@@ -1,0 +1,64 @@
+#!/usr/bin/env sh
+
+LIBBPF_DIR=$1
+OUTPUT_DIR=$2
+
+if test -z "$LIBBPF_DIR"; then
+    echo "error: no libbpf dir provided"
+    exit 1
+fi
+
+if test -z "$OUTPUT_DIR"; then
+    echo "error: no output dir provided"
+    exit 1
+fi
+
+BPF_TYPES="\
+    bpf_cmd \
+    bpf_insn \
+    bpf_attr \
+    bpf_map_type \
+    bpf_prog_type \
+    bpf_attach_type
+    "
+
+BPF_VARS="\
+    BPF_PSEUDO_.*
+    "
+
+PERF_TYPES="\
+    perf_event_attr \
+    perf_sw_ids \
+    perf_event_sample_format \
+    perf_event_mmap_page \
+    perf_event_header \
+    perf_type_id \
+    perf_event_type
+    "
+
+PERF_VARS="\
+    PERF_FLAG_.* \
+    PERF_EVENT_.*
+    "
+
+bindgen $LIBBPF_DIR/include/uapi/linux/bpf.h \
+    --no-layout-tests \
+    --default-enum-style moduleconsts \
+    $(for ty in $BPF_TYPES; do
+        echo --whitelist-type "$ty"
+    done) \
+    $(for var in $BPF_VARS; do
+        echo --whitelist-var "$var"
+    done) \
+    > $OUTPUT_DIR/bpf_bindings.rs
+
+bindgen include/perf_wrapper.h \
+    --no-layout-tests \
+    --default-enum-style moduleconsts \
+    $(for ty in $PERF_TYPES; do
+        echo --whitelist-type "$ty"
+    done) \
+    $(for var in $PERF_VARS; do
+        echo --whitelist-var "$var"
+    done) \
+    > $OUTPUT_DIR/perf_bindings.rs
