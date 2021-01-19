@@ -10,8 +10,6 @@ use crate::{
     syscalls::bpf_map_update_elem_ptr,
 };
 
-pub use object::Pod;
-
 unsafe impl object::Pod for bpf_insn {}
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
@@ -20,6 +18,18 @@ pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
 pub(crate) const PERF_EVENT_IOC_ENABLE: libc::c_ulong = 9216;
 pub(crate) const PERF_EVENT_IOC_DISABLE: libc::c_ulong = 9217;
 pub(crate) const PERF_EVENT_IOC_SET_BPF: libc::c_ulong = 1074013192;
+
+pub unsafe trait Pod: Copy + 'static {}
+
+macro_rules! unsafe_impl_pod {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            unsafe impl Pod for $struct_name { }
+        )+
+    }
+}
+
+unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64);
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]

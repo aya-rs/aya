@@ -13,7 +13,7 @@ use crate::{
     generated::{bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn},
     programs::VerifierLog,
     syscalls::SysResult,
-    RawFd, BPF_OBJ_NAME_LEN,
+    Pod, RawFd, BPF_OBJ_NAME_LEN,
 };
 
 use super::{syscall, Syscall};
@@ -62,7 +62,7 @@ pub(crate) fn bpf_load_program(
     sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr)
 }
 
-fn lookup<K, V: crate::Pod>(
+fn lookup<K, V: Pod>(
     fd: RawFd,
     key: &K,
     flags: u64,
@@ -84,7 +84,7 @@ fn lookup<K, V: crate::Pod>(
     }
 }
 
-pub(crate) fn bpf_map_lookup_elem<K, V: crate::Pod>(
+pub(crate) fn bpf_map_lookup_elem<K, V: Pod>(
     fd: RawFd,
     key: &K,
     flags: u64,
@@ -92,7 +92,7 @@ pub(crate) fn bpf_map_lookup_elem<K, V: crate::Pod>(
     lookup(fd, key, flags, bpf_cmd::BPF_MAP_LOOKUP_ELEM)
 }
 
-pub(crate) fn bpf_map_lookup_and_delete_elem<K, V: crate::Pod>(
+pub(crate) fn bpf_map_lookup_and_delete_elem<K, V: Pod>(
     fd: RawFd,
     key: &K,
 ) -> Result<Option<V>, (c_long, io::Error)> {
