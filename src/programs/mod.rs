@@ -4,7 +4,7 @@ mod socket_filter;
 mod trace_point;
 mod xdp;
 
-use libc::ENOSPC;
+use libc::{close, ENOSPC};
 use perf_attach::*;
 pub use probe::*;
 pub use socket_filter::*;
@@ -39,7 +39,7 @@ pub enum ProgramError {
         verifier_log: String,
     },
 
-    #[error("FIXME")]
+    #[error("the program was already detached")]
     AlreadyDetached,
 
     #[error("the perf_event_open syscall failed: {io_error}")]
@@ -258,5 +258,27 @@ impl<T: Link> Link for LinkRef<T> {
         } else {
             Err(ProgramError::AlreadyDetached)
         }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct FdLink {
+    fd: Option<RawFd>,
+}
+
+impl Link for FdLink {
+    fn detach(&mut self) -> Result<(), ProgramError> {
+        if let Some(fd) = self.fd.take() {
+            unsafe { close(fd) };
+            Ok(())
+        } else {
+            Err(ProgramError::AlreadyDetached)
+        }
+    }
+}
+
+impl Drop for FdLink {
+    fn drop(&mut self) {
+        let _ = self.detach();
     }
 }
