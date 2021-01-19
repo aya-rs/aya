@@ -98,13 +98,13 @@ impl<'a, K: Pod, V: Pod> TryFrom<&'a mut Map> for HashMap<&'a mut Map, K, V> {
     }
 }
 
-pub struct MapKeys<'coll, T: AsRef<Map>, K: Clone + Pod, V: Clone + Pod> {
+pub struct MapKeys<'coll, T: AsRef<Map>, K: Pod, V: Pod> {
     map: &'coll HashMap<T, K, V>,
     err: bool,
     key: Option<K>,
 }
 
-impl<'coll, T: AsRef<Map>, K: Clone + Pod, V: Clone + Pod> MapKeys<'coll, T, K, V> {
+impl<'coll, T: AsRef<Map>, K: Pod, V: Pod> MapKeys<'coll, T, K, V> {
     fn new(map: &'coll HashMap<T, K, V>) -> MapKeys<'coll, T, K, V> {
         MapKeys {
             map,
@@ -114,7 +114,7 @@ impl<'coll, T: AsRef<Map>, K: Clone + Pod, V: Clone + Pod> MapKeys<'coll, T, K, 
     }
 }
 
-impl<T: AsRef<Map>, K: Clone + Pod, V: Clone + Pod> Iterator for MapKeys<'_, T, K, V> {
+impl<T: AsRef<Map>, K: Pod, V: Pod> Iterator for MapKeys<'_, T, K, V> {
     type Item = Result<K, MapError>;
 
     fn next(&mut self) -> Option<Result<K, MapError>> {
@@ -147,11 +147,11 @@ impl<T: AsRef<Map>, K: Clone + Pod, V: Clone + Pod> Iterator for MapKeys<'_, T, 
     }
 }
 
-pub struct MapIter<'coll, T: AsRef<Map>, K: Clone + Pod, V: Clone + Pod> {
+pub struct MapIter<'coll, T: AsRef<Map>, K: Pod, V: Pod> {
     inner: MapKeys<'coll, T, K, V>,
 }
 
-impl<'coll, T: AsRef<Map>, K: Clone + Pod, V: Clone + Pod> MapIter<'coll, T, K, V> {
+impl<'coll, T: AsRef<Map>, K: Pod, V: Pod> MapIter<'coll, T, K, V> {
     fn new(map: &'coll HashMap<T, K, V>) -> MapIter<'coll, T, K, V> {
         MapIter {
             inner: MapKeys::new(map),
@@ -159,7 +159,7 @@ impl<'coll, T: AsRef<Map>, K: Clone + Pod, V: Clone + Pod> MapIter<'coll, T, K, 
     }
 }
 
-impl<T: AsRef<Map>, K: Clone + Pod, V: Clone + Pod> Iterator for MapIter<'_, T, K, V> {
+impl<T: AsRef<Map>, K: Pod, V: Pod> Iterator for MapIter<'_, T, K, V> {
     type Item = Result<(K, V), MapError>;
 
     fn next(&mut self) -> Option<Self::Item> {
