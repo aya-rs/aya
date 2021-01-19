@@ -592,7 +592,10 @@ mod tests {
         let mut keys = unsafe { hm.keys() };
         assert!(matches!(keys.next(), Some(Ok(10))));
         assert!(matches!(keys.next(), Some(Ok(20))));
-        assert!(matches!(keys.next(), Some(Err(MapError::GetNextKeyFailed { .. }))));
+        assert!(matches!(
+            keys.next(),
+            Some(Err(MapError::GetNextKeyFailed { .. }))
+        ));
         assert!(matches!(keys.next(), None));
     }
 
@@ -683,7 +686,10 @@ mod tests {
         let mut iter = unsafe { hm.iter() };
         assert!(matches!(iter.next(), Some(Ok((10, 100)))));
         assert!(matches!(iter.next(), Some(Ok((20, 200)))));
-        assert!(matches!(iter.next(), Some(Err(MapError::GetNextKeyFailed { .. }))));
+        assert!(matches!(
+            iter.next(),
+            Some(Err(MapError::GetNextKeyFailed { .. }))
+        ));
         assert!(matches!(iter.next(), None));
     }
 
@@ -718,7 +724,10 @@ mod tests {
 
         let mut iter = unsafe { hm.iter() };
         assert!(matches!(iter.next(), Some(Ok((10, 100)))));
-        assert!(matches!(iter.next(), Some(Err(MapError::LookupElementFailed { .. }))));
+        assert!(matches!(
+            iter.next(),
+            Some(Err(MapError::LookupElementFailed { .. }))
+        ));
         assert!(matches!(iter.next(), Some(Ok((30, 300)))));
         assert!(matches!(iter.next(), None));
     }

@@ -2,11 +2,12 @@ use std::ffi::CString;
 
 use libc::if_nametoindex;
 
-use crate::generated::{bpf_attach_type::BPF_XDP, bpf_prog_type::BPF_PROG_TYPE_XDP};
-use crate::syscalls::bpf_link_create;
 use crate::RawFd;
-
-use super::{load_program, ProgramData, ProgramError};
+use crate::{
+    generated::{bpf_attach_type::BPF_XDP, bpf_prog_type::BPF_PROG_TYPE_XDP},
+    programs::{load_program, ProgramData, ProgramError},
+    syscalls::bpf_link_create,
+};
 
 #[derive(Debug)]
 pub struct Xdp {
