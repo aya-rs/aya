@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, marker::PhantomData, mem};
+use std::{convert::TryFrom, marker::PhantomData, mem, os::unix::prelude::RawFd};
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_HASH,
@@ -51,11 +51,11 @@ impl<T: AsRef<Map>, K: Pod, V: Pod> HashMap<T, K, V> {
             .map_err(|(code, io_error)| MapError::LookupElementFailed { code, io_error })
     }
 
-    pub unsafe fn iter<'coll>(&'coll self) -> MapIter<'coll, T, K, V> {
+    pub unsafe fn iter<'coll>(&'coll self) -> MapIter<'coll, K, V> {
         MapIter::new(self)
     }
 
-    pub unsafe fn keys<'coll>(&'coll self) -> MapKeys<'coll, T, K, V> {
+    pub unsafe fn keys<'coll>(&'coll self) -> MapKeys<'coll, K, V> {
         MapKeys::new(self)
     }
 }
@@ -98,14 +98,29 @@ impl<'a, K: Pod, V: Pod> TryFrom<&'a mut Map> for HashMap<&'a mut Map, K, V> {
     }
 }
 
-pub struct MapKeys<'coll, T: AsRef<Map>, K: Pod, V: Pod> {
-    map: &'coll HashMap<T, K, V>,
+pub(crate) trait IterableMap<K: Pod, V: Pod> {
+    fn fd(&self) -> Result<RawFd, MapError>;
+    unsafe fn get(&self, key: &K) -> Result<Option<V>, MapError>;
+}
+
+impl<T: AsRef<Map>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> {
+    fn fd(&self) -> Result<RawFd, MapError> {
+        self.inner.as_ref().fd_or_err()
+    }
+
+    unsafe fn get(&self, key: &K) -> Result<Option<V>, MapError> {
+        HashMap::get(self, key, 0)
+    }
+}
+
+pub struct MapKeys<'coll, K: Pod, V: Pod> {
+    map: &'coll dyn IterableMap<K, V>,
     err: bool,
     key: Option<K>,
 }
 
-impl<'coll, T: AsRef<Map>, K: Pod, V: Pod> MapKeys<'coll, T, K, V> {
-    fn new(map: &'coll HashMap<T, K, V>) -> MapKeys<'coll, T, K, V> {
+impl<'coll, K: Pod, V: Pod> MapKeys<'coll, K, V> {
+    fn new(map: &'coll dyn IterableMap<K, V>) -> MapKeys<'coll, K, V> {
         MapKeys {
             map,
             err: false,
@@ -114,7 +129,7 @@ impl<'coll, T: AsRef<Map>, K: Pod, V: Pod> MapKeys<'coll, T, K, V> {
     }
 }
 
-impl<T: AsRef<Map>, K: Pod, V: Pod> Iterator for MapKeys<'_, T, K, V> {
+impl<K: Pod, V: Pod> Iterator for MapKeys<'_, K, V> {
     type Item = Result<K, MapError>;
 
     fn next(&mut self) -> Option<Result<K, MapError>> {
@@ -122,7 +137,7 @@ impl<T: AsRef<Map>, K: Pod, V: Pod> Iterator for MapKeys<'_, T, K, V> {
             return None;
         }
 
-        let fd = match self.map.inner.as_ref().fd_or_err() {
+        let fd = match self.map.fd() {
             Ok(fd) => fd,
             Err(e) => {
                 self.err = true;
@@ -147,26 +162,26 @@ impl<T: AsRef<Map>, K: Pod, V: Pod> Iterator for MapKeys<'_, T, K, V> {
     }
 }
 
-pub struct MapIter<'coll, T: AsRef<Map>, K: Pod, V: Pod> {
-    inner: MapKeys<'coll, T, K, V>,
+pub struct MapIter<'coll, K: Pod, V: Pod> {
+    inner: MapKeys<'coll, K, V>,
 }
 
-impl<'coll, T: AsRef<Map>, K: Pod, V: Pod> MapIter<'coll, T, K, V> {
-    fn new(map: &'coll HashMap<T, K, V>) -> MapIter<'coll, T, K, V> {
+impl<'coll, K: Pod, V: Pod> MapIter<'coll, K, V> {
+    fn new(map: &'coll dyn IterableMap<K, V>) -> MapIter<'coll, K, V> {
         MapIter {
             inner: MapKeys::new(map),
         }
     }
 }
 
-impl<T: AsRef<Map>, K: Pod, V: Pod> Iterator for MapIter<'_, T, K, V> {
+impl<K: Pod, V: Pod> Iterator for MapIter<'_, K, V> {
     type Item = Result<(K, V), MapError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.inner.next() {
                 Some(Ok(key)) => {
-                    let value = unsafe { self.inner.map.get(&key, 0) };
+                    let value = unsafe { self.inner.map.get(&key) };
                     match value {
                         Ok(None) => continue,
                         Ok(Some(value)) => return Some(Ok((key, value))),
