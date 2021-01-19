@@ -1,7 +1,11 @@
 use std::{ffi::CString, io};
 use thiserror::Error;
 
-use crate::{obj, syscalls::bpf_create_map, RawFd};
+use crate::{
+    obj,
+    syscalls::{bpf_create_map, bpf_map_get_next_key},
+    Pod, RawFd,
+};
 
 mod hash_map;
 pub use hash_map::*;
@@ -87,6 +91,93 @@ impl Map {
         self.fd.ok_or_else(|| MapError::NotCreated {
             name: self.obj.name.clone(),
         })
+    }
+}
+
+pub(crate) trait IterableMap<K: Pod, V: Pod> {
+    fn fd(&self) -> Result<RawFd, MapError>;
+    unsafe fn get(&self, key: &K) -> Result<Option<V>, MapError>;
+}
+
+pub struct MapKeys<'coll, K: Pod, V: Pod> {
+    map: &'coll dyn IterableMap<K, V>,
+    err: bool,
+    key: Option<K>,
+}
+
+impl<'coll, K: Pod, V: Pod> MapKeys<'coll, K, V> {
+    fn new(map: &'coll dyn IterableMap<K, V>) -> MapKeys<'coll, K, V> {
+        MapKeys {
+            map,
+            err: false,
+            key: None,
+        }
+    }
+}
+
+impl<K: Pod, V: Pod> Iterator for MapKeys<'_, K, V> {
+    type Item = Result<K, MapError>;
+
+    fn next(&mut self) -> Option<Result<K, MapError>> {
+        if self.err {
+            return None;
+        }
+
+        let fd = match self.map.fd() {
+            Ok(fd) => fd,
+            Err(e) => {
+                self.err = true;
+                return Some(Err(e));
+            }
+        };
+
+        match bpf_map_get_next_key(fd, self.key.as_ref()) {
+            Ok(Some(key)) => {
+                self.key = Some(key);
+                return Some(Ok(key));
+            }
+            Ok(None) => {
+                self.key = None;
+                return None;
+            }
+            Err((code, io_error)) => {
+                self.err = true;
+                return Some(Err(MapError::GetNextKeyFailed { code, io_error }));
+            }
+        }
+    }
+}
+
+pub struct MapIter<'coll, K: Pod, V: Pod> {
+    inner: MapKeys<'coll, K, V>,
+}
+
+impl<'coll, K: Pod, V: Pod> MapIter<'coll, K, V> {
+    fn new(map: &'coll dyn IterableMap<K, V>) -> MapIter<'coll, K, V> {
+        MapIter {
+            inner: MapKeys::new(map),
+        }
+    }
+}
+
+impl<K: Pod, V: Pod> Iterator for MapIter<'_, K, V> {
+    type Item = Result<(K, V), MapError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.inner.next() {
+                Some(Ok(key)) => {
+                    let value = unsafe { self.inner.map.get(&key) };
+                    match value {
+                        Ok(None) => continue,
+                        Ok(Some(value)) => return Some(Ok((key, value))),
+                        Err(e) => return Some(Err(e)),
+                    }
+                }
+                Some(Err(e)) => return Some(Err(e)),
+                None => return None,
+            }
+        }
     }
 }
 
