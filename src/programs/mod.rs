@@ -77,12 +77,8 @@ pub enum ProgramError {
     Other { message: String },
 }
 
-#[derive(Debug)]
-pub(crate) struct ProgramData {
-    pub(crate) name: String,
-    pub(crate) obj: obj::Program,
-    pub(crate) fd: Option<RawFd>,
-    pub(crate) links: Vec<Rc<RefCell<dyn Link>>>,
+pub trait ProgramFd {
+    fn fd(&self) -> Option<RawFd>;
 }
 
 #[derive(Debug)]
@@ -110,6 +106,16 @@ impl Program {
         }
     }
 
+    pub(crate) fn data(&self) -> &ProgramData {
+        match self {
+            Program::KProbe(p) => &p.data,
+            Program::UProbe(p) => &p.data,
+            Program::TracePoint(p) => &p.data,
+            Program::SocketFilter(p) => &p.data,
+            Program::Xdp(p) => &p.data,
+        }
+    }
+
     fn data_mut(&mut self) -> &mut ProgramData {
         match self {
             Program::KProbe(p) => &mut p.data,
@@ -121,16 +127,40 @@ impl Program {
     }
 }
 
+impl ProgramFd for Program {
+    fn fd(&self) -> Option<RawFd> {
+        self.data().fd
+    }
+}
+
+macro_rules! impl_program_fd {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl ProgramFd for $struct_name {
+                fn fd(&self) -> Option<RawFd> {
+                    self.data.fd
+                }
+            }
+        )+
+    }
+}
+
+impl_program_fd!(KProbe, UProbe, TracePoint, SocketFilter, Xdp);
+
+#[derive(Debug)]
+pub(crate) struct ProgramData {
+    pub(crate) name: String,
+    pub(crate) obj: obj::Program,
+    pub(crate) fd: Option<RawFd>,
+    pub(crate) links: Vec<Rc<RefCell<dyn Link>>>,
+}
+
 impl ProgramData {
     fn fd_or_err(&self) -> Result<RawFd, ProgramError> {
         self.fd.ok_or(ProgramError::NotLoaded {
             program: self.name.clone(),
         })
     }
-}
-
-impl Drop for ProgramData {
-    fn drop(&mut self) {}
 }
 
 const MAX_LOG_BUF_SIZE: usize = (std::u32::MAX >> 8) as usize;

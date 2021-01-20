@@ -8,10 +8,12 @@ use crate::{
 };
 
 mod hash_map;
-pub use hash_map::*;
-
 mod perf_map;
+mod program_array;
+
+pub use hash_map::*;
 pub use perf_map::*;
+pub use program_array::*;
 
 #[derive(Error, Debug)]
 pub enum MapError {
@@ -39,6 +41,12 @@ pub enum MapError {
 
     #[error("invalid value size {size}, expected {expected}")]
     InvalidValueSize { size: usize, expected: usize },
+
+    #[error("the index is {index} but `max_entries` is {max_entries}")]
+    OutOfBounds { index: u32, max_entries: u32 },
+
+    #[error("the program is not loaded")]
+    ProgramNotLoaded,
 
     #[error("the BPF_MAP_UPDATE_ELEM syscall failed with code {code} io_error {io_error}")]
     UpdateElementFailed { code: i64, io_error: io::Error },
