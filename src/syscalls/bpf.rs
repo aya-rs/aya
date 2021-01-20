@@ -62,7 +62,7 @@ pub(crate) fn bpf_load_program(
     sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr)
 }
 
-fn lookup<K, V: Pod>(
+fn lookup<K: Pod, V: Pod>(
     fd: RawFd,
     key: &K,
     flags: u64,
@@ -84,7 +84,7 @@ fn lookup<K, V: Pod>(
     }
 }
 
-pub(crate) fn bpf_map_lookup_elem<K, V: Pod>(
+pub(crate) fn bpf_map_lookup_elem<K: Pod, V: Pod>(
     fd: RawFd,
     key: &K,
     flags: u64,
@@ -92,7 +92,7 @@ pub(crate) fn bpf_map_lookup_elem<K, V: Pod>(
     lookup(fd, key, flags, bpf_cmd::BPF_MAP_LOOKUP_ELEM)
 }
 
-pub(crate) fn bpf_map_lookup_and_delete_elem<K, V: Pod>(
+pub(crate) fn bpf_map_lookup_and_delete_elem<K: Pod, V: Pod>(
     fd: RawFd,
     key: &K,
 ) -> Result<Option<V>, (c_long, io::Error)> {
