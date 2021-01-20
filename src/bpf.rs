@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    cell::{Ref, RefCell, RefMut},
+    collections::HashMap,
+};
 
 use thiserror::Error;
 
@@ -45,7 +48,7 @@ unsafe impl object::Pod for bpf_map_def {}
 
 #[derive(Debug)]
 pub struct Bpf {
-    maps: HashMap<String, Map>,
+    maps: HashMap<String, RefCell<Map>>,
     programs: HashMap<String, Program>,
 }
 
@@ -91,18 +94,18 @@ impl Bpf {
         Ok(Bpf {
             maps: maps
                 .drain(..)
-                .map(|map| (map.obj.name.clone(), map))
+                .map(|map| (map.obj.name.clone(), RefCell::new(map)))
                 .collect(),
             programs,
         })
     }
 
-    pub fn map(&self, name: &str) -> Option<&Map> {
-        self.maps.get(name)
+    pub fn map(&self, name: &str) -> Option<Ref<'_, Map>> {
+        self.maps.get(name).map(|cell| cell.borrow())
     }
 
-    pub fn map_mut(&mut self, name: &str) -> Option<&mut Map> {
-        self.maps.get_mut(name)
+    pub fn map_mut(&self, name: &str) -> Option<RefMut<'_, Map>> {
+        self.maps.get(name).map(|cell| cell.borrow_mut())
     }
 
     pub fn program(&self, name: &str) -> Option<&Program> {

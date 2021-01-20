@@ -1,4 +1,10 @@
-use std::{convert::TryFrom, marker::PhantomData, mem};
+use std::{
+    cell::{Ref, RefMut},
+    convert::TryFrom,
+    marker::PhantomData,
+    mem,
+    ops::{Deref, DerefMut},
+};
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_HASH,
@@ -10,15 +16,15 @@ use crate::{
     Pod, RawFd,
 };
 
-pub struct HashMap<T: AsRef<Map>, K, V> {
+pub struct HashMap<T: Deref<Target = Map>, K, V> {
     inner: T,
     _k: PhantomData<K>,
     _v: PhantomData<V>,
 }
 
-impl<T: AsRef<Map>, K: Pod, V: Pod> HashMap<T, K, V> {
+impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     pub fn new(map: T) -> Result<HashMap<T, K, V>, MapError> {
-        let inner = map.as_ref();
+        let inner = map.deref();
         let map_type = inner.obj.def.map_type;
         if map_type != BPF_MAP_TYPE_HASH {
             return Err(MapError::InvalidMapType {
@@ -45,7 +51,7 @@ impl<T: AsRef<Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     }
 
     pub unsafe fn get(&self, key: &K, flags: u64) -> Result<Option<V>, MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.deref().fd_or_err()?;
         bpf_map_lookup_elem(fd, key, flags)
             .map_err(|(code, io_error)| MapError::LookupElementFailed { code, io_error })
     }
@@ -59,35 +65,51 @@ impl<T: AsRef<Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     }
 }
 
-impl<T: AsRef<Map> + AsMut<Map>, K: Pod, V: Pod> HashMap<T, K, V> {
+impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     pub fn insert(&mut self, key: K, value: V, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.deref_mut().fd_or_err()?;
         bpf_map_update_elem(fd, &key, &value, flags)
             .map_err(|(code, io_error)| MapError::UpdateElementFailed { code, io_error })?;
         Ok(())
     }
 
     pub unsafe fn pop(&mut self, key: &K) -> Result<Option<V>, MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.deref_mut().fd_or_err()?;
         bpf_map_lookup_and_delete_elem(fd, key)
             .map_err(|(code, io_error)| MapError::LookupAndDeleteElementFailed { code, io_error })
     }
 
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.deref_mut().fd_or_err()?;
         bpf_map_delete_elem(fd, key)
             .map(|_| ())
             .map_err(|(code, io_error)| MapError::DeleteElementFailed { code, io_error })
     }
 }
 
-impl<T: AsRef<Map>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> {
+impl<T: Deref<Target = Map>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> {
     fn fd(&self) -> Result<RawFd, MapError> {
-        self.inner.as_ref().fd_or_err()
+        self.inner.deref().fd_or_err()
     }
 
     unsafe fn get(&self, key: &K) -> Result<Option<V>, MapError> {
         HashMap::get(self, key, 0)
+    }
+}
+
+impl<'a, K: Pod, V: Pod> TryFrom<Ref<'a, Map>> for HashMap<Ref<'a, Map>, K, V> {
+    type Error = MapError;
+
+    fn try_from(inner: Ref<'a, Map>) -> Result<HashMap<Ref<'a, Map>, K, V>, MapError> {
+        HashMap::new(inner)
+    }
+}
+
+impl<'a, K: Pod, V: Pod> TryFrom<RefMut<'a, Map>> for HashMap<RefMut<'a, Map>, K, V> {
+    type Error = MapError;
+
+    fn try_from(inner: RefMut<'a, Map>) -> Result<HashMap<RefMut<'a, Map>, K, V>, MapError> {
+        HashMap::new(inner)
     }
 }
 

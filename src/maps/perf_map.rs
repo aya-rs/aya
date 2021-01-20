@@ -1,7 +1,10 @@
 use std::{
+    cell::RefMut,
     convert::TryFrom,
     ffi::c_void,
-    fs, io, mem, ptr, slice,
+    fs, io, mem,
+    ops::DerefMut,
+    ptr, slice,
     str::FromStr,
     sync::atomic::{self, AtomicPtr, Ordering},
 };
@@ -277,18 +280,18 @@ pub enum PerfMapError {
     },
 }
 
-pub struct PerfMap<'map> {
-    map: &'map Map,
+pub struct PerfMap<T: DerefMut<Target = Map>> {
+    map: T,
     cpu_fds: Vec<(u32, RawFd)>,
     buffers: Vec<Option<PerfBuffer>>,
 }
 
-impl<'map> PerfMap<'map> {
+impl<T: DerefMut<Target = Map>> PerfMap<T> {
     pub fn new(
-        map: &'map Map,
+        map: T,
         cpu_ids: Option<Vec<u32>>,
         page_count: Option<usize>,
-    ) -> Result<PerfMap<'map>, PerfMapError> {
+    ) -> Result<PerfMap<T>, PerfMapError> {
         let map_type = map.obj.def.map_type;
         if map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY {
             return Err(MapError::InvalidMapType {
@@ -345,11 +348,19 @@ impl<'map> PerfMap<'map> {
     }
 }
 
-impl<'inner> TryFrom<&'inner Map> for PerfMap<'inner> {
+impl<'a> TryFrom<RefMut<'a, Map>> for PerfMap<RefMut<'a, Map>> {
     type Error = PerfMapError;
 
-    fn try_from(inner: &'inner Map) -> Result<PerfMap<'inner>, PerfMapError> {
-        PerfMap::new(inner, None, None)
+    fn try_from(a: RefMut<'a, Map>) -> Result<PerfMap<RefMut<'a, Map>>, PerfMapError> {
+        PerfMap::new(a, None, None)
+    }
+}
+
+impl<'a> TryFrom<&'a mut Map> for PerfMap<&'a mut Map> {
+    type Error = PerfMapError;
+
+    fn try_from(a: &'a mut Map) -> Result<PerfMap<&'a mut Map>, PerfMapError> {
+        PerfMap::new(a, None, None)
     }
 }
 
