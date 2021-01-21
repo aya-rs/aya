@@ -1,6 +1,7 @@
 use std::{
     cell::{Ref, RefCell, RefMut},
     collections::HashMap,
+    convert::TryFrom,
 };
 
 use thiserror::Error;
@@ -100,12 +101,24 @@ impl Bpf {
         })
     }
 
-    pub fn map(&self, name: &str) -> Option<Ref<'_, Map>> {
-        self.maps.get(name).map(|cell| cell.borrow())
+    pub fn map<'a, 'slf: 'a, T: TryFrom<Ref<'a, Map>>>(
+        &'slf self,
+        name: &str,
+    ) -> Result<Option<T>, <T as TryFrom<Ref<'a, Map>>>::Error> {
+        self.maps
+            .get(name)
+            .map(|cell| T::try_from(cell.borrow()))
+            .transpose()
     }
 
-    pub fn map_mut(&self, name: &str) -> Option<RefMut<'_, Map>> {
-        self.maps.get(name).map(|cell| cell.borrow_mut())
+    pub fn map_mut<'a, 'slf: 'a, T: TryFrom<RefMut<'a, Map>>>(
+        &'slf self,
+        name: &str,
+    ) -> Result<Option<T>, <T as TryFrom<RefMut<'a, Map>>>::Error> {
+        self.maps
+            .get(name)
+            .map(|cell| T::try_from(cell.borrow_mut()))
+            .transpose()
     }
 
     pub fn program(&self, name: &str) -> Option<&Program> {
