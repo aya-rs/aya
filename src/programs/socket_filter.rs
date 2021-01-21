@@ -1,10 +1,10 @@
+use libc::{setsockopt, SOL_SOCKET, SO_ATTACH_BPF};
 use std::{io, mem, os::unix::prelude::RawFd};
 
-use libc::{setsockopt, SOL_SOCKET, SO_ATTACH_BPF};
-
-use crate::generated::bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER;
-
-use super::{load_program, ProgramData, ProgramError};
+use crate::{
+    generated::bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER,
+    programs::{load_program, ProgramData, ProgramError},
+};
 
 #[derive(Debug)]
 pub struct SocketFilter {

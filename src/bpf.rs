@@ -121,82 +121,21 @@ impl Bpf {
             .transpose()
     }
 
-    pub fn program(&self, name: &str) -> Option<&Program> {
-        self.programs.get(name)
+    pub fn program<'a, 'slf: 'a, T: TryFrom<&'a Program>>(
+        &'slf self,
+        name: &str,
+    ) -> Result<Option<T>, <T as TryFrom<&'a Program>>::Error> {
+        self.programs.get(name).map(|p| T::try_from(p)).transpose()
     }
 
-    pub fn program_mut(&mut self, name: &str) -> Option<&mut Program> {
-        self.programs.get_mut(name)
-    }
-
-    pub fn kprobe(&self, name: &str) -> Option<&KProbe> {
-        match self.programs.get(name) {
-            Some(Program::KProbe(kprobe)) => Some(kprobe),
-            _ => None,
-        }
-    }
-
-    pub fn kprobe_mut(&mut self, name: &str) -> Option<&mut KProbe> {
-        match self.programs.get_mut(name) {
-            Some(Program::KProbe(kprobe)) => Some(kprobe),
-            _ => None,
-        }
-    }
-
-    pub fn uprobe(&self, name: &str) -> Option<&UProbe> {
-        match self.programs.get(name) {
-            Some(Program::UProbe(uprobe)) => Some(uprobe),
-            _ => None,
-        }
-    }
-
-    pub fn uprobe_mut(&mut self, name: &str) -> Option<&mut UProbe> {
-        match self.programs.get_mut(name) {
-            Some(Program::UProbe(uprobe)) => Some(uprobe),
-            _ => None,
-        }
-    }
-
-    pub fn trace_point(&self, name: &str) -> Option<&TracePoint> {
-        match self.programs.get(name) {
-            Some(Program::TracePoint(trace_point)) => Some(trace_point),
-            _ => None,
-        }
-    }
-
-    pub fn trace_point_mut(&mut self, name: &str) -> Option<&mut TracePoint> {
-        match self.programs.get_mut(name) {
-            Some(Program::TracePoint(trace_point)) => Some(trace_point),
-            _ => None,
-        }
-    }
-
-    pub fn socket_filter(&self, name: &str) -> Option<&SocketFilter> {
-        match self.programs.get(name) {
-            Some(Program::SocketFilter(socket_filter)) => Some(socket_filter),
-            _ => None,
-        }
-    }
-
-    pub fn socket_filter_mut(&mut self, name: &str) -> Option<&mut SocketFilter> {
-        match self.programs.get_mut(name) {
-            Some(Program::SocketFilter(socket_filter)) => Some(socket_filter),
-            _ => None,
-        }
-    }
-
-    pub fn xdp(&self, name: &str) -> Option<&Xdp> {
-        match self.programs.get(name) {
-            Some(Program::Xdp(xdp)) => Some(xdp),
-            _ => None,
-        }
-    }
-
-    pub fn xdp_mut(&mut self, name: &str) -> Option<&mut Xdp> {
-        match self.programs.get_mut(name) {
-            Some(Program::Xdp(xdp)) => Some(xdp),
-            _ => None,
-        }
+    pub fn program_mut<'a, 'slf: 'a, T: TryFrom<&'a mut Program>>(
+        &'slf mut self,
+        name: &str,
+    ) -> Result<Option<T>, <T as TryFrom<&'a mut Program>>::Error> {
+        self.programs
+            .get_mut(name)
+            .map(|p| T::try_from(p))
+            .transpose()
     }
 }
 

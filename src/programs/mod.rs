@@ -5,23 +5,23 @@ mod trace_point;
 mod xdp;
 
 use libc::{close, ENOSPC};
-use perf_attach::*;
-pub use probe::*;
-pub use socket_filter::*;
-pub use trace_point::*;
-pub use xdp::*;
-
 use std::{
     cell::RefCell,
     cmp,
+    convert::TryFrom,
     ffi::CStr,
     io,
     os::raw::c_uint,
     path::PathBuf,
     rc::{Rc, Weak},
 };
-
 use thiserror::Error;
+
+use perf_attach::*;
+pub use probe::*;
+pub use socket_filter::*;
+pub use trace_point::*;
+pub use xdp::*;
 
 use crate::{obj, syscalls::bpf_load_program, RawFd};
 #[derive(Debug, Error)]
@@ -72,6 +72,9 @@ pub enum ProgramError {
 
     #[error("setsockopt SO_ATTACH_BPF failed: {io_error}")]
     SocketFilterError { io_error: io::Error },
+
+    #[error("unexpected program type")]
+    UnexpectedProgramType,
 
     #[error("{message}")]
     Other { message: String },
@@ -126,26 +129,6 @@ impl Program {
         }
     }
 }
-
-impl ProgramFd for Program {
-    fn fd(&self) -> Option<RawFd> {
-        self.data().fd
-    }
-}
-
-macro_rules! impl_program_fd {
-    ($($struct_name:ident),+ $(,)?) => {
-        $(
-            impl ProgramFd for $struct_name {
-                fn fd(&self) -> Option<RawFd> {
-                    self.data.fd
-                }
-            }
-        )+
-    }
-}
-
-impl_program_fd!(KProbe, UProbe, TracePoint, SocketFilter, Xdp);
 
 #[derive(Debug)]
 pub(crate) struct ProgramData {
@@ -312,3 +295,53 @@ impl Drop for FdLink {
         let _ = self.detach();
     }
 }
+
+impl ProgramFd for Program {
+    fn fd(&self) -> Option<RawFd> {
+        self.data().fd
+    }
+}
+
+macro_rules! impl_program_fd {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl ProgramFd for $struct_name {
+                fn fd(&self) -> Option<RawFd> {
+                    self.data.fd
+                }
+            }
+        )+
+    }
+}
+
+impl_program_fd!(KProbe, UProbe, TracePoint, SocketFilter, Xdp);
+
+macro_rules! impl_try_from_program {
+    ($($ty:ident),+ $(,)?) => {
+        $(
+            impl<'a> TryFrom<&'a Program> for &'a $ty {
+                type Error = ProgramError;
+
+                fn try_from(program: &'a Program) -> Result<&'a $ty, ProgramError> {
+                    match program {
+                        Program::$ty(p) => Ok(p),
+                        _ => Err(ProgramError::UnexpectedProgramType),
+                    }
+                }
+            }
+
+            impl<'a> TryFrom<&'a mut Program> for &'a mut $ty {
+                type Error = ProgramError;
+
+                fn try_from(program: &'a mut Program) -> Result<&'a mut $ty, ProgramError> {
+                    match program {
+                        Program::$ty(p) => Ok(p),
+                        _ => Err(ProgramError::UnexpectedProgramType),
+                    }
+                }
+            }
+        )+
+    }
+}
+
+impl_try_from_program!(KProbe, UProbe, TracePoint, SocketFilter, Xdp);

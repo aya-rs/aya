@@ -12,11 +12,9 @@ use thiserror::Error;
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_KPROBE,
-    programs::{load_program, ProgramData, ProgramError},
+    programs::{load_program, perf_attach, Link, ProgramData, ProgramError},
     syscalls::perf_event_open_probe,
 };
-
-use super::{perf_attach, Link};
 
 lazy_static! {
     static ref LD_SO_CACHE: Result<LdSoCache, io::Error> = LdSoCache::load("/etc/ld.so.cache");

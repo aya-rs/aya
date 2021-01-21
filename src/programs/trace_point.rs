@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, fs};
+use std::fs;
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT, syscalls::perf_event_open_trace_point,
