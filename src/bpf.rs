@@ -85,6 +85,9 @@ impl Bpf {
                     crate::obj::ProgramKind::KProbe => Program::KProbe(KProbe { data }),
                     crate::obj::ProgramKind::UProbe => Program::UProbe(UProbe { data }),
                     crate::obj::ProgramKind::TracePoint => Program::TracePoint(TracePoint { data }),
+                    crate::obj::ProgramKind::SocketFilter => {
+                        Program::SocketFilter(SocketFilter { data })
+                    }
                     crate::obj::ProgramKind::Xdp => Program::Xdp(Xdp { data }),
                 };
 

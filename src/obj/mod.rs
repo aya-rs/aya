@@ -56,8 +56,9 @@ pub(crate) struct Program {
 pub enum ProgramKind {
     KProbe,
     UProbe,
-    Xdp,
     TracePoint,
+    SocketFilter,
+    Xdp,
 }
 
 impl FromStr for ProgramKind {
@@ -70,6 +71,7 @@ impl FromStr for ProgramKind {
             "uprobe" => UProbe,
             "xdp" => Xdp,
             "trace_point" => TracePoint,
+            "socket_filter" => SocketFilter,
             _ => {
                 return Err(ParseError::InvalidProgramKind {
                     kind: kind.to_string(),
