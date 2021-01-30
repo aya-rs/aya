@@ -81,6 +81,17 @@ where
         }
     }
 }
+pub const BPF_LD: u32 = 0;
+pub const BPF_LDX: u32 = 1;
+pub const BPF_ST: u32 = 2;
+pub const BPF_STX: u32 = 3;
+pub const BPF_ALU: u32 = 4;
+pub const BPF_W: u32 = 0;
+pub const BPF_H: u32 = 8;
+pub const BPF_B: u32 = 16;
+pub const BPF_K: u32 = 0;
+pub const BPF_ALU64: u32 = 7;
+pub const BPF_DW: u32 = 24;
 pub const BPF_PSEUDO_MAP_FD: u32 = 1;
 pub const BPF_PSEUDO_MAP_VALUE: u32 = 2;
 pub const BPF_PSEUDO_BTF_ID: u32 = 3;

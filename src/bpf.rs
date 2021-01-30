@@ -9,7 +9,7 @@ use thiserror::Error;
 use crate::{
     generated::bpf_insn,
     maps::{Map, MapError},
-    obj::{relocate, Object, ParseError, RelocationError},
+    obj::{Object, ParseError, RelocationError},
     programs::{KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint, UProbe, Xdp},
     syscalls::bpf_map_update_elem_ptr,
 };
@@ -68,7 +68,7 @@ impl Bpf {
             maps.push(map);
         }
 
-        relocate(&mut obj, maps.as_slice())?;
+        obj.relocate(maps.as_slice())?;
 
         let programs = obj
             .programs

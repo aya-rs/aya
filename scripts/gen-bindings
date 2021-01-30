@@ -24,6 +24,39 @@ BPF_TYPES="\
 
 BPF_VARS="\
     BPF_PSEUDO_.*
+    BPF_ALU \
+    BPF_ALU64 \
+    BPF_LDX \
+    BPF_ST \
+    BPF_STX \
+    BPF_LD \
+    BPF_K \
+    BPF_DW \
+    BPF_W \
+    BPF_H \
+    BPF_B
+    "
+
+BTF_TYPES="\
+    btf_header \
+    btf_ext_header \
+    btf_ext_info \
+    btf_ext_info_sec \
+    bpf_core_relo \
+    bpf_core_relo_kind \
+    btf_type \
+    btf_enum \
+    btf_array \
+    btf_member \
+    btf_param \
+    btf_var \
+    btf_var_secinfo
+
+    "
+
+BTF_VARS="\
+    BTF_KIND_.*
+    BTF_INT_.*
     "
 
 PERF_TYPES="\
@@ -51,6 +84,28 @@ bindgen $LIBBPF_DIR/include/uapi/linux/bpf.h \
         echo --whitelist-var "$var"
     done) \
     > $OUTPUT_DIR/bpf_bindings.rs
+
+bindgen $LIBBPF_DIR/include/uapi/linux/btf.h \
+    --no-layout-tests \
+    --default-enum-style moduleconsts \
+    $(for ty in $BTF_TYPES; do
+        echo --whitelist-type "$ty"
+    done) \
+    $(for var in $BTF_VARS; do
+        echo --whitelist-var "$var"
+    done) \
+    > $OUTPUT_DIR/btf_bindings.rs
+
+bindgen $LIBBPF_DIR/src/libbpf_internal.h \
+    --no-layout-tests \
+    --default-enum-style moduleconsts \
+    $(for ty in $BTF_TYPES; do
+        echo --whitelist-type "$ty"
+    done) \
+    $(for var in $BTF_VARS; do
+        echo --whitelist-var "$var"
+    done) \
+    > $OUTPUT_DIR/btf_internal_bindings.rs
 
 bindgen include/perf_wrapper.h \
     --no-layout-tests \

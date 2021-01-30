@@ -1,3 +1,4 @@
+mod btf;
 mod relocation;
 
 use object::{
@@ -14,7 +15,8 @@ use std::{
 };
 use thiserror::Error;
 
-pub use self::relocation::{relocate, RelocationError};
+use btf::{Btf, BtfError, BtfExt};
+pub use relocation::*;
 
 use crate::{
     bpf_map_def,
@@ -24,11 +26,13 @@ use crate::{
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Object {
     pub(crate) endianness: Endianness,
     pub license: CString,
     pub kernel_version: KernelVersion,
+    pub btf: Option<Btf>,
+    pub btf_ext: Option<BtfExt>,
     pub(crate) maps: HashMap<String, Map>,
     pub(crate) programs: HashMap<String, Program>,
     pub(crate) relocations: HashMap<SectionIndex, Vec<Relocation>>,
@@ -100,6 +104,8 @@ impl Object {
             endianness: endianness.into(),
             license,
             kernel_version,
+            btf: None,
+            btf_ext: None,
             maps: HashMap::new(),
             programs: HashMap::new(),
             relocations: HashMap::new(),
@@ -134,6 +140,9 @@ pub enum ParseError {
         #[source]
         source: object::read::Error,
     },
+
+    #[error("Error parsing BTF: {0}")]
+    BTF(#[from] BtfError),
 
     #[error("no license specified")]
     MissingLicense,
@@ -193,7 +202,7 @@ impl<'data, 'file, 's> TryFrom<&'s Section<'data, 'file>> for BPFSection<'s> {
             relocations: section
                 .relocations()
                 .map(|(offset, r)| {
-                    Ok(Relocation {
+                    Ok::<_, ParseError>(Relocation {
                         kind: r.kind(),
                         target: r.target(),
                         addend: r.addend(),
@@ -321,6 +330,17 @@ fn parse_program(bpf: &Object, section: &BPFSection, ty: &str) -> Result<Program
     })
 }
 
+fn parse_btf(obj: &mut Object, section: &BPFSection) -> Result<(), BtfError> {
+    obj.btf = Some(Btf::parse(section.data)?);
+
+    Ok(())
+}
+
+fn parse_btf_ext(obj: &mut Object, section: &BPFSection) -> Result<(), BtfError> {
+    obj.btf_ext = Some(BtfExt::parse(section.data)?);
+    Ok(())
+}
+
 fn parse_section(bpf: &mut Object, section: BPFSection) -> Result<(), ParseError> {
     let parts = section.name.split("/").collect::<Vec<_>>();
 
@@ -329,6 +349,8 @@ fn parse_section(bpf: &mut Object, section: BPFSection) -> Result<(), ParseError
             bpf.maps
                 .insert(name.to_string(), parse_map(&section, name)?);
         }
+        &[".BTF"] => parse_btf(bpf, &section)?,
+        &[".BTF.ext"] => parse_btf_ext(bpf, &section)?,
         &["maps", name] => {
             bpf.maps
                 .insert(name.to_string(), parse_map(&section, name)?);
