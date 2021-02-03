@@ -272,13 +272,15 @@ impl Object {
     }
 }
 
+fn flavorless_name(name: &str) -> &str {
+    name.splitn(2, "___").next().unwrap()
+}
+
 fn find_candidates<'target>(
     local_ty: &BtfType,
     local_name: &str,
     target_btf: &'target Btf,
 ) -> Result<Vec<Candidate<'target>>, BtfError> {
-    let flavorless_name = |name: &str| name.splitn(2, "___").next().unwrap().to_string();
-
     let mut candidates = Vec::new();
     let local_name = flavorless_name(local_name);
     for (type_id, ty) in target_btf.types().enumerate() {
@@ -330,7 +332,31 @@ fn match_candidate<'target>(
                 return Ok(None);
             }
         }
-        RelocationKind::EnumVariantExists | RelocationKind::EnumVariantValue => todo!(),
+        RelocationKind::EnumVariantExists | RelocationKind::EnumVariantValue => {
+            let target_id = candidate.btf.resolve_type(candidate.type_id)?;
+            let target_ty = candidate.btf.type_by_id(target_id)?;
+            // the first accessor is guaranteed to have a name by construction
+            let local_variant_name = local_spec.accessors[0].name.as_ref().unwrap();
+            match target_ty {
+                BtfType::Enum(_, members) => {
+                    for (index, member) in members.iter().enumerate() {
+                        let target_variant_name = candidate.btf.string_at(member.name_off)?;
+                        if flavorless_name(local_variant_name)
+                            == flavorless_name(&target_variant_name)
+                        {
+                            target_spec.parts.push(index);
+                            target_spec.accessors.push(Accessor {
+                                index,
+                                type_id: target_id,
+                                name: None,
+                            });
+                            return Ok(Some(target_spec));
+                        }
+                    }
+                }
+                _ => return Ok(None),
+            }
+        }
         RelocationKind::FieldByteOffset
         | RelocationKind::FieldByteSize
         | RelocationKind::FieldExists
@@ -522,7 +548,7 @@ impl<'a> AccessSpec<'a> {
                     let accessors = vec![Accessor {
                         type_id,
                         index,
-                        name: btf.type_name(ty)?.map(String::from),
+                        name: Some(btf.string_at(members[index].name_off)?.to_string()),
                     }];
 
                     AccessSpec {
