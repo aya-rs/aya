@@ -364,7 +364,7 @@ fn match_candidate<'target>(
         | RelocationKind::FieldLShift64
         | RelocationKind::FieldRShift64 => {
             let mut target_id = candidate.type_id;
-            for accessor in &local_spec.accessors {
+            for (i, accessor) in local_spec.accessors.iter().enumerate() {
                 target_id = candidate.btf.resolve_type(target_id)?;
 
                 if accessor.name.is_some() {
@@ -381,7 +381,29 @@ fn match_candidate<'target>(
                         return Ok(None);
                     }
                 } else {
-                    // array access
+                    // i = 0 is the base struct. for i > 0, we need to potentially do bounds checking
+                    if i > 0 {
+                        let target_ty = candidate.btf.type_by_id(target_id)?;
+                        let array = match target_ty {
+                            BtfType::Array(_, array) => array,
+                            _ => return Ok(None),
+                        };
+
+                        let var_len = array.nelems == 0 && {
+                            // an array is potentially variable length if it's the last field
+                            // of the parent struct and has 0 elements
+                            let parent = target_spec.accessors.last().unwrap();
+                            let parent_ty = candidate.btf.type_by_id(parent.type_id)?;
+                            match parent_ty {
+                                BtfType::Struct(_, members) => parent.index == members.len() - 1,
+                                _ => false,
+                            }
+                        };
+                        if !var_len && accessor.index >= array.nelems as usize {
+                            return Ok(None);
+                        }
+                        target_id = candidate.btf.resolve_type(array.type_)?;
+                    }
 
                     if target_spec.parts.len() == MAX_SPEC_LEN {
                         return Err(BtfRelocationError::MaximumNestingLevelReached {
