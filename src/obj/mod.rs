@@ -14,13 +14,13 @@ use std::{
 };
 use thiserror::Error;
 
-use btf::{Btf, BtfError, BtfExt};
+pub use btf::RelocationError as BtfRelocationError;
 pub use relocation::*;
 
 use crate::{
     bpf_map_def,
     generated::{bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY},
-    obj::relocation::{Relocation, Symbol},
+    obj::btf::{Btf, BtfError, BtfExt},
 };
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;

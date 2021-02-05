@@ -3,5 +3,5 @@ mod relocation;
 mod types;
 
 pub use btf::*;
-pub(crate) use relocation::*;
+pub use relocation::RelocationError;
 pub(crate) use types::*;

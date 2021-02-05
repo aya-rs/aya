@@ -8,7 +8,7 @@ use thiserror::Error;
 
 use crate::{
     maps::{Map, MapError},
-    obj::{Object, ParseError, RelocationError},
+    obj::{BtfRelocationError, Object, ParseError, RelocationError},
     programs::{KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint, UProbe, Xdp},
     syscalls::bpf_map_update_elem_ptr,
 };
@@ -52,6 +52,8 @@ impl Bpf {
     pub fn load(data: &[u8]) -> Result<Bpf, BpfError> {
         let mut obj = Object::parse(data)?;
 
+        obj.relocate_btf()?;
+
         let mut maps = Vec::new();
         for (_, obj) in obj.maps.drain() {
             let mut map = Map { obj, fd: None };
@@ -63,7 +65,7 @@ impl Bpf {
             maps.push(map);
         }
 
-        obj.relocate(maps.as_slice())?;
+        obj.relocate_maps(maps.as_slice())?;
 
         let programs = obj
             .programs
@@ -143,6 +145,11 @@ pub enum BpfError {
     ParseError(#[from] ParseError),
     #[error("error relocating BPF object: {0}")]
     RelocationError(#[from] RelocationError),
+    #[error("BTF error: {error}")]
+    BtfRelocationError {
+        #[from]
+        error: BtfRelocationError,
+    },
     #[error("map error: {0}")]
     MapError(#[from] MapError),
     #[error("program error: {0}")]

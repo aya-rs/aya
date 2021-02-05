@@ -6,7 +6,7 @@ use thiserror::Error;
 use crate::{
     generated::{bpf_insn, BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE},
     maps::Map,
-    obj::{btf::RelocationError as BtfRelocationError, Object},
+    obj::Object,
 };
 
 #[derive(Debug, Error)]
@@ -35,12 +35,6 @@ pub enum RelocationError {
         relocation_number: usize,
     },
 
-    #[error("BTF error: {error}")]
-    BtfRelocationError {
-        #[from]
-        error: BtfRelocationError,
-    },
-
     #[error("IO error: {io_error}")]
     IO {
         #[from]
@@ -64,13 +58,6 @@ pub(crate) struct Symbol {
 }
 
 impl Object {
-    pub fn relocate(&mut self, maps: &[Map]) -> Result<(), RelocationError> {
-        self.relocate_maps(maps)?;
-        self.relocate_btf()?;
-
-        Ok(())
-    }
-
     pub fn relocate_maps(&mut self, maps: &[Map]) -> Result<(), RelocationError> {
         let maps_by_section = maps
             .iter()

@@ -8,9 +8,11 @@ use std::{
 use object::Endianness;
 use thiserror::Error;
 
-use crate::generated::{btf_ext_header, btf_header};
-
-use super::{BtfType, Relocation};
+use crate::{
+    generated::{btf_ext_header, btf_header},
+    obj::btf::relocation::Relocation,
+    obj::btf::BtfType,
+};
 
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
 pub(crate) const MAX_SPEC_LEN: usize = 64;
