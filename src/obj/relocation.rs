@@ -6,7 +6,7 @@ use thiserror::Error;
 use crate::{
     generated::{bpf_insn, BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE},
     maps::Map,
-    obj::{btf::BtfRelocationError, Object},
+    obj::{btf::RelocationError as BtfRelocationError, Object},
 };
 
 #[derive(Debug, Error)]

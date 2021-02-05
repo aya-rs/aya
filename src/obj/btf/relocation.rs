@@ -22,7 +22,7 @@ use crate::{
 };
 
 #[derive(Error, Debug)]
-pub enum BtfRelocationError {
+pub enum RelocationError {
     #[error("{error}")]
     BtfError {
         #[from]
@@ -161,7 +161,7 @@ impl Relocation {
 }
 
 impl Object {
-    pub fn relocate_btf(&mut self) -> Result<(), BtfRelocationError> {
+    pub fn relocate_btf(&mut self) -> Result<(), RelocationError> {
         let (local_btf, btf_ext) = match (&self.btf, &self.btf_ext) {
             (Some(btf), Some(btf_ext)) => (btf, btf_ext),
             _ => return Ok(()),
@@ -189,7 +189,7 @@ impl Object {
             }
             let section_name = parts[1];
             let program = self.programs.get_mut(section_name).ok_or_else(|| {
-                BtfRelocationError::SectionNotFound {
+                RelocationError::SectionNotFound {
                     name: section_name.to_string(),
                 }
             })?;
@@ -198,7 +198,7 @@ impl Object {
                 let instructions = &mut program.instructions;
                 let ins_index = rel.ins_offset as usize / std::mem::size_of::<bpf_insn>();
                 if ins_index >= instructions.len() {
-                    return Err(BtfRelocationError::InvalidInstructionIndex {
+                    return Err(RelocationError::InvalidInstructionIndex {
                         index: ins_index,
                         num_instructions: instructions.len(),
                         section_name: section_name.to_string(),
@@ -259,7 +259,7 @@ impl Object {
                         })
                         .collect::<Vec<_>>();
                     if !conflicts.is_empty() {
-                        return Err(BtfRelocationError::ConflictingCandidates {
+                        return Err(RelocationError::ConflictingCandidates {
                             type_name: local_name.to_string(),
                             candidates: conflicts,
                         });
@@ -314,7 +314,7 @@ fn find_candidates<'target>(
 fn match_candidate<'target>(
     local_spec: &AccessSpec,
     candidate: &'target Candidate,
-) -> Result<Option<AccessSpec<'target>>, BtfRelocationError> {
+) -> Result<Option<AccessSpec<'target>>, RelocationError> {
     let mut target_spec = AccessSpec {
         btf: candidate.btf,
         root_type_id: candidate.type_id,
@@ -414,7 +414,7 @@ fn match_candidate<'target>(
                     }
 
                     if target_spec.parts.len() == MAX_SPEC_LEN {
-                        return Err(BtfRelocationError::MaximumNestingLevelReached {
+                        return Err(RelocationError::MaximumNestingLevelReached {
                             type_name: Some(candidate.name.clone()),
                         });
                     }
@@ -442,7 +442,7 @@ fn match_member<'local, 'target>(
     target_btf: &'target Btf,
     target_id: u32,
     target_spec: &mut AccessSpec<'target>,
-) -> Result<Option<u32>, BtfRelocationError> {
+) -> Result<Option<u32>, RelocationError> {
     let local_ty = local_btf.type_by_id(local_accessor.type_id)?;
     let local_member = match local_ty {
         BtfType::Struct(_, members) | BtfType::Union(_, members) => {
@@ -465,7 +465,7 @@ fn match_member<'local, 'target>(
     for (index, target_member) in target_members.iter().enumerate() {
         if target_spec.parts.len() == MAX_SPEC_LEN {
             let root_ty = target_spec.btf.type_by_id(target_spec.root_type_id)?;
-            return Err(BtfRelocationError::MaximumNestingLevelReached {
+            return Err(RelocationError::MaximumNestingLevelReached {
                 type_name: target_spec.btf.err_type_name(root_ty),
             });
         }
@@ -527,12 +527,12 @@ impl<'a> AccessSpec<'a> {
         root_type_id: u32,
         spec: &str,
         relocation: Relocation,
-    ) -> Result<AccessSpec<'a>, BtfRelocationError> {
+    ) -> Result<AccessSpec<'a>, RelocationError> {
         let parts = spec
             .split(":")
             .map(|s| s.parse::<usize>())
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| BtfRelocationError::InvalidAccessString {
+            .map_err(|_| RelocationError::InvalidAccessString {
                 access_str: spec.to_string(),
             })?;
 
@@ -545,7 +545,7 @@ impl<'a> AccessSpec<'a> {
             | RelocationKind::TypeExists
             | RelocationKind::TypeSize => {
                 if parts != [0] {
-                    return Err(BtfRelocationError::InvalidAccessString {
+                    return Err(RelocationError::InvalidAccessString {
                         access_str: spec.to_string(),
                     });
                 }
@@ -561,13 +561,13 @@ impl<'a> AccessSpec<'a> {
             RelocationKind::EnumVariantExists | RelocationKind::EnumVariantValue => match ty {
                 BtfType::Enum(_, members) => {
                     if parts.len() != 1 {
-                        return Err(BtfRelocationError::InvalidAccessString {
+                        return Err(RelocationError::InvalidAccessString {
                             access_str: spec.to_string(),
                         });
                     }
                     let index = parts[0];
                     if index >= members.len() {
-                        return Err(BtfRelocationError::InvalidAccessIndex {
+                        return Err(RelocationError::InvalidAccessIndex {
                             type_name: btf.err_type_name(ty),
                             spec: spec.to_string(),
                             index: index,
@@ -591,7 +591,7 @@ impl<'a> AccessSpec<'a> {
                     }
                 }
                 _ => {
-                    return Err(BtfRelocationError::InvalidRelocationKindForType {
+                    return Err(RelocationError::InvalidRelocationKindForType {
                         relocation_number: relocation.number,
                         relocation_kind: format!("{:?}", relocation.kind),
                         type_kind: format!("{:?}", ty.kind()?.unwrap()),
@@ -620,7 +620,7 @@ impl<'a> AccessSpec<'a> {
                     match ty {
                         Struct(t, members) | Union(t, members) => {
                             if index >= members.len() {
-                                return Err(BtfRelocationError::InvalidAccessIndex {
+                                return Err(RelocationError::InvalidAccessIndex {
                                     type_name: btf.err_type_name(ty),
                                     spec: spec.to_string(),
                                     index: index,
@@ -656,7 +656,7 @@ impl<'a> AccessSpec<'a> {
                                 }
                             };
                             if !var_len && index >= array.nelems as usize {
-                                return Err(BtfRelocationError::InvalidAccessIndex {
+                                return Err(RelocationError::InvalidAccessIndex {
                                     type_name: btf.err_type_name(ty),
                                     spec: spec.to_string(),
                                     index,
@@ -673,7 +673,7 @@ impl<'a> AccessSpec<'a> {
                             bit_offset += index * size * 8;
                         }
                         rel_kind => {
-                            return Err(BtfRelocationError::InvalidRelocationKindForType {
+                            return Err(RelocationError::InvalidRelocationKindForType {
                                 relocation_number: relocation.number,
                                 relocation_kind: format!("{:?}", rel_kind),
                                 type_kind: format!("{:?}", ty.kind()),
@@ -732,7 +732,7 @@ impl ComputedRelocation {
         rel: &Relocation,
         local_spec: &AccessSpec,
         target_spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocation, BtfRelocationError> {
+    ) -> Result<ComputedRelocation, RelocationError> {
         use RelocationKind::*;
         let ret = match rel.kind {
             FieldByteOffset | FieldByteSize | FieldExists | FieldSigned | FieldLShift64
@@ -760,14 +760,14 @@ impl ComputedRelocation {
         section_name: &str,
         local_btf: &Btf,
         target_btf: &Btf,
-    ) -> Result<(), BtfRelocationError> {
+    ) -> Result<(), RelocationError> {
         let instructions = &mut program.instructions;
         let num_instructions = instructions.len();
         let ins_index = rel.ins_offset as usize / std::mem::size_of::<bpf_insn>();
         let mut ins =
             instructions
                 .get_mut(ins_index)
-                .ok_or(BtfRelocationError::InvalidInstructionIndex {
+                .ok_or(RelocationError::InvalidInstructionIndex {
                     index: rel.ins_offset as usize,
                     num_instructions,
                     section_name: section_name.to_string(),
@@ -782,7 +782,7 @@ impl ComputedRelocation {
             BPF_ALU | BPF_ALU64 => {
                 let src_reg = ins.src_reg();
                 if src_reg != BPF_K as u8 {
-                    return Err(BtfRelocationError::InvalidInstruction {
+                    return Err(RelocationError::InvalidInstruction {
                         relocation_number: rel.number,
                         index: ins_index,
                         error: format!("invalid src_reg={:x} expected {:x}", src_reg, BPF_K),
@@ -793,7 +793,7 @@ impl ComputedRelocation {
             }
             BPF_LDX | BPF_ST | BPF_STX => {
                 if target_value > std::i16::MAX as u32 {
-                    return Err(BtfRelocationError::InvalidInstruction {
+                    return Err(RelocationError::InvalidInstruction {
                         relocation_number: rel.number,
                         index: ins_index,
                         error: format!("value `{}` overflows 16 bits offset field", target_value),
@@ -812,7 +812,7 @@ impl ComputedRelocation {
                         (Int(_, local_info), Int(_, target_info))
                             if unsigned(*local_info) && unsigned(*target_info) => {}
                         _ => {
-                            return Err(BtfRelocationError::InvalidInstruction {
+                            return Err(RelocationError::InvalidInstruction {
                                 relocation_number: rel.number,
                                 index: ins_index,
                                 error: format!(
@@ -832,7 +832,7 @@ impl ComputedRelocation {
                         2 => BPF_H,
                         1 => BPF_B,
                         size => {
-                            return Err(BtfRelocationError::InvalidInstruction {
+                            return Err(RelocationError::InvalidInstruction {
                                 relocation_number: rel.number,
                                 index: ins_index,
                                 error: format!("invalid target size {}", size),
@@ -845,7 +845,7 @@ impl ComputedRelocation {
             BPF_LD => {
                 ins.imm = target_value as i32;
                 let mut next_ins = instructions.get_mut(ins_index + 1).ok_or(
-                    BtfRelocationError::InvalidInstructionIndex {
+                    RelocationError::InvalidInstructionIndex {
                         index: ins_index + 1,
                         num_instructions,
                         section_name: section_name.to_string(),
@@ -856,7 +856,7 @@ impl ComputedRelocation {
                 next_ins.imm = 0;
             }
             class => {
-                return Err(BtfRelocationError::InvalidInstruction {
+                return Err(RelocationError::InvalidInstruction {
                     relocation_number: rel.number,
                     index: ins_index,
                     error: format!("invalid instruction class {:x}", class),
@@ -870,7 +870,7 @@ impl ComputedRelocation {
     fn compute_enum_relocation(
         rel: &Relocation,
         spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocationValue, BtfRelocationError> {
+    ) -> Result<ComputedRelocationValue, RelocationError> {
         use RelocationKind::*;
         let value = match rel.kind {
             EnumVariantExists => spec.is_some() as u32,
@@ -896,7 +896,7 @@ impl ComputedRelocation {
     fn compute_field_relocation(
         rel: &Relocation,
         spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocationValue, BtfRelocationError> {
+    ) -> Result<ComputedRelocationValue, RelocationError> {
         use RelocationKind::*;
 
         if let FieldExists = rel.kind {
@@ -926,7 +926,7 @@ impl ComputedRelocation {
                 }),
                 rel_kind => {
                     let ty = spec.btf.type_by_id(accessor.type_id)?;
-                    return Err(BtfRelocationError::InvalidRelocationKindForType {
+                    return Err(RelocationError::InvalidRelocationKindForType {
                         relocation_number: rel.number,
                         relocation_kind: format!("{:?}", rel_kind),
                         type_kind: format!("{:?}", ty.kind()),
@@ -942,7 +942,7 @@ impl ComputedRelocation {
                 (ty, members[accessor.index])
             }
             _ => {
-                return Err(BtfRelocationError::InvalidRelocationKindForType {
+                return Err(RelocationError::InvalidRelocationKindForType {
                     relocation_number: rel.number,
                     relocation_kind: format!("{:?}", rel.kind),
                     type_kind: format!("{:?}", ty.kind()),
@@ -1021,7 +1021,7 @@ impl ComputedRelocation {
         rel: &Relocation,
         local_spec: &AccessSpec,
         target_spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocationValue, BtfRelocationError> {
+    ) -> Result<ComputedRelocationValue, RelocationError> {
         use RelocationKind::*;
         let value = match rel.kind {
             TypeIdLocal => local_spec.root_type_id,
