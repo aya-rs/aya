@@ -3,6 +3,8 @@ use std::{
     mem, ptr,
 };
 
+use object::Endianness;
+
 use crate::{
     generated::{
         btf_array, btf_enum, btf_member, btf_param, btf_type, btf_type__bindgen_ty_1, btf_var,
@@ -104,7 +106,7 @@ unsafe fn read_array<T>(data: &[u8], len: usize) -> Result<Vec<T>, BtfError> {
 
 impl BtfType {
     #[allow(unused_unsafe)]
-    pub(crate) unsafe fn read(data: &[u8]) -> Result<BtfType, BtfError> {
+    pub(crate) unsafe fn read(data: &[u8], endianness: Endianness) -> Result<BtfType, BtfError> {
         let ty = unsafe { read::<btf_type>(data)? };
         let data = &data[mem::size_of::<btf_type>()..];
 
@@ -120,13 +122,17 @@ impl BtfType {
             BtfKind::Typedef => Typedef(ty),
             BtfKind::Func => Func(ty),
             BtfKind::Int => {
-                // FIXME: endianness
                 if mem::size_of::<u32>() > data.len() {
                     return Err(BtfError::InvalidTypeInfo);
                 }
+                let read_u32 = if endianness == Endianness::Little {
+                    u32::from_le_bytes
+                } else {
+                    u32::from_be_bytes
+                };
                 Int(
                     ty,
-                    u32::from_ne_bytes(data[..mem::size_of::<u32>()].try_into().unwrap()),
+                    read_u32(data[..mem::size_of::<u32>()].try_into().unwrap()),
                 )
             }
             BtfKind::Enum => Enum(ty, unsafe { read_array(data, vlen)? }),

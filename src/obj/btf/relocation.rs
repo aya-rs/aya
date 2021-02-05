@@ -4,6 +4,7 @@ use std::{
     fs, io, mem, ptr,
 };
 
+use object::{Endian, Endianness, NativeEndian};
 use thiserror::Error;
 
 use crate::{
@@ -167,7 +168,14 @@ impl Object {
         };
 
         let target_btf = fs::read("/sys/kernel/btf/vmlinux")?;
-        let target_btf = Btf::parse(&target_btf)?;
+        let target_btf = Btf::parse(&target_btf, {
+            let e = NativeEndian;
+            if e.is_little_endian() {
+                Endianness::Little
+            } else {
+                Endianness::Big
+            }
+        })?;
 
         let mut candidates_cache = HashMap::<u32, Vec<Candidate>>::new();
 

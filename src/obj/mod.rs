@@ -162,13 +162,13 @@ impl Object {
     }
 
     fn parse_btf(&mut self, section: &Section) -> Result<(), BtfError> {
-        self.btf = Some(Btf::parse(section.data)?);
+        self.btf = Some(Btf::parse(section.data, self.endianness)?);
 
         Ok(())
     }
 
     fn parse_btf_ext(&mut self, section: &Section) -> Result<(), BtfError> {
-        self.btf_ext = Some(BtfExt::parse(section.data)?);
+        self.btf_ext = Some(BtfExt::parse(section.data, self.endianness)?);
         Ok(())
     }
 

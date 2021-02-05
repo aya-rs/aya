@@ -5,6 +5,7 @@ use std::{
     mem, ptr,
 };
 
+use object::Endianness;
 use thiserror::Error;
 
 use crate::generated::{btf_ext_header, btf_header};
@@ -63,10 +64,11 @@ pub struct Btf {
     header: btf_header,
     strings: Vec<u8>,
     types: Vec<BtfType>,
+    endianness: Endianness,
 }
 
 impl Btf {
-    pub(crate) fn parse(data: &[u8]) -> Result<Btf, BtfError> {
+    pub(crate) fn parse(data: &[u8], endianness: Endianness) -> Result<Btf, BtfError> {
         if data.len() < mem::size_of::<btf_header>() {
             return Err(BtfError::InvalidHeader);
         }
@@ -81,16 +83,21 @@ impl Btf {
         }
 
         let strings = data[str_off..str_off + str_len].to_vec();
-        let types = Btf::read_type_info(&header, data)?;
+        let types = Btf::read_type_info(&header, data, endianness)?;
 
         Ok(Btf {
             header,
             strings,
             types,
+            endianness,
         })
     }
 
-    fn read_type_info(header: &btf_header, data: &[u8]) -> Result<Vec<BtfType>, BtfError> {
+    fn read_type_info(
+        header: &btf_header,
+        data: &[u8],
+        endianness: Endianness,
+    ) -> Result<Vec<BtfType>, BtfError> {
         let hdr_len = header.hdr_len as usize;
         let type_off = header.type_off as usize;
         let type_len = header.type_len as usize;
@@ -105,7 +112,7 @@ impl Btf {
             // Safety:
             // read() reads POD values from ELF, which is sound, but the values can still contain
             // internally inconsistent values (like out of bound offsets and such).
-            let ty = unsafe { BtfType::read(data)? };
+            let ty = unsafe { BtfType::read(data, endianness)? };
             data = &data[ty.type_info_size()..];
             types.push(ty);
         }
@@ -221,6 +228,7 @@ impl Btf {
 #[derive(Debug, Clone)]
 pub struct BtfExt {
     data: Vec<u8>,
+    endianness: Endianness,
     relocations: Vec<(u32, Vec<Relocation>)>,
     header: btf_ext_header,
     func_info_rec_size: usize,
@@ -229,7 +237,7 @@ pub struct BtfExt {
 }
 
 impl BtfExt {
-    pub(crate) fn parse(data: &[u8]) -> Result<BtfExt, BtfError> {
+    pub(crate) fn parse(data: &[u8], endianness: Endianness) -> Result<BtfExt, BtfError> {
         // Safety: btf_ext_header is POD so read_unaligned is safe
         let header = unsafe {
             ptr::read_unaligned::<btf_ext_header>(data.as_ptr() as *const btf_ext_header)
@@ -246,9 +254,13 @@ impl BtfExt {
                     section_len: data.len(),
                 });
             }
+            let read_u32 = if endianness == Endianness::Little {
+                u32::from_le_bytes
+            } else {
+                u32::from_be_bytes
+            };
             Ok(if len > 0 {
-                /* FIXME: endianness */
-                u32::from_ne_bytes(data[offset..offset + 4].try_into().unwrap()) as usize
+                read_u32(data[offset..offset + 4].try_into().unwrap()) as usize
             } else {
                 0
             })
@@ -271,11 +283,12 @@ impl BtfExt {
             line_info_rec_size: rec_size(line_info_off, line_info_len)?,
             core_relo_rec_size: rec_size(core_relo_off, core_relo_len)?,
             data: data.to_vec(),
+            endianness,
         };
 
         let rec_size = ext.core_relo_rec_size;
         ext.relocations.extend(
-            SecInfoIter::new(ext.core_relo_data(), ext.core_relo_rec_size)
+            SecInfoIter::new(ext.core_relo_data(), ext.core_relo_rec_size, endianness)
                 .map(move |sec| {
                     let relos = sec
                         .data
@@ -315,11 +328,19 @@ impl BtfExt {
     }
 
     pub(crate) fn func_info(&self) -> SecInfoIter<'_> {
-        SecInfoIter::new(self.func_info_data(), self.func_info_rec_size)
+        SecInfoIter::new(
+            self.func_info_data(),
+            self.func_info_rec_size,
+            self.endianness,
+        )
     }
 
     pub(crate) fn line_info(&self) -> SecInfoIter<'_> {
-        SecInfoIter::new(self.line_info_data(), self.line_info_rec_size)
+        SecInfoIter::new(
+            self.line_info_data(),
+            self.line_info_rec_size,
+            self.endianness,
+        )
     }
 
     pub(crate) fn relocations(&self) -> impl Iterator<Item = &(u32, Vec<Relocation>)> {
@@ -331,14 +352,16 @@ pub(crate) struct SecInfoIter<'a> {
     data: &'a [u8],
     offset: usize,
     rec_size: usize,
+    endianness: Endianness,
 }
 
 impl<'a> SecInfoIter<'a> {
-    fn new(data: &'a [u8], rec_size: usize) -> Self {
+    fn new(data: &'a [u8], rec_size: usize, endianness: Endianness) -> Self {
         Self {
             data,
             rec_size,
             offset: 0,
+            endianness,
         }
     }
 }
@@ -352,9 +375,12 @@ impl<'a> Iterator for SecInfoIter<'a> {
             return None;
         }
 
-        // FIXME: endianness
-        let sec_name_off =
-            u32::from_ne_bytes(data[self.offset..self.offset + 4].try_into().unwrap());
+        let read_u32 = if self.endianness == Endianness::Little {
+            u32::from_le_bytes
+        } else {
+            u32::from_be_bytes
+        };
+        let sec_name_off = read_u32(data[self.offset..self.offset + 4].try_into().unwrap());
         self.offset += 4;
         let num_info = u32::from_ne_bytes(data[self.offset..self.offset + 4].try_into().unwrap());
         self.offset += 4;
