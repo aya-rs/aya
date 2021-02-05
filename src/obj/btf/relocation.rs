@@ -457,7 +457,7 @@ fn match_member<'local, 'target>(
     let target_ty = target_btf.type_by_id(target_id)?;
 
     let target_members = match target_ty {
-        BtfType::Struct(ty, members) | BtfType::Union(ty, members) => members,
+        BtfType::Struct(_, members) | BtfType::Union(_, members) => members,
         // not a fields type, no match
         _ => return Ok(None),
     };

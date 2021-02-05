@@ -2,7 +2,6 @@ mod btf;
 mod relocation;
 
 use object::{
-    pod,
     read::{Object as ElfObject, ObjectSection, Section as ObjSection},
     Endianness, ObjectSymbol, ObjectSymbolTable, SectionIndex, SymbolIndex,
 };
