@@ -10,3 +10,6 @@ thiserror = "1"
 object = "0.23"
 bytes = "1"
 lazy_static = "1"
+
+[dev-dependencies]
+matches = "0.1.8"
