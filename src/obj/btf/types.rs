@@ -14,8 +14,6 @@ use crate::{
     obj::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH},
 };
 
-unsafe impl object::pod::Pod for btf_type {}
-
 #[derive(Clone, Debug)]
 pub(crate) enum BtfType {
     Unknown,

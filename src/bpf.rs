@@ -7,14 +7,11 @@ use std::{
 use thiserror::Error;
 
 use crate::{
-    generated::bpf_insn,
     maps::{Map, MapError},
     obj::{Object, ParseError, RelocationError},
     programs::{KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint, UProbe, Xdp},
     syscalls::bpf_map_update_elem_ptr,
 };
-
-unsafe impl object::Pod for bpf_insn {}
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
 
@@ -44,8 +41,6 @@ pub(crate) struct bpf_map_def {
     pub(crate) max_entries: u32,
     pub(crate) map_flags: u32,
 }
-
-unsafe impl object::Pod for bpf_map_def {}
 
 #[derive(Debug)]
 pub struct Bpf {

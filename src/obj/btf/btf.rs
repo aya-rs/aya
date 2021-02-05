@@ -11,9 +11,6 @@ use crate::generated::{btf_ext_header, btf_header};
 
 use super::{BtfType, Relocation};
 
-unsafe impl object::pod::Pod for btf_header {}
-unsafe impl object::pod::Pod for btf_ext_header {}
-
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
 pub(crate) const MAX_SPEC_LEN: usize = 64;
 
