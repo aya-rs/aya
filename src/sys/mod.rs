@@ -4,9 +4,12 @@ mod perf_event;
 #[cfg(test)]
 mod fake;
 
-use std::io;
+use std::{
+    ffi::{CStr, CString},
+    io, mem,
+};
 
-use libc::{c_int, c_long, c_ulong, pid_t};
+use libc::{c_int, c_long, c_ulong, pid_t, utsname};
 
 pub(crate) use bpf::*;
 #[cfg(test)]
@@ -68,4 +71,30 @@ unsafe fn syscall_impl(call: Syscall) -> SysResult {
     }
 
     Ok(ret)
+}
+
+pub(crate) fn kernel_version() -> Result<(u32, u32, u32), ()> {
+    unsafe {
+        let mut v = mem::zeroed::<utsname>();
+        if libc::uname(&mut v as *mut _) != 0 {
+            return Err(());
+        }
+
+        let mut major = 0u32;
+        let mut minor = 0u32;
+        let mut patch = 0u32;
+        let format = CString::new("%u.%u.%u").unwrap();
+        if libc::sscanf(
+            v.release.as_ptr(),
+            format.as_ptr(),
+            &mut major as *mut u32,
+            &mut minor as *mut _,
+            &mut patch as *mut _,
+        ) != 3
+        {
+            return Err(());
+        }
+
+        Ok((major, minor, patch))
+    }
 }
