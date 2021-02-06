@@ -291,7 +291,7 @@ fn resolve_symbol(path: &str, symbol: &str) -> Result<u64, ResolveSymbolError> {
         .ok_or_else(|| ResolveSymbolError::Unknown(symbol.to_string()))
 }
 
-pub fn read_sys_fs_perf_type(pmu: &str) -> Result<u32, ProgramError> {
+fn read_sys_fs_perf_type(pmu: &str) -> Result<u32, ProgramError> {
     let file = format!("/sys/bus/event_source/devices/{}/type", pmu);
 
     let perf_ty = fs::read_to_string(&file).map_err(|e| ProgramError::Other {
@@ -307,7 +307,7 @@ pub fn read_sys_fs_perf_type(pmu: &str) -> Result<u32, ProgramError> {
     Ok(perf_ty)
 }
 
-pub fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, ProgramError> {
+fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, ProgramError> {
     let file = format!("/sys/bus/event_source/devices/{}/format/retprobe", pmu);
 
     let data = fs::read_to_string(&file).map_err(|e| ProgramError::Other {
