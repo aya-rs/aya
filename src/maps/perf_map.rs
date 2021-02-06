@@ -261,17 +261,11 @@ pub enum PerfMapError {
     #[error("invalid cpu {cpu_id}")]
     InvalidCpu { cpu_id: u32 },
 
-    #[error("map error: {map_error}")]
-    MapError {
-        #[from]
-        map_error: MapError,
-    },
+    #[error("map error: {0}")]
+    MapError(#[from] MapError),
 
-    #[error("perf buffer error: {buf_error}")]
-    PerfBufferError {
-        #[from]
-        buf_error: PerfBufferError,
-    },
+    #[error("perf buffer error: {0}")]
+    PerfBufferError(#[from] PerfBufferError),
 
     #[error("bpf_map_update_elem failed: {io_error}")]
     UpdateElementFailed {

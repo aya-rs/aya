@@ -2,13 +2,15 @@ use std::{
     cell::{Ref, RefCell, RefMut},
     collections::HashMap,
     convert::TryFrom,
+    io,
 };
 
 use thiserror::Error;
 
 use crate::{
     maps::{Map, MapError},
-    obj::{BtfRelocationError, Object, ParseError, RelocationError},
+    obj::btf::RelocationError as BtfRelocationError,
+    obj::{btf::BtfError, Object, ParseError, RelocationError},
     programs::{KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint, UProbe, Xdp},
     syscalls::bpf_map_update_elem_ptr,
 };
@@ -141,17 +143,24 @@ impl Bpf {
 
 #[derive(Debug, Error)]
 pub enum BpfError {
+    #[error("IO error: {0}")]
+    IO(#[from] io::Error),
+
     #[error("error parsing BPF object: {0}")]
     ParseError(#[from] ParseError),
+
+    #[error("BTF error: {0}")]
+    BtfError(#[from] BtfError),
+
     #[error("error relocating BPF object: {0}")]
     RelocationError(#[from] RelocationError),
-    #[error("BTF error: {error}")]
-    BtfRelocationError {
-        #[from]
-        error: BtfRelocationError,
-    },
+
+    #[error(transparent)]
+    BtfRelocationError(#[from] BtfRelocationError),
+
     #[error("map error: {0}")]
     MapError(#[from] MapError),
+
     #[error("program error: {0}")]
     ProgramError(#[from] ProgramError),
 }

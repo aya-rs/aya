@@ -34,12 +34,6 @@ pub enum RelocationError {
         num_instructions: usize,
         relocation_number: usize,
     },
-
-    #[error("IO error: {io_error}")]
-    IO {
-        #[from]
-        io_error: io::Error,
-    },
 }
 
 #[derive(Debug, Copy, Clone)]

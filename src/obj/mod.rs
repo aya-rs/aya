@@ -1,4 +1,4 @@
-mod btf;
+pub(crate) mod btf;
 mod relocation;
 
 use object::{
@@ -14,13 +14,13 @@ use std::{
 };
 use thiserror::Error;
 
-pub use btf::RelocationError as BtfRelocationError;
 pub use relocation::*;
 
 use crate::{
     bpf_map_def,
     generated::{bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY},
     obj::btf::{Btf, BtfError, BtfExt},
+    BpfError,
 };
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
@@ -85,8 +85,8 @@ impl FromStr for ProgramKind {
 }
 
 impl Object {
-    pub(crate) fn parse(data: &[u8]) -> Result<Object, ParseError> {
-        let obj = object::read::File::parse(data).map_err(|source| ParseError::Error { source })?;
+    pub(crate) fn parse(data: &[u8]) -> Result<Object, BpfError> {
+        let obj = object::read::File::parse(data).map_err(|e| ParseError::ElfError(e))?;
         let endianness = obj.endianness();
 
         let section = obj
@@ -138,9 +138,7 @@ impl Object {
     fn parse_program(&self, section: &Section, ty: &str) -> Result<Program, ParseError> {
         let num_instructions = section.data.len() / mem::size_of::<bpf_insn>();
         if section.data.len() % mem::size_of::<bpf_insn>() > 0 {
-            return Err(ParseError::InvalidProgramCode {
-                name: section.name.to_owned(),
-            });
+            return Err(ParseError::InvalidProgramCode);
         }
         let instructions = (0..num_instructions)
             .map(|i| unsafe {
@@ -171,7 +169,7 @@ impl Object {
         Ok(())
     }
 
-    fn parse_section(&mut self, section: Section) -> Result<(), ParseError> {
+    fn parse_section(&mut self, section: Section) -> Result<(), BpfError> {
         let parts = section.name.split("/").collect::<Vec<_>>();
 
         match parts.as_slice() {
@@ -209,13 +207,7 @@ impl Object {
 #[derive(Debug, Clone, Error)]
 pub enum ParseError {
     #[error("error parsing ELF data")]
-    Error {
-        #[source]
-        source: object::read::Error,
-    },
-
-    #[error("Error parsing BTF: {0}")]
-    BTF(#[from] BtfError),
+    ElfError(#[from] object::read::Error),
 
     #[error("no license specified")]
     MissingLicense,
@@ -245,8 +237,8 @@ pub enum ParseError {
     #[error("invalid program kind `{kind}`")]
     InvalidProgramKind { kind: String },
 
-    #[error("error parsing program `{name}`")]
-    InvalidProgramCode { name: String },
+    #[error("invalid program code")]
+    InvalidProgramCode,
 
     #[error("error parsing map `{name}`")]
     InvalidMapDefinition { name: String },
@@ -410,7 +402,7 @@ mod tests {
     fn test_parse_generic_error() {
         assert!(matches!(
             Object::parse(&b"foo"[..]),
-            Err(ParseError::Error { .. })
+            Err(BpfError::ParseError(ParseError::ElfError(_)))
         ))
     }
 
@@ -570,14 +562,8 @@ mod tests {
         let obj = fake_obj();
 
         assert_matches!(
-            obj.parse_program(
-                &fake_section(
-                    "kprobe/foo",
-                    &42u32.to_ne_bytes(),
-                ),
-                "kprobe"
-            ),
-            Err(ParseError::InvalidProgramCode { name }) if name == "kprobe/foo"
+            obj.parse_program(&fake_section("kprobe/foo", &42u32.to_ne_bytes(),), "kprobe"),
+            Err(ParseError::InvalidProgramCode)
         );
     }
 
