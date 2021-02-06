@@ -1,9 +1,9 @@
-use libc::{setsockopt, SOL_SOCKET, SO_ATTACH_BPF};
-use std::{io, mem, os::unix::prelude::RawFd};
+use libc::{setsockopt, SOL_SOCKET, SO_ATTACH_BPF, SO_DETACH_BPF};
+use std::{cell::RefCell, io, mem, os::unix::prelude::RawFd, rc::Rc};
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER,
-    programs::{load_program, ProgramData, ProgramError},
+    programs::{load_program, Link, LinkRef, ProgramData, ProgramError},
 };
 
 #[derive(Debug)]
@@ -16,7 +16,7 @@ impl SocketFilter {
         load_program(BPF_PROG_TYPE_SOCKET_FILTER, &mut self.data)
     }
 
-    pub fn attach(&self, socket: RawFd) -> Result<(), ProgramError> {
+    pub fn attach(&self, socket: RawFd) -> Result<impl Link, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
 
         let ret = unsafe {
@@ -33,7 +33,42 @@ impl SocketFilter {
                 io_error: io::Error::last_os_error(),
             });
         }
+        let link = Rc::new(RefCell::new(SocketFilterLink {
+            socket,
+            prog_fd: Some(prog_fd),
+        }));
 
-        Ok(())
+        Ok(LinkRef::new(&link))
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct SocketFilterLink {
+    socket: RawFd,
+    prog_fd: Option<RawFd>,
+}
+
+impl Link for SocketFilterLink {
+    fn detach(&mut self) -> Result<(), ProgramError> {
+        if let Some(fd) = self.prog_fd.take() {
+            unsafe {
+                setsockopt(
+                    self.socket,
+                    SOL_SOCKET,
+                    SO_DETACH_BPF,
+                    &fd as *const _ as *const _,
+                    mem::size_of::<RawFd>() as u32,
+                );
+            }
+            Ok(())
+        } else {
+            Err(ProgramError::AlreadyDetached)
+        }
+    }
+}
+
+impl Drop for SocketFilterLink {
+    fn drop(&mut self) {
+        let _ = self.detach();
     }
 }
