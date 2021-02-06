@@ -27,17 +27,16 @@ pub enum RelocationError {
     #[error(transparent)]
     IOError(#[from] io::Error),
 
-    #[error("section `{name}` not found")]
-    SectionNotFound { name: String },
+    #[error("program not found")]
+    ProgramNotFound,
 
     #[error("invalid relocation access string {access_str}")]
     InvalidAccessString { access_str: String },
 
-    #[error("invalid instruction index #{index} referenced by relocation #{relocation_number} in section `{section_name}`")]
+    #[error("invalid instruction index #{index} referenced by relocation #{relocation_number}, the program contains {num_instructions} instructions")]
     InvalidInstructionIndex {
         index: usize,
         num_instructions: usize,
-        section_name: String,
         relocation_number: usize,
     },
 
@@ -170,7 +169,6 @@ impl Object {
         })?;
 
         let mut candidates_cache = HashMap::<u32, Vec<Candidate>>::new();
-
         for (sec_name_off, relos) in btf_ext.relocations() {
             let section_name = local_btf.string_at(*sec_name_off)?;
 
@@ -180,96 +178,120 @@ impl Object {
                 continue;
             }
             let section_name = parts[1];
-            let program = self.programs.get_mut(section_name).ok_or_else(|| {
-                RelocationError::SectionNotFound {
-                    name: section_name.to_string(),
+            let program = self
+                .programs
+                .get_mut(section_name)
+                .ok_or(BpfError::RelocationError {
+                    program_name: section_name.to_owned(),
+                    error: Box::new(RelocationError::ProgramNotFound),
+                })?;
+            match relocate_btf_program(
+                program,
+                relos,
+                local_btf,
+                &target_btf,
+                &mut candidates_cache,
+            ) {
+                Ok(_) => {}
+                Err(ErrorWrapper::BtfError(e)) => return Err(e)?,
+                Err(ErrorWrapper::RelocationError(error)) => {
+                    return Err(BpfError::RelocationError {
+                        program_name: section_name.to_owned(),
+                        error: Box::new(error),
+                    })
                 }
-            })?;
-
-            for rel in relos {
-                let instructions = &mut program.instructions;
-                let ins_index = rel.ins_offset as usize / std::mem::size_of::<bpf_insn>();
-                if ins_index >= instructions.len() {
-                    return Err(RelocationError::InvalidInstructionIndex {
-                        index: ins_index,
-                        num_instructions: instructions.len(),
-                        section_name: section_name.to_string(),
-                        relocation_number: rel.number,
-                    })?;
-                }
-
-                let local_ty = local_btf.type_by_id(rel.type_id)?;
-                let local_name = &*local_btf.type_name(local_ty)?.unwrap();
-                let access_str = &*local_btf.string_at(rel.access_str_offset)?;
-                let local_spec = AccessSpec::new(local_btf, rel.type_id, access_str, *rel)?;
-
-                let mut matches = match rel.kind {
-                    RelocationKind::TypeIdLocal => Vec::new(), // we don't need to look at target types to relocate this value
-                    _ => {
-                        let candidates = match candidates_cache.get(&rel.type_id) {
-                            Some(cands) => cands,
-                            None => {
-                                candidates_cache.insert(
-                                    rel.type_id,
-                                    find_candidates(local_ty, local_name, &target_btf)?,
-                                );
-                                candidates_cache.get(&rel.type_id).unwrap()
-                            }
-                        };
-
-                        let mut matches = Vec::new();
-                        for candidate in candidates {
-                            if let Some(candidate_spec) = match_candidate(&local_spec, candidate)? {
-                                let comp_rel = ComputedRelocation::new(
-                                    rel,
-                                    &local_spec,
-                                    Some(&candidate_spec),
-                                )?;
-                                matches.push((candidate.name.clone(), candidate_spec, comp_rel));
-                            }
-                        }
-
-                        matches
-                    }
-                };
-
-                let comp_rel = if !matches.is_empty() {
-                    let mut matches = matches.drain(..);
-                    let (_, target_spec, target_comp_rel) = matches.next().unwrap();
-
-                    // if there's more than one candidate, make sure that they all resolve to the
-                    // same value, else the relocation is ambiguous and can't be applied
-                    let conflicts = matches
-                        .filter_map(|(cand_name, cand_spec, cand_comp_rel)| {
-                            if cand_spec.bit_offset != target_spec.bit_offset
-                                || cand_comp_rel.target.value != target_comp_rel.target.value
-                            {
-                                Some(cand_name.clone())
-                            } else {
-                                None
-                            }
-                        })
-                        .collect::<Vec<_>>();
-                    if !conflicts.is_empty() {
-                        return Err(RelocationError::ConflictingCandidates {
-                            type_name: local_name.to_string(),
-                            candidates: conflicts,
-                        })?;
-                    }
-                    target_comp_rel
-                } else {
-                    // there are no candidate matches and therefore no target_spec. This might mean
-                    // that matching failed, or that the relocation can be applied looking at local
-                    // types only
-                    ComputedRelocation::new(rel, &local_spec, None)?
-                };
-
-                comp_rel.apply(program, rel, section_name, local_btf, &target_btf)?;
             }
         }
 
         Ok(())
     }
+}
+
+fn relocate_btf_program<'target>(
+    program: &mut Program,
+    relos: &[Relocation],
+    local_btf: &Btf,
+    target_btf: &'target Btf,
+    candidates_cache: &mut HashMap<u32, Vec<Candidate<'target>>>,
+) -> Result<(), ErrorWrapper> {
+    for rel in relos {
+        let instructions = &mut program.instructions;
+        let ins_index = rel.ins_offset as usize / std::mem::size_of::<bpf_insn>();
+        if ins_index >= instructions.len() {
+            return Err(RelocationError::InvalidInstructionIndex {
+                index: ins_index,
+                num_instructions: instructions.len(),
+                relocation_number: rel.number,
+            })?;
+        }
+
+        let local_ty = local_btf.type_by_id(rel.type_id)?;
+        let local_name = &*local_btf.type_name(local_ty)?.unwrap();
+        let access_str = &*local_btf.string_at(rel.access_str_offset)?;
+        let local_spec = AccessSpec::new(local_btf, rel.type_id, access_str, *rel)?;
+
+        let mut matches = match rel.kind {
+            RelocationKind::TypeIdLocal => Vec::new(), // we don't need to look at target types to relocate this value
+            _ => {
+                let candidates = match candidates_cache.get(&rel.type_id) {
+                    Some(cands) => cands,
+                    None => {
+                        candidates_cache.insert(
+                            rel.type_id,
+                            find_candidates(local_ty, local_name, target_btf)?,
+                        );
+                        candidates_cache.get(&rel.type_id).unwrap()
+                    }
+                };
+
+                let mut matches = Vec::new();
+                for candidate in candidates {
+                    if let Some(candidate_spec) = match_candidate(&local_spec, candidate)? {
+                        let comp_rel =
+                            ComputedRelocation::new(rel, &local_spec, Some(&candidate_spec))?;
+                        matches.push((candidate.name.clone(), candidate_spec, comp_rel));
+                    }
+                }
+
+                matches
+            }
+        };
+
+        let comp_rel = if !matches.is_empty() {
+            let mut matches = matches.drain(..);
+            let (_, target_spec, target_comp_rel) = matches.next().unwrap();
+
+            // if there's more than one candidate, make sure that they all resolve to the
+            // same value, else the relocation is ambiguous and can't be applied
+            let conflicts = matches
+                .filter_map(|(cand_name, cand_spec, cand_comp_rel)| {
+                    if cand_spec.bit_offset != target_spec.bit_offset
+                        || cand_comp_rel.target.value != target_comp_rel.target.value
+                    {
+                        Some(cand_name.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+            if !conflicts.is_empty() {
+                return Err(RelocationError::ConflictingCandidates {
+                    type_name: local_name.to_string(),
+                    candidates: conflicts,
+                })?;
+            }
+            target_comp_rel
+        } else {
+            // there are no candidate matches and therefore no target_spec. This might mean
+            // that matching failed, or that the relocation can be applied looking at local
+            // types only
+            ComputedRelocation::new(rel, &local_spec, None)?
+        };
+
+        comp_rel.apply(program, rel, local_btf, &target_btf)?;
+    }
+
+    Ok(())
 }
 
 fn flavorless_name(name: &str) -> &str {
@@ -306,7 +328,7 @@ fn find_candidates<'target>(
 fn match_candidate<'target>(
     local_spec: &AccessSpec,
     candidate: &'target Candidate,
-) -> Result<Option<AccessSpec<'target>>, BpfError> {
+) -> Result<Option<AccessSpec<'target>>, ErrorWrapper> {
     let mut target_spec = AccessSpec {
         btf: candidate.btf,
         root_type_id: candidate.type_id,
@@ -434,7 +456,7 @@ fn match_member<'local, 'target>(
     target_btf: &'target Btf,
     target_id: u32,
     target_spec: &mut AccessSpec<'target>,
-) -> Result<Option<u32>, BpfError> {
+) -> Result<Option<u32>, ErrorWrapper> {
     let local_ty = local_btf.type_by_id(local_accessor.type_id)?;
     let local_member = match local_ty {
         BtfType::Struct(_, members) | BtfType::Union(_, members) => {
@@ -519,7 +541,7 @@ impl<'a> AccessSpec<'a> {
         root_type_id: u32,
         spec: &str,
         relocation: Relocation,
-    ) -> Result<AccessSpec<'a>, BpfError> {
+    ) -> Result<AccessSpec<'a>, ErrorWrapper> {
         let parts = spec
             .split(":")
             .map(|s| s.parse::<usize>())
@@ -724,7 +746,7 @@ impl ComputedRelocation {
         rel: &Relocation,
         local_spec: &AccessSpec,
         target_spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocation, BpfError> {
+    ) -> Result<ComputedRelocation, ErrorWrapper> {
         use RelocationKind::*;
         let ret = match rel.kind {
             FieldByteOffset | FieldByteSize | FieldExists | FieldSigned | FieldLShift64
@@ -749,10 +771,9 @@ impl ComputedRelocation {
         &self,
         program: &mut Program,
         rel: &Relocation,
-        section_name: &str,
         local_btf: &Btf,
         target_btf: &Btf,
-    ) -> Result<(), BpfError> {
+    ) -> Result<(), ErrorWrapper> {
         let instructions = &mut program.instructions;
         let num_instructions = instructions.len();
         let ins_index = rel.ins_offset as usize / std::mem::size_of::<bpf_insn>();
@@ -762,7 +783,6 @@ impl ComputedRelocation {
                 .ok_or(RelocationError::InvalidInstructionIndex {
                     index: rel.ins_offset as usize,
                     num_instructions,
-                    section_name: section_name.to_string(),
                     relocation_number: rel.number,
                 })?;
 
@@ -840,7 +860,6 @@ impl ComputedRelocation {
                     RelocationError::InvalidInstructionIndex {
                         index: ins_index + 1,
                         num_instructions,
-                        section_name: section_name.to_string(),
                         relocation_number: rel.number,
                     },
                 )?;
@@ -862,7 +881,7 @@ impl ComputedRelocation {
     fn compute_enum_relocation(
         rel: &Relocation,
         spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocationValue, BpfError> {
+    ) -> Result<ComputedRelocationValue, ErrorWrapper> {
         use RelocationKind::*;
         let value = match rel.kind {
             EnumVariantExists => spec.is_some() as u32,
@@ -888,7 +907,7 @@ impl ComputedRelocation {
     fn compute_field_relocation(
         rel: &Relocation,
         spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocationValue, BpfError> {
+    ) -> Result<ComputedRelocationValue, ErrorWrapper> {
         use RelocationKind::*;
 
         if let FieldExists = rel.kind {
@@ -1013,7 +1032,7 @@ impl ComputedRelocation {
         rel: &Relocation,
         local_spec: &AccessSpec,
         target_spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocationValue, BpfError> {
+    ) -> Result<ComputedRelocationValue, ErrorWrapper> {
         use RelocationKind::*;
         let value = match rel.kind {
             TypeIdLocal => local_spec.root_type_id,
@@ -1036,4 +1055,15 @@ impl ComputedRelocation {
             type_id: None,
         })
     }
+}
+
+// this exists only to simplify propagating errors from relocate_btf() and to associate
+// RelocationError(s) with their respective program name
+#[derive(Error, Debug)]
+enum ErrorWrapper {
+    #[error(transparent)]
+    BtfError(#[from] BtfError),
+
+    #[error(transparent)]
+    RelocationError(#[from] RelocationError),
 }

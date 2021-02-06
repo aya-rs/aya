@@ -22,10 +22,10 @@ pub enum BtfError {
     #[error("error parsing BTF header")]
     InvalidHeader,
 
-    #[error("invalid type info segment")]
+    #[error("invalid BTF type info segment")]
     InvalidTypeInfo,
 
-    #[error("invalid relocation info segment")]
+    #[error("invalid BTF relocation info segment")]
     InvalidRelocationInfo,
 
     #[error("invalid BTF type kind `{kind}`")]
