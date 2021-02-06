@@ -17,6 +17,7 @@ unsafe fn test_syscall(_call: Syscall) -> SysResult {
     return Err((-1, io::Error::from_raw_os_error(libc::EINVAL)));
 }
 
+#[cfg(test)]
 pub(crate) fn override_syscall(call: unsafe fn(Syscall) -> SysResult) {
     TEST_SYSCALL.with(|test_impl| *test_impl.borrow_mut() = call);
 }

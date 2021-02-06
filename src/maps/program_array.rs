@@ -10,7 +10,7 @@ use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY,
     maps::{IterableMap, Map, MapError, MapIter, MapKeys},
     programs::ProgramFd,
-    syscalls::{
+    sys::{
         bpf_map_delete_elem, bpf_map_lookup_and_delete_elem, bpf_map_lookup_elem,
         bpf_map_update_elem,
     },

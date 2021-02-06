@@ -6,7 +6,7 @@ use crate::RawFd;
 use crate::{
     generated::{bpf_attach_type::BPF_XDP, bpf_prog_type::BPF_PROG_TYPE_XDP},
     programs::{load_program, FdLink, Link, LinkRef, ProgramData, ProgramError},
-    syscalls::bpf_link_create,
+    sys::bpf_link_create,
 };
 
 #[derive(Debug)]

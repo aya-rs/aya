@@ -12,7 +12,7 @@ use crate::{
     maps::{Map, MapError},
     obj::{btf::BtfError, Object, ParseError},
     programs::{KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint, UProbe, Xdp},
-    syscalls::bpf_map_update_elem_ptr,
+    sys::bpf_map_update_elem_ptr,
 };
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;

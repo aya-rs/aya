@@ -21,7 +21,7 @@ use crate::{
         perf_event_type::*,
     },
     maps::{Map, MapError},
-    syscalls::{bpf_map_update_elem, perf_event_ioctl, perf_event_open},
+    sys::{bpf_map_update_elem, perf_event_ioctl, perf_event_open},
     RawFd, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
 
@@ -397,7 +397,7 @@ unsafe fn mmap(
     return libc::mmap(addr, len, prot, flags, fd, offset);
 
     #[cfg(test)]
-    use crate::syscalls::TEST_MMAP_RET;
+    use crate::sys::TEST_MMAP_RET;
 
     #[cfg(test)]
     TEST_MMAP_RET.with(|ret| *ret.borrow())
@@ -423,7 +423,7 @@ mod tests {
     use super::*;
     use crate::{
         generated::perf_event_mmap_page,
-        syscalls::{override_syscall, Syscall, TEST_MMAP_RET},
+        sys::{override_syscall, Syscall, TEST_MMAP_RET},
     };
 
     use std::{convert::TryInto, fmt::Debug, iter::FromIterator, mem};

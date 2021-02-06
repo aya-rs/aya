@@ -13,7 +13,7 @@ use thiserror::Error;
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_KPROBE,
     programs::{load_program, perf_attach, Link, ProgramData, ProgramError},
-    syscalls::perf_event_open_probe,
+    sys::perf_event_open_probe,
 };
 
 lazy_static! {

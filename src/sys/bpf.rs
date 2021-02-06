@@ -12,7 +12,7 @@ use crate::{
     bpf_map_def,
     generated::{bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn},
     programs::VerifierLog,
-    syscalls::SysResult,
+    sys::SysResult,
     Pod, RawFd, BPF_OBJ_NAME_LEN,
 };
 

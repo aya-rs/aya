@@ -23,7 +23,7 @@ pub use socket_filter::*;
 pub use trace_point::*;
 pub use xdp::*;
 
-use crate::{obj, syscalls::bpf_load_program, RawFd};
+use crate::{obj, sys::bpf_load_program, RawFd};
 #[derive(Debug, Error)]
 pub enum ProgramError {
     #[error("the program {program} is already loaded")]

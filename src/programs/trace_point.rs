@@ -1,8 +1,6 @@
 use std::fs;
 
-use crate::{
-    generated::bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT, syscalls::perf_event_open_trace_point,
-};
+use crate::{generated::bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT, sys::perf_event_open_trace_point};
 
 use super::{load_program, perf_attach, Link, ProgramData, ProgramError};
 

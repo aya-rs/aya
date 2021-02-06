@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use libc::close;
 
 use crate::{
-    syscalls::perf_event_ioctl, RawFd, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
+    sys::perf_event_ioctl, RawFd, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
     PERF_EVENT_IOC_SET_BPF,
 };
 

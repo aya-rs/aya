@@ -9,7 +9,7 @@ use std::{
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_HASH,
     maps::{IterableMap, Map, MapError, MapIter, MapKeys},
-    syscalls::{
+    sys::{
         bpf_map_delete_elem, bpf_map_lookup_and_delete_elem, bpf_map_lookup_elem,
         bpf_map_update_elem,
     },
@@ -142,7 +142,7 @@ mod tests {
             bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
         },
         obj,
-        syscalls::{override_syscall, SysResult, Syscall},
+        sys::{override_syscall, SysResult, Syscall},
     };
 
     use super::*;

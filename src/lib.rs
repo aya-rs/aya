@@ -8,6 +8,6 @@ mod generated;
 pub mod maps;
 mod obj;
 pub mod programs;
-mod syscalls;
+mod sys;
 
 pub use bpf::*;

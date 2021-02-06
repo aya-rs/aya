@@ -85,5 +85,5 @@ pub(crate) fn perf_event_ioctl(fd: c_int, request: c_ulong, arg: c_int) -> SysRe
     return syscall(call);
 
     #[cfg(test)]
-    return crate::syscalls::TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
+    return crate::sys::TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
 }

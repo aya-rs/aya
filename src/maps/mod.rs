@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use crate::{
     obj,
-    syscalls::{bpf_create_map, bpf_map_get_next_key},
+    sys::{bpf_create_map, bpf_map_get_next_key},
     Pod, RawFd,
 };
 
@@ -196,7 +196,7 @@ mod tests {
     use crate::{
         bpf_map_def,
         generated::{bpf_cmd, bpf_map_type::BPF_MAP_TYPE_HASH},
-        syscalls::{override_syscall, Syscall},
+        sys::{override_syscall, Syscall},
     };
 
     use super::*;
