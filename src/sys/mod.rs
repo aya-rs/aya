@@ -1,19 +1,18 @@
 mod bpf;
+mod netlink;
 mod perf_event;
 
 #[cfg(test)]
 mod fake;
 
-use std::{
-    ffi::{CStr, CString},
-    io, mem,
-};
+use std::{ffi::CString, io, mem};
 
 use libc::{c_int, c_long, c_ulong, pid_t, utsname};
 
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
+pub(crate) use netlink::*;
 pub(crate) use perf_event::*;
 
 use crate::generated::{bpf_attr, bpf_cmd, perf_event_attr};

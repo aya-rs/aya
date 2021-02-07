@@ -58,6 +58,13 @@ pub enum ProgramError {
         io_error: io::Error,
     },
 
+    #[error("error attaching XDP program using netlink: {io_error}")]
+    NetlinkXdpFailed {
+        program: String,
+        #[source]
+        io_error: io::Error,
+    },
+
     #[error("unkown network interface {name}")]
     UnkownInterface { name: String },
 

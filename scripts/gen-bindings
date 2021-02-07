@@ -74,6 +74,16 @@ PERF_VARS="\
     PERF_EVENT_.*
     "
 
+NETLINK_TYPES="\
+    ifinfomsg
+    "
+
+NETLINK_VARS="\
+    NLMSG_ALIGNTO \
+    IFLA_XDP_FD \
+    XDP_FLAGS_.*
+    "
+
 bindgen $LIBBPF_DIR/include/uapi/linux/bpf.h \
     --no-layout-tests \
     --default-enum-style moduleconsts \
@@ -117,3 +127,14 @@ bindgen include/perf_wrapper.h \
         echo --whitelist-var "$var"
     done) \
     > $OUTPUT_DIR/perf_bindings.rs
+
+bindgen include/netlink_wrapper.h \
+    --no-layout-tests \
+    --default-enum-style moduleconsts \
+    $(for ty in $NETLINK_TYPES; do
+        echo --whitelist-type "$ty"
+    done) \
+    $(for var in $NETLINK_VARS; do
+        echo --whitelist-var "$var"
+    done) \
+    > $OUTPUT_DIR/netlink_bindings.rs

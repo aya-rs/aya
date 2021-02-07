@@ -2,11 +2,13 @@ use std::{cell::RefCell, ffi::CString, rc::Rc};
 
 use libc::if_nametoindex;
 
-use crate::RawFd;
+use crate::{generated::XDP_FLAGS_REPLACE, RawFd};
 use crate::{
     generated::{bpf_attach_type::BPF_XDP, bpf_prog_type::BPF_PROG_TYPE_XDP},
     programs::{load_program, FdLink, Link, LinkRef, ProgramData, ProgramError},
     sys::bpf_link_create,
+    sys::kernel_version,
+    sys::netlink_set_xdp_fd,
 };
 
 #[derive(Debug)]
@@ -34,15 +36,72 @@ impl Xdp {
             })?;
         }
 
-        let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, 0).map_err(|(_, io_error)| {
-            ProgramError::BpfLinkCreateFailed {
-                program: self.name(),
-                io_error,
-            }
-        })? as RawFd;
-        let link = Rc::new(RefCell::new(FdLink { fd: Some(link_fd) }));
-        self.data.links.push(link.clone());
+        let k_ver = kernel_version().unwrap();
+        if k_ver >= (5, 7, 0) {
+            let link_fd =
+                bpf_link_create(prog_fd, if_index, BPF_XDP, 0).map_err(|(_, io_error)| {
+                    ProgramError::BpfLinkCreateFailed {
+                        program: self.name(),
+                        io_error,
+                    }
+                })? as RawFd;
+            let link = Rc::new(RefCell::new(XdpLink::FdLink(FdLink { fd: Some(link_fd) })));
+            self.data.links.push(link.clone());
 
-        Ok(LinkRef::new(&link))
+            Ok(LinkRef::new(&link))
+        } else {
+            unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, 0) }.map_err(|io_error| {
+                ProgramError::NetlinkXdpFailed {
+                    program: self.name(),
+                    io_error,
+                }
+            })?;
+
+            let link = Rc::new(RefCell::new(XdpLink::NlLink(NlLink {
+                if_index,
+                prog_fd: Some(prog_fd),
+            })));
+            self.data.links.push(link.clone());
+
+            Ok(LinkRef::new(&link))
+        }
+    }
+}
+
+#[derive(Debug)]
+struct NlLink {
+    if_index: i32,
+    prog_fd: Option<RawFd>,
+}
+
+impl Link for NlLink {
+    fn detach(&mut self) -> Result<(), ProgramError> {
+        if let Some(fd) = self.prog_fd.take() {
+            let _ = unsafe { netlink_set_xdp_fd(self.if_index, -1, Some(fd), XDP_FLAGS_REPLACE) };
+            Ok(())
+        } else {
+            Err(ProgramError::AlreadyDetached)
+        }
+    }
+}
+
+impl Drop for NlLink {
+    fn drop(&mut self) {
+        let _ = self.detach();
+    }
+}
+
+#[derive(Debug)]
+enum XdpLink {
+    FdLink(FdLink),
+    NlLink(NlLink),
+}
+
+impl Link for XdpLink {
+    fn detach(&mut self) -> Result<(), ProgramError> {
+        match self {
+            XdpLink::FdLink(link) => link.detach(),
+            XdpLink::NlLink(link) => link.detach(),
+        }
     }
 }
