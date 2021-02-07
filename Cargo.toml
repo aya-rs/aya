@@ -1,15 +1,2 @@
-[package]
-name = "aya"
-version = "0.1.0"
-authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
-edition = "2018"
-
-[dependencies]
-libc = { version = "0.2", features = ["extra_traits"] }
-thiserror = "1"
-object = "0.23"
-bytes = "1"
-lazy_static = "1"
-
-[dev-dependencies]
-matches = "0.1.8"
+[workspace]
+members = ["aya"]
