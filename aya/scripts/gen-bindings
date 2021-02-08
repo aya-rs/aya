@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+set -e
+
 LIBBPF_DIR=$1
 OUTPUT_DIR=$2
 
@@ -51,7 +53,6 @@ BTF_TYPES="\
     btf_param \
     btf_var \
     btf_var_secinfo
-
     "
 
 BTF_VARS="\
@@ -84,27 +85,8 @@ NETLINK_VARS="\
     XDP_FLAGS_.*
     "
 
-bindgen $LIBBPF_DIR/include/uapi/linux/bpf.h \
-    --no-layout-tests \
-    --default-enum-style moduleconsts \
-    $(for ty in $BPF_TYPES; do
-        echo --whitelist-type "$ty"
-    done) \
-    $(for var in $BPF_VARS; do
-        echo --whitelist-var "$var"
-    done) \
-    > $OUTPUT_DIR/bpf_bindings.rs
-
-bindgen $LIBBPF_DIR/include/uapi/linux/btf.h \
-    --no-layout-tests \
-    --default-enum-style moduleconsts \
-    $(for ty in $BTF_TYPES; do
-        echo --whitelist-type "$ty"
-    done) \
-    $(for var in $BTF_VARS; do
-        echo --whitelist-var "$var"
-    done) \
-    > $OUTPUT_DIR/btf_bindings.rs
+LINUX_TYPES="$BPF_TYPES $BTF_TYPES $PERF_TYPES $NETLINK_TYPES"
+LINUX_VARS="$BPF_VARS $BTF_VARS $PERF_VARS $NETLINK_VARS"
 
 bindgen $LIBBPF_DIR/src/libbpf_internal.h \
     --no-layout-tests \
@@ -117,24 +99,37 @@ bindgen $LIBBPF_DIR/src/libbpf_internal.h \
     done) \
     > $OUTPUT_DIR/btf_internal_bindings.rs
 
-bindgen include/perf_wrapper.h \
-    --no-layout-tests \
-    --default-enum-style moduleconsts \
-    $(for ty in $PERF_TYPES; do
-        echo --whitelist-type "$ty"
-    done) \
-    $(for var in $PERF_VARS; do
-        echo --whitelist-var "$var"
-    done) \
-    > $OUTPUT_DIR/perf_bindings.rs
+KVER=5.10.0-051000
 
-bindgen include/netlink_wrapper.h \
+bindgen aya/include/linux_wrapper.h \
     --no-layout-tests \
     --default-enum-style moduleconsts \
-    $(for ty in $NETLINK_TYPES; do
+    $(for ty in $LINUX_TYPES; do
         echo --whitelist-type "$ty"
     done) \
-    $(for var in $NETLINK_VARS; do
+    $(for var in $LINUX_VARS; do
         echo --whitelist-var "$var"
     done) \
-    > $OUTPUT_DIR/netlink_bindings.rs
+    -- \
+    -target x86_64 \
+    -I $LIBBPF_DIR/include/uapi \
+    -I $LIBBPF_DIR/include/ \
+    -I /usr/include/x86_64-linux-gnu \
+    > $OUTPUT_DIR/linux_bindings_x86_64.rs
+
+# requires libc6-dev-arm64-cross
+bindgen aya/include/linux_wrapper.h \
+    --no-layout-tests \
+    --default-enum-style moduleconsts \
+    $(for ty in $LINUX_TYPES; do
+        echo --whitelist-type "$ty"
+    done) \
+    $(for var in $LINUX_VARS; do
+        echo --whitelist-var "$var"
+    done) \
+    -- \
+    -target arm64 \
+    -I $LIBBPF_DIR/include/uapi \
+    -I $LIBBPF_DIR/include/ \
+    -I /usr/aarch64-linux-gnu/include \
+    > $OUTPUT_DIR/linux_bindings_aarch64.rs

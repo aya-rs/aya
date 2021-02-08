@@ -1,5 +1,4 @@
 use std::{io, mem, os::unix::io::RawFd, ptr};
-use thiserror::Error;
 
 use libc::{
     c_int, close, getsockname, nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl,
@@ -8,7 +7,7 @@ use libc::{
 };
 
 use crate::generated::{
-    _bindgen_ty_41::{IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS},
+    _bindgen_ty_79::{IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS},
     ifinfomsg, NLMSG_ALIGNTO, XDP_FLAGS_REPLACE,
 };
 
