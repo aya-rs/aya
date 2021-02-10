@@ -358,7 +358,7 @@ impl<'a> TryFrom<&'a mut Map> for PerfMap<&'a mut Map> {
     }
 }
 
-fn online_cpus() -> Result<Vec<u32>, ()> {
+pub fn online_cpus() -> Result<Vec<u32>, ()> {
     let data = fs::read_to_string(ONLINE_CPUS).map_err(|_| ())?;
     parse_online_cpus(data.trim())
 }
