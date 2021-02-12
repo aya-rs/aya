@@ -1,15 +1,9 @@
-use std::{
-    cell::{Ref, RefCell, RefMut},
-    collections::HashMap,
-    convert::TryFrom,
-    error::Error,
-    io,
-};
+use std::{collections::HashMap, convert::TryFrom, error::Error, io};
 
 use thiserror::Error;
 
 use crate::{
-    maps::{Map, MapError},
+    maps::{Map, MapError, MapLock, MapRef, MapRefMut},
     obj::{btf::BtfError, Object, ParseError},
     programs::{KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint, UProbe, Xdp},
     sys::bpf_map_update_elem_ptr,
@@ -46,7 +40,7 @@ pub(crate) struct bpf_map_def {
 
 #[derive(Debug)]
 pub struct Bpf {
-    maps: HashMap<String, RefCell<Map>>,
+    maps: HashMap<String, MapLock>,
     programs: HashMap<String, Program>,
 }
 
@@ -97,29 +91,43 @@ impl Bpf {
         Ok(Bpf {
             maps: maps
                 .drain(..)
-                .map(|map| (map.obj.name.clone(), RefCell::new(map)))
+                .map(|map| (map.obj.name.clone(), MapLock::new(map)))
                 .collect(),
             programs,
         })
     }
 
-    pub fn map<'a, 'slf: 'a, T: TryFrom<Ref<'a, Map>>>(
-        &'slf self,
+    pub fn map<T: TryFrom<MapRef>>(
+        &self,
         name: &str,
-    ) -> Result<Option<T>, <T as TryFrom<Ref<'a, Map>>>::Error> {
+    ) -> Result<Option<T>, <T as TryFrom<MapRef>>::Error>
+    where
+        <T as TryFrom<MapRef>>::Error: From<MapError>,
+    {
         self.maps
             .get(name)
-            .map(|cell| T::try_from(cell.borrow()))
+            .map(|lock| {
+                T::try_from(lock.try_read().map_err(|_| MapError::BorrowError {
+                    name: name.to_owned(),
+                })?)
+            })
             .transpose()
     }
 
-    pub fn map_mut<'a, 'slf: 'a, T: TryFrom<RefMut<'a, Map>>>(
-        &'slf self,
+    pub fn map_mut<T: TryFrom<MapRefMut>>(
+        &self,
         name: &str,
-    ) -> Result<Option<T>, <T as TryFrom<RefMut<'a, Map>>>::Error> {
+    ) -> Result<Option<T>, <T as TryFrom<MapRefMut>>::Error>
+    where
+        <T as TryFrom<MapRefMut>>::Error: From<MapError>,
+    {
         self.maps
             .get(name)
-            .map(|cell| T::try_from(cell.borrow_mut()))
+            .map(|lock| {
+                T::try_from(lock.try_write().map_err(|_| MapError::BorrowError {
+                    name: name.to_owned(),
+                })?)
+            })
             .transpose()
     }
 

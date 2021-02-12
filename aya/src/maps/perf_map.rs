@@ -1,12 +1,13 @@
 use std::{
-    cell::RefMut,
     convert::TryFrom,
     ffi::c_void,
-    fs, io, mem,
+    io, mem,
     ops::DerefMut,
     ptr, slice,
-    str::FromStr,
-    sync::atomic::{self, AtomicPtr, Ordering},
+    sync::{
+        atomic::{self, AtomicPtr, Ordering},
+        Arc,
+    },
 };
 
 use bytes::BytesMut;
@@ -20,12 +21,10 @@ use crate::{
         bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY, perf_event_header, perf_event_mmap_page,
         perf_event_type::*,
     },
-    maps::{Map, MapError},
+    maps::{Map, MapError, MapLockWriteGuard},
     sys::{bpf_map_update_elem, perf_event_ioctl, perf_event_open},
     RawFd, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
-
-const ONLINE_CPUS: &str = "/sys/devices/system/cpu/online";
 
 #[derive(Error, Debug)]
 pub enum PerfBufferError {
@@ -274,18 +273,24 @@ pub enum PerfMapError {
     },
 }
 
+pub struct PerfMapBuffer<T: DerefMut<Target = Map>> {
+    _map: Arc<T>,
+    buf: PerfBuffer,
+}
+
+impl<T: DerefMut<Target = Map>> PerfMapBuffer<T> {
+    pub fn read_events(&mut self, buffers: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
+        self.buf.read_events(buffers)
+    }
+}
+
 pub struct PerfMap<T: DerefMut<Target = Map>> {
-    map: T,
-    cpu_fds: Vec<(u32, RawFd)>,
-    buffers: Vec<Option<PerfBuffer>>,
+    map: Arc<T>,
+    page_size: usize,
 }
 
 impl<T: DerefMut<Target = Map>> PerfMap<T> {
-    pub fn new(
-        map: T,
-        cpu_ids: Option<Vec<u32>>,
-        page_count: Option<usize>,
-    ) -> Result<PerfMap<T>, PerfMapError> {
+    pub fn new(map: T) -> Result<PerfMap<T>, PerfMapError> {
         let map_type = map.obj.def.map_type;
         if map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY {
             return Err(MapError::InvalidMapType {
@@ -293,95 +298,38 @@ impl<T: DerefMut<Target = Map>> PerfMap<T> {
             })?;
         }
 
-        let mut cpu_ids = match cpu_ids {
-            Some(ids) => ids,
-            None => online_cpus().map_err(|_| PerfMapError::InvalidOnlineCpuFile)?,
-        };
-        if cpu_ids.is_empty() {
-            return Err(PerfMapError::NoCpus);
-        }
-        cpu_ids.sort();
-        let min_cpu = cpu_ids.first().unwrap();
-        let max_cpu = cpu_ids.last().unwrap();
-        let mut buffers = (*min_cpu..=*max_cpu).map(|_| None).collect::<Vec<_>>();
-
-        let map_fd = map.fd_or_err()?;
-        let page_size = unsafe { sysconf(_SC_PAGESIZE) } as usize;
-
-        let mut cpu_fds = Vec::new();
-        for cpu_id in &cpu_ids {
-            let buf = PerfBuffer::open(*cpu_id, page_size, page_count.unwrap_or(2))?;
-            bpf_map_update_elem(map_fd, cpu_id, &buf.fd, 0)
-                .map_err(|(_, io_error)| PerfMapError::UpdateElementFailed { io_error })?;
-            cpu_fds.push((*cpu_id, buf.fd));
-            buffers[*cpu_id as usize] = Some(buf);
-        }
-
         Ok(PerfMap {
-            map,
-            cpu_fds,
-            buffers,
+            map: Arc::new(map),
+            // Safety: libc
+            page_size: unsafe { sysconf(_SC_PAGESIZE) } as usize,
         })
     }
 
-    pub fn cpu_file_descriptors(&self) -> &[(u32, RawFd)] {
-        self.cpu_fds.as_slice()
-    }
-
-    pub fn read_cpu_events(
+    pub fn open(
         &mut self,
-        cpu_id: u32,
-        buffers: &mut [BytesMut],
-    ) -> Result<Events, PerfMapError> {
-        let buf = match self.buffers.get_mut(cpu_id as usize) {
-            None | Some(None) => return Err(PerfMapError::InvalidCpu { cpu_id }),
-            Some(Some(buf)) => buf,
-        };
+        index: u32,
+        page_count: Option<usize>,
+    ) -> Result<PerfMapBuffer<T>, PerfMapError> {
+        // FIXME: keep track of open buffers
 
-        Ok(buf.read_events(buffers)?)
-    }
-}
+        let map_fd = self.map.fd_or_err()?;
+        let buf = PerfBuffer::open(index, self.page_size, page_count.unwrap_or(2))?;
+        bpf_map_update_elem(map_fd, &index, &buf.fd, 0)
+            .map_err(|(_, io_error)| PerfMapError::UpdateElementFailed { io_error })?;
 
-impl<'a> TryFrom<RefMut<'a, Map>> for PerfMap<RefMut<'a, Map>> {
-    type Error = PerfMapError;
-
-    fn try_from(a: RefMut<'a, Map>) -> Result<PerfMap<RefMut<'a, Map>>, PerfMapError> {
-        PerfMap::new(a, None, None)
-    }
-}
-
-impl<'a> TryFrom<&'a mut Map> for PerfMap<&'a mut Map> {
-    type Error = PerfMapError;
-
-    fn try_from(a: &'a mut Map) -> Result<PerfMap<&'a mut Map>, PerfMapError> {
-        PerfMap::new(a, None, None)
-    }
-}
-
-pub fn online_cpus() -> Result<Vec<u32>, ()> {
-    let data = fs::read_to_string(ONLINE_CPUS).map_err(|_| ())?;
-    parse_online_cpus(data.trim())
-}
-
-fn parse_online_cpus(data: &str) -> Result<Vec<u32>, ()> {
-    let mut cpus = Vec::new();
-    for range in data.split(',') {
-        cpus.extend({
-            match range
-                .splitn(2, '-')
-                .map(u32::from_str)
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(|_| ())?
-                .as_slice()
-            {
-                &[] | &[_, _, _, ..] => return Err(()),
-                &[start] => start..=start,
-                &[start, end] => start..=end,
-            }
+        Ok(PerfMapBuffer {
+            buf,
+            _map: self.map.clone(),
         })
     }
+}
 
-    Ok(cpus)
+impl TryFrom<MapLockWriteGuard> for PerfMap<MapLockWriteGuard> {
+    type Error = PerfMapError;
+
+    fn try_from(a: MapLockWriteGuard) -> Result<PerfMap<MapLockWriteGuard>, PerfMapError> {
+        PerfMap::new(a)
+    }
 }
 
 #[cfg_attr(test, allow(unused_variables))]
@@ -425,21 +373,7 @@ mod tests {
         generated::perf_event_mmap_page,
         sys::{override_syscall, Syscall, TEST_MMAP_RET},
     };
-
-    use std::{convert::TryInto, fmt::Debug, iter::FromIterator, mem};
-
-    #[test]
-    fn test_parse_online_cpus() {
-        assert_eq!(parse_online_cpus("0").unwrap(), vec![0]);
-        assert_eq!(parse_online_cpus("0,1").unwrap(), vec![0, 1]);
-        assert_eq!(parse_online_cpus("0,1,2").unwrap(), vec![0, 1, 2]);
-        assert_eq!(parse_online_cpus("0-7").unwrap(), Vec::from_iter(0..=7));
-        assert_eq!(parse_online_cpus("0-3,4-7").unwrap(), Vec::from_iter(0..=7));
-        assert_eq!(parse_online_cpus("0-5,6,7").unwrap(), Vec::from_iter(0..=7));
-        assert!(parse_online_cpus("").is_err());
-        assert!(parse_online_cpus("0-1,2-").is_err());
-        assert!(parse_online_cpus("foo").is_err());
-    }
+    use std::{convert::TryInto, fmt::Debug, mem};
 
     const PAGE_SIZE: usize = 4096;
     union MMappedBuf {

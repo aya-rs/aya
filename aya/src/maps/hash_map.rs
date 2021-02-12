@@ -1,5 +1,4 @@
 use std::{
-    cell::{Ref, RefMut},
     convert::TryFrom,
     marker::PhantomData,
     mem,
@@ -8,7 +7,7 @@ use std::{
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_HASH,
-    maps::{IterableMap, Map, MapError, MapIter, MapKeys},
+    maps::{IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut},
     sys::{
         bpf_map_delete_elem, bpf_map_lookup_and_delete_elem, bpf_map_lookup_elem,
         bpf_map_update_elem,
@@ -97,35 +96,35 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K,
     }
 }
 
-impl<'a, K: Pod, V: Pod> TryFrom<Ref<'a, Map>> for HashMap<Ref<'a, Map>, K, V> {
+impl<K: Pod, V: Pod> TryFrom<MapRef> for HashMap<MapRef, K, V> {
     type Error = MapError;
 
-    fn try_from(inner: Ref<'a, Map>) -> Result<HashMap<Ref<'a, Map>, K, V>, MapError> {
-        HashMap::new(inner)
+    fn try_from(a: MapRef) -> Result<HashMap<MapRef, K, V>, MapError> {
+        HashMap::new(a)
     }
 }
 
-impl<'a, K: Pod, V: Pod> TryFrom<RefMut<'a, Map>> for HashMap<RefMut<'a, Map>, K, V> {
+impl<K: Pod, V: Pod> TryFrom<MapRefMut> for HashMap<MapRefMut, K, V> {
     type Error = MapError;
 
-    fn try_from(inner: RefMut<'a, Map>) -> Result<HashMap<RefMut<'a, Map>, K, V>, MapError> {
-        HashMap::new(inner)
+    fn try_from(a: MapRefMut) -> Result<HashMap<MapRefMut, K, V>, MapError> {
+        HashMap::new(a)
     }
 }
 
 impl<'a, K: Pod, V: Pod> TryFrom<&'a Map> for HashMap<&'a Map, K, V> {
     type Error = MapError;
 
-    fn try_from(inner: &'a Map) -> Result<HashMap<&'a Map, K, V>, MapError> {
-        HashMap::new(inner)
+    fn try_from(a: &'a Map) -> Result<HashMap<&'a Map, K, V>, MapError> {
+        HashMap::new(a)
     }
 }
 
 impl<'a, K: Pod, V: Pod> TryFrom<&'a mut Map> for HashMap<&'a mut Map, K, V> {
     type Error = MapError;
 
-    fn try_from(inner: &'a mut Map) -> Result<HashMap<&'a mut Map, K, V>, MapError> {
-        HashMap::new(inner)
+    fn try_from(a: &'a mut Map) -> Result<HashMap<&'a mut Map, K, V>, MapError> {
+        HashMap::new(a)
     }
 }
 

@@ -50,7 +50,6 @@ fn syscall(call: Syscall) -> SysResult {
 #[cfg(not(test))]
 unsafe fn syscall_impl(call: Syscall) -> SysResult {
     use libc::{SYS_bpf, SYS_perf_event_open};
-    use std::mem;
 
     use Syscall::*;
     let ret = match call {

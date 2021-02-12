@@ -8,11 +8,13 @@ use crate::{
 };
 
 mod hash_map;
+mod map_lock;
 mod perf_map;
 mod program_array;
 
 pub use hash_map::*;
-pub use perf_map::*;
+pub(crate) use map_lock::*;
+pub use perf_map::{PerfMap, PerfMapBuffer};
 pub use program_array::*;
 
 #[derive(Error, Debug)]
@@ -64,6 +66,12 @@ pub enum MapError {
 
     #[error("the BPF_MAP_GET_NEXT_KEY syscall failed with code {code} io_error {io_error}")]
     GetNextKeyFailed { code: i64, io_error: io::Error },
+
+    #[error("map `{name}` is borrowed mutably")]
+    BorrowError { name: String },
+
+    #[error("map `{name}` is already borrowed")]
+    BorrowMutError { name: String },
 }
 
 #[derive(Debug)]

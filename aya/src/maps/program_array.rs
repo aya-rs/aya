@@ -1,5 +1,4 @@
 use std::{
-    cell::{Ref, RefMut},
     convert::TryFrom,
     mem,
     ops::{Deref, DerefMut},
@@ -8,7 +7,7 @@ use std::{
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY,
-    maps::{IterableMap, Map, MapError, MapIter, MapKeys},
+    maps::{IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut},
     programs::ProgramFd,
     sys::{
         bpf_map_delete_elem, bpf_map_lookup_and_delete_elem, bpf_map_lookup_elem,
@@ -111,18 +110,18 @@ impl<T: Deref<Target = Map>> IterableMap<u32, RawFd> for ProgramArray<T> {
     }
 }
 
-impl<'a> TryFrom<Ref<'a, Map>> for ProgramArray<Ref<'a, Map>> {
+impl TryFrom<MapRef> for ProgramArray<MapRef> {
     type Error = MapError;
 
-    fn try_from(inner: Ref<'a, Map>) -> Result<ProgramArray<Ref<'a, Map>>, MapError> {
-        ProgramArray::new(inner)
+    fn try_from(a: MapRef) -> Result<ProgramArray<MapRef>, MapError> {
+        ProgramArray::new(a)
     }
 }
 
-impl<'a> TryFrom<RefMut<'a, Map>> for ProgramArray<RefMut<'a, Map>> {
+impl TryFrom<MapRefMut> for ProgramArray<MapRefMut> {
     type Error = MapError;
 
-    fn try_from(inner: RefMut<'a, Map>) -> Result<ProgramArray<RefMut<'a, Map>>, MapError> {
-        ProgramArray::new(inner)
+    fn try_from(a: MapRefMut) -> Result<ProgramArray<MapRefMut>, MapError> {
+        ProgramArray::new(a)
     }
 }

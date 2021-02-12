@@ -9,5 +9,6 @@ pub mod maps;
 mod obj;
 pub mod programs;
 mod sys;
+pub mod util;
 
 pub use bpf::*;
