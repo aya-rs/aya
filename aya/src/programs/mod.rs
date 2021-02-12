@@ -33,7 +33,7 @@ pub enum ProgramError {
     NotLoaded { program: String },
 
     #[error("the BPF_PROG_LOAD syscall for `{program}` failed: {io_error}\nVerifier output:\n{verifier_log}")]
-    LoadFailed {
+    LoadError {
         program: String,
         io_error: io::Error,
         verifier_log: String,
@@ -43,23 +43,23 @@ pub enum ProgramError {
     AlreadyDetached,
 
     #[error("the perf_event_open syscall failed: {io_error}")]
-    PerfEventOpenFailed { io_error: io::Error },
+    PerfEventOpenError { io_error: io::Error },
 
     #[error("PERF_EVENT_IOC_SET_BPF/PERF_EVENT_IOC_ENABLE failed: {io_error}")]
-    PerfEventAttachFailed { io_error: io::Error },
+    PerfEventAttachError { io_error: io::Error },
 
     #[error("the program {program} is not attached")]
     NotAttached { program: String },
 
     #[error("error attaching {program}: BPF_LINK_CREATE failed with {io_error}")]
-    BpfLinkCreateFailed {
+    BpfLinkCreateError {
         program: String,
         #[source]
         io_error: io::Error,
     },
 
     #[error("error attaching XDP program using netlink: {io_error}")]
-    NetlinkXdpFailed {
+    NetlinkXdpError {
         program: String,
         #[source]
         io_error: io::Error,
@@ -244,7 +244,7 @@ fn load_program(prog_type: c_uint, data: &mut ProgramData) -> Result<(), Program
 
     if let Err((_, io_error)) = ret {
         log_buf.truncate();
-        return Err(ProgramError::LoadFailed {
+        return Err(ProgramError::LoadError {
             program: name.clone(),
             io_error,
             verifier_log: log_buf.as_c_str().unwrap().to_string_lossy().to_string(),

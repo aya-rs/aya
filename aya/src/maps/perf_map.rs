@@ -32,19 +32,19 @@ pub enum PerfBufferError {
     InvalidPageCount { page_count: usize },
 
     #[error("perf_event_open failed: {io_error}")]
-    OpenFailed {
+    OpenError {
         #[source]
         io_error: io::Error,
     },
 
     #[error("mmap failed: {io_error}")]
-    MMapFailed {
+    MMapError {
         #[source]
         io_error: io::Error,
     },
 
     #[error("PERF_EVENT_IOC_ENABLE failed: {io_error}")]
-    PerfEventEnableFailed {
+    PerfEventEnableError {
         #[source]
         io_error: io::Error,
     },
@@ -80,7 +80,7 @@ impl PerfBuffer {
         }
 
         let fd = perf_event_open(cpu_id as i32)
-            .map_err(|(_, io_error)| PerfBufferError::OpenFailed { io_error })?
+            .map_err(|(_, io_error)| PerfBufferError::OpenError { io_error })?
             as RawFd;
         let size = page_size * page_count;
         let buf = unsafe {
@@ -94,7 +94,7 @@ impl PerfBuffer {
             )
         };
         if buf == MAP_FAILED {
-            return Err(PerfBufferError::MMapFailed {
+            return Err(PerfBufferError::MMapError {
                 io_error: io::Error::last_os_error(),
             });
         }
@@ -107,7 +107,7 @@ impl PerfBuffer {
         };
 
         perf_event_ioctl(fd, PERF_EVENT_IOC_ENABLE, 0)
-            .map_err(|(_, io_error)| PerfBufferError::PerfEventEnableFailed { io_error })?;
+            .map_err(|(_, io_error)| PerfBufferError::PerfEventEnableError { io_error })?;
 
         Ok(perf_buf)
     }
@@ -267,7 +267,7 @@ pub enum PerfMapError {
     PerfBufferError(#[from] PerfBufferError),
 
     #[error("bpf_map_update_elem failed: {io_error}")]
-    UpdateElementFailed {
+    UpdateElementError {
         #[source]
         io_error: io::Error,
     },
@@ -315,7 +315,7 @@ impl<T: DerefMut<Target = Map>> PerfMap<T> {
         let map_fd = self.map.fd_or_err()?;
         let buf = PerfBuffer::open(index, self.page_size, page_count.unwrap_or(2))?;
         bpf_map_update_elem(map_fd, &index, &buf.fd, 0)
-            .map_err(|(_, io_error)| PerfMapError::UpdateElementFailed { io_error })?;
+            .map_err(|(_, io_error)| PerfMapError::UpdateElementError { io_error })?;
 
         Ok(PerfMapBuffer {
             buf,

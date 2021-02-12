@@ -32,7 +32,7 @@ pub enum MapError {
     AlreadyCreated { name: String },
 
     #[error("failed to create map `{name}`: {code}")]
-    CreateFailed {
+    CreateError {
         name: String,
         code: i64,
         io_error: io::Error,
@@ -51,21 +51,21 @@ pub enum MapError {
     ProgramNotLoaded,
 
     #[error("the BPF_MAP_UPDATE_ELEM syscall failed with code {code} io_error {io_error}")]
-    UpdateElementFailed { code: i64, io_error: io::Error },
+    UpdateElementError { code: i64, io_error: io::Error },
 
     #[error("the BPF_MAP_LOOKUP_ELEM syscall failed with code {code} io_error {io_error}")]
-    LookupElementFailed { code: i64, io_error: io::Error },
+    LookupElementError { code: i64, io_error: io::Error },
 
     #[error("the BPF_MAP_DELETE_ELEM syscall failed with code {code} io_error {io_error}")]
-    DeleteElementFailed { code: i64, io_error: io::Error },
+    DeleteElementError { code: i64, io_error: io::Error },
 
     #[error(
         "the BPF_MAP_LOOKUP_AND_DELETE_ELEM syscall failed with code {code} io_error {io_error}"
     )]
-    LookupAndDeleteElementFailed { code: i64, io_error: io::Error },
+    LookupAndDeleteElementError { code: i64, io_error: io::Error },
 
     #[error("the BPF_MAP_GET_NEXT_KEY syscall failed with code {code} io_error {io_error}")]
-    GetNextKeyFailed { code: i64, io_error: io::Error },
+    GetNextKeyError { code: i64, io_error: io::Error },
 
     #[error("map `{name}` is borrowed mutably")]
     BorrowError { name: String },
@@ -91,7 +91,7 @@ impl Map {
             CString::new(name.clone()).map_err(|_| MapError::InvalidName { name: name.clone() })?;
 
         let fd = bpf_create_map(&c_name, &self.obj.def).map_err(|(code, io_error)| {
-            MapError::CreateFailed {
+            MapError::CreateError {
                 name,
                 code,
                 io_error,
@@ -158,7 +158,7 @@ impl<K: Pod, V: Pod> Iterator for MapKeys<'_, K, V> {
             }
             Err((code, io_error)) => {
                 self.err = true;
-                return Some(Err(MapError::GetNextKeyFailed { code, io_error }));
+                return Some(Err(MapError::GetNextKeyError { code, io_error }));
             }
         }
     }
@@ -255,8 +255,8 @@ mod tests {
 
         let mut map = new_map("foo");
         let ret = map.create();
-        assert!(matches!(ret, Err(MapError::CreateFailed { .. })));
-        if let Err(MapError::CreateFailed {
+        assert!(matches!(ret, Err(MapError::CreateError { .. })));
+        if let Err(MapError::CreateError {
             name,
             code,
             io_error,

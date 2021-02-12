@@ -56,7 +56,7 @@ impl Bpf {
             let fd = map.create()?;
             if !map.obj.data.is_empty() && map.obj.name != ".bss" {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data.as_ptr(), 0)
-                    .map_err(|(code, io_error)| MapError::UpdateElementFailed { code, io_error })?;
+                    .map_err(|(code, io_error)| MapError::UpdateElementError { code, io_error })?;
             }
             maps.push(map);
         }

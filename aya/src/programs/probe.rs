@@ -142,7 +142,7 @@ fn attach(
     };
 
     let fd = perf_event_open_probe(perf_ty, ret_bit, name, offset, pid)
-        .map_err(|(_code, io_error)| ProgramError::PerfEventOpenFailed { io_error })?
+        .map_err(|(_code, io_error)| ProgramError::PerfEventOpenError { io_error })?
         as i32;
 
     perf_attach(program_data, fd)

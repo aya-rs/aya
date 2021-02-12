@@ -38,9 +38,9 @@ pub(crate) fn perf_attach(data: &mut ProgramData, fd: RawFd) -> Result<impl Link
 
     let prog_fd = data.fd_or_err()?;
     perf_event_ioctl(fd, PERF_EVENT_IOC_SET_BPF, prog_fd)
-        .map_err(|(_, io_error)| ProgramError::PerfEventAttachFailed { io_error })?;
+        .map_err(|(_, io_error)| ProgramError::PerfEventAttachError { io_error })?;
     perf_event_ioctl(fd, PERF_EVENT_IOC_ENABLE, 0)
-        .map_err(|(_, io_error)| ProgramError::PerfEventAttachFailed { io_error })?;
+        .map_err(|(_, io_error)| ProgramError::PerfEventAttachError { io_error })?;
 
     Ok(LinkRef::new(&link))
 }

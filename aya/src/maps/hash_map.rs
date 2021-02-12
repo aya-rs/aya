@@ -52,7 +52,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     pub unsafe fn get(&self, key: &K, flags: u64) -> Result<Option<V>, MapError> {
         let fd = self.inner.deref().fd_or_err()?;
         bpf_map_lookup_elem(fd, key, flags)
-            .map_err(|(code, io_error)| MapError::LookupElementFailed { code, io_error })
+            .map_err(|(code, io_error)| MapError::LookupElementError { code, io_error })
     }
 
     pub unsafe fn iter<'coll>(&'coll self) -> MapIter<'coll, K, V> {
@@ -68,21 +68,21 @@ impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     pub fn insert(&mut self, key: K, value: V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.deref_mut().fd_or_err()?;
         bpf_map_update_elem(fd, &key, &value, flags)
-            .map_err(|(code, io_error)| MapError::UpdateElementFailed { code, io_error })?;
+            .map_err(|(code, io_error)| MapError::UpdateElementError { code, io_error })?;
         Ok(())
     }
 
     pub unsafe fn pop(&mut self, key: &K) -> Result<Option<V>, MapError> {
         let fd = self.inner.deref_mut().fd_or_err()?;
         bpf_map_lookup_and_delete_elem(fd, key)
-            .map_err(|(code, io_error)| MapError::LookupAndDeleteElementFailed { code, io_error })
+            .map_err(|(code, io_error)| MapError::LookupAndDeleteElementError { code, io_error })
     }
 
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
         let fd = self.inner.deref_mut().fd_or_err()?;
         bpf_map_delete_elem(fd, key)
             .map(|_| ())
-            .map_err(|(code, io_error)| MapError::DeleteElementFailed { code, io_error })
+            .map_err(|(code, io_error)| MapError::DeleteElementError { code, io_error })
     }
 }
 
@@ -254,7 +254,7 @@ mod tests {
 
         assert!(matches!(
             hm.insert(1, 42, 0),
-            Err(MapError::UpdateElementFailed { code: -1, io_error }) if io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::UpdateElementError { code: -1, io_error }) if io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 
@@ -300,7 +300,7 @@ mod tests {
 
         assert!(matches!(
             hm.remove(&1),
-            Err(MapError::DeleteElementFailed { code: -1, io_error }) if io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::DeleteElementError { code: -1, io_error }) if io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 
@@ -348,7 +348,7 @@ mod tests {
 
         assert!(matches!(
             unsafe { hm.get(&1, 0) },
-            Err(MapError::LookupElementFailed { code: -1, io_error }) if io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::LookupElementError { code: -1, io_error }) if io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 
@@ -395,7 +395,7 @@ mod tests {
 
         assert!(matches!(
             unsafe { hm.pop(&1) },
-            Err(MapError::LookupAndDeleteElementFailed { code: -1, io_error }) if io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::LookupAndDeleteElementError { code: -1, io_error }) if io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 
@@ -524,7 +524,7 @@ mod tests {
         assert!(matches!(keys.next(), Some(Ok(20))));
         assert!(matches!(
             keys.next(),
-            Some(Err(MapError::GetNextKeyFailed { .. }))
+            Some(Err(MapError::GetNextKeyError { .. }))
         ));
         assert!(matches!(keys.next(), None));
     }
@@ -618,7 +618,7 @@ mod tests {
         assert!(matches!(iter.next(), Some(Ok((20, 200)))));
         assert!(matches!(
             iter.next(),
-            Some(Err(MapError::GetNextKeyFailed { .. }))
+            Some(Err(MapError::GetNextKeyError { .. }))
         ));
         assert!(matches!(iter.next(), None));
     }
@@ -656,7 +656,7 @@ mod tests {
         assert!(matches!(iter.next(), Some(Ok((10, 100)))));
         assert!(matches!(
             iter.next(),
-            Some(Err(MapError::LookupElementFailed { .. }))
+            Some(Err(MapError::LookupElementError { .. }))
         ));
         assert!(matches!(iter.next(), Some(Ok((30, 300)))));
         assert!(matches!(iter.next(), None));

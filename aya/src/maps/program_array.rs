@@ -46,7 +46,7 @@ impl<T: Deref<Target = Map>> ProgramArray<T> {
     pub unsafe fn get(&self, key: &u32, flags: u64) -> Result<Option<RawFd>, MapError> {
         let fd = self.inner.deref().fd_or_err()?;
         let fd = bpf_map_lookup_elem(fd, key, flags)
-            .map_err(|(code, io_error)| MapError::LookupElementFailed { code, io_error })?;
+            .map_err(|(code, io_error)| MapError::LookupElementError { code, io_error })?;
         Ok(fd)
     }
 
@@ -80,7 +80,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
         let prog_fd = program.fd().ok_or(MapError::ProgramNotLoaded)?;
 
         bpf_map_update_elem(fd, &index, &prog_fd, flags)
-            .map_err(|(code, io_error)| MapError::UpdateElementFailed { code, io_error })?;
+            .map_err(|(code, io_error)| MapError::UpdateElementError { code, io_error })?;
         Ok(())
     }
 
@@ -88,7 +88,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
         let fd = self.inner.deref().fd_or_err()?;
         self.check_bounds(*index)?;
         bpf_map_lookup_and_delete_elem(fd, index)
-            .map_err(|(code, io_error)| MapError::LookupAndDeleteElementFailed { code, io_error })
+            .map_err(|(code, io_error)| MapError::LookupAndDeleteElementError { code, io_error })
     }
 
     pub fn remove(&mut self, index: &u32) -> Result<(), MapError> {
@@ -96,7 +96,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
         self.check_bounds(*index)?;
         bpf_map_delete_elem(fd, index)
             .map(|_| ())
-            .map_err(|(code, io_error)| MapError::DeleteElementFailed { code, io_error })
+            .map_err(|(code, io_error)| MapError::DeleteElementError { code, io_error })
     }
 }
 

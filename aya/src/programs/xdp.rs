@@ -40,7 +40,7 @@ impl Xdp {
         if k_ver >= (5, 7, 0) {
             let link_fd =
                 bpf_link_create(prog_fd, if_index, BPF_XDP, 0).map_err(|(_, io_error)| {
-                    ProgramError::BpfLinkCreateFailed {
+                    ProgramError::BpfLinkCreateError {
                         program: self.name(),
                         io_error,
                     }
@@ -51,7 +51,7 @@ impl Xdp {
             Ok(LinkRef::new(&link))
         } else {
             unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, 0) }.map_err(|io_error| {
-                ProgramError::NetlinkXdpFailed {
+                ProgramError::NetlinkXdpError {
                     program: self.name(),
                     io_error,
                 }
