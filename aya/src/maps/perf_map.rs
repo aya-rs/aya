@@ -3,6 +3,7 @@ use std::{
     ffi::c_void,
     io, mem,
     ops::DerefMut,
+    os::unix::prelude::AsRawFd,
     ptr, slice,
     sync::{
         atomic::{self, AtomicPtr, Ordering},
@@ -239,6 +240,12 @@ impl PerfBuffer {
     }
 }
 
+impl AsRawFd for PerfBuffer {
+    fn as_raw_fd(&self) -> RawFd {
+        self.fd
+    }
+}
+
 impl Drop for PerfBuffer {
     fn drop(&mut self) {
         unsafe {
@@ -287,6 +294,12 @@ pub struct PerfMapBuffer<T: DerefMut<Target = Map>> {
 impl<T: DerefMut<Target = Map>> PerfMapBuffer<T> {
     pub fn read_events(&mut self, buffers: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
         self.buf.read_events(buffers)
+    }
+}
+
+impl<T: DerefMut<Target = Map>> AsRawFd for PerfMapBuffer<T> {
+    fn as_raw_fd(&self) -> RawFd {
+        self.buf.as_raw_fd()
     }
 }
 
