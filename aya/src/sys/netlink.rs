@@ -125,7 +125,7 @@ struct Request {
 
 struct NetlinkSocket {
     sock: RawFd,
-    nl_pid: u32,
+    _nl_pid: u32,
 }
 
 impl NetlinkSocket {
@@ -160,7 +160,7 @@ impl NetlinkSocket {
 
         Ok(NetlinkSocket {
             sock,
-            nl_pid: addr.nl_pid,
+            _nl_pid: addr.nl_pid,
         })
     }
 

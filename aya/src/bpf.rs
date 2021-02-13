@@ -28,6 +28,7 @@ macro_rules! unsafe_impl_pod {
 
 unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64);
 
+#[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct bpf_map_def {
