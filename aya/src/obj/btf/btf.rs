@@ -317,32 +317,8 @@ impl BtfExt {
         }
     }
 
-    fn func_info_data(&self) -> &[u8] {
-        self.info_data(self.header.func_info_off, self.header.func_info_len)
-    }
-
-    fn line_info_data(&self) -> &[u8] {
-        self.info_data(self.header.line_info_off, self.header.line_info_len)
-    }
-
     fn core_relo_data(&self) -> &[u8] {
         self.info_data(self.header.core_relo_off, self.header.core_relo_len)
-    }
-
-    pub(crate) fn func_info(&self) -> SecInfoIter<'_> {
-        SecInfoIter::new(
-            self.func_info_data(),
-            self.func_info_rec_size,
-            self.endianness,
-        )
-    }
-
-    pub(crate) fn line_info(&self) -> SecInfoIter<'_> {
-        SecInfoIter::new(
-            self.line_info_data(),
-            self.line_info_rec_size,
-            self.endianness,
-        )
     }
 
     pub(crate) fn relocations(&self) -> impl Iterator<Item = &(u32, Vec<Relocation>)> {
