@@ -73,6 +73,7 @@ impl<T: DerefMut<Target = Map>> PerfMap<T> {
                 map_type: map_type as u32,
             })?;
         }
+        let _fd = map.fd_or_err()?;
 
         Ok(PerfMap {
             map: Arc::new(map),

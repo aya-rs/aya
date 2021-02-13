@@ -23,24 +23,28 @@ pub struct HashMap<T: Deref<Target = Map>, K, V> {
 
 impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     pub fn new(map: T) -> Result<HashMap<T, K, V>, MapError> {
-        let inner = map.deref();
-        let map_type = inner.obj.def.map_type;
+        let map_type = map.obj.def.map_type;
+
+        // validate the map definition
         if map_type != BPF_MAP_TYPE_HASH {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
             })?;
         }
         let size = mem::size_of::<K>();
-        let expected = inner.obj.def.key_size as usize;
+        let expected = map.obj.def.key_size as usize;
         if size != expected {
             return Err(MapError::InvalidKeySize { size, expected });
         }
 
         let size = mem::size_of::<V>();
-        let expected = inner.obj.def.value_size as usize;
+        let expected = map.obj.def.value_size as usize;
         if size != expected {
             return Err(MapError::InvalidValueSize { size, expected });
         }
+
+        // make sure the map has been created
+        let _fd = map.fd_or_err()?;
 
         Ok(HashMap {
             inner: map,
@@ -220,26 +224,35 @@ mod tests {
     }
 
     #[test]
-    fn test_try_from_ok() {
-        let map = Map {
-            obj: new_obj_map("TEST"),
-            fd: None,
-        };
-        assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
-    }
-
-    #[test]
-    fn test_insert_not_created() {
+    fn test_new_not_created() {
         let mut map = Map {
             obj: new_obj_map("TEST"),
             fd: None,
         };
-        let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
         assert!(matches!(
-            hm.insert(1, 42, 0),
+            HashMap::<_, u32, u32>::new(&mut map),
             Err(MapError::NotCreated { .. })
         ));
+    }
+
+    #[test]
+    fn test_new_ok() {
+        let mut map = Map {
+            obj: new_obj_map("TEST"),
+            fd: Some(42),
+        };
+
+        assert!(HashMap::<_, u32, u32>::new(&mut map).is_ok());
+    }
+
+    #[test]
+    fn test_try_from_ok() {
+        let map = Map {
+            obj: new_obj_map("TEST"),
+            fd: Some(42),
+        };
+        assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
     }
 
     #[test]
@@ -278,17 +291,6 @@ mod tests {
     }
 
     #[test]
-    fn test_remove_not_created() {
-        let mut map = Map {
-            obj: new_obj_map("TEST"),
-            fd: None,
-        };
-        let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
-
-        assert!(matches!(hm.remove(&1), Err(MapError::NotCreated { .. })));
-    }
-
-    #[test]
     fn test_remove_syscall_error() {
         override_syscall(|_| sys_error(EFAULT));
 
@@ -324,20 +326,6 @@ mod tests {
     }
 
     #[test]
-    fn test_get_not_created() {
-        let map = Map {
-            obj: new_obj_map("TEST"),
-            fd: None,
-        };
-        let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
-
-        assert!(matches!(
-            unsafe { hm.get(&1, 0) },
-            Err(MapError::NotCreated { .. })
-        ));
-    }
-
-    #[test]
     fn test_get_syscall_error() {
         override_syscall(|_| sys_error(EFAULT));
         let map = Map {
@@ -368,20 +356,6 @@ mod tests {
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
         assert!(matches!(unsafe { hm.get(&1, 0) }, Ok(None)));
-    }
-
-    #[test]
-    fn test_pop_not_created() {
-        let mut map = Map {
-            obj: new_obj_map("TEST"),
-            fd: None,
-        };
-        let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
-
-        assert!(matches!(
-            unsafe { hm.pop(&1) },
-            Err(MapError::NotCreated { .. })
-        ));
     }
 
     #[test]
