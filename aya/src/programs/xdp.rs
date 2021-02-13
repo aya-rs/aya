@@ -1,15 +1,24 @@
-use std::ffi::CString;
-
 use libc::if_nametoindex;
+use std::{ffi::CString, io};
+use thiserror::Error;
 
-use crate::{generated::XDP_FLAGS_REPLACE, RawFd};
 use crate::{
-    generated::{bpf_attach_type::BPF_XDP, bpf_prog_type::BPF_PROG_TYPE_XDP},
+    generated::{bpf_attach_type::BPF_XDP, bpf_prog_type::BPF_PROG_TYPE_XDP, XDP_FLAGS_REPLACE},
     programs::{load_program, FdLink, Link, LinkRef, ProgramData, ProgramError},
     sys::bpf_link_create,
     sys::kernel_version,
     sys::netlink_set_xdp_fd,
+    RawFd,
 };
+
+#[derive(Debug, Error)]
+pub enum XdpError {
+    #[error("netlink error while attaching XDP program")]
+    NetlinkError {
+        #[source]
+        io_error: io::Error,
+    },
+}
 
 #[derive(Debug)]
 pub struct Xdp {
@@ -31,30 +40,22 @@ impl Xdp {
         let c_interface = CString::new(interface).unwrap();
         let if_index = unsafe { if_nametoindex(c_interface.as_ptr()) } as RawFd;
         if if_index == 0 {
-            return Err(ProgramError::UnkownInterface {
+            return Err(ProgramError::UnknownInterface {
                 name: interface.to_string(),
             })?;
         }
 
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 7, 0) {
-            let link_fd =
-                bpf_link_create(prog_fd, if_index, BPF_XDP, 0).map_err(|(_, io_error)| {
-                    ProgramError::BpfLinkCreateError {
-                        program: self.name(),
-                        io_error,
-                    }
-                })? as RawFd;
+            let link_fd = bpf_link_create(prog_fd, if_index + 42, BPF_XDP, 0)
+                .map_err(|(_, io_error)| ProgramError::BpfLinkCreateError { io_error })?
+                as RawFd;
             Ok(self
                 .data
                 .link(XdpLink::FdLink(FdLink { fd: Some(link_fd) })))
         } else {
-            unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, 0) }.map_err(|io_error| {
-                ProgramError::NetlinkXdpError {
-                    program: self.name(),
-                    io_error,
-                }
-            })?;
+            unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, 0) }
+                .map_err(|io_error| XdpError::NetlinkError { io_error })?;
 
             Ok(self.data.link(XdpLink::NlLink(NlLink {
                 if_index,

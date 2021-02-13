@@ -1,10 +1,20 @@
 use libc::{setsockopt, SOL_SOCKET, SO_ATTACH_BPF, SO_DETACH_BPF};
 use std::{io, mem, os::unix::prelude::RawFd};
+use thiserror::Error;
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER,
     programs::{load_program, Link, LinkRef, ProgramData, ProgramError},
 };
+
+#[derive(Debug, Error)]
+pub enum SocketFilterError {
+    #[error("setsockopt SO_ATTACH_BPF failed")]
+    SoAttachBpfError {
+        #[source]
+        io_error: io::Error,
+    },
+}
 
 #[derive(Debug)]
 pub struct SocketFilter {
@@ -29,9 +39,9 @@ impl SocketFilter {
             )
         };
         if ret < 0 {
-            return Err(ProgramError::SocketFilterError {
+            return Err(SocketFilterError::SoAttachBpfError {
                 io_error: io::Error::last_os_error(),
-            });
+            })?;
         }
 
         Ok(self.data.link(SocketFilterLink {

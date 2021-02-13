@@ -5,9 +5,7 @@ mod trace_point;
 mod xdp;
 
 use libc::{close, ENOSPC};
-use std::{
-    cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::raw::c_uint, path::PathBuf, rc::Rc,
-};
+use std::{cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::raw::c_uint, rc::Rc};
 use thiserror::Error;
 
 use perf_attach::*;
@@ -19,65 +17,63 @@ pub use xdp::*;
 use crate::{obj, sys::bpf_load_program, RawFd};
 #[derive(Debug, Error)]
 pub enum ProgramError {
-    #[error("the program {program} is already loaded")]
-    AlreadyLoaded { program: String },
+    #[error("the program is already loaded")]
+    AlreadyLoaded,
 
-    #[error("the program {program} is not loaded")]
-    NotLoaded { program: String },
-
-    #[error("the BPF_PROG_LOAD syscall for `{program}` failed: {io_error}\nVerifier output:\n{verifier_log}")]
-    LoadError {
-        program: String,
-        io_error: io::Error,
-        verifier_log: String,
-    },
+    #[error("the program is not loaded")]
+    NotLoaded,
 
     #[error("the program was already detached")]
     AlreadyDetached,
 
-    #[error("the perf_event_open syscall failed: {io_error}")]
-    PerfEventOpenError { io_error: io::Error },
+    #[error("the program is not attached")]
+    NotAttached,
 
-    #[error("PERF_EVENT_IOC_SET_BPF/PERF_EVENT_IOC_ENABLE failed: {io_error}")]
-    PerfEventAttachError { io_error: io::Error },
+    #[error("the BPF_PROG_LOAD syscall failed: {io_error}\nVerifier output:\n{verifier_log}")]
+    LoadError {
+        #[source]
+        io_error: io::Error,
+        verifier_log: String,
+    },
 
-    #[error("the program {program} is not attached")]
-    NotAttached { program: String },
+    #[error("the perf_event_open syscall failed")]
+    PerfEventOpenError {
+        #[source]
+        io_error: io::Error,
+    },
 
-    #[error("error attaching {program}: BPF_LINK_CREATE failed with {io_error}")]
+    #[error("PERF_EVENT_IOC_SET_BPF/PERF_EVENT_IOC_ENABLE failed")]
+    PerfEventAttachError {
+        #[source]
+        io_error: io::Error,
+    },
+
+    #[error("unknown network interface {name}")]
+    UnknownInterface { name: String },
+
+    #[error("BPF_LINK_CREATE failed")]
     BpfLinkCreateError {
-        program: String,
         #[source]
         io_error: io::Error,
     },
-
-    #[error("error attaching XDP program using netlink: {io_error}")]
-    NetlinkXdpError {
-        program: String,
-        #[source]
-        io_error: io::Error,
-    },
-
-    #[error("unkown network interface {name}")]
-    UnkownInterface { name: String },
-
-    #[error("error reading ld.so.cache file")]
-    InvalidLdSoCache { error_kind: io::ErrorKind },
-
-    #[error("could not resolve uprobe target {path}")]
-    InvalidUprobeTarget { path: PathBuf },
-
-    #[error("error resolving symbol: {error}")]
-    UprobeSymbolError { symbol: String, error: String },
-
-    #[error("setsockopt SO_ATTACH_BPF failed: {io_error}")]
-    SocketFilterError { io_error: io::Error },
 
     #[error("unexpected program type")]
     UnexpectedProgramType,
 
-    #[error("{message}")]
-    Other { message: String },
+    #[error(transparent)]
+    KProbeError(#[from] KProbeError),
+
+    #[error(transparent)]
+    UProbeError(#[from] UProbeError),
+
+    #[error(transparent)]
+    TracePointError(#[from] TracePointError),
+
+    #[error(transparent)]
+    SocketFilterError(#[from] SocketFilterError),
+
+    #[error(transparent)]
+    XdpError(#[from] XdpError),
 }
 
 pub trait ProgramFd {
@@ -140,9 +136,7 @@ pub(crate) struct ProgramData {
 
 impl ProgramData {
     fn fd_or_err(&self) -> Result<RawFd, ProgramError> {
-        self.fd.ok_or(ProgramError::NotLoaded {
-            program: self.name.clone(),
-        })
+        self.fd.ok_or(ProgramError::NotLoaded)
     }
 
     pub fn link<T: Link + 'static>(&mut self, link: T) -> LinkRef {
@@ -204,11 +198,9 @@ impl VerifierLog {
 }
 
 fn load_program(prog_type: c_uint, data: &mut ProgramData) -> Result<(), ProgramError> {
-    let ProgramData { obj, fd, name, .. } = data;
+    let ProgramData { obj, fd, .. } = data;
     if fd.is_some() {
-        return Err(ProgramError::AlreadyLoaded {
-            program: name.to_string(),
-        });
+        return Err(ProgramError::AlreadyLoaded);
     }
     let crate::obj::Program {
         instructions,
@@ -244,7 +236,6 @@ fn load_program(prog_type: c_uint, data: &mut ProgramData) -> Result<(), Program
     if let Err((_, io_error)) = ret {
         log_buf.truncate();
         return Err(ProgramError::LoadError {
-            program: name.clone(),
             io_error,
             verifier_log: log_buf.as_c_str().unwrap().to_string_lossy().to_string(),
         });

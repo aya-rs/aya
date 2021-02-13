@@ -1,12 +1,14 @@
 use libc::pid_t;
 use object::{Object, ObjectSymbol};
 use std::{
+    error::Error,
     ffi::CStr,
     fs,
     io::{self, BufRead, Cursor, Read},
     mem,
     os::raw::c_char,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 use thiserror::Error;
 
@@ -16,10 +18,49 @@ use crate::{
     sys::perf_event_open_probe,
 };
 
+const LD_SO_CACHE_FILE: &str = "/etc/ld.so.cache";
+
 lazy_static! {
-    static ref LD_SO_CACHE: Result<LdSoCache, io::Error> = LdSoCache::load("/etc/ld.so.cache");
+    static ref LD_SO_CACHE: Result<LdSoCache, Arc<io::Error>> =
+        LdSoCache::load(LD_SO_CACHE_FILE).map_err(Arc::new);
 }
 const LD_SO_CACHE_HEADER: &str = "glibc-ld.so.cache1.1";
+
+#[derive(Debug, Error)]
+pub enum KProbeError {
+    #[error("`{filename}`")]
+    FileError {
+        filename: String,
+        #[source]
+        io_error: io::Error,
+    },
+}
+
+#[derive(Debug, Error)]
+pub enum UProbeError {
+    #[error("error reading `{}` file", LD_SO_CACHE_FILE)]
+    InvalidLdSoCache {
+        #[source]
+        io_error: Arc<io::Error>,
+    },
+
+    #[error("could not resolve uprobe target `{path}`")]
+    InvalidTarget { path: PathBuf },
+
+    #[error("error resolving symbol")]
+    SymbolError {
+        symbol: String,
+        #[source]
+        error: Box<dyn Error + Send + Sync>,
+    },
+
+    #[error("`{filename}`")]
+    FileError {
+        filename: String,
+        #[source]
+        io_error: io::Error,
+    },
+}
 
 #[derive(Debug)]
 pub struct KProbe {
@@ -70,8 +111,9 @@ impl UProbe {
         let target_str = &*target.as_os_str().to_string_lossy();
 
         let mut path = if let Some(pid) = pid {
-            find_lib_in_proc_maps(pid, &target_str).map_err(|io_error| ProgramError::Other {
-                message: format!("error parsing /proc/{}/maps: {}", pid, io_error),
+            find_lib_in_proc_maps(pid, &target_str).map_err(|io_error| UProbeError::FileError {
+                filename: format!("/proc/{}/maps", pid),
+                io_error,
             })?
         } else {
             None
@@ -84,22 +126,22 @@ impl UProbe {
                 let cache =
                     LD_SO_CACHE
                         .as_ref()
-                        .map_err(|io_error| ProgramError::InvalidLdSoCache {
-                            error_kind: io_error.kind(),
+                        .map_err(|error| UProbeError::InvalidLdSoCache {
+                            io_error: error.clone(),
                         })?;
                 cache.resolve(target_str)
             }
             .map(String::from)
         };
 
-        let path = path.ok_or(ProgramError::InvalidUprobeTarget {
+        let path = path.ok_or(UProbeError::InvalidTarget {
             path: target.to_owned(),
         })?;
 
         let sym_offset = if let Some(fn_name) = fn_name {
-            resolve_symbol(&path, fn_name).map_err(|error| ProgramError::UprobeSymbolError {
+            resolve_symbol(&path, fn_name).map_err(|error| UProbeError::SymbolError {
                 symbol: fn_name.to_string(),
-                error: error.to_string(),
+                error: Box::new(error),
             })?
         } else {
             0
@@ -131,13 +173,22 @@ fn attach(
 ) -> Result<LinkRef, ProgramError> {
     use ProbeKind::*;
 
-    let perf_ty = read_sys_fs_perf_type(match kind {
-        KProbe | KRetProbe => "kprobe",
-        UProbe | URetProbe => "uprobe",
-    })?;
+    let perf_ty = match kind {
+        KProbe | KRetProbe => read_sys_fs_perf_type("kprobe")
+            .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
+        UProbe | URetProbe => read_sys_fs_perf_type("uprobe")
+            .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
+    };
+
     let ret_bit = match kind {
-        KRetProbe => Some(read_sys_fs_perf_ret_probe("kprobe")?),
-        URetProbe => Some(read_sys_fs_perf_ret_probe("uprobe")?),
+        KRetProbe => Some(
+            read_sys_fs_perf_ret_probe("kprobe")
+                .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
+        ),
+        URetProbe => Some(
+            read_sys_fs_perf_ret_probe("uprobe")
+                .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
+        ),
         _ => None,
     };
 
@@ -270,13 +321,13 @@ impl LdSoCache {
 
 #[derive(Error, Debug)]
 enum ResolveSymbolError {
-    #[error("io error {0}")]
+    #[error(transparent)]
     Io(#[from] io::Error),
 
-    #[error("error parsing ELF {0}")]
+    #[error("error parsing ELF")]
     Object(#[from] object::Error),
 
-    #[error("unknown symbol {0}")]
+    #[error("unknown symbol `{0}`")]
     Unknown(String),
 }
 
@@ -291,34 +342,32 @@ fn resolve_symbol(path: &str, symbol: &str) -> Result<u64, ResolveSymbolError> {
         .ok_or_else(|| ResolveSymbolError::Unknown(symbol.to_string()))
 }
 
-fn read_sys_fs_perf_type(pmu: &str) -> Result<u32, ProgramError> {
+fn read_sys_fs_perf_type(pmu: &str) -> Result<u32, (String, io::Error)> {
     let file = format!("/sys/bus/event_source/devices/{}/type", pmu);
 
-    let perf_ty = fs::read_to_string(&file).map_err(|e| ProgramError::Other {
-        message: format!("error parsing {}: {}", file, e),
-    })?;
+    let perf_ty = fs::read_to_string(&file).map_err(|e| (file.clone(), e))?;
     let perf_ty = perf_ty
         .trim()
         .parse::<u32>()
-        .map_err(|e| ProgramError::Other {
-            message: format!("error parsing {}: {}", file, e),
-        })?;
+        .map_err(|e| (file, io::Error::new(io::ErrorKind::Other, e)))?;
 
     Ok(perf_ty)
 }
 
-fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, ProgramError> {
+fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, (String, io::Error)> {
     let file = format!("/sys/bus/event_source/devices/{}/format/retprobe", pmu);
 
-    let data = fs::read_to_string(&file).map_err(|e| ProgramError::Other {
-        message: format!("error parsing {}: {}", file, e),
-    })?;
+    let data = fs::read_to_string(&file).map_err(|e| (file.clone(), e))?;
 
     let mut parts = data.trim().splitn(2, ":").skip(1);
-    let config = parts.next().ok_or(ProgramError::Other {
-        message: format!("error parsing {}: `{}'", file, data),
+    let config = parts.next().ok_or_else(|| {
+        (
+            file.clone(),
+            io::Error::new(io::ErrorKind::Other, "invalid format"),
+        )
     })?;
-    config.parse::<u32>().map_err(|e| ProgramError::Other {
-        message: format!("error parsing {}: {}", file, e),
-    })
+
+    config
+        .parse::<u32>()
+        .map_err(|e| (file, io::Error::new(io::ErrorKind::Other, e)))
 }

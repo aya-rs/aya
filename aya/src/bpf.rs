@@ -164,7 +164,7 @@ pub enum BpfError {
     #[error("error relocating BPF program `{program_name}`: {error}")]
     RelocationError {
         program_name: String,
-        error: Box<dyn Error>,
+        error: Box<dyn Error + Send + Sync>,
     },
 
     #[error("map error: {0}")]
