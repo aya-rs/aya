@@ -1,10 +1,4 @@
-use std::{
-    convert::TryFrom,
-    io,
-    ops::DerefMut,
-    os::unix::io::{AsRawFd, RawFd},
-    sync::Arc,
-};
+use std::{convert::TryFrom, io, ops::DerefMut, os::unix::prelude::AsRawFd, sync::Arc};
 
 use bytes::BytesMut;
 use libc::{sysconf, _SC_PAGESIZE};
@@ -12,11 +6,10 @@ use thiserror::Error;
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-    maps::{
-        perf_map::{Events, PerfBuffer, PerfBufferError},
-        Map, MapError, MapRefMut,
-    },
+    maps::perf_map::{Events, PerfBuffer, PerfBufferError},
+    maps::{Map, MapError, MapRefMut},
     sys::bpf_map_update_elem,
+    RawFd,
 };
 
 #[derive(Error, Debug)]
@@ -52,10 +45,6 @@ pub struct PerfMapBuffer<T: DerefMut<Target = Map>> {
 }
 
 impl<T: DerefMut<Target = Map>> PerfMapBuffer<T> {
-    pub fn readable(&self) -> bool {
-        self.buf.readable()
-    }
-
     pub fn read_events(&mut self, buffers: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
         self.buf.read_events(buffers)
     }
@@ -75,12 +64,11 @@ pub struct PerfMap<T: DerefMut<Target = Map>> {
 impl<T: DerefMut<Target = Map>> PerfMap<T> {
     pub fn new(map: T) -> Result<PerfMap<T>, PerfMapError> {
         let map_type = map.obj.def.map_type;
-        if map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 {
+        if map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
             })?;
         }
-        let _fd = map.fd_or_err()?;
 
         Ok(PerfMap {
             map: Arc::new(map),

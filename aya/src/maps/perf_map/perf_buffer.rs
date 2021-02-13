@@ -1,29 +1,18 @@
 use std::{
-    convert::TryFrom,
     ffi::c_void,
     io, mem,
-    ops::DerefMut,
     os::unix::prelude::AsRawFd,
     ptr, slice,
-    sync::{
-        atomic::{self, AtomicPtr, Ordering},
-        Arc,
-    },
+    sync::atomic::{self, AtomicPtr, Ordering},
 };
 
 use bytes::BytesMut;
-use libc::{
-    c_int, close, munmap, sysconf, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE, _SC_PAGESIZE,
-};
+use libc::{c_int, close, munmap, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
 use crate::{
-    generated::{
-        bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY, perf_event_header, perf_event_mmap_page,
-        perf_event_type::*,
-    },
-    maps::{Map, MapError, MapLockWriteGuard},
-    sys::{bpf_map_update_elem, perf_event_ioctl, perf_event_open},
+    generated::{perf_event_header, perf_event_mmap_page, perf_event_type::*},
+    sys::{perf_event_ioctl, perf_event_open},
     RawFd, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
 
@@ -66,7 +55,7 @@ pub struct Events {
     pub lost: usize,
 }
 
-struct PerfBuffer {
+pub(crate) struct PerfBuffer {
     buf: AtomicPtr<perf_event_mmap_page>,
     size: usize,
     page_size: usize,
@@ -74,7 +63,7 @@ struct PerfBuffer {
 }
 
 impl PerfBuffer {
-    fn open(
+    pub(crate) fn open(
         cpu_id: u32,
         page_size: usize,
         page_count: usize,
@@ -256,98 +245,6 @@ impl Drop for PerfBuffer {
             );
             close(self.fd);
         }
-    }
-}
-
-#[derive(Error, Debug)]
-pub enum PerfMapError {
-    #[error("error parsing /sys/devices/system/cpu/online")]
-    InvalidOnlineCpuFile,
-
-    #[error("no CPUs specified")]
-    NoCpus,
-
-    #[error("invalid cpu {cpu_id}")]
-    InvalidCpu { cpu_id: u32 },
-
-    #[error("map error: {0}")]
-    MapError(#[from] MapError),
-
-    #[error("perf buffer error: {0}")]
-    PerfBufferError(#[from] PerfBufferError),
-
-    #[error(transparent)]
-    IOError(#[from] io::Error),
-
-    #[error("bpf_map_update_elem failed: {io_error}")]
-    UpdateElementError {
-        #[source]
-        io_error: io::Error,
-    },
-}
-
-pub struct PerfMapBuffer<T: DerefMut<Target = Map>> {
-    _map: Arc<T>,
-    buf: PerfBuffer,
-}
-
-impl<T: DerefMut<Target = Map>> PerfMapBuffer<T> {
-    pub fn read_events(&mut self, buffers: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
-        self.buf.read_events(buffers)
-    }
-}
-
-impl<T: DerefMut<Target = Map>> AsRawFd for PerfMapBuffer<T> {
-    fn as_raw_fd(&self) -> RawFd {
-        self.buf.as_raw_fd()
-    }
-}
-
-pub struct PerfMap<T: DerefMut<Target = Map>> {
-    map: Arc<T>,
-    page_size: usize,
-}
-
-impl<T: DerefMut<Target = Map>> PerfMap<T> {
-    pub fn new(map: T) -> Result<PerfMap<T>, PerfMapError> {
-        let map_type = map.obj.def.map_type;
-        if map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY {
-            return Err(MapError::InvalidMapType {
-                map_type: map_type as u32,
-            })?;
-        }
-
-        Ok(PerfMap {
-            map: Arc::new(map),
-            // Safety: libc
-            page_size: unsafe { sysconf(_SC_PAGESIZE) } as usize,
-        })
-    }
-
-    pub fn open(
-        &mut self,
-        index: u32,
-        page_count: Option<usize>,
-    ) -> Result<PerfMapBuffer<T>, PerfMapError> {
-        // FIXME: keep track of open buffers
-
-        let map_fd = self.map.fd_or_err()?;
-        let buf = PerfBuffer::open(index, self.page_size, page_count.unwrap_or(2))?;
-        bpf_map_update_elem(map_fd, &index, &buf.fd, 0)
-            .map_err(|(_, io_error)| PerfMapError::UpdateElementError { io_error })?;
-
-        Ok(PerfMapBuffer {
-            buf,
-            _map: self.map.clone(),
-        })
-    }
-}
-
-impl TryFrom<MapLockWriteGuard> for PerfMap<MapLockWriteGuard> {
-    type Error = PerfMapError;
-
-    fn try_from(a: MapLockWriteGuard) -> Result<PerfMap<MapLockWriteGuard>, PerfMapError> {
-        PerfMap::new(a)
     }
 }
 
