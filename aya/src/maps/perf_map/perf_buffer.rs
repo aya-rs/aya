@@ -105,7 +105,17 @@ impl PerfBuffer {
         Ok(perf_buf)
     }
 
-    pub fn read_events(&mut self, buffers: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
+    pub(crate) fn readable(&self) -> bool {
+        let header = self.buf.load(Ordering::SeqCst);
+        let head = unsafe { (*header).data_head } as usize;
+        let tail = unsafe { (*header).data_tail } as usize;
+        head != tail
+    }
+
+    pub(crate) fn read_events(
+        &mut self,
+        buffers: &mut [BytesMut],
+    ) -> Result<Events, PerfBufferError> {
         if buffers.is_empty() {
             return Err(PerfBufferError::NoBuffers);
         }

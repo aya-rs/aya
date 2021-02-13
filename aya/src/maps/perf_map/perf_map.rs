@@ -45,6 +45,10 @@ pub struct PerfMapBuffer<T: DerefMut<Target = Map>> {
 }
 
 impl<T: DerefMut<Target = Map>> PerfMapBuffer<T> {
+    pub fn readable(&self) -> bool {
+        self.buf.readable()
+    }
+
     pub fn read_events(&mut self, buffers: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
         self.buf.read_events(buffers)
     }
