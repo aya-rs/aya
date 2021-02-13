@@ -54,6 +54,9 @@ pub enum PerfBufferError {
 
     #[error("the buffer needs to be of at least {size} bytes")]
     MoreSpaceNeeded { size: usize },
+
+    #[error(transparent)]
+    IOError(#[from] io::Error),
 }
 
 #[derive(Debug, PartialEq)]
@@ -265,6 +268,9 @@ pub enum PerfMapError {
 
     #[error("perf buffer error: {0}")]
     PerfBufferError(#[from] PerfBufferError),
+
+    #[error(transparent)]
+    IOError(#[from] io::Error),
 
     #[error("bpf_map_update_elem failed: {io_error}")]
     UpdateElementError {
