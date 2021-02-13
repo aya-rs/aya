@@ -5,9 +5,9 @@ authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-libc = { version = "0.2", features = ["extra_traits"] }
+libc = { version = "0.2" }
 thiserror = "1"
-object = "0.23"
+object = { version = "0.23", default-features = false, features = ["std", "read_core", "elf"] }
 bytes = "1"
 lazy_static = "1"
 parking_lot = { version = "0.11.1", features = ["send_guard"] }

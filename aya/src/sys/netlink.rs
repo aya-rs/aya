@@ -209,10 +209,9 @@ impl NetlinkSocket {
     }
 }
 
-#[derive(Debug)]
 struct NetlinkMessage {
     header: nlmsghdr,
-    data: Vec<u8>,
+    _data: Vec<u8>,
     error: Option<nlmsgerr>,
 }
 
@@ -246,7 +245,7 @@ impl NetlinkMessage {
 
         Ok(NetlinkMessage {
             header,
-            data,
+            _data: data,
             error,
         })
     }
