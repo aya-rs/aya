@@ -2,7 +2,7 @@ use std::fs;
 
 use crate::{generated::bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT, sys::perf_event_open_trace_point};
 
-use super::{load_program, perf_attach, Link, ProgramData, ProgramError};
+use super::{load_program, perf_attach, LinkRef, ProgramData, ProgramError};
 
 #[derive(Debug)]
 pub struct TracePoint {
@@ -14,7 +14,7 @@ impl TracePoint {
         load_program(BPF_PROG_TYPE_TRACEPOINT, &mut self.data)
     }
 
-    pub fn attach(&mut self, category: &str, name: &str) -> Result<impl Link, ProgramError> {
+    pub fn attach(&mut self, category: &str, name: &str) -> Result<LinkRef, ProgramError> {
         let id = read_sys_fs_trace_point_id(category, name)?;
         let fd = perf_event_open_trace_point(id)
             .map_err(|(_code, io_error)| ProgramError::PerfEventOpenError { io_error })?

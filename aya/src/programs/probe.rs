@@ -12,7 +12,7 @@ use thiserror::Error;
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_KPROBE,
-    programs::{load_program, perf_attach, Link, ProgramData, ProgramError},
+    programs::{load_program, perf_attach, LinkRef, ProgramData, ProgramError},
     sys::perf_event_open_probe,
 };
 
@@ -45,7 +45,7 @@ impl KProbe {
         fn_name: &str,
         offset: u64,
         pid: Option<pid_t>,
-    ) -> Result<impl Link, ProgramError> {
+    ) -> Result<LinkRef, ProgramError> {
         attach(&mut self.data, ProbeKind::KProbe, fn_name, offset, pid)
     }
 }
@@ -65,7 +65,7 @@ impl UProbe {
         offset: u64,
         target: T,
         pid: Option<pid_t>,
-    ) -> Result<impl Link, ProgramError> {
+    ) -> Result<LinkRef, ProgramError> {
         let target = target.as_ref();
         let target_str = &*target.as_os_str().to_string_lossy();
 
@@ -128,7 +128,7 @@ fn attach(
     name: &str,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<impl Link, ProgramError> {
+) -> Result<LinkRef, ProgramError> {
     use ProbeKind::*;
 
     let perf_ty = read_sys_fs_perf_type(match kind {

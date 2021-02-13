@@ -1,5 +1,5 @@
 use libc::{setsockopt, SOL_SOCKET, SO_ATTACH_BPF, SO_DETACH_BPF};
-use std::{cell::RefCell, io, mem, os::unix::prelude::RawFd, rc::Rc};
+use std::{io, mem, os::unix::prelude::RawFd};
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER,
@@ -16,7 +16,7 @@ impl SocketFilter {
         load_program(BPF_PROG_TYPE_SOCKET_FILTER, &mut self.data)
     }
 
-    pub fn attach(&self, socket: RawFd) -> Result<impl Link, ProgramError> {
+    pub fn attach(&mut self, socket: RawFd) -> Result<LinkRef, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
 
         let ret = unsafe {
@@ -33,17 +33,16 @@ impl SocketFilter {
                 io_error: io::Error::last_os_error(),
             });
         }
-        let link = Rc::new(RefCell::new(SocketFilterLink {
+
+        Ok(self.data.link(SocketFilterLink {
             socket,
             prog_fd: Some(prog_fd),
-        }));
-
-        Ok(LinkRef::new(&link))
+        }))
     }
 }
 
 #[derive(Debug)]
-pub(crate) struct SocketFilterLink {
+struct SocketFilterLink {
     socket: RawFd,
     prog_fd: Option<RawFd>,
 }

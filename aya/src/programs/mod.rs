@@ -6,14 +6,7 @@ mod xdp;
 
 use libc::{close, ENOSPC};
 use std::{
-    cell::RefCell,
-    cmp,
-    convert::TryFrom,
-    ffi::CStr,
-    io,
-    os::raw::c_uint,
-    path::PathBuf,
-    rc::{Rc, Weak},
+    cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::raw::c_uint, path::PathBuf, rc::Rc,
 };
 use thiserror::Error;
 
@@ -151,6 +144,12 @@ impl ProgramData {
             program: self.name.clone(),
         })
     }
+
+    pub fn link<T: Link + 'static>(&mut self, link: T) -> LinkRef {
+        let link: Rc<RefCell<dyn Link>> = Rc::new(RefCell::new(link));
+        self.links.push(Rc::clone(&link));
+        LinkRef::new(link)
+    }
 }
 
 const MAX_LOG_BUF_SIZE: usize = (std::u32::MAX >> 8) as usize;
@@ -259,25 +258,19 @@ pub trait Link: std::fmt::Debug {
 }
 
 #[derive(Debug)]
-pub(crate) struct LinkRef<T: Link> {
-    inner: Weak<RefCell<T>>,
+pub struct LinkRef {
+    inner: Rc<RefCell<dyn Link>>,
 }
 
-impl<T: Link> LinkRef<T> {
-    fn new(inner: &Rc<RefCell<T>>) -> LinkRef<T> {
-        LinkRef {
-            inner: Rc::downgrade(inner),
-        }
+impl LinkRef {
+    fn new(link: Rc<RefCell<dyn Link>>) -> LinkRef {
+        LinkRef { inner: link }
     }
 }
 
-impl<T: Link> Link for LinkRef<T> {
+impl Link for LinkRef {
     fn detach(&mut self) -> Result<(), ProgramError> {
-        if let Some(inner) = self.inner.upgrade() {
-            inner.borrow_mut().detach()
-        } else {
-            Err(ProgramError::AlreadyDetached)
-        }
+        self.inner.borrow_mut().detach()
     }
 }
 

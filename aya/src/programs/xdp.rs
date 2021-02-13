@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ffi::CString, rc::Rc};
+use std::ffi::CString;
 
 use libc::if_nametoindex;
 
@@ -25,7 +25,7 @@ impl Xdp {
         self.data.name.to_string()
     }
 
-    pub fn attach(&mut self, interface: &str) -> Result<impl Link, ProgramError> {
+    pub fn attach(&mut self, interface: &str) -> Result<LinkRef, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
 
         let c_interface = CString::new(interface).unwrap();
@@ -45,10 +45,9 @@ impl Xdp {
                         io_error,
                     }
                 })? as RawFd;
-            let link = Rc::new(RefCell::new(XdpLink::FdLink(FdLink { fd: Some(link_fd) })));
-            self.data.links.push(link.clone());
-
-            Ok(LinkRef::new(&link))
+            Ok(self
+                .data
+                .link(XdpLink::FdLink(FdLink { fd: Some(link_fd) })))
         } else {
             unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, 0) }.map_err(|io_error| {
                 ProgramError::NetlinkXdpError {
@@ -57,13 +56,10 @@ impl Xdp {
                 }
             })?;
 
-            let link = Rc::new(RefCell::new(XdpLink::NlLink(NlLink {
+            Ok(self.data.link(XdpLink::NlLink(NlLink {
                 if_index,
                 prog_fd: Some(prog_fd),
-            })));
-            self.data.links.push(link.clone());
-
-            Ok(LinkRef::new(&link))
+            })))
         }
     }
 }
