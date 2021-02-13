@@ -9,12 +9,12 @@ use crate::{
 
 mod hash_map;
 mod map_lock;
-mod perf_map;
+pub mod perf_map;
 mod program_array;
 
 pub use hash_map::*;
-pub(crate) use map_lock::*;
-pub use perf_map::{PerfMap, PerfMapBuffer};
+pub use map_lock::*;
+pub use perf_map::PerfMap;
 pub use program_array::*;
 
 #[derive(Error, Debug)]
