@@ -1,7 +1,7 @@
 use std::{fs, io, str::FromStr};
 
 const ONLINE_CPUS: &str = "/sys/devices/system/cpu/online";
-const POSSIBLE_CPUS: &str = "/sys/devices/system/cpu/possible";
+pub(crate) const POSSIBLE_CPUS: &str = "/sys/devices/system/cpu/possible";
 
 pub fn online_cpus() -> Result<Vec<u32>, io::Error> {
     let data = fs::read_to_string(ONLINE_CPUS)?;

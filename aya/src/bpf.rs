@@ -9,6 +9,7 @@ use std::{
 use thiserror::Error;
 
 use crate::{
+    generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
     maps::{Map, MapError, MapLock, MapRef, MapRefMut},
     obj::{
         btf::{Btf, BtfError},
@@ -16,6 +17,7 @@ use crate::{
     },
     programs::{KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint, UProbe, Xdp},
     sys::bpf_map_update_elem_ptr,
+    util::{possible_cpus, POSSIBLE_CPUS},
 };
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
@@ -74,7 +76,16 @@ impl Bpf {
         }
 
         let mut maps = Vec::new();
-        for (_, obj) in obj.maps.drain() {
+        for (_, mut obj) in obj.maps.drain() {
+            if obj.def.map_type == BPF_MAP_TYPE_PERF_EVENT_ARRAY && obj.def.max_entries == 0 {
+                obj.def.max_entries = *possible_cpus()
+                    .map_err(|error| BpfError::FileError {
+                        path: PathBuf::from(POSSIBLE_CPUS),
+                        error,
+                    })?
+                    .last()
+                    .unwrap_or(&0);
+            }
             let mut map = Map { obj, fd: None };
             let fd = map.create()?;
             if !map.obj.data.is_empty() && map.obj.name != ".bss" {
