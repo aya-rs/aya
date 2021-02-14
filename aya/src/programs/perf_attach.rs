@@ -1,8 +1,8 @@
 use libc::close;
+use std::os::unix::io::RawFd;
 
 use crate::{
-    sys::perf_event_ioctl, RawFd, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
-    PERF_EVENT_IOC_SET_BPF,
+    sys::perf_event_ioctl, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE, PERF_EVENT_IOC_SET_BPF,
 };
 
 use super::{Link, LinkRef, ProgramData, ProgramError};

@@ -3,6 +3,7 @@ use std::{
     marker::PhantomData,
     mem,
     ops::{Deref, DerefMut},
+    os::unix::io::RawFd,
 };
 
 use crate::{
@@ -12,7 +13,7 @@ use crate::{
         bpf_map_delete_elem, bpf_map_lookup_and_delete_elem, bpf_map_lookup_elem,
         bpf_map_update_elem,
     },
-    Pod, RawFd,
+    Pod,
 };
 
 pub struct HashMap<T: Deref<Target = Map>, K, V> {

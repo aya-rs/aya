@@ -5,7 +5,10 @@ pub mod trace_point;
 pub mod xdp;
 
 use libc::{close, ENOSPC};
-use std::{cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::raw::c_uint, rc::Rc};
+use std::{
+    cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::raw::c_uint, os::unix::io::RawFd,
+    rc::Rc,
+};
 use thiserror::Error;
 
 use perf_attach::*;
@@ -14,7 +17,7 @@ pub use socket_filter::{SocketFilter, SocketFilterError};
 pub use trace_point::{TracePoint, TracePointError};
 pub use xdp::{Xdp, XdpError};
 
-use crate::{obj, sys::bpf_load_program, RawFd};
+use crate::{obj, sys::bpf_load_program};
 #[derive(Debug, Error)]
 pub enum ProgramError {
     #[error("the program is already loaded")]

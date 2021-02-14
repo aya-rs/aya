@@ -3,6 +3,7 @@ use std::{
     ffi::CStr,
     io,
     mem::{self, MaybeUninit},
+    os::unix::io::RawFd,
     slice,
 };
 
@@ -13,7 +14,7 @@ use crate::{
     generated::{bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn},
     programs::VerifierLog,
     sys::SysResult,
-    Pod, RawFd, BPF_OBJ_NAME_LEN,
+    Pod, BPF_OBJ_NAME_LEN,
 };
 
 use super::{syscall, Syscall};

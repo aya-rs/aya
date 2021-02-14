@@ -1,6 +1,6 @@
 use bitflags;
 use libc::if_nametoindex;
-use std::{ffi::CString, io};
+use std::{ffi::CString, io, os::unix::io::RawFd};
 use thiserror::Error;
 
 use crate::{
@@ -12,7 +12,6 @@ use crate::{
     sys::bpf_link_create,
     sys::kernel_version,
     sys::netlink_set_xdp_fd,
-    RawFd,
 };
 
 #[derive(Debug, Error)]

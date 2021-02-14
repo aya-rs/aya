@@ -1,4 +1,10 @@
-use std::{convert::TryFrom, io, ops::DerefMut, os::unix::prelude::AsRawFd, sync::Arc};
+use std::{
+    convert::TryFrom,
+    io,
+    ops::DerefMut,
+    os::unix::io::{AsRawFd, RawFd},
+    sync::Arc,
+};
 
 use bytes::BytesMut;
 use libc::{sysconf, _SC_PAGESIZE};
@@ -9,7 +15,6 @@ use crate::{
     maps::perf_map::{Events, PerfBuffer, PerfBufferError},
     maps::{Map, MapError, MapRefMut},
     sys::bpf_map_update_elem,
-    RawFd,
 };
 
 #[derive(Error, Debug)]

@@ -1,10 +1,10 @@
-use std::{ffi::CString, io};
+use std::{ffi::CString, io, os::unix::io::RawFd};
 use thiserror::Error;
 
 use crate::{
     obj,
     sys::{bpf_create_map, bpf_map_get_next_key},
-    Pod, RawFd,
+    Pod,
 };
 
 mod hash_map;

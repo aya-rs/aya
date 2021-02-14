@@ -1,7 +1,7 @@
 use std::{
     ffi::c_void,
     io, mem,
-    os::unix::prelude::AsRawFd,
+    os::unix::io::{AsRawFd, RawFd},
     ptr, slice,
     sync::atomic::{self, AtomicPtr, Ordering},
 };
@@ -13,7 +13,7 @@ use thiserror::Error;
 use crate::{
     generated::{perf_event_header, perf_event_mmap_page, perf_event_type::*},
     sys::{perf_event_ioctl, perf_event_open},
-    RawFd, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
+    PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
 
 #[derive(Error, Debug)]
