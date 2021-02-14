@@ -6,7 +6,12 @@ pub mod xdp;
 
 use libc::{close, ENOSPC};
 use std::{
-    cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::raw::c_uint, os::unix::io::RawFd,
+    cell::RefCell,
+    cmp,
+    convert::TryFrom,
+    ffi::CStr,
+    io,
+    os::{raw::c_uint, unix::io::RawFd},
     rc::Rc,
 };
 use thiserror::Error;

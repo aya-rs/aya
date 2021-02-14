@@ -9,9 +9,7 @@ use crate::{
         XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE, XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
     programs::{load_program, FdLink, Link, LinkRef, ProgramData, ProgramError},
-    sys::bpf_link_create,
-    sys::kernel_version,
-    sys::netlink_set_xdp_fd,
+    sys::{bpf_link_create, kernel_version, netlink_set_xdp_fd},
 };
 
 #[derive(Debug, Error)]

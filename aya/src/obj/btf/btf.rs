@@ -12,8 +12,7 @@ use thiserror::Error;
 
 use crate::{
     generated::{btf_ext_header, btf_header},
-    obj::btf::relocation::Relocation,
-    obj::btf::BtfType,
+    obj::btf::{relocation::Relocation, BtfType},
 };
 
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;

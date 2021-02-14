@@ -12,8 +12,10 @@ use thiserror::Error;
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-    maps::perf_map::{Events, PerfBuffer, PerfBufferError},
-    maps::{Map, MapError, MapRefMut},
+    maps::{
+        perf_map::{Events, PerfBuffer, PerfBufferError},
+        Map, MapError, MapRefMut,
+    },
     sys::bpf_map_update_elem,
 };
 
