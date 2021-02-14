@@ -1,10 +1,19 @@
-use std::{collections::HashMap, convert::TryFrom, error::Error, io};
+use std::{
+    collections::HashMap,
+    convert::TryFrom,
+    error::Error,
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 use thiserror::Error;
 
 use crate::{
     maps::{Map, MapError, MapLock, MapRef, MapRefMut},
-    obj::{btf::BtfError, Object, ParseError},
+    obj::{
+        btf::{Btf, BtfError},
+        Object, ParseError,
+    },
     programs::{KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint, UProbe, Xdp},
     sys::bpf_map_update_elem_ptr,
 };
@@ -46,10 +55,23 @@ pub struct Bpf {
 }
 
 impl Bpf {
-    pub fn load(data: &[u8]) -> Result<Bpf, BpfError> {
+    pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Bpf, BpfError> {
+        let path = path.as_ref();
+        Bpf::load(
+            &fs::read(path).map_err(|error| BpfError::FileError {
+                path: path.to_owned(),
+                error,
+            })?,
+            Some(Btf::from_sys_fs()?),
+        )
+    }
+
+    pub fn load(data: &[u8], target_btf: Option<Btf>) -> Result<Bpf, BpfError> {
         let mut obj = Object::parse(data)?;
 
-        obj.relocate_btf()?;
+        if let Some(btf) = target_btf {
+            obj.relocate_btf(btf)?;
+        }
 
         let mut maps = Vec::new();
         for (_, obj) in obj.maps.drain() {
@@ -152,13 +174,17 @@ impl Bpf {
 
 #[derive(Debug, Error)]
 pub enum BpfError {
-    #[error("IO error: {0}")]
-    IO(#[from] io::Error),
+    #[error("error loading {path}")]
+    FileError {
+        path: PathBuf,
+        #[source]
+        error: io::Error,
+    },
 
     #[error("error parsing BPF object: {0}")]
     ParseError(#[from] ParseError),
 
-    #[error("BTF error: {0}")]
+    #[error("BTF error")]
     BtfError(#[from] BtfError),
 
     #[error("error relocating BPF program `{program_name}`: {error}")]

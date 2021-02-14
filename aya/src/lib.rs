@@ -14,3 +14,5 @@ mod sys;
 pub mod util;
 
 pub use bpf::*;
+pub use obj::btf::{Btf, BtfError};
+pub use object::Endianness;

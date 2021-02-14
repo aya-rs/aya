@@ -2,7 +2,9 @@ use std::{
     borrow::Cow,
     convert::TryInto,
     ffi::{c_void, CStr},
-    mem, ptr,
+    fs, io, mem,
+    path::{Path, PathBuf},
+    ptr,
 };
 
 use object::Endianness;
@@ -17,8 +19,15 @@ use crate::{
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
 pub(crate) const MAX_SPEC_LEN: usize = 64;
 
-#[derive(Error, Debug, Clone, Eq, PartialEq)]
+#[derive(Error, Debug)]
 pub enum BtfError {
+    #[error("error parsing {path}")]
+    FileError {
+        path: PathBuf,
+        #[source]
+        error: io::Error,
+    },
+
     #[error("error parsing BTF header")]
     InvalidHeader,
 
@@ -70,6 +79,21 @@ pub struct Btf {
 }
 
 impl Btf {
+    pub fn from_sys_fs() -> Result<Btf, BtfError> {
+        Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
+    }
+
+    pub fn parse_file<P: AsRef<Path>>(path: P, endianness: Endianness) -> Result<Btf, BtfError> {
+        let path = path.as_ref();
+        Btf::parse(
+            &fs::read(path).map_err(|error| BtfError::FileError {
+                path: path.to_owned(),
+                error,
+            })?,
+            endianness,
+        )
+    }
+
     pub(crate) fn parse(data: &[u8], endianness: Endianness) -> Result<Btf, BtfError> {
         if data.len() < mem::size_of::<btf_header>() {
             return Err(BtfError::InvalidHeader);
