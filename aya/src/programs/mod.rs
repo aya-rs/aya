@@ -1,18 +1,18 @@
 mod perf_attach;
-mod probe;
-mod socket_filter;
-mod trace_point;
-mod xdp;
+pub mod probe;
+pub mod socket_filter;
+pub mod trace_point;
+pub mod xdp;
 
 use libc::{close, ENOSPC};
 use std::{cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::raw::c_uint, rc::Rc};
 use thiserror::Error;
 
 use perf_attach::*;
-pub use probe::*;
-pub use socket_filter::*;
-pub use trace_point::*;
-pub use xdp::*;
+pub use probe::{KProbe, KProbeError, UProbe, UProbeError};
+pub use socket_filter::{SocketFilter, SocketFilterError};
+pub use trace_point::{TracePoint, TracePointError};
+pub use xdp::{Xdp, XdpError};
 
 use crate::{obj, sys::bpf_load_program, RawFd};
 #[derive(Debug, Error)]

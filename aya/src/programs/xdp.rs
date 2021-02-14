@@ -1,9 +1,13 @@
+use bitflags;
 use libc::if_nametoindex;
 use std::{ffi::CString, io};
 use thiserror::Error;
 
 use crate::{
-    generated::{bpf_attach_type::BPF_XDP, bpf_prog_type::BPF_PROG_TYPE_XDP, XDP_FLAGS_REPLACE},
+    generated::{
+        bpf_attach_type::BPF_XDP, bpf_prog_type::BPF_PROG_TYPE_XDP, XDP_FLAGS_DRV_MODE,
+        XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE, XDP_FLAGS_UPDATE_IF_NOEXIST,
+    },
     programs::{load_program, FdLink, Link, LinkRef, ProgramData, ProgramError},
     sys::bpf_link_create,
     sys::kernel_version,
@@ -20,6 +24,17 @@ pub enum XdpError {
     },
 }
 
+bitflags! {
+    #[derive(Default)]
+    pub struct XdpFlags: u32 {
+        const SKB_MODE = XDP_FLAGS_SKB_MODE;
+        const DRV_MODE = XDP_FLAGS_DRV_MODE;
+        const HW_MODE = XDP_FLAGS_HW_MODE;
+        const REPLACE = XDP_FLAGS_REPLACE;
+        const UPDATE_IF_NOEXIST = XDP_FLAGS_UPDATE_IF_NOEXIST;
+    }
+}
+
 #[derive(Debug)]
 pub struct Xdp {
     pub(crate) data: ProgramData,
@@ -34,7 +49,7 @@ impl Xdp {
         self.data.name.to_string()
     }
 
-    pub fn attach(&mut self, interface: &str) -> Result<LinkRef, ProgramError> {
+    pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<LinkRef, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
 
         let c_interface = CString::new(interface).unwrap();
@@ -47,7 +62,7 @@ impl Xdp {
 
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, if_index + 42, BPF_XDP, 0)
+            let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, flags.bits)
                 .map_err(|(_, io_error)| ProgramError::BpfLinkCreateError { io_error })?
                 as RawFd;
             Ok(self
