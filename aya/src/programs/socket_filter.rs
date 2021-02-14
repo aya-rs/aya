@@ -1,9 +1,9 @@
-use libc::{setsockopt, SOL_SOCKET, SO_ATTACH_BPF, SO_DETACH_BPF};
+use libc::{setsockopt, SOL_SOCKET};
 use std::{io, mem, os::unix::prelude::RawFd};
 use thiserror::Error;
 
 use crate::{
-    generated::bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER,
+    generated::{bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF},
     programs::{load_program, Link, LinkRef, ProgramData, ProgramError},
 };
 
@@ -33,7 +33,7 @@ impl SocketFilter {
             setsockopt(
                 socket,
                 SOL_SOCKET,
-                SO_ATTACH_BPF,
+                SO_ATTACH_BPF as i32,
                 &prog_fd as *const _ as *const _,
                 mem::size_of::<RawFd>() as u32,
             )
@@ -64,7 +64,7 @@ impl Link for SocketFilterLink {
                 setsockopt(
                     self.socket,
                     SOL_SOCKET,
-                    SO_DETACH_BPF,
+                    SO_DETACH_BPF as i32,
                     &fd as *const _ as *const _,
                     mem::size_of::<RawFd>() as u32,
                 );

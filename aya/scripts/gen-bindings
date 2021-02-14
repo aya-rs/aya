@@ -36,7 +36,9 @@ BPF_VARS="\
     BPF_DW \
     BPF_W \
     BPF_H \
-    BPF_B
+    BPF_B \
+    SO_ATTACH_BPF \
+    SO_DETACH_BPF
     "
 
 BTF_TYPES="\

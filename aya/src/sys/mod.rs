@@ -5,7 +5,7 @@ mod perf_event;
 #[cfg(test)]
 mod fake;
 
-use std::{ffi::CString, io, mem};
+use std::{convert::TryInto, ffi::CString, io, mem};
 
 use libc::{c_int, c_long, c_ulong, pid_t, utsname};
 
@@ -61,7 +61,9 @@ unsafe fn syscall_impl(call: Syscall) -> SysResult {
             group,
             flags,
         } => libc::syscall(SYS_perf_event_open, &attr, pid, cpu, group, flags),
-        PerfEventIoctl { fd, request, arg } => libc::ioctl(fd, request, arg) as i64,
+        PerfEventIoctl { fd, request, arg } => {
+            libc::ioctl(fd, request.try_into().unwrap(), arg) as i64
+        }
     };
 
     if ret < 0 {
