@@ -192,7 +192,7 @@ pub enum BpfError {
         error: io::Error,
     },
 
-    #[error("error parsing BPF object: {0}")]
+    #[error("error parsing BPF object")]
     ParseError(#[from] ParseError),
 
     #[error("BTF error")]
