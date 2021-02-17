@@ -58,7 +58,9 @@ pub(crate) struct Program {
 #[derive(Debug, Copy, Clone)]
 pub enum ProgramKind {
     KProbe,
+    KRetProbe,
     UProbe,
+    URetProbe,
     TracePoint,
     SocketFilter,
     Xdp,
@@ -71,7 +73,9 @@ impl FromStr for ProgramKind {
         use ProgramKind::*;
         Ok(match kind {
             "kprobe" => KProbe,
+            "kretprobe" => KRetProbe,
             "uprobe" => UProbe,
+            "uretprobe" => URetProbe,
             "xdp" => Xdp,
             "trace_point" => TracePoint,
             "socket_filter" => SocketFilter,
@@ -186,7 +190,9 @@ impl Object {
                     .insert(name.to_string(), parse_map(&section, name)?);
             }
             &[ty @ "kprobe", name]
+            | &[ty @ "kretprobe", name]
             | &[ty @ "uprobe", name]
+            | &[ty @ "uretprobe", name]
             | &[ty @ "socket_filter", name]
             | &[ty @ "xdp", name]
             | &[ty @ "trace_point", name] => {

@@ -65,11 +65,13 @@ pub enum UProbeError {
 #[derive(Debug)]
 pub struct KProbe {
     pub(crate) data: ProgramData,
+    pub(crate) kind: ProbeKind,
 }
 
 #[derive(Debug)]
 pub struct UProbe {
     pub(crate) data: ProgramData,
+    pub(crate) kind: ProbeKind,
 }
 
 impl KProbe {
@@ -87,7 +89,7 @@ impl KProbe {
         offset: u64,
         pid: Option<pid_t>,
     ) -> Result<LinkRef, ProgramError> {
-        attach(&mut self.data, ProbeKind::KProbe, fn_name, offset, pid)
+        attach(&mut self.data, self.kind, fn_name, offset, pid)
     }
 }
 
@@ -147,17 +149,12 @@ impl UProbe {
             0
         };
 
-        attach(
-            &mut self.data,
-            ProbeKind::UProbe,
-            &path,
-            sym_offset + offset,
-            pid,
-        )
+        attach(&mut self.data, self.kind, &path, sym_offset + offset, pid)
     }
 }
 
-enum ProbeKind {
+#[derive(Debug, Copy, Clone)]
+pub(crate) enum ProbeKind {
     KProbe,
     KRetProbe,
     UProbe,

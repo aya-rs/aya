@@ -15,7 +15,10 @@ use crate::{
         btf::{Btf, BtfError},
         Object, ParseError,
     },
-    programs::{KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint, UProbe, Xdp},
+    programs::{
+        probe::ProbeKind, KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint,
+        UProbe, Xdp,
+    },
     sys::bpf_map_update_elem_ptr,
     util::{possible_cpus, POSSIBLE_CPUS},
 };
@@ -109,8 +112,22 @@ impl Bpf {
                     links: Vec::new(),
                 };
                 let program = match kind {
-                    crate::obj::ProgramKind::KProbe => Program::KProbe(KProbe { data }),
-                    crate::obj::ProgramKind::UProbe => Program::UProbe(UProbe { data }),
+                    crate::obj::ProgramKind::KProbe => Program::KProbe(KProbe {
+                        data,
+                        kind: ProbeKind::KProbe,
+                    }),
+                    crate::obj::ProgramKind::KRetProbe => Program::KProbe(KProbe {
+                        data,
+                        kind: ProbeKind::KRetProbe,
+                    }),
+                    crate::obj::ProgramKind::UProbe => Program::UProbe(UProbe {
+                        data,
+                        kind: ProbeKind::UProbe,
+                    }),
+                    crate::obj::ProgramKind::URetProbe => Program::UProbe(UProbe {
+                        data,
+                        kind: ProbeKind::URetProbe,
+                    }),
                     crate::obj::ProgramKind::TracePoint => Program::TracePoint(TracePoint { data }),
                     crate::obj::ProgramKind::SocketFilter => {
                         Program::SocketFilter(SocketFilter { data })
