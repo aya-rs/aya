@@ -5,7 +5,9 @@ mod perf_event;
 #[cfg(test)]
 mod fake;
 
-use std::{convert::TryInto, ffi::CString, io, mem};
+#[cfg(not(test))]
+use std::convert::TryInto;
+use std::{ffi::CString, io, mem};
 
 use libc::{c_int, c_long, c_ulong, pid_t, utsname};
 
