@@ -93,15 +93,17 @@ impl Object {
         let obj = object::read::File::parse(data).map_err(|e| ParseError::ElfError(e))?;
         let endianness = obj.endianness();
 
-        let section = obj
-            .section_by_name("license")
-            .ok_or(ParseError::MissingLicense)?;
-        let license = parse_license(Section::try_from(&section)?.data)?;
+        let license = if let Some(section) = obj.section_by_name("license") {
+            parse_license(Section::try_from(&section)?.data)?
+        } else {
+            CString::new("GPL").unwrap()
+        };
 
-        let section = obj
-            .section_by_name("version")
-            .ok_or(ParseError::MissingKernelVersion)?;
-        let kernel_version = parse_version(Section::try_from(&section)?.data, endianness)?;
+        let kernel_version = if let Some(section) = obj.section_by_name("version") {
+            parse_version(Section::try_from(&section)?.data, endianness)?
+        } else {
+            KernelVersion::Any
+        };
 
         let mut bpf_obj = Object::new(endianness, license, kernel_version);
 
@@ -215,17 +217,11 @@ pub enum ParseError {
     #[error("error parsing ELF data")]
     ElfError(#[from] object::read::Error),
 
-    #[error("no license specified")]
-    MissingLicense,
-
     #[error("invalid license `{data:?}`: missing NULL terminator")]
     MissingLicenseNullTerminator { data: Vec<u8> },
 
     #[error("invalid license `{data:?}`")]
     InvalidLicense { data: Vec<u8> },
-
-    #[error("missing kernel version")]
-    MissingKernelVersion,
 
     #[error("invalid kernel version `{data:?}`")]
     InvalidKernelVersion { data: Vec<u8> },
