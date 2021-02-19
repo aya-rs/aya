@@ -1,0 +1,13 @@
+[package]
+name = "aya-bpf-macros"
+version = "0.1.0"
+authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = {version = "1.0", features = ["full"]}

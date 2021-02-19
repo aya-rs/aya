@@ -1,0 +1,32 @@
+language: rust
+
+matrix:
+  include:
+      # MSRV
+    - env: TARGET=x86_64-unknown-linux-gnu
+      rust: 1.30.0
+
+    - env: TARGET=x86_64-unknown-linux-gnu
+      rust: stable
+
+before_install: set -e
+
+install:
+  - sh ci/install.sh
+
+script:
+  - sh ci/script.sh
+
+after_script: set +e
+
+cache: cargo
+
+branches:
+  only:
+    - master
+    - staging
+    - trying
+
+notifications:
+  email:
+    on_success: never
