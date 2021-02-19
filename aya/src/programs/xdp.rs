@@ -58,7 +58,7 @@ impl Xdp {
         }
 
         let k_ver = kernel_version().unwrap();
-        if k_ver >= (5, 7, 0) {
+        if k_ver >= (5, 9, 0) {
             let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, flags.bits)
                 .map_err(|(_, io_error)| ProgramError::BpfLinkCreateError { io_error })?
                 as RawFd;
