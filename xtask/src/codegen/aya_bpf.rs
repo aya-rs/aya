@@ -14,6 +14,8 @@ use syn::{
     Type,
 };
 
+use crate::codegen::getters::{generate_getters_for_items, Getter};
+
 #[derive(StructOpt)]
 pub struct CodegenOptions {
     #[structopt(long)]
@@ -57,15 +59,17 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
 
     // delete the helpers, then rewrite them in helpers.rs
     let mut tree = parse_str::<syn::File>(bindings).unwrap();
+
     let mut tx = RewriteBpfHelpers {
         helpers: Vec::new(),
     };
     tx.visit_file_mut(&mut tree);
 
+    let bindings = tree.to_token_stream().to_string();
     let filename = generated.join("bindings.rs");
     {
         let mut file = File::create(&filename)?;
-        write!(file, "{}", tree.to_token_stream())?;
+        write!(file, "{}", bindings)?;
     }
     Command::new("rustfmt").arg(filename).status()?;
 
@@ -79,7 +83,43 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
     }
     Command::new("rustfmt").arg(filename).status()?;
 
+    let getters = generate_getters_for_items(&tree.items, gen_probe_read_getter);
+    let filename = generated.join("getters.rs");
+    {
+        let mut file = File::create(&filename)?;
+        write!(file, "use crate::bpf::generated::bindings::*;")?;
+        write!(file, "{}", getters)?;
+    }
+    Command::new("rustfmt").arg(filename).status()?;
+
     Ok(())
+}
+
+fn gen_probe_read_getter(getter: &Getter<'_>) -> TokenStream {
+    let ident = getter.ident;
+    let ty = getter.ty;
+    let prefix = &getter.prefix;
+    match ty {
+        Type::Ptr(_) => {
+            quote! {
+                pub fn #ident(&self) -> Option<#ty> {
+                    let v = unsafe { crate::bpf::helpers::bpf_probe_read(&#(#prefix).*.#ident) }.ok()?;
+                    if v.is_null() {
+                        None
+                    } else {
+                        Some(v)
+                    }
+                }
+            }
+        }
+        _ => {
+            quote! {
+                pub fn #ident(&self) -> Option<#ty> {
+                    unsafe { crate::bpf::helpers::bpf_probe_read(&#(#prefix).*.#ident) }.ok()
+                }
+            }
+        }
+    }
 }
 
 struct RewriteBpfHelpers {

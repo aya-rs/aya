@@ -4,11 +4,9 @@ version = "0.1.0"
 authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 structopt = {version = "0.3", default-features = false }
 anyhow = "1"
-syn = {version = "1", features = ["visit-mut"] }
+syn = {version = "1", features = ["visit-mut", "extra-traits"] }
 quote = "1"
 proc-macro2 = "1"
