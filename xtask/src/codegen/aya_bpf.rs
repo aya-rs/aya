@@ -14,7 +14,10 @@ use syn::{
     Type,
 };
 
-use crate::codegen::getters::{generate_getters_for_items, Getter};
+use crate::codegen::{
+    bindgen::bindgen,
+    getters::{generate_getters_for_items, Getter},
+};
 
 #[derive(StructOpt)]
 pub struct CodegenOptions {
@@ -26,26 +29,10 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
     let dir = PathBuf::from("bpf/aya-bpf");
     let generated = dir.join("src/bpf/generated");
 
-    let types: Vec<&str> = vec!["bpf_map_.*"];
-    let vars = vec!["BPF_.*", "bpf_.*"];
-    let mut cmd = Command::new("bindgen");
-    cmd.arg("--no-layout-tests")
-        .arg("--use-core")
-        .arg("--ctypes-prefix")
-        .arg("::aya_bpf_cty")
-        .arg("--default-enum-style")
-        .arg("consts")
-        .arg("--no-prepend-enum-name")
-        .arg(&*dir.join("include/aya_bpf_bindings.h").to_string_lossy());
-
-    for x in types {
-        cmd.arg("--whitelist-type").arg(x);
-    }
-
-    for x in vars {
-        cmd.arg("--whitelist-var").arg(x);
-    }
-
+    let types = ["bpf_map_.*"];
+    let vars = ["BPF_.*", "bpf_.*"];
+    let mut cmd = bindgen(&types, &vars);
+    cmd.arg(&*dir.join("include/aya_bpf_bindings.h").to_string_lossy());
     cmd.arg("--");
     cmd.arg("-I").arg(opts.libbpf_dir.join("src"));
 
