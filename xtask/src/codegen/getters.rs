@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use indexmap::IndexMap;
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, TokenStreamExt};
 use syn::{
@@ -9,7 +8,7 @@ use syn::{
 
 pub struct GetterList<'a> {
     slf: Ident,
-    item_fields: HashMap<Ident, (&'a Item, &'a FieldsNamed)>,
+    item_fields: IndexMap<Ident, (&'a Item, &'a FieldsNamed)>,
 }
 
 impl<'a> GetterList<'a> {
