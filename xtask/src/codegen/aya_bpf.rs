@@ -15,7 +15,7 @@ use syn::{
 };
 
 use crate::codegen::{
-    bindgen::bindgen,
+    bindings::bindgen,
     getters::{generate_getters_for_items, Getter},
 };
 
