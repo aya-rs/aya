@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write, path::PathBuf, process::Command};
+use std::path::PathBuf;
 
 use anyhow::anyhow;
 use proc_macro2::TokenStream;
@@ -15,7 +15,7 @@ use syn::{
 };
 
 use crate::codegen::{
-    bindings::bindgen,
+    bindings::{self, bindgen},
     getters::{generate_getters_for_items, Getter},
 };
 
@@ -52,32 +52,23 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
     };
     tx.visit_file_mut(&mut tree);
 
-    let bindings = tree.to_token_stream().to_string();
-    let filename = generated.join("bindings.rs");
-    {
-        let mut file = File::create(&filename)?;
-        write!(file, "{}", bindings)?;
-    }
-    Command::new("rustfmt").arg(filename).status()?;
+    bindings::write(
+        &tree.to_token_stream().to_string(),
+        "",
+        &generated.join("bindings.rs"),
+    )?;
 
-    let filename = generated.join("helpers.rs");
-    {
-        let mut file = File::create(&filename)?;
-        write!(file, "use crate::bpf::generated::bindings::*;")?;
-        for helper in &tx.helpers {
-            file.write(helper.as_bytes())?;
-        }
-    }
-    Command::new("rustfmt").arg(filename).status()?;
+    bindings::write(
+        &tx.helpers.join(""),
+        "use crate::bpf::generated::bindings::*;",
+        &generated.join("helpers.rs"),
+    )?;
 
-    let getters = generate_getters_for_items(&tree.items, gen_probe_read_getter);
-    let filename = generated.join("getters.rs");
-    {
-        let mut file = File::create(&filename)?;
-        write!(file, "use crate::bpf::generated::bindings::*;")?;
-        write!(file, "{}", getters)?;
-    }
-    Command::new("rustfmt").arg(filename).status()?;
+    bindings::write(
+        &generate_getters_for_items(&tree.items, gen_probe_read_getter).to_string(),
+        "use crate::bpf::generated::bindings::*;",
+        &generated.join("getters.rs"),
+    )?;
 
     Ok(())
 }

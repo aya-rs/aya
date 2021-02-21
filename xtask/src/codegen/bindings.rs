@@ -1,4 +1,9 @@
-use std::process::Command;
+use std::{
+    fs::File,
+    io::{self, Write},
+    path::Path,
+    process::Command,
+};
 
 pub fn bindgen(types: &[&str], vars: &[&str]) -> Command {
     let mut cmd = Command::new("bindgen");
@@ -19,4 +24,13 @@ pub fn bindgen(types: &[&str], vars: &[&str]) -> Command {
     }
 
     cmd
+}
+
+pub fn write(bindings: &str, header: &str, filename: &Path) -> io::Result<()> {
+    let mut file = File::create(&filename)?;
+    file.write(header.as_bytes())?;
+    file.write(bindings.as_bytes())?;
+
+    Command::new("rustfmt").arg(filename).status()?;
+    Ok(())
 }
