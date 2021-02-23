@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{bpf::pt_regs, BpfContext};
+use crate::{bindings::pt_regs, BpfContext};
 
 pub struct ProbeContext {
     regs: *mut pt_regs,

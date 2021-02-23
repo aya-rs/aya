@@ -1,14 +1,16 @@
 #![no_std]
 
-pub mod bpf;
+pub use aya_bpf_bindings::bindings;
+
+pub mod helpers;
 pub mod maps;
 pub mod programs;
 
 pub use aya_bpf_cty as cty;
 
-use bpf::helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid};
 use core::ffi::c_void;
 use cty::c_char;
+use helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid};
 
 pub use aya_bpf_macros as macros;
 

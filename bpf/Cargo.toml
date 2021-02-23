@@ -1,2 +1,2 @@
 [workspace]
-members = ["aya-bpf", "aya-bpf-macros"]
+members = ["aya-bpf", "aya-bpf-macros", "aya-bpf-bindings"]

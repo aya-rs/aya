@@ -1,10 +1,9 @@
 use core::mem::{self, MaybeUninit};
 
-use crate::{
-    bpf::generated::helpers as gen,
-    cty::{c_char, c_long, c_void},
-};
+use aya_bpf_bindings::helpers as gen;
 pub use gen::*;
+
+use crate::cty::{c_char, c_long, c_void};
 
 #[inline]
 pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {

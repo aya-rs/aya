@@ -1,10 +1,8 @@
 use core::{marker::PhantomData, mem};
 
 use crate::{
-    bpf::{
-        bpf_map_def, helpers::bpf_perf_event_output, BPF_F_CURRENT_CPU,
-        BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-    },
+    bindings::{bpf_map_def, BPF_F_CURRENT_CPU, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
+    helpers::bpf_perf_event_output,
     BpfContext,
 };
 

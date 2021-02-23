@@ -17,22 +17,26 @@ use syn::{
 use crate::codegen::{
     bindings::{self, bindgen},
     getters::{generate_getters_for_items, Getter},
+    Architecture,
 };
 
 #[derive(StructOpt)]
 pub struct CodegenOptions {
     #[structopt(long)]
+    arch: Architecture,
+
+    #[structopt(long)]
     libbpf_dir: PathBuf,
 }
 
 pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
-    let dir = PathBuf::from("bpf/aya-bpf");
-    let generated = dir.join("src/bpf/generated");
+    let dir = PathBuf::from("bpf/aya-bpf-bindings");
+    let generated = dir.join("src").join(opts.arch.to_string());
 
     let types = ["bpf_map_.*"];
     let vars = ["BPF_.*", "bpf_.*"];
     let mut cmd = bindgen(&types, &vars);
-    cmd.arg(&*dir.join("include/aya_bpf_bindings.h").to_string_lossy());
+    cmd.arg(&*dir.join("include/bindings.h").to_string_lossy());
     cmd.arg("--");
     cmd.arg("-I").arg(opts.libbpf_dir.join("src"));
 
@@ -60,13 +64,13 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
 
     bindings::write(
         &tx.helpers.join(""),
-        "use crate::bpf::generated::bindings::*;",
+        "use super::bindings::*;",
         &generated.join("helpers.rs"),
     )?;
 
     bindings::write(
         &generate_getters_for_items(&tree.items, gen_probe_read_getter).to_string(),
-        "use crate::bpf::generated::bindings::*;",
+        "use super::bindings::*;",
         &generated.join("getters.rs"),
     )?;
 
@@ -81,7 +85,7 @@ fn gen_probe_read_getter(getter: &Getter<'_>) -> TokenStream {
         Type::Ptr(_) => {
             quote! {
                 pub fn #ident(&self) -> Option<#ty> {
-                    let v = unsafe { crate::bpf::helpers::bpf_probe_read(&#(#prefix).*.#ident) }.ok()?;
+                    let v = unsafe { crate::bpf_probe_read(&#(#prefix).*.#ident) }.ok()?;
                     if v.is_null() {
                         None
                     } else {
@@ -93,7 +97,7 @@ fn gen_probe_read_getter(getter: &Getter<'_>) -> TokenStream {
         _ => {
             quote! {
                 pub fn #ident(&self) -> Option<#ty> {
-                    unsafe { crate::bpf::helpers::bpf_probe_read(&#(#prefix).*.#ident) }.ok()
+                    unsafe { crate::bpf_probe_read(&#(#prefix).*.#ident) }.ok()
                 }
             }
         }
