@@ -1,6 +1,5 @@
 mod aya_bpf_bindings;
 mod bindings;
-pub mod getters;
 
 use structopt::StructOpt;
 

@@ -9,14 +9,15 @@ use syn::{
     punctuated::Punctuated,
     token::Comma,
     visit_mut::{self, VisitMut},
-    AngleBracketedGenericArguments, ForeignItemStatic, GenericArgument, Ident, Item,
+    AngleBracketedGenericArguments, ForeignItemStatic, GenericArgument, Ident, Item, Path,
     PathArguments::AngleBracketed,
     Type,
 };
 
+use aya_gen::getters::{generate_getters_for_items, probe_read_getter};
+
 use crate::codegen::{
     bindings::{self, bindgen},
-    getters::{generate_getters_for_items, Getter},
     Architecture,
 };
 
@@ -68,40 +69,17 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
         &generated.join("helpers.rs"),
     )?;
 
+    let bpf_probe_read = syn::parse_str::<Path>("crate::bpf_probe_read").unwrap();
     bindings::write(
-        &generate_getters_for_items(&tree.items, gen_probe_read_getter).to_string(),
+        &generate_getters_for_items(&tree.items, |getter| {
+            probe_read_getter(getter, &bpf_probe_read)
+        })
+        .to_string(),
         "use super::bindings::*;",
         &generated.join("getters.rs"),
     )?;
 
     Ok(())
-}
-
-fn gen_probe_read_getter(getter: &Getter<'_>) -> TokenStream {
-    let ident = getter.ident;
-    let ty = getter.ty;
-    let prefix = &getter.prefix;
-    match ty {
-        Type::Ptr(_) => {
-            quote! {
-                pub fn #ident(&self) -> Option<#ty> {
-                    let v = unsafe { crate::bpf_probe_read(&#(#prefix).*.#ident) }.ok()?;
-                    if v.is_null() {
-                        None
-                    } else {
-                        Some(v)
-                    }
-                }
-            }
-        }
-        _ => {
-            quote! {
-                pub fn #ident(&self) -> Option<#ty> {
-                    unsafe { crate::bpf_probe_read(&#(#prefix).*.#ident) }.ok()
-                }
-            }
-        }
-    }
 }
 
 struct RewriteBpfHelpers {
