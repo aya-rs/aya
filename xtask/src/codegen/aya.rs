@@ -1,23 +1,16 @@
 use anyhow::anyhow;
 use std::path::PathBuf;
-use structopt::StructOpt;
 
 use aya_gen::{bindgen, write_to_file};
 
-use crate::codegen::Architecture;
+use crate::codegen::{Architecture, Options};
 
-#[derive(StructOpt)]
-pub struct CodegenOptions {
-    #[structopt(long)]
-    libbpf_dir: PathBuf,
+pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
+    codegen_internal_btf_bindings(opts)?;
+    codegen_bindings(opts)
 }
 
-pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
-    codegen_internal_btf_bindings(&opts)?;
-    codegen_bindings(&opts)
-}
-
-fn codegen_internal_btf_bindings(opts: &CodegenOptions) -> Result<(), anyhow::Error> {
+fn codegen_internal_btf_bindings(opts: &Options) -> Result<(), anyhow::Error> {
     let dir = PathBuf::from("aya");
     let generated = dir.join("src/generated");
     let mut bindgen = bindgen::user_builder().header(
@@ -46,7 +39,7 @@ fn codegen_internal_btf_bindings(opts: &CodegenOptions) -> Result<(), anyhow::Er
     Ok(())
 }
 
-fn codegen_bindings(opts: &CodegenOptions) -> Result<(), anyhow::Error> {
+fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
     let types = [
         // BPF
         "BPF_TYPES",

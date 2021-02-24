@@ -2,6 +2,8 @@ mod aya;
 mod aya_bpf_bindings;
 mod helpers;
 
+use std::path::PathBuf;
+
 use structopt::StructOpt;
 
 const SUPPORTED_ARCHS: &'static [Architecture] = &[Architecture::X86_64, Architecture::AArch64];
@@ -41,22 +43,29 @@ impl std::fmt::Display for Architecture {
 
 #[derive(StructOpt)]
 pub struct Options {
+    #[structopt(long)]
+    libbpf_dir: PathBuf,
+
     #[structopt(subcommand)]
-    command: Command,
+    command: Option<Command>,
 }
 
 #[derive(StructOpt)]
 enum Command {
     #[structopt(name = "aya")]
-    Aya(aya::CodegenOptions),
+    Aya,
     #[structopt(name = "aya-bpf-bindings")]
-    AyaBpfBindings(aya_bpf_bindings::CodegenOptions),
+    AyaBpfBindings,
 }
 
 pub fn codegen(opts: Options) -> Result<(), anyhow::Error> {
     use Command::*;
     match opts.command {
-        Aya(opts) => aya::codegen(opts),
-        AyaBpfBindings(opts) => aya_bpf_bindings::codegen(opts),
+        Some(Aya) => aya::codegen(&opts),
+        Some(AyaBpfBindings) => aya_bpf_bindings::codegen(&opts),
+        None => {
+            aya::codegen(&opts)?;
+            aya_bpf_bindings::codegen(&opts)
+        }
     }
 }

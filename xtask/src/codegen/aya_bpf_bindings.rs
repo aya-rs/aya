@@ -2,7 +2,6 @@ use anyhow::anyhow;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use std::path::PathBuf;
-use structopt::StructOpt;
 
 use aya_gen::{
     bindgen,
@@ -13,16 +12,10 @@ use syn::{parse_str, Item};
 
 use crate::codegen::{
     helpers::{expand_helpers, extract_helpers},
-    Architecture,
+    Architecture, Options,
 };
 
-#[derive(StructOpt)]
-pub struct CodegenOptions {
-    #[structopt(long)]
-    libbpf_dir: PathBuf,
-}
-
-pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
+pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
     let dir = PathBuf::from("bpf/aya-bpf-bindings");
 
     let builder = || {
