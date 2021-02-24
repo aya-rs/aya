@@ -4,11 +4,14 @@ use quote::ToTokens;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-use aya_gen::getters::{generate_getters_for_items, probe_read_getter};
+use aya_gen::{
+    bindgen,
+    getters::{generate_getters_for_items, probe_read_getter},
+    write_to_file, write_to_file_fmt,
+};
 use syn::{parse_str, Item};
 
 use crate::codegen::{
-    bindings::{self, bindgen},
     helpers::{expand_helpers, extract_helpers},
     Architecture,
 };
@@ -26,48 +29,56 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
     let dir = PathBuf::from("bpf/aya-bpf-bindings");
     let generated = dir.join("src").join(opts.arch.to_string());
 
+    let mut bindgen = bindgen::builder()
+        .header(&*dir.join("include/bindings.h").to_string_lossy())
+        .clang_args(&["-I", &*opts.libbpf_dir.join("src").to_string_lossy()]);
+
     let types = ["bpf_map_.*"];
     let vars = ["BPF_.*", "bpf_.*"];
-    let mut cmd = bindgen(&types, &vars);
-    cmd.arg(&*dir.join("include/bindings.h").to_string_lossy());
-    cmd.arg("--");
-    cmd.arg("-I").arg(opts.libbpf_dir.join("src"));
 
-    let output = cmd.output()?;
-    let bindings = std::str::from_utf8(&output.stdout)?;
-
-    if !output.status.success() {
-        eprintln!("{}", std::str::from_utf8(&output.stderr)?);
-        return Err(anyhow!("bindgen failed: {}", output.status));
+    for x in &types {
+        bindgen = bindgen.whitelist_type(x);
     }
 
-    let mut tree = parse_str::<syn::File>(bindings).unwrap();
+    for x in &vars {
+        bindgen = bindgen.whitelist_var(x);
+    }
+
+    let bindings = bindgen
+        .generate()
+        .map_err(|_| anyhow!("bindgen failed"))?
+        .to_string();
+
+    let mut tree = parse_str::<syn::File>(&bindings).unwrap();
     let (indexes, helpers) = extract_helpers(&tree.items);
     let helpers = expand_helpers(&helpers);
     for index in indexes {
         tree.items[index] = Item::Verbatim(TokenStream::new())
     }
 
-    bindings::write(
-        &tree.to_token_stream().to_string(),
-        "",
+    // write the bindings, with the original helpers removed
+    write_to_file(
         &generated.join("bindings.rs"),
+        &tree.to_token_stream().to_string(),
     )?;
 
-    bindings::write(
-        &helpers.to_string(),
-        "use super::bindings::*;",
+    // write the new helpers as expanded by expand_helpers()
+    write_to_file_fmt(
         &generated.join("helpers.rs"),
+        &format!("use super::bindings::*; {}", helpers.to_string()),
     )?;
 
+    // write the bpf_probe_read() getters
     let bpf_probe_read = syn::parse_str("crate::bpf_probe_read").unwrap();
-    bindings::write(
-        &generate_getters_for_items(&tree.items, |getter| {
-            probe_read_getter(getter, &bpf_probe_read)
-        })
-        .to_string(),
-        "use super::bindings::*;",
+    write_to_file_fmt(
         &generated.join("getters.rs"),
+        &format!(
+            "use super::bindings::*; {}",
+            &generate_getters_for_items(&tree.items, |getter| {
+                probe_read_getter(getter, &bpf_probe_read)
+            })
+            .to_string()
+        ),
     )?;
 
     Ok(())
