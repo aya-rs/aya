@@ -3,8 +3,10 @@ use bindgen::{self, Builder, EnumVariation};
 pub fn user_builder() -> Builder {
     let bindgen = bindgen::builder()
         .layout_tests(false)
-        .default_enum_style(EnumVariation::ModuleConsts)
-        .prepend_enum_name(false);
+        .prepend_enum_name(false)
+        .default_enum_style(EnumVariation::Rust {
+            non_exhaustive: false,
+        });
 
     bindgen
 }

@@ -1,7 +1,8 @@
-use std::{ffi::CString, io, os::unix::io::RawFd};
+use std::{convert::TryFrom, ffi::CString, io, os::unix::io::RawFd};
 use thiserror::Error;
 
 use crate::{
+    generated::bpf_map_type,
     obj,
     sys::{bpf_create_map, bpf_map_get_next_key},
     Pod,
@@ -197,6 +198,49 @@ impl<K: Pod, V: Pod> Iterator for MapIter<'_, K, V> {
     }
 }
 
+impl TryFrom<u32> for bpf_map_type {
+    type Error = MapError;
+
+    fn try_from(map_type: u32) -> Result<Self, Self::Error> {
+        use bpf_map_type::*;
+        Ok(match map_type {
+            x if x == BPF_MAP_TYPE_UNSPEC as u32 => BPF_MAP_TYPE_UNSPEC,
+            x if x == BPF_MAP_TYPE_HASH as u32 => BPF_MAP_TYPE_HASH,
+            x if x == BPF_MAP_TYPE_ARRAY as u32 => BPF_MAP_TYPE_ARRAY,
+            x if x == BPF_MAP_TYPE_PROG_ARRAY as u32 => BPF_MAP_TYPE_PROG_ARRAY,
+            x if x == BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 => BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+            x if x == BPF_MAP_TYPE_PERCPU_HASH as u32 => BPF_MAP_TYPE_PERCPU_HASH,
+            x if x == BPF_MAP_TYPE_PERCPU_ARRAY as u32 => BPF_MAP_TYPE_PERCPU_ARRAY,
+            x if x == BPF_MAP_TYPE_STACK_TRACE as u32 => BPF_MAP_TYPE_STACK_TRACE,
+            x if x == BPF_MAP_TYPE_CGROUP_ARRAY as u32 => BPF_MAP_TYPE_CGROUP_ARRAY,
+            x if x == BPF_MAP_TYPE_LRU_HASH as u32 => BPF_MAP_TYPE_LRU_HASH,
+            x if x == BPF_MAP_TYPE_LRU_PERCPU_HASH as u32 => BPF_MAP_TYPE_LRU_PERCPU_HASH,
+            x if x == BPF_MAP_TYPE_LPM_TRIE as u32 => BPF_MAP_TYPE_LPM_TRIE,
+            x if x == BPF_MAP_TYPE_ARRAY_OF_MAPS as u32 => BPF_MAP_TYPE_ARRAY_OF_MAPS,
+            x if x == BPF_MAP_TYPE_HASH_OF_MAPS as u32 => BPF_MAP_TYPE_HASH_OF_MAPS,
+            x if x == BPF_MAP_TYPE_DEVMAP as u32 => BPF_MAP_TYPE_DEVMAP,
+            x if x == BPF_MAP_TYPE_SOCKMAP as u32 => BPF_MAP_TYPE_SOCKMAP,
+            x if x == BPF_MAP_TYPE_CPUMAP as u32 => BPF_MAP_TYPE_CPUMAP,
+            x if x == BPF_MAP_TYPE_XSKMAP as u32 => BPF_MAP_TYPE_XSKMAP,
+            x if x == BPF_MAP_TYPE_SOCKHASH as u32 => BPF_MAP_TYPE_SOCKHASH,
+            x if x == BPF_MAP_TYPE_CGROUP_STORAGE as u32 => BPF_MAP_TYPE_CGROUP_STORAGE,
+            x if x == BPF_MAP_TYPE_REUSEPORT_SOCKARRAY as u32 => BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
+            x if x == BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE as u32 => {
+                BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE
+            }
+            x if x == BPF_MAP_TYPE_QUEUE as u32 => BPF_MAP_TYPE_QUEUE,
+            x if x == BPF_MAP_TYPE_STACK as u32 => BPF_MAP_TYPE_STACK,
+            x if x == BPF_MAP_TYPE_SK_STORAGE as u32 => BPF_MAP_TYPE_SK_STORAGE,
+            x if x == BPF_MAP_TYPE_DEVMAP_HASH as u32 => BPF_MAP_TYPE_DEVMAP_HASH,
+            x if x == BPF_MAP_TYPE_STRUCT_OPS as u32 => BPF_MAP_TYPE_STRUCT_OPS,
+            x if x == BPF_MAP_TYPE_RINGBUF as u32 => BPF_MAP_TYPE_RINGBUF,
+            x if x == BPF_MAP_TYPE_INODE_STORAGE as u32 => BPF_MAP_TYPE_INODE_STORAGE,
+            x if x == BPF_MAP_TYPE_TASK_STORAGE as u32 => BPF_MAP_TYPE_TASK_STORAGE,
+            _ => return Err(MapError::InvalidMapType { map_type }),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use libc::EFAULT;
@@ -213,7 +257,7 @@ mod tests {
         obj::Map {
             name: name.to_string(),
             def: bpf_map_def {
-                map_type: BPF_MAP_TYPE_HASH,
+                map_type: BPF_MAP_TYPE_HASH as u32,
                 key_size: 4,
                 value_size: 4,
                 max_entries: 1024,

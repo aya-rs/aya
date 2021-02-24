@@ -11,7 +11,10 @@ use libc::{c_int, close, munmap, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
 use crate::{
-    generated::{perf_event_header, perf_event_mmap_page, perf_event_type::*},
+    generated::{
+        perf_event_header, perf_event_mmap_page,
+        perf_event_type::{PERF_RECORD_LOST, PERF_RECORD_SAMPLE},
+    },
     sys::{perf_event_ioctl, perf_event_open},
     PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
@@ -148,7 +151,7 @@ impl PerfBuffer {
 
         let read_event = |event_start, event_type, base, buf: &mut BytesMut| {
             let sample_size = match event_type {
-                PERF_RECORD_SAMPLE | PERF_RECORD_LOST => {
+                x if x == PERF_RECORD_SAMPLE as u32 || x == PERF_RECORD_LOST as u32 => {
                     let mut size = [0u8; mem::size_of::<u32>()];
                     fill_buf(
                         event_start + mem::size_of::<perf_event_header>(),
@@ -166,7 +169,7 @@ impl PerfBuffer {
                     % self.size;
 
             match event_type {
-                PERF_RECORD_SAMPLE => {
+                x if x == PERF_RECORD_SAMPLE as u32 => {
                     buf.clear();
                     if sample_size > buf.capacity() {
                         return Err(PerfBufferError::MoreSpaceNeeded { size: sample_size });
@@ -178,7 +181,7 @@ impl PerfBuffer {
 
                     Ok(Some((1, 0)))
                 }
-                PERF_RECORD_LOST => {
+                x if x == PERF_RECORD_LOST as u32 => {
                     let mut count = [0u8; mem::size_of::<u64>()];
                     fill_buf(
                         event_start + mem::size_of::<perf_event_header>() + mem::size_of::<u64>(),
@@ -369,7 +372,7 @@ mod tests {
 
         let evt = LostSamples {
             header: perf_event_header {
-                type_: PERF_RECORD_LOST,
+                type_: PERF_RECORD_LOST as u32,
                 misc: 0,
                 size: mem::size_of::<LostSamples>() as u16,
             },
@@ -405,7 +408,7 @@ mod tests {
         let sample = PerfSample {
             s_hdr: Sample {
                 header: perf_event_header {
-                    type_: PERF_RECORD_SAMPLE,
+                    type_: PERF_RECORD_SAMPLE as u32,
                     misc: 0,
                     size: mem::size_of::<PerfSample<T>>() as u16,
                 },
@@ -512,7 +515,7 @@ mod tests {
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let header = perf_event_header {
-            type_: PERF_RECORD_SAMPLE,
+            type_: PERF_RECORD_SAMPLE as u32,
             misc: 0,
             size: mem::size_of::<PerfSample<u64>>() as u16,
         };
@@ -542,7 +545,7 @@ mod tests {
         let sample = PerfSample {
             s_hdr: Sample {
                 header: perf_event_header {
-                    type_: PERF_RECORD_SAMPLE,
+                    type_: PERF_RECORD_SAMPLE as u32,
                     misc: 0,
                     size: mem::size_of::<PerfSample<u64>>() as u16,
                 },

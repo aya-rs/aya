@@ -27,7 +27,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
         let map_type = map.obj.def.map_type;
 
         // validate the map definition
-        if map_type != BPF_MAP_TYPE_HASH {
+        if map_type != BPF_MAP_TYPE_HASH as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
             })?;
@@ -155,7 +155,7 @@ mod tests {
         obj::Map {
             name: name.to_string(),
             def: bpf_map_def {
-                map_type: BPF_MAP_TYPE_HASH,
+                map_type: BPF_MAP_TYPE_HASH as u32,
                 key_size: 4,
                 value_size: 4,
                 max_entries: 1024,
@@ -206,7 +206,7 @@ mod tests {
             obj: obj::Map {
                 name: "TEST".to_string(),
                 def: bpf_map_def {
-                    map_type: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                    map_type: BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32,
                     key_size: 4,
                     value_size: 4,
                     max_entries: 1024,

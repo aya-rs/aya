@@ -13,11 +13,13 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
 fn codegen_internal_btf_bindings(opts: &Options) -> Result<(), anyhow::Error> {
     let dir = PathBuf::from("aya");
     let generated = dir.join("src/generated");
-    let mut bindgen = bindgen::user_builder().header(
-        opts.libbpf_dir
-            .join("src/libbpf_internal.h")
-            .to_string_lossy(),
-    );
+    let mut bindgen = bindgen::user_builder()
+        .header(
+            opts.libbpf_dir
+                .join("src/libbpf_internal.h")
+                .to_string_lossy(),
+        )
+        .constified_enum_module("bpf_core_relo_kind");
 
     let types = ["bpf_core_relo", "btf_ext_header"];
 

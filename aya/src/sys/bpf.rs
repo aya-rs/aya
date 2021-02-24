@@ -7,11 +7,11 @@ use std::{
     slice,
 };
 
-use libc::{c_long, c_uint, ENOENT};
+use libc::{c_long, ENOENT};
 
 use crate::{
     bpf_map_def,
-    generated::{bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn},
+    generated::{bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn, bpf_prog_type},
     programs::VerifierLog,
     sys::SysResult,
     Pod, BPF_OBJ_NAME_LEN,
@@ -38,7 +38,7 @@ pub(crate) fn bpf_create_map(name: &CStr, def: &bpf_map_def) -> SysResult {
 }
 
 pub(crate) fn bpf_load_program(
-    ty: c_uint,
+    ty: bpf_prog_type,
     insns: &[bpf_insn],
     license: &CStr,
     kernel_version: u32,
@@ -47,7 +47,7 @@ pub(crate) fn bpf_load_program(
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_3 };
-    u.prog_type = ty;
+    u.prog_type = ty as u32;
     u.expected_attach_type = 0;
     u.insns = insns.as_ptr() as u64;
     u.insn_cnt = insns.len() as u32;
@@ -67,7 +67,7 @@ fn lookup<K: Pod, V: Pod>(
     fd: RawFd,
     key: &K,
     flags: u64,
-    cmd: bpf_cmd::Type,
+    cmd: bpf_cmd,
 ) -> Result<Option<V>, (c_long, io::Error)> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let mut value = MaybeUninit::uninit();
@@ -164,19 +164,19 @@ pub(crate) fn bpf_map_get_next_key<K>(
 pub(crate) fn bpf_link_create(
     prog_fd: RawFd,
     target_fd: RawFd,
-    attach_type: bpf_attach_type::Type,
+    attach_type: bpf_attach_type,
     flags: u32,
 ) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.link_create.prog_fd = prog_fd as u32;
     attr.link_create.__bindgen_anon_1.target_fd = target_fd as u32;
-    attr.link_create.attach_type = attach_type;
+    attr.link_create.attach_type = attach_type as u32;
     attr.link_create.flags = flags;
 
     sys_bpf(bpf_cmd::BPF_LINK_CREATE, &attr)
 }
 
-fn sys_bpf<'a>(cmd: bpf_cmd::Type, attr: &'a bpf_attr) -> SysResult {
+fn sys_bpf<'a>(cmd: bpf_cmd, attr: &'a bpf_attr) -> SysResult {
     syscall(Syscall::Bpf { cmd, attr })
 }

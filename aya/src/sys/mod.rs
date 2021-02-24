@@ -24,7 +24,7 @@ pub(crate) type SysResult = Result<c_long, (c_long, io::Error)>;
 #[cfg_attr(test, allow(dead_code))]
 pub(crate) enum Syscall<'a> {
     Bpf {
-        cmd: bpf_cmd::Type,
+        cmd: bpf_cmd,
         attr: &'a bpf_attr,
     },
     PerfEventOpen {

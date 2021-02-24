@@ -17,7 +17,7 @@ pub(crate) fn perf_event_open(cpu: c_int) -> SysResult {
 
     attr.config = PERF_COUNT_SW_BPF_OUTPUT as u64;
     attr.size = mem::size_of::<perf_event_attr>() as u32;
-    attr.type_ = PERF_TYPE_SOFTWARE;
+    attr.type_ = PERF_TYPE_SOFTWARE as u32;
     attr.sample_type = PERF_SAMPLE_RAW as u64;
     attr.__bindgen_anon_1.sample_period = 1;
     attr.__bindgen_anon_2.wakeup_events = 1;
@@ -67,7 +67,7 @@ pub(crate) fn perf_event_open_trace_point(id: u32) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     attr.size = mem::size_of::<perf_event_attr>() as u32;
-    attr.type_ = PERF_TYPE_TRACEPOINT;
+    attr.type_ = PERF_TYPE_TRACEPOINT as u32;
     attr.config = id as u64;
 
     syscall(Syscall::PerfEventOpen {
@@ -87,3 +87,34 @@ pub(crate) fn perf_event_ioctl(fd: c_int, request: c_ulong, arg: c_int) -> SysRe
     #[cfg(test)]
     return crate::sys::TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
 }
+
+/*
+impl TryFrom<u32> for perf_event_type {
+    PERF_RECORD_MMAP = 1,
+    PERF_RECORD_LOST = 2,
+    PERF_RECORD_COMM = 3,
+    PERF_RECORD_EXIT = 4,
+    PERF_RECORD_THROTTLE = 5,
+    PERF_RECORD_UNTHROTTLE = 6,
+    PERF_RECORD_FORK = 7,
+    PERF_RECORD_READ = 8,
+    PERF_RECORD_SAMPLE = 9,
+    PERF_RECORD_MMAP2 = 10,
+    PERF_RECORD_AUX = 11,
+    PERF_RECORD_ITRACE_START = 12,
+    PERF_RECORD_LOST_SAMPLES = 13,
+    PERF_RECORD_SWITCH = 14,
+    PERF_RECORD_SWITCH_CPU_WIDE = 15,
+    PERF_RECORD_NAMESPACES = 16,
+    PERF_RECORD_KSYMBOL = 17,
+    PERF_RECORD_BPF_EVENT = 18,
+    PERF_RECORD_CGROUP = 19,
+    PERF_RECORD_MAX
+
+    type Error = ();
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        todo!()
+    }
+}
+*/

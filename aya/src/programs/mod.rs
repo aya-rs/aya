@@ -5,15 +5,7 @@ pub mod trace_point;
 pub mod xdp;
 
 use libc::{close, ENOSPC};
-use std::{
-    cell::RefCell,
-    cmp,
-    convert::TryFrom,
-    ffi::CStr,
-    io,
-    os::{raw::c_uint, unix::io::RawFd},
-    rc::Rc,
-};
+use std::{cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::unix::io::RawFd, rc::Rc};
 use thiserror::Error;
 
 use perf_attach::*;
@@ -22,7 +14,7 @@ pub use socket_filter::{SocketFilter, SocketFilterError};
 pub use trace_point::{TracePoint, TracePointError};
 pub use xdp::{Xdp, XdpError};
 
-use crate::{obj, sys::bpf_load_program};
+use crate::{generated::bpf_prog_type, obj, sys::bpf_load_program};
 #[derive(Debug, Error)]
 pub enum ProgramError {
     #[error("the program is already loaded")]
@@ -102,7 +94,7 @@ impl Program {
         load_program(self.prog_type(), self.data_mut())
     }
 
-    fn prog_type(&self) -> c_uint {
+    fn prog_type(&self) -> bpf_prog_type {
         use crate::generated::bpf_prog_type::*;
         match self {
             Program::KProbe(_) => BPF_PROG_TYPE_KPROBE,
@@ -205,7 +197,7 @@ impl VerifierLog {
     }
 }
 
-fn load_program(prog_type: c_uint, data: &mut ProgramData) -> Result<(), ProgramError> {
+fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), ProgramError> {
     let ProgramData { obj, fd, .. } = data;
     if fd.is_some() {
         return Err(ProgramError::AlreadyLoaded);

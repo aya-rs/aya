@@ -182,153 +182,157 @@ impl bpf_insn {
         __bindgen_bitfield_unit
     }
 }
-pub mod bpf_cmd {
-    pub type Type = ::std::os::raw::c_uint;
-    pub const BPF_MAP_CREATE: Type = 0;
-    pub const BPF_MAP_LOOKUP_ELEM: Type = 1;
-    pub const BPF_MAP_UPDATE_ELEM: Type = 2;
-    pub const BPF_MAP_DELETE_ELEM: Type = 3;
-    pub const BPF_MAP_GET_NEXT_KEY: Type = 4;
-    pub const BPF_PROG_LOAD: Type = 5;
-    pub const BPF_OBJ_PIN: Type = 6;
-    pub const BPF_OBJ_GET: Type = 7;
-    pub const BPF_PROG_ATTACH: Type = 8;
-    pub const BPF_PROG_DETACH: Type = 9;
-    pub const BPF_PROG_TEST_RUN: Type = 10;
-    pub const BPF_PROG_GET_NEXT_ID: Type = 11;
-    pub const BPF_MAP_GET_NEXT_ID: Type = 12;
-    pub const BPF_PROG_GET_FD_BY_ID: Type = 13;
-    pub const BPF_MAP_GET_FD_BY_ID: Type = 14;
-    pub const BPF_OBJ_GET_INFO_BY_FD: Type = 15;
-    pub const BPF_PROG_QUERY: Type = 16;
-    pub const BPF_RAW_TRACEPOINT_OPEN: Type = 17;
-    pub const BPF_BTF_LOAD: Type = 18;
-    pub const BPF_BTF_GET_FD_BY_ID: Type = 19;
-    pub const BPF_TASK_FD_QUERY: Type = 20;
-    pub const BPF_MAP_LOOKUP_AND_DELETE_ELEM: Type = 21;
-    pub const BPF_MAP_FREEZE: Type = 22;
-    pub const BPF_BTF_GET_NEXT_ID: Type = 23;
-    pub const BPF_MAP_LOOKUP_BATCH: Type = 24;
-    pub const BPF_MAP_LOOKUP_AND_DELETE_BATCH: Type = 25;
-    pub const BPF_MAP_UPDATE_BATCH: Type = 26;
-    pub const BPF_MAP_DELETE_BATCH: Type = 27;
-    pub const BPF_LINK_CREATE: Type = 28;
-    pub const BPF_LINK_UPDATE: Type = 29;
-    pub const BPF_LINK_GET_FD_BY_ID: Type = 30;
-    pub const BPF_LINK_GET_NEXT_ID: Type = 31;
-    pub const BPF_ENABLE_STATS: Type = 32;
-    pub const BPF_ITER_CREATE: Type = 33;
-    pub const BPF_LINK_DETACH: Type = 34;
-    pub const BPF_PROG_BIND_MAP: Type = 35;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum bpf_cmd {
+    BPF_MAP_CREATE = 0,
+    BPF_MAP_LOOKUP_ELEM = 1,
+    BPF_MAP_UPDATE_ELEM = 2,
+    BPF_MAP_DELETE_ELEM = 3,
+    BPF_MAP_GET_NEXT_KEY = 4,
+    BPF_PROG_LOAD = 5,
+    BPF_OBJ_PIN = 6,
+    BPF_OBJ_GET = 7,
+    BPF_PROG_ATTACH = 8,
+    BPF_PROG_DETACH = 9,
+    BPF_PROG_TEST_RUN = 10,
+    BPF_PROG_GET_NEXT_ID = 11,
+    BPF_MAP_GET_NEXT_ID = 12,
+    BPF_PROG_GET_FD_BY_ID = 13,
+    BPF_MAP_GET_FD_BY_ID = 14,
+    BPF_OBJ_GET_INFO_BY_FD = 15,
+    BPF_PROG_QUERY = 16,
+    BPF_RAW_TRACEPOINT_OPEN = 17,
+    BPF_BTF_LOAD = 18,
+    BPF_BTF_GET_FD_BY_ID = 19,
+    BPF_TASK_FD_QUERY = 20,
+    BPF_MAP_LOOKUP_AND_DELETE_ELEM = 21,
+    BPF_MAP_FREEZE = 22,
+    BPF_BTF_GET_NEXT_ID = 23,
+    BPF_MAP_LOOKUP_BATCH = 24,
+    BPF_MAP_LOOKUP_AND_DELETE_BATCH = 25,
+    BPF_MAP_UPDATE_BATCH = 26,
+    BPF_MAP_DELETE_BATCH = 27,
+    BPF_LINK_CREATE = 28,
+    BPF_LINK_UPDATE = 29,
+    BPF_LINK_GET_FD_BY_ID = 30,
+    BPF_LINK_GET_NEXT_ID = 31,
+    BPF_ENABLE_STATS = 32,
+    BPF_ITER_CREATE = 33,
+    BPF_LINK_DETACH = 34,
+    BPF_PROG_BIND_MAP = 35,
 }
-pub mod bpf_map_type {
-    pub type Type = ::std::os::raw::c_uint;
-    pub const BPF_MAP_TYPE_UNSPEC: Type = 0;
-    pub const BPF_MAP_TYPE_HASH: Type = 1;
-    pub const BPF_MAP_TYPE_ARRAY: Type = 2;
-    pub const BPF_MAP_TYPE_PROG_ARRAY: Type = 3;
-    pub const BPF_MAP_TYPE_PERF_EVENT_ARRAY: Type = 4;
-    pub const BPF_MAP_TYPE_PERCPU_HASH: Type = 5;
-    pub const BPF_MAP_TYPE_PERCPU_ARRAY: Type = 6;
-    pub const BPF_MAP_TYPE_STACK_TRACE: Type = 7;
-    pub const BPF_MAP_TYPE_CGROUP_ARRAY: Type = 8;
-    pub const BPF_MAP_TYPE_LRU_HASH: Type = 9;
-    pub const BPF_MAP_TYPE_LRU_PERCPU_HASH: Type = 10;
-    pub const BPF_MAP_TYPE_LPM_TRIE: Type = 11;
-    pub const BPF_MAP_TYPE_ARRAY_OF_MAPS: Type = 12;
-    pub const BPF_MAP_TYPE_HASH_OF_MAPS: Type = 13;
-    pub const BPF_MAP_TYPE_DEVMAP: Type = 14;
-    pub const BPF_MAP_TYPE_SOCKMAP: Type = 15;
-    pub const BPF_MAP_TYPE_CPUMAP: Type = 16;
-    pub const BPF_MAP_TYPE_XSKMAP: Type = 17;
-    pub const BPF_MAP_TYPE_SOCKHASH: Type = 18;
-    pub const BPF_MAP_TYPE_CGROUP_STORAGE: Type = 19;
-    pub const BPF_MAP_TYPE_REUSEPORT_SOCKARRAY: Type = 20;
-    pub const BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE: Type = 21;
-    pub const BPF_MAP_TYPE_QUEUE: Type = 22;
-    pub const BPF_MAP_TYPE_STACK: Type = 23;
-    pub const BPF_MAP_TYPE_SK_STORAGE: Type = 24;
-    pub const BPF_MAP_TYPE_DEVMAP_HASH: Type = 25;
-    pub const BPF_MAP_TYPE_STRUCT_OPS: Type = 26;
-    pub const BPF_MAP_TYPE_RINGBUF: Type = 27;
-    pub const BPF_MAP_TYPE_INODE_STORAGE: Type = 28;
-    pub const BPF_MAP_TYPE_TASK_STORAGE: Type = 29;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum bpf_map_type {
+    BPF_MAP_TYPE_UNSPEC = 0,
+    BPF_MAP_TYPE_HASH = 1,
+    BPF_MAP_TYPE_ARRAY = 2,
+    BPF_MAP_TYPE_PROG_ARRAY = 3,
+    BPF_MAP_TYPE_PERF_EVENT_ARRAY = 4,
+    BPF_MAP_TYPE_PERCPU_HASH = 5,
+    BPF_MAP_TYPE_PERCPU_ARRAY = 6,
+    BPF_MAP_TYPE_STACK_TRACE = 7,
+    BPF_MAP_TYPE_CGROUP_ARRAY = 8,
+    BPF_MAP_TYPE_LRU_HASH = 9,
+    BPF_MAP_TYPE_LRU_PERCPU_HASH = 10,
+    BPF_MAP_TYPE_LPM_TRIE = 11,
+    BPF_MAP_TYPE_ARRAY_OF_MAPS = 12,
+    BPF_MAP_TYPE_HASH_OF_MAPS = 13,
+    BPF_MAP_TYPE_DEVMAP = 14,
+    BPF_MAP_TYPE_SOCKMAP = 15,
+    BPF_MAP_TYPE_CPUMAP = 16,
+    BPF_MAP_TYPE_XSKMAP = 17,
+    BPF_MAP_TYPE_SOCKHASH = 18,
+    BPF_MAP_TYPE_CGROUP_STORAGE = 19,
+    BPF_MAP_TYPE_REUSEPORT_SOCKARRAY = 20,
+    BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE = 21,
+    BPF_MAP_TYPE_QUEUE = 22,
+    BPF_MAP_TYPE_STACK = 23,
+    BPF_MAP_TYPE_SK_STORAGE = 24,
+    BPF_MAP_TYPE_DEVMAP_HASH = 25,
+    BPF_MAP_TYPE_STRUCT_OPS = 26,
+    BPF_MAP_TYPE_RINGBUF = 27,
+    BPF_MAP_TYPE_INODE_STORAGE = 28,
+    BPF_MAP_TYPE_TASK_STORAGE = 29,
 }
-pub mod bpf_prog_type {
-    pub type Type = ::std::os::raw::c_uint;
-    pub const BPF_PROG_TYPE_UNSPEC: Type = 0;
-    pub const BPF_PROG_TYPE_SOCKET_FILTER: Type = 1;
-    pub const BPF_PROG_TYPE_KPROBE: Type = 2;
-    pub const BPF_PROG_TYPE_SCHED_CLS: Type = 3;
-    pub const BPF_PROG_TYPE_SCHED_ACT: Type = 4;
-    pub const BPF_PROG_TYPE_TRACEPOINT: Type = 5;
-    pub const BPF_PROG_TYPE_XDP: Type = 6;
-    pub const BPF_PROG_TYPE_PERF_EVENT: Type = 7;
-    pub const BPF_PROG_TYPE_CGROUP_SKB: Type = 8;
-    pub const BPF_PROG_TYPE_CGROUP_SOCK: Type = 9;
-    pub const BPF_PROG_TYPE_LWT_IN: Type = 10;
-    pub const BPF_PROG_TYPE_LWT_OUT: Type = 11;
-    pub const BPF_PROG_TYPE_LWT_XMIT: Type = 12;
-    pub const BPF_PROG_TYPE_SOCK_OPS: Type = 13;
-    pub const BPF_PROG_TYPE_SK_SKB: Type = 14;
-    pub const BPF_PROG_TYPE_CGROUP_DEVICE: Type = 15;
-    pub const BPF_PROG_TYPE_SK_MSG: Type = 16;
-    pub const BPF_PROG_TYPE_RAW_TRACEPOINT: Type = 17;
-    pub const BPF_PROG_TYPE_CGROUP_SOCK_ADDR: Type = 18;
-    pub const BPF_PROG_TYPE_LWT_SEG6LOCAL: Type = 19;
-    pub const BPF_PROG_TYPE_LIRC_MODE2: Type = 20;
-    pub const BPF_PROG_TYPE_SK_REUSEPORT: Type = 21;
-    pub const BPF_PROG_TYPE_FLOW_DISSECTOR: Type = 22;
-    pub const BPF_PROG_TYPE_CGROUP_SYSCTL: Type = 23;
-    pub const BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE: Type = 24;
-    pub const BPF_PROG_TYPE_CGROUP_SOCKOPT: Type = 25;
-    pub const BPF_PROG_TYPE_TRACING: Type = 26;
-    pub const BPF_PROG_TYPE_STRUCT_OPS: Type = 27;
-    pub const BPF_PROG_TYPE_EXT: Type = 28;
-    pub const BPF_PROG_TYPE_LSM: Type = 29;
-    pub const BPF_PROG_TYPE_SK_LOOKUP: Type = 30;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum bpf_prog_type {
+    BPF_PROG_TYPE_UNSPEC = 0,
+    BPF_PROG_TYPE_SOCKET_FILTER = 1,
+    BPF_PROG_TYPE_KPROBE = 2,
+    BPF_PROG_TYPE_SCHED_CLS = 3,
+    BPF_PROG_TYPE_SCHED_ACT = 4,
+    BPF_PROG_TYPE_TRACEPOINT = 5,
+    BPF_PROG_TYPE_XDP = 6,
+    BPF_PROG_TYPE_PERF_EVENT = 7,
+    BPF_PROG_TYPE_CGROUP_SKB = 8,
+    BPF_PROG_TYPE_CGROUP_SOCK = 9,
+    BPF_PROG_TYPE_LWT_IN = 10,
+    BPF_PROG_TYPE_LWT_OUT = 11,
+    BPF_PROG_TYPE_LWT_XMIT = 12,
+    BPF_PROG_TYPE_SOCK_OPS = 13,
+    BPF_PROG_TYPE_SK_SKB = 14,
+    BPF_PROG_TYPE_CGROUP_DEVICE = 15,
+    BPF_PROG_TYPE_SK_MSG = 16,
+    BPF_PROG_TYPE_RAW_TRACEPOINT = 17,
+    BPF_PROG_TYPE_CGROUP_SOCK_ADDR = 18,
+    BPF_PROG_TYPE_LWT_SEG6LOCAL = 19,
+    BPF_PROG_TYPE_LIRC_MODE2 = 20,
+    BPF_PROG_TYPE_SK_REUSEPORT = 21,
+    BPF_PROG_TYPE_FLOW_DISSECTOR = 22,
+    BPF_PROG_TYPE_CGROUP_SYSCTL = 23,
+    BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE = 24,
+    BPF_PROG_TYPE_CGROUP_SOCKOPT = 25,
+    BPF_PROG_TYPE_TRACING = 26,
+    BPF_PROG_TYPE_STRUCT_OPS = 27,
+    BPF_PROG_TYPE_EXT = 28,
+    BPF_PROG_TYPE_LSM = 29,
+    BPF_PROG_TYPE_SK_LOOKUP = 30,
 }
-pub mod bpf_attach_type {
-    pub type Type = ::std::os::raw::c_uint;
-    pub const BPF_CGROUP_INET_INGRESS: Type = 0;
-    pub const BPF_CGROUP_INET_EGRESS: Type = 1;
-    pub const BPF_CGROUP_INET_SOCK_CREATE: Type = 2;
-    pub const BPF_CGROUP_SOCK_OPS: Type = 3;
-    pub const BPF_SK_SKB_STREAM_PARSER: Type = 4;
-    pub const BPF_SK_SKB_STREAM_VERDICT: Type = 5;
-    pub const BPF_CGROUP_DEVICE: Type = 6;
-    pub const BPF_SK_MSG_VERDICT: Type = 7;
-    pub const BPF_CGROUP_INET4_BIND: Type = 8;
-    pub const BPF_CGROUP_INET6_BIND: Type = 9;
-    pub const BPF_CGROUP_INET4_CONNECT: Type = 10;
-    pub const BPF_CGROUP_INET6_CONNECT: Type = 11;
-    pub const BPF_CGROUP_INET4_POST_BIND: Type = 12;
-    pub const BPF_CGROUP_INET6_POST_BIND: Type = 13;
-    pub const BPF_CGROUP_UDP4_SENDMSG: Type = 14;
-    pub const BPF_CGROUP_UDP6_SENDMSG: Type = 15;
-    pub const BPF_LIRC_MODE2: Type = 16;
-    pub const BPF_FLOW_DISSECTOR: Type = 17;
-    pub const BPF_CGROUP_SYSCTL: Type = 18;
-    pub const BPF_CGROUP_UDP4_RECVMSG: Type = 19;
-    pub const BPF_CGROUP_UDP6_RECVMSG: Type = 20;
-    pub const BPF_CGROUP_GETSOCKOPT: Type = 21;
-    pub const BPF_CGROUP_SETSOCKOPT: Type = 22;
-    pub const BPF_TRACE_RAW_TP: Type = 23;
-    pub const BPF_TRACE_FENTRY: Type = 24;
-    pub const BPF_TRACE_FEXIT: Type = 25;
-    pub const BPF_MODIFY_RETURN: Type = 26;
-    pub const BPF_LSM_MAC: Type = 27;
-    pub const BPF_TRACE_ITER: Type = 28;
-    pub const BPF_CGROUP_INET4_GETPEERNAME: Type = 29;
-    pub const BPF_CGROUP_INET6_GETPEERNAME: Type = 30;
-    pub const BPF_CGROUP_INET4_GETSOCKNAME: Type = 31;
-    pub const BPF_CGROUP_INET6_GETSOCKNAME: Type = 32;
-    pub const BPF_XDP_DEVMAP: Type = 33;
-    pub const BPF_CGROUP_INET_SOCK_RELEASE: Type = 34;
-    pub const BPF_XDP_CPUMAP: Type = 35;
-    pub const BPF_SK_LOOKUP: Type = 36;
-    pub const BPF_XDP: Type = 37;
-    pub const __MAX_BPF_ATTACH_TYPE: Type = 38;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum bpf_attach_type {
+    BPF_CGROUP_INET_INGRESS = 0,
+    BPF_CGROUP_INET_EGRESS = 1,
+    BPF_CGROUP_INET_SOCK_CREATE = 2,
+    BPF_CGROUP_SOCK_OPS = 3,
+    BPF_SK_SKB_STREAM_PARSER = 4,
+    BPF_SK_SKB_STREAM_VERDICT = 5,
+    BPF_CGROUP_DEVICE = 6,
+    BPF_SK_MSG_VERDICT = 7,
+    BPF_CGROUP_INET4_BIND = 8,
+    BPF_CGROUP_INET6_BIND = 9,
+    BPF_CGROUP_INET4_CONNECT = 10,
+    BPF_CGROUP_INET6_CONNECT = 11,
+    BPF_CGROUP_INET4_POST_BIND = 12,
+    BPF_CGROUP_INET6_POST_BIND = 13,
+    BPF_CGROUP_UDP4_SENDMSG = 14,
+    BPF_CGROUP_UDP6_SENDMSG = 15,
+    BPF_LIRC_MODE2 = 16,
+    BPF_FLOW_DISSECTOR = 17,
+    BPF_CGROUP_SYSCTL = 18,
+    BPF_CGROUP_UDP4_RECVMSG = 19,
+    BPF_CGROUP_UDP6_RECVMSG = 20,
+    BPF_CGROUP_GETSOCKOPT = 21,
+    BPF_CGROUP_SETSOCKOPT = 22,
+    BPF_TRACE_RAW_TP = 23,
+    BPF_TRACE_FENTRY = 24,
+    BPF_TRACE_FEXIT = 25,
+    BPF_MODIFY_RETURN = 26,
+    BPF_LSM_MAC = 27,
+    BPF_TRACE_ITER = 28,
+    BPF_CGROUP_INET4_GETPEERNAME = 29,
+    BPF_CGROUP_INET6_GETPEERNAME = 30,
+    BPF_CGROUP_INET4_GETSOCKNAME = 31,
+    BPF_CGROUP_INET6_GETSOCKNAME = 32,
+    BPF_XDP_DEVMAP = 33,
+    BPF_CGROUP_INET_SOCK_RELEASE = 34,
+    BPF_XDP_CPUMAP = 35,
+    BPF_SK_LOOKUP = 36,
+    BPF_XDP = 37,
+    __MAX_BPF_ATTACH_TYPE = 38,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -650,57 +654,60 @@ pub struct btf_var_secinfo {
     pub offset: __u32,
     pub size: __u32,
 }
-pub mod perf_type_id {
-    pub type Type = ::std::os::raw::c_uint;
-    pub const PERF_TYPE_HARDWARE: Type = 0;
-    pub const PERF_TYPE_SOFTWARE: Type = 1;
-    pub const PERF_TYPE_TRACEPOINT: Type = 2;
-    pub const PERF_TYPE_HW_CACHE: Type = 3;
-    pub const PERF_TYPE_RAW: Type = 4;
-    pub const PERF_TYPE_BREAKPOINT: Type = 5;
-    pub const PERF_TYPE_MAX: Type = 6;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum perf_type_id {
+    PERF_TYPE_HARDWARE = 0,
+    PERF_TYPE_SOFTWARE = 1,
+    PERF_TYPE_TRACEPOINT = 2,
+    PERF_TYPE_HW_CACHE = 3,
+    PERF_TYPE_RAW = 4,
+    PERF_TYPE_BREAKPOINT = 5,
+    PERF_TYPE_MAX = 6,
 }
-pub mod perf_sw_ids {
-    pub type Type = ::std::os::raw::c_uint;
-    pub const PERF_COUNT_SW_CPU_CLOCK: Type = 0;
-    pub const PERF_COUNT_SW_TASK_CLOCK: Type = 1;
-    pub const PERF_COUNT_SW_PAGE_FAULTS: Type = 2;
-    pub const PERF_COUNT_SW_CONTEXT_SWITCHES: Type = 3;
-    pub const PERF_COUNT_SW_CPU_MIGRATIONS: Type = 4;
-    pub const PERF_COUNT_SW_PAGE_FAULTS_MIN: Type = 5;
-    pub const PERF_COUNT_SW_PAGE_FAULTS_MAJ: Type = 6;
-    pub const PERF_COUNT_SW_ALIGNMENT_FAULTS: Type = 7;
-    pub const PERF_COUNT_SW_EMULATION_FAULTS: Type = 8;
-    pub const PERF_COUNT_SW_DUMMY: Type = 9;
-    pub const PERF_COUNT_SW_BPF_OUTPUT: Type = 10;
-    pub const PERF_COUNT_SW_MAX: Type = 11;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum perf_sw_ids {
+    PERF_COUNT_SW_CPU_CLOCK = 0,
+    PERF_COUNT_SW_TASK_CLOCK = 1,
+    PERF_COUNT_SW_PAGE_FAULTS = 2,
+    PERF_COUNT_SW_CONTEXT_SWITCHES = 3,
+    PERF_COUNT_SW_CPU_MIGRATIONS = 4,
+    PERF_COUNT_SW_PAGE_FAULTS_MIN = 5,
+    PERF_COUNT_SW_PAGE_FAULTS_MAJ = 6,
+    PERF_COUNT_SW_ALIGNMENT_FAULTS = 7,
+    PERF_COUNT_SW_EMULATION_FAULTS = 8,
+    PERF_COUNT_SW_DUMMY = 9,
+    PERF_COUNT_SW_BPF_OUTPUT = 10,
+    PERF_COUNT_SW_MAX = 11,
 }
-pub mod perf_event_sample_format {
-    pub type Type = ::std::os::raw::c_ulong;
-    pub const PERF_SAMPLE_IP: Type = 1;
-    pub const PERF_SAMPLE_TID: Type = 2;
-    pub const PERF_SAMPLE_TIME: Type = 4;
-    pub const PERF_SAMPLE_ADDR: Type = 8;
-    pub const PERF_SAMPLE_READ: Type = 16;
-    pub const PERF_SAMPLE_CALLCHAIN: Type = 32;
-    pub const PERF_SAMPLE_ID: Type = 64;
-    pub const PERF_SAMPLE_CPU: Type = 128;
-    pub const PERF_SAMPLE_PERIOD: Type = 256;
-    pub const PERF_SAMPLE_STREAM_ID: Type = 512;
-    pub const PERF_SAMPLE_RAW: Type = 1024;
-    pub const PERF_SAMPLE_BRANCH_STACK: Type = 2048;
-    pub const PERF_SAMPLE_REGS_USER: Type = 4096;
-    pub const PERF_SAMPLE_STACK_USER: Type = 8192;
-    pub const PERF_SAMPLE_WEIGHT: Type = 16384;
-    pub const PERF_SAMPLE_DATA_SRC: Type = 32768;
-    pub const PERF_SAMPLE_IDENTIFIER: Type = 65536;
-    pub const PERF_SAMPLE_TRANSACTION: Type = 131072;
-    pub const PERF_SAMPLE_REGS_INTR: Type = 262144;
-    pub const PERF_SAMPLE_PHYS_ADDR: Type = 524288;
-    pub const PERF_SAMPLE_AUX: Type = 1048576;
-    pub const PERF_SAMPLE_CGROUP: Type = 2097152;
-    pub const PERF_SAMPLE_MAX: Type = 4194304;
-    pub const __PERF_SAMPLE_CALLCHAIN_EARLY: Type = 9223372036854775808;
+#[repr(u64)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum perf_event_sample_format {
+    PERF_SAMPLE_IP = 1,
+    PERF_SAMPLE_TID = 2,
+    PERF_SAMPLE_TIME = 4,
+    PERF_SAMPLE_ADDR = 8,
+    PERF_SAMPLE_READ = 16,
+    PERF_SAMPLE_CALLCHAIN = 32,
+    PERF_SAMPLE_ID = 64,
+    PERF_SAMPLE_CPU = 128,
+    PERF_SAMPLE_PERIOD = 256,
+    PERF_SAMPLE_STREAM_ID = 512,
+    PERF_SAMPLE_RAW = 1024,
+    PERF_SAMPLE_BRANCH_STACK = 2048,
+    PERF_SAMPLE_REGS_USER = 4096,
+    PERF_SAMPLE_STACK_USER = 8192,
+    PERF_SAMPLE_WEIGHT = 16384,
+    PERF_SAMPLE_DATA_SRC = 32768,
+    PERF_SAMPLE_IDENTIFIER = 65536,
+    PERF_SAMPLE_TRANSACTION = 131072,
+    PERF_SAMPLE_REGS_INTR = 262144,
+    PERF_SAMPLE_PHYS_ADDR = 524288,
+    PERF_SAMPLE_AUX = 1048576,
+    PERF_SAMPLE_CGROUP = 2097152,
+    PERF_SAMPLE_MAX = 4194304,
+    __PERF_SAMPLE_CALLCHAIN_EARLY = 9223372036854775808,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1451,41 +1458,53 @@ pub struct perf_event_header {
     pub misc: __u16,
     pub size: __u16,
 }
-pub mod perf_event_type {
-    pub type Type = ::std::os::raw::c_uint;
-    pub const PERF_RECORD_MMAP: Type = 1;
-    pub const PERF_RECORD_LOST: Type = 2;
-    pub const PERF_RECORD_COMM: Type = 3;
-    pub const PERF_RECORD_EXIT: Type = 4;
-    pub const PERF_RECORD_THROTTLE: Type = 5;
-    pub const PERF_RECORD_UNTHROTTLE: Type = 6;
-    pub const PERF_RECORD_FORK: Type = 7;
-    pub const PERF_RECORD_READ: Type = 8;
-    pub const PERF_RECORD_SAMPLE: Type = 9;
-    pub const PERF_RECORD_MMAP2: Type = 10;
-    pub const PERF_RECORD_AUX: Type = 11;
-    pub const PERF_RECORD_ITRACE_START: Type = 12;
-    pub const PERF_RECORD_LOST_SAMPLES: Type = 13;
-    pub const PERF_RECORD_SWITCH: Type = 14;
-    pub const PERF_RECORD_SWITCH_CPU_WIDE: Type = 15;
-    pub const PERF_RECORD_NAMESPACES: Type = 16;
-    pub const PERF_RECORD_KSYMBOL: Type = 17;
-    pub const PERF_RECORD_BPF_EVENT: Type = 18;
-    pub const PERF_RECORD_CGROUP: Type = 19;
-    pub const PERF_RECORD_MAX: Type = 20;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum perf_event_type {
+    PERF_RECORD_MMAP = 1,
+    PERF_RECORD_LOST = 2,
+    PERF_RECORD_COMM = 3,
+    PERF_RECORD_EXIT = 4,
+    PERF_RECORD_THROTTLE = 5,
+    PERF_RECORD_UNTHROTTLE = 6,
+    PERF_RECORD_FORK = 7,
+    PERF_RECORD_READ = 8,
+    PERF_RECORD_SAMPLE = 9,
+    PERF_RECORD_MMAP2 = 10,
+    PERF_RECORD_AUX = 11,
+    PERF_RECORD_ITRACE_START = 12,
+    PERF_RECORD_LOST_SAMPLES = 13,
+    PERF_RECORD_SWITCH = 14,
+    PERF_RECORD_SWITCH_CPU_WIDE = 15,
+    PERF_RECORD_NAMESPACES = 16,
+    PERF_RECORD_KSYMBOL = 17,
+    PERF_RECORD_BPF_EVENT = 18,
+    PERF_RECORD_CGROUP = 19,
+    PERF_RECORD_MAX = 20,
 }
-pub mod _bindgen_ty_79 {
-    pub type Type = ::std::os::raw::c_uint;
-    pub const IFLA_XDP_UNSPEC: Type = 0;
-    pub const IFLA_XDP_FD: Type = 1;
-    pub const IFLA_XDP_ATTACHED: Type = 2;
-    pub const IFLA_XDP_FLAGS: Type = 3;
-    pub const IFLA_XDP_PROG_ID: Type = 4;
-    pub const IFLA_XDP_DRV_PROG_ID: Type = 5;
-    pub const IFLA_XDP_SKB_PROG_ID: Type = 6;
-    pub const IFLA_XDP_HW_PROG_ID: Type = 7;
-    pub const IFLA_XDP_EXPECTED_FD: Type = 8;
-    pub const __IFLA_XDP_MAX: Type = 9;
+pub const IFLA_XDP_UNSPEC: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_UNSPEC;
+pub const IFLA_XDP_FD: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_FD;
+pub const IFLA_XDP_ATTACHED: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_ATTACHED;
+pub const IFLA_XDP_FLAGS: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_FLAGS;
+pub const IFLA_XDP_PROG_ID: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_PROG_ID;
+pub const IFLA_XDP_DRV_PROG_ID: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_DRV_PROG_ID;
+pub const IFLA_XDP_SKB_PROG_ID: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_SKB_PROG_ID;
+pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_HW_PROG_ID;
+pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_EXPECTED_FD;
+pub const __IFLA_XDP_MAX: _bindgen_ty_79 = _bindgen_ty_79::__IFLA_XDP_MAX;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_79 {
+    IFLA_XDP_UNSPEC = 0,
+    IFLA_XDP_FD = 1,
+    IFLA_XDP_ATTACHED = 2,
+    IFLA_XDP_FLAGS = 3,
+    IFLA_XDP_PROG_ID = 4,
+    IFLA_XDP_DRV_PROG_ID = 5,
+    IFLA_XDP_SKB_PROG_ID = 6,
+    IFLA_XDP_HW_PROG_ID = 7,
+    IFLA_XDP_EXPECTED_FD = 8,
+    __IFLA_XDP_MAX = 9,
 }
 #[doc = "\t\tLink layer specific messages."]
 #[repr(C)]

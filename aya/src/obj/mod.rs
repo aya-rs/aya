@@ -340,7 +340,7 @@ fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
     let (def, data) = if name == ".bss" || name.starts_with(".data") || name.starts_with(".rodata")
     {
         let def = bpf_map_def {
-            map_type: BPF_MAP_TYPE_ARRAY,
+            map_type: BPF_MAP_TYPE_ARRAY as u32,
             key_size: mem::size_of::<u32>() as u32,
             value_size: section.data.len() as u32,
             max_entries: 1,
@@ -541,7 +541,7 @@ mod tests {
                 section_index: 0,
                 name,
                 def: bpf_map_def {
-                    map_type: BPF_MAP_TYPE_ARRAY,
+                    map_type: _map_type,
                     key_size: 4,
                     value_size,
                     max_entries: 1,

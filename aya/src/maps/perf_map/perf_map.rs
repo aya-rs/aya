@@ -75,7 +75,7 @@ pub struct PerfMap<T: DerefMut<Target = Map>> {
 impl<T: DerefMut<Target = Map>> PerfMap<T> {
     pub fn new(map: T) -> Result<PerfMap<T>, PerfMapError> {
         let map_type = map.obj.def.map_type;
-        if map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY {
+        if map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
             })?;
