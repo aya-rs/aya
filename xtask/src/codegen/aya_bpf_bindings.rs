@@ -29,7 +29,7 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
     let dir = PathBuf::from("bpf/aya-bpf-bindings");
     let generated = dir.join("src").join(opts.arch.to_string());
 
-    let mut bindgen = bindgen::builder()
+    let mut bindgen = bindgen::bpf_builder()
         .header(&*dir.join("include/bindings.h").to_string_lossy())
         .clang_args(&["-I", &*opts.libbpf_dir.join("src").to_string_lossy()]);
 

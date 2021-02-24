@@ -1,12 +1,21 @@
+mod aya;
 mod aya_bpf_bindings;
 mod helpers;
 
 use structopt::StructOpt;
 
+const SUPPORTED_ARCHS: &'static [Architecture] = &[Architecture::X86_64, Architecture::AArch64];
+
 #[derive(Debug, Copy, Clone)]
 pub enum Architecture {
     X86_64,
     AArch64,
+}
+
+impl Architecture {
+    pub fn supported() -> &'static [Architecture] {
+        SUPPORTED_ARCHS
+    }
 }
 
 impl std::str::FromStr for Architecture {
@@ -38,6 +47,8 @@ pub struct Options {
 
 #[derive(StructOpt)]
 enum Command {
+    #[structopt(name = "aya")]
+    Aya(aya::CodegenOptions),
     #[structopt(name = "aya-bpf-bindings")]
     AyaBpfBindings(aya_bpf_bindings::CodegenOptions),
 }
@@ -45,6 +56,7 @@ enum Command {
 pub fn codegen(opts: Options) -> Result<(), anyhow::Error> {
     use Command::*;
     match opts.command {
+        Aya(opts) => aya::codegen(opts),
         AyaBpfBindings(opts) => aya_bpf_bindings::codegen(opts),
     }
 }
