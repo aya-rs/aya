@@ -21,7 +21,21 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
             .header(&*dir.join("include/bindings.h").to_string_lossy())
-            .clang_args(&["-I", &*opts.libbpf_dir.join("src").to_string_lossy()]);
+            .clang_args(&["-I", &*opts.libbpf_dir.join("src").to_string_lossy()])
+            // open aya-bpf-bindings/.../bindings.rs and look for mod
+            // _bindgen, those are anonymous enums
+            .constified_enum("BPF_F_.*")
+            .constified_enum("BPF_REG_.*")
+            .constified_enum("BPF_CSUM_.*")
+            .constified_enum("BPF_ADJ_.*")
+            .constified_enum("BPF_SK_.*")
+            .constified_enum("BPF_RB_.*")
+            .constified_enum("BPF_RINGBUF_.*")
+            .constified_enum("BPF_SOCK_.*")
+            .constified_enum("BPF_TCP_.*")
+            .constified_enum("BPF_DEVCG_.*")
+            .constified_enum("BPF_FIB_.*")
+            .constified_enum("BPF_FLOW_.*");
 
         let types = ["bpf_map_.*"];
         let vars = ["BPF_.*", "bpf_.*"];

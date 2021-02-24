@@ -15,7 +15,7 @@ pub fn bpf_builder() -> Builder {
         .ctypes_prefix("::aya_bpf_cty")
         .layout_tests(false)
         .clang_arg("-Wno-unknown-attributes")
-        .default_enum_style(EnumVariation::Consts)
+        .default_enum_style(EnumVariation::ModuleConsts)
         .prepend_enum_name(false);
 
     bindgen
