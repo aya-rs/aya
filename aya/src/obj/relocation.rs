@@ -61,7 +61,7 @@ impl Object {
             .map(|map| (map.obj.section_index, map))
             .collect::<HashMap<_, _>>();
 
-        let symbol_table = &self.symbol_table;
+        let symbol_table = &self.symbols_by_index;
         for (program_name, program) in self.programs.iter_mut() {
             if let Some(relocations) = self.relocations.get(&program.section_index) {
                 relocate_program(program, relocations, &maps_by_section, symbol_table).map_err(

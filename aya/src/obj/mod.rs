@@ -35,7 +35,7 @@ pub struct Object {
     pub(crate) maps: HashMap<String, Map>,
     pub(crate) programs: HashMap<String, Program>,
     pub(crate) relocations: HashMap<SectionIndex, Vec<Relocation>>,
-    pub(crate) symbol_table: HashMap<SymbolIndex, Symbol>,
+    pub(crate) symbols_by_index: HashMap<SymbolIndex, Symbol>,
 }
 
 #[derive(Debug, Clone)]
@@ -113,7 +113,7 @@ impl Object {
 
         if let Some(symbol_table) = obj.symbol_table() {
             for symbol in symbol_table.symbols() {
-                bpf_obj.symbol_table.insert(
+                bpf_obj.symbols_by_index.insert(
                     symbol.index(),
                     Symbol {
                         name: symbol.name().ok().map(String::from),
@@ -137,7 +137,7 @@ impl Object {
             maps: HashMap::new(),
             programs: HashMap::new(),
             relocations: HashMap::new(),
-            symbol_table: HashMap::new(),
+            symbols_by_index: HashMap::new(),
         }
     }
 
