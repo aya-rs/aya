@@ -94,7 +94,7 @@ impl Program {
         load_program(self.prog_type(), self.data_mut())
     }
 
-    fn prog_type(&self) -> bpf_prog_type {
+    pub fn prog_type(&self) -> bpf_prog_type {
         use crate::generated::bpf_prog_type::*;
         match self {
             Program::KProbe(_) => BPF_PROG_TYPE_KPROBE,
@@ -123,6 +123,10 @@ impl Program {
             Program::SocketFilter(p) => &mut p.data,
             Program::Xdp(p) => &mut p.data,
         }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.data().name
     }
 }
 
