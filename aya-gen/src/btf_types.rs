@@ -28,7 +28,7 @@ pub fn generate<T: AsRef<str>>(
     types: &[T],
     probe_read_getters: bool,
 ) -> Result<String, Error> {
-    let mut bindgen = bindgen::builder();
+    let mut bindgen = bindgen::bpf_builder();
 
     let c_header = c_header_from_btf(btf_file)?;
     bindgen = bindgen.header_contents("kernel_types.h", &c_header);
