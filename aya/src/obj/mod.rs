@@ -389,6 +389,7 @@ mod tests {
     fn fake_ins() -> bpf_insn {
         bpf_insn {
             code: 0,
+            _bitfield_align_1: [],
             _bitfield_1: bpf_insn::new_bitfield_1(0, 0),
             off: 0,
             imm: 0,
