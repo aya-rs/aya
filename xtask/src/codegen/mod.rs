@@ -1,5 +1,6 @@
 mod aya_bpf_bindings;
 mod bindings;
+mod helpers;
 
 use structopt::StructOpt;
 

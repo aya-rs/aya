@@ -1,23 +1,15 @@
-use std::path::PathBuf;
-
 use anyhow::anyhow;
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::ToTokens;
+use std::path::PathBuf;
 use structopt::StructOpt;
-use syn::{
-    self, parse_str,
-    punctuated::Punctuated,
-    token::Comma,
-    visit_mut::{self, VisitMut},
-    AngleBracketedGenericArguments, ForeignItemStatic, GenericArgument, Ident, Item, Path,
-    PathArguments::AngleBracketed,
-    Type,
-};
 
 use aya_gen::getters::{generate_getters_for_items, probe_read_getter};
+use syn::{parse_str, Item};
 
 use crate::codegen::{
     bindings::{self, bindgen},
+    helpers::{expand_helpers, extract_helpers},
     Architecture,
 };
 
@@ -49,13 +41,12 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
         return Err(anyhow!("bindgen failed: {}", output.status));
     }
 
-    // delete the helpers, then rewrite them in helpers.rs
     let mut tree = parse_str::<syn::File>(bindings).unwrap();
-
-    let mut tx = RewriteBpfHelpers {
-        helpers: Vec::new(),
-    };
-    tx.visit_file_mut(&mut tree);
+    let (indexes, helpers) = extract_helpers(&tree.items);
+    let helpers = expand_helpers(&helpers);
+    for index in indexes {
+        tree.items[index] = Item::Verbatim(TokenStream::new())
+    }
 
     bindings::write(
         &tree.to_token_stream().to_string(),
@@ -64,12 +55,12 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
     )?;
 
     bindings::write(
-        &tx.helpers.join(""),
+        &helpers.to_string(),
         "use super::bindings::*;",
         &generated.join("helpers.rs"),
     )?;
 
-    let bpf_probe_read = syn::parse_str::<Path>("crate::bpf_probe_read").unwrap();
+    let bpf_probe_read = syn::parse_str("crate::bpf_probe_read").unwrap();
     bindings::write(
         &generate_getters_for_items(&tree.items, |getter| {
             probe_read_getter(getter, &bpf_probe_read)
@@ -80,61 +71,4 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
     )?;
 
     Ok(())
-}
-
-struct RewriteBpfHelpers {
-    helpers: Vec<String>,
-}
-
-impl VisitMut for RewriteBpfHelpers {
-    fn visit_item_mut(&mut self, item: &mut Item) {
-        visit_mut::visit_item_mut(self, item);
-        if let Item::ForeignMod(_) = item {
-            *item = Item::Verbatim(TokenStream::new())
-        }
-    }
-    fn visit_foreign_item_static_mut(&mut self, static_item: &mut ForeignItemStatic) {
-        if let Type::Path(path) = &*static_item.ty {
-            let ident = &static_item.ident;
-            let ident_str = ident.to_string();
-            let last = path.path.segments.last().unwrap();
-            let ty_ident = last.ident.to_string();
-            if ident_str.starts_with("bpf_") && ty_ident == "Option" {
-                let fn_ty = match &last.arguments {
-                    AngleBracketed(AngleBracketedGenericArguments { args, .. }) => {
-                        args.first().unwrap()
-                    }
-                    _ => panic!(),
-                };
-                let mut ty_s = quote! {
-                    #[inline(always)]
-                    pub #fn_ty
-                }
-                .to_string();
-                ty_s = ty_s.replace("fn (", &format!("fn {} (", ident_str));
-                let call_idx = self.helpers.len() + 1;
-                let args: Punctuated<Ident, Comma> = match fn_ty {
-                    GenericArgument::Type(Type::BareFn(f)) => f
-                        .inputs
-                        .iter()
-                        .map(|arg| arg.name.clone().unwrap().0)
-                        .collect(),
-                    _ => unreachable!(),
-                };
-                let body = quote! {
-                    {
-                        let f: #fn_ty = ::core::mem::transmute(#call_idx);
-                        f(#args)
-                    }
-                }
-                .to_string();
-                ty_s.push_str(&body);
-                let mut helper = ty_s;
-                if helper.contains("printk") {
-                    helper = format!("/* {} */", helper);
-                }
-                self.helpers.push(helper);
-            }
-        }
-    }
 }
