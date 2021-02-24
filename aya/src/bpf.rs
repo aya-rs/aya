@@ -183,6 +183,17 @@ impl Bpf {
             .transpose()
     }
 
+    pub fn maps<'a>(&'a self) -> impl Iterator<Item = (&'a str, Result<MapRef, MapError>)> + 'a {
+        let ret = self.maps.iter().map(|(name, lock)| {
+            (
+                name.as_str(),
+                lock.try_read()
+                    .map_err(|_| MapError::BorrowError { name: name.clone() }),
+            )
+        });
+        ret
+    }
+
     pub fn program<'a, 'slf: 'a, T: TryFrom<&'a Program>>(
         &'slf self,
         name: &str,
