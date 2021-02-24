@@ -99,7 +99,7 @@ pub fn generate_getters_for_items(
     tokens
 }
 
-pub fn probe_read_getter(getter: &Getter<'_>, bpf_probe_read: &Path) -> TokenStream {
+pub fn read_getter(getter: &Getter<'_>, read_fn: &Path) -> TokenStream {
     let ident = getter.ident;
     let ty = getter.ty;
     let prefix = &getter.prefix;
@@ -107,7 +107,7 @@ pub fn probe_read_getter(getter: &Getter<'_>, bpf_probe_read: &Path) -> TokenStr
         Type::Ptr(_) => {
             quote! {
                 pub fn #ident(&self) -> Option<#ty> {
-                    let v = unsafe { #bpf_probe_read(&#(#prefix).*.#ident) }.ok()?;
+                    let v = unsafe { #read_fn(&#(#prefix).*.#ident) }.ok()?;
                     if v.is_null() {
                         None
                     } else {
@@ -119,7 +119,7 @@ pub fn probe_read_getter(getter: &Getter<'_>, bpf_probe_read: &Path) -> TokenStr
         _ => {
             quote! {
                 pub fn #ident(&self) -> Option<#ty> {
-                    unsafe { #bpf_probe_read(&#(#prefix).*.#ident) }.ok()
+                    unsafe { #read_fn(&#(#prefix).*.#ident) }.ok()
                 }
             }
         }

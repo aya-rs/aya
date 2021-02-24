@@ -6,7 +6,7 @@ use structopt::StructOpt;
 
 use aya_gen::{
     bindgen,
-    getters::{generate_getters_for_items, probe_read_getter},
+    getters::{generate_getters_for_items, read_getter},
     write_to_file, write_to_file_fmt,
 };
 use syn::{parse_str, Item};
@@ -75,7 +75,7 @@ pub fn codegen(opts: CodegenOptions) -> Result<(), anyhow::Error> {
         &format!(
             "use super::bindings::*; {}",
             &generate_getters_for_items(&tree.items, |getter| {
-                probe_read_getter(getter, &bpf_probe_read)
+                read_getter(getter, &bpf_probe_read)
             })
             .to_string()
         ),

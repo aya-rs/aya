@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::{
     bindgen,
-    getters::{generate_getters_for_items, probe_read_getter},
+    getters::{generate_getters_for_items, read_getter},
     rustfmt,
 };
 
@@ -44,9 +44,8 @@ pub fn generate<T: AsRef<str>>(
 
     let tree = syn::parse_str::<syn::File>(&bindings).unwrap();
     let bpf_probe_read = syn::parse_str::<syn::Path>("::aya_bpf::helpers::bpf_probe_read").unwrap();
-    let getters = generate_getters_for_items(&tree.items, |getter| {
-        probe_read_getter(getter, &bpf_probe_read)
-    });
+    let getters =
+        generate_getters_for_items(&tree.items, |getter| read_getter(getter, &bpf_probe_read));
     let getters =
         rustfmt::format(&getters.to_string()).map_err(|io_error| Error::Rustfmt(io_error))?;
 
