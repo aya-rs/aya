@@ -210,6 +210,10 @@ impl Bpf {
             .map(|p| T::try_from(p))
             .transpose()
     }
+
+    pub fn programs(&self) -> impl Iterator<Item = &Program> {
+        self.programs.values()
+    }
 }
 
 #[derive(Debug, Error)]
