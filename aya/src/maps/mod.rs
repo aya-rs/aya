@@ -104,6 +104,14 @@ impl Map {
         Ok(fd)
     }
 
+    pub fn name(&self) -> &str {
+        &self.obj.name
+    }
+
+    pub fn map_type(&self) -> Result<bpf_map_type, MapError> {
+        bpf_map_type::try_from(self.obj.def.map_type)
+    }
+
     pub(crate) fn fd_or_err(&self) -> Result<RawFd, MapError> {
         self.fd.ok_or_else(|| MapError::NotCreated {
             name: self.obj.name.clone(),
