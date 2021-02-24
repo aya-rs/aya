@@ -194,15 +194,15 @@ impl Bpf {
         ret
     }
 
-    pub fn program<'a, 'slf: 'a, T: TryFrom<&'a Program>>(
-        &'slf self,
+    pub fn program<'a, T: TryFrom<&'a Program>>(
+        &'a self,
         name: &str,
     ) -> Result<Option<T>, <T as TryFrom<&'a Program>>::Error> {
         self.programs.get(name).map(|p| T::try_from(p)).transpose()
     }
 
-    pub fn program_mut<'a, 'slf: 'a, T: TryFrom<&'a mut Program>>(
-        &'slf mut self,
+    pub fn program_mut<'a, T: TryFrom<&'a mut Program>>(
+        &'a mut self,
         name: &str,
     ) -> Result<Option<T>, <T as TryFrom<&'a mut Program>>::Error> {
         self.programs
