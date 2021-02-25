@@ -14,7 +14,11 @@ pub use socket_filter::{SocketFilter, SocketFilterError};
 pub use trace_point::{TracePoint, TracePointError};
 pub use xdp::{Xdp, XdpError};
 
-use crate::{generated::bpf_prog_type, obj, sys::bpf_load_program};
+use crate::{
+    generated::bpf_prog_type,
+    obj::{self, Function},
+    sys::bpf_load_program,
+};
 #[derive(Debug, Error)]
 pub enum ProgramError {
     #[error("the program is already loaded")]
@@ -207,13 +211,13 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
         return Err(ProgramError::AlreadyLoaded);
     }
     let crate::obj::Program {
-        instructions,
+        function: Function { instructions, .. },
         license,
         kernel_version,
         ..
     } = obj;
 
-    let mut ret = Ok(1);
+    let mut ret = Ok(1); // FIXME
     let mut log_buf = VerifierLog::new();
     for i in 0..3 {
         log_buf.reset();

@@ -88,6 +88,8 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "BPF_W",
         "BPF_H",
         "BPF_B",
+        "BPF_JMP",
+        "BPF_CALL",
         "SO_ATTACH_BPF",
         "SO_DETACH_BPF",
         // BTF

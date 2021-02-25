@@ -100,6 +100,7 @@ impl Bpf {
         }
 
         obj.relocate_maps(maps.as_slice())?;
+        obj.relocate_calls()?;
 
         let programs = obj
             .programs
@@ -231,9 +232,9 @@ pub enum BpfError {
     #[error("BTF error")]
     BtfError(#[from] BtfError),
 
-    #[error("error relocating BPF program `{program_name}`: {error}")]
+    #[error("error relocating `{function}`: {error}")]
     RelocationError {
-        program_name: String,
+        function: String,
         error: Box<dyn Error + Send + Sync>,
     },
 

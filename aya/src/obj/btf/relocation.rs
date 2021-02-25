@@ -171,7 +171,7 @@ impl Object {
                 .programs
                 .get_mut(section_name)
                 .ok_or(BpfError::RelocationError {
-                    program_name: section_name.to_owned(),
+                    function: section_name.to_owned(),
                     error: Box::new(RelocationError::ProgramNotFound),
                 })?;
             match relocate_btf_program(
@@ -185,7 +185,7 @@ impl Object {
                 Err(ErrorWrapper::BtfError(e)) => return Err(e)?,
                 Err(ErrorWrapper::RelocationError(error)) => {
                     return Err(BpfError::RelocationError {
-                        program_name: section_name.to_owned(),
+                        function: section_name.to_owned(),
                         error: Box::new(error),
                     })
                 }
@@ -204,7 +204,7 @@ fn relocate_btf_program<'target>(
     candidates_cache: &mut HashMap<u32, Vec<Candidate<'target>>>,
 ) -> Result<(), ErrorWrapper> {
     for rel in relos {
-        let instructions = &mut program.instructions;
+        let instructions = &mut program.function.instructions;
         let ins_index = rel.ins_offset as usize / std::mem::size_of::<bpf_insn>();
         if ins_index >= instructions.len() {
             return Err(RelocationError::InvalidInstructionIndex {
@@ -763,7 +763,7 @@ impl ComputedRelocation {
         local_btf: &Btf,
         target_btf: &Btf,
     ) -> Result<(), ErrorWrapper> {
-        let instructions = &mut program.instructions;
+        let instructions = &mut program.function.instructions;
         let num_instructions = instructions.len();
         let ins_index = rel.ins_offset as usize / std::mem::size_of::<bpf_insn>();
         let mut ins =

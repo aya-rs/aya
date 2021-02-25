@@ -3,7 +3,7 @@ mod relocation;
 
 use object::{
     read::{Object as ElfObject, ObjectSection, Section as ObjSection},
-    Endianness, ObjectSymbol, ObjectSymbolTable, SectionIndex, SymbolIndex,
+    Endianness, ObjectSymbol, ObjectSymbolTable, RelocationTarget, SectionIndex,
 };
 use std::{
     collections::HashMap,
@@ -14,7 +14,7 @@ use std::{
 };
 use thiserror::Error;
 
-pub use relocation::*;
+use relocation::*;
 
 use crate::{
     bpf_map_def,
@@ -34,8 +34,9 @@ pub struct Object {
     pub btf_ext: Option<BtfExt>,
     pub(crate) maps: HashMap<String, Map>,
     pub(crate) programs: HashMap<String, Program>,
-    pub(crate) relocations: HashMap<SectionIndex, Vec<Relocation>>,
-    pub(crate) symbols_by_index: HashMap<SymbolIndex, Symbol>,
+    pub(crate) functions: HashMap<u64, Function>,
+    pub(crate) relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
+    pub(crate) symbols_by_index: HashMap<usize, Symbol>,
 }
 
 #[derive(Debug, Clone)]
@@ -50,9 +51,17 @@ pub struct Map {
 pub(crate) struct Program {
     pub(crate) license: CString,
     pub(crate) kernel_version: KernelVersion,
-    pub(crate) instructions: Vec<bpf_insn>,
     pub(crate) kind: ProgramKind,
+    pub(crate) function: Function,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct Function {
+    pub(crate) address: u64,
+    pub(crate) name: String,
     pub(crate) section_index: SectionIndex,
+    pub(crate) section_offset: usize,
+    pub(crate) instructions: Vec<bpf_insn>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -107,21 +116,24 @@ impl Object {
 
         let mut bpf_obj = Object::new(endianness, license, kernel_version);
 
-        for s in obj.sections() {
-            bpf_obj.parse_section(Section::try_from(&s)?)?;
-        }
-
         if let Some(symbol_table) = obj.symbol_table() {
             for symbol in symbol_table.symbols() {
-                bpf_obj.symbols_by_index.insert(
-                    symbol.index(),
-                    Symbol {
-                        name: symbol.name().ok().map(String::from),
-                        section_index: symbol.section().index(),
-                        address: symbol.address(),
-                    },
-                );
+                let sym = Symbol {
+                    index: symbol.index().0,
+                    name: symbol.name().ok().map(String::from),
+                    section_index: symbol.section().index(),
+                    address: symbol.address(),
+                    size: symbol.size(),
+                    is_definition: symbol.is_definition(),
+                };
+                bpf_obj
+                    .symbols_by_index
+                    .insert(symbol.index().0, sym.clone());
             }
+        }
+
+        for s in obj.sections() {
+            bpf_obj.parse_section(Section::try_from(&s)?)?;
         }
 
         return Ok(bpf_obj);
@@ -136,32 +148,10 @@ impl Object {
             btf_ext: None,
             maps: HashMap::new(),
             programs: HashMap::new(),
+            functions: HashMap::new(),
             relocations: HashMap::new(),
             symbols_by_index: HashMap::new(),
         }
-    }
-
-    fn parse_program(&self, section: &Section, ty: &str) -> Result<Program, ParseError> {
-        let num_instructions = section.data.len() / mem::size_of::<bpf_insn>();
-        if section.data.len() % mem::size_of::<bpf_insn>() > 0 {
-            return Err(ParseError::InvalidProgramCode);
-        }
-        let instructions = (0..num_instructions)
-            .map(|i| unsafe {
-                ptr::read_unaligned(
-                    (section.data.as_ptr() as usize + i * mem::size_of::<bpf_insn>())
-                        as *const bpf_insn,
-                )
-            })
-            .collect::<Vec<_>>();
-
-        Ok(Program {
-            section_index: section.index,
-            license: self.license.clone(),
-            kernel_version: self.kernel_version,
-            instructions,
-            kind: ProgramKind::from_str(ty)?,
-        })
     }
 
     fn parse_btf(&mut self, section: &Section) -> Result<(), BtfError> {
@@ -175,7 +165,88 @@ impl Object {
         Ok(())
     }
 
-    fn parse_section(&mut self, section: Section) -> Result<(), BpfError> {
+    fn parse_program(
+        &self,
+        section: &Section,
+        ty: &str,
+        name: &str,
+    ) -> Result<Program, ParseError> {
+        Ok(Program {
+            license: self.license.clone(),
+            kernel_version: self.kernel_version,
+            kind: ProgramKind::from_str(ty)?,
+            function: Function {
+                name: name.to_owned(),
+                address: section.address,
+                section_index: section.index,
+                section_offset: 0,
+                instructions: copy_instructions(section.data)?,
+            },
+        })
+    }
+
+    fn parse_text_section(&mut self, mut section: Section) -> Result<(), ParseError> {
+        let mut symbols_by_address = HashMap::new();
+
+        for sym in self.symbols_by_index.values() {
+            if sym.is_definition && sym.section_index == Some(section.index) {
+                if symbols_by_address.contains_key(&sym.address) {
+                    return Err(ParseError::SymbolTableConflict {
+                        section_index: section.index.0,
+                        address: sym.address,
+                    });
+                }
+                symbols_by_address.insert(sym.address, sym);
+            }
+        }
+
+        let mut offset = 0;
+        while offset < section.data.len() {
+            let address = section.address + offset as u64;
+            let sym = symbols_by_address
+                .get(&address)
+                .ok_or(ParseError::UnknownSymbol {
+                    section_index: section.index.0,
+                    address,
+                })?;
+            if sym.size == 0 {
+                return Err(ParseError::InvalidSymbol {
+                    index: sym.index,
+                    name: sym.name.clone(),
+                });
+            }
+
+            self.functions.insert(
+                sym.address,
+                Function {
+                    address,
+                    name: sym.name.clone().unwrap(),
+                    section_index: section.index,
+                    section_offset: offset,
+                    instructions: copy_instructions(
+                        &section.data[offset..offset + sym.size as usize],
+                    )?,
+                },
+            );
+
+            offset += sym.size as usize;
+        }
+
+        if !section.relocations.is_empty() {
+            self.relocations.insert(
+                section.index,
+                section
+                    .relocations
+                    .drain(..)
+                    .map(|rel| (rel.offset, rel))
+                    .collect(),
+            );
+        }
+
+        Ok(())
+    }
+
+    fn parse_section(&mut self, mut section: Section) -> Result<(), BpfError> {
         let parts = section.name.split("/").collect::<Vec<_>>();
 
         match parts.as_slice() {
@@ -185,6 +256,7 @@ impl Object {
                 self.maps
                     .insert(name.to_string(), parse_map(&section, name)?);
             }
+            &[".text"] => self.parse_text_section(section)?,
             &[".BTF"] => self.parse_btf(&section)?,
             &[".BTF.ext"] => self.parse_btf_ext(&section)?,
             &["maps", name] => {
@@ -199,9 +271,16 @@ impl Object {
             | &[ty @ "xdp", name]
             | &[ty @ "trace_point", name] => {
                 self.programs
-                    .insert(name.to_string(), self.parse_program(&section, ty)?);
+                    .insert(name.to_string(), self.parse_program(&section, ty, name)?);
                 if !section.relocations.is_empty() {
-                    self.relocations.insert(section.index, section.relocations);
+                    self.relocations.insert(
+                        section.index,
+                        section
+                            .relocations
+                            .drain(..)
+                            .map(|rel| (rel.offset, rel))
+                            .collect(),
+                    );
                 }
             }
 
@@ -233,8 +312,8 @@ pub enum ParseError {
         source: object::read::Error,
     },
 
-    #[error("unsupported relocation")]
-    UnsupportedRelocationKind,
+    #[error("unsupported relocation target")]
+    UnsupportedRelocationTarget,
 
     #[error("invalid program kind `{kind}`")]
     InvalidProgramKind { kind: String },
@@ -244,10 +323,21 @@ pub enum ParseError {
 
     #[error("error parsing map `{name}`")]
     InvalidMapDefinition { name: String },
+
+    #[error("two or more symbols in section `{section_index}` have the same address {address:x}")]
+    SymbolTableConflict { section_index: usize, address: u64 },
+
+    #[error("unknown symbol in section `{section_index}` at address {address:x}")]
+    UnknownSymbol { section_index: usize, address: u64 },
+
+    #[error("invalid symbol, index `{index}` name: {}", .name.as_ref().unwrap_or(&"[unknown]".into()))]
+    InvalidSymbol { index: usize, name: Option<String> },
 }
 
+#[derive(Debug)]
 struct Section<'a> {
     index: SectionIndex,
+    address: u64,
     name: &'a str,
     data: &'a [u8],
     relocations: Vec<Relocation>,
@@ -262,19 +352,24 @@ impl<'data, 'file, 'a> TryFrom<&'a ObjSection<'data, 'file>> for Section<'a> {
             index: index.0,
             source,
         };
+
         Ok(Section {
             index,
+            address: section.address(),
             name: section.name().map_err(map_err)?,
             data: section.data().map_err(map_err)?,
             relocations: section
                 .relocations()
-                .map(|(offset, r)| Relocation {
-                    kind: r.kind(),
-                    target: r.target(),
-                    addend: r.addend(),
-                    offset,
+                .map(|(offset, r)| {
+                    Ok(Relocation {
+                        symbol_index: match r.target() {
+                            RelocationTarget::Symbol(index) => index.0,
+                            _ => return Err(ParseError::UnsupportedRelocationTarget),
+                        },
+                        offset,
+                    })
                 })
-                .collect::<Vec<_>>(),
+                .collect::<Result<Vec<_>, _>>()?,
         })
     }
 }
@@ -367,6 +462,22 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     Ok(unsafe { ptr::read_unaligned(data.as_ptr() as *const bpf_map_def) })
 }
 
+fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
+    if data.len() % mem::size_of::<bpf_insn>() > 0 {
+        return Err(ParseError::InvalidProgramCode);
+    }
+    let num_instructions = data.len() / mem::size_of::<bpf_insn>();
+    let instructions = (0..num_instructions)
+        .map(|i| unsafe {
+            ptr::read_unaligned(
+                (data.as_ptr() as usize + i * mem::size_of::<bpf_insn>()) as *const bpf_insn,
+            )
+        })
+        .collect::<Vec<_>>();
+
+    Ok(instructions)
+}
+
 #[cfg(test)]
 mod tests {
     use matches::assert_matches;
@@ -378,6 +489,7 @@ mod tests {
     fn fake_section<'a>(name: &'a str, data: &'a [u8]) -> Section<'a> {
         Section {
             index: SectionIndex(0),
+            address: 0,
             name,
             data,
             relocations: Vec::new(),
@@ -563,7 +675,11 @@ mod tests {
         let obj = fake_obj();
 
         assert_matches!(
-            obj.parse_program(&fake_section("kprobe/foo", &42u32.to_ne_bytes(),), "kprobe"),
+            obj.parse_program(
+                &fake_section("kprobe/foo", &42u32.to_ne_bytes(),),
+                "kprobe",
+                "foo"
+            ),
             Err(ParseError::InvalidProgramCode)
         );
     }
@@ -573,14 +689,19 @@ mod tests {
         let obj = fake_obj();
 
         assert_matches!(
-            obj.parse_program(&fake_section("kprobe/foo", bytes_of(&fake_ins())), "kprobe"),
+            obj.parse_program(&fake_section("kprobe/foo", bytes_of(&fake_ins())), "kprobe", "foo"),
             Ok(Program {
                 license,
-                kernel_version,
+                kernel_version: KernelVersion::Any,
                 kind: ProgramKind::KProbe,
-                section_index: SectionIndex(0),
-                instructions
-            }) if license.to_string_lossy() == "GPL" && kernel_version == KernelVersion::Any && instructions.len() == 1
+                function: Function {
+                    name,
+                    address: 0,
+                    section_index: SectionIndex(0),
+                    section_offset: 0,
+                    instructions
+                }
+            }) if license.to_string_lossy() == "GPL" && name == "foo" && instructions.len() == 1
         );
     }
 
