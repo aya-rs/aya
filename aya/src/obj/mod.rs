@@ -268,15 +268,13 @@ impl<'data, 'file, 'a> TryFrom<&'a ObjSection<'data, 'file>> for Section<'a> {
             data: section.data().map_err(map_err)?,
             relocations: section
                 .relocations()
-                .map(|(offset, r)| {
-                    Ok::<_, ParseError>(Relocation {
-                        kind: r.kind(),
-                        target: r.target(),
-                        addend: r.addend(),
-                        offset,
-                    })
+                .map(|(offset, r)| Relocation {
+                    kind: r.kind(),
+                    target: r.target(),
+                    addend: r.addend(),
+                    offset,
                 })
-                .collect::<Result<Vec<_>, _>>()?,
+                .collect::<Vec<_>>(),
         })
     }
 }
