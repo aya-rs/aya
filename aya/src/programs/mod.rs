@@ -154,6 +154,7 @@ impl ProgramData {
     }
 }
 
+const MIN_LOG_BUF_SIZE: usize = 1024 * 10;
 const MAX_LOG_BUF_SIZE: usize = (std::u32::MAX >> 8) as usize;
 
 pub struct VerifierLog {
@@ -171,8 +172,8 @@ impl VerifierLog {
 
     fn grow(&mut self) {
         self.buf.reserve(cmp::max(
-            1024 * 4,
-            cmp::min(MAX_LOG_BUF_SIZE, self.buf.capacity() * 2),
+            MIN_LOG_BUF_SIZE,
+            cmp::min(MAX_LOG_BUF_SIZE, self.buf.capacity() * 3),
         ));
         self.buf.resize(self.buf.capacity(), 0);
     }
@@ -217,27 +218,28 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
         ..
     } = obj;
 
-    let mut ret = Ok(1); // FIXME
+    let mut ret = Ok(-1);
     let mut log_buf = VerifierLog::new();
     for i in 0..3 {
         log_buf.reset();
 
-        ret = match bpf_load_program(
+        ret = bpf_load_program(
             prog_type,
             instructions,
             license,
             (*kernel_version).into(),
             &mut log_buf,
-        ) {
+        );
+        match &ret {
             Ok(prog_fd) => {
-                *fd = Some(prog_fd as RawFd);
+                *fd = Some(*prog_fd as RawFd);
                 return Ok(());
             }
             Err((_, io_error)) if i == 0 || io_error.raw_os_error() == Some(ENOSPC) => {
                 log_buf.grow();
                 continue;
             }
-            x => x,
+            _ => break,
         };
     }
 
