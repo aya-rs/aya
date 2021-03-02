@@ -20,6 +20,9 @@ pub use program_array::*;
 
 #[derive(Error, Debug)]
 pub enum MapError {
+    #[error("map `{name}` not found ")]
+    NotFound { name: String },
+
     #[error("invalid map type {map_type}")]
     InvalidMapType { map_type: u32 },
 

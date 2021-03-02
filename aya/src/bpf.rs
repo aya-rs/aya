@@ -148,38 +148,30 @@ impl Bpf {
         })
     }
 
-    pub fn map<T: TryFrom<MapRef>>(
-        &self,
-        name: &str,
-    ) -> Result<Option<T>, <T as TryFrom<MapRef>>::Error>
-    where
-        <T as TryFrom<MapRef>>::Error: From<MapError>,
-    {
+    pub fn map(&self, name: &str) -> Result<MapRef, MapError> {
         self.maps
             .get(name)
-            .map(|lock| {
-                T::try_from(lock.try_read().map_err(|_| MapError::BorrowError {
-                    name: name.to_owned(),
-                })?)
+            .ok_or_else(|| MapError::NotFound {
+                name: name.to_owned(),
             })
-            .transpose()
+            .and_then(|lock| {
+                lock.try_read().map_err(|_| MapError::BorrowError {
+                    name: name.to_owned(),
+                })
+            })
     }
 
-    pub fn map_mut<T: TryFrom<MapRefMut>>(
-        &self,
-        name: &str,
-    ) -> Result<Option<T>, <T as TryFrom<MapRefMut>>::Error>
-    where
-        <T as TryFrom<MapRefMut>>::Error: From<MapError>,
-    {
+    pub fn map_mut(&self, name: &str) -> Result<MapRefMut, MapError> {
         self.maps
             .get(name)
-            .map(|lock| {
-                T::try_from(lock.try_write().map_err(|_| MapError::BorrowError {
-                    name: name.to_owned(),
-                })?)
+            .ok_or_else(|| MapError::NotFound {
+                name: name.to_owned(),
             })
-            .transpose()
+            .and_then(|lock| {
+                lock.try_write().map_err(|_| MapError::BorrowError {
+                    name: name.to_owned(),
+                })
+            })
     }
 
     pub fn maps<'a>(&'a self) -> impl Iterator<Item = (&'a str, Result<MapRef, MapError>)> + 'a {
