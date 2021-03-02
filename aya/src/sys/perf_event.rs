@@ -79,7 +79,7 @@ pub(crate) fn perf_event_open_trace_point(id: u32) -> SysResult {
     })
 }
 
-pub(crate) fn perf_event_ioctl(fd: c_int, request: c_ulong, arg: c_int) -> SysResult {
+pub(crate) fn perf_event_ioctl(fd: c_int, request: c_int, arg: c_int) -> SysResult {
     let call = Syscall::PerfEventIoctl { fd, request, arg };
     #[cfg(not(test))]
     return syscall(call);

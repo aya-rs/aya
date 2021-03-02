@@ -2,13 +2,17 @@ use std::{
     collections::HashMap,
     error::Error,
     fs, io,
+    os::raw::c_int,
     path::{Path, PathBuf},
 };
 
 use thiserror::Error;
 
 use crate::{
-    generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+    generated::{
+        bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY, AYA_PERF_EVENT_IOC_DISABLE,
+        AYA_PERF_EVENT_IOC_ENABLE, AYA_PERF_EVENT_IOC_SET_BPF,
+    },
     maps::{Map, MapError, MapLock, MapRef, MapRefMut},
     obj::{
         btf::{Btf, BtfError},
@@ -24,10 +28,9 @@ use crate::{
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
 
-/* FIXME: these are arch dependent */
-pub(crate) const PERF_EVENT_IOC_ENABLE: libc::c_ulong = 9216;
-pub(crate) const PERF_EVENT_IOC_DISABLE: libc::c_ulong = 9217;
-pub(crate) const PERF_EVENT_IOC_SET_BPF: libc::c_ulong = 1074013192;
+pub(crate) const PERF_EVENT_IOC_ENABLE: c_int = AYA_PERF_EVENT_IOC_ENABLE;
+pub(crate) const PERF_EVENT_IOC_DISABLE: c_int = AYA_PERF_EVENT_IOC_DISABLE;
+pub(crate) const PERF_EVENT_IOC_SET_BPF: c_int = AYA_PERF_EVENT_IOC_SET_BPF;
 
 pub unsafe trait Pod: Copy + 'static {}
 

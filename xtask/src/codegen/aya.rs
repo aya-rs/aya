@@ -98,6 +98,8 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         // PERF
         "PERF_FLAG_.*",
         "PERF_EVENT_.*",
+        // see linux_wrapper.h, these are to workaround the IOC macros
+        "AYA_PERF_EVENT_.*",
         // NETLINK
         "NLMSG_ALIGNTO",
         "IFLA_XDP_FD",

@@ -1518,3 +1518,6 @@ pub struct ifinfomsg {
     pub ifi_flags: ::std::os::raw::c_uint,
     pub ifi_change: ::std::os::raw::c_uint,
 }
+pub const AYA_PERF_EVENT_IOC_ENABLE: ::std::os::raw::c_int = 9216;
+pub const AYA_PERF_EVENT_IOC_DISABLE: ::std::os::raw::c_int = 9217;
+pub const AYA_PERF_EVENT_IOC_SET_BPF: ::std::os::raw::c_int = 1074013192;

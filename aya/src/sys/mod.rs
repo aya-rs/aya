@@ -36,7 +36,7 @@ pub(crate) enum Syscall<'a> {
     },
     PerfEventIoctl {
         fd: c_int,
-        request: c_ulong,
+        request: c_int,
         arg: c_int,
     },
 }
