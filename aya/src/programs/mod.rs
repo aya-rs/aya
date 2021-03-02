@@ -21,6 +21,9 @@ use crate::{
 };
 #[derive(Debug, Error)]
 pub enum ProgramError {
+    #[error("program `{name}` not found")]
+    NotFound { name: String },
+
     #[error("the program is already loaded")]
     AlreadyLoaded,
 

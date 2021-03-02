@@ -1,6 +1,5 @@
 use std::{
     collections::HashMap,
-    convert::TryFrom,
     error::Error,
     fs, io,
     path::{Path, PathBuf},
@@ -185,21 +184,20 @@ impl Bpf {
         ret
     }
 
-    pub fn program<'a, T: TryFrom<&'a Program>>(
-        &'a self,
-        name: &str,
-    ) -> Result<Option<T>, <T as TryFrom<&'a Program>>::Error> {
-        self.programs.get(name).map(|p| T::try_from(p)).transpose()
+    pub fn program(&self, name: &str) -> Result<&Program, ProgramError> {
+        self.programs
+            .get(name)
+            .ok_or_else(|| ProgramError::NotFound {
+                name: name.to_owned(),
+            })
     }
 
-    pub fn program_mut<'a, T: TryFrom<&'a mut Program>>(
-        &'a mut self,
-        name: &str,
-    ) -> Result<Option<T>, <T as TryFrom<&'a mut Program>>::Error> {
+    pub fn program_mut(&mut self, name: &str) -> Result<&mut Program, ProgramError> {
         self.programs
             .get_mut(name)
-            .map(|p| T::try_from(p))
-            .transpose()
+            .ok_or_else(|| ProgramError::NotFound {
+                name: name.to_owned(),
+            })
     }
 
     pub fn programs(&self) -> impl Iterator<Item = &Program> {
