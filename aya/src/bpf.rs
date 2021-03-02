@@ -13,7 +13,7 @@ use crate::{
     maps::{Map, MapError, MapLock, MapRef, MapRefMut},
     obj::{
         btf::{Btf, BtfError},
-        Object, ParseError,
+        Object, ParseError, ProgramKind,
     },
     programs::{
         probe::ProbeKind, KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint,
@@ -114,27 +114,25 @@ impl Bpf {
                     links: Vec::new(),
                 };
                 let program = match kind {
-                    crate::obj::ProgramKind::KProbe => Program::KProbe(KProbe {
+                    ProgramKind::KProbe => Program::KProbe(KProbe {
                         data,
                         kind: ProbeKind::KProbe,
                     }),
-                    crate::obj::ProgramKind::KRetProbe => Program::KProbe(KProbe {
+                    ProgramKind::KRetProbe => Program::KProbe(KProbe {
                         data,
                         kind: ProbeKind::KRetProbe,
                     }),
-                    crate::obj::ProgramKind::UProbe => Program::UProbe(UProbe {
+                    ProgramKind::UProbe => Program::UProbe(UProbe {
                         data,
                         kind: ProbeKind::UProbe,
                     }),
-                    crate::obj::ProgramKind::URetProbe => Program::UProbe(UProbe {
+                    ProgramKind::URetProbe => Program::UProbe(UProbe {
                         data,
                         kind: ProbeKind::URetProbe,
                     }),
-                    crate::obj::ProgramKind::TracePoint => Program::TracePoint(TracePoint { data }),
-                    crate::obj::ProgramKind::SocketFilter => {
-                        Program::SocketFilter(SocketFilter { data })
-                    }
-                    crate::obj::ProgramKind::Xdp => Program::Xdp(Xdp { data }),
+                    ProgramKind::TracePoint => Program::TracePoint(TracePoint { data }),
+                    ProgramKind::SocketFilter => Program::SocketFilter(SocketFilter { data }),
+                    ProgramKind::Xdp => Program::Xdp(Xdp { data }),
                 };
 
                 (name, program)
