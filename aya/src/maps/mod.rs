@@ -54,22 +54,12 @@ pub enum MapError {
     #[error("the program is not loaded")]
     ProgramNotLoaded,
 
-    #[error("the BPF_MAP_UPDATE_ELEM syscall failed with code {code} io_error {io_error}")]
-    UpdateElementError { code: i64, io_error: io::Error },
-
-    #[error("the BPF_MAP_LOOKUP_ELEM syscall failed with code {code} io_error {io_error}")]
-    LookupElementError { code: i64, io_error: io::Error },
-
-    #[error("the BPF_MAP_DELETE_ELEM syscall failed with code {code} io_error {io_error}")]
-    DeleteElementError { code: i64, io_error: io::Error },
-
-    #[error(
-        "the BPF_MAP_LOOKUP_AND_DELETE_ELEM syscall failed with code {code} io_error {io_error}"
-    )]
-    LookupAndDeleteElementError { code: i64, io_error: io::Error },
-
-    #[error("the BPF_MAP_GET_NEXT_KEY syscall failed with code {code} io_error {io_error}")]
-    GetNextKeyError { code: i64, io_error: io::Error },
+    #[error("the `{call}` syscall failed with code {code} io_error {io_error}")]
+    SyscallError {
+        call: String,
+        code: i64,
+        io_error: io::Error,
+    },
 
     #[error("map `{name}` is borrowed mutably")]
     BorrowError { name: String },
@@ -170,7 +160,11 @@ impl<K: Pod, V: Pod> Iterator for MapKeys<'_, K, V> {
             }
             Err((code, io_error)) => {
                 self.err = true;
-                return Some(Err(MapError::GetNextKeyError { code, io_error }));
+                return Some(Err(MapError::SyscallError {
+                    call: "bpf_map_get_next_key".to_owned(),
+                    code,
+                    io_error,
+                }));
             }
         }
     }
