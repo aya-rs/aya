@@ -55,6 +55,7 @@ pub(crate) struct bpf_map_def {
     pub(crate) map_flags: u32,
 }
 
+/// Used to work with eBPF programs and maps.
 #[derive(Debug)]
 pub struct Bpf {
     maps: HashMap<String, MapLock>,
@@ -62,6 +63,20 @@ pub struct Bpf {
 }
 
 impl Bpf {
+    /// Loads eBPF bytecode from a file.
+    ///
+    /// Parses the given object code file and initializes the [maps](crate::maps) defined in it. If
+    /// the kernel supports [BTF](Btf) debug info, it is automatically loaded from
+    /// `/sys/kernel/btf/vmlinux`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use aya::Bpf;
+    ///
+    /// let bpf = Bpf::load_file("file.o")?;
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
     pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Bpf, BpfError> {
         let path = path.as_ref();
         Bpf::load(
@@ -73,6 +88,23 @@ impl Bpf {
         )
     }
 
+    /// Load eBPF bytecode.
+    ///
+    /// Parses the object code contained in `data` and initializes the [maps](crate::maps) defined
+    /// in it. If `target_btf` is `Some` and `data` includes BTF debug info, [BTF](Btf) relocations
+    /// are applied as well.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use aya::{Bpf, Btf};
+    /// use std::fs;
+    ///
+    /// let data = fs::read("file.o").unwrap();
+    /// // load the BTF data from /sys/kernel/btf/vmlinux
+    /// let bpf = Bpf::load(&data, Some(Btf::from_sys_fs()?));
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
     pub fn load(data: &[u8], target_btf: Option<Btf>) -> Result<Bpf, BpfError> {
         let mut obj = Object::parse(data)?;
 
@@ -155,6 +187,18 @@ impl Bpf {
         })
     }
 
+    /// Returns a reference to the map with the given name.
+    ///
+    /// The returned type is mostly opaque. In order to do anything useful with it you need to
+    /// convert it to a [concrete map type](crate::maps).
+    ///
+    /// For more details and examples on maps and their usage, see the [maps module
+    /// documentation][crate::maps].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapError::NotFound`] if the map does not exist. If the map is already borrowed
+    /// mutably with [map_mut](Self::map_mut) then [`MapError::BorrowError`] is returned.
     pub fn map(&self, name: &str) -> Result<MapRef, MapError> {
         self.maps
             .get(name)
@@ -168,6 +212,18 @@ impl Bpf {
             })
     }
 
+    /// Returns a mutable reference to the map with the given name.
+    ///
+    /// The returned type is mostly opaque. In order to do anything useful with it you need to
+    /// convert it to a [concrete map type](crate::maps).
+    ///
+    /// For more details and examples on maps and their usage, see the [maps module
+    /// documentation][crate::maps].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapError::NotFound`] if the map does not exist. If the map is already borrowed
+    /// mutably with [map_mut](Self::map_mut) then [`MapError::BorrowError`] is returned.
     pub fn map_mut(&self, name: &str) -> Result<MapRefMut, MapError> {
         self.maps
             .get(name)
@@ -181,6 +237,20 @@ impl Bpf {
             })
     }
 
+    /// An iterator over all the maps.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # let mut bpf = aya::Bpf::load(&[], None)?;
+    /// for (name, map) in bpf.maps() {
+    ///     println!(
+    ///         "found map `{}` of type `{:?}`",
+    ///         name,
+    ///         map?.map_type().unwrap()
+    ///     );
+    /// }
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
     pub fn maps<'a>(&'a self) -> impl Iterator<Item = (&'a str, Result<MapRef, MapError>)> + 'a {
         let ret = self.maps.iter().map(|(name, lock)| {
             (
@@ -192,6 +262,26 @@ impl Bpf {
         ret
     }
 
+    /// Returns a reference to the program with the given name.
+    ///
+    /// You can use this to inspect a program and its properties. To load and attach a program, use
+    /// [program_mut](Self::program_mut) instead.
+    ///
+    /// For more details on programs and their usage, see the [programs module
+    /// documentation](crate::programs).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError::NotFound`] if the program does not exist.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # let bpf = aya::Bpf::load(&[], None)?;
+    /// let program = bpf.program("SSL_read")?;
+    /// println!("program SSL_read is of type {:?}", program.prog_type());
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
     pub fn program(&self, name: &str) -> Result<&Program, ProgramError> {
         self.programs
             .get(name)
@@ -200,6 +290,27 @@ impl Bpf {
             })
     }
 
+    /// Returns a mutable reference to the program with the given name.
+    ///
+    /// Used to get a program before loading and attaching it. For more details on programs and
+    /// their usage, see the [programs module documentation](crate::programs).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError::NotFound`] if the program does not exist.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # let mut bpf = aya::Bpf::load(&[], None)?;
+    /// use aya::programs::UProbe;
+    /// use std::convert::TryInto;
+    ///
+    /// let program: &mut UProbe = bpf.program_mut("SSL_read")?.try_into()?;
+    /// program.load()?;
+    /// program.attach(Some("SSL_read"), 0, "libssl", None)?;
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
     pub fn program_mut(&mut self, name: &str) -> Result<&mut Program, ProgramError> {
         self.programs
             .get_mut(name)
@@ -208,6 +319,20 @@ impl Bpf {
             })
     }
 
+    /// An iterator over all the programs.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # let mut bpf = aya::Bpf::load(&[], None)?;
+    /// for program in bpf.programs() {
+    ///     println!(
+    ///         "found program `{}` of type `{:?}`",
+    ///         program.name(),
+    ///         program.prog_type()
+    ///     );
+    /// }
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
     pub fn programs(&self) -> impl Iterator<Item = &Program> {
         self.programs.values()
     }
