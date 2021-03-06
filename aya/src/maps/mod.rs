@@ -1,3 +1,33 @@
+//! eBPF map types.
+//!
+//! The eBPF platform provides data structures - maps in eBPF speak - that can be used by eBPF
+//! programs and user-space to exchange data.
+//!
+//! When you call [Bpf::load_file](crate::Bpf::load_file) or [Bpf::load](crate::Bpf::load), aya
+//! transparently discovers all the maps defined in the loaded code and initializes them. The maps
+//! can then be accessed using [Bpf::map](crate::Bpf::map) and [Bpf::map_mut](crate::Bpf::map_mut).
+//!
+//! # Concrete map types
+//!
+//! Different map types support different operations. [Bpf::map](crate::Bpf::map) and
+//! [Bpf::map_mut](crate::Bpf::map_mut) always return the opaque [MapRef] and [MapRefMut] types
+//! respectively, which you can convert those to concrete map types using the
+//! [TryFrom](std::convert::TryFrom) trait. For example to insert a value inside a
+//! [HashMap](crate::maps::hash_map::HashMap):
+//!
+//! ```no_run
+//! # let bpf = aya::Bpf::load(&[], None)?;
+//! use aya::maps::HashMap;
+//! use std::convert::TryFrom;
+//!
+//! const CONFIG_KEY_NUM_RETRIES: u8 = 1;
+//!
+//! let mut hm = HashMap::try_from(bpf.map_mut("CONFIG")?)?;
+//! hm.insert(CONFIG_KEY_NUM_RETRIES, 3, 0 /* flags */);
+//! # Ok::<(), aya::BpfError>(())
+//! ```
+//!
+//! All the concrete map types implement the [TryFrom](std::convert::TryFrom) trait.
 use std::{convert::TryFrom, ffi::CString, io, os::unix::io::RawFd};
 use thiserror::Error;
 
@@ -8,15 +38,15 @@ use crate::{
     Pod,
 };
 
-mod hash_map;
+pub mod hash_map;
 mod map_lock;
 pub mod perf_map;
-mod program_array;
+pub mod program_array;
 
-pub use hash_map::*;
+pub use hash_map::HashMap;
 pub use map_lock::*;
 pub use perf_map::PerfMap;
-pub use program_array::*;
+pub use program_array::ProgramArray;
 
 #[derive(Error, Debug)]
 pub enum MapError {
@@ -117,6 +147,7 @@ pub(crate) trait IterableMap<K: Pod, V: Pod> {
     unsafe fn get(&self, key: &K) -> Result<Option<V>, MapError>;
 }
 
+/// Iterator returned by `map.keys()`.
 pub struct MapKeys<'coll, K: Pod, V: Pod> {
     map: &'coll dyn IterableMap<K, V>,
     err: bool,
@@ -170,6 +201,7 @@ impl<K: Pod, V: Pod> Iterator for MapKeys<'_, K, V> {
     }
 }
 
+/// Iterator returned by `map.iter()`.
 pub struct MapIter<'coll, K: Pod, V: Pod> {
     inner: MapKeys<'coll, K, V>,
 }
