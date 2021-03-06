@@ -1,3 +1,5 @@
+//! Program array (jump table) for eBPF programs.
+
 use std::{
     convert::TryFrom,
     mem,
@@ -12,6 +14,10 @@ use crate::{
     sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
+/// An array of eBPF program file descriptors used as a jump table.
+///
+/// eBPF programs can jump to other programs calling `bpf_tail_call(prog_array, index)`. User space
+/// programs can use [`ProgramArray`] to configure which programs correspond to which jump indexes.
 pub struct ProgramArray<T: Deref<Target = Map>> {
     inner: T,
 }
@@ -71,6 +77,23 @@ impl<T: Deref<Target = Map>> ProgramArray<T> {
 }
 
 impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
+    /// Insert a program file descriptor in the jump table.
+    ///
+    /// When an eBPF program calls `bpf_tail_call(prog_array, index)`, `program`
+    /// will be executed.
+    ///
+    /// # Example
+    /// ```no_run
+    /// # let bpf = aya::Bpf::load(&[], None)?;
+    /// use aya::maps::ProgramArray;
+    /// use aya::programs::KProbe;
+    /// use std::convert::{TryFrom, TryInto};
+    ///
+    /// let mut prog_array = ProgramArray::try_from(bpf.map_mut("JUMP_TABLE")?)?;
+    /// let prog: &KProbe = bpf.program("example_prog")?.try_into()?;
+    /// prog_array.insert(0, prog, 0 /* flags */);
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
     pub fn insert(
         &mut self,
         index: u32,
@@ -91,6 +114,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
         Ok(())
     }
 
+    /// Remove an entry from the jump table.
     pub fn remove(&mut self, index: &u32) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(*index)?;
