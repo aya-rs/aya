@@ -1,3 +1,4 @@
+//! Hash map types.
 use std::{
     convert::TryFrom,
     marker::PhantomData,
@@ -9,13 +10,29 @@ use std::{
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_HASH,
     maps::{IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut},
-    sys::{
-        bpf_map_delete_elem, bpf_map_lookup_and_delete_elem, bpf_map_lookup_elem,
-        bpf_map_update_elem,
-    },
+    sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
     Pod,
 };
 
+/// A hash map stored inside the kernel, in which both user-space and eBPF programs can insert and
+/// lookup values from.
+///
+/// The types of the keys and values must be plain old data (POD), meaning that they
+/// must be safely convertible to and from byte slices.
+///
+/// # Example
+///
+/// ```no_run
+/// # let bpf = aya::Bpf::load(&[], None)?;
+/// use aya::maps::HashMap;
+/// use std::convert::TryFrom;
+///
+/// const CONFIG_KEY_NUM_RETRIES: u8 = 1;
+///
+/// let mut hm = HashMap::try_from(bpf.map_mut("CONFIG")?)?;
+/// hm.insert(CONFIG_KEY_NUM_RETRIES, 3, 0 /* flags */);
+/// # Ok::<(), aya::BpfError>(())
+/// ```
 pub struct HashMap<T: Deref<Target = Map>, K, V> {
     inner: T,
     _k: PhantomData<K>,
@@ -54,6 +71,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
         })
     }
 
+    /// Returns a copy of the value associated with the key.
     pub unsafe fn get(&self, key: &K, flags: u64) -> Result<Option<V>, MapError> {
         let fd = self.inner.deref().fd_or_err()?;
         bpf_map_lookup_elem(fd, key, flags).map_err(|(code, io_error)| MapError::SyscallError {
@@ -63,16 +81,21 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
         })
     }
 
+    /// An iterator visiting all key-value pairs in arbitrary order. The
+    /// iterator item type is `Result<(K, V), MapError>`.
     pub unsafe fn iter<'coll>(&'coll self) -> MapIter<'coll, K, V> {
         MapIter::new(self)
     }
 
+    /// An iterator visiting all keys in arbitrary order. The iterator element
+    /// type is `Result<K, MapError>`.
     pub unsafe fn keys<'coll>(&'coll self) -> MapKeys<'coll, K, V> {
         MapKeys::new(self)
     }
 }
 
 impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
+    /// Inserts a key-value pair into the map.
     pub fn insert(&mut self, key: K, value: V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.deref_mut().fd_or_err()?;
         bpf_map_update_elem(fd, &key, &value, flags).map_err(|(code, io_error)| {
@@ -85,6 +108,7 @@ impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
         Ok(())
     }
 
+    /// Removes a key from the map.
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
         let fd = self.inner.deref_mut().fd_or_err()?;
         bpf_map_delete_elem(fd, key)
