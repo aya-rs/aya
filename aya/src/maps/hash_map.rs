@@ -23,7 +23,7 @@ pub struct HashMap<T: Deref<Target = Map>, K, V> {
 }
 
 impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
-    pub fn new(map: T) -> Result<HashMap<T, K, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<HashMap<T, K, V>, MapError> {
         let map_type = map.obj.def.map_type;
 
         // validate the map definition
