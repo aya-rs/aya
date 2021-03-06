@@ -9,10 +9,7 @@ use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY,
     maps::{IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut},
     programs::ProgramFd,
-    sys::{
-        bpf_map_delete_elem, bpf_map_lookup_and_delete_elem, bpf_map_lookup_elem,
-        bpf_map_update_elem,
-    },
+    sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
 pub struct ProgramArray<T: Deref<Target = Map>> {
@@ -92,18 +89,6 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
             }
         })?;
         Ok(())
-    }
-
-    pub unsafe fn pop(&mut self, index: &u32) -> Result<Option<RawFd>, MapError> {
-        let fd = self.inner.fd_or_err()?;
-        self.check_bounds(*index)?;
-        bpf_map_lookup_and_delete_elem(fd, index).map_err(|(code, io_error)| {
-            MapError::SyscallError {
-                call: "bpf_map_lookup_and_delete_elem".to_owned(),
-                code,
-                io_error,
-            }
-        })
     }
 
     pub fn remove(&mut self, index: &u32) -> Result<(), MapError> {

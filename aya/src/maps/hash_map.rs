@@ -85,15 +85,6 @@ impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
         Ok(())
     }
 
-    pub unsafe fn pop(&mut self, key: &K) -> Result<Option<V>, MapError> {
-        let fd = self.inner.deref_mut().fd_or_err()?;
-        bpf_map_lookup_and_delete_elem(fd, key).map_err(|(code, io_error)| MapError::SyscallError {
-            call: "bpf_map_lookup_and_delete_elem".to_owned(),
-            code,
-            io_error,
-        })
-    }
-
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
         let fd = self.inner.deref_mut().fd_or_err()?;
         bpf_map_delete_elem(fd, key)
@@ -372,39 +363,6 @@ mod tests {
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
         assert!(matches!(unsafe { hm.get(&1, 0) }, Ok(None)));
-    }
-
-    #[test]
-    fn test_pop_syscall_error() {
-        override_syscall(|_| sys_error(EFAULT));
-        let mut map = Map {
-            obj: new_obj_map("TEST"),
-            fd: Some(42),
-        };
-        let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
-
-        assert!(matches!(
-            unsafe { hm.pop(&1) },
-            Err(MapError::SyscallError { call, code: -1, io_error }) if call == "bpf_map_lookup_and_delete_elem" && io_error.raw_os_error() == Some(EFAULT)
-        ));
-    }
-
-    #[test]
-    fn test_pop_not_found() {
-        override_syscall(|call| match call {
-            Syscall::Bpf {
-                cmd: bpf_cmd::BPF_MAP_LOOKUP_AND_DELETE_ELEM,
-                ..
-            } => sys_error(ENOENT),
-            _ => sys_error(EFAULT),
-        });
-        let mut map = Map {
-            obj: new_obj_map("TEST"),
-            fd: Some(42),
-        };
-        let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
-
-        assert!(matches!(unsafe { hm.pop(&1) }, Ok(None)));
     }
 
     fn bpf_key<T: Copy>(attr: &bpf_attr) -> Option<T> {
