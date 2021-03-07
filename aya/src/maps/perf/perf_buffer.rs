@@ -22,7 +22,7 @@ use crate::{
 /// Perf buffer error.
 #[derive(Error, Debug)]
 pub enum PerfBufferError {
-    /// the page count value passed to [`PerfEventArray::open`] is invalid.
+    /// the page count value passed to [`PerfEventArray::open`](crate::maps::PerfEventArray::open) is invalid.
     #[error("invalid page count {page_count}, the value must be a power of two")]
     InvalidPageCount { page_count: usize },
 

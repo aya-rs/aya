@@ -3,17 +3,17 @@
 //! The eBPF platform provides data structures - maps in eBPF speak - that can be used by eBPF
 //! programs and user-space to exchange data.
 //!
-//! When you call [Bpf::load_file](crate::Bpf::load_file) or [Bpf::load](crate::Bpf::load), aya
+//! When you call [`Bpf::load_file`](crate::Bpf::load_file) or [`Bpf::load`](crate::Bpf::load), aya
 //! transparently discovers all the maps defined in the loaded code and initializes them. The maps
-//! can then be accessed using [Bpf::map](crate::Bpf::map) and [Bpf::map_mut](crate::Bpf::map_mut).
+//! can then be accessed using [`Bpf::map`](crate::Bpf::map) and [`Bpf::map_mut`](crate::Bpf::map_mut).
 //!
 //! # Concrete map types
 //!
-//! Different map types support different operations. [Bpf::map](crate::Bpf::map) and
-//! [Bpf::map_mut](crate::Bpf::map_mut) always return the opaque [MapRef] and [MapRefMut] types
-//! respectively, which you can convert those to concrete map types using the
-//! [TryFrom](std::convert::TryFrom) trait. For example to insert a value inside a
-//! [HashMap](crate::maps::hash_map::HashMap):
+//! Different map types support different operations. [`Bpf::map`](crate::Bpf::map) and
+//! [`Bpf::map_mut`](crate::Bpf::map_mut) always return the opaque [`MapRef`] and [`MapRefMut`]
+//! types respectively, which you can convert to concrete map types using the
+//! [`TryFrom`](std::convert::TryFrom) trait. For example the code below shows how to insert a
+//! value inside a [`HashMap`](crate::maps::hash_map::HashMap):
 //!
 //! ```no_run
 //! # let bpf = aya::Bpf::load(&[], None)?;
@@ -27,7 +27,7 @@
 //! # Ok::<(), aya::BpfError>(())
 //! ```
 //!
-//! All the concrete map types implement the [TryFrom](std::convert::TryFrom) trait.
+//! All the concrete map types implement the [`TryFrom`](std::convert::TryFrom) trait.
 use std::{convert::TryFrom, ffi::CString, io, os::unix::io::RawFd};
 use thiserror::Error;
 
