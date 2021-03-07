@@ -40,12 +40,12 @@ use crate::{
 
 pub mod hash_map;
 mod map_lock;
-pub mod perf_map;
+pub mod perf;
 pub mod program_array;
 
 pub use hash_map::HashMap;
 pub use map_lock::*;
-pub use perf_map::PerfMap;
+pub use perf::PerfEventArray;
 pub use program_array::ProgramArray;
 
 #[derive(Error, Debug)]

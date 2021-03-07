@@ -12,23 +12,23 @@ use async_io::Async;
 use tokio::io::unix::AsyncFd;
 
 use crate::maps::{
-    perf_map::{Events, PerfBufferError, PerfMap, PerfMapBuffer, PerfMapError},
-    Map, MapRefMut,
+    perf::{Events, PerfBufferError, PerfEventArray, PerfEventArrayBuffer},
+    Map, MapError, MapRefMut,
 };
 
-pub struct AsyncPerfMap<T: DerefMut<Target = Map>> {
-    perf_map: PerfMap<T>,
+pub struct AsyncPerfEventArray<T: DerefMut<Target = Map>> {
+    perf_map: PerfEventArray<T>,
 }
 
-impl<T: DerefMut<Target = Map>> AsyncPerfMap<T> {
+impl<T: DerefMut<Target = Map>> AsyncPerfEventArray<T> {
     pub fn open(
         &mut self,
         index: u32,
         page_count: Option<usize>,
-    ) -> Result<AsyncPerfMapBuffer<T>, PerfMapError> {
+    ) -> Result<AsyncPerfEventArrayBuffer<T>, PerfBufferError> {
         let buf = self.perf_map.open(index, page_count)?;
         let fd = buf.as_raw_fd();
-        Ok(AsyncPerfMapBuffer {
+        Ok(AsyncPerfEventArrayBuffer {
             buf,
 
             #[cfg(feature = "async_tokio")]
@@ -40,16 +40,16 @@ impl<T: DerefMut<Target = Map>> AsyncPerfMap<T> {
     }
 }
 
-impl<T: DerefMut<Target = Map>> AsyncPerfMap<T> {
-    fn new(map: T) -> Result<AsyncPerfMap<T>, PerfMapError> {
-        Ok(AsyncPerfMap {
-            perf_map: PerfMap::new(map)?,
+impl<T: DerefMut<Target = Map>> AsyncPerfEventArray<T> {
+    fn new(map: T) -> Result<AsyncPerfEventArray<T>, MapError> {
+        Ok(AsyncPerfEventArray {
+            perf_map: PerfEventArray::new(map)?,
         })
     }
 }
 
-pub struct AsyncPerfMapBuffer<T: DerefMut<Target = Map>> {
-    buf: PerfMapBuffer<T>,
+pub struct AsyncPerfEventArrayBuffer<T: DerefMut<Target = Map>> {
+    buf: PerfEventArrayBuffer<T>,
 
     #[cfg(feature = "async_tokio")]
     async_fd: AsyncFd<RawFd>,
@@ -59,7 +59,7 @@ pub struct AsyncPerfMapBuffer<T: DerefMut<Target = Map>> {
 }
 
 #[cfg(feature = "async_tokio")]
-impl<T: DerefMut<Target = Map>> AsyncPerfMapBuffer<T> {
+impl<T: DerefMut<Target = Map>> AsyncPerfEventArrayBuffer<T> {
     pub async fn read_events(
         &mut self,
         buffers: &mut [BytesMut],
@@ -80,7 +80,7 @@ impl<T: DerefMut<Target = Map>> AsyncPerfMapBuffer<T> {
 }
 
 #[cfg(feature = "async_std")]
-impl<T: DerefMut<Target = Map>> AsyncPerfMapBuffer<T> {
+impl<T: DerefMut<Target = Map>> AsyncPerfEventArrayBuffer<T> {
     pub async fn read_events(
         &mut self,
         buffers: &mut [BytesMut],
@@ -99,10 +99,10 @@ impl<T: DerefMut<Target = Map>> AsyncPerfMapBuffer<T> {
     }
 }
 
-impl TryFrom<MapRefMut> for AsyncPerfMap<MapRefMut> {
-    type Error = PerfMapError;
+impl TryFrom<MapRefMut> for AsyncPerfEventArray<MapRefMut> {
+    type Error = MapError;
 
-    fn try_from(a: MapRefMut) -> Result<AsyncPerfMap<MapRefMut>, PerfMapError> {
-        AsyncPerfMap::new(a)
+    fn try_from(a: MapRefMut) -> Result<AsyncPerfEventArray<MapRefMut>, MapError> {
+        AsyncPerfEventArray::new(a)
     }
 }

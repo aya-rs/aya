@@ -19,42 +19,54 @@ use crate::{
     PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
 
+/// Perf buffer error.
 #[derive(Error, Debug)]
 pub enum PerfBufferError {
+    /// the page count value passed to [`PerfEventArray::open`] is invalid.
     #[error("invalid page count {page_count}, the value must be a power of two")]
     InvalidPageCount { page_count: usize },
 
+    /// `perf_event_open` failed.
     #[error("perf_event_open failed: {io_error}")]
     OpenError {
         #[source]
         io_error: io::Error,
     },
 
+    /// `mmap`-ping the buffer failed.
     #[error("mmap failed: {io_error}")]
     MMapError {
         #[source]
         io_error: io::Error,
     },
 
+    /// The `PERF_EVENT_IOC_ENABLE` ioctl failed
     #[error("PERF_EVENT_IOC_ENABLE failed: {io_error}")]
     PerfEventEnableError {
         #[source]
         io_error: io::Error,
     },
 
+    /// `read_events()` was called with no output buffers.
     #[error("read_events() was called with no output buffers")]
     NoBuffers,
 
+    /// `read_events()` was called with a buffer that is not large enough to
+    /// contain the next event in the perf buffer.
     #[error("the buffer needs to be of at least {size} bytes")]
     MoreSpaceNeeded { size: usize },
 
+    /// An IO error occurred.
     #[error(transparent)]
     IOError(#[from] io::Error),
 }
 
+/// Return type of `read_events()`.
 #[derive(Debug, PartialEq)]
 pub struct Events {
+    /// The number of events read.
     pub read: usize,
+    /// The number of events lost.
     pub lost: usize,
 }
 
@@ -282,14 +294,14 @@ unsafe fn mmap(
 
 #[derive(Debug)]
 #[repr(C)]
-pub struct Sample {
+struct Sample {
     header: perf_event_header,
     pub size: u32,
 }
 
 #[repr(C)]
 #[derive(Debug)]
-pub struct LostSamples {
+struct LostSamples {
     header: perf_event_header,
     pub id: u64,
     pub count: u64,
