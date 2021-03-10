@@ -160,7 +160,7 @@ impl ProgramData {
 const MIN_LOG_BUF_SIZE: usize = 1024 * 10;
 const MAX_LOG_BUF_SIZE: usize = (std::u32::MAX >> 8) as usize;
 
-pub struct VerifierLog {
+pub(crate) struct VerifierLog {
     buf: Vec<u8>,
 }
 
