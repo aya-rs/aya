@@ -20,7 +20,7 @@ use crate::{
     sys::bpf_map_update_elem,
 };
 
-/// A buffer that can receive events from eBPF programs.
+/// A ring buffer that can receive events from eBPF programs.
 ///
 /// [`PerfEventArrayBuffer`] is a ring buffer that can receive events from eBPF
 /// programs that use `bpf_perf_event_output()`. It's returned by [`PerfEventArray::open`].

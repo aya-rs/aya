@@ -24,7 +24,6 @@
 //! * Easy to deploy and fast to build: aya doesn't require kernel headers nor a
 //!   C toolchain and a release build completes in a matter of seconds.
 //!
-//!
 //! # Minimum kernel version
 //!
 //! Aya currently supports kernels version 5.4 (latest LTS) and newer.

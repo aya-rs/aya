@@ -1,4 +1,4 @@
-//! Program array (jump table) for eBPF programs.
+//! An array of eBPF program file descriptors used as a jump table.
 
 use std::{
     convert::TryFrom,

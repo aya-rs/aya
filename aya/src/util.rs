@@ -1,8 +1,10 @@
+//! Utility functions.
 use std::{fs, io, str::FromStr};
 
 const ONLINE_CPUS: &str = "/sys/devices/system/cpu/online";
 pub(crate) const POSSIBLE_CPUS: &str = "/sys/devices/system/cpu/possible";
 
+/// Returns the numeric IDs of the available CPUs.
 pub fn online_cpus() -> Result<Vec<u32>, io::Error> {
     let data = fs::read_to_string(ONLINE_CPUS)?;
     parse_cpu_ranges(data.trim()).map_err(|_| {
@@ -13,7 +15,7 @@ pub fn online_cpus() -> Result<Vec<u32>, io::Error> {
     })
 }
 
-pub fn possible_cpus() -> Result<Vec<u32>, io::Error> {
+pub(crate) fn possible_cpus() -> Result<Vec<u32>, io::Error> {
     let data = fs::read_to_string(POSSIBLE_CPUS)?;
     parse_cpu_ranges(data.trim()).map_err(|_| {
         io::Error::new(

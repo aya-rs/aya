@@ -1,19 +1,17 @@
-//! eBPF map types.
+//! eBPF data structures used to exchange data with eBPF programs.
 //!
 //! The eBPF platform provides data structures - maps in eBPF speak - that can be used by eBPF
-//! programs and user-space to exchange data.
-//!
-//! When you call [`Bpf::load_file`](crate::Bpf::load_file) or [`Bpf::load`](crate::Bpf::load), aya
-//! transparently discovers all the maps defined in the loaded code and initializes them. The maps
-//! can then be accessed using [`Bpf::map`](crate::Bpf::map) and [`Bpf::map_mut`](crate::Bpf::map_mut).
+//! programs and user-space to exchange data. When you call
+//! [`Bpf::load_file`](crate::Bpf::load_file) or [`Bpf::load`](crate::Bpf::load), all the maps
+//! defined in the code get initialized and can then be accessed using
+//! [`Bpf::map`](crate::Bpf::map) and [`Bpf::map_mut`](crate::Bpf::map_mut).
 //!
 //! # Concrete map types
 //!
-//! Different map types support different operations. [`Bpf::map`](crate::Bpf::map) and
-//! [`Bpf::map_mut`](crate::Bpf::map_mut) always return the opaque [`MapRef`] and [`MapRefMut`]
-//! types respectively, which you can convert to concrete map types using the
-//! [`TryFrom`](std::convert::TryFrom) trait. For example the code below shows how to insert a
-//! value inside a [`HashMap`](crate::maps::hash_map::HashMap):
+//! The eBPF platform provides many map types each supporting different operations.
+//! [`Bpf::map`](crate::Bpf::map) and [`Bpf::map_mut`](crate::Bpf::map_mut) always return the
+//! opaque [`MapRef`] and [`MapRefMut`] types respectively. Those two types can be converted to
+//! *concrete map types* using the [`TryFrom`](std::convert::TryFrom) trait. For example:
 //!
 //! ```no_run
 //! # let bpf = aya::Bpf::load(&[], None)?;
@@ -22,12 +20,15 @@
 //!
 //! const CONFIG_KEY_NUM_RETRIES: u8 = 1;
 //!
+//! // HashMap::try_from() converts MapRefMut to HashMap. It will fail if CONFIG is not an eBPF
+//! // hash map.
 //! let mut hm = HashMap::try_from(bpf.map_mut("CONFIG")?)?;
 //! hm.insert(CONFIG_KEY_NUM_RETRIES, 3, 0 /* flags */);
 //! # Ok::<(), aya::BpfError>(())
 //! ```
 //!
-//! All the concrete map types implement the [`TryFrom`](std::convert::TryFrom) trait.
+//! The code above uses `HashMap`, but all the concrete map types implement the
+//! `TryFrom` trait.
 use std::{convert::TryFrom, ffi::CString, io, os::unix::io::RawFd};
 use thiserror::Error;
 
