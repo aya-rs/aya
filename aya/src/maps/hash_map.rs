@@ -49,20 +49,8 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
                 map_type: map_type as u32,
             })?;
         }
-        let size = mem::size_of::<K>();
-        let expected = map.obj.def.key_size as usize;
-        if size != expected {
-            return Err(MapError::InvalidKeySize { size, expected });
-        }
-
-        let size = mem::size_of::<V>();
-        let expected = map.obj.def.value_size as usize;
-        if size != expected {
-            return Err(MapError::InvalidValueSize { size, expected });
-        }
-
-        // make sure the map has been created
-        let _fd = map.fd_or_err()?;
+        check_kv_size::<K, V>(&map)?;
+        let _ = map.fd_or_err()?;
 
         Ok(HashMap {
             inner: map,
@@ -83,13 +71,13 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
 
     /// An iterator visiting all key-value pairs in arbitrary order. The
     /// iterator item type is `Result<(K, V), MapError>`.
-    pub unsafe fn iter<'coll>(&'coll self) -> MapIter<'coll, K, V> {
+    pub unsafe fn iter(&self) -> MapIter<'_, K, V> {
         MapIter::new(self)
     }
 
     /// An iterator visiting all keys in arbitrary order. The iterator element
     /// type is `Result<K, MapError>`.
-    pub unsafe fn keys<'coll>(&'coll self) -> MapKeys<'coll, K, V> {
+    pub unsafe fn keys(&self) -> MapKeys<'_, K, V> {
         MapKeys::new(self)
     }
 }
@@ -97,27 +85,12 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
 impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Inserts a key-value pair into the map.
     pub fn insert(&mut self, key: K, value: V, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.deref_mut().fd_or_err()?;
-        bpf_map_update_elem(fd, &key, &value, flags).map_err(|(code, io_error)| {
-            MapError::SyscallError {
-                call: "bpf_map_update_elem".to_owned(),
-                code,
-                io_error,
-            }
-        })?;
-        Ok(())
+        insert(&mut self.inner, key, value, flags)
     }
 
     /// Removes a key from the map.
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
-        let fd = self.inner.deref_mut().fd_or_err()?;
-        bpf_map_delete_elem(fd, key)
-            .map(|_| ())
-            .map_err(|(code, io_error)| MapError::SyscallError {
-                call: "bpf_map_delete_elem".to_owned(),
-                code,
-                io_error,
-            })
+        remove(&mut self.inner, key)
     }
 }
 
@@ -161,6 +134,43 @@ impl<'a, K: Pod, V: Pod> TryFrom<&'a mut Map> for HashMap<&'a mut Map, K, V> {
     fn try_from(a: &'a mut Map) -> Result<HashMap<&'a mut Map, K, V>, MapError> {
         HashMap::new(a)
     }
+}
+
+fn check_kv_size<K, V>(map: &Map) -> Result<(), MapError> {
+    let size = mem::size_of::<K>();
+    let expected = map.obj.def.key_size as usize;
+    if size != expected {
+        return Err(MapError::InvalidKeySize { size, expected });
+    }
+    let size = mem::size_of::<V>();
+    let expected = map.obj.def.value_size as usize;
+    Ok(if size != expected {
+        return Err(MapError::InvalidValueSize { size, expected });
+    })
+}
+
+fn insert<K, V>(map: &mut Map, key: K, value: V, flags: u64) -> Result<(), MapError> {
+    let fd = map.fd_or_err()?;
+    bpf_map_update_elem(fd, &key, &value, flags).map_err(|(code, io_error)| {
+        MapError::SyscallError {
+            call: "bpf_map_update_elem".to_owned(),
+            code,
+            io_error,
+        }
+    })?;
+
+    Ok(())
+}
+
+fn remove<K>(map: &mut Map, key: &K) -> Result<(), MapError> {
+    let fd = map.fd_or_err()?;
+    bpf_map_delete_elem(fd, key)
+        .map(|_| ())
+        .map_err(|(code, io_error)| MapError::SyscallError {
+            call: "bpf_map_delete_elem".to_owned(),
+            code,
+            io_error,
+        })
 }
 
 #[cfg(test)]
