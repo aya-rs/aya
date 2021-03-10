@@ -9,7 +9,7 @@ mod fake;
 use std::convert::TryInto;
 use std::{ffi::CString, io, mem};
 
-use libc::{c_int, c_long, c_ulong, pid_t, utsname};
+use libc::{c_int, c_long, pid_t, utsname};
 
 pub(crate) use bpf::*;
 #[cfg(test)]

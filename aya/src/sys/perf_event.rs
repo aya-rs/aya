@@ -1,6 +1,6 @@
 use std::{ffi::CString, mem};
 
-use libc::{c_int, c_ulong, pid_t};
+use libc::{c_int, pid_t};
 
 use crate::generated::{
     perf_event_attr,
