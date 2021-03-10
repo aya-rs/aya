@@ -8,7 +8,7 @@ use std::{
 };
 
 use crate::{
-    generated::bpf_map_type::BPF_MAP_TYPE_HASH,
+    generated::bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_LRU_HASH},
     maps::{IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut},
     sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
     Pod,
@@ -44,7 +44,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
         let map_type = map.obj.def.map_type;
 
         // validate the map definition
-        if map_type != BPF_MAP_TYPE_HASH as u32 {
+        if map_type != BPF_MAP_TYPE_HASH as u32 && map_type != BPF_MAP_TYPE_LRU_HASH as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
             })?;
@@ -283,6 +283,27 @@ mod tests {
             obj: new_obj_map("TEST"),
             fd: Some(42),
         };
+        assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
+    }
+
+    #[test]
+    fn test_try_from_ok_lru() {
+        let map = Map {
+            obj: obj::Map {
+                name: "TEST".to_string(),
+                def: bpf_map_def {
+                    map_type: BPF_MAP_TYPE_LRU_HASH as u32,
+                    key_size: 4,
+                    value_size: 4,
+                    max_entries: 1024,
+                    map_flags: 0,
+                },
+                section_index: 0,
+                data: Vec::new(),
+            },
+            fd: Some(42),
+        };
+
         assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
     }
 
