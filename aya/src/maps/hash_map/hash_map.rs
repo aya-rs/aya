@@ -2,15 +2,14 @@
 use std::{
     convert::TryFrom,
     marker::PhantomData,
-    mem,
     ops::{Deref, DerefMut},
     os::unix::io::RawFd,
 };
 
 use crate::{
     generated::bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_LRU_HASH},
-    maps::{IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut},
-    sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
+    maps::{hash_map, IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut},
+    sys::bpf_map_lookup_elem,
     Pod,
 };
 
@@ -49,7 +48,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
                 map_type: map_type as u32,
             })?;
         }
-        check_kv_size::<K, V>(&map)?;
+        hash_map::check_kv_size::<K, V>(&map)?;
         let _ = map.fd_or_err()?;
 
         Ok(HashMap {
@@ -85,12 +84,12 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
 impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Inserts a key-value pair into the map.
     pub fn insert(&mut self, key: K, value: V, flags: u64) -> Result<(), MapError> {
-        insert(&mut self.inner, key, value, flags)
+        hash_map::insert(&mut self.inner, key, value, flags)
     }
 
     /// Removes a key from the map.
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
-        remove(&mut self.inner, key)
+        hash_map::remove(&mut self.inner, key)
     }
 }
 
@@ -134,43 +133,6 @@ impl<'a, K: Pod, V: Pod> TryFrom<&'a mut Map> for HashMap<&'a mut Map, K, V> {
     fn try_from(a: &'a mut Map) -> Result<HashMap<&'a mut Map, K, V>, MapError> {
         HashMap::new(a)
     }
-}
-
-fn check_kv_size<K, V>(map: &Map) -> Result<(), MapError> {
-    let size = mem::size_of::<K>();
-    let expected = map.obj.def.key_size as usize;
-    if size != expected {
-        return Err(MapError::InvalidKeySize { size, expected });
-    }
-    let size = mem::size_of::<V>();
-    let expected = map.obj.def.value_size as usize;
-    Ok(if size != expected {
-        return Err(MapError::InvalidValueSize { size, expected });
-    })
-}
-
-fn insert<K, V>(map: &mut Map, key: K, value: V, flags: u64) -> Result<(), MapError> {
-    let fd = map.fd_or_err()?;
-    bpf_map_update_elem(fd, &key, &value, flags).map_err(|(code, io_error)| {
-        MapError::SyscallError {
-            call: "bpf_map_update_elem".to_owned(),
-            code,
-            io_error,
-        }
-    })?;
-
-    Ok(())
-}
-
-fn remove<K>(map: &mut Map, key: &K) -> Result<(), MapError> {
-    let fd = map.fd_or_err()?;
-    bpf_map_delete_elem(fd, key)
-        .map(|_| ())
-        .map_err(|(code, io_error)| MapError::SyscallError {
-            call: "bpf_map_delete_elem".to_owned(),
-            code,
-            io_error,
-        })
 }
 
 #[cfg(test)]
