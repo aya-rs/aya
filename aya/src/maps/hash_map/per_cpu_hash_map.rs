@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    generated::bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH,
+    generated::bpf_map_type::{BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH},
     maps::{
         hash_map, IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut, PerCpuValues,
     },
@@ -17,6 +17,9 @@ use crate::{
 
 /// Similar to [`HashMap`](crate::maps::HashMap) but each CPU holds a separate value for a given key. Tipically used to
 /// minimize lock contention in eBPF programs.
+///
+/// This type can be used with eBPF maps of type `BPF_MAP_TYPE_PERCPU_HASH` and
+/// `BPF_MAP_TYPE_LRU_PERCPU_HASH`.
 ///
 /// # Example
 ///
@@ -36,6 +39,8 @@ use crate::{
 /// }
 /// # Ok::<(), aya::BpfError>(())
 /// ```
+#[doc(alias = "BPF_MAP_TYPE_LRU_PERCPU_HASH")]
+#[doc(alias = "BPF_MAP_TYPE_PERCPU_HASH")]
 pub struct PerCpuHashMap<T: Deref<Target = Map>, K: Pod, V: Pod> {
     inner: T,
     _k: PhantomData<K>,
@@ -47,7 +52,9 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
         let map_type = map.obj.def.map_type;
 
         // validate the map definition
-        if map_type != BPF_MAP_TYPE_PERCPU_HASH as u32 {
+        if map_type != BPF_MAP_TYPE_PERCPU_HASH as u32
+            && map_type != BPF_MAP_TYPE_LRU_PERCPU_HASH as u32
+        {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
             })?;
