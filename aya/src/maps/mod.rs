@@ -53,7 +53,7 @@ pub use program_array::ProgramArray;
 #[derive(Error, Debug)]
 pub enum MapError {
     #[error("map `{name}` not found ")]
-    NotFound { name: String },
+    MapNotFound { name: String },
 
     #[error("invalid map type {map_type}")]
     InvalidMapType { map_type: u32 },

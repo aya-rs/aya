@@ -197,12 +197,12 @@ impl Bpf {
     ///
     /// # Errors
     ///
-    /// Returns [`MapError::NotFound`] if the map does not exist. If the map is already borrowed
+    /// Returns [`MapError::MapNotFound`] if the map does not exist. If the map is already borrowed
     /// mutably with [map_mut](Self::map_mut) then [`MapError::BorrowError`] is returned.
     pub fn map(&self, name: &str) -> Result<MapRef, MapError> {
         self.maps
             .get(name)
-            .ok_or_else(|| MapError::NotFound {
+            .ok_or_else(|| MapError::MapNotFound {
                 name: name.to_owned(),
             })
             .and_then(|lock| {
@@ -222,12 +222,12 @@ impl Bpf {
     ///
     /// # Errors
     ///
-    /// Returns [`MapError::NotFound`] if the map does not exist. If the map is already borrowed
+    /// Returns [`MapError::MapNotFound`] if the map does not exist. If the map is already borrowed
     /// mutably with [map_mut](Self::map_mut) then [`MapError::BorrowError`] is returned.
     pub fn map_mut(&self, name: &str) -> Result<MapRefMut, MapError> {
         self.maps
             .get(name)
-            .ok_or_else(|| MapError::NotFound {
+            .ok_or_else(|| MapError::MapNotFound {
                 name: name.to_owned(),
             })
             .and_then(|lock| {
