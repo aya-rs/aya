@@ -29,8 +29,8 @@ use crate::{
 /// const WAKEUPS: u8 = 2;
 ///
 /// let mut hm = PerCpuHashMap::<_, u8, u32>::try_from(bpf.map("COUNTERS")?)?;
-/// let cpu_ids = unsafe { hm.get(&CPU_IDS, 0)?.unwrap() };
-/// let wakeups = unsafe { hm.get(&WAKEUPS, 0)?.unwrap() };
+/// let cpu_ids = unsafe { hm.get(&CPU_IDS, 0)? };
+/// let wakeups = unsafe { hm.get(&WAKEUPS, 0)? };
 /// for (cpu_id, wakeups) in cpu_ids.iter().zip(wakeups.iter()) {
 ///     println!("cpu {} woke up {} times", cpu_id, wakeups);
 /// }
@@ -63,15 +63,16 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     }
 
     /// Returns a slice of values - one for each CPU - associated with the key.
-    pub unsafe fn get(&self, key: &K, flags: u64) -> Result<Option<PerCpuValues<V>>, MapError> {
+    pub unsafe fn get(&self, key: &K, flags: u64) -> Result<PerCpuValues<V>, MapError> {
         let fd = self.inner.deref().fd_or_err()?;
-        bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|(code, io_error)| {
+        let values = bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|(code, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
                 code,
                 io_error,
             }
-        })
+        })?;
+        values.ok_or(MapError::KeyNotFound)
     }
 
     /// An iterator visiting all key-value pairs in arbitrary order. The
@@ -143,7 +144,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> IterableMap<K, PerCpuValues<V>>
         self.inner.deref().fd_or_err()
     }
 
-    unsafe fn get(&self, key: &K) -> Result<Option<PerCpuValues<V>>, MapError> {
+    unsafe fn get(&self, key: &K) -> Result<PerCpuValues<V>, MapError> {
         PerCpuHashMap::get(self, key, 0)
     }
 }

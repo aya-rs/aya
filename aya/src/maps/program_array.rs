@@ -46,7 +46,7 @@ impl<T: Deref<Target = Map>> ProgramArray<T> {
         Ok(ProgramArray { inner: map })
     }
 
-    pub unsafe fn get(&self, key: &u32, flags: u64) -> Result<Option<RawFd>, MapError> {
+    pub unsafe fn get(&self, key: &u32, flags: u64) -> Result<RawFd, MapError> {
         let fd = self.inner.fd_or_err()?;
         let fd = bpf_map_lookup_elem(fd, key, flags).map_err(|(code, io_error)| {
             MapError::SyscallError {
@@ -55,7 +55,7 @@ impl<T: Deref<Target = Map>> ProgramArray<T> {
                 io_error,
             }
         })?;
-        Ok(fd)
+        fd.ok_or(MapError::KeyNotFound)
     }
 
     pub unsafe fn iter<'coll>(&'coll self) -> MapIter<'coll, u32, RawFd> {
@@ -133,7 +133,7 @@ impl<T: Deref<Target = Map>> IterableMap<u32, RawFd> for ProgramArray<T> {
         self.inner.fd_or_err()
     }
 
-    unsafe fn get(&self, index: &u32) -> Result<Option<RawFd>, MapError> {
+    unsafe fn get(&self, index: &u32) -> Result<RawFd, MapError> {
         self.get(index, 0)
     }
 }

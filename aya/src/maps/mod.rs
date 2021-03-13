@@ -83,6 +83,9 @@ pub enum MapError {
     #[error("the index is {index} but `max_entries` is {max_entries}")]
     OutOfBounds { index: u32, max_entries: u32 },
 
+    #[error("key not found")]
+    KeyNotFound,
+
     #[error("the program is not loaded")]
     ProgramNotLoaded,
 
@@ -146,7 +149,7 @@ impl Map {
 
 pub(crate) trait IterableMap<K: Pod, V> {
     fn fd(&self) -> Result<RawFd, MapError>;
-    unsafe fn get(&self, key: &K) -> Result<Option<V>, MapError>;
+    unsafe fn get(&self, key: &K) -> Result<V, MapError>;
 }
 
 /// Iterator returned by `map.keys()`.
@@ -225,8 +228,8 @@ impl<K: Pod, V> Iterator for MapIter<'_, K, V> {
                 Some(Ok(key)) => {
                     let value = unsafe { self.inner.map.get(&key) };
                     match value {
-                        Ok(None) => continue,
-                        Ok(Some(value)) => return Some(Ok((key, value))),
+                        Ok(value) => return Some(Ok((key, value))),
+                        Err(MapError::KeyNotFound) => continue,
                         Err(e) => return Some(Err(e)),
                     }
                 }
