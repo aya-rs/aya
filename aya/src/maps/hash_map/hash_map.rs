@@ -32,6 +32,8 @@ use crate::{
 /// hm.insert(CONFIG_KEY_NUM_RETRIES, 3, 0 /* flags */);
 /// # Ok::<(), aya::BpfError>(())
 /// ```
+#[doc(alias = "BPF_MAP_TYPE_HASH")]
+#[doc(alias = "BPF_MAP_TYPE_LRU_HASH")]
 pub struct HashMap<T: Deref<Target = Map>, K, V> {
     inner: T,
     _k: PhantomData<K>,
