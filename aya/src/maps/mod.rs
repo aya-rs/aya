@@ -29,13 +29,14 @@
 //!
 //! The code above uses `HashMap`, but all the concrete map types implement the
 //! `TryFrom` trait.
-use std::{convert::TryFrom, ffi::CString, io, os::unix::io::RawFd};
+use std::{convert::TryFrom, ffi::CString, io, mem, ops::Deref, os::unix::io::RawFd, ptr};
 use thiserror::Error;
 
 use crate::{
     generated::bpf_map_type,
     obj,
     sys::{bpf_create_map, bpf_map_get_next_key},
+    util::nr_cpus,
     Pod,
 };
 
@@ -44,7 +45,7 @@ mod map_lock;
 pub mod perf;
 pub mod program_array;
 
-pub use hash_map::HashMap;
+pub use hash_map::{HashMap, PerCpuHashMap};
 pub use map_lock::*;
 pub use perf::PerfEventArray;
 pub use program_array::ProgramArray;
@@ -143,19 +144,19 @@ impl Map {
     }
 }
 
-pub(crate) trait IterableMap<K: Pod, V: Pod> {
+pub(crate) trait IterableMap<K: Pod, V> {
     fn fd(&self) -> Result<RawFd, MapError>;
     unsafe fn get(&self, key: &K) -> Result<Option<V>, MapError>;
 }
 
 /// Iterator returned by `map.keys()`.
-pub struct MapKeys<'coll, K: Pod, V: Pod> {
+pub struct MapKeys<'coll, K: Pod, V> {
     map: &'coll dyn IterableMap<K, V>,
     err: bool,
     key: Option<K>,
 }
 
-impl<'coll, K: Pod, V: Pod> MapKeys<'coll, K, V> {
+impl<'coll, K: Pod, V> MapKeys<'coll, K, V> {
     fn new(map: &'coll dyn IterableMap<K, V>) -> MapKeys<'coll, K, V> {
         MapKeys {
             map,
@@ -165,7 +166,7 @@ impl<'coll, K: Pod, V: Pod> MapKeys<'coll, K, V> {
     }
 }
 
-impl<K: Pod, V: Pod> Iterator for MapKeys<'_, K, V> {
+impl<K: Pod, V> Iterator for MapKeys<'_, K, V> {
     type Item = Result<K, MapError>;
 
     fn next(&mut self) -> Option<Result<K, MapError>> {
@@ -203,11 +204,11 @@ impl<K: Pod, V: Pod> Iterator for MapKeys<'_, K, V> {
 }
 
 /// Iterator returned by `map.iter()`.
-pub struct MapIter<'coll, K: Pod, V: Pod> {
+pub struct MapIter<'coll, K: Pod, V> {
     inner: MapKeys<'coll, K, V>,
 }
 
-impl<'coll, K: Pod, V: Pod> MapIter<'coll, K, V> {
+impl<'coll, K: Pod, V> MapIter<'coll, K, V> {
     fn new(map: &'coll dyn IterableMap<K, V>) -> MapIter<'coll, K, V> {
         MapIter {
             inner: MapKeys::new(map),
@@ -215,7 +216,7 @@ impl<'coll, K: Pod, V: Pod> MapIter<'coll, K, V> {
     }
 }
 
-impl<K: Pod, V: Pod> Iterator for MapIter<'_, K, V> {
+impl<K: Pod, V> Iterator for MapIter<'_, K, V> {
     type Item = Result<(K, V), MapError>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -276,6 +277,108 @@ impl TryFrom<u32> for bpf_map_type {
             x if x == BPF_MAP_TYPE_TASK_STORAGE as u32 => BPF_MAP_TYPE_TASK_STORAGE,
             _ => return Err(MapError::InvalidMapType { map_type }),
         })
+    }
+}
+pub struct PerCpuKernelMem {
+    bytes: Vec<u8>,
+}
+
+impl PerCpuKernelMem {
+    pub(crate) fn as_ptr(&self) -> *const u8 {
+        self.bytes.as_ptr()
+    }
+
+    pub(crate) fn as_mut_ptr(&mut self) -> *mut u8 {
+        self.bytes.as_mut_ptr()
+    }
+}
+
+/// A slice of per-CPU values.
+///
+/// Used by maps that implement per-CPU storage like [`PerCpuHashMap`].
+///
+/// # Example
+///
+/// ```no_run
+/// # #[derive(thiserror::Error, Debug)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
+/// # let bpf = aya::Bpf::load(&[], None)?;
+/// use aya::maps::PerCpuValues;
+/// use aya::util::nr_cpus;
+/// use std::convert::TryFrom;
+///
+/// let values = PerCpuValues::try_from(vec![42u32; nr_cpus()?])?;
+/// # Ok::<(), Error>(())
+/// ```
+#[derive(Debug)]
+pub struct PerCpuValues<T: Pod> {
+    values: Box<[T]>,
+}
+
+impl<T: Pod> TryFrom<Vec<T>> for PerCpuValues<T> {
+    type Error = io::Error;
+
+    fn try_from(values: Vec<T>) -> Result<Self, Self::Error> {
+        let nr_cpus = nr_cpus()?;
+        if values.len() != nr_cpus {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!("not enough values ({}), nr_cpus: {}", values.len(), nr_cpus),
+            ));
+        }
+        Ok(PerCpuValues {
+            values: values.into_boxed_slice(),
+        })
+    }
+}
+
+impl<T: Pod> PerCpuValues<T> {
+    pub(crate) fn alloc_kernel_mem() -> Result<PerCpuKernelMem, io::Error> {
+        let value_size = mem::size_of::<T>() + 7 & !7;
+        Ok(PerCpuKernelMem {
+            bytes: vec![0u8; nr_cpus()? * value_size],
+        })
+    }
+
+    pub(crate) unsafe fn from_kernel_mem(mem: PerCpuKernelMem) -> PerCpuValues<T> {
+        let mem_ptr = mem.bytes.as_ptr() as usize;
+        let value_size = mem::size_of::<T>() + 7 & !7;
+        let mut values = Vec::new();
+        let mut offset = 0;
+        while offset < mem.bytes.len() {
+            values.push(ptr::read_unaligned((mem_ptr + offset) as *const _));
+            offset += value_size;
+        }
+
+        PerCpuValues {
+            values: values.into_boxed_slice(),
+        }
+    }
+
+    pub(crate) fn into_kernel_mem(&self) -> Result<PerCpuKernelMem, io::Error> {
+        let mut mem = PerCpuValues::<T>::alloc_kernel_mem()?;
+        let mem_ptr = mem.as_mut_ptr() as usize;
+        let value_size = mem::size_of::<T>() + 7 & !7;
+        for i in 0..self.values.len() {
+            unsafe { ptr::write_unaligned((mem_ptr + i * value_size) as *mut _, self.values[i]) };
+        }
+
+        Ok(mem)
+    }
+}
+
+impl<T: Pod> Deref for PerCpuValues<T> {
+    type Target = Box<[T]>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.values
     }
 }
 

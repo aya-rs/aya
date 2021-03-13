@@ -15,6 +15,10 @@ pub fn online_cpus() -> Result<Vec<u32>, io::Error> {
     })
 }
 
+pub fn nr_cpus() -> Result<usize, io::Error> {
+    Ok(possible_cpus()?.len())
+}
+
 pub(crate) fn possible_cpus() -> Result<Vec<u32>, io::Error> {
     let data = fs::read_to_string(POSSIBLE_CPUS)?;
     parse_cpu_ranges(data.trim()).map_err(|_| {

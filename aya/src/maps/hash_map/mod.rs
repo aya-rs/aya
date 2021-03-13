@@ -6,7 +6,10 @@ use crate::{
 };
 
 mod hash_map;
+mod per_cpu_hash_map;
+
 pub use hash_map::*;
+pub use per_cpu_hash_map::*;
 
 pub(crate) fn check_kv_size<K, V>(map: &Map) -> Result<(), MapError> {
     let size = mem::size_of::<K>();
