@@ -40,15 +40,15 @@ use crate::{
     Pod,
 };
 
+pub mod array;
 pub mod hash_map;
 mod map_lock;
 pub mod perf;
-pub mod program_array;
 
+pub use array::ProgramArray;
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use map_lock::*;
 pub use perf::PerfEventArray;
-pub use program_array::ProgramArray;
 
 #[derive(Error, Debug)]
 pub enum MapError {

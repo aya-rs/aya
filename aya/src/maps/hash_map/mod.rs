@@ -1,3 +1,4 @@
+//! Hash map types.
 use std::mem;
 
 use crate::{

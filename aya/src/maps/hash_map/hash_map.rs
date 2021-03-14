@@ -1,4 +1,3 @@
-//! Hash map types.
 use std::{
     convert::TryFrom,
     marker::PhantomData,
