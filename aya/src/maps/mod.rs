@@ -282,7 +282,7 @@ impl TryFrom<u32> for bpf_map_type {
         })
     }
 }
-pub struct PerCpuKernelMem {
+pub(crate) struct PerCpuKernelMem {
     bytes: Vec<u8>,
 }
 
