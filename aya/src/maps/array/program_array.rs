@@ -46,24 +46,8 @@ impl<T: Deref<Target = Map>> ProgramArray<T> {
         Ok(ProgramArray { inner: map })
     }
 
-    pub unsafe fn get(&self, key: &u32, flags: u64) -> Result<RawFd, MapError> {
-        let fd = self.inner.fd_or_err()?;
-        let fd = bpf_map_lookup_elem(fd, key, flags).map_err(|(code, io_error)| {
-            MapError::SyscallError {
-                call: "bpf_map_lookup_elem".to_owned(),
-                code,
-                io_error,
-            }
-        })?;
-        fd.ok_or(MapError::KeyNotFound)
-    }
-
-    pub unsafe fn iter<'coll>(&'coll self) -> MapIter<'coll, u32, RawFd> {
-        MapIter::new(self)
-    }
-
-    pub unsafe fn keys<'coll>(&'coll self) -> MapKeys<'coll, u32, RawFd> {
-        MapKeys::new(self)
+    pub unsafe fn keys<'coll>(&'coll self) -> MapKeys<'coll, u32> {
+        MapKeys::new(&self.inner)
     }
 
     fn check_bounds(&self, index: u32) -> Result<(), MapError> {
@@ -77,10 +61,10 @@ impl<T: Deref<Target = Map>> ProgramArray<T> {
 }
 
 impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
-    /// Insert a program file descriptor in the jump table.
+    /// Sets the target program file descriptor for the given index in the jump table.
     ///
-    /// When an eBPF program calls `bpf_tail_call(prog_array, index)`, `program`
-    /// will be executed.
+    /// When an eBPF program calls `bpf_tail_call(prog_array, index)`, control
+    /// flow will jump to `program`.
     ///
     /// # Example
     /// ```no_run
@@ -91,15 +75,10 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
     ///
     /// let mut prog_array = ProgramArray::try_from(bpf.map_mut("JUMP_TABLE")?)?;
     /// let prog: &KProbe = bpf.program("example_prog")?.try_into()?;
-    /// prog_array.insert(0, prog, 0 /* flags */);
+    /// prog_array.set(0, prog, 0 /* flags */);
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn insert(
-        &mut self,
-        index: u32,
-        program: &dyn ProgramFd,
-        flags: u64,
-    ) -> Result<(), MapError> {
+    pub fn set(&mut self, index: u32, program: &dyn ProgramFd, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(index)?;
         let prog_fd = program.fd().ok_or(MapError::ProgramNotLoaded)?;
@@ -114,8 +93,10 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
         Ok(())
     }
 
-    /// Remove an entry from the jump table.
-    pub fn remove(&mut self, index: &u32) -> Result<(), MapError> {
+    /// Clears the value at index in the jump table.
+    ///
+    /// Calling `bpf_tail_call(prog_array, index)` on an index that has been results in a failure.
+    pub fn unset(&mut self, index: &u32) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(*index)?;
         bpf_map_delete_elem(fd, index)
@@ -125,16 +106,6 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
                 code,
                 io_error,
             })
-    }
-}
-
-impl<T: Deref<Target = Map>> IterableMap<u32, RawFd> for ProgramArray<T> {
-    fn fd(&self) -> Result<RawFd, MapError> {
-        self.inner.fd_or_err()
-    }
-
-    unsafe fn get(&self, index: &u32) -> Result<RawFd, MapError> {
-        self.get(index, 0)
     }
 }
 

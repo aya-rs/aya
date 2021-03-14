@@ -125,8 +125,8 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Array<T, V> {
 }
 
 impl<T: Deref<Target = Map>, V: Pod> IterableMap<u32, V> for Array<T, V> {
-    fn fd(&self) -> Result<RawFd, MapError> {
-        self.inner.fd_or_err()
+    fn map(&self) -> &Map {
+        &self.inner
     }
 
     unsafe fn get(&self, index: &u32) -> Result<V, MapError> {

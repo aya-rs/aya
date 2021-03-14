@@ -80,8 +80,8 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
 
     /// An iterator visiting all keys in arbitrary order. The iterator element
     /// type is `Result<K, MapError>`.
-    pub unsafe fn keys(&self) -> MapKeys<'_, K, V> {
-        MapKeys::new(self)
+    pub unsafe fn keys(&self) -> MapKeys<'_, K> {
+        MapKeys::new(&self.inner)
     }
 }
 
@@ -98,8 +98,8 @@ impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
 }
 
 impl<T: Deref<Target = Map>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> {
-    fn fd(&self) -> Result<RawFd, MapError> {
-        self.inner.deref().fd_or_err()
+    fn map(&self) -> &Map {
+        &self.inner
     }
 
     unsafe fn get(&self, key: &K) -> Result<V, MapError> {

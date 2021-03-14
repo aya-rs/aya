@@ -29,7 +29,10 @@
 //!
 //! The code above uses `HashMap`, but all the concrete map types implement the
 //! `TryFrom` trait.
-use std::{convert::TryFrom, ffi::CString, io, mem, ops::Deref, os::unix::io::RawFd, ptr};
+use std::{
+    convert::TryFrom, ffi::CString, io, marker::PhantomData, mem, ops::Deref, os::unix::io::RawFd,
+    ptr,
+};
 use thiserror::Error;
 
 use crate::{
@@ -148,19 +151,20 @@ impl Map {
 }
 
 pub(crate) trait IterableMap<K: Pod, V> {
-    fn fd(&self) -> Result<RawFd, MapError>;
+    fn map(&self) -> &Map;
+
     unsafe fn get(&self, key: &K) -> Result<V, MapError>;
 }
 
 /// Iterator returned by `map.keys()`.
-pub struct MapKeys<'coll, K: Pod, V> {
-    map: &'coll dyn IterableMap<K, V>,
+pub struct MapKeys<'coll, K: Pod> {
+    map: &'coll Map,
     err: bool,
     key: Option<K>,
 }
 
-impl<'coll, K: Pod, V> MapKeys<'coll, K, V> {
-    fn new(map: &'coll dyn IterableMap<K, V>) -> MapKeys<'coll, K, V> {
+impl<'coll, K: Pod> MapKeys<'coll, K> {
+    fn new(map: &'coll Map) -> MapKeys<'coll, K> {
         MapKeys {
             map,
             err: false,
@@ -169,7 +173,7 @@ impl<'coll, K: Pod, V> MapKeys<'coll, K, V> {
     }
 }
 
-impl<K: Pod, V> Iterator for MapKeys<'_, K, V> {
+impl<K: Pod> Iterator for MapKeys<'_, K> {
     type Item = Result<K, MapError>;
 
     fn next(&mut self) -> Option<Result<K, MapError>> {
@@ -177,7 +181,7 @@ impl<K: Pod, V> Iterator for MapKeys<'_, K, V> {
             return None;
         }
 
-        let fd = match self.map.fd() {
+        let fd = match self.map.fd_or_err() {
             Ok(fd) => fd,
             Err(e) => {
                 self.err = true;
@@ -208,13 +212,17 @@ impl<K: Pod, V> Iterator for MapKeys<'_, K, V> {
 
 /// Iterator returned by `map.iter()`.
 pub struct MapIter<'coll, K: Pod, V> {
-    inner: MapKeys<'coll, K, V>,
+    keys: MapKeys<'coll, K>,
+    map: &'coll dyn IterableMap<K, V>,
+    _v: PhantomData<V>,
 }
 
 impl<'coll, K: Pod, V> MapIter<'coll, K, V> {
     fn new(map: &'coll dyn IterableMap<K, V>) -> MapIter<'coll, K, V> {
         MapIter {
-            inner: MapKeys::new(map),
+            keys: MapKeys::new(map.map()),
+            map,
+            _v: PhantomData,
         }
     }
 }
@@ -224,9 +232,9 @@ impl<K: Pod, V> Iterator for MapIter<'_, K, V> {
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            match self.inner.next() {
+            match self.keys.next() {
                 Some(Ok(key)) => {
-                    let value = unsafe { self.inner.map.get(&key) };
+                    let value = unsafe { self.map.get(&key) };
                     match value {
                         Ok(value) => return Some(Ok((key, value))),
                         Err(MapError::KeyNotFound) => continue,
