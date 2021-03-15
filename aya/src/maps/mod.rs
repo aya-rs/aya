@@ -48,7 +48,7 @@ pub mod hash_map;
 mod map_lock;
 pub mod perf;
 
-pub use array::{Array, ProgramArray};
+pub use array::{Array, PerCpuArray, ProgramArray};
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use map_lock::*;
 pub use perf::PerfEventArray;

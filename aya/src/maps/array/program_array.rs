@@ -9,9 +9,9 @@ use std::{
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY,
-    maps::{IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut},
+    maps::{Map, MapError, MapKeys, MapRef, MapRefMut},
     programs::ProgramFd,
-    sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
+    sys::{bpf_map_delete_elem, bpf_map_update_elem},
 };
 
 /// An array of eBPF program file descriptors used as a jump table.
