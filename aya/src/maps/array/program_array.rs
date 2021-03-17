@@ -97,8 +97,9 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
 
     /// Clears the value at index in the jump table.
     ///
-    /// Calling `bpf_tail_call(prog_array, index)` on an index that has been results in a failure.
-    pub fn unset(&mut self, index: &u32) -> Result<(), MapError> {
+    /// Calling `bpf_tail_call(prog_array, index)` on an index that has been cleared returns an
+    /// error.
+    pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(*index)?;
         bpf_map_delete_elem(fd, index)
