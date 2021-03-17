@@ -46,7 +46,9 @@ impl<T: Deref<Target = Map>> ProgramArray<T> {
         Ok(ProgramArray { inner: map })
     }
 
-    pub unsafe fn keys<'coll>(&'coll self) -> MapKeys<'coll, u32> {
+    /// An iterator over the indices of the array that point to a program. The iterator item type
+    /// is `Result<u32, MapError>`.
+    pub unsafe fn indices(&self) -> MapKeys<'_, u32> {
         MapKeys::new(&self.inner)
     }
 
