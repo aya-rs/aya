@@ -16,6 +16,37 @@ use crate::{
 ///
 /// The size of the array is defined on the eBPF side using the `bpf_map_def::max_entries` field.
 /// All the entries are zero-initialized when the map is created.
+///
+/// # Example
+/// ```no_run
+/// # #[derive(thiserror::Error, Debug)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
+/// # let bpf = aya::Bpf::load(&[], None)?;
+/// use aya::maps::{PerCpuArray, PerCpuValues};
+/// use aya::util::nr_cpus;
+/// use std::convert::TryFrom;
+///
+/// let mut array = PerCpuArray::try_from(bpf.map_mut("ARRAY")?)?;
+///
+/// // set array[1] = 42 for all cpus
+/// let nr_cpus = nr_cpus()?;
+/// array.set(1, PerCpuValues::try_from(vec![42u32; nr_cpus])?, 0)?;
+///
+/// // retrieve the values at index 1 for all cpus
+/// let values = array.get(&1, 0)?;
+/// assert_eq!(values.len(), nr_cpus);
+/// for cpu_val in values.iter() {
+///     assert_eq!(*cpu_val, 42u32);
+/// }
+/// # Ok::<(), Error>(())
+/// ```
 pub struct PerCpuArray<T: Deref<Target = Map>, V: Pod> {
     inner: T,
     _v: PhantomData<V>,
@@ -77,9 +108,9 @@ impl<T: Deref<Target = Map>, V: Pod> PerCpuArray<T, V> {
 
     /// An iterator over the elements of the array. The iterator item type is
     /// `Result<PerCpuValues<V>, MapError>`.
-    pub unsafe fn iter<'coll>(
-        &'coll self,
-    ) -> impl Iterator<Item = Result<PerCpuValues<V>, MapError>> + 'coll {
+    pub unsafe fn iter<'a>(
+        &'a self,
+    ) -> impl Iterator<Item = Result<PerCpuValues<V>, MapError>> + 'a {
         (0..self.len()).map(move |i| self.get(&i, 0))
     }
 
@@ -100,28 +131,6 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> PerCpuArray<T, V> 
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_update_elem` fails.
-    ///
-    /// # Example
-    /// ```no_run
-    /// # #[derive(thiserror::Error, Debug)]
-    /// # enum Error {
-    /// #     #[error(transparent)]
-    /// #     IO(#[from] std::io::Error),
-    /// #     #[error(transparent)]
-    /// #     Map(#[from] aya::maps::MapError),
-    /// #     #[error(transparent)]
-    /// #     Bpf(#[from] aya::BpfError)
-    /// # }
-    /// # let bpf = aya::Bpf::load(&[], None)?;
-    /// use aya::maps::{PerCpuArray, PerCpuValues};
-    /// use aya::util::nr_cpus;
-    /// use std::convert::TryFrom;
-    ///
-    /// let mut array = PerCpuArray::try_from(bpf.map_mut("ARRAY")?)?;
-    /// array.set(1, PerCpuValues::try_from(vec![42u32; nr_cpus()?])?, 0)?;
-    /// assert_eq!(&**array.get(&1, 0)?, vec![42u32; nr_cpus()?].as_slice());
-    /// # Ok::<(), Error>(())
-    /// ```
     pub fn set(&mut self, index: u32, values: PerCpuValues<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(index)?;

@@ -3,7 +3,6 @@ use std::{
     convert::TryFrom,
     marker::PhantomData,
     ops::{Deref, DerefMut},
-    os::unix::io::RawFd,
 };
 
 use crate::{

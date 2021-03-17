@@ -1,9 +1,9 @@
-//! eBPF data structures used to exchange data with eBPF programs.
+//! Data structures used to exchange data with eBPF programs.
 //!
 //! The eBPF platform provides data structures - maps in eBPF speak - that can be used by eBPF
 //! programs and user-space to exchange data. When you call
 //! [`Bpf::load_file`](crate::Bpf::load_file) or [`Bpf::load`](crate::Bpf::load), all the maps
-//! defined in the code get initialized and can then be accessed using
+//! defined in the eBPF code get initialized and can then be accessed using
 //! [`Bpf::map`](crate::Bpf::map) and [`Bpf::map_mut`](crate::Bpf::map_mut).
 //!
 //! # Concrete map types

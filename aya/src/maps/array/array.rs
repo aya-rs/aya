@@ -77,7 +77,7 @@ impl<T: Deref<Target = Map>, V: Pod> Array<T, V> {
 
     /// An iterator over the elements of the array. The iterator item type is `Result<V,
     /// MapError>`.
-    pub unsafe fn iter<'coll>(&'coll self) -> impl Iterator<Item = Result<V, MapError>> + 'coll {
+    pub unsafe fn iter<'a>(&'a self) -> impl Iterator<Item = Result<V, MapError>> + 'a {
         (0..self.len()).map(move |i| self.get(&i, 0))
     }
 

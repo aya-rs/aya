@@ -16,8 +16,30 @@ use crate::{
 
 /// An array of eBPF program file descriptors used as a jump table.
 ///
-/// eBPF programs can jump to other programs calling `bpf_tail_call(prog_array, index)`. User space
-/// programs can use [`ProgramArray`] to configure which programs correspond to which jump indexes.
+/// eBPF programs can jump to other programs calling `bpf_tail_call(prog_array, index)`. You can
+/// use [`ProgramArray`] to configure which programs correspond to which jump indexes.
+///
+/// # Example
+/// ```no_run
+/// # let bpf = aya::Bpf::load(&[], None)?;
+/// use aya::maps::ProgramArray;
+/// use aya::programs::KProbe;
+/// use std::convert::{TryFrom, TryInto};
+///
+/// let mut prog_array = ProgramArray::try_from(bpf.map_mut("JUMP_TABLE")?)?;
+/// let prog_0: &KProbe = bpf.program("example_prog_0")?.try_into()?;
+/// let prog_1: &KProbe = bpf.program("example_prog_1")?.try_into()?;
+/// let prog_2: &KProbe = bpf.program("example_prog_2")?.try_into()?;
+///
+/// let flags = 0;
+/// // bpf_tail_call(JUMP_TABLE, 0) will jump to prog_0
+/// prog_array.set(0, prog_0, flags);
+/// // bpf_tail_call(JUMP_TABLE, 0) will jump to prog_1
+/// prog_array.set(1, prog_1, flags);
+/// // bpf_tail_call(JUMP_TABLE, 0) will jump to prog_2
+/// prog_array.set(2, prog_2, flags);
+/// # Ok::<(), aya::BpfError>(())
+/// ```
 pub struct ProgramArray<T: Deref<Target = Map>> {
     inner: T,
 }
@@ -67,19 +89,6 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
     ///
     /// When an eBPF program calls `bpf_tail_call(prog_array, index)`, control
     /// flow will jump to `program`.
-    ///
-    /// # Example
-    /// ```no_run
-    /// # let bpf = aya::Bpf::load(&[], None)?;
-    /// use aya::maps::ProgramArray;
-    /// use aya::programs::KProbe;
-    /// use std::convert::{TryFrom, TryInto};
-    ///
-    /// let mut prog_array = ProgramArray::try_from(bpf.map_mut("JUMP_TABLE")?)?;
-    /// let prog: &KProbe = bpf.program("example_prog")?.try_into()?;
-    /// prog_array.set(0, prog, 0 /* flags */);
-    /// # Ok::<(), aya::BpfError>(())
-    /// ```
     pub fn set(&mut self, index: u32, program: &dyn ProgramFd, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(index)?;
