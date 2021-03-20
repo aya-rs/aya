@@ -43,15 +43,18 @@ use crate::{
     Pod,
 };
 
+mod map_lock;
+
 pub mod array;
 pub mod hash_map;
-mod map_lock;
 pub mod perf;
+pub mod stack_trace;
 
 pub use array::{Array, PerCpuArray, ProgramArray};
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use map_lock::*;
 pub use perf::PerfEventArray;
+pub use stack_trace::StackTraceMap;
 
 #[derive(Error, Debug)]
 pub enum MapError {

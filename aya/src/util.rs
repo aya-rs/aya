@@ -57,6 +57,9 @@ fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, ()> {
     Ok(cpus)
 }
 
+/// Loads kernel symbols from `/proc/kallsyms`.
+///
+/// The symbols can be passed to [`StackTrace::resolve`](crate::maps::stack_trace::StackTrace::resolve).
 pub fn kernel_symbols() -> Result<BTreeMap<u64, String>, io::Error> {
     let mut reader = BufReader::new(File::open("/proc/kallsyms")?);
     parse_kernel_symbols(&mut reader)
