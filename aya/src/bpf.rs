@@ -127,7 +127,7 @@ impl Bpf {
             let mut map = Map { obj, fd: None };
             let fd = map.create()?;
             if !map.obj.data.is_empty() && map.obj.name != ".bss" {
-                bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data.as_ptr(), 0).map_err(
+                bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data.as_mut_ptr(), 0).map_err(
                     |(code, io_error)| MapError::SyscallError {
                         call: "bpf_map_update_elem".to_owned(),
                         code,

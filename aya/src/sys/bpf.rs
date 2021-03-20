@@ -71,7 +71,7 @@ fn lookup<K: Pod, V: Pod>(
     cmd: bpf_cmd,
 ) -> Result<Option<V>, (c_long, io::Error)> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let mut value = MaybeUninit::uninit();
+    let mut value = MaybeUninit::zeroed();
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd as u32;
@@ -106,17 +106,30 @@ pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
     key: &K,
     flags: u64,
 ) -> Result<Option<PerCpuValues<V>>, (c_long, io::Error)> {
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let mut mem = PerCpuValues::<V>::alloc_kernel_mem().map_err(|io_error| (-1, io_error))?;
+    match bpf_map_lookup_elem_ptr(fd, key, mem.as_mut_ptr(), flags) {
+        Ok(_) => Ok(Some(unsafe { PerCpuValues::from_kernel_mem(mem) })),
+        Err((_, io_error)) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
+        Err(e) => Err(e),
+    }
+}
+
+pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
+    fd: RawFd,
+    key: &K,
+    value: *mut V,
+    flags: u64,
+) -> Result<Option<()>, (c_long, io::Error)> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd as u32;
     u.key = key as *const _ as u64;
-    u.__bindgen_anon_1.value = mem.as_mut_ptr() as u64;
+    u.__bindgen_anon_1.value = value as u64;
     u.flags = flags;
 
     match sys_bpf(bpf_cmd::BPF_MAP_LOOKUP_ELEM, &attr) {
-        Ok(_) => Ok(Some(unsafe { PerCpuValues::from_kernel_mem(mem) })),
+        Ok(_) => Ok(Some(())),
         Err((_, io_error)) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
         Err(e) => Err(e),
     }
@@ -137,7 +150,7 @@ pub(crate) fn bpf_map_update_elem<K, V>(fd: RawFd, key: &K, value: &V, flags: u6
 pub(crate) fn bpf_map_update_elem_ptr<K, V>(
     fd: RawFd,
     key: *const K,
-    value: *const V,
+    value: *mut V,
     flags: u64,
 ) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
@@ -157,8 +170,8 @@ pub(crate) fn bpf_map_update_elem_per_cpu<K, V: Pod>(
     values: &PerCpuValues<V>,
     flags: u64,
 ) -> SysResult {
-    let mem = values.into_kernel_mem().map_err(|e| (-1, e))?;
-    bpf_map_update_elem_ptr(fd, key, mem.as_ptr(), flags)
+    let mut mem = values.into_kernel_mem().map_err(|e| (-1, e))?;
+    bpf_map_update_elem_ptr(fd, key, mem.as_mut_ptr(), flags)
 }
 
 pub(crate) fn bpf_map_delete_elem<K>(fd: RawFd, key: &K) -> SysResult {
