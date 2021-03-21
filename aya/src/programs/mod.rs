@@ -1,18 +1,68 @@
+//! eBPF program types.
+//!
+//! eBPF programs are loaded inside the kernel and attached to one or more hook points. Whenever
+//! the kernel or an application reaches those hook points, the programs are executed.
+//!
+//! # Loading programs
+//!
+//! When you call [`Bpf::load_file`] or [`Bpf::load`], all the programs present in the code are
+//! parsed and can be retrieved using the [`Bpf::program`] and [`Bpf::program_mut`] methods. In
+//! order to load a program, you need to get a handle to it and call the `load()` method, for
+//! example:
+//!
+//! ```no_run
+//! use aya::{Bpf, programs::KProbe};
+//! use std::convert::TryInto;
+//!
+//! let mut bpf = Bpf::load_file("ebpf_programs.o")?;
+//! // intercept_wakeups is the name of the program we want to load
+//! let program: &mut KProbe = bpf.program_mut("intercept_wakeups")?.try_into()?;
+//! program.load()?;
+//! # Ok::<(), aya::BpfError>(())
+//! ```
+//!
+//! # Attaching programs
+//!
+//! After being loaded, programs must be attached to their target hook points to be executed. The
+//! eBPF platform supports many different program types, with each type providing different
+//! attachment options. For example when attaching a [`KProbe`], you must provide the name of the
+//! kernel function you want instrument; when loading an [`Xdp`] program, you need to specify the
+//! network card name you want to hook into, and so forth.
+//!
+//! Currently aya supports [`KProbe`], [`UProbe`], [`SocketFilter`], [`TracePoint`] and [`Xdp`]
+//! programs. To see how to attach them, see the documentation of the respective `attach()` method.
+//!
+//! # Interacting with programs
+//!
+//! eBPF programs are event-driven and execute when the hook points they are attached to are hit.
+//! To communicate with user-space, programs use data structures provided by the eBPF platform,
+//! which can be found in the [maps] module.
+//!
+//! [`Bpf::load_file`]: crate::Bpf::load_file
+//! [`Bpf::load`]: crate::Bpf::load
+//! [`Bpf::programs`]: crate::Bpf::programs
+//! [`Bpf::program`]: crate::Bpf::program
+//! [`Bpf::program_mut`]: crate::Bpf::program_mut
+//! [maps]: crate::maps
+mod kprobe;
 mod perf_attach;
-pub mod probe;
-pub mod socket_filter;
-pub mod trace_point;
-pub mod xdp;
+mod probe;
+mod socket_filter;
+mod trace_point;
+mod uprobe;
+mod xdp;
 
 use libc::{close, ENOSPC};
 use std::{cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::unix::io::RawFd, rc::Rc};
 use thiserror::Error;
 
+pub use kprobe::{KProbe, KProbeError};
 use perf_attach::*;
-pub use probe::{KProbe, KProbeError, UProbe, UProbeError};
+pub use probe::ProbeKind;
 pub use socket_filter::{SocketFilter, SocketFilterError};
 pub use trace_point::{TracePoint, TracePointError};
-pub use xdp::{Xdp, XdpError};
+pub use uprobe::{UProbe, UProbeError};
+pub use xdp::{Xdp, XdpError, XdpFlags};
 
 use crate::{
     generated::bpf_prog_type,
@@ -87,6 +137,7 @@ pub trait ProgramFd {
     fn fd(&self) -> Option<RawFd>;
 }
 
+/// eBPF program type.
 #[derive(Debug)]
 pub enum Program {
     KProbe(KProbe),
@@ -97,10 +148,21 @@ pub enum Program {
 }
 
 impl Program {
+    /// Loads the program in the kernel.
+    ///
+    /// # Errors
+    ///
+    /// If the load operation fails, the method returns
+    /// [`ProgramError::LoadError`] and the error's `verifier_log` field
+    /// contains the output from the kernel verifier.
+    ///
+    /// If the program is already loaded, [`ProgramError::AlreadyLoaded`] is
+    /// returned.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(self.prog_type(), self.data_mut())
     }
 
+    /// Returns the low level program type.
     pub fn prog_type(&self) -> bpf_prog_type {
         use crate::generated::bpf_prog_type::*;
         match self {
@@ -112,7 +174,12 @@ impl Program {
         }
     }
 
-    pub(crate) fn data(&self) -> &ProgramData {
+    /// Returns the name of the program.
+    pub fn name(&self) -> &str {
+        &self.data().name
+    }
+
+    fn data(&self) -> &ProgramData {
         match self {
             Program::KProbe(p) => &p.data,
             Program::UProbe(p) => &p.data,
@@ -130,10 +197,6 @@ impl Program {
             Program::SocketFilter(p) => &mut p.data,
             Program::Xdp(p) => &mut p.data,
         }
-    }
-
-    pub fn name(&self) -> &str {
-        &self.data().name
     }
 }
 

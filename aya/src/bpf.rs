@@ -19,8 +19,8 @@ use crate::{
         Object, ParseError, ProgramKind,
     },
     programs::{
-        probe::ProbeKind, KProbe, Program, ProgramData, ProgramError, SocketFilter, TracePoint,
-        UProbe, Xdp,
+        KProbe, ProbeKind, Program, ProgramData, ProgramError, SocketFilter, TracePoint, UProbe,
+        Xdp,
     },
     sys::bpf_map_update_elem_ptr,
     util::{possible_cpus, POSSIBLE_CPUS},
@@ -55,7 +55,7 @@ pub(crate) struct bpf_map_def {
     pub(crate) map_flags: u32,
 }
 
-/// Used to work with eBPF programs and maps.
+/// The main entry point into the library, used to work with eBPF programs and maps.
 #[derive(Debug)]
 pub struct Bpf {
     maps: HashMap<String, MapLock>,

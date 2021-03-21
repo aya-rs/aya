@@ -69,6 +69,14 @@ pub enum BtfError {
     MaximumTypeDepthReached { type_id: u32 },
 }
 
+/// Bpf Type Format (BTF) metadata.
+///
+/// BTF is a kind of debug metadata that allows eBPF programs compiled against one kernel version
+/// to be loaded into different kernel versions.
+///
+/// Aya automatically loads BTF metadata if you use [`Bpf::load_file`](crate::Bpf::load_file). You
+/// only need to explicitly use this type if you want to load BTF from a non-standard
+/// location or if you are using [`Bpf::load`](crate::Bpf::load).
 #[derive(Clone, Debug)]
 pub struct Btf {
     header: btf_header,
@@ -78,10 +86,12 @@ pub struct Btf {
 }
 
 impl Btf {
+    /// Loads BTF metadata from `/sys/kernel/btf/vmlinux`.
     pub fn from_sys_fs() -> Result<Btf, BtfError> {
         Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
     }
 
+    /// Loads BTF metadata from the given `path`.
     pub fn parse_file<P: AsRef<Path>>(path: P, endianness: Endianness) -> Result<Btf, BtfError> {
         let path = path.as_ref();
         Btf::parse(
