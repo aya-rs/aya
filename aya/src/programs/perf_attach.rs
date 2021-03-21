@@ -32,10 +32,18 @@ impl Drop for PerfLink {
 
 pub(crate) fn perf_attach(data: &mut ProgramData, fd: RawFd) -> Result<LinkRef, ProgramError> {
     let prog_fd = data.fd_or_err()?;
-    perf_event_ioctl(fd, PERF_EVENT_IOC_SET_BPF, prog_fd)
-        .map_err(|(_, io_error)| ProgramError::PerfEventAttachError { io_error })?;
-    perf_event_ioctl(fd, PERF_EVENT_IOC_ENABLE, 0)
-        .map_err(|(_, io_error)| ProgramError::PerfEventAttachError { io_error })?;
+    perf_event_ioctl(fd, PERF_EVENT_IOC_SET_BPF, prog_fd).map_err(|(_, io_error)| {
+        ProgramError::SyscallError {
+            call: "PERF_EVENT_IOC_SET_BPF".to_owned(),
+            io_error,
+        }
+    })?;
+    perf_event_ioctl(fd, PERF_EVENT_IOC_ENABLE, 0).map_err(|(_, io_error)| {
+        ProgramError::SyscallError {
+            call: "PERF_EVENT_IOC_ENABLE".to_owned(),
+            io_error,
+        }
+    })?;
 
     Ok(data.link(PerfLink { perf_fd: Some(fd) }))
 }

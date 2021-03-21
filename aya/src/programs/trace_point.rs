@@ -27,9 +27,12 @@ impl TracePoint {
 
     pub fn attach(&mut self, category: &str, name: &str) -> Result<LinkRef, ProgramError> {
         let id = read_sys_fs_trace_point_id(category, name)?;
-        let fd = perf_event_open_trace_point(id)
-            .map_err(|(_code, io_error)| ProgramError::PerfEventOpenError { io_error })?
-            as i32;
+        let fd = perf_event_open_trace_point(id).map_err(|(_code, io_error)| {
+            ProgramError::SyscallError {
+                call: "perf_event_open".to_owned(),
+                io_error,
+            }
+        })? as i32;
 
         perf_attach(&mut self.data, fd)
     }

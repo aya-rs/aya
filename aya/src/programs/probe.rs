@@ -44,9 +44,12 @@ pub(crate) fn attach(
         _ => None,
     };
 
-    let fd = perf_event_open_probe(perf_ty, ret_bit, name, offset, pid)
-        .map_err(|(_code, io_error)| ProgramError::PerfEventOpenError { io_error })?
-        as i32;
+    let fd = perf_event_open_probe(perf_ty, ret_bit, name, offset, pid).map_err(
+        |(_code, io_error)| ProgramError::SyscallError {
+            call: "perf_event_open".to_owned(),
+            io_error,
+        },
+    )? as i32;
 
     perf_attach(program_data, fd)
 }

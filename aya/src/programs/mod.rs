@@ -93,26 +93,15 @@ pub enum ProgramError {
         verifier_log: String,
     },
 
-    #[error("the perf_event_open syscall failed")]
-    PerfEventOpenError {
-        #[source]
-        io_error: io::Error,
-    },
-
-    #[error("PERF_EVENT_IOC_SET_BPF/PERF_EVENT_IOC_ENABLE failed")]
-    PerfEventAttachError {
+    #[error("`{call}` failed")]
+    SyscallError {
+        call: String,
         #[source]
         io_error: io::Error,
     },
 
     #[error("unknown network interface {name}")]
     UnknownInterface { name: String },
-
-    #[error("BPF_LINK_CREATE failed")]
-    BpfLinkCreateError {
-        #[source]
-        io_error: io::Error,
-    },
 
     #[error("unexpected program type")]
     UnexpectedProgramType,
