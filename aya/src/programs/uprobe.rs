@@ -66,7 +66,7 @@ impl UProbe {
     ///
     /// Attaches the uprobe to the function `fn_name` defined in the `target`.
     /// If `offset` is non-zero, it is added to the address of the target
-    /// function. If `pid` is `Some()`, the program executes only when the target
+    /// function. If `pid` is not `None`, the program executes only when the target
     /// function is executed by the given `pid`.
     ///
     /// The `target` argument can be an absolute path to a binary or library, or

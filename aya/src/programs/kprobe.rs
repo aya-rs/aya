@@ -48,7 +48,7 @@ impl KProbe {
     ///
     /// Attaches the probe to the given function name inside the kernel. If
     /// `offset` is non-zero, it is added to the address of the target
-    /// function. If `pid` is `Some()`, the program executes only when the
+    /// function. If `pid` is not `None`, the program executes only when the
     /// target function is triggered by the given `pid`.
     ///
     /// If the program is a `kprobe`, it is attached to the *start* address of the target function.

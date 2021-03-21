@@ -32,6 +32,7 @@ pub(crate) const PERF_EVENT_IOC_ENABLE: c_int = AYA_PERF_EVENT_IOC_ENABLE;
 pub(crate) const PERF_EVENT_IOC_DISABLE: c_int = AYA_PERF_EVENT_IOC_DISABLE;
 pub(crate) const PERF_EVENT_IOC_SET_BPF: c_int = AYA_PERF_EVENT_IOC_SET_BPF;
 
+/// Marker trait for types that can safely be converted to and from byte slices.
 pub unsafe trait Pod: Copy + 'static {}
 
 macro_rules! unsafe_impl_pod {
@@ -91,7 +92,7 @@ impl Bpf {
     /// Load eBPF bytecode.
     ///
     /// Parses the object code contained in `data` and initializes the [maps](crate::maps) defined
-    /// in it. If `target_btf` is `Some` and `data` includes BTF debug info, [BTF](Btf) relocations
+    /// in it. If `target_btf` is not `None` and `data` includes BTF debug info, [BTF](Btf) relocations
     /// are applied as well.
     ///
     /// # Examples

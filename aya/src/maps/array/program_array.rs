@@ -32,11 +32,14 @@ use crate::{
 /// let prog_2: &KProbe = bpf.program("example_prog_2")?.try_into()?;
 ///
 /// let flags = 0;
+///
 /// // bpf_tail_call(JUMP_TABLE, 0) will jump to prog_0
 /// prog_array.set(0, prog_0, flags);
-/// // bpf_tail_call(JUMP_TABLE, 0) will jump to prog_1
+///
+/// // bpf_tail_call(JUMP_TABLE, 1) will jump to prog_1
 /// prog_array.set(1, prog_1, flags);
-/// // bpf_tail_call(JUMP_TABLE, 0) will jump to prog_2
+///
+/// // bpf_tail_call(JUMP_TABLE, 2) will jump to prog_2
 /// prog_array.set(2, prog_2, flags);
 /// # Ok::<(), aya::BpfError>(())
 /// ```

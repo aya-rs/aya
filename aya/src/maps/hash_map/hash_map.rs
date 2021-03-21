@@ -11,11 +11,9 @@ use crate::{
     Pod,
 };
 
-/// A hash map stored inside the kernel, in which both user-space and eBPF programs can insert and
-/// lookup values from.
+/// A hash map that can be shared between eBPF programs and user space.
 ///
-/// The types of the keys and values must be plain old data (POD), meaning that they
-/// must be safely convertible to and from byte slices.
+/// It is required that both keys and values implement the [`Pod`] trait.
 ///
 /// # Example
 ///
