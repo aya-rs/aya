@@ -30,6 +30,13 @@ lazy_static! {
 }
 const LD_SO_CACHE_HEADER: &str = "glibc-ld.so.cache1.1";
 
+/// An user space probe.
+///
+/// User probes are eBPF programs that can be attached to any userspace
+/// function. They can be of two kinds:
+///
+/// - `uprobe`: get attached to the *start* of the target functions
+/// - `uretprobe`: get attached to the *return address* of the target functions
 #[derive(Debug)]
 pub struct UProbe {
     pub(crate) data: ProgramData,
@@ -37,14 +44,38 @@ pub struct UProbe {
 }
 
 impl UProbe {
+    /// Loads the program inside the kernel.
+    ///
+    /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
     }
 
+    /// Returns the name of the program.
     pub fn name(&self) -> String {
         self.data.name.to_string()
     }
 
+    /// Returns `UProbe` if the program is a `uprobe`, or `URetProbe` if the
+    /// program is a `uretprobe`.
+    pub fn kind(&self) -> ProbeKind {
+        self.kind
+    }
+
+    /// Attaches the program.
+    ///
+    /// Attaches the uprobe to the function `fn_name` defined in the `target`.
+    /// If `offset` is non-zero, it is added to the address of the target
+    /// function. If `pid` is `Some()`, the program executes only when the target
+    /// function is executed by the given `pid`.
+    ///
+    /// The `target` argument can be an absolute path to a binary or library, or
+    /// a library name (eg: `"libc"`).
+    ///
+    /// If the program is an `uprobe`, it is attached to the *start* address of the target
+    /// function.  Instead if the program is a `kretprobe`, it is attached to the return address of
+    /// the target function.
+    ///
     pub fn attach<T: AsRef<Path>>(
         &mut self,
         fn_name: Option<&str>,

@@ -32,20 +32,55 @@ bitflags! {
     }
 }
 
+/// An XDP program.
+///
+/// eXpress Data Path (XDP) programs can be attached to the very early stages of network
+/// processing, where they can apply custom packet processing logic.  When supported by the
+/// underlying network driver, XDP programs can execute directly on network cards, greatly
+/// reducing CPU load.
 #[derive(Debug)]
 pub struct Xdp {
     pub(crate) data: ProgramData,
 }
 
 impl Xdp {
+    /// Loads the program inside the kernel.
+    ///
+    /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_XDP, &mut self.data)
     }
 
+    /// Returns the name of the program.
     pub fn name(&self) -> String {
         self.data.name.to_string()
     }
 
+    /// Attaches the program.
+    ///
+    /// Attaches the program to the given `interface`.
+    ///
+    /// # Errors
+    ///
+    /// If the given `interface` does not exist
+    /// [`ProgramError::UnknownInterface`] is returned.
+    ///
+    /// When attaching fails, [`ProgramError::SyscallError`] is returned for
+    /// kernels `>= 5.9.0`, and instead
+    /// [`XdpError::NetlinkError`] is returned for older
+    /// kernels.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
+    /// use aya::{Bpf, programs::{Xdp, XdpFlags}};
+    /// use std::convert::TryInto;
+    ///
+    /// let program: &mut Xdp = bpf.program_mut("intercept_packets")?.try_into()?;
+    /// program.attach("eth0", XdpFlags::default())?;
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
     pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<LinkRef, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
 
