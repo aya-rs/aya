@@ -55,7 +55,7 @@ impl<T: Deref<Target = Map>> ProgramArray<T> {
                 map_type: map_type as u32,
             })?;
         }
-        let expected = mem::size_of::<RawFd>();
+        let expected = mem::size_of::<u32>();
         let size = map.obj.def.key_size as usize;
         if size != expected {
             return Err(MapError::InvalidKeySize { size, expected });
