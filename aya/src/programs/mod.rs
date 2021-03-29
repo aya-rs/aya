@@ -47,6 +47,7 @@
 mod kprobe;
 mod perf_attach;
 mod probe;
+mod sk_skb;
 mod socket_filter;
 mod trace_point;
 mod uprobe;
@@ -59,15 +60,17 @@ use thiserror::Error;
 pub use kprobe::{KProbe, KProbeError};
 use perf_attach::*;
 pub use probe::ProbeKind;
+pub use sk_skb::{SkSkb, SkSkbKind};
 pub use socket_filter::{SocketFilter, SocketFilterError};
 pub use trace_point::{TracePoint, TracePointError};
 pub use uprobe::{UProbe, UProbeError};
 pub use xdp::{Xdp, XdpError, XdpFlags};
 
 use crate::{
-    generated::bpf_prog_type,
+    generated::{bpf_attach_type, bpf_prog_type},
+    maps::MapError,
     obj::{self, Function},
-    sys::bpf_load_program,
+    sys::{bpf_load_program, bpf_prog_detach},
 };
 #[derive(Debug, Error)]
 pub enum ProgramError {
@@ -107,6 +110,9 @@ pub enum ProgramError {
     UnexpectedProgramType,
 
     #[error(transparent)]
+    MapError(#[from] MapError),
+
+    #[error(transparent)]
     KProbeError(#[from] KProbeError),
 
     #[error(transparent)]
@@ -134,6 +140,7 @@ pub enum Program {
     TracePoint(TracePoint),
     SocketFilter(SocketFilter),
     Xdp(Xdp),
+    SkSkb(SkSkb),
 }
 
 impl Program {
@@ -160,6 +167,7 @@ impl Program {
             Program::TracePoint(_) => BPF_PROG_TYPE_TRACEPOINT,
             Program::SocketFilter(_) => BPF_PROG_TYPE_SOCKET_FILTER,
             Program::Xdp(_) => BPF_PROG_TYPE_XDP,
+            Program::SkSkb(_) => BPF_PROG_TYPE_SK_SKB,
         }
     }
 
@@ -175,6 +183,7 @@ impl Program {
             Program::TracePoint(p) => &p.data,
             Program::SocketFilter(p) => &p.data,
             Program::Xdp(p) => &p.data,
+            Program::SkSkb(p) => &p.data,
         }
     }
 
@@ -185,6 +194,7 @@ impl Program {
             Program::TracePoint(p) => &mut p.data,
             Program::SocketFilter(p) => &mut p.data,
             Program::Xdp(p) => &mut p.data,
+            Program::SkSkb(p) => &mut p.data,
         }
     }
 }
@@ -352,6 +362,30 @@ impl Drop for FdLink {
     }
 }
 
+#[derive(Debug)]
+struct ProgAttachLink {
+    prog_fd: Option<RawFd>,
+    map_fd: Option<RawFd>,
+    attach_type: bpf_attach_type,
+}
+
+impl Link for ProgAttachLink {
+    fn detach(&mut self) -> Result<(), ProgramError> {
+        if let Some(prog_fd) = self.prog_fd.take() {
+            let _ = bpf_prog_detach(prog_fd, self.map_fd.take().unwrap(), self.attach_type);
+            Ok(())
+        } else {
+            Err(ProgramError::AlreadyDetached)
+        }
+    }
+}
+
+impl Drop for ProgAttachLink {
+    fn drop(&mut self) {
+        let _ = self.detach();
+    }
+}
+
 impl ProgramFd for Program {
     fn fd(&self) -> Option<RawFd> {
         self.data().fd
@@ -370,7 +404,7 @@ macro_rules! impl_program_fd {
     }
 }
 
-impl_program_fd!(KProbe, UProbe, TracePoint, SocketFilter, Xdp);
+impl_program_fd!(KProbe, UProbe, TracePoint, SocketFilter, Xdp, SkSkb);
 
 macro_rules! impl_try_from_program {
     ($($ty:ident),+ $(,)?) => {
@@ -400,4 +434,4 @@ macro_rules! impl_try_from_program {
     }
 }
 
-impl_try_from_program!(KProbe, UProbe, TracePoint, SocketFilter, Xdp);
+impl_try_from_program!(KProbe, UProbe, TracePoint, SocketFilter, Xdp, SkSkb);

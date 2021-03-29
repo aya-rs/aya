@@ -222,6 +222,34 @@ pub(crate) fn bpf_link_create(
     sys_bpf(bpf_cmd::BPF_LINK_CREATE, &attr)
 }
 
+pub(crate) fn bpf_prog_attach(
+    prog_fd: RawFd,
+    map_fd: RawFd,
+    attach_type: bpf_attach_type,
+) -> SysResult {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    attr.__bindgen_anon_5.attach_bpf_fd = prog_fd as u32;
+    attr.__bindgen_anon_5.target_fd = map_fd as u32;
+    attr.__bindgen_anon_5.attach_type = attach_type as u32;
+
+    sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &attr)
+}
+
+pub(crate) fn bpf_prog_detach(
+    prog_fd: RawFd,
+    map_fd: RawFd,
+    attach_type: bpf_attach_type,
+) -> SysResult {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    attr.__bindgen_anon_5.attach_bpf_fd = prog_fd as u32;
+    attr.__bindgen_anon_5.target_fd = map_fd as u32;
+    attr.__bindgen_anon_5.attach_type = attach_type as u32;
+
+    sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &attr)
+}
+
 fn sys_bpf<'a>(cmd: bpf_cmd, attr: &'a bpf_attr) -> SysResult {
     syscall(Syscall::Bpf { cmd, attr })
 }

@@ -48,12 +48,14 @@ mod map_lock;
 pub mod array;
 pub mod hash_map;
 pub mod perf;
+pub mod sock_map;
 pub mod stack_trace;
 
 pub use array::{Array, PerCpuArray, ProgramArray};
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use map_lock::*;
 pub use perf::PerfEventArray;
+pub use sock_map::SockMap;
 pub use stack_trace::StackTraceMap;
 
 #[derive(Error, Debug)]
