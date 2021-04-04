@@ -54,7 +54,7 @@ impl SkSkb {
         })?;
         Ok(self.data.link(ProgAttachLink {
             prog_fd: Some(prog_fd),
-            map_fd: Some(map_fd),
+            target_fd: Some(map_fd),
             attach_type,
         }))
     }

@@ -48,6 +48,7 @@ mod kprobe;
 mod perf_attach;
 mod probe;
 mod sk_skb;
+mod sock_ops;
 mod socket_filter;
 mod trace_point;
 mod uprobe;
@@ -61,6 +62,7 @@ pub use kprobe::{KProbe, KProbeError};
 use perf_attach::*;
 pub use probe::ProbeKind;
 pub use sk_skb::{SkSkb, SkSkbKind};
+pub use sock_ops::SockOps;
 pub use socket_filter::{SocketFilter, SocketFilterError};
 pub use trace_point::{TracePoint, TracePointError};
 pub use uprobe::{UProbe, UProbeError};
@@ -141,6 +143,7 @@ pub enum Program {
     SocketFilter(SocketFilter),
     Xdp(Xdp),
     SkSkb(SkSkb),
+    SockOps(SockOps),
 }
 
 impl Program {
@@ -168,6 +171,7 @@ impl Program {
             Program::SocketFilter(_) => BPF_PROG_TYPE_SOCKET_FILTER,
             Program::Xdp(_) => BPF_PROG_TYPE_XDP,
             Program::SkSkb(_) => BPF_PROG_TYPE_SK_SKB,
+            Program::SockOps(_) => BPF_PROG_TYPE_SOCK_OPS,
         }
     }
 
@@ -184,6 +188,7 @@ impl Program {
             Program::SocketFilter(p) => &p.data,
             Program::Xdp(p) => &p.data,
             Program::SkSkb(p) => &p.data,
+            Program::SockOps(p) => &p.data,
         }
     }
 
@@ -195,6 +200,7 @@ impl Program {
             Program::SocketFilter(p) => &mut p.data,
             Program::Xdp(p) => &mut p.data,
             Program::SkSkb(p) => &mut p.data,
+            Program::SockOps(p) => &mut p.data,
         }
     }
 }
@@ -365,14 +371,14 @@ impl Drop for FdLink {
 #[derive(Debug)]
 struct ProgAttachLink {
     prog_fd: Option<RawFd>,
-    map_fd: Option<RawFd>,
+    target_fd: Option<RawFd>,
     attach_type: bpf_attach_type,
 }
 
 impl Link for ProgAttachLink {
     fn detach(&mut self) -> Result<(), ProgramError> {
         if let Some(prog_fd) = self.prog_fd.take() {
-            let _ = bpf_prog_detach(prog_fd, self.map_fd.take().unwrap(), self.attach_type);
+            let _ = bpf_prog_detach(prog_fd, self.target_fd.take().unwrap(), self.attach_type);
             Ok(())
         } else {
             Err(ProgramError::AlreadyDetached)
@@ -434,4 +440,12 @@ macro_rules! impl_try_from_program {
     }
 }
 
-impl_try_from_program!(KProbe, UProbe, TracePoint, SocketFilter, Xdp, SkSkb);
+impl_try_from_program!(
+    KProbe,
+    UProbe,
+    TracePoint,
+    SocketFilter,
+    Xdp,
+    SkSkb,
+    SockOps
+);

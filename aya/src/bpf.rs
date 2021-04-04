@@ -19,8 +19,8 @@ use crate::{
         Object, ParseError, ProgramKind,
     },
     programs::{
-        KProbe, ProbeKind, Program, ProgramData, ProgramError, SkSkb, SkSkbKind, SocketFilter,
-        TracePoint, UProbe, Xdp,
+        KProbe, ProbeKind, Program, ProgramData, ProgramError, SkSkb, SkSkbKind, SockOps,
+        SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::bpf_map_update_elem_ptr,
     util::{possible_cpus, POSSIBLE_CPUS},
@@ -181,6 +181,7 @@ impl Bpf {
                         data,
                         kind: SkSkbKind::StreamVerdict,
                     }),
+                    ProgramKind::SockOps => Program::SockOps(SockOps { data }),
                 };
 
                 (name, program)

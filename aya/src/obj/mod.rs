@@ -75,6 +75,7 @@ pub enum ProgramKind {
     Xdp,
     SkSkbStreamParser,
     SkSkbStreamVerdict,
+    SockOps,
 }
 
 impl FromStr for ProgramKind {
@@ -92,6 +93,7 @@ impl FromStr for ProgramKind {
             "socket_filter" => SocketFilter,
             "sk_skb/stream_parser" => SkSkbStreamParser,
             "sk_skb/stream_verdict" => SkSkbStreamVerdict,
+            "sockops" => SockOps,
             _ => {
                 return Err(ParseError::InvalidProgramKind {
                     kind: kind.to_string(),
@@ -254,6 +256,12 @@ impl Object {
         let mut parts = section.name.rsplitn(2, "/").collect::<Vec<_>>();
         parts.reverse();
 
+        if parts.len() == 1 {
+            if parts[0] == "xdp" || parts[0] == "sockops" {
+                parts.push(parts[0]);
+            }
+        }
+
         match parts.as_slice() {
             &[name]
                 if name == ".bss" || name.starts_with(".data") || name.starts_with(".rodata") =>
@@ -276,7 +284,8 @@ impl Object {
             | &[ty @ "xdp", name]
             | &[ty @ "trace_point", name]
             | &[ty @ "sk_skb/stream_parser", name]
-            | &[ty @ "sk_skb/stream_verdict", name] => {
+            | &[ty @ "sk_skb/stream_verdict", name]
+            | &[ty @ "sockops", name] => {
                 self.programs
                     .insert(name.to_string(), self.parse_program(&section, ty, name)?);
                 if !section.relocations.is_empty() {
