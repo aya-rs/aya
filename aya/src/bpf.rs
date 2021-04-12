@@ -19,7 +19,7 @@ use crate::{
         Object, ParseError, ProgramKind,
     },
     programs::{
-        KProbe, ProbeKind, Program, ProgramData, ProgramError, SkSkb, SkSkbKind, SockOps,
+        KProbe, ProbeKind, Program, ProgramData, ProgramError, SkMsg, SkSkb, SkSkbKind, SockOps,
         SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::bpf_map_update_elem_ptr,
@@ -173,6 +173,7 @@ impl Bpf {
                     ProgramKind::TracePoint => Program::TracePoint(TracePoint { data }),
                     ProgramKind::SocketFilter => Program::SocketFilter(SocketFilter { data }),
                     ProgramKind::Xdp => Program::Xdp(Xdp { data }),
+                    ProgramKind::SkMsg => Program::SkMsg(SkMsg { data }),
                     ProgramKind::SkSkbStreamParser => Program::SkSkb(SkSkb {
                         data,
                         kind: SkSkbKind::StreamParser,

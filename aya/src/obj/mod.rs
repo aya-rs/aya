@@ -73,6 +73,7 @@ pub enum ProgramKind {
     TracePoint,
     SocketFilter,
     Xdp,
+    SkMsg,
     SkSkbStreamParser,
     SkSkbStreamVerdict,
     SockOps,
@@ -91,6 +92,7 @@ impl FromStr for ProgramKind {
             "xdp" => Xdp,
             "trace_point" => TracePoint,
             "socket_filter" => SocketFilter,
+            "sk_msg" => SkMsg,
             "sk_skb/stream_parser" => SkSkbStreamParser,
             "sk_skb/stream_verdict" => SkSkbStreamVerdict,
             "sockops" => SockOps,
@@ -257,7 +259,7 @@ impl Object {
         parts.reverse();
 
         if parts.len() == 1 {
-            if parts[0] == "xdp" || parts[0] == "sockops" {
+            if parts[0] == "xdp" || parts[0] == "sk_msg" || parts[0] == "sockops" {
                 parts.push(parts[0]);
             }
         }
@@ -283,6 +285,7 @@ impl Object {
             | &[ty @ "socket_filter", name]
             | &[ty @ "xdp", name]
             | &[ty @ "trace_point", name]
+            | &[ty @ "sk_msg", name]
             | &[ty @ "sk_skb/stream_parser", name]
             | &[ty @ "sk_skb/stream_verdict", name]
             | &[ty @ "sockops", name] => {

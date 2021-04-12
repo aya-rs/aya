@@ -47,6 +47,7 @@
 mod kprobe;
 mod perf_attach;
 mod probe;
+mod sk_msg;
 mod sk_skb;
 mod sock_ops;
 mod socket_filter;
@@ -61,6 +62,7 @@ use thiserror::Error;
 pub use kprobe::{KProbe, KProbeError};
 use perf_attach::*;
 pub use probe::ProbeKind;
+pub use sk_msg::SkMsg;
 pub use sk_skb::{SkSkb, SkSkbKind};
 pub use sock_ops::SockOps;
 pub use socket_filter::{SocketFilter, SocketFilterError};
@@ -142,6 +144,7 @@ pub enum Program {
     TracePoint(TracePoint),
     SocketFilter(SocketFilter),
     Xdp(Xdp),
+    SkMsg(SkMsg),
     SkSkb(SkSkb),
     SockOps(SockOps),
 }
@@ -170,6 +173,7 @@ impl Program {
             Program::TracePoint(_) => BPF_PROG_TYPE_TRACEPOINT,
             Program::SocketFilter(_) => BPF_PROG_TYPE_SOCKET_FILTER,
             Program::Xdp(_) => BPF_PROG_TYPE_XDP,
+            Program::SkMsg(_) => BPF_PROG_TYPE_SK_MSG,
             Program::SkSkb(_) => BPF_PROG_TYPE_SK_SKB,
             Program::SockOps(_) => BPF_PROG_TYPE_SOCK_OPS,
         }
@@ -187,6 +191,7 @@ impl Program {
             Program::TracePoint(p) => &p.data,
             Program::SocketFilter(p) => &p.data,
             Program::Xdp(p) => &p.data,
+            Program::SkMsg(p) => &p.data,
             Program::SkSkb(p) => &p.data,
             Program::SockOps(p) => &p.data,
         }
@@ -199,6 +204,7 @@ impl Program {
             Program::TracePoint(p) => &mut p.data,
             Program::SocketFilter(p) => &mut p.data,
             Program::Xdp(p) => &mut p.data,
+            Program::SkMsg(p) => &mut p.data,
             Program::SkSkb(p) => &mut p.data,
             Program::SockOps(p) => &mut p.data,
         }
@@ -410,7 +416,7 @@ macro_rules! impl_program_fd {
     }
 }
 
-impl_program_fd!(KProbe, UProbe, TracePoint, SocketFilter, Xdp, SkSkb);
+impl_program_fd!(KProbe, UProbe, TracePoint, SocketFilter, Xdp, SkMsg, SkSkb);
 
 macro_rules! impl_try_from_program {
     ($($ty:ident),+ $(,)?) => {
@@ -446,6 +452,7 @@ impl_try_from_program!(
     TracePoint,
     SocketFilter,
     Xdp,
+    SkMsg,
     SkSkb,
     SockOps
 );
