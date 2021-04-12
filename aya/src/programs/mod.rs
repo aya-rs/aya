@@ -93,7 +93,7 @@ pub enum ProgramError {
     #[error("the program is not attached")]
     NotAttached,
 
-    #[error("the BPF_PROG_LOAD syscall failed: {io_error}\nVerifier output:\n{verifier_log}")]
+    #[error("the BPF_PROG_LOAD syscall failed. Verifier output: {verifier_log}")]
     LoadError {
         #[source]
         io_error: io::Error,
@@ -248,11 +248,12 @@ impl VerifierLog {
     }
 
     fn grow(&mut self) {
-        self.buf.reserve(cmp::max(
+        let len = cmp::max(
             MIN_LOG_BUF_SIZE,
-            cmp::min(MAX_LOG_BUF_SIZE, self.buf.capacity() * 3),
-        ));
-        self.buf.resize(self.buf.capacity(), 0);
+            cmp::min(MAX_LOG_BUF_SIZE, self.buf.capacity() * 10),
+        );
+        self.buf.resize(len, 0);
+        self.reset();
     }
 
     fn reset(&mut self) {
@@ -271,6 +272,7 @@ impl VerifierLog {
             .iter()
             .position(|b| *b == 0)
             .unwrap_or(self.buf.len() - 1);
+        self.buf[pos] = 0;
         self.buf.truncate(pos + 1);
     }
 
@@ -295,11 +297,10 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
         ..
     } = obj;
 
-    let mut ret = Ok(-1);
     let mut log_buf = VerifierLog::new();
-    for i in 0..3 {
-        log_buf.reset();
-
+    let mut retries = 0;
+    let mut ret;
+    loop {
         ret = bpf_load_program(
             prog_type,
             instructions,
@@ -312,11 +313,14 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
                 *fd = Some(*prog_fd as RawFd);
                 return Ok(());
             }
-            Err((_, io_error)) if i == 0 || io_error.raw_os_error() == Some(ENOSPC) => {
+            Err((_, io_error)) if retries == 0 || io_error.raw_os_error() == Some(ENOSPC) => {
+                if retries == 10 {
+                    break;
+                }
+                retries += 1;
                 log_buf.grow();
-                continue;
             }
-            _ => break,
+            Err(_) => break,
         };
     }
 
@@ -324,7 +328,10 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
         log_buf.truncate();
         return Err(ProgramError::LoadError {
             io_error,
-            verifier_log: log_buf.as_c_str().unwrap().to_string_lossy().to_string(),
+            verifier_log: log_buf
+                .as_c_str()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_else(|| "[none]".to_owned()),
         });
     }
 
