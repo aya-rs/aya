@@ -4,15 +4,23 @@ use std::{
     convert::TryFrom,
     mem,
     ops::{Deref, DerefMut},
-    os::unix::prelude::RawFd,
+    os::unix::{io::AsRawFd, prelude::RawFd},
 };
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_SOCKMAP,
-    maps::{Map, MapError, MapKeys, MapRef, MapRefMut},
+    maps::{sock::SocketMap, Map, MapError, MapKeys, MapRef, MapRefMut},
     sys::{bpf_map_delete_elem, bpf_map_update_elem},
 };
 
+/// An array of TCP or UDP sock objects. Primarly used for doing socket redirect with eBPF helpers.
+///
+/// A sock map can have two eBPF programs attached: one to parse packets and one to provide a
+/// redirect decision on packets. Whenever a sock object is added to the map, the map's programs
+/// are automatically attached to the socket.
+///
+/// # Example
+///
 pub struct SockMap<T: Deref<Target = Map>> {
     pub(crate) inner: T,
 }
@@ -58,20 +66,24 @@ impl<T: Deref<Target = Map>> SockMap<T> {
 }
 
 impl<T: Deref<Target = Map> + DerefMut<Target = Map>> SockMap<T> {
-    pub fn set(&mut self, index: u32, tcp_fd: RawFd, flags: u64) -> Result<(), MapError> {
+    /// Stores a TCP socket into the map.
+    ///
+    /// eBPF programs can then pass `index` to the `bpf_sk_redirect_map()` helper to redirect
+    /// packets to the corresponding socket.
+    pub fn set<I: AsRawFd>(&mut self, index: u32, socket: &I, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(index)?;
-        bpf_map_update_elem(fd, &index, &tcp_fd, flags).map_err(|(code, io_error)| {
-            MapError::SyscallError {
+        bpf_map_update_elem(fd, &index, &socket.as_raw_fd(), flags).map_err(
+            |(code, io_error)| MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 code,
                 io_error,
-            }
-        })?;
+            },
+        )?;
         Ok(())
     }
 
-    /// Clears the value at index in the jump table.
+    /// Removes the TCP socket stored at `index` from the map.
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(*index)?;
@@ -82,6 +94,12 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> SockMap<T> {
                 code,
                 io_error,
             })
+    }
+}
+
+impl<T: Deref<Target = Map> + DerefMut<Target = Map>> SocketMap for SockMap<T> {
+    fn fd_or_err(&self) -> Result<RawFd, MapError> {
+        self.inner.fd_or_err()
     }
 }
 

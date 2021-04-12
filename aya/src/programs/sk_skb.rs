@@ -5,7 +5,7 @@ use crate::{
         bpf_attach_type::{BPF_SK_SKB_STREAM_PARSER, BPF_SK_SKB_STREAM_VERDICT},
         bpf_prog_type::BPF_PROG_TYPE_SK_SKB,
     },
-    maps::{Map, SockMap},
+    maps::{sock::SocketMap, Map, SockMap},
     programs::{load_program, LinkRef, ProgAttachLink, ProgramData, ProgramError},
     sys::bpf_prog_attach,
 };
@@ -35,12 +35,10 @@ impl SkSkb {
         self.data.name.to_string()
     }
 
-    pub fn attach<T: Deref<Target = Map>>(
-        &mut self,
-        map: &SockMap<T>,
-    ) -> Result<LinkRef, ProgramError> {
+    /// Attaches the program to the given sockmap.
+    pub fn attach(&mut self, map: &dyn SocketMap) -> Result<LinkRef, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let map_fd = map.inner.fd_or_err()?;
+        let map_fd = map.fd_or_err()?;
 
         let attach_type = match self.kind {
             SkSkbKind::StreamParser => BPF_SK_SKB_STREAM_PARSER,
