@@ -89,6 +89,98 @@ impl Probe {
     }
 }
 
+pub struct SockOps {
+    item: ItemFn,
+    name: Option<String>,
+}
+
+impl SockOps {
+    pub fn from_syn(args: Args, item: ItemFn) -> Result<SockOps> {
+        let name = name_arg(&args)?;
+
+        Ok(SockOps { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = if let Some(name) = &self.name {
+            format!("sockops/{}", name)
+        } else {
+            "sockops".to_owned()
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock_ops) -> u32 {
+                return #fn_name(::aya_bpf::programs::SockOpsContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
+
+pub struct SkMsg {
+    item: ItemFn,
+    name: String,
+}
+
+impl SkMsg {
+    pub fn from_syn(args: Args, item: ItemFn) -> Result<SkMsg> {
+        let name = name_arg(&args)?.unwrap_or_else(|| item.sig.ident.to_string());
+
+        Ok(SkMsg { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = format!("sk_msg/{}", self.name);
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::sk_msg_md) -> u32 {
+                return #fn_name(::aya_bpf::programs::SkMsgContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
+
+pub struct Xdp {
+    item: ItemFn,
+    name: Option<String>,
+}
+
+impl Xdp {
+    pub fn from_syn(args: Args, item: ItemFn) -> Result<Xdp> {
+        let name = name_arg(&args)?;
+
+        Ok(Xdp { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = if let Some(name) = &self.name {
+            format!("xdp/{}", name)
+        } else {
+            "xdp".to_owned()
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::xdp_md) -> u32 {
+                return #fn_name(::aya_bpf::programs::XdpContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
+
 fn name_arg(args: &Args) -> Result<Option<String>> {
     for arg in &args.args {
         if arg.name == "name" {

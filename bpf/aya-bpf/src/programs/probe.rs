@@ -3,7 +3,7 @@ use core::ffi::c_void;
 use crate::{bindings::pt_regs, BpfContext};
 
 pub struct ProbeContext {
-    regs: *mut pt_regs,
+    pub regs: *mut pt_regs,
 }
 
 impl ProbeContext {

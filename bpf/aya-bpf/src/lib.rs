@@ -24,12 +24,10 @@ pub trait BpfContext {
         bpf_get_current_comm()
     }
 
-    #[inline]
     fn pid(&self) -> u32 {
         bpf_get_current_pid_tgid() as u32
     }
 
-    #[inline]
     fn tgid(&self) -> u32 {
         (bpf_get_current_pid_tgid() >> 32) as u32
     }
