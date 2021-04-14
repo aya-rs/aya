@@ -3,8 +3,10 @@ use core::{marker::PhantomData, mem};
 use aya_bpf_cty::c_void;
 
 use crate::{
-    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKHASH, bpf_sock_ops},
-    helpers::bpf_sock_hash_update,
+    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKHASH, bpf_sock_ops, BPF_F_INGRESS},
+    helpers::{bpf_msg_redirect_hash, bpf_sock_hash_update},
+    programs::SkMsgContext,
+    BpfContext,
 };
 
 #[repr(transparent)]
@@ -44,5 +46,15 @@ impl<K> SockHash<K> {
         } else {
             Ok(())
         }
+    }
+
+    pub unsafe fn redirect(&mut self, ctx: &SkMsgContext, key: &mut K, flags: u64) -> i64 {
+        let ret = bpf_msg_redirect_hash(
+            ctx.as_ptr() as *mut _,
+            &mut self.def as *mut _ as *mut _,
+            key as *mut _ as *mut _,
+            flags,
+        );
+        ret
     }
 }
