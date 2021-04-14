@@ -94,13 +94,6 @@ pub(crate) fn bpf_map_lookup_elem<K: Pod, V: Pod>(
     lookup(fd, key, flags, bpf_cmd::BPF_MAP_LOOKUP_ELEM)
 }
 
-pub(crate) fn bpf_map_lookup_and_delete_elem<K: Pod, V: Pod>(
-    fd: RawFd,
-    key: &K,
-) -> Result<Option<V>, (c_long, io::Error)> {
-    lookup(fd, key, 0, bpf_cmd::BPF_MAP_LOOKUP_AND_DELETE_ELEM)
-}
-
 pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
     fd: RawFd,
     key: &K,

@@ -5,7 +5,7 @@ use std::{
     os::unix::prelude::{AsRawFd, RawFd},
 };
 
-#[cfg(feature = "async_std")]
+#[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
 use async_io::Async;
 
 #[cfg(feature = "async_tokio")]

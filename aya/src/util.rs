@@ -1,6 +1,6 @@
 //! Utility functions.
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::BTreeMap,
     fs::{self, File},
     io::{self, BufReader},
     str::FromStr,

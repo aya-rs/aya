@@ -1,8 +1,6 @@
-use std::ops::Deref;
-
 use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
-    maps::{sock::SocketMap, Map, SockMap},
+    maps::sock::SocketMap,
     programs::{load_program, LinkRef, ProgAttachLink, ProgramData, ProgramError},
     sys::bpf_prog_attach,
 };

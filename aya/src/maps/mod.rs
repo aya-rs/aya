@@ -55,7 +55,7 @@ pub use array::{Array, PerCpuArray, ProgramArray};
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use map_lock::*;
 pub use perf::PerfEventArray;
-pub use sock::SockMap;
+pub use sock::{SockHash, SockMap};
 pub use stack_trace::StackTraceMap;
 
 #[derive(Error, Debug)]
@@ -300,10 +300,6 @@ pub(crate) struct PerCpuKernelMem {
 }
 
 impl PerCpuKernelMem {
-    pub(crate) fn as_ptr(&self) -> *const u8 {
-        self.bytes.as_ptr()
-    }
-
     pub(crate) fn as_mut_ptr(&mut self) -> *mut u8 {
         self.bytes.as_mut_ptr()
     }
