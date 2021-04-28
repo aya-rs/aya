@@ -110,6 +110,7 @@ impl Xdp {
             Ok(self.data.link(XdpLink::NlLink(NlLink {
                 if_index,
                 prog_fd: Some(prog_fd),
+                flags,
             })))
         }
     }
@@ -119,12 +120,19 @@ impl Xdp {
 struct NlLink {
     if_index: i32,
     prog_fd: Option<RawFd>,
+    flags: XdpFlags,
 }
 
 impl Link for NlLink {
     fn detach(&mut self) -> Result<(), ProgramError> {
         if let Some(fd) = self.prog_fd.take() {
-            let _ = unsafe { netlink_set_xdp_fd(self.if_index, -1, Some(fd), XDP_FLAGS_REPLACE) };
+            let k_ver = kernel_version().unwrap();
+            let flags = if k_ver >= (5, 7, 0) {
+                self.flags.bits | XDP_FLAGS_REPLACE
+            } else {
+                self.flags.bits
+            };
+            let _ = unsafe { netlink_set_xdp_fd(self.if_index, -1, Some(fd), flags) };
             Ok(())
         } else {
             Err(ProgramError::AlreadyDetached)
