@@ -364,15 +364,15 @@ pub enum BpfError {
     #[error("BTF error")]
     BtfError(#[from] BtfError),
 
-    #[error("error relocating `{function}`: {error}")]
+    #[error("error relocating `{function}`")]
     RelocationError {
         function: String,
         error: Box<dyn Error + Send + Sync>,
     },
 
-    #[error("map error: {0}")]
+    #[error("map error")]
     MapError(#[from] MapError),
 
-    #[error("program error: {0}")]
+    #[error("program error")]
     ProgramError(#[from] ProgramError),
 }
