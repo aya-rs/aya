@@ -14,6 +14,14 @@ fn codegen_internal_btf_bindings(opts: &Options) -> Result<(), anyhow::Error> {
     let dir = PathBuf::from("aya");
     let generated = dir.join("src/generated");
     let mut bindgen = bindgen::user_builder()
+        .clang_arg(format!(
+            "-I{}",
+            opts.libbpf_dir
+                .join("include/uapi")
+                .canonicalize()
+                .unwrap()
+                .to_string_lossy()
+        ))
         .header(
             opts.libbpf_dir
                 .join("src/libbpf_internal.h")
