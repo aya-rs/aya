@@ -104,7 +104,7 @@ impl Xdp {
                 .data
                 .link(XdpLink::FdLink(FdLink { fd: Some(link_fd) })))
         } else {
-            unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, 0) }
+            unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, flags.bits) }
                 .map_err(|io_error| XdpError::NetlinkError { io_error })?;
 
             Ok(self.data.link(XdpLink::NlLink(NlLink {
