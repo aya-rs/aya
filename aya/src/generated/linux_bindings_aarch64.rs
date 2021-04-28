@@ -96,7 +96,9 @@ pub const BPF_CALL: u32 = 128;
 pub const BPF_PSEUDO_MAP_FD: u32 = 1;
 pub const BPF_PSEUDO_MAP_VALUE: u32 = 2;
 pub const BPF_PSEUDO_BTF_ID: u32 = 3;
+pub const BPF_PSEUDO_FUNC: u32 = 4;
 pub const BPF_PSEUDO_CALL: u32 = 1;
+pub const BPF_PSEUDO_KFUNC_CALL: u32 = 2;
 pub const BTF_KIND_UNKN: u32 = 0;
 pub const BTF_KIND_INT: u32 = 1;
 pub const BTF_KIND_PTR: u32 = 2;
@@ -113,7 +115,8 @@ pub const BTF_KIND_FUNC: u32 = 12;
 pub const BTF_KIND_FUNC_PROTO: u32 = 13;
 pub const BTF_KIND_VAR: u32 = 14;
 pub const BTF_KIND_DATASEC: u32 = 15;
-pub const BTF_KIND_MAX: u32 = 15;
+pub const BTF_KIND_FLOAT: u32 = 16;
+pub const BTF_KIND_MAX: u32 = 16;
 pub const BTF_INT_SIGNED: u32 = 1;
 pub const BTF_INT_CHAR: u32 = 2;
 pub const BTF_INT_BOOL: u32 = 4;
@@ -336,7 +339,8 @@ pub enum bpf_attach_type {
     BPF_XDP_CPUMAP = 35,
     BPF_SK_LOOKUP = 36,
     BPF_XDP = 37,
-    __MAX_BPF_ATTACH_TYPE = 38,
+    BPF_SK_SKB_VERDICT = 38,
+    __MAX_BPF_ATTACH_TYPE = 39,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -708,9 +712,7 @@ pub enum perf_event_sample_format {
     PERF_SAMPLE_TRANSACTION = 131072,
     PERF_SAMPLE_REGS_INTR = 262144,
     PERF_SAMPLE_PHYS_ADDR = 524288,
-    PERF_SAMPLE_AUX = 1048576,
-    PERF_SAMPLE_CGROUP = 2097152,
-    PERF_SAMPLE_MAX = 4194304,
+    PERF_SAMPLE_MAX = 1048576,
     __PERF_SAMPLE_CALLCHAIN_EARLY = 9223372036854775808,
 }
 #[repr(C)]
@@ -736,8 +738,6 @@ pub struct perf_event_attr {
     pub aux_watermark: __u32,
     pub sample_max_stack: __u16,
     pub __reserved_2: __u16,
-    pub aux_sample_size: __u32,
-    pub __reserved_3: __u32,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1114,25 +1114,14 @@ impl perf_event_attr {
         }
     }
     #[inline]
-    pub fn cgroup(&self) -> __u64 {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(32usize, 1u8) as u64) }
-    }
-    #[inline]
-    pub fn set_cgroup(&mut self, val: __u64) {
-        unsafe {
-            let val: u64 = ::std::mem::transmute(val);
-            self._bitfield_1.set(32usize, 1u8, val as u64)
-        }
-    }
-    #[inline]
     pub fn __reserved_1(&self) -> __u64 {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(33usize, 31u8) as u64) }
+        unsafe { ::std::mem::transmute(self._bitfield_1.get(32usize, 32u8) as u64) }
     }
     #[inline]
     pub fn set___reserved_1(&mut self, val: __u64) {
         unsafe {
             let val: u64 = ::std::mem::transmute(val);
-            self._bitfield_1.set(33usize, 31u8, val as u64)
+            self._bitfield_1.set(32usize, 32u8, val as u64)
         }
     }
     #[inline]
@@ -1168,7 +1157,6 @@ impl perf_event_attr {
         ksymbol: __u64,
         bpf_event: __u64,
         aux_output: __u64,
-        cgroup: __u64,
         __reserved_1: __u64,
     ) -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
@@ -1298,11 +1286,7 @@ impl perf_event_attr {
             let aux_output: u64 = unsafe { ::std::mem::transmute(aux_output) };
             aux_output as u64
         });
-        __bindgen_bitfield_unit.set(32usize, 1u8, {
-            let cgroup: u64 = unsafe { ::std::mem::transmute(cgroup) };
-            cgroup as u64
-        });
-        __bindgen_bitfield_unit.set(33usize, 31u8, {
+        __bindgen_bitfield_unit.set(32usize, 32u8, {
             let __reserved_1: u64 = unsafe { ::std::mem::transmute(__reserved_1) };
             __reserved_1 as u64
         });
@@ -1483,8 +1467,7 @@ pub enum perf_event_type {
     PERF_RECORD_NAMESPACES = 16,
     PERF_RECORD_KSYMBOL = 17,
     PERF_RECORD_BPF_EVENT = 18,
-    PERF_RECORD_CGROUP = 19,
-    PERF_RECORD_MAX = 20,
+    PERF_RECORD_MAX = 19,
 }
 pub const IFLA_XDP_UNSPEC: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_UNSPEC;
 pub const IFLA_XDP_FD: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_FD;
@@ -1510,7 +1493,6 @@ pub enum _bindgen_ty_79 {
     IFLA_XDP_EXPECTED_FD = 8,
     __IFLA_XDP_MAX = 9,
 }
-#[doc = "\t\tLink layer specific messages."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ifinfomsg {
