@@ -117,13 +117,12 @@ impl Bpf {
         for (_, mut obj) in obj.maps.drain() {
             if obj.def.map_type == BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 && obj.def.max_entries == 0
             {
-                obj.def.max_entries = *possible_cpus()
+                obj.def.max_entries = possible_cpus()
                     .map_err(|error| BpfError::FileError {
                         path: PathBuf::from(POSSIBLE_CPUS),
                         error,
                     })?
-                    .last()
-                    .unwrap_or(&0);
+                    .len() as u32;
             }
             let mut map = Map { obj, fd: None };
             let fd = map.create()?;
