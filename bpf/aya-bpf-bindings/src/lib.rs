@@ -7,11 +7,14 @@ mod x86_64;
 #[cfg(bpf_target_arch = "aarch64")]
 mod aarch64;
 
-#[cfg(bpf_target_arch = "x86_64")]
-pub use x86_64::*;
+mod gen {
+    #[cfg(bpf_target_arch = "x86_64")]
+    pub use super::x86_64::*;
 
-#[cfg(bpf_target_arch = "aarch64")]
-pub use aarch64::*;
+    #[cfg(bpf_target_arch = "aarch64")]
+    pub use super::aarch64::*;
+}
+pub use gen::*;
 
 use aya_bpf_cty::{c_long, c_void};
 use core::mem::{self, MaybeUninit};
@@ -30,3 +33,15 @@ unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
 
     Ok(v.assume_init())
 }
+
+pub const TC_ACT_OK: i32 = gen::bindings::TC_ACT_OK as i32;
+pub const TC_ACT_RECLASSIFY: i32 = gen::bindings::TC_ACT_RECLASSIFY as i32;
+pub const TC_ACT_SHOT: i32 = gen::bindings::TC_ACT_SHOT as i32;
+pub const TC_ACT_PIPE: i32 = gen::bindings::TC_ACT_PIPE as i32;
+pub const TC_ACT_STOLEN: i32 = gen::bindings::TC_ACT_STOLEN as i32;
+pub const TC_ACT_QUEUED: i32 = gen::bindings::TC_ACT_QUEUED as i32;
+pub const TC_ACT_REPEAT: i32 = gen::bindings::TC_ACT_REPEAT as i32;
+pub const TC_ACT_REDIRECT: i32 = gen::bindings::TC_ACT_REDIRECT as i32;
+pub const TC_ACT_TRAP: i32 = gen::bindings::TC_ACT_TRAP as i32;
+pub const TC_ACT_VALUE_MAX: i32 = gen::bindings::TC_ACT_VALUE_MAX as i32;
+pub const TC_ACT_EXT_VAL_MASK: i32 = 268435455;

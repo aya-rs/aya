@@ -181,6 +181,38 @@ impl Xdp {
     }
 }
 
+pub struct SchedClassifier {
+    item: ItemFn,
+    name: Option<String>,
+}
+
+impl SchedClassifier {
+    pub fn from_syn(args: Args, item: ItemFn) -> Result<SchedClassifier> {
+        let name = name_arg(&args)?;
+
+        Ok(SchedClassifier { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = if let Some(name) = &self.name {
+            format!("classifier/{}", name)
+        } else {
+            "classifier".to_owned()
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
+                return #fn_name(::aya_bpf::programs::SkSkbContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
+
 fn name_arg(args: &Args) -> Result<Option<String>> {
     for arg in &args.args {
         if arg.name == "name" {
