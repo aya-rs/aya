@@ -44,6 +44,7 @@
 //! [`Bpf::program`]: crate::Bpf::program
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [maps]: crate::maps
+mod cls;
 mod kprobe;
 mod perf_attach;
 mod probe;
@@ -59,6 +60,7 @@ use libc::{close, ENOSPC};
 use std::{cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::unix::io::RawFd, rc::Rc};
 use thiserror::Error;
 
+pub use cls::{SchedAction, SchedClassifier};
 pub use kprobe::{KProbe, KProbeError};
 use perf_attach::*;
 pub use probe::ProbeKind;
@@ -147,6 +149,7 @@ pub enum Program {
     SkMsg(SkMsg),
     SkSkb(SkSkb),
     SockOps(SockOps),
+    SchedClassifier(SchedClassifier),
 }
 
 impl Program {
@@ -176,6 +179,7 @@ impl Program {
             Program::SkMsg(_) => BPF_PROG_TYPE_SK_MSG,
             Program::SkSkb(_) => BPF_PROG_TYPE_SK_SKB,
             Program::SockOps(_) => BPF_PROG_TYPE_SOCK_OPS,
+            Program::SchedClassifier(_) => BPF_PROG_TYPE_SCHED_CLS,
         }
     }
 
@@ -194,6 +198,7 @@ impl Program {
             Program::SkMsg(p) => &p.data,
             Program::SkSkb(p) => &p.data,
             Program::SockOps(p) => &p.data,
+            Program::SchedClassifier(p) => &p.data,
         }
     }
 
@@ -207,6 +212,7 @@ impl Program {
             Program::SkMsg(p) => &mut p.data,
             Program::SkSkb(p) => &mut p.data,
             Program::SockOps(p) => &mut p.data,
+            Program::SchedClassifier(p) => &mut p.data,
         }
     }
 }
@@ -423,7 +429,16 @@ macro_rules! impl_program_fd {
     }
 }
 
-impl_program_fd!(KProbe, UProbe, TracePoint, SocketFilter, Xdp, SkMsg, SkSkb);
+impl_program_fd!(
+    KProbe,
+    UProbe,
+    TracePoint,
+    SocketFilter,
+    Xdp,
+    SkMsg,
+    SkSkb,
+    SchedClassifier
+);
 
 macro_rules! impl_try_from_program {
     ($($ty:ident),+ $(,)?) => {
@@ -461,5 +476,6 @@ impl_try_from_program!(
     Xdp,
     SkMsg,
     SkSkb,
-    SockOps
+    SockOps,
+    SchedClassifier
 );

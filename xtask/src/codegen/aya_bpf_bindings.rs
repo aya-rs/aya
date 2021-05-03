@@ -38,7 +38,7 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
             .constified_enum("BPF_FLOW_.*");
 
         let types = ["bpf_map_.*", "sk_action", "pt_regs", "xdp_action"];
-        let vars = ["BPF_.*", "bpf_.*"];
+        let vars = ["BPF_.*", "bpf_.*", "TC_ACT_.*"];
 
         for x in &types {
             bindgen = bindgen.whitelist_type(x);
