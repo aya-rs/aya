@@ -3,7 +3,7 @@ use core::{marker::PhantomData, mem};
 use aya_bpf_cty::c_void;
 
 use crate::{
-    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKHASH, bpf_sock_ops, BPF_F_INGRESS},
+    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKHASH, bpf_sock_ops},
     helpers::{bpf_msg_redirect_hash, bpf_sock_hash_update},
     programs::SkMsgContext,
     BpfContext,
