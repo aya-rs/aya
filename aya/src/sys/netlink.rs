@@ -194,10 +194,7 @@ impl NetlinkSocket {
                             // this is an ACK
                             continue;
                         }
-                        return Err(io::Error::new(
-                            io::ErrorKind::Other,
-                            format!("netlink error: {}", err.error),
-                        ));
+                        return Err(io::Error::from_raw_os_error(-err.error));
                     }
                     NLMSG_DONE => break,
                     _ => {}
