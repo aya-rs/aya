@@ -3,7 +3,7 @@ use core::{
     mem::{self, MaybeUninit},
 };
 
-use aya_bpf_bindings::helpers::{bpf_l4_csum_replace, bpf_skb_load_bytes, bpf_skb_store_bytes};
+use aya_bpf_bindings::helpers::{bpf_l3_csum_replace, bpf_l4_csum_replace, bpf_skb_load_bytes, bpf_skb_store_bytes};
 use aya_bpf_cty::c_long;
 
 use crate::{bindings::__sk_buff, BpfContext};
@@ -15,6 +15,11 @@ pub struct SkSkbContext {
 impl SkSkbContext {
     pub fn new(skb: *mut __sk_buff) -> SkSkbContext {
         SkSkbContext { skb }
+    }
+
+    #[inline]
+    pub fn set_mark(&mut self, mark: u32) {
+        unsafe { *self.skb }.mark = mark;
     }
 
     #[inline]
@@ -36,7 +41,7 @@ impl SkSkbContext {
     }
 
     #[inline]
-    pub fn store<T>(&self, offset: usize, v: &T) -> Result<(), c_long> {
+    pub fn store<T>(&mut self, offset: usize, v: &T) -> Result<(), c_long> {
         unsafe {
             let ret = bpf_skb_store_bytes(
                 self.skb as *mut _,
@@ -45,6 +50,24 @@ impl SkSkbContext {
                 mem::size_of::<T>() as u32,
                 0,
             );
+            if ret < 0 {
+                return Err(ret);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    pub fn l3_csum_replace(
+        &self,
+        offset: usize,
+        from: u64,
+        to: u64,
+        size: u64,
+    ) -> Result<(), c_long> {
+        unsafe {
+            let ret = bpf_l3_csum_replace(self.skb as *mut _, offset as u32, from, to, size);
             if ret < 0 {
                 return Err(ret);
             }
