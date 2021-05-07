@@ -1,10 +1,10 @@
 use core::{marker::PhantomData, mem};
 
-use aya_bpf_cty::c_void;
+use aya_bpf_cty::{c_long, c_void};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_HASH},
-    helpers::bpf_map_lookup_elem,
+    helpers::{bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
 #[repr(transparent)]
@@ -40,5 +40,19 @@ impl<K, V> HashMap<K, V> {
             // FIXME: alignment
             Some(&*(value as *const V))
         }
+    }
+
+    pub unsafe fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
+        let ret = bpf_map_update_elem(
+            &mut self.def as *mut _ as *mut _,
+            key as *const _ as *const _,
+            value as *const _ as *const _,
+            flags,
+        );
+        if ret < 0 {
+            return Err(ret);
+        }
+
+        Ok(())
     }
 }
