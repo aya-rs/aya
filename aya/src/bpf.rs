@@ -54,6 +54,8 @@ pub(crate) struct bpf_map_def {
     pub(crate) value_size: u32,
     pub(crate) max_entries: u32,
     pub(crate) map_flags: u32,
+    pub(crate) id: u32,
+    pub(crate) pinning: u32,
 }
 
 /// The main entry point into the library, used to work with eBPF programs and maps.

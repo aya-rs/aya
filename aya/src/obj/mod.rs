@@ -464,6 +464,8 @@ fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
             value_size: section.data.len() as u32,
             max_entries: 1,
             map_flags: 0, /* FIXME: set rodata readonly */
+            id: 0,
+            pinning: 0,
         };
         (def, section.data.to_vec())
     } else {
@@ -610,7 +612,9 @@ mod tests {
                     key_size: 2,
                     value_size: 3,
                     max_entries: 4,
-                    map_flags: 5
+                    map_flags: 5,
+                    id: 0,
+                    pinning: 0
                 })
             ),
             Ok(bpf_map_def {
@@ -618,7 +622,9 @@ mod tests {
                 key_size: 2,
                 value_size: 3,
                 max_entries: 4,
-                map_flags: 5
+                map_flags: 5,
+                id: 0,
+                pinning: 0
             })
         ));
     }
@@ -642,7 +648,9 @@ mod tests {
                         key_size: 2,
                         value_size: 3,
                         max_entries: 4,
-                        map_flags: 5
+                        map_flags: 5,
+                        id: 0,
+                        pinning: 0
                     })
                 ),
                 "foo"
@@ -656,6 +664,8 @@ mod tests {
                     value_size: 3,
                     max_entries: 4,
                     map_flags: 5,
+                    id: 0,
+                    pinning: 0
                 },
                 data
             }) if name == "foo" && data.is_empty()
@@ -682,6 +692,8 @@ mod tests {
                     value_size,
                     max_entries: 1,
                     map_flags: 0,
+                    id: 0,
+                    pinning: 0
                 },
                 data
             }) if name == ".bss" && data == map_data && value_size == map_data.len() as u32
@@ -743,7 +755,9 @@ mod tests {
                     key_size: 2,
                     value_size: 3,
                     max_entries: 4,
-                    map_flags: 5
+                    map_flags: 5,
+                    id: 0,
+                    pinning: 0
                 })
             ),),
             Ok(())
