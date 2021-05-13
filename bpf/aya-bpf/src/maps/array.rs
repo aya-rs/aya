@@ -22,6 +22,8 @@ impl<T> Array<T> {
                 value_size: mem::size_of::<T>() as u32,
                 max_entries,
                 map_flags: flags,
+                id: 0,
+                pinning: 0,
             },
             _t: PhantomData,
         }

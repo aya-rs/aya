@@ -23,6 +23,8 @@ impl<K, V> HashMap<K, V> {
                 value_size: mem::size_of::<V>() as u32,
                 max_entries,
                 map_flags: flags,
+                id: 0,
+                pinning: 0,
             },
             _k: PhantomData,
             _v: PhantomData,

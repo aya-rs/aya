@@ -920,4 +920,6 @@ pub struct bpf_map_def {
     pub value_size: ::aya_bpf_cty::c_uint,
     pub max_entries: ::aya_bpf_cty::c_uint,
     pub map_flags: ::aya_bpf_cty::c_uint,
+    pub id: ::aya_bpf_cty::c_uint,
+    pub pinning: ::aya_bpf_cty::c_uint,
 }

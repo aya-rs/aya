@@ -24,6 +24,8 @@ impl<K> SockHash<K> {
                 value_size: mem::size_of::<u32>() as u32,
                 max_entries,
                 map_flags: flags,
+                id: 0,
+                pinning: 0,
             },
             _k: PhantomData,
         }
