@@ -205,6 +205,80 @@ pub const BPF_FIB_LOOKUP_OUTPUT: u32 = 2;
 pub const BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG: u32 = 1;
 pub const BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL: u32 = 2;
 pub const BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP: u32 = 4;
+pub const SOL_SOCKET: u32 = 1;
+pub const SO_DEBUG: u32 = 1;
+pub const SO_REUSEADDR: u32 = 2;
+pub const SO_TYPE: u32 = 3;
+pub const SO_ERROR: u32 = 4;
+pub const SO_DONTROUTE: u32 = 5;
+pub const SO_BROADCAST: u32 = 6;
+pub const SO_SNDBUF: u32 = 7;
+pub const SO_RCVBUF: u32 = 8;
+pub const SO_SNDBUFFORCE: u32 = 32;
+pub const SO_RCVBUFFORCE: u32 = 33;
+pub const SO_KEEPALIVE: u32 = 9;
+pub const SO_OOBINLINE: u32 = 10;
+pub const SO_NO_CHECK: u32 = 11;
+pub const SO_PRIORITY: u32 = 12;
+pub const SO_LINGER: u32 = 13;
+pub const SO_BSDCOMPAT: u32 = 14;
+pub const SO_REUSEPORT: u32 = 15;
+pub const SO_PASSCRED: u32 = 16;
+pub const SO_PEERCRED: u32 = 17;
+pub const SO_RCVLOWAT: u32 = 18;
+pub const SO_SNDLOWAT: u32 = 19;
+pub const SO_RCVTIMEO_OLD: u32 = 20;
+pub const SO_SNDTIMEO_OLD: u32 = 21;
+pub const SO_SECURITY_AUTHENTICATION: u32 = 22;
+pub const SO_SECURITY_ENCRYPTION_TRANSPORT: u32 = 23;
+pub const SO_SECURITY_ENCRYPTION_NETWORK: u32 = 24;
+pub const SO_BINDTODEVICE: u32 = 25;
+pub const SO_ATTACH_FILTER: u32 = 26;
+pub const SO_DETACH_FILTER: u32 = 27;
+pub const SO_GET_FILTER: u32 = 26;
+pub const SO_PEERNAME: u32 = 28;
+pub const SO_ACCEPTCONN: u32 = 30;
+pub const SO_PEERSEC: u32 = 31;
+pub const SO_PASSSEC: u32 = 34;
+pub const SO_MARK: u32 = 36;
+pub const SO_PROTOCOL: u32 = 38;
+pub const SO_DOMAIN: u32 = 39;
+pub const SO_RXQ_OVFL: u32 = 40;
+pub const SO_WIFI_STATUS: u32 = 41;
+pub const SO_PEEK_OFF: u32 = 42;
+pub const SO_NOFCS: u32 = 43;
+pub const SO_LOCK_FILTER: u32 = 44;
+pub const SO_SELECT_ERR_QUEUE: u32 = 45;
+pub const SO_BUSY_POLL: u32 = 46;
+pub const SO_MAX_PACING_RATE: u32 = 47;
+pub const SO_BPF_EXTENSIONS: u32 = 48;
+pub const SO_INCOMING_CPU: u32 = 49;
+pub const SO_ATTACH_BPF: u32 = 50;
+pub const SO_DETACH_BPF: u32 = 27;
+pub const SO_ATTACH_REUSEPORT_CBPF: u32 = 51;
+pub const SO_ATTACH_REUSEPORT_EBPF: u32 = 52;
+pub const SO_CNX_ADVICE: u32 = 53;
+pub const SO_MEMINFO: u32 = 55;
+pub const SO_INCOMING_NAPI_ID: u32 = 56;
+pub const SO_COOKIE: u32 = 57;
+pub const SO_PEERGROUPS: u32 = 59;
+pub const SO_ZEROCOPY: u32 = 60;
+pub const SO_TXTIME: u32 = 61;
+pub const SO_BINDTOIFINDEX: u32 = 62;
+pub const SO_TIMESTAMP_OLD: u32 = 29;
+pub const SO_TIMESTAMPNS_OLD: u32 = 35;
+pub const SO_TIMESTAMPING_OLD: u32 = 37;
+pub const SO_TIMESTAMP_NEW: u32 = 63;
+pub const SO_TIMESTAMPNS_NEW: u32 = 64;
+pub const SO_TIMESTAMPING_NEW: u32 = 65;
+pub const SO_RCVTIMEO_NEW: u32 = 66;
+pub const SO_SNDTIMEO_NEW: u32 = 67;
+pub const SO_DETACH_REUSEPORT_BPF: u32 = 68;
+pub const SO_TIMESTAMP: u32 = 29;
+pub const SO_TIMESTAMPNS: u32 = 35;
+pub const SO_TIMESTAMPING: u32 = 37;
+pub const SO_RCVTIMEO: u32 = 20;
+pub const SO_SNDTIMEO: u32 = 21;
 pub const TC_ACT_UNSPEC: i32 = -1;
 pub const TC_ACT_OK: u32 = 0;
 pub const TC_ACT_RECLASSIFY: u32 = 1;
@@ -822,6 +896,13 @@ pub struct pt_regs {
     pub rsp: ::aya_bpf_cty::c_ulong,
     pub ss: ::aya_bpf_cty::c_ulong,
 }
+pub type sa_family_t = ::aya_bpf_cty::c_ushort;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct sockaddr {
+    pub sa_family: sa_family_t,
+    pub sa_data: [::aya_bpf_cty::c_char; 14usize],
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct bpf_perf_event_data {
@@ -840,11 +921,6 @@ pub struct bpf_redir_neigh {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct linux_binprm {
-    _unused: [u8; 0],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct sockaddr {
     _unused: [u8; 0],
 }
 #[repr(C)]

@@ -960,11 +960,18 @@ impl pt_regs {
         unsafe { crate::bpf_probe_read(&self.ss) }.ok()
     }
 }
+impl sockaddr {
+    pub fn sa_family(&self) -> Option<sa_family_t> {
+        unsafe { crate::bpf_probe_read(&self.sa_family) }.ok()
+    }
+    pub fn sa_data(&self) -> Option<[::aya_bpf_cty::c_char; 14usize]> {
+        unsafe { crate::bpf_probe_read(&self.sa_data) }.ok()
+    }
+}
 impl bpf_perf_event_data {}
 impl bpf_pidns_info {}
 impl bpf_redir_neigh {}
 impl linux_binprm {}
-impl sockaddr {}
 impl tcphdr {}
 impl seq_file {}
 impl tcp6_sock {}
