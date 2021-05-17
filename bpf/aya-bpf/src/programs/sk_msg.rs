@@ -15,6 +15,10 @@ impl SkMsgContext {
         SkMsgContext { msg }
     }
 
+    pub fn size(&self) -> u32 {
+        unsafe { (*self.msg).size }
+    }
+
     pub fn data(&self) -> usize {
         unsafe { (*self.msg).__bindgen_anon_1.data as usize }
     }
@@ -23,12 +27,22 @@ impl SkMsgContext {
         unsafe { (*self.msg).__bindgen_anon_2.data_end as usize }
     }
 
-    pub fn push_data(&self, start: u32, len: u32, flags: u64) -> i64 {
-        unsafe { bpf_msg_push_data(self.msg, start, len as u32, flags) }
+    pub fn push_data(&self, start: u32, len: u32, flags: u64) -> Result<(), i64> {
+        let ret = unsafe { bpf_msg_push_data(self.msg, start, len as u32, flags) };
+        if ret == 0 {
+            Ok(())
+        } else {
+            Err(ret)
+        }
     }
 
-    pub fn pop_data(&self, start: u32, len: u32, flags: u64) -> i64 {
-        unsafe { bpf_msg_pop_data(self.msg, start, len as u32, flags) }
+    pub fn pop_data(&self, start: u32, len: u32, flags: u64) -> Result<(), i64> {
+        let ret = unsafe { bpf_msg_pop_data(self.msg, start, len as u32, flags) };
+        if ret == 0 {
+            Ok(())
+        } else {
+            Err(ret)
+        }
     }
 }
 
