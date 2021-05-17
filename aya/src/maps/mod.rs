@@ -48,16 +48,19 @@ mod map_lock;
 pub mod array;
 pub mod hash_map;
 pub mod perf;
+pub mod queue;
 pub mod sock;
+pub mod stack;
 pub mod stack_trace;
 
 pub use array::{Array, PerCpuArray, ProgramArray};
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use map_lock::*;
 pub use perf::PerfEventArray;
+pub use queue::Queue;
 pub use sock::{SockHash, SockMap};
+pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
-
 #[derive(Error, Debug)]
 pub enum MapError {
     #[error("map `{name}` not found ")]
@@ -93,6 +96,9 @@ pub enum MapError {
 
     #[error("key not found")]
     KeyNotFound,
+
+    #[error("element not found")]
+    ElementNotFound,
 
     #[error("the program is not loaded")]
     ProgramNotLoaded,

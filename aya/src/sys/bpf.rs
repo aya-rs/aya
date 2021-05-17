@@ -66,7 +66,7 @@ pub(crate) fn bpf_load_program(
 
 fn lookup<K: Pod, V: Pod>(
     fd: RawFd,
-    key: &K,
+    key: Option<&K>,
     flags: u64,
     cmd: bpf_cmd,
 ) -> Result<Option<V>, (c_long, io::Error)> {
@@ -75,7 +75,9 @@ fn lookup<K: Pod, V: Pod>(
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd as u32;
-    u.key = key as *const _ as u64;
+    if let Some(key) = key {
+        u.key = key as *const _ as u64;
+    }
     u.__bindgen_anon_1.value = &mut value as *mut _ as u64;
     u.flags = flags;
 
@@ -91,7 +93,15 @@ pub(crate) fn bpf_map_lookup_elem<K: Pod, V: Pod>(
     key: &K,
     flags: u64,
 ) -> Result<Option<V>, (c_long, io::Error)> {
-    lookup(fd, key, flags, bpf_cmd::BPF_MAP_LOOKUP_ELEM)
+    lookup(fd, Some(key), flags, bpf_cmd::BPF_MAP_LOOKUP_ELEM)
+}
+
+pub(crate) fn bpf_map_lookup_and_delete_elem<K: Pod, V: Pod>(
+    fd: RawFd,
+    key: Option<&K>,
+    flags: u64,
+) -> Result<Option<V>, (c_long, io::Error)> {
+    lookup(fd, key, flags, bpf_cmd::BPF_MAP_LOOKUP_AND_DELETE_ELEM)
 }
 
 pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
@@ -134,6 +144,17 @@ pub(crate) fn bpf_map_update_elem<K, V>(fd: RawFd, key: &K, value: &V, flags: u6
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd as u32;
     u.key = key as *const _ as u64;
+    u.__bindgen_anon_1.value = value as *const _ as u64;
+    u.flags = flags;
+
+    sys_bpf(bpf_cmd::BPF_MAP_UPDATE_ELEM, &attr)
+}
+
+pub(crate) fn bpf_map_push_elem<V>(fd: RawFd, value: &V, flags: u64) -> SysResult {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    let u = unsafe { &mut attr.__bindgen_anon_2 };
+    u.map_fd = fd as u32;
     u.__bindgen_anon_1.value = value as *const _ as u64;
     u.flags = flags;
 
