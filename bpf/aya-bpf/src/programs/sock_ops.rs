@@ -1,5 +1,7 @@
 use core::ffi::c_void;
 
+use aya_bpf_bindings::helpers::bpf_sock_ops_cb_flags_set;
+
 use crate::{bindings::bpf_sock_ops, BpfContext};
 
 pub struct SockOpsContext {
@@ -13,6 +15,23 @@ impl SockOpsContext {
 
     pub fn op(&self) -> u32 {
         unsafe { (*self.ops).op }
+    }
+
+    pub fn cb_flags(&self) -> u32 {
+        unsafe { (*self.ops).bpf_sock_ops_cb_flags }
+    }
+
+    pub fn set_cb_flags(&self, flags: i32) -> Result<(), i64> {
+        let ret = unsafe { bpf_sock_ops_cb_flags_set(self.ops, flags) };
+        if ret < 0 {
+            Err(ret)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn arg(&self, n: usize) -> u32 {
+        unsafe { (*self.ops).__bindgen_anon_1.args[n] }
     }
 }
 
