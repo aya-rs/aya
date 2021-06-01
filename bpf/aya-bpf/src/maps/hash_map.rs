@@ -73,4 +73,16 @@ impl<K, V> HashMap<K, V> {
 
         Ok(())
     }
+
+    pub unsafe fn remove(&mut self, key: &K) -> Result<(), c_long> {
+        let value = bpf_map_delete_elem(
+            &mut self.def as *mut _ as *mut _,
+            key as *const _ as *const c_void,
+        );
+        if value < 0 {
+            Err(value)
+        } else {
+            Ok(())
+        }
+    }
 }
