@@ -371,6 +371,7 @@ pub enum BpfError {
     #[error("error relocating `{function}`")]
     RelocationError {
         function: String,
+        #[source]
         error: Box<dyn Error + Send + Sync>,
     },
 
