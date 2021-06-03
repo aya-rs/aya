@@ -28,8 +28,8 @@ enum RelocationError {
         symbol_name: Option<String>,
     },
 
-    #[error("function {address:#x} not found")]
-    UnknownFunction { address: u64 },
+    #[error("function {address:#x} not found while relocating `{caller_name}`")]
+    UnknownFunction { address: u64, caller_name: String },
 
     #[error("the map `{name}` at section `{section_index}` has not been created")]
     MapNotCreated { section_index: usize, name: String },
@@ -278,6 +278,7 @@ impl<'a> FunctionLinker<'a> {
                     .get(&callee_address)
                     .ok_or(RelocationError::UnknownFunction {
                         address: callee_address,
+                        caller_name: fun.name.clone(),
                     })?;
             let callee_ins_index = self.link_function(program, callee)?;
 
