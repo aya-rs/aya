@@ -59,6 +59,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "bpf_map_type",
         "bpf_prog_type",
         "bpf_attach_type",
+        "bpf_prog_info",
         // BTF
         "btf_header",
         "btf_ext_info",
@@ -80,6 +81,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "perf_event_type",
         // NETLINK
         "ifinfomsg",
+        "tcmsg",
     ];
 
     let vars = [
@@ -112,7 +114,22 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         // NETLINK
         "NLMSG_ALIGNTO",
         "IFLA_XDP_FD",
+        "TCA_KIND",
+        "TCA_OPTIONS",
+        "TCA_BPF_FD",
+        "TCA_BPF_NAME",
+        "TCA_BPF_FLAGS",
+        "TCA_BPF_FLAG_ACT_DIRECT",
         "XDP_FLAGS_.*",
+        "TC_H_MAJ_MASK",
+        "TC_H_MIN_MASK",
+        "TC_H_UNSPEC",
+        "TC_H_ROOT",
+        "TC_H_INGRESS",
+        "TC_H_CLSACT",
+        "TC_H_MIN_PRIORITY",
+        "TC_H_MIN_INGRESS",
+        "TC_H_MIN_EGRESS",
     ];
 
     let dir = PathBuf::from("aya");

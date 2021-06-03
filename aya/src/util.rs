@@ -2,9 +2,17 @@
 use std::{
     collections::BTreeMap,
     fs::{self, File},
+    ffi::CString,
+    os::raw::c_char,
     io::{self, BufReader},
     str::FromStr,
 };
+
+use crate::{
+    generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK},
+};
+
+use libc::if_nametoindex;
 
 use io::BufRead;
 
@@ -24,6 +32,10 @@ pub fn online_cpus() -> Result<Vec<u32>, io::Error> {
 
 pub fn nr_cpus() -> Result<usize, io::Error> {
     Ok(possible_cpus()?.len())
+}
+
+pub(crate) fn tc_handler_make(major: u32, minor: u32) -> u32 {
+    (major & TC_H_MAJ_MASK) | (minor & TC_H_MIN_MASK)
 }
 
 pub(crate) fn possible_cpus() -> Result<Vec<u32>, io::Error> {
@@ -55,6 +67,28 @@ fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, ()> {
     }
 
     Ok(cpus)
+}
+
+/// Gets interface index from interface name.
+pub unsafe fn ifindex_from_ifname(if_name: &str) -> Result<u32, io::Error> {
+    let c_str_if_name = CString::new(if_name)?;
+    let c_if_name: *const c_char = c_str_if_name.as_ptr() as *const c_char;
+    // unsafe libc wrapper
+    let if_index = if_nametoindex(c_if_name);
+    if if_index ==  0 {
+        return Err(io::Error::last_os_error());
+    }
+    Ok(if_index)
+}
+
+
+/// htons and ntohs util functions
+pub fn htons(u: u16) -> u16 {
+        u.to_be()
+}
+
+pub fn ntohs(u: u16) -> u16 {
+        u16::from_be(u)
 }
 
 /// Loads kernel symbols from `/proc/kallsyms`.

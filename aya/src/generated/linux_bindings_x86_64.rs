@@ -136,6 +136,16 @@ pub const XDP_FLAGS_MODES: u32 = 14;
 pub const XDP_FLAGS_MASK: u32 = 31;
 pub const SO_ATTACH_BPF: u32 = 50;
 pub const SO_DETACH_BPF: u32 = 27;
+pub const TC_H_MAJ_MASK: u32 = 4294901760;
+pub const TC_H_MIN_MASK: u32 = 65535;
+pub const TC_H_UNSPEC: u32 = 0;
+pub const TC_H_ROOT: u32 = 4294967295;
+pub const TC_H_INGRESS: u32 = 4294967281;
+pub const TC_H_CLSACT: u32 = 4294967281;
+pub const TC_H_MIN_PRIORITY: u32 = 65504;
+pub const TC_H_MIN_INGRESS: u32 = 65522;
+pub const TC_H_MIN_EGRESS: u32 = 65523;
+pub const TCA_BPF_FLAG_ACT_DIRECT: u32 = 1;
 pub type __u8 = ::std::os::raw::c_uchar;
 pub type __s16 = ::std::os::raw::c_short;
 pub type __u16 = ::std::os::raw::c_ushort;
@@ -600,6 +610,68 @@ pub struct bpf_attr__bindgen_ty_19 {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct bpf_prog_info {
+    pub type_: __u32,
+    pub id: __u32,
+    pub tag: [__u8; 8usize],
+    pub jited_prog_len: __u32,
+    pub xlated_prog_len: __u32,
+    pub jited_prog_insns: __u64,
+    pub xlated_prog_insns: __u64,
+    pub load_time: __u64,
+    pub created_by_uid: __u32,
+    pub nr_map_ids: __u32,
+    pub map_ids: __u64,
+    pub name: [::std::os::raw::c_char; 16usize],
+    pub ifindex: __u32,
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
+    pub netns_dev: __u64,
+    pub netns_ino: __u64,
+    pub nr_jited_ksyms: __u32,
+    pub nr_jited_func_lens: __u32,
+    pub jited_ksyms: __u64,
+    pub jited_func_lens: __u64,
+    pub btf_id: __u32,
+    pub func_info_rec_size: __u32,
+    pub func_info: __u64,
+    pub nr_func_info: __u32,
+    pub nr_line_info: __u32,
+    pub line_info: __u64,
+    pub jited_line_info: __u64,
+    pub nr_jited_line_info: __u32,
+    pub line_info_rec_size: __u32,
+    pub jited_line_info_rec_size: __u32,
+    pub nr_prog_tags: __u32,
+    pub prog_tags: __u64,
+    pub run_time_ns: __u64,
+    pub run_cnt: __u64,
+    pub recursion_misses: __u64,
+}
+impl bpf_prog_info {
+    #[inline]
+    pub fn gpl_compatible(&self) -> __u32 {
+        unsafe { ::std::mem::transmute(self._bitfield_1.get(0usize, 1u8) as u32) }
+    }
+    #[inline]
+    pub fn set_gpl_compatible(&mut self, val: __u32) {
+        unsafe {
+            let val: u32 = ::std::mem::transmute(val);
+            self._bitfield_1.set(0usize, 1u8, val as u64)
+        }
+    }
+    #[inline]
+    pub fn new_bitfield_1(gpl_compatible: __u32) -> __BindgenBitfieldUnit<[u8; 4usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
+        __bindgen_bitfield_unit.set(0usize, 1u8, {
+            let gpl_compatible: u32 = unsafe { ::std::mem::transmute(gpl_compatible) };
+            gpl_compatible as u64
+        });
+        __bindgen_bitfield_unit
+    }
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct btf_header {
     pub magic: __u16,
     pub version: __u8,
@@ -689,7 +761,7 @@ pub enum perf_sw_ids {
     PERF_COUNT_SW_BPF_OUTPUT = 10,
     PERF_COUNT_SW_MAX = 11,
 }
-#[repr(u64)]
+#[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum perf_event_sample_format {
     PERF_SAMPLE_IP = 1,
@@ -713,7 +785,6 @@ pub enum perf_event_sample_format {
     PERF_SAMPLE_REGS_INTR = 262144,
     PERF_SAMPLE_PHYS_ADDR = 524288,
     PERF_SAMPLE_MAX = 1048576,
-    __PERF_SAMPLE_CALLCHAIN_EARLY = 9223372036854775808,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -724,7 +795,7 @@ pub struct perf_event_attr {
     pub __bindgen_anon_1: perf_event_attr__bindgen_ty_1,
     pub sample_type: __u64,
     pub read_format: __u64,
-    pub _bitfield_align_1: [u32; 0],
+    pub _bitfield_align_1: [u64; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
     pub __bindgen_anon_2: perf_event_attr__bindgen_ty_2,
     pub bp_type: __u32,
@@ -757,8 +828,6 @@ pub union perf_event_attr__bindgen_ty_2 {
 #[derive(Copy, Clone)]
 pub union perf_event_attr__bindgen_ty_3 {
     pub bp_addr: __u64,
-    pub kprobe_func: __u64,
-    pub uprobe_path: __u64,
     pub config1: __u64,
     _bindgen_union_align: u64,
 }
@@ -766,8 +835,6 @@ pub union perf_event_attr__bindgen_ty_3 {
 #[derive(Copy, Clone)]
 pub union perf_event_attr__bindgen_ty_4 {
     pub bp_len: __u64,
-    pub kprobe_addr: __u64,
-    pub probe_offset: __u64,
     pub config2: __u64,
     _bindgen_union_align: u64,
 }
@@ -1081,47 +1148,14 @@ impl perf_event_attr {
         }
     }
     #[inline]
-    pub fn ksymbol(&self) -> __u64 {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(29usize, 1u8) as u64) }
-    }
-    #[inline]
-    pub fn set_ksymbol(&mut self, val: __u64) {
-        unsafe {
-            let val: u64 = ::std::mem::transmute(val);
-            self._bitfield_1.set(29usize, 1u8, val as u64)
-        }
-    }
-    #[inline]
-    pub fn bpf_event(&self) -> __u64 {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(30usize, 1u8) as u64) }
-    }
-    #[inline]
-    pub fn set_bpf_event(&mut self, val: __u64) {
-        unsafe {
-            let val: u64 = ::std::mem::transmute(val);
-            self._bitfield_1.set(30usize, 1u8, val as u64)
-        }
-    }
-    #[inline]
-    pub fn aux_output(&self) -> __u64 {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(31usize, 1u8) as u64) }
-    }
-    #[inline]
-    pub fn set_aux_output(&mut self, val: __u64) {
-        unsafe {
-            let val: u64 = ::std::mem::transmute(val);
-            self._bitfield_1.set(31usize, 1u8, val as u64)
-        }
-    }
-    #[inline]
     pub fn __reserved_1(&self) -> __u64 {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(32usize, 32u8) as u64) }
+        unsafe { ::std::mem::transmute(self._bitfield_1.get(29usize, 35u8) as u64) }
     }
     #[inline]
     pub fn set___reserved_1(&mut self, val: __u64) {
         unsafe {
             let val: u64 = ::std::mem::transmute(val);
-            self._bitfield_1.set(32usize, 32u8, val as u64)
+            self._bitfield_1.set(29usize, 35u8, val as u64)
         }
     }
     #[inline]
@@ -1154,9 +1188,6 @@ impl perf_event_attr {
         context_switch: __u64,
         write_backward: __u64,
         namespaces: __u64,
-        ksymbol: __u64,
-        bpf_event: __u64,
-        aux_output: __u64,
         __reserved_1: __u64,
     ) -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
@@ -1274,19 +1305,7 @@ impl perf_event_attr {
             let namespaces: u64 = unsafe { ::std::mem::transmute(namespaces) };
             namespaces as u64
         });
-        __bindgen_bitfield_unit.set(29usize, 1u8, {
-            let ksymbol: u64 = unsafe { ::std::mem::transmute(ksymbol) };
-            ksymbol as u64
-        });
-        __bindgen_bitfield_unit.set(30usize, 1u8, {
-            let bpf_event: u64 = unsafe { ::std::mem::transmute(bpf_event) };
-            bpf_event as u64
-        });
-        __bindgen_bitfield_unit.set(31usize, 1u8, {
-            let aux_output: u64 = unsafe { ::std::mem::transmute(aux_output) };
-            aux_output as u64
-        });
-        __bindgen_bitfield_unit.set(32usize, 32u8, {
+        __bindgen_bitfield_unit.set(29usize, 35u8, {
             let __reserved_1: u64 = unsafe { ::std::mem::transmute(__reserved_1) };
             __reserved_1 as u64
         });
@@ -1465,9 +1484,7 @@ pub enum perf_event_type {
     PERF_RECORD_SWITCH = 14,
     PERF_RECORD_SWITCH_CPU_WIDE = 15,
     PERF_RECORD_NAMESPACES = 16,
-    PERF_RECORD_KSYMBOL = 17,
-    PERF_RECORD_BPF_EVENT = 18,
-    PERF_RECORD_MAX = 19,
+    PERF_RECORD_MAX = 17,
 }
 pub const IFLA_XDP_UNSPEC: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_UNSPEC;
 pub const IFLA_XDP_FD: _bindgen_ty_79 = _bindgen_ty_79::IFLA_XDP_FD;
@@ -1502,6 +1519,79 @@ pub struct ifinfomsg {
     pub ifi_index: ::std::os::raw::c_int,
     pub ifi_flags: ::std::os::raw::c_uint,
     pub ifi_change: ::std::os::raw::c_uint,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct tcmsg {
+    pub tcm_family: ::std::os::raw::c_uchar,
+    pub tcm__pad1: ::std::os::raw::c_uchar,
+    pub tcm__pad2: ::std::os::raw::c_ushort,
+    pub tcm_ifindex: ::std::os::raw::c_int,
+    pub tcm_handle: __u32,
+    pub tcm_parent: __u32,
+    pub tcm_info: __u32,
+}
+pub const TCA_UNSPEC: _bindgen_ty_91 = _bindgen_ty_91::TCA_UNSPEC;
+pub const TCA_KIND: _bindgen_ty_91 = _bindgen_ty_91::TCA_KIND;
+pub const TCA_OPTIONS: _bindgen_ty_91 = _bindgen_ty_91::TCA_OPTIONS;
+pub const TCA_STATS: _bindgen_ty_91 = _bindgen_ty_91::TCA_STATS;
+pub const TCA_XSTATS: _bindgen_ty_91 = _bindgen_ty_91::TCA_XSTATS;
+pub const TCA_RATE: _bindgen_ty_91 = _bindgen_ty_91::TCA_RATE;
+pub const TCA_FCNT: _bindgen_ty_91 = _bindgen_ty_91::TCA_FCNT;
+pub const TCA_STATS2: _bindgen_ty_91 = _bindgen_ty_91::TCA_STATS2;
+pub const TCA_STAB: _bindgen_ty_91 = _bindgen_ty_91::TCA_STAB;
+pub const TCA_PAD: _bindgen_ty_91 = _bindgen_ty_91::TCA_PAD;
+pub const TCA_DUMP_INVISIBLE: _bindgen_ty_91 = _bindgen_ty_91::TCA_DUMP_INVISIBLE;
+pub const TCA_CHAIN: _bindgen_ty_91 = _bindgen_ty_91::TCA_CHAIN;
+pub const TCA_HW_OFFLOAD: _bindgen_ty_91 = _bindgen_ty_91::TCA_HW_OFFLOAD;
+pub const __TCA_MAX: _bindgen_ty_91 = _bindgen_ty_91::__TCA_MAX;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_91 {
+    TCA_UNSPEC = 0,
+    TCA_KIND = 1,
+    TCA_OPTIONS = 2,
+    TCA_STATS = 3,
+    TCA_XSTATS = 4,
+    TCA_RATE = 5,
+    TCA_FCNT = 6,
+    TCA_STATS2 = 7,
+    TCA_STAB = 8,
+    TCA_PAD = 9,
+    TCA_DUMP_INVISIBLE = 10,
+    TCA_CHAIN = 11,
+    TCA_HW_OFFLOAD = 12,
+    __TCA_MAX = 13,
+}
+pub const TCA_BPF_UNSPEC: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_UNSPEC;
+pub const TCA_BPF_ACT: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_ACT;
+pub const TCA_BPF_POLICE: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_POLICE;
+pub const TCA_BPF_CLASSID: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_CLASSID;
+pub const TCA_BPF_OPS_LEN: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_OPS_LEN;
+pub const TCA_BPF_OPS: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_OPS;
+pub const TCA_BPF_FD: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_FD;
+pub const TCA_BPF_NAME: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_NAME;
+pub const TCA_BPF_FLAGS: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_FLAGS;
+pub const TCA_BPF_FLAGS_GEN: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_FLAGS_GEN;
+pub const TCA_BPF_TAG: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_TAG;
+pub const TCA_BPF_ID: _bindgen_ty_133 = _bindgen_ty_133::TCA_BPF_ID;
+pub const __TCA_BPF_MAX: _bindgen_ty_133 = _bindgen_ty_133::__TCA_BPF_MAX;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_133 {
+    TCA_BPF_UNSPEC = 0,
+    TCA_BPF_ACT = 1,
+    TCA_BPF_POLICE = 2,
+    TCA_BPF_CLASSID = 3,
+    TCA_BPF_OPS_LEN = 4,
+    TCA_BPF_OPS = 5,
+    TCA_BPF_FD = 6,
+    TCA_BPF_NAME = 7,
+    TCA_BPF_FLAGS = 8,
+    TCA_BPF_FLAGS_GEN = 9,
+    TCA_BPF_TAG = 10,
+    TCA_BPF_ID = 11,
+    __TCA_BPF_MAX = 12,
 }
 pub const AYA_PERF_EVENT_IOC_ENABLE: ::std::os::raw::c_int = 9216;
 pub const AYA_PERF_EVENT_IOC_DISABLE: ::std::os::raw::c_int = 9217;

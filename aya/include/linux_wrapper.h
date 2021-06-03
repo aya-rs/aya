@@ -4,6 +4,8 @@
 #include <linux/if_link.h>
 #include <linux/rtnetlink.h>
 #include <asm-generic/socket.h>
+#include <linux/pkt_sched.h>
+#include <linux/pkt_cls.h>
 
 /* workaround the fact that bindgen can't parse the IOC macros */
 int AYA_PERF_EVENT_IOC_ENABLE = PERF_EVENT_IOC_ENABLE;

@@ -44,7 +44,7 @@
 //! [`Bpf::program`]: crate::Bpf::program
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [maps]: crate::maps
-mod cls;
+mod tc;
 mod kprobe;
 mod perf_attach;
 mod probe;
@@ -60,7 +60,7 @@ use libc::{close, ENOSPC};
 use std::{cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::unix::io::RawFd, rc::Rc};
 use thiserror::Error;
 
-pub use cls::{SchedAction, SchedClassifier};
+pub use tc::{SchedClassifier, TcError, TcAttachPoint};
 pub use kprobe::{KProbe, KProbeError};
 use perf_attach::*;
 pub use probe::ProbeKind;
@@ -132,6 +132,9 @@ pub enum ProgramError {
 
     #[error(transparent)]
     XdpError(#[from] XdpError),
+
+    #[error(transparent)]
+    TcError(#[from] TcError),
 }
 
 pub trait ProgramFd {
