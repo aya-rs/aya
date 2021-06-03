@@ -277,7 +277,7 @@ impl Object {
                 self.maps
                     .insert(name.to_string(), parse_map(&section, name)?);
             }
-            &[".text"] => self.parse_text_section(section)?,
+            &[name] if name.starts_with(".text") => self.parse_text_section(section)?,
             &[".BTF"] => self.parse_btf(&section)?,
             &[".BTF.ext"] => self.parse_btf_ext(&section)?,
             &["maps", name] => {
