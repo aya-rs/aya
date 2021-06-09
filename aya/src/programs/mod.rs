@@ -44,7 +44,7 @@
 //! [`Bpf::program`]: crate::Bpf::program
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [maps]: crate::maps
-mod tc;
+mod cgroup_skb;
 mod kprobe;
 mod perf_attach;
 mod probe;
@@ -52,6 +52,7 @@ mod sk_msg;
 mod sk_skb;
 mod sock_ops;
 mod socket_filter;
+mod tc;
 mod trace_point;
 mod uprobe;
 mod xdp;
@@ -60,7 +61,7 @@ use libc::{close, dup, ENOSPC};
 use std::{cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::unix::io::RawFd, rc::Rc};
 use thiserror::Error;
 
-pub use tc::{SchedClassifier, TcError, TcAttachPoint};
+pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
 pub use kprobe::{KProbe, KProbeError};
 use perf_attach::*;
 pub use probe::ProbeKind;
@@ -68,6 +69,7 @@ pub use sk_msg::SkMsg;
 pub use sk_skb::{SkSkb, SkSkbKind};
 pub use sock_ops::SockOps;
 pub use socket_filter::{SocketFilter, SocketFilterError};
+pub use tc::{SchedClassifier, TcAttachPoint, TcError};
 pub use trace_point::{TracePoint, TracePointError};
 pub use uprobe::{UProbe, UProbeError};
 pub use xdp::{Xdp, XdpError, XdpFlags};
@@ -153,6 +155,7 @@ pub enum Program {
     SkSkb(SkSkb),
     SockOps(SockOps),
     SchedClassifier(SchedClassifier),
+    CgroupSkb(CgroupSkb),
 }
 
 impl Program {
@@ -183,6 +186,7 @@ impl Program {
             Program::SkSkb(_) => BPF_PROG_TYPE_SK_SKB,
             Program::SockOps(_) => BPF_PROG_TYPE_SOCK_OPS,
             Program::SchedClassifier(_) => BPF_PROG_TYPE_SCHED_CLS,
+            Program::CgroupSkb(_) => BPF_PROG_TYPE_CGROUP_SKB,
         }
     }
 
@@ -202,6 +206,7 @@ impl Program {
             Program::SkSkb(p) => &p.data,
             Program::SockOps(p) => &p.data,
             Program::SchedClassifier(p) => &p.data,
+            Program::CgroupSkb(p) => &p.data,
         }
     }
 
@@ -216,6 +221,7 @@ impl Program {
             Program::SkSkb(p) => &mut p.data,
             Program::SockOps(p) => &mut p.data,
             Program::SchedClassifier(p) => &mut p.data,
+            Program::CgroupSkb(p) => &mut p.data,
         }
     }
 }
@@ -496,5 +502,6 @@ impl_try_from_program!(
     SkMsg,
     SkSkb,
     SockOps,
-    SchedClassifier
+    SchedClassifier,
+    CgroupSkb
 );

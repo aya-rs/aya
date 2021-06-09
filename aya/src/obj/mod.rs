@@ -78,6 +78,8 @@ pub enum ProgramKind {
     SkSkbStreamVerdict,
     SockOps,
     SchedClassifier,
+    CgroupSkbIngress,
+    CgroupSkbEgress,
 }
 
 impl FromStr for ProgramKind {
@@ -98,6 +100,8 @@ impl FromStr for ProgramKind {
             "sk_skb/stream_verdict" => SkSkbStreamVerdict,
             "sockops" => SockOps,
             "classifier" => SchedClassifier,
+            "cgroup_skb/ingress" => CgroupSkbIngress,
+            "cgroup_skb/egress" => CgroupSkbEgress,
             _ => {
                 return Err(ParseError::InvalidProgramKind {
                     kind: kind.to_string(),
@@ -295,7 +299,10 @@ impl Object {
             | &[ty @ "sk_skb/stream_parser", name]
             | &[ty @ "sk_skb/stream_verdict", name]
             | &[ty @ "sockops", name]
-            | &[ty @ "classifier", name] => {
+            | &[ty @ "classifier", name]
+            | &[ty @ "cgroup_skb/ingress", name]
+            | &[ty @ "cgroup_skb/egress", name]
+            | &[ty @ "cgroup/skb", name] => {
                 self.programs
                     .insert(name.to_string(), self.parse_program(&section, ty, name)?);
                 if !section.relocations.is_empty() {

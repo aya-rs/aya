@@ -19,8 +19,8 @@ use crate::{
         Object, ParseError, ProgramKind,
     },
     programs::{
-        KProbe, ProbeKind, Program, ProgramData, ProgramError, SchedClassifier, SkMsg, SkSkb,
-        SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        CgroupSkb, CgroupSkbAttachType, KProbe, ProbeKind, Program, ProgramData, ProgramError,
+        SchedClassifier, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::bpf_map_update_elem_ptr,
     util::{possible_cpus, POSSIBLE_CPUS},
@@ -187,6 +187,14 @@ impl Bpf {
                     ProgramKind::SchedClassifier => {
                         Program::SchedClassifier(SchedClassifier { data })
                     }
+                    ProgramKind::CgroupSkbIngress => Program::CgroupSkb(CgroupSkb {
+                        data,
+                        expected_attach_type: Some(CgroupSkbAttachType::Ingress),
+                    }),
+                    ProgramKind::CgroupSkbEgress => Program::CgroupSkb(CgroupSkb {
+                        data,
+                        expected_attach_type: Some(CgroupSkbAttachType::Egress),
+                    }),
                 };
 
                 (name, program)
