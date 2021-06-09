@@ -31,7 +31,7 @@ impl SockOps {
 
         bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_SOCK_OPS).map_err(|(_, io_error)| {
             ProgramError::SyscallError {
-                call: "bpf_link_create".to_owned(),
+                call: "bpf_prog_attach".to_owned(),
                 io_error,
             }
         })?;
