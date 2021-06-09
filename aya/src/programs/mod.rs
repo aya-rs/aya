@@ -56,7 +56,7 @@ mod trace_point;
 mod uprobe;
 mod xdp;
 
-use libc::{close, ENOSPC};
+use libc::{close, dup, ENOSPC};
 use std::{cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::unix::io::RawFd, rc::Rc};
 use thiserror::Error;
 
@@ -397,10 +397,26 @@ struct ProgAttachLink {
     attach_type: bpf_attach_type,
 }
 
+impl ProgAttachLink {
+    pub(crate) fn new(
+        prog_fd: RawFd,
+        target_fd: RawFd,
+        attach_type: bpf_attach_type,
+    ) -> ProgAttachLink {
+        ProgAttachLink {
+            prog_fd: Some(prog_fd),
+            target_fd: Some(unsafe { dup(target_fd) }),
+            attach_type,
+        }
+    }
+}
+
 impl Link for ProgAttachLink {
     fn detach(&mut self) -> Result<(), ProgramError> {
         if let Some(prog_fd) = self.prog_fd.take() {
-            let _ = bpf_prog_detach(prog_fd, self.target_fd.take().unwrap(), self.attach_type);
+            let target_fd = self.target_fd.take().unwrap();
+            let _ = bpf_prog_detach(prog_fd, target_fd, self.attach_type);
+            unsafe { close(target_fd) };
             Ok(())
         } else {
             Err(ProgramError::AlreadyDetached)

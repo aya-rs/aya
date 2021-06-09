@@ -48,10 +48,8 @@ impl SkSkb {
                 io_error,
             }
         })?;
-        Ok(self.data.link(ProgAttachLink {
-            prog_fd: Some(prog_fd),
-            target_fd: Some(map_fd),
-            attach_type,
-        }))
+        Ok(self
+            .data
+            .link(ProgAttachLink::new(prog_fd, map_fd, attach_type)))
     }
 }

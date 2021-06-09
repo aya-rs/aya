@@ -35,10 +35,8 @@ impl SockOps {
                 io_error,
             }
         })?;
-        Ok(self.data.link(ProgAttachLink {
-            prog_fd: Some(prog_fd),
-            target_fd: Some(cgroup_fd),
-            attach_type: BPF_CGROUP_SOCK_OPS,
-        }))
+        Ok(self
+            .data
+            .link(ProgAttachLink::new(prog_fd, cgroup_fd, BPF_CGROUP_SOCK_OPS)))
     }
 }

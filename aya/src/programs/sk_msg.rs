@@ -42,10 +42,8 @@ impl SkMsg {
                 io_error,
             }
         })?;
-        Ok(self.data.link(ProgAttachLink {
-            prog_fd: Some(prog_fd),
-            target_fd: Some(map_fd),
-            attach_type: BPF_SK_MSG_VERDICT,
-        }))
+        Ok(self
+            .data
+            .link(ProgAttachLink::new(prog_fd, map_fd, BPF_SK_MSG_VERDICT)))
     }
 }
