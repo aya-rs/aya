@@ -462,7 +462,8 @@ impl_program_fd!(
     Xdp,
     SkMsg,
     SkSkb,
-    SchedClassifier
+    SchedClassifier,
+    CgroupSkb
 );
 
 macro_rules! impl_try_from_program {
