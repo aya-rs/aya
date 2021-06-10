@@ -22,10 +22,10 @@ use crate::{
 /// use aya::maps::HashMap;
 /// use std::convert::TryFrom;
 ///
-/// const CONFIG_KEY_NUM_RETRIES: u8 = 1;
+/// let mut redirect_ports = HashMap::try_from(bpf.map_mut("REDIRECT_PORTS")?)?;
 ///
-/// let mut hm = HashMap::try_from(bpf.map_mut("CONFIG")?)?;
-/// hm.insert(CONFIG_KEY_NUM_RETRIES, 3, 0 /* flags */);
+/// redirect_ports.insert(80, 8080, 0 /* flags */);
+/// redirect_ports.insert(443, 8443, 0 /* flags */);
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_HASH")]

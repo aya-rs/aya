@@ -137,7 +137,7 @@ impl<T: DerefMut<Target = Map>> AsRawFd for PerfEventArrayBuffer<T> {
 ///
 /// # Polling and avoiding lost events
 ///
-/// In the example above the implementation of `poll_buffers` and `poll.poll_readable()` is not
+/// In the example above the implementation of `poll_buffers()` and `poll.poll_readable()` is not
 /// given. [`PerfEventArrayBuffer`] implements the [`AsRawFd`] trait, so you can implement polling
 /// using any crate that can poll file descriptors, like [epoll], [mio] etc.  
 ///
