@@ -58,14 +58,17 @@ impl CgroupSkb {
     /// #     #[error(transparent)]
     /// #     Map(#[from] aya::maps::MapError),
     /// #     #[error(transparent)]
+    /// #     Program(#[from] aya::programs::ProgramError),
+    /// #     #[error(transparent)]
     /// #     Bpf(#[from] aya::BpfError)
     /// # }
-    /// # let bpf = aya::Bpf::load(&[], None)?;
+    /// # let mut bpf = aya::Bpf::load(&[], None)?;
+    /// use std::fs::File;
+    /// use std::convert::TryInto;
     /// use aya::programs::{CgroupSkb, CgroupSkbAttachType};
     ///
     /// let file = File::open("/sys/fs/cgroup/unified")?;
-    /// let egress: &mut CgroupSkb =
-    ///     self.bpf.program_mut("egress_filter")?.try_into()?;
+    /// let egress: &mut CgroupSkb = bpf.program_mut("egress_filter")?.try_into()?;
     /// egress.load()?;
     /// egress.attach(file, CgroupSkbAttachType::Egress)?;
     /// # Ok::<(), Error>(())
