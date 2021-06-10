@@ -91,7 +91,7 @@ impl<T: Deref<Target = Map>> ProgramArray<T> {
 impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
     /// Sets the target program file descriptor for the given index in the jump table.
     ///
-    /// When an eBPF program calls `bpf_tail_call(prog_array, index)`, control
+    /// When an eBPF program calls `bpf_tail_call(ctx, prog_array, index)`, control
     /// flow will jump to `program`.
     pub fn set(&mut self, index: u32, program: &dyn ProgramFd, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
@@ -110,7 +110,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
 
     /// Clears the value at index in the jump table.
     ///
-    /// Calling `bpf_tail_call(prog_array, index)` on an index that has been cleared returns an
+    /// Calling `bpf_tail_call(ctx, prog_array, index)` on an index that has been cleared returns an
     /// error.
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
