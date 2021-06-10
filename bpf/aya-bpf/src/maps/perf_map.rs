@@ -32,8 +32,8 @@ impl<T> PerfMap<T> {
         }
     }
 
-    pub fn output<C: BpfContext>(&mut self, ctx: &C, data: &T) {
-        self.output_at_index(ctx, None, data, 0)
+    pub fn output<C: BpfContext>(&mut self, ctx: &C, data: &T, flags: u32) {
+        self.output_at_index(ctx, None, data, flags)
     }
 
     pub fn output_at_index<C: BpfContext>(
@@ -43,10 +43,8 @@ impl<T> PerfMap<T> {
         data: &T,
         flags: u32,
     ) {
-        let index = index
-            .map(|i| (i as u64) << 32)
-            .unwrap_or(BPF_F_CURRENT_CPU.into());
-        let flags = index | flags as u64;
+        let index = index.unwrap_or(BPF_F_CURRENT_CPU.into()) as u64;
+        let flags = (flags as u64) << 32 | index;
         unsafe {
             bpf_perf_event_output(
                 ctx.as_ptr(),
