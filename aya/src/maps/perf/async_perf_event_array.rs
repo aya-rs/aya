@@ -59,7 +59,7 @@ use crate::maps::{
 ///
 ///     // process each perf buffer in a separate task
 ///     // NOTE: use async_std::task::spawn with async-std and tokio::spawn with tokio
-///     futs.push(task::spawn(async move {
+///     task::spawn(async move {
 ///         let mut buffers = (0..10)
 ///             .map(|_| BytesMut::with_capacity(1024))
 ///             .collect::<Vec<_>>();
@@ -77,11 +77,9 @@ use crate::maps::{
 ///         }
 ///
 ///         Ok::<_, PerfBufferError>(())
-///     }));
+///     });
 /// }
 ///
-///
-/// future::join_all(futs).await;
 /// # Ok(())
 /// # }
 /// ```
@@ -90,6 +88,9 @@ pub struct AsyncPerfEventArray<T: DerefMut<Target = Map>> {
 }
 
 impl<T: DerefMut<Target = Map>> AsyncPerfEventArray<T> {
+    /// Opens the perf buffer at the given index.
+    ///
+    /// The returned buffer will receive all the events eBPF programs send at the given index.
     pub fn open(
         &mut self,
         index: u32,
@@ -134,8 +135,17 @@ pub struct AsyncPerfEventArrayBuffer<T: DerefMut<Target = Map>> {
     async_fd: Async<RawFd>,
 }
 
-#[cfg(feature = "async_tokio")]
+#[cfg(any(feature = "async_tokio", doc))]
 impl<T: DerefMut<Target = Map>> AsyncPerfEventArrayBuffer<T> {
+    /// Reads events from the buffer.
+    ///
+    /// This method reads events into the provided slice of buffers, filling
+    /// each buffer in order stopping when there are no more events to read or
+    /// all the buffers have been filled.
+    ///
+    /// Returns the number of events read and the number of events lost. Events
+    /// are lost when user space doesn't read events fast enough and the ring
+    /// buffer fills up.
     pub async fn read_events(
         &mut self,
         buffers: &mut [BytesMut],
@@ -157,6 +167,15 @@ impl<T: DerefMut<Target = Map>> AsyncPerfEventArrayBuffer<T> {
 
 #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
 impl<T: DerefMut<Target = Map>> AsyncPerfEventArrayBuffer<T> {
+    /// Reads events from the buffer.
+    ///
+    /// This method reads events into the provided slice of buffers, filling
+    /// each buffer in order stopping when there are no more events to read or
+    /// all the buffers have been filled.
+    ///
+    /// Returns the number of events read and the number of events lost. Events
+    /// are lost when user space doesn't read events fast enough and the ring
+    /// buffer fills up.
     pub async fn read_events(
         &mut self,
         buffers: &mut [BytesMut],
