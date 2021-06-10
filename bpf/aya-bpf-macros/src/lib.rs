@@ -4,6 +4,8 @@ use expand::{Args, Map, Probe, ProbeKind, SchedClassifier, SkMsg, SockOps, Xdp};
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemFn, ItemStatic};
 
+use crate::expand::CgroupSkb;
+
 #[proc_macro_attribute]
 pub fn map(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let args = parse_macro_input!(attrs as Args);
@@ -74,6 +76,17 @@ pub fn classifier(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let item = parse_macro_input!(item as ItemFn);
 
     SchedClassifier::from_syn(args, item)
+        .and_then(|u| u.expand())
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+#[proc_macro_attribute]
+pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attrs as Args);
+    let item = parse_macro_input!(item as ItemFn);
+
+    CgroupSkb::from_syn(args, item)
         .and_then(|u| u.expand())
         .unwrap_or_else(|err| err.to_compile_error())
         .into()

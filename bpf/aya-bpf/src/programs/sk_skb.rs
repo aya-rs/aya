@@ -3,7 +3,9 @@ use core::{
     mem::{self, MaybeUninit},
 };
 
-use aya_bpf_bindings::helpers::{bpf_l3_csum_replace, bpf_l4_csum_replace, bpf_skb_load_bytes, bpf_skb_store_bytes};
+use aya_bpf_bindings::helpers::{
+    bpf_l3_csum_replace, bpf_l4_csum_replace, bpf_skb_load_bytes, bpf_skb_store_bytes,
+};
 use aya_bpf_cty::c_long;
 
 use crate::{bindings::__sk_buff, BpfContext};
@@ -15,6 +17,11 @@ pub struct SkSkbContext {
 impl SkSkbContext {
     pub fn new(skb: *mut __sk_buff) -> SkSkbContext {
         SkSkbContext { skb }
+    }
+
+    #[inline]
+    pub fn len(&self) -> u32 {
+        unsafe { *self.skb }.len
     }
 
     #[inline]

@@ -43,8 +43,8 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn from_syn(args: Args, item: ItemStatic) -> Result<Map> {
-        let name = name_arg(&args)?.unwrap_or_else(|| item.ident.to_string());
+    pub fn from_syn(mut args: Args, item: ItemStatic) -> Result<Map> {
+        let name = name_arg(&mut args)?.unwrap_or_else(|| item.ident.to_string());
         Ok(Map { item, name })
     }
 
@@ -66,8 +66,8 @@ pub struct Probe {
 }
 
 impl Probe {
-    pub fn from_syn(kind: ProbeKind, args: Args, item: ItemFn) -> Result<Probe> {
-        let name = name_arg(&args)?.unwrap_or_else(|| item.sig.ident.to_string());
+    pub fn from_syn(kind: ProbeKind, mut args: Args, item: ItemFn) -> Result<Probe> {
+        let name = name_arg(&mut args)?.unwrap_or_else(|| item.sig.ident.to_string());
 
         Ok(Probe { kind, item, name })
     }
@@ -95,8 +95,8 @@ pub struct SockOps {
 }
 
 impl SockOps {
-    pub fn from_syn(args: Args, item: ItemFn) -> Result<SockOps> {
-        let name = name_arg(&args)?;
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<SockOps> {
+        let name = name_arg(&mut args)?;
 
         Ok(SockOps { item, name })
     }
@@ -127,8 +127,8 @@ pub struct SkMsg {
 }
 
 impl SkMsg {
-    pub fn from_syn(args: Args, item: ItemFn) -> Result<SkMsg> {
-        let name = name_arg(&args)?.unwrap_or_else(|| item.sig.ident.to_string());
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<SkMsg> {
+        let name = name_arg(&mut args)?.unwrap_or_else(|| item.sig.ident.to_string());
 
         Ok(SkMsg { item, name })
     }
@@ -155,8 +155,8 @@ pub struct Xdp {
 }
 
 impl Xdp {
-    pub fn from_syn(args: Args, item: ItemFn) -> Result<Xdp> {
-        let name = name_arg(&args)?;
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<Xdp> {
+        let name = name_arg(&mut args)?;
 
         Ok(Xdp { item, name })
     }
@@ -187,8 +187,8 @@ pub struct SchedClassifier {
 }
 
 impl SchedClassifier {
-    pub fn from_syn(args: Args, item: ItemFn) -> Result<SchedClassifier> {
-        let name = name_arg(&args)?;
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<SchedClassifier> {
+        let name = name_arg(&mut args)?;
 
         Ok(SchedClassifier { item, name })
     }
@@ -213,16 +213,65 @@ impl SchedClassifier {
     }
 }
 
-fn name_arg(args: &Args) -> Result<Option<String>> {
-    for arg in &args.args {
-        if arg.name == "name" {
-            return Ok(Some(arg.value.value()));
-        } else {
-            return Err(Error::new_spanned(&arg.name, "invalid argument"));
-        }
+pub struct CgroupSkb {
+    item: ItemFn,
+    expected_attach_type: String,
+    name: Option<String>,
+}
+
+impl CgroupSkb {
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<CgroupSkb> {
+        let name = pop_arg(&mut args, "name");
+        let expected_attach_type = pop_arg(&mut args, "attach").unwrap_or_else(|| "skb".to_owned());
+
+        Ok(CgroupSkb {
+            item,
+            name,
+            expected_attach_type,
+        })
     }
 
-    Ok(None)
+    pub fn expand(&self) -> Result<TokenStream> {
+        let attach = &self.expected_attach_type;
+        let section_name = if let Some(name) = &self.name {
+            format!("cgroup_skb/{}/{}", attach, name)
+        } else {
+            format!("cgroup_skb/{}", attach)
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
+                return #fn_name(::aya_bpf::programs::SkSkbContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
+
+fn pop_arg(args: &mut Args, name: &str) -> Option<String> {
+    match args.args.iter().position(|arg| arg.name == name) {
+        Some(index) => Some(args.args.remove(index).value.value()),
+        None => None,
+    }
+}
+
+fn err_on_unknown_args(args: &Args) -> Result<()> {
+    for arg in &args.args {
+        return Err(Error::new_spanned(&arg.name, "invalid argument"));
+    }
+
+    Ok(())
+}
+
+fn name_arg(args: &mut Args) -> Result<Option<String>> {
+    let name = pop_arg(args, "name");
+    err_on_unknown_args(args)?;
+
+    Ok(name)
 }
 
 #[derive(Debug, Copy, Clone)]
