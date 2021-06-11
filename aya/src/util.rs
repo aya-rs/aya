@@ -1,16 +1,14 @@
 //! Utility functions.
 use std::{
     collections::BTreeMap,
-    fs::{self, File},
     ffi::CString,
-    os::raw::c_char,
+    fs::{self, File},
     io::{self, BufReader},
+    os::raw::c_char,
     str::FromStr,
 };
 
-use crate::{
-    generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK},
-};
+use crate::generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK};
 
 use libc::if_nametoindex;
 
@@ -19,7 +17,7 @@ use io::BufRead;
 const ONLINE_CPUS: &str = "/sys/devices/system/cpu/online";
 pub(crate) const POSSIBLE_CPUS: &str = "/sys/devices/system/cpu/possible";
 
-/// Returns the numeric IDs of the available CPUs.
+/// Returns the numeric IDs of the CPUs currently online.
 pub fn online_cpus() -> Result<Vec<u32>, io::Error> {
     let data = fs::read_to_string(ONLINE_CPUS)?;
     parse_cpu_ranges(data.trim()).map_err(|_| {
@@ -30,6 +28,9 @@ pub fn online_cpus() -> Result<Vec<u32>, io::Error> {
     })
 }
 
+/// Get the number of possible cpus.
+///
+/// See `/sys/devices/system/cpu/possible`.
 pub fn nr_cpus() -> Result<usize, io::Error> {
     Ok(possible_cpus()?.len())
 }
@@ -38,6 +39,9 @@ pub(crate) fn tc_handler_make(major: u32, minor: u32) -> u32 {
     (major & TC_H_MAJ_MASK) | (minor & TC_H_MIN_MASK)
 }
 
+/// Get the list of possible cpus.
+///
+/// See `/sys/devices/system/cpu/possible`.
 pub(crate) fn possible_cpus() -> Result<Vec<u32>, io::Error> {
     let data = fs::read_to_string(POSSIBLE_CPUS)?;
     parse_cpu_ranges(data.trim()).map_err(|_| {
@@ -75,20 +79,19 @@ pub unsafe fn ifindex_from_ifname(if_name: &str) -> Result<u32, io::Error> {
     let c_if_name: *const c_char = c_str_if_name.as_ptr() as *const c_char;
     // unsafe libc wrapper
     let if_index = if_nametoindex(c_if_name);
-    if if_index ==  0 {
+    if if_index == 0 {
         return Err(io::Error::last_os_error());
     }
     Ok(if_index)
 }
 
-
 /// htons and ntohs util functions
 pub fn htons(u: u16) -> u16 {
-        u.to_be()
+    u.to_be()
 }
 
 pub fn ntohs(u: u16) -> u16 {
-        u16::from_be(u)
+    u16::from_be(u)
 }
 
 /// Loads kernel symbols from `/proc/kallsyms`.

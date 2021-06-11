@@ -127,17 +127,21 @@ impl UProbe {
     }
 }
 
+/// The type returned when attaching an [`UProbe`] fails.
 #[derive(Debug, Error)]
 pub enum UProbeError {
+    /// There was an error parsing `/etc/ld.so.cache`.
     #[error("error reading `{}` file", LD_SO_CACHE_FILE)]
     InvalidLdSoCache {
         #[source]
         io_error: Arc<io::Error>,
     },
 
+    /// The target program could not be found.
     #[error("could not resolve uprobe target `{path}`")]
     InvalidTarget { path: PathBuf },
 
+    /// There was an error resolving the target symbol.
     #[error("error resolving symbol")]
     SymbolError {
         symbol: String,
@@ -145,6 +149,7 @@ pub enum UProbeError {
         error: Box<dyn Error + Send + Sync>,
     },
 
+    /// There was an error accessing `filename`.
     #[error("`{filename}`")]
     FileError {
         filename: String,

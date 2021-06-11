@@ -8,21 +8,37 @@ use crate::{
     sys::bpf_prog_attach,
 };
 
+/// The kind of [`SkSkb`] program.
 #[derive(Copy, Clone, Debug)]
 pub enum SkSkbKind {
     StreamParser,
     StreamVerdict,
 }
 
-/// A socket buffer program.
+/// A program used to intercept ingress socket buffers.
 ///
-/// Socket buffer programs are attached to [socket maps], and can be used to
-/// inspect, redirect or filter packet. See [SockMap] and [SockHash] for more
-/// info and examples.
+/// [`SkSkb`] programs are attached to [socket maps], and can be used to
+/// inspect, redirect or filter incoming packet. See also [`SockMap`] and
+/// [`SockHash`].
+///
+/// # Example
+///
+/// ```no_run
+/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// use std::convert::{TryFrom, TryInto};
+/// use aya::maps::SockMap;
+/// use aya::programs::SkSkb;
+///
+/// let intercept_ingress = SockMap::try_from(bpf.map_mut("INTERCEPT_INGRESS")?)?;
+/// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet")?.try_into()?;
+/// prog.load()?;
+/// prog.attach(&intercept_ingress)?;
+/// # Ok::<(), aya::BpfError>(())
+/// ```
 ///
 /// [socket maps]: crate::maps::sock
-/// [SockMap]: crate::maps::SockMap
-/// [SockHash]: crate::maps::SockHash
+/// [`SockMap`]: crate::maps::SockMap
+/// [`SockHash`]: crate::maps::SockHash
 #[derive(Debug)]
 pub struct SkSkb {
     pub(crate) data: ProgramData,

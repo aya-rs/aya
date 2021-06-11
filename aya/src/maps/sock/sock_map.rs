@@ -28,12 +28,12 @@ use crate::{
 /// # let mut bpf = aya::Bpf::load(&[], None)?;
 /// use std::convert::{TryFrom, TryInto};
 /// use aya::maps::SockMap;
-/// use aya::programs::SkMsg;
+/// use aya::programs::SkSkb;
 ///
-/// let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
-/// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet")?.try_into()?;
+/// let intercept_ingress = SockMap::try_from(bpf.map_mut("INTERCEPT_INGRESS")?)?;
+/// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet")?.try_into()?;
 /// prog.load()?;
-/// prog.attach(&intercept_egress)?;
+/// prog.attach(&intercept_ingress)?;
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 pub struct SockMap<T: Deref<Target = Map>> {

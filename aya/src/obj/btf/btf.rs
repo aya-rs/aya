@@ -18,6 +18,7 @@ use crate::{
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
 pub(crate) const MAX_SPEC_LEN: usize = 64;
 
+/// The error type returned when `BTF` operations fail.
 #[derive(Error, Debug)]
 pub enum BtfError {
     #[error("error parsing {path}")]

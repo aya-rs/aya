@@ -13,8 +13,6 @@ use crate::{
 
 /// A hash map that can be shared between eBPF programs and user space.
 ///
-/// It is required that both keys and values implement the [`Pod`] trait.
-///
 /// # Example
 ///
 /// ```no_run
@@ -24,8 +22,10 @@ use crate::{
 ///
 /// let mut redirect_ports = HashMap::try_from(bpf.map_mut("REDIRECT_PORTS")?)?;
 ///
-/// redirect_ports.insert(80, 8080, 0 /* flags */);
-/// redirect_ports.insert(443, 8443, 0 /* flags */);
+/// // redirect port 80 to 8080
+/// redirect_ports.insert(80, 8080, 0);
+/// // redirect port 443 to 8443
+/// redirect_ports.insert(443, 8443, 0);
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_HASH")]

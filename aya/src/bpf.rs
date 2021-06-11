@@ -213,7 +213,7 @@ impl Bpf {
     /// Returns a reference to the map with the given name.
     ///
     /// The returned type is mostly opaque. In order to do anything useful with it you need to
-    /// convert it to a [concrete map type](crate::maps).
+    /// convert it to a [typed map](crate::maps).
     ///
     /// For more details and examples on maps and their usage, see the [maps module
     /// documentation][crate::maps].
@@ -238,7 +238,7 @@ impl Bpf {
     /// Returns a mutable reference to the map with the given name.
     ///
     /// The returned type is mostly opaque. In order to do anything useful with it you need to
-    /// convert it to a [concrete map type](crate::maps).
+    /// convert it to a [typed map](crate::maps).
     ///
     /// For more details and examples on maps and their usage, see the [maps module
     /// documentation][crate::maps].
@@ -361,6 +361,7 @@ impl Bpf {
     }
 }
 
+/// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].
 #[derive(Debug, Error)]
 pub enum BpfError {
     #[error("error loading {path}")]

@@ -16,6 +16,18 @@ use crate::{
 ///
 /// The size of the array is defined on the eBPF side using the `bpf_map_def::max_entries` field.
 /// All the entries are zero-initialized when the map is created.
+///
+/// # Example
+/// ```no_run
+/// # let bpf = aya::Bpf::load(&[], None)?;
+/// use aya::maps::Array;
+/// use std::convert::TryFrom;
+///
+/// let mut array = Array::try_from(bpf.map_mut("ARRAY")?)?;
+/// array.set(1, 42, 0)?;
+/// assert_eq!(array.get(&1, 0)?, 42);
+/// # Ok::<(), aya::BpfError>(())
+/// ```
 pub struct Array<T: Deref<Target = Map>, V: Pod> {
     inner: T,
     _v: PhantomData<V>,
@@ -98,18 +110,6 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Array<T, V> {
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_update_elem` fails.
-    ///
-    /// # Example
-    /// ```no_run
-    /// # let bpf = aya::Bpf::load(&[], None)?;
-    /// use aya::maps::Array;
-    /// use std::convert::TryFrom;
-    ///
-    /// let mut array = Array::try_from(bpf.map_mut("ARRAY")?)?;
-    /// array.set(1, 42, 0)?;
-    /// assert_eq!(array.get(&1, 0)?, 42);
-    /// # Ok::<(), aya::BpfError>(())
-    /// ```
     pub fn set(&mut self, index: u32, value: V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(index)?;

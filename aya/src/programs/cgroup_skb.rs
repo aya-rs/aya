@@ -14,9 +14,36 @@ use super::FdLink;
 /// A program used to inspect or filter network activity for a given cgroup.
 ///
 /// [`CgroupSkb`] programs can be used to inspect or filter network activity
-/// generated on all the sockets belonging to a given [cgroup].
+/// generated on all the sockets belonging to a given [cgroup]. They can be
+/// attached to both _ingress_ and _egress_.
 ///
 /// [cgroup]: https://man7.org/linux/man-pages/man7/cgroups.7.html
+///
+/// # Example
+///
+/// ```no_run
+/// # #[derive(thiserror::Error, Debug)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
+/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// use std::fs::File;
+/// use std::convert::TryInto;
+/// use aya::programs::{CgroupSkb, CgroupSkbAttachType};
+///
+/// let file = File::open("/sys/fs/cgroup/unified")?;
+/// let egress: &mut CgroupSkb = bpf.program_mut("egress_filter")?.try_into()?;
+/// egress.load()?;
+/// egress.attach(file, CgroupSkbAttachType::Egress)?;
+/// # Ok::<(), Error>(())
+/// ```
 #[derive(Debug)]
 pub struct CgroupSkb {
     pub(crate) data: ProgramData,
@@ -47,32 +74,6 @@ impl CgroupSkb {
     }
 
     /// Attaches the program to the given cgroup.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # #[derive(thiserror::Error, Debug)]
-    /// # enum Error {
-    /// #     #[error(transparent)]
-    /// #     IO(#[from] std::io::Error),
-    /// #     #[error(transparent)]
-    /// #     Map(#[from] aya::maps::MapError),
-    /// #     #[error(transparent)]
-    /// #     Program(#[from] aya::programs::ProgramError),
-    /// #     #[error(transparent)]
-    /// #     Bpf(#[from] aya::BpfError)
-    /// # }
-    /// # let mut bpf = aya::Bpf::load(&[], None)?;
-    /// use std::fs::File;
-    /// use std::convert::TryInto;
-    /// use aya::programs::{CgroupSkb, CgroupSkbAttachType};
-    ///
-    /// let file = File::open("/sys/fs/cgroup/unified")?;
-    /// let egress: &mut CgroupSkb = bpf.program_mut("egress_filter")?.try_into()?;
-    /// egress.load()?;
-    /// egress.attach(file, CgroupSkbAttachType::Egress)?;
-    /// # Ok::<(), Error>(())
-    /// ```
     pub fn attach<T: AsRawFd>(
         &mut self,
         cgroup: T,
@@ -110,8 +111,11 @@ impl CgroupSkb {
     }
 }
 
+/// Defines where to attach a [`CgroupSkb`] program.
 #[derive(Copy, Clone, Debug)]
 pub enum CgroupSkbAttachType {
+    /// Attach to ingress.
     Ingress,
+    /// Attach to egress.
     Egress,
 }

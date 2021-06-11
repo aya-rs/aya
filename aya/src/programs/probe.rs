@@ -10,9 +10,13 @@ use crate::{
 
 #[derive(Debug, Copy, Clone)]
 pub enum ProbeKind {
+    /// Kernel probe
     KProbe,
+    /// Kernel return probe
     KRetProbe,
+    /// User space probe
     UProbe,
+    /// User space return probe
     URetProbe,
 }
 

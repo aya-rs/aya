@@ -1,34 +1,37 @@
-//! Data structures used to exchange data with eBPF programs.
+//! Data structures used to setup and share data with eBPF programs.
 //!
-//! The eBPF platform provides data structures - maps in eBPF speak - that can be used by eBPF
-//! programs and user-space to exchange data. When you call
-//! [`Bpf::load_file`](crate::Bpf::load_file) or [`Bpf::load`](crate::Bpf::load), all the maps
-//! defined in the eBPF code get initialized and can then be accessed using
-//! [`Bpf::map`](crate::Bpf::map) and [`Bpf::map_mut`](crate::Bpf::map_mut).
+//! The eBPF platform provides data structures - maps in eBPF speak - that are
+//! used to setup and share data with eBPF programs. When you call
+//! [`Bpf::load_file`](crate::Bpf::load_file) or
+//! [`Bpf::load`](crate::Bpf::load), all the maps defined in the eBPF code get
+//! initialized and can then be accessed using [`Bpf::map`](crate::Bpf::map) and
+//! [`Bpf::map_mut`](crate::Bpf::map_mut).
 //!
-//! # Concrete map types
+//! # Typed maps
 //!
-//! The eBPF platform provides many map types each supporting different operations.
+//! The eBPF API includes many map types each supporting different operations.
 //! [`Bpf::map`](crate::Bpf::map) and [`Bpf::map_mut`](crate::Bpf::map_mut) always return the
 //! opaque [`MapRef`] and [`MapRefMut`] types respectively. Those two types can be converted to
-//! *concrete map types* using the [`TryFrom`](std::convert::TryFrom) trait. For example:
+//! *typed maps* using the [`TryFrom`](std::convert::TryFrom) trait. For example:
 //!
 //! ```no_run
-//! # let bpf = aya::Bpf::load(&[], None)?;
-//! use aya::maps::HashMap;
-//! use std::convert::TryFrom;
+//! # let mut bpf = aya::Bpf::load(&[], None)?;
+//! use std::convert::{TryFrom, TryInto};
+//! use aya::maps::SockMap;
+//! use aya::programs::SkMsg;
 //!
-//! const CONFIG_KEY_NUM_RETRIES: u8 = 1;
-//!
-//! // HashMap::try_from() converts MapRefMut to HashMap. It will fail if CONFIG is not an eBPF
-//! // hash map.
-//! let mut hm = HashMap::try_from(bpf.map_mut("CONFIG")?)?;
-//! hm.insert(CONFIG_KEY_NUM_RETRIES, 3, 0 /* flags */);
+//! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+//! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet")?.try_into()?;
+//! prog.load()?;
+//! prog.attach(&intercept_egress)?;
 //! # Ok::<(), aya::BpfError>(())
 //! ```
 //!
-//! The code above uses `HashMap`, but all the concrete map types implement the
-//! `TryFrom` trait.
+//! # Maps and `Pod` values
+//!
+//! Many map operations copy data from kernel space to user space and vice
+//! versa. Because of that, all map values must be plain old data and therefore
+//! implement the [Pod] trait.
 use std::{
     convert::TryFrom, ffi::CString, io, marker::PhantomData, mem, ops::Deref, os::unix::io::RawFd,
     ptr,
@@ -118,6 +121,8 @@ pub enum MapError {
 }
 
 /// A generic handle to a BPF map.
+///
+/// You should never need to use this unless you're implementing a new map type.
 #[derive(Debug)]
 pub struct Map {
     pub(crate) obj: obj::Map,

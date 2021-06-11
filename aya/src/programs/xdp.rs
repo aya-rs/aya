@@ -12,6 +12,7 @@ use crate::{
     sys::{bpf_link_create, kernel_version, netlink_set_xdp_fd},
 };
 
+/// The type returned when attaching an [`Xdp`] program fails on kernels `< 5.9`.
 #[derive(Debug, Error)]
 pub enum XdpError {
     #[error("netlink error while attaching XDP program")]
@@ -22,12 +23,18 @@ pub enum XdpError {
 }
 
 bitflags! {
+    /// Flags passed to [`Xdp::attach()`].
     #[derive(Default)]
     pub struct XdpFlags: u32 {
+        /// Skb mode.
         const SKB_MODE = XDP_FLAGS_SKB_MODE;
+        /// Driver mode.
         const DRV_MODE = XDP_FLAGS_DRV_MODE;
+        /// Hardware mode.
         const HW_MODE = XDP_FLAGS_HW_MODE;
+        /// Replace a previously attached XDP program.
         const REPLACE = XDP_FLAGS_REPLACE;
+        /// Only attach if there isn't another XDP program already attached.
         const UPDATE_IF_NOEXIST = XDP_FLAGS_UPDATE_IF_NOEXIST;
     }
 }
@@ -38,6 +45,18 @@ bitflags! {
 /// processing, where they can apply custom packet processing logic.  When supported by the
 /// underlying network driver, XDP programs can execute directly on network cards, greatly
 /// reducing CPU load.
+///
+/// # Example
+///
+/// ```no_run
+/// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
+/// use aya::{Bpf, programs::{Xdp, XdpFlags}};
+/// use std::convert::TryInto;
+///
+/// let program: &mut Xdp = bpf.program_mut("intercept_packets")?.try_into()?;
+/// program.attach("eth0", XdpFlags::default())?;
+/// # Ok::<(), aya::BpfError>(())
+/// ```
 #[derive(Debug)]
 pub struct Xdp {
     pub(crate) data: ProgramData,
@@ -56,8 +75,6 @@ impl Xdp {
         self.data.name.to_string()
     }
 
-    /// Attaches the program.
-    ///
     /// Attaches the program to the given `interface`.
     ///
     /// # Errors
@@ -69,18 +86,6 @@ impl Xdp {
     /// kernels `>= 5.9.0`, and instead
     /// [`XdpError::NetlinkError`] is returned for older
     /// kernels.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
-    /// use aya::{Bpf, programs::{Xdp, XdpFlags}};
-    /// use std::convert::TryInto;
-    ///
-    /// let program: &mut Xdp = bpf.program_mut("intercept_packets")?.try_into()?;
-    /// program.attach("eth0", XdpFlags::default())?;
-    /// # Ok::<(), aya::BpfError>(())
-    /// ```
     pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<LinkRef, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
 

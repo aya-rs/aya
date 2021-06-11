@@ -6,6 +6,36 @@ use crate::{
     sys::bpf_prog_attach,
 };
 
+/// A program used to work with sockets.
+///
+/// [`SockOps`] programs can access or set socket options, connection
+/// parameters, watch connection state changes and more. They are attached to
+/// cgroups.
+///
+/// # Example
+///
+/// ```no_run
+/// # #[derive(thiserror::Error, Debug)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
+/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// use std::fs::File;
+/// use std::convert::TryInto;
+/// use aya::programs::SockOps;
+///
+/// let file = File::open("/sys/fs/cgroup/unified")?;
+/// let prog: &mut SockOps = bpf.program_mut("intercept_active_sockets")?.try_into()?;
+/// prog.load()?;
+/// prog.attach(file)?;
+/// # Ok::<(), Error>(())
 #[derive(Debug)]
 pub struct SockOps {
     pub(crate) data: ProgramData,
@@ -24,7 +54,7 @@ impl SockOps {
         self.data.name.to_string()
     }
 
-    /// Attaches the program to the given sockmap.
+    /// Attaches the program to the given cgroup.
     pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<LinkRef, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let cgroup_fd = cgroup.as_raw_fd();

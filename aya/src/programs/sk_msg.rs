@@ -5,14 +5,50 @@ use crate::{
     sys::bpf_prog_attach,
 };
 
-/// A socket buffer program.
+/// A program used to intercept messages sent with `sendmsg()`/`sendfile()`.
 ///
-/// Socket buffer programs are attached to [sockmaps], and can be used to
-/// redirect or drop packets. See the [`SockMap` documentation] for more info
-/// and examples.
+/// [`SkMsg`] programs are attached to [socket maps], and can be used inspect,
+/// filter and redirect messages sent on sockets. See also [`SockMap`] and
+/// [`SockHash`].
 ///
-/// [sockmaps]: crate::maps::SockMap
-/// [`SockMap` documentation]: crate::maps::SockMap
+/// # Example
+///
+/// ```no_run
+/// ##[derive(Debug, thiserror::Error)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
+/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// use std::convert::{TryFrom, TryInto};
+/// use std::io::Write;
+/// use std::net::TcpStream;
+/// use std::os::unix::io::AsRawFd;
+/// use aya::maps::SockHash;
+/// use aya::programs::SkMsg;
+///
+/// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+/// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet")?.try_into()?;
+/// prog.load()?;
+/// prog.attach(&intercept_egress)?;
+///
+/// let mut client = TcpStream::connect("127.0.0.1:1234")?;
+/// intercept_egress.insert(1234, client.as_raw_fd(), 0)?;
+///
+/// // the write will be intercepted
+/// client.write_all(b"foo")?;
+/// # Ok::<(), Error>(())
+/// ```
+///
+/// [socket maps]: crate::maps::sock
+/// [`SockMap`]: crate::maps::SockMap
+/// [`SockHash`]: crate::maps::SockHash
 #[derive(Debug)]
 pub struct SkMsg {
     pub(crate) data: ProgramData,

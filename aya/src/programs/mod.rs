@@ -1,14 +1,17 @@
 //! eBPF program types.
 //!
-//! eBPF programs are loaded inside the kernel and attached to one or more hook points. Whenever
-//! the kernel or an application reaches those hook points, the programs are executed.
+//! eBPF programs are loaded inside the kernel and attached to one or more hook
+//! points. Whenever the hook points are reached, the programs are executed.
 //!
-//! # Loading programs
+//! # Loading and attaching programs
 //!
-//! When you call [`Bpf::load_file`] or [`Bpf::load`], all the programs present in the code are
-//! parsed and can be retrieved using the [`Bpf::program`] and [`Bpf::program_mut`] methods. In
-//! order to load a program, you need to get a handle to it and call the `load()` method, for
-//! example:
+//! When you call [`Bpf::load_file`] or [`Bpf::load`], all the programs included
+//! in the object code are parsed and relocated. Programs are not loaded
+//! automatically though, since often you will need to do some application
+//! specific setup before you can actually load them.
+//!
+//! In order to load and attach a program, you need to retrieve it using [`Bpf::program_mut`],
+//! then call the `load()` and `attach()` methods, for example:
 //!
 //! ```no_run
 //! use aya::{Bpf, programs::KProbe};
@@ -18,32 +21,21 @@
 //! // intercept_wakeups is the name of the program we want to load
 //! let program: &mut KProbe = bpf.program_mut("intercept_wakeups")?.try_into()?;
 //! program.load()?;
+//! // intercept_wakeups will be called every time try_to_wake_up() is called
+//! // inside the kernel
+//! program.attach("try_to_wake_up", 0, None)?;
 //! # Ok::<(), aya::BpfError>(())
 //! ```
 //!
-//! # Attaching programs
-//!
-//! After being loaded, programs must be attached to their target hook points to be executed. The
-//! eBPF platform supports many different program types, with each type providing different
-//! attachment options. For example when attaching a [`KProbe`], you must provide the name of the
-//! kernel function you want instrument; when loading an [`Xdp`] program, you need to specify the
-//! network card name you want to hook into, and so forth.
-//!
-//! Currently aya supports [`KProbe`], [`UProbe`], [`SocketFilter`], [`TracePoint`] and [`Xdp`]
-//! programs. To see how to attach them, see the documentation of the respective `attach()` method.
-//!
-//! # Interacting with programs
-//!
-//! eBPF programs are event-driven and execute when the hook points they are attached to are hit.
-//! To communicate with user-space, programs use data structures provided by the eBPF platform,
-//! which can be found in the [maps] module.
+//! The signature of the `attach()` method varies depending on what kind of
+//! program you're trying to attach.
 //!
 //! [`Bpf::load_file`]: crate::Bpf::load_file
 //! [`Bpf::load`]: crate::Bpf::load
 //! [`Bpf::programs`]: crate::Bpf::programs
 //! [`Bpf::program`]: crate::Bpf::program
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
-//! [maps]: crate::maps
+//! [`maps`]: crate::maps
 mod cgroup_skb;
 mod kprobe;
 mod perf_attach;
@@ -80,61 +72,83 @@ use crate::{
     obj::{self, Function},
     sys::{bpf_load_program, bpf_prog_detach},
 };
+
+/// Error type returned when working with programs.
 #[derive(Debug, Error)]
 pub enum ProgramError {
+    /// The program could not be found in the object code.
     #[error("program `{name}` not found")]
     NotFound { name: String },
 
+    /// The program is already loaded.
     #[error("the program is already loaded")]
     AlreadyLoaded,
 
+    /// The program is not loaded.
     #[error("the program is not loaded")]
     NotLoaded,
 
+    /// The program is already detached.
     #[error("the program was already detached")]
     AlreadyDetached,
 
+    /// The program is not attached.
     #[error("the program is not attached")]
     NotAttached,
 
+    /// Loading the program failed.
     #[error("the BPF_PROG_LOAD syscall failed. Verifier output: {verifier_log}")]
     LoadError {
+        /// The [`io::Error`] returned by the `BPF_PROG_LOAD` syscall.
         #[source]
         io_error: io::Error,
+        /// The error log produced by the kernel verifier.
         verifier_log: String,
     },
 
+    /// A syscall failed.
     #[error("`{call}` failed")]
     SyscallError {
+        /// The name of the syscall which failed.
         call: String,
+        /// The [`io::Error`] returned by the syscall.
         #[source]
         io_error: io::Error,
     },
 
+    /// The network interface does not exist.
     #[error("unknown network interface {name}")]
     UnknownInterface { name: String },
 
+    /// The program is not of the expected type.
     #[error("unexpected program type")]
     UnexpectedProgramType,
 
+    /// A map error occurred while loading or attaching a program.
     #[error(transparent)]
     MapError(#[from] MapError),
 
+    /// An error occurred while working with a [`KProbe`].
     #[error(transparent)]
     KProbeError(#[from] KProbeError),
 
+    /// An error occurred while working with an [`UProbe`].
     #[error(transparent)]
     UProbeError(#[from] UProbeError),
 
+    /// An error occurred while working with a [`TracePoint`].
     #[error(transparent)]
     TracePointError(#[from] TracePointError),
 
+    /// An error occurred while working with a [`SocketFilter`].
     #[error(transparent)]
     SocketFilterError(#[from] SocketFilterError),
 
+    /// An error occurred while working with an [`Xdp`] program.
     #[error(transparent)]
     XdpError(#[from] XdpError),
 
+    /// An error occurred while working with a TC program.
     #[error(transparent)]
     TcError(#[from] TcError),
 }
@@ -353,10 +367,15 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
     Ok(())
 }
 
+/// Detach an attached program.
 pub trait Link: std::fmt::Debug {
     fn detach(&mut self) -> Result<(), ProgramError>;
 }
 
+/// The return type of `program.attach(...)`.
+///
+/// [`LinkRef`] implements the [`Link`] trait and can be used to detach a
+/// program.
 #[derive(Debug)]
 pub struct LinkRef {
     inner: Rc<RefCell<dyn Link>>,

@@ -19,6 +19,18 @@ use crate::{
 ///
 /// - `kprobe`: get attached to the *start* of the target functions
 /// - `kretprobe`: get attached to the *return address* of the target functions
+///
+/// # Example
+///
+/// ```no_run
+/// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
+/// use aya::{Bpf, programs::KProbe};
+/// use std::convert::TryInto;
+///
+/// let program: &mut KProbe = bpf.program_mut("intercept_wakeups")?.try_into()?;
+/// program.attach("try_to_wake_up", 0, None)?;
+/// # Ok::<(), aya::BpfError>(())
+/// ```
 #[derive(Debug)]
 pub struct KProbe {
     pub(crate) data: ProgramData,
@@ -54,20 +66,6 @@ impl KProbe {
     /// If the program is a `kprobe`, it is attached to the *start* address of the target function.
     /// Conversely if the program is a `kretprobe`, it is attached to the return address of the
     /// target function.
-    ///
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
-    /// use aya::{Bpf, programs::KProbe};
-    /// use std::convert::TryInto;
-    ///
-    /// let program: &mut KProbe = bpf.program_mut("intercept_wakeups")?.try_into()?;
-    /// program.attach("try_to_wake_up", 0, None)?;
-    /// # Ok::<(), aya::BpfError>(())
-    /// ```
-    ///
     pub fn attach(
         &mut self,
         fn_name: &str,
@@ -78,6 +76,7 @@ impl KProbe {
     }
 }
 
+/// The type returned when attaching a [`KProbe`] fails.
 #[derive(Debug, Error)]
 pub enum KProbeError {
     #[error("`{filename}`")]

@@ -5,6 +5,7 @@ use crate::{generated::bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT, sys::perf_event_
 
 use super::{load_program, perf_attach, LinkRef, ProgramData, ProgramError};
 
+/// The type returned when attaching a [`TracePoint`] fails.
 #[derive(Debug, Error)]
 pub enum TracePointError {
     #[error("`{filename}`")]
@@ -15,16 +16,52 @@ pub enum TracePointError {
     },
 }
 
+/// A program that can be attached at a pre-defined kernel trace point.
+///
+/// The kernel provides a set of pre-defined trace points that eBPF programs can
+/// be attached to. See `/sys/kernel/debug/tracing/events` for a list of which
+/// events can be traced.
+///
+/// # Example
+///
+/// ```no_run
+/// ##[derive(Debug, thiserror::Error)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
+/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// use std::convert::{TryFrom, TryInto};
+/// use aya::programs::TracePoint;
+///
+/// let prog: &mut TracePoint = bpf.program_mut("trace_context_switch")?.try_into()?;
+/// prog.load()?;
+/// prog.attach("sched", "sched_switch")?;
+/// # Ok::<(), Error>(())
+/// ```
 #[derive(Debug)]
 pub struct TracePoint {
     pub(crate) data: ProgramData,
 }
 
 impl TracePoint {
+    /// Loads the program inside the kernel.
+    ///
+    /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_TRACEPOINT, &mut self.data)
     }
 
+    /// Attaches to a given trace point.
+    ///
+    /// For a list of the available event categories and names, see
+    /// `/sys/kernel/debug/tracing/events`.
     pub fn attach(&mut self, category: &str, name: &str) -> Result<LinkRef, ProgramError> {
         let id = read_sys_fs_trace_point_id(category, name)?;
         let fd = perf_event_open_trace_point(id).map_err(|(_code, io_error)| {
