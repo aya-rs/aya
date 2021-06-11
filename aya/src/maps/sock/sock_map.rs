@@ -13,14 +13,29 @@ use crate::{
     sys::{bpf_map_delete_elem, bpf_map_update_elem},
 };
 
-/// An array of TCP or UDP sock objects. Primarly used for doing socket redirect with eBPF helpers.
+/// An array of TCP or UDP sockets.
 ///
-/// A sock map can have two eBPF programs attached: one to parse packets and one to provide a
-/// redirect decision on packets. Whenever a sock object is added to the map, the map's programs
-/// are automatically attached to the socket.
+/// A `SockMap` is used to store TCP or UDP sockets. eBPF programs can then be
+/// attached to the map to inspect, filter or redirect network buffers on those
+/// sockets.
+///
+/// A `SockMap` can also be used to redirect packets to sockets contained by the
+/// map using `bpf_redirect_map()`, `bpf_sk_redirect_map()` etc.    
 ///
 /// # Example
 ///
+/// ```no_run
+/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// use std::convert::{TryFrom, TryInto};
+/// use aya::maps::SockMap;
+/// use aya::programs::SkMsg;
+///
+/// let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+/// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet")?.try_into()?;
+/// prog.load()?;
+/// prog.attach(&intercept_egress)?;
+/// # Ok::<(), aya::BpfError>(())
+/// ```
 pub struct SockMap<T: Deref<Target = Map>> {
     pub(crate) inner: T,
 }
@@ -66,10 +81,7 @@ impl<T: Deref<Target = Map>> SockMap<T> {
 }
 
 impl<T: Deref<Target = Map> + DerefMut<Target = Map>> SockMap<T> {
-    /// Stores a TCP socket into the map.
-    ///
-    /// eBPF programs can then pass `index` to the `bpf_sk_redirect_map()` helper to redirect
-    /// packets to the corresponding socket.
+    /// Stores a socket into the map.
     pub fn set<I: AsRawFd>(&mut self, index: u32, socket: &I, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(index)?;
@@ -83,7 +95,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> SockMap<T> {
         Ok(())
     }
 
-    /// Removes the TCP socket stored at `index` from the map.
+    /// Removes the socket stored at `index` from the map.
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(*index)?;

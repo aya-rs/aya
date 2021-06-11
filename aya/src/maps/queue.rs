@@ -1,3 +1,4 @@
+//! A FIFO queue.
 use std::{
     convert::TryFrom,
     marker::PhantomData,

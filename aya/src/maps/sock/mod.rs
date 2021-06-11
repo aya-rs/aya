@@ -1,3 +1,4 @@
+//! Socket maps.
 mod sock_hash;
 mod sock_map;
 

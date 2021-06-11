@@ -14,6 +14,15 @@ pub enum SkSkbKind {
     StreamVerdict,
 }
 
+/// A socket buffer program.
+///
+/// Socket buffer programs are attached to [socket maps], and can be used to
+/// inspect, redirect or filter packet. See [SockMap] and [SockHash] for more
+/// info and examples.
+///
+/// [socket maps]: crate::maps::sock
+/// [SockMap]: crate::maps::SockMap
+/// [SockHash]: crate::maps::SockHash
 #[derive(Debug)]
 pub struct SkSkb {
     pub(crate) data: ProgramData,
@@ -33,7 +42,7 @@ impl SkSkb {
         self.data.name.to_string()
     }
 
-    /// Attaches the program to the given sockmap.
+    /// Attaches the program to the given socket map.
     pub fn attach(&mut self, map: &dyn SocketMap) -> Result<LinkRef, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let map_fd = map.fd_or_err()?;

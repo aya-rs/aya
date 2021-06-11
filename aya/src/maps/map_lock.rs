@@ -46,11 +46,13 @@ impl MapLock {
     }
 }
 
+/// A borrowed reference to a BPF map.
 pub struct MapRef {
     _lock: Arc<RwLock<Map>>,
     guard: RwLockReadGuard<'static, Map>,
 }
 
+/// A mutable borrowed reference to a BPF map.
 pub struct MapRefMut {
     _lock: Arc<RwLock<Map>>,
     guard: RwLockWriteGuard<'static, Map>,

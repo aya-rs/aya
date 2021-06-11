@@ -117,6 +117,7 @@ pub enum MapError {
     BorrowMutError { name: String },
 }
 
+/// A generic handle to a BPF map.
 #[derive(Debug)]
 pub struct Map {
     pub(crate) obj: obj::Map,

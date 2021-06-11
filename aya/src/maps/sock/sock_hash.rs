@@ -14,22 +14,48 @@ use crate::{
     Pod,
 };
 
-/// A hash map that can be shared between eBPF programs and user space.
+/// A hash map of TCP or UDP sockets.
 ///
-/// It is required that both keys and values implement the [`Pod`] trait.
+/// A `SockHash` is used to store TCP or UDP sockets. eBPF programs can then be
+/// attached to the map to inspect, filter or redirect network buffers on those
+/// sockets.
+///
+/// A `SockHash` can also be used to redirect packets to sockets contained by the
+/// map using `bpf_redirect_map()`, `bpf_sk_redirect_hash()` etc.
 ///
 /// # Example
 ///
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[], None)?;
+/// ##[derive(Debug, thiserror::Error)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
+/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// use std::convert::{TryFrom, TryInto};
+/// use std::io::Write;
+/// use std::net::TcpStream;
+/// use std::os::unix::io::AsRawFd;
 /// use aya::maps::SockHash;
-/// use std::convert::TryFrom;
+/// use aya::programs::SkMsg;
 ///
-/// const CONFIG_KEY_NUM_RETRIES: u8 = 1;
+/// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+/// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet")?.try_into()?;
+/// prog.load()?;
+/// prog.attach(&intercept_egress)?;
 ///
-/// let mut hm = SockHash::try_from(bpf.map_mut("CONFIG")?)?;
-/// hm.insert(CONFIG_KEY_NUM_RETRIES, 3, 0 /* flags */);
-/// # Ok::<(), aya::BpfError>(())
+/// let mut client = TcpStream::connect("127.0.0.1:1234")?;
+/// intercept_egress.insert(1234, client.as_raw_fd(), 0)?;
+///
+/// // the write will be intercepted
+/// client.write_all(b"foo")?;
+/// # Ok::<(), Error>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_SOCKHASH")]
 pub struct SockHash<T: Deref<Target = Map>, K> {
@@ -56,8 +82,8 @@ impl<T: Deref<Target = Map>, K: Pod> SockHash<T, K> {
         })
     }
 
-    /// Returns a copy of the value associated with the key.
-    pub unsafe fn get(&self, key: &K, flags: u64) -> Result<u32, MapError> {
+    /// Returns the fd of the socket stored at the given key.
+    pub unsafe fn get(&self, key: &K, flags: u64) -> Result<RawFd, MapError> {
         let fd = self.inner.deref().fd_or_err()?;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(code, io_error)| {
             MapError::SyscallError {
@@ -71,7 +97,7 @@ impl<T: Deref<Target = Map>, K: Pod> SockHash<T, K> {
 
     /// An iterator visiting all key-value pairs in arbitrary order. The
     /// iterator item type is `Result<(K, V), MapError>`.
-    pub unsafe fn iter(&self) -> MapIter<'_, K, u32> {
+    pub unsafe fn iter(&self) -> MapIter<'_, K, RawFd> {
         MapIter::new(self)
     }
 
@@ -83,23 +109,23 @@ impl<T: Deref<Target = Map>, K: Pod> SockHash<T, K> {
 }
 
 impl<T: DerefMut<Target = Map>, K: Pod> SockHash<T, K> {
-    /// Inserts a key-value pair into the map.
+    /// Inserts a socket under the given key.
     pub fn insert<I: AsRawFd>(&mut self, key: K, value: I, flags: u64) -> Result<(), MapError> {
         hash_map::insert(&mut self.inner, key, value.as_raw_fd(), flags)
     }
 
-    /// Removes a key from the map.
+    /// Removes a socket from the map.
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
         hash_map::remove(&mut self.inner, key)
     }
 }
 
-impl<T: Deref<Target = Map>, K: Pod> IterableMap<K, u32> for SockHash<T, K> {
+impl<T: Deref<Target = Map>, K: Pod> IterableMap<K, RawFd> for SockHash<T, K> {
     fn map(&self) -> &Map {
         &self.inner
     }
 
-    unsafe fn get(&self, key: &K) -> Result<u32, MapError> {
+    unsafe fn get(&self, key: &K) -> Result<RawFd, MapError> {
         SockHash::get(self, key, 0)
     }
 }

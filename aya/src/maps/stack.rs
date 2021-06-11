@@ -1,3 +1,4 @@
+//! A LIFO stack.
 use std::{
     convert::TryFrom,
     marker::PhantomData,
@@ -13,6 +14,19 @@ use crate::{
 };
 
 /// A LIFO stack.
+///
+/// # Example
+/// ```no_run
+/// # let bpf = aya::Bpf::load(&[], None)?;
+/// use aya::maps::Stack;
+/// use std::convert::TryFrom;
+///
+/// let mut stack = Stack::try_from(bpf.map_mut("STACK")?)?;
+/// stack.push(42, 0)?;
+/// stack.push(43, 0)?;
+/// assert_eq!(stack.pop(0)?, 43);
+/// # Ok::<(), aya::BpfError>(())
+/// ```
 pub struct Stack<T: Deref<Target = Map>, V: Pod> {
     inner: T,
     _v: PhantomData<V>,
@@ -78,19 +92,6 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Stack<T, V> {
     /// # Errors
     ///
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
-    ///
-    /// # Example
-    /// ```no_run
-    /// # let bpf = aya::Bpf::load(&[], None)?;
-    /// use aya::maps::Stack;
-    /// use std::convert::TryFrom;
-    ///
-    /// let mut stack = Stack::try_from(bpf.map_mut("ARRAY")?)?;
-    /// stack.push(42, 0)?;
-    /// stack.push(43, 0)?;
-    /// assert_eq!(stack.pop(0)?, 43);
-    /// # Ok::<(), aya::BpfError>(())
-    /// ```
     pub fn push(&mut self, value: V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         bpf_map_update_elem(fd, &0, &value, flags).map_err(|(code, io_error)| {
