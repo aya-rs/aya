@@ -55,6 +55,7 @@ pub enum SocketFilterError {
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
+#[doc(alias = "BPF_PROG_TYPE_SOCKET_FILTER")]
 pub struct SocketFilter {
     pub(crate) data: ProgramData,
 }

@@ -47,6 +47,7 @@ use crate::{
 /// }
 /// # Ok::<(), Error>(())
 /// ```
+#[doc(alias = "BPF_MAP_TYPE_PERCPU_ARRAY")]
 pub struct PerCpuArray<T: Deref<Target = Map>, V: Pod> {
     inner: T,
     _v: PhantomData<V>,

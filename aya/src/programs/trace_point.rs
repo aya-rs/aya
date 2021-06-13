@@ -46,6 +46,7 @@ pub enum TracePointError {
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
+#[doc(alias = "BPF_PROG_TYPE_TRACEPOINT")]
 pub struct TracePoint {
     pub(crate) data: ProgramData,
 }

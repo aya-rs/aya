@@ -59,6 +59,7 @@ pub enum TcAttachType {
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
+#[doc(alias = "BPF_PROG_TYPE_SCHED_CLS")]
 pub struct SchedClassifier {
     pub(crate) data: ProgramData,
 }

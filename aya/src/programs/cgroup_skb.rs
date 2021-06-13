@@ -45,6 +45,7 @@ use super::FdLink;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
+#[doc(alias = "BPF_PROG_TYPE_CGROUP_SKB")]
 pub struct CgroupSkb {
     pub(crate) data: ProgramData,
     pub(crate) expected_attach_type: Option<CgroupSkbAttachType>,

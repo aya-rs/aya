@@ -32,6 +32,7 @@ use crate::{
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[derive(Debug)]
+#[doc(alias = "BPF_PROG_TYPE_KPROBE")]
 pub struct KProbe {
     pub(crate) data: ProgramData,
     pub(crate) kind: ProbeKind,

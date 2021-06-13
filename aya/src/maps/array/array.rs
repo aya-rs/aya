@@ -28,6 +28,7 @@ use crate::{
 /// assert_eq!(array.get(&1, 0)?, 42);
 /// # Ok::<(), aya::BpfError>(())
 /// ```
+#[doc(alias = "BPF_MAP_TYPE_ARRAY")]
 pub struct Array<T: Deref<Target = Map>, V: Pod> {
     inner: T,
     _v: PhantomData<V>,

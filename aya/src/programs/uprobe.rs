@@ -38,6 +38,7 @@ const LD_SO_CACHE_HEADER: &str = "glibc-ld.so.cache1.1";
 /// - `uprobe`: get attached to the *start* of the target functions
 /// - `uretprobe`: get attached to the *return address* of the target functions
 #[derive(Debug)]
+#[doc(alias = "BPF_PROG_TYPE_KPROBE")]
 pub struct UProbe {
     pub(crate) data: ProgramData,
     pub(crate) kind: ProbeKind,

@@ -40,6 +40,7 @@ pub enum SkSkbKind {
 /// [`SockMap`]: crate::maps::SockMap
 /// [`SockHash`]: crate::maps::SockHash
 #[derive(Debug)]
+#[doc(alias = "BPF_PROG_TYPE_SK_SKB")]
 pub struct SkSkb {
     pub(crate) data: ProgramData,
     pub(crate) kind: SkSkbKind,

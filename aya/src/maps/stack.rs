@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    generated::bpf_map_type::BPF_MAP_TYPE_QUEUE,
+    generated::bpf_map_type::BPF_MAP_TYPE_STACK,
     maps::{Map, MapError, MapRef, MapRefMut},
     sys::{bpf_map_lookup_and_delete_elem, bpf_map_update_elem},
     Pod,
@@ -27,6 +27,7 @@ use crate::{
 /// assert_eq!(stack.pop(0)?, 43);
 /// # Ok::<(), aya::BpfError>(())
 /// ```
+#[doc(alias = "BPF_MAP_TYPE_STACK")]
 pub struct Stack<T: Deref<Target = Map>, V: Pod> {
     inner: T,
     _v: PhantomData<V>,
@@ -35,7 +36,7 @@ pub struct Stack<T: Deref<Target = Map>, V: Pod> {
 impl<T: Deref<Target = Map>, V: Pod> Stack<T, V> {
     fn new(map: T) -> Result<Stack<T, V>, MapError> {
         let map_type = map.obj.def.map_type;
-        if map_type != BPF_MAP_TYPE_QUEUE as u32 {
+        if map_type != BPF_MAP_TYPE_STACK as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
             })?;

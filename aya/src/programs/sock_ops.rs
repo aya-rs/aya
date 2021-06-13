@@ -37,6 +37,7 @@ use crate::{
 /// prog.attach(file)?;
 /// # Ok::<(), Error>(())
 #[derive(Debug)]
+#[doc(alias = "BPF_PROG_TYPE_SOCK_OPS")]
 pub struct SockOps {
     pub(crate) data: ProgramData,
 }

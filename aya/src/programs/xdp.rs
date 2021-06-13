@@ -58,6 +58,7 @@ bitflags! {
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[derive(Debug)]
+#[doc(alias = "BPF_PROG_TYPE_XDP")]
 pub struct Xdp {
     pub(crate) data: ProgramData,
 }

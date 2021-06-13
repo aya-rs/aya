@@ -50,6 +50,7 @@ use crate::{
 /// [`SockMap`]: crate::maps::SockMap
 /// [`SockHash`]: crate::maps::SockHash
 #[derive(Debug)]
+#[doc(alias = "BPF_PROG_TYPE_SK_MSG")]
 pub struct SkMsg {
     pub(crate) data: ProgramData,
 }

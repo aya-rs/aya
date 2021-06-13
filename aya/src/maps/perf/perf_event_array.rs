@@ -155,6 +155,7 @@ impl<T: DerefMut<Target = Map>> AsRawFd for PerfEventArrayBuffer<T> {
 /// [mio]: https://docs.rs/mio
 /// [tokio]: https://docs.rs/tokio
 /// [async-std]: https://docs.rs/async-std
+#[doc(alias = "BPF_MAP_TYPE_PERF_EVENT_ARRAY")]
 pub struct PerfEventArray<T: DerefMut<Target = Map>> {
     map: Arc<T>,
     page_size: usize,

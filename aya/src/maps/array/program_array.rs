@@ -44,6 +44,7 @@ use crate::{
 /// prog_array.set(2, prog_2, flags);
 /// # Ok::<(), aya::BpfError>(())
 /// ```
+#[doc(alias = "BPF_MAP_TYPE_PROG_ARRAY")]
 pub struct ProgramArray<T: Deref<Target = Map>> {
     inner: T,
 }

@@ -83,6 +83,7 @@ use crate::maps::{
 /// # Ok(())
 /// # }
 /// ```
+#[doc(alias = "BPF_MAP_TYPE_PERF_EVENT_ARRAY")]
 pub struct AsyncPerfEventArray<T: DerefMut<Target = Map>> {
     perf_map: PerfEventArray<T>,
 }

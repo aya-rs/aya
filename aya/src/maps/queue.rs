@@ -14,6 +14,7 @@ use crate::{
 };
 
 /// A FIFO queue.
+#[doc(alias = "BPF_MAP_TYPE_QUEUE")]
 pub struct Queue<T: Deref<Target = Map>, V: Pod> {
     inner: T,
     _v: PhantomData<V>,

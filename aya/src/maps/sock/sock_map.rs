@@ -36,6 +36,7 @@ use crate::{
 /// prog.attach(&intercept_ingress)?;
 /// # Ok::<(), aya::BpfError>(())
 /// ```
+#[doc(alias = "BPF_MAP_TYPE_SOCKMAP")]
 pub struct SockMap<T: Deref<Target = Map>> {
     pub(crate) inner: T,
 }
