@@ -20,7 +20,7 @@ use crate::{
 /// This type can be used with eBPF maps of type `BPF_MAP_TYPE_PERCPU_HASH` and
 /// `BPF_MAP_TYPE_LRU_PERCPU_HASH`.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[], None)?;
@@ -97,7 +97,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
 impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// Inserts a slice of values - one for each CPU - for the given key.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```no_run
     /// # #[derive(thiserror::Error, Debug)]

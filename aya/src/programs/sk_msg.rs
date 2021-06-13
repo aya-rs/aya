@@ -11,10 +11,10 @@ use crate::{
 /// filter and redirect messages sent on sockets. See also [`SockMap`] and
 /// [`SockHash`].
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
-/// ##[derive(Debug, thiserror::Error)]
+/// # #[derive(Debug, thiserror::Error)]
 /// # enum Error {
 /// #     #[error(transparent)]
 /// #     IO(#[from] std::io::Error),

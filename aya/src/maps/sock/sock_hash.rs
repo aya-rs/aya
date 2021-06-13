@@ -23,10 +23,10 @@ use crate::{
 /// A `SockHash` can also be used to redirect packets to sockets contained by the
 /// map using `bpf_redirect_map()`, `bpf_sk_redirect_hash()` etc.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
-/// ##[derive(Debug, thiserror::Error)]
+/// # #[derive(Debug, thiserror::Error)]
 /// # enum Error {
 /// #     #[error(transparent)]
 /// #     IO(#[from] std::io::Error),

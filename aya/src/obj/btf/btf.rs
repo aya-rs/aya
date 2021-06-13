@@ -70,7 +70,7 @@ pub enum BtfError {
     MaximumTypeDepthReached { type_id: u32 },
 }
 
-/// Bpf Type Format (BTF) metadata.
+/// Bpf Type Format metadata.
 ///
 /// BTF is a kind of debug metadata that allows eBPF programs compiled against one kernel version
 /// to be loaded into different kernel versions.

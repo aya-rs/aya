@@ -21,7 +21,7 @@ pub enum SkSkbKind {
 /// inspect, redirect or filter incoming packet. See also [`SockMap`] and
 /// [`SockHash`].
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
 /// # let mut bpf = aya::Bpf::load(&[], None)?;

@@ -321,7 +321,7 @@ impl PerCpuKernelMem {
 ///
 /// Used by maps that implement per-CPU storage like [`PerCpuHashMap`].
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
 /// # #[derive(thiserror::Error, Debug)]

@@ -22,7 +22,7 @@ use crate::{
 /// A `SockMap` can also be used to redirect packets to sockets contained by the
 /// map using `bpf_redirect_map()`, `bpf_sk_redirect_map()` etc.    
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
 /// # let mut bpf = aya::Bpf::load(&[], None)?;

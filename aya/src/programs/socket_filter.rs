@@ -27,10 +27,10 @@ pub enum SocketFilterError {
 /// and filter incoming packets.
 ///
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
-/// ##[derive(Debug, thiserror::Error)]
+/// # #[derive(Debug, thiserror::Error)]
 /// # enum Error {
 /// #     #[error(transparent)]
 /// #     IO(#[from] std::io::Error),

@@ -76,7 +76,7 @@ impl<T: DerefMut<Target = Map>> AsRawFd for PerfEventArrayBuffer<T> {
 ///   inserted in the buffer
 /// * call [`PerfEventArrayBuffer::read_events`] to read the events
 ///
-/// # Example
+/// # Examples
 ///
 /// A common way to use a perf array is to have one perf buffer for each
 /// available CPU:

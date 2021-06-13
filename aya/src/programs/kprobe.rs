@@ -20,7 +20,7 @@ use crate::{
 /// - `kprobe`: get attached to the *start* of the target functions
 /// - `kretprobe`: get attached to the *return address* of the target functions
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;

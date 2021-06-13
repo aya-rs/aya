@@ -297,7 +297,7 @@ impl Bpf {
     ///
     /// Returns [`ProgramError::NotFound`] if the program does not exist.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```no_run
     /// # let bpf = aya::Bpf::load(&[], None)?;
@@ -322,7 +322,7 @@ impl Bpf {
     ///
     /// Returns [`ProgramError::NotFound`] if the program does not exist.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```no_run
     /// # let mut bpf = aya::Bpf::load(&[], None)?;

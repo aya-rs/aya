@@ -12,7 +12,7 @@ use crate::{
 /// parameters, watch connection state changes and more. They are attached to
 /// cgroups.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
 /// # #[derive(thiserror::Error, Debug)]

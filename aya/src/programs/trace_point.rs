@@ -22,10 +22,10 @@ pub enum TracePointError {
 /// be attached to. See `/sys/kernel/debug/tracing/events` for a list of which
 /// events can be traced.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
-/// ##[derive(Debug, thiserror::Error)]
+/// # #[derive(Debug, thiserror::Error)]
 /// # enum Error {
 /// #     #[error(transparent)]
 /// #     IO(#[from] std::io::Error),

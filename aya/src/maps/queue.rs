@@ -80,7 +80,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Queue<T, V> {
     ///
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
     ///
-    /// # Example
+    /// # Examples
     /// ```no_run
     /// # let bpf = aya::Bpf::load(&[], None)?;
     /// use aya::maps::Queue;

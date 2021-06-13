@@ -26,7 +26,7 @@ use crate::maps::{
 /// * call [`AsyncPerfEventArray::open`]
 /// * call [`AsyncPerfEventArrayBuffer::read_events`] to read the events
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
 /// # #[derive(thiserror::Error, Debug)]

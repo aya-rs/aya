@@ -13,7 +13,7 @@ use crate::{
 
 /// A hash map that can be shared between eBPF programs and user space.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[], None)?;

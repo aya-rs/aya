@@ -30,10 +30,10 @@ pub enum TcAttachType {
 /// linux network traffic control system. See
 /// [https://man7.org/linux/man-pages/man8/tc-bpf.8.html](https://man7.org/linux/man-pages/man8/tc-bpf.8.html).
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
-/// ##[derive(Debug, thiserror::Error)]
+/// # #[derive(Debug, thiserror::Error)]
 /// # enum Error {
 /// #     #[error(transparent)]
 /// #     IO(#[from] std::io::Error),

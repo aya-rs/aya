@@ -20,7 +20,7 @@ use crate::{
 /// prog_array, index)`. You can use [`ProgramArray`] to configure which
 /// programs correspond to which jump indexes.
 ///
-/// # Example
+/// # Examples
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[], None)?;
 /// use aya::maps::ProgramArray;

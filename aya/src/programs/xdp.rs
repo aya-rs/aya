@@ -46,7 +46,7 @@ bitflags! {
 /// underlying network driver, XDP programs can execute directly on network cards, greatly
 /// reducing CPU load.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```no_run
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;

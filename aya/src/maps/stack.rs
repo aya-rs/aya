@@ -15,7 +15,7 @@ use crate::{
 
 /// A LIFO stack.
 ///
-/// # Example
+/// # Examples
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[], None)?;
 /// use aya::maps::Stack;

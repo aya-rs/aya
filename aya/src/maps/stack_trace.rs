@@ -18,7 +18,7 @@ use crate::{
 /// `stack_id = bpf_get_stackid(ctx, map, flags)` from eBPF, and then you can retrieve the traces
 /// from their stack ids.
 ///  
-/// # Example
+/// # Examples
 ///
 /// ```no_run
 /// # #[derive(thiserror::Error, Debug)]
