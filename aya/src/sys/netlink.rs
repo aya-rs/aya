@@ -1,28 +1,23 @@
-use std::{
-    io,
-    mem,
-    os::unix::io::RawFd, 
-    ptr,
-    slice,
-};
+use std::{io, mem, os::unix::io::RawFd, ptr, slice};
 
 use libc::{
     c_int, close, getsockname, nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl,
-    socket, AF_NETLINK, AF_UNSPEC, IFLA_XDP, NETLINK_ROUTE, NLA_ALIGNTO, NLA_F_NESTED, NLMSG_DONE,
-    NLMSG_ERROR, NLM_F_ACK, NLM_F_EXCL, NLM_F_ECHO, NLM_F_CREATE, NLM_F_MULTI, NLM_F_REQUEST, RTM_SETLINK, SOCK_RAW, 
-    SOL_NETLINK, RTM_NEWQDISC, RTM_NEWTFILTER, RTM_DELTFILTER, ETH_P_ALL,
+    socket, AF_NETLINK, AF_UNSPEC, ETH_P_ALL, IFLA_XDP, NETLINK_ROUTE, NLA_ALIGNTO, NLA_F_NESTED,
+    NLMSG_DONE, NLMSG_ERROR, NLM_F_ACK, NLM_F_CREATE, NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI,
+    NLM_F_REQUEST, RTM_DELTFILTER, RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK, SOCK_RAW,
+    SOL_NETLINK,
 };
 
 use crate::{
     generated::{
-    _bindgen_ty_79::{IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS},
-    _bindgen_ty_91::{TCA_KIND, TCA_OPTIONS},
-    _bindgen_ty_133::{TCA_BPF_FD, TCA_BPF_NAME, TCA_BPF_FLAGS},
-    ifinfomsg, tcmsg, NLMSG_ALIGNTO, XDP_FLAGS_REPLACE,
-    TC_H_UNSPEC, TCA_BPF_FLAG_ACT_DIRECT, TC_H_CLSACT, TC_H_INGRESS, TC_H_MAJ_MASK,
+        _bindgen_ty_133::{TCA_BPF_FD, TCA_BPF_FLAGS, TCA_BPF_NAME},
+        _bindgen_ty_79::{IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS},
+        _bindgen_ty_91::{TCA_KIND, TCA_OPTIONS},
+        ifinfomsg, tcmsg, NLMSG_ALIGNTO, TCA_BPF_FLAG_ACT_DIRECT, TC_H_CLSACT, TC_H_INGRESS,
+        TC_H_MAJ_MASK, TC_H_UNSPEC, XDP_FLAGS_REPLACE,
     },
-    util::{htons, tc_handler_make},
-    programs::TcAttachPoint,
+    programs::TcAttachType,
+    util::tc_handler_make,
 };
 
 const NETLINK_EXT_ACK: c_int = 11;
@@ -130,9 +125,7 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     Ok(())
 }
 
-pub(crate) unsafe fn netlink_qdisc_add_clsact(
-    if_index: i32
-) -> Result<(), io::Error> {
+pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), io::Error> {
     let sock = NetlinkSocket::open()?;
 
     let seq = 1;
@@ -191,14 +184,14 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(
 
 pub(crate) unsafe fn netlink_qdisc_detach(
     if_index: i32,
-    attach_point: &TcAttachPoint,
+    attach_type: &TcAttachType,
     priority: u32,
 ) -> Result<(), io::Error> {
-        let sock = NetlinkSocket::open()?;
+    let sock = NetlinkSocket::open()?;
     let seq = 1;
     let mut req = mem::zeroed::<QdiscRequest>();
 
-    req.header = nlmsghdr{
+    req.header = nlmsghdr {
         nlmsg_len: (mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>()) as u32,
         nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
         nlmsg_type: RTM_DELTFILTER,
@@ -209,7 +202,7 @@ pub(crate) unsafe fn netlink_qdisc_detach(
     req.tc_info.tcm_family = AF_UNSPEC as u8;
     req.tc_info.tcm_handle = 0; // auto-assigned, if not provided
     req.tc_info.tcm_info = tc_handler_make(priority << 16, htons(ETH_P_ALL as u16) as u32);
-    req.tc_info.tcm_parent = attach_point.tcm_parent(0)?;
+    req.tc_info.tcm_parent = attach_type.parent();
     req.tc_info.tcm_ifindex = if_index;
 
     if send(
@@ -229,7 +222,7 @@ pub(crate) unsafe fn netlink_qdisc_detach(
 
 pub(crate) unsafe fn netlink_qdisc_attach(
     if_index: i32,
-    attach_point: &TcAttachPoint,
+    attach_type: &TcAttachType,
     prog_fd: RawFd,
     prog_name: &str,
 ) -> Result<u32, io::Error> {
@@ -238,7 +231,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     let priority = 0;
     let mut req = mem::zeroed::<QdiscRequest>();
 
-    req.header = nlmsghdr{
+    req.header = nlmsghdr {
         nlmsg_len: (mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>()) as u32,
         nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE | NLM_F_ECHO) as u16,
         nlmsg_type: RTM_NEWTFILTER,
@@ -246,9 +239,9 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         nlmsg_seq: seq,
     };
     req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = 0;  // auto-assigned, if not provided
+    req.tc_info.tcm_handle = 0; // auto-assigned, if not provided
     req.tc_info.tcm_ifindex = if_index;
-    req.tc_info.tcm_parent = attach_point.tcm_parent(0)?;
+    req.tc_info.tcm_parent = attach_type.parent();
 
     req.tc_info.tcm_info = tc_handler_make(priority << 16, htons(ETH_P_ALL as u16) as u32);
 
@@ -279,10 +272,10 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     let nested_tca_options_start = nla_len;
     let nested_attr_offset = offset;
     // now write the nested portion
-    
+
     let mut nested_attr = nlattr {
         nla_type: TCA_OPTIONS as u16 | NLA_F_NESTED as u16,
-        nla_len: nla_hdr_len as u16,  // no data
+        nla_len: nla_hdr_len as u16, // no data
     };
 
     offset += nla_hdr_len;
@@ -329,7 +322,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     ptr::write(offset as *mut u32, bpf_flags);
     nla_len += attr.nla_len;
 
-    // now write the NESTED nlattr 
+    // now write the NESTED nlattr
     nested_attr.nla_len = nla_len - nested_tca_options_start;
     ptr::write(nested_attr_offset as *mut nlattr, nested_attr);
     req.header.nlmsg_len += align_to(nla_len as usize, NLA_ALIGNTO as usize) as u32;
@@ -504,3 +497,6 @@ fn align_to(v: usize, align: usize) -> usize {
     (v + (align - 1)) & !(align - 1)
 }
 
+fn htons(u: u16) -> u16 {
+    u.to_be()
+}

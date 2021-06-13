@@ -1,25 +1,63 @@
+//! Network traffic control programs.
 use thiserror::Error;
 
 use std::{io, os::unix::io::RawFd};
 
 use crate::{
     generated::{
-        TC_H_CLSACT, TC_H_MIN_INGRESS, TC_H_MIN_EGRESS,
-        bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS,
+        bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS, TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     },
-    programs::{Link, LinkRef, load_program, ProgramData, ProgramError},
+    programs::{load_program, Link, LinkRef, ProgramData, ProgramError},
     sys::{netlink_qdisc_add_clsact, netlink_qdisc_attach, netlink_qdisc_detach},
     util::{ifindex_from_ifname, tc_handler_make},
 };
 
+/// Traffic control attach type.
 #[derive(Debug, Clone, Copy)]
-#[repr(u32)]
-pub enum TcAttachPoint {
-    Ingress = TC_H_MIN_INGRESS,
-    Egress = TC_H_MIN_EGRESS,
-    Custom,
+pub enum TcAttachType {
+    /// Attach to ingress.
+    Ingress,
+    /// Attach to egress.
+    Egress,
+    /// Attach to custom parent.
+    Custom(u32),
 }
 
+/// A network traffic control classifier.
+///
+/// [`SchedClassifier`] programs can be used to inspect, filter or redirect
+/// network packets in both ingress and egress. They are executed as part of the
+/// linux network traffic control system. See
+/// [https://man7.org/linux/man-pages/man8/tc-bpf.8.html](https://man7.org/linux/man-pages/man8/tc-bpf.8.html).
+///
+/// # Example
+///
+/// ```no_run
+/// ##[derive(Debug, thiserror::Error)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
+/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// use std::convert::TryInto;
+/// use aya::programs::{tc, SchedClassifier, TcAttachType};
+///
+/// // the clsact qdisc needs to be added before SchedClassifier programs can be
+/// // attached
+/// tc::qdisc_add_clsact("eth0")?;
+///
+/// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress")?.try_into()?;
+/// prog.load()?;
+/// prog.attach("eth0", TcAttachType::Ingress)?;
+///
+/// # Ok::<(), Error>(())
+/// ```
 #[derive(Debug)]
 pub struct SchedClassifier {
     pub(crate) data: ProgramData,
@@ -39,21 +77,17 @@ pub enum TcError {
 #[derive(Debug)]
 struct TcLink {
     if_index: i32,
-    attach_point: TcAttachPoint,
+    attach_type: TcAttachType,
     prog_fd: Option<RawFd>,
     priority: u32,
 }
 
-impl TcAttachPoint {
-    pub fn tcm_parent(&self, parent: u32) -> Result<u32, io::Error> {
-        match *self {
-            TcAttachPoint::Custom => {
-                if parent == 0 {
-                    return Err(io::Error::new(io::ErrorKind::Other, "Parent must be non-zero for Custom attach points"));
-                }
-                Ok(parent)
-            }
-            _ => Ok(tc_handler_make(TC_H_CLSACT, (*self).clone() as u32))
+impl TcAttachType {
+    pub(crate) fn parent(&self) -> u32 {
+        match self {
+            TcAttachType::Custom(parent) => *parent,
+            TcAttachType::Ingress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_INGRESS),
+            TcAttachType::Egress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_EGRESS),
         }
     }
 }
@@ -71,30 +105,32 @@ impl SchedClassifier {
         self.data.name.to_string()
     }
 
-    /// Attaches the program to the given `interface` and `attach-point`
-    pub fn attach(&mut self, interface: &str, attach_point: TcAttachPoint) -> Result<LinkRef, ProgramError> {
+    /// Attaches the program to the given `interface`.
+    ///
+    /// # Errors
+    ///
+    /// [`TcError::NetlinkError`] is returned if attaching fails. A common cause
+    /// of failure is not having added the `clsact` qdisc to the given
+    /// interface, see [`qdisc_add_clsact`]
+    ///
+    pub fn attach(
+        &mut self,
+        interface: &str,
+        attach_type: TcAttachType,
+    ) -> Result<LinkRef, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let if_index = unsafe { ifindex_from_ifname(interface) }
-                         .map_err(|io_error| TcError::NetlinkError { io_error })?;
-        let prog_name = self.name();
-        let priority = unsafe { netlink_qdisc_attach(if_index as i32, &attach_point, prog_fd, &prog_name[..]) }
+        let if_index = ifindex_from_ifname(interface)
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        let prog_name = self.name();
+        let priority =
+            unsafe { netlink_qdisc_attach(if_index as i32, &attach_type, prog_fd, &prog_name[..]) }
+                .map_err(|io_error| TcError::NetlinkError { io_error })?;
         Ok(self.data.link(TcLink {
             if_index: if_index as i32,
-            attach_point,
+            attach_type,
             prog_fd: Some(prog_fd),
             priority,
         }))
-    }
-    
-    /// Add "clasct" qdisc to an interface
-    pub fn qdisc_add_clsact_to_interface(if_name: &str) -> Result<(), ProgramError> {
-        // unsafe wrapper
-        let if_index = unsafe { ifindex_from_ifname(if_name) }
-                           .map_err(|_| ProgramError::UnknownInterface {name: if_name.to_string()})?;
-        unsafe { netlink_qdisc_add_clsact(if_index as i32) }
-                           .map_err(|io_error| TcError::NetlinkError { io_error })?;
-        Ok(())
     }
 }
 
@@ -107,7 +143,7 @@ impl Drop for TcLink {
 impl Link for TcLink {
     fn detach(&mut self) -> Result<(), ProgramError> {
         if let Some(_) = self.prog_fd.take() {
-            unsafe { netlink_qdisc_detach(self.if_index, &self.attach_point, self.priority) }
+            unsafe { netlink_qdisc_detach(self.if_index, &self.attach_type, self.priority) }
                 .map_err(|io_error| TcError::NetlinkError { io_error })?;
             Ok(())
         } else {
@@ -116,3 +152,15 @@ impl Link for TcLink {
     }
 }
 
+/// Add the `clasct` qdisc to the given interface.
+///
+/// The `clsact` qdisc must be added to an interface before [`SchedClassifier`]
+/// programs can be attached.
+pub fn qdisc_add_clsact(if_name: &str) -> Result<(), ProgramError> {
+    let if_index = ifindex_from_ifname(if_name).map_err(|_| ProgramError::UnknownInterface {
+        name: if_name.to_string(),
+    })?;
+    unsafe { netlink_qdisc_add_clsact(if_index as i32) }
+        .map_err(|io_error| TcError::NetlinkError { io_error })?;
+    Ok(())
+}
