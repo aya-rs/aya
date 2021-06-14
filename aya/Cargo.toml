@@ -1,6 +1,6 @@
 [package]
 name = "aya"
-version = "0.1.0"
+version = "0.10.0"
 authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
 edition = "2018"
 
