@@ -58,7 +58,7 @@ use aya::Bpf;
 use aya::programs::{CgroupSkb, CgroupSkbAttachType};
 
 // load the BPF code
-let bpf = Bpf::load_file("bpf.o")?;
+let mut bpf = Bpf::load_file("bpf.o")?;
 
 // get the `ingress_filter` program compiled into `bpf.o`. 
 let ingress: &mut CgroupSkb = bpf.program_mut("ingress_filter")?.try_into()?;

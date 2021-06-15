@@ -41,24 +41,22 @@ use crate::maps::{
 /// #    PerfBuf(#[from] aya::maps::perf::PerfBufferError),
 /// # }
 /// # async fn try_main() -> Result<(), Error> {
-/// # use async_std::task;
 /// # let bpf = aya::Bpf::load(&[], None)?;
 /// use aya::maps::perf::{AsyncPerfEventArray, PerfBufferError};
 /// use aya::util::online_cpus;
 /// use std::convert::TryFrom;
 /// use futures::future;
 /// use bytes::BytesMut;
+/// use tokio::task; // or async_std::task
 ///
 /// // try to convert the PERF_ARRAY map to an AsyncPerfEventArray
 /// let mut perf_array = AsyncPerfEventArray::try_from(bpf.map_mut("PERF_ARRAY")?)?;
 ///
-/// let mut futs = Vec::new();
 /// for cpu_id in online_cpus()? {
 ///     // open a separate perf buffer for each cpu
 ///     let mut buf = perf_array.open(cpu_id, None)?;
 ///
 ///     // process each perf buffer in a separate task
-///     // NOTE: use async_std::task::spawn with async-std and tokio::spawn with tokio
 ///     task::spawn(async move {
 ///         let mut buffers = (0..10)
 ///             .map(|_| BytesMut::with_capacity(1024))

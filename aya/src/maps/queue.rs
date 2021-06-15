@@ -14,6 +14,19 @@ use crate::{
 };
 
 /// A FIFO queue.
+///
+/// # Examples
+/// ```no_run
+/// # let bpf = aya::Bpf::load(&[], None)?;
+/// use aya::maps::Queue;
+/// use std::convert::TryFrom;
+///
+/// let mut queue = Queue::try_from(bpf.map_mut("ARRAY")?)?;
+/// queue.push(42, 0)?;
+/// queue.push(43, 0)?;
+/// assert_eq!(queue.pop(0)?, 42);
+/// # Ok::<(), aya::BpfError>(())
+/// ```
 #[doc(alias = "BPF_MAP_TYPE_QUEUE")]
 pub struct Queue<T: Deref<Target = Map>, V: Pod> {
     inner: T,
@@ -80,19 +93,6 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Queue<T, V> {
     /// # Errors
     ///
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
-    ///
-    /// # Examples
-    /// ```no_run
-    /// # let bpf = aya::Bpf::load(&[], None)?;
-    /// use aya::maps::Queue;
-    /// use std::convert::TryFrom;
-    ///
-    /// let mut queue = Queue::try_from(bpf.map_mut("ARRAY")?)?;
-    /// queue.push(42, 0)?;
-    /// queue.push(43, 0)?;
-    /// assert_eq!(queue.pop(0)?, 42);
-    /// # Ok::<(), aya::BpfError>(())
-    /// ```
     pub fn push(&mut self, value: V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         bpf_map_push_elem(fd, &value, flags).map_err(|(code, io_error)| {
