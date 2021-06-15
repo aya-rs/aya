@@ -40,7 +40,7 @@ Some of the major features provided include:
 [api-docs]: https://docs.rs/aya
 [libbpf]: https://github.com/libbpf/libbpf
 [bcc]: https://github.com/iovisor/bcc
-[libc]: https://crates.io/libc
+[libc]: https://docs.rs/libc
 [co-re]: https://facebookmicrosites.github.io/bpf/blog/2020/02/19/bpf-portability-and-co-re.html 
 [tokio]: https://docs.rs/tokio
 [async-std]: https://docs.rs/async-std
