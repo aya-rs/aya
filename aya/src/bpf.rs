@@ -87,7 +87,7 @@ impl Bpf {
                 path: path.to_owned(),
                 error,
             })?,
-            Some(Btf::from_sys_fs()?),
+            Btf::from_sys_fs().ok(),
         )
     }
 
