@@ -1,7 +1,13 @@
 [package]
 name = "aya"
 version = "0.10.0"
+description = "An eBPF library with a focus on developer experience and operability."
+keywords = ["ebpf", "bpf", "linux", "kernel"]
+license = "MIT OR Apache-2.0"
 authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
+repository = "https://github.com/alessandrod/aya"
+readme = "README.md"
+documentation = "https://docs.rs/aya"
 edition = "2018"
 
 [dependencies]
