@@ -19,8 +19,9 @@ use crate::{
         Object, ParseError, ProgramKind,
     },
     programs::{
-        CgroupSkb, CgroupSkbAttachType, KProbe, ProbeKind, Program, ProgramData, ProgramError,
-        SchedClassifier, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        CgroupSkb, CgroupSkbAttachType, KProbe, LircMode2, ProbeKind, Program, ProgramData,
+        ProgramError, SchedClassifier, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
+        UProbe, Xdp,
     },
     sys::bpf_map_update_elem_ptr,
     util::{possible_cpus, POSSIBLE_CPUS},
@@ -195,6 +196,7 @@ impl Bpf {
                         data,
                         expected_attach_type: Some(CgroupSkbAttachType::Egress),
                     }),
+                    ProgramKind::LircMode2 => Program::LircMode2(LircMode2 { data }),
                 };
 
                 (name, program)
