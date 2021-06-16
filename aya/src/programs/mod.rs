@@ -38,6 +38,7 @@
 //! [`maps`]: crate::maps
 mod cgroup_skb;
 mod kprobe;
+mod lirc_mode2;
 mod perf_attach;
 mod probe;
 mod sk_msg;
@@ -55,6 +56,7 @@ use thiserror::Error;
 
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
 pub use kprobe::{KProbe, KProbeError};
+pub use lirc_mode2::LircMode2;
 use perf_attach::*;
 pub use probe::ProbeKind;
 pub use sk_msg::SkMsg;
@@ -170,6 +172,7 @@ pub enum Program {
     SockOps(SockOps),
     SchedClassifier(SchedClassifier),
     CgroupSkb(CgroupSkb),
+    LircMode2(LircMode2),
 }
 
 impl Program {
@@ -201,6 +204,7 @@ impl Program {
             Program::SockOps(_) => BPF_PROG_TYPE_SOCK_OPS,
             Program::SchedClassifier(_) => BPF_PROG_TYPE_SCHED_CLS,
             Program::CgroupSkb(_) => BPF_PROG_TYPE_CGROUP_SKB,
+            Program::LircMode2(_) => BPF_PROG_TYPE_LIRC_MODE2,
         }
     }
 
@@ -221,6 +225,7 @@ impl Program {
             Program::SockOps(p) => &p.data,
             Program::SchedClassifier(p) => &p.data,
             Program::CgroupSkb(p) => &p.data,
+            Program::LircMode2(p) => &p.data,
         }
     }
 
@@ -236,6 +241,7 @@ impl Program {
             Program::SockOps(p) => &mut p.data,
             Program::SchedClassifier(p) => &mut p.data,
             Program::CgroupSkb(p) => &mut p.data,
+            Program::LircMode2(p) => &mut p.data,
         }
     }
 }
@@ -482,7 +488,8 @@ impl_program_fd!(
     SkMsg,
     SkSkb,
     SchedClassifier,
-    CgroupSkb
+    CgroupSkb,
+    LircMode2
 );
 
 macro_rules! impl_try_from_program {
@@ -523,5 +530,6 @@ impl_try_from_program!(
     SkSkb,
     SockOps,
     SchedClassifier,
-    CgroupSkb
+    CgroupSkb,
+    LircMode2
 );

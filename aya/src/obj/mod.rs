@@ -80,6 +80,7 @@ pub enum ProgramKind {
     SchedClassifier,
     CgroupSkbIngress,
     CgroupSkbEgress,
+    LircMode2,
 }
 
 impl FromStr for ProgramKind {
@@ -102,6 +103,7 @@ impl FromStr for ProgramKind {
             "classifier" => SchedClassifier,
             "cgroup_skb/ingress" => CgroupSkbIngress,
             "cgroup_skb/egress" => CgroupSkbEgress,
+            "lirc_mode2" => LircMode2,
             _ => {
                 return Err(ParseError::InvalidProgramKind {
                     kind: kind.to_string(),
@@ -302,7 +304,8 @@ impl Object {
             | &[ty @ "classifier", name]
             | &[ty @ "cgroup_skb/ingress", name]
             | &[ty @ "cgroup_skb/egress", name]
-            | &[ty @ "cgroup/skb", name] => {
+            | &[ty @ "cgroup/skb", name]
+            | &[ty @ "lirc_mode2", name] => {
                 self.programs
                     .insert(name.to_string(), self.parse_program(&section, ty, name)?);
                 if !section.relocations.is_empty() {
