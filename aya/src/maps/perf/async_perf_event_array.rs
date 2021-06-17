@@ -40,6 +40,7 @@ use crate::maps::{
 /// #    #[error(transparent)]
 /// #    PerfBuf(#[from] aya::maps::perf::PerfBufferError),
 /// # }
+/// # #[cfg(feature = "async_tokio")]
 /// # async fn try_main() -> Result<(), Error> {
 /// # let bpf = aya::Bpf::load(&[], None)?;
 /// use aya::maps::perf::{AsyncPerfEventArray, PerfBufferError};
