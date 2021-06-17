@@ -18,15 +18,27 @@ use libc::{close, dup};
 /// # Examples
 ///
 /// ```no_run
+/// # #[derive(thiserror::Error, Debug)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
+/// # let mut bpf = aya::Bpf::load(&[], None)?;
 /// use std::fs::File;
 /// use std::convert::TryInto;
 /// use aya::programs::LircMode2;
 ///
-/// let file = File::open("/dev/lirc0").unwrap();
-/// let mut bpf = Bpf::load_file("imon_rsc.o").unwrap();
-/// let decoder: &mut LircMode2 = bpf.program_mut("imon_rsc").unwrap().try_into().unwrap();
-/// decoder.load().unwrap();
-/// decoder.attach(file).unwrap();
+/// let file = File::open("/dev/lirc0")?;
+/// let mut bpf = aya::Bpf::load_file("imon_rsc.o")?;
+/// let decoder: &mut LircMode2 = bpf.program_mut("imon_rsc")?.try_into().unwrap();
+/// decoder.load()?;
+/// decoder.attach(file)?;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
