@@ -361,6 +361,7 @@ struct Request {
 struct QdiscRequest {
     header: nlmsghdr,
     tc_info: tcmsg,
+    attrs: [u8; 64],
 }
 
 struct NetlinkSocket {
