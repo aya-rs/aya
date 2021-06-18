@@ -94,7 +94,7 @@ impl FromStr for ProgramKind {
             "uprobe" => UProbe,
             "uretprobe" => URetProbe,
             "xdp" => Xdp,
-            "trace_point" => TracePoint,
+            "tracepoint" => TracePoint,
             "socket_filter" => SocketFilter,
             "sk_msg" => SkMsg,
             "sk_skb/stream_parser" => SkSkbStreamParser,
@@ -848,7 +848,7 @@ mod tests {
         let mut obj = fake_obj();
 
         assert_matches!(
-            obj.parse_section(fake_section("trace_point/foo", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section("tracepoint/foo", bytes_of(&fake_ins()))),
             Ok(())
         );
         assert_matches!(
