@@ -296,7 +296,7 @@ impl Object {
             | &[ty @ "uretprobe", name]
             | &[ty @ "socket_filter", name]
             | &[ty @ "xdp", name]
-            | &[ty @ "trace_point", name]
+            | &[ty @ "tracepoint", name]
             | &[ty @ "sk_msg", name]
             | &[ty @ "sk_skb/stream_parser", name]
             | &[ty @ "sk_skb/stream_verdict", name]
