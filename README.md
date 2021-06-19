@@ -9,7 +9,10 @@
 [license-badge]: https://img.shields.io/badge/license-MIT%2FApache--2.0-blue
 [build-badge]: https://github.com/alessandrod/aya/actions/workflows/build-test.yml/badge.svg 
 
-[API docs][api-docs]
+[API docs][api-docs] | [Chat][chat-url]
+
+[api-docs]: https://docs.rs/aya
+[chat-url]: https://discord.gg/xHW2cb2N6G
 
 ## Overview
 
@@ -37,7 +40,6 @@ Some of the major features provided include:
   compiled headers, and not even a C toolchain; a release build completes in a matter
   of seconds.
 
-[api-docs]: https://docs.rs/aya
 [libbpf]: https://github.com/libbpf/libbpf
 [bcc]: https://github.com/iovisor/bcc
 [libc]: https://docs.rs/libc
@@ -71,6 +73,10 @@ ingress.load()?;
 let cgroup = File::open("/sys/fs/cgroup/unified")?;
 ingress.attach(cgroup, CgroupSkbAttachType::Ingress)?;
 ```
+
+## Community
+
+Join [the conversation on Discord][chat-url] to discuss anything related to aya.
 
 ## License
 
