@@ -16,7 +16,7 @@ use crate::{
     maps::{Map, MapError, MapLock, MapRef, MapRefMut},
     obj::{
         btf::{Btf, BtfError},
-        Object, ParseError, ProgramKind,
+        Object, ParseError, ProgramSection,
     },
     programs::{
         CgroupSkb, CgroupSkbAttachType, KProbe, LircMode2, ProbeKind, Program, ProgramData,
@@ -148,55 +148,57 @@ impl Bpf {
             .programs
             .drain()
             .map(|(name, obj)| {
-                let kind = obj.kind;
+                let section = obj.section.clone();
                 let data = ProgramData {
                     obj,
                     name: name.clone(),
                     fd: None,
                     links: Vec::new(),
                 };
-                let program = match kind {
-                    ProgramKind::KProbe => Program::KProbe(KProbe {
+                let program = match section {
+                    ProgramSection::KProbe { .. } => Program::KProbe(KProbe {
                         data,
                         kind: ProbeKind::KProbe,
                     }),
-                    ProgramKind::KRetProbe => Program::KProbe(KProbe {
+                    ProgramSection::KRetProbe { .. } => Program::KProbe(KProbe {
                         data,
                         kind: ProbeKind::KRetProbe,
                     }),
-                    ProgramKind::UProbe => Program::UProbe(UProbe {
+                    ProgramSection::UProbe { .. } => Program::UProbe(UProbe {
                         data,
                         kind: ProbeKind::UProbe,
                     }),
-                    ProgramKind::URetProbe => Program::UProbe(UProbe {
+                    ProgramSection::URetProbe { .. } => Program::UProbe(UProbe {
                         data,
                         kind: ProbeKind::URetProbe,
                     }),
-                    ProgramKind::TracePoint => Program::TracePoint(TracePoint { data }),
-                    ProgramKind::SocketFilter => Program::SocketFilter(SocketFilter { data }),
-                    ProgramKind::Xdp => Program::Xdp(Xdp { data }),
-                    ProgramKind::SkMsg => Program::SkMsg(SkMsg { data }),
-                    ProgramKind::SkSkbStreamParser => Program::SkSkb(SkSkb {
+                    ProgramSection::TracePoint { .. } => Program::TracePoint(TracePoint { data }),
+                    ProgramSection::SocketFilter { .. } => {
+                        Program::SocketFilter(SocketFilter { data })
+                    }
+                    ProgramSection::Xdp { .. } => Program::Xdp(Xdp { data }),
+                    ProgramSection::SkMsg { .. } => Program::SkMsg(SkMsg { data }),
+                    ProgramSection::SkSkbStreamParser { .. } => Program::SkSkb(SkSkb {
                         data,
                         kind: SkSkbKind::StreamParser,
                     }),
-                    ProgramKind::SkSkbStreamVerdict => Program::SkSkb(SkSkb {
+                    ProgramSection::SkSkbStreamVerdict { .. } => Program::SkSkb(SkSkb {
                         data,
                         kind: SkSkbKind::StreamVerdict,
                     }),
-                    ProgramKind::SockOps => Program::SockOps(SockOps { data }),
-                    ProgramKind::SchedClassifier => {
+                    ProgramSection::SockOps { .. } => Program::SockOps(SockOps { data }),
+                    ProgramSection::SchedClassifier { .. } => {
                         Program::SchedClassifier(SchedClassifier { data })
                     }
-                    ProgramKind::CgroupSkbIngress => Program::CgroupSkb(CgroupSkb {
+                    ProgramSection::CgroupSkbIngress { .. } => Program::CgroupSkb(CgroupSkb {
                         data,
                         expected_attach_type: Some(CgroupSkbAttachType::Ingress),
                     }),
-                    ProgramKind::CgroupSkbEgress => Program::CgroupSkb(CgroupSkb {
+                    ProgramSection::CgroupSkbEgress { .. } => Program::CgroupSkb(CgroupSkb {
                         data,
                         expected_attach_type: Some(CgroupSkbAttachType::Egress),
                     }),
-                    ProgramKind::LircMode2 => Program::LircMode2(LircMode2 { data }),
+                    ProgramSection::LircMode2 { .. } => Program::LircMode2(LircMode2 { data }),
                 };
 
                 (name, program)
