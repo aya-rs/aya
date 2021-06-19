@@ -46,69 +46,27 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     req.if_info.ifi_family = AF_UNSPEC as u8;
     req.if_info.ifi_index = if_index;
 
-    let attrs_addr = &req as *const _ as usize + req.header.nlmsg_len as usize;
-    let attrs_addr = align_to(attrs_addr, NLMSG_ALIGNTO as usize);
-    let nla_hdr_len = align_to(mem::size_of::<nlattr>(), NLA_ALIGNTO as usize);
+    let attrs_addr = align_to(
+        &req as *const _ as usize + req.header.nlmsg_len as usize,
+        NLMSG_ALIGNTO as usize,
+    );
+    let attrs_end = &req as *const _ as usize + mem::size_of::<Request>();
+    let attrs_buf = slice::from_raw_parts_mut(attrs_addr as *mut u8, attrs_end - attrs_addr);
 
-    // length of the root attribute
-    let mut nla_len = nla_hdr_len as u16;
-
-    // set the program fd
-    let mut offset = attrs_addr + nla_len as usize;
-    let attr = nlattr {
-        nla_type: IFLA_XDP_FD as u16,
-        // header len + fd
-        nla_len: (nla_hdr_len + mem::size_of::<RawFd>()) as u16,
-    };
-    // write the header
-    ptr::write(offset as *mut nlattr, attr);
-    offset += nla_hdr_len;
-    // write the fd
-    ptr::write(offset as *mut RawFd, fd);
-    offset += 4;
-    nla_len += attr.nla_len;
+    // write the attrs
+    let mut attrs = NestedAttrs::new(attrs_buf, IFLA_XDP);
+    attrs.write_attr(IFLA_XDP_FD as u16, fd)?;
 
     if flags > 0 {
-        // set the flags
-        let attr = nlattr {
-            nla_type: IFLA_XDP_FLAGS as u16,
-            // header len + flags
-            nla_len: (nla_hdr_len + mem::size_of::<u32>()) as u16,
-        };
-        // write the header
-        ptr::write(offset as *mut nlattr, attr);
-        offset += nla_hdr_len;
-        // write the flags
-        ptr::write(offset as *mut u32, flags);
-        offset += 4;
-        nla_len += attr.nla_len;
+        attrs.write_attr(IFLA_XDP_FLAGS as u16, flags)?;
     }
 
     if flags & XDP_FLAGS_REPLACE != 0 {
-        // set the expected fd
-        let attr = nlattr {
-            nla_type: IFLA_XDP_EXPECTED_FD as u16,
-            // header len + fd
-            nla_len: (nla_hdr_len + mem::size_of::<RawFd>()) as u16,
-        };
-        // write the header
-        ptr::write(offset as *mut nlattr, attr);
-        offset += nla_hdr_len;
-        // write the old fd
-        ptr::write(offset as *mut RawFd, old_fd.unwrap());
-        // offset += 4;
-        nla_len += attr.nla_len;
+        attrs.write_attr(IFLA_XDP_EXPECTED_FD as u16, old_fd.unwrap())?;
     }
 
-    // now write the root header
-    let attr = nlattr {
-        nla_type: NLA_F_NESTED as u16 | IFLA_XDP as u16,
-        nla_len,
-    };
-    offset = attrs_addr;
-    ptr::write(offset as *mut nlattr, attr);
-
-    req.header.nlmsg_len += align_to(nla_len as usize, NLA_ALIGNTO as usize) as u32;
+    let nla_len = attrs.finish()?;
+    req.header.nlmsg_len += align_to(nla_len, NLA_ALIGNTO as usize) as u32;
 
     if send(
         sock.sock,
@@ -494,10 +452,121 @@ impl Drop for NetlinkSocket {
     }
 }
 
-fn align_to(v: usize, align: usize) -> usize {
+const fn align_to(v: usize, align: usize) -> usize {
     (v + (align - 1)) & !(align - 1)
 }
 
 fn htons(u: u16) -> u16 {
     u.to_be()
+}
+
+const NLA_HDR_LEN: usize = align_to(mem::size_of::<nlattr>(), NLA_ALIGNTO as usize);
+
+struct NestedAttrs<'a> {
+    buf: &'a mut [u8],
+    top_attr_type: u16,
+    offset: usize,
+}
+
+impl<'a> NestedAttrs<'a> {
+    fn new(buf: &mut [u8], top_attr_type: u16) -> NestedAttrs<'_> {
+        NestedAttrs {
+            buf,
+            top_attr_type,
+            offset: NLA_HDR_LEN,
+        }
+    }
+
+    fn write_attr<T>(&mut self, attr_type: u16, value: T) -> io::Result<()> {
+        let attr = nlattr {
+            nla_type: attr_type as u16,
+            nla_len: (NLA_HDR_LEN + mem::size_of::<T>()) as u16,
+        };
+
+        self.write_header(attr)?;
+        self.write_value(value)?;
+
+        Ok(())
+    }
+
+    fn write_header<T>(&mut self, value: T) -> Result<(), io::Error> {
+        write(self.buf, self.offset, value)?;
+        self.offset += NLA_HDR_LEN;
+        Ok(())
+    }
+
+    fn write_value<T>(&mut self, value: T) -> Result<(), io::Error> {
+        self.offset += write(self.buf, self.offset, value)?;
+        Ok(())
+    }
+
+    fn finish(self) -> Result<usize, io::Error> {
+        let nla_len = self.offset;
+        let attr = nlattr {
+            nla_type: NLA_F_NESTED as u16 | self.top_attr_type as u16,
+            nla_len: nla_len as u16,
+        };
+
+        write(self.buf, 0, attr)?;
+        Ok(nla_len)
+    }
+}
+
+fn write<T>(buf: &mut [u8], offset: usize, value: T) -> Result<usize, io::Error> {
+    let value_size = mem::size_of::<T>();
+    if offset + value_size > buf.len() {
+        return Err(io::Error::new(io::ErrorKind::Other, "not space left"));
+    }
+    unsafe { ptr::write_unaligned(buf[offset..].as_mut_ptr() as *mut T, value) };
+
+    Ok(value_size)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_nested_attrs() {
+        let mut buf = [0; 64];
+
+        // write IFLA_XDP with 2 nested attrs
+        let mut attrs = NestedAttrs::new(&mut buf, IFLA_XDP);
+        attrs.write_attr(IFLA_XDP_FD as u16, 42u32).unwrap();
+        attrs
+            .write_attr(IFLA_XDP_EXPECTED_FD as u16, 24u32)
+            .unwrap();
+        let len = attrs.finish().unwrap() as u16;
+
+        // 3 nlattr headers (IFLA_XDP, IFLA_XDP_FD and IFLA_XDP_EXPECTED_FD) + the fd
+        let nla_len = (NLA_HDR_LEN * 3 + mem::size_of::<u32>() * 2) as u16;
+        assert_eq!(len, nla_len);
+
+        // read IFLA_XDP
+        let attr = unsafe { ptr::read_unaligned(buf.as_ptr() as *const nlattr) };
+        assert_eq!(attr.nla_type, NLA_F_NESTED as u16 | IFLA_XDP);
+        assert_eq!(attr.nla_len, nla_len);
+
+        // read IFLA_XDP_FD + fd
+        let attr = unsafe { ptr::read_unaligned(buf[NLA_HDR_LEN..].as_ptr() as *const nlattr) };
+        assert_eq!(attr.nla_type, IFLA_XDP_FD as u16);
+        assert_eq!(attr.nla_len, (NLA_HDR_LEN + mem::size_of::<u32>()) as u16);
+        let fd = unsafe { ptr::read_unaligned(buf[NLA_HDR_LEN * 2..].as_ptr() as *const u32) };
+        assert_eq!(fd, 42);
+
+        // read IFLA_XDP_EXPECTED_FD + fd
+        let attr = unsafe {
+            ptr::read_unaligned(
+                buf[NLA_HDR_LEN * 2 + mem::size_of::<u32>()..].as_ptr() as *const nlattr
+            )
+        };
+        assert_eq!(attr.nla_type, IFLA_XDP_EXPECTED_FD as u16);
+        assert_eq!(attr.nla_len, (NLA_HDR_LEN + mem::size_of::<u32>()) as u16);
+        let fd = unsafe {
+            ptr::read_unaligned(
+                buf[NLA_HDR_LEN * 3 + mem::size_of::<u32>()..].as_ptr() as *const u32
+            )
+        };
+        assert_eq!(fd, 24);
+    }
 }
