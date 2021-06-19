@@ -477,27 +477,16 @@ impl<'a> NestedAttrs<'a> {
         }
     }
 
-    fn write_attr<T>(&mut self, attr_type: u16, value: T) -> io::Result<()> {
-        let attr = nlattr {
-            nla_type: attr_type as u16,
-            nla_len: (NLA_HDR_LEN + mem::size_of::<T>()) as u16,
-        };
-
-        self.write_header(attr)?;
-        self.write_value(value)?;
-
-        Ok(())
+    fn write_attr<T>(&mut self, attr_type: u16, value: T) -> Result<usize, io::Error> {
+        let size = write_attr(&mut self.buf, self.offset, attr_type, value)?;
+        self.offset += size;
+        Ok(size)
     }
 
-    fn write_header<T>(&mut self, value: T) -> Result<(), io::Error> {
-        write(self.buf, self.offset, value)?;
-        self.offset += NLA_HDR_LEN;
-        Ok(())
-    }
-
-    fn write_value<T>(&mut self, value: T) -> Result<(), io::Error> {
-        self.offset += write(self.buf, self.offset, value)?;
-        Ok(())
+    fn write_attr_bytes(&mut self, attr_type: u16, value: &[u8]) -> Result<usize, io::Error> {
+        let size = write_attr_bytes(&mut self.buf, self.offset, attr_type, value)?;
+        self.offset += size;
+        Ok(size)
     }
 
     fn finish(self) -> Result<usize, io::Error> {
@@ -507,19 +496,55 @@ impl<'a> NestedAttrs<'a> {
             nla_len: nla_len as u16,
         };
 
-        write(self.buf, 0, attr)?;
+        write_attr_header(self.buf, 0, attr)?;
         Ok(nla_len)
     }
 }
 
-fn write<T>(buf: &mut [u8], offset: usize, value: T) -> Result<usize, io::Error> {
-    let value_size = mem::size_of::<T>();
-    if offset + value_size > buf.len() {
-        return Err(io::Error::new(io::ErrorKind::Other, "not space left"));
-    }
-    unsafe { ptr::write_unaligned(buf[offset..].as_mut_ptr() as *mut T, value) };
+fn write_attr<T>(
+    buf: &mut [u8],
+    offset: usize,
+    attr_type: u16,
+    value: T,
+) -> Result<usize, io::Error> {
+    let value =
+        unsafe { slice::from_raw_parts(&value as *const _ as *const _, mem::size_of::<T>()) };
+    write_attr_bytes(buf, offset, attr_type, value)
+}
 
-    Ok(value_size)
+fn write_attr_bytes(
+    buf: &mut [u8],
+    offset: usize,
+    attr_type: u16,
+    value: &[u8],
+) -> Result<usize, io::Error> {
+    let attr = nlattr {
+        nla_type: attr_type as u16,
+        nla_len: ((NLA_HDR_LEN + value.len()) as u16),
+    };
+
+    write_attr_header(buf, offset, attr)?;
+    let value_len = write_bytes(buf, offset + NLA_HDR_LEN, value)?;
+
+    Ok(NLA_HDR_LEN + value_len)
+}
+
+fn write_attr_header(buf: &mut [u8], offset: usize, attr: nlattr) -> Result<usize, io::Error> {
+    let attr =
+        unsafe { slice::from_raw_parts(&attr as *const _ as *const _, mem::size_of::<nlattr>()) };
+
+    write_bytes(buf, offset, attr)?;
+    Ok(NLA_HDR_LEN)
+}
+
+fn write_bytes(buf: &mut [u8], offset: usize, value: &[u8]) -> Result<usize, io::Error> {
+    if offset + value.len() > buf.len() {
+        return Err(io::Error::new(io::ErrorKind::Other, "no space left"));
+    }
+
+    buf[offset..offset + value.len()].copy_from_slice(value);
+
+    Ok(value.len())
 }
 
 #[cfg(test)]
