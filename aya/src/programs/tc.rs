@@ -1,7 +1,7 @@
 //! Network traffic control programs.
 use thiserror::Error;
 
-use std::{io, os::unix::io::RawFd};
+use std::{ffi::CString, io, os::unix::io::RawFd};
 
 use crate::{
     generated::{
@@ -122,9 +122,9 @@ impl SchedClassifier {
         let prog_fd = self.data.fd_or_err()?;
         let if_index = ifindex_from_ifname(interface)
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
-        let prog_name = self.name();
+        let name = CString::new(self.name()).unwrap();
         let priority =
-            unsafe { netlink_qdisc_attach(if_index as i32, &attach_type, prog_fd, &prog_name[..]) }
+            unsafe { netlink_qdisc_attach(if_index as i32, &attach_type, prog_fd, &name) }
                 .map_err(|io_error| TcError::NetlinkError { io_error })?;
         Ok(self.data.link(TcLink {
             if_index: if_index as i32,

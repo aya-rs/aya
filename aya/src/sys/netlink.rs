@@ -1,4 +1,4 @@
-use std::{io, mem, os::unix::io::RawFd, ptr, slice};
+use std::{ffi::CStr, io, mem, os::unix::io::RawFd, ptr, slice};
 
 use libc::{
     c_int, close, getsockname, nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl,
@@ -20,6 +20,7 @@ use crate::{
     util::tc_handler_make,
 };
 
+const NLA_HDR_LEN: usize = align_to(mem::size_of::<nlattr>(), NLA_ALIGNTO as usize);
 const NETLINK_EXT_ACK: c_int = 11;
 
 // Safety: marking this as unsafe overall because of all the pointer math required to comply with
@@ -46,12 +47,14 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     req.if_info.ifi_family = AF_UNSPEC as u8;
     req.if_info.ifi_index = if_index;
 
-    let attrs_addr = align_to(
-        &req as *const _ as usize + req.header.nlmsg_len as usize,
-        NLMSG_ALIGNTO as usize,
-    );
-    let attrs_end = &req as *const _ as usize + mem::size_of::<Request>();
-    let attrs_buf = slice::from_raw_parts_mut(attrs_addr as *mut u8, attrs_end - attrs_addr);
+    let attrs_buf = {
+        let attrs_addr = align_to(
+            &req as *const _ as usize + req.header.nlmsg_len as usize,
+            NLMSG_ALIGNTO as usize,
+        );
+        let attrs_end = &req as *const _ as usize + mem::size_of::<Request>();
+        slice::from_raw_parts_mut(attrs_addr as *mut u8, attrs_end - attrs_addr)
+    };
 
     // write the attrs
     let mut attrs = NestedAttrs::new(attrs_buf, IFLA_XDP);
@@ -89,6 +92,7 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), io::E
     let seq = 1;
     let mut req = mem::zeroed::<QdiscRequest>();
 
+    // prepare the TC rquest
     req.header = nlmsghdr {
         nlmsg_len: (mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>()) as u32,
         nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE) as u16,
@@ -102,29 +106,17 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), io::E
     req.tc_info.tcm_parent = tc_handler_make(TC_H_CLSACT, TC_H_INGRESS);
     req.tc_info.tcm_info = 0;
 
-    let attrs_addr = &req as *const _ as usize + req.header.nlmsg_len as usize;
-    let attrs_addr = align_to(attrs_addr, NLMSG_ALIGNTO as usize);
-    let nla_hdr_len = align_to(mem::size_of::<nlattr>(), NLA_ALIGNTO as usize);
-
-    // length of the root attribute
-    let mut nla_len = nla_hdr_len as u16;
-
-    let mut offset = attrs_addr as usize;
-    let attr = nlattr {
-        nla_type: TCA_KIND as u16,
-        // size of payload
-        nla_len: (nla_hdr_len + 7) as u16,
+    // add the TCA_KIND attribute
+    let attrs_buf = {
+        let attrs_addr = align_to(
+            &req as *const _ as usize + req.header.nlmsg_len as usize,
+            NLMSG_ALIGNTO as usize,
+        );
+        let attrs_end = &req as *const _ as usize + mem::size_of::<QdiscRequest>();
+        slice::from_raw_parts_mut(attrs_addr as *mut u8, attrs_end - attrs_addr)
     };
-
-    // write header
-    ptr::write(offset as *mut nlattr, attr);
-    offset += nla_hdr_len;
-    // write the "clsact" string
-    let buf = slice::from_raw_parts_mut(offset as *mut u8, 7);
-    buf.copy_from_slice(b"clsact\0");
-    nla_len += attr.nla_len;
-
-    req.header.nlmsg_len += align_to(nla_len as usize, NLA_ALIGNTO as usize) as u32;
+    let attr_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"clsact\0")?;
+    req.header.nlmsg_len += align_to(attr_len as usize, NLA_ALIGNTO as usize) as u32;
 
     if send(
         sock.sock,
@@ -138,6 +130,76 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), io::E
     sock.recv()?;
 
     Ok(())
+}
+
+pub(crate) unsafe fn netlink_qdisc_attach(
+    if_index: i32,
+    attach_type: &TcAttachType,
+    prog_fd: RawFd,
+    prog_name: &CStr,
+) -> Result<u32, io::Error> {
+    let sock = NetlinkSocket::open()?;
+    let seq = 1;
+    let priority = 0;
+    let mut req = mem::zeroed::<QdiscRequest>();
+
+    req.header = nlmsghdr {
+        nlmsg_len: (mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>()) as u32,
+        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE | NLM_F_ECHO) as u16,
+        nlmsg_type: RTM_NEWTFILTER,
+        nlmsg_pid: 0,
+        nlmsg_seq: seq,
+    };
+    req.tc_info.tcm_family = AF_UNSPEC as u8;
+    req.tc_info.tcm_handle = 0; // auto-assigned, if not provided
+    req.tc_info.tcm_ifindex = if_index;
+    req.tc_info.tcm_parent = attach_type.parent();
+
+    req.tc_info.tcm_info = tc_handler_make(priority << 16, htons(ETH_P_ALL as u16) as u32);
+
+    let attrs_buf = {
+        let attrs_addr = align_to(
+            &req as *const _ as usize + req.header.nlmsg_len as usize,
+            NLMSG_ALIGNTO as usize,
+        );
+        let attrs_end = &req as *const _ as usize + mem::size_of::<QdiscRequest>();
+        slice::from_raw_parts_mut(attrs_addr as *mut u8, attrs_end - attrs_addr)
+    };
+
+    // add TCA_KIND
+    let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"bpf\0")?;
+
+    // add TCA_OPTIONS which includes TCA_BPF_FD, TCA_BPF_NAME and TCA_BPF_FLAGS
+    let mut options = NestedAttrs::new(&mut attrs_buf[kind_len..], TCA_OPTIONS as u16);
+    options.write_attr(TCA_BPF_FD as u16, prog_fd)?;
+    options.write_attr_bytes(TCA_BPF_NAME as u16, prog_name.to_bytes_with_nul())?;
+    let flags: u32 = TCA_BPF_FLAG_ACT_DIRECT;
+    options.write_attr(TCA_BPF_FLAGS as u16, flags)?;
+    let options_len = options.finish()?;
+
+    req.header.nlmsg_len += align_to(kind_len + options_len as usize, NLA_ALIGNTO as usize) as u32;
+
+    if send(
+        sock.sock,
+        &req as *const _ as *const _,
+        req.header.nlmsg_len as usize,
+        0,
+    ) < 0
+    {
+        return Err(io::Error::last_os_error())?;
+    }
+
+    let reply_msg = sock.recv()?;
+    let mut tcinfo = 0;
+    for reply in &reply_msg {
+        if reply.header.nlmsg_type == RTM_NEWTFILTER {
+            let _tcmsg = reply._data.as_ptr() as *const tcmsg;
+            tcinfo = (*_tcmsg).tcm_info;
+            break;
+        }
+    }
+    let priority = ((tcinfo & TC_H_MAJ_MASK) >> 16) as u32;
+    Ok(priority)
 }
 
 pub(crate) unsafe fn netlink_qdisc_detach(
@@ -176,136 +238,6 @@ pub(crate) unsafe fn netlink_qdisc_detach(
     sock.recv()?;
 
     Ok(())
-}
-
-pub(crate) unsafe fn netlink_qdisc_attach(
-    if_index: i32,
-    attach_type: &TcAttachType,
-    prog_fd: RawFd,
-    prog_name: &str,
-) -> Result<u32, io::Error> {
-    let sock = NetlinkSocket::open()?;
-    let seq = 1;
-    let priority = 0;
-    let mut req = mem::zeroed::<QdiscRequest>();
-
-    req.header = nlmsghdr {
-        nlmsg_len: (mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>()) as u32,
-        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE | NLM_F_ECHO) as u16,
-        nlmsg_type: RTM_NEWTFILTER,
-        nlmsg_pid: 0,
-        nlmsg_seq: seq,
-    };
-    req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = 0; // auto-assigned, if not provided
-    req.tc_info.tcm_ifindex = if_index;
-    req.tc_info.tcm_parent = attach_type.parent();
-
-    req.tc_info.tcm_info = tc_handler_make(priority << 16, htons(ETH_P_ALL as u16) as u32);
-
-    let attrs_addr = &req as *const _ as usize + req.header.nlmsg_len as usize;
-    let attrs_addr = align_to(attrs_addr, NLMSG_ALIGNTO as usize);
-    let nla_hdr_len = align_to(mem::size_of::<nlattr>(), NLA_ALIGNTO as usize);
-
-    let mut nla_len = nla_hdr_len as u16;
-
-    let mut offset = attrs_addr as usize;
-
-    let attr = nlattr {
-        nla_type: TCA_KIND as u16,
-        nla_len: (nla_hdr_len + 4) as u16,
-    };
-
-    // write header
-    ptr::write(offset as *mut nlattr, attr);
-    offset += nla_hdr_len;
-
-    // now write the actual "bpf" string
-    let buf = slice::from_raw_parts_mut(offset as *mut u8, 4);
-    buf.copy_from_slice(b"bpf\0");
-
-    offset += 4;
-    nla_len += attr.nla_len;
-
-    let nested_tca_options_start = nla_len;
-    let nested_attr_offset = offset;
-    // now write the nested portion
-
-    let mut nested_attr = nlattr {
-        nla_type: TCA_OPTIONS as u16 | NLA_F_NESTED as u16,
-        nla_len: nla_hdr_len as u16, // no data
-    };
-
-    offset += nla_hdr_len;
-    nla_len += attr.nla_len;
-    // add program fd and name.
-
-    let attr = nlattr {
-        nla_type: TCA_BPF_FD as u16,
-        nla_len: (nla_hdr_len + mem::size_of::<RawFd>()) as u16,
-    };
-    ptr::write(offset as *mut nlattr, attr);
-    offset += nla_hdr_len;
-
-    ptr::write(offset as *mut RawFd, prog_fd);
-    offset += mem::size_of::<i32>();
-    nla_len += attr.nla_len;
-
-    let prog_name_null = prog_name.to_string() + "\0";
-    let prog_name_len = prog_name_null.len();
-
-    let attr = nlattr {
-        nla_type: TCA_BPF_NAME as u16,
-        nla_len: (nla_hdr_len + prog_name_len) as u16,
-    };
-
-    ptr::write(offset as *mut nlattr, attr);
-    offset += nla_hdr_len;
-
-    let buf = slice::from_raw_parts_mut(offset as *mut u8, prog_name_len);
-    buf.copy_from_slice(prog_name_null.as_bytes());
-
-    offset += prog_name_len;
-    nla_len += attr.nla_len;
-
-    // write bpf flags for direct action, direct action is the default
-    let bpf_flags = TCA_BPF_FLAG_ACT_DIRECT;
-    let attr = nlattr {
-        nla_type: TCA_BPF_FLAGS as u16,
-        nla_len: (nla_hdr_len + mem::size_of::<u32>()) as u16,
-    };
-    ptr::write(offset as *mut nlattr, attr);
-    offset += nla_hdr_len;
-
-    ptr::write(offset as *mut u32, bpf_flags);
-    nla_len += attr.nla_len;
-
-    // now write the NESTED nlattr
-    nested_attr.nla_len = nla_len - nested_tca_options_start;
-    ptr::write(nested_attr_offset as *mut nlattr, nested_attr);
-    req.header.nlmsg_len += align_to(nla_len as usize, NLA_ALIGNTO as usize) as u32;
-
-    if send(
-        sock.sock,
-        &req as *const _ as *const _,
-        req.header.nlmsg_len as usize,
-        0,
-    ) < 0
-    {
-        return Err(io::Error::last_os_error())?;
-    }
-
-    let reply_msg = sock.recv()?;
-    let mut tcinfo = 0;
-    for reply in &reply_msg {
-        if reply.header.nlmsg_type == RTM_NEWTFILTER {
-            let _tcmsg = reply._data.as_ptr() as *const tcmsg;
-            tcinfo = (*_tcmsg).tcm_info;
-            break;
-        }
-    }
-    let priority = ((tcinfo & TC_H_MAJ_MASK) >> 16) as u32;
-    Ok(priority)
 }
 
 #[repr(C)]
@@ -459,8 +391,6 @@ const fn align_to(v: usize, align: usize) -> usize {
 fn htons(u: u16) -> u16 {
     u.to_be()
 }
-
-const NLA_HDR_LEN: usize = align_to(mem::size_of::<nlattr>(), NLA_ALIGNTO as usize);
 
 struct NestedAttrs<'a> {
     buf: &'a mut [u8],
