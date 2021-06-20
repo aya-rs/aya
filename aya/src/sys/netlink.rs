@@ -189,16 +189,28 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         return Err(io::Error::last_os_error())?;
     }
 
-    let reply_msg = sock.recv()?;
-    let mut tcinfo = 0;
-    for reply in &reply_msg {
-        if reply.header.nlmsg_type == RTM_NEWTFILTER {
-            let _tcmsg = reply._data.as_ptr() as *const tcmsg;
-            tcinfo = (*_tcmsg).tcm_info;
-            break;
+    // find the RTM_NEWTFILTER reply and read the tcm_info field which we'll
+    // need to detach
+    let tc_info = match sock
+        .recv()?
+        .iter()
+        .find(|reply| reply.header.nlmsg_type == RTM_NEWTFILTER)
+    {
+        Some(reply) => {
+            let msg = ptr::read_unaligned(reply.data.as_ptr() as *const tcmsg);
+            msg.tcm_info
         }
-    }
-    let priority = ((tcinfo & TC_H_MAJ_MASK) >> 16) as u32;
+        None => {
+            // if sock.recv() succeeds we should never get here unless there's a
+            // bug in the kernel
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "no RTM_NEWTFILTER reply received, this is a bug.",
+            ));
+        }
+    };
+
+    let priority = ((tc_info & TC_H_MAJ_MASK) >> 16) as u32;
     Ok(priority)
 }
 
@@ -337,7 +349,7 @@ impl NetlinkSocket {
 
 struct NetlinkMessage {
     header: nlmsghdr,
-    _data: Vec<u8>,
+    data: Vec<u8>,
     error: Option<nlmsgerr>,
 }
 
@@ -371,7 +383,7 @@ impl NetlinkMessage {
 
         Ok(NetlinkMessage {
             header,
-            _data: data,
+            data,
             error,
         })
     }
