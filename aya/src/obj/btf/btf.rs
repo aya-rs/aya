@@ -12,7 +12,7 @@ use thiserror::Error;
 
 use crate::{
     generated::{btf_ext_header, btf_header},
-    obj::btf::{relocation::Relocation, BtfType},
+    obj::btf::{relocation::Relocation, BtfKind, BtfType},
 };
 
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
@@ -65,6 +65,9 @@ pub enum BtfError {
 
     #[error("Unexpected BTF type id `{type_id}`")]
     UnexpectedBtfType { type_id: u32 },
+
+    #[error("Unknown BTF type `{type_name}`")]
+    UnknownBtfTypeName { type_name: String },
 
     #[error("maximum depth reached resolving BTF type")]
     MaximumTypeDepthReached { type_id: u32 },
@@ -219,6 +222,33 @@ impl Btf {
     pub(crate) fn err_type_name(&self, ty: &BtfType) -> Option<String> {
         ty.name_offset()
             .and_then(|off| self.string_at(off).ok().map(String::from))
+    }
+
+    pub(crate) fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
+        for (type_id, ty) in self.types().enumerate() {
+            match ty.kind()? {
+                Some(k) => {
+                    if k != kind {
+                        continue;
+                    }
+                }
+                None => continue,
+            }
+
+            match self.type_name(ty)? {
+                Some(ty_name) => {
+                    if ty_name == name {
+                        return Ok(type_id as u32);
+                    }
+                    continue;
+                }
+                None => continue,
+            }
+        }
+
+        Err(BtfError::UnknownBtfTypeName {
+            type_name: name.to_string(),
+        })
     }
 
     pub(crate) fn type_size(&self, root_type_id: u32) -> Result<usize, BtfError> {

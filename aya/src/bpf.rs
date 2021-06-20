@@ -20,9 +20,9 @@ use crate::{
         Object, ParseError, ProgramSection,
     },
     programs::{
-        CgroupSkb, CgroupSkbAttachType, KProbe, LircMode2, PerfEvent, ProbeKind, Program,
-        ProgramData, ProgramError, SchedClassifier, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter,
-        TracePoint, UProbe, Xdp,
+        CgroupSkb, CgroupSkbAttachType, KProbe, LircMode2, Lsm, PerfEvent, ProbeKind, Program,
+        ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkMsg, SkSkb, SkSkbKind,
+        SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::bpf_map_update_elem_ptr,
     util::{possible_cpus, POSSIBLE_CPUS},
@@ -253,6 +253,9 @@ impl<'a> BpfLoader<'a> {
                     name: name.clone(),
                     fd: None,
                     links: Vec::new(),
+                    expected_attach_type: None,
+                    attach_btf_obj_fd: None,
+                    attach_btf_id: None,
                 };
                 let program = match section {
                     ProgramSection::KProbe { .. } => Program::KProbe(KProbe {
@@ -299,6 +302,10 @@ impl<'a> BpfLoader<'a> {
                     }),
                     ProgramSection::LircMode2 { .. } => Program::LircMode2(LircMode2 { data }),
                     ProgramSection::PerfEvent { .. } => Program::PerfEvent(PerfEvent { data }),
+                    ProgramSection::RawTracePoint { .. } => {
+                        Program::RawTracePoint(RawTracePoint { data })
+                    }
+                    ProgramSection::Lsm { .. } => Program::Lsm(Lsm { data }),
                 };
 
                 (name, program)
