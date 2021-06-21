@@ -521,7 +521,9 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
 
     unsafe {
         // std::ptr::copy is const, we can't use it because data.len() isn't known at
-        // compile time
+        // compile time, this is only safe because we've asserted that data.len()
+        // must be <= mem::size_of::<bpf_map_def>(), if you change that check, then
+        // you must change this copy
         let mut p = data.as_ptr();
         let mut q = &mut map_def as *mut bpf_map_def as *mut u8;
         for _ in 0..=data.len() {
