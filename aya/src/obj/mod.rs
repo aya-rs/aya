@@ -509,33 +509,24 @@ fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
 }
 
 fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
-    if mem::size_of::<bpf_map_def>() < data.len() {
+    if data.len() > mem::size_of::<bpf_map_def>() {
         return Err(ParseError::InvalidMapDefinition {
             name: name.to_owned(),
         });
     }
 
-    let mut map_def = bpf_map_def{
-        ..Default::default()
-    };
-
-    unsafe {
-        // std::ptr::copy is const, we can't use it because data.len() isn't known at
-        // compile time, this is only safe because we've asserted that data.len()
-        // must be <= mem::size_of::<bpf_map_def>(), if you change that check, then
-        // you must change this copy
-        let mut p = data.as_ptr();
-        let mut q = &mut map_def as *mut bpf_map_def as *mut u8;
-        for _ in 0..=data.len() {
-            *q = *p;
-            q = q.add(1);
-            p = p.add(1);
+    if data.len() <  mem::size_of::<bpf_map_def>() {
+        let mut map_def = bpf_map_def { ..Default::default() };
+        unsafe {
+            ptr::copy(data.as_ptr() as *const bpf_map_def, &mut map_def as *mut bpf_map_def, 1);
+            // id and pinning will be garbage data
+            map_def.id = 0;
+            map_def.pinning = 0;
         }
+        Ok(map_def)
+    } else {
+        Ok(unsafe { ptr::read_unaligned(data.as_ptr() as *const bpf_map_def) })
     }
-
-    Ok(map_def)
-
-    //Ok(unsafe { ptr::read_unaligned(data.as_ptr() as *const bpf_map_def) })
 }
 
 fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
@@ -703,6 +694,19 @@ mod tests {
             ),
             Ok(map_def)
         ));
+
+        assert!(matches!(
+            parse_map_def(
+                "foo",
+                &[0u8, 0u8, 0u8, 1u8, 0u8, 0u8, 0u8, 2u8, 0u8, 0u8, 0u8, 4u8, 0u8, 0u8, 0u8, 5u8]
+            ),
+            Ok(map_def)
+        ));
+        let map = parse_map_def(
+            "foo",
+            &[0u8, 0u8, 0u8, 1u8, 0u8, 0u8, 0u8, 2u8, 0u8, 0u8, 0u8, 4u8, 0u8, 0u8, 0u8, 5u8]
+        ).unwrap();
+        assert!(map.id == 0 && map.pinning == 0)
     }
 
     #[test]

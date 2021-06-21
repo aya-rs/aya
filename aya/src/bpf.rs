@@ -48,7 +48,7 @@ unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64);
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub(crate) struct bpf_map_def {
     // minimum features required by old BPF programs
     pub(crate) map_type: u32,
@@ -57,34 +57,8 @@ pub(crate) struct bpf_map_def {
     pub(crate) max_entries: u32,
     pub(crate) map_flags: u32,
     // optional features
-    pub(crate) inner_map_fd: u32, // id
-    pub(crate) numa_node: u32,    // pinning
-    pub(crate) map_name: [u8; BPF_OBJ_NAME_LEN],
-    pub(crate) map_ifindex: u32,
-    pub(crate) btf_id: u32,
-    pub(crate) btf_key_type_id: u32,
-    pub(crate) btf_value_type_id: u32,
-    pub(crate) btf_vmlinux_value_type_id: u32,
-}
-
-impl Default for bpf_map_def {
-    fn default() -> Self {
-        Self {
-            map_type: 0,
-            key_size: 0,
-            value_size: 0,
-            max_entries: 0,
-            map_flags: 0,
-            inner_map_fd: 0,
-            numa_node: 0,
-            map_name: [0u8; BPF_OBJ_NAME_LEN],
-            map_ifindex: 0,
-            btf_id: 0,
-            btf_key_type_id: 0,
-            btf_value_type_id: 0,
-            btf_vmlinux_value_type_id: 0
-        }
-    }
+    pub(crate) id: u32, // id
+    pub(crate) pinning: u32,    // pinning
 }
 
 /// The main entry point into the library, used to work with eBPF programs and maps.
