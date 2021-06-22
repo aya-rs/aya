@@ -78,6 +78,9 @@ ingress.attach(cgroup, CgroupSkbAttachType::Ingress)?;
 
 Join [the conversation on Discord][chat-url] to discuss anything related to aya.
 
+## Contributing
+
+Please see the [contributing guide](https://github.com/alessandrod/aya/blob/main/CONTRIBUTING.md).
 ## License
 
 Aya is distributed under the terms of either the [MIT license] or the [Apache License] (version
