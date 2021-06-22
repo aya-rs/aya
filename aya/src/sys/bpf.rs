@@ -11,7 +11,7 @@ use libc::{c_long, ENOENT};
 
 use crate::{
     bpf_map_def,
-    generated::{bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn, bpf_prog_type},
+    generated::{bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn, bpf_prog_info, bpf_prog_type},
     maps::PerCpuValues,
     programs::VerifierLog,
     sys::SysResult,
@@ -262,6 +262,59 @@ pub(crate) fn bpf_prog_detach(
     attr.__bindgen_anon_5.attach_type = attach_type as u32;
 
     sys_bpf(bpf_cmd::BPF_PROG_DETACH, &attr)
+}
+
+pub(crate) fn bpf_prog_query(
+    target_fd: RawFd,
+    attach_type: bpf_attach_type,
+    query_flags: u32,
+    attach_flags: Option<&mut u32>,
+    prog_ids: &mut [u32],
+    prog_cnt: &mut u32,
+) -> SysResult {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    attr.query.target_fd = target_fd as u32;
+    attr.query.attach_type = attach_type as u32;
+    attr.query.query_flags = query_flags;
+    attr.query.prog_cnt = prog_ids.len() as u32;
+    attr.query.prog_ids = prog_ids.as_mut_ptr() as u64;
+
+    let ret = sys_bpf(bpf_cmd::BPF_PROG_QUERY, &attr);
+
+    *prog_cnt = unsafe { attr.query.prog_cnt };
+
+    if let Some(attach_flags) = attach_flags {
+        *attach_flags = unsafe { attr.query.attach_flags };
+    }
+
+    ret
+}
+
+pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<RawFd, io::Error> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    attr.__bindgen_anon_6.__bindgen_anon_1.prog_id = prog_id;
+
+    match sys_bpf(bpf_cmd::BPF_PROG_GET_FD_BY_ID, &attr) {
+        Ok(v) => Ok(v as RawFd),
+        Err((_, err)) => Err(err),
+    }
+}
+
+pub(crate) fn bpf_obj_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_prog_info, io::Error> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    // info gets entirely populated by the kernel
+    let info = unsafe { MaybeUninit::zeroed().assume_init() };
+
+    attr.info.bpf_fd = prog_fd as u32;
+    attr.info.info = &info as *const _ as u64;
+    attr.info.info_len = mem::size_of::<bpf_prog_info>() as u32;
+
+    match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &attr) {
+        Ok(_) => Ok(info),
+        Err((_, err)) => Err(err),
+    }
 }
 
 fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult {
