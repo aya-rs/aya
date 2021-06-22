@@ -516,7 +516,7 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     }
 
     if data.len() <  mem::size_of::<bpf_map_def>() {
-        let mut map_def = bpf_map_def { ..Default::default() };
+        let mut map_def = bpf_map_def::default();
         unsafe {
             ptr::copy(data.as_ptr() as *const bpf_map_def, &mut map_def as *mut bpf_map_def, 1);
             // id and pinning will be garbage data
