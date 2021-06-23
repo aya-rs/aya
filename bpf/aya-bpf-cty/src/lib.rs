@@ -15,7 +15,7 @@ pub use od::*;
 // PWD = Pointer Width Dependent
 pub use pwd::*;
 
-#[cfg(any(target_arch = "bpfel", target_arch = "bpfeb"))]
+#[cfg(any(target_arch = "bpf"))]
 mod ad {
     pub type c_int = i32;
     pub type c_uint = u32;
