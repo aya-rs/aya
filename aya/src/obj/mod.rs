@@ -22,6 +22,7 @@ use crate::{
     obj::btf::{Btf, BtfError, BtfExt},
     BpfError,
 };
+use std::slice::from_raw_parts_mut;
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
 /// The first five __u32 of `bpf_map_def` must be defined.
@@ -520,13 +521,9 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     if data.len() < mem::size_of::<bpf_map_def>() {
         let mut map_def = bpf_map_def::default();
         unsafe {
-            let mut data_ptr = data.as_ptr();
-            let mut map_def_ptr = &mut map_def as *mut bpf_map_def as *mut u8;
-            for _ in 0..=data.len() {
-                *map_def_ptr = *data_ptr;
-                map_def_ptr = map_def_ptr.add(1);
-                data_ptr = data_ptr.add(1);
-            }
+            let map_def_ptr =
+                from_raw_parts_mut(&mut map_def as *mut bpf_map_def as *mut u8, data.len());
+            map_def_ptr.copy_from_slice(data);
         }
         Ok(map_def)
     } else {
@@ -672,24 +669,15 @@ mod tests {
 
     #[test]
     fn test_parse_map_def() {
-        #![allow(unused_variables)] // map_def is used by the assertion
         assert!(matches!(
             parse_map_def("foo", &[]),
             Err(ParseError::InvalidMapDefinition { .. })
         ));
         assert!(matches!(
-            parse_map_def("foo", &[0u8; std::mem::size_of::<bpf_map_def>() + 10]),
+            parse_map_def("foo", &[0u8; std::mem::size_of::<bpf_map_def>() + 1]),
             Err(ParseError::InvalidMapDefinition { .. })
         ));
-        let def = bpf_map_def {
-            map_type: 1,
-            key_size: 2,
-            value_size: 3,
-            max_entries: 4,
-            map_flags: 5,
-            ..Default::default()
-        };
-        assert!(matches!(
+        assert_eq!(
             parse_map_def(
                 "foo",
                 bytes_of(&bpf_map_def {
@@ -700,11 +688,19 @@ mod tests {
                     map_flags: 5,
                     ..Default::default()
                 })
-            ),
-            Ok(def)
-        ));
+            )
+            .unwrap(),
+            bpf_map_def {
+                map_type: 1,
+                key_size: 2,
+                value_size: 3,
+                max_entries: 4,
+                map_flags: 5,
+                ..Default::default()
+            }
+        );
 
-        assert!(matches!(
+        assert_eq!(
             parse_map_def(
                 "foo",
                 &bytes_of(&bpf_map_def {
@@ -715,9 +711,17 @@ mod tests {
                     map_flags: 5,
                     ..Default::default()
                 })[..(mem::size_of::<u32>() * 5)]
-            ),
-            Ok(map_def)
-        ));
+            )
+            .unwrap(),
+            bpf_map_def {
+                map_type: 1,
+                key_size: 2,
+                value_size: 3,
+                max_entries: 4,
+                map_flags: 5,
+                ..Default::default()
+            }
+        );
         let map = parse_map_def(
             "foo",
             &bytes_of(&bpf_map_def {
@@ -741,7 +745,7 @@ mod tests {
         ));
         assert!(matches!(
             parse_map(
-                &fake_section("maps/foo", &[0u8; std::mem::size_of::<bpf_map_def>() + 10]),
+                &fake_section("maps/foo", &[0u8; std::mem::size_of::<bpf_map_def>() + 1]),
                 "foo"
             ),
             Err(ParseError::InvalidMapDefinition { .. })
@@ -750,15 +754,6 @@ mod tests {
 
     #[test]
     fn test_parse_map() {
-        #![allow(unused_variables)] // def is used by the assertion
-        let def = bpf_map_def {
-            map_type: 1,
-            key_size: 2,
-            value_size: 3,
-            max_entries: 4,
-            map_flags: 5,
-            ..Default::default()
-        };
         assert!(matches!(
             parse_map(
                 &fake_section(
@@ -769,7 +764,8 @@ mod tests {
                         value_size: 3,
                         max_entries: 4,
                         map_flags: 5,
-                        ..Default::default()
+                        id: 0,
+                        pinning: 0
                     })
                 ),
                 "foo"
@@ -777,7 +773,15 @@ mod tests {
             Ok(Map {
                 section_index: 0,
                 name,
-                def,
+                def: bpf_map_def {
+                    map_type: 1,
+                    key_size: 2,
+                    value_size: 3,
+                    max_entries: 4,
+                    map_flags: 5,
+                    id: 0,
+                    pinning: 0
+                },
                 data
             }) if name == "foo" && data.is_empty()
         ))
@@ -785,18 +789,7 @@ mod tests {
 
     #[test]
     fn test_parse_map_data() {
-        #![allow(unused_variables)] // def is used by the assertion
         let map_data = b"map data";
-        let _map_type = BPF_MAP_TYPE_ARRAY;
-        let value_size = map_data.len() as u32;
-        let def = bpf_map_def {
-            map_type: _map_type as u32,
-            key_size: 4,
-            value_size,
-            max_entries: 1,
-            map_flags: 0,
-            ..Default::default()
-        };
         assert!(matches!(
             parse_map(
                 &fake_section(
@@ -808,7 +801,15 @@ mod tests {
             Ok(Map {
                 section_index: 0,
                 name,
-                def,
+                def: bpf_map_def {
+                    map_type: _map_type,
+                    key_size: 4,
+                    value_size,
+                    max_entries: 1,
+                    map_flags: 0,
+                    id: 0,
+                    pinning: 0,
+                },
                 data
             }) if name == ".bss" && data == map_data && value_size == map_data.len() as u32
         ))

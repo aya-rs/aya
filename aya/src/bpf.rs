@@ -48,7 +48,7 @@ unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64);
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub(crate) struct bpf_map_def {
     // minimum features required by old BPF programs
     pub(crate) map_type: u32,
