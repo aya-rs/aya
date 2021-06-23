@@ -426,9 +426,7 @@ mod tests {
                 key_size: 4,
                 value_size: 4,
                 max_entries: 1024,
-                map_flags: 0,
-                id: 0,
-                pinning: 0,
+                ..Default::default()
             },
             section_index: 0,
             data: Vec::new(),

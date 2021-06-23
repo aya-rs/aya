@@ -22,8 +22,11 @@ use crate::{
     obj::btf::{Btf, BtfError, BtfExt},
     BpfError,
 };
+use std::slice::from_raw_parts_mut;
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
+/// The first five __u32 of `bpf_map_def` must be defined.
+const MINIMUM_MAP_SIZE: usize = mem::size_of::<u32>() * 5;
 
 #[derive(Clone)]
 pub struct Object {
@@ -493,8 +496,7 @@ fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
             value_size: section.data.len() as u32,
             max_entries: 1,
             map_flags: 0, /* FIXME: set rodata readonly */
-            id: 0,
-            pinning: 0,
+            ..Default::default()
         };
         (def, section.data.to_vec())
     } else {
@@ -510,13 +512,23 @@ fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
 }
 
 fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
-    if mem::size_of::<bpf_map_def>() > data.len() {
+    if data.len() > mem::size_of::<bpf_map_def>() || data.len() < MINIMUM_MAP_SIZE {
         return Err(ParseError::InvalidMapDefinition {
             name: name.to_owned(),
         });
     }
 
-    Ok(unsafe { ptr::read_unaligned(data.as_ptr() as *const bpf_map_def) })
+    if data.len() < mem::size_of::<bpf_map_def>() {
+        let mut map_def = bpf_map_def::default();
+        unsafe {
+            let map_def_ptr =
+                from_raw_parts_mut(&mut map_def as *mut bpf_map_def as *mut u8, data.len());
+            map_def_ptr.copy_from_slice(data);
+        }
+        Ok(map_def)
+    } else {
+        Ok(unsafe { ptr::read_unaligned(data.as_ptr() as *const bpf_map_def) })
+    }
 }
 
 fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
@@ -662,6 +674,10 @@ mod tests {
             Err(ParseError::InvalidMapDefinition { .. })
         ));
         assert!(matches!(
+            parse_map_def("foo", &[0u8; std::mem::size_of::<bpf_map_def>() + 1]),
+            Err(ParseError::InvalidMapDefinition { .. })
+        ));
+        assert_eq!(
             parse_map_def(
                 "foo",
                 bytes_of(&bpf_map_def {
@@ -670,26 +686,68 @@ mod tests {
                     value_size: 3,
                     max_entries: 4,
                     map_flags: 5,
-                    id: 0,
-                    pinning: 0
+                    ..Default::default()
                 })
-            ),
-            Ok(bpf_map_def {
+            )
+            .unwrap(),
+            bpf_map_def {
                 map_type: 1,
                 key_size: 2,
                 value_size: 3,
                 max_entries: 4,
                 map_flags: 5,
-                id: 0,
-                pinning: 0
-            })
-        ));
+                ..Default::default()
+            }
+        );
+
+        assert_eq!(
+            parse_map_def(
+                "foo",
+                &bytes_of(&bpf_map_def {
+                    map_type: 1,
+                    key_size: 2,
+                    value_size: 3,
+                    max_entries: 4,
+                    map_flags: 5,
+                    ..Default::default()
+                })[..(mem::size_of::<u32>() * 5)]
+            )
+            .unwrap(),
+            bpf_map_def {
+                map_type: 1,
+                key_size: 2,
+                value_size: 3,
+                max_entries: 4,
+                map_flags: 5,
+                ..Default::default()
+            }
+        );
+        let map = parse_map_def(
+            "foo",
+            &bytes_of(&bpf_map_def {
+                map_type: 1,
+                key_size: 2,
+                value_size: 3,
+                max_entries: 4,
+                map_flags: 5,
+                ..Default::default()
+            })[..(mem::size_of::<u32>() * 5)],
+        )
+        .unwrap();
+        assert!(map.id == 0 && map.pinning == 0)
     }
 
     #[test]
     fn test_parse_map_error() {
         assert!(matches!(
             parse_map(&fake_section("maps/foo", &[]), "foo"),
+            Err(ParseError::InvalidMapDefinition { .. })
+        ));
+        assert!(matches!(
+            parse_map(
+                &fake_section("maps/foo", &[0u8; std::mem::size_of::<bpf_map_def>() + 1]),
+                "foo"
+            ),
             Err(ParseError::InvalidMapDefinition { .. })
         ))
     }
@@ -750,7 +808,7 @@ mod tests {
                     max_entries: 1,
                     map_flags: 0,
                     id: 0,
-                    pinning: 0
+                    pinning: 0,
                 },
                 data
             }) if name == ".bss" && data == map_data && value_size == map_data.len() as u32
@@ -809,8 +867,7 @@ mod tests {
                     value_size: 3,
                     max_entries: 4,
                     map_flags: 5,
-                    id: 0,
-                    pinning: 0
+                    ..Default::default()
                 })
             ),),
             Ok(())
