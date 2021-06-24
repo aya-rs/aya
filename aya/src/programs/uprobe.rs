@@ -258,21 +258,23 @@ impl LdSoCache {
             )
         )?;
         let mut is_old: bool = false;
-        if header != LD_SO_CACHE_HEADER {
-            if header != LD_SO_CACHE_HEADER_OLD {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    "invalid ld.so.cache header",
-                ));
-            } else {
+        match header {
+            LD_SO_CACHE_HEADER => {
+                // we have to reset the position since we found the new header
+                cursor.set_position(LD_SO_CACHE_HEADER.len() as u64);
+            }
+            LD_SO_CACHE_HEADER_OLD => {
                 is_old = true;
                 // add a padding corresponding to LD_SO_CACHE_HEADER_OLD
                 // size 11 + 1 to align on 12 bytes or 3*4 bounds
                 cursor.consume(1)
             }
-        } else {
-            // we have to reset the position since we found the new header
-            cursor.set_position(LD_SO_CACHE_HEADER.len() as u64);
+            _ => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "invalid ld.so.cache header",
+                ));
+            }
         }
 
         let num_entries: u32 = read_u32(&mut cursor)?;
