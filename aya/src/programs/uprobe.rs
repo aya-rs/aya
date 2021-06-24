@@ -1,24 +1,23 @@
 //! User space probes.
-use libc::pid_t;
-use object::{Object, ObjectSymbol};
 use std::{
     error::Error,
-    ffi::CStr,
     fs,
     io::{self, BufRead, Cursor, Read},
     mem,
-    os::raw::c_char,
     path::{Path, PathBuf},
     sync::Arc,
 };
+
+use libc::pid_t;
+use object::{Object, ObjectSymbol};
 use thiserror::Error;
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_KPROBE,
     programs::{
+        LinkRef,
         load_program,
-        probe::{attach, ProbeKind},
-        LinkRef, ProgramData, ProgramError,
+        probe::{attach, ProbeKind}, ProgramData, ProgramError,
     },
 };
 
@@ -29,6 +28,7 @@ lazy_static! {
         LdSoCache::load(LD_SO_CACHE_FILE).map_err(Arc::new);
 }
 const LD_SO_CACHE_HEADER: &str = "glibc-ld.so.cache1.1";
+const LD_SO_CACHE_HEADER_OLD: &str = "ld.so-1.7.0";
 
 /// An user space probe.
 ///
@@ -108,7 +108,7 @@ impl UProbe {
                         })?;
                 cache.resolve(target_str)
             }
-            .map(String::from)
+                .map(String::from)
         };
 
         let path = path.ok_or(UProbeError::InvalidTarget {
@@ -196,8 +196,8 @@ fn find_lib_in_proc_maps(pid: pid_t, lib: &str) -> Result<Option<String>, io::Er
 
 #[derive(Debug)]
 pub(crate) struct CacheEntry {
-    key: String,
-    value: String,
+    lib_name: String,
+    path: String,
     flags: i32,
 }
 
@@ -206,64 +206,115 @@ pub(crate) struct LdSoCache {
     entries: Vec<CacheEntry>,
 }
 
+#[allow(unused)]
+#[derive(Copy, Clone, Debug)]
+pub enum TargetEndian {
+    Native,
+    Big,
+    Little,
+}
+
 impl LdSoCache {
     pub fn load<T: AsRef<Path>>(path: T) -> Result<Self, io::Error> {
         let data = fs::read(path)?;
-        Self::parse(&data)
+        Self::parse(&data, TargetEndian::Native)
     }
 
-    fn parse(data: &[u8]) -> Result<Self, io::Error> {
+    fn parse(data: &[u8], endianness: TargetEndian) -> Result<Self, io::Error> {
         let mut cursor = Cursor::new(data);
 
         let read_u32 = |cursor: &mut Cursor<_>| -> Result<u32, io::Error> {
             let mut buf = [0u8; mem::size_of::<u32>()];
             cursor.read_exact(&mut buf)?;
 
-            Ok(u32::from_ne_bytes(buf))
+            Ok(match endianness {
+                TargetEndian::Native => u32::from_ne_bytes(buf),
+                TargetEndian::Big => u32::from_be_bytes(buf),
+                TargetEndian::Little => u32::from_le_bytes(buf),
+            })
         };
 
         let read_i32 = |cursor: &mut Cursor<_>| -> Result<i32, io::Error> {
             let mut buf = [0u8; mem::size_of::<i32>()];
             cursor.read_exact(&mut buf)?;
-
-            Ok(i32::from_ne_bytes(buf))
+            Ok(match endianness {
+                TargetEndian::Native => i32::from_ne_bytes(buf),
+                TargetEndian::Big => i32::from_be_bytes(buf),
+                TargetEndian::Little => i32::from_le_bytes(buf),
+            })
         };
 
         let mut buf = [0u8; LD_SO_CACHE_HEADER.len()];
+        let mut buf_old = [0u8; LD_SO_CACHE_HEADER_OLD.len()];
         cursor.read_exact(&mut buf)?;
-        let header = std::str::from_utf8(&buf).or(Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "invalid ld.so.cache header",
-        )))?;
+        cursor.set_position(0);
+        cursor.read_exact(&mut buf_old)?;
+        let header = std::str::from_utf8(&buf).or(
+            std::str::from_utf8(&buf_old).or(
+                Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "invalid ld.so.cache header",
+                ))
+            )
+        )?;
+        let mut is_old: bool = false;
         if header != LD_SO_CACHE_HEADER {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "invalid ld.so.cache header",
-            ));
+            if header != LD_SO_CACHE_HEADER_OLD {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "invalid ld.so.cache header",
+                ));
+            } else {
+                is_old = true;
+                // add a padding corresponding to LD_SO_CACHE_HEADER_OLD
+                // size 11 + 1 to align on 12 bytes or 3*4 bounds
+                cursor.consume(1)
+            }
+        } else {
+            // we have to reset the position since we found the new header
+            cursor.set_position(LD_SO_CACHE_HEADER.len() as u64);
         }
 
-        let num_entries = read_u32(&mut cursor)?;
-        let _str_tab_len = read_u32(&mut cursor)?;
-        cursor.consume(5 * mem::size_of::<u32>());
+        let num_entries: u32 = read_u32(&mut cursor)?;
+        let mut string_table_offset: usize = 0;
+        if !is_old {
+            let _str_tab_len = read_u32(&mut cursor)?;
+            // those are as of glibc 2.33 (flags u8, empty 3xu8, extension_offset u32, unused 3xu32)
+            cursor.consume(5 * mem::size_of::<u32>());
+        } else {
+            // only 3 u32 were present in the old entries
+            string_table_offset = cursor.position() as usize + num_entries as usize * mem::size_of::<u32>() * 3;
+        }
 
         let mut entries = Vec::new();
         for _ in 0..num_entries {
             let flags = read_i32(&mut cursor)?;
             let k_pos = read_u32(&mut cursor)? as usize;
             let v_pos = read_u32(&mut cursor)? as usize;
-            cursor.consume(12);
-            let key =
-                unsafe { CStr::from_ptr(cursor.get_ref()[k_pos..].as_ptr() as *const c_char) }
-                    .to_string_lossy()
-                    .into_owned();
-            let value =
-                unsafe { CStr::from_ptr(cursor.get_ref()[v_pos..].as_ptr() as *const c_char) }
-                    .to_string_lossy()
-                    .into_owned();
-            entries.push(CacheEntry { key, value, flags });
+            if !is_old {
+                // those are as of glibc 2.33 (os_version u32, hwcap u64)
+                cursor.consume(mem::size_of::<u32>() + mem::size_of::<u64>());
+            }
+            let key = Self::str_from_u8_nul_utf8(&cursor.get_ref()[k_pos + string_table_offset..]).map_err(|e| io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("Invalid ut8 string : {}", e),
+            ))?.to_owned();
+            let value = Self::str_from_u8_nul_utf8(&cursor.get_ref()[v_pos + string_table_offset..]).map_err(|e| io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("Invalid ut8 string : {}", e),
+            ))?.to_owned();
+            entries.push(CacheEntry { lib_name: key, path: value, flags });
         }
 
         Ok(LdSoCache { entries })
+    }
+
+    pub fn str_from_u8_nul_utf8(utf8_src: &[u8]) -> Result<&str, std::str::Utf8Error> {
+        let nul_range_end = utf8_src
+            .iter()
+            .position(|&c| c == b'\0')
+            .unwrap_or(utf8_src.len()); // default to length if no `\0` present
+        ::std::str::from_utf8(&utf8_src[0..nul_range_end])
     }
 
     pub fn resolve(&self, lib: &str) -> Option<&str> {
@@ -274,8 +325,8 @@ impl LdSoCache {
         };
         self.entries
             .iter()
-            .find(|entry| entry.key.starts_with(&lib))
-            .map(|entry| entry.value.as_str())
+            .find(|entry| entry.lib_name.starts_with(&lib))
+            .map(|entry| entry.path.as_str())
     }
 }
 
@@ -300,4 +351,63 @@ fn resolve_symbol(path: &str, symbol: &str) -> Result<u64, ResolveSymbolError> {
         .find(|sym| sym.name().map(|name| name == symbol).unwrap_or(false))
         .map(|s| s.address())
         .ok_or_else(|| ResolveSymbolError::Unknown(symbol.to_string()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_big_endian_old_format_s390x() {
+        let data = include_bytes!("../../tests/fixtures/ld.so.cache_s390x_old");
+        let cache = LdSoCache::parse(data, TargetEndian::Big);
+        assert!(cache.is_ok());
+        let cache = cache.unwrap();
+        assert_eq!(cache.entries.len(), 188);
+        let strings: &str = include_str!("../../tests/fixtures/s390x.strings");
+        test_entries(strings, cache);
+    }
+
+    #[test]
+    fn test_little_endian_new_format_mips() {
+        let data = include_bytes!("../../tests/fixtures/ld.so.cache_mips");
+        let cache = LdSoCache::parse(data, TargetEndian::Little);
+        assert!(cache.is_ok());
+        let cache = cache.unwrap();
+        assert_eq!(cache.entries.len(), 2407);
+        let strings: &str = include_str!("../../tests/fixtures/mips.strings");
+        test_entries(strings, cache);
+    }
+
+    #[test]
+    fn test_little_endian_new_format_debian_x86_64() {
+        let data = include_bytes!("../../tests/fixtures/ld.so.cache_debian");
+        let cache = LdSoCache::parse(data, TargetEndian::Little);
+        assert!(cache.is_ok());
+        let cache = cache.unwrap();
+        assert_eq!(cache.entries.len(), 81);
+        let strings: &str = include_str!("../../tests/fixtures/debian.strings");
+        test_entries(strings, cache);
+    }
+
+    #[test]
+    fn test_little_endian_old_format_debian_x86_64() {
+        let data = include_bytes!("../../tests/fixtures/ld.so.cache_debian_old");
+        let cache = LdSoCache::parse(data, TargetEndian::Little);
+        assert!(cache.is_ok());
+        let cache = cache.unwrap();
+        assert_eq!(cache.entries.len(), 148);
+        let strings: &str = include_str!("../../tests/fixtures/debian_old.strings");
+        test_entries(strings, cache);
+    }
+
+    fn test_entries(strings: &str, cache: LdSoCache) {
+        for string in strings.split_terminator("\n") {
+            let (lib_name, path) = string.split_once(" ").unwrap();
+            assert!(cache.entries.iter().any(|x| x.lib_name == lib_name), "lib name : {} was not inside the entries", lib_name);
+            let found_paths: Vec<&CacheEntry> = cache.entries.iter().filter(|e| e.lib_name == lib_name).collect();
+            assert!(!found_paths.is_empty(), "Path was not found for lib name : {}", lib_name);
+            assert!(found_paths.iter().any(|e| e.path == path), "lib path : {} was not correct, got {:?}", path, found_paths);
+        }
+    }
 }
