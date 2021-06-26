@@ -28,6 +28,7 @@ use crate::{
 /// use std::convert::TryInto;
 ///
 /// let program: &mut KProbe = bpf.program_mut("intercept_wakeups")?.try_into()?;
+/// program.load()?;
 /// program.attach("try_to_wake_up", 0, None)?;
 /// # Ok::<(), aya::BpfError>(())
 /// ```
