@@ -14,7 +14,7 @@ use crate::{
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.13
+/// The minimum kernel version required to use this feature is 4.13.
 ///
 /// # Examples
 ///

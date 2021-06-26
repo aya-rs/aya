@@ -23,7 +23,7 @@ pub enum SkSkbKind {
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.14
+/// The minimum kernel version required to use this feature is 4.14.
 ///
 /// # Examples
 ///

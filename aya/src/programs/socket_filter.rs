@@ -28,7 +28,7 @@ pub enum SocketFilterError {
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.0
+/// The minimum kernel version required to use this feature is 4.0.
 ///
 /// # Examples
 ///

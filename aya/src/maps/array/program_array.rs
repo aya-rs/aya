@@ -22,7 +22,7 @@ use crate::{
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.2
+/// The minimum kernel version required to use this feature is 4.2.
 ///
 /// # Examples
 /// ```no_run

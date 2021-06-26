@@ -17,7 +17,7 @@ use crate::{
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.20
+/// The minimum kernel version required to use this feature is 4.20.
 ///
 /// # Examples
 /// ```no_run

@@ -24,7 +24,7 @@ pub enum TracePointError {
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.7
+/// The minimum kernel version required to use this feature is 4.7.
 ///
 /// # Examples
 ///

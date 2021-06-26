@@ -78,7 +78,7 @@ impl<T: DerefMut<Target = Map>> AsRawFd for PerfEventArrayBuffer<T> {
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.3
+/// The minimum kernel version required to use this feature is 4.3.
 ///
 /// # Examples
 ///

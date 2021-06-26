@@ -34,7 +34,7 @@ pub enum TcAttachType {
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.1
+/// The minimum kernel version required to use this feature is 4.1.
 ///
 /// ```no_run
 /// # #[derive(Debug, thiserror::Error)]

@@ -48,7 +48,7 @@ bitflags! {
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.8
+/// The minimum kernel version required to use this feature is 4.8.
 ///
 /// # Examples
 ///

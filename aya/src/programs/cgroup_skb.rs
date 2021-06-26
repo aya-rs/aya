@@ -21,7 +21,7 @@ use super::FdLink;
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.10
+/// The minimum kernel version required to use this feature is 4.10.
 ///
 /// # Examples
 ///

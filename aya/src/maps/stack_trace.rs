@@ -20,7 +20,7 @@ use crate::{
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.6
+/// The minimum kernel version required to use this feature is 4.6.
 ///  
 /// # Examples
 ///
@@ -43,7 +43,7 @@ use crate::{
 /// // load kernel symbols from /proc/kallsyms
 /// let ksyms = kernel_symbols()?;
 ///
-/// // NOTE: you tipically send stack_ids from eBPF to user space using other maps
+/// // NOTE: you typically send stack_ids from eBPF to user space using other maps
 /// let stack_id = 1234;
 /// let mut stack_trace = stack_traces.get(&stack_id, 0)?;
 ///

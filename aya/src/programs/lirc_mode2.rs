@@ -17,7 +17,7 @@ use libc::{close, dup};
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.18
+/// The minimum kernel version required to use this feature is 4.18.
 ///
 /// # Examples
 ///
