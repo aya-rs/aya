@@ -19,6 +19,10 @@ use super::FdLink;
 ///
 /// [cgroup]: https://man7.org/linux/man-pages/man7/cgroups.7.html
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.10.
+///
 /// # Examples
 ///
 /// ```no_run

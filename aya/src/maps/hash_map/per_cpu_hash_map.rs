@@ -20,6 +20,10 @@ use crate::{
 /// This type can be used with eBPF maps of type `BPF_MAP_TYPE_PERCPU_HASH` and
 /// `BPF_MAP_TYPE_LRU_PERCPU_HASH`.
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.6.
+///
 /// # Examples
 ///
 /// ```no_run

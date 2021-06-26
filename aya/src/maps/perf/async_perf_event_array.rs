@@ -26,6 +26,10 @@ use crate::maps::{
 /// * call [`AsyncPerfEventArray::open`]
 /// * call [`AsyncPerfEventArrayBuffer::read_events`] to read the events
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.3.
+///
 /// # Examples
 ///
 /// ```no_run

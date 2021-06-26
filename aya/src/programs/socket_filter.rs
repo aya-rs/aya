@@ -26,6 +26,9 @@ pub enum SocketFilterError {
 /// [`SocketFilter`] programs are attached on sockets and can be used to inspect
 /// and filter incoming packets.
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.0.
 ///
 /// # Examples
 ///

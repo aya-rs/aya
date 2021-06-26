@@ -46,6 +46,10 @@ bitflags! {
 /// underlying network driver, XDP programs can execute directly on network cards, greatly
 /// reducing CPU load.
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.8.
+///
 /// # Examples
 ///
 /// ```no_run

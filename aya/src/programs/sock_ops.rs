@@ -12,6 +12,10 @@ use crate::{
 /// parameters, watch connection state changes and more. They are attached to
 /// cgroups.
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.13.
+///
 /// # Examples
 ///
 /// ```no_run

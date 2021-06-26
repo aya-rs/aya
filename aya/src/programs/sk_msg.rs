@@ -11,6 +11,10 @@ use crate::{
 /// filter and redirect messages sent on sockets. See also [`SockMap`] and
 /// [`SockHash`].
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.17.
+///
 /// # Examples
 ///
 /// ```no_run

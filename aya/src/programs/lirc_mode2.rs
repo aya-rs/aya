@@ -15,6 +15,10 @@ use libc::{close, dup};
 ///
 /// [lirc]: https://www.kernel.org/doc/html/latest/userspace-api/media/rc/lirc-dev.html
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.18.
+///
 /// # Examples
 ///
 /// ```no_run

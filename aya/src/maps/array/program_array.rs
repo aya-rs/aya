@@ -20,6 +20,10 @@ use crate::{
 /// prog_array, index)`. You can use [`ProgramArray`] to configure which
 /// programs correspond to which jump indexes.
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.2.
+///
 /// # Examples
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[], None)?;

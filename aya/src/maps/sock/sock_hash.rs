@@ -23,6 +23,10 @@ use crate::{
 /// A `SockHash` can also be used to redirect packets to sockets contained by the
 /// map using `bpf_redirect_map()`, `bpf_sk_redirect_hash()` etc.
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.18.
+///
 /// # Examples
 ///
 /// ```no_run

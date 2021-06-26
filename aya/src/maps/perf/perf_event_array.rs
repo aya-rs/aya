@@ -76,6 +76,10 @@ impl<T: DerefMut<Target = Map>> AsRawFd for PerfEventArrayBuffer<T> {
 ///   inserted in the buffer
 /// * call [`PerfEventArrayBuffer::read_events`] to read the events
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.3.
+///
 /// # Examples
 ///
 /// A common way to use a perf array is to have one perf buffer for each

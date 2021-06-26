@@ -20,6 +20,10 @@ use crate::{
 /// - `kprobe`: get attached to the *start* of the target functions
 /// - `kretprobe`: get attached to the *return address* of the target functions
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.1.
+///
 /// # Examples
 ///
 /// ```no_run

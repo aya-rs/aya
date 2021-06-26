@@ -17,6 +17,10 @@ use crate::{
 /// useful for profiling, to associate a trace to an event, etc. You can capture traces calling
 /// `stack_id = bpf_get_stackid(ctx, map, flags)` from eBPF, and then you can retrieve the traces
 /// from their stack ids.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.6.
 ///  
 /// # Examples
 ///
@@ -39,7 +43,7 @@ use crate::{
 /// // load kernel symbols from /proc/kallsyms
 /// let ksyms = kernel_symbols()?;
 ///
-/// // NOTE: you tipically send stack_ids from eBPF to user space using other maps
+/// // NOTE: you typically send stack_ids from eBPF to user space using other maps
 /// let stack_id = 1234;
 /// let mut stack_trace = stack_traces.get(&stack_id, 0)?;
 ///

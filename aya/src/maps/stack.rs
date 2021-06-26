@@ -15,6 +15,10 @@ use crate::{
 
 /// A LIFO stack.
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.20.
+///
 /// # Examples
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[], None)?;

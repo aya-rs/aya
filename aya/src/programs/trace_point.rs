@@ -22,6 +22,10 @@ pub enum TracePointError {
 /// be attached to. See `/sys/kernel/debug/tracing/events` for a list of which
 /// events can be traced.
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.7.
+///
 /// # Examples
 ///
 /// ```no_run

@@ -17,6 +17,10 @@ use crate::{
 /// The size of the array is defined on the eBPF side using the `bpf_map_def::max_entries` field.
 /// All the entries are zero-initialized when the map is created.
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.6.
+///
 /// # Examples
 /// ```no_run
 /// # #[derive(thiserror::Error, Debug)]

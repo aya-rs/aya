@@ -22,6 +22,10 @@ use crate::{
 /// A `SockMap` can also be used to redirect packets to sockets contained by the
 /// map using `bpf_redirect_map()`, `bpf_sk_redirect_map()` etc.    
 ///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.14.
+///
 /// # Examples
 ///
 /// ```no_run
