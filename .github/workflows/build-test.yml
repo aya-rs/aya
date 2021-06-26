@@ -20,15 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v1
-      - name: Install LLVM
-        run: |
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          echo -e "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-11 main\n" | sudo tee /etc/apt/sources.list.d/llvm.list
-          sudo apt-get update
-          sudo apt-get install llvm-11-dev libclang-11-dev
-
-      - name: Install bpf-linker
-        run: cargo install bpf-linker
 
       - name: Build
         run: cargo build --verbose
