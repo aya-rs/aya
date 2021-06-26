@@ -23,7 +23,7 @@
 //! program.load()?;
 //! // intercept_wakeups will be called every time try_to_wake_up() is called
 //! // inside the kernel
-//! program.attach("try_to_wake_up", 0, None)?;
+//! program.attach("try_to_wake_up", 0)?;
 //! # Ok::<(), aya::BpfError>(())
 //! ```
 //!
