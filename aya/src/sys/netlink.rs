@@ -10,9 +10,9 @@ use libc::{
 
 use crate::{
     generated::{
-        _bindgen_ty_133::{TCA_BPF_FD, TCA_BPF_FLAGS, TCA_BPF_NAME},
-        _bindgen_ty_79::{IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS},
-        _bindgen_ty_91::{TCA_KIND, TCA_OPTIONS},
+        _bindgen_ty_151::{TCA_BPF_FD, TCA_BPF_FLAGS, TCA_BPF_NAME},
+        _bindgen_ty_80::{IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS},
+        _bindgen_ty_94::{TCA_KIND, TCA_OPTIONS},
         ifinfomsg, tcmsg, NLMSG_ALIGNTO, TCA_BPF_FLAG_ACT_DIRECT, TC_H_CLSACT, TC_H_INGRESS,
         TC_H_MAJ_MASK, TC_H_UNSPEC, XDP_FLAGS_REPLACE,
     },
