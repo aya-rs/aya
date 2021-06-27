@@ -1,7 +1,5 @@
 use core::{marker::PhantomData, mem};
 
-use aya_bpf_cty::c_void;
-
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_QUEUE},
     helpers::{bpf_map_pop_elem, bpf_map_push_elem},

@@ -1679,3 +1679,34 @@ pub unsafe fn bpf_snprintf(
     ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(165usize);
     fun(str_, str_size, fmt, data, data_len)
 }
+pub unsafe fn bpf_sys_bpf(
+    cmd: __u32,
+    attr: *mut ::aya_bpf_cty::c_void,
+    attr_size: __u32,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        cmd: __u32,
+        attr: *mut ::aya_bpf_cty::c_void,
+        attr_size: __u32,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(166usize);
+    fun(cmd, attr, attr_size)
+}
+pub unsafe fn bpf_btf_find_by_name_kind(
+    name: *mut ::aya_bpf_cty::c_char,
+    name_sz: ::aya_bpf_cty::c_int,
+    kind: __u32,
+    flags: ::aya_bpf_cty::c_int,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        name: *mut ::aya_bpf_cty::c_char,
+        name_sz: ::aya_bpf_cty::c_int,
+        kind: __u32,
+        flags: ::aya_bpf_cty::c_int,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(167usize);
+    fun(name, name_sz, kind, flags)
+}
+pub unsafe fn bpf_sys_close(fd: __u32) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(fd: __u32) -> ::aya_bpf_cty::c_long =
+        ::core::mem::transmute(168usize);
+    fun(fd)
+}
