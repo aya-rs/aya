@@ -1,7 +1,10 @@
 use core::{marker::PhantomData, mem};
 
 use crate::{
-    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY, BPF_F_CURRENT_CPU},
+    bindings::{
+        bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY, BPF_F_CURRENT_CPU,
+        BPF_F_INDEX_MASK,
+    },
     helpers::bpf_perf_event_output,
     BpfContext,
 };
@@ -43,7 +46,9 @@ impl<T> PerfMap<T> {
         data: &T,
         flags: u32,
     ) {
-        let index = index.unwrap_or(BPF_F_CURRENT_CPU.into()) as u64;
+        let index = index
+            .map(|index| index & BPF_F_INDEX_MASK)
+            .unwrap_or(BPF_F_CURRENT_CPU) as u64;
         let flags = (flags as u64) << 32 | index;
         unsafe {
             bpf_perf_event_output(
