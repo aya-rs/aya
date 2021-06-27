@@ -5,8 +5,9 @@ use std::path::PathBuf;
 
 use aya_gen::{
     bindgen,
+    btf_types::c_header_from_btf,
     getters::{generate_getters_for_items, read_getter},
-    write_to_file_fmt,
+    write_to_file, write_to_file_fmt,
 };
 use syn::{parse_str, Item};
 
@@ -17,6 +18,8 @@ use crate::codegen::{
 
 pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
     let dir = PathBuf::from("bpf/aya-bpf-bindings");
+    let vmlinux = c_header_from_btf(&*opts.btf)?;
+    write_to_file(&dir.join("include").join("vmlinux.h"), &vmlinux)?;
 
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
@@ -41,11 +44,24 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
         let vars = ["BPF_.*", "bpf_.*", "TC_ACT_.*", "SOL_SOCKET", "SO_.*"];
 
         for x in &types {
-            bindgen = bindgen.whitelist_type(x);
+            bindgen = bindgen.allowlist_type(x);
         }
 
         for x in &vars {
-            bindgen = bindgen.whitelist_var(x);
+            bindgen = bindgen.allowlist_var(x);
+        }
+
+        bindgen
+    };
+
+    // from BTF we can't generate bindings for macros like TC_ACT_OK, macro_bindings.h is for bindgen to do the work.
+    let marcro_bindings_builder = || {
+        let mut bindgen =
+            bindgen::bpf_builder().header(&*dir.join("include/macro_bindings.h").to_string_lossy());
+
+        let vars = ["TC_ACT_.*"];
+        for x in &vars {
+            bindgen = bindgen.allowlist_var(x);
         }
 
         bindgen
@@ -54,11 +70,15 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
     for arch in Architecture::supported() {
         let generated = dir.join("src").join(arch.to_string());
 
-        let bindings = builder()
+        let mut bindings = builder()
             .generate()
             .map_err(|_| anyhow!("bindgen failed"))?
             .to_string();
-
+        let marcro_bindings = marcro_bindings_builder()
+            .generate()
+            .map_err(|_| anyhow!("bindgen failed"))?
+            .to_string();
+        bindings.push_str(&marcro_bindings);
         let mut tree = parse_str::<syn::File>(&bindings).unwrap();
         let (indexes, helpers) = extract_helpers(&tree.items);
         let helpers = expand_helpers(&helpers);

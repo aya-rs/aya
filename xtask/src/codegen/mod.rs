@@ -45,7 +45,8 @@ impl std::fmt::Display for Architecture {
 pub struct Options {
     #[structopt(long)]
     libbpf_dir: PathBuf,
-
+    #[structopt(long, default_value = "/sys/kernel/btf/vmlinux")]
+    btf: PathBuf,
     #[structopt(subcommand)]
     command: Option<Command>,
 }

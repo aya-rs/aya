@@ -17,6 +17,14 @@ fn codegen_internal_btf_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         .clang_arg(format!(
             "-I{}",
             opts.libbpf_dir
+                .join("include")
+                .canonicalize()
+                .unwrap()
+                .to_string_lossy(),
+        ))
+        .clang_arg(format!(
+            "-I{}",
+            opts.libbpf_dir
                 .join("include/uapi")
                 .canonicalize()
                 .unwrap()
@@ -32,7 +40,7 @@ fn codegen_internal_btf_bindings(opts: &Options) -> Result<(), anyhow::Error> {
     let types = ["bpf_core_relo", "btf_ext_header"];
 
     for x in &types {
-        bindgen = bindgen.whitelist_type(x);
+        bindgen = bindgen.allowlist_type(x);
     }
 
     let bindings = bindgen
@@ -149,10 +157,10 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         let mut bindgen = builder();
 
         for x in &types {
-            bindgen = bindgen.whitelist_type(x);
+            bindgen = bindgen.allowlist_type(x);
         }
         for x in &vars {
-            bindgen = bindgen.whitelist_var(x);
+            bindgen = bindgen.allowlist_var(x);
         }
 
         // FIXME: this stuff is probably debian/ubuntu specific
@@ -166,11 +174,11 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         };
 
         for x in &types {
-            bindgen = bindgen.whitelist_type(x);
+            bindgen = bindgen.allowlist_type(x);
         }
 
         for x in &vars {
-            bindgen = bindgen.whitelist_var(x);
+            bindgen = bindgen.allowlist_var(x);
         }
 
         let bindings = bindgen
