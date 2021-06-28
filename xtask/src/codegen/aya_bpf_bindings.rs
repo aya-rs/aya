@@ -21,6 +21,11 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
             .header(&*dir.join("include/bindings.h").to_string_lossy())
+            .clang_args(&[
+                "-I",
+                &*opts.libbpf_dir.join("include/uapi").to_string_lossy(),
+            ])
+            .clang_args(&["-I", &*opts.libbpf_dir.join("include").to_string_lossy()])
             .clang_args(&["-I", &*opts.libbpf_dir.join("src").to_string_lossy()])
             // open aya-bpf-bindings/.../bindings.rs and look for mod
             // _bindgen, those are anonymous enums

@@ -22,6 +22,14 @@ fn codegen_internal_btf_bindings(opts: &Options) -> Result<(), anyhow::Error> {
                 .unwrap()
                 .to_string_lossy()
         ))
+        .clang_arg(format!(
+            "-I{}",
+            opts.libbpf_dir
+                .join("include")
+                .canonicalize()
+                .unwrap()
+                .to_string_lossy()
+        ))
         .header(
             opts.libbpf_dir
                 .join("src/libbpf_internal.h")
