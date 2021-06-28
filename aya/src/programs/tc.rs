@@ -161,11 +161,7 @@ impl Link for TcLink {
 ///
 /// The `clsact` qdisc must be added to an interface before [`SchedClassifier`]
 /// programs can be attached.
-pub fn qdisc_add_clsact(if_name: &str) -> Result<(), ProgramError> {
-    let if_index = ifindex_from_ifname(if_name).map_err(|_| ProgramError::UnknownInterface {
-        name: if_name.to_string(),
-    })?;
+pub fn qdisc_add_clsact(if_name: &str) -> Result<(), io::Error> {
+    let if_index = ifindex_from_ifname(if_name)?;
     unsafe { netlink_qdisc_add_clsact(if_index as i32) }
-        .map_err(|io_error| TcError::NetlinkError { io_error })?;
-    Ok(())
 }
