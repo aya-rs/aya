@@ -104,6 +104,9 @@ impl __sk_buff {
             Some(v)
         }
     }
+    pub fn gso_size(&self) -> Option<__u32> {
+        unsafe { crate::bpf_probe_read(&self.gso_size) }.ok()
+    }
 }
 impl __sk_buff__bindgen_ty_1 {
     pub fn flow_keys(&self) -> Option<*mut bpf_flow_keys> {
@@ -223,6 +226,9 @@ impl bpf_sock {
     }
     pub fn state(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.state) }.ok()
+    }
+    pub fn rx_queue_mapping(&self) -> Option<__s32> {
+        unsafe { crate::bpf_probe_read(&self.rx_queue_mapping) }.ok()
     }
 }
 impl bpf_tcp_sock {
@@ -365,6 +371,9 @@ impl xdp_md {
     pub fn rx_queue_index(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.rx_queue_index) }.ok()
     }
+    pub fn egress_ifindex(&self) -> Option<__u32> {
+        unsafe { crate::bpf_probe_read(&self.egress_ifindex) }.ok()
+    }
 }
 impl sk_msg_md {
     pub fn data(&self) -> Option<*mut ::aya_bpf_cty::c_void> {
@@ -407,6 +416,14 @@ impl sk_msg_md {
     pub fn size(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.size) }.ok()
     }
+    pub fn sk(&self) -> Option<*mut bpf_sock> {
+        let v = unsafe { crate::bpf_probe_read(&self.__bindgen_anon_3.sk) }.ok()?;
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
+    }
 }
 impl sk_msg_md__bindgen_ty_1 {
     pub fn data(&self) -> Option<*mut ::aya_bpf_cty::c_void> {
@@ -421,6 +438,16 @@ impl sk_msg_md__bindgen_ty_1 {
 impl sk_msg_md__bindgen_ty_2 {
     pub fn data_end(&self) -> Option<*mut ::aya_bpf_cty::c_void> {
         let v = unsafe { crate::bpf_probe_read(&self.data_end) }.ok()?;
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
+    }
+}
+impl sk_msg_md__bindgen_ty_3 {
+    pub fn sk(&self) -> Option<*mut bpf_sock> {
+        let v = unsafe { crate::bpf_probe_read(&self.sk) }.ok()?;
         if v.is_null() {
             None
         } else {
@@ -460,6 +487,22 @@ impl sk_reuseport_md {
     pub fn hash(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.hash) }.ok()
     }
+    pub fn sk(&self) -> Option<*mut bpf_sock> {
+        let v = unsafe { crate::bpf_probe_read(&self.__bindgen_anon_3.sk) }.ok()?;
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
+    }
+    pub fn migrating_sk(&self) -> Option<*mut bpf_sock> {
+        let v = unsafe { crate::bpf_probe_read(&self.__bindgen_anon_4.migrating_sk) }.ok()?;
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
+    }
 }
 impl sk_reuseport_md__bindgen_ty_1 {
     pub fn data(&self) -> Option<*mut ::aya_bpf_cty::c_void> {
@@ -474,6 +517,26 @@ impl sk_reuseport_md__bindgen_ty_1 {
 impl sk_reuseport_md__bindgen_ty_2 {
     pub fn data_end(&self) -> Option<*mut ::aya_bpf_cty::c_void> {
         let v = unsafe { crate::bpf_probe_read(&self.data_end) }.ok()?;
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
+    }
+}
+impl sk_reuseport_md__bindgen_ty_3 {
+    pub fn sk(&self) -> Option<*mut bpf_sock> {
+        let v = unsafe { crate::bpf_probe_read(&self.sk) }.ok()?;
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
+    }
+}
+impl sk_reuseport_md__bindgen_ty_4 {
+    pub fn migrating_sk(&self) -> Option<*mut bpf_sock> {
+        let v = unsafe { crate::bpf_probe_read(&self.migrating_sk) }.ok()?;
         if v.is_null() {
             None
         } else {
@@ -505,6 +568,9 @@ impl bpf_map_info {
     }
     pub fn ifindex(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.ifindex) }.ok()
+    }
+    pub fn btf_vmlinux_value_type_id(&self) -> Option<__u32> {
+        unsafe { crate::bpf_probe_read(&self.btf_vmlinux_value_type_id) }.ok()
     }
     pub fn netns_dev(&self) -> Option<__u64> {
         unsafe { crate::bpf_probe_read(&self.netns_dev) }.ok()
@@ -689,6 +755,28 @@ impl bpf_sock_ops {
             Some(v)
         }
     }
+    pub fn skb_data(&self) -> Option<*mut ::aya_bpf_cty::c_void> {
+        let v = unsafe { crate::bpf_probe_read(&self.__bindgen_anon_3.skb_data) }.ok()?;
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
+    }
+    pub fn skb_data_end(&self) -> Option<*mut ::aya_bpf_cty::c_void> {
+        let v = unsafe { crate::bpf_probe_read(&self.__bindgen_anon_4.skb_data_end) }.ok()?;
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
+    }
+    pub fn skb_len(&self) -> Option<__u32> {
+        unsafe { crate::bpf_probe_read(&self.skb_len) }.ok()
+    }
+    pub fn skb_tcp_flags(&self) -> Option<__u32> {
+        unsafe { crate::bpf_probe_read(&self.skb_tcp_flags) }.ok()
+    }
 }
 impl bpf_sock_ops__bindgen_ty_1 {
     pub fn args(&self) -> Option<[__u32; 4usize]> {
@@ -704,6 +792,26 @@ impl bpf_sock_ops__bindgen_ty_1 {
 impl bpf_sock_ops__bindgen_ty_2 {
     pub fn sk(&self) -> Option<*mut bpf_sock> {
         let v = unsafe { crate::bpf_probe_read(&self.sk) }.ok()?;
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
+    }
+}
+impl bpf_sock_ops__bindgen_ty_3 {
+    pub fn skb_data(&self) -> Option<*mut ::aya_bpf_cty::c_void> {
+        let v = unsafe { crate::bpf_probe_read(&self.skb_data) }.ok()?;
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
+    }
+}
+impl bpf_sock_ops__bindgen_ty_4 {
+    pub fn skb_data_end(&self) -> Option<*mut ::aya_bpf_cty::c_void> {
+        let v = unsafe { crate::bpf_probe_read(&self.skb_data_end) }.ok()?;
         if v.is_null() {
             None
         } else {
@@ -736,31 +844,34 @@ impl bpf_fib_lookup {
         unsafe { crate::bpf_probe_read(&self.dport) }.ok()
     }
     pub fn tot_len(&self) -> Option<__u16> {
-        unsafe { crate::bpf_probe_read(&self.tot_len) }.ok()
+        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_1.tot_len) }.ok()
+    }
+    pub fn mtu_result(&self) -> Option<__u16> {
+        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_1.mtu_result) }.ok()
     }
     pub fn ifindex(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.ifindex) }.ok()
     }
     pub fn tos(&self) -> Option<__u8> {
-        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_1.tos) }.ok()
+        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_2.tos) }.ok()
     }
     pub fn flowinfo(&self) -> Option<__be32> {
-        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_1.flowinfo) }.ok()
+        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_2.flowinfo) }.ok()
     }
     pub fn rt_metric(&self) -> Option<__u32> {
-        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_1.rt_metric) }.ok()
+        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_2.rt_metric) }.ok()
     }
     pub fn ipv4_src(&self) -> Option<__be32> {
-        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_2.ipv4_src) }.ok()
+        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_3.ipv4_src) }.ok()
     }
     pub fn ipv6_src(&self) -> Option<[__u32; 4usize]> {
-        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_2.ipv6_src) }.ok()
+        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_3.ipv6_src) }.ok()
     }
     pub fn ipv4_dst(&self) -> Option<__be32> {
-        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_3.ipv4_dst) }.ok()
+        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_4.ipv4_dst) }.ok()
     }
     pub fn ipv6_dst(&self) -> Option<[__u32; 4usize]> {
-        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_3.ipv6_dst) }.ok()
+        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_4.ipv6_dst) }.ok()
     }
     pub fn h_vlan_proto(&self) -> Option<__be16> {
         unsafe { crate::bpf_probe_read(&self.h_vlan_proto) }.ok()
@@ -776,6 +887,14 @@ impl bpf_fib_lookup {
     }
 }
 impl bpf_fib_lookup__bindgen_ty_1 {
+    pub fn tot_len(&self) -> Option<__u16> {
+        unsafe { crate::bpf_probe_read(&self.tot_len) }.ok()
+    }
+    pub fn mtu_result(&self) -> Option<__u16> {
+        unsafe { crate::bpf_probe_read(&self.mtu_result) }.ok()
+    }
+}
+impl bpf_fib_lookup__bindgen_ty_2 {
     pub fn tos(&self) -> Option<__u8> {
         unsafe { crate::bpf_probe_read(&self.tos) }.ok()
     }
@@ -786,7 +905,7 @@ impl bpf_fib_lookup__bindgen_ty_1 {
         unsafe { crate::bpf_probe_read(&self.rt_metric) }.ok()
     }
 }
-impl bpf_fib_lookup__bindgen_ty_2 {
+impl bpf_fib_lookup__bindgen_ty_3 {
     pub fn ipv4_src(&self) -> Option<__be32> {
         unsafe { crate::bpf_probe_read(&self.ipv4_src) }.ok()
     }
@@ -794,12 +913,31 @@ impl bpf_fib_lookup__bindgen_ty_2 {
         unsafe { crate::bpf_probe_read(&self.ipv6_src) }.ok()
     }
 }
-impl bpf_fib_lookup__bindgen_ty_3 {
+impl bpf_fib_lookup__bindgen_ty_4 {
     pub fn ipv4_dst(&self) -> Option<__be32> {
         unsafe { crate::bpf_probe_read(&self.ipv4_dst) }.ok()
     }
     pub fn ipv6_dst(&self) -> Option<[__u32; 4usize]> {
         unsafe { crate::bpf_probe_read(&self.ipv6_dst) }.ok()
+    }
+}
+impl bpf_redir_neigh {
+    pub fn nh_family(&self) -> Option<__u32> {
+        unsafe { crate::bpf_probe_read(&self.nh_family) }.ok()
+    }
+    pub fn ipv4_nh(&self) -> Option<__be32> {
+        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_1.ipv4_nh) }.ok()
+    }
+    pub fn ipv6_nh(&self) -> Option<[__u32; 4usize]> {
+        unsafe { crate::bpf_probe_read(&self.__bindgen_anon_1.ipv6_nh) }.ok()
+    }
+}
+impl bpf_redir_neigh__bindgen_ty_1 {
+    pub fn ipv4_nh(&self) -> Option<__be32> {
+        unsafe { crate::bpf_probe_read(&self.ipv4_nh) }.ok()
+    }
+    pub fn ipv6_nh(&self) -> Option<[__u32; 4usize]> {
+        unsafe { crate::bpf_probe_read(&self.ipv6_nh) }.ok()
     }
 }
 impl bpf_flow_keys {
@@ -895,6 +1033,30 @@ impl bpf_sysctl {
         unsafe { crate::bpf_probe_read(&self.file_pos) }.ok()
     }
 }
+impl bpf_pidns_info {
+    pub fn pid(&self) -> Option<__u32> {
+        unsafe { crate::bpf_probe_read(&self.pid) }.ok()
+    }
+    pub fn tgid(&self) -> Option<__u32> {
+        unsafe { crate::bpf_probe_read(&self.tgid) }.ok()
+    }
+}
+impl btf_ptr {
+    pub fn ptr(&self) -> Option<*mut ::aya_bpf_cty::c_void> {
+        let v = unsafe { crate::bpf_probe_read(&self.ptr) }.ok()?;
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
+    }
+    pub fn type_id(&self) -> Option<__u32> {
+        unsafe { crate::bpf_probe_read(&self.type_id) }.ok()
+    }
+    pub fn flags(&self) -> Option<__u32> {
+        unsafe { crate::bpf_probe_read(&self.flags) }.ok()
+    }
+}
 impl pt_regs {
     pub fn r15(&self) -> Option<::aya_bpf_cty::c_ulong> {
         unsafe { crate::bpf_probe_read(&self.r15) }.ok()
@@ -969,8 +1131,6 @@ impl sockaddr {
     }
 }
 impl bpf_perf_event_data {}
-impl bpf_pidns_info {}
-impl bpf_redir_neigh {}
 impl linux_binprm {}
 impl tcphdr {}
 impl seq_file {}
@@ -981,7 +1141,6 @@ impl tcp_request_sock {}
 impl udp6_sock {}
 impl task_struct {}
 impl path {}
-impl btf_ptr {}
 impl inode {}
 impl socket {}
 impl file {}

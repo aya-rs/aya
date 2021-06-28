@@ -43,7 +43,7 @@ impl<T> PerfMap<T> {
         data: &T,
         flags: u32,
     ) {
-        let index = index.unwrap_or(BPF_F_CURRENT_CPU.into()) as u64;
+        let index = index.unwrap_or(BPF_F_CURRENT_CPU as u32) as u64;
         let flags = (flags as u64) << 32 | index;
         unsafe {
             bpf_perf_event_output(
