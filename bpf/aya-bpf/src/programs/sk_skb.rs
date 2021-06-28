@@ -4,7 +4,8 @@ use core::{
 };
 
 use aya_bpf_bindings::helpers::{
-    bpf_l3_csum_replace, bpf_l4_csum_replace, bpf_skb_load_bytes, bpf_skb_store_bytes,
+    bpf_clone_redirect, bpf_l3_csum_replace, bpf_l4_csum_replace, bpf_skb_adjust_room,
+    bpf_skb_change_type, bpf_skb_load_bytes, bpf_skb_store_bytes,
 };
 use aya_bpf_cty::c_long;
 
@@ -48,14 +49,14 @@ impl SkSkbContext {
     }
 
     #[inline]
-    pub fn store<T>(&mut self, offset: usize, v: &T) -> Result<(), c_long> {
+    pub fn store<T>(&mut self, offset: usize, v: &T, flags: u64) -> Result<(), c_long> {
         unsafe {
             let ret = bpf_skb_store_bytes(
                 self.skb as *mut _,
                 offset as u32,
                 v as *const _ as *const _,
                 mem::size_of::<T>() as u32,
-                0,
+                flags,
             );
             if ret < 0 {
                 return Err(ret);
@@ -99,6 +100,36 @@ impl SkSkbContext {
         }
 
         Ok(())
+    }
+
+    #[inline]
+    pub fn adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> Result<(), c_long> {
+        let ret = unsafe { bpf_skb_adjust_room(self.as_ptr() as *mut _, len_diff, mode, flags) };
+        if ret < 0 {
+            return Err(ret);
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    pub fn clone_redirect(&self, if_index: u32, flags: u64) -> Result<(), c_long> {
+        let ret = unsafe { bpf_clone_redirect(self.as_ptr() as *mut _, if_index, flags) };
+        if ret < 0 {
+            Err(ret)
+        } else {
+            Ok(())
+        }
+    }
+
+    #[inline]
+    pub fn change_type(&self, ty: u32) -> Result<(), c_long> {
+        let ret = unsafe { bpf_skb_change_type(self.as_ptr() as *mut _, ty) };
+        if ret < 0 {
+            Err(ret)
+        } else {
+            Ok(())
+        }
     }
 }
 
