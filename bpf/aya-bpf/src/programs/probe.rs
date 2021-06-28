@@ -9,7 +9,7 @@ pub struct ProbeContext {
 impl ProbeContext {
     pub fn new(ctx: *mut c_void) -> ProbeContext {
         ProbeContext {
-            regs: Regs { regs: ctx as *mut pt_regs },
+            regs: Regs::from(ctx)
         }
     }
 }
