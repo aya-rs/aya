@@ -42,7 +42,13 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
             .constified_enum("BPF_FIB_.*")
             .constified_enum("BPF_FLOW_.*");
 
-        let types = ["bpf_map_.*", "sk_action", "pt_regs", "xdp_action"];
+        let types = [
+            "bpf_map_.*",
+            "sk_action",
+            "pt_regs",
+            "xdp_action",
+            "bpf_adj_room_mode",
+        ];
         let vars = ["BPF_.*", "bpf_.*", "TC_ACT_.*", "SOL_SOCKET", "SO_.*"];
 
         for x in &types {
