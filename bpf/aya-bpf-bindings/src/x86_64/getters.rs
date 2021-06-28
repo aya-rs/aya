@@ -1144,20 +1144,3 @@ impl path {}
 impl inode {}
 impl socket {}
 impl file {}
-impl bpf_map_def {
-    pub fn type_(&self) -> Option<::aya_bpf_cty::c_uint> {
-        unsafe { crate::bpf_probe_read(&self.type_) }.ok()
-    }
-    pub fn key_size(&self) -> Option<::aya_bpf_cty::c_uint> {
-        unsafe { crate::bpf_probe_read(&self.key_size) }.ok()
-    }
-    pub fn value_size(&self) -> Option<::aya_bpf_cty::c_uint> {
-        unsafe { crate::bpf_probe_read(&self.value_size) }.ok()
-    }
-    pub fn max_entries(&self) -> Option<::aya_bpf_cty::c_uint> {
-        unsafe { crate::bpf_probe_read(&self.max_entries) }.ok()
-    }
-    pub fn map_flags(&self) -> Option<::aya_bpf_cty::c_uint> {
-        unsafe { crate::bpf_probe_read(&self.map_flags) }.ok()
-    }
-}

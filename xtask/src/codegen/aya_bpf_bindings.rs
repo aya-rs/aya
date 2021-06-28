@@ -55,6 +55,10 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
             bindgen = bindgen.whitelist_type(x);
         }
 
+        // we define our own version which is compatible with both libbpf and
+        // iproute2
+        bindgen = bindgen.blacklist_type("bpf_map_def");
+
         for x in &vars {
             bindgen = bindgen.whitelist_var(x);
         }
