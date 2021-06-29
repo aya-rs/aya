@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{bindings::pt_regs, BpfContext};
+use crate::{bindings::__u64, bindings::pt_regs, BpfContext};
 
 pub struct ProbeContext {
     pub regs: Regs,
@@ -53,43 +53,43 @@ impl Regs {
     #[cfg(any(bpf_target_arch = "x86_64", bpf_target_arch = "aarch64"))]
     #[doc(alias = "PT_REGS_PARM1")]
     /// Utility to get the First Parameter
-    pub fn parm1(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { &*(self.regs) }.rdi()
+    pub fn parm1(&self) -> __u64 {
+        unsafe { &*(self.regs) }.rdi
     }
 
     #[cfg(any(bpf_target_arch = "x86_64", bpf_target_arch = "aarch64"))]
     #[doc(alias = "PT_REGS_PARM2")]
     /// Utility to get the Second Parameter
-    pub fn parm2(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { &*(self.regs) }.rsi()
+    pub fn parm2(&self) -> __u64 {
+        unsafe { &*(self.regs) }.rsi
     }
 
     #[cfg(any(bpf_target_arch = "x86_64", bpf_target_arch = "aarch64"))]
     #[doc(alias = "PT_REGS_PARM3")]
     /// Utility to get the Third Parameter
-    pub fn parm3(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { &*(self.regs) }.rdx()
+    pub fn parm3(&self) -> __u64 {
+        unsafe { &*(self.regs) }.rdx
     }
 
     #[cfg(any(bpf_target_arch = "x86_64", bpf_target_arch = "aarch64"))]
     #[doc(alias = "PT_REGS_PARM4")]
     /// Utility to get the Fourth Parameter
-    pub fn parm4(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { &*(self.regs) }.rcx()
+    pub fn parm4(&self) -> __u64 {
+        unsafe { &*(self.regs) }.rcx
     }
 
     #[cfg(any(bpf_target_arch = "x86_64", bpf_target_arch = "aarch64"))]
     #[doc(alias = "PT_REGS_PARM5")]
     /// Utility to get the Fifth Parameter
-    pub fn parm5(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { &*(self.regs) }.r8()
+    pub fn parm5(&self) -> __u64 {
+        unsafe { &*(self.regs) }.r8
     }
 
     #[cfg(any(bpf_target_arch = "x86_64", bpf_target_arch = "aarch64"))]
     #[doc(alias = "PT_REGS_PARM6")]
     /// Utility to get the Sixth Parameter (not available for s390x)
-    pub fn parm6(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { &*(self.regs) }.r9()
+    pub fn parm6(&self) -> __u64 {
+        unsafe { &*(self.regs) }.r9
     }
 
     #[cfg(any(bpf_target_arch = "x86_64", bpf_target_arch = "aarch64"))]
