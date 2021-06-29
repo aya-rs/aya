@@ -6,11 +6,16 @@ use std::path::PathBuf;
 
 use structopt::StructOpt;
 
-const SUPPORTED_ARCHS: &'static [Architecture] = &[Architecture::X86_64, Architecture::AArch64];
+const SUPPORTED_ARCHS: &'static [Architecture] = &[
+    Architecture::X86_64,
+    Architecture::ARMv7,
+    Architecture::AArch64,
+];
 
 #[derive(Debug, Copy, Clone)]
 pub enum Architecture {
     X86_64,
+    ARMv7,
     AArch64,
 }
 
@@ -26,6 +31,7 @@ impl std::str::FromStr for Architecture {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "x86_64" => Architecture::X86_64,
+            "armv7" => Architecture::ARMv7,
             "aarch64" => Architecture::AArch64,
             _ => return Err("invalid architecture".to_owned()),
         })
@@ -36,6 +42,7 @@ impl std::fmt::Display for Architecture {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
             Architecture::X86_64 => "x86_64",
+            Architecture::ARMv7 => "armv7",
             Architecture::AArch64 => "aarch64",
         })
     }

@@ -273,6 +273,11 @@ impl Drop for PerfBuffer {
     }
 }
 
+#[cfg(target_pointer_width = "32")]
+type OffsetType = i32;
+#[cfg(target_pointer_width = "64")]
+type OffsetType = i64;
+
 #[cfg_attr(test, allow(unused_variables))]
 unsafe fn mmap(
     addr: *mut c_void,
@@ -280,7 +285,7 @@ unsafe fn mmap(
     prot: c_int,
     flags: c_int,
     fd: i32,
-    offset: i64,
+    offset: OffsetType,
 ) -> *mut c_void {
     #[cfg(not(test))]
     return libc::mmap(addr, len, prot, flags, fd, offset);
