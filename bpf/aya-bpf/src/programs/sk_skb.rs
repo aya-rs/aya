@@ -31,6 +31,16 @@ impl SkSkbContext {
     }
 
     #[inline]
+    pub fn cb(&self) -> &[u32] {
+        unsafe { &(*self.skb).cb }
+    }
+
+    #[inline]
+    pub fn cb_mut(&self) -> &mut [u32] {
+        unsafe { &mut (*self.skb).cb }
+    }
+
+    #[inline]
     pub fn load<T>(&self, offset: usize) -> Result<T, c_long> {
         unsafe {
             let mut data = MaybeUninit::<T>::uninit();
