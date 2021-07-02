@@ -142,7 +142,7 @@ impl Map {
 
         let fd = bpf_create_map(&c_name, &self.obj.def).map_err(|(code, io_error)| {
             MapError::CreateError {
-                name: name,
+                name,
                 code,
                 io_error,
             }
