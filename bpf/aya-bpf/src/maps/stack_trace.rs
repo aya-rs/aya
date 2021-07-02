@@ -28,7 +28,7 @@ impl StackTrace {
 		}
 	}
 
-	pub unsafe fn get_stackid<C: BpfContext>(&mut self, ctx: &C, flags: u64) -> Result<u32, i64> {
+	pub unsafe fn get_stackid<C: BpfContext>(&mut self, ctx: &C, flags: u64) -> Result<i64, i64> {
 		let ret = bpf_get_stackid(
 			ctx.as_ptr(),
 			&mut self.def as *mut _ as *mut _,
@@ -37,7 +37,7 @@ impl StackTrace {
 		if ret < 0 {
 			Err(ret)
 		} else {
-			Ok(ret as u32)
+			Ok(ret)
 		}
 	}
 }
