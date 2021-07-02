@@ -49,11 +49,6 @@ fn syscall(call: Syscall) -> SysResult {
     return TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
 }
 
-#[cfg(target_pointer_width = "32")]
-type RetType = i32;
-#[cfg(target_pointer_width = "64")]
-type RetType = i64;
-
 #[cfg(not(test))]
 unsafe fn syscall_impl(call: Syscall) -> SysResult {
     use libc::{SYS_bpf, SYS_perf_event_open};
@@ -69,7 +64,7 @@ unsafe fn syscall_impl(call: Syscall) -> SysResult {
             flags,
         } => libc::syscall(SYS_perf_event_open, &attr, pid, cpu, group, flags),
         PerfEventIoctl { fd, request, arg } => {
-            libc::ioctl(fd, request.try_into().unwrap(), arg) as RetType
+            libc::ioctl(fd, request.try_into().unwrap(), arg) as libc::c_long
         }
     };
 

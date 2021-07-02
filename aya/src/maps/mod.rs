@@ -65,11 +65,6 @@ pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
 
-#[cfg(target_pointer_width = "32")]
-type CodeType = i32;
-#[cfg(target_pointer_width = "64")]
-type CodeType = i64;
-
 #[derive(Error, Debug)]
 pub enum MapError {
     #[error("map `{name}` not found ")]
@@ -90,7 +85,7 @@ pub enum MapError {
     #[error("failed to create map `{name}`: {code}")]
     CreateError {
         name: String,
-        code: CodeType,
+        code: libc::c_long,
         io_error: io::Error,
     },
 
@@ -115,7 +110,7 @@ pub enum MapError {
     #[error("the `{call}` syscall failed with code {code} io_error {io_error}")]
     SyscallError {
         call: String,
-        code: CodeType,
+        code: libc::c_long,
         io_error: io::Error,
     },
 
