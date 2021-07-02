@@ -280,7 +280,7 @@ unsafe fn mmap(
     prot: c_int,
     flags: c_int,
     fd: i32,
-    offset: i64,
+    offset: libc::off_t,
 ) -> *mut c_void {
     #[cfg(not(test))]
     return libc::mmap(addr, len, prot, flags, fd, offset);

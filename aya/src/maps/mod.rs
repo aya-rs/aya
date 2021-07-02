@@ -64,6 +64,7 @@ pub use queue::Queue;
 pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
+
 #[derive(Error, Debug)]
 pub enum MapError {
     #[error("map `{name}` not found ")]
@@ -84,7 +85,7 @@ pub enum MapError {
     #[error("failed to create map `{name}`: {code}")]
     CreateError {
         name: String,
-        code: i64,
+        code: libc::c_long,
         io_error: io::Error,
     },
 
@@ -109,7 +110,7 @@ pub enum MapError {
     #[error("the `{call}` syscall failed with code {code} io_error {io_error}")]
     SyscallError {
         call: String,
-        code: i64,
+        code: libc::c_long,
         io_error: io::Error,
     },
 

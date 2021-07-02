@@ -64,7 +64,7 @@ unsafe fn syscall_impl(call: Syscall) -> SysResult {
             flags,
         } => libc::syscall(SYS_perf_event_open, &attr, pid, cpu, group, flags),
         PerfEventIoctl { fd, request, arg } => {
-            libc::ioctl(fd, request.try_into().unwrap(), arg) as i64
+            libc::ioctl(fd, request.try_into().unwrap(), arg) as libc::c_long
         }
     };
 
