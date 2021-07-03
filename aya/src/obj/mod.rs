@@ -668,70 +668,61 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_map_def() {
+    fn test_parse_map_def_error() {
         assert!(matches!(
             parse_map_def("foo", &[]),
             Err(ParseError::InvalidMapDefinition { .. })
         ));
+    }
+
+    #[test]
+    fn test_parse_map_short() {
+        let def = bpf_map_def {
+            map_type: 1,
+            key_size: 2,
+            value_size: 3,
+            max_entries: 4,
+            map_flags: 5,
+            id: 0,
+            pinning: 0,
+        };
 
         assert_eq!(
-            parse_map_def(
-                "foo",
-                bytes_of(&bpf_map_def {
-                    map_type: 1,
-                    key_size: 2,
-                    value_size: 3,
-                    max_entries: 4,
-                    map_flags: 5,
-                    ..Default::default()
-                })
-            )
-            .unwrap(),
-            bpf_map_def {
-                map_type: 1,
-                key_size: 2,
-                value_size: 3,
-                max_entries: 4,
-                map_flags: 5,
-                ..Default::default()
-            }
+            parse_map_def("foo", &bytes_of(&def)[..MINIMUM_MAP_SIZE]).unwrap(),
+            def
         );
+    }
 
-        assert_eq!(
-            parse_map_def(
-                "foo",
-                &bytes_of(&bpf_map_def {
-                    map_type: 1,
-                    key_size: 2,
-                    value_size: 3,
-                    max_entries: 4,
-                    map_flags: 5,
-                    ..Default::default()
-                })[..(mem::size_of::<u32>() * 5)]
-            )
-            .unwrap(),
-            bpf_map_def {
-                map_type: 1,
-                key_size: 2,
-                value_size: 3,
-                max_entries: 4,
-                map_flags: 5,
-                ..Default::default()
-            }
-        );
-        let map = parse_map_def(
-            "foo",
-            &bytes_of(&bpf_map_def {
-                map_type: 1,
-                key_size: 2,
-                value_size: 3,
-                max_entries: 4,
-                map_flags: 5,
-                ..Default::default()
-            })[..(mem::size_of::<u32>() * 5)],
-        )
-        .unwrap();
-        assert!(map.id == 0 && map.pinning == 0)
+    #[test]
+    fn test_parse_map_def() {
+        let def = bpf_map_def {
+            map_type: 1,
+            key_size: 2,
+            value_size: 3,
+            max_entries: 4,
+            map_flags: 5,
+            id: 6,
+            pinning: 7,
+        };
+
+        assert_eq!(parse_map_def("foo", bytes_of(&def)).unwrap(), def);
+    }
+
+    #[test]
+    fn test_parse_map_def_with_padding() {
+        let def = bpf_map_def {
+            map_type: 1,
+            key_size: 2,
+            value_size: 3,
+            max_entries: 4,
+            map_flags: 5,
+            id: 6,
+            pinning: 7,
+        };
+        let mut buf = [0u8; 128];
+        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, def.clone()) };
+
+        assert_eq!(parse_map_def("foo", &buf).unwrap(), def);
     }
 
     #[test]
