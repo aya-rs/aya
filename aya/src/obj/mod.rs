@@ -512,7 +512,7 @@ fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
 }
 
 fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
-    if data.len() > mem::size_of::<bpf_map_def>() || data.len() < MINIMUM_MAP_SIZE {
+    if data.len() < MINIMUM_MAP_SIZE {
         return Err(ParseError::InvalidMapDefinition {
             name: name.to_owned(),
         });
@@ -673,10 +673,7 @@ mod tests {
             parse_map_def("foo", &[]),
             Err(ParseError::InvalidMapDefinition { .. })
         ));
-        assert!(matches!(
-            parse_map_def("foo", &[0u8; std::mem::size_of::<bpf_map_def>() + 1]),
-            Err(ParseError::InvalidMapDefinition { .. })
-        ));
+
         assert_eq!(
             parse_map_def(
                 "foo",
@@ -743,13 +740,6 @@ mod tests {
             parse_map(&fake_section("maps/foo", &[]), "foo"),
             Err(ParseError::InvalidMapDefinition { .. })
         ));
-        assert!(matches!(
-            parse_map(
-                &fake_section("maps/foo", &[0u8; std::mem::size_of::<bpf_map_def>() + 1]),
-                "foo"
-            ),
-            Err(ParseError::InvalidMapDefinition { .. })
-        ))
     }
 
     #[test]
