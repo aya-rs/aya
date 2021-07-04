@@ -75,7 +75,7 @@ impl<T: Deref<Target = Map>, K: Pod> SockHash<T, K> {
         if map_type != BPF_MAP_TYPE_SOCKHASH as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
-            })?;
+            });
         }
         hash_map::check_kv_size::<K, u32>(&map)?;
         let _ = map.fd_or_err()?;

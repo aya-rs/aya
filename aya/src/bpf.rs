@@ -280,7 +280,7 @@ impl Bpf {
     /// }
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn maps<'a>(&'a self) -> impl Iterator<Item = (&'a str, Result<MapRef, MapError>)> + 'a {
+    pub fn maps(&self) -> impl Iterator<Item = (&str, Result<MapRef, MapError>)> {
         let ret = self.maps.iter().map(|(name, lock)| {
             (
                 name.as_str(),

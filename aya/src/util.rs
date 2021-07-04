@@ -108,8 +108,6 @@ pub(crate) fn tc_handler_make(major: u32, minor: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use std::iter::FromIterator;
-
     use super::*;
 
     #[test]
@@ -117,9 +115,18 @@ mod tests {
         assert_eq!(parse_cpu_ranges("0").unwrap(), vec![0]);
         assert_eq!(parse_cpu_ranges("0,1").unwrap(), vec![0, 1]);
         assert_eq!(parse_cpu_ranges("0,1,2").unwrap(), vec![0, 1, 2]);
-        assert_eq!(parse_cpu_ranges("0-7").unwrap(), Vec::from_iter(0..=7));
-        assert_eq!(parse_cpu_ranges("0-3,4-7").unwrap(), Vec::from_iter(0..=7));
-        assert_eq!(parse_cpu_ranges("0-5,6,7").unwrap(), Vec::from_iter(0..=7));
+        assert_eq!(
+            parse_cpu_ranges("0-7").unwrap(),
+            (0..=7).collect::<Vec<_>>()
+        );
+        assert_eq!(
+            parse_cpu_ranges("0-3,4-7").unwrap(),
+            (0..=7).collect::<Vec<_>>()
+        );
+        assert_eq!(
+            parse_cpu_ranges("0-5,6,7").unwrap(),
+            (0..=7).collect::<Vec<_>>()
+        );
         assert!(parse_cpu_ranges("").is_err());
         assert!(parse_cpu_ranges("0-1,2-").is_err());
         assert!(parse_cpu_ranges("foo").is_err());

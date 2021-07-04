@@ -77,7 +77,7 @@ impl<T: Deref<Target = Map>> StackTraceMap<T> {
         if map_type != BPF_MAP_TYPE_STACK_TRACE as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
-            })?;
+            });
         }
         let expected = mem::size_of::<u32>();
         let size = map.obj.def.key_size as usize;

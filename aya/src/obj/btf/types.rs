@@ -200,10 +200,7 @@ impl BtfType {
     }
 
     pub(crate) fn is_composite(&self) -> bool {
-        match self {
-            BtfType::Struct(_, _) | BtfType::Union(_, _) => true,
-            _ => false,
-        }
+        matches!(self, BtfType::Struct(_, _) | BtfType::Union(_, _))
     }
 }
 

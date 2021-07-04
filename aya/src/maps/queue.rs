@@ -43,7 +43,7 @@ impl<T: Deref<Target = Map>, V: Pod> Queue<T, V> {
         if map_type != BPF_MAP_TYPE_QUEUE as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
-            })?;
+            });
         }
         let expected = 0;
         let size = map.obj.def.key_size as usize;

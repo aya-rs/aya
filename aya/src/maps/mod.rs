@@ -134,7 +134,7 @@ impl Map {
     pub fn create(&mut self) -> Result<RawFd, MapError> {
         let name = self.obj.name.clone();
         if self.fd.is_some() {
-            return Err(MapError::AlreadyCreated { name: name.clone() });
+            return Err(MapError::AlreadyCreated { name });
         }
 
         let c_name =
@@ -210,19 +210,19 @@ impl<K: Pod> Iterator for MapKeys<'_, K> {
         match bpf_map_get_next_key(fd, self.key.as_ref()) {
             Ok(Some(key)) => {
                 self.key = Some(key);
-                return Some(Ok(key));
+                Some(Ok(key))
             }
             Ok(None) => {
                 self.key = None;
-                return None;
+                None
             }
             Err((code, io_error)) => {
                 self.err = true;
-                return Some(Err(MapError::SyscallError {
+                Some(Err(MapError::SyscallError {
                     call: "bpf_map_get_next_key".to_owned(),
                     code,
                     io_error,
-                }));
+                }))
             }
         }
     }
@@ -366,7 +366,7 @@ impl<T: Pod> TryFrom<Vec<T>> for PerCpuValues<T> {
 
 impl<T: Pod> PerCpuValues<T> {
     pub(crate) fn alloc_kernel_mem() -> Result<PerCpuKernelMem, io::Error> {
-        let value_size = mem::size_of::<T>() + 7 & !7;
+        let value_size = (mem::size_of::<T>() + 7) & !7;
         Ok(PerCpuKernelMem {
             bytes: vec![0u8; nr_cpus()? * value_size],
         })
@@ -374,7 +374,7 @@ impl<T: Pod> PerCpuValues<T> {
 
     pub(crate) unsafe fn from_kernel_mem(mem: PerCpuKernelMem) -> PerCpuValues<T> {
         let mem_ptr = mem.bytes.as_ptr() as usize;
-        let value_size = mem::size_of::<T>() + 7 & !7;
+        let value_size = (mem::size_of::<T>() + 7) & !7;
         let mut values = Vec::new();
         let mut offset = 0;
         while offset < mem.bytes.len() {
@@ -387,10 +387,10 @@ impl<T: Pod> PerCpuValues<T> {
         }
     }
 
-    pub(crate) fn into_kernel_mem(&self) -> Result<PerCpuKernelMem, io::Error> {
+    pub(crate) fn build_kernel_mem(&self) -> Result<PerCpuKernelMem, io::Error> {
         let mut mem = PerCpuValues::<T>::alloc_kernel_mem()?;
         let mem_ptr = mem.as_mut_ptr() as usize;
-        let value_size = mem::size_of::<T>() + 7 & !7;
+        let value_size = (mem::size_of::<T>() + 7) & !7;
         for i in 0..self.values.len() {
             unsafe { ptr::write_unaligned((mem_ptr + i * value_size) as *mut _, self.values[i]) };
         }
@@ -459,9 +459,7 @@ mod tests {
 
     #[test]
     fn test_create_failed() {
-        override_syscall(|_| {
-            return Err((-42, io::Error::from_raw_os_error(EFAULT)));
-        });
+        override_syscall(|_| Err((-42, io::Error::from_raw_os_error(EFAULT))));
 
         let mut map = new_map("foo");
         let ret = map.create();

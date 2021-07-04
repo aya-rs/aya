@@ -14,7 +14,7 @@ thread_local! {
 
 #[cfg(test)]
 unsafe fn test_syscall(_call: Syscall) -> SysResult {
-    return Err((-1, io::Error::from_raw_os_error(libc::EINVAL)));
+    Err((-1, io::Error::from_raw_os_error(libc::EINVAL)))
 }
 
 #[cfg(test)]

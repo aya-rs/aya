@@ -48,7 +48,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
         if map_type != BPF_MAP_TYPE_HASH as u32 && map_type != BPF_MAP_TYPE_LRU_HASH as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
-            })?;
+            });
         }
         hash_map::check_kv_size::<K, V>(&map)?;
         let _ = map.fd_or_err()?;
@@ -426,10 +426,10 @@ mod tests {
     }
 
     fn get_next_key(attr: &bpf_attr) -> SysResult {
-        match bpf_key(&attr) {
-            None => set_next_key(&attr, 10),
-            Some(10) => set_next_key(&attr, 20),
-            Some(20) => set_next_key(&attr, 30),
+        match bpf_key(attr) {
+            None => set_next_key(attr, 10),
+            Some(10) => set_next_key(attr, 20),
+            Some(20) => set_next_key(attr, 30),
             Some(30) => return sys_error(ENOENT),
             Some(_) => return sys_error(EFAULT),
         };
@@ -438,10 +438,10 @@ mod tests {
     }
 
     fn lookup_elem(attr: &bpf_attr) -> SysResult {
-        match bpf_key(&attr) {
-            Some(10) => set_ret(&attr, 100),
-            Some(20) => set_ret(&attr, 200),
-            Some(30) => set_ret(&attr, 300),
+        match bpf_key(attr) {
+            Some(10) => set_ret(attr, 100),
+            Some(20) => set_ret(attr, 200),
+            Some(30) => set_ret(attr, 300),
             Some(_) => return sys_error(ENOENT),
             None => return sys_error(EFAULT),
         };
@@ -455,7 +455,7 @@ mod tests {
             Syscall::Bpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
-            } => get_next_key(&attr),
+            } => get_next_key(attr),
             _ => sys_error(EFAULT),
         });
 
@@ -476,9 +476,9 @@ mod tests {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
             } => {
-                match bpf_key(&attr) {
-                    None => set_next_key(&attr, 10),
-                    Some(10) => set_next_key(&attr, 20),
+                match bpf_key(attr) {
+                    None => set_next_key(attr, 10),
+                    Some(10) => set_next_key(attr, 20),
                     Some(_) => return sys_error(EFAULT),
                 };
 
@@ -508,11 +508,11 @@ mod tests {
             Syscall::Bpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
-            } => get_next_key(&attr),
+            } => get_next_key(attr),
             Syscall::Bpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 attr,
-            } => lookup_elem(&attr),
+            } => lookup_elem(attr),
             _ => sys_error(EFAULT),
         });
         let map = Map {
@@ -530,15 +530,15 @@ mod tests {
             Syscall::Bpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
-            } => get_next_key(&attr),
+            } => get_next_key(attr),
             Syscall::Bpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 attr,
             } => {
-                match bpf_key(&attr) {
-                    Some(10) => set_ret(&attr, 100),
+                match bpf_key(attr) {
+                    Some(10) => set_ret(attr, 100),
                     Some(20) => return sys_error(ENOENT),
-                    Some(30) => set_ret(&attr, 300),
+                    Some(30) => set_ret(attr, 300),
                     Some(_) => return sys_error(ENOENT),
                     None => return sys_error(EFAULT),
                 };
@@ -564,9 +564,9 @@ mod tests {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
             } => {
-                match bpf_key(&attr) {
-                    None => set_next_key(&attr, 10),
-                    Some(10) => set_next_key(&attr, 20),
+                match bpf_key(attr) {
+                    None => set_next_key(attr, 10),
+                    Some(10) => set_next_key(attr, 20),
                     Some(20) => return sys_error(EFAULT),
                     Some(30) => return sys_error(ENOENT),
                     Some(_) => panic!(),
@@ -577,7 +577,7 @@ mod tests {
             Syscall::Bpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 attr,
-            } => lookup_elem(&attr),
+            } => lookup_elem(attr),
             _ => sys_error(EFAULT),
         });
         let map = Map {
@@ -602,15 +602,15 @@ mod tests {
             Syscall::Bpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
-            } => get_next_key(&attr),
+            } => get_next_key(attr),
             Syscall::Bpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 attr,
             } => {
-                match bpf_key(&attr) {
-                    Some(10) => set_ret(&attr, 100),
+                match bpf_key(attr) {
+                    Some(10) => set_ret(attr, 100),
                     Some(20) => return sys_error(EFAULT),
-                    Some(30) => set_ret(&attr, 300),
+                    Some(30) => set_ret(attr, 300),
                     Some(_) => return sys_error(ENOENT),
                     None => return sys_error(EFAULT),
                 };

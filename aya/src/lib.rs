@@ -30,6 +30,7 @@
 //! [tokio]: https://docs.rs/tokio
 //! [async-std]: https://docs.rs/async-std
 #![deny(clippy::all)]
+#![allow(clippy::missing_safety_doc, clippy::len_without_is_empty)]
 
 #[macro_use]
 extern crate lazy_static;

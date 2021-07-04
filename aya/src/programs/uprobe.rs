@@ -88,7 +88,7 @@ impl UProbe {
         let target_str = &*target.as_os_str().to_string_lossy();
 
         let mut path = if let Some(pid) = pid {
-            find_lib_in_proc_maps(pid, &target_str).map_err(|io_error| UProbeError::FileError {
+            find_lib_in_proc_maps(pid, target_str).map_err(|io_error| UProbeError::FileError {
                 filename: format!("/proc/{}/maps", pid),
                 io_error,
             })?
@@ -231,10 +231,9 @@ impl LdSoCache {
 
         let mut buf = [0u8; LD_SO_CACHE_HEADER.len()];
         cursor.read_exact(&mut buf)?;
-        let header = std::str::from_utf8(&buf).or(Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "invalid ld.so.cache header",
-        )))?;
+        let header = std::str::from_utf8(&buf).map_err(|_| {
+            io::Error::new(io::ErrorKind::InvalidData, "invalid ld.so.cache header")
+        })?;
         if header != LD_SO_CACHE_HEADER {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,

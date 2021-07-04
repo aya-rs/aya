@@ -116,7 +116,7 @@ impl FromStr for ProgramSection {
 
         // parse the common case, eg "xdp/program_name" or
         // "sk_skb/stream_verdict/program_name"
-        let mut parts = section.rsplitn(2, "/").collect::<Vec<_>>();
+        let mut parts = section.rsplitn(2, '/').collect::<Vec<_>>();
         if parts.len() == 1 {
             parts.push(parts[0]);
         }
@@ -132,7 +132,7 @@ impl FromStr for ProgramSection {
             _ if kind.starts_with("tracepoint") || kind.starts_with("tp") => {
                 // tracepoint sections are named `tracepoint/category/event_name`,
                 // and we want to parse the name as "category/event_name"
-                let name = section.splitn(2, "/").last().unwrap().to_owned();
+                let name = section.splitn(2, '/').last().unwrap().to_owned();
                 TracePoint { name }
             }
             "socket_filter" => SocketFilter { name },
@@ -155,7 +155,7 @@ impl FromStr for ProgramSection {
 
 impl Object {
     pub(crate) fn parse(data: &[u8]) -> Result<Object, BpfError> {
-        let obj = object::read::File::parse(data).map_err(|e| ParseError::ElfError(e))?;
+        let obj = object::read::File::parse(data).map_err(ParseError::ElfError)?;
         let endianness = obj.endianness();
 
         let license = if let Some(section) = obj.section_by_name("license") {
@@ -192,12 +192,12 @@ impl Object {
             bpf_obj.parse_section(Section::try_from(&s)?)?;
         }
 
-        return Ok(bpf_obj);
+        Ok(bpf_obj)
     }
 
     fn new(endianness: Endianness, license: CString, kernel_version: KernelVersion) -> Object {
         Object {
-            endianness: endianness.into(),
+            endianness,
             license,
             kernel_version,
             btf: None,
@@ -300,17 +300,16 @@ impl Object {
     }
 
     fn parse_section(&mut self, mut section: Section) -> Result<(), BpfError> {
-        let mut parts = section.name.rsplitn(2, "/").collect::<Vec<_>>();
+        let mut parts = section.name.rsplitn(2, '/').collect::<Vec<_>>();
         parts.reverse();
 
-        if parts.len() == 1 {
-            if parts[0] == "xdp"
+        if parts.len() == 1
+            && (parts[0] == "xdp"
                 || parts[0] == "sk_msg"
                 || parts[0] == "sockops"
-                || parts[0] == "classifier"
-            {
-                parts.push(parts[0]);
-            }
+                || parts[0] == "classifier")
+        {
+            parts.push(parts[0]);
         }
 
         match section.name {
@@ -322,7 +321,7 @@ impl Object {
             ".BTF" => self.parse_btf(&section)?,
             ".BTF.ext" => self.parse_btf_ext(&section)?,
             map if map.starts_with("maps/") => {
-                let name = map.splitn(2, "/").last().unwrap();
+                let name = map.splitn(2, '/').last().unwrap();
                 self.maps
                     .insert(name.to_string(), parse_map(&section, name)?);
             }
@@ -720,7 +719,7 @@ mod tests {
             pinning: 7,
         };
         let mut buf = [0u8; 128];
-        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, def.clone()) };
+        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, def) };
 
         assert_eq!(parse_map_def("foo", &buf).unwrap(), def);
     }

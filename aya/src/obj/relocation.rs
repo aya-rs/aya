@@ -216,9 +216,8 @@ impl<'a> FunctionLinker<'a> {
         program: &mut Function,
         fun: &Function,
     ) -> Result<usize, RelocationError> {
-        match self.linked_functions.get(&fun.address) {
-            Some(fun_ins_index) => return Ok(*fun_ins_index), // already linked
-            None => {}
+        if let Some(fun_ins_index) = self.linked_functions.get(&fun.address) {
+            return Ok(*fun_ins_index);
         };
 
         // append fun.instructions to the program and record that `fun.address` has been inserted

@@ -75,7 +75,7 @@ fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, (String, io::Error)> {
 
     let data = fs::read_to_string(&file).map_err(|e| (file.clone(), e))?;
 
-    let mut parts = data.trim().splitn(2, ":").skip(1);
+    let mut parts = data.trim().splitn(2, ':').skip(1);
     let config = parts.next().ok_or_else(|| {
         (
             file.clone(),

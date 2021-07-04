@@ -184,7 +184,7 @@ pub(crate) fn bpf_map_update_elem_per_cpu<K, V: Pod>(
     values: &PerCpuValues<V>,
     flags: u64,
 ) -> SysResult {
-    let mut mem = values.into_kernel_mem().map_err(|e| (-1, e))?;
+    let mut mem = values.build_kernel_mem().map_err(|e| (-1, e))?;
     bpf_map_update_elem_ptr(fd, key, mem.as_mut_ptr(), flags)
 }
 
@@ -264,6 +264,6 @@ pub(crate) fn bpf_prog_detach(
     sys_bpf(bpf_cmd::BPF_PROG_DETACH, &attr)
 }
 
-fn sys_bpf<'a>(cmd: bpf_cmd, attr: &'a bpf_attr) -> SysResult {
+fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult {
     syscall(Syscall::Bpf { cmd, attr })
 }

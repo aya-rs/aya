@@ -171,7 +171,7 @@ impl<T: DerefMut<Target = Map>> PerfEventArray<T> {
         if map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
-            })?;
+            });
         }
         let _fd = map.fd_or_err()?;
 

@@ -99,7 +99,7 @@ impl Xdp {
         if if_index == 0 {
             return Err(ProgramError::UnknownInterface {
                 name: interface.to_string(),
-            })?;
+            });
         }
 
         let k_ver = kernel_version().unwrap();

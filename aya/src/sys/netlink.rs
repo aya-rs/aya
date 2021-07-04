@@ -76,7 +76,7 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
         0,
     ) < 0
     {
-        return Err(io::Error::last_os_error())?;
+        return Err(io::Error::last_os_error());
     }
 
     sock.recv()?;
@@ -123,7 +123,7 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), io::E
         0,
     ) < 0
     {
-        return Err(io::Error::last_os_error())?;
+        return Err(io::Error::last_os_error());
     }
     sock.recv()?;
 
@@ -184,7 +184,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         0,
     ) < 0
     {
-        return Err(io::Error::last_os_error())?;
+        return Err(io::Error::last_os_error());
     }
 
     // find the RTM_NEWTFILTER reply and read the tcm_info field which we'll
@@ -242,7 +242,7 @@ pub(crate) unsafe fn netlink_qdisc_detach(
         0,
     ) < 0
     {
-        return Err(io::Error::last_os_error())?;
+        return Err(io::Error::last_os_error());
     }
 
     sock.recv()?;
@@ -274,7 +274,7 @@ impl NetlinkSocket {
         // Safety: libc wrapper
         let sock = unsafe { socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE) };
         if sock < 0 {
-            return Err(io::Error::last_os_error())?;
+            return Err(io::Error::last_os_error());
         }
 
         let enable = 1i32;
@@ -296,7 +296,7 @@ impl NetlinkSocket {
         // Safety: libc wrapper
         if unsafe { getsockname(sock, &mut addr as *mut _ as *mut _, &mut addr_len as *mut _) } < 0
         {
-            return Err(io::Error::last_os_error())?;
+            return Err(io::Error::last_os_error());
         }
 
         Ok(NetlinkSocket {
@@ -314,7 +314,7 @@ impl NetlinkSocket {
             // Safety: libc wrapper
             let len = unsafe { recv(self.sock, buf.as_mut_ptr() as *mut _, buf.len(), 0) };
             if len < 0 {
-                return Err(io::Error::last_os_error())?;
+                return Err(io::Error::last_os_error());
             }
             if len == 0 {
                 break;

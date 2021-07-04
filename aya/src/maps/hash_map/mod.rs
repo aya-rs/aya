@@ -6,6 +6,7 @@ use crate::{
     sys::{bpf_map_delete_elem, bpf_map_update_elem},
 };
 
+#[allow(clippy::module_inception)]
 mod hash_map;
 mod per_cpu_hash_map;
 
@@ -20,9 +21,10 @@ pub(crate) fn check_kv_size<K, V>(map: &Map) -> Result<(), MapError> {
     }
     let size = mem::size_of::<V>();
     let expected = map.obj.def.value_size as usize;
-    Ok(if size != expected {
+    if size != expected {
         return Err(MapError::InvalidValueSize { size, expected });
-    })
+    };
+    Ok(())
 }
 
 pub(crate) fn insert<K, V>(map: &mut Map, key: K, value: V, flags: u64) -> Result<(), MapError> {

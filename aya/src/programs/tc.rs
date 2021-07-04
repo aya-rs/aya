@@ -147,7 +147,7 @@ impl Drop for TcLink {
 
 impl Link for TcLink {
     fn detach(&mut self) -> Result<(), ProgramError> {
-        if let Some(_) = self.prog_fd.take() {
+        if self.prog_fd.take().is_some() {
             unsafe { netlink_qdisc_detach(self.if_index, &self.attach_type, self.priority) }
                 .map_err(|io_error| TcError::NetlinkError { io_error })?;
             Ok(())

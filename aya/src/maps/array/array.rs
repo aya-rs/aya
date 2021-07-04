@@ -44,7 +44,7 @@ impl<T: Deref<Target = Map>, V: Pod> Array<T, V> {
         if map_type != BPF_MAP_TYPE_ARRAY as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
-            })?;
+            });
         }
         let expected = mem::size_of::<u32>();
         let size = map.obj.def.key_size as usize;
@@ -94,7 +94,7 @@ impl<T: Deref<Target = Map>, V: Pod> Array<T, V> {
 
     /// An iterator over the elements of the array. The iterator item type is `Result<V,
     /// MapError>`.
-    pub unsafe fn iter<'a>(&'a self) -> impl Iterator<Item = Result<V, MapError>> + 'a {
+    pub unsafe fn iter(&self) -> impl Iterator<Item = Result<V, MapError>> + '_ {
         (0..self.len()).map(move |i| self.get(&i, 0))
     }
 

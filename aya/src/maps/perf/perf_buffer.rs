@@ -250,7 +250,7 @@ impl PerfBuffer {
         atomic::fence(Ordering::SeqCst);
         unsafe { (*header).data_tail = tail as u64 };
 
-        return Ok(events);
+        Ok(events)
     }
 }
 

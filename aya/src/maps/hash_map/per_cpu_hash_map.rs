@@ -60,7 +60,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
         {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
-            })?;
+            });
         }
         hash_map::check_kv_size::<K, V>(&map)?;
         let _ = map.fd_or_err()?;
