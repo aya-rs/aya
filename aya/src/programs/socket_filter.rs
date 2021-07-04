@@ -87,7 +87,8 @@ impl SocketFilter {
         if ret < 0 {
             return Err(SocketFilterError::SoAttachBpfError {
                 io_error: io::Error::last_os_error(),
-            }.into());
+            }
+            .into());
         }
 
         Ok(self.data.link(SocketFilterLink {

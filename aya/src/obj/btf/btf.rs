@@ -214,9 +214,7 @@ impl Btf {
     }
 
     pub(crate) fn type_name(&self, ty: &BtfType) -> Result<Option<Cow<'_, str>>, BtfError> {
-        ty.name_offset()
-            .map(|off| self.string_at(off))
-            .transpose()
+        ty.name_offset().map(|off| self.string_at(off)).transpose()
     }
 
     pub(crate) fn err_type_name(&self, ty: &BtfType) -> Option<String> {
