@@ -60,11 +60,11 @@ pub fn expand_helpers(helpers: &[Helper<'_>]) -> TokenStream {
     tokens.append_all(
         helpers
             .iter()
-            .filter(|h| h.ident.to_string() != "bpf_trace_printk")
+            .filter(|h| *h.ident != "bpf_trace_printk")
             .map(expand_helper),
     );
 
-    return tokens;
+    tokens
 }
 
 pub fn expand_helper(helper: &Helper<'_>) -> TokenStream {

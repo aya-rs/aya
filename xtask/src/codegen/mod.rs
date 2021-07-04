@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use structopt::StructOpt;
 
-const SUPPORTED_ARCHS: &'static [Architecture] = &[
+const SUPPORTED_ARCHS: &[Architecture] = &[
     Architecture::X86_64,
     Architecture::ARMv7,
     Architecture::AArch64,
