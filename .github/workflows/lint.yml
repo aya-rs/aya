@@ -14,7 +14,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-20.04
 
     steps:
@@ -28,3 +28,9 @@ jobs:
 
       - name: Check formatting
         run: cargo +nightly fmt --all -- --check
+
+      - name: Run clippy
+        run: |
+          cargo +nightly clippy -p aya -- --deny warnings
+          cargo +nightly clippy -p aya-gen -- --deny warnings
+          cargo +nightly clippy -p xtask -- --deny warnings
