@@ -1,26 +1,22 @@
 use bindgen::{self, Builder, EnumVariation};
 
 pub fn user_builder() -> Builder {
-    let bindgen = bindgen::builder()
+    bindgen::builder()
         .layout_tests(false)
         .generate_comments(false)
         .prepend_enum_name(false)
         .default_enum_style(EnumVariation::Rust {
             non_exhaustive: false,
-        });
-
-    bindgen
+        })
 }
 
 pub fn bpf_builder() -> Builder {
-    let bindgen = bindgen::builder()
+    bindgen::builder()
         .use_core()
         .ctypes_prefix("::aya_bpf_cty")
         .layout_tests(false)
         .generate_comments(false)
         .clang_arg("-Wno-unknown-attributes")
         .default_enum_style(EnumVariation::ModuleConsts)
-        .prepend_enum_name(false);
-
-    bindgen
+        .prepend_enum_name(false)
 }

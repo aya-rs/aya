@@ -60,7 +60,7 @@ impl<'a> GetterList<'a> {
                 let sub_fields = self
                     .item_fields
                     .get(field_ty_ident)
-                    .expect(&field_ty_ident.to_string())
+                    .unwrap_or_else(|| panic!("{}", field_ty_ident.to_string()))
                     .1;
                 getters.extend(self.getters(field_ident, sub_fields).drain(..).map(
                     |mut getter| {
@@ -86,7 +86,7 @@ pub fn generate_getters_for_items(
     gen_getter: impl Fn(&Getter<'_>) -> TokenStream,
 ) -> TokenStream {
     let mut tokens = TokenStream::new();
-    tokens.append_all(GetterList::new(&items).iter().map(|(item, getters)| {
+    tokens.append_all(GetterList::new(items).iter().map(|(item, getters)| {
         let getters = getters.iter().map(&gen_getter);
         let (ident, generics, _) = unpack_item(item).unwrap();
         quote! {

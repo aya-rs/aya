@@ -46,8 +46,7 @@ pub fn generate<T: AsRef<str>>(
     let bpf_probe_read = syn::parse_str::<syn::Path>("::aya_bpf::helpers::bpf_probe_read").unwrap();
     let getters =
         generate_getters_for_items(&tree.items, |getter| read_getter(getter, &bpf_probe_read));
-    let getters =
-        rustfmt::format(&getters.to_string()).map_err(|io_error| Error::Rustfmt(io_error))?;
+    let getters = rustfmt::format(&getters.to_string()).map_err(Error::Rustfmt)?;
 
     let bindings = format!("{}\n{}", bindings, getters);
 
@@ -60,7 +59,7 @@ fn c_header_from_btf(path: &Path) -> Result<String, Error> {
         .arg(path)
         .args(&["format", "c"])
         .output()
-        .map_err(|io_error| Error::BpfTool(io_error))?;
+        .map_err(Error::BpfTool)?;
 
     if !output.status.success() {
         return Err(Error::BpfToolExit {
