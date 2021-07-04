@@ -36,7 +36,7 @@ impl SkSkbContext {
     }
 
     #[inline]
-    pub fn cb_mut(&self) -> &mut [u32] {
+    pub fn cb_mut(&mut self) -> &mut [u32] {
         unsafe { &mut (*self.skb).cb }
     }
 

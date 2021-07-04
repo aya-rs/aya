@@ -226,8 +226,8 @@ impl CgroupSkb {
 
         Ok(CgroupSkb {
             item,
-            name,
             expected_attach_type,
+            name,
         })
     }
 
@@ -260,7 +260,7 @@ fn pop_arg(args: &mut Args, name: &str) -> Option<String> {
 }
 
 fn err_on_unknown_args(args: &Args) -> Result<()> {
-    for arg in &args.args {
+    if let Some(arg) = args.args.get(0) {
         return Err(Error::new_spanned(&arg.name, "invalid argument"));
     }
 
