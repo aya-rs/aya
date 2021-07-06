@@ -4,7 +4,7 @@ use aya_bpf_cty::{c_long, c_void};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_HASH},
-    helpers::{bpf_map_lookup_elem, bpf_map_update_elem, bpf_map_delete_elem},
+    helpers::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
 #[repr(transparent)]
