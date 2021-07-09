@@ -90,7 +90,7 @@ impl Bpf {
                 path: path.to_owned(),
                 error,
             })?,
-            Btf::from_sys_fs().ok(),
+            Btf::from_sys_fs().ok().as_ref(),
         )
     }
 
@@ -98,7 +98,8 @@ impl Bpf {
     ///
     /// Parses the object code contained in `data` and initializes the [maps](crate::maps) defined
     /// in it. If `target_btf` is not `None` and `data` includes BTF debug info, [BTF](Btf) relocations
-    /// are applied as well.
+    /// are applied as well. In order to allow sharing of a single [BTF](Btf) object among multiple
+    /// eBPF programs, `target_btf` is passed by reference.
     ///
     /// # Examples
     ///
@@ -108,10 +109,10 @@ impl Bpf {
     ///
     /// let data = fs::read("file.o").unwrap();
     /// // load the BTF data from /sys/kernel/btf/vmlinux
-    /// let bpf = Bpf::load(&data, Some(Btf::from_sys_fs()?));
+    /// let bpf = Bpf::load(&data, Btf::from_sys_fs().ok().as_ref());
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn load(data: &[u8], target_btf: Option<Btf>) -> Result<Bpf, BpfError> {
+    pub fn load(data: &[u8], target_btf: Option<&Btf>) -> Result<Bpf, BpfError> {
         let mut obj = Object::parse(data)?;
 
         if let Some(btf) = target_btf {
