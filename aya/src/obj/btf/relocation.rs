@@ -151,7 +151,7 @@ impl Relocation {
 }
 
 impl Object {
-    pub fn relocate_btf(&mut self, target_btf: Btf) -> Result<(), BpfError> {
+    pub fn relocate_btf(&mut self, target_btf: &Btf) -> Result<(), BpfError> {
         let (local_btf, btf_ext) = match (&self.btf, &self.btf_ext) {
             (Some(btf), Some(btf_ext)) => (btf, btf_ext),
             _ => return Ok(()),
@@ -174,13 +174,8 @@ impl Object {
                     function: section_name.to_owned(),
                     error: Box::new(RelocationError::ProgramNotFound),
                 })?;
-            match relocate_btf_program(
-                program,
-                relos,
-                local_btf,
-                &target_btf,
-                &mut candidates_cache,
-            ) {
+            match relocate_btf_program(program, relos, local_btf, target_btf, &mut candidates_cache)
+            {
                 Ok(_) => {}
                 Err(ErrorWrapper::BtfError(e)) => return Err(e.into()),
                 Err(ErrorWrapper::RelocationError(error)) => {
