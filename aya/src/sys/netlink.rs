@@ -438,13 +438,15 @@ fn write_attr_header(buf: &mut [u8], offset: usize, attr: nlattr) -> Result<usiz
 }
 
 fn write_bytes(buf: &mut [u8], offset: usize, value: &[u8]) -> Result<usize, io::Error> {
-    if offset + value.len() > buf.len() {
+    let align_len = align_to(value.len(), NLA_ALIGNTO as usize);
+    if offset + align_len > buf.len() {
         return Err(io::Error::new(io::ErrorKind::Other, "no space left"));
     }
 
     buf[offset..offset + value.len()].copy_from_slice(value);
 
-    Ok(value.len())
+    Ok(align_len)
+}
 }
 
 
