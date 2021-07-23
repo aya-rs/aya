@@ -258,7 +258,7 @@ impl NetlinkSocket {
         let mut buf = [0u8; 4096];
         let mut messages = Vec::new();
         let mut multipart = true;
-        while multipart {
+        'out: while multipart {
             multipart = false;
             // Safety: libc wrapper
             let len = unsafe { recv(self.sock, buf.as_mut_ptr() as *mut _, buf.len(), 0) };
@@ -284,7 +284,7 @@ impl NetlinkSocket {
                         }
                         return Err(io::Error::from_raw_os_error(-err.error));
                     }
-                    NLMSG_DONE => break,
+                    NLMSG_DONE => break 'out,
                     _ => messages.push(message),
                 }
             }
@@ -303,11 +303,19 @@ struct NetlinkMessage {
 impl NetlinkMessage {
     fn read(buf: &[u8]) -> Result<NetlinkMessage, io::Error> {
         if mem::size_of::<nlmsghdr>() > buf.len() {
-            return Err(io::Error::new(io::ErrorKind::Other, "need more data"));
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "buffer smaller than nlmsghdr",
+            ));
         }
 
         // Safety: nlmsghdr is POD so read is safe
         let header = unsafe { ptr::read_unaligned(buf.as_ptr() as *const nlmsghdr) };
+        let msg_len = header.nlmsg_len as usize;
+        if msg_len < mem::size_of::<nlmsghdr>() || msg_len > buf.len() {
+            return Err(io::Error::new(io::ErrorKind::Other, "invalid nlmsg_len"));
+        }
+
         let data_offset = align_to(mem::size_of::<nlmsghdr>(), NLMSG_ALIGNTO as usize);
         if data_offset >= buf.len() {
             return Err(io::Error::new(io::ErrorKind::Other, "need more data"));
@@ -315,7 +323,10 @@ impl NetlinkMessage {
 
         let (data, error) = if header.nlmsg_type == NLMSG_ERROR as u16 {
             if data_offset + mem::size_of::<nlmsgerr>() > buf.len() {
-                return Err(io::Error::new(io::ErrorKind::Other, "need more data"));
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    "NLMSG_ERROR but not enough space for nlmsgerr",
+                ));
             }
             (
                 Vec::new(),
@@ -325,7 +336,7 @@ impl NetlinkMessage {
                 }),
             )
         } else {
-            (buf[data_offset..].to_vec(), None)
+            (buf[data_offset..msg_len].to_vec(), None)
         };
 
         Ok(NetlinkMessage {
