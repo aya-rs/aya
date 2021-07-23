@@ -227,7 +227,7 @@ pub(crate) unsafe fn netlink_find_filter_with_name(
         let attrs = parse_attrs(&msg.data[mem::size_of::<tcmsg>()..])?;
 
         if let Some(opts) = attrs.get(&(TCA_OPTIONS as u16)) {
-            let opts = parse_attrs(&opts.data)?;
+            let opts = parse_attrs(opts.data)?;
             if let Some(f_name) = opts.get(&(TCA_BPF_NAME as u16)) {
                 if let Ok(f_name) = CStr::from_bytes_with_nul(f_name.data) {
                     if name == f_name {
@@ -513,7 +513,7 @@ impl<'a> Iterator for NlAttrsIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let buf = &self.attrs[self.offset..];
-        if buf.len() == 0 {
+        if buf.is_empty() {
             return None;
         }
 

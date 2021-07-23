@@ -187,7 +187,7 @@ pub fn qdisc_detach_program(
 
     let prios = unsafe { netlink_find_filter_with_name(if_index, attach_type, &c_name)? };
     if prios.is_empty() {
-        return Err(io::Error::new(io::ErrorKind::NotFound, format!("{}", name)));
+        return Err(io::Error::new(io::ErrorKind::NotFound, name.to_string()));
     }
 
     for prio in prios {
