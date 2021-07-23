@@ -8,7 +8,10 @@ use crate::{
         bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS, TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     },
     programs::{load_program, Link, LinkRef, ProgramData, ProgramError},
-    sys::{netlink_qdisc_add_clsact, netlink_qdisc_attach, netlink_qdisc_detach},
+    sys::{
+        netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
+        netlink_qdisc_detach,
+    },
     util::{ifindex_from_ifname, tc_handler_make},
 };
 
@@ -130,6 +133,7 @@ impl SchedClassifier {
         let priority =
             unsafe { netlink_qdisc_attach(if_index as i32, &attach_type, prog_fd, &name) }
                 .map_err(|io_error| TcError::NetlinkError { io_error })?;
+
         Ok(self.data.link(TcLink {
             if_index: if_index as i32,
             attach_type,
@@ -164,4 +168,31 @@ impl Link for TcLink {
 pub fn qdisc_add_clsact(if_name: &str) -> Result<(), io::Error> {
     let if_index = ifindex_from_ifname(if_name)?;
     unsafe { netlink_qdisc_add_clsact(if_index as i32) }
+}
+
+/// Detaches the programs with the given name.
+///
+/// # Errors
+///
+/// Returns [`io::ErrorKind::NotFound`] to indicate that no programs with the
+/// given name were found, so nothing was detached. Other error kinds indicate
+/// an actual failure while detaching a program.
+pub fn qdisc_detach_program(
+    if_name: &str,
+    attach_type: TcAttachType,
+    name: &str,
+) -> Result<(), io::Error> {
+    let if_index = ifindex_from_ifname(if_name)? as i32;
+    let c_name = CString::new(name).unwrap();
+
+    let prios = unsafe { netlink_find_filter_with_name(if_index, attach_type, &c_name)? };
+    if prios.is_empty() {
+        return Err(io::Error::new(io::ErrorKind::NotFound, format!("{}", name)));
+    }
+
+    for prio in prios {
+        unsafe { netlink_qdisc_detach(if_index, &attach_type, prio)? };
+    }
+
+    Ok(())
 }
