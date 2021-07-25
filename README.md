@@ -74,6 +74,19 @@ let cgroup = File::open("/sys/fs/cgroup/unified")?;
 ingress.attach(cgroup, CgroupSkbAttachType::Ingress)?;
 ```
 
+### Examples
+
+There are some examples of how to use Aya to write BPF programs and userspace program in the `examples` directory. These can be compiled by running `cargo xtask examples`.
+The BPF examples require you to have a rust nightly toolchain installed.
+
+`cargo xtask examples`
+
+# Run
+
+## XDP
+
+`sudo ./examples/target/debug/xdp_userspace ./examples/target/bpfel-unknown-none/release/xdp wlp2s0`
+
 ## Community
 
 Join [the conversation on Discord][chat-url] to discuss anything related to aya.

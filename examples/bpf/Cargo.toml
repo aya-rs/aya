@@ -1,0 +1,20 @@
+[package]
+name = "bpf"
+version = "0.1.0"
+edition = "2018"
+publish = false
+
+[features]
+default = []
+user = [ "aya" ]
+
+[dependencies]
+aya-bpf = { path = "../../bpf/aya-bpf" }
+aya = { path = "../../aya", optional=true }
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "xdp"
+path = "src/xdp/main.rs"

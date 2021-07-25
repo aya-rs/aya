@@ -21,8 +21,14 @@ jobs:
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v1
 
+      - name: Install bpf-linker
+        run: cargo install bpf-linker
+
       - name: Build
         run: cargo build --verbose
+
+      - name: Build examples
+        run: cargo xtask examples
 
       - name: Run tests
         run: RUST_BACKTRACE=full cargo test --verbose

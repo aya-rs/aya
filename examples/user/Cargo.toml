@@ -1,0 +1,14 @@
+[package]
+name = "user"
+version = "0.1.0"
+edition = "2018"
+publish = false
+
+[dependencies]
+aya = { path = "../../aya" }
+bpf = { path = "../bpf", features=["user"] }
+anyhow = "1.0.42"
+
+[[bin]]
+name = "xdp_userspace"
+path = "src/xdp.rs"
