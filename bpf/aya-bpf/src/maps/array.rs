@@ -1,10 +1,10 @@
 use core::{marker::PhantomData, mem};
 
-use aya_bpf_cty::c_void;
+use aya_bpf_cty::{c_void, c_long};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_ARRAY},
-    helpers::bpf_map_lookup_elem,
+    helpers::{bpf_map_lookup_elem, bpf_map_update_elem}
 };
 
 #[repr(transparent)]
@@ -40,5 +40,18 @@ impl<T> Array<T> {
             // FIXME: alignment
             Some(&*(value as *const T))
         }
+    }
+
+    pub unsafe fn set(&mut self, index: u32, value: &T, flags: u64) -> Result<(), c_long> {
+        let ret = bpf_map_update_elem(
+            &mut self.def as *mut _ as *mut _,
+            &index as *const _ as *const c_void,
+            value as *const _ as *const _,
+            flags,
+        );
+        if ret < 0 {
+            return Err(ret);
+        }
+        Ok(())
     }
 }
