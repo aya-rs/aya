@@ -51,7 +51,15 @@ mod uprobe;
 mod xdp;
 
 use libc::{close, dup, ENOSPC};
-use std::{cell::RefCell, cmp, convert::TryFrom, ffi::CStr, io, os::unix::io::RawFd, rc::Rc};
+use std::{
+    cell::RefCell,
+    cmp,
+    convert::TryFrom,
+    ffi::CStr,
+    io,
+    os::unix::io::{AsRawFd, RawFd},
+    rc::Rc,
+};
 use thiserror::Error;
 
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
@@ -69,10 +77,10 @@ pub use uprobe::{UProbe, UProbeError};
 pub use xdp::{Xdp, XdpError, XdpFlags};
 
 use crate::{
-    generated::{bpf_attach_type, bpf_prog_type},
+    generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
     maps::MapError,
     obj::{self, Function},
-    sys::{bpf_load_program, bpf_prog_detach},
+    sys::{bpf_load_program, bpf_prog_detach, bpf_prog_query},
 };
 
 /// Error type returned when working with programs.
@@ -373,6 +381,44 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
     Ok(())
 }
 
+pub(crate) fn query<T: AsRawFd>(
+    target_fd: T,
+    attach_type: bpf_attach_type,
+    query_flags: u32,
+    attach_flags: &mut Option<u32>,
+) -> Result<Vec<u32>, ProgramError> {
+    let mut prog_ids = vec![0u32; 64];
+    let mut prog_cnt = prog_ids.len() as u32;
+
+    let mut retries = 0;
+
+    loop {
+        match bpf_prog_query(
+            target_fd.as_raw_fd(),
+            attach_type,
+            query_flags,
+            attach_flags.as_mut(),
+            &mut prog_ids,
+            &mut prog_cnt,
+        ) {
+            Ok(_) => {
+                prog_ids.resize(prog_cnt as usize, 0);
+                return Ok(prog_ids);
+            }
+            Err((_, io_error)) if retries == 0 && io_error.raw_os_error() == Some(ENOSPC) => {
+                prog_ids.resize(prog_cnt as usize, 0);
+                retries += 1;
+            }
+            Err((_, io_error)) => {
+                return Err(ProgramError::SyscallError {
+                    call: "bpf_prog_query".to_owned(),
+                    io_error,
+                });
+            }
+        }
+    }
+}
+
 /// Detach an attached program.
 pub trait Link: std::fmt::Debug {
     fn detach(&mut self) -> Result<(), ProgramError>;
@@ -533,3 +579,33 @@ impl_try_from_program!(
     CgroupSkb,
     LircMode2
 );
+
+/// Provides information about a loaded program, like name, id and statistics
+pub struct ProgramInfo(bpf_prog_info);
+
+impl ProgramInfo {
+    /// The name of the program as was provided when it was load. This is limited to 16 bytes
+    pub fn name(&self) -> &[u8] {
+        let length = self
+            .0
+            .name
+            .iter()
+            .rposition(|ch| *ch != 0)
+            .map(|pos| pos + 1)
+            .unwrap_or(0);
+
+        // The name field is defined as [std::os::raw::c_char; 16]. c_char may be signed or
+        // unsigned depending on the platform; that's why we're using from_raw_parts here
+        unsafe { std::slice::from_raw_parts(self.0.name.as_ptr() as *const _, length) }
+    }
+
+    /// The name of the program as a &str. If the name was not valid unicode, None is returned
+    pub fn name_as_str(&self) -> Option<&str> {
+        std::str::from_utf8(self.name()).ok()
+    }
+
+    /// The program id for this program. Each program has a unique id.
+    pub fn id(&self) -> u32 {
+        self.0.id
+    }
+}

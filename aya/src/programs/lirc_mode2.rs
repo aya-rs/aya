@@ -2,8 +2,8 @@ use std::os::unix::prelude::{AsRawFd, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
-    programs::{load_program, Link, LinkRef, ProgramData, ProgramError},
-    sys::{bpf_prog_attach, bpf_prog_detach},
+    programs::{load_program, query, Link, LinkRef, ProgramData, ProgramError, ProgramInfo},
+    sys::{bpf_obj_get_info_by_fd, bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
 };
 
 use libc::{close, dup};
@@ -78,10 +78,34 @@ impl LircMode2 {
 
         Ok(self.data.link(LircLink::new(prog_fd, lircdev_fd)))
     }
+
+    /// Query lirc device for attached programs
+    pub fn query<T: AsRawFd>(target_fd: T) -> Result<Vec<LircLink>, ProgramError> {
+        let prog_ids = query(target_fd.as_raw_fd(), BPF_LIRC_MODE2, 0, &mut None)?;
+
+        let mut prog_fds = Vec::with_capacity(prog_ids.len());
+
+        for id in prog_ids {
+            let fd = bpf_prog_get_fd_by_id(id).map_err(|io_error| ProgramError::SyscallError {
+                call: "bpf_prog_get_fd_by_id".to_owned(),
+                io_error,
+            })?;
+
+            prog_fds.push(fd as RawFd);
+        }
+
+        Ok(prog_fds
+            .into_iter()
+            .map(|prog_fd| LircLink {
+                prog_fd: Some(prog_fd),
+                target_fd: Some(unsafe { dup(target_fd.as_raw_fd()) }),
+            })
+            .collect())
+    }
 }
 
 #[derive(Debug)]
-struct LircLink {
+pub struct LircLink {
     prog_fd: Option<RawFd>,
     target_fd: Option<RawFd>,
 }
@@ -91,6 +115,20 @@ impl LircLink {
         LircLink {
             prog_fd: Some(prog_fd),
             target_fd: Some(unsafe { dup(target_fd) }),
+        }
+    }
+
+    pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
+        if let Some(fd) = self.prog_fd {
+            match bpf_obj_get_info_by_fd(fd) {
+                Ok(info) => Ok(ProgramInfo(info)),
+                Err(io_error) => Err(ProgramError::SyscallError {
+                    call: "bpf_obj_get_info_by_fd".to_owned(),
+                    io_error,
+                }),
+            }
+        } else {
+            Err(ProgramError::AlreadyDetached)
         }
     }
 }
