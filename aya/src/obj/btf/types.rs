@@ -9,7 +9,7 @@ use crate::{
     generated::{
         btf_array, btf_enum, btf_member, btf_param, btf_type, btf_type__bindgen_ty_1, btf_var,
         btf_var_secinfo, BTF_KIND_ARRAY, BTF_KIND_CONST, BTF_KIND_DATASEC, BTF_KIND_ENUM,
-        BTF_KIND_FUNC, BTF_KIND_FUNC_PROTO, BTF_KIND_FWD, BTF_KIND_INT, BTF_KIND_PTR,
+        BTF_KIND_FUNC, BTF_KIND_FUNC_PROTO, BTF_KIND_FWD, BTF_KIND_INT, BTF_KIND_FLOAT, BTF_KIND_PTR,
         BTF_KIND_RESTRICT, BTF_KIND_STRUCT, BTF_KIND_TYPEDEF, BTF_KIND_UNION, BTF_KIND_UNKN,
         BTF_KIND_VAR, BTF_KIND_VOLATILE,
     },
@@ -27,6 +27,7 @@ pub(crate) enum BtfType {
     Typedef(btf_type),
     Func(btf_type),
     Int(btf_type, u32),
+    Float(btf_type),
     Enum(btf_type, Vec<btf_enum>),
     Array(btf_type, btf_array),
     Struct(btf_type, Vec<btf_member>),
@@ -41,6 +42,7 @@ pub(crate) enum BtfType {
 pub(crate) enum BtfKind {
     Unknown = BTF_KIND_UNKN,
     Int = BTF_KIND_INT,
+    Float = BTF_KIND_FLOAT,
     Ptr = BTF_KIND_PTR,
     Array = BTF_KIND_ARRAY,
     Struct = BTF_KIND_STRUCT,
@@ -65,6 +67,7 @@ impl TryFrom<u32> for BtfKind {
         Ok(match v {
             BTF_KIND_UNKN => Unknown,
             BTF_KIND_INT => Int,
+            BTF_KIND_FLOAT => Float,
             BTF_KIND_PTR => Ptr,
             BTF_KIND_ARRAY => Array,
             BTF_KIND_STRUCT => Struct,
@@ -135,6 +138,7 @@ impl BtfType {
                     read_u32(data[..mem::size_of::<u32>()].try_into().unwrap()),
                 )
             }
+            BtfKind::Float => Float(ty),
             BtfKind::Enum => Enum(ty, unsafe { read_array(data, vlen)? }),
             BtfKind::Array => Array(ty, unsafe { read(data)? }),
             BtfKind::Struct => Struct(ty, unsafe { read_array(data, vlen)? }),
@@ -151,7 +155,7 @@ impl BtfType {
         use BtfType::*;
         match self {
             Unknown => 0,
-            Fwd(_) | Const(_) | Volatile(_) | Restrict(_) | Ptr(_) | Typedef(_) | Func(_) => {
+            Fwd(_) | Const(_) | Volatile(_) | Restrict(_) | Ptr(_) | Typedef(_) | Func(_) | Float(_) => {
                 ty_size
             }
             Int(_, _) => ty_size + mem::size_of::<u32>(),
@@ -177,6 +181,7 @@ impl BtfType {
             Typedef(ty) => ty,
             Func(ty) => ty,
             Int(ty, _) => ty,
+            Float(ty) => ty,
             Enum(ty, _) => ty,
             Array(ty, _) => ty,
             Struct(ty, _) => ty,
@@ -205,7 +210,7 @@ impl BtfType {
 }
 
 fn type_kind(ty: &btf_type) -> Result<BtfKind, BtfError> {
-    ((ty.info >> 24) & 0x0F).try_into()
+    ((ty.info >> 24) & 0x1F).try_into()
 }
 
 fn type_vlen(ty: &btf_type) -> usize {
@@ -257,7 +262,7 @@ pub(crate) fn types_are_compatible(
 
         use BtfType::*;
         match local_ty {
-            Unknown | Struct(_, _) | Union(_, _) | Enum(_, _) | Fwd(_) => return Ok(true),
+            Unknown | Struct(_, _) | Union(_, _) | Enum(_, _) | Fwd(_) | Float(_) => return Ok(true),
             Int(_, local_off) => {
                 if let Int(_, target_off) = target_ty {
                     return Ok(*local_off == 0 && *target_off == 0);
@@ -350,6 +355,7 @@ pub(crate) fn fields_are_compatible(
                     return Ok(local_off == 0 && target_off == 0);
                 }
             }
+            Float(_) => return Ok(true),
             Ptr(_) => return Ok(true),
             Array(l_ty, _) => {
                 if let Array(t_ty, _) = target_ty {

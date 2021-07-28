@@ -152,7 +152,6 @@ impl Btf {
             data = &data[ty.type_info_size()..];
             types.push(ty);
         }
-
         Ok(types)
     }
 
@@ -230,7 +229,7 @@ impl Btf {
 
             use BtfType::*;
             let size = match ty {
-                Int(ty, _) | Struct(ty, _) | Union(ty, _) | Enum(ty, _) | DataSec(ty, _) => {
+                Int(ty, _) | Struct(ty, _) | Union(ty, _) | Enum(ty, _) | DataSec(ty, _) | Float(ty) => {
                     // Safety: union
                     unsafe { ty.__bindgen_anon_1.size as usize }
                 }
