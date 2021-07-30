@@ -110,7 +110,7 @@ impl Btf {
         }
 
         // safety: btf_header is POD so read_unaligned is safe
-        let header = unsafe { ptr::read_unaligned(data.as_ptr() as *const btf_header) };
+        let header = unsafe { read_btf_header(data) };
 
         let str_off = header.hdr_len as usize + header.str_off as usize;
         let str_len = header.str_len as usize;
@@ -229,7 +229,12 @@ impl Btf {
 
             use BtfType::*;
             let size = match ty {
-                Int(ty, _) | Struct(ty, _) | Union(ty, _) | Enum(ty, _) | DataSec(ty, _) | Float(ty) => {
+                Int(ty, _)
+                | Struct(ty, _)
+                | Union(ty, _)
+                | Enum(ty, _)
+                | DataSec(ty, _)
+                | Float(ty) => {
                     // Safety: union
                     unsafe { ty.__bindgen_anon_1.size as usize }
                 }
@@ -256,6 +261,11 @@ impl Btf {
             type_id: root_type_id,
         })
     }
+}
+
+unsafe fn read_btf_header(data: &[u8]) -> btf_header {
+    // safety: btf_header is POD so read_unaligned is safe
+    ptr::read_unaligned(data.as_ptr() as *const btf_header)
 }
 
 #[derive(Debug, Clone)]
@@ -410,4 +420,26 @@ pub(crate) struct SecInfo<'a> {
     sec_name_off: u32,
     num_info: u32,
     data: &'a [u8],
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_header() {
+        let data: &[u8] = &[
+            0x9f, 0xeb, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x64, 0x54,
+            0x2a, 0x00, 0x64, 0x54, 0x2a, 0x00, 0x10, 0x64, 0x1c, 0x00,
+        ];
+        let header = unsafe { read_btf_header(data) };
+        assert_eq!(header.magic, 0xeb9f);
+        assert_eq!(header.version, 0x01);
+        assert_eq!(header.flags, 0x00);
+        assert_eq!(header.hdr_len, 0x18);
+        assert_eq!(header.type_off, 0x00);
+        assert_eq!(header.type_len, 0x2a5464);
+        assert_eq!(header.str_off, 0x2a5464);
+        assert_eq!(header.str_len, 0x1c6410);
+    }
 }

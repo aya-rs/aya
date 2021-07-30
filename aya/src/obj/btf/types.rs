@@ -9,9 +9,9 @@ use crate::{
     generated::{
         btf_array, btf_enum, btf_member, btf_param, btf_type, btf_type__bindgen_ty_1, btf_var,
         btf_var_secinfo, BTF_KIND_ARRAY, BTF_KIND_CONST, BTF_KIND_DATASEC, BTF_KIND_ENUM,
-        BTF_KIND_FUNC, BTF_KIND_FUNC_PROTO, BTF_KIND_FWD, BTF_KIND_INT, BTF_KIND_FLOAT, BTF_KIND_PTR,
-        BTF_KIND_RESTRICT, BTF_KIND_STRUCT, BTF_KIND_TYPEDEF, BTF_KIND_UNION, BTF_KIND_UNKN,
-        BTF_KIND_VAR, BTF_KIND_VOLATILE,
+        BTF_KIND_FLOAT, BTF_KIND_FUNC, BTF_KIND_FUNC_PROTO, BTF_KIND_FWD, BTF_KIND_INT,
+        BTF_KIND_PTR, BTF_KIND_RESTRICT, BTF_KIND_STRUCT, BTF_KIND_TYPEDEF, BTF_KIND_UNION,
+        BTF_KIND_UNKN, BTF_KIND_VAR, BTF_KIND_VOLATILE,
     },
     obj::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH},
 };
@@ -155,9 +155,8 @@ impl BtfType {
         use BtfType::*;
         match self {
             Unknown => 0,
-            Fwd(_) | Const(_) | Volatile(_) | Restrict(_) | Ptr(_) | Typedef(_) | Func(_) | Float(_) => {
-                ty_size
-            }
+            Fwd(_) | Const(_) | Volatile(_) | Restrict(_) | Ptr(_) | Typedef(_) | Func(_)
+            | Float(_) => ty_size,
             Int(_, _) => ty_size + mem::size_of::<u32>(),
             Enum(ty, _) => ty_size + type_vlen(ty) * mem::size_of::<btf_enum>(),
             Array(_, _) => ty_size + mem::size_of::<btf_array>(),
@@ -262,7 +261,9 @@ pub(crate) fn types_are_compatible(
 
         use BtfType::*;
         match local_ty {
-            Unknown | Struct(_, _) | Union(_, _) | Enum(_, _) | Fwd(_) | Float(_) => return Ok(true),
+            Unknown | Struct(_, _) | Union(_, _) | Enum(_, _) | Fwd(_) | Float(_) => {
+                return Ok(true)
+            }
             Int(_, local_off) => {
                 if let Int(_, target_off) = target_ty {
                     return Ok(*local_off == 0 && *target_off == 0);
@@ -391,5 +392,231 @@ impl std::fmt::Debug for btf_type__bindgen_ty_1 {
             .field("size", unsafe { &self.size })
             .field("type_", unsafe { &self.type_ })
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_read_btf_type_int() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x08, 0x00, 0x00, 0x00, 0x40, 0x00,
+            0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Int(ty, nr_bits)) => {
+                assert_eq!(ty.name_off, 1);
+                assert_eq!(nr_bits, 64);
+            }
+            Ok(t) => panic!("expected int type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_ptr() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x06, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Ptr(_)) => {}
+            Ok(t) => panic!("expected ptr type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_array() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
+            0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Array(_, _)) => {}
+            Ok(t) => panic!("expected array type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_struct() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x00, 0x47, 0x02,
+            0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Struct(_, _)) => {}
+            Ok(t) => panic!("expected struct type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_union() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x05, 0x04, 0x00, 0x00, 0x00, 0x0d, 0x04,
+            0x00, 0x00, 0x68, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Union(_, _)) => {}
+            Ok(t) => panic!("expected union type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_enum() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x06, 0x04, 0x00, 0x00, 0x00, 0xc9, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xcf, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Enum(_, _)) => {}
+            Ok(t) => panic!("expected enum type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_fwd() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x0b, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Fwd(_)) => {}
+            Ok(t) => panic!("expected fwd type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_typedef() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x0b, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Typedef(_)) => {}
+            Ok(t) => panic!("expected typedef type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_volatile() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x24, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Volatile(_)) => {}
+            Ok(t) => panic!("expected volatile type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_const() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x01, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Const(_)) => {}
+            Ok(t) => panic!("expected const type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_restrict() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x04, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Restrict(_)) => {}
+            Ok(t) => panic!("expected restrict type gpt {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_func() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x17, 0x8b, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x0c, 0xf0, 0xe4, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Func(_)) => {}
+            Ok(t) => panic!("expected func type gpt {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_func_proto() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x12, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::FuncProto(_, _)) => {}
+            Ok(t) => panic!("expected func_proto type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_func_var() {
+        let endianness = Endianness::default();
+        // NOTE: There was no data in /sys/kernell/btf/vmlinux for this type
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Var(_, _)) => {}
+            Ok(t) => panic!("expected var type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_func_datasec() {
+        let endianness = Endianness::default();
+        // NOTE: There was no data in /sys/kernell/btf/vmlinux for this type
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::DataSec(_, _)) => {}
+            Ok(t) => panic!("expected datasec type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn test_read_btf_type_float() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x78, 0xfd, 0x02, 0x00, 0x00, 0x00, 0x00, 0x10, 0x08, 0x00, 0x00, 0x00,
+        ];
+        match unsafe { BtfType::read(data, endianness) } {
+            Ok(BtfType::Float(_)) => {}
+            Ok(t) => panic!("expected float type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
     }
 }
