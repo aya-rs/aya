@@ -79,7 +79,7 @@ impl LircMode2 {
         Ok(self.data.link(LircLink::new(prog_fd, lircdev_fd)))
     }
 
-    /// Query lirc device for attached programs
+    /// Queries the lirc device for attached programs.
     pub fn query<T: AsRawFd>(target_fd: T) -> Result<Vec<LircLink>, ProgramError> {
         let prog_ids = query(target_fd.as_raw_fd(), BPF_LIRC_MODE2, 0, &mut None)?;
 
