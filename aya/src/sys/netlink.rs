@@ -708,7 +708,7 @@ mod tests {
             TCA_OPTIONS as u16
         );
 
-        let mut iter = NlAttrsIterator::new(&outer.data);
+        let mut iter = NlAttrsIterator::new(outer.data);
         let inner = iter.next().unwrap().unwrap();
         assert_eq!(
             inner.header.nla_type & NLA_TYPE_MASK as u16,
