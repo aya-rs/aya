@@ -274,6 +274,7 @@ fn name_arg(args: &mut Args) -> Result<Option<String>> {
     Ok(name)
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Copy, Clone)]
 pub enum ProbeKind {
     KProbe,

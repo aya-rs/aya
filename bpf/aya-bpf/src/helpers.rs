@@ -21,12 +21,13 @@ pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
 }
 
 #[inline]
-pub fn bpf_get_current_comm() -> Result<[c_char; 16], ()> {
+pub fn bpf_get_current_comm() -> Result<[c_char; 16], c_long> {
     let mut comm: [c_char; 16usize] = [0; 16];
-    if unsafe { gen::bpf_get_current_comm(&mut comm as *mut _ as *mut c_void, 16u32) } == 0 {
+    let ret = unsafe { gen::bpf_get_current_comm(&mut comm as *mut _ as *mut c_void, 16u32) };
+    if ret == 0 {
         Ok(comm)
     } else {
-        Err(())
+        Err(ret)
     }
 }
 

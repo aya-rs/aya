@@ -51,12 +51,11 @@ impl<K> SockHash<K> {
     }
 
     pub unsafe fn redirect(&mut self, ctx: &SkMsgContext, key: &mut K, flags: u64) -> i64 {
-        let ret = bpf_msg_redirect_hash(
+        bpf_msg_redirect_hash(
             ctx.as_ptr() as *mut _,
             &mut self.def as *mut _ as *mut _,
             key as *mut _ as *mut _,
             flags,
-        );
-        ret
+        )
     }
 }

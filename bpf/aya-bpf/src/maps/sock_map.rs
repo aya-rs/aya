@@ -49,12 +49,11 @@ impl SockMap {
     }
 
     pub unsafe fn redirect(&mut self, ctx: &SkMsgContext, index: u32, flags: u64) -> i64 {
-        let ret = bpf_msg_redirect_map(
+        bpf_msg_redirect_map(
             ctx.as_ptr() as *mut _,
             &mut self.def as *mut _ as *mut _,
             index,
             flags,
-        );
-        ret
+        )
     }
 }

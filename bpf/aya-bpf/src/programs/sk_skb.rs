@@ -20,6 +20,7 @@ impl SkSkbContext {
         SkSkbContext { skb }
     }
 
+    #[allow(clippy::len_without_is_empty)]
     #[inline]
     pub fn len(&self) -> u32 {
         unsafe { *self.skb }.len
