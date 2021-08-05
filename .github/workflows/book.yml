@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+      - ci
+
+  pull_request:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Install Dependencies
+        run: cargo install mdbook
+
+      - name: Run tests
+        run: mdbook build ./docs && mdbook test ./docs
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@4.1.4
+        if: github.ref == 'refs/heads/main'
+        with:
+          branch: gh-pages
+          folder: docs/book
