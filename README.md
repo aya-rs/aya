@@ -3,11 +3,14 @@
 [![Crates.io][crates-badge]][crates-url]
 ![License][license-badge]
 ![Build status][build-badge]
+[![Documentaiton][docs-badge]][docs-url]
 
 [crates-badge]: https://img.shields.io/crates/v/aya.svg
 [crates-url]: https://crates.io/crates/aya
 [license-badge]: https://img.shields.io/badge/license-MIT%2FApache--2.0-blue
 [build-badge]: https://github.com/alessandrod/aya/actions/workflows/build-test.yml/badge.svg 
+[docs-badge]: https://img.shields.io/badge/docs-website-blue.svg
+[docs-url]: https://alessandrod.github.io/aya
 
 [API docs][api-docs] | [Chat][chat-url]
 
