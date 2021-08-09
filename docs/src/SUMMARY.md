@@ -5,3 +5,4 @@
 - [Getting Started](./start/index.md)
   - [Development Environment](./start/development.md)
   - [Hello XDP!](./start/hello-xdp.md)
+  - [Logging Packets](./start/logging-packets.md)
