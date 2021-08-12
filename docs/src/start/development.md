@@ -7,7 +7,7 @@ This is easily achieved with [`rustup`]:
 
 ```console
 rustup install stable
-rustup install nightly --component rust-src
+rustup toolchain install nightly --component rust-src
 ```
 
 Once you have the Rust tool-chains installed, you must also install the `bpf-linker` - for linking our eBPF program - and `cargo-generate` - for generating the project skeleton.
