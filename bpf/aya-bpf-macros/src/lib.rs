@@ -1,6 +1,8 @@
 mod expand;
 
-use expand::{Args, Map, Probe, ProbeKind, SchedClassifier, SkMsg, SockOps, TracePoint, Xdp};
+use expand::{
+    Args, Map, PerfEvent, Probe, ProbeKind, SchedClassifier, SkMsg, SockOps, TracePoint, Xdp,
+};
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemFn, ItemStatic};
 
@@ -108,6 +110,17 @@ pub fn tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let item = parse_macro_input!(item as ItemFn);
 
     TracePoint::from_syn(args, item)
+        .and_then(|u| u.expand())
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+#[proc_macro_attribute]
+pub fn perf_event(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attrs as Args);
+    let item = parse_macro_input!(item as ItemFn);
+
+    PerfEvent::from_syn(args, item)
         .and_then(|u| u.expand())
         .unwrap_or_else(|err| err.to_compile_error())
         .into()

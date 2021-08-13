@@ -15,7 +15,7 @@ use crate::{
         perf_event_header, perf_event_mmap_page,
         perf_event_type::{PERF_RECORD_LOST, PERF_RECORD_SAMPLE},
     },
-    sys::{perf_event_ioctl, perf_event_open},
+    sys::{perf_event_ioctl, perf_event_open_bpf},
     PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
 
@@ -87,7 +87,7 @@ impl PerfBuffer {
             return Err(PerfBufferError::InvalidPageCount { page_count });
         }
 
-        let fd = perf_event_open(cpu_id as i32)
+        let fd = perf_event_open_bpf(cpu_id as i32)
             .map_err(|(_, io_error)| PerfBufferError::OpenError { io_error })?
             as RawFd;
         let size = page_size * page_count;

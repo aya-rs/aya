@@ -40,6 +40,7 @@ mod cgroup_skb;
 mod kprobe;
 mod lirc_mode2;
 mod perf_attach;
+mod perf_event;
 mod probe;
 mod sk_msg;
 mod sk_skb;
@@ -66,6 +67,7 @@ pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
 pub use kprobe::{KProbe, KProbeError};
 pub use lirc_mode2::LircMode2;
 use perf_attach::*;
+pub use perf_event::{PerfEvent, PerfEventScope, SamplePolicy};
 pub use probe::ProbeKind;
 pub use sk_msg::SkMsg;
 pub use sk_skb::{SkSkb, SkSkbKind};
@@ -181,6 +183,7 @@ pub enum Program {
     SchedClassifier(SchedClassifier),
     CgroupSkb(CgroupSkb),
     LircMode2(LircMode2),
+    PerfEvent(PerfEvent),
 }
 
 impl Program {
@@ -213,6 +216,7 @@ impl Program {
             Program::SchedClassifier(_) => BPF_PROG_TYPE_SCHED_CLS,
             Program::CgroupSkb(_) => BPF_PROG_TYPE_CGROUP_SKB,
             Program::LircMode2(_) => BPF_PROG_TYPE_LIRC_MODE2,
+            Program::PerfEvent(_) => BPF_PROG_TYPE_PERF_EVENT,
         }
     }
 
@@ -234,6 +238,7 @@ impl Program {
             Program::SchedClassifier(p) => &p.data,
             Program::CgroupSkb(p) => &p.data,
             Program::LircMode2(p) => &p.data,
+            Program::PerfEvent(p) => &p.data,
         }
     }
 
@@ -250,6 +255,7 @@ impl Program {
             Program::SchedClassifier(p) => &mut p.data,
             Program::CgroupSkb(p) => &mut p.data,
             Program::LircMode2(p) => &mut p.data,
+            Program::PerfEvent(p) => &mut p.data,
         }
     }
 }
@@ -535,7 +541,8 @@ impl_program_fd!(
     SkSkb,
     SchedClassifier,
     CgroupSkb,
-    LircMode2
+    LircMode2,
+    PerfEvent
 );
 
 macro_rules! impl_try_from_program {
@@ -577,7 +584,8 @@ impl_try_from_program!(
     SockOps,
     SchedClassifier,
     CgroupSkb,
-    LircMode2
+    LircMode2,
+    PerfEvent
 );
 
 /// Provides information about a loaded program, like name, id and statistics

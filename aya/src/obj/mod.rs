@@ -84,6 +84,7 @@ pub enum ProgramSection {
     CgroupSkbIngress { name: String },
     CgroupSkbEgress { name: String },
     LircMode2 { name: String },
+    PerfEvent { name: String },
 }
 
 impl ProgramSection {
@@ -104,6 +105,7 @@ impl ProgramSection {
             ProgramSection::CgroupSkbIngress { name } => name,
             ProgramSection::CgroupSkbEgress { name } => name,
             ProgramSection::LircMode2 { name } => name,
+            ProgramSection::PerfEvent { name } => name,
         }
     }
 }
@@ -144,6 +146,7 @@ impl FromStr for ProgramSection {
             "cgroup_skb/ingress" => CgroupSkbIngress { name },
             "cgroup_skb/egress" => CgroupSkbEgress { name },
             "lirc_mode2" => LircMode2 { name },
+            "perf_event" => PerfEvent { name },
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),
@@ -555,6 +558,7 @@ fn is_program_section(name: &str) -> bool {
         "kprobe",
         "kretprobe",
         "lirc_mode2",
+        "perf_event",
         "sk_msg",
         "sk_skb/stream_parser",
         "sk_skb/stream_verdict",
