@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../intro/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../ebpf/index.html"><strong aria-hidden="true">2.</strong> eBPF Program Limitiations</a></li><li class="chapter-item expanded "><a href="../start/index.html"><strong aria-hidden="true">3.</strong> Getting Started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../start/development.html"><strong aria-hidden="true">3.1.</strong> Development Environment</a></li><li class="chapter-item expanded "><a href="../start/hello-xdp.html" class="active"><strong aria-hidden="true">3.2.</strong> Hello XDP!</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../intro/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../ebpf/index.html"><strong aria-hidden="true">2.</strong> eBPF Program Limitiations</a></li><li class="chapter-item expanded "><a href="../start/index.html"><strong aria-hidden="true">3.</strong> Getting Started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../start/development.html"><strong aria-hidden="true">3.1.</strong> Development Environment</a></li><li class="chapter-item expanded "><a href="../start/hello-xdp.html" class="active"><strong aria-hidden="true">3.2.</strong> Hello XDP!</a></li><li class="chapter-item expanded "><a href="../start/logging-packets.html"><strong aria-hidden="true">3.3.</strong> Logging Packets</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -240,7 +240,7 @@ fn try_main() -&gt; Result&lt;(), anyhow::Error&gt; {
 }
 </code></pre>
 <p>Let's adapt it to load our program.</p>
-<p>We'll need the following imports at the top of the file:</p>
+<p>We will add a dependency on <code>ctrlc = &quot;3.2&quot;</code> to <code>myapp/Cargo.toml</code>, then add the following imports at the top of the <code>myapp/src/main.rs</code>:</p>
 <pre><code class="language-rust ignore">use aya::Bpf;
 use aya::programs::{Xdp, XdpFlags};
 use std::{
@@ -248,6 +248,8 @@ use std::{
     env,
     thread,
     time::Duration,
+    sync::Arc,
+    sync::atomic::{AtomicBool, Ordering},
 };
 </code></pre>
 <p>Then we'll adapt the <code>try_main</code> function to load our program:</p>
@@ -264,9 +266,18 @@ use std::{
     let probe: &amp;mut Xdp = bpf.program_mut(&quot;xdp&quot;)?.try_into()?;
     probe.load()?;
     probe.attach(&amp;iface, XdpFlags::default())?;
-    for _i in 1..10 {
-        thread::sleep(Duration::from_secs(1));
-    };
+
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
+
+    ctrlc::set_handler(move || {
+        r.store(false, Ordering::SeqCst);
+    }).expect(&quot;Error setting Ctrl-C handler&quot;);
+
+    println!(&quot;Waiting for Ctrl-C...&quot;);
+    while running.load(Ordering::SeqCst) {}
+    println!(&quot;Exiting...&quot;);
+
     Ok(())
 }
 </code></pre>
@@ -285,23 +296,26 @@ use std::{
 <p>Once our file is loaded, we can extract the XDP probe with <code>let probe: &amp;mut Xdp = bpf.program_mut(&quot;xdp&quot;)?.try_into()?;</code> and then load it in to the kernel with <code>probe.load()</code>.</p>
 <p>Finally, we can attach it to an interface with <code>probe.attach(&amp;iface, XdpFlags::default())?;</code></p>
 <p>Let's try it out!</p>
-<pre><code class="language-console">cargo build
-sudo ./target/debug/myapp ./target/bpfel-unknown-none/debug/myapp wlp2s0
-
+<pre><code class="language-console">$ cargo build
+$ sudo ./target/debug/myapp ./target/bpfel-unknown-none/debug/myapp wlp2s0
+Waiting for Ctrl-C...
+Exiting...
 </code></pre>
 <p>That was uneventful. Did it work?</p>
+<blockquote>
+<p>💡 <strong>HINT: Error Loading Program?</strong></p>
+<p>If you get an error loading the program, try changing <code>XdpFlags::default()</code> to <code>XdpFlags::SKB_MODE</code></p>
+</blockquote>
 <h3 id="the-lifecycle-of-an-ebpf-program"><a class="header" href="#the-lifecycle-of-an-ebpf-program">The Lifecycle of an eBPF Program</a></h3>
-<p>You'll notice that our program ends by sleeping for 10 seconds and you may even have wondered what this is for...</p>
-<p>When you load an eBPF program or map in to the kernel, the kernel maintains a reference count.
-So, when our eBPF application is loaded, the kernel returns a file descriptor and the reference count is incremented.
-When our program terminates, the file descriptor is closed, the reference count is decremented and the memory (eventually) freed.</p>
-<p>You can see this when by issuing the <code>sudo bpftool prog list</code> command when <code>myapp</code> is running:</p>
+<p>The program runs until CTRL+C is pressed and then exits.
+On exit, Aya takes care of detaching the program for us.</p>
+<p>If you issue the <code>sudo bpftool prog list</code> command when <code>myapp</code> is running you can verify that it is loaded:</p>
 <pre><code class="language-console">84: xdp  tag 3b185187f1855c4c  gpl
         loaded_at 2021-08-05T13:35:06+0100  uid 0
         xlated 16B  jited 18B  memlock 4096B
         pids myapp(69184)
 </code></pre>
-<p>For our firewall to work once the user-space program has exited, we'll need to pin it to the BPF FS.</p>
+<p>Running the command again once <code>myapp</code> has exited will show that the program is no longer running.</p>
 
                     </main>
 
@@ -309,6 +323,9 @@ When our program terminates, the file descriptor is closed, the reference count 
                         <!-- Mobile navigation buttons -->
                             <a rel="prev" href="../start/development.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
+                            </a>
+                            <a rel="next" href="../start/logging-packets.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
                             </a>
                         <div style="clear: both"></div>
                     </nav>
@@ -318,6 +335,9 @@ When our program terminates, the file descriptor is closed, the reference count 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                     <a rel="prev" href="../start/development.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
+                    </a>
+                    <a rel="next" href="../start/logging-packets.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
 

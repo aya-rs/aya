@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../intro/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../ebpf/index.html"><strong aria-hidden="true">2.</strong> eBPF Program Limitiations</a></li><li class="chapter-item expanded "><a href="../start/index.html"><strong aria-hidden="true">3.</strong> Getting Started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../start/development.html" class="active"><strong aria-hidden="true">3.1.</strong> Development Environment</a></li><li class="chapter-item expanded "><a href="../start/hello-xdp.html"><strong aria-hidden="true">3.2.</strong> Hello XDP!</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../intro/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../ebpf/index.html"><strong aria-hidden="true">2.</strong> eBPF Program Limitiations</a></li><li class="chapter-item expanded "><a href="../start/index.html"><strong aria-hidden="true">3.</strong> Getting Started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../start/development.html" class="active"><strong aria-hidden="true">3.1.</strong> Development Environment</a></li><li class="chapter-item expanded "><a href="../start/hello-xdp.html"><strong aria-hidden="true">3.2.</strong> Hello XDP!</a></li><li class="chapter-item expanded "><a href="../start/logging-packets.html"><strong aria-hidden="true">3.3.</strong> Logging Packets</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -143,7 +143,7 @@ rustup toolchain install nightly --component rust-src
 </code></pre>
 <p>Once you have the Rust tool-chains installed, you must also install the <code>bpf-linker</code> - for linking our eBPF program - and <code>cargo-generate</code> - for generating the project skeleton.</p>
 <pre><code class="language-console">cargo +nightly install bpf-linker
-cargo install cargo-generate
+cargo install --git https://github.com/cargo-generate/cargo-generate
 </code></pre>
 <h2 id="starting-a-new-project"><a class="header" href="#starting-a-new-project">Starting A New Project</a></h2>
 <p>To start a new project, you can use <code>cargo-generate</code>:</p>
