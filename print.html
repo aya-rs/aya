@@ -218,7 +218,7 @@ and running a simple eBPF program and userspace application.</p>
 <p>Before getting started you will need the Rust stable and nightly tool-chains installed on your system.
 This is easily achieved with [<code>rustup</code>]:</p>
 <pre><code class="language-console">rustup install stable
-rustup install nightly --component rust-src
+rustup toolchain install nightly --component rust-src
 </code></pre>
 <p>Once you have the Rust tool-chains installed, you must also install the <code>bpf-linker</code> - for linking our eBPF program - and <code>cargo-generate</code> - for generating the project skeleton.</p>
 <pre><code class="language-console">cargo +nightly install bpf-linker
