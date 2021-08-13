@@ -135,7 +135,7 @@ fn try_main() -> Result<(), anyhow::Error> {
 
 Let's adapt it to load our program.
 
-We'll need the following imports at the top of the file:
+We will add a dependency on `ctrlc = "3.2"` to `myapp/Cargo.toml`, then add the following imports at the top of the `myapp/src/main.rs`:
 
 ```rust,ignore
 use aya::Bpf;
@@ -145,6 +145,8 @@ use std::{
     env,
     thread,
     time::Duration,
+    sync::Arc,
+    sync::atomic::{AtomicBool, Ordering},
 };
 ```
 
@@ -164,13 +166,22 @@ fn try_main() -> Result<(), anyhow::Error> {
     let probe: &mut Xdp = bpf.program_mut("xdp")?.try_into()?;
     probe.load()?;
     probe.attach(&iface, XdpFlags::default())?;
-    for _i in 1..10 {
-        thread::sleep(Duration::from_secs(1));
-    };
+
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
+
+    ctrlc::set_handler(move || {
+        r.store(false, Ordering::SeqCst);
+    }).expect("Error setting Ctrl-C handler");
+
+    println!("Waiting for Ctrl-C...");
+    while running.load(Ordering::SeqCst) {}
+    println!("Exiting...");
+
     Ok(())
 }
 ```
- 
+
 The program takes two positional arguments
 - The path to our eBPF application
 - The interface we wish to attach it to (defaults to `eth0`)
@@ -188,22 +199,24 @@ Finally, we can attach it to an interface with `probe.attach(&iface, XdpFlags::d
 Let's try it out!
 
 ```console
-cargo build
-sudo ./target/debug/myapp ./target/bpfel-unknown-none/debug/myapp wlp2s0
-
+$ cargo build
+$ sudo ./target/debug/myapp ./target/bpfel-unknown-none/debug/myapp wlp2s0
+Waiting for Ctrl-C...
+Exiting...
 ```
 
 That was uneventful. Did it work?
 
+> 💡 **HINT: Error Loading Program?**
+>
+> If you get an error loading the program, try changing `XdpFlags::default()` to `XdpFlags::SKB_MODE`
+
 ### The Lifecycle of an eBPF Program
 
-You'll notice that our program ends by sleeping for 10 seconds and you may even have wondered what this is for...
+The program runs until CTRL+C is pressed and then exits.
+On exit, Aya takes care of detaching the program for us.
 
-When you load an eBPF program or map in to the kernel, the kernel maintains a reference count.
-So, when our eBPF application is loaded, the kernel returns a file descriptor and the reference count is incremented.
-When our program terminates, the file descriptor is closed, the reference count is decremented and the memory (eventually) freed.
-
-You can see this when by issuing the `sudo bpftool prog list` command when `myapp` is running:
+If you issue the `sudo bpftool prog list` command when `myapp` is running you can verify that it is loaded:
 
 ```console
 84: xdp  tag 3b185187f1855c4c  gpl
@@ -212,4 +225,4 @@ You can see this when by issuing the `sudo bpftool prog list` command when `myap
         pids myapp(69184)
 ```
 
-For our firewall to work once the user-space program has exited, we'll need to pin it to the BPF FS.
+Running the command again once `myapp` has exited will show that the program is no longer running.
