@@ -12,23 +12,53 @@ use crate::generated::{
 
 use super::{syscall, SysResult, Syscall};
 
-pub(crate) fn perf_event_open(cpu: c_int) -> SysResult {
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn perf_event_open(
+    perf_type: u32,
+    config: u64,
+    pid: pid_t,
+    cpu: c_int,
+    sample_period: u64,
+    sample_frequency: Option<u64>,
+    wakeup: bool,
+    flags: u32,
+) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
-    attr.config = PERF_COUNT_SW_BPF_OUTPUT as u64;
+    attr.config = config;
     attr.size = mem::size_of::<perf_event_attr>() as u32;
-    attr.type_ = PERF_TYPE_SOFTWARE as u32;
+    attr.type_ = perf_type;
     attr.sample_type = PERF_SAMPLE_RAW as u64;
-    attr.__bindgen_anon_1.sample_period = 1;
-    attr.__bindgen_anon_2.wakeup_events = 1;
+    // attr.inherits = if pid > 0 { 1 } else { 0 };
+    attr.__bindgen_anon_2.wakeup_events = if wakeup { 1 } else { 0 };
+
+    if let Some(frequency) = sample_frequency {
+        attr.set_freq(1);
+        attr.__bindgen_anon_1.sample_freq = frequency;
+    } else {
+        attr.__bindgen_anon_1.sample_period = sample_period;
+    }
 
     syscall(Syscall::PerfEventOpen {
         attr,
-        pid: -1,
+        pid,
         cpu,
         group: -1,
-        flags: PERF_FLAG_FD_CLOEXEC,
+        flags,
     })
+}
+
+pub(crate) fn perf_event_open_bpf(cpu: c_int) -> SysResult {
+    perf_event_open(
+        PERF_TYPE_SOFTWARE as u32,
+        PERF_COUNT_SW_BPF_OUTPUT as u64,
+        -1,
+        cpu,
+        1,
+        None,
+        true,
+        PERF_FLAG_FD_CLOEXEC,
+    )
 }
 
 pub(crate) fn perf_event_open_probe(
