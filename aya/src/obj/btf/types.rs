@@ -154,7 +154,7 @@ impl BtfType {
 
         use BtfType::*;
         match self {
-            Unknown => 0,
+            Unknown => ty_size,
             Fwd(_) | Const(_) | Volatile(_) | Restrict(_) | Ptr(_) | Typedef(_) | Func(_)
             | Float(_) => ty_size,
             Int(_, _) => ty_size + mem::size_of::<u32>(),
