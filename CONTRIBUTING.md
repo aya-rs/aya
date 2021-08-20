@@ -5,7 +5,7 @@ Thanks for your help improving the project!
 ## Reporting issues
 
 If you believe you've discovered a bug in aya, please check if the bug is
-already known or [create an issue](https://github.com/alessandrod/aya/issues) on
+already known or [create an issue](https://github.com/aya-rs/aya/issues) on
 github. Please also report an issue if you find documentation that you think is
 confusing or could be improved.
 

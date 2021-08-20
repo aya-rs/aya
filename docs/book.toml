@@ -1,9 +1,0 @@
-[book]
-authors = ["The Aya Contributors"]
-language = "en"
-multilingual = false
-src = "src"
-title = "Building eBPF Programs With Aya"
-
-[rust]
-edition = "2018"
