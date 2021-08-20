@@ -8,9 +8,9 @@
 [crates-badge]: https://img.shields.io/crates/v/aya.svg
 [crates-url]: https://crates.io/crates/aya
 [license-badge]: https://img.shields.io/badge/license-MIT%2FApache--2.0-blue
-[build-badge]: https://github.com/alessandrod/aya/actions/workflows/build-test.yml/badge.svg 
+[build-badge]: https://github.com/aya-rs/aya/actions/workflows/build-test.yml/badge.svg
 [docs-badge]: https://img.shields.io/badge/docs-website-blue.svg
-[docs-url]: https://alessandrod.github.io/aya
+[docs-url]: http://aya-rs.github.io/book/
 
 [API docs][api-docs] | [Chat][chat-url]
 
@@ -83,7 +83,7 @@ Join [the conversation on Discord][chat-url] to discuss anything related to aya.
 
 ## Contributing
 
-Please see the [contributing guide](https://github.com/alessandrod/aya/blob/main/CONTRIBUTING.md).
+Please see the [contributing guide](https://github.com/aya-rs/aya/blob/main/CONTRIBUTING.md).
 ## License
 
 Aya is distributed under the terms of either the [MIT license] or the [Apache License] (version
@@ -91,5 +91,5 @@ Aya is distributed under the terms of either the [MIT license] or the [Apache Li
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this crate by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions. 
 
-[MIT license]: https://github.com/alessandrod/aya/blob/main/LICENSE-MIT
-[Apache license]: https://github.com/alessandrod/aya/blob/main/LICENSE-APACHE
+[MIT license]: https://github.com/aya-rs/aya/blob/main/LICENSE-MIT
+[Apache license]: https://github.com/aya-rs/aya/blob/main/LICENSE-APACHE
