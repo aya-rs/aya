@@ -55,15 +55,15 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
         let vars = ["BPF_.*", "bpf_.*", "TC_ACT_.*", "SOL_SOCKET", "SO_.*"];
 
         for x in &types {
-            bindgen = bindgen.whitelist_type(x);
+            bindgen = bindgen.allowlist_type(x);
         }
 
         // we define our own version which is compatible with both libbpf and
         // iproute2
-        bindgen = bindgen.blacklist_type("bpf_map_def");
+        bindgen = bindgen.blocklist_type("bpf_map_def");
 
         for x in &vars {
-            bindgen = bindgen.whitelist_var(x);
+            bindgen = bindgen.allowlist_var(x);
         }
 
         bindgen

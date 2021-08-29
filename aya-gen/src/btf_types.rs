@@ -34,7 +34,7 @@ pub fn generate<T: AsRef<str>>(
     bindgen = bindgen.header_contents("kernel_types.h", &c_header);
 
     for ty in types {
-        bindgen = bindgen.whitelist_type(ty);
+        bindgen = bindgen.allowlist_type(ty);
     }
 
     let bindings = bindgen.generate().or(Err(Error::Bindgen))?.to_string();
