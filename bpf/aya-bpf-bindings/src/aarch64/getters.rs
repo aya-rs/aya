@@ -1025,6 +1025,7 @@ impl bpf_spin_lock {
         unsafe { crate::bpf_probe_read(&self.val) }.ok()
     }
 }
+impl bpf_timer {}
 impl bpf_sysctl {
     pub fn write(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.write) }.ok()

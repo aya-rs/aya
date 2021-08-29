@@ -1710,3 +1710,52 @@ pub unsafe fn bpf_sys_close(fd: __u32) -> ::aya_bpf_cty::c_long {
         ::core::mem::transmute(168usize);
     fun(fd)
 }
+pub unsafe fn bpf_timer_init(
+    timer: *mut bpf_timer,
+    map: *mut ::aya_bpf_cty::c_void,
+    flags: __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        timer: *mut bpf_timer,
+        map: *mut ::aya_bpf_cty::c_void,
+        flags: __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(169usize);
+    fun(timer, map, flags)
+}
+pub unsafe fn bpf_timer_set_callback(
+    timer: *mut bpf_timer,
+    callback_fn: *mut ::aya_bpf_cty::c_void,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        timer: *mut bpf_timer,
+        callback_fn: *mut ::aya_bpf_cty::c_void,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(170usize);
+    fun(timer, callback_fn)
+}
+pub unsafe fn bpf_timer_start(
+    timer: *mut bpf_timer,
+    nsecs: __u64,
+    flags: __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        timer: *mut bpf_timer,
+        nsecs: __u64,
+        flags: __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(171usize);
+    fun(timer, nsecs, flags)
+}
+pub unsafe fn bpf_timer_cancel(timer: *mut bpf_timer) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(timer: *mut bpf_timer) -> ::aya_bpf_cty::c_long =
+        ::core::mem::transmute(172usize);
+    fun(timer)
+}
+pub unsafe fn bpf_get_func_ip(ctx: *mut ::aya_bpf_cty::c_void) -> __u64 {
+    let fun: unsafe extern "C" fn(ctx: *mut ::aya_bpf_cty::c_void) -> __u64 =
+        ::core::mem::transmute(173usize);
+    fun(ctx)
+}
+pub unsafe fn bpf_get_attach_cookie(ctx: *mut ::aya_bpf_cty::c_void) -> __u64 {
+    let fun: unsafe extern "C" fn(ctx: *mut ::aya_bpf_cty::c_void) -> __u64 =
+        ::core::mem::transmute(174usize);
+    fun(ctx)
+}
