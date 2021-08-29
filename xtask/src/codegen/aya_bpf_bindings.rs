@@ -21,6 +21,9 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
             .header(&*dir.join("include/bindings.h").to_string_lossy())
+            // aya-gen uses aya_bpf::cty. We can't use that here since aya-bpf
+            // depends on aya-bpf-bindings so it would create a circular dep.
+            .ctypes_prefix("::aya_bpf_cty")
             .clang_args(&[
                 "-I",
                 &*opts.libbpf_dir.join("include/uapi").to_string_lossy(),
