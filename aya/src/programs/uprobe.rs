@@ -296,7 +296,7 @@ enum ResolveSymbolError {
 
 fn resolve_symbol(path: &str, symbol: &str) -> Result<u64, ResolveSymbolError> {
     let data = fs::read(path)?;
-    let obj = object::read::File::parse(&data)?;
+    let obj = object::read::File::parse(&*data)?;
 
     obj.dynamic_symbols()
         .chain(obj.symbols())
