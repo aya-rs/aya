@@ -342,7 +342,7 @@ pub(crate) fn fields_are_compatible(
         match local_ty {
             Fwd(_) | Enum(_, _) => {
                 let flavorless_name =
-                    |name: &str| name.splitn(2, "___").next().unwrap().to_string();
+                    |name: &str| name.split_once("___").map_or(name, |x| x.0).to_string();
 
                 let local_name = flavorless_name(&*local_btf.type_name(local_ty)?.unwrap());
                 let target_name = flavorless_name(&*target_btf.type_name(target_ty)?.unwrap());
