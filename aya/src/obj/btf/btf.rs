@@ -83,7 +83,7 @@ pub struct Btf {
     header: btf_header,
     strings: Vec<u8>,
     types: Vec<BtfType>,
-    endianness: Endianness,
+    _endianness: Endianness,
 }
 
 impl Btf {
@@ -125,7 +125,7 @@ impl Btf {
             header,
             strings,
             types,
-            endianness,
+            _endianness: endianness,
         })
     }
 
@@ -271,11 +271,11 @@ unsafe fn read_btf_header(data: &[u8]) -> btf_header {
 #[derive(Debug, Clone)]
 pub struct BtfExt {
     data: Vec<u8>,
-    endianness: Endianness,
+    _endianness: Endianness,
     relocations: Vec<(u32, Vec<Relocation>)>,
     header: btf_ext_header,
-    func_info_rec_size: usize,
-    line_info_rec_size: usize,
+    _func_info_rec_size: usize,
+    _line_info_rec_size: usize,
     core_relo_rec_size: usize,
 }
 
@@ -322,11 +322,11 @@ impl BtfExt {
         let mut ext = BtfExt {
             header,
             relocations: Vec::new(),
-            func_info_rec_size: rec_size(func_info_off, func_info_len)?,
-            line_info_rec_size: rec_size(line_info_off, line_info_len)?,
+            _func_info_rec_size: rec_size(func_info_off, func_info_len)?,
+            _line_info_rec_size: rec_size(line_info_off, line_info_len)?,
             core_relo_rec_size: rec_size(core_relo_off, core_relo_len)?,
             data: data.to_vec(),
-            endianness,
+            _endianness: endianness,
         };
 
         let rec_size = ext.core_relo_rec_size;
@@ -409,7 +409,7 @@ impl<'a> Iterator for SecInfoIter<'a> {
 
         Some(SecInfo {
             sec_name_off,
-            num_info,
+            _num_info: num_info,
             data,
         })
     }
@@ -418,7 +418,7 @@ impl<'a> Iterator for SecInfoIter<'a> {
 #[derive(Debug)]
 pub(crate) struct SecInfo<'a> {
     sec_name_off: u32,
-    num_info: u32,
+    _num_info: u32,
     data: &'a [u8],
 }
 

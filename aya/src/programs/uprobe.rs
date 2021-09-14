@@ -198,7 +198,7 @@ fn find_lib_in_proc_maps(pid: pid_t, lib: &str) -> Result<Option<String>, io::Er
 pub(crate) struct CacheEntry {
     key: String,
     value: String,
-    flags: i32,
+    _flags: i32,
 }
 
 #[derive(Debug)]
@@ -259,7 +259,11 @@ impl LdSoCache {
                 unsafe { CStr::from_ptr(cursor.get_ref()[v_pos..].as_ptr() as *const c_char) }
                     .to_string_lossy()
                     .into_owned();
-            entries.push(CacheEntry { key, value, flags });
+            entries.push(CacheEntry {
+                key,
+                value,
+                _flags: flags,
+            });
         }
 
         Ok(LdSoCache { entries })

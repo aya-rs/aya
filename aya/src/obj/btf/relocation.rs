@@ -281,7 +281,7 @@ fn relocate_btf_program<'target>(
 }
 
 fn flavorless_name(name: &str) -> &str {
-    name.splitn(2, "___").next().unwrap()
+    name.split_once("___").map_or(name, |x| x.0)
 }
 
 fn find_candidates<'target>(
@@ -303,7 +303,7 @@ fn find_candidates<'target>(
         candidates.push(Candidate {
             name: name.to_owned(),
             btf: target_btf,
-            ty,
+            _ty: ty,
             type_id: type_id as u32,
         });
     }
@@ -719,7 +719,7 @@ struct Accessor {
 struct Candidate<'a> {
     name: String,
     btf: &'a Btf,
-    ty: &'a BtfType,
+    _ty: &'a BtfType,
     type_id: u32,
 }
 
