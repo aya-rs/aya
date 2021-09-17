@@ -3,7 +3,7 @@ mod relocation;
 
 use object::{
     read::{Object as ElfObject, ObjectSection, Section as ObjSection},
-    Endianness, ObjectSymbol, ObjectSymbolTable, RelocationTarget, SectionIndex,
+    Endianness, ObjectSymbol, ObjectSymbolTable, RelocationTarget, SectionIndex, SymbolKind,
 };
 use std::{
     collections::HashMap,
@@ -181,6 +181,7 @@ impl Object {
                     address: symbol.address(),
                     size: symbol.size(),
                     is_definition: symbol.is_definition(),
+                    is_text: symbol.kind() == SymbolKind::Text,
                 };
                 bpf_obj
                     .symbols_by_index
@@ -242,7 +243,7 @@ impl Object {
         let mut symbols_by_address = HashMap::new();
 
         for sym in self.symbols_by_index.values() {
-            if sym.is_definition && sym.section_index == Some(section.index) {
+            if sym.is_definition && sym.is_text && sym.section_index == Some(section.index) {
                 if symbols_by_address.contains_key(&sym.address) {
                     return Err(ParseError::SymbolTableConflict {
                         section_index: section.index.0,
@@ -381,10 +382,10 @@ pub enum ParseError {
     #[error("error parsing map `{name}`")]
     InvalidMapDefinition { name: String },
 
-    #[error("two or more symbols in section `{section_index}` have the same address {address:x}")]
+    #[error("two or more symbols in section `{section_index}` have the same address {address:#X}")]
     SymbolTableConflict { section_index: usize, address: u64 },
 
-    #[error("unknown symbol in section `{section_index}` at address {address:x}")]
+    #[error("unknown symbol in section `{section_index}` at address {address:#X}")]
     UnknownSymbol { section_index: usize, address: u64 },
 
     #[error("invalid symbol, index `{index}` name: {}", .name.as_ref().unwrap_or(&"[unknown]".into()))]

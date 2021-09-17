@@ -20,8 +20,8 @@ enum RelocationError {
     #[error("unknown symbol, index `{index}`")]
     UnknownSymbol { index: usize },
 
-    #[error("section `{section_index}` not found, referenced by symbol `{}`",
-            .symbol_name.clone().unwrap_or_else(|| .symbol_index.to_string()))]
+    #[error("section `{section_index}` not found, referenced by symbol `{}` #{symbol_index}",
+            .symbol_name.clone().unwrap_or_else(|| "".to_string()))]
     SectionNotFound {
         section_index: usize,
         symbol_index: usize,
@@ -57,6 +57,7 @@ pub(crate) struct Symbol {
     pub(crate) address: u64,
     pub(crate) size: u64,
     pub(crate) is_definition: bool,
+    pub(crate) is_text: bool,
 }
 
 impl Object {
