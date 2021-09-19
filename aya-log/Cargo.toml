@@ -1,0 +1,16 @@
+[package]
+name = "aya-log"
+version = "0.1.0"
+edition = "2018"
+publish = false
+
+[dependencies]
+aya = { git = "https://github.com/aya-rs/aya", branch="main", features=["async_tokio"] }
+aya-log-common = { path = "../aya-log-common", features=["userspace"] }
+thiserror = "1"
+log = "0.4"
+bytes = "1.1"
+tokio = { version = "1.2.0" }
+
+[lib]
+path = "src/lib.rs"
