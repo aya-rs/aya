@@ -1,8 +1,27 @@
+//! Perf event programs.
 use crate::{generated::bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT, sys::perf_event_open};
 
-pub use crate::generated::perf_type_id;
+use crate::generated::perf_type_id::{
+    PERF_TYPE_BREAKPOINT, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE, PERF_TYPE_RAW,
+    PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT,
+};
+
+pub use crate::generated::{
+    perf_hw_cache_id, perf_hw_cache_op_id, perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids,
+};
 
 use super::{load_program, perf_attach, LinkRef, ProgramData, ProgramError};
+
+#[repr(u32)]
+#[derive(Debug, Clone)]
+pub enum PerfTypeId {
+    Hardware = PERF_TYPE_HARDWARE as u32,
+    Software = PERF_TYPE_SOFTWARE as u32,
+    TracePoint = PERF_TYPE_TRACEPOINT as u32,
+    HwCache = PERF_TYPE_HW_CACHE as u32,
+    Raw = PERF_TYPE_RAW as u32,
+    Breakpoint = PERF_TYPE_BREAKPOINT as u32,
+}
 
 #[derive(Debug, Clone)]
 pub enum SamplePolicy {
@@ -22,13 +41,9 @@ pub enum PerfEventScope {
 
 /// A program that can be attached at a perf event.
 ///
-/// TODO: Explain the different types of perf events and how to get a list.
-/// Maybe just link to the man page of `perf list`.
-/// (But it's not clear to me how to translate those strings into numbers.)
-///
 /// # Minimum kernel version
 ///
-/// TODO: minimum kernel version?
+/// The minimum kernel version required to use this feature is 4.9.
 ///
 /// # Examples
 ///
@@ -46,16 +61,18 @@ pub enum PerfEventScope {
 /// # }
 /// # let mut bpf = aya::Bpf::load(&[], None)?;
 /// use std::convert::TryInto;
-/// use aya::programs::{PerfEvent, PerfEventScope, SamplePolicy };
 /// use aya::util::online_cpus;
+/// use aya::programs::perf_event::{
+///     perf_sw_ids::PERF_COUNT_SW_CPU_CLOCK, PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy,
+/// };
 ///
 /// let prog: &mut PerfEvent = bpf.program_mut("observe_cpu_clock")?.try_into()?;
 /// prog.load()?;
 ///
 /// for cpu in online_cpus()? {
 ///     prog.attach(
-///         1, /* PERF_TYPE_SOFTWARE */
-///         0, /* PERF_COUNT_SW_CPU_CLOCK */
+///         PerfTypeId::Software,
+///         PERF_COUNT_SW_CPU_CLOCK as u64,
 ///         PerfEventScope::AllProcessesOneCpu { cpu },
 ///         SamplePolicy::Period(1000000),
 ///     )?;
@@ -76,10 +93,14 @@ impl PerfEvent {
         load_program(BPF_PROG_TYPE_PERF_EVENT, &mut self.data)
     }
 
-    /// Attaches to a given perf event.
+    /// Attaches to the given perf event.
+    ///
+    /// The possible values and encoding of the `config` argument depends on the
+    /// `perf_type`. See `perf_sw_ids`, `perf_hw_id`, `perf_hw_cache_id`,
+    /// `perf_hw_cache_op_id` and `perf_hw_cache_op_result_id`.
     pub fn attach(
         &mut self,
-        perf_type: u32, // perf_type_id
+        perf_type: PerfTypeId,
         config: u64,
         scope: PerfEventScope,
         sample_policy: SamplePolicy,
@@ -96,7 +117,7 @@ impl PerfEvent {
             PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
         };
         let fd = perf_event_open(
-            perf_type,
+            perf_type as u32,
             config,
             pid,
             cpu,
