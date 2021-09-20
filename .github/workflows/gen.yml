@@ -1,0 +1,51 @@
+name: codegen
+
+on: workflow_dispatch
+
+jobs:
+  codegen:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/checkout@v2
+        with:
+          repository: libbpf/libbpf
+          path: libbpf
+
+      - name: libbpf-version
+        working-directory: libbpf
+        run: echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Run codegen
+        run: |
+          cargo xtask codegen --libbpf-dir ./libbpf
+
+      - name: Check for changes
+        run: |
+          git diff --quiet || echo "COMMIT_CHANGES=1" >> $GITHUB_ENV
+
+      - name: Commit Changes
+        id: commit
+        if: env.COMMIT_CHANGES == 1
+        uses: devops-infra/action-commit-push@master
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          commit_prefix: "[codegen] Update libbpf to ${{ env.LIBBPF_SHA }}"
+          commit_message: "Created using GitHub Actions"
+          target_branch: codegen
+
+
+      - name: Create pull request
+        if: steps.commit.outputs.files_changed != ''
+        uses: devops-infra/action-pull-request@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          body: "**Automated pull request**<br><br>Update libbpf to ${{ env.LIBBPF_SHA }}"
+          title: Update libbpf to ${{ env.LIBBPF_SHA }}
+          source_branch: codegen
+          target_branch: main
+          get_diff: true
