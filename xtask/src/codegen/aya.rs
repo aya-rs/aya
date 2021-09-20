@@ -79,6 +79,10 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         // PERF
         "perf_event_attr",
         "perf_sw_ids",
+        "perf_hw_id",
+        "perf_hw_cache_id",
+        "perf_hw_cache_op_id",
+        "perf_hw_cache_op_result_id",
         "perf_event_sample_format",
         "perf_event_mmap_page",
         "perf_event_header",
