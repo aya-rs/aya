@@ -18,11 +18,12 @@ aya-log = { git = "https://github.com/aya-rs/aya-log", branch = "main" }
 
 ### eBPF side
 
-Add `aya-log-ebpf` to `Cargo.toml`:
+Add `aya-log-ebpf` and `ufmt` to `Cargo.toml`:
 
 ```toml
 [dependencies]
 aya-log-ebpf = { git = "https://github.com/aya-rs/aya-log", branch = "main" }
+ufmt = "0.1"
 ```
 
 ## Example
