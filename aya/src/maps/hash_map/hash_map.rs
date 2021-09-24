@@ -20,7 +20,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[], None)?;
+/// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::HashMap;
 /// use std::convert::TryFrom;
 ///
@@ -182,6 +182,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: None,
+            pinned: false,
         };
         assert!(matches!(
             HashMap::<_, u8, u32>::new(&map),
@@ -197,6 +198,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: None,
+            pinned: false,
         };
         assert!(matches!(
             HashMap::<_, u32, u16>::new(&map),
@@ -223,6 +225,7 @@ mod tests {
                 data: Vec::new(),
             },
             fd: None,
+            pinned: false,
         };
 
         assert!(matches!(
@@ -236,6 +239,7 @@ mod tests {
         let mut map = Map {
             obj: new_obj_map("TEST"),
             fd: None,
+            pinned: false,
         };
 
         assert!(matches!(
@@ -249,6 +253,7 @@ mod tests {
         let mut map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
 
         assert!(HashMap::<_, u32, u32>::new(&mut map).is_ok());
@@ -259,6 +264,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
     }
@@ -279,6 +285,7 @@ mod tests {
                 data: Vec::new(),
             },
             fd: Some(42),
+            pinned: false,
         };
 
         assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
@@ -291,6 +298,7 @@ mod tests {
         let mut map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
@@ -313,6 +321,7 @@ mod tests {
         let mut map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
@@ -326,6 +335,7 @@ mod tests {
         let mut map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
@@ -348,6 +358,7 @@ mod tests {
         let mut map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
@@ -360,6 +371,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -381,6 +393,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -419,6 +432,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
         let keys = unsafe { hm.keys() }.collect::<Result<Vec<_>, _>>();
@@ -462,6 +476,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -489,6 +504,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -518,6 +534,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
         let items = unsafe { hm.iter() }.collect::<Result<Vec<_>, _>>().unwrap();
@@ -550,6 +567,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -583,6 +601,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -622,6 +641,7 @@ mod tests {
         let map = Map {
             obj: new_obj_map("TEST"),
             fd: Some(42),
+            pinned: false,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 

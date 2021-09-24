@@ -40,7 +40,7 @@ pub enum TracePointError {
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::convert::TryInto;
 /// use aya::programs::TracePoint;
 ///

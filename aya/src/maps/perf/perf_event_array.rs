@@ -109,7 +109,7 @@ impl<T: DerefMut<Target = Map>> AsRawFd for PerfEventArrayBuffer<T> {
 /// #    #[error(transparent)]
 /// #    PerfBuf(#[from] aya::maps::perf::PerfBufferError),
 /// # }
-/// # let bpf = aya::Bpf::load(&[], None)?;
+/// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::PerfEventArray;
 /// use aya::util::online_cpus;
 /// use std::convert::{TryFrom, TryInto};

@@ -56,9 +56,10 @@ use std::{
     cell::RefCell,
     cmp,
     convert::TryFrom,
-    ffi::CStr,
+    ffi::{CStr, CString},
     io,
     os::unix::io::{AsRawFd, RawFd},
+    path::Path,
     rc::Rc,
 };
 use thiserror::Error;
@@ -82,7 +83,7 @@ use crate::{
     generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
     maps::MapError,
     obj::{self, Function},
-    sys::{bpf_load_program, bpf_prog_detach, bpf_prog_query},
+    sys::{bpf_load_program, bpf_pin_object, bpf_prog_detach, bpf_prog_query},
 };
 
 /// Error type returned when working with programs.
@@ -135,6 +136,9 @@ pub enum ProgramError {
     /// The program is not of the expected type.
     #[error("unexpected program type")]
     UnexpectedProgramType,
+
+    #[error("invalid pin path `{error}`")]
+    InvalidPinPath { error: String },
 
     /// A map error occurred while loading or attaching a program.
     #[error(transparent)]
@@ -225,6 +229,11 @@ impl Program {
         &self.data().name
     }
 
+    /// Pin the program to the provided path
+    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
+        self.data_mut().pin(path)
+    }
+
     fn data(&self) -> &ProgramData {
         match self {
             Program::KProbe(p) => &p.data,
@@ -277,6 +286,23 @@ impl ProgramData {
         let link: Rc<RefCell<dyn Link>> = Rc::new(RefCell::new(link));
         self.links.push(Rc::clone(&link));
         LinkRef::new(link)
+    }
+
+    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
+        let fd = self.fd_or_err()?;
+        let path_string =
+            CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
+                MapError::InvalidPinPath {
+                    error: e.to_string(),
+                }
+            })?;
+        bpf_pin_object(fd, &path_string).map_err(|(_code, io_error)| {
+            ProgramError::SyscallError {
+                call: "BPF_OBJ_PIN".to_string(),
+                io_error,
+            }
+        })?;
+        Ok(())
     }
 }
 

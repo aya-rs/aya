@@ -26,7 +26,7 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[], None)?;
+/// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::ProgramArray;
 /// use aya::programs::CgroupSkb;
 /// use std::convert::{TryFrom, TryInto};

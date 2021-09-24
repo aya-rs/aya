@@ -59,7 +59,7 @@ pub enum PerfEventScope {
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::convert::TryInto;
 /// use aya::util::online_cpus;
 /// use aya::programs::perf_event::{

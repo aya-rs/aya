@@ -38,6 +38,21 @@ pub(crate) fn bpf_create_map(name: &CStr, def: &bpf_map_def) -> SysResult {
     sys_bpf(bpf_cmd::BPF_MAP_CREATE, &attr)
 }
 
+pub(crate) fn bpf_pin_object(fd: RawFd, path: &CStr) -> SysResult {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_4 };
+    u.bpf_fd = fd as u32;
+    u.pathname = path.as_ptr() as u64;
+    sys_bpf(bpf_cmd::BPF_OBJ_PIN, &attr)
+}
+
+pub(crate) fn bpf_get_object(path: &CStr) -> SysResult {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_4 };
+    u.pathname = path.as_ptr() as u64;
+    sys_bpf(bpf_cmd::BPF_OBJ_GET, &attr)
+}
+
 pub(crate) fn bpf_load_program(
     ty: bpf_prog_type,
     insns: &[bpf_insn],

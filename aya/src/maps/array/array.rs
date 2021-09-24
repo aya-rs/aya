@@ -23,7 +23,7 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[], None)?;
+/// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::Array;
 /// use std::convert::TryFrom;
 ///

@@ -586,6 +586,7 @@ mod tests {
     use std::slice;
 
     use super::*;
+    use crate::PinningType;
 
     fn fake_section<'a>(name: &'a str, data: &'a [u8]) -> Section<'a> {
         Section {
@@ -688,7 +689,7 @@ mod tests {
             max_entries: 4,
             map_flags: 5,
             id: 0,
-            pinning: 0,
+            pinning: PinningType::None,
         };
 
         assert_eq!(
@@ -706,7 +707,7 @@ mod tests {
             max_entries: 4,
             map_flags: 5,
             id: 6,
-            pinning: 7,
+            pinning: PinningType::ByName,
         };
 
         assert_eq!(parse_map_def("foo", bytes_of(&def)).unwrap(), def);
@@ -721,7 +722,7 @@ mod tests {
             max_entries: 4,
             map_flags: 5,
             id: 6,
-            pinning: 7,
+            pinning: PinningType::ByName,
         };
         let mut buf = [0u8; 128];
         unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, def) };
@@ -750,7 +751,7 @@ mod tests {
                         max_entries: 4,
                         map_flags: 5,
                         id: 0,
-                        pinning: 0
+                        pinning: PinningType::None,
                     })
                 ),
                 "foo"
@@ -765,7 +766,7 @@ mod tests {
                     max_entries: 4,
                     map_flags: 5,
                     id: 0,
-                    pinning: 0
+                    pinning: PinningType::None,
                 },
                 data
             }) if name == "foo" && data.is_empty()
@@ -793,7 +794,7 @@ mod tests {
                     max_entries: 1,
                     map_flags: 0,
                     id: 0,
-                    pinning: 0,
+                    pinning: PinningType::None,
                 },
                 data
             }) if name == ".bss" && data == map_data && value_size == map_data.len() as u32
