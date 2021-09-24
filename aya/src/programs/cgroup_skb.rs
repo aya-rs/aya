@@ -37,7 +37,7 @@ use super::FdLink;
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::fs::File;
 /// use std::convert::TryInto;
 /// use aya::programs::{CgroupSkb, CgroupSkbAttachType};

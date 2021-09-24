@@ -29,7 +29,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::convert::{TryFrom, TryInto};
 /// use aya::maps::SockMap;
 /// use aya::programs::SkSkb;

@@ -2,7 +2,7 @@ use std::{
     collections::HashMap,
     error::Error,
     fs, io,
-    os::raw::c_int,
+    os::{raw::c_int, unix::io::RawFd},
     path::{Path, PathBuf},
 };
 
@@ -58,64 +58,92 @@ pub(crate) struct bpf_map_def {
     pub(crate) map_flags: u32,
     // optional features
     pub(crate) id: u32,
-    pub(crate) pinning: u32,
+    pub(crate) pinning: PinningType,
 }
 
-/// The main entry point into the library, used to work with eBPF programs and maps.
-#[derive(Debug)]
-pub struct Bpf {
-    maps: HashMap<String, MapLock>,
-    programs: HashMap<String, Program>,
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub(crate) enum PinningType {
+    None = 0,
+    #[allow(dead_code)] // ByName is constructed from the BPF side
+    ByName = 1,
 }
 
-impl Bpf {
+impl Default for PinningType {
+    fn default() -> Self {
+        PinningType::None
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct BpfLoader {
+    btf: Option<Btf>,
+    map_pin_path: Option<PathBuf>,
+}
+
+impl BpfLoader {
+    pub fn new() -> BpfLoader {
+        BpfLoader {
+            btf: None,
+            map_pin_path: None,
+        }
+    }
+
+    // Set the target BTF
+    pub fn btf(&mut self, btf: Btf) -> &mut BpfLoader {
+        self.btf = Some(btf);
+        self
+    }
+
+    // Set the map pin path
+    pub fn map_pin_path<P: AsRef<Path>>(&mut self, path: P) -> &mut BpfLoader {
+        self.map_pin_path = Some(path.as_ref().to_owned());
+        self
+    }
+
     /// Loads eBPF bytecode from a file.
     ///
-    /// Parses the given object code file and initializes the [maps](crate::maps) defined in it. If
-    /// the kernel supports [BTF](Btf) debug info, it is automatically loaded from
-    /// `/sys/kernel/btf/vmlinux`.
+    /// Parses the given object code file and initializes the [maps](crate::maps) defined in it.
     ///
     /// # Examples
     ///
     /// ```no_run
-    /// use aya::Bpf;
+    /// use aya::BpfLoader;
     ///
-    /// let bpf = Bpf::load_file("file.o")?;
+    /// let bpf = BpfLoader::new().load_file("file.o")?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Bpf, BpfError> {
+    pub fn load_file<P: AsRef<Path>>(&mut self, path: P) -> Result<Bpf, BpfError> {
         let path = path.as_ref();
-        Bpf::load(
-            &fs::read(path).map_err(|error| BpfError::FileError {
-                path: path.to_owned(),
-                error,
-            })?,
-            Btf::from_sys_fs().ok().as_ref(),
-        )
+        self.load(&fs::read(path).map_err(|error| BpfError::FileError {
+            path: path.to_owned(),
+            error,
+        })?)
     }
 
     /// Load eBPF bytecode.
     ///
     /// Parses the object code contained in `data` and initializes the [maps](crate::maps) defined
-    /// in it. If `target_btf` is not `None` and `data` includes BTF debug info, [BTF](Btf) relocations
-    /// are applied as well. In order to allow sharing of a single [BTF](Btf) object among multiple
-    /// eBPF programs, `target_btf` is passed by reference.
+    /// in it. If `BpfLoader.btf` is not `None` and `data` includes BTF debug info, [BTF](Btf) relocations
+    /// are applied as well. Any maps that require pinning will be pinned to `BpfLoader.map_pin_path`
     ///
     /// # Examples
     ///
     /// ```no_run
-    /// use aya::{Bpf, Btf};
+    /// use aya::{BpfLoader, Btf};
     /// use std::fs;
     ///
     /// let data = fs::read("file.o").unwrap();
     /// // load the BTF data from /sys/kernel/btf/vmlinux
-    /// let bpf = Bpf::load(&data, Btf::from_sys_fs().ok().as_ref());
+
+    /// let target_btf = Btf::from_sys_fs().unwrap();
+    /// let bpf = BpfLoader::new().btf(target_btf).load(&data);
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn load(data: &[u8], target_btf: Option<&Btf>) -> Result<Bpf, BpfError> {
+    pub fn load(&mut self, data: &[u8]) -> Result<Bpf, BpfError> {
         let mut obj = Object::parse(data)?;
 
-        if let Some(btf) = target_btf {
+        if let Some(btf) = &self.btf {
             obj.relocate_btf(btf)?;
         }
 
@@ -130,8 +158,32 @@ impl Bpf {
                     })?
                     .len() as u32;
             }
-            let mut map = Map { obj, fd: None };
-            let fd = map.create()?;
+            let mut map = Map {
+                obj,
+                fd: None,
+                pinned: false,
+            };
+            let fd = match map.obj.def.pinning {
+                PinningType::ByName => {
+                    let path = match &self.map_pin_path {
+                        Some(p) => p,
+                        None => return Err(BpfError::NoPinPath),
+                    };
+                    // try to open map in case it's already pinned
+                    match map.from_pinned(path) {
+                        Ok(fd) => {
+                            map.pinned = true;
+                            fd as RawFd
+                        }
+                        Err(_) => {
+                            let fd = map.create()?;
+                            map.pin(path)?;
+                            fd
+                        }
+                    }
+                }
+                PinningType::None => map.create()?,
+            };
             if !map.obj.data.is_empty() && map.obj.name != ".bss" {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data.as_mut_ptr(), 0).map_err(
                     |(code, io_error)| MapError::SyscallError {
@@ -208,7 +260,6 @@ impl Bpf {
                 (name, program)
             })
             .collect();
-
         Ok(Bpf {
             maps: maps
                 .drain(..)
@@ -216,6 +267,64 @@ impl Bpf {
                 .collect(),
             programs,
         })
+    }
+}
+
+/// The main entry point into the library, used to work with eBPF programs and maps.
+#[derive(Debug)]
+pub struct Bpf {
+    maps: HashMap<String, MapLock>,
+    programs: HashMap<String, Program>,
+}
+
+impl Bpf {
+    /// Loads eBPF bytecode from a file.
+    ///
+    /// Parses the given object code file and initializes the [maps](crate::maps) defined in it. If
+    /// the kernel supports [BTF](Btf) debug info, it is automatically loaded from
+    /// `/sys/kernel/btf/vmlinux`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use aya::Bpf;
+    ///
+    /// let bpf = Bpf::load_file("file.o")?;
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
+    pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Bpf, BpfError> {
+        let mut loader = BpfLoader::new();
+        let path = path.as_ref();
+        if let Ok(btf) = Btf::from_sys_fs() {
+            loader.btf(btf);
+        };
+        loader.load_file(path)
+    }
+
+    /// Load eBPF bytecode.
+    ///
+    /// Parses the object code contained in `data` and initializes the [maps](crate::maps) defined
+    /// in it. If `target_btf` is not `None` and `data` includes BTF debug info, [BTF](Btf) relocations
+    /// are applied as well. In order to allow sharing of a single [BTF](Btf) object among multiple
+    /// eBPF programs, `target_btf` is passed by reference.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use aya::{Bpf, Btf};
+    /// use std::fs;
+    ///
+    /// let data = fs::read("file.o").unwrap();
+    /// // load the BTF data from /sys/kernel/btf/vmlinux
+    /// let bpf = Bpf::load(&data);
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
+    pub fn load(data: &[u8]) -> Result<Bpf, BpfError> {
+        let mut loader = BpfLoader::new();
+        if let Ok(btf) = Btf::from_sys_fs() {
+            loader.btf(btf);
+        };
+        loader.load(data)
     }
 
     /// Returns a reference to the map with the given name.
@@ -272,7 +381,7 @@ impl Bpf {
     ///
     /// # Examples
     /// ```no_run
-    /// # let mut bpf = aya::Bpf::load(&[], None)?;
+    /// # let mut bpf = aya::Bpf::load(&[])?;
     /// for (name, map) in bpf.maps() {
     ///     println!(
     ///         "found map `{}` of type `{:?}`",
@@ -308,7 +417,7 @@ impl Bpf {
     /// # Examples
     ///
     /// ```no_run
-    /// # let bpf = aya::Bpf::load(&[], None)?;
+    /// # let bpf = aya::Bpf::load(&[])?;
     /// let program = bpf.program("SSL_read")?;
     /// println!("program SSL_read is of type {:?}", program.prog_type());
     /// # Ok::<(), aya::BpfError>(())
@@ -333,7 +442,7 @@ impl Bpf {
     /// # Examples
     ///
     /// ```no_run
-    /// # let mut bpf = aya::Bpf::load(&[], None)?;
+    /// # let mut bpf = aya::Bpf::load(&[])?;
     /// use aya::programs::UProbe;
     /// use std::convert::TryInto;
     ///
@@ -354,7 +463,7 @@ impl Bpf {
     ///
     /// # Examples
     /// ```no_run
-    /// # let mut bpf = aya::Bpf::load(&[], None)?;
+    /// # let mut bpf = aya::Bpf::load(&[])?;
     /// for program in bpf.programs() {
     ///     println!(
     ///         "found program `{}` of type `{:?}`",
@@ -378,6 +487,15 @@ pub enum BpfError {
         #[source]
         error: io::Error,
     },
+
+    #[error("pinning requested but no path provided")]
+    NoPinPath,
+
+    #[error("unexpected pinning type {name}")]
+    UnexpectedPinningType { name: u32 },
+
+    #[error("invalid path `{error}`")]
+    InvalidPath { error: String },
 
     #[error("error parsing BPF object")]
     ParseError(#[from] ParseError),

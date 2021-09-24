@@ -44,7 +44,7 @@ pub enum SocketFilterError {
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[], None)?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::convert::TryInto;
 /// use std::net::TcpStream;
 /// use std::os::unix::io::AsRawFd;

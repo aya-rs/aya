@@ -34,7 +34,7 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let bpf = aya::Bpf::load(&[], None)?;
+/// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::StackTraceMap;
 /// use aya::util::kernel_symbols;
 /// use std::convert::TryFrom;

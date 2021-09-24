@@ -15,7 +15,7 @@
 //! *typed maps* using the [`TryFrom`](std::convert::TryFrom) trait. For example:
 //!
 //! ```no_run
-//! # let mut bpf = aya::Bpf::load(&[], None)?;
+//! # let mut bpf = aya::Bpf::load(&[])?;
 //! use std::convert::{TryFrom, TryInto};
 //! use aya::maps::SockMap;
 //! use aya::programs::SkMsg;
@@ -34,14 +34,14 @@
 //! implement the [Pod] trait.
 use std::{
     convert::TryFrom, ffi::CString, io, marker::PhantomData, mem, ops::Deref, os::unix::io::RawFd,
-    ptr,
+    path::Path, ptr,
 };
 use thiserror::Error;
 
 use crate::{
     generated::bpf_map_type,
     obj,
-    sys::{bpf_create_map, bpf_map_get_next_key},
+    sys::{bpf_create_map, bpf_get_object, bpf_map_get_next_key, bpf_pin_object},
     util::nr_cpus,
     Pod,
 };
@@ -76,14 +76,27 @@ pub enum MapError {
     #[error("invalid map name `{name}`")]
     InvalidName { name: String },
 
+    #[error("invalid map path `{error}`")]
+    InvalidPinPath { error: String },
+
     #[error("the map `{name}` has not been created")]
     NotCreated { name: String },
 
     #[error("the map `{name}` has already been created")]
     AlreadyCreated { name: String },
 
+    #[error("the map `{name}` has already been pinned")]
+    AlreadyPinned { name: String },
+
     #[error("failed to create map `{name}`: {code}")]
     CreateError {
+        name: String,
+        code: libc::c_long,
+        io_error: io::Error,
+    },
+
+    #[error("failed to pin map `{name}`: {code}")]
+    PinError {
         name: String,
         code: libc::c_long,
         io_error: io::Error,
@@ -128,6 +141,7 @@ pub enum MapError {
 pub struct Map {
     pub(crate) obj: obj::Map,
     pub(crate) fd: Option<RawFd>,
+    pub pinned: bool,
 }
 
 impl Map {
@@ -153,6 +167,31 @@ impl Map {
         Ok(fd)
     }
 
+    pub(crate) fn from_pinned<P: AsRef<Path>>(&mut self, path: P) -> Result<RawFd, MapError> {
+        let name = self.obj.name.clone();
+        if self.fd.is_some() {
+            return Err(MapError::AlreadyCreated { name });
+        }
+        let map_path = path.as_ref().join(self.name());
+        let path_string = match CString::new(map_path.to_str().unwrap()) {
+            Ok(s) => s,
+            Err(e) => {
+                return Err(MapError::InvalidPinPath {
+                    error: e.to_string(),
+                })
+            }
+        };
+        let fd = bpf_get_object(&path_string).map_err(|(code, io_error)| MapError::PinError {
+            name,
+            code,
+            io_error,
+        })? as RawFd;
+
+        self.fd = Some(fd);
+
+        Ok(fd)
+    }
+
     pub fn name(&self) -> &str {
         &self.obj.name
     }
@@ -165,6 +204,28 @@ impl Map {
         self.fd.ok_or_else(|| MapError::NotCreated {
             name: self.obj.name.clone(),
         })
+    }
+
+    pub(crate) fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), MapError> {
+        if self.pinned {
+            return Err(MapError::AlreadyPinned {
+                name: self.name().to_string(),
+            });
+        }
+        let map_path = path.as_ref().join(self.name());
+        let fd = self.fd_or_err()?;
+        let path_string = CString::new(map_path.to_string_lossy().into_owned()).map_err(|e| {
+            MapError::InvalidPinPath {
+                error: e.to_string(),
+            }
+        })?;
+        bpf_pin_object(fd, &path_string).map_err(|(code, io_error)| MapError::SyscallError {
+            call: "BPF_OBJ_PIN".to_string(),
+            code,
+            io_error,
+        })?;
+        self.pinned = true;
+        Ok(())
     }
 }
 
@@ -334,7 +395,7 @@ impl PerCpuKernelMem {
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let bpf = aya::Bpf::load(&[], None)?;
+/// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::PerCpuValues;
 /// use aya::util::nr_cpus;
 /// use std::convert::TryFrom;
@@ -438,6 +499,7 @@ mod tests {
         Map {
             obj: new_obj_map(name),
             fd: None,
+            pinned: false,
         }
     }
 

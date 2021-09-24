@@ -27,7 +27,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[], None)?;
+/// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::PerCpuHashMap;
 /// use std::convert::TryFrom;
 ///
@@ -113,7 +113,7 @@ impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// #     #[error(transparent)]
     /// #     Bpf(#[from] aya::BpfError)
     /// # }
-    /// # let bpf = aya::Bpf::load(&[], None)?;
+    /// # let bpf = aya::Bpf::load(&[])?;
     /// use aya::maps::{PerCpuHashMap, PerCpuValues};
     /// use aya::util::nr_cpus;
     /// use std::convert::TryFrom;
