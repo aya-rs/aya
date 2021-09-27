@@ -5,6 +5,7 @@ use aya_bpf_cty::c_void;
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY},
     helpers::bpf_map_lookup_elem,
+    maps::PinningType,
 };
 
 #[repr(transparent)]
@@ -23,7 +24,22 @@ impl<T> PerCpuArray<T> {
                 max_entries,
                 map_flags: flags,
                 id: 0,
-                pinning: 0,
+                pinning: PinningType::None as u32,
+            },
+            _t: PhantomData,
+        }
+    }
+
+    pub const fn pinned(max_entries: u32, flags: u32) -> PerCpuArray<T> {
+        PerCpuArray {
+            def: bpf_map_def {
+                type_: BPF_MAP_TYPE_PERCPU_ARRAY,
+                key_size: mem::size_of::<u32>() as u32,
+                value_size: mem::size_of::<T>() as u32,
+                max_entries,
+                map_flags: flags,
+                id: 0,
+                pinning: PinningType::ByName as u32,
             },
             _t: PhantomData,
         }

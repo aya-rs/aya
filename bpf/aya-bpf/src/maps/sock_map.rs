@@ -5,6 +5,7 @@ use aya_bpf_cty::c_void;
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKMAP, bpf_sock_ops},
     helpers::{bpf_msg_redirect_map, bpf_sock_map_update},
+    maps::PinningType,
     programs::SkMsgContext,
     BpfContext,
 };
@@ -24,7 +25,21 @@ impl SockMap {
                 max_entries,
                 map_flags: flags,
                 id: 0,
-                pinning: 0,
+                pinning: PinningType::None as u32,
+            },
+        }
+    }
+
+    pub const fn pinned(max_entries: u32, flags: u32) -> SockMap {
+        SockMap {
+            def: bpf_map_def {
+                type_: BPF_MAP_TYPE_SOCKMAP,
+                key_size: mem::size_of::<u32>() as u32,
+                value_size: mem::size_of::<u32>() as u32,
+                max_entries,
+                map_flags: flags,
+                id: 0,
+                pinning: PinningType::ByName as u32,
             },
         }
     }

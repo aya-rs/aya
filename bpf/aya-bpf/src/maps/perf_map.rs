@@ -3,6 +3,7 @@ use core::{marker::PhantomData, mem};
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY, BPF_F_CURRENT_CPU},
     helpers::bpf_perf_event_output,
+    maps::PinningType,
     BpfContext,
 };
 
@@ -26,7 +27,22 @@ impl<T> PerfMap<T> {
                 max_entries,
                 map_flags: flags,
                 id: 0,
-                pinning: 0,
+                pinning: PinningType::None as u32,
+            },
+            _t: PhantomData,
+        }
+    }
+
+    pub const fn pinned(max_entries: u32, flags: u32) -> PerfMap<T> {
+        PerfMap {
+            def: bpf_map_def {
+                type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                key_size: mem::size_of::<u32>() as u32,
+                value_size: mem::size_of::<u32>() as u32,
+                max_entries,
+                map_flags: flags,
+                id: 0,
+                pinning: PinningType::ByName as u32,
             },
             _t: PhantomData,
         }

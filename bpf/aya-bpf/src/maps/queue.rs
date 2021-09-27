@@ -3,6 +3,7 @@ use core::{marker::PhantomData, mem};
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_QUEUE},
     helpers::{bpf_map_pop_elem, bpf_map_push_elem},
+    maps::PinningType,
 };
 
 #[repr(transparent)]
@@ -21,7 +22,22 @@ impl<T> Queue<T> {
                 max_entries,
                 map_flags: flags,
                 id: 0,
-                pinning: 0,
+                pinning: PinningType::None as u32,
+            },
+            _t: PhantomData,
+        }
+    }
+
+    pub const fn pinned(max_entries: u32, flags: u32) -> Queue<T> {
+        Queue {
+            def: bpf_map_def {
+                type_: BPF_MAP_TYPE_QUEUE,
+                key_size: 0,
+                value_size: mem::size_of::<T>() as u32,
+                max_entries,
+                map_flags: flags,
+                id: 0,
+                pinning: PinningType::ByName as u32,
             },
             _t: PhantomData,
         }
