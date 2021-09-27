@@ -5,6 +5,7 @@ use aya_bpf_cty::{c_long, c_void};
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_HASH},
     helpers::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
+    maps::PinningType,
 };
 
 #[repr(transparent)]
@@ -24,14 +25,14 @@ impl<K, V> HashMap<K, V> {
                 max_entries,
                 map_flags: flags,
                 id: 0,
-                pinning: 0,
+                pinning: PinningType::None as u32,
             },
             _k: PhantomData,
             _v: PhantomData,
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32, pinning: u32) -> HashMap<K, V> {
+    pub const fn pinned(max_entries: u32, flags: u32) -> HashMap<K, V> {
         HashMap {
             def: bpf_map_def {
                 type_: BPF_MAP_TYPE_HASH,
@@ -40,7 +41,7 @@ impl<K, V> HashMap<K, V> {
                 max_entries,
                 map_flags: flags,
                 id: 0,
-                pinning,
+                pinning: PinningType::ByName as u32,
             },
             _k: PhantomData,
             _v: PhantomData,

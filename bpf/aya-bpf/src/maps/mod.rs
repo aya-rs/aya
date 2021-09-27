@@ -1,3 +1,10 @@
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub(crate) enum PinningType {
+    None = 0,
+    ByName = 1,
+}
+
 pub mod array;
 pub mod hash_map;
 pub mod per_cpu_array;
