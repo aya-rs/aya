@@ -1,4 +1,4 @@
-name: Build
+name: Build aya-bpf
 
 on:
   push:
@@ -19,10 +19,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+
       - uses: Swatinem/rust-cache@v1
 
       - name: Build
-        run: cargo build --verbose
+        run: cargo +nightly build --verbose
 
       - name: Run tests
-        run: RUST_BACKTRACE=full cargo test --verbose
+        run: RUST_BACKTRACE=full cargo +nightly test --verbose
