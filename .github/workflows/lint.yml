@@ -27,10 +27,17 @@ jobs:
           components: rustfmt, clippy
 
       - name: Check formatting
-        run: cargo +nightly fmt --all -- --check
+        run: |
+          cargo +nightly fmt --all -- --check
+          pushd bpf
+          cargo +nightly fmt --all -- --check
+          popd
 
       - name: Run clippy
         run: |
           cargo +nightly clippy -p aya -- --deny warnings
           cargo +nightly clippy -p aya-gen -- --deny warnings
           cargo +nightly clippy -p xtask -- --deny warnings
+          pushd bpf
+          cargo +nightly clippy -p aya-bpf -- --deny warnings
+          popd
