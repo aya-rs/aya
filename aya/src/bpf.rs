@@ -76,13 +76,13 @@ impl Default for PinningType {
 }
 
 #[derive(Default, Debug)]
-pub struct BpfLoader {
-    btf: Option<Btf>,
+pub struct BpfLoader<'a> {
+    btf: Option<&'a Btf>,
     map_pin_path: Option<PathBuf>,
 }
 
-impl BpfLoader {
-    pub fn new() -> BpfLoader {
+impl<'a> BpfLoader<'a> {
+    pub fn new() -> BpfLoader<'a> {
         BpfLoader {
             btf: None,
             map_pin_path: None,
@@ -90,13 +90,13 @@ impl BpfLoader {
     }
 
     // Set the target BTF
-    pub fn btf(&mut self, btf: Btf) -> &mut BpfLoader {
-        self.btf = Some(btf);
+    pub fn btf(&mut self, btf: Option<&'a Btf>) -> &mut BpfLoader<'a> {
+        self.btf = btf;
         self
     }
 
     // Set the map pin path
-    pub fn map_pin_path<P: AsRef<Path>>(&mut self, path: P) -> &mut BpfLoader {
+    pub fn map_pin_path<P: AsRef<Path>>(&mut self, path: P) -> &mut BpfLoader<'a> {
         self.map_pin_path = Some(path.as_ref().to_owned());
         self
     }
@@ -135,9 +135,9 @@ impl BpfLoader {
     ///
     /// let data = fs::read("file.o").unwrap();
     /// // load the BTF data from /sys/kernel/btf/vmlinux
-
-    /// let target_btf = Btf::from_sys_fs().unwrap();
-    /// let bpf = BpfLoader::new().btf(target_btf).load(&data);
+    /// let bpf = BpfLoader::new()
+    ///     .btf(Btf::from_sys_fs().ok().as_ref())
+    ///     .load(&data);
     /// # Ok::<(), aya::BpfError>(())
     /// ```
     pub fn load(&mut self, data: &[u8]) -> Result<Bpf, BpfError> {
@@ -293,12 +293,9 @@ impl Bpf {
     /// # Ok::<(), aya::BpfError>(())
     /// ```
     pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Bpf, BpfError> {
-        let mut loader = BpfLoader::new();
-        let path = path.as_ref();
-        if let Ok(btf) = Btf::from_sys_fs() {
-            loader.btf(btf);
-        };
-        loader.load_file(path)
+        BpfLoader::new()
+            .btf(Btf::from_sys_fs().ok().as_ref())
+            .load_file(path)
     }
 
     /// Load eBPF bytecode.
@@ -320,11 +317,9 @@ impl Bpf {
     /// # Ok::<(), aya::BpfError>(())
     /// ```
     pub fn load(data: &[u8]) -> Result<Bpf, BpfError> {
-        let mut loader = BpfLoader::new();
-        if let Ok(btf) = Btf::from_sys_fs() {
-            loader.btf(btf);
-        };
-        loader.load(data)
+        BpfLoader::new()
+            .btf(Btf::from_sys_fs().ok().as_ref())
+            .load(data)
     }
 
     /// Returns a reference to the map with the given name.
