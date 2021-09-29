@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     collections::HashMap,
     error::Error,
     fs, io,
@@ -75,35 +76,85 @@ impl Default for PinningType {
     }
 }
 
-#[derive(Default, Debug)]
+/// Builder style API for advanced loading of eBPF programs.
+///
+/// Loading eBPF code involves a few steps, including loading maps and applying
+/// relocations. You can use `BpfLoader` to customize some of the loading
+/// options.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya::{BpfLoader, Btf};
+/// use std::fs;
+///
+/// let bpf = BpfLoader::new()
+///     // load the BTF data from /sys/kernel/btf/vmlinux
+///     .btf(Btf::from_sys_fs().ok().as_ref())
+///     // load pinned maps from /sys/fs/bpf/my-program
+///     .map_pin_path("/sys/fs/bpf/my-program")
+///     // finally load the code
+///     .load_file("file.o")?;
+/// # Ok::<(), aya::BpfError>(())
+/// ```
+#[derive(Debug)]
 pub struct BpfLoader<'a> {
-    btf: Option<&'a Btf>,
+    btf: Option<Cow<'a, Btf>>,
     map_pin_path: Option<PathBuf>,
 }
 
 impl<'a> BpfLoader<'a> {
+    /// Creates a new loader instance.
     pub fn new() -> BpfLoader<'a> {
         BpfLoader {
-            btf: None,
+            btf: Btf::from_sys_fs().ok().map(Cow::Owned),
             map_pin_path: None,
         }
     }
 
-    // Set the target BTF
+    /// Sets the target [BTF](Btf) info.
+    ///
+    /// The loader defaults to loading `BTF` info using [Btf::from_sys_fs].
+    /// Use this method if you want to load `BTF` from a custom location or
+    /// pass `None` to disable `BTF` relocations entirely.
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::{BpfLoader, Btf, Endianness};
+    ///
+    /// let bpf = BpfLoader::new()
+    ///     // load the BTF data from a custom location
+    ///     .btf(Btf::parse_file("/custom_btf_file", Endianness::default()).ok().as_ref())
+    ///     .load_file("file.o")?;
+    ///
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
     pub fn btf(&mut self, btf: Option<&'a Btf>) -> &mut BpfLoader<'a> {
-        self.btf = btf;
+        self.btf = btf.map(Cow::Borrowed);
         self
     }
 
-    // Set the map pin path
+    /// Sets the base directory path for pinned maps.
+    ///
+    /// Pinned maps will be loaded from `path/MAP_NAME`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::BpfLoader;
+    ///
+    /// let bpf = BpfLoader::new()
+    ///     .map_pin_path("/sys/fs/bpf/my-program")
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
+    ///
     pub fn map_pin_path<P: AsRef<Path>>(&mut self, path: P) -> &mut BpfLoader<'a> {
         self.map_pin_path = Some(path.as_ref().to_owned());
         self
     }
 
     /// Loads eBPF bytecode from a file.
-    ///
-    /// Parses the given object code file and initializes the [maps](crate::maps) defined in it.
     ///
     /// # Examples
     ///
@@ -121,23 +172,16 @@ impl<'a> BpfLoader<'a> {
         })?)
     }
 
-    /// Load eBPF bytecode.
-    ///
-    /// Parses the object code contained in `data` and initializes the [maps](crate::maps) defined
-    /// in it. If `BpfLoader.btf` is not `None` and `data` includes BTF debug info, [BTF](Btf) relocations
-    /// are applied as well. Any maps that require pinning will be pinned to `BpfLoader.map_pin_path`
+    /// Loads eBPF bytecode from a buffer.
     ///
     /// # Examples
     ///
     /// ```no_run
-    /// use aya::{BpfLoader, Btf};
+    /// use aya::BpfLoader;
     /// use std::fs;
     ///
     /// let data = fs::read("file.o").unwrap();
-    /// // load the BTF data from /sys/kernel/btf/vmlinux
-    /// let bpf = BpfLoader::new()
-    ///     .btf(Btf::from_sys_fs().ok().as_ref())
-    ///     .load(&data);
+    /// let bpf = BpfLoader::new().load(&data)?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
     pub fn load(&mut self, data: &[u8]) -> Result<Bpf, BpfError> {
@@ -270,6 +314,12 @@ impl<'a> BpfLoader<'a> {
     }
 }
 
+impl<'a> Default for BpfLoader<'a> {
+    fn default() -> Self {
+        BpfLoader::new()
+    }
+}
+
 /// The main entry point into the library, used to work with eBPF programs and maps.
 #[derive(Debug)]
 pub struct Bpf {
@@ -283,6 +333,8 @@ impl Bpf {
     /// Parses the given object code file and initializes the [maps](crate::maps) defined in it. If
     /// the kernel supports [BTF](Btf) debug info, it is automatically loaded from
     /// `/sys/kernel/btf/vmlinux`.
+    ///
+    /// For more loading options, see [BpfLoader].
     ///
     /// # Examples
     ///
@@ -298,12 +350,13 @@ impl Bpf {
             .load_file(path)
     }
 
-    /// Load eBPF bytecode.
+    /// Loads eBPF bytecode from a buffer.
     ///
-    /// Parses the object code contained in `data` and initializes the [maps](crate::maps) defined
-    /// in it. If `target_btf` is not `None` and `data` includes BTF debug info, [BTF](Btf) relocations
-    /// are applied as well. In order to allow sharing of a single [BTF](Btf) object among multiple
-    /// eBPF programs, `target_btf` is passed by reference.
+    /// Parses the object code contained in `data` and initializes the
+    /// [maps](crate::maps) defined in it. If the kernel supports [BTF](Btf)
+    /// debug info, it is automatically loaded from `/sys/kernel/btf/vmlinux`.
+    ///
+    /// For more loading options, see [BpfLoader].
     ///
     /// # Examples
     ///
@@ -313,7 +366,7 @@ impl Bpf {
     ///
     /// let data = fs::read("file.o").unwrap();
     /// // load the BTF data from /sys/kernel/btf/vmlinux
-    /// let bpf = Bpf::load(&data);
+    /// let bpf = Bpf::load(&data)?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
     pub fn load(data: &[u8]) -> Result<Bpf, BpfError> {
