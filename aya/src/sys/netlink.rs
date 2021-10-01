@@ -427,13 +427,13 @@ impl<'a> NestedAttrs<'a> {
     }
 
     fn write_attr<T>(&mut self, attr_type: u16, value: T) -> Result<usize, io::Error> {
-        let size = write_attr(&mut self.buf, self.offset, attr_type, value)?;
+        let size = write_attr(self.buf, self.offset, attr_type, value)?;
         self.offset += size;
         Ok(size)
     }
 
     fn write_attr_bytes(&mut self, attr_type: u16, value: &[u8]) -> Result<usize, io::Error> {
-        let size = write_attr_bytes(&mut self.buf, self.offset, attr_type, value)?;
+        let size = write_attr_bytes(self.buf, self.offset, attr_type, value)?;
         self.offset += size;
         Ok(size)
     }
