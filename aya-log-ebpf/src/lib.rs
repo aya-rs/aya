@@ -1,5 +1,7 @@
 #![no_std]
 
+pub extern crate ufmt;
+
 mod macros;
 
 use core::{cmp, mem, ptr};

@@ -167,6 +167,7 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
             .line(line)
             .build(),
     );
+    logger.flush();
     Ok(())
 }
 

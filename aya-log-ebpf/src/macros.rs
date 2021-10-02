@@ -195,7 +195,8 @@ macro_rules! log {
 #[macro_export]
 macro_rules! write_record_message {
     ($buf:expr, $($arg:tt)+) => {{
+        use aya_log_ebpf::ufmt;
         let mut writer = $crate::LogBufWriter::new($buf);
-        ufmt::uwrite!(writer, $($arg)+).map(|_| writer.finish())
+        aya_log_ebpf::ufmt::uwrite!(writer, $($arg)+).map(|_| writer.finish())
     }}
 }
