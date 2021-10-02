@@ -7,12 +7,8 @@ mod macros;
 use core::{cmp, mem, ptr};
 
 use aya_bpf::{
-    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY, BPF_F_CURRENT_CPU},
-    cty::c_long,
-    helpers::bpf_perf_event_output,
     macros::map,
-    maps::PerCpuArray,
-    BpfContext,
+    maps::{PerCpuArray, PerfEventByteArray},
 };
 pub use aya_log_common::Level;
 use aya_log_common::{RecordField, LOG_BUF_CAPACITY};
@@ -29,7 +25,7 @@ pub static mut AYA_LOG_BUF: PerCpuArray<LogBuf> = PerCpuArray::with_max_entries(
 
 #[doc(hidden)]
 #[map]
-pub static mut AYA_LOGS: LogEventArray = LogEventArray::with_max_entries(1024, 0);
+pub static mut AYA_LOGS: PerfEventByteArray = PerfEventByteArray::with_max_entries(1024, 0);
 
 #[doc(hidden)]
 pub struct LogBufWriter<'a> {
@@ -124,49 +120,4 @@ pub fn write_record_header(
     }
 
     Ok(size)
-}
-
-#[doc(hidden)]
-#[repr(transparent)]
-pub struct LogEventArray {
-    def: bpf_map_def,
-}
-
-impl LogEventArray {
-    const fn with_max_entries(max_entries: u32, flags: u32) -> LogEventArray {
-        LogEventArray {
-            def: bpf_map_def {
-                type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-                key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<u32>() as u32,
-                max_entries,
-                map_flags: flags,
-                id: 0,
-                pinning: 0,
-            },
-        }
-    }
-
-    #[inline(always)]
-    pub fn output<C: BpfContext>(
-        &mut self,
-        ctx: &C,
-        buf: &mut LogBuf,
-        len: usize,
-    ) -> Result<(), c_long> {
-        let ret = unsafe {
-            bpf_perf_event_output(
-                ctx.as_ptr(),
-                &mut self.def as *mut _ as *mut _,
-                BPF_F_CURRENT_CPU,
-                buf.buf.as_mut_ptr() as *mut _,
-                len as u64,
-            )
-        };
-        if ret < 0 {
-            Err(ret)
-        } else {
-            Ok(())
-        }
-    }
 }
