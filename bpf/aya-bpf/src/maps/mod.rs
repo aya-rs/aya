@@ -17,7 +17,7 @@ pub mod stack_trace;
 pub use array::Array;
 pub use hash_map::HashMap;
 pub use per_cpu_array::PerCpuArray;
-pub use perf::PerfEventArray;
+pub use perf::{PerfEventArray, PerfEventByteArray};
 pub use queue::Queue;
 pub use sock_hash::SockHash;
 pub use sock_map::SockMap;
