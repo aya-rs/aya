@@ -8,7 +8,7 @@ pub(crate) enum PinningType {
 pub mod array;
 pub mod hash_map;
 pub mod per_cpu_array;
-pub mod perf_map;
+pub mod perf;
 pub mod queue;
 pub mod sock_hash;
 pub mod sock_map;
@@ -17,7 +17,7 @@ pub mod stack_trace;
 pub use array::Array;
 pub use hash_map::HashMap;
 pub use per_cpu_array::PerCpuArray;
-pub use perf_map::PerfMap;
+pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use sock_hash::SockHash;
 pub use sock_map::SockMap;

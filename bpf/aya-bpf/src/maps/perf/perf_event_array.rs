@@ -8,18 +8,18 @@ use crate::{
 };
 
 #[repr(transparent)]
-pub struct PerfMap<T> {
+pub struct PerfEventArray<T> {
     def: bpf_map_def,
     _t: PhantomData<T>,
 }
 
-impl<T> PerfMap<T> {
-    pub const fn new(flags: u32) -> PerfMap<T> {
-        PerfMap::with_max_entries(0, flags)
+impl<T> PerfEventArray<T> {
+    pub const fn new(flags: u32) -> PerfEventArray<T> {
+        PerfEventArray::with_max_entries(0, flags)
     }
 
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> PerfMap<T> {
-        PerfMap {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> PerfEventArray<T> {
+        PerfEventArray {
             def: bpf_map_def {
                 type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
@@ -33,8 +33,8 @@ impl<T> PerfMap<T> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> PerfMap<T> {
-        PerfMap {
+    pub const fn pinned(max_entries: u32, flags: u32) -> PerfEventArray<T> {
+        PerfEventArray {
             def: bpf_map_def {
                 type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
