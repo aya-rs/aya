@@ -1,4 +1,4 @@
-use core::{marker::PhantomData, mem};
+use core::mem;
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY, BPF_F_CURRENT_CPU},
