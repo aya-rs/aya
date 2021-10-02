@@ -49,18 +49,11 @@ impl<T> PerfEventArray<T> {
     }
 
     pub fn output<C: BpfContext>(&mut self, ctx: &C, data: &T, flags: u32) {
-        self.output_at_index(ctx, None, data, flags)
+        self.output_at_index(ctx, BPF_F_CURRENT_CPU as u32, data, flags)
     }
 
-    pub fn output_at_index<C: BpfContext>(
-        &mut self,
-        ctx: &C,
-        index: Option<u32>,
-        data: &T,
-        flags: u32,
-    ) {
-        let index = index.unwrap_or(BPF_F_CURRENT_CPU as u32) as u64;
-        let flags = (flags as u64) << 32 | index;
+    pub fn output_at_index<C: BpfContext>(&mut self, ctx: &C, index: u32, data: &T, flags: u32) {
+        let flags = (flags as u64) << 32 | index as u64;
         unsafe {
             bpf_perf_event_output(
                 ctx.as_ptr(),
