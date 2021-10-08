@@ -44,6 +44,8 @@ jobs:
           popd
 
       - name: Run miri
+        env:
+          MIRIFLAGS: -Zmiri-disable-stacked-borrows
         run: |
           cargo miri test
           pushd bpf
