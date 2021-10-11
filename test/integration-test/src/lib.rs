@@ -5,6 +5,7 @@ pub const ITER_TASK: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/i
 pub const MAIN: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/main.bpf.o"));
 pub const MULTIMAP_BTF: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/multimap-btf.bpf.o"));
+pub const OFMAPS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ofmaps.bpf.o"));
 pub const RELOC_BPF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/reloc.bpf.o"));
 pub const RELOC_BTF: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/reloc.bpf.target.o"));
@@ -32,6 +33,7 @@ pub const TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/test")
 pub const TWO_PROGS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/two_progs"));
 pub const XDP_SEC: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/xdp_sec"));
 pub const UPROBE_COOKIE: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/uprobe_cookie"));
+pub const OFMAPS_RUST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/map_of_maps"));
 
 #[cfg(test)]
 mod tests;

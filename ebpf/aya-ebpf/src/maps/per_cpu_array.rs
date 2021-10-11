@@ -5,7 +5,7 @@ use aya_ebpf_cty::c_void;
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY},
     helpers::bpf_map_lookup_elem,
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
 };
 
 #[repr(transparent)]
@@ -15,6 +15,7 @@ pub struct PerCpuArray<T> {
 }
 
 unsafe impl<T> Sync for PerCpuArray<T> {}
+unsafe impl<T> InnerMap for PerCpuArray<T> {}
 
 impl<T> PerCpuArray<T> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> PerCpuArray<T> {

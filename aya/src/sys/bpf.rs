@@ -1,5 +1,6 @@
 use std::{
     cmp,
+    collections::BTreeMap,
     ffi::{c_char, c_long, CStr, CString},
     io, iter,
     mem::{self, MaybeUninit},
@@ -60,6 +61,24 @@ pub(crate) fn bpf_create_map(
     u.value_size = def.value_size();
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
+
+    let inner_fd = match def.inner() {
+        Some(inner_def) => {
+            let inner_name = &[name.to_bytes(), b".inner\0"].concat();
+            let c_inner_name = CStr::from_bytes_with_nul(inner_name)
+                .map_err(|_| (0, io::Error::from_raw_os_error(ENOSPC)))?;
+            Some(bpf_create_map(
+                c_inner_name,
+                &inner_def,
+                btf_fd,
+                kernel_version,
+            )?)
+        }
+        _ => None,
+    };
+    if let Some(fd) = inner_fd.as_ref() {
+        u.inner_map_fd = fd.as_raw_fd() as u32;
+    }
 
     if let obj::Map::Btf(m) = def {
         use bpf_map_type::*;
@@ -962,10 +981,12 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
                 max_entries: 1,
                 ..Default::default()
             },
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
             data: Vec::new(),
+            initial_slots: BTreeMap::new(),
         }),
         "aya_global",
         None,

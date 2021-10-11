@@ -42,7 +42,7 @@
 //! #[cfg(not(feature = "std"))]
 //! let text_sections = hashbrown::HashSet::new();
 //! object.relocate_calls(&text_sections).unwrap();
-//! object.relocate_maps(std::iter::empty(), &text_sections).unwrap();
+//! object.relocate_map_references(std::iter::empty(), &text_sections).unwrap();
 //!
 //! // Run with rbpf
 //! let function = object.functions.get(&object.programs["prog_name"].function_key()).unwrap();

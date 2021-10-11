@@ -7,7 +7,7 @@ use aya::{
         loaded_links, loaded_programs, KProbe, TracePoint, UProbe, Xdp, XdpFlags,
     },
     util::KernelVersion,
-    Ebpf,
+    Ebpf, EbpfLoader,
 };
 use aya_obj::programs::XdpAttachType;
 use test_log::test;
@@ -574,4 +574,64 @@ fn pin_lifecycle_uprobe() {
 
     // Make sure the function isn't optimized out.
     uprobe_function();
+}
+
+#[test]
+fn ofmaps_array() {
+    let mut bpf = Ebpf::load(crate::OFMAPS).unwrap();
+    let prog: &mut Xdp = bpf
+        .program_mut("mim_test_array")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+    prog.attach("lo", XdpFlags::default()).unwrap();
+
+    assert_loaded("mim_test_array");
+}
+
+#[test]
+fn ofmaps_hash() {
+    let mut bpf = Ebpf::load(crate::OFMAPS).unwrap();
+    let prog: &mut Xdp = bpf
+        .program_mut("mim_test_hash")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+    prog.attach("lo", XdpFlags::default()).unwrap();
+
+    assert_loaded("mim_test_hash");
+}
+
+#[test]
+fn test_ofmaps_rust() {
+    let mut bpf = EbpfLoader::new()
+        .map_in_map("OUTER", "INNER", Some(&["INNER", "INNER_2"]))
+        .load(crate::OFMAPS_RUST)
+        .unwrap();
+    let prog: &mut UProbe = bpf
+        .program_mut("mim_test_array")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+    prog.attach("trigger_mim_test_program", "/proc/self/exe", None, None)
+        .unwrap();
+
+    assert_loaded("mim_test_array");
+
+    trigger_mim_test_program();
+
+    let m = aya::maps::Array::<_, u32>::try_from(bpf.map("INNER").unwrap()).unwrap();
+    assert_eq!(m.get(&0, 0).unwrap(), 42);
+
+    let m = aya::maps::Array::<_, u32>::try_from(bpf.map("INNER_2").unwrap()).unwrap();
+    assert_eq!(m.get(&0, 0).unwrap(), 24);
+}
+
+#[no_mangle]
+#[inline(never)]
+pub extern "C" fn trigger_mim_test_program() {
+    core::hint::black_box(trigger_mim_test_program);
 }

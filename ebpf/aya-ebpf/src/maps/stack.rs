@@ -3,7 +3,7 @@ use core::{marker::PhantomData, mem};
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_STACK},
     helpers::{bpf_map_pop_elem, bpf_map_push_elem},
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
 };
 
 #[repr(transparent)]
@@ -11,6 +11,9 @@ pub struct Stack<T> {
     def: bpf_map_def,
     _t: PhantomData<T>,
 }
+
+unsafe impl<T: Sync> Sync for Stack<T> {}
+unsafe impl<T> InnerMap for Stack<T> {}
 
 impl<T> Stack<T> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Stack<T> {
