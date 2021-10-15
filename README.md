@@ -33,21 +33,22 @@ to log eBPF messages to the terminal.
 ### User space code
 
 ```rust
-use aya_log::BpfLogger;
 use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
+use aya_log::BpfLogger;
 
-BpfLogger::init(
-    &mut bpf,
-    TermLogger::new(
-        LevelFilter::Trace,
-        ConfigBuilder::new()
-            .set_target_level(LevelFilter::Error)
-            .set_location_level(LevelFilter::Error)
-            .build(),
-        TerminalMode::Mixed,
-        ColorChoice::Auto,
-    ),
-).unwrap();
+TermLogger::init(
+    LevelFilter::Debug,
+    ConfigBuilder::new()
+        .set_target_level(LevelFilter::Error)
+        .set_location_level(LevelFilter::Error)
+        .build(),
+    TerminalMode::Mixed,
+    ColorChoice::Auto,
+)
+.unwrap();
+
+// Will log using the default logger, which is TermLogger in this case
+BpfLogger::init(&mut bpf).unwrap();
 ```
 
 ### eBPF code
