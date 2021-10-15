@@ -12,7 +12,7 @@
 //! This example uses the [simplelog] crate to log messages to the terminal.
 //!
 //! ```no_run
-//! # let mut bpf = aya::Bpf::load(&[], None)?;
+//! # let mut bpf = aya::Bpf::load(&[]).unwrap();
 //! use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
 //! use aya_log::BpfLogger;
 //!
