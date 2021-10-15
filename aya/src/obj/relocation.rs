@@ -257,20 +257,21 @@ impl<'a> FunctionLinker<'a> {
                 continue;
             }
 
-            let callee_address =
-                if let Some(rel) = rel_info(((ins_index - start_ins) * INS_SIZE) as u64) {
-                    // We have a relocation entry for the instruction at `ins_index`, the address of
-                    // the callee is the address of the relocation's target symbol.
-                    rel_target_address(rel, self.symbol_table)?
-                } else {
-                    // The caller and the callee are in the same ELF section and this is a pc-relative
-                    // call. Resolve the pc-relative imm to an absolute address.
-                    let ins_size = INS_SIZE as i64;
-                    (fun.section_offset as i64
-                        + ((ins_index - start_ins) as i64) * ins_size
-                        + (program.instructions[ins_index].imm + 1) as i64 * ins_size)
-                        as u64
-                };
+            let callee_address = if let Some(rel) =
+                rel_info((fun.section_offset + (ins_index - start_ins) * INS_SIZE) as u64)
+            {
+                // We have a relocation entry for the instruction at `ins_index`, the address of
+                // the callee is the address of the relocation's target symbol.
+                rel_target_address(rel, self.symbol_table)?
+            } else {
+                // The caller and the callee are in the same ELF section and this is a pc-relative
+                // call. Resolve the pc-relative imm to an absolute address.
+                let ins_size = INS_SIZE as i64;
+                (fun.section_offset as i64
+                    + ((ins_index - start_ins) as i64) * ins_size
+                    + (program.instructions[ins_index].imm + 1) as i64 * ins_size)
+                    as u64
+            };
 
             // lookup and link the callee if it hasn't been linked already. `callee_ins_index` will
             // contain the instruction index of the callee inside the program.
