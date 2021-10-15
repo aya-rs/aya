@@ -183,7 +183,10 @@ macro_rules! log {
         if let Some(buf) = unsafe { $crate::AYA_LOG_BUF.get_mut(0) } {
             if let Ok(header_len) = $crate::write_record_header(&mut buf.buf, module_path!(), $lvl, module_path!(), file!(), line!()) {
                 if let Ok(message_len) = $crate::write_record_message!(&mut buf.buf[header_len..], $($arg)+) {
-                    let _ = unsafe { $crate::AYA_LOGS.output($ctx, &buf.buf[..header_len + message_len], 0) };
+                    let record_len = header_len + message_len;
+                    if record_len <= $crate::LOG_BUF_CAPACITY {
+                        let _ = unsafe { $crate::AYA_LOGS.output($ctx, &buf.buf[..header_len + message_len], 0) };
+                    }
                 };
             }
         }
