@@ -11,7 +11,8 @@ use aya_bpf::{
     maps::{PerCpuArray, PerfEventByteArray},
 };
 pub use aya_log_common::Level;
-use aya_log_common::{RecordField, LOG_BUF_CAPACITY};
+use aya_log_common::RecordField;
+pub use aya_log_common::LOG_BUF_CAPACITY;
 
 #[doc(hidden)]
 #[repr(C)]
@@ -59,12 +60,18 @@ impl<'a> ufmt::uWrite for LogBufWriter<'a> {
     fn write_str(&mut self, s: &str) -> Result<(), Self::Error> {
         let bytes = s.as_bytes();
         let len = bytes.len();
+
+        // this is to make sure the verifier knows about the upper bound
+        if len > LOG_BUF_CAPACITY {
+            return Err(());
+        }
+
         let available = self.data.len() - self.pos;
         if available < len {
             return Err(());
         }
 
-        self.data[self.pos..self.pos + len].copy_from_slice(bytes);
+        self.data[self.pos..self.pos + len].copy_from_slice(&bytes[..len]);
         self.pos += len;
         Ok(())
     }
