@@ -1,8 +1,14 @@
 [package]
 name = "aya-log"
 version = "0.1.1"
+description = "A logging library for eBPF programs."
+keywords = ["ebpf", "bpf", "log", "logging"]
+license = "MIT OR Apache-2.0"
+authors = ["The Aya Contributors"]
+repository = "https://github.com/aya-rs/aya-log"
+readme = "README.md"
+documentation = "https://docs.rs/aya-log"
 edition = "2018"
-publish = false
 
 [dependencies]
 aya = { version = "0.10.5", features=["async_tokio"] }
