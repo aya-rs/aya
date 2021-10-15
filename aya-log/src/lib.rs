@@ -63,7 +63,7 @@ use std::{convert::TryInto, io, mem, ptr, sync::Arc};
 
 use aya_log_common::{RecordField, LOG_BUF_CAPACITY, LOG_FIELDS};
 use bytes::BytesMut;
-use log::{logger, Level, Log, Record};
+use log::{Level, Log, Record};
 use thiserror::Error;
 
 use aya::{
