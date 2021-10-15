@@ -101,24 +101,6 @@ pub const BPF_PSEUDO_BTF_ID: u32 = 3;
 pub const BPF_PSEUDO_FUNC: u32 = 4;
 pub const BPF_PSEUDO_CALL: u32 = 1;
 pub const BPF_PSEUDO_KFUNC_CALL: u32 = 2;
-pub const BTF_KIND_UNKN: u32 = 0;
-pub const BTF_KIND_INT: u32 = 1;
-pub const BTF_KIND_PTR: u32 = 2;
-pub const BTF_KIND_ARRAY: u32 = 3;
-pub const BTF_KIND_STRUCT: u32 = 4;
-pub const BTF_KIND_UNION: u32 = 5;
-pub const BTF_KIND_ENUM: u32 = 6;
-pub const BTF_KIND_FWD: u32 = 7;
-pub const BTF_KIND_TYPEDEF: u32 = 8;
-pub const BTF_KIND_VOLATILE: u32 = 9;
-pub const BTF_KIND_CONST: u32 = 10;
-pub const BTF_KIND_RESTRICT: u32 = 11;
-pub const BTF_KIND_FUNC: u32 = 12;
-pub const BTF_KIND_FUNC_PROTO: u32 = 13;
-pub const BTF_KIND_VAR: u32 = 14;
-pub const BTF_KIND_DATASEC: u32 = 15;
-pub const BTF_KIND_FLOAT: u32 = 16;
-pub const BTF_KIND_MAX: u32 = 16;
 pub const BTF_INT_SIGNED: u32 = 1;
 pub const BTF_INT_CHAR: u32 = 2;
 pub const BTF_INT_BOOL: u32 = 4;
@@ -714,6 +696,27 @@ pub union btf_type__bindgen_ty_1 {
     pub size: __u32,
     pub type_: __u32,
 }
+pub const BTF_KIND_UNKN: ::std::os::raw::c_uint = 0;
+pub const BTF_KIND_INT: ::std::os::raw::c_uint = 1;
+pub const BTF_KIND_PTR: ::std::os::raw::c_uint = 2;
+pub const BTF_KIND_ARRAY: ::std::os::raw::c_uint = 3;
+pub const BTF_KIND_STRUCT: ::std::os::raw::c_uint = 4;
+pub const BTF_KIND_UNION: ::std::os::raw::c_uint = 5;
+pub const BTF_KIND_ENUM: ::std::os::raw::c_uint = 6;
+pub const BTF_KIND_FWD: ::std::os::raw::c_uint = 7;
+pub const BTF_KIND_TYPEDEF: ::std::os::raw::c_uint = 8;
+pub const BTF_KIND_VOLATILE: ::std::os::raw::c_uint = 9;
+pub const BTF_KIND_CONST: ::std::os::raw::c_uint = 10;
+pub const BTF_KIND_RESTRICT: ::std::os::raw::c_uint = 11;
+pub const BTF_KIND_FUNC: ::std::os::raw::c_uint = 12;
+pub const BTF_KIND_FUNC_PROTO: ::std::os::raw::c_uint = 13;
+pub const BTF_KIND_VAR: ::std::os::raw::c_uint = 14;
+pub const BTF_KIND_DATASEC: ::std::os::raw::c_uint = 15;
+pub const BTF_KIND_FLOAT: ::std::os::raw::c_uint = 16;
+pub const BTF_KIND_TAG: ::std::os::raw::c_uint = 17;
+pub const NR_BTF_KINDS: ::std::os::raw::c_uint = 18;
+pub const BTF_KIND_MAX: ::std::os::raw::c_uint = 17;
+pub type _bindgen_ty_37 = ::std::os::raw::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct btf_enum {
@@ -1722,19 +1725,19 @@ pub enum perf_event_type {
     PERF_RECORD_TEXT_POKE = 20,
     PERF_RECORD_MAX = 21,
 }
-pub const IFLA_XDP_UNSPEC: _bindgen_ty_80 = _bindgen_ty_80::IFLA_XDP_UNSPEC;
-pub const IFLA_XDP_FD: _bindgen_ty_80 = _bindgen_ty_80::IFLA_XDP_FD;
-pub const IFLA_XDP_ATTACHED: _bindgen_ty_80 = _bindgen_ty_80::IFLA_XDP_ATTACHED;
-pub const IFLA_XDP_FLAGS: _bindgen_ty_80 = _bindgen_ty_80::IFLA_XDP_FLAGS;
-pub const IFLA_XDP_PROG_ID: _bindgen_ty_80 = _bindgen_ty_80::IFLA_XDP_PROG_ID;
-pub const IFLA_XDP_DRV_PROG_ID: _bindgen_ty_80 = _bindgen_ty_80::IFLA_XDP_DRV_PROG_ID;
-pub const IFLA_XDP_SKB_PROG_ID: _bindgen_ty_80 = _bindgen_ty_80::IFLA_XDP_SKB_PROG_ID;
-pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_80 = _bindgen_ty_80::IFLA_XDP_HW_PROG_ID;
-pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_80 = _bindgen_ty_80::IFLA_XDP_EXPECTED_FD;
-pub const __IFLA_XDP_MAX: _bindgen_ty_80 = _bindgen_ty_80::__IFLA_XDP_MAX;
+pub const IFLA_XDP_UNSPEC: _bindgen_ty_81 = _bindgen_ty_81::IFLA_XDP_UNSPEC;
+pub const IFLA_XDP_FD: _bindgen_ty_81 = _bindgen_ty_81::IFLA_XDP_FD;
+pub const IFLA_XDP_ATTACHED: _bindgen_ty_81 = _bindgen_ty_81::IFLA_XDP_ATTACHED;
+pub const IFLA_XDP_FLAGS: _bindgen_ty_81 = _bindgen_ty_81::IFLA_XDP_FLAGS;
+pub const IFLA_XDP_PROG_ID: _bindgen_ty_81 = _bindgen_ty_81::IFLA_XDP_PROG_ID;
+pub const IFLA_XDP_DRV_PROG_ID: _bindgen_ty_81 = _bindgen_ty_81::IFLA_XDP_DRV_PROG_ID;
+pub const IFLA_XDP_SKB_PROG_ID: _bindgen_ty_81 = _bindgen_ty_81::IFLA_XDP_SKB_PROG_ID;
+pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_81 = _bindgen_ty_81::IFLA_XDP_HW_PROG_ID;
+pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_81 = _bindgen_ty_81::IFLA_XDP_EXPECTED_FD;
+pub const __IFLA_XDP_MAX: _bindgen_ty_81 = _bindgen_ty_81::__IFLA_XDP_MAX;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_80 {
+pub enum _bindgen_ty_81 {
     IFLA_XDP_UNSPEC = 0,
     IFLA_XDP_FD = 1,
     IFLA_XDP_ATTACHED = 2,
@@ -1767,25 +1770,26 @@ pub struct tcmsg {
     pub tcm_parent: __u32,
     pub tcm_info: __u32,
 }
-pub const TCA_UNSPEC: _bindgen_ty_92 = _bindgen_ty_92::TCA_UNSPEC;
-pub const TCA_KIND: _bindgen_ty_92 = _bindgen_ty_92::TCA_KIND;
-pub const TCA_OPTIONS: _bindgen_ty_92 = _bindgen_ty_92::TCA_OPTIONS;
-pub const TCA_STATS: _bindgen_ty_92 = _bindgen_ty_92::TCA_STATS;
-pub const TCA_XSTATS: _bindgen_ty_92 = _bindgen_ty_92::TCA_XSTATS;
-pub const TCA_RATE: _bindgen_ty_92 = _bindgen_ty_92::TCA_RATE;
-pub const TCA_FCNT: _bindgen_ty_92 = _bindgen_ty_92::TCA_FCNT;
-pub const TCA_STATS2: _bindgen_ty_92 = _bindgen_ty_92::TCA_STATS2;
-pub const TCA_STAB: _bindgen_ty_92 = _bindgen_ty_92::TCA_STAB;
-pub const TCA_PAD: _bindgen_ty_92 = _bindgen_ty_92::TCA_PAD;
-pub const TCA_DUMP_INVISIBLE: _bindgen_ty_92 = _bindgen_ty_92::TCA_DUMP_INVISIBLE;
-pub const TCA_CHAIN: _bindgen_ty_92 = _bindgen_ty_92::TCA_CHAIN;
-pub const TCA_HW_OFFLOAD: _bindgen_ty_92 = _bindgen_ty_92::TCA_HW_OFFLOAD;
-pub const TCA_INGRESS_BLOCK: _bindgen_ty_92 = _bindgen_ty_92::TCA_INGRESS_BLOCK;
-pub const TCA_EGRESS_BLOCK: _bindgen_ty_92 = _bindgen_ty_92::TCA_EGRESS_BLOCK;
-pub const __TCA_MAX: _bindgen_ty_92 = _bindgen_ty_92::__TCA_MAX;
+pub const TCA_UNSPEC: _bindgen_ty_95 = _bindgen_ty_95::TCA_UNSPEC;
+pub const TCA_KIND: _bindgen_ty_95 = _bindgen_ty_95::TCA_KIND;
+pub const TCA_OPTIONS: _bindgen_ty_95 = _bindgen_ty_95::TCA_OPTIONS;
+pub const TCA_STATS: _bindgen_ty_95 = _bindgen_ty_95::TCA_STATS;
+pub const TCA_XSTATS: _bindgen_ty_95 = _bindgen_ty_95::TCA_XSTATS;
+pub const TCA_RATE: _bindgen_ty_95 = _bindgen_ty_95::TCA_RATE;
+pub const TCA_FCNT: _bindgen_ty_95 = _bindgen_ty_95::TCA_FCNT;
+pub const TCA_STATS2: _bindgen_ty_95 = _bindgen_ty_95::TCA_STATS2;
+pub const TCA_STAB: _bindgen_ty_95 = _bindgen_ty_95::TCA_STAB;
+pub const TCA_PAD: _bindgen_ty_95 = _bindgen_ty_95::TCA_PAD;
+pub const TCA_DUMP_INVISIBLE: _bindgen_ty_95 = _bindgen_ty_95::TCA_DUMP_INVISIBLE;
+pub const TCA_CHAIN: _bindgen_ty_95 = _bindgen_ty_95::TCA_CHAIN;
+pub const TCA_HW_OFFLOAD: _bindgen_ty_95 = _bindgen_ty_95::TCA_HW_OFFLOAD;
+pub const TCA_INGRESS_BLOCK: _bindgen_ty_95 = _bindgen_ty_95::TCA_INGRESS_BLOCK;
+pub const TCA_EGRESS_BLOCK: _bindgen_ty_95 = _bindgen_ty_95::TCA_EGRESS_BLOCK;
+pub const TCA_DUMP_FLAGS: _bindgen_ty_95 = _bindgen_ty_95::TCA_DUMP_FLAGS;
+pub const __TCA_MAX: _bindgen_ty_95 = _bindgen_ty_95::__TCA_MAX;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_92 {
+pub enum _bindgen_ty_95 {
     TCA_UNSPEC = 0,
     TCA_KIND = 1,
     TCA_OPTIONS = 2,
@@ -1801,24 +1805,25 @@ pub enum _bindgen_ty_92 {
     TCA_HW_OFFLOAD = 12,
     TCA_INGRESS_BLOCK = 13,
     TCA_EGRESS_BLOCK = 14,
-    __TCA_MAX = 15,
+    TCA_DUMP_FLAGS = 15,
+    __TCA_MAX = 16,
 }
-pub const TCA_BPF_UNSPEC: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_UNSPEC;
-pub const TCA_BPF_ACT: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_ACT;
-pub const TCA_BPF_POLICE: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_POLICE;
-pub const TCA_BPF_CLASSID: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_CLASSID;
-pub const TCA_BPF_OPS_LEN: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_OPS_LEN;
-pub const TCA_BPF_OPS: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_OPS;
-pub const TCA_BPF_FD: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_FD;
-pub const TCA_BPF_NAME: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_NAME;
-pub const TCA_BPF_FLAGS: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_FLAGS;
-pub const TCA_BPF_FLAGS_GEN: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_FLAGS_GEN;
-pub const TCA_BPF_TAG: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_TAG;
-pub const TCA_BPF_ID: _bindgen_ty_148 = _bindgen_ty_148::TCA_BPF_ID;
-pub const __TCA_BPF_MAX: _bindgen_ty_148 = _bindgen_ty_148::__TCA_BPF_MAX;
+pub const TCA_BPF_UNSPEC: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_UNSPEC;
+pub const TCA_BPF_ACT: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_ACT;
+pub const TCA_BPF_POLICE: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_POLICE;
+pub const TCA_BPF_CLASSID: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_CLASSID;
+pub const TCA_BPF_OPS_LEN: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_OPS_LEN;
+pub const TCA_BPF_OPS: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_OPS;
+pub const TCA_BPF_FD: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_FD;
+pub const TCA_BPF_NAME: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_NAME;
+pub const TCA_BPF_FLAGS: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_FLAGS;
+pub const TCA_BPF_FLAGS_GEN: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_FLAGS_GEN;
+pub const TCA_BPF_TAG: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_TAG;
+pub const TCA_BPF_ID: _bindgen_ty_151 = _bindgen_ty_151::TCA_BPF_ID;
+pub const __TCA_BPF_MAX: _bindgen_ty_151 = _bindgen_ty_151::__TCA_BPF_MAX;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_148 {
+pub enum _bindgen_ty_151 {
     TCA_BPF_UNSPEC = 0,
     TCA_BPF_ACT = 1,
     TCA_BPF_POLICE = 2,

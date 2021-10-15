@@ -1759,3 +1759,34 @@ pub unsafe fn bpf_get_attach_cookie(ctx: *mut ::aya_bpf_cty::c_void) -> __u64 {
         ::core::mem::transmute(174usize);
     fun(ctx)
 }
+pub unsafe fn bpf_task_pt_regs(task: *mut task_struct) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(task: *mut task_struct) -> ::aya_bpf_cty::c_long =
+        ::core::mem::transmute(175usize);
+    fun(task)
+}
+pub unsafe fn bpf_get_branch_snapshot(
+    entries: *mut ::aya_bpf_cty::c_void,
+    size: __u32,
+    flags: __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        entries: *mut ::aya_bpf_cty::c_void,
+        size: __u32,
+        flags: __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(176usize);
+    fun(entries, size, flags)
+}
+pub unsafe fn bpf_trace_vprintk(
+    fmt: *const ::aya_bpf_cty::c_char,
+    fmt_size: __u32,
+    data: *const ::aya_bpf_cty::c_void,
+    data_len: __u32,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        fmt: *const ::aya_bpf_cty::c_char,
+        fmt_size: __u32,
+        data: *const ::aya_bpf_cty::c_void,
+        data_len: __u32,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(177usize);
+    fun(fmt, fmt_size, data, data_len)
+}
