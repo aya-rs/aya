@@ -107,6 +107,9 @@ impl __sk_buff {
     pub fn gso_size(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.gso_size) }.ok()
     }
+    pub fn hwtstamp(&self) -> Option<__u64> {
+        unsafe { crate::bpf_probe_read(&self.hwtstamp) }.ok()
+    }
 }
 impl __sk_buff__bindgen_ty_1 {
     pub fn flow_keys(&self) -> Option<*mut bpf_flow_keys> {
