@@ -13,21 +13,23 @@
 //!
 //! ```no_run
 //! # let mut bpf = aya::Bpf::load(&[], None)?;
-//! use aya_log::BpfLogger;
 //! use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
+//! use aya_log::BpfLogger;
 //!
-//! BpfLogger::init(
-//!     &mut bpf,
-//!     TermLogger::new(
-//!         LevelFilter::Trace,
-//!         ConfigBuilder::new()
-//!             .set_target_level(LevelFilter::Error)
-//!             .set_location_level(LevelFilter::Error)
-//!             .build(),
-//!         TerminalMode::Mixed,
-//!         ColorChoice::Auto,
-//!     ),
-//! ).unwrap();
+//! // initialize simplelog::TermLogger as the default logger
+//! TermLogger::init(
+//!     LevelFilter::Debug,
+//!     ConfigBuilder::new()
+//!         .set_target_level(LevelFilter::Error)
+//!         .set_location_level(LevelFilter::Error)
+//!         .build(),
+//!     TerminalMode::Mixed,
+//!     ColorChoice::Auto,
+//! )
+//! .unwrap();
+//!
+//! // start reading aya-log records and log them using the default logger
+//! BpfLogger::init(&mut bpf).unwrap();
 //! ```
 //!
 //! With the following eBPF code:
@@ -61,7 +63,7 @@ use std::{convert::TryInto, io, mem, ptr, sync::Arc};
 
 use aya_log_common::{RecordField, LOG_BUF_CAPACITY, LOG_FIELDS};
 use bytes::BytesMut;
-use log::{Level, Log, Record};
+use log::{logger, Level, Log, Record};
 use thiserror::Error;
 
 use aya::{
@@ -80,8 +82,17 @@ pub struct BpfLogger;
 
 impl BpfLogger {
     /// Starts reading log records created with `aya-log-ebpf` and logs them
+    /// with the default logger. See [log::logger].
+    pub fn init(bpf: &mut Bpf) -> Result<BpfLogger, Error> {
+        BpfLogger::init_with_logger(bpf, DefaultLogger {})
+    }
+
+    /// Starts reading log records created with `aya-log-ebpf` and logs them
     /// with the given logger.
-    pub fn init<T: Log + 'static>(bpf: &mut Bpf, logger: T) -> Result<BpfLogger, Error> {
+    pub fn init_with_logger<T: Log + 'static>(
+        bpf: &mut Bpf,
+        logger: T,
+    ) -> Result<BpfLogger, Error> {
         let logger = Arc::new(logger);
         let mut logs: AsyncPerfEventArray<_> = bpf.map_mut("AYA_LOGS")?.try_into()?;
 
@@ -107,6 +118,23 @@ impl BpfLogger {
         }
 
         Ok(BpfLogger {})
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+struct DefaultLogger;
+
+impl Log for DefaultLogger {
+    fn enabled(&self, metadata: &log::Metadata) -> bool {
+        log::logger().enabled(metadata)
+    }
+
+    fn log(&self, record: &Record) {
+        log::logger().log(record)
+    }
+
+    fn flush(&self) {
+        log::logger().flush()
     }
 }
 
