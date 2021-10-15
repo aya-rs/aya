@@ -185,7 +185,7 @@ macro_rules! log {
                 if let Ok(message_len) = $crate::write_record_message!(&mut buf.buf[header_len..], $($arg)+) {
                     let record_len = header_len + message_len;
                     if record_len <= $crate::LOG_BUF_CAPACITY {
-                        let _ = unsafe { $crate::AYA_LOGS.output($ctx, &buf.buf[..header_len + message_len], 0) };
+                        let _ = unsafe { $crate::AYA_LOGS.output($ctx, &buf.buf[..record_len], 0) };
                     }
                 };
             }
