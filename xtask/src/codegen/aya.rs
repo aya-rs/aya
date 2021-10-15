@@ -112,8 +112,8 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "SO_ATTACH_BPF",
         "SO_DETACH_BPF",
         // BTF
-        "BTF_KIND_.*",
         "BTF_INT_.*",
+        "BTF_KIND_.*",
         // PERF
         "PERF_FLAG_.*",
         "PERF_EVENT_.*",
@@ -161,7 +161,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
             bindgen = bindgen.allowlist_type(x);
         }
         for x in &vars {
-            bindgen = bindgen.allowlist_var(x);
+            bindgen = bindgen.allowlist_var(x).constified_enum("BTF_KIND_.*");
         }
 
         // FIXME: this stuff is probably debian/ubuntu specific
