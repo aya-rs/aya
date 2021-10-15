@@ -6,7 +6,7 @@ edition = "2018"
 [dependencies]
 aya-bpf = { git = "https://github.com/aya-rs/aya", branch = "main" }
 aya-log-common = { path = "../aya-log-common" }
-ufmt = "0.1.0"
+ufmt = { version = "0.1", package = "aya-ufmt" }
 
 [lib]
 path = "src/lib.rs"
