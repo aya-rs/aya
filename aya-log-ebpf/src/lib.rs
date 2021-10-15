@@ -26,7 +26,7 @@ pub static mut AYA_LOG_BUF: PerCpuArray<LogBuf> = PerCpuArray::with_max_entries(
 
 #[doc(hidden)]
 #[map]
-pub static mut AYA_LOGS: PerfEventByteArray = PerfEventByteArray::with_max_entries(1024, 0);
+pub static mut AYA_LOGS: PerfEventByteArray = PerfEventByteArray::new(0);
 
 #[doc(hidden)]
 pub struct LogBufWriter<'a> {
