@@ -35,7 +35,7 @@ jobs:
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           commit_prefix: "[codegen] Update libbpf to ${{ env.LIBBPF_SHA }}"
-          commit_message: "Created using GitHub Actions"
+          commit_message: "Update libbpf to ${{ env.LIBBPF_SHA }}"
           target_branch: codegen
 
 
