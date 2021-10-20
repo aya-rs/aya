@@ -8,7 +8,7 @@
 [crates-badge]: https://img.shields.io/crates/v/aya.svg
 [crates-url]: https://crates.io/crates/aya
 [license-badge]: https://img.shields.io/badge/license-MIT%2FApache--2.0-blue
-[build-badge]: https://github.com/aya-rs/aya/actions/workflows/build-test.yml/badge.svg
+[build-badge]: https://github.com/aya-rs/aya/actions/workflows/build-aya.yml/badge.svg
 [docs-badge]: https://img.shields.io/badge/docs-website-blue.svg
 [docs-url]: http://aya-rs.github.io/book/
 
