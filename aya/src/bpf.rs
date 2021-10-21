@@ -10,6 +10,7 @@ use std::{
 use aya_obj::{
     btf::{BtfFeatures, BtfRelocationError},
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS},
+    maps::InvalidMapTypeError,
     relocation::BpfRelocationError,
     BpfSectionKind, Features,
 };
@@ -39,7 +40,7 @@ use crate::{
         is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
         is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
     },
-    util::{bytes_of, bytes_of_slice, possible_cpus, VerifierLog, POSSIBLE_CPUS},
+    util::{bytes_of, bytes_of_slice, page_size, possible_cpus, VerifierLog, POSSIBLE_CPUS},
 };
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
@@ -374,23 +375,18 @@ impl<'a> BpfLoader<'a> {
             {
                 continue;
             }
-
-            match self.max_entries.get(name.as_str()) {
-                Some(size) => obj.set_max_entries(*size),
-                None => {
-                    if obj.map_type() == BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32
-                        && obj.max_entries() == 0
-                    {
-                        obj.set_max_entries(
-                            possible_cpus()
-                                .map_err(|error| BpfError::FileError {
-                                    path: PathBuf::from(POSSIBLE_CPUS),
-                                    error,
-                                })?
-                                .len() as u32,
-                        );
-                    }
-                }
+            let map_type: bpf_map_type =
+                obj.map_type()
+                    .try_into()
+                    .map_err(|InvalidMapTypeError { map_type }| {
+                        BpfError::MapError(MapError::InvalidMapType { map_type })
+                    })?;
+            if let Some(max_entries) = RuntimeSystemInfo::max_entries_override(
+                map_type,
+                self.max_entries.get(name.as_str()).cloned(),
+                || obj.max_entries(),
+            )? {
+                obj.set_max_entries(max_entries)
             }
             let mut map = MapData {
                 obj,
@@ -633,6 +629,7 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
         BPF_MAP_TYPE_PERCPU_HASH => Ok(Map::PerCpuHashMap(map)),
         BPF_MAP_TYPE_LRU_PERCPU_HASH => Ok(Map::PerCpuLruHashMap(map)),
         BPF_MAP_TYPE_PERF_EVENT_ARRAY => Ok(Map::PerfEventArray(map)),
+        BPF_MAP_TYPE_RINGBUF => Ok(Map::RingBuf(map)),
         BPF_MAP_TYPE_SOCKHASH => Ok(Map::SockHash(map)),
         BPF_MAP_TYPE_SOCKMAP => Ok(Map::SockMap(map)),
         BPF_MAP_TYPE_BLOOM_FILTER => Ok(Map::BloomFilter(map)),
@@ -646,6 +643,129 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
     }?;
 
     Ok((name, map))
+}
+
+// Used to compute runtime map properties based on the properties of the current system.
+trait SystemInfo {
+    fn page_size() -> u32;
+    fn num_cpus() -> Result<u32, BpfError>;
+
+    /// Computes the value which should be used to override the max_entries value of the map
+    /// based on the user-provided override and the rules for that map type.
+    fn max_entries_override<F>(
+        map_type: bpf_map_type,
+        user_override: Option<u32>,
+        current_value: F,
+    ) -> Result<Option<u32>, BpfError>
+    where
+        F: Fn() -> u32,
+    {
+        let max_entries = || user_override.unwrap_or_else(&current_value);
+        Ok(match map_type {
+            BPF_MAP_TYPE_PERF_EVENT_ARRAY if max_entries() == 0 => Some(Self::num_cpus()?),
+            BPF_MAP_TYPE_RINGBUF => Some(Self::adjust_to_page_size(max_entries()))
+                .filter(|adjusted| *adjusted != max_entries())
+                .or(user_override),
+            _ => user_override,
+        })
+    }
+
+    // Adjusts the byte size of a RingBuf map to match a power-of-two multiple of the page size.
+    //
+    // This mirrors the logic used by libbpf.
+    // See https://github.com/libbpf/libbpf/blob/ec6f716eda43fd0f4b865ddcebe0ce8cb56bf445/src/libbpf.c#L2461-L2463
+    fn adjust_to_page_size(byte_size: u32) -> u32 {
+        // If the byte_size is zero, return zero and let the verifier reject the map
+        // when it is loaded. This is the behavior of libbpf.
+        if byte_size == 0 {
+            return 0;
+        }
+        let page_size = Self::page_size();
+        let quotient = byte_size / page_size;
+        let remainder = byte_size % page_size;
+        let pages_needed = match remainder {
+            0 if quotient.is_power_of_two() => return byte_size,
+            0 => quotient,
+            _ => quotient + 1,
+        };
+        page_size * pages_needed.next_power_of_two()
+    }
+}
+
+struct RuntimeSystemInfo;
+
+impl SystemInfo for RuntimeSystemInfo {
+    fn page_size() -> u32 {
+        page_size() as u32
+    }
+
+    fn num_cpus() -> Result<u32, BpfError> {
+        Ok(possible_cpus()
+            .map_err(|error| BpfError::FileError {
+                path: PathBuf::from(POSSIBLE_CPUS),
+                error,
+            })?
+            .len() as u32)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::SystemInfo;
+    use crate::generated::bpf_map_type::*;
+
+    struct TestSystemInfo {}
+
+    const PAGE_SIZE: u32 = 4096;
+    const NUM_CPUS: u32 = 4;
+    impl SystemInfo for TestSystemInfo {
+        fn page_size() -> u32 {
+            PAGE_SIZE
+        }
+        fn num_cpus() -> Result<u32, crate::BpfError> {
+            Ok(NUM_CPUS)
+        }
+    }
+
+    #[test]
+    fn test_adjust_to_page_size() {
+        [
+            (0, 0),
+            (4096, 1),
+            (4096, 4095),
+            (4096, 4096),
+            (8192, 4097),
+            (8192, 8192),
+            (16384, 8193),
+        ]
+        .into_iter()
+        .for_each(|(exp, input)| assert_eq!(exp, TestSystemInfo::adjust_to_page_size(input)))
+    }
+
+    #[test]
+    fn test_max_entries_override() {
+        [
+            (BPF_MAP_TYPE_RINGBUF, Some(1), 1, Some(PAGE_SIZE)),
+            (BPF_MAP_TYPE_RINGBUF, None, 1, Some(PAGE_SIZE)),
+            (BPF_MAP_TYPE_RINGBUF, None, PAGE_SIZE, None),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 1, None),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, Some(42), 1, Some(42)),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, Some(0), 1, Some(NUM_CPUS)),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 0, Some(NUM_CPUS)),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 42, None),
+            (BPF_MAP_TYPE_ARRAY, None, 1, None),
+            (BPF_MAP_TYPE_ARRAY, Some(2), 1, Some(2)),
+        ]
+        .into_iter()
+        .for_each(|(map_type, user_override, current_value, exp)| {
+            assert_eq!(
+                exp,
+                TestSystemInfo::max_entries_override(map_type, user_override, || { current_value })
+                    .unwrap()
+            )
+        })
+    }
 }
 
 impl<'a> Default for BpfLoader<'a> {
