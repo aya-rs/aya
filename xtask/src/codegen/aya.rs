@@ -147,6 +147,8 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "TC_H_MIN_PRIORITY",
         "TC_H_MIN_INGRESS",
         "TC_H_MIN_EGRESS",
+        // Ringbuf
+        "BPF_RINGBUF_.*",
     ];
 
     let dir = PathBuf::from("aya");
@@ -193,7 +195,10 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
                 .allowlist_var(x)
                 .constified_enum("BPF_F_.*")
                 .constified_enum("BTF_KIND_.*")
-                .constified_enum("BTF_VAR_.*");
+                .constified_enum("BTF_VAR_.*")
+                .constified_enum("IFLA_.*")
+                .constified_enum("TCA_.*")
+                .constified_enum("BPF_RINGBUF_.*");
         }
 
         for x in &types {
