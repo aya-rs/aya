@@ -6,7 +6,7 @@ mod perf_event;
 mod fake;
 
 use std::{
-    ffi::{c_int, c_long},
+    ffi::{c_int, c_long, c_void},
     io, mem,
     os::fd::{AsRawFd as _, BorrowedFd},
 };
@@ -114,4 +114,20 @@ fn syscall(call: Syscall<'_>) -> SysResult<c_long> {
         ret @ 0.. => Ok(ret),
         ret => Err((ret, io::Error::last_os_error())),
     }
+}
+
+#[cfg_attr(test, allow(unused_variables))]
+pub(crate) unsafe fn mmap(
+    addr: *mut c_void,
+    len: usize,
+    prot: c_int,
+    flags: c_int,
+    fd: BorrowedFd<'_>,
+    offset: libc::off_t,
+) -> *mut c_void {
+    #[cfg(not(test))]
+    return libc::mmap(addr, len, prot, flags, fd.as_raw_fd(), offset);
+
+    #[cfg(test)]
+    TEST_MMAP_RET.with(|ret| *ret.borrow())
 }
