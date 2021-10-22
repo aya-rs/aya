@@ -70,6 +70,7 @@ pub mod hash_map;
 pub mod lpm_trie;
 pub mod perf;
 pub mod queue;
+pub mod ringbuf;
 pub mod sock;
 pub mod stack;
 pub mod stack_trace;
@@ -83,6 +84,7 @@ pub use lpm_trie::LpmTrie;
 pub use perf::AsyncPerfEventArray;
 pub use perf::PerfEventArray;
 pub use queue::Queue;
+pub use ringbuf::RingBuf;
 pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
@@ -245,6 +247,8 @@ pub enum Map {
     PerCpuHashMap(MapData),
     /// A [`PerfEventArray`] map
     PerfEventArray(MapData),
+    /// A [`RingBuf`] map
+    RingBuf(MapData),
     /// A [`SockMap`] map
     SockMap(MapData),
     /// A [`SockHash`] map
@@ -271,6 +275,7 @@ impl Map {
             Map::HashMap(map) => map.obj.map_type(),
             Map::PerCpuHashMap(map) => map.obj.map_type(),
             Map::PerfEventArray(map) => map.obj.map_type(),
+            Map::RingBuf(map) => map.obj.map_type(),
             Map::SockHash(map) => map.obj.map_type(),
             Map::SockMap(map) => map.obj.map_type(),
             Map::BloomFilter(map) => map.obj.map_type(),
@@ -332,6 +337,7 @@ impl_try_from_map!(
     SockMap from Map::SockMap,
     PerfEventArray from Map::PerfEventArray,
     StackTraceMap from Map::StackTraceMap,
+    RingBuf from Map::RingBuf,
 );
 
 #[cfg(feature = "async")]
