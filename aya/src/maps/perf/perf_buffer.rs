@@ -7,7 +7,7 @@ use std::{
 };
 
 use bytes::BytesMut;
-use libc::{c_int, munmap, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
+use libc::{munmap, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
 use crate::{
@@ -15,7 +15,7 @@ use crate::{
         perf_event_header, perf_event_mmap_page,
         perf_event_type::{PERF_RECORD_LOST, PERF_RECORD_SAMPLE},
     },
-    sys::{perf_event_ioctl, perf_event_open_bpf, SysResult},
+    sys::{mmap, perf_event_ioctl, perf_event_open_bpf, SysResult},
     PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
 
@@ -280,25 +280,6 @@ impl Drop for PerfBuffer {
             );
         }
     }
-}
-
-#[cfg_attr(test, allow(unused_variables))]
-unsafe fn mmap(
-    addr: *mut c_void,
-    len: usize,
-    prot: c_int,
-    flags: c_int,
-    fd: BorrowedFd<'_>,
-    offset: libc::off_t,
-) -> *mut c_void {
-    #[cfg(not(test))]
-    return libc::mmap(addr, len, prot, flags, fd.as_raw_fd(), offset);
-
-    #[cfg(test)]
-    use crate::sys::TEST_MMAP_RET;
-
-    #[cfg(test)]
-    TEST_MMAP_RET.with(|ret| *ret.borrow())
 }
 
 #[derive(Debug)]
