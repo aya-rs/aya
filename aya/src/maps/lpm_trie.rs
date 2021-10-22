@@ -196,10 +196,10 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<Key<K>, V> for LpmTrie<T, K
 
 #[cfg(test)]
 mod tests {
-    use std::{ffi::c_long, io, mem, net::Ipv4Addr};
+    use std::{io, mem, net::Ipv4Addr};
 
     use assert_matches::assert_matches;
-    use libc::{EFAULT, ENOENT};
+    use libc::{c_long, EFAULT, ENOENT};
 
     use super::*;
     use crate::{

@@ -79,10 +79,10 @@ impl<T: BorrowMut<MapData>, V: Pod> BloomFilter<T, V> {
 
 #[cfg(test)]
 mod tests {
-    use std::{ffi::c_long, io};
+    use std::io;
 
     use assert_matches::assert_matches;
-    use libc::{EFAULT, ENOENT};
+    use libc::{c_long, EFAULT, ENOENT};
 
     use super::*;
     use crate::{
