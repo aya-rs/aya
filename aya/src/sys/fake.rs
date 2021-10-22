@@ -1,6 +1,6 @@
-use std::{cell::RefCell, ffi::c_long, io, ptr};
+use std::{cell::RefCell, io, ptr};
 
-use libc::c_void;
+use libc::{c_long, c_void};
 
 use super::{SysResult, Syscall};
 

@@ -208,8 +208,8 @@ mod tests {
         sys::{override_syscall, SysResult, Syscall},
     };
     use assert_matches::assert_matches;
-    use libc::{EFAULT, ENOENT};
-    use std::{ffi::c_long, io, mem, net::Ipv4Addr};
+    use libc::{c_long, EFAULT, ENOENT};
+    use std::{io, mem, net::Ipv4Addr};
 
     fn new_obj_map() -> obj::Map {
         obj::Map::Legacy(LegacyMap {
