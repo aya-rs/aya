@@ -11,7 +11,7 @@ use std::{ffi::CString, mem};
 
 #[cfg(not(test))]
 use libc::utsname;
-use libc::{c_int, c_long, pid_t};
+use libc::{c_int, c_long, c_void, pid_t};
 
 pub(crate) use bpf::*;
 #[cfg(test)]
@@ -107,4 +107,20 @@ pub(crate) fn kernel_version() -> Result<(u32, u32, u32), ()> {
 
         Ok((major, minor, patch))
     }
+}
+
+#[cfg_attr(test, allow(unused_variables))]
+pub(crate) unsafe fn mmap(
+    addr: *mut c_void,
+    len: usize,
+    prot: c_int,
+    flags: c_int,
+    fd: i32,
+    offset: libc::off_t,
+) -> *mut c_void {
+    #[cfg(not(test))]
+    return libc::mmap(addr, len, prot, flags, fd, offset);
+
+    #[cfg(test)]
+    TEST_MMAP_RET.with(|ret| *ret.borrow())
 }
