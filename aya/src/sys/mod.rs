@@ -13,7 +13,7 @@ use std::{
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
-use libc::{c_int, c_long, pid_t, SYS_bpf, SYS_perf_event_open};
+use libc::{c_int, c_long, c_void, pid_t, SYS_bpf, SYS_perf_event_open};
 #[doc(hidden)]
 pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
@@ -113,4 +113,20 @@ fn syscall(call: Syscall<'_>) -> SysResult<c_long> {
         ret @ 0.. => Ok(ret),
         ret => Err((ret, io::Error::last_os_error())),
     }
+}
+
+#[cfg_attr(test, allow(unused_variables))]
+pub(crate) unsafe fn mmap(
+    addr: *mut c_void,
+    len: usize,
+    prot: c_int,
+    flags: c_int,
+    fd: BorrowedFd<'_>,
+    offset: libc::off_t,
+) -> *mut c_void {
+    #[cfg(not(test))]
+    return libc::mmap(addr, len, prot, flags, fd.as_raw_fd(), offset);
+
+    #[cfg(test)]
+    TEST_MMAP_RET.with(|ret| *ret.borrow())
 }
