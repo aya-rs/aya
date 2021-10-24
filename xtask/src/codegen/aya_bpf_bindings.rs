@@ -93,7 +93,7 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
         // write the new helpers as expanded by expand_helpers()
         write_to_file_fmt(
             &generated.join("helpers.rs"),
-            &format!("use super::bindings::*; {}", helpers.to_string()),
+            &format!("use super::bindings::*; {}", helpers),
         )?;
 
         // write the bpf_probe_read() getters
