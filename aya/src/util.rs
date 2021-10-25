@@ -106,6 +106,40 @@ pub(crate) fn tc_handler_make(major: u32, minor: u32) -> u32 {
     (major & TC_H_MAJ_MASK) | (minor & TC_H_MIN_MASK)
 }
 
+/// Include bytes from a file for use in a subsequent [`crate::Bpf::load`].
+///
+/// This macro differs from the standard `include_bytes!` macro since it also ensures that
+/// the bytes are correctly aligned to be parsed as an ELF binary. This avoid some nasty
+/// compilation errors when the resulting byte array is not the correct alignment.
+///
+/// # Examples
+/// ```ignore
+/// use aya::{Bpf, include_bytes_aligned};
+///
+/// let mut bpf = Bpf::load(include_bytes_aligned!(
+///     "/path/to/bpf.o"
+/// ))?;
+///
+/// # Ok::<(), aya::BpfError>(())
+/// ```
+#[macro_export]
+macro_rules! include_bytes_aligned {
+    ($path:literal) => {{
+        #[repr(C)]
+        pub struct Aligned<Bytes: ?Sized> {
+            pub _align: [u32; 0],
+            pub bytes: Bytes,
+        }
+
+        static ALIGNED: &Aligned<[u8]> = &Aligned {
+            _align: [],
+            bytes: *include_bytes!($path),
+        };
+
+        &ALIGNED.bytes
+    }};
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
