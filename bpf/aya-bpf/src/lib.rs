@@ -3,6 +3,7 @@
 
 pub use aya_bpf_bindings::bindings;
 
+mod args;
 pub mod helpers;
 pub mod maps;
 pub mod programs;
