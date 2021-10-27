@@ -1,3 +1,5 @@
 Cargo.lock
 target/
 libbpf/
+.vscode/
+!.vscode/settings.json
