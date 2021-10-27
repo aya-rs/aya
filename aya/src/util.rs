@@ -125,9 +125,12 @@ pub(crate) fn tc_handler_make(major: u32, minor: u32) -> u32 {
 #[macro_export]
 macro_rules! include_bytes_aligned {
     ($path:literal) => {{
+        #[repr(align(32))]
+        pub struct Aligned32;
+
         #[repr(C)]
         pub struct Aligned<Bytes: ?Sized> {
-            pub _align: [u32; 0],
+            pub _align: [Aligned32; 0],
             pub bytes: Bytes,
         }
 
