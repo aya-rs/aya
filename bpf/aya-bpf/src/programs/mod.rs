@@ -1,13 +1,17 @@
+pub mod lsm;
 pub mod perf_event;
 pub mod probe;
+pub mod raw_tracepoint;
 pub mod sk_msg;
 pub mod sk_skb;
 pub mod sock_ops;
 pub mod tracepoint;
 pub mod xdp;
 
+pub use lsm::LsmContext;
 pub use perf_event::PerfEventContext;
 pub use probe::ProbeContext;
+pub use raw_tracepoint::RawTracePointContext;
 pub use sk_msg::SkMsgContext;
 pub use sk_skb::SkSkbContext;
 pub use sock_ops::SockOpsContext;

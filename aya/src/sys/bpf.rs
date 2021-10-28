@@ -53,27 +53,40 @@ pub(crate) fn bpf_get_object(path: &CStr) -> SysResult {
     sys_bpf(bpf_cmd::BPF_OBJ_GET, &attr)
 }
 
-pub(crate) fn bpf_load_program(
-    ty: bpf_prog_type,
-    insns: &[bpf_insn],
-    license: &CStr,
-    kernel_version: u32,
-    log: &mut VerifierLog,
-) -> SysResult {
+pub(crate) struct BpfLoadProgramAttrs<'a> {
+    pub(crate) ty: bpf_prog_type,
+    pub(crate) insns: &'a [bpf_insn],
+    pub(crate) license: &'a CStr,
+    pub(crate) kernel_version: u32,
+    pub(crate) expected_attach_type: Option<bpf_attach_type>,
+    pub(crate) attach_btf_obj_fd: Option<u32>,
+    pub(crate) attach_btf_id: Option<u32>,
+    pub(crate) log: &'a mut VerifierLog,
+}
+
+pub(crate) fn bpf_load_program(aya_attr: BpfLoadProgramAttrs) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_3 };
-    u.prog_type = ty as u32;
-    u.expected_attach_type = 0;
-    u.insns = insns.as_ptr() as u64;
-    u.insn_cnt = insns.len() as u32;
-    u.license = license.as_ptr() as u64;
-    u.kern_version = kernel_version;
-    let log_buf = log.buf();
+    u.prog_type = aya_attr.ty as u32;
+    if let Some(v) = aya_attr.expected_attach_type {
+        u.expected_attach_type = v as u32;
+    }
+    u.insns = aya_attr.insns.as_ptr() as u64;
+    u.insn_cnt = aya_attr.insns.len() as u32;
+    u.license = aya_attr.license.as_ptr() as u64;
+    u.kern_version = aya_attr.kernel_version;
+    let log_buf = aya_attr.log.buf();
     if log_buf.capacity() > 0 {
         u.log_level = 7;
         u.log_buf = log_buf.as_mut_ptr() as u64;
         u.log_size = log_buf.capacity() as u32;
+    }
+    if let Some(v) = aya_attr.attach_btf_obj_fd {
+        u.__bindgen_anon_1.attach_btf_obj_fd = v;
+    }
+    if let Some(v) = aya_attr.attach_btf_id {
+        u.attach_btf_id = v;
     }
 
     sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr)
@@ -330,6 +343,18 @@ pub(crate) fn bpf_obj_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_prog_info, io
         Ok(_) => Ok(info),
         Err((_, err)) => Err(err),
     }
+}
+
+pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> SysResult {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    attr.raw_tracepoint.name = match name {
+        Some(n) => n.as_ptr() as u64,
+        None => 0,
+    };
+    attr.raw_tracepoint.prog_fd = prog_fd as u32;
+
+    sys_bpf(bpf_cmd::BPF_RAW_TRACEPOINT_OPEN, &attr)
 }
 
 fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult {

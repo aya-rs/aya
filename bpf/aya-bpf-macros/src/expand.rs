@@ -352,3 +352,63 @@ impl PerfEvent {
         })
     }
 }
+
+pub struct RawTracePoint {
+    item: ItemFn,
+    name: String,
+}
+
+impl RawTracePoint {
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<RawTracePoint> {
+        let name = name_arg(&mut args)?.unwrap_or_else(|| item.sig.ident.to_string());
+
+        Ok(RawTracePoint { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = format!("raw_tp/{}", self.name);
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
+                let _ = #fn_name(::aya_bpf::programs::RawTracePointContext::new(ctx));
+                return 0;
+
+                #item
+            }
+        })
+    }
+}
+
+pub struct Lsm {
+    item: ItemFn,
+    name: String,
+}
+
+impl Lsm {
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<Lsm> {
+        let name = name_arg(&mut args)?.unwrap_or_else(|| item.sig.ident.to_string());
+
+        Ok(Lsm { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = format!("lsm/{}", self.name);
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        // LSM probes need to return an integer corresponding to the correct
+        // policy decision. Therefore we do not simply default to a return value
+        // of 0 as in other program types.
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+                return #fn_name(::aya_bpf::programs::LsmContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}

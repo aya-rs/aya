@@ -39,9 +39,11 @@
 mod cgroup_skb;
 mod kprobe;
 mod lirc_mode2;
+mod lsm;
 mod perf_attach;
 pub mod perf_event;
 mod probe;
+mod raw_trace_point;
 mod sk_msg;
 mod sk_skb;
 mod sock_ops;
@@ -67,9 +69,11 @@ use thiserror::Error;
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
 pub use kprobe::{KProbe, KProbeError};
 pub use lirc_mode2::LircMode2;
+pub use lsm::{Lsm, LsmLoadError};
 use perf_attach::*;
 pub use perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy};
 pub use probe::ProbeKind;
+pub use raw_trace_point::RawTracePoint;
 pub use sk_msg::SkMsg;
 pub use sk_skb::{SkSkb, SkSkbKind};
 pub use sock_ops::SockOps;
@@ -83,7 +87,7 @@ use crate::{
     generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
     maps::MapError,
     obj::{self, Function},
-    sys::{bpf_load_program, bpf_pin_object, bpf_prog_detach, bpf_prog_query},
+    sys::{bpf_load_program, bpf_pin_object, bpf_prog_detach, bpf_prog_query, BpfLoadProgramAttrs},
 };
 
 /// Error type returned when working with programs.
@@ -188,6 +192,8 @@ pub enum Program {
     CgroupSkb(CgroupSkb),
     LircMode2(LircMode2),
     PerfEvent(PerfEvent),
+    RawTracePoint(RawTracePoint),
+    Lsm(Lsm),
 }
 
 impl Program {
@@ -221,6 +227,8 @@ impl Program {
             Program::CgroupSkb(_) => BPF_PROG_TYPE_CGROUP_SKB,
             Program::LircMode2(_) => BPF_PROG_TYPE_LIRC_MODE2,
             Program::PerfEvent(_) => BPF_PROG_TYPE_PERF_EVENT,
+            Program::RawTracePoint(_) => BPF_PROG_TYPE_RAW_TRACEPOINT,
+            Program::Lsm(_) => BPF_PROG_TYPE_LSM,
         }
     }
 
@@ -248,6 +256,8 @@ impl Program {
             Program::CgroupSkb(p) => &p.data,
             Program::LircMode2(p) => &p.data,
             Program::PerfEvent(p) => &p.data,
+            Program::RawTracePoint(p) => &p.data,
+            Program::Lsm(p) => &p.data,
         }
     }
 
@@ -265,6 +275,8 @@ impl Program {
             Program::CgroupSkb(p) => &mut p.data,
             Program::LircMode2(p) => &mut p.data,
             Program::PerfEvent(p) => &mut p.data,
+            Program::RawTracePoint(p) => &mut p.data,
+            Program::Lsm(p) => &mut p.data,
         }
     }
 }
@@ -275,6 +287,9 @@ pub(crate) struct ProgramData {
     pub(crate) obj: obj::Program,
     pub(crate) fd: Option<RawFd>,
     pub(crate) links: Vec<Rc<RefCell<dyn Link>>>,
+    pub(crate) expected_attach_type: Option<bpf_attach_type>,
+    pub(crate) attach_btf_obj_fd: Option<u32>,
+    pub(crate) attach_btf_id: Option<u32>,
 }
 
 impl ProgramData {
@@ -376,13 +391,17 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
     let mut retries = 0;
     let mut ret;
     loop {
-        ret = bpf_load_program(
-            prog_type,
-            instructions,
+        let attr = BpfLoadProgramAttrs {
+            ty: prog_type,
+            insns: instructions,
             license,
-            (*kernel_version).into(),
-            &mut log_buf,
-        );
+            kernel_version: (*kernel_version).into(),
+            expected_attach_type: data.expected_attach_type,
+            attach_btf_obj_fd: data.attach_btf_obj_fd,
+            attach_btf_id: data.attach_btf_id,
+            log: &mut log_buf,
+        };
+        ret = bpf_load_program(attr);
         match &ret {
             Ok(prog_fd) => {
                 *fd = Some(*prog_fd as RawFd);
@@ -568,7 +587,9 @@ impl_program_fd!(
     SchedClassifier,
     CgroupSkb,
     LircMode2,
-    PerfEvent
+    PerfEvent,
+    Lsm,
+    RawTracePoint,
 );
 
 macro_rules! impl_try_from_program {
@@ -611,7 +632,9 @@ impl_try_from_program!(
     SchedClassifier,
     CgroupSkb,
     LircMode2,
-    PerfEvent
+    PerfEvent,
+    Lsm,
+    RawTracePoint,
 );
 
 /// Provides information about a loaded program, like name, id and statistics

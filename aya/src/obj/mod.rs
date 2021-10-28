@@ -85,6 +85,8 @@ pub enum ProgramSection {
     CgroupSkbEgress { name: String },
     LircMode2 { name: String },
     PerfEvent { name: String },
+    RawTracePoint { name: String },
+    Lsm { name: String },
 }
 
 impl ProgramSection {
@@ -106,6 +108,8 @@ impl ProgramSection {
             ProgramSection::CgroupSkbEgress { name } => name,
             ProgramSection::LircMode2 { name } => name,
             ProgramSection::PerfEvent { name } => name,
+            ProgramSection::RawTracePoint { name } => name,
+            ProgramSection::Lsm { name } => name,
         }
     }
 }
@@ -147,6 +151,8 @@ impl FromStr for ProgramSection {
             "cgroup_skb/egress" => CgroupSkbEgress { name },
             "lirc_mode2" => LircMode2 { name },
             "perf_event" => PerfEvent { name },
+            "raw_tp" | "raw_tracepoint" => RawTracePoint { name },
+            "lsm" => Lsm { name },
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),
@@ -570,6 +576,9 @@ fn is_program_section(name: &str) -> bool {
         "uprobe",
         "uretprobe",
         "xdp",
+        "raw_tp",
+        "raw_tracepoint",
+        "lsm",
     ] {
         if name.starts_with(prefix) {
             return true;
@@ -987,6 +996,52 @@ mod tests {
             obj.programs.get("foo"),
             Some(Program {
                 section: ProgramSection::Xdp { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_raw_tp() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section("raw_tp/foo", bytes_of(&fake_ins()))),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::RawTracePoint { .. },
+                ..
+            })
+        );
+
+        assert_matches!(
+            obj.parse_section(fake_section("raw_tracepoint/bar", bytes_of(&fake_ins()))),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("bar"),
+            Some(Program {
+                section: ProgramSection::RawTracePoint { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_lsm() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section("lsm/foo", bytes_of(&fake_ins()))),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::Lsm { .. },
                 ..
             })
         );
