@@ -12,10 +12,11 @@
 [docs-badge]: https://img.shields.io/badge/docs-website-blue.svg
 [docs-url]: http://aya-rs.github.io/book/
 
-[API docs][api-docs] | [Chat][chat-url]
+[API docs][api-docs] | [Chat][chat-url] | [Aya-Related Projects][awesome-aya]
 
 [api-docs]: https://docs.rs/aya
 [chat-url]: https://discord.gg/xHW2cb2N6G
+[awesome-aya]: https://github.com/aya-rs/awesome-aya
 
 ## Overview
 
@@ -46,7 +47,7 @@ Some of the major features provided include:
 [libbpf]: https://github.com/libbpf/libbpf
 [bcc]: https://github.com/iovisor/bcc
 [libc]: https://docs.rs/libc
-[co-re]: https://facebookmicrosites.github.io/bpf/blog/2020/02/19/bpf-portability-and-co-re.html 
+[co-re]: https://facebookmicrosites.github.io/bpf/blog/2020/02/19/bpf-portability-and-co-re.html
 [tokio]: https://docs.rs/tokio
 [async-std]: https://docs.rs/async-std
 
@@ -65,7 +66,7 @@ use aya::programs::{CgroupSkb, CgroupSkbAttachType};
 // load the BPF code
 let mut bpf = Bpf::load_file("bpf.o")?;
 
-// get the `ingress_filter` program compiled into `bpf.o`. 
+// get the `ingress_filter` program compiled into `bpf.o`.
 let ingress: &mut CgroupSkb = bpf.program_mut("ingress_filter")?.try_into()?;
 
 // load the program into the kernel
@@ -89,7 +90,7 @@ Please see the [contributing guide](https://github.com/aya-rs/aya/blob/main/CONT
 Aya is distributed under the terms of either the [MIT license] or the [Apache License] (version
 2.0), at your option.
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this crate by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions. 
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this crate by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
 
 [MIT license]: https://github.com/aya-rs/aya/blob/main/LICENSE-MIT
 [Apache license]: https://github.com/aya-rs/aya/blob/main/LICENSE-APACHE
