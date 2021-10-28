@@ -5,6 +5,7 @@ pub mod raw_tracepoint;
 pub mod sk_msg;
 pub mod sk_skb;
 pub mod sock_ops;
+pub mod tp_btf;
 pub mod tracepoint;
 pub mod xdp;
 
@@ -15,5 +16,6 @@ pub use raw_tracepoint::RawTracePointContext;
 pub use sk_msg::SkMsgContext;
 pub use sk_skb::SkSkbContext;
 pub use sock_ops::SockOpsContext;
+pub use tp_btf::BtfTracePointContext;
 pub use tracepoint::TracePointContext;
 pub use xdp::XdpContext;

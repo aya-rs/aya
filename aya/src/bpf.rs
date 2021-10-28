@@ -20,9 +20,9 @@ use crate::{
         Object, ParseError, ProgramSection,
     },
     programs::{
-        CgroupSkb, CgroupSkbAttachType, KProbe, LircMode2, Lsm, PerfEvent, ProbeKind, Program,
-        ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkMsg, SkSkb, SkSkbKind,
-        SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        BtfTracePoint, CgroupSkb, CgroupSkbAttachType, KProbe, LircMode2, Lsm, PerfEvent,
+        ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkMsg,
+        SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::bpf_map_update_elem_ptr,
     util::{possible_cpus, POSSIBLE_CPUS},
@@ -306,6 +306,9 @@ impl<'a> BpfLoader<'a> {
                         Program::RawTracePoint(RawTracePoint { data })
                     }
                     ProgramSection::Lsm { .. } => Program::Lsm(Lsm { data }),
+                    ProgramSection::BtfTracePoint { .. } => {
+                        Program::BtfTracePoint(BtfTracePoint { data })
+                    }
                 };
 
                 (name, program)
