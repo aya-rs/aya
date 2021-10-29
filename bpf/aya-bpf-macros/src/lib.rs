@@ -1,8 +1,8 @@
 mod expand;
 
 use expand::{
-    Args, Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint, SchedClassifier, SkMsg, SockOps,
-    TracePoint, Xdp,
+    Args, BtfTracePoint, Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint, SchedClassifier,
+    SkMsg, SockOps, TracePoint, Xdp,
 };
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemFn, ItemStatic};
@@ -203,6 +203,47 @@ pub fn lsm(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let item = parse_macro_input!(item as ItemFn);
 
     Lsm::from_syn(args, item)
+        .and_then(|u| u.expand())
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+/// Marks a function as a [BTF-enabled raw tracepoint][1] eBPF program that can be attached at
+/// a pre-defined kernel trace point.
+///
+/// The kernel provides a set of pre-defined trace points that eBPF programs can
+/// be attached to. See `/sys/kernel/debug/tracing/events` for a list of which
+/// events can be traced.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 5.5.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{macros::btf_tracepoint, programs::BtfTracePointContext};
+///
+/// #[btf_tracepoint(name = "sched_process_fork")]
+/// pub fn sched_process_fork(ctx: BtfTracePointContext) -> u32 {
+///     match unsafe { try_sched_process_fork(ctx) } {
+///         Ok(ret) => ret,
+///         Err(ret) => ret,
+///     }
+/// }
+///
+/// unsafe fn try_sched_process_fork(_ctx: BtfTracePointContext) -> Result<u32, u32> {
+///     Ok(0)
+/// }
+/// ```
+///
+/// [1]: https://github.com/torvalds/linux/commit/9e15db66136a14cde3f35691f1d839d950118826
+#[proc_macro_attribute]
+pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attrs as Args);
+    let item = parse_macro_input!(item as ItemFn);
+
+    BtfTracePoint::from_syn(args, item)
         .and_then(|u| u.expand())
         .unwrap_or_else(|err| err.to_compile_error())
         .into()

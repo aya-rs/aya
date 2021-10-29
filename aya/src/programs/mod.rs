@@ -49,6 +49,7 @@ mod sk_skb;
 mod sock_ops;
 mod socket_filter;
 pub mod tc;
+mod tp_btf;
 mod trace_point;
 mod uprobe;
 mod xdp;
@@ -79,6 +80,7 @@ pub use sk_skb::{SkSkb, SkSkbKind};
 pub use sock_ops::SockOps;
 pub use socket_filter::{SocketFilter, SocketFilterError};
 pub use tc::{SchedClassifier, TcAttachType, TcError};
+pub use tp_btf::{BtfTracePoint, BtfTracePointError};
 pub use trace_point::{TracePoint, TracePointError};
 pub use uprobe::{UProbe, UProbeError};
 pub use xdp::{Xdp, XdpError, XdpFlags};
@@ -171,6 +173,10 @@ pub enum ProgramError {
     /// An error occurred while working with a TC program.
     #[error(transparent)]
     TcError(#[from] TcError),
+
+    /// An error occurred while working with a BTF raw tracepoint program.
+    #[error(transparent)]
+    BtfTracePointError(#[from] BtfTracePointError),
 }
 
 pub trait ProgramFd {
@@ -194,6 +200,7 @@ pub enum Program {
     PerfEvent(PerfEvent),
     RawTracePoint(RawTracePoint),
     Lsm(Lsm),
+    BtfTracePoint(BtfTracePoint),
 }
 
 impl Program {
@@ -229,6 +236,7 @@ impl Program {
             Program::PerfEvent(_) => BPF_PROG_TYPE_PERF_EVENT,
             Program::RawTracePoint(_) => BPF_PROG_TYPE_RAW_TRACEPOINT,
             Program::Lsm(_) => BPF_PROG_TYPE_LSM,
+            Program::BtfTracePoint(_) => BPF_PROG_TYPE_TRACING,
         }
     }
 
@@ -258,6 +266,7 @@ impl Program {
             Program::PerfEvent(p) => &p.data,
             Program::RawTracePoint(p) => &p.data,
             Program::Lsm(p) => &p.data,
+            Program::BtfTracePoint(p) => &p.data,
         }
     }
 
@@ -277,6 +286,7 @@ impl Program {
             Program::PerfEvent(p) => &mut p.data,
             Program::RawTracePoint(p) => &mut p.data,
             Program::Lsm(p) => &mut p.data,
+            Program::BtfTracePoint(p) => &mut p.data,
         }
     }
 }
@@ -590,6 +600,7 @@ impl_program_fd!(
     PerfEvent,
     Lsm,
     RawTracePoint,
+    BtfTracePoint,
 );
 
 macro_rules! impl_try_from_program {
@@ -635,6 +646,7 @@ impl_try_from_program!(
     PerfEvent,
     Lsm,
     RawTracePoint,
+    BtfTracePoint,
 );
 
 /// Provides information about a loaded program, like name, id and statistics

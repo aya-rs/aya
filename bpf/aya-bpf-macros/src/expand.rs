@@ -412,3 +412,32 @@ impl Lsm {
         })
     }
 }
+
+pub struct BtfTracePoint {
+    item: ItemFn,
+    name: String,
+}
+
+impl BtfTracePoint {
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<BtfTracePoint> {
+        let name = name_arg(&mut args)?.unwrap_or_else(|| item.sig.ident.to_string());
+
+        Ok(BtfTracePoint { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = format!("tp_btf/{}", self.name);
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+                let _ = #fn_name(::aya_bpf::programs::BtfTracePointContext::new(ctx));
+                return 0;
+
+                #item
+            }
+        })
+    }
+}

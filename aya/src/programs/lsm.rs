@@ -32,16 +32,19 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     LsmLoad(#[from] aya::programs::LsmLoadError),
 /// #     #[error(transparent)]
+/// #     BtfError(#[from] aya::BtfError),
+/// #     #[error(transparent)]
 /// #     Program(#[from] aya::programs::ProgramError),
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError),
 /// # }
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
-/// use aya::{Bpf, programs::Lsm};
+/// use aya::{Bpf, programs::Lsm, BtfError, Btf};
 /// use std::convert::TryInto;
 ///
+/// let btf = Btf::from_sys_fs()?;
 /// let program: &mut Lsm = bpf.program_mut("lsm_prog")?.try_into()?;
-/// program.load("security_bprm_exec")?;
+/// program.load("security_bprm_exec", &btf)?;
 /// program.attach()?;
 /// # Ok::<(), LsmError>(())
 /// ```
@@ -72,8 +75,7 @@ impl Lsm {
     ///
     /// * `lsm_hook_name` - full name of the LSM hook that the program should
     ///   be attached to
-    pub fn load(&mut self, lsm_hook_name: &str) -> Result<(), LsmLoadError> {
-        let btf = &Btf::from_sys_fs()?;
+    pub fn load(&mut self, lsm_hook_name: &str, btf: &Btf) -> Result<(), LsmLoadError> {
         self.data.expected_attach_type = Some(BPF_LSM_MAC);
         let type_name = format!("bpf_lsm_{}", lsm_hook_name);
         self.data.attach_btf_id =
