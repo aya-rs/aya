@@ -88,17 +88,19 @@ pub enum MapError {
     #[error("the map `{name}` has already been pinned")]
     AlreadyPinned { name: String },
 
-    #[error("failed to create map `{name}`: {code}")]
+    #[error("failed to create map `{name}` with code {code}")]
     CreateError {
         name: String,
         code: libc::c_long,
+        #[source]
         io_error: io::Error,
     },
 
-    #[error("failed to pin map `{name}`: {code}")]
+    #[error("failed to pin map `{name}` with code {code}")]
     PinError {
         name: String,
         code: libc::c_long,
+        #[source]
         io_error: io::Error,
     },
 
@@ -120,10 +122,11 @@ pub enum MapError {
     #[error("the program is not loaded")]
     ProgramNotLoaded,
 
-    #[error("the `{call}` syscall failed with code {code} io_error {io_error}")]
+    #[error("the `{call}` syscall failed with code {code}")]
     SyscallError {
         call: String,
         code: libc::c_long,
+        #[source]
         io_error: io::Error,
     },
 
