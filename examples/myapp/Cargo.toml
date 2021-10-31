@@ -1,0 +1,19 @@
+[package]
+name = "myapp"
+version = "0.1.0"
+edition = "2018"
+publish = false
+
+[dependencies]
+aya = { git = "https://github.com/aya-rs/aya", branch="main", features=["async_tokio"] }
+myapp-common = { path = "../myapp-common", features=["userspace"] }
+anyhow = "1.0.42"
+bytes = "1"
+tokio = { version = "1.9.0", features = ["full"] }
+ctrlc = "3.2"
+
+structopt = { version = "0.3"}
+
+[[bin]]
+name = "myapp"
+path = "src/main.rs"
