@@ -11,7 +11,7 @@ documentation = "https://docs.rs/aya"
 edition = "2018"
 
 [dependencies]
-libc = { version = "0.2" }
+libc = { version = "0.2.105" }
 thiserror = "1"
 object = { version = "0.27", default-features = false, features = ["std", "read_core", "elf"] }
 bitflags = "1.2.1"
