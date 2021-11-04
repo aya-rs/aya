@@ -1,6 +1,6 @@
 use core::mem::{self, MaybeUninit};
 
-use aya_bpf_bindings::helpers as gen;
+pub use aya_bpf_bindings::helpers as gen;
 pub use gen::*;
 
 use crate::cty::{c_char, c_long, c_void};
