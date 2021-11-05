@@ -1790,3 +1790,22 @@ pub unsafe fn bpf_trace_vprintk(
     ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(177usize);
     fun(fmt, fmt_size, data, data_len)
 }
+pub unsafe fn bpf_skc_to_unix_sock(sk: *mut ::aya_bpf_cty::c_void) -> *mut unix_sock {
+    let fun: unsafe extern "C" fn(sk: *mut ::aya_bpf_cty::c_void) -> *mut unix_sock =
+        ::core::mem::transmute(178usize);
+    fun(sk)
+}
+pub unsafe fn bpf_kallsyms_lookup_name(
+    name: *const ::aya_bpf_cty::c_char,
+    name_sz: ::aya_bpf_cty::c_int,
+    flags: ::aya_bpf_cty::c_int,
+    res: *mut __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        name: *const ::aya_bpf_cty::c_char,
+        name_sz: ::aya_bpf_cty::c_int,
+        flags: ::aya_bpf_cty::c_int,
+        res: *mut __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(179usize);
+    fun(name, name_sz, flags, res)
+}

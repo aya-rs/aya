@@ -228,9 +228,6 @@ pub const SO_TIMESTAMPING_NEW: u32 = 65;
 pub const SO_RCVTIMEO_NEW: u32 = 66;
 pub const SO_SNDTIMEO_NEW: u32 = 67;
 pub const SO_DETACH_REUSEPORT_BPF: u32 = 68;
-pub const SO_PREFER_BUSY_POLL: u32 = 69;
-pub const SO_BUSY_POLL_BUDGET: u32 = 70;
-pub const SO_NETNS_COOKIE: u32 = 71;
 pub const SO_TIMESTAMP: u32 = 29;
 pub const SO_TIMESTAMPNS: u32 = 35;
 pub const SO_TIMESTAMPING: u32 = 37;
@@ -302,6 +299,7 @@ pub mod bpf_map_type {
     pub const BPF_MAP_TYPE_RINGBUF: Type = 27;
     pub const BPF_MAP_TYPE_INODE_STORAGE: Type = 28;
     pub const BPF_MAP_TYPE_TASK_STORAGE: Type = 29;
+    pub const BPF_MAP_TYPE_BLOOM_FILTER: Type = 30;
 }
 pub const BPF_ANY: ::aya_bpf_cty::c_uint = 0;
 pub const BPF_NOEXIST: ::aya_bpf_cty::c_uint = 1;
@@ -745,6 +743,16 @@ pub struct bpf_map_info {
     pub btf_id: __u32,
     pub btf_key_type_id: __u32,
     pub btf_value_type_id: __u32,
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
+    pub map_extra: __u64,
+}
+impl bpf_map_info {
+    #[inline]
+    pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 4usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
+        __bindgen_bitfield_unit
+    }
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1074,31 +1082,6 @@ pub struct btf_ptr {
     pub type_id: __u32,
     pub flags: __u32,
 }
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct pt_regs {
-    pub r15: ::aya_bpf_cty::c_ulong,
-    pub r14: ::aya_bpf_cty::c_ulong,
-    pub r13: ::aya_bpf_cty::c_ulong,
-    pub r12: ::aya_bpf_cty::c_ulong,
-    pub rbp: ::aya_bpf_cty::c_ulong,
-    pub rbx: ::aya_bpf_cty::c_ulong,
-    pub r11: ::aya_bpf_cty::c_ulong,
-    pub r10: ::aya_bpf_cty::c_ulong,
-    pub r9: ::aya_bpf_cty::c_ulong,
-    pub r8: ::aya_bpf_cty::c_ulong,
-    pub rax: ::aya_bpf_cty::c_ulong,
-    pub rcx: ::aya_bpf_cty::c_ulong,
-    pub rdx: ::aya_bpf_cty::c_ulong,
-    pub rsi: ::aya_bpf_cty::c_ulong,
-    pub rdi: ::aya_bpf_cty::c_ulong,
-    pub orig_rax: ::aya_bpf_cty::c_ulong,
-    pub rip: ::aya_bpf_cty::c_ulong,
-    pub cs: ::aya_bpf_cty::c_ulong,
-    pub eflags: ::aya_bpf_cty::c_ulong,
-    pub rsp: ::aya_bpf_cty::c_ulong,
-    pub ss: ::aya_bpf_cty::c_ulong,
-}
 pub type sa_family_t = ::aya_bpf_cty::c_ushort;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1114,6 +1097,11 @@ pub struct bpf_perf_event_data {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct linux_binprm {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct pt_regs {
     _unused: [u8; 0],
 }
 #[repr(C)]
@@ -1149,6 +1137,11 @@ pub struct tcp_request_sock {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct udp6_sock {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct unix_sock {
     _unused: [u8; 0],
 }
 #[repr(C)]
