@@ -228,14 +228,6 @@ pub const SO_TIMESTAMPING_NEW: u32 = 65;
 pub const SO_RCVTIMEO_NEW: u32 = 66;
 pub const SO_SNDTIMEO_NEW: u32 = 67;
 pub const SO_DETACH_REUSEPORT_BPF: u32 = 68;
-pub const SO_PREFER_BUSY_POLL: u32 = 69;
-pub const SO_BUSY_POLL_BUDGET: u32 = 70;
-pub const SO_NETNS_COOKIE: u32 = 71;
-pub const SO_TIMESTAMP: u32 = 29;
-pub const SO_TIMESTAMPNS: u32 = 35;
-pub const SO_TIMESTAMPING: u32 = 37;
-pub const SO_RCVTIMEO: u32 = 20;
-pub const SO_SNDTIMEO: u32 = 21;
 pub const TC_ACT_UNSPEC: i32 = -1;
 pub const TC_ACT_OK: u32 = 0;
 pub const TC_ACT_RECLASSIFY: u32 = 1;
@@ -302,6 +294,7 @@ pub mod bpf_map_type {
     pub const BPF_MAP_TYPE_RINGBUF: Type = 27;
     pub const BPF_MAP_TYPE_INODE_STORAGE: Type = 28;
     pub const BPF_MAP_TYPE_TASK_STORAGE: Type = 29;
+    pub const BPF_MAP_TYPE_BLOOM_FILTER: Type = 30;
 }
 pub const BPF_ANY: ::aya_bpf_cty::c_uint = 0;
 pub const BPF_NOEXIST: ::aya_bpf_cty::c_uint = 1;
@@ -345,10 +338,10 @@ pub const BPF_F_ZERO_CSUM_TX: ::aya_bpf_cty::c_uint = 2;
 pub const BPF_F_DONT_FRAGMENT: ::aya_bpf_cty::c_uint = 4;
 pub const BPF_F_SEQ_NUMBER: ::aya_bpf_cty::c_uint = 8;
 pub type _bindgen_ty_10 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_INDEX_MASK: ::aya_bpf_cty::c_ulong = 4294967295;
-pub const BPF_F_CURRENT_CPU: ::aya_bpf_cty::c_ulong = 4294967295;
-pub const BPF_F_CTXLEN_MASK: ::aya_bpf_cty::c_ulong = 4503595332403200;
-pub type _bindgen_ty_11 = ::aya_bpf_cty::c_ulong;
+pub const BPF_F_INDEX_MASK: ::aya_bpf_cty::c_ulonglong = 4294967295;
+pub const BPF_F_CURRENT_CPU: ::aya_bpf_cty::c_ulonglong = 4294967295;
+pub const BPF_F_CTXLEN_MASK: ::aya_bpf_cty::c_ulonglong = 4503595332403200;
+pub type _bindgen_ty_11 = ::aya_bpf_cty::c_ulonglong;
 pub const BPF_F_CURRENT_NETNS: ::aya_bpf_cty::c_int = -1;
 pub type _bindgen_ty_12 = ::aya_bpf_cty::c_int;
 pub const BPF_CSUM_LEVEL_QUERY: ::aya_bpf_cty::c_uint = 0;
@@ -439,6 +432,7 @@ pub struct __sk_buff {
     pub hwtstamp: __u64,
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union __sk_buff__bindgen_ty_1 {
     pub flow_keys: *mut bpf_flow_keys,
@@ -453,6 +447,7 @@ impl __sk_buff__bindgen_ty_1 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union __sk_buff__bindgen_ty_2 {
     pub sk: *mut bpf_sock,
@@ -618,6 +613,7 @@ pub struct sk_msg_md {
     pub __bindgen_anon_3: sk_msg_md__bindgen_ty_3,
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_msg_md__bindgen_ty_1 {
     pub data: *mut ::aya_bpf_cty::c_void,
@@ -632,6 +628,7 @@ impl sk_msg_md__bindgen_ty_1 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_msg_md__bindgen_ty_2 {
     pub data_end: *mut ::aya_bpf_cty::c_void,
@@ -646,6 +643,7 @@ impl sk_msg_md__bindgen_ty_2 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_msg_md__bindgen_ty_3 {
     pub sk: *mut bpf_sock,
@@ -673,6 +671,7 @@ pub struct sk_reuseport_md {
     pub __bindgen_anon_4: sk_reuseport_md__bindgen_ty_4,
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_1 {
     pub data: *mut ::aya_bpf_cty::c_void,
@@ -687,6 +686,7 @@ impl sk_reuseport_md__bindgen_ty_1 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_2 {
     pub data_end: *mut ::aya_bpf_cty::c_void,
@@ -701,6 +701,7 @@ impl sk_reuseport_md__bindgen_ty_2 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_3 {
     pub sk: *mut bpf_sock,
@@ -715,6 +716,7 @@ impl sk_reuseport_md__bindgen_ty_3 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_4 {
     pub migrating_sk: *mut bpf_sock,
@@ -745,6 +747,16 @@ pub struct bpf_map_info {
     pub btf_id: __u32,
     pub btf_key_type_id: __u32,
     pub btf_value_type_id: __u32,
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
+    pub map_extra: __u64,
+}
+impl bpf_map_info {
+    #[inline]
+    pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 4usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
+        __bindgen_bitfield_unit
+    }
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -761,6 +773,7 @@ pub struct bpf_sock_addr {
     pub __bindgen_anon_1: bpf_sock_addr__bindgen_ty_1,
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sock_addr__bindgen_ty_1 {
     pub sk: *mut bpf_sock,
@@ -826,6 +839,7 @@ pub union bpf_sock_ops__bindgen_ty_1 {
     pub replylong: [__u32; 4usize],
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sock_ops__bindgen_ty_2 {
     pub sk: *mut bpf_sock,
@@ -840,6 +854,7 @@ impl bpf_sock_ops__bindgen_ty_2 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sock_ops__bindgen_ty_3 {
     pub skb_data: *mut ::aya_bpf_cty::c_void,
@@ -854,6 +869,7 @@ impl bpf_sock_ops__bindgen_ty_3 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sock_ops__bindgen_ty_4 {
     pub skb_data_end: *mut ::aya_bpf_cty::c_void,
@@ -1077,27 +1093,7 @@ pub struct btf_ptr {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct pt_regs {
-    pub r15: ::aya_bpf_cty::c_ulong,
-    pub r14: ::aya_bpf_cty::c_ulong,
-    pub r13: ::aya_bpf_cty::c_ulong,
-    pub r12: ::aya_bpf_cty::c_ulong,
-    pub rbp: ::aya_bpf_cty::c_ulong,
-    pub rbx: ::aya_bpf_cty::c_ulong,
-    pub r11: ::aya_bpf_cty::c_ulong,
-    pub r10: ::aya_bpf_cty::c_ulong,
-    pub r9: ::aya_bpf_cty::c_ulong,
-    pub r8: ::aya_bpf_cty::c_ulong,
-    pub rax: ::aya_bpf_cty::c_ulong,
-    pub rcx: ::aya_bpf_cty::c_ulong,
-    pub rdx: ::aya_bpf_cty::c_ulong,
-    pub rsi: ::aya_bpf_cty::c_ulong,
-    pub rdi: ::aya_bpf_cty::c_ulong,
-    pub orig_rax: ::aya_bpf_cty::c_ulong,
-    pub rip: ::aya_bpf_cty::c_ulong,
-    pub cs: ::aya_bpf_cty::c_ulong,
-    pub eflags: ::aya_bpf_cty::c_ulong,
-    pub rsp: ::aya_bpf_cty::c_ulong,
-    pub ss: ::aya_bpf_cty::c_ulong,
+    pub uregs: [::aya_bpf_cty::c_long; 18usize],
 }
 pub type sa_family_t = ::aya_bpf_cty::c_ushort;
 #[repr(C)]
@@ -1149,6 +1145,11 @@ pub struct tcp_request_sock {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct udp6_sock {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct unix_sock {
     _unused: [u8; 0],
 }
 #[repr(C)]

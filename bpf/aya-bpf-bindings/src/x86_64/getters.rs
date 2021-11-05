@@ -590,6 +590,9 @@ impl bpf_map_info {
     pub fn btf_value_type_id(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.btf_value_type_id) }.ok()
     }
+    pub fn map_extra(&self) -> Option<__u64> {
+        unsafe { crate::bpf_probe_read(&self.map_extra) }.ok()
+    }
 }
 impl bpf_sock_addr {
     pub fn user_family(&self) -> Option<__u32> {
@@ -1143,6 +1146,7 @@ impl tcp_sock {}
 impl tcp_timewait_sock {}
 impl tcp_request_sock {}
 impl udp6_sock {}
+impl unix_sock {}
 impl task_struct {}
 impl path {}
 impl inode {}
