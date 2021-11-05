@@ -70,9 +70,27 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
     };
 
     for arch in Architecture::supported() {
-        let generated = dir.join("src").join(arch.to_string());
+        let mut bindgen = builder();
 
-        let bindings = builder()
+        // Set target triple. This will set the right flags (which you can see
+        // running clang -target=X  -E - -dM </dev/null)
+        let target = match arch {
+            Architecture::X86_64 => "x86_64-unknown-linux-gnu",
+            Architecture::ARMv7 => "armv7-unknown-linux-gnu",
+            Architecture::AArch64 => "aarch64-unknown-linux-gnu",
+        };
+        bindgen = bindgen.clang_args(&["-target", target]);
+
+        // Set the sysroot. This is needed to ensure that the correct arch
+        // specific headers are imported.
+        let sysroot = match arch {
+            Architecture::X86_64 => &opts.x86_64_sysroot,
+            Architecture::ARMv7 => &opts.armv7_sysroot,
+            Architecture::AArch64 => &opts.aarch64_sysroot,
+        };
+        bindgen = bindgen.clang_args(&["-I", &*sysroot.to_string_lossy()]);
+
+        let bindings = bindgen
             .generate()
             .map_err(|_| anyhow!("bindgen failed"))?
             .to_string();
@@ -84,6 +102,7 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
             tree.items[index] = Item::Verbatim(TokenStream::new())
         }
 
+        let generated = dir.join("src").join(arch.to_string());
         // write the bindings, with the original helpers removed
         write_to_file_fmt(
             &generated.join("bindings.rs"),
