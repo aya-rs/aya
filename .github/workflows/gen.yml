@@ -20,6 +20,11 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
+      - name: Install headers
+        run: |
+          apt -y update
+          apt -y install libc6-dev libc6-dev-{aarch64,armel}-cross
+
       - name: Run codegen
         run: |
           cargo xtask codegen --libbpf-dir ./libbpf

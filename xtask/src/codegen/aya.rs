@@ -157,25 +157,30 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
     for arch in Architecture::supported() {
         let mut bindgen = builder();
 
+        // Set target triple. This will set the right flags (which you can see
+        // running clang -target=X  -E - -dM </dev/null)
+        let target = match arch {
+            Architecture::X86_64 => "x86_64-unknown-linux-gnu",
+            Architecture::ARMv7 => "armv7-unknown-linux-gnu",
+            Architecture::AArch64 => "aarch64-unknown-linux-gnu",
+        };
+        bindgen = bindgen.clang_args(&["-target", target]);
+
+        // Set the sysroot. This is needed to ensure that the correct arch
+        // specific headers are imported.
+        let sysroot = match arch {
+            Architecture::X86_64 => &opts.x86_64_sysroot,
+            Architecture::ARMv7 => &opts.armv7_sysroot,
+            Architecture::AArch64 => &opts.aarch64_sysroot,
+        };
+        bindgen = bindgen.clang_args(&["-I", &*sysroot.to_string_lossy()]);
+
         for x in &types {
             bindgen = bindgen.allowlist_type(x);
         }
         for x in &vars {
             bindgen = bindgen.allowlist_var(x).constified_enum("BTF_KIND_.*");
         }
-
-        // FIXME: this stuff is probably debian/ubuntu specific
-        match arch {
-            Architecture::X86_64 => {
-                bindgen = bindgen.clang_args(&["-I", "/usr/include/x86_64-linux-gnu"]);
-            }
-            Architecture::ARMv7 => {
-                bindgen = bindgen.clang_args(&["-I", "/usr/arm-linux-gnueabi/include"]);
-            }
-            Architecture::AArch64 => {
-                bindgen = bindgen.clang_args(&["-I", "/usr/aarch64-linux-gnu/include"]);
-            }
-        };
 
         for x in &types {
             bindgen = bindgen.allowlist_type(x);

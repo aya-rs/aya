@@ -53,6 +53,17 @@ pub struct Options {
     #[structopt(long)]
     libbpf_dir: PathBuf,
 
+    // sysroot options. Default to ubuntu headers installed by the
+    // libc6-dev-{arm64,armel}-cross packages.
+    #[structopt(long, default_value = "/usr/include/x86_64-linux-gnu")]
+    x86_64_sysroot: PathBuf,
+
+    #[structopt(long, default_value = "/usr/aarch64-linux-gnu/include")]
+    aarch64_sysroot: PathBuf,
+
+    #[structopt(long, default_value = "/usr/arm-linux-gnueabi/include")]
+    armv7_sysroot: PathBuf,
+
     #[structopt(subcommand)]
     command: Option<Command>,
 }
