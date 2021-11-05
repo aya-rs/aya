@@ -590,6 +590,9 @@ impl bpf_map_info {
     pub fn btf_value_type_id(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.btf_value_type_id) }.ok()
     }
+    pub fn map_extra(&self) -> Option<__u64> {
+        unsafe { crate::bpf_probe_read(&self.map_extra) }.ok()
+    }
 }
 impl bpf_sock_addr {
     pub fn user_family(&self) -> Option<__u32> {
@@ -1062,68 +1065,8 @@ impl btf_ptr {
     }
 }
 impl pt_regs {
-    pub fn r15(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.r15) }.ok()
-    }
-    pub fn r14(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.r14) }.ok()
-    }
-    pub fn r13(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.r13) }.ok()
-    }
-    pub fn r12(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.r12) }.ok()
-    }
-    pub fn rbp(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.rbp) }.ok()
-    }
-    pub fn rbx(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.rbx) }.ok()
-    }
-    pub fn r11(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.r11) }.ok()
-    }
-    pub fn r10(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.r10) }.ok()
-    }
-    pub fn r9(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.r9) }.ok()
-    }
-    pub fn r8(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.r8) }.ok()
-    }
-    pub fn rax(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.rax) }.ok()
-    }
-    pub fn rcx(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.rcx) }.ok()
-    }
-    pub fn rdx(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.rdx) }.ok()
-    }
-    pub fn rsi(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.rsi) }.ok()
-    }
-    pub fn rdi(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.rdi) }.ok()
-    }
-    pub fn orig_rax(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.orig_rax) }.ok()
-    }
-    pub fn rip(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.rip) }.ok()
-    }
-    pub fn cs(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.cs) }.ok()
-    }
-    pub fn eflags(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.eflags) }.ok()
-    }
-    pub fn rsp(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.rsp) }.ok()
-    }
-    pub fn ss(&self) -> Option<::aya_bpf_cty::c_ulong> {
-        unsafe { crate::bpf_probe_read(&self.ss) }.ok()
+    pub fn uregs(&self) -> Option<[::aya_bpf_cty::c_long; 18usize]> {
+        unsafe { crate::bpf_probe_read(&self.uregs) }.ok()
     }
 }
 impl sockaddr {
@@ -1143,6 +1086,7 @@ impl tcp_sock {}
 impl tcp_timewait_sock {}
 impl tcp_request_sock {}
 impl udp6_sock {}
+impl unix_sock {}
 impl task_struct {}
 impl path {}
 impl inode {}
