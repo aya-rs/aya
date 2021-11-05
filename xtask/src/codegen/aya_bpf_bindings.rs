@@ -49,6 +49,7 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
             "bpf_map_.*",
             "sk_action",
             "pt_regs",
+            "user_pt_regs",
             "xdp_action",
             "bpf_adj_room_mode",
         ];
