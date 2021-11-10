@@ -2,7 +2,7 @@ mod expand;
 
 use expand::{
     Args, BtfTracePoint, Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint, SchedClassifier,
-    SkMsg, SockOps, TracePoint, Xdp,
+    SkMsg, SkSkb, SkSkbKind, SockOps, TracePoint, Xdp,
 };
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemFn, ItemStatic};
@@ -244,6 +244,76 @@ pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let item = parse_macro_input!(item as ItemFn);
 
     BtfTracePoint::from_syn(args, item)
+        .and_then(|u| u.expand())
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+/// Marks a function as a SK_SKB Stream Parser eBPF program that can be attached
+/// to a SockMap
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.14
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{macros::stream_parser, programs::SkSkbContext};
+///
+///
+///#[stream_parser]
+///fn stream_parser(ctx: SkSkbContext) -> u32 {
+///    match { try_stream_parser(ctx) } {
+///        Ok(ret) => ret,
+///        Err(ret) => ret,
+///    }
+///}
+///
+///fn try_stream_parser(ctx: SkSkbContext) -> Result<u32, u32> {
+///    Ok(ctx.len())
+///}
+/// ```
+#[proc_macro_attribute]
+pub fn stream_parser(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    sk_skb(SkSkbKind::StreamParser, attrs, item)
+}
+
+/// Marks a function as a SK_SKB Stream Verdict eBPF program that can be attached
+/// to a SockMap
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.14
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{macros::stream_verdict, programs::SkSkbContext, bindings::sk_action};
+///
+///
+///#[stream_verdict]
+///fn stream_verdict(ctx: SkSkbContext) -> u32 {
+///    match { try_stream_verdict(ctx) } {
+///        Ok(ret) => ret,
+///        Err(ret) => ret,
+///    }
+///}
+///
+///fn try_stream_verdict(_ctx: SkSkbContext) -> Result<u32, u32> {
+///    Ok(sk_action::SK_PASS)
+///}
+/// ```
+#[proc_macro_attribute]
+pub fn stream_verdict(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    sk_skb(SkSkbKind::StreamVerdict, attrs, item)
+}
+
+fn sk_skb(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attrs as Args);
+    let item = parse_macro_input!(item as ItemFn);
+
+    SkSkb::from_syn(kind, args, item)
         .and_then(|u| u.expand())
         .unwrap_or_else(|err| err.to_compile_error())
         .into()

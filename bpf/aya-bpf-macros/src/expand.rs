@@ -441,3 +441,53 @@ impl BtfTracePoint {
         })
     }
 }
+
+#[allow(clippy::enum_variant_names)]
+#[derive(Debug, Copy, Clone)]
+pub enum SkSkbKind {
+    StreamVerdict,
+    StreamParser,
+}
+
+impl std::fmt::Display for SkSkbKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use SkSkbKind::*;
+        match self {
+            StreamVerdict => write!(f, "stream_verdict"),
+            StreamParser => write!(f, "stream_parser"),
+        }
+    }
+}
+
+pub struct SkSkb {
+    kind: SkSkbKind,
+    item: ItemFn,
+    name: Option<String>,
+}
+
+impl SkSkb {
+    pub fn from_syn(kind: SkSkbKind, mut args: Args, item: ItemFn) -> Result<SkSkb> {
+        let name = pop_arg(&mut args, "name");
+        Ok(SkSkb { item, kind, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let kind = &self.kind;
+        let section_name = if let Some(name) = &self.name {
+            format!("sk_skb/{}/{}", kind, name)
+        } else {
+            format!("sk_skb/{}", kind)
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> u32 {
+                return #fn_name(::aya_bpf::programs::SkSkbContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
