@@ -4,9 +4,9 @@ use aya_bpf_cty::c_void;
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKMAP, bpf_sock_ops},
-    helpers::{bpf_msg_redirect_map, bpf_sock_map_update},
+    helpers::{bpf_msg_redirect_map, bpf_sk_redirect_map, bpf_sock_map_update},
     maps::PinningType,
-    programs::SkMsgContext,
+    programs::{SkMsgContext, SkSkbContext},
     BpfContext,
 };
 
@@ -63,8 +63,17 @@ impl SockMap {
         }
     }
 
-    pub unsafe fn redirect(&mut self, ctx: &SkMsgContext, index: u32, flags: u64) -> i64 {
+    pub unsafe fn redirect_msg(&mut self, ctx: &SkMsgContext, index: u32, flags: u64) -> i64 {
         bpf_msg_redirect_map(
+            ctx.as_ptr() as *mut _,
+            &mut self.def as *mut _ as *mut _,
+            index,
+            flags,
+        )
+    }
+
+    pub unsafe fn redirect_skb(&mut self, ctx: &SkSkbContext, index: u32, flags: u64) -> i64 {
+        bpf_sk_redirect_map(
             ctx.as_ptr() as *mut _,
             &mut self.def as *mut _ as *mut _,
             index,
