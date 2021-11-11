@@ -146,6 +146,15 @@ impl FromStr for ProgramSection {
             }
             "socket_filter" => SocketFilter { name },
             "sk_msg" => SkMsg { name },
+            "sk_skb" => match &*name {
+                "stream_parser" => SkSkbStreamParser { name },
+                "stream_verdict" => SkSkbStreamVerdict { name },
+                _ => {
+                    return Err(ParseError::InvalidProgramSection {
+                        section: section.to_owned(),
+                    })
+                }
+            },
             "sk_skb/stream_parser" => SkSkbStreamParser { name },
             "sk_skb/stream_verdict" => SkSkbStreamVerdict { name },
             "sockops" => SockOps { name },
@@ -1068,6 +1077,43 @@ mod tests {
             obj.programs.get("foo"),
             Some(Program {
                 section: ProgramSection::BtfTracePoint { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_skskb_unnamed() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section("sk_skb/stream_parser", bytes_of(&fake_ins()))),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("stream_parser"),
+            Some(Program {
+                section: ProgramSection::SkSkbStreamParser { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_skskb_named() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                "sk_skb/stream_parser/my_parser",
+                bytes_of(&fake_ins())
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("my_parser"),
+            Some(Program {
+                section: ProgramSection::SkSkbStreamParser { .. },
                 ..
             })
         );
