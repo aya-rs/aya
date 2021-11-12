@@ -1,13 +1,11 @@
 mod expand;
 
 use expand::{
-    Args, BtfTracePoint, Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint, SchedClassifier,
-    SkMsg, SkSkb, SkSkbKind, SockOps, TracePoint, Xdp,
+    Args, BtfTracePoint, CgroupSkb, Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint,
+    SchedClassifier, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, Xdp,
 };
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemFn, ItemStatic};
-
-use crate::expand::CgroupSkb;
 
 #[proc_macro_attribute]
 pub fn map(attrs: TokenStream, item: TokenStream) -> TokenStream {
@@ -314,6 +312,34 @@ fn sk_skb(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> TokenStream
     let item = parse_macro_input!(item as ItemFn);
 
     SkSkb::from_syn(kind, args, item)
+        .and_then(|u| u.expand())
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+/// Marks a function as a eBPF Socket Filter program that can be attached to
+/// a socket.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 3.19
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{macros::socket_filter, programs::SkSkbContext};
+///
+/// #[socket_filter(name = "accept_all")]
+/// pub fn accept_all(_ctx: SkSkbContext) -> i64 {
+///     return 0
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attrs as Args);
+    let item = parse_macro_input!(item as ItemFn);
+
+    SocketFilter::from_syn(args, item)
         .and_then(|u| u.expand())
         .unwrap_or_else(|err| err.to_compile_error())
         .into()

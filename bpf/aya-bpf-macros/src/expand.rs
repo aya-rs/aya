@@ -491,3 +491,35 @@ impl SkSkb {
         })
     }
 }
+
+pub struct SocketFilter {
+    item: ItemFn,
+    name: Option<String>,
+}
+
+impl SocketFilter {
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<SocketFilter> {
+        let name = name_arg(&mut args)?;
+
+        Ok(SocketFilter { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = if let Some(name) = &self.name {
+            format!("socket/{}", name)
+        } else {
+            "socket".to_owned()
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i64 {
+                return #fn_name(::aya_bpf::programs::SkSkbContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
