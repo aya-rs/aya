@@ -54,6 +54,42 @@ pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
     Ok(v.assume_init())
 }
 
+/// Read bytes from the pointer `src` into the provided destination buffer.
+///
+/// Generally speaking, the more specific [`bpf_probe_read_user_buf`] and
+/// [`bpf_probe_read_kernel_buf`] should be preferred over this function.
+///
+/// # Examples
+///
+/// ```no_run
+/// # #![allow(dead_code)]
+/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_buf};
+/// # fn try_test() -> Result<(), c_long> {
+/// # let ptr: *const c_int = 0 as _;
+/// let mut buf = [0u8; 16];
+/// unsafe { bpf_probe_read_buf(ptr, &mut buf)? };
+///
+/// # Ok::<(), c_long>(())
+/// # }
+/// ```
+///
+/// # Errors
+///
+/// On failure, this function returns a negative value wrapped in an `Err`.
+#[inline]
+pub unsafe fn bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c_long> {
+    let ret = gen::bpf_probe_read(
+        dst.as_mut_ptr() as *mut c_void,
+        dst.len() as u32,
+        src as *const c_void,
+    );
+    if ret < 0 {
+        return Err(ret);
+    }
+
+    Ok(())
+}
+
 /// Read bytes stored at the _user space_ pointer `src` and store them as a `T`.
 ///
 /// Returns a bitwise copy of `mem::size_of::<T>()` bytes stored at the user space address
@@ -91,6 +127,40 @@ pub unsafe fn bpf_probe_read_user<T>(src: *const T) -> Result<T, c_long> {
     Ok(v.assume_init())
 }
 
+/// Read bytes from the _user space_ pointer `src` into the provided destination
+/// buffer.
+///
+/// # Examples
+///
+/// ```no_run
+/// # #![allow(dead_code)]
+/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_user_buf};
+/// # fn try_test() -> Result<(), c_long> {
+/// # let user_ptr: *const c_int = 0 as _;
+/// let mut buf = [0u8; 16];
+/// unsafe { bpf_probe_read_user_buf(user_ptr, &mut buf)? };
+///
+/// # Ok::<(), c_long>(())
+/// # }
+/// ```
+///
+/// # Errors
+///
+/// On failure, this function returns a negative value wrapped in an `Err`.
+#[inline]
+pub unsafe fn bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c_long> {
+    let ret = gen::bpf_probe_read_user(
+        dst.as_mut_ptr() as *mut c_void,
+        dst.len() as u32,
+        src as *const c_void,
+    );
+    if ret < 0 {
+        return Err(ret);
+    }
+
+    Ok(())
+}
+
 /// Read bytes stored at the _kernel space_ pointer `src` and store them as a `T`.
 ///
 /// Returns a bitwise copy of `mem::size_of::<T>()` bytes stored at the kernel space address
@@ -126,6 +196,40 @@ pub unsafe fn bpf_probe_read_kernel<T>(src: *const T) -> Result<T, c_long> {
     }
 
     Ok(v.assume_init())
+}
+
+/// Read bytes from the _kernel space_ pointer `src` into the provided destination
+/// buffer.
+///
+/// # Examples
+///
+/// ```no_run
+/// # #![allow(dead_code)]
+/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_kernel_buf};
+/// # fn try_test() -> Result<(), c_long> {
+/// # let kernel_ptr: *const c_int = 0 as _;
+/// let mut buf = [0u8; 16];
+/// unsafe { bpf_probe_read_kernel_buf(kernel_ptr, &mut buf)? };
+///
+/// # Ok::<(), c_long>(())
+/// # }
+/// ```
+///
+/// # Errors
+///
+/// On failure, this function returns a negative value wrapped in an `Err`.
+#[inline]
+pub unsafe fn bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c_long> {
+    let ret = gen::bpf_probe_read_kernel(
+        dst.as_mut_ptr() as *mut c_void,
+        dst.len() as u32,
+        src as *const c_void,
+    );
+    if ret < 0 {
+        return Err(ret);
+    }
+
+    Ok(())
 }
 
 /// Read a null-terminated string stored at `src` into `dest`.
