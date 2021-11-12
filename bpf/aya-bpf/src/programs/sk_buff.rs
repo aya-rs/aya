@@ -11,13 +11,13 @@ use aya_bpf_cty::c_long;
 
 use crate::{bindings::__sk_buff, BpfContext};
 
-pub struct SkSkbContext {
+pub struct SkBuffContext {
     skb: *mut __sk_buff,
 }
 
-impl SkSkbContext {
-    pub fn new(skb: *mut __sk_buff) -> SkSkbContext {
-        SkSkbContext { skb }
+impl SkBuffContext {
+    pub fn new(skb: *mut __sk_buff) -> SkBuffContext {
+        SkBuffContext { skb }
     }
 
     #[allow(clippy::len_without_is_empty)]
@@ -144,7 +144,7 @@ impl SkSkbContext {
     }
 }
 
-impl BpfContext for SkSkbContext {
+impl BpfContext for SkBuffContext {
     fn as_ptr(&self) -> *mut c_void {
         self.skb as *mut _
     }

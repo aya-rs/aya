@@ -6,7 +6,7 @@ use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKHASH, bpf_sock_ops},
     helpers::{bpf_msg_redirect_hash, bpf_sk_redirect_hash, bpf_sock_hash_update},
     maps::PinningType,
-    programs::{SkMsgContext, SkSkbContext},
+    programs::{SkBuffContext, SkMsgContext},
     BpfContext,
 };
 
@@ -75,7 +75,7 @@ impl<K> SockHash<K> {
         )
     }
 
-    pub unsafe fn redirect_skb(&mut self, ctx: &SkSkbContext, key: &mut K, flags: u64) -> i64 {
+    pub unsafe fn redirect_skb(&mut self, ctx: &SkBuffContext, key: &mut K, flags: u64) -> i64 {
         bpf_sk_redirect_hash(
             ctx.as_ptr() as *mut _,
             &mut self.def as *mut _ as *mut _,
