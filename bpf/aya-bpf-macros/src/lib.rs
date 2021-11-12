@@ -257,18 +257,18 @@ pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{macros::stream_parser, programs::SkSkbContext};
+/// use aya_bpf::{macros::stream_parser, programs::SkBuffContext};
 ///
 ///
 ///#[stream_parser]
-///fn stream_parser(ctx: SkSkbContext) -> u32 {
+///fn stream_parser(ctx: SkBuffContext) -> u32 {
 ///    match { try_stream_parser(ctx) } {
 ///        Ok(ret) => ret,
 ///        Err(ret) => ret,
 ///    }
 ///}
 ///
-///fn try_stream_parser(ctx: SkSkbContext) -> Result<u32, u32> {
+///fn try_stream_parser(ctx: SkBuffContext) -> Result<u32, u32> {
 ///    Ok(ctx.len())
 ///}
 /// ```
@@ -287,18 +287,18 @@ pub fn stream_parser(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{macros::stream_verdict, programs::SkSkbContext, bindings::sk_action};
+/// use aya_bpf::{macros::stream_verdict, programs::SkBuffContext, bindings::sk_action};
 ///
 ///
 ///#[stream_verdict]
-///fn stream_verdict(ctx: SkSkbContext) -> u32 {
+///fn stream_verdict(ctx: SkBuffContext) -> u32 {
 ///    match { try_stream_verdict(ctx) } {
 ///        Ok(ret) => ret,
 ///        Err(ret) => ret,
 ///    }
 ///}
 ///
-///fn try_stream_verdict(_ctx: SkSkbContext) -> Result<u32, u32> {
+///fn try_stream_verdict(_ctx: SkBuffContext) -> Result<u32, u32> {
 ///    Ok(sk_action::SK_PASS)
 ///}
 /// ```
@@ -327,10 +327,10 @@ fn sk_skb(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> TokenStream
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{macros::socket_filter, programs::SkSkbContext};
+/// use aya_bpf::{macros::socket_filter, programs::SkBuffContext};
 ///
 /// #[socket_filter(name = "accept_all")]
-/// pub fn accept_all(_ctx: SkSkbContext) -> i64 {
+/// pub fn accept_all(_ctx: SkBuffContext) -> i64 {
 ///     return 0
 /// }
 /// ```

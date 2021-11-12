@@ -205,7 +205,7 @@ impl SchedClassifier {
             #[no_mangle]
             #[link_section = #section_name]
             fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return #fn_name(::aya_bpf::programs::SkSkbContext::new(ctx));
+                return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
 
                 #item
             }
@@ -244,7 +244,7 @@ impl CgroupSkb {
             #[no_mangle]
             #[link_section = #section_name]
             fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return #fn_name(::aya_bpf::programs::SkSkbContext::new(ctx));
+                return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
 
                 #item
             }
@@ -484,7 +484,7 @@ impl SkSkb {
             #[no_mangle]
             #[link_section = #section_name]
             fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> u32 {
-                return #fn_name(::aya_bpf::programs::SkSkbContext::new(ctx));
+                return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
 
                 #item
             }
@@ -516,7 +516,7 @@ impl SocketFilter {
             #[no_mangle]
             #[link_section = #section_name]
             fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i64 {
-                return #fn_name(::aya_bpf::programs::SkSkbContext::new(ctx));
+                return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
 
                 #item
             }
