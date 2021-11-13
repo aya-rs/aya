@@ -65,7 +65,7 @@ pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
 /// # #![allow(dead_code)]
 /// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_buf};
 /// # fn try_test() -> Result<(), c_long> {
-/// # let ptr: *const c_int = 0 as _;
+/// # let ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
 /// unsafe { bpf_probe_read_buf(ptr, &mut buf)? };
 ///
@@ -136,7 +136,7 @@ pub unsafe fn bpf_probe_read_user<T>(src: *const T) -> Result<T, c_long> {
 /// # #![allow(dead_code)]
 /// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_user_buf};
 /// # fn try_test() -> Result<(), c_long> {
-/// # let user_ptr: *const c_int = 0 as _;
+/// # let user_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
 /// unsafe { bpf_probe_read_user_buf(user_ptr, &mut buf)? };
 ///
@@ -207,7 +207,7 @@ pub unsafe fn bpf_probe_read_kernel<T>(src: *const T) -> Result<T, c_long> {
 /// # #![allow(dead_code)]
 /// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_kernel_buf};
 /// # fn try_test() -> Result<(), c_long> {
-/// # let kernel_ptr: *const c_int = 0 as _;
+/// # let kernel_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
 /// unsafe { bpf_probe_read_kernel_buf(kernel_ptr, &mut buf)? };
 ///
