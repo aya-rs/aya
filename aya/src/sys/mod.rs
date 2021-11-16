@@ -75,6 +75,12 @@ unsafe fn syscall_impl(call: Syscall) -> SysResult {
     Ok(ret)
 }
 
+#[cfg(test)]
+pub(crate) fn kernel_version() -> Result<(u32, u32, u32), ()> {
+    return Ok((0xff, 0xff, 0xff))
+}
+
+#[cfg(not(test))]
 pub(crate) fn kernel_version() -> Result<(u32, u32, u32), ()> {
     unsafe {
         let mut v = mem::zeroed::<utsname>();
