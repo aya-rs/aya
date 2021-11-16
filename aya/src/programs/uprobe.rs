@@ -17,7 +17,7 @@ use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_KPROBE,
     programs::{
         load_program,
-        probe::{attach, ProbeKind},
+        probe::{attach, detach, ProbeKind},
         LinkRef, ProgramData, ProgramError,
     },
 };
@@ -125,6 +125,10 @@ impl UProbe {
         };
 
         attach(&mut self.data, self.kind, &path, sym_offset + offset, pid)
+    }
+
+    pub fn detach(&mut self, fn_name: &str) -> Result<(), ProgramError> {
+        detach(&mut self.data, self.kind, fn_name)
     }
 }
 
