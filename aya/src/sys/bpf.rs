@@ -14,7 +14,7 @@ use crate::{
     generated::{bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn, bpf_prog_info, bpf_prog_type},
     maps::PerCpuValues,
     programs::VerifierLog,
-    sys::SysResult,
+    sys::{kernel_version, SysResult},
     Pod, BPF_OBJ_NAME_LEN,
 };
 
@@ -30,10 +30,16 @@ pub(crate) fn bpf_create_map(name: &CStr, def: &bpf_map_def) -> SysResult {
     u.max_entries = def.max_entries;
     u.map_flags = def.map_flags;
 
-    // u.map_name is 16 bytes max and must be NULL terminated
-    let name_len = cmp::min(name.to_bytes().len(), BPF_OBJ_NAME_LEN - 1);
-    u.map_name[..name_len]
-        .copy_from_slice(unsafe { slice::from_raw_parts(name.as_ptr(), name_len) });
+    // https://github.com/torvalds/linux/commit/ad5b177bd73f5107d97c36f56395c4281fb6f089
+    // The map name was added as a parameter in kernel 4.15+ so we skip adding it on
+    // older kernels for compatibility
+    let k_ver = kernel_version().unwrap();
+    if k_ver >= (4, 15, 0) {
+        // u.map_name is 16 bytes max and must be NULL terminated
+        let name_len = cmp::min(name.to_bytes().len(), BPF_OBJ_NAME_LEN - 1);
+        u.map_name[..name_len]
+            .copy_from_slice(unsafe { slice::from_raw_parts(name.as_ptr(), name_len) });
+    }
 
     sys_bpf(bpf_cmd::BPF_MAP_CREATE, &attr)
 }
