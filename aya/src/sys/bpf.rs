@@ -32,7 +32,7 @@ pub(crate) fn bpf_create_map(name: &CStr, def: &bpf_map_def) -> SysResult {
 
     // https://github.com/torvalds/linux/commit/ad5b177bd73f5107d97c36f56395c4281fb6f089
     // The map name was added as a parameter in kernel 4.15+ so we skip adding it on
-    // older kernels for compatibility 
+    // older kernels for compatibility
     let k_ver = kernel_version().unwrap();
     if k_ver >= (4, 15, 0) {
         // u.map_name is 16 bytes max and must be NULL terminated
