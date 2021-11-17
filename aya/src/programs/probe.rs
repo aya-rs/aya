@@ -212,7 +212,7 @@ fn create_probe_event(
 
 fn find_in_sys_kernel_debug_tracing_events(
     events_file_name: &str,
-    event_name: &str,
+    event_alias: &str,
 ) -> Result<bool, (String, io::Error)> {
     use std::io::BufRead;
 
@@ -222,12 +222,12 @@ fn find_in_sys_kernel_debug_tracing_events(
     Ok(io::BufReader::new(events_file)
         .lines()
         .map(|line| line.unwrap())
-        .any(|line| line == event_name))
+        .any(|line| line.contains(event_alias)))
 }
 
 fn delete_in_sys_kernel_debug_tracing_events(
     events_file_name: &str,
-    event_name: &str,
+    event_alias: &str,
 ) -> Result<(), (String, io::Error)> {
     let mut events_file = fs::OpenOptions::new()
         .append(true)
@@ -235,7 +235,7 @@ fn delete_in_sys_kernel_debug_tracing_events(
         .map_err(|e| (events_file_name.to_string(), e))?;
 
     events_file
-        .write_fmt(format_args!("-:{}", event_name))
+        .write_fmt(format_args!("-:{}", event_alias))
         .map_err(|e| (events_file_name.to_string(), e))?;
 
     Ok(())
