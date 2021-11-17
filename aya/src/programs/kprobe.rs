@@ -6,7 +6,7 @@ use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_KPROBE,
     programs::{
         load_program,
-        probe::{attach, detach, ProbeKind},
+        probe::{attach, ProbeKind},
         LinkRef, ProgramData, ProgramError,
     },
 };
@@ -72,10 +72,6 @@ impl KProbe {
     /// target function.
     pub fn attach(&mut self, fn_name: &str, offset: u64) -> Result<LinkRef, ProgramError> {
         attach(&mut self.data, self.kind, fn_name, offset, None)
-    }
-
-    pub fn detach(&mut self, fn_name: &str) -> Result<(), ProgramError> {
-        detach(&mut self.data, self.kind, fn_name)
     }
 }
 
