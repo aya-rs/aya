@@ -151,9 +151,8 @@ fn create_as_trace_point(
         ),
     };
 
-    // TODO: pid and cpu handling
     let tpid = read_sys_fs_trace_point_id(event_type, &event_alias)?;
-    let fd = perf_event_open_trace_point(tpid).map_err(|(_code, io_error)| {
+    let fd = perf_event_open_trace_point(tpid, pid).map_err(|(_code, io_error)| {
         ProgramError::SyscallError {
             call: "perf_event_open".to_owned(),
             io_error,
