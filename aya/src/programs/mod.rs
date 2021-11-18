@@ -88,7 +88,7 @@ pub use xdp::{Xdp, XdpError, XdpFlags};
 use crate::{
     generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
     maps::MapError,
-    obj::{self, Function},
+    obj::{self, Function, KernelVersion},
     sys::{bpf_load_program, bpf_pin_object, bpf_prog_detach, bpf_prog_query, BpfLoadProgramAttrs},
 };
 
@@ -397,6 +397,14 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
         ..
     } = obj;
 
+    let target_kernel_version = match *kernel_version {
+        KernelVersion::Any => {
+            let (major, minor, patch) = crate::sys::kernel_version().unwrap();
+            (major << 16) + (minor << 8) + patch
+        }
+        _ => (*kernel_version).into(),
+    };
+
     let mut log_buf = VerifierLog::new();
     let mut retries = 0;
     let mut ret;
@@ -405,7 +413,7 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
             ty: prog_type,
             insns: instructions,
             license,
-            kernel_version: (*kernel_version).into(),
+            kernel_version: target_kernel_version,
             expected_attach_type: data.expected_attach_type,
             attach_btf_obj_fd: data.attach_btf_obj_fd,
             attach_btf_id: data.attach_btf_id,
