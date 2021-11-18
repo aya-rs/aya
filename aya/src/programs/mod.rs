@@ -400,9 +400,9 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
     let target_kernel_version = match *kernel_version {
         KernelVersion::Any => {
             let (major, minor, patch) = crate::sys::kernel_version().unwrap();
-            KernelVersion::Version((major << 16) + (minor << 8) + patch)
+            (major << 16) + (minor << 8) + patch
         }
-        _ => *kernel_version,
+        _ => (*kernel_version).into(),
     };
 
     let mut log_buf = VerifierLog::new();
@@ -413,7 +413,7 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
             ty: prog_type,
             insns: instructions,
             license,
-            kernel_version: target_kernel_version.into(),
+            kernel_version: target_kernel_version,
             expected_attach_type: data.expected_attach_type,
             attach_btf_obj_fd: data.attach_btf_obj_fd,
             attach_btf_id: data.attach_btf_id,
