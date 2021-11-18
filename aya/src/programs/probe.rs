@@ -183,24 +183,37 @@ fn create_probe_event(
         .open(&events_file_name)
         .map_err(|e| (events_file_name.clone(), e))?;
 
-    // FIXME: add offset
     let p = match kind {
-        KProbe => format!(
-            "{}:{}s/{} {}",
-            probe_type_prefix, event_type, event_alias, fn_name
-        ),
+        KProbe => {
+            if offset > 0 {
+                format!(
+                    "{}:{}s/{} {}+{}",
+                    probe_type_prefix, event_type, event_alias, fn_name, offset
+                )
+            } else {
+                format!(
+                    "{}:{}s/{} {}",
+                    probe_type_prefix, event_type, event_alias, fn_name
+                )
+            }
+        }
         KRetProbe => format!(
             "{}:{}s/{} {}",
             probe_type_prefix, event_type, event_alias, fn_name
         ),
-        UProbe => format!(
-            "{}:{}s/{} {}",
-            probe_type_prefix, event_type, event_alias, fn_name
-        ),
-        URetProbe => format!(
-            "{}:{}s/{} {}",
-            probe_type_prefix, event_type, event_alias, fn_name
-        ),
+        UProbe | URetProbe => {
+            if offset > 0 {
+                format!(
+                    "{}:{}s/{} {}:{:#x}",
+                    probe_type_prefix, event_type, event_alias, fn_name, offset
+                )
+            } else {
+                format!(
+                    "{}:{}s/{} {}",
+                    probe_type_prefix, event_type, event_alias, fn_name
+                )
+            }
+        }
     };
 
     events_file
