@@ -42,6 +42,24 @@ impl Drop for PerfLink {
 }
 
 pub(crate) fn perf_attach(data: &mut ProgramData, fd: RawFd) -> Result<LinkRef, ProgramError> {
+    perf_attach_either(data, fd, None, None)
+}
+
+pub(crate) fn perf_attach_debugfs(
+    data: &mut ProgramData,
+    fd: RawFd,
+    probe_kind: ProbeKind,
+    event_alias: String,
+) -> Result<LinkRef, ProgramError> {
+    perf_attach_either(data, fd, Some(probe_kind), Some(event_alias))
+}
+
+fn perf_attach_either(
+    data: &mut ProgramData,
+    fd: RawFd,
+    probe_kind: Option<ProbeKind>,
+    event_alias: Option<String>,
+) -> Result<LinkRef, ProgramError> {
     let prog_fd = data.fd_or_err()?;
     perf_event_ioctl(fd, PERF_EVENT_IOC_SET_BPF, prog_fd).map_err(|(_, io_error)| {
         ProgramError::SyscallError {
@@ -58,22 +76,7 @@ pub(crate) fn perf_attach(data: &mut ProgramData, fd: RawFd) -> Result<LinkRef, 
 
     Ok(data.link(PerfLink {
         perf_fd: Some(fd),
-        probe_kind: None,
-        event_alias: None,
-    }))
-}
-
-pub(crate) fn perf_attach_debugfs(
-    data: &mut ProgramData,
-    fd: RawFd,
-    probe_kind: ProbeKind,
-    event_alias: String,
-) -> Result<LinkRef, ProgramError> {
-    perf_attach(data, fd)?;
-
-    Ok(data.link(PerfLink {
-        perf_fd: Some(fd),
-        probe_kind: Some(probe_kind),
-        event_alias: Some(event_alias),
+        probe_kind,
+        event_alias,
     }))
 }

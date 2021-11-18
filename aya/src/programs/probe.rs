@@ -234,8 +234,10 @@ fn delete_in_sys_kernel_debug_tracing_events(
         .open(events_file_name)
         .map_err(|e| (events_file_name.to_string(), e))?;
 
+    let rm = format!("-:{}", event_alias);
+
     events_file
-        .write_fmt(format_args!("-:{}", event_alias))
+        .write_all(rm.as_bytes())
         .map_err(|e| (events_file_name.to_string(), e))?;
 
     Ok(())
