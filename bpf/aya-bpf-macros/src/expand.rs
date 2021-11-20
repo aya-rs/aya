@@ -528,3 +528,78 @@ impl SocketFilter {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use syn::parse_quote;
+
+    use super::*;
+
+    #[test]
+    fn cgroup_skb_with_attach_and_name() {
+        let prog = CgroupSkb::from_syn(
+            parse_quote!(name = "foo", attach = "ingress"),
+            parse_quote!(
+                fn foo(ctx: SkBuffContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream
+            .to_string()
+            .contains("[link_section = \"cgroup_skb/ingress/foo\"]"));
+    }
+
+    #[test]
+    fn cgroup_skb_with_name() {
+        let prog = CgroupSkb::from_syn(
+            parse_quote!(name = "foo"),
+            parse_quote!(
+                fn foo(ctx: SkBuffContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream
+            .to_string()
+            .contains("[link_section = \"cgroup/skb/foo\"]"));
+    }
+
+    #[test]
+    fn cgroup_skb_no_name() {
+        let prog = CgroupSkb::from_syn(
+            parse_quote!(),
+            parse_quote!(
+                fn foo(ctx: SkBuffContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream
+            .to_string()
+            .contains("[link_section = \"cgroup/skb\"]"));
+    }
+
+    #[test]
+    fn cgroup_skb_with_attach_no_name() {
+        let prog = CgroupSkb::from_syn(
+            parse_quote!(attach = "egress"),
+            parse_quote!(
+                fn foo(ctx: SkBuffContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream
+            .to_string()
+            .contains("[link_section = \"cgroup_skb/egress\"]"));
+    }
+}
