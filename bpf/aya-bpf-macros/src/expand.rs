@@ -215,14 +215,14 @@ impl SchedClassifier {
 
 pub struct CgroupSkb {
     item: ItemFn,
-    expected_attach_type: String,
+    expected_attach_type: Option<String>,
     name: Option<String>,
 }
 
 impl CgroupSkb {
     pub fn from_syn(mut args: Args, item: ItemFn) -> Result<CgroupSkb> {
         let name = pop_arg(&mut args, "name");
-        let expected_attach_type = pop_arg(&mut args, "attach").unwrap_or_else(|| "skb".to_owned());
+        let expected_attach_type = pop_arg(&mut args, "attach");
 
         Ok(CgroupSkb {
             item,
@@ -232,11 +232,16 @@ impl CgroupSkb {
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
-        let attach = &self.expected_attach_type;
-        let section_name = if let Some(name) = &self.name {
-            format!("cgroup_skb/{}/{}", attach, name)
+        let section_name = if let Some(attach) = &self.expected_attach_type {
+            if let Some(name) = &self.name {
+                format!("cgroup_skb/{}/{}", attach, name)
+            } else {
+                format!("cgroup_skb/{}", attach)
+            }
+        } else if let Some(name) = &self.name {
+            format!("cgroup/skb/{}", name)
         } else {
-            format!("cgroup_skb/{}", attach)
+            ("cgroup/skb").to_owned()
         };
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
@@ -521,5 +526,80 @@ impl SocketFilter {
                 #item
             }
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use syn::parse_quote;
+
+    use super::*;
+
+    #[test]
+    fn cgroup_skb_with_attach_and_name() {
+        let prog = CgroupSkb::from_syn(
+            parse_quote!(name = "foo", attach = "ingress"),
+            parse_quote!(
+                fn foo(ctx: SkBuffContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream
+            .to_string()
+            .contains("[link_section = \"cgroup_skb/ingress/foo\"]"));
+    }
+
+    #[test]
+    fn cgroup_skb_with_name() {
+        let prog = CgroupSkb::from_syn(
+            parse_quote!(name = "foo"),
+            parse_quote!(
+                fn foo(ctx: SkBuffContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream
+            .to_string()
+            .contains("[link_section = \"cgroup/skb/foo\"]"));
+    }
+
+    #[test]
+    fn cgroup_skb_no_name() {
+        let prog = CgroupSkb::from_syn(
+            parse_quote!(),
+            parse_quote!(
+                fn foo(ctx: SkBuffContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream
+            .to_string()
+            .contains("[link_section = \"cgroup/skb\"]"));
+    }
+
+    #[test]
+    fn cgroup_skb_with_attach_no_name() {
+        let prog = CgroupSkb::from_syn(
+            parse_quote!(attach = "egress"),
+            parse_quote!(
+                fn foo(ctx: SkBuffContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream
+            .to_string()
+            .contains("[link_section = \"cgroup_skb/egress\"]"));
     }
 }
