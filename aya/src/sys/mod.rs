@@ -5,18 +5,19 @@ mod perf_event;
 #[cfg(test)]
 mod fake;
 
-#[cfg(not(test))]
-pub(crate) use bpf::*;
-#[cfg(test)]
-pub(crate) use fake::*;
-#[cfg(not(test))]
-use libc::utsname;
-use libc::{c_int, c_long, pid_t};
-pub(crate) use netlink::*;
-pub(crate) use perf_event::*;
 use std::io;
 #[cfg(not(test))]
 use std::{convert::TryInto, ffi::CString, mem};
+
+#[cfg(not(test))]
+use libc::utsname;
+use libc::{c_int, c_long, pid_t};
+
+pub(crate) use bpf::*;
+#[cfg(test)]
+pub(crate) use fake::*;
+pub(crate) use netlink::*;
+pub(crate) use perf_event::*;
 
 use crate::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 
