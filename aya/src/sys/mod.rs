@@ -6,10 +6,13 @@ mod perf_event;
 mod fake;
 
 #[cfg(not(test))]
+use libc::utsname;
+use libc::{c_int, c_long, pid_t};
+#[cfg(not(test))]
 use std::convert::TryInto;
-use std::{ffi::CString, io, mem};
-
-use libc::{c_int, c_long, pid_t, utsname};
+use std::io;
+#[cfg(not(test))]
+use std::{ffi::CString, mem};
 
 pub(crate) use bpf::*;
 #[cfg(test)]
