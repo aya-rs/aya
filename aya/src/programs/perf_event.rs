@@ -10,7 +10,7 @@ pub use crate::generated::{
     perf_hw_cache_id, perf_hw_cache_op_id, perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids,
 };
 
-use super::{load_program, perf_attach, LinkRef, ProgramData, ProgramError};
+use super::{load_program, perf_attach, OwnedLink, ProgramData, ProgramError};
 
 #[repr(u32)]
 #[derive(Debug, Clone)]
@@ -104,7 +104,7 @@ impl PerfEvent {
         config: u64,
         scope: PerfEventScope,
         sample_policy: SamplePolicy,
-    ) -> Result<LinkRef, ProgramError> {
+    ) -> Result<OwnedLink, ProgramError> {
         let (sample_period, sample_frequency) = match sample_policy {
             SamplePolicy::Period(period) => (period, None),
             SamplePolicy::Frequency(frequency) => (0, Some(frequency)),

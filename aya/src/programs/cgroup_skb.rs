@@ -5,11 +5,9 @@ use crate::{
         bpf_attach_type::{BPF_CGROUP_INET_EGRESS, BPF_CGROUP_INET_INGRESS},
         bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB,
     },
-    programs::{load_program, LinkRef, ProgAttachLink, ProgramData, ProgramError},
+    programs::{load_program, FdLink, OwnedLink, ProgAttachLink, ProgramData, ProgramError},
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };
-
-use super::FdLink;
 
 /// A program used to inspect or filter network activity for a given cgroup.
 ///
@@ -78,7 +76,7 @@ impl CgroupSkb {
         &mut self,
         cgroup: T,
         attach_type: CgroupSkbAttachType,
-    ) -> Result<LinkRef, ProgramError> {
+    ) -> Result<OwnedLink, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let cgroup_fd = cgroup.as_raw_fd();
 
@@ -95,7 +93,7 @@ impl CgroupSkb {
                         io_error,
                     }
                 })? as RawFd;
-            Ok(self.data.link(FdLink { fd: Some(link_fd) }))
+            Ok(FdLink { fd: Some(link_fd) }.into())
         } else {
             bpf_prog_attach(prog_fd, cgroup_fd, attach_type).map_err(|(_, io_error)| {
                 ProgramError::SyscallError {
@@ -104,9 +102,7 @@ impl CgroupSkb {
                 }
             })?;
 
-            Ok(self
-                .data
-                .link(ProgAttachLink::new(prog_fd, cgroup_fd, attach_type)))
+            Ok(ProgAttachLink::new(prog_fd, cgroup_fd, attach_type).into())
         }
     }
 }

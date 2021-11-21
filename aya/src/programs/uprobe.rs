@@ -18,7 +18,7 @@ use crate::{
     programs::{
         load_program,
         probe::{attach, ProbeKind},
-        LinkRef, ProgramData, ProgramError,
+        OwnedLink, ProgramData, ProgramError,
     },
 };
 
@@ -78,7 +78,7 @@ impl UProbe {
         offset: u64,
         target: T,
         pid: Option<pid_t>,
-    ) -> Result<LinkRef, ProgramError> {
+    ) -> Result<OwnedLink, ProgramError> {
         let target = target.as_ref();
         let target_str = &*target.as_os_str().to_string_lossy();
 

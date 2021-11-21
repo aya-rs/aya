@@ -4,7 +4,7 @@ use crate::{
         bpf_prog_type::BPF_PROG_TYPE_SK_SKB,
     },
     maps::sock::SocketMap,
-    programs::{load_program, LinkRef, ProgAttachLink, ProgramData, ProgramError},
+    programs::{load_program, OwnedLink, ProgAttachLink, ProgramData, ProgramError},
     sys::bpf_prog_attach,
 };
 
@@ -59,7 +59,7 @@ impl SkSkb {
     }
 
     /// Attaches the program to the given socket map.
-    pub fn attach(&mut self, map: &dyn SocketMap) -> Result<LinkRef, ProgramError> {
+    pub fn attach(&mut self, map: impl SocketMap) -> Result<OwnedLink, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let map_fd = map.fd_or_err()?;
 
@@ -73,8 +73,6 @@ impl SkSkb {
                 io_error,
             }
         })?;
-        Ok(self
-            .data
-            .link(ProgAttachLink::new(prog_fd, map_fd, attach_type)))
+        Ok(ProgAttachLink::new(prog_fd, map_fd, attach_type).into())
     }
 }

@@ -251,7 +251,6 @@ impl<'a> BpfLoader<'a> {
                 let data = ProgramData {
                     obj,
                     fd: None,
-                    links: Vec::new(),
                     expected_attach_type: None,
                     attach_btf_obj_fd: None,
                     attach_btf_id: None,

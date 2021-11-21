@@ -1,7 +1,7 @@
 use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
     maps::sock::SocketMap,
-    programs::{load_program, LinkRef, ProgAttachLink, ProgramData, ProgramError},
+    programs::{load_program, OwnedLink, ProgAttachLink, ProgramData, ProgramError},
     sys::bpf_prog_attach,
 };
 
@@ -68,7 +68,7 @@ impl SkMsg {
     }
 
     /// Attaches the program to the given sockmap.
-    pub fn attach(&mut self, map: &dyn SocketMap) -> Result<LinkRef, ProgramError> {
+    pub fn attach(&mut self, map: impl SocketMap) -> Result<OwnedLink, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let map_fd = map.fd_or_err()?;
 
@@ -78,8 +78,6 @@ impl SkMsg {
                 io_error,
             }
         })?;
-        Ok(self
-            .data
-            .link(ProgAttachLink::new(prog_fd, map_fd, BPF_SK_MSG_VERDICT)))
+        Ok(ProgAttachLink::new(prog_fd, map_fd, BPF_SK_MSG_VERDICT).into())
     }
 }

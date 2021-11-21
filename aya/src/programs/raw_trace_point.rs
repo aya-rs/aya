@@ -3,7 +3,7 @@ use std::{ffi::CString, os::unix::io::RawFd};
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT,
-    programs::{load_program, FdLink, LinkRef, ProgramData, ProgramError},
+    programs::{load_program, FdLink, OwnedLink, ProgramData, ProgramError},
     sys::bpf_raw_tracepoint_open,
 };
 
@@ -46,7 +46,7 @@ impl RawTracePoint {
     }
 
     /// Attaches the program to the given tracepoint.
-    pub fn attach(&mut self, tp_name: &str) -> Result<LinkRef, ProgramError> {
+    pub fn attach(&mut self, tp_name: &str) -> Result<OwnedLink, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let name = CString::new(tp_name).unwrap();
 
@@ -57,6 +57,6 @@ impl RawTracePoint {
             }
         })? as RawFd;
 
-        Ok(self.data.link(FdLink { fd: Some(pfd) }))
+        Ok(FdLink { fd: Some(pfd) }.into())
     }
 }

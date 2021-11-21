@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use crate::{
     generated::{bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF},
-    programs::{load_program, Link, LinkRef, ProgramData, ProgramError},
+    programs::{load_program, Link, OwnedLink, ProgramData, ProgramError},
 };
 
 /// The type returned when attaching a [`SocketFilter`] fails.
@@ -71,7 +71,7 @@ impl SocketFilter {
     }
 
     /// Attaches the filter on the given socket.
-    pub fn attach<T: AsRawFd>(&mut self, socket: T) -> Result<LinkRef, ProgramError> {
+    pub fn attach<T: AsRawFd>(&mut self, socket: T) -> Result<OwnedLink, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let socket = socket.as_raw_fd();
 
@@ -91,15 +91,16 @@ impl SocketFilter {
             .into());
         }
 
-        Ok(self.data.link(SocketFilterLink {
+        Ok(SocketFilterLink {
             socket,
             prog_fd: Some(prog_fd),
-        }))
+        }
+        .into())
     }
 }
 
 #[derive(Debug)]
-struct SocketFilterLink {
+pub(crate) struct SocketFilterLink {
     socket: RawFd,
     prog_fd: Option<RawFd>,
 }

@@ -7,7 +7,7 @@ use crate::{
     programs::{
         load_program,
         probe::{attach, ProbeKind},
-        LinkRef, ProgramData, ProgramError,
+        OwnedLink, ProgramData, ProgramError,
     },
 };
 
@@ -65,7 +65,7 @@ impl KProbe {
     /// If the program is a `kprobe`, it is attached to the *start* address of the target function.
     /// Conversely if the program is a `kretprobe`, it is attached to the return address of the
     /// target function.
-    pub fn attach(&mut self, fn_name: &str, offset: u64) -> Result<LinkRef, ProgramError> {
+    pub fn attach(&mut self, fn_name: &str, offset: u64) -> Result<OwnedLink, ProgramError> {
         attach(&mut self.data, self.kind, fn_name, offset, None)
     }
 }

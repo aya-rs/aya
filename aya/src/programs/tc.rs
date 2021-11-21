@@ -11,7 +11,7 @@ use crate::{
     generated::{
         bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS, TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     },
-    programs::{load_program, Link, LinkRef, ProgramData, ProgramError},
+    programs::{load_program, Link, OwnedLink, ProgramData, ProgramError},
     sys::{
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
         netlink_qdisc_detach,
@@ -88,7 +88,7 @@ pub enum TcError {
 }
 
 #[derive(Debug)]
-struct TcLink {
+pub(crate) struct TcLink {
     if_index: i32,
     attach_type: TcAttachType,
     prog_fd: Option<RawFd>,
@@ -125,7 +125,7 @@ impl SchedClassifier {
         &mut self,
         interface: &str,
         attach_type: TcAttachType,
-    ) -> Result<LinkRef, ProgramError> {
+    ) -> Result<OwnedLink, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let if_index = ifindex_from_ifname(interface)
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
@@ -133,12 +133,13 @@ impl SchedClassifier {
             unsafe { netlink_qdisc_attach(if_index as i32, &attach_type, prog_fd, &self.name) }
                 .map_err(|io_error| TcError::NetlinkError { io_error })?;
 
-        Ok(self.data.link(TcLink {
+        Ok(TcLink {
             if_index: if_index as i32,
             attach_type,
             prog_fd: Some(prog_fd),
             priority,
-        }))
+        }
+        .into())
     }
 }
 

@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use crate::{generated::bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT, sys::perf_event_open_trace_point};
 
-use super::{load_program, perf_attach, LinkRef, ProgramData, ProgramError};
+use super::{load_program, perf_attach, OwnedLink, ProgramData, ProgramError};
 
 /// The type returned when attaching a [`TracePoint`] fails.
 #[derive(Debug, Error)]
@@ -67,7 +67,7 @@ impl TracePoint {
     ///
     /// For a list of the available event categories and names, see
     /// `/sys/kernel/debug/tracing/events`.
-    pub fn attach(&mut self, category: &str, name: &str) -> Result<LinkRef, ProgramError> {
+    pub fn attach(&mut self, category: &str, name: &str) -> Result<OwnedLink, ProgramError> {
         let id = read_sys_fs_trace_point_id(category, name)?;
         let fd = perf_event_open_trace_point(id, None).map_err(|(_code, io_error)| {
             ProgramError::SyscallError {

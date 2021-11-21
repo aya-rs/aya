@@ -6,7 +6,7 @@ use thiserror::Error;
 use crate::{
     generated::{bpf_attach_type::BPF_LSM_MAC, bpf_prog_type::BPF_PROG_TYPE_LSM},
     obj::btf::{Btf, BtfError, BtfKind},
-    programs::{load_program, FdLink, LinkRef, ProgramData, ProgramError},
+    programs::{load_program, FdLink, OwnedLink, ProgramData, ProgramError},
     sys::bpf_raw_tracepoint_open,
 };
 
@@ -84,13 +84,13 @@ impl Lsm {
     }
 
     /// Attaches the program.
-    pub fn attach(&mut self) -> Result<LinkRef, ProgramError> {
+    pub fn attach(&mut self) -> Result<OwnedLink, ProgramError> {
         attach_btf_id(&mut self.data)
     }
 }
 
 /// Common logic for all BPF program types that attach to a BTF id.
-pub(crate) fn attach_btf_id(program_data: &mut ProgramData) -> Result<LinkRef, ProgramError> {
+pub(crate) fn attach_btf_id(program_data: &mut ProgramData) -> Result<OwnedLink, ProgramError> {
     let prog_fd = program_data.fd_or_err()?;
 
     // Attaching LSM programs doesn't require providing attach name. LSM
@@ -102,5 +102,5 @@ pub(crate) fn attach_btf_id(program_data: &mut ProgramData) -> Result<LinkRef, P
         }
     })? as RawFd;
 
-    Ok(program_data.link(FdLink { fd: Some(pfd) }))
+    Ok(FdLink { fd: Some(pfd) }.into())
 }

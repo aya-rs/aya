@@ -8,7 +8,7 @@ use crate::{
         bpf_attach_type::BPF_XDP, bpf_prog_type::BPF_PROG_TYPE_XDP, XDP_FLAGS_DRV_MODE,
         XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE, XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
-    programs::{load_program, FdLink, Link, LinkRef, ProgramData, ProgramError},
+    programs::{load_program, FdLink, Link, OwnedLink, ProgramData, ProgramError},
     sys::{bpf_link_create, kernel_version, netlink_set_xdp_fd},
 };
 
@@ -86,7 +86,7 @@ impl Xdp {
     /// kernels `>= 5.9.0`, and instead
     /// [`XdpError::NetlinkError`] is returned for older
     /// kernels.
-    pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<LinkRef, ProgramError> {
+    pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<OwnedLink, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
 
         let c_interface = CString::new(interface).unwrap();
@@ -105,24 +105,23 @@ impl Xdp {
                     io_error,
                 },
             )? as RawFd;
-            Ok(self
-                .data
-                .link(XdpLink::FdLink(FdLink { fd: Some(link_fd) })))
+            Ok(FdLink { fd: Some(link_fd) }.into())
         } else {
             unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, flags.bits) }
                 .map_err(|io_error| XdpError::NetlinkError { io_error })?;
 
-            Ok(self.data.link(XdpLink::NlLink(NlLink {
+            Ok(NlLink {
                 if_index,
                 prog_fd: Some(prog_fd),
                 flags,
-            })))
+            }
+            .into())
         }
     }
 }
 
 #[derive(Debug)]
-struct NlLink {
+pub(crate) struct NlLink {
     if_index: i32,
     prog_fd: Option<RawFd>,
     flags: XdpFlags,
@@ -148,20 +147,5 @@ impl Link for NlLink {
 impl Drop for NlLink {
     fn drop(&mut self) {
         let _ = self.detach();
-    }
-}
-
-#[derive(Debug)]
-enum XdpLink {
-    FdLink(FdLink),
-    NlLink(NlLink),
-}
-
-impl Link for XdpLink {
-    fn detach(&mut self) -> Result<(), ProgramError> {
-        match self {
-            XdpLink::FdLink(link) => link.detach(),
-            XdpLink::NlLink(link) => link.detach(),
-        }
     }
 }

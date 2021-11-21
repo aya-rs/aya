@@ -8,7 +8,7 @@ use std::{
 use crate::{
     programs::{
         kprobe::KProbeError, perf_attach, perf_attach_debugfs,
-        trace_point::read_sys_fs_trace_point_id, uprobe::UProbeError, LinkRef, ProgramData,
+        trace_point::read_sys_fs_trace_point_id, uprobe::UProbeError, OwnedLink, ProgramData,
         ProgramError,
     },
     sys::{kernel_version, perf_event_open_probe, perf_event_open_trace_point},
@@ -41,7 +41,7 @@ pub(crate) fn attach(
     fn_name: &str,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<LinkRef, ProgramError> {
+) -> Result<OwnedLink, ProgramError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
     // Use debugfs to create probe
     let k_ver = kernel_version().unwrap();

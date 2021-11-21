@@ -6,7 +6,7 @@ use thiserror::Error;
 use crate::{
     generated::{bpf_attach_type::BPF_TRACE_RAW_TP, bpf_prog_type::BPF_PROG_TYPE_TRACING},
     obj::btf::{Btf, BtfError, BtfKind},
-    programs::{load_program, FdLink, LinkRef, ProgramData, ProgramError},
+    programs::{load_program, FdLink, OwnedLink, ProgramData, ProgramError},
     sys::bpf_raw_tracepoint_open,
 };
 
@@ -82,7 +82,7 @@ impl BtfTracePoint {
     }
 
     /// Attaches the program.
-    pub fn attach(&mut self) -> Result<LinkRef, ProgramError> {
+    pub fn attach(&mut self) -> Result<OwnedLink, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
 
         // BTF programs specify their attach name at program load time
@@ -93,6 +93,6 @@ impl BtfTracePoint {
             }
         })? as RawFd;
 
-        Ok(self.data.link(FdLink { fd: Some(pfd) }))
+        Ok(FdLink { fd: Some(pfd) }.into())
     }
 }

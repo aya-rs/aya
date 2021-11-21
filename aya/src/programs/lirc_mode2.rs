@@ -2,7 +2,7 @@ use std::os::unix::prelude::{AsRawFd, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
-    programs::{load_program, query, Link, LinkRef, ProgramData, ProgramError, ProgramInfo},
+    programs::{load_program, query, Link, OwnedLink, ProgramData, ProgramError, ProgramInfo},
     sys::{bpf_obj_get_info_by_fd, bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
 };
 
@@ -60,7 +60,7 @@ impl LircMode2 {
     }
 
     /// Attaches the program to the given lirc device.
-    pub fn attach<T: AsRawFd>(&mut self, lircdev: T) -> Result<LinkRef, ProgramError> {
+    pub fn attach<T: AsRawFd>(&mut self, lircdev: T) -> Result<OwnedLink, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let lircdev_fd = lircdev.as_raw_fd();
 
@@ -71,7 +71,7 @@ impl LircMode2 {
             }
         })?;
 
-        Ok(self.data.link(LircLink::new(prog_fd, lircdev_fd)))
+        Ok(LircLink::new(prog_fd, lircdev_fd).into())
     }
 
     /// Queries the lirc device for attached programs.

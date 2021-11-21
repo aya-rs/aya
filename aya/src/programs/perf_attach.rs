@@ -7,10 +7,10 @@ use crate::{
     PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE, PERF_EVENT_IOC_SET_BPF,
 };
 
-use super::{Link, LinkRef, ProgramData, ProgramError};
+use super::{Link, OwnedLink, ProgramData, ProgramError};
 
 #[derive(Debug)]
-struct PerfLink {
+pub(crate) struct PerfLink {
     perf_fd: Option<RawFd>,
     probe_kind: Option<ProbeKind>,
     event_alias: Option<String>,
@@ -41,7 +41,7 @@ impl Drop for PerfLink {
     }
 }
 
-pub(crate) fn perf_attach(data: &mut ProgramData, fd: RawFd) -> Result<LinkRef, ProgramError> {
+pub(crate) fn perf_attach(data: &mut ProgramData, fd: RawFd) -> Result<OwnedLink, ProgramError> {
     perf_attach_either(data, fd, None, None)
 }
 
@@ -50,7 +50,7 @@ pub(crate) fn perf_attach_debugfs(
     fd: RawFd,
     probe_kind: ProbeKind,
     event_alias: String,
-) -> Result<LinkRef, ProgramError> {
+) -> Result<OwnedLink, ProgramError> {
     perf_attach_either(data, fd, Some(probe_kind), Some(event_alias))
 }
 
@@ -59,7 +59,7 @@ fn perf_attach_either(
     fd: RawFd,
     probe_kind: Option<ProbeKind>,
     event_alias: Option<String>,
-) -> Result<LinkRef, ProgramError> {
+) -> Result<OwnedLink, ProgramError> {
     let prog_fd = data.fd_or_err()?;
     perf_event_ioctl(fd, PERF_EVENT_IOC_SET_BPF, prog_fd).map_err(|(_, io_error)| {
         ProgramError::SyscallError {
@@ -74,9 +74,10 @@ fn perf_attach_either(
         }
     })?;
 
-    Ok(data.link(PerfLink {
+    Ok(PerfLink {
         perf_fd: Some(fd),
         probe_kind,
         event_alias,
-    }))
+    }
+    .into())
 }

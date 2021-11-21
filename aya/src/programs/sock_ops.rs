@@ -2,7 +2,7 @@ use std::os::unix::io::AsRawFd;
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS},
-    programs::{load_program, LinkRef, ProgAttachLink, ProgramData, ProgramError},
+    programs::{load_program, OwnedLink, ProgAttachLink, ProgramData, ProgramError},
     sys::bpf_prog_attach,
 };
 
@@ -55,7 +55,7 @@ impl SockOps {
     }
 
     /// Attaches the program to the given cgroup.
-    pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<LinkRef, ProgramError> {
+    pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<OwnedLink, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let cgroup_fd = cgroup.as_raw_fd();
 
@@ -65,8 +65,6 @@ impl SockOps {
                 io_error,
             }
         })?;
-        Ok(self
-            .data
-            .link(ProgAttachLink::new(prog_fd, cgroup_fd, BPF_CGROUP_SOCK_OPS)))
+        Ok(ProgAttachLink::new(prog_fd, cgroup_fd, BPF_CGROUP_SOCK_OPS).into())
     }
 }
