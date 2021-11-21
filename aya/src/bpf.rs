@@ -521,7 +521,7 @@ impl Bpf {
     ///
     /// # Examples
     /// ```no_run
-    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let bpf = aya::Bpf::load(&[])?;
     /// for program in bpf.programs() {
     ///     println!(
     ///         "found program `{}` of type `{:?}`",
@@ -533,6 +533,22 @@ impl Bpf {
     /// ```
     pub fn programs(&self) -> impl Iterator<Item = &Program> {
         self.programs.values()
+    }
+
+    /// An iterator mutably referencing all of the programs.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use std::path::Path;
+    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let pin_path = Path::new("/tmp/pin_path");
+    /// for program in bpf.programs_mut() {
+    ///     program.pin(pin_path)?;
+    /// }
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
+    pub fn programs_mut(&mut self) -> impl Iterator<Item = &mut Program> {
+        self.programs.values_mut()
     }
 }
 
