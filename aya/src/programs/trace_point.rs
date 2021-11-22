@@ -69,7 +69,7 @@ impl TracePoint {
     /// `/sys/kernel/debug/tracing/events`.
     pub fn attach(&mut self, category: &str, name: &str) -> Result<LinkRef, ProgramError> {
         let id = read_sys_fs_trace_point_id(category, name)?;
-        let fd = perf_event_open_trace_point(id).map_err(|(_code, io_error)| {
+        let fd = perf_event_open_trace_point(id, None).map_err(|(_code, io_error)| {
             ProgramError::SyscallError {
                 call: "perf_event_open".to_owned(),
                 io_error,
@@ -80,7 +80,10 @@ impl TracePoint {
     }
 }
 
-fn read_sys_fs_trace_point_id(category: &str, name: &str) -> Result<u32, TracePointError> {
+pub(crate) fn read_sys_fs_trace_point_id(
+    category: &str,
+    name: &str,
+) -> Result<u32, TracePointError> {
     let file = format!("/sys/kernel/debug/tracing/events/{}/{}/id", category, name);
 
     let id = fs::read_to_string(&file).map_err(|io_error| TracePointError::FileError {

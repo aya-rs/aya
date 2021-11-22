@@ -93,17 +93,20 @@ pub(crate) fn perf_event_open_probe(
     })
 }
 
-pub(crate) fn perf_event_open_trace_point(id: u32) -> SysResult {
+pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     attr.size = mem::size_of::<perf_event_attr>() as u32;
     attr.type_ = PERF_TYPE_TRACEPOINT as u32;
     attr.config = id as u64;
 
+    let cpu = if pid.is_some() { -1 } else { 0 };
+    let pid = pid.unwrap_or(-1);
+
     syscall(Syscall::PerfEventOpen {
         attr,
-        pid: -1,
-        cpu: 0,
+        pid,
+        cpu,
         group: -1,
         flags: PERF_FLAG_FD_CLOEXEC,
     })
