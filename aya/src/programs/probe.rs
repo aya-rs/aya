@@ -1,6 +1,6 @@
 use libc::pid_t;
 use std::{
-    fs,
+    fs::{self, OpenOptions},
     io::{self, Write},
     process,
 };
@@ -24,6 +24,15 @@ pub enum ProbeKind {
     UProbe,
     /// User space return probe
     URetProbe,
+}
+
+impl ProbeKind {
+    fn pmu(&self) -> &'static str {
+        match *self {
+            ProbeKind::KProbe | ProbeKind::KRetProbe => "kprobe",
+            ProbeKind::UProbe | ProbeKind::URetProbe => "uprobe",
+        }
+    }
 }
 
 pub(crate) fn attach(
@@ -50,45 +59,12 @@ pub(crate) fn attach(
 pub(crate) fn detach_debug_fs(kind: ProbeKind, event_alias: &str) -> Result<(), ProgramError> {
     use ProbeKind::*;
 
-    /*
-     * Taken from https://github.com/iovisor/bcc/blob/67f59ee80fcf5deedaacba1436d9fa09d32a16a0/src/cc/libbpf.c#L1173
-     *
-     * For [k,u]probe created with perf_event_open (on newer kernel), it is
-     * not necessary to clean it up in [k,u]probe_events. We first look up
-     * the %s_bcc_%d line in [k,u]probe_events. If the event is not found,
-     * it is safe to skip the cleaning up process (write -:... to the file).
-     */
-
-    let event_type = match kind {
-        KProbe | KRetProbe => "kprobe",
-        UProbe | URetProbe => "uprobe",
+    let _ = match kind {
+        KProbe | KRetProbe => delete_probe_event(kind, event_alias)
+            .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
+        UProbe | URetProbe => delete_probe_event(kind, event_alias)
+            .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
     };
-
-    let events_file_name = format!("/sys/kernel/debug/tracing/{}_events", event_type);
-
-    let found = match kind {
-        KProbe | KRetProbe => {
-            find_in_sys_kernel_debug_tracing_events(&events_file_name, event_alias)
-                .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?
-        }
-        UProbe | URetProbe => {
-            find_in_sys_kernel_debug_tracing_events(&events_file_name, event_alias)
-                .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?
-        }
-    };
-
-    if found {
-        match kind {
-            KProbe | KRetProbe => {
-                delete_in_sys_kernel_debug_tracing_events(&events_file_name, event_alias)
-                    .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?
-            }
-            UProbe | URetProbe => {
-                delete_in_sys_kernel_debug_tracing_events(&events_file_name, event_alias)
-                    .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?
-            }
-        };
-    }
 
     Ok(())
 }
@@ -102,19 +78,19 @@ fn create_as_probe(
     use ProbeKind::*;
 
     let perf_ty = match kind {
-        KProbe | KRetProbe => read_sys_fs_perf_type("kprobe")
+        KProbe | KRetProbe => read_sys_fs_perf_type(kind.pmu())
             .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
-        UProbe | URetProbe => read_sys_fs_perf_type("uprobe")
+        UProbe | URetProbe => read_sys_fs_perf_type(kind.pmu())
             .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
     };
 
     let ret_bit = match kind {
         KRetProbe => Some(
-            read_sys_fs_perf_ret_probe("kprobe")
+            read_sys_fs_perf_ret_probe(kind.pmu())
                 .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
         ),
         URetProbe => Some(
-            read_sys_fs_perf_ret_probe("uprobe")
+            read_sys_fs_perf_ret_probe(kind.pmu())
                 .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
         ),
         _ => None,
@@ -138,20 +114,15 @@ fn create_as_trace_point(
 ) -> Result<(i32, String), ProgramError> {
     use ProbeKind::*;
 
-    let (event_type, event_alias) = match kind {
-        KProbe | KRetProbe => (
-            "kprobes",
-            create_probe_event(kind, "kprobe", name, offset)
-                .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
-        ),
-        UProbe | URetProbe => (
-            "uprobes",
-            create_probe_event(kind, "uprobe", name, offset)
-                .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
-        ),
+    let event_alias = match kind {
+        KProbe | KRetProbe => create_probe_event(kind, name, offset)
+            .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
+        UProbe | URetProbe => create_probe_event(kind, name, offset)
+            .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
     };
 
-    let tpid = read_sys_fs_trace_point_id(event_type, &event_alias)?;
+    let category = format!("{}s", kind.pmu());
+    let tpid = read_sys_fs_trace_point_id(&category, &event_alias)?;
     let fd = perf_event_open_trace_point(tpid, pid).map_err(|(_code, io_error)| {
         ProgramError::SyscallError {
             call: "perf_event_open".to_owned(),
@@ -164,93 +135,69 @@ fn create_as_trace_point(
 
 fn create_probe_event(
     kind: ProbeKind,
-    event_type: &str,
     fn_name: &str,
     offset: u64,
 ) -> Result<String, (String, io::Error)> {
     use ProbeKind::*;
 
-    let events_file_name = format!("/sys/kernel/debug/tracing/{}_events", event_type);
+    let events_file_name = format!("/sys/kernel/debug/tracing/{}_events", kind.pmu());
     let probe_type_prefix = match kind {
         KProbe | UProbe => 'p',
         KRetProbe | URetProbe => 'r',
     };
-    let event_alias = format!("{}_{}_aya_{}", probe_type_prefix, fn_name, process::id());
+    let event_alias = format!(
+        "aya_{}_{}_{}_{:#x}",
+        process::id(),
+        probe_type_prefix,
+        fn_name,
+        offset
+    );
+    let offset_suffix = match kind {
+        KProbe => format!("+{}", offset),
+        UProbe => format!(":{:#x}", offset),
+        _ => "".to_string(),
+    };
+    let probe = format!(
+        "{}:{}s/{} {}{}\n",
+        probe_type_prefix,
+        kind.pmu(),
+        event_alias,
+        fn_name,
+        offset_suffix
+    );
 
-    let mut events_file = fs::OpenOptions::new()
+    let mut events_file = OpenOptions::new()
         .append(true)
         .open(&events_file_name)
         .map_err(|e| (events_file_name.clone(), e))?;
 
-    let p = match kind {
-        KProbe => {
-            if offset > 0 {
-                format!(
-                    "{}:{}s/{} {}+{}",
-                    probe_type_prefix, event_type, event_alias, fn_name, offset
-                )
-            } else {
-                format!(
-                    "{}:{}s/{} {}",
-                    probe_type_prefix, event_type, event_alias, fn_name
-                )
-            }
-        }
-        KRetProbe => format!(
-            "{}:{}s/{} {}",
-            probe_type_prefix, event_type, event_alias, fn_name
-        ),
-        UProbe | URetProbe => {
-            if offset > 0 {
-                format!(
-                    "{}:{}s/{} {}:{:#x}",
-                    probe_type_prefix, event_type, event_alias, fn_name, offset
-                )
-            } else {
-                format!(
-                    "{}:{}s/{} {}",
-                    probe_type_prefix, event_type, event_alias, fn_name
-                )
-            }
-        }
-    };
-
     events_file
-        .write_all(p.as_bytes())
+        .write_all(probe.as_bytes())
         .map_err(|e| (events_file_name.clone(), e))?;
 
     Ok(event_alias)
 }
 
-fn find_in_sys_kernel_debug_tracing_events(
-    events_file_name: &str,
-    event_alias: &str,
-) -> Result<bool, (String, io::Error)> {
-    use std::io::BufRead;
+fn delete_probe_event(kind: ProbeKind, event_alias: &str) -> Result<(), (String, io::Error)> {
+    let events_file_name = format!("/sys/kernel/debug/tracing/{}_events", kind.pmu());
 
-    let events_file =
-        fs::File::open(events_file_name).map_err(|e| (events_file_name.to_string(), e))?;
+    let events =
+        fs::read_to_string(&events_file_name).map_err(|e| (events_file_name.clone(), e))?;
 
-    Ok(io::BufReader::new(events_file)
-        .lines()
-        .map(|line| line.unwrap())
-        .any(|line| line.contains(event_alias)))
-}
+    let found = events.lines().any(|line| line.contains(event_alias));
 
-fn delete_in_sys_kernel_debug_tracing_events(
-    events_file_name: &str,
-    event_alias: &str,
-) -> Result<(), (String, io::Error)> {
-    let mut events_file = fs::OpenOptions::new()
-        .append(true)
-        .open(events_file_name)
-        .map_err(|e| (events_file_name.to_string(), e))?;
+    if found {
+        let mut events_file = OpenOptions::new()
+            .append(true)
+            .open(&events_file_name)
+            .map_err(|e| (events_file_name.to_string(), e))?;
 
-    let rm = format!("-:{}", event_alias);
+        let rm = format!("-:{}\n", event_alias);
 
-    events_file
-        .write_all(rm.as_bytes())
-        .map_err(|e| (events_file_name.to_string(), e))?;
+        events_file
+            .write_all(rm.as_bytes())
+            .map_err(|e| (events_file_name.to_string(), e))?;
+    }
 
     Ok(())
 }

@@ -80,7 +80,10 @@ impl TracePoint {
     }
 }
 
-pub fn read_sys_fs_trace_point_id(category: &str, name: &str) -> Result<u32, TracePointError> {
+pub(crate) fn read_sys_fs_trace_point_id(
+    category: &str,
+    name: &str,
+) -> Result<u32, TracePointError> {
     let file = format!("/sys/kernel/debug/tracing/events/{}/{}/id", category, name);
 
     let id = fs::read_to_string(&file).map_err(|io_error| TracePointError::FileError {
