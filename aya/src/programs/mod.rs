@@ -582,6 +582,12 @@ impl ProgramFd for Program {
     }
 }
 
+impl<'a, P: ProgramFd> ProgramFd for &'a P {
+    fn fd(&self) -> Option<RawFd> {
+        (*self).fd()
+    }
+}
+
 macro_rules! impl_program_fd {
     ($($struct_name:ident),+ $(,)?) => {
         $(

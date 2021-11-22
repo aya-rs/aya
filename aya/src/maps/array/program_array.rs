@@ -28,7 +28,7 @@ use crate::{
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::ProgramArray;
-/// use aya::programs::CgroupSkb;
+/// use aya::programs::{CgroupSkb, ProgramFd};
 /// use std::convert::{TryFrom, TryInto};
 ///
 /// let mut prog_array = ProgramArray::try_from(bpf.map_mut("JUMP_TABLE")?)?;
@@ -98,7 +98,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
     ///
     /// When an eBPF program calls `bpf_tail_call(ctx, prog_array, index)`, control
     /// flow will jump to `program`.
-    pub fn set(&mut self, index: u32, program: &dyn ProgramFd, flags: u64) -> Result<(), MapError> {
+    pub fn set(&mut self, index: u32, program: impl ProgramFd, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(index)?;
         let prog_fd = program.fd().ok_or(MapError::ProgramNotLoaded)?;

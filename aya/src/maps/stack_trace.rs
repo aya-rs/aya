@@ -140,7 +140,7 @@ impl<T: Deref<Target = Map>> StackTraceMap<T> {
 
     /// An iterator visiting all (`stack_id`, `stack_trace`) pairs in arbitrary order. The
     /// iterator item type is `Result<(u32, StackTrace), MapError>`.
-    pub fn iter(&self) -> MapIter<'_, u32, StackTrace> {
+    pub fn iter(&self) -> MapIter<'_, u32, StackTrace, Self> {
         MapIter::new(self)
     }
 
@@ -179,7 +179,7 @@ impl TryFrom<MapRefMut> for StackTraceMap<MapRefMut> {
 
 impl<'a, T: Deref<Target = Map>> IntoIterator for &'a StackTraceMap<T> {
     type Item = Result<(u32, StackTrace), MapError>;
-    type IntoIter = MapIter<'a, u32, StackTrace>;
+    type IntoIter = MapIter<'a, u32, StackTrace, StackTraceMap<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()

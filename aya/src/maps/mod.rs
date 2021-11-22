@@ -241,7 +241,7 @@ impl Drop for Map {
     }
 }
 
-pub(crate) trait IterableMap<K: Pod, V> {
+pub trait IterableMap<K: Pod, V> {
     fn map(&self) -> &Map;
 
     unsafe fn get(&self, key: &K) -> Result<V, MapError>;
@@ -302,14 +302,14 @@ impl<K: Pod> Iterator for MapKeys<'_, K> {
 }
 
 /// Iterator returned by `map.iter()`.
-pub struct MapIter<'coll, K: Pod, V> {
+pub struct MapIter<'coll, K: Pod, V, I: IterableMap<K, V>> {
     keys: MapKeys<'coll, K>,
-    map: &'coll dyn IterableMap<K, V>,
+    map: &'coll I,
     _v: PhantomData<V>,
 }
 
-impl<'coll, K: Pod, V> MapIter<'coll, K, V> {
-    fn new(map: &'coll dyn IterableMap<K, V>) -> MapIter<'coll, K, V> {
+impl<'coll, K: Pod, V, I: IterableMap<K, V>> MapIter<'coll, K, V, I> {
+    fn new(map: &'coll I) -> MapIter<'coll, K, V, I> {
         MapIter {
             keys: MapKeys::new(map.map()),
             map,
@@ -318,7 +318,7 @@ impl<'coll, K: Pod, V> MapIter<'coll, K, V> {
     }
 }
 
-impl<K: Pod, V> Iterator for MapIter<'_, K, V> {
+impl<K: Pod, V, I: IterableMap<K, V>> Iterator for MapIter<'_, K, V, I> {
     type Item = Result<(K, V), MapError>;
 
     fn next(&mut self) -> Option<Self::Item> {

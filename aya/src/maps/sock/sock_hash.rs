@@ -101,7 +101,7 @@ impl<T: Deref<Target = Map>, K: Pod> SockHash<T, K> {
 
     /// An iterator visiting all key-value pairs in arbitrary order. The
     /// iterator item type is `Result<(K, V), MapError>`.
-    pub unsafe fn iter(&self) -> MapIter<'_, K, RawFd> {
+    pub unsafe fn iter(&self) -> MapIter<'_, K, RawFd, Self> {
         MapIter::new(self)
     }
 
