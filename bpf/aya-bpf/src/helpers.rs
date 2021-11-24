@@ -418,3 +418,26 @@ pub fn bpf_get_current_comm() -> Result<[c_char; 16], c_long> {
 pub fn bpf_get_current_pid_tgid() -> u64 {
     unsafe { gen::bpf_get_current_pid_tgid() }
 }
+
+/// Read the user id and group id associated with the current task struct as
+/// a `u64`.
+///
+/// In the return value, the upper 32 bits are the `gid`, and the lower 32 bits are the
+/// `uid`. That is, the returned value is equal to: `(gid << 32) | uid`. A caller may
+/// access the individual fields by either casting to a `u32` or performing a `>> 32` bit
+/// shift and casting to a `u32`.
+///
+/// # Examples
+///
+/// ```no_run
+/// # #![allow(dead_code)]
+/// # use aya_bpf::helpers::bpf_get_current_uid_gid;
+/// let gid = (bpf_get_current_uid_gid() >> 32) as u32;
+/// let uid = bpf_get_current_uid_gid() as u32;
+///
+/// // Do something with uid and gid
+/// ```
+#[inline]
+pub fn bpf_get_current_uid_gid() -> u64 {
+    unsafe { gen::bpf_get_current_uid_gid() }
+}
