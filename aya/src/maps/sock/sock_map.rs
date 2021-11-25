@@ -35,7 +35,7 @@ use crate::{
 /// use aya::programs::SkSkb;
 ///
 /// let intercept_ingress = SockMap::try_from(bpf.map_mut("INTERCEPT_INGRESS")?)?;
-/// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet")?.try_into()?;
+/// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach(&intercept_ingress)?;
 /// # Ok::<(), aya::BpfError>(())

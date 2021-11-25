@@ -44,7 +44,7 @@ pub enum TracePointError {
 /// use std::convert::TryInto;
 /// use aya::programs::TracePoint;
 ///
-/// let prog: &mut TracePoint = bpf.program_mut("trace_context_switch")?.try_into()?;
+/// let prog: &mut TracePoint = bpf.program_mut("trace_context_switch").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach("sched", "sched_switch")?;
 /// # Ok::<(), Error>(())

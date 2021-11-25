@@ -43,7 +43,7 @@ use crate::{
 /// use std::convert::TryInto;
 ///
 /// let btf = Btf::from_sys_fs()?;
-/// let program: &mut Lsm = bpf.program_mut("lsm_prog")?.try_into()?;
+/// let program: &mut Lsm = bpf.program_mut("lsm_prog").unwrap().try_into()?;
 /// program.load("security_bprm_exec", &btf)?;
 /// program.attach()?;
 /// # Ok::<(), LsmError>(())
@@ -81,11 +81,6 @@ impl Lsm {
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
         load_program(BPF_PROG_TYPE_LSM, &mut self.data).map_err(LsmLoadError::from)
-    }
-
-    /// Returns the name of the program.
-    pub fn name(&self) -> String {
-        self.data.name.to_string()
     }
 
     /// Attaches the program.

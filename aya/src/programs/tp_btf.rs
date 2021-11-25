@@ -40,7 +40,7 @@ use crate::{
 /// use std::convert::TryInto;
 ///
 /// let btf = Btf::from_sys_fs()?;
-/// let program: &mut BtfTracePoint = bpf.program_mut("sched_process_fork")?.try_into()?;
+/// let program: &mut BtfTracePoint = bpf.program_mut("sched_process_fork").unwrap().try_into()?;
 /// program.load("sched_process_fork", &btf)?;
 /// program.attach()?;
 /// # Ok::<(), Error>(())
@@ -79,11 +79,6 @@ impl BtfTracePoint {
                 .map_err(BtfTracePointError::from)?,
         );
         load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
-    }
-
-    /// Returns the name of the program.
-    pub fn name(&self) -> String {
-        self.data.name.to_string()
     }
 
     /// Attaches the program.

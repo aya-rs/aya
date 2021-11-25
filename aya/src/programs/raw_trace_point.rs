@@ -26,7 +26,7 @@ use crate::{
 /// use aya::{Bpf, programs::RawTracePoint};
 /// use std::convert::TryInto;
 ///
-/// let program: &mut RawTracePoint = bpf.program_mut("sys_enter")?.try_into()?;
+/// let program: &mut RawTracePoint = bpf.program_mut("sys_enter").unwrap().try_into()?;
 /// program.load()?;
 /// program.attach("sys_enter")?;
 /// # Ok::<(), aya::BpfError>(())
@@ -43,11 +43,6 @@ impl RawTracePoint {
     /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_RAW_TRACEPOINT, &mut self.data)
-    }
-
-    /// Returns the name of the program.
-    pub fn name(&self) -> String {
-        self.data.name.to_string()
     }
 
     /// Attaches the program to the given tracepoint.

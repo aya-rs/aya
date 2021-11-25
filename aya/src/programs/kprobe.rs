@@ -30,7 +30,7 @@ use crate::{
 /// use aya::{Bpf, programs::KProbe};
 /// use std::convert::TryInto;
 ///
-/// let program: &mut KProbe = bpf.program_mut("intercept_wakeups")?.try_into()?;
+/// let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 /// program.load()?;
 /// program.attach("try_to_wake_up", 0)?;
 /// # Ok::<(), aya::BpfError>(())
@@ -48,11 +48,6 @@ impl KProbe {
     /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
-    }
-
-    /// Returns the name of the program.
-    pub fn name(&self) -> String {
-        self.data.name.to_string()
     }
 
     /// Returns `KProbe` if the program is a `kprobe`, or `KRetProbe` if the

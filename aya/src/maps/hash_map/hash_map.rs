@@ -158,9 +158,8 @@ mod tests {
 
     use super::*;
 
-    fn new_obj_map(name: &str) -> obj::Map {
+    fn new_obj_map() -> obj::Map {
         obj::Map {
-            name: name.to_string(),
             def: bpf_map_def {
                 map_type: BPF_MAP_TYPE_HASH as u32,
                 key_size: 4,
@@ -180,7 +179,7 @@ mod tests {
     #[test]
     fn test_wrong_key_size() {
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: None,
             pinned: false,
         };
@@ -196,7 +195,7 @@ mod tests {
     #[test]
     fn test_wrong_value_size() {
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: None,
             pinned: false,
         };
@@ -213,7 +212,6 @@ mod tests {
     fn test_try_from_wrong_map() {
         let map = Map {
             obj: obj::Map {
-                name: "TEST".to_string(),
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32,
                     key_size: 4,
@@ -237,7 +235,7 @@ mod tests {
     #[test]
     fn test_new_not_created() {
         let mut map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: None,
             pinned: false,
         };
@@ -251,7 +249,7 @@ mod tests {
     #[test]
     fn test_new_ok() {
         let mut map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -262,7 +260,7 @@ mod tests {
     #[test]
     fn test_try_from_ok() {
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -273,7 +271,6 @@ mod tests {
     fn test_try_from_ok_lru() {
         let map = Map {
             obj: obj::Map {
-                name: "TEST".to_string(),
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_LRU_HASH as u32,
                     key_size: 4,
@@ -296,7 +293,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
 
         let mut map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -319,7 +316,7 @@ mod tests {
         });
 
         let mut map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -333,7 +330,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
 
         let mut map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -356,7 +353,7 @@ mod tests {
         });
 
         let mut map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -369,7 +366,7 @@ mod tests {
     fn test_get_syscall_error() {
         override_syscall(|_| sys_error(EFAULT));
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -391,7 +388,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -430,7 +427,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -474,7 +471,7 @@ mod tests {
         });
 
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -502,7 +499,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -532,7 +529,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -565,7 +562,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -599,7 +596,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };
@@ -639,7 +636,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
         let map = Map {
-            obj: new_obj_map("TEST"),
+            obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
         };

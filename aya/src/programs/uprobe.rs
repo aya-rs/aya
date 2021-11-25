@@ -52,11 +52,6 @@ impl UProbe {
         load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
     }
 
-    /// Returns the name of the program.
-    pub fn name(&self) -> String {
-        self.data.name.to_string()
-    }
-
     /// Returns `UProbe` if the program is a `uprobe`, or `URetProbe` if the
     /// program is a `uretprobe`.
     pub fn kind(&self) -> ProbeKind {

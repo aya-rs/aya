@@ -40,7 +40,7 @@ use libc::{close, dup};
 ///
 /// let file = File::open("/dev/lirc0")?;
 /// let mut bpf = aya::Bpf::load_file("imon_rsc.o")?;
-/// let decoder: &mut LircMode2 = bpf.program_mut("imon_rsc")?.try_into().unwrap();
+/// let decoder: &mut LircMode2 = bpf.program_mut("imon_rsc").unwrap().try_into().unwrap();
 /// decoder.load()?;
 /// decoder.attach(file)?;
 /// # Ok::<(), Error>(())
@@ -57,11 +57,6 @@ impl LircMode2 {
     /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_LIRC_MODE2, &mut self.data)
-    }
-
-    /// Returns the name of the program.
-    pub fn name(&self) -> String {
-        self.data.name.to_string()
     }
 
     /// Attaches the program to the given lirc device.

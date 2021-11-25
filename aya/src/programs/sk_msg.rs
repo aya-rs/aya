@@ -38,7 +38,7 @@ use crate::{
 /// use aya::programs::SkMsg;
 ///
 /// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
-/// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet")?.try_into()?;
+/// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach(&intercept_egress)?;
 ///
@@ -65,11 +65,6 @@ impl SkMsg {
     /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SK_MSG, &mut self.data)
-    }
-
-    /// Returns the name of the program.
-    pub fn name(&self) -> String {
-        self.data.name.to_string()
     }
 
     /// Attaches the program to the given sockmap.

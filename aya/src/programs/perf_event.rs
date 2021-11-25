@@ -66,7 +66,7 @@ pub enum PerfEventScope {
 ///     perf_sw_ids::PERF_COUNT_SW_CPU_CLOCK, PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy,
 /// };
 ///
-/// let prog: &mut PerfEvent = bpf.program_mut("observe_cpu_clock")?.try_into()?;
+/// let prog: &mut PerfEvent = bpf.program_mut("observe_cpu_clock").unwrap().try_into()?;
 /// prog.load()?;
 ///
 /// for cpu in online_cpus()? {
