@@ -232,6 +232,15 @@ impl Map {
     }
 }
 
+impl Drop for Map {
+    fn drop(&mut self) {
+        // TODO: Replace this with an OwnedFd once that is stabilized.
+        if let Some(fd) = self.fd.take() {
+            unsafe { libc::close(fd) };
+        }
+    }
+}
+
 pub(crate) trait IterableMap<K: Pod, V> {
     fn map(&self) -> &Map;
 
