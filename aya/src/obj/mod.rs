@@ -510,20 +510,31 @@ impl From<KernelVersion> for u32 {
     }
 }
 
+fn data_section_def(section: &Section, map_flags: u32) -> bpf_map_def {
+    bpf_map_def {
+        map_type: BPF_MAP_TYPE_ARRAY as u32,
+        key_size: mem::size_of::<u32>() as u32,
+        // We need to use section.size here since
+        // .bss will always have data.len() == 0
+        value_size: section.size as u32,
+        max_entries: 1,
+        map_flags,
+        ..Default::default()
+    }
+}
+
 fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
-    let (def, data) = if name == ".bss" || name.starts_with(".data") || name.starts_with(".rodata")
-    {
-        let def = bpf_map_def {
-            map_type: BPF_MAP_TYPE_ARRAY as u32,
-            key_size: mem::size_of::<u32>() as u32,
-            // We need to use section.size here since
-            // .bss will always have data.len() == 0
-            value_size: section.size as u32,
-            max_entries: 1,
-            map_flags: 0, /* FIXME: set rodata readonly */
-            ..Default::default()
-        };
-        (def, section.data.to_vec())
+    // TODO: Create an equivalent of aya-bpf-bindings for aya and define this
+    // there. This value is the same across armv7, amd64, and aarch64.
+    const BPF_F_RDONLY: u32 = 8;
+
+    let (def, data) = if name == ".bss" || name.starts_with(".data") {
+        (data_section_def(section, 0), section.data.to_vec())
+    } else if name.starts_with(".rodata") {
+        (
+            data_section_def(section, BPF_F_RDONLY),
+            section.data.to_vec(),
+        )
     } else {
         (parse_map_def(name, section.data)?, Vec::new())
     };
