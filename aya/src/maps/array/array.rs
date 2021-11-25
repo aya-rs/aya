@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
-    maps::{IterableMap, Map, MapError, MapRef, MapRefMut},
+    maps::{IterableMap, Map, MapError},
     sys::{bpf_map_lookup_elem, bpf_map_update_elem},
     Pod,
 };
@@ -23,11 +23,11 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::Array;
 /// use std::convert::TryFrom;
 ///
-/// let mut array = Array::try_from(bpf.map_mut("ARRAY")?)?;
+/// let mut array = Array::try_from(bpf.map_mut("ARRAY").unwrap())?;
 /// array.set(1, 42, 0)?;
 /// assert_eq!(array.get(&1, 0)?, 42);
 /// # Ok::<(), aya::BpfError>(())
@@ -139,18 +139,18 @@ impl<T: Deref<Target = Map>, V: Pod> IterableMap<u32, V> for Array<T, V> {
     }
 }
 
-impl<V: Pod> TryFrom<MapRef> for Array<MapRef, V> {
+impl<'a, V: Pod> TryFrom<&'a Map> for Array<&'a Map, V> {
     type Error = MapError;
 
-    fn try_from(a: MapRef) -> Result<Array<MapRef, V>, MapError> {
+    fn try_from(a: &'a Map) -> Result<Array<&'a Map, V>, MapError> {
         Array::new(a)
     }
 }
 
-impl<V: Pod> TryFrom<MapRefMut> for Array<MapRefMut, V> {
+impl<'a, V: Pod> TryFrom<&'a mut Map> for Array<&'a mut Map, V> {
     type Error = MapError;
 
-    fn try_from(a: MapRefMut) -> Result<Array<MapRefMut, V>, MapError> {
+    fn try_from(a: &'a mut Map) -> Result<Array<&'a mut Map, V>, MapError> {
         Array::new(a)
     }
 }

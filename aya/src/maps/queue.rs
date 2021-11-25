@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_QUEUE,
-    maps::{Map, MapError, MapRef, MapRefMut},
+    maps::{Map, MapError},
     sys::{bpf_map_lookup_and_delete_elem, bpf_map_push_elem},
     Pod,
 };
@@ -21,11 +21,11 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::Queue;
 /// use std::convert::TryFrom;
 ///
-/// let mut queue = Queue::try_from(bpf.map_mut("ARRAY")?)?;
+/// let mut queue = Queue::try_from(bpf.map_mut("ARRAY").unwrap())?;
 /// queue.push(42, 0)?;
 /// queue.push(43, 0)?;
 /// assert_eq!(queue.pop(0)?, 42);
@@ -110,18 +110,18 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Queue<T, V> {
     }
 }
 
-impl<V: Pod> TryFrom<MapRef> for Queue<MapRef, V> {
+impl<'a, V: Pod> TryFrom<&'a Map> for Queue<&'a Map, V> {
     type Error = MapError;
 
-    fn try_from(a: MapRef) -> Result<Queue<MapRef, V>, MapError> {
+    fn try_from(a: &'a Map) -> Result<Queue<&'a Map, V>, MapError> {
         Queue::new(a)
     }
 }
 
-impl<V: Pod> TryFrom<MapRefMut> for Queue<MapRefMut, V> {
+impl<'a, V: Pod> TryFrom<&'a mut Map> for Queue<&'a mut Map, V> {
     type Error = MapError;
 
-    fn try_from(a: MapRefMut) -> Result<Queue<MapRefMut, V>, MapError> {
+    fn try_from(a: &'a mut Map) -> Result<Queue<&'a mut Map, V>, MapError> {
         Queue::new(a)
     }
 }

@@ -9,7 +9,7 @@ use std::{
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY,
-    maps::{Map, MapError, MapKeys, MapRef, MapRefMut},
+    maps::{Map, MapError, MapKeys},
     programs::ProgramFd,
     sys::{bpf_map_delete_elem, bpf_map_update_elem},
 };
@@ -26,12 +26,13 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::ProgramArray;
 /// use aya::programs::{CgroupSkb, ProgramFd};
 /// use std::convert::{TryFrom, TryInto};
 ///
-/// let mut prog_array = ProgramArray::try_from(bpf.map_mut("JUMP_TABLE")?)?;
+/// let (name, mut map) = bpf.take_map("JUMP_TABLE").unwrap();
+/// let mut prog_array = ProgramArray::try_from(&mut map)?;
 /// let prog_0: &CgroupSkb = bpf.program("example_prog_0").unwrap().try_into()?;
 /// let prog_1: &CgroupSkb = bpf.program("example_prog_1").unwrap().try_into()?;
 /// let prog_2: &CgroupSkb = bpf.program("example_prog_2").unwrap().try_into()?;
@@ -46,6 +47,8 @@ use crate::{
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 2) will jump to prog_2
 /// prog_array.set(2, prog_2, flags);
+///
+/// bpf.return_map(name, map)?;
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_PROG_ARRAY")]
@@ -130,18 +133,18 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
     }
 }
 
-impl TryFrom<MapRef> for ProgramArray<MapRef> {
+impl<'a> TryFrom<&'a Map> for ProgramArray<&'a Map> {
     type Error = MapError;
 
-    fn try_from(a: MapRef) -> Result<ProgramArray<MapRef>, MapError> {
+    fn try_from(a: &'a Map) -> Result<ProgramArray<&'a Map>, MapError> {
         ProgramArray::new(a)
     }
 }
 
-impl TryFrom<MapRefMut> for ProgramArray<MapRefMut> {
+impl<'a> TryFrom<&'a mut Map> for ProgramArray<&'a mut Map> {
     type Error = MapError;
 
-    fn try_from(a: MapRefMut) -> Result<ProgramArray<MapRefMut>, MapError> {
+    fn try_from(a: &'a mut Map) -> Result<ProgramArray<&'a mut Map>, MapError> {
         ProgramArray::new(a)
     }
 }

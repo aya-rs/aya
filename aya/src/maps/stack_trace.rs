@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_STACK_TRACE,
-    maps::{IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut},
+    maps::{IterableMap, Map, MapError, MapIter, MapKeys},
     sys::bpf_map_lookup_elem_ptr,
 };
 
@@ -39,7 +39,7 @@ use crate::{
 /// use aya::util::kernel_symbols;
 /// use std::convert::TryFrom;
 ///
-/// let mut stack_traces = StackTraceMap::try_from(bpf.map("STACK_TRACES")?)?;
+/// let mut stack_traces = StackTraceMap::try_from(bpf.map("STACK_TRACES").unwrap())?;
 /// // load kernel symbols from /proc/kallsyms
 /// let ksyms = kernel_symbols()?;
 ///
@@ -161,18 +161,18 @@ impl<T: Deref<Target = Map>> IterableMap<u32, StackTrace> for StackTraceMap<T> {
     }
 }
 
-impl TryFrom<MapRef> for StackTraceMap<MapRef> {
+impl<'a> TryFrom<&'a Map> for StackTraceMap<&'a Map> {
     type Error = MapError;
 
-    fn try_from(a: MapRef) -> Result<StackTraceMap<MapRef>, MapError> {
+    fn try_from(a: &'a Map) -> Result<StackTraceMap<&'a Map>, MapError> {
         StackTraceMap::new(a)
     }
 }
 
-impl TryFrom<MapRefMut> for StackTraceMap<MapRefMut> {
+impl<'a> TryFrom<&'a mut Map> for StackTraceMap<&'a mut Map> {
     type Error = MapError;
 
-    fn try_from(a: MapRefMut) -> Result<StackTraceMap<MapRefMut>, MapError> {
+    fn try_from(a: &'a mut Map) -> Result<StackTraceMap<&'a mut Map>, MapError> {
         StackTraceMap::new(a)
     }
 }

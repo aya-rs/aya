@@ -7,9 +7,7 @@ use std::{
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_SOCKHASH,
-    maps::{
-        hash_map, sock::SocketMap, IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut,
-    },
+    maps::{hash_map, sock::SocketMap, IterableMap, Map, MapError, MapIter, MapKeys},
     sys::bpf_map_lookup_elem,
     Pod,
 };
@@ -49,13 +47,15 @@ use crate::{
 /// use aya::maps::SockHash;
 /// use aya::programs::SkMsg;
 ///
-/// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+/// let (name, mut map) = bpf.take_map("INTERCEPT_EGRESS").unwrap();
+/// let mut intercept_egress = SockHash::try_from(&mut map)?;
 /// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach(&intercept_egress)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
 /// intercept_egress.insert(1234, client.as_raw_fd(), 0)?;
+/// bpf.return_map(name, map)?;
 ///
 /// // the write will be intercepted
 /// client.write_all(b"foo")?;
@@ -140,18 +140,18 @@ impl<T: DerefMut<Target = Map>, K: Pod> SocketMap for SockHash<T, K> {
     }
 }
 
-impl<K: Pod> TryFrom<MapRef> for SockHash<MapRef, K> {
+impl<'a, K: Pod> TryFrom<&'a Map> for SockHash<&'a Map, K> {
     type Error = MapError;
 
-    fn try_from(a: MapRef) -> Result<SockHash<MapRef, K>, MapError> {
+    fn try_from(a: &'a Map) -> Result<SockHash<&'a Map, K>, MapError> {
         SockHash::new(a)
     }
 }
 
-impl<K: Pod> TryFrom<MapRefMut> for SockHash<MapRefMut, K> {
+impl<'a, K: Pod> TryFrom<&'a mut Map> for SockHash<&'a mut Map, K> {
     type Error = MapError;
 
-    fn try_from(a: MapRefMut) -> Result<SockHash<MapRefMut, K>, MapError> {
+    fn try_from(a: &'a mut Map) -> Result<SockHash<&'a mut Map, K>, MapError> {
         SockHash::new(a)
     }
 }

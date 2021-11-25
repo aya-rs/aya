@@ -15,7 +15,7 @@ use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
     maps::{
         perf::{Events, PerfBuffer, PerfBufferError},
-        Map, MapError, MapRefMut,
+        Map, MapError,
     },
     sys::bpf_map_update_elem,
 };
@@ -109,13 +109,13 @@ impl<T: DerefMut<Target = Map>> AsRawFd for PerfEventArrayBuffer<T> {
 /// #    #[error(transparent)]
 /// #    PerfBuf(#[from] aya::maps::perf::PerfBufferError),
 /// # }
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::PerfEventArray;
 /// use aya::util::online_cpus;
 /// use std::convert::{TryFrom, TryInto};
 /// use bytes::BytesMut;
 ///
-/// let mut perf_array = PerfEventArray::try_from(bpf.map_mut("EVENTS")?)?;
+/// let mut perf_array = PerfEventArray::try_from(bpf.map_mut("EVENTS").unwrap())?;
 ///
 /// // eBPF programs are going to write to the EVENTS perf array, using the id of the CPU they're
 /// // running on as the array index.
@@ -205,10 +205,10 @@ impl<T: DerefMut<Target = Map>> PerfEventArray<T> {
     }
 }
 
-impl TryFrom<MapRefMut> for PerfEventArray<MapRefMut> {
+impl<'a> TryFrom<&'a mut Map> for PerfEventArray<&'a mut Map> {
     type Error = MapError;
 
-    fn try_from(a: MapRefMut) -> Result<PerfEventArray<MapRefMut>, MapError> {
+    fn try_from(a: &'a mut Map) -> Result<PerfEventArray<&'a mut Map>, MapError> {
         PerfEventArray::new(a)
     }
 }

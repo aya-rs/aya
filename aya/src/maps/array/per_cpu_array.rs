@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY,
-    maps::{IterableMap, Map, MapError, MapRef, MapRefMut, PerCpuValues},
+    maps::{IterableMap, Map, MapError, PerCpuValues},
     sys::{bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu},
     Pod,
 };
@@ -32,12 +32,12 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::{PerCpuArray, PerCpuValues};
 /// use aya::util::nr_cpus;
 /// use std::convert::TryFrom;
 ///
-/// let mut array = PerCpuArray::try_from(bpf.map_mut("ARRAY")?)?;
+/// let mut array = PerCpuArray::try_from(bpf.map_mut("ARRAY").unwrap())?;
 ///
 /// // set array[1] = 42 for all cpus
 /// let nr_cpus = nr_cpus()?;
@@ -158,18 +158,18 @@ impl<T: Deref<Target = Map>, V: Pod> IterableMap<u32, PerCpuValues<V>> for PerCp
     }
 }
 
-impl<V: Pod> TryFrom<MapRef> for PerCpuArray<MapRef, V> {
+impl<'a, V: Pod> TryFrom<&'a Map> for PerCpuArray<&'a Map, V> {
     type Error = MapError;
 
-    fn try_from(a: MapRef) -> Result<PerCpuArray<MapRef, V>, MapError> {
+    fn try_from(a: &'a Map) -> Result<PerCpuArray<&'a Map, V>, MapError> {
         PerCpuArray::new(a)
     }
 }
 
-impl<V: Pod> TryFrom<MapRefMut> for PerCpuArray<MapRefMut, V> {
+impl<'a, V: Pod> TryFrom<&'a mut Map> for PerCpuArray<&'a mut Map, V> {
     type Error = MapError;
 
-    fn try_from(a: MapRefMut) -> Result<PerCpuArray<MapRefMut, V>, MapError> {
+    fn try_from(a: &'a mut Map) -> Result<PerCpuArray<&'a mut Map, V>, MapError> {
         PerCpuArray::new(a)
     }
 }

@@ -11,7 +11,7 @@
 //!
 //! The eBPF API includes many map types each supporting different operations.
 //! [`Bpf::map`](crate::Bpf::map) and [`Bpf::map_mut`](crate::Bpf::map_mut) always return the
-//! opaque [`MapRef`] and [`MapRefMut`] types respectively. Those two types can be converted to
+//! opaque &Map and &mut Map types respectively. Those two types can be converted to
 //! *typed maps* using the [`TryFrom`](std::convert::TryFrom) trait. For example:
 //!
 //! ```no_run
@@ -20,10 +20,12 @@
 //! use aya::maps::SockMap;
 //! use aya::programs::SkMsg;
 //!
-//! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+//! let (name, mut map) = bpf.take_map("INTERCEPT_EGRESS").unwrap();
+//! let intercept_egress = SockMap::try_from(&mut map)?;
 //! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 //! prog.load()?;
 //! prog.attach(&intercept_egress)?;
+//! bpf.return_map(name, map)?;
 //! # Ok::<(), aya::BpfError>(())
 //! ```
 //!
@@ -46,8 +48,6 @@ use crate::{
     Pod,
 };
 
-mod map_lock;
-
 pub mod array;
 pub mod hash_map;
 pub mod perf;
@@ -58,7 +58,6 @@ pub mod stack_trace;
 
 pub use array::{Array, PerCpuArray, ProgramArray};
 pub use hash_map::{HashMap, PerCpuHashMap};
-pub use map_lock::*;
 pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use sock::{SockHash, SockMap};
@@ -67,8 +66,8 @@ pub use stack_trace::StackTraceMap;
 
 #[derive(Error, Debug)]
 pub enum MapError {
-    #[error("map `{name}` not found ")]
-    MapNotFound { name: String },
+    #[error("map already exists")]
+    Occupied,
 
     #[error("invalid map type {map_type}")]
     InvalidMapType { map_type: u32 },
@@ -129,12 +128,6 @@ pub enum MapError {
         #[source]
         io_error: io::Error,
     },
-
-    #[error("map `{name}` is borrowed mutably")]
-    BorrowError { name: String },
-
-    #[error("map `{name}` is already borrowed")]
-    BorrowMutError { name: String },
 }
 
 /// A generic handle to a BPF map.

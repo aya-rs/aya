@@ -9,7 +9,7 @@ use std::{
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_SOCKMAP,
-    maps::{sock::SocketMap, Map, MapError, MapKeys, MapRef, MapRefMut},
+    maps::{sock::SocketMap, Map, MapError, MapKeys},
     sys::{bpf_map_delete_elem, bpf_map_update_elem},
 };
 
@@ -34,10 +34,12 @@ use crate::{
 /// use aya::maps::SockMap;
 /// use aya::programs::SkSkb;
 ///
-/// let intercept_ingress = SockMap::try_from(bpf.map_mut("INTERCEPT_INGRESS")?)?;
+/// let (name, mut map) = bpf.take_map("INTERCEPT_EGRESS").unwrap();
+/// let intercept_ingress = SockMap::try_from(&mut map)?;
 /// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach(&intercept_ingress)?;
+/// bpf.return_map(name, map)?;
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_SOCKMAP")]
@@ -120,18 +122,18 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> SocketMap for SockMap<T> {
     }
 }
 
-impl TryFrom<MapRef> for SockMap<MapRef> {
+impl<'a> TryFrom<&'a Map> for SockMap<&'a Map> {
     type Error = MapError;
 
-    fn try_from(a: MapRef) -> Result<SockMap<MapRef>, MapError> {
+    fn try_from(a: &'a Map) -> Result<SockMap<&'a Map>, MapError> {
         SockMap::new(a)
     }
 }
 
-impl TryFrom<MapRefMut> for SockMap<MapRefMut> {
+impl<'a> TryFrom<&'a mut Map> for SockMap<&'a mut Map> {
     type Error = MapError;
 
-    fn try_from(a: MapRefMut) -> Result<SockMap<MapRefMut>, MapError> {
+    fn try_from(a: &'a mut Map) -> Result<SockMap<&'a mut Map>, MapError> {
         SockMap::new(a)
     }
 }

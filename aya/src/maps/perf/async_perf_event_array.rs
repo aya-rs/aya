@@ -13,7 +13,7 @@ use tokio::io::unix::AsyncFd;
 
 use crate::maps::{
     perf::{Events, PerfBufferError, PerfEventArray, PerfEventArrayBuffer},
-    Map, MapError, MapRefMut,
+    Map, MapError,
 };
 
 /// A `Future` based map that can be used to receive events from eBPF programs using the linux
@@ -198,10 +198,10 @@ impl<T: DerefMut<Target = Map>> AsyncPerfEventArrayBuffer<T> {
     }
 }
 
-impl TryFrom<MapRefMut> for AsyncPerfEventArray<MapRefMut> {
+impl<'a> TryFrom<&'a mut Map> for AsyncPerfEventArray<&'a mut Map> {
     type Error = MapError;
 
-    fn try_from(a: MapRefMut) -> Result<AsyncPerfEventArray<MapRefMut>, MapError> {
+    fn try_from(a: &'a mut Map) -> Result<AsyncPerfEventArray<&'a mut Map>, MapError> {
         AsyncPerfEventArray::new(a)
     }
 }

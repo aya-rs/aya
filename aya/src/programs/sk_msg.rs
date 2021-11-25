@@ -37,7 +37,8 @@ use crate::{
 /// use aya::maps::SockHash;
 /// use aya::programs::SkMsg;
 ///
-/// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+/// let (name, mut map) = bpf.take_map("INTERCEPT_EGRESS").unwrap();
+/// let mut intercept_egress = SockHash::try_from(&mut map)?;
 /// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach(&intercept_egress)?;
@@ -47,6 +48,7 @@ use crate::{
 ///
 /// // the write will be intercepted
 /// client.write_all(b"foo")?;
+/// bpf.return_map(name, map)?;
 /// # Ok::<(), Error>(())
 /// ```
 ///
