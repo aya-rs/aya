@@ -87,7 +87,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
 
     /// An iterator visiting all key-value pairs in arbitrary order. The
     /// iterator item type is `Result<(K, PerCpuValues<V>), MapError>`.
-    pub unsafe fn iter(&self) -> MapIter<'_, K, PerCpuValues<V>> {
+    pub unsafe fn iter(&self) -> MapIter<'_, K, PerCpuValues<V>, Self> {
         MapIter::new(self)
     }
 

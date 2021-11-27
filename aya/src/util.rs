@@ -76,7 +76,7 @@ pub fn kernel_symbols() -> Result<BTreeMap<u64, String>, io::Error> {
     parse_kernel_symbols(&mut reader)
 }
 
-fn parse_kernel_symbols(reader: &mut dyn BufRead) -> Result<BTreeMap<u64, String>, io::Error> {
+fn parse_kernel_symbols(reader: impl BufRead) -> Result<BTreeMap<u64, String>, io::Error> {
     let mut syms = BTreeMap::new();
 
     for line in reader.lines() {

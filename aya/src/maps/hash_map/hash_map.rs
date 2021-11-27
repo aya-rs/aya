@@ -75,7 +75,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
 
     /// An iterator visiting all key-value pairs in arbitrary order. The
     /// iterator item type is `Result<(K, V), MapError>`.
-    pub unsafe fn iter(&self) -> MapIter<'_, K, V> {
+    pub unsafe fn iter(&self) -> MapIter<'_, K, V, Self> {
         MapIter::new(self)
     }
 
