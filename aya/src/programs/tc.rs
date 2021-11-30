@@ -4,14 +4,13 @@ use thiserror::Error;
 use std::{
     ffi::{CStr, CString},
     io,
-    os::unix::io::RawFd,
 };
 
 use crate::{
     generated::{
         bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS, TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     },
-    programs::{load_program, Link, OwnedLink, ProgramData, ProgramError},
+    programs::{load_program, InnerLink, OwnedLink, ProgramData, ProgramError},
     sys::{
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
         netlink_qdisc_detach,
@@ -91,7 +90,6 @@ pub enum TcError {
 pub(crate) struct TcLink {
     if_index: i32,
     attach_type: TcAttachType,
-    prog_fd: Option<RawFd>,
     priority: u32,
 }
 
@@ -136,28 +134,17 @@ impl SchedClassifier {
         Ok(TcLink {
             if_index: if_index as i32,
             attach_type,
-            prog_fd: Some(prog_fd),
             priority,
         }
         .into())
     }
 }
 
-impl Drop for TcLink {
-    fn drop(&mut self) {
-        let _ = self.detach();
-    }
-}
-
-impl Link for TcLink {
+impl InnerLink for TcLink {
     fn detach(&mut self) -> Result<(), ProgramError> {
-        if self.prog_fd.take().is_some() {
-            unsafe { netlink_qdisc_detach(self.if_index, &self.attach_type, self.priority) }
-                .map_err(|io_error| TcError::NetlinkError { io_error })?;
-            Ok(())
-        } else {
-            Err(ProgramError::AlreadyDetached)
-        }
+        unsafe { netlink_qdisc_detach(self.if_index, &self.attach_type, self.priority) }
+            .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        Ok(())
     }
 }
 

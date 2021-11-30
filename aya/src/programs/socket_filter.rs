@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use crate::{
     generated::{bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF},
-    programs::{load_program, Link, OwnedLink, ProgramData, ProgramError},
+    programs::{load_program, InnerLink, OwnedLink, ProgramData, ProgramError},
 };
 
 /// The type returned when attaching a [`SocketFilter`] fails.
@@ -91,41 +91,27 @@ impl SocketFilter {
             .into());
         }
 
-        Ok(SocketFilterLink {
-            socket,
-            prog_fd: Some(prog_fd),
-        }
-        .into())
+        Ok(SocketFilterLink { socket, prog_fd }.into())
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct SocketFilterLink {
     socket: RawFd,
-    prog_fd: Option<RawFd>,
+    prog_fd: RawFd,
 }
 
-impl Link for SocketFilterLink {
+impl InnerLink for SocketFilterLink {
     fn detach(&mut self) -> Result<(), ProgramError> {
-        if let Some(fd) = self.prog_fd.take() {
-            unsafe {
-                setsockopt(
-                    self.socket,
-                    SOL_SOCKET,
-                    SO_DETACH_BPF as i32,
-                    &fd as *const _ as *const _,
-                    mem::size_of::<RawFd>() as u32,
-                );
-            }
-            Ok(())
-        } else {
-            Err(ProgramError::AlreadyDetached)
+        unsafe {
+            setsockopt(
+                self.socket,
+                SOL_SOCKET,
+                SO_DETACH_BPF as i32,
+                &self.prog_fd as *const _ as *const _,
+                mem::size_of::<RawFd>() as u32,
+            );
         }
-    }
-}
-
-impl Drop for SocketFilterLink {
-    fn drop(&mut self) {
-        let _ = self.detach();
+        Ok(())
     }
 }

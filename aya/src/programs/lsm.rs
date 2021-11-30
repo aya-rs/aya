@@ -102,5 +102,5 @@ pub(crate) fn attach_btf_id(program_data: &mut ProgramData) -> Result<OwnedLink,
         }
     })? as RawFd;
 
-    Ok(FdLink { fd: Some(pfd) }.into())
+    Ok(FdLink { fd: pfd }.into())
 }

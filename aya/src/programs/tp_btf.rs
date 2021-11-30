@@ -93,6 +93,6 @@ impl BtfTracePoint {
             }
         })? as RawFd;
 
-        Ok(FdLink { fd: Some(pfd) }.into())
+        Ok(FdLink { fd: pfd }.into())
     }
 }

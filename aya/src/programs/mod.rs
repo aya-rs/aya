@@ -60,6 +60,7 @@ use std::{
     convert::TryFrom,
     ffi::{CStr, CString},
     io,
+    mem::ManuallyDrop,
     os::unix::io::{AsRawFd, RawFd},
     path::Path,
 };
@@ -104,14 +105,6 @@ pub enum ProgramError {
     /// The program is not loaded.
     #[error("the program is not loaded")]
     NotLoaded,
-
-    /// The program is already detached.
-    #[error("the program was already detached")]
-    AlreadyDetached,
-
-    /// The program is not attached.
-    #[error("the program is not attached")]
-    NotAttached,
 
     /// Loading the program failed.
     #[error("the BPF_PROG_LOAD syscall failed. Verifier output: {verifier_log}")]
@@ -473,26 +466,53 @@ pub(crate) fn query<T: AsRawFd>(
     }
 }
 
-/// Detach an attached program.
+/// A type implementing Link represents an attached eBPF program. It can be
+/// either detached to terminate its execution, or forgotten so that it persists
+/// in the kernel even without a companion userspace.
 pub trait Link {
+    /// Detach the program from the eBPF VM.
+    fn detach(self) -> Result<(), ProgramError>;
+    /// Perform any necessary cleanup to forget the program without leaking
+    /// system resources, if possible.
+    fn forget(self) -> Result<(), ProgramError>;
+}
+
+/// The private counterpart to Link for the enum members of OwnedLink. InnerLink functions are
+/// permitted to put the implementing type in a state such that all subsequent method calls fail.
+/// The intent is that InnerLink functions will only be publicly called through Link. This allows
+/// us to cleanly handle Drop without exposing the &mut self methods to the public API.
+pub(crate) trait InnerLink {
+    /// Detach the program from the eBPF VM.
     fn detach(&mut self) -> Result<(), ProgramError>;
+    /// Perform any necessary cleanup to forget the program without leaking
+    /// system resources, if possible.
+    fn forget(&mut self) -> Result<(), ProgramError> {
+        Ok(())
+    }
 }
 
 /// The return type of `program.attach(...)`.
 ///
-/// [`OwnedLink`] implements the [`Link`] trait and can be used to detach a
-/// program.
+/// [`OwnedLink`] implements the [`Link`] trait and can be used to detach or
+/// forget a program.
 /// An eBPF program's lifetime is directly connected to the OwnedLink's; it must
 /// be in scope for as long as one wants the program to remain attached. When
-/// dropped, OwnedLink will detach the program.
+/// dropped, OwnedLink will detach the program. In order to persist a program in
+/// the kernel beyond the OwnedLink's lifetime, call the [forget](Link::forget) method.
 #[derive(Debug)]
 pub struct OwnedLink {
-    pub(crate) inner: OwnedLinkImpl,
+    inner: OwnedLinkImpl,
 }
 
 impl Link for OwnedLink {
-    fn detach(&mut self) -> Result<(), ProgramError> {
-        self.inner.detach()
+    fn detach(self) -> Result<(), ProgramError> {
+        let mut v = ManuallyDrop::new(self);
+        v.inner.detach()
+    }
+
+    fn forget(self) -> Result<(), ProgramError> {
+        let mut v = ManuallyDrop::new(self);
+        v.inner.forget()
     }
 }
 
@@ -544,6 +564,12 @@ impl From<TcLink> for OwnedLink {
     }
 }
 
+impl Drop for OwnedLink {
+    fn drop(&mut self) {
+        let _ = self.inner.detach();
+    }
+}
+
 #[derive(Debug)]
 pub(crate) enum OwnedLinkImpl {
     Fd(FdLink),
@@ -555,7 +581,7 @@ pub(crate) enum OwnedLinkImpl {
     Tc(TcLink),
 }
 
-impl Link for OwnedLinkImpl {
+impl OwnedLinkImpl {
     fn detach(&mut self) -> Result<(), ProgramError> {
         match self {
             Self::Fd(link) => link.detach(),
@@ -565,6 +591,18 @@ impl Link for OwnedLinkImpl {
             Self::ProgAttach(link) => link.detach(),
             Self::SocketFilter(link) => link.detach(),
             Self::Tc(link) => link.detach(),
+        }
+    }
+
+    fn forget(&mut self) -> Result<(), ProgramError> {
+        match self {
+            Self::Fd(link) => link.forget(),
+            Self::Lirc(link) => link.forget(),
+            Self::Nl(link) => link.forget(),
+            Self::Perf(link) => link.forget(),
+            Self::ProgAttach(link) => link.forget(),
+            Self::SocketFilter(link) => link.forget(),
+            Self::Tc(link) => link.forget(),
         }
     }
 }
@@ -613,30 +651,21 @@ impl From<TcLink> for OwnedLinkImpl {
 
 #[derive(Debug)]
 pub(crate) struct FdLink {
-    fd: Option<RawFd>,
+    fd: RawFd,
 }
 
-impl Link for FdLink {
+impl InnerLink for FdLink {
     fn detach(&mut self) -> Result<(), ProgramError> {
-        if let Some(fd) = self.fd.take() {
-            unsafe { close(fd) };
-            Ok(())
-        } else {
-            Err(ProgramError::AlreadyDetached)
-        }
-    }
-}
-
-impl Drop for FdLink {
-    fn drop(&mut self) {
-        let _ = self.detach();
+        // TODO: Actually wrap this return code.
+        unsafe { close(self.fd) };
+        Ok(())
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct ProgAttachLink {
-    prog_fd: Option<RawFd>,
-    target_fd: Option<RawFd>,
+    prog_fd: RawFd,
+    target_fd: RawFd,
     attach_type: bpf_attach_type,
 }
 
@@ -647,29 +676,24 @@ impl ProgAttachLink {
         attach_type: bpf_attach_type,
     ) -> ProgAttachLink {
         ProgAttachLink {
-            prog_fd: Some(prog_fd),
-            target_fd: Some(unsafe { dup(target_fd) }),
+            prog_fd,
+            target_fd: unsafe { dup(target_fd) },
             attach_type,
         }
     }
 }
 
-impl Link for ProgAttachLink {
+impl InnerLink for ProgAttachLink {
     fn detach(&mut self) -> Result<(), ProgramError> {
-        if let Some(prog_fd) = self.prog_fd.take() {
-            let target_fd = self.target_fd.take().unwrap();
-            let _ = bpf_prog_detach(prog_fd, target_fd, self.attach_type);
-            unsafe { close(target_fd) };
-            Ok(())
-        } else {
-            Err(ProgramError::AlreadyDetached)
-        }
+        // TODO: Actually wrap this return code.
+        let _ = bpf_prog_detach(self.prog_fd, self.target_fd, self.attach_type);
+        self.forget()
     }
-}
 
-impl Drop for ProgAttachLink {
-    fn drop(&mut self) {
-        let _ = self.detach();
+    fn forget(&mut self) -> Result<(), ProgramError> {
+        // TODO: Actually wrap this return code.
+        unsafe { close(self.target_fd) };
+        Ok(())
     }
 }
 

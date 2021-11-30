@@ -93,7 +93,7 @@ impl CgroupSkb {
                         io_error,
                     }
                 })? as RawFd;
-            Ok(FdLink { fd: Some(link_fd) }.into())
+            Ok(FdLink { fd: link_fd }.into())
         } else {
             bpf_prog_attach(prog_fd, cgroup_fd, attach_type).map_err(|(_, io_error)| {
                 ProgramError::SyscallError {

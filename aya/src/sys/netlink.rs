@@ -27,7 +27,7 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     if_index: i32,
     fd: RawFd,
     old_fd: Option<RawFd>,
-    flags: u32,
+    mut flags: u32,
 ) -> Result<(), io::Error> {
     let sock = NetlinkSocket::open()?;
 
@@ -50,12 +50,12 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     let mut attrs = NestedAttrs::new(attrs_buf, IFLA_XDP);
     attrs.write_attr(IFLA_XDP_FD as u16, fd)?;
 
-    if flags > 0 {
-        attrs.write_attr(IFLA_XDP_FLAGS as u16, flags)?;
+    if let Some(old_fd) = old_fd {
+        attrs.write_attr(IFLA_XDP_EXPECTED_FD as u16, old_fd)?;
+        flags |= XDP_FLAGS_REPLACE;
     }
-
-    if flags & XDP_FLAGS_REPLACE != 0 {
-        attrs.write_attr(IFLA_XDP_EXPECTED_FD as u16, old_fd.unwrap())?;
+    if flags != 0 {
+        attrs.write_attr(IFLA_XDP_FLAGS as u16, flags)?;
     }
 
     let nla_len = attrs.finish()?;

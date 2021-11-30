@@ -8,7 +8,7 @@ use crate::{
         bpf_attach_type::BPF_XDP, bpf_prog_type::BPF_PROG_TYPE_XDP, XDP_FLAGS_DRV_MODE,
         XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE, XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
-    programs::{load_program, FdLink, Link, OwnedLink, ProgramData, ProgramError},
+    programs::{load_program, FdLink, InnerLink, OwnedLink, ProgramData, ProgramError},
     sys::{bpf_link_create, kernel_version, netlink_set_xdp_fd},
 };
 
@@ -105,14 +105,14 @@ impl Xdp {
                     io_error,
                 },
             )? as RawFd;
-            Ok(FdLink { fd: Some(link_fd) }.into())
+            Ok(FdLink { fd: link_fd }.into())
         } else {
             unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, flags.bits) }
                 .map_err(|io_error| XdpError::NetlinkError { io_error })?;
 
             Ok(NlLink {
                 if_index,
-                prog_fd: Some(prog_fd),
+                prog_fd,
                 flags,
             }
             .into())
@@ -123,29 +123,15 @@ impl Xdp {
 #[derive(Debug)]
 pub(crate) struct NlLink {
     if_index: i32,
-    prog_fd: Option<RawFd>,
+    prog_fd: RawFd,
     flags: XdpFlags,
 }
 
-impl Link for NlLink {
+impl InnerLink for NlLink {
     fn detach(&mut self) -> Result<(), ProgramError> {
-        if let Some(fd) = self.prog_fd.take() {
-            let k_ver = kernel_version().unwrap();
-            let flags = if k_ver >= (5, 7, 0) {
-                self.flags.bits | XDP_FLAGS_REPLACE
-            } else {
-                self.flags.bits
-            };
-            let _ = unsafe { netlink_set_xdp_fd(self.if_index, -1, Some(fd), flags) };
-            Ok(())
-        } else {
-            Err(ProgramError::AlreadyDetached)
-        }
-    }
-}
-
-impl Drop for NlLink {
-    fn drop(&mut self) {
-        let _ = self.detach();
+        let k_ver = kernel_version().unwrap();
+        let old_fd = (k_ver >= (5, 7, 0)).then(|| self.prog_fd);
+        let _ = unsafe { netlink_set_xdp_fd(self.if_index, -1, old_fd, self.flags.bits) };
+        Ok(())
     }
 }

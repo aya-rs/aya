@@ -1,12 +1,16 @@
-use std::os::unix::prelude::{AsRawFd, RawFd};
+use std::{
+    mem::ManuallyDrop,
+    os::unix::prelude::{AsRawFd, RawFd},
+};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
-    programs::{load_program, query, Link, OwnedLink, ProgramData, ProgramError, ProgramInfo},
-    sys::{bpf_obj_get_info_by_fd, bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
+    programs::{
+        load_program, query, InnerLink, Link, OwnedLink, ProgAttachLink, ProgramData, ProgramError,
+        ProgramInfo,
+    },
+    sys::{bpf_obj_get_info_by_fd, bpf_prog_attach, bpf_prog_get_fd_by_id},
 };
-
-use libc::{close, dup};
 
 /// A program used to decode IR into key events for a lirc device.
 ///
@@ -91,60 +95,61 @@ impl LircMode2 {
 
         Ok(prog_fds
             .into_iter()
-            .map(|prog_fd| LircLink {
-                prog_fd: Some(prog_fd),
-                target_fd: Some(unsafe { dup(target_fd.as_raw_fd()) }),
-            })
+            .map(|prog_fd| LircLink::new(prog_fd, target_fd.as_raw_fd()))
             .collect())
     }
 }
 
 #[derive(Debug)]
 pub struct LircLink {
-    prog_fd: Option<RawFd>,
-    target_fd: Option<RawFd>,
+    inner: ProgAttachLink,
 }
 
 impl LircLink {
     pub(crate) fn new(prog_fd: RawFd, target_fd: RawFd) -> LircLink {
         LircLink {
-            prog_fd: Some(prog_fd),
-            target_fd: Some(unsafe { dup(target_fd) }),
+            inner: ProgAttachLink::new(prog_fd, target_fd, BPF_LIRC_MODE2),
         }
     }
 
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-        if let Some(fd) = self.prog_fd {
-            match bpf_obj_get_info_by_fd(fd) {
-                Ok(info) => Ok(ProgramInfo(info)),
-                Err(io_error) => Err(ProgramError::SyscallError {
-                    call: "bpf_obj_get_info_by_fd".to_owned(),
-                    io_error,
-                }),
-            }
-        } else {
-            Err(ProgramError::AlreadyDetached)
-        }
+        bpf_obj_get_info_by_fd(self.inner.prog_fd)
+            .map(ProgramInfo)
+            .map_err(|io_error| ProgramError::SyscallError {
+                call: "bpf_obj_get_info_by_fd".to_owned(),
+                io_error,
+            })
+    }
+}
+
+impl InnerLink for LircLink {
+    fn detach(&mut self) -> Result<(), ProgramError> {
+        self.inner.detach()
+    }
+
+    fn forget(&mut self) -> Result<(), ProgramError> {
+        self.inner.forget()
     }
 }
 
 impl Link for LircLink {
-    fn detach(&mut self) -> Result<(), ProgramError> {
-        if let Some(prog_fd) = self.prog_fd.take() {
-            let target_fd = self.target_fd.take().unwrap();
-            let _ = bpf_prog_detach(prog_fd, target_fd, BPF_LIRC_MODE2);
-            unsafe { close(target_fd) };
-            Ok(())
-        } else {
-            Err(ProgramError::AlreadyDetached)
-        }
+    fn detach(self) -> Result<(), ProgramError> {
+        let mut v = ManuallyDrop::new(self);
+        InnerLink::detach(&mut *v)
+    }
+
+    fn forget(self) -> Result<(), ProgramError> {
+        let mut v = ManuallyDrop::new(self);
+        InnerLink::forget(&mut *v)
     }
 }
 
+// Since LircLinks can only be publicly created from query, they are essentially
+// mutable views, and the actual ownership of the link lies with the
+// kernel. Perhaps it is more appropriate to create a separate LircLinkView
+// struct.
 impl Drop for LircLink {
     fn drop(&mut self) {
-        if let Some(target_fd) = self.target_fd.take() {
-            unsafe { close(target_fd) };
-        }
+        let _ = self.forget();
     }
 }
