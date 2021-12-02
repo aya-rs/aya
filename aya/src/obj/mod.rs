@@ -609,10 +609,9 @@ fn is_program_section(name: &str) -> bool {
 mod tests {
     use matches::assert_matches;
     use object::Endianness;
-    use std::slice;
 
     use super::*;
-    use crate::PinningType;
+    use crate::{util::bytes_of, PinningType};
 
     fn fake_section<'a>(name: &'a str, data: &'a [u8]) -> Section<'a> {
         Section {
@@ -633,11 +632,6 @@ mod tests {
             off: 0,
             imm: 0,
         }
-    }
-
-    fn bytes_of<T>(val: &T) -> &[u8] {
-        let size = mem::size_of::<T>();
-        unsafe { slice::from_raw_parts(slice::from_ref(val).as_ptr().cast(), size) }
     }
 
     #[test]

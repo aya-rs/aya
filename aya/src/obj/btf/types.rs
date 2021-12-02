@@ -14,6 +14,7 @@ use crate::{
         BTF_KIND_UNKN, BTF_KIND_VAR, BTF_KIND_VOLATILE,
     },
     obj::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH},
+    util::bytes_of,
 };
 
 #[derive(Clone, Debug)]
@@ -147,6 +148,63 @@ impl BtfType {
             BtfKind::Var => Var(ty, unsafe { read(data)? }),
             BtfKind::DataSec => DataSec(ty, unsafe { read_array(data, vlen)? }),
         })
+    }
+
+    pub(crate) unsafe fn to_bytes(&self) -> Vec<u8> {
+        match self {
+            BtfType::Fwd(btf_type)
+            | BtfType::Const(btf_type)
+            | BtfType::Volatile(btf_type)
+            | BtfType::Restrict(btf_type)
+            | BtfType::Ptr(btf_type)
+            | BtfType::Typedef(btf_type)
+            | BtfType::Func(btf_type)
+            | BtfType::Float(btf_type) => bytes_of::<btf_type>(btf_type).to_vec(),
+            BtfType::Int(btf_type, len) => {
+                let mut buf = bytes_of::<btf_type>(btf_type).to_vec();
+                buf.append(&mut len.to_ne_bytes().to_vec());
+                buf
+            }
+            BtfType::Enum(btf_type, enums) => {
+                let mut buf = bytes_of::<btf_type>(btf_type).to_vec();
+                for en in enums {
+                    buf.append(&mut bytes_of::<btf_enum>(en).to_vec());
+                }
+                buf
+            }
+            BtfType::Array(btf_type, btf_array) => {
+                let mut buf = bytes_of::<btf_type>(btf_type).to_vec();
+                buf.append(&mut bytes_of::<btf_array>(btf_array).to_vec());
+                buf
+            }
+            BtfType::Struct(btf_type, btf_members) | BtfType::Union(btf_type, btf_members) => {
+                let mut buf = bytes_of::<btf_type>(btf_type).to_vec();
+                for m in btf_members {
+                    buf.append(&mut bytes_of::<btf_member>(m).to_vec());
+                }
+                buf
+            }
+            BtfType::FuncProto(btf_type, btf_params) => {
+                let mut buf = bytes_of::<btf_type>(btf_type).to_vec();
+                for p in btf_params {
+                    buf.append(&mut bytes_of::<btf_param>(p).to_vec());
+                }
+                buf
+            }
+            BtfType::Var(btf_type, btf_var) => {
+                let mut buf = bytes_of::<btf_type>(btf_type).to_vec();
+                buf.append(&mut bytes_of::<btf_var>(btf_var).to_vec());
+                buf
+            }
+            BtfType::DataSec(btf_type, btf_var_secinfo) => {
+                let mut buf = bytes_of::<btf_type>(btf_type).to_vec();
+                for s in btf_var_secinfo {
+                    buf.append(&mut bytes_of::<btf_var_secinfo>(s).to_vec());
+                }
+                buf
+            }
+            BtfType::Unknown => vec![],
+        }
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
@@ -406,7 +464,8 @@ mod tests {
             0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x08, 0x00, 0x00, 0x00, 0x40, 0x00,
             0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Int(ty, nr_bits)) => {
                 assert_eq!(ty.name_off, 1);
                 assert_eq!(nr_bits, 64);
@@ -414,6 +473,8 @@ mod tests {
             Ok(t) => panic!("expected int type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -422,11 +483,14 @@ mod tests {
         let data: &[u8] = &[
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x06, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Ptr(_)) => {}
             Ok(t) => panic!("expected ptr type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -436,11 +500,14 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
             0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Array(_, _)) => {}
             Ok(t) => panic!("expected array type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -450,11 +517,14 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x00, 0x47, 0x02,
             0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Struct(_, _)) => {}
             Ok(t) => panic!("expected struct type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -464,11 +534,14 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x05, 0x04, 0x00, 0x00, 0x00, 0x0d, 0x04,
             0x00, 0x00, 0x68, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Union(_, _)) => {}
             Ok(t) => panic!("expected union type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -478,11 +551,14 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x06, 0x04, 0x00, 0x00, 0x00, 0xc9, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xcf, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Enum(_, _)) => {}
             Ok(t) => panic!("expected enum type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -491,11 +567,14 @@ mod tests {
         let data: &[u8] = &[
             0x0b, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Fwd(_)) => {}
             Ok(t) => panic!("expected fwd type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -504,11 +583,14 @@ mod tests {
         let data: &[u8] = &[
             0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x0b, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Typedef(_)) => {}
             Ok(t) => panic!("expected typedef type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -517,11 +599,14 @@ mod tests {
         let data: &[u8] = &[
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x24, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Volatile(_)) => {}
             Ok(t) => panic!("expected volatile type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -530,11 +615,14 @@ mod tests {
         let data: &[u8] = &[
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x01, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Const(_)) => {}
             Ok(t) => panic!("expected const type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -543,11 +631,14 @@ mod tests {
         let data: &[u8] = &[
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x04, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Restrict(_)) => {}
             Ok(t) => panic!("expected restrict type gpt {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -556,11 +647,14 @@ mod tests {
         let data: &[u8] = &[
             0x17, 0x8b, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x0c, 0xf0, 0xe4, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Func(_)) => {}
             Ok(t) => panic!("expected func type gpt {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -570,11 +664,14 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x12, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::FuncProto(_, _)) => {}
             Ok(t) => panic!("expected func_proto type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -585,11 +682,14 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Var(_, _)) => {}
             Ok(t) => panic!("expected var type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
-        }
+        };
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -600,11 +700,14 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::DataSec(_, _)) => {}
             Ok(t) => panic!("expected datasec type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 
     #[test]
@@ -613,10 +716,13 @@ mod tests {
         let data: &[u8] = &[
             0x78, 0xfd, 0x02, 0x00, 0x00, 0x00, 0x00, 0x10, 0x08, 0x00, 0x00, 0x00,
         ];
-        match unsafe { BtfType::read(data, endianness) } {
+        let got = unsafe { BtfType::read(data, endianness) };
+        match got {
             Ok(BtfType::Float(_)) => {}
             Ok(t) => panic!("expected float type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+        let data2 = unsafe { got.unwrap().to_bytes() };
+        assert_eq!(data, data2.as_slice())
     }
 }

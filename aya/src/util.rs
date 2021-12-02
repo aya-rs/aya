@@ -4,6 +4,7 @@ use std::{
     ffi::CString,
     fs::{self, File},
     io::{self, BufReader},
+    mem, slice,
     str::FromStr,
 };
 
@@ -141,6 +142,12 @@ macro_rules! include_bytes_aligned {
 
         &ALIGNED.bytes
     }};
+}
+
+// bytes of converts a <T> to raw bytes
+pub(crate) fn bytes_of<T>(val: &T) -> &[u8] {
+    let size = mem::size_of::<T>();
+    unsafe { slice::from_raw_parts(slice::from_ref(val).as_ptr().cast(), size) }
 }
 
 #[cfg(test)]
