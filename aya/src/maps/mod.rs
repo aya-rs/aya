@@ -50,6 +50,7 @@ mod map_lock;
 
 pub mod array;
 pub mod hash_map;
+pub mod lpm_trie;
 pub mod perf;
 pub mod queue;
 pub mod sock;
