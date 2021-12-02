@@ -50,6 +50,7 @@ mod map_lock;
 
 pub mod array;
 pub mod hash_map;
+pub mod of_maps;
 pub mod perf;
 pub mod queue;
 pub mod sock;
@@ -59,6 +60,7 @@ pub mod stack_trace;
 pub use array::{Array, PerCpuArray, ProgramArray};
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use map_lock::*;
+pub use of_maps::{Array as ArrayOfMaps, HashMap as HashMapOfMaps};
 pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use sock::{SockHash, SockMap};

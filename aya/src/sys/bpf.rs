@@ -253,6 +253,17 @@ pub(crate) fn bpf_map_get_next_key<K>(
     }
 }
 
+pub(crate) fn bpf_map_get_fd_by_id(map_id: u32) -> Result<RawFd, io::Error> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    attr.__bindgen_anon_6.__bindgen_anon_1.map_id = map_id;
+
+    match sys_bpf(bpf_cmd::BPF_MAP_GET_FD_BY_ID, &attr) {
+        Ok(v) => Ok(v as RawFd),
+        Err((_, err)) => Err(err),
+    }
+}
+
 // since kernel 5.7
 pub(crate) fn bpf_link_create(
     prog_fd: RawFd,
