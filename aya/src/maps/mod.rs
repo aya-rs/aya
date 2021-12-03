@@ -237,7 +237,7 @@ impl Drop for Map {
 pub trait IterableMap<K: Pod, V> {
     fn map(&self) -> &Map;
 
-    unsafe fn get(&self, key: &K) -> Result<V, MapError>;
+    fn get(&self, key: &K) -> Result<V, MapError>;
 }
 
 /// Iterator returned by `map.keys()`.
@@ -317,14 +317,11 @@ impl<K: Pod, V, I: IterableMap<K, V>> Iterator for MapIter<'_, K, V, I> {
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.keys.next() {
-                Some(Ok(key)) => {
-                    let value = unsafe { self.map.get(&key) };
-                    match value {
-                        Ok(value) => return Some(Ok((key, value))),
-                        Err(MapError::KeyNotFound) => continue,
-                        Err(e) => return Some(Err(e)),
-                    }
-                }
+                Some(Ok(key)) => match self.map.get(&key) {
+                    Ok(value) => return Some(Ok((key, value))),
+                    Err(MapError::KeyNotFound) => continue,
+                    Err(e) => return Some(Err(e)),
+                },
                 Some(Err(e)) => return Some(Err(e)),
                 None => return None,
             }

@@ -73,7 +73,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     }
 
     /// Returns a slice of values - one for each CPU - associated with the key.
-    pub unsafe fn get(&self, key: &K, flags: u64) -> Result<PerCpuValues<V>, MapError> {
+    pub fn get(&self, key: &K, flags: u64) -> Result<PerCpuValues<V>, MapError> {
         let fd = self.inner.deref().fd_or_err()?;
         let values = bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|(code, io_error)| {
             MapError::SyscallError {
@@ -87,13 +87,13 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
 
     /// An iterator visiting all key-value pairs in arbitrary order. The
     /// iterator item type is `Result<(K, PerCpuValues<V>), MapError>`.
-    pub unsafe fn iter(&self) -> MapIter<'_, K, PerCpuValues<V>, Self> {
+    pub fn iter(&self) -> MapIter<'_, K, PerCpuValues<V>, Self> {
         MapIter::new(self)
     }
 
     /// An iterator visiting all keys in arbitrary order. The iterator element
     /// type is `Result<K, MapError>`.
-    pub unsafe fn keys(&self) -> MapKeys<'_, K> {
+    pub fn keys(&self) -> MapKeys<'_, K> {
         MapKeys::new(&self.inner)
     }
 }
@@ -154,7 +154,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> IterableMap<K, PerCpuValues<V>>
         &self.inner
     }
 
-    unsafe fn get(&self, key: &K) -> Result<PerCpuValues<V>, MapError> {
+    fn get(&self, key: &K) -> Result<PerCpuValues<V>, MapError> {
         PerCpuHashMap::get(self, key, 0)
     }
 }

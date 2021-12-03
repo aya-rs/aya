@@ -156,7 +156,7 @@ impl<T: Deref<Target = Map>> IterableMap<u32, StackTrace> for StackTraceMap<T> {
         &self.inner
     }
 
-    unsafe fn get(&self, index: &u32) -> Result<StackTrace, MapError> {
+    fn get(&self, index: &u32) -> Result<StackTrace, MapError> {
         self.get(index, 0)
     }
 }
