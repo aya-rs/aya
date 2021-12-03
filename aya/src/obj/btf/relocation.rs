@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     convert::{TryFrom, TryInto},
     io, mem, ptr,
+    str::FromStr,
 };
 
 use thiserror::Error;
@@ -16,7 +17,7 @@ use crate::{
             fields_are_compatible, member_bit_field_size, member_bit_offset, types_are_compatible,
             BtfType, MAX_SPEC_LEN,
         },
-        Btf, BtfError, Object, Program,
+        Btf, BtfError, Object, Program, ProgramSection,
     },
     BpfError,
 };
@@ -161,12 +162,12 @@ impl Object {
         for (sec_name_off, relos) in btf_ext.relocations() {
             let section_name = local_btf.string_at(*sec_name_off)?;
 
-            // FIXME
-            let parts = section_name.split('/').collect::<Vec<_>>();
-            if parts.len() < 2 {
-                continue;
-            }
-            let section_name = parts[1];
+            let program_section = match ProgramSection::from_str(&section_name) {
+                Ok(program) => program,
+                Err(_) => continue,
+            };
+            let section_name = program_section.name();
+
             let program = self
                 .programs
                 .get_mut(section_name)
