@@ -1,4 +1,4 @@
-use core::{marker::PhantomData, mem};
+use core::{marker::PhantomData, mem, ptr::NonNull};
 
 use aya_bpf_cty::c_void;
 
@@ -45,16 +45,14 @@ impl<T> Array<T> {
         }
     }
 
-    pub unsafe fn get(&mut self, index: u32) -> Option<&T> {
-        let value = bpf_map_lookup_elem(
-            &mut self.def as *mut _ as *mut _,
-            &index as *const _ as *const c_void,
-        );
-        if value.is_null() {
-            None
-        } else {
+    pub fn get(&mut self, index: u32) -> Option<&T> {
+        unsafe {
+            let value = bpf_map_lookup_elem(
+                &mut self.def as *mut _ as *mut _,
+                &index as *const _ as *const c_void,
+            );
             // FIXME: alignment
-            Some(&*(value as *const T))
+            NonNull::new(value as *mut T).map(|p| p.as_ref())
         }
     }
 }

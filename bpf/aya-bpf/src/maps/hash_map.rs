@@ -1,4 +1,4 @@
-use core::{marker::PhantomData, mem};
+use core::{marker::PhantomData, mem, ptr::NonNull};
 
 use aya_bpf_bindings::bindings::bpf_map_type::{
     BPF_MAP_TYPE_LRU_HASH, BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH,
@@ -36,17 +36,17 @@ impl<K, V> HashMap<K, V> {
     }
 
     #[inline]
-    pub unsafe fn get(&mut self, key: &K) -> Option<&V> {
+    pub fn get(&mut self, key: &K) -> Option<&V> {
         get(&mut self.def, key)
     }
 
     #[inline]
-    pub unsafe fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
+    pub fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
         insert(&mut self.def, key, value, flags)
     }
 
     #[inline]
-    pub unsafe fn remove(&mut self, key: &K) -> Result<(), c_long> {
+    pub fn remove(&mut self, key: &K) -> Result<(), c_long> {
         remove(&mut self.def, key)
     }
 }
@@ -81,17 +81,17 @@ impl<K, V> LruHashMap<K, V> {
     }
 
     #[inline]
-    pub unsafe fn get(&mut self, key: &K) -> Option<&V> {
+    pub fn get(&mut self, key: &K) -> Option<&V> {
         get(&mut self.def, key)
     }
 
     #[inline]
-    pub unsafe fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
+    pub fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
         insert(&mut self.def, key, value, flags)
     }
 
     #[inline]
-    pub unsafe fn remove(&mut self, key: &K) -> Result<(), c_long> {
+    pub fn remove(&mut self, key: &K) -> Result<(), c_long> {
         remove(&mut self.def, key)
     }
 }
@@ -131,17 +131,17 @@ impl<K, V> PerCpuHashMap<K, V> {
     }
 
     #[inline]
-    pub unsafe fn get(&mut self, key: &K) -> Option<&V> {
+    pub fn get(&mut self, key: &K) -> Option<&V> {
         get(&mut self.def, key)
     }
 
     #[inline]
-    pub unsafe fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
+    pub fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
         insert(&mut self.def, key, value, flags)
     }
 
     #[inline]
-    pub unsafe fn remove(&mut self, key: &K) -> Result<(), c_long> {
+    pub fn remove(&mut self, key: &K) -> Result<(), c_long> {
         remove(&mut self.def, key)
     }
 }
@@ -181,17 +181,17 @@ impl<K, V> LruPerCpuHashMap<K, V> {
     }
 
     #[inline]
-    pub unsafe fn get(&mut self, key: &K) -> Option<&V> {
+    pub fn get(&mut self, key: &K) -> Option<&V> {
         get(&mut self.def, key)
     }
 
     #[inline]
-    pub unsafe fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
+    pub fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
         insert(&mut self.def, key, value, flags)
     }
 
     #[inline]
-    pub unsafe fn remove(&mut self, key: &K) -> Result<(), c_long> {
+    pub fn remove(&mut self, key: &K) -> Result<(), c_long> {
         remove(&mut self.def, key)
     }
 }
@@ -209,42 +209,30 @@ const fn build_def<K, V>(ty: u32, max_entries: u32, flags: u32, pin: PinningType
 }
 
 #[inline]
-unsafe fn get<'a, K, V>(def: &mut bpf_map_def, key: &K) -> Option<&'a V> {
-    let value = bpf_map_lookup_elem(def as *mut _ as *mut _, key as *const _ as *const c_void);
-    if value.is_null() {
-        None
-    } else {
+fn get<'a, K, V>(def: &mut bpf_map_def, key: &K) -> Option<&'a V> {
+    unsafe {
+        let value = bpf_map_lookup_elem(def as *mut _ as *mut _, key as *const _ as *const c_void);
         // FIXME: alignment
-        Some(&*(value as *const V))
+        NonNull::new(value as *mut V).map(|p| p.as_ref())
     }
 }
 
 #[inline]
-unsafe fn insert<K, V>(
-    def: &mut bpf_map_def,
-    key: &K,
-    value: &V,
-    flags: u64,
-) -> Result<(), c_long> {
-    let ret = bpf_map_update_elem(
-        def as *mut _ as *mut _,
-        key as *const _ as *const _,
-        value as *const _ as *const _,
-        flags,
-    );
-    if ret < 0 {
-        return Err(ret);
-    }
-
-    Ok(())
+fn insert<K, V>(def: &mut bpf_map_def, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
+    let ret = unsafe {
+        bpf_map_update_elem(
+            def as *mut _ as *mut _,
+            key as *const _ as *const _,
+            value as *const _ as *const _,
+            flags,
+        )
+    };
+    (ret >= 0).then(|| ()).ok_or(ret)
 }
 
 #[inline]
-unsafe fn remove<K>(def: &mut bpf_map_def, key: &K) -> Result<(), c_long> {
-    let value = bpf_map_delete_elem(def as *mut _ as *mut _, key as *const _ as *const c_void);
-    if value < 0 {
-        Err(value)
-    } else {
-        Ok(())
-    }
+fn remove<K>(def: &mut bpf_map_def, key: &K) -> Result<(), c_long> {
+    let ret =
+        unsafe { bpf_map_delete_elem(def as *mut _ as *mut _, key as *const _ as *const c_void) };
+    (ret >= 0).then(|| ()).ok_or(ret)
 }

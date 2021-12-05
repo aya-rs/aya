@@ -1,4 +1,4 @@
-use core::{marker::PhantomData, mem};
+use core::{marker::PhantomData, mem, ptr::NonNull};
 
 use aya_bpf_cty::c_void;
 
@@ -46,30 +46,27 @@ impl<T> PerCpuArray<T> {
     }
 
     #[inline(always)]
-    pub unsafe fn get(&mut self, index: u32) -> Option<&T> {
-        let value = bpf_map_lookup_elem(
-            &mut self.def as *mut _ as *mut _,
-            &index as *const _ as *const c_void,
-        );
-        if value.is_null() {
-            None
-        } else {
+    pub fn get(&mut self, index: u32) -> Option<&T> {
+        unsafe {
             // FIXME: alignment
-            Some(&*(value as *const T))
+            self.lookup(index).map(|p| p.as_ref())
         }
     }
 
     #[inline(always)]
-    pub unsafe fn get_mut(&mut self, index: u32) -> Option<&mut T> {
-        let value = bpf_map_lookup_elem(
+    pub fn get_mut(&mut self, index: u32) -> Option<&mut T> {
+        unsafe {
+            // FIXME: alignment
+            self.lookup(index).map(|mut p| p.as_mut())
+        }
+    }
+
+    #[inline(always)]
+    unsafe fn lookup(&mut self, index: u32) -> Option<NonNull<T>> {
+        let ptr = bpf_map_lookup_elem(
             &mut self.def as *mut _ as *mut _,
             &index as *const _ as *const c_void,
         );
-        if value.is_null() {
-            None
-        } else {
-            // FIXME: alignment
-            Some(&mut *(value as *mut T))
-        }
+        NonNull::new(ptr as *mut T)
     }
 }

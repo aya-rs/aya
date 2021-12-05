@@ -43,29 +43,25 @@ impl<T> Queue<T> {
         }
     }
 
-    pub unsafe fn push(&mut self, value: &T, flags: u64) -> Result<(), i64> {
-        let ret = bpf_map_push_elem(
-            &mut self.def as *mut _ as *mut _,
-            value as *const _ as *const _,
-            flags,
-        );
-        if ret < 0 {
-            Err(ret)
-        } else {
-            Ok(())
-        }
+    pub fn push(&mut self, value: &T, flags: u64) -> Result<(), i64> {
+        let ret = unsafe {
+            bpf_map_push_elem(
+                &mut self.def as *mut _ as *mut _,
+                value as *const _ as *const _,
+                flags,
+            )
+        };
+        (ret >= 0).then(|| ()).ok_or(ret)
     }
 
-    pub unsafe fn pop(&mut self) -> Option<T> {
-        let mut value = mem::MaybeUninit::uninit();
-        let ret = bpf_map_pop_elem(
-            &mut self.def as *mut _ as *mut _,
-            &mut value as *mut _ as *mut _,
-        );
-        if ret < 0 {
-            None
-        } else {
-            Some(value.assume_init())
+    pub fn pop(&mut self) -> Option<T> {
+        unsafe {
+            let mut value = mem::MaybeUninit::uninit();
+            let ret = bpf_map_pop_elem(
+                &mut self.def as *mut _ as *mut _,
+                value.as_mut_ptr() as *mut _,
+            );
+            (ret >= 0).then(|| value.assume_init())
         }
     }
 }
