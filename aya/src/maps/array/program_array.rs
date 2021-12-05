@@ -79,7 +79,7 @@ impl<T: Deref<Target = Map>> ProgramArray<T> {
 
     /// An iterator over the indices of the array that point to a program. The iterator item type
     /// is `Result<u32, MapError>`.
-    pub unsafe fn indices(&self) -> MapKeys<'_, u32> {
+    pub fn indices(&self) -> MapKeys<'_, u32> {
         MapKeys::new(&self.inner)
     }
 

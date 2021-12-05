@@ -87,7 +87,7 @@ impl<T: Deref<Target = Map>, K: Pod> SockHash<T, K> {
     }
 
     /// Returns the fd of the socket stored at the given key.
-    pub unsafe fn get(&self, key: &K, flags: u64) -> Result<RawFd, MapError> {
+    pub fn get(&self, key: &K, flags: u64) -> Result<RawFd, MapError> {
         let fd = self.inner.deref().fd_or_err()?;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(code, io_error)| {
             MapError::SyscallError {
@@ -101,13 +101,13 @@ impl<T: Deref<Target = Map>, K: Pod> SockHash<T, K> {
 
     /// An iterator visiting all key-value pairs in arbitrary order. The
     /// iterator item type is `Result<(K, V), MapError>`.
-    pub unsafe fn iter(&self) -> MapIter<'_, K, RawFd, Self> {
+    pub fn iter(&self) -> MapIter<'_, K, RawFd, Self> {
         MapIter::new(self)
     }
 
     /// An iterator visiting all keys in arbitrary order. The iterator element
     /// type is `Result<K, MapError>`.
-    pub unsafe fn keys(&self) -> MapKeys<'_, K> {
+    pub fn keys(&self) -> MapKeys<'_, K> {
         MapKeys::new(&self.inner)
     }
 }
@@ -129,7 +129,7 @@ impl<T: Deref<Target = Map>, K: Pod> IterableMap<K, RawFd> for SockHash<T, K> {
         &self.inner
     }
 
-    unsafe fn get(&self, key: &K) -> Result<RawFd, MapError> {
+    fn get(&self, key: &K) -> Result<RawFd, MapError> {
         SockHash::get(self, key, 0)
     }
 }

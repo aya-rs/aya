@@ -94,7 +94,7 @@ impl<T: Deref<Target = Map>, V: Pod> Array<T, V> {
 
     /// An iterator over the elements of the array. The iterator item type is `Result<V,
     /// MapError>`.
-    pub unsafe fn iter(&self) -> impl Iterator<Item = Result<V, MapError>> + '_ {
+    pub fn iter(&self) -> impl Iterator<Item = Result<V, MapError>> + '_ {
         (0..self.len()).map(move |i| self.get(&i, 0))
     }
 
@@ -134,7 +134,7 @@ impl<T: Deref<Target = Map>, V: Pod> IterableMap<u32, V> for Array<T, V> {
         &self.inner
     }
 
-    unsafe fn get(&self, index: &u32) -> Result<V, MapError> {
+    fn get(&self, index: &u32) -> Result<V, MapError> {
         self.get(index, 0)
     }
 }

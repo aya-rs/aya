@@ -61,7 +61,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     }
 
     /// Returns a copy of the value associated with the key.
-    pub unsafe fn get(&self, key: &K, flags: u64) -> Result<V, MapError> {
+    pub fn get(&self, key: &K, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.deref().fd_or_err()?;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(code, io_error)| {
             MapError::SyscallError {
@@ -75,13 +75,13 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
 
     /// An iterator visiting all key-value pairs in arbitrary order. The
     /// iterator item type is `Result<(K, V), MapError>`.
-    pub unsafe fn iter(&self) -> MapIter<'_, K, V, Self> {
+    pub fn iter(&self) -> MapIter<'_, K, V, Self> {
         MapIter::new(self)
     }
 
     /// An iterator visiting all keys in arbitrary order. The iterator element
     /// type is `Result<K, MapError>`.
-    pub unsafe fn keys(&self) -> MapKeys<'_, K> {
+    pub fn keys(&self) -> MapKeys<'_, K> {
         MapKeys::new(&self.inner)
     }
 }
@@ -103,7 +103,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K,
         &self.inner
     }
 
-    unsafe fn get(&self, key: &K) -> Result<V, MapError> {
+    fn get(&self, key: &K) -> Result<V, MapError> {
         HashMap::get(self, key, 0)
     }
 }
@@ -373,7 +373,7 @@ mod tests {
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
         assert!(matches!(
-            unsafe { hm.get(&1, 0) },
+            hm.get(&1, 0),
             Err(MapError::SyscallError { call, code: -1, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
@@ -394,10 +394,7 @@ mod tests {
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
-        assert!(matches!(
-            unsafe { hm.get(&1, 0) },
-            Err(MapError::KeyNotFound)
-        ));
+        assert!(matches!(hm.get(&1, 0), Err(MapError::KeyNotFound)));
     }
 
     fn bpf_key<T: Copy>(attr: &bpf_attr) -> Option<T> {
@@ -432,7 +429,7 @@ mod tests {
             pinned: false,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
-        let keys = unsafe { hm.keys() }.collect::<Result<Vec<_>, _>>();
+        let keys = hm.keys().collect::<Result<Vec<_>, _>>();
         assert!(matches!(keys, Ok(ks) if ks.is_empty()))
     }
 
@@ -477,7 +474,7 @@ mod tests {
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
-        let keys = unsafe { hm.keys() }.collect::<Result<Vec<_>, _>>().unwrap();
+        let keys = hm.keys().collect::<Result<Vec<_>, _>>().unwrap();
         assert_eq!(&keys, &[10, 20, 30])
     }
 
@@ -505,7 +502,7 @@ mod tests {
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
-        let mut keys = unsafe { hm.keys() };
+        let mut keys = hm.keys();
         assert!(matches!(keys.next(), Some(Ok(10))));
         assert!(matches!(keys.next(), Some(Ok(20))));
         assert!(matches!(
@@ -534,7 +531,7 @@ mod tests {
             pinned: false,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
-        let items = unsafe { hm.iter() }.collect::<Result<Vec<_>, _>>().unwrap();
+        let items = hm.iter().collect::<Result<Vec<_>, _>>().unwrap();
         assert_eq!(&items, &[(10, 100), (20, 200), (30, 300)])
     }
 
@@ -568,7 +565,7 @@ mod tests {
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
-        let items = unsafe { hm.iter() }.collect::<Result<Vec<_>, _>>().unwrap();
+        let items = hm.iter().collect::<Result<Vec<_>, _>>().unwrap();
         assert_eq!(&items, &[(10, 100), (30, 300)])
     }
 
@@ -602,7 +599,7 @@ mod tests {
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
-        let mut iter = unsafe { hm.iter() };
+        let mut iter = hm.iter();
         assert!(matches!(iter.next(), Some(Ok((10, 100)))));
         assert!(matches!(iter.next(), Some(Ok((20, 200)))));
         assert!(matches!(
@@ -642,7 +639,7 @@ mod tests {
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
-        let mut iter = unsafe { hm.iter() };
+        let mut iter = hm.iter();
         assert!(matches!(iter.next(), Some(Ok((10, 100)))));
         assert!(matches!(
             iter.next(),
