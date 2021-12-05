@@ -3,7 +3,8 @@ mod relocation;
 
 use object::{
     read::{Object as ElfObject, ObjectSection, Section as ObjSection},
-    Endianness, ObjectSymbol, ObjectSymbolTable, RelocationTarget, SectionIndex, SymbolKind,
+    Endianness, ObjectSymbol, ObjectSymbolTable, RelocationTarget, SectionIndex, SectionKind,
+    SymbolKind,
 };
 use std::{
     collections::HashMap,
@@ -333,20 +334,20 @@ impl Object {
             parts.push(parts[0]);
         }
 
-        match section.name {
-            name if name == ".bss" || name.starts_with(".data") || name.starts_with(".rodata") => {
+        match section.kind {
+            BpfSectionKind::Data => {
+                self.maps
+                    .insert(section.name.to_string(), parse_map(&section, section.name)?);
+            }
+            BpfSectionKind::Text => self.parse_text_section(section)?,
+            BpfSectionKind::Btf => self.parse_btf(&section)?,
+            BpfSectionKind::BtfExt => self.parse_btf_ext(&section)?,
+            BpfSectionKind::Maps => {
+                let name = section.name.splitn(2, '/').last().unwrap();
                 self.maps
                     .insert(name.to_string(), parse_map(&section, name)?);
             }
-            name if name.starts_with(".text") => self.parse_text_section(section)?,
-            ".BTF" => self.parse_btf(&section)?,
-            ".BTF.ext" => self.parse_btf_ext(&section)?,
-            map if map.starts_with("maps/") => {
-                let name = map.splitn(2, '/').last().unwrap();
-                self.maps
-                    .insert(name.to_string(), parse_map(&section, name)?);
-            }
-            name if is_program_section(name) => {
+            BpfSectionKind::Program => {
                 let program = self.parse_program(&section)?;
                 self.programs
                     .insert(program.section.name().to_owned(), program);
@@ -413,8 +414,50 @@ pub enum ParseError {
 }
 
 #[derive(Debug)]
+enum BpfSectionKind {
+    Undefined,
+    Maps,
+    BtfMaps,
+    Program,
+    Data,
+    Text,
+    Btf,
+    BtfExt,
+    License,
+    Version,
+}
+
+impl BpfSectionKind {
+    fn from_name(name: &str) -> BpfSectionKind {
+        if name.starts_with("license") {
+            BpfSectionKind::License
+        } else if name.starts_with("version") {
+            BpfSectionKind::Version
+        } else if name.starts_with("maps") {
+            BpfSectionKind::Maps
+        } else if name.starts_with(".maps") {
+            BpfSectionKind::BtfMaps
+        } else if name.starts_with(".text") {
+            BpfSectionKind::Text
+        } else if name.starts_with(".bss")
+            || name.starts_with(".data")
+            || name.starts_with(".rodata")
+        {
+            BpfSectionKind::Data
+        } else if name == ".BTF" {
+            BpfSectionKind::Btf
+        } else if name == ".BTF.ext" {
+            BpfSectionKind::BtfExt
+        } else {
+            BpfSectionKind::Undefined
+        }
+    }
+}
+
+#[derive(Debug)]
 struct Section<'a> {
     index: SectionIndex,
+    kind: BpfSectionKind,
     address: u64,
     name: &'a str,
     data: &'a [u8],
@@ -431,11 +474,22 @@ impl<'data, 'file, 'a> TryFrom<&'a ObjSection<'data, 'file>> for Section<'a> {
             index: index.0,
             source,
         };
-
+        let name = section.name().map_err(map_err)?;
+        let kind = match BpfSectionKind::from_name(name) {
+            BpfSectionKind::Undefined => {
+                if section.kind() == SectionKind::Text && section.size() > 0 {
+                    BpfSectionKind::Program
+                } else {
+                    BpfSectionKind::Undefined
+                }
+            }
+            k => k,
+        };
         Ok(Section {
             index,
+            kind,
             address: section.address(),
-            name: section.name().map_err(map_err)?,
+            name,
             data: section.data().map_err(map_err)?,
             size: section.size(),
             relocations: section
@@ -570,39 +624,6 @@ fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
     Ok(instructions)
 }
 
-fn is_program_section(name: &str) -> bool {
-    for prefix in &[
-        "classifier",
-        "cgroup/skb",
-        "cgroup_skb/egress",
-        "cgroup_skb/ingress",
-        "kprobe",
-        "kretprobe",
-        "lirc_mode2",
-        "perf_event",
-        "sk_msg",
-        "sk_skb/stream_parser",
-        "sk_skb/stream_verdict",
-        "socket_filter",
-        "sockops",
-        "tp",
-        "tracepoint",
-        "uprobe",
-        "uretprobe",
-        "xdp",
-        "raw_tp",
-        "raw_tracepoint",
-        "lsm",
-        "tp_btf",
-    ] {
-        if name.starts_with(prefix) {
-            return true;
-        }
-    }
-
-    false
-}
-
 #[cfg(test)]
 mod tests {
     use matches::assert_matches;
@@ -612,9 +633,10 @@ mod tests {
     use super::*;
     use crate::PinningType;
 
-    fn fake_section<'a>(name: &'a str, data: &'a [u8]) -> Section<'a> {
+    fn fake_section<'a>(kind: BpfSectionKind, name: &'a str, data: &'a [u8]) -> Section<'a> {
         Section {
             index: SectionIndex(0),
+            kind,
             address: 0,
             name,
             data,
@@ -758,7 +780,7 @@ mod tests {
     #[test]
     fn test_parse_map_error() {
         assert!(matches!(
-            parse_map(&fake_section("maps/foo", &[]), "foo"),
+            parse_map(&fake_section(BpfSectionKind::Maps, "maps/foo", &[]), "foo"),
             Err(ParseError::InvalidMapDefinition { .. })
         ));
     }
@@ -768,6 +790,7 @@ mod tests {
         assert!(matches!(
             parse_map(
                 &fake_section(
+                    BpfSectionKind::Maps,
                     "maps/foo",
                     bytes_of(&bpf_map_def {
                         map_type: 1,
@@ -803,6 +826,7 @@ mod tests {
         assert!(matches!(
             parse_map(
                 &fake_section(
+                    BpfSectionKind::Data,
                     ".bss",
                     map_data,
                 ),
@@ -837,7 +861,11 @@ mod tests {
         let obj = fake_obj();
 
         assert_matches!(
-            obj.parse_program(&fake_section("kprobe/foo", &42u32.to_ne_bytes(),),),
+            obj.parse_program(&fake_section(
+                BpfSectionKind::Program,
+                "kprobe/foo",
+                &42u32.to_ne_bytes(),
+            ),),
             Err(ParseError::InvalidProgramCode)
         );
     }
@@ -847,7 +875,7 @@ mod tests {
         let obj = fake_obj();
 
         assert_matches!(
-            obj.parse_program(&fake_section("kprobe/foo", bytes_of(&fake_ins()))),
+            obj.parse_program(&fake_section(BpfSectionKind::Program,"kprobe/foo", bytes_of(&fake_ins()))),
             Ok(Program {
                 license,
                 kernel_version: KernelVersion::Any,
@@ -869,6 +897,7 @@ mod tests {
 
         assert_matches!(
             obj.parse_section(fake_section(
+                BpfSectionKind::Maps,
                 "maps/foo",
                 bytes_of(&bpf_map_def {
                     map_type: 1,
@@ -888,31 +917,35 @@ mod tests {
     fn test_parse_section_data() {
         let mut obj = fake_obj();
         assert_matches!(
-            obj.parse_section(fake_section(".bss", b"map data"),),
+            obj.parse_section(fake_section(BpfSectionKind::Data, ".bss", b"map data"),),
             Ok(())
         );
         assert!(obj.maps.get(".bss").is_some());
 
         assert_matches!(
-            obj.parse_section(fake_section(".rodata", b"map data"),),
+            obj.parse_section(fake_section(BpfSectionKind::Data, ".rodata", b"map data"),),
             Ok(())
         );
         assert!(obj.maps.get(".rodata").is_some());
 
         assert_matches!(
-            obj.parse_section(fake_section(".rodata.boo", b"map data"),),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Data,
+                ".rodata.boo",
+                b"map data"
+            ),),
             Ok(())
         );
         assert!(obj.maps.get(".rodata.boo").is_some());
 
         assert_matches!(
-            obj.parse_section(fake_section(".data", b"map data"),),
+            obj.parse_section(fake_section(BpfSectionKind::Data, ".data", b"map data"),),
             Ok(())
         );
         assert!(obj.maps.get(".data").is_some());
 
         assert_matches!(
-            obj.parse_section(fake_section(".data.boo", b"map data"),),
+            obj.parse_section(fake_section(BpfSectionKind::Data, ".data.boo", b"map data"),),
             Ok(())
         );
         assert!(obj.maps.get(".data.boo").is_some());
@@ -923,7 +956,11 @@ mod tests {
         let mut obj = fake_obj();
 
         assert_matches!(
-            obj.parse_section(fake_section("kprobe/foo", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "kprobe/foo",
+                bytes_of(&fake_ins())
+            )),
             Ok(())
         );
         assert_matches!(
@@ -940,7 +977,11 @@ mod tests {
         let mut obj = fake_obj();
 
         assert_matches!(
-            obj.parse_section(fake_section("uprobe/foo", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "uprobe/foo",
+                bytes_of(&fake_ins())
+            )),
             Ok(())
         );
         assert_matches!(
@@ -957,7 +998,11 @@ mod tests {
         let mut obj = fake_obj();
 
         assert_matches!(
-            obj.parse_section(fake_section("tracepoint/foo", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "tracepoint/foo",
+                bytes_of(&fake_ins())
+            )),
             Ok(())
         );
         assert_matches!(
@@ -969,7 +1014,11 @@ mod tests {
         );
 
         assert_matches!(
-            obj.parse_section(fake_section("tp/foo/bar", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "tp/foo/bar",
+                bytes_of(&fake_ins())
+            )),
             Ok(())
         );
         assert_matches!(
@@ -986,7 +1035,11 @@ mod tests {
         let mut obj = fake_obj();
 
         assert_matches!(
-            obj.parse_section(fake_section("socket_filter/foo", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "socket_filter/foo",
+                bytes_of(&fake_ins())
+            )),
             Ok(())
         );
         assert_matches!(
@@ -1003,7 +1056,11 @@ mod tests {
         let mut obj = fake_obj();
 
         assert_matches!(
-            obj.parse_section(fake_section("xdp/foo", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "xdp/foo",
+                bytes_of(&fake_ins())
+            )),
             Ok(())
         );
         assert_matches!(
@@ -1020,7 +1077,11 @@ mod tests {
         let mut obj = fake_obj();
 
         assert_matches!(
-            obj.parse_section(fake_section("raw_tp/foo", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "raw_tp/foo",
+                bytes_of(&fake_ins())
+            )),
             Ok(())
         );
         assert_matches!(
@@ -1032,7 +1093,11 @@ mod tests {
         );
 
         assert_matches!(
-            obj.parse_section(fake_section("raw_tracepoint/bar", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "raw_tracepoint/bar",
+                bytes_of(&fake_ins())
+            )),
             Ok(())
         );
         assert_matches!(
@@ -1049,7 +1114,11 @@ mod tests {
         let mut obj = fake_obj();
 
         assert_matches!(
-            obj.parse_section(fake_section("lsm/foo", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "lsm/foo",
+                bytes_of(&fake_ins())
+            )),
             Ok(())
         );
         assert_matches!(
@@ -1066,7 +1135,11 @@ mod tests {
         let mut obj = fake_obj();
 
         assert_matches!(
-            obj.parse_section(fake_section("tp_btf/foo", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "tp_btf/foo",
+                bytes_of(&fake_ins())
+            )),
             Ok(())
         );
         assert_matches!(
@@ -1083,7 +1156,11 @@ mod tests {
         let mut obj = fake_obj();
 
         assert_matches!(
-            obj.parse_section(fake_section("sk_skb/stream_parser", bytes_of(&fake_ins()))),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "sk_skb/stream_parser",
+                bytes_of(&fake_ins())
+            )),
             Ok(())
         );
         assert_matches!(
@@ -1101,6 +1178,7 @@ mod tests {
 
         assert_matches!(
             obj.parse_section(fake_section(
+                BpfSectionKind::Program,
                 "sk_skb/stream_parser/my_parser",
                 bytes_of(&fake_ins())
             )),
