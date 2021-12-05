@@ -47,40 +47,42 @@ impl<K> SockHash<K> {
         }
     }
 
-    pub unsafe fn update(
+    pub fn update(
         &mut self,
         key: &mut K,
-        sk_ops: *mut bpf_sock_ops,
+        sk_ops: &mut bpf_sock_ops,
         flags: u64,
     ) -> Result<(), i64> {
-        let ret = bpf_sock_hash_update(
-            sk_ops,
-            &mut self.def as *mut _ as *mut _,
-            key as *mut _ as *mut c_void,
-            flags,
-        );
-        if ret < 0 {
-            Err(ret)
-        } else {
-            Ok(())
+        let ret = unsafe {
+            bpf_sock_hash_update(
+                sk_ops as *mut _,
+                &mut self.def as *mut _ as *mut _,
+                key as *mut _ as *mut c_void,
+                flags,
+            )
+        };
+        (ret >= 0).then(|| ()).ok_or(ret)
+    }
+
+    pub fn redirect_msg(&mut self, ctx: &SkMsgContext, key: &mut K, flags: u64) -> i64 {
+        unsafe {
+            bpf_msg_redirect_hash(
+                ctx.as_ptr() as *mut _,
+                &mut self.def as *mut _ as *mut _,
+                key as *mut _ as *mut _,
+                flags,
+            )
         }
     }
 
-    pub unsafe fn redirect_msg(&mut self, ctx: &SkMsgContext, key: &mut K, flags: u64) -> i64 {
-        bpf_msg_redirect_hash(
-            ctx.as_ptr() as *mut _,
-            &mut self.def as *mut _ as *mut _,
-            key as *mut _ as *mut _,
-            flags,
-        )
-    }
-
-    pub unsafe fn redirect_skb(&mut self, ctx: &SkBuffContext, key: &mut K, flags: u64) -> i64 {
-        bpf_sk_redirect_hash(
-            ctx.as_ptr() as *mut _,
-            &mut self.def as *mut _ as *mut _,
-            key as *mut _ as *mut _,
-            flags,
-        )
+    pub fn redirect_skb(&mut self, ctx: &SkBuffContext, key: &mut K, flags: u64) -> i64 {
+        unsafe {
+            bpf_sk_redirect_hash(
+                ctx.as_ptr() as *mut _,
+                &mut self.def as *mut _ as *mut _,
+                key as *mut _ as *mut _,
+                flags,
+            )
+        }
     }
 }
