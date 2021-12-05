@@ -1,7 +1,11 @@
 //! Network traffic control programs.
 use thiserror::Error;
 
-use std::{ffi::CString, io, os::unix::io::RawFd};
+use std::{
+    ffi::{CStr, CString},
+    io,
+    os::unix::io::RawFd,
+};
 
 use crate::{
     generated::{
@@ -59,7 +63,7 @@ pub enum TcAttachType {
 /// // attached
 /// tc::qdisc_add_clsact("eth0")?;
 ///
-/// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress")?.try_into()?;
+/// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach("eth0", TcAttachType::Ingress)?;
 ///
@@ -69,6 +73,7 @@ pub enum TcAttachType {
 #[doc(alias = "BPF_PROG_TYPE_SCHED_CLS")]
 pub struct SchedClassifier {
     pub(crate) data: ProgramData,
+    pub(crate) name: Box<CStr>,
 }
 
 #[derive(Debug, Error)]
@@ -108,11 +113,6 @@ impl SchedClassifier {
         load_program(BPF_PROG_TYPE_SCHED_CLS, &mut self.data)
     }
 
-    /// Returns the name of the program.
-    pub fn name(&self) -> String {
-        self.data.name.to_string()
-    }
-
     /// Attaches the program to the given `interface`.
     ///
     /// # Errors
@@ -129,9 +129,8 @@ impl SchedClassifier {
         let prog_fd = self.data.fd_or_err()?;
         let if_index = ifindex_from_ifname(interface)
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
-        let name = CString::new(self.name()).unwrap();
         let priority =
-            unsafe { netlink_qdisc_attach(if_index as i32, &attach_type, prog_fd, &name) }
+            unsafe { netlink_qdisc_attach(if_index as i32, &attach_type, prog_fd, &self.name) }
                 .map_err(|io_error| TcError::NetlinkError { io_error })?;
 
         Ok(self.data.link(TcLink {
@@ -182,12 +181,32 @@ pub fn qdisc_detach_program(
     attach_type: TcAttachType,
     name: &str,
 ) -> Result<(), io::Error> {
-    let if_index = ifindex_from_ifname(if_name)? as i32;
-    let c_name = CString::new(name).unwrap();
+    let cstr = CString::new(name)?;
+    qdisc_detach_program_fast(if_name, attach_type, &cstr)
+}
 
-    let prios = unsafe { netlink_find_filter_with_name(if_index, attach_type, &c_name)? };
+/// Detaches the programs with the given name as a C string.
+/// Unlike qdisc_detach_program, this function does not allocate an additional
+/// CString to.
+///
+/// # Errors
+///
+/// Returns [`io::ErrorKind::NotFound`] to indicate that no programs with the
+/// given name were found, so nothing was detached. Other error kinds indicate
+/// an actual failure while detaching a program.
+fn qdisc_detach_program_fast(
+    if_name: &str,
+    attach_type: TcAttachType,
+    name: &CStr,
+) -> Result<(), io::Error> {
+    let if_index = ifindex_from_ifname(if_name)? as i32;
+
+    let prios = unsafe { netlink_find_filter_with_name(if_index, attach_type, name)? };
     if prios.is_empty() {
-        return Err(io::Error::new(io::ErrorKind::NotFound, name.to_string()));
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            name.to_string_lossy(),
+        ));
     }
 
     for prio in prios {

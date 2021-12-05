@@ -36,7 +36,7 @@ use crate::{
 /// use aya::programs::SockOps;
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
-/// let prog: &mut SockOps = bpf.program_mut("intercept_active_sockets")?.try_into()?;
+/// let prog: &mut SockOps = bpf.program_mut("intercept_active_sockets").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach(file)?;
 /// # Ok::<(), Error>(())
@@ -52,11 +52,6 @@ impl SockOps {
     /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SOCK_OPS, &mut self.data)
-    }
-
-    /// Returns the name of the program.
-    pub fn name(&self) -> String {
-        self.data.name.to_string()
     }
 
     /// Attaches the program to the given cgroup.

@@ -51,7 +51,7 @@ pub enum SocketFilterError {
 /// use aya::programs::SocketFilter;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
-/// let prog: &mut SocketFilter = bpf.program_mut("filter_packets")?.try_into()?;
+/// let prog: &mut SocketFilter = bpf.program_mut("filter_packets").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach(client.as_raw_fd())?;
 /// # Ok::<(), Error>(())

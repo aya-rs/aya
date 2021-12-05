@@ -44,7 +44,6 @@ pub struct Object {
 
 #[derive(Debug, Clone)]
 pub struct Map {
-    pub(crate) name: String,
     pub(crate) def: bpf_map_def,
     pub(crate) section_index: usize,
     pub(crate) data: Vec<u8>,
@@ -530,7 +529,6 @@ fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
 
     Ok(Map {
         section_index: section.index.0,
-        name: name.to_string(),
         def,
         data,
     })
@@ -785,7 +783,6 @@ mod tests {
             ),
             Ok(Map {
                 section_index: 0,
-                name,
                 def: bpf_map_def {
                     map_type: 1,
                     key_size: 2,
@@ -796,7 +793,7 @@ mod tests {
                     pinning: PinningType::None,
                 },
                 data
-            }) if name == "foo" && data.is_empty()
+            }) if data.is_empty()
         ))
     }
 
@@ -813,7 +810,6 @@ mod tests {
             ),
             Ok(Map {
                 section_index: 0,
-                name,
                 def: bpf_map_def {
                     map_type: _map_type,
                     key_size: 4,
@@ -824,7 +820,7 @@ mod tests {
                     pinning: PinningType::None,
                 },
                 data
-            }) if name == ".bss" && data == map_data && value_size == map_data.len() as u32
+            }) if data == map_data && value_size == map_data.len() as u32
         ))
     }
 

@@ -2,6 +2,7 @@ use std::{
     borrow::Cow,
     collections::HashMap,
     error::Error,
+    ffi::CString,
     fs, io,
     os::{raw::c_int, unix::io::RawFd},
     path::{Path, PathBuf},
@@ -191,8 +192,8 @@ impl<'a> BpfLoader<'a> {
             obj.relocate_btf(btf)?;
         }
 
-        let mut maps = Vec::new();
-        for (_, mut obj) in obj.maps.drain() {
+        let mut maps = HashMap::new();
+        for (name, mut obj) in obj.maps.drain() {
             if obj.def.map_type == BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 && obj.def.max_entries == 0
             {
                 obj.def.max_entries = possible_cpus()
@@ -214,21 +215,21 @@ impl<'a> BpfLoader<'a> {
                         None => return Err(BpfError::NoPinPath),
                     };
                     // try to open map in case it's already pinned
-                    match map.from_pinned(path) {
+                    match map.from_pinned(&name, path) {
                         Ok(fd) => {
                             map.pinned = true;
                             fd as RawFd
                         }
                         Err(_) => {
-                            let fd = map.create()?;
-                            map.pin(path)?;
+                            let fd = map.create(&name)?;
+                            map.pin(&name, path)?;
                             fd
                         }
                     }
                 }
-                PinningType::None => map.create()?,
+                PinningType::None => map.create(&name)?,
             };
-            if !map.obj.data.is_empty() && map.obj.name != ".bss" {
+            if !map.obj.data.is_empty() && name != ".bss" {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data.as_mut_ptr(), 0).map_err(
                     |(code, io_error)| MapError::SyscallError {
                         call: "bpf_map_update_elem".to_owned(),
@@ -237,27 +238,25 @@ impl<'a> BpfLoader<'a> {
                     },
                 )?;
             }
-            maps.push(map);
+            maps.insert(name, map);
         }
 
-        obj.relocate_maps(maps.as_slice())?;
+        obj.relocate_maps(maps.iter().map(|(name, map)| (name.as_str(), map)))?;
         obj.relocate_calls()?;
 
         let programs = obj
             .programs
             .drain()
             .map(|(name, obj)| {
-                let section = obj.section.clone();
                 let data = ProgramData {
                     obj,
-                    name: name.clone(),
                     fd: None,
                     links: Vec::new(),
                     expected_attach_type: None,
                     attach_btf_obj_fd: None,
                     attach_btf_id: None,
                 };
-                let program = match section {
+                let program = match &data.obj.section {
                     ProgramSection::KProbe { .. } => Program::KProbe(KProbe {
                         data,
                         kind: ProbeKind::KProbe,
@@ -290,7 +289,13 @@ impl<'a> BpfLoader<'a> {
                     }),
                     ProgramSection::SockOps { .. } => Program::SockOps(SockOps { data }),
                     ProgramSection::SchedClassifier { .. } => {
-                        Program::SchedClassifier(SchedClassifier { data })
+                        Program::SchedClassifier(SchedClassifier {
+                            data,
+                            name: unsafe {
+                                CString::from_vec_unchecked(Vec::from(name.clone()))
+                                    .into_boxed_c_str()
+                            },
+                        })
                     }
                     ProgramSection::CgroupSkbIngress { .. } => Program::CgroupSkb(CgroupSkb {
                         data,
@@ -314,13 +319,11 @@ impl<'a> BpfLoader<'a> {
                 (name, program)
             })
             .collect();
-        Ok(Bpf {
-            maps: maps
-                .drain(..)
-                .map(|map| (map.obj.name.clone(), MapLock::new(map)))
-                .collect(),
-            programs,
-        })
+        let maps = maps
+            .drain()
+            .map(|(name, map)| (name, MapLock::new(map)))
+            .collect();
+        Ok(Bpf { maps, programs })
     }
 }
 
@@ -468,34 +471,22 @@ impl Bpf {
     /// For more details on programs and their usage, see the [programs module
     /// documentation](crate::programs).
     ///
-    /// # Errors
-    ///
-    /// Returns [`ProgramError::NotFound`] if the program does not exist.
-    ///
     /// # Examples
     ///
     /// ```no_run
     /// # let bpf = aya::Bpf::load(&[])?;
-    /// let program = bpf.program("SSL_read")?;
+    /// let program = bpf.program("SSL_read").unwrap();
     /// println!("program SSL_read is of type {:?}", program.prog_type());
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn program(&self, name: &str) -> Result<&Program, ProgramError> {
-        self.programs
-            .get(name)
-            .ok_or_else(|| ProgramError::NotFound {
-                name: name.to_owned(),
-            })
+    pub fn program(&self, name: &str) -> Option<&Program> {
+        self.programs.get(name)
     }
 
     /// Returns a mutable reference to the program with the given name.
     ///
     /// Used to get a program before loading and attaching it. For more details on programs and
     /// their usage, see the [programs module documentation](crate::programs).
-    ///
-    /// # Errors
-    ///
-    /// Returns [`ProgramError::NotFound`] if the program does not exist.
     ///
     /// # Examples
     ///
@@ -504,17 +495,13 @@ impl Bpf {
     /// use aya::programs::UProbe;
     /// use std::convert::TryInto;
     ///
-    /// let program: &mut UProbe = bpf.program_mut("SSL_read")?.try_into()?;
+    /// let program: &mut UProbe = bpf.program_mut("SSL_read").unwrap().try_into()?;
     /// program.load()?;
     /// program.attach(Some("SSL_read"), 0, "libssl", None)?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn program_mut(&mut self, name: &str) -> Result<&mut Program, ProgramError> {
-        self.programs
-            .get_mut(name)
-            .ok_or_else(|| ProgramError::NotFound {
-                name: name.to_owned(),
-            })
+    pub fn program_mut(&mut self, name: &str) -> Option<&mut Program> {
+        self.programs.get_mut(name)
     }
 
     /// An iterator over all the programs.
@@ -522,17 +509,17 @@ impl Bpf {
     /// # Examples
     /// ```no_run
     /// # let bpf = aya::Bpf::load(&[])?;
-    /// for program in bpf.programs() {
+    /// for (name, program) in bpf.programs() {
     ///     println!(
     ///         "found program `{}` of type `{:?}`",
-    ///         program.name(),
+    ///         name,
     ///         program.prog_type()
     ///     );
     /// }
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn programs(&self) -> impl Iterator<Item = &Program> {
-        self.programs.values()
+    pub fn programs(&self) -> impl Iterator<Item = (&str, &Program)> {
+        self.programs.iter().map(|(s, p)| (s.as_str(), p))
     }
 
     /// An iterator mutably referencing all of the programs.
@@ -542,13 +529,13 @@ impl Bpf {
     /// # use std::path::Path;
     /// # let mut bpf = aya::Bpf::load(&[])?;
     /// # let pin_path = Path::new("/tmp/pin_path");
-    /// for program in bpf.programs_mut() {
+    /// for (_, program) in bpf.programs_mut() {
     ///     program.pin(pin_path)?;
     /// }
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn programs_mut(&mut self) -> impl Iterator<Item = &mut Program> {
-        self.programs.values_mut()
+    pub fn programs_mut(&mut self) -> impl Iterator<Item = (&str, &mut Program)> {
+        self.programs.iter_mut().map(|(s, p)| (s.as_str(), p))
     }
 }
 

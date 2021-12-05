@@ -32,9 +32,9 @@ use crate::{
 /// use std::convert::{TryFrom, TryInto};
 ///
 /// let mut prog_array = ProgramArray::try_from(bpf.map_mut("JUMP_TABLE")?)?;
-/// let prog_0: &CgroupSkb = bpf.program("example_prog_0")?.try_into()?;
-/// let prog_1: &CgroupSkb = bpf.program("example_prog_1")?.try_into()?;
-/// let prog_2: &CgroupSkb = bpf.program("example_prog_2")?.try_into()?;
+/// let prog_0: &CgroupSkb = bpf.program("example_prog_0").unwrap().try_into()?;
+/// let prog_1: &CgroupSkb = bpf.program("example_prog_1").unwrap().try_into()?;
+/// let prog_2: &CgroupSkb = bpf.program("example_prog_2").unwrap().try_into()?;
 ///
 /// let flags = 0;
 ///

@@ -61,10 +61,12 @@ pub(crate) struct Symbol {
 }
 
 impl Object {
-    pub fn relocate_maps(&mut self, maps: &[Map]) -> Result<(), BpfError> {
+    pub fn relocate_maps<'a>(
+        &'a mut self,
+        maps: impl Iterator<Item = (&'a str, &'a Map)>,
+    ) -> Result<(), BpfError> {
         let maps_by_section = maps
-            .iter()
-            .map(|map| (map.obj.section_index, map))
+            .map(|(name, map)| (map.obj.section_index, (name, map)))
             .collect::<HashMap<_, _>>();
 
         let functions = self
@@ -110,7 +112,7 @@ impl Object {
 fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     fun: &mut Function,
     relocations: I,
-    maps_by_section: &HashMap<usize, &Map>,
+    maps_by_section: &HashMap<usize, (&str, &Map)>,
     symbol_table: &HashMap<usize, Symbol>,
 ) -> Result<(), RelocationError> {
     let section_offset = fun.section_offset;
@@ -152,7 +154,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             None => continue,
         };
 
-        let map =
+        let (name, map) =
             maps_by_section
                 .get(&section_index.0)
                 .ok_or(RelocationError::SectionNotFound {
@@ -162,7 +164,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
                 })?;
 
         let map_fd = map.fd.ok_or_else(|| RelocationError::MapNotCreated {
-            name: map.obj.name.clone(),
+            name: (*name).into(),
             section_index: section_index.0,
         })?;
 

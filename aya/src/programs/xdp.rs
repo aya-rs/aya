@@ -57,7 +57,7 @@ bitflags! {
 /// use aya::{Bpf, programs::{Xdp, XdpFlags}};
 /// use std::convert::TryInto;
 ///
-/// let program: &mut Xdp = bpf.program_mut("intercept_packets")?.try_into()?;
+/// let program: &mut Xdp = bpf.program_mut("intercept_packets").unwrap().try_into()?;
 /// program.attach("eth0", XdpFlags::default())?;
 /// # Ok::<(), aya::BpfError>(())
 /// ```
@@ -73,11 +73,6 @@ impl Xdp {
     /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_XDP, &mut self.data)
-    }
-
-    /// Returns the name of the program.
-    pub fn name(&self) -> String {
-        self.data.name.to_string()
     }
 
     /// Attaches the program to the given `interface`.

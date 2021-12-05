@@ -19,7 +19,7 @@
 //!
 //! let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 //! // intercept_wakeups is the name of the program we want to load
-//! let program: &mut KProbe = bpf.program_mut("intercept_wakeups")?.try_into()?;
+//! let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 //! program.load()?;
 //! // intercept_wakeups will be called every time try_to_wake_up() is called
 //! // inside the kernel
@@ -95,10 +95,6 @@ use crate::{
 /// Error type returned when working with programs.
 #[derive(Debug, Error)]
 pub enum ProgramError {
-    /// The program could not be found in the object code.
-    #[error("program `{name}` not found")]
-    NotFound { name: String },
-
     /// The program is already loaded.
     #[error("the program is already loaded")]
     AlreadyLoaded,
@@ -240,11 +236,6 @@ impl Program {
         }
     }
 
-    /// Returns the name of the program.
-    pub fn name(&self) -> &str {
-        &self.data().name
-    }
-
     /// Pin the program to the provided path
     pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
         self.data_mut().pin(path)
@@ -293,7 +284,6 @@ impl Program {
 
 #[derive(Debug)]
 pub(crate) struct ProgramData {
-    pub(crate) name: String,
     pub(crate) obj: obj::Program,
     pub(crate) fd: Option<RawFd>,
     pub(crate) links: Vec<Rc<RefCell<dyn Link>>>,

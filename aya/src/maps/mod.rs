@@ -21,7 +21,7 @@
 //! use aya::programs::SkMsg;
 //!
 //! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
-//! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet")?.try_into()?;
+//! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 //! prog.load()?;
 //! prog.attach(&intercept_egress)?;
 //! # Ok::<(), aya::BpfError>(())
@@ -79,8 +79,8 @@ pub enum MapError {
     #[error("invalid map path `{error}`")]
     InvalidPinPath { error: String },
 
-    #[error("the map `{name}` has not been created")]
-    NotCreated { name: String },
+    #[error("the map has not been created")]
+    NotCreated,
 
     #[error("the map `{name}` has already been created")]
     AlreadyCreated { name: String },
@@ -148,18 +148,16 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn create(&mut self) -> Result<RawFd, MapError> {
-        let name = self.obj.name.clone();
+    pub fn create(&mut self, name: &str) -> Result<RawFd, MapError> {
         if self.fd.is_some() {
-            return Err(MapError::AlreadyCreated { name });
+            return Err(MapError::AlreadyCreated { name: name.into() });
         }
 
-        let c_name =
-            CString::new(name.clone()).map_err(|_| MapError::InvalidName { name: name.clone() })?;
+        let c_name = CString::new(name).map_err(|_| MapError::InvalidName { name: name.into() })?;
 
         let fd = bpf_create_map(&c_name, &self.obj.def).map_err(|(code, io_error)| {
             MapError::CreateError {
-                name,
+                name: name.into(),
                 code,
                 io_error,
             }
@@ -170,12 +168,15 @@ impl Map {
         Ok(fd)
     }
 
-    pub(crate) fn from_pinned<P: AsRef<Path>>(&mut self, path: P) -> Result<RawFd, MapError> {
-        let name = self.obj.name.clone();
+    pub(crate) fn from_pinned<P: AsRef<Path>>(
+        &mut self,
+        name: &str,
+        path: P,
+    ) -> Result<RawFd, MapError> {
         if self.fd.is_some() {
-            return Err(MapError::AlreadyCreated { name });
+            return Err(MapError::AlreadyCreated { name: name.into() });
         }
-        let map_path = path.as_ref().join(self.name());
+        let map_path = path.as_ref().join(name);
         let path_string = match CString::new(map_path.to_str().unwrap()) {
             Ok(s) => s,
             Err(e) => {
@@ -185,7 +186,7 @@ impl Map {
             }
         };
         let fd = bpf_get_object(&path_string).map_err(|(code, io_error)| MapError::PinError {
-            name,
+            name: name.into(),
             code,
             io_error,
         })? as RawFd;
@@ -195,27 +196,19 @@ impl Map {
         Ok(fd)
     }
 
-    pub fn name(&self) -> &str {
-        &self.obj.name
-    }
-
     pub fn map_type(&self) -> Result<bpf_map_type, MapError> {
         bpf_map_type::try_from(self.obj.def.map_type)
     }
 
     pub(crate) fn fd_or_err(&self) -> Result<RawFd, MapError> {
-        self.fd.ok_or_else(|| MapError::NotCreated {
-            name: self.obj.name.clone(),
-        })
+        self.fd.ok_or(MapError::NotCreated)
     }
 
-    pub(crate) fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), MapError> {
+    pub(crate) fn pin<P: AsRef<Path>>(&mut self, name: &str, path: P) -> Result<(), MapError> {
         if self.pinned {
-            return Err(MapError::AlreadyPinned {
-                name: self.name().to_string(),
-            });
+            return Err(MapError::AlreadyPinned { name: name.into() });
         }
-        let map_path = path.as_ref().join(self.name());
+        let map_path = path.as_ref().join(name);
         let fd = self.fd_or_err()?;
         let path_string = CString::new(map_path.to_string_lossy().into_owned()).map_err(|e| {
             MapError::InvalidPinPath {
@@ -492,9 +485,8 @@ mod tests {
 
     use super::*;
 
-    fn new_obj_map(name: &str) -> obj::Map {
+    fn new_obj_map() -> obj::Map {
         obj::Map {
-            name: name.to_string(),
             def: bpf_map_def {
                 map_type: BPF_MAP_TYPE_HASH as u32,
                 key_size: 4,
@@ -507,9 +499,9 @@ mod tests {
         }
     }
 
-    fn new_map(name: &str) -> Map {
+    fn new_map() -> Map {
         Map {
-            obj: new_obj_map(name),
+            obj: new_obj_map(),
             fd: None,
             pinned: false,
         }
@@ -525,18 +517,21 @@ mod tests {
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
         });
 
-        let mut map = new_map("foo");
-        assert!(matches!(map.create(), Ok(42)));
+        let mut map = new_map();
+        assert!(matches!(map.create("foo"), Ok(42)));
         assert_eq!(map.fd, Some(42));
-        assert!(matches!(map.create(), Err(MapError::AlreadyCreated { .. })));
+        assert!(matches!(
+            map.create("foo"),
+            Err(MapError::AlreadyCreated { .. })
+        ));
     }
 
     #[test]
     fn test_create_failed() {
         override_syscall(|_| Err((-42, io::Error::from_raw_os_error(EFAULT))));
 
-        let mut map = new_map("foo");
-        let ret = map.create();
+        let mut map = new_map();
+        let ret = map.create("foo");
         assert!(matches!(ret, Err(MapError::CreateError { .. })));
         if let Err(MapError::CreateError {
             name,

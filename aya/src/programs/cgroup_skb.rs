@@ -43,7 +43,7 @@ use super::FdLink;
 /// use aya::programs::{CgroupSkb, CgroupSkbAttachType};
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
-/// let egress: &mut CgroupSkb = bpf.program_mut("egress_filter")?.try_into()?;
+/// let egress: &mut CgroupSkb = bpf.program_mut("egress_filter").unwrap().try_into()?;
 /// egress.load()?;
 /// egress.attach(file, CgroupSkbAttachType::Egress)?;
 /// # Ok::<(), Error>(())
@@ -61,11 +61,6 @@ impl CgroupSkb {
     /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_CGROUP_SKB, &mut self.data)
-    }
-
-    /// Returns the name of the program.
-    pub fn name(&self) -> String {
-        self.data.name.to_string()
     }
 
     /// Returns the expected attach type of the program.
