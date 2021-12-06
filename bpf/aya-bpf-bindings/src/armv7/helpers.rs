@@ -1809,3 +1809,19 @@ pub unsafe fn bpf_kallsyms_lookup_name(
     ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(179usize);
     fun(name, name_sz, flags, res)
 }
+pub unsafe fn bpf_find_vma(
+    task: *mut task_struct,
+    addr: __u64,
+    callback_fn: *mut ::aya_bpf_cty::c_void,
+    callback_ctx: *mut ::aya_bpf_cty::c_void,
+    flags: __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        task: *mut task_struct,
+        addr: __u64,
+        callback_fn: *mut ::aya_bpf_cty::c_void,
+        callback_ctx: *mut ::aya_bpf_cty::c_void,
+        flags: __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(180usize);
+    fun(task, addr, callback_fn, callback_ctx, flags)
+}
