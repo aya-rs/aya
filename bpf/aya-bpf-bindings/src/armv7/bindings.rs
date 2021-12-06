@@ -228,6 +228,10 @@ pub const SO_TIMESTAMPING_NEW: u32 = 65;
 pub const SO_RCVTIMEO_NEW: u32 = 66;
 pub const SO_SNDTIMEO_NEW: u32 = 67;
 pub const SO_DETACH_REUSEPORT_BPF: u32 = 68;
+pub const SO_PREFER_BUSY_POLL: u32 = 69;
+pub const SO_BUSY_POLL_BUDGET: u32 = 70;
+pub const SO_NETNS_COOKIE: u32 = 71;
+pub const SO_BUF_LOCK: u32 = 72;
 pub const TC_ACT_UNSPEC: i32 = -1;
 pub const TC_ACT_OK: u32 = 0;
 pub const TC_ACT_RECLASSIFY: u32 = 1;
@@ -1093,7 +1097,27 @@ pub struct btf_ptr {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct pt_regs {
-    pub uregs: [::aya_bpf_cty::c_long; 18usize],
+    pub r15: ::aya_bpf_cty::c_ulong,
+    pub r14: ::aya_bpf_cty::c_ulong,
+    pub r13: ::aya_bpf_cty::c_ulong,
+    pub r12: ::aya_bpf_cty::c_ulong,
+    pub rbp: ::aya_bpf_cty::c_ulong,
+    pub rbx: ::aya_bpf_cty::c_ulong,
+    pub r11: ::aya_bpf_cty::c_ulong,
+    pub r10: ::aya_bpf_cty::c_ulong,
+    pub r9: ::aya_bpf_cty::c_ulong,
+    pub r8: ::aya_bpf_cty::c_ulong,
+    pub rax: ::aya_bpf_cty::c_ulong,
+    pub rcx: ::aya_bpf_cty::c_ulong,
+    pub rdx: ::aya_bpf_cty::c_ulong,
+    pub rsi: ::aya_bpf_cty::c_ulong,
+    pub rdi: ::aya_bpf_cty::c_ulong,
+    pub orig_rax: ::aya_bpf_cty::c_ulong,
+    pub rip: ::aya_bpf_cty::c_ulong,
+    pub cs: ::aya_bpf_cty::c_ulong,
+    pub eflags: ::aya_bpf_cty::c_ulong,
+    pub rsp: ::aya_bpf_cty::c_ulong,
+    pub ss: ::aya_bpf_cty::c_ulong,
 }
 pub type sa_family_t = ::aya_bpf_cty::c_ushort;
 #[repr(C)]
