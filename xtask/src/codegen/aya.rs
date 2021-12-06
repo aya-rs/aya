@@ -65,6 +65,9 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "bpf_prog_type",
         "bpf_attach_type",
         "bpf_prog_info",
+        "bpf_btf_info",
+        "bpf_func_info",
+        "bpf_line_info",
         // BTF
         "btf_header",
         "btf_ext_info",
@@ -76,6 +79,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "btf_param",
         "btf_var",
         "btf_var_secinfo",
+        "btf_func_linkage",
         // PERF
         "perf_event_attr",
         "perf_sw_ids",
@@ -114,6 +118,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         // BTF
         "BTF_INT_.*",
         "BTF_KIND_.*",
+        "BTF_VAR_.*",
         // PERF
         "PERF_FLAG_.*",
         "PERF_EVENT_.*",
@@ -179,7 +184,10 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
             bindgen = bindgen.allowlist_type(x);
         }
         for x in &vars {
-            bindgen = bindgen.allowlist_var(x).constified_enum("BTF_KIND_.*");
+            bindgen = bindgen
+                .allowlist_var(x)
+                .constified_enum("BTF_KIND_.*")
+                .constified_enum("BTF_VAR_.*");
         }
 
         for x in &types {
