@@ -38,7 +38,7 @@ jobs:
         if: env.COMMIT_CHANGES == 1
         uses: devops-infra/action-commit-push@master
         with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          github_token: "${{ secrets.CRABBY_GITHUB_TOKEN }}"
           commit_prefix: "[codegen] Update libbpf to ${{ env.LIBBPF_SHA }}"
           commit_message: "Update libbpf to ${{ env.LIBBPF_SHA }}"
           target_branch: codegen
@@ -48,7 +48,7 @@ jobs:
         if: steps.commit.outputs.files_changed != ''
         uses: devops-infra/action-pull-request@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
           body: "**Automated pull request**<br><br>Update libbpf to ${{ env.LIBBPF_SHA }}"
           title: Update libbpf to ${{ env.LIBBPF_SHA }}
           source_branch: codegen
