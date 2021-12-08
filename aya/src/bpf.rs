@@ -46,7 +46,7 @@ macro_rules! unsafe_impl_pod {
     }
 }
 
-unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64);
+unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64, u128, i128);
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
