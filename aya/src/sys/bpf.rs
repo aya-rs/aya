@@ -1,20 +1,28 @@
+use crate::{
+    generated::{btf_func_linkage, btf_param, btf_var_secinfo, BTF_INT_SIGNED, BTF_VAR_STATIC},
+    obj::{btf::BtfType, copy_instructions},
+    Btf,
+};
+use libc::{c_char, c_long, close, ENOENT};
+
 use std::{
-    cmp,
-    ffi::CStr,
+    cmp::{self, min},
+    ffi::{CStr, CString},
     io,
     mem::{self, MaybeUninit},
     os::unix::io::RawFd,
     slice,
 };
 
-use libc::{c_long, ENOENT};
-
 use crate::{
     bpf_map_def,
-    generated::{bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn, bpf_prog_info, bpf_prog_type},
+    generated::{
+        bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_prog_info, bpf_prog_type,
+    },
     maps::PerCpuValues,
-    programs::VerifierLog,
+    obj::btf::{FuncSecInfo, LineSecInfo},
     sys::{kernel_version, SysResult},
+    util::VerifierLog,
     Pod, BPF_OBJ_NAME_LEN,
 };
 
@@ -60,20 +68,38 @@ pub(crate) fn bpf_get_object(path: &CStr) -> SysResult {
 }
 
 pub(crate) struct BpfLoadProgramAttrs<'a> {
+    pub(crate) name: Option<CString>,
     pub(crate) ty: bpf_prog_type,
     pub(crate) insns: &'a [bpf_insn],
     pub(crate) license: &'a CStr,
     pub(crate) kernel_version: u32,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
+    pub(crate) prog_btf_fd: Option<RawFd>,
     pub(crate) attach_btf_obj_fd: Option<u32>,
     pub(crate) attach_btf_id: Option<u32>,
+    pub(crate) attach_prog_fd: Option<RawFd>,
     pub(crate) log: &'a mut VerifierLog,
+    pub(crate) func_info_rec_size: usize,
+    pub(crate) func_info: FuncSecInfo,
+    pub(crate) line_info_rec_size: usize,
+    pub(crate) line_info: LineSecInfo,
 }
 
 pub(crate) fn bpf_load_program(aya_attr: BpfLoadProgramAttrs) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_3 };
+
+    if let Some(prog_name) = aya_attr.name {
+        let mut name: [c_char; 16] = [0; 16];
+        let name_bytes = prog_name.to_bytes();
+        let len = min(name.len(), name_bytes.len());
+        name[..len].copy_from_slice(unsafe {
+            slice::from_raw_parts(name_bytes.as_ptr() as *const c_char, len)
+        });
+        u.prog_name = name;
+    }
+
     u.prog_type = aya_attr.ty as u32;
     if let Some(v) = aya_attr.expected_attach_type {
         u.expected_attach_type = v as u32;
@@ -82,6 +108,22 @@ pub(crate) fn bpf_load_program(aya_attr: BpfLoadProgramAttrs) -> SysResult {
     u.insn_cnt = aya_attr.insns.len() as u32;
     u.license = aya_attr.license.as_ptr() as u64;
     u.kern_version = aya_attr.kernel_version;
+
+    if let Some(btf_fd) = aya_attr.prog_btf_fd {
+        let line_info_buf = aya_attr.line_info.line_info_bytes();
+        let func_info_buf = aya_attr.func_info.func_info_bytes();
+        u.prog_btf_fd = btf_fd as u32;
+        if aya_attr.line_info_rec_size > 0 {
+            u.line_info = line_info_buf.as_ptr() as *const _ as u64;
+            u.line_info_cnt = aya_attr.line_info.len() as u32;
+            u.line_info_rec_size = aya_attr.line_info_rec_size as u32;
+        }
+        if aya_attr.func_info_rec_size > 0 {
+            u.func_info = func_info_buf.as_ptr() as *const _ as u64;
+            u.func_info_cnt = aya_attr.func_info.len() as u32;
+            u.func_info_rec_size = aya_attr.func_info_rec_size as u32;
+        }
+    }
     let log_buf = aya_attr.log.buf();
     if log_buf.capacity() > 0 {
         u.log_level = 7;
@@ -91,6 +133,10 @@ pub(crate) fn bpf_load_program(aya_attr: BpfLoadProgramAttrs) -> SysResult {
     if let Some(v) = aya_attr.attach_btf_obj_fd {
         u.__bindgen_anon_1.attach_btf_obj_fd = v;
     }
+    if let Some(v) = aya_attr.attach_prog_fd {
+        u.__bindgen_anon_1.attach_prog_fd = v as u32;
+    }
+
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
     }
@@ -266,6 +312,7 @@ pub(crate) fn bpf_link_create(
     prog_fd: RawFd,
     target_fd: RawFd,
     attach_type: bpf_attach_type,
+    btf_id: Option<u32>,
     flags: u32,
 ) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
@@ -274,6 +321,9 @@ pub(crate) fn bpf_link_create(
     attr.link_create.__bindgen_anon_1.target_fd = target_fd as u32;
     attr.link_create.attach_type = attach_type as u32;
     attr.link_create.flags = flags;
+    if let Some(btf_id) = btf_id {
+        attr.link_create.__bindgen_anon_2.target_btf_id = btf_id;
+    }
 
     sys_bpf(bpf_cmd::BPF_LINK_CREATE, &attr)
 }
@@ -359,6 +409,25 @@ pub(crate) fn bpf_obj_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_prog_info, io
     }
 }
 
+pub(crate) fn btf_obj_get_info_by_fd(
+    prog_fd: RawFd,
+    buf: &mut [u8],
+) -> Result<bpf_btf_info, io::Error> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let mut info = unsafe { mem::zeroed::<bpf_btf_info>() };
+    let buf_size = buf.len() as u32;
+    info.btf = buf.as_ptr() as u64;
+    info.btf_size = buf_size;
+    attr.info.bpf_fd = prog_fd as u32;
+    attr.info.info = &info as *const bpf_btf_info as u64;
+    attr.info.info_len = mem::size_of::<bpf_btf_info>() as u32;
+
+    match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &attr) {
+        Ok(_) => Ok(info),
+        Err((_, err)) => Err(err),
+    }
+}
+
 pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -371,6 +440,233 @@ pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> Sy
     sys_bpf(bpf_cmd::BPF_RAW_TRACEPOINT_OPEN, &attr)
 }
 
-fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult {
+pub(crate) fn bpf_load_btf(raw_btf: &[u8], log: &mut VerifierLog) -> Result<RawFd, io::Error> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_7 };
+    u.btf = raw_btf.as_ptr() as *const _ as u64;
+    u.btf_size = mem::size_of_val(raw_btf) as u32;
+    let log_buf = log.buf();
+    if log_buf.capacity() > 0 {
+        u.btf_log_level = 1;
+        u.btf_log_buf = log_buf.as_mut_ptr() as u64;
+        u.btf_log_size = log_buf.capacity() as u32;
+    }
+    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
+        Ok(v) => Ok(v as RawFd),
+        Err((_, err)) => Err(err),
+    }
+}
+
+pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<RawFd, io::Error> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    attr.__bindgen_anon_6.__bindgen_anon_1.btf_id = id;
+
+    match sys_bpf(bpf_cmd::BPF_BTF_GET_FD_BY_ID, &attr) {
+        Ok(v) => Ok(v as RawFd),
+        Err((_, err)) => Err(err),
+    }
+}
+
+pub(crate) fn is_prog_name_supported() -> bool {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+    let mut name: [c_char; 16] = [0; 16];
+    let cstring = CString::new("aya_name_check").unwrap();
+    let name_bytes = cstring.to_bytes();
+    let len = min(name.len(), name_bytes.len());
+    name[..len].copy_from_slice(unsafe {
+        slice::from_raw_parts(name_bytes.as_ptr() as *const c_char, len)
+    });
+    u.prog_name = name;
+
+    let prog: &[u8] = &[
+        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+
+    let insns = copy_instructions(prog).unwrap();
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
+
+    match sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
+        Ok(v) => {
+            let fd = v as RawFd;
+            unsafe { close(fd) };
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+pub(crate) fn is_btf_supported() -> bool {
+    let mut btf = Btf::new();
+    let name_offset = btf.add_string("int".to_string());
+    let int_type = BtfType::new_int(name_offset, 4, BTF_INT_SIGNED, 0);
+    btf.add_type(int_type);
+    let btf_bytes = btf.to_bytes();
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_7 };
+    u.btf = btf_bytes.as_ptr() as u64;
+    u.btf_size = btf_bytes.len() as u32;
+
+    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
+        Ok(v) => {
+            let fd = v as RawFd;
+            unsafe { close(fd) };
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+pub(crate) fn is_btf_func_supported() -> bool {
+    let mut btf = Btf::new();
+    let name_offset = btf.add_string("int".to_string());
+    let int_type = BtfType::new_int(name_offset, 4, BTF_INT_SIGNED, 0);
+    let int_type_id = btf.add_type(int_type);
+
+    let a_name = btf.add_string("a".to_string());
+    let b_name = btf.add_string("b".to_string());
+    let params = vec![
+        btf_param {
+            name_off: a_name,
+            type_: int_type_id,
+        },
+        btf_param {
+            name_off: b_name,
+            type_: int_type_id,
+        },
+    ];
+    let func_proto = BtfType::new_func_proto(params, int_type_id);
+    let func_proto_type_id = btf.add_type(func_proto);
+
+    let add = btf.add_string("inc".to_string());
+    let func = BtfType::new_func(add, func_proto_type_id, btf_func_linkage::BTF_FUNC_STATIC);
+    btf.add_type(func);
+
+    let btf_bytes = btf.to_bytes();
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_7 };
+    u.btf = btf_bytes.as_ptr() as u64;
+    u.btf_size = btf_bytes.len() as u32;
+
+    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
+        Ok(v) => {
+            let fd = v as RawFd;
+            unsafe { close(fd) };
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+pub(crate) fn is_btf_func_global_supported() -> bool {
+    let mut btf = Btf::new();
+    let name_offset = btf.add_string("int".to_string());
+    let int_type = BtfType::new_int(name_offset, 4, BTF_INT_SIGNED, 0);
+    let int_type_id = btf.add_type(int_type);
+
+    let a_name = btf.add_string("a".to_string());
+    let b_name = btf.add_string("b".to_string());
+    let params = vec![
+        btf_param {
+            name_off: a_name,
+            type_: int_type_id,
+        },
+        btf_param {
+            name_off: b_name,
+            type_: int_type_id,
+        },
+    ];
+    let func_proto = BtfType::new_func_proto(params, int_type_id);
+    let func_proto_type_id = btf.add_type(func_proto);
+
+    let add = btf.add_string("inc".to_string());
+    let func = BtfType::new_func(add, func_proto_type_id, btf_func_linkage::BTF_FUNC_GLOBAL);
+    btf.add_type(func);
+
+    let btf_bytes = btf.to_bytes();
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_7 };
+    u.btf = btf_bytes.as_ptr() as u64;
+    u.btf_size = btf_bytes.len() as u32;
+
+    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
+        Ok(v) => {
+            let fd = v as RawFd;
+            unsafe { close(fd) };
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+pub(crate) fn is_btf_datasec_supported() -> bool {
+    let mut btf = Btf::new();
+    let name_offset = btf.add_string("int".to_string());
+    let int_type = BtfType::new_int(name_offset, 4, BTF_INT_SIGNED, 0);
+    let int_type_id = btf.add_type(int_type);
+
+    let name_offset = btf.add_string("foo".to_string());
+    let var_type = BtfType::new_var(name_offset, int_type_id, BTF_VAR_STATIC);
+    let var_type_id = btf.add_type(var_type);
+
+    let name_offset = btf.add_string(".data".to_string());
+    let variables = vec![btf_var_secinfo {
+        type_: var_type_id,
+        offset: 0,
+        size: 4,
+    }];
+    let datasec_type = BtfType::new_datasec(name_offset, variables, 4);
+    btf.add_type(datasec_type);
+
+    let btf_bytes = btf.to_bytes();
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_7 };
+    u.btf = btf_bytes.as_ptr() as u64;
+    u.btf_size = btf_bytes.len() as u32;
+
+    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
+        Ok(v) => {
+            let fd = v as RawFd;
+            unsafe { close(fd) };
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+pub(crate) fn is_btf_float_supported() -> bool {
+    let mut btf = Btf::new();
+    let name_offset = btf.add_string("float".to_string());
+    let float_type = BtfType::new_float(name_offset, 16);
+    btf.add_type(float_type);
+
+    let btf_bytes = btf.to_bytes();
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_7 };
+    u.btf = btf_bytes.as_ptr() as u64;
+    u.btf_size = btf_bytes.len() as u32;
+
+    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
+        Ok(v) => {
+            let fd = v as RawFd;
+            unsafe { close(fd) };
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+pub fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult {
     syscall(Syscall::Bpf { cmd, attr })
 }

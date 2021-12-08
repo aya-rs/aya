@@ -1,5 +1,6 @@
 use std::{
     convert::{TryFrom, TryInto},
+    fmt::Display,
     mem, ptr,
 };
 
@@ -7,11 +8,11 @@ use object::Endianness;
 
 use crate::{
     generated::{
-        btf_array, btf_enum, btf_member, btf_param, btf_type, btf_type__bindgen_ty_1, btf_var,
-        btf_var_secinfo, BTF_KIND_ARRAY, BTF_KIND_CONST, BTF_KIND_DATASEC, BTF_KIND_ENUM,
-        BTF_KIND_FLOAT, BTF_KIND_FUNC, BTF_KIND_FUNC_PROTO, BTF_KIND_FWD, BTF_KIND_INT,
-        BTF_KIND_PTR, BTF_KIND_RESTRICT, BTF_KIND_STRUCT, BTF_KIND_TYPEDEF, BTF_KIND_UNION,
-        BTF_KIND_UNKN, BTF_KIND_VAR, BTF_KIND_VOLATILE,
+        btf_array, btf_enum, btf_func_linkage, btf_member, btf_param, btf_type,
+        btf_type__bindgen_ty_1, btf_var, btf_var_secinfo, BTF_KIND_ARRAY, BTF_KIND_CONST,
+        BTF_KIND_DATASEC, BTF_KIND_ENUM, BTF_KIND_FLOAT, BTF_KIND_FUNC, BTF_KIND_FUNC_PROTO,
+        BTF_KIND_FWD, BTF_KIND_INT, BTF_KIND_PTR, BTF_KIND_RESTRICT, BTF_KIND_STRUCT,
+        BTF_KIND_TYPEDEF, BTF_KIND_UNION, BTF_KIND_UNKN, BTF_KIND_VAR, BTF_KIND_VOLATILE,
     },
     obj::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH},
 };
@@ -84,6 +85,36 @@ impl TryFrom<u32> for BtfKind {
             BTF_KIND_DATASEC => DataSec,
             kind => return Err(BtfError::InvalidTypeKind { kind }),
         })
+    }
+}
+
+impl Display for BtfKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BtfKind::Unknown => write!(f, "[UNKNOWN]"),
+            BtfKind::Int => write!(f, "[INT]"),
+            BtfKind::Float => write!(f, "[FLOAT]"),
+            BtfKind::Ptr => write!(f, "[PTR]"),
+            BtfKind::Array => write!(f, "[ARRAY]"),
+            BtfKind::Struct => write!(f, "[STRUCT]"),
+            BtfKind::Union => write!(f, "[UNION]"),
+            BtfKind::Enum => write!(f, "[ENUM]"),
+            BtfKind::Fwd => write!(f, "[FWD]"),
+            BtfKind::Typedef => write!(f, "[TYPEDEF]"),
+            BtfKind::Volatile => write!(f, "[VOLATILE]"),
+            BtfKind::Const => write!(f, "[CONST]"),
+            BtfKind::Restrict => write!(f, "[RESTRICT]"),
+            BtfKind::Func => write!(f, "[FUNC]"),
+            BtfKind::FuncProto => write!(f, "[FUNC_PROTO]"),
+            BtfKind::Var => write!(f, "[VAR]"),
+            BtfKind::DataSec => write!(f, "[DATASEC]"),
+        }
+    }
+}
+
+impl Default for BtfKind {
+    fn default() -> Self {
+        BtfKind::Unknown
     }
 }
 
@@ -170,7 +201,7 @@ impl BtfType {
             }
             BtfType::Enum(btf_type, enums) => {
                 let mut buf = bytes_of::<btf_type>(btf_type).to_vec();
-                for en in enums { 
+                for en in enums {
                     buf.append(&mut bytes_of::<btf_enum>(en).to_vec());
                 }
                 buf
@@ -267,13 +298,109 @@ impl BtfType {
     pub(crate) fn is_composite(&self) -> bool {
         matches!(self, BtfType::Struct(_, _) | BtfType::Union(_, _))
     }
+
+    pub(crate) fn new_int(name_off: u32, size: u32, encoding: u32, offset: u32) -> BtfType {
+        let info = (BTF_KIND_INT) << 24;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = name_off;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.size = size;
+
+        let mut data = 0u32;
+        data |= (encoding & 0x0f) << 24;
+        data |= (offset & 0xff) << 16;
+        data |= (size * 8) & 0xff;
+        BtfType::Int(btf_type, data)
+    }
+
+    pub(crate) fn new_func(name_off: u32, proto: u32, linkage: btf_func_linkage) -> BtfType {
+        let mut info = (BTF_KIND_FUNC) << 24;
+        info |= (linkage as u32) & 0xFFFF;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = name_off;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.type_ = proto;
+        BtfType::Func(btf_type)
+    }
+
+    pub(crate) fn new_func_proto(params: Vec<btf_param>, return_type: u32) -> BtfType {
+        let mut info = (BTF_KIND_FUNC_PROTO) << 24;
+        info |= (params.len() as u32) & 0xFFFF;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = 0;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.type_ = return_type;
+        BtfType::FuncProto(btf_type, params)
+    }
+
+    pub(crate) fn new_var(name_off: u32, type_: u32, linkage: u32) -> BtfType {
+        let info = (BTF_KIND_VAR) << 24;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = name_off;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.type_ = type_;
+        let var = btf_var { linkage };
+        BtfType::Var(btf_type, var)
+    }
+
+    pub(crate) fn new_datasec(
+        name_off: u32,
+        variables: Vec<btf_var_secinfo>,
+        size: u32,
+    ) -> BtfType {
+        let mut info = (BTF_KIND_DATASEC) << 24;
+        info |= (variables.len() as u32) & 0xFFFF;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = name_off;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.size = size;
+        BtfType::DataSec(btf_type, variables)
+    }
+
+    pub(crate) fn new_float(name_off: u32, size: u32) -> BtfType {
+        let info = (BTF_KIND_FLOAT) << 24;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = name_off;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.size = size;
+        BtfType::Float(btf_type)
+    }
+
+    pub(crate) fn new_struct(name_off: u32, members: Vec<btf_member>, size: u32) -> BtfType {
+        let mut info = (BTF_KIND_STRUCT) << 24;
+        info |= (members.len() as u32) & 0xFFFF;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = name_off;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.size = size;
+        BtfType::Struct(btf_type, members)
+    }
+
+    pub(crate) fn new_enum(name_off: u32, members: Vec<btf_enum>) -> BtfType {
+        let mut info = (BTF_KIND_ENUM) << 24;
+        info |= (members.len() as u32) & 0xFFFF;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = name_off;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.size = 4;
+        BtfType::Enum(btf_type, members)
+    }
+
+    pub(crate) fn new_typedef(name_off: u32, type_: u32) -> BtfType {
+        let info = (BTF_KIND_TYPEDEF) << 24;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = name_off;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.type_ = type_;
+        BtfType::Typedef(btf_type)
+    }
 }
 
 fn type_kind(ty: &btf_type) -> Result<BtfKind, BtfError> {
     ((ty.info >> 24) & 0x1F).try_into()
 }
 
-fn type_vlen(ty: &btf_type) -> usize {
+pub(crate) fn type_vlen(ty: &btf_type) -> usize {
     (ty.info & 0xFFFF) as usize
 }
 
@@ -458,6 +585,8 @@ impl std::fmt::Debug for btf_type__bindgen_ty_1 {
 
 #[cfg(test)]
 mod tests {
+    use crate::generated::BTF_INT_SIGNED;
+
     use super::*;
 
     #[test]
@@ -471,13 +600,44 @@ mod tests {
         match got {
             Ok(BtfType::Int(ty, nr_bits)) => {
                 assert_eq!(ty.name_off, 1);
+                assert_eq!(unsafe { ty.__bindgen_anon_1.size }, 8);
                 assert_eq!(nr_bits, 64);
             }
             Ok(t) => panic!("expected int type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2.as_slice())
+        assert_eq!(data, data2.as_slice());
+    }
+
+    #[test]
+    fn test_write_btf_long_unsigned_int() {
+        let data: &[u8] = &[
+            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x08, 0x00, 0x00, 0x00, 0x40, 0x00,
+            0x00, 0x00,
+        ];
+        let int = BtfType::new_int(1, 8, 0, 0);
+        assert_eq!(int.to_bytes(), data);
+    }
+
+    #[test]
+    fn test_write_btf_uchar() {
+        let data: &[u8] = &[
+            0x13, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00,
+            0x00, 0x00,
+        ];
+        let int = BtfType::new_int(0x13, 1, 0, 0);
+        assert_eq!(int.to_bytes(), data);
+    }
+
+    #[test]
+    fn test_write_btf_signed_short_int() {
+        let data: &[u8] = &[
+            0x4a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00, 0x10, 0x00,
+            0x00, 0x01,
+        ];
+        let int = BtfType::new_int(0x4a, 2, BTF_INT_SIGNED, 0);
+        assert_eq!(int.to_bytes(), data);
     }
 
     #[test]
@@ -698,14 +858,20 @@ mod tests {
     #[test]
     fn test_read_btf_type_func_datasec() {
         let endianness = Endianness::default();
-        // NOTE: There was no data in /sys/kernell/btf/vmlinux for this type
         let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0xd9, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,
         ];
         let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::DataSec(_, _)) => {}
+        match &got {
+            Ok(BtfType::DataSec(ty, info)) => {
+                assert_eq!(0, unsafe { ty.__bindgen_anon_1.size } as usize);
+                assert_eq!(1, type_vlen(ty) as usize);
+                assert_eq!(1, info.len());
+                assert_eq!(11, info[0].type_);
+                assert_eq!(0, info[0].offset);
+                assert_eq!(4, info[0].size);
+            }
             Ok(t) => panic!("expected datasec type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
@@ -727,5 +893,29 @@ mod tests {
         }
         let data2 = got.unwrap().to_bytes();
         assert_eq!(data, data2.as_slice())
+    }
+
+    #[test]
+    fn test_write_btf_func_proto() {
+        let params = vec![
+            btf_param {
+                name_off: 1,
+                type_: 1,
+            },
+            btf_param {
+                name_off: 3,
+                type_: 1,
+            },
+        ];
+        let func_proto = BtfType::new_func_proto(params, 2);
+        let data = func_proto.to_bytes();
+        let got = unsafe { BtfType::read(&data, Endianness::default()) };
+        match got {
+            Ok(BtfType::FuncProto(btf_type, _params)) => {
+                assert_eq!(type_vlen(&btf_type), 2);
+            }
+            Ok(t) => panic!("expected func proto type, got {:#?}", t),
+            Err(_) => panic!("unexpected error"),
+        }
     }
 }

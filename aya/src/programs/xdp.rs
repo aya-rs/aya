@@ -5,8 +5,10 @@ use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_attach_type::BPF_XDP, bpf_prog_type::BPF_PROG_TYPE_XDP, XDP_FLAGS_DRV_MODE,
-        XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE, XDP_FLAGS_UPDATE_IF_NOEXIST,
+        bpf_attach_type::{self, BPF_XDP},
+        bpf_prog_type::BPF_PROG_TYPE_XDP,
+        XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE,
+        XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
     programs::{load_program, FdLink, Link, LinkRef, ProgramData, ProgramError},
     sys::{bpf_link_create, kernel_version, netlink_set_xdp_fd},
@@ -72,6 +74,7 @@ impl Xdp {
     ///
     /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
+        self.data.expected_attach_type = Some(bpf_attach_type::BPF_XDP);
         load_program(BPF_PROG_TYPE_XDP, &mut self.data)
     }
 
@@ -88,7 +91,6 @@ impl Xdp {
     /// kernels.
     pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<LinkRef, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-
         let c_interface = CString::new(interface).unwrap();
         let if_index = unsafe { if_nametoindex(c_interface.as_ptr()) } as RawFd;
         if if_index == 0 {
@@ -99,7 +101,7 @@ impl Xdp {
 
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 9, 0) {
-            let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, flags.bits).map_err(
+            let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, None, flags.bits).map_err(
                 |(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_link_create".to_owned(),
                     io_error,
