@@ -80,6 +80,36 @@ where
         }
     }
 }
+#[repr(C)]
+#[derive(Default)]
+pub struct __IncompleteArrayField<T>(::std::marker::PhantomData<T>, [T; 0]);
+impl<T> __IncompleteArrayField<T> {
+    #[inline]
+    pub const fn new() -> Self {
+        __IncompleteArrayField(::std::marker::PhantomData, [])
+    }
+    #[inline]
+    pub fn as_ptr(&self) -> *const T {
+        self as *const _ as *const T
+    }
+    #[inline]
+    pub fn as_mut_ptr(&mut self) -> *mut T {
+        self as *mut _ as *mut T
+    }
+    #[inline]
+    pub unsafe fn as_slice(&self, len: usize) -> &[T] {
+        ::std::slice::from_raw_parts(self.as_ptr(), len)
+    }
+    #[inline]
+    pub unsafe fn as_mut_slice(&mut self, len: usize) -> &mut [T] {
+        ::std::slice::from_raw_parts_mut(self.as_mut_ptr(), len)
+    }
+}
+impl<T> ::std::fmt::Debug for __IncompleteArrayField<T> {
+    fn fmt(&self, fmt: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        fmt.write_str("__IncompleteArrayField")
+    }
+}
 pub const BPF_LD: u32 = 0;
 pub const BPF_LDX: u32 = 1;
 pub const BPF_ST: u32 = 2;
@@ -182,6 +212,12 @@ impl bpf_insn {
         });
         __bindgen_bitfield_unit
     }
+}
+#[repr(C)]
+#[derive(Debug)]
+pub struct bpf_lpm_trie_key {
+    pub prefixlen: __u32,
+    pub data: __IncompleteArrayField<__u8>,
 }
 impl bpf_cmd {
     pub const BPF_PROG_RUN: bpf_cmd = bpf_cmd::BPF_PROG_TEST_RUN;
@@ -828,7 +864,7 @@ pub enum perf_sw_ids {
     PERF_COUNT_SW_BPF_OUTPUT = 10,
     PERF_COUNT_SW_MAX = 11,
 }
-#[repr(u64)]
+#[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum perf_event_sample_format {
     PERF_SAMPLE_IP = 1,
@@ -852,7 +888,6 @@ pub enum perf_event_sample_format {
     PERF_SAMPLE_REGS_INTR = 262144,
     PERF_SAMPLE_PHYS_ADDR = 524288,
     PERF_SAMPLE_MAX = 1048576,
-    __PERF_SAMPLE_CALLCHAIN_EARLY = 9223372036854775808,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -863,7 +898,7 @@ pub struct perf_event_attr {
     pub __bindgen_anon_1: perf_event_attr__bindgen_ty_1,
     pub sample_type: __u64,
     pub read_format: __u64,
-    pub _bitfield_align_1: [u32; 0],
+    pub _bitfield_align_1: [u64; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
     pub __bindgen_anon_2: perf_event_attr__bindgen_ty_2,
     pub bp_type: __u32,
@@ -894,16 +929,12 @@ pub union perf_event_attr__bindgen_ty_2 {
 #[derive(Copy, Clone)]
 pub union perf_event_attr__bindgen_ty_3 {
     pub bp_addr: __u64,
-    pub kprobe_func: __u64,
-    pub uprobe_path: __u64,
     pub config1: __u64,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union perf_event_attr__bindgen_ty_4 {
     pub bp_len: __u64,
-    pub kprobe_addr: __u64,
-    pub probe_offset: __u64,
     pub config2: __u64,
 }
 impl perf_event_attr {
@@ -1216,47 +1247,14 @@ impl perf_event_attr {
         }
     }
     #[inline]
-    pub fn ksymbol(&self) -> __u64 {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(29usize, 1u8) as u64) }
-    }
-    #[inline]
-    pub fn set_ksymbol(&mut self, val: __u64) {
-        unsafe {
-            let val: u64 = ::std::mem::transmute(val);
-            self._bitfield_1.set(29usize, 1u8, val as u64)
-        }
-    }
-    #[inline]
-    pub fn bpf_event(&self) -> __u64 {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(30usize, 1u8) as u64) }
-    }
-    #[inline]
-    pub fn set_bpf_event(&mut self, val: __u64) {
-        unsafe {
-            let val: u64 = ::std::mem::transmute(val);
-            self._bitfield_1.set(30usize, 1u8, val as u64)
-        }
-    }
-    #[inline]
-    pub fn aux_output(&self) -> __u64 {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(31usize, 1u8) as u64) }
-    }
-    #[inline]
-    pub fn set_aux_output(&mut self, val: __u64) {
-        unsafe {
-            let val: u64 = ::std::mem::transmute(val);
-            self._bitfield_1.set(31usize, 1u8, val as u64)
-        }
-    }
-    #[inline]
     pub fn __reserved_1(&self) -> __u64 {
-        unsafe { ::std::mem::transmute(self._bitfield_1.get(32usize, 32u8) as u64) }
+        unsafe { ::std::mem::transmute(self._bitfield_1.get(29usize, 35u8) as u64) }
     }
     #[inline]
     pub fn set___reserved_1(&mut self, val: __u64) {
         unsafe {
             let val: u64 = ::std::mem::transmute(val);
-            self._bitfield_1.set(32usize, 32u8, val as u64)
+            self._bitfield_1.set(29usize, 35u8, val as u64)
         }
     }
     #[inline]
@@ -1289,9 +1287,6 @@ impl perf_event_attr {
         context_switch: __u64,
         write_backward: __u64,
         namespaces: __u64,
-        ksymbol: __u64,
-        bpf_event: __u64,
-        aux_output: __u64,
         __reserved_1: __u64,
     ) -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
@@ -1409,19 +1404,7 @@ impl perf_event_attr {
             let namespaces: u64 = unsafe { ::std::mem::transmute(namespaces) };
             namespaces as u64
         });
-        __bindgen_bitfield_unit.set(29usize, 1u8, {
-            let ksymbol: u64 = unsafe { ::std::mem::transmute(ksymbol) };
-            ksymbol as u64
-        });
-        __bindgen_bitfield_unit.set(30usize, 1u8, {
-            let bpf_event: u64 = unsafe { ::std::mem::transmute(bpf_event) };
-            bpf_event as u64
-        });
-        __bindgen_bitfield_unit.set(31usize, 1u8, {
-            let aux_output: u64 = unsafe { ::std::mem::transmute(aux_output) };
-            aux_output as u64
-        });
-        __bindgen_bitfield_unit.set(32usize, 32u8, {
+        __bindgen_bitfield_unit.set(29usize, 35u8, {
             let __reserved_1: u64 = unsafe { ::std::mem::transmute(__reserved_1) };
             __reserved_1 as u64
         });
@@ -1599,9 +1582,7 @@ pub enum perf_event_type {
     PERF_RECORD_SWITCH = 14,
     PERF_RECORD_SWITCH_CPU_WIDE = 15,
     PERF_RECORD_NAMESPACES = 16,
-    PERF_RECORD_KSYMBOL = 17,
-    PERF_RECORD_BPF_EVENT = 18,
-    PERF_RECORD_MAX = 19,
+    PERF_RECORD_MAX = 17,
 }
 pub const IFLA_XDP_UNSPEC: _bindgen_ty_81 = _bindgen_ty_81::IFLA_XDP_UNSPEC;
 pub const IFLA_XDP_FD: _bindgen_ty_81 = _bindgen_ty_81::IFLA_XDP_FD;
@@ -1661,8 +1642,6 @@ pub const TCA_PAD: _bindgen_ty_93 = _bindgen_ty_93::TCA_PAD;
 pub const TCA_DUMP_INVISIBLE: _bindgen_ty_93 = _bindgen_ty_93::TCA_DUMP_INVISIBLE;
 pub const TCA_CHAIN: _bindgen_ty_93 = _bindgen_ty_93::TCA_CHAIN;
 pub const TCA_HW_OFFLOAD: _bindgen_ty_93 = _bindgen_ty_93::TCA_HW_OFFLOAD;
-pub const TCA_INGRESS_BLOCK: _bindgen_ty_93 = _bindgen_ty_93::TCA_INGRESS_BLOCK;
-pub const TCA_EGRESS_BLOCK: _bindgen_ty_93 = _bindgen_ty_93::TCA_EGRESS_BLOCK;
 pub const __TCA_MAX: _bindgen_ty_93 = _bindgen_ty_93::__TCA_MAX;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -1680,9 +1659,7 @@ pub enum _bindgen_ty_93 {
     TCA_DUMP_INVISIBLE = 10,
     TCA_CHAIN = 11,
     TCA_HW_OFFLOAD = 12,
-    TCA_INGRESS_BLOCK = 13,
-    TCA_EGRESS_BLOCK = 14,
-    __TCA_MAX = 15,
+    __TCA_MAX = 13,
 }
 pub const TCA_BPF_UNSPEC: _bindgen_ty_149 = _bindgen_ty_149::TCA_BPF_UNSPEC;
 pub const TCA_BPF_ACT: _bindgen_ty_149 = _bindgen_ty_149::TCA_BPF_ACT;

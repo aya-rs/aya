@@ -65,6 +65,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "bpf_prog_type",
         "bpf_attach_type",
         "bpf_prog_info",
+        "bpf_lpm_trie_key",
         // BTF
         "btf_header",
         "btf_ext_info",
