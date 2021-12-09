@@ -1,13 +1,8 @@
 //! BTF-enabled raw tracepoints.
-use std::os::unix::io::RawFd;
-
-use thiserror::Error;
-
 use crate::{
     generated::{bpf_attach_type::BPF_TRACE_RAW_TP, bpf_prog_type::BPF_PROG_TYPE_TRACING},
-    obj::btf::{Btf, BtfError, BtfKind},
-    programs::{load_program, FdLink, LinkRef, ProgramData, ProgramError},
-    sys::bpf_raw_tracepoint_open,
+    obj::btf::{Btf, BtfKind},
+    programs::{load_program, utils::attach_raw_tracepoint, LinkRef, ProgramData, ProgramError},
 };
 
 /// Marks a function as a [BTF-enabled raw tracepoint][1] eBPF program that can be attached at
@@ -26,8 +21,6 @@ use crate::{
 /// ```no_run
 /// # #[derive(thiserror::Error, Debug)]
 /// # enum Error {
-/// #     #[error(transparent)]
-/// #     BtfTracePointError(#[from] aya::programs::BtfTracePointError),
 /// #     #[error(transparent)]
 /// #     BtfError(#[from] aya::BtfError),
 /// #     #[error(transparent)]
@@ -54,14 +47,6 @@ pub struct BtfTracePoint {
     pub(crate) data: ProgramData,
 }
 
-/// Error type returned when loading LSM programs.
-#[derive(Debug, Error)]
-pub enum BtfTracePointError {
-    /// An error occured while working with BTF.
-    #[error(transparent)]
-    Btf(#[from] BtfError),
-}
-
 impl BtfTracePoint {
     /// Loads the program inside the kernel.
     ///
@@ -74,25 +59,13 @@ impl BtfTracePoint {
     pub fn load(&mut self, tracepoint: &str, btf: &Btf) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_TRACE_RAW_TP);
         let type_name = format!("btf_trace_{}", tracepoint);
-        self.data.attach_btf_id = Some(
-            btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Typedef)
-                .map_err(BtfTracePointError::from)?,
-        );
+        self.data.attach_btf_id =
+            Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Typedef)?);
         load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
     }
 
     /// Attaches the program.
     pub fn attach(&mut self) -> Result<LinkRef, ProgramError> {
-        let prog_fd = self.data.fd_or_err()?;
-
-        // BTF programs specify their attach name at program load time
-        let pfd = bpf_raw_tracepoint_open(None, prog_fd).map_err(|(_code, io_error)| {
-            ProgramError::SyscallError {
-                call: "bpf_raw_tracepoint_open".to_owned(),
-                io_error,
-            }
-        })? as RawFd;
-
-        Ok(self.data.link(FdLink { fd: Some(pfd) }))
+        attach_raw_tracepoint(&mut self.data, None)
     }
 }

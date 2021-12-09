@@ -1,8 +1,9 @@
 mod expand;
 
 use expand::{
-    Args, BtfTracePoint, CgroupSkb, Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint,
-    SchedClassifier, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, Xdp,
+    Args, BtfTracePoint, CgroupSkb, FEntry, FExit, Lsm, Map, PerfEvent, Probe, ProbeKind,
+    RawTracePoint, SchedClassifier, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
+    Xdp,
 };
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemFn, ItemStatic};
@@ -340,6 +341,89 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let item = parse_macro_input!(item as ItemFn);
 
     SocketFilter::from_syn(args, item)
+        .and_then(|u| u.expand())
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+/// Marks a function as a fentry eBPF program that can be attached to almost
+/// any function inside the kernel. The difference between fentry and kprobe
+/// is that fexit has practically zero overhead to call before kernel function.
+/// fentry programs can be also attached to other eBPF programs.
+///
+/// # Minimumm kernel version
+///
+/// The minimum kernel version required to use this feature is 5.5.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{macros::fentry, programs::FEntryContext};
+/// use vmlinux::{filename, path};
+///
+/// #[fentry(name = "filename_lookup")]
+/// fn filename_lookup(ctx: FEntryContext) -> i32 {
+///     match { try_filename_lookup(ctx) } {
+///         Ok(ret) => ret,
+///         Err(ret) => ret,
+///     }
+/// }
+///
+/// unsafe fn try_filename_lookup(ctx: FEntryContext) -> Result<u32, u32> {
+///     let _f: *const filename = ctx.arg(1);
+///     let _p: *const path = ctx.arg(3);
+///
+///     Ok(0)
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attrs as Args);
+    let item = parse_macro_input!(item as ItemFn);
+
+    FEntry::from_syn(args, item)
+        .and_then(|u| u.expand())
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+/// Marks a function as a fexit eBPF program that can be attached to almost
+/// any function inside the kernel. The difference between fexit and kretprobe
+/// is that fexit has practically zero overhead to call after kernel function
+/// and it focuses on access to arguments rather than the return value. fexit
+/// programs can be also attached to other eBPF programs
+///
+/// # Minimumm kernel version
+///
+/// The minimum kernel version required to use this feature is 5.5.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{macros::fexit, programs::FExitContext};
+/// use vmlinux::{filename, path};
+///
+/// #[fexit(name = "filename_lookup")]
+/// fn filename_lookup(ctx: FExitContext) -> i32 {
+///     match { try_filename_lookup(ctx) } {
+///         Ok(ret) => ret,
+///         Err(ret) => ret,
+///     }
+/// }
+///
+/// unsafe fn try_filename_lookup(ctx: FExitContext) -> Result<u32, u32> {
+///     let _f: *const filename = ctx.arg(1);
+///     let _p: *const path = ctx.arg(3);
+///
+///     Ok(0)
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attrs as Args);
+    let item = parse_macro_input!(item as ItemFn);
+
+    FExit::from_syn(args, item)
         .and_then(|u| u.expand())
         .unwrap_or_else(|err| err.to_compile_error())
         .into()

@@ -1,3 +1,5 @@
+pub mod fentry;
+pub mod fexit;
 pub mod lsm;
 pub mod perf_event;
 pub mod probe;
@@ -9,6 +11,8 @@ pub mod tp_btf;
 pub mod tracepoint;
 pub mod xdp;
 
+pub use fentry::FEntryContext;
+pub use fexit::FExitContext;
 pub use lsm::LsmContext;
 pub use perf_event::PerfEventContext;
 pub use probe::ProbeContext;

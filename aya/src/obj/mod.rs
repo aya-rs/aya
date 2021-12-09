@@ -88,6 +88,8 @@ pub enum ProgramSection {
     RawTracePoint { name: String },
     Lsm { name: String },
     BtfTracePoint { name: String },
+    FEntry { name: String },
+    FExit { name: String },
 }
 
 impl ProgramSection {
@@ -112,6 +114,8 @@ impl ProgramSection {
             ProgramSection::RawTracePoint { name } => name,
             ProgramSection::Lsm { name } => name,
             ProgramSection::BtfTracePoint { name } => name,
+            ProgramSection::FEntry { name } => name,
+            ProgramSection::FExit { name } => name,
         }
     }
 }
@@ -165,6 +169,8 @@ impl FromStr for ProgramSection {
             "perf_event" => PerfEvent { name },
             "raw_tp" | "raw_tracepoint" => RawTracePoint { name },
             "lsm" => Lsm { name },
+            "fentry" => FEntry { name },
+            "fexit" => FExit { name },
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),
@@ -1188,6 +1194,48 @@ mod tests {
             obj.programs.get("my_parser"),
             Some(Program {
                 section: ProgramSection::SkSkbStreamParser { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_fentry() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "fentry/foo",
+                bytes_of(&fake_ins())
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::FEntry { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_fexit() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "fexit/foo",
+                bytes_of(&fake_ins())
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::FExit { .. },
                 ..
             })
         );
