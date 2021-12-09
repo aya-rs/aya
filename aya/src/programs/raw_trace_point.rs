@@ -1,10 +1,9 @@
 //! Raw tracepoints.
-use std::{ffi::CString, os::unix::io::RawFd};
+use std::ffi::CString;
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT,
-    programs::{load_program, FdLink, LinkRef, ProgramData, ProgramError},
-    sys::bpf_raw_tracepoint_open,
+    programs::{load_program, utils::attach_raw_tracepoint, LinkRef, ProgramData, ProgramError},
 };
 
 /// A program that can be attached at a pre-defined kernel trace point, but also
@@ -47,16 +46,7 @@ impl RawTracePoint {
 
     /// Attaches the program to the given tracepoint.
     pub fn attach(&mut self, tp_name: &str) -> Result<LinkRef, ProgramError> {
-        let prog_fd = self.data.fd_or_err()?;
-        let name = CString::new(tp_name).unwrap();
-
-        let pfd = bpf_raw_tracepoint_open(Some(&name), prog_fd).map_err(|(_code, io_error)| {
-            ProgramError::SyscallError {
-                call: "bpf_raw_tracepoint_open".to_owned(),
-                io_error,
-            }
-        })? as RawFd;
-
-        Ok(self.data.link(FdLink { fd: Some(pfd) }))
+        let tp_name_c = CString::new(tp_name).unwrap();
+        attach_raw_tracepoint(&mut self.data, Some(&tp_name_c))
     }
 }
