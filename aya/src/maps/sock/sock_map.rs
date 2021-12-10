@@ -47,20 +47,20 @@ pub struct SockMap<T: Deref<Target = Map>> {
 
 impl<T: Deref<Target = Map>> SockMap<T> {
     fn new(map: T) -> Result<SockMap<T>, MapError> {
-        let map_type = map.obj.def.map_type;
+        let map_type = map.obj.map_type();
         if map_type != BPF_MAP_TYPE_SOCKMAP as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
             });
         }
         let expected = mem::size_of::<u32>();
-        let size = map.obj.def.key_size as usize;
+        let size = map.obj.key_size() as usize;
         if size != expected {
             return Err(MapError::InvalidKeySize { size, expected });
         }
 
         let expected = mem::size_of::<RawFd>();
-        let size = map.obj.def.value_size as usize;
+        let size = map.obj.value_size() as usize;
         if size != expected {
             return Err(MapError::InvalidValueSize { size, expected });
         }
@@ -76,8 +76,8 @@ impl<T: Deref<Target = Map>> SockMap<T> {
     }
 
     fn check_bounds(&self, index: u32) -> Result<(), MapError> {
-        let max_entries = self.inner.obj.def.max_entries;
-        if index >= self.inner.obj.def.max_entries {
+        let max_entries = self.inner.obj.max_entries();
+        if index >= self.inner.obj.max_entries() {
             Err(MapError::OutOfBounds { index, max_entries })
         } else {
             Ok(())

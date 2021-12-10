@@ -40,20 +40,20 @@ pub struct Array<T: Deref<Target = Map>, V: Pod> {
 
 impl<T: Deref<Target = Map>, V: Pod> Array<T, V> {
     fn new(map: T) -> Result<Array<T, V>, MapError> {
-        let map_type = map.obj.def.map_type;
+        let map_type = map.obj.map_type();
         if map_type != BPF_MAP_TYPE_ARRAY as u32 {
             return Err(MapError::InvalidMapType {
                 map_type: map_type as u32,
             });
         }
         let expected = mem::size_of::<u32>();
-        let size = map.obj.def.key_size as usize;
+        let size = map.obj.key_size() as usize;
         if size != expected {
             return Err(MapError::InvalidKeySize { size, expected });
         }
 
         let expected = mem::size_of::<V>();
-        let size = map.obj.def.value_size as usize;
+        let size = map.obj.value_size() as usize;
         if size != expected {
             return Err(MapError::InvalidValueSize { size, expected });
         }
@@ -69,7 +69,7 @@ impl<T: Deref<Target = Map>, V: Pod> Array<T, V> {
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
     pub fn len(&self) -> u32 {
-        self.inner.obj.def.max_entries
+        self.inner.obj.max_entries()
     }
 
     /// Returns the value stored at the given index.
@@ -99,8 +99,8 @@ impl<T: Deref<Target = Map>, V: Pod> Array<T, V> {
     }
 
     fn check_bounds(&self, index: u32) -> Result<(), MapError> {
-        let max_entries = self.inner.obj.def.max_entries;
-        if index >= self.inner.obj.def.max_entries {
+        let max_entries = self.inner.obj.max_entries();
+        if index >= self.inner.obj.max_entries() {
             Err(MapError::OutOfBounds { index, max_entries })
         } else {
             Ok(())

@@ -1,6 +1,7 @@
 pub(crate) mod btf;
 mod relocation;
 
+use log::debug;
 use object::{
     read::{Object as ElfObject, ObjectSection, Section as ObjSection},
     Endianness, ObjectSymbol, ObjectSymbolTable, RelocationTarget, SectionIndex, SectionKind,
@@ -19,14 +20,14 @@ use relocation::*;
 
 use crate::{
     bpf_map_def,
-    generated::{bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_F_RDONLY_PROG},
-    obj::btf::{Btf, BtfError, BtfExt},
+    generated::{bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY, btf_var_secinfo, BPF_F_RDONLY_PROG},
+    obj::btf::{Btf, BtfError, BtfExt, BtfType},
     programs::{CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType},
-    BpfError,
+    BpfError, BtfMapDef, PinningType,
 };
 use std::slice::from_raw_parts_mut;
 
-use self::btf::{FuncSecInfo, LineSecInfo};
+use self::btf::{BtfKind, FuncSecInfo, LineSecInfo};
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
 /// The first five __u32 of `bpf_map_def` must be defined.
@@ -51,7 +52,7 @@ pub struct Object {
     pub(crate) text_section_index: Option<usize>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum MapKind {
     Bss,
     Data,
@@ -74,12 +75,113 @@ impl From<&str> for MapKind {
 }
 
 #[derive(Debug, Clone)]
-pub struct Map {
+pub enum Map {
+    Legacy(LegacyMap),
+    Btf(BtfMap),
+}
+
+impl Map {
+    pub(crate) fn map_type(&self) -> u32 {
+        match self {
+            Map::Legacy(m) => m.def.map_type,
+            Map::Btf(m) => m.def.map_type,
+        }
+    }
+
+    pub(crate) fn key_size(&self) -> u32 {
+        match self {
+            Map::Legacy(m) => m.def.key_size,
+            Map::Btf(m) => m.def.key_size,
+        }
+    }
+
+    pub(crate) fn value_size(&self) -> u32 {
+        match self {
+            Map::Legacy(m) => m.def.value_size,
+            Map::Btf(m) => m.def.value_size,
+        }
+    }
+
+    pub(crate) fn max_entries(&self) -> u32 {
+        match self {
+            Map::Legacy(m) => m.def.max_entries,
+            Map::Btf(m) => m.def.max_entries,
+        }
+    }
+
+    pub(crate) fn set_max_entries(&mut self, v: u32) {
+        match self {
+            Map::Legacy(m) => m.def.max_entries = v,
+            Map::Btf(m) => m.def.max_entries = v,
+        }
+    }
+
+    pub(crate) fn map_flags(&self) -> u32 {
+        match self {
+            Map::Legacy(m) => m.def.map_flags,
+            Map::Btf(m) => m.def.map_flags,
+        }
+    }
+
+    pub(crate) fn pinning(&self) -> PinningType {
+        match self {
+            Map::Legacy(m) => m.def.pinning,
+            Map::Btf(m) => m.def.pinning,
+        }
+    }
+
+    pub(crate) fn data(&self) -> &[u8] {
+        match self {
+            Map::Legacy(m) => &m.data,
+            Map::Btf(m) => &m.data,
+        }
+    }
+
+    pub(crate) fn data_mut(&mut self) -> &mut Vec<u8> {
+        match self {
+            Map::Legacy(m) => m.data.as_mut(),
+            Map::Btf(m) => m.data.as_mut(),
+        }
+    }
+
+    pub(crate) fn kind(&self) -> MapKind {
+        match self {
+            Map::Legacy(m) => m.kind,
+            Map::Btf(m) => m.kind,
+        }
+    }
+
+    pub(crate) fn section_index(&self) -> usize {
+        match self {
+            Map::Legacy(m) => m.section_index,
+            Map::Btf(m) => m.section_index,
+        }
+    }
+
+    pub(crate) fn symbol_index(&self) -> usize {
+        match self {
+            Map::Legacy(m) => m.symbol_index,
+            Map::Btf(m) => m.symbol_index,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct LegacyMap {
     pub(crate) def: bpf_map_def,
     pub(crate) section_index: usize,
     pub(crate) symbol_index: usize,
     pub(crate) data: Vec<u8>,
     pub(crate) kind: MapKind,
+}
+
+#[derive(Debug, Clone)]
+pub struct BtfMap {
+    pub(crate) def: BtfMapDef,
+    pub(crate) section_index: usize,
+    pub(crate) symbol_index: usize,
+    pub(crate) kind: MapKind,
+    pub(crate) data: Vec<u8>,
 }
 
 #[derive(Debug, Clone)]
@@ -519,20 +621,20 @@ impl Object {
                     .iter_mut()
                     // assumption: there is only one map created per section where we're trying to
                     // patch data. this assumption holds true for the .rodata section at least
-                    .find(|(_, m)| symbol.section_index == Some(m.section_index))
+                    .find(|(_, m)| symbol.section_index == Some(m.section_index()))
                     .ok_or_else(|| ParseError::MapNotFound {
                         index: symbol.section_index.unwrap_or(0),
                     })?;
                 let start = symbol.address as usize;
                 let end = start + symbol.size as usize;
-                if start > end || end > map.data.len() {
+                if start > end || end > map.data().len() {
                     return Err(ParseError::InvalidGlobalData {
                         name: name.to_string(),
                         sym_size: symbol.size,
                         data_size: data.len(),
                     });
                 }
-                map.data.splice(start..end, data.iter().cloned());
+                map.data_mut().splice(start..end, data.iter().cloned());
             } else {
                 return Err(ParseError::SymbolNotFound {
                     name: name.to_owned(),
@@ -706,14 +808,59 @@ impl Object {
             let def = parse_map_def(name, data)?;
             self.maps.insert(
                 name.to_string(),
-                Map {
+                Map::Legacy(LegacyMap {
                     section_index: section.index.0,
                     symbol_index: sym.index,
                     def,
                     data: Vec::new(),
                     kind: MapKind::Other,
-                },
+                }),
             );
+        }
+        Ok(())
+    }
+
+    fn parse_btf_maps(
+        &mut self,
+        section: &Section,
+        symbols: HashMap<String, Symbol>,
+    ) -> Result<(), BpfError> {
+        if self.btf.is_none() {
+            return Err(BpfError::NoBTF);
+        }
+        let btf = self.btf.as_ref().unwrap();
+
+        for t in btf.types() {
+            if let BtfType::DataSec(_, sec_info) = &t {
+                let type_name = match btf.type_name(t) {
+                    Ok(Some(name)) => name,
+                    _ => continue,
+                };
+                if type_name == section.name {
+                    // each btf_var_secinfo contains a map
+                    for info in sec_info {
+                        let (map_name, def) = parse_btf_map_def(btf, info)?;
+                        let symbol_index = symbols
+                            .get(&map_name)
+                            .ok_or_else(|| {
+                                BpfError::ParseError(ParseError::SymbolNotFound {
+                                    name: map_name.to_string(),
+                                })
+                            })?
+                            .index;
+                        self.maps.insert(
+                            map_name,
+                            Map::Btf(BtfMap {
+                                def,
+                                section_index: section.index.0,
+                                symbol_index,
+                                kind: MapKind::Other,
+                                data: Vec::new(),
+                            }),
+                        );
+                    }
+                }
+            }
         }
         Ok(())
     }
@@ -740,6 +887,22 @@ impl Object {
             BpfSectionKind::Text => self.parse_text_section(section)?,
             BpfSectionKind::Btf => self.parse_btf(&section)?,
             BpfSectionKind::BtfExt => self.parse_btf_ext(&section)?,
+            BpfSectionKind::BtfMaps => {
+                let symbols: HashMap<String, Symbol> = self
+                    .symbols_by_index
+                    .values()
+                    .filter(|s| {
+                        if let Some(idx) = s.section_index {
+                            idx == section.index.0 && s.name.is_some()
+                        } else {
+                            false
+                        }
+                    })
+                    .cloned()
+                    .map(|s| (s.name.as_ref().unwrap().to_string(), s))
+                    .collect();
+                self.parse_btf_maps(&section, symbols)?
+            }
             BpfSectionKind::Maps => {
                 let symbols: Vec<Symbol> = self
                     .symbols_by_index
@@ -770,10 +933,7 @@ impl Object {
                     );
                 }
             }
-            BpfSectionKind::Undefined
-            | BpfSectionKind::BtfMaps
-            | BpfSectionKind::License
-            | BpfSectionKind::Version => {}
+            BpfSectionKind::Undefined | BpfSectionKind::License | BpfSectionKind::Version => {}
         }
 
         Ok(())
@@ -977,6 +1137,30 @@ fn parse_version(data: &[u8], endianness: object::Endianness) -> Result<KernelVe
     })
 }
 
+// Gets an integer value from a BTF map defintion K/V pair.
+// type_id should be a PTR to an ARRAY.
+// the value is encoded in the array nr_elems field.
+fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
+    let pty = match &btf.type_by_id(type_id)? {
+        BtfType::Ptr(pty) => pty,
+        other => {
+            return Err(BtfError::UnexpectedBtfType {
+                type_id: other.kind()?.unwrap_or(BtfKind::Unknown) as u32,
+            })
+        }
+    };
+    // Safety: union
+    let arr = match &btf.type_by_id(unsafe { pty.__bindgen_anon_1.type_ })? {
+        BtfType::Array(_, arr) => arr,
+        other => {
+            return Err(BtfError::UnexpectedBtfType {
+                type_id: other.kind()?.unwrap_or(BtfKind::Unknown) as u32,
+            })
+        }
+    };
+    Ok(arr.nelems)
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum KernelVersion {
     Version(u32),
@@ -1014,13 +1198,13 @@ fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
         }
         MapKind::Other => (parse_map_def(name, section.data)?, Vec::new()),
     };
-    Ok(Map {
+    Ok(Map::Legacy(LegacyMap {
         section_index: section.index.0,
         symbol_index: 0,
         def,
         data,
         kind,
-    })
+    }))
 }
 
 fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
@@ -1041,6 +1225,82 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     } else {
         Ok(unsafe { ptr::read_unaligned(data.as_ptr() as *const bpf_map_def) })
     }
+}
+
+fn parse_btf_map_def(btf: &Btf, info: &btf_var_secinfo) -> Result<(String, BtfMapDef), BtfError> {
+    let ty = match btf.type_by_id(info.type_)? {
+        BtfType::Var(ty, _) => ty,
+        other => {
+            return Err(BtfError::UnexpectedBtfType {
+                type_id: other.kind()?.unwrap_or(BtfKind::Unknown) as u32,
+            })
+        }
+    };
+    let map_name = btf.string_at(ty.name_off)?;
+    let mut map_def = BtfMapDef::default();
+
+    // Safety: union
+    let root_type = btf.resolve_type(unsafe { ty.__bindgen_anon_1.type_ })?;
+    let members = match btf.type_by_id(root_type)? {
+        BtfType::Struct(_, members) => members,
+        other => {
+            return Err(BtfError::UnexpectedBtfType {
+                type_id: other.kind()?.unwrap_or(BtfKind::Unknown) as u32,
+            })
+        }
+    };
+
+    for m in members {
+        match btf.string_at(m.name_off)?.as_ref() {
+            "type" => {
+                map_def.map_type = get_map_field(btf, m.type_)?;
+            }
+            "key" => {
+                if let BtfType::Ptr(pty) = btf.type_by_id(m.type_)? {
+                    // Safety: union
+                    let t = unsafe { pty.__bindgen_anon_1.type_ };
+                    map_def.key_size = btf.type_size(t)? as u32;
+                    map_def.btf_key_type_id = t;
+                } else {
+                    return Err(BtfError::UnexpectedBtfType { type_id: m.type_ });
+                }
+            }
+            "key_size" => {
+                map_def.key_size = get_map_field(btf, m.type_)?;
+            }
+            "value" => {
+                if let BtfType::Ptr(pty) = btf.type_by_id(m.type_)? {
+                    // Safety: union
+                    let t = unsafe { pty.__bindgen_anon_1.type_ };
+                    map_def.value_size = btf.type_size(t)? as u32;
+                    map_def.btf_value_type_id = t;
+                } else {
+                    return Err(BtfError::UnexpectedBtfType { type_id: m.type_ });
+                }
+            }
+            "value_size" => {
+                map_def.value_size = get_map_field(btf, m.type_)?;
+            }
+            "max_entries" => {
+                map_def.max_entries = get_map_field(btf, m.type_)?;
+            }
+            "map_flags" => {
+                map_def.map_flags = get_map_field(btf, m.type_)?;
+            }
+            "pinning" => {
+                let pinning = get_map_field(btf, m.type_)?;
+                map_def.pinning = PinningType::try_from(pinning).unwrap_or_else(|_| {
+                    debug!("{} is not a valid pin type. using PIN_NONE", pinning);
+                    PinningType::None
+                });
+            }
+            other => {
+                debug!("skipping unknown map section: {}", other);
+                continue;
+            }
+        }
+    }
+    Ok((map_name.to_string(), map_def))
 }
 
 pub(crate) fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
@@ -1187,6 +1447,7 @@ mod tests {
             map_flags: 5,
             id: 0,
             pinning: PinningType::None,
+            ..Default::default()
         };
 
         assert_eq!(
@@ -1205,6 +1466,7 @@ mod tests {
             map_flags: 5,
             id: 6,
             pinning: PinningType::ByName,
+            ..Default::default()
         };
 
         assert_eq!(parse_map_def("foo", bytes_of(&def)).unwrap(), def);
@@ -1220,6 +1482,7 @@ mod tests {
             map_flags: 5,
             id: 6,
             pinning: PinningType::ByName,
+            ..Default::default()
         };
         let mut buf = [0u8; 128];
         unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, def) };
@@ -1250,11 +1513,12 @@ mod tests {
                         map_flags: 5,
                         id: 0,
                         pinning: PinningType::None,
+                        ..Default::default()
                     })
                 ),
                 "foo"
             ),
-            Ok(Map {
+            Ok(Map::Legacy(LegacyMap{
                 section_index: 0,
                 def: bpf_map_def {
                     map_type: 1,
@@ -1267,7 +1531,7 @@ mod tests {
                 },
                 data,
                 ..
-            }) if data.is_empty()
+            })) if data.is_empty()
         ))
     }
 
@@ -1283,7 +1547,7 @@ mod tests {
                 ),
                 ".bss"
             ),
-            Ok(Map {
+            Ok(Map::Legacy(LegacyMap {
                 section_index: 0,
                 symbol_index: 0,
                 def: bpf_map_def {
@@ -1297,7 +1561,7 @@ mod tests {
                 },
                 data,
                 kind
-            }) if data == map_data && value_size == map_data.len() as u32 && kind == MapKind::Bss
+            })) if data == map_data && value_size == map_data.len() as u32 && kind == MapKind::Bss
         ))
     }
 
@@ -1393,8 +1657,12 @@ mod tests {
         assert!(obj.maps.get("foo").is_some());
         assert!(obj.maps.get("bar").is_some());
         assert!(obj.maps.get("baz").is_some());
-        for m in obj.maps.values() {
-            assert_eq!(&m.def, def);
+        for map in obj.maps.values() {
+            if let Map::Legacy(m) = map {
+                assert_eq!(&m.def, def);
+            } else {
+                panic!("expected a BTF map")
+            }
         }
     }
 
@@ -1905,7 +2173,7 @@ mod tests {
         let mut obj = fake_obj();
         obj.maps.insert(
             ".rodata".to_string(),
-            Map {
+            Map::Legacy(LegacyMap {
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_ARRAY as u32,
                     key_size: mem::size_of::<u32>() as u32,
@@ -1914,12 +2182,13 @@ mod tests {
                     map_flags: BPF_F_RDONLY_PROG,
                     id: 1,
                     pinning: PinningType::None,
+                    ..Default::default()
                 },
                 section_index: 1,
                 symbol_index: 1,
                 data: vec![0, 0, 0],
                 kind: MapKind::Rodata,
-            },
+            }),
         );
         obj.symbols_by_index.insert(
             1,
@@ -1939,6 +2208,103 @@ mod tests {
             .unwrap();
 
         let map = obj.maps.get(".rodata").unwrap();
-        assert_eq!(test_data, map.data);
+        assert_eq!(test_data, map.data());
+    }
+
+    #[test]
+    fn test_parse_btf_map_section() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "map_1", 0);
+        fake_sym(&mut obj, 0, 0, "map_2", 0);
+        // generated from:
+        // objcopy --dump-section .BTF=test.btf ./target/bpfel-unknown-none/debug/multimap-btf.bpf.o
+        // hexdump -v  -e '7/1 "0x%02X, " 1/1  " 0x%02X,\n"' test.btf
+        let data: &[u8] = &[
+            0x9F, 0xEB, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x01,
+            0x00, 0x00, 0xF0, 0x01, 0x00, 0x00, 0xCC, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x02, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00,
+            0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+            0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x02, 0x06, 0x00, 0x00, 0x00, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08,
+            0x07, 0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00,
+            0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+            0x09, 0x00, 0x00, 0x00, 0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x0A, 0x00,
+            0x00, 0x00, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x08, 0x00, 0x00, 0x00,
+            0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0C, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+            0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x04, 0x00, 0x00, 0x04, 0x20, 0x00, 0x00, 0x00, 0x45, 0x00, 0x00, 0x00,
+            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4A, 0x00, 0x00, 0x00, 0x05, 0x00,
+            0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x4E, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+            0x80, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0xC0, 0x00,
+            0x00, 0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x0D, 0x00, 0x00, 0x00,
+            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x04, 0x20, 0x00,
+            0x00, 0x00, 0x45, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x4A, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x4E, 0x00,
+            0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00,
+            0x0B, 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x0E, 0x0F, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
+            0x00, 0x0D, 0x02, 0x00, 0x00, 0x00, 0x6C, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00,
+            0x70, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0C, 0x12, 0x00, 0x00, 0x00, 0xB0, 0x01,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x01,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00,
+            0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xB5, 0x01, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x0E, 0x15, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xBE, 0x01,
+            0x00, 0x00, 0x02, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0xC4, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0F,
+            0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00,
+            0x00, 0x00, 0x00, 0x69, 0x6E, 0x74, 0x00, 0x5F, 0x5F, 0x41, 0x52, 0x52, 0x41, 0x59,
+            0x5F, 0x53, 0x49, 0x5A, 0x45, 0x5F, 0x54, 0x59, 0x50, 0x45, 0x5F, 0x5F, 0x00, 0x5F,
+            0x5F, 0x75, 0x33, 0x32, 0x00, 0x75, 0x6E, 0x73, 0x69, 0x67, 0x6E, 0x65, 0x64, 0x20,
+            0x69, 0x6E, 0x74, 0x00, 0x5F, 0x5F, 0x75, 0x36, 0x34, 0x00, 0x75, 0x6E, 0x73, 0x69,
+            0x67, 0x6E, 0x65, 0x64, 0x20, 0x6C, 0x6F, 0x6E, 0x67, 0x20, 0x6C, 0x6F, 0x6E, 0x67,
+            0x00, 0x74, 0x79, 0x70, 0x65, 0x00, 0x6B, 0x65, 0x79, 0x00, 0x76, 0x61, 0x6C, 0x75,
+            0x65, 0x00, 0x6D, 0x61, 0x78, 0x5F, 0x65, 0x6E, 0x74, 0x72, 0x69, 0x65, 0x73, 0x00,
+            0x6D, 0x61, 0x70, 0x5F, 0x31, 0x00, 0x6D, 0x61, 0x70, 0x5F, 0x32, 0x00, 0x63, 0x74,
+            0x78, 0x00, 0x62, 0x70, 0x66, 0x5F, 0x70, 0x72, 0x6F, 0x67, 0x00, 0x74, 0x72, 0x61,
+            0x63, 0x65, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x00, 0x2F, 0x76, 0x61, 0x72, 0x2F, 0x68,
+            0x6F, 0x6D, 0x65, 0x2F, 0x64, 0x61, 0x76, 0x65, 0x2F, 0x64, 0x65, 0x76, 0x2F, 0x61,
+            0x79, 0x61, 0x2D, 0x72, 0x73, 0x2F, 0x61, 0x79, 0x61, 0x2F, 0x74, 0x65, 0x73, 0x74,
+            0x2F, 0x69, 0x6E, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x2D, 0x65,
+            0x62, 0x70, 0x66, 0x2F, 0x73, 0x72, 0x63, 0x2F, 0x62, 0x70, 0x66, 0x2F, 0x6D, 0x75,
+            0x6C, 0x74, 0x69, 0x6D, 0x61, 0x70, 0x2D, 0x62, 0x74, 0x66, 0x2E, 0x62, 0x70, 0x66,
+            0x2E, 0x63, 0x00, 0x69, 0x6E, 0x74, 0x20, 0x62, 0x70, 0x66, 0x5F, 0x70, 0x72, 0x6F,
+            0x67, 0x28, 0x76, 0x6F, 0x69, 0x64, 0x20, 0x2A, 0x63, 0x74, 0x78, 0x29, 0x00, 0x09,
+            0x5F, 0x5F, 0x75, 0x33, 0x32, 0x20, 0x6B, 0x65, 0x79, 0x20, 0x3D, 0x20, 0x30, 0x3B,
+            0x00, 0x09, 0x5F, 0x5F, 0x75, 0x36, 0x34, 0x20, 0x74, 0x77, 0x65, 0x6E, 0x74, 0x79,
+            0x5F, 0x66, 0x6F, 0x75, 0x72, 0x20, 0x3D, 0x20, 0x32, 0x34, 0x3B, 0x00, 0x09, 0x5F,
+            0x5F, 0x75, 0x36, 0x34, 0x20, 0x66, 0x6F, 0x72, 0x74, 0x79, 0x5F, 0x74, 0x77, 0x6F,
+            0x20, 0x3D, 0x20, 0x34, 0x32, 0x3B, 0x00, 0x20, 0x20, 0x20, 0x20, 0x62, 0x70, 0x66,
+            0x5F, 0x6D, 0x61, 0x70, 0x5F, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x5F, 0x65, 0x6C,
+            0x65, 0x6D, 0x28, 0x26, 0x6D, 0x61, 0x70, 0x5F, 0x31, 0x2C, 0x20, 0x26, 0x6B, 0x65,
+            0x79, 0x2C, 0x20, 0x26, 0x74, 0x77, 0x65, 0x6E, 0x74, 0x79, 0x5F, 0x66, 0x6F, 0x75,
+            0x72, 0x2C, 0x20, 0x42, 0x50, 0x46, 0x5F, 0x41, 0x4E, 0x59, 0x29, 0x3B, 0x00, 0x20,
+            0x20, 0x20, 0x20, 0x62, 0x70, 0x66, 0x5F, 0x6D, 0x61, 0x70, 0x5F, 0x75, 0x70, 0x64,
+            0x61, 0x74, 0x65, 0x5F, 0x65, 0x6C, 0x65, 0x6D, 0x28, 0x26, 0x6D, 0x61, 0x70, 0x5F,
+            0x32, 0x2C, 0x20, 0x26, 0x6B, 0x65, 0x79, 0x2C, 0x20, 0x26, 0x66, 0x6F, 0x72, 0x74,
+            0x79, 0x5F, 0x74, 0x77, 0x6F, 0x2C, 0x20, 0x42, 0x50, 0x46, 0x5F, 0x41, 0x4E, 0x59,
+            0x29, 0x3B, 0x00, 0x09, 0x72, 0x65, 0x74, 0x75, 0x72, 0x6E, 0x20, 0x30, 0x3B, 0x00,
+            0x63, 0x68, 0x61, 0x72, 0x00, 0x5F, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x00,
+            0x2E, 0x6D, 0x61, 0x70, 0x73, 0x00, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x00,
+        ];
+
+        let btf_section = fake_section(BpfSectionKind::Btf, ".BTF", data);
+        obj.parse_section(btf_section).unwrap();
+
+        let map_section = fake_section(BpfSectionKind::BtfMaps, ".maps", &[]);
+        obj.parse_section(map_section).unwrap();
+
+        let map = obj.maps.get("map_1").unwrap();
+        if let Map::Btf(m) = map {
+            assert_eq!(m.def.key_size, 4);
+            assert_eq!(m.def.value_size, 8);
+            assert_eq!(m.def.max_entries, 1);
+        } else {
+            panic!("expected a BTF map")
+        }
     }
 }

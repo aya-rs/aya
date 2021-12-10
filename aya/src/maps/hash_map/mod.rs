@@ -15,12 +15,12 @@ pub use per_cpu_hash_map::*;
 
 pub(crate) fn check_kv_size<K, V>(map: &Map) -> Result<(), MapError> {
     let size = mem::size_of::<K>();
-    let expected = map.obj.def.key_size as usize;
+    let expected = map.obj.key_size() as usize;
     if size != expected {
         return Err(MapError::InvalidKeySize { size, expected });
     }
     let size = mem::size_of::<V>();
-    let expected = map.obj.def.value_size as usize;
+    let expected = map.obj.value_size() as usize;
     if size != expected {
         return Err(MapError::InvalidValueSize { size, expected });
     };

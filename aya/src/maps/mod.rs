@@ -266,6 +266,7 @@ fn maybe_warn_rlimit() {
 pub struct Map {
     pub(crate) obj: obj::Map,
     pub(crate) fd: Option<RawFd>,
+    pub(crate) btf_fd: Option<RawFd>,
     /// Indicates if this map has been pinned to bpffs
     pub pinned: bool,
 }
@@ -279,7 +280,7 @@ impl Map {
 
         let c_name = CString::new(name).map_err(|_| MapError::InvalidName { name: name.into() })?;
 
-        let fd = bpf_create_map(&c_name, &self.obj.def).map_err(|(code, io_error)| {
+        let fd = bpf_create_map(&c_name, &self.obj, self.btf_fd).map_err(|(code, io_error)| {
             let k_ver = kernel_version().unwrap();
             if k_ver < (5, 11, 0) {
                 maybe_warn_rlimit();
@@ -327,7 +328,7 @@ impl Map {
 
     /// Returns the [`bpf_map_type`] of this map
     pub fn map_type(&self) -> Result<bpf_map_type, MapError> {
-        bpf_map_type::try_from(self.obj.def.map_type)
+        bpf_map_type::try_from(self.obj.map_type())
     }
 
     pub(crate) fn fd_or_err(&self) -> Result<RawFd, MapError> {
@@ -625,7 +626,7 @@ mod tests {
     use super::*;
 
     fn new_obj_map() -> obj::Map {
-        obj::Map {
+        obj::Map::Legacy(obj::LegacyMap {
             def: bpf_map_def {
                 map_type: BPF_MAP_TYPE_HASH as u32,
                 key_size: 4,
@@ -637,7 +638,7 @@ mod tests {
             symbol_index: 0,
             data: Vec::new(),
             kind: MapKind::Other,
-        }
+        })
     }
 
     fn new_map() -> Map {
@@ -645,6 +646,7 @@ mod tests {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
+            btf_fd: None,
         }
     }
 

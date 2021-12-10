@@ -41,7 +41,7 @@ pub struct BloomFilter<T: Deref<Target = Map>, V: Pod> {
 
 impl<T: Deref<Target = Map>, V: Pod> BloomFilter<T, V> {
     pub(crate) fn new(map: T) -> Result<BloomFilter<T, V>, MapError> {
-        let map_type = map.obj.def.map_type;
+        let map_type = map.obj.map_type();
 
         // validate the map definition
         if map_type != BPF_MAP_TYPE_BLOOM_FILTER as u32 {
@@ -51,7 +51,7 @@ impl<T: Deref<Target = Map>, V: Pod> BloomFilter<T, V> {
         }
 
         let size = mem::size_of::<V>();
-        let expected = map.obj.def.value_size as usize;
+        let expected = map.obj.value_size() as usize;
         if size != expected {
             return Err(MapError::InvalidValueSize { size, expected });
         };
@@ -140,7 +140,7 @@ mod tests {
     use std::io;
 
     fn new_obj_map() -> obj::Map {
-        obj::Map {
+        obj::Map::Legacy(obj::LegacyMap {
             def: bpf_map_def {
                 map_type: BPF_MAP_TYPE_BLOOM_FILTER as u32,
                 key_size: 4,
@@ -152,7 +152,7 @@ mod tests {
             symbol_index: 0,
             data: Vec::new(),
             kind: obj::MapKind::Other,
-        }
+        })
     }
 
     fn sys_error(value: i32) -> SysResult {
@@ -165,6 +165,7 @@ mod tests {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
+            btf_fd: None,
         };
         assert!(matches!(
             BloomFilter::<_, u16>::new(&map),
@@ -178,7 +179,7 @@ mod tests {
     #[test]
     fn test_try_from_wrong_map() {
         let map = Map {
-            obj: obj::Map {
+            obj: obj::Map::Legacy(obj::LegacyMap {
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32,
                     key_size: 4,
@@ -190,9 +191,10 @@ mod tests {
                 symbol_index: 0,
                 data: Vec::new(),
                 kind: obj::MapKind::Other,
-            },
+            }),
             fd: None,
             pinned: false,
+            btf_fd: None,
         };
 
         assert!(matches!(
@@ -207,6 +209,7 @@ mod tests {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
+            btf_fd: None,
         };
 
         assert!(matches!(
@@ -221,6 +224,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
 
         assert!(BloomFilter::<_, u32>::new(&mut map).is_ok());
@@ -232,6 +236,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         assert!(BloomFilter::<_, u32>::try_from(&map).is_ok())
     }
@@ -244,6 +249,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let bloom_filter = BloomFilter::<_, u32>::new(&mut map).unwrap();
 
@@ -267,6 +273,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
 
         let bloom_filter = BloomFilter::<_, u32>::new(&mut map).unwrap();
@@ -280,6 +287,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let bloom_filter = BloomFilter::<_, u32>::new(&map).unwrap();
 
@@ -302,6 +310,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let bloom_filter = BloomFilter::<_, u32>::new(&map).unwrap();
 
