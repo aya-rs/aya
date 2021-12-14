@@ -364,6 +364,45 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
     Ok(len as usize)
 }
 
+/// Write bytes to the _user space_ pointer `src` and store them as a `T`.
+///
+/// # Examples
+///
+/// ```no_run
+/// # #![allow(dead_code)]
+/// # use aya_bpf::{
+/// #     cty::{c_int, c_long},
+/// #     helpers::bpf_probe_write_user,
+/// #     programs::ProbeContext,
+/// # };
+/// fn try_test(ctx: ProbeContext) -> Result<(), c_long> {
+///     let retp: *mut c_int = ctx.arg(0).ok_or(1)?;
+///     let val: i32 = 1;
+///     // Write the value to the userspace pointer.
+///     unsafe { bpf_probe_write_user(retp, &val as *const i32)? };
+///
+///     Ok::<(), c_long>(())
+/// }
+/// ```
+///
+/// # Errors
+///
+/// On failure, this function returns a negative value wrapped in an `Err`.
+#[allow(clippy::fn_to_numeric_cast_with_truncation)]
+#[inline]
+pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), c_long> {
+    let ret = gen::bpf_probe_write_user(
+        dst as *mut c_void,
+        src as *const c_void,
+        mem::size_of::<T>() as u32,
+    );
+    if ret < 0 {
+        return Err(ret);
+    }
+
+    Ok(())
+}
+
 /// Read the `comm` field associated with the current task struct
 /// as a `[c_char; 16]`.
 ///
