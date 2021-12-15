@@ -111,6 +111,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "BPF_W",
         "BPF_H",
         "BPF_B",
+        "BPF_F_.*",
         "BPF_JMP",
         "BPF_CALL",
         "SO_ATTACH_BPF",
@@ -186,6 +187,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         for x in &vars {
             bindgen = bindgen
                 .allowlist_var(x)
+                .constified_enum("BPF_F_.*")
                 .constified_enum("BTF_KIND_.*")
                 .constified_enum("BTF_VAR_.*");
         }
