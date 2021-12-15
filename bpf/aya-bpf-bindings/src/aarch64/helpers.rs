@@ -1825,3 +1825,56 @@ pub unsafe fn bpf_find_vma(
     ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(180usize);
     fun(task, addr, callback_fn, callback_ctx, flags)
 }
+pub unsafe fn bpf_loop(
+    nr_loops: __u32,
+    callback_fn: *mut ::aya_bpf_cty::c_void,
+    callback_ctx: *mut ::aya_bpf_cty::c_void,
+    flags: __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        nr_loops: __u32,
+        callback_fn: *mut ::aya_bpf_cty::c_void,
+        callback_ctx: *mut ::aya_bpf_cty::c_void,
+        flags: __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(181usize);
+    fun(nr_loops, callback_fn, callback_ctx, flags)
+}
+pub unsafe fn bpf_strncmp(
+    s1: *const ::aya_bpf_cty::c_char,
+    s1_sz: __u32,
+    s2: *const ::aya_bpf_cty::c_char,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        s1: *const ::aya_bpf_cty::c_char,
+        s1_sz: __u32,
+        s2: *const ::aya_bpf_cty::c_char,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(182usize);
+    fun(s1, s1_sz, s2)
+}
+pub unsafe fn bpf_get_func_arg(
+    ctx: *mut ::aya_bpf_cty::c_void,
+    n: __u32,
+    value: *mut __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        ctx: *mut ::aya_bpf_cty::c_void,
+        n: __u32,
+        value: *mut __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(183usize);
+    fun(ctx, n, value)
+}
+pub unsafe fn bpf_get_func_ret(
+    ctx: *mut ::aya_bpf_cty::c_void,
+    value: *mut __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        ctx: *mut ::aya_bpf_cty::c_void,
+        value: *mut __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(184usize);
+    fun(ctx, value)
+}
+pub unsafe fn bpf_get_func_arg_cnt(ctx: *mut ::aya_bpf_cty::c_void) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(ctx: *mut ::aya_bpf_cty::c_void) -> ::aya_bpf_cty::c_long =
+        ::core::mem::transmute(185usize);
+    fun(ctx)
+}
