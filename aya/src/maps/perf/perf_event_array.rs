@@ -9,7 +9,6 @@ use std::{
 };
 
 use bytes::BytesMut;
-use libc::{sysconf, _SC_PAGESIZE};
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
@@ -18,6 +17,7 @@ use crate::{
         Map, MapError, MapRefMut,
     },
     sys::bpf_map_update_elem,
+    util::page_size,
 };
 
 /// A ring buffer that can receive events from eBPF programs.
@@ -177,8 +177,7 @@ impl<T: DerefMut<Target = Map>> PerfEventArray<T> {
 
         Ok(PerfEventArray {
             map: Arc::new(map),
-            // Safety: libc
-            page_size: unsafe { sysconf(_SC_PAGESIZE) } as usize,
+            page_size: page_size(),
         })
     }
 

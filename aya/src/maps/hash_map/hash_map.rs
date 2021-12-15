@@ -169,6 +169,7 @@ mod tests {
             },
             section_index: 0,
             data: Vec::new(),
+            kind: obj::MapKind::Other,
         }
     }
 
@@ -221,6 +222,7 @@ mod tests {
                 },
                 section_index: 0,
                 data: Vec::new(),
+                kind: obj::MapKind::Other,
             },
             fd: None,
             pinned: false,
@@ -280,6 +282,7 @@ mod tests {
                 },
                 section_index: 0,
                 data: Vec::new(),
+                kind: obj::MapKind::Other,
             },
             fd: Some(42),
             pinned: false,

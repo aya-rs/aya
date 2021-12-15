@@ -18,15 +18,15 @@ use crate::{
     maps::{Map, MapError, MapLock, MapRef, MapRefMut},
     obj::{
         btf::{Btf, BtfError},
-        Object, ParseError, ProgramSection,
+        MapKind, Object, ParseError, ProgramSection,
     },
     programs::{
         BtfTracePoint, CgroupSkb, CgroupSkbAttachType, FEntry, FExit, KProbe, LircMode2, Lsm,
         PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier,
         SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
-    sys::bpf_map_update_elem_ptr,
-    util::{possible_cpus, POSSIBLE_CPUS},
+    sys::{bpf_map_freeze, bpf_map_update_elem_ptr},
+    util::{bytes_of, possible_cpus, POSSIBLE_CPUS},
 };
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
@@ -102,6 +102,7 @@ impl Default for PinningType {
 pub struct BpfLoader<'a> {
     btf: Option<Cow<'a, Btf>>,
     map_pin_path: Option<PathBuf>,
+    globals: HashMap<&'a str, &'a [u8]>,
 }
 
 impl<'a> BpfLoader<'a> {
@@ -110,6 +111,7 @@ impl<'a> BpfLoader<'a> {
         BpfLoader {
             btf: Btf::from_sys_fs().ok().map(Cow::Owned),
             map_pin_path: None,
+            globals: HashMap::new(),
         }
     }
 
@@ -155,6 +157,36 @@ impl<'a> BpfLoader<'a> {
         self
     }
 
+    /// Sets the value of a global variable
+    ///
+    /// From Rust eBPF, a global variable would be constructed as follows:
+    /// ```no run
+    /// #[no_mangle]
+    /// const VERSION = 0;
+    /// ```
+    /// If using a struct, ensure that it is `#[repr(C)]` to ensure the size will
+    /// match that of the corresponding ELF symbol.
+    ///
+    /// From C eBPF, you would annotate a variable as `volatile const`
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::BpfLoader;
+    ///
+    /// let bpf = BpfLoader::new()
+    ///     .set_global("VERSION", &2)
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
+    ///
+    pub fn set_global<V: Pod>(&mut self, name: &'a str, value: &'a V) -> &mut BpfLoader<'a> {
+        // Safety: value is POD
+        let data = unsafe { bytes_of(value) };
+        self.globals.insert(name, data);
+        self
+    }
+
     /// Loads eBPF bytecode from a file.
     ///
     /// # Examples
@@ -187,6 +219,7 @@ impl<'a> BpfLoader<'a> {
     /// ```
     pub fn load(&mut self, data: &[u8]) -> Result<Bpf, BpfError> {
         let mut obj = Object::parse(data)?;
+        obj.patch_map_data(self.globals.clone())?;
 
         if let Some(btf) = &self.btf {
             obj.relocate_btf(btf)?;
@@ -229,7 +262,7 @@ impl<'a> BpfLoader<'a> {
                 }
                 PinningType::None => map.create(&name)?,
             };
-            if !map.obj.data.is_empty() && name != ".bss" {
+            if !map.obj.data.is_empty() && map.obj.kind != MapKind::Bss {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data.as_mut_ptr(), 0).map_err(
                     |(code, io_error)| MapError::SyscallError {
                         call: "bpf_map_update_elem".to_owned(),
@@ -237,6 +270,13 @@ impl<'a> BpfLoader<'a> {
                         io_error,
                     },
                 )?;
+            }
+            if map.obj.kind == MapKind::Rodata {
+                bpf_map_freeze(fd).map_err(|(code, io_error)| MapError::SyscallError {
+                    call: "bpf_map_freeze".to_owned(),
+                    code,
+                    io_error,
+                })?;
             }
             maps.insert(name, map);
         }

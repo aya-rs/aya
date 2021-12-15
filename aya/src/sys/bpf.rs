@@ -253,6 +253,14 @@ pub(crate) fn bpf_map_get_next_key<K>(
     }
 }
 
+// since kernel 5.2
+pub(crate) fn bpf_map_freeze(fd: RawFd) -> SysResult {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_2 };
+    u.map_fd = fd as u32;
+    sys_bpf(bpf_cmd::BPF_MAP_FREEZE, &attr)
+}
+
 // since kernel 5.7
 pub(crate) fn bpf_link_create(
     prog_fd: RawFd,

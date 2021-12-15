@@ -477,6 +477,7 @@ mod tests {
     use crate::{
         bpf_map_def,
         generated::{bpf_cmd, bpf_map_type::BPF_MAP_TYPE_HASH},
+        obj::MapKind,
         sys::{override_syscall, Syscall},
     };
 
@@ -493,6 +494,7 @@ mod tests {
             },
             section_index: 0,
             data: Vec::new(),
+            kind: MapKind::Other,
         }
     }
 

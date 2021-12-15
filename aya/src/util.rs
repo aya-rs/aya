@@ -4,12 +4,13 @@ use std::{
     ffi::CString,
     fs::{self, File},
     io::{self, BufReader},
+    mem, slice,
     str::FromStr,
 };
 
 use crate::generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK};
 
-use libc::if_nametoindex;
+use libc::{if_nametoindex, sysconf, _SC_PAGESIZE};
 
 use io::BufRead;
 
@@ -141,6 +142,17 @@ macro_rules! include_bytes_aligned {
 
         &ALIGNED.bytes
     }};
+}
+
+pub(crate) fn page_size() -> usize {
+    // Safety: libc
+    (unsafe { sysconf(_SC_PAGESIZE) }) as usize
+}
+
+// bytes_of converts a <T> to a byte slice
+pub(crate) unsafe fn bytes_of<T>(val: &T) -> &[u8] {
+    let size = mem::size_of::<T>();
+    slice::from_raw_parts(slice::from_ref(val).as_ptr().cast(), size)
 }
 
 #[cfg(test)]
