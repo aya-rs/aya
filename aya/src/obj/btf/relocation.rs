@@ -85,18 +85,18 @@ fn err_type_name(name: &Option<String>) -> String {
 #[derive(Copy, Clone, Debug)]
 #[repr(u32)]
 enum RelocationKind {
-    FieldByteOffset = BPF_FIELD_BYTE_OFFSET,
-    FieldByteSize = BPF_FIELD_BYTE_SIZE,
-    FieldExists = BPF_FIELD_EXISTS,
-    FieldSigned = BPF_FIELD_SIGNED,
-    FieldLShift64 = BPF_FIELD_LSHIFT_U64,
-    FieldRShift64 = BPF_FIELD_RSHIFT_U64,
-    TypeIdLocal = BPF_TYPE_ID_LOCAL,
-    TypeIdTarget = BPF_TYPE_ID_TARGET,
-    TypeExists = BPF_TYPE_EXISTS,
-    TypeSize = BPF_TYPE_SIZE,
-    EnumVariantExists = BPF_ENUMVAL_EXISTS,
-    EnumVariantValue = BPF_ENUMVAL_VALUE,
+    FieldByteOffset = BPF_CORE_FIELD_BYTE_OFFSET,
+    FieldByteSize = BPF_CORE_FIELD_BYTE_SIZE,
+    FieldExists = BPF_CORE_FIELD_EXISTS,
+    FieldSigned = BPF_CORE_FIELD_SIGNED,
+    FieldLShift64 = BPF_CORE_FIELD_LSHIFT_U64,
+    FieldRShift64 = BPF_CORE_FIELD_RSHIFT_U64,
+    TypeIdLocal = BPF_CORE_TYPE_ID_LOCAL,
+    TypeIdTarget = BPF_CORE_TYPE_ID_TARGET,
+    TypeExists = BPF_CORE_TYPE_EXISTS,
+    TypeSize = BPF_CORE_TYPE_SIZE,
+    EnumVariantExists = BPF_CORE_ENUMVAL_EXISTS,
+    EnumVariantValue = BPF_CORE_ENUMVAL_VALUE,
 }
 
 impl TryFrom<u32> for RelocationKind {
@@ -106,18 +106,18 @@ impl TryFrom<u32> for RelocationKind {
         use RelocationKind::*;
 
         Ok(match v {
-            BPF_FIELD_BYTE_OFFSET => FieldByteOffset,
-            BPF_FIELD_BYTE_SIZE => FieldByteSize,
-            BPF_FIELD_EXISTS => FieldExists,
-            BPF_FIELD_SIGNED => FieldSigned,
-            BPF_FIELD_LSHIFT_U64 => FieldLShift64,
-            BPF_FIELD_RSHIFT_U64 => FieldRShift64,
-            BPF_TYPE_ID_LOCAL => TypeIdLocal,
-            BPF_TYPE_ID_TARGET => TypeIdTarget,
-            BPF_TYPE_EXISTS => TypeExists,
-            BPF_TYPE_SIZE => TypeSize,
-            BPF_ENUMVAL_EXISTS => EnumVariantExists,
-            BPF_ENUMVAL_VALUE => EnumVariantValue,
+            BPF_CORE_FIELD_BYTE_OFFSET => FieldByteOffset,
+            BPF_CORE_FIELD_BYTE_SIZE => FieldByteSize,
+            BPF_CORE_FIELD_EXISTS => FieldExists,
+            BPF_CORE_FIELD_SIGNED => FieldSigned,
+            BPF_CORE_FIELD_LSHIFT_U64 => FieldLShift64,
+            BPF_CORE_FIELD_RSHIFT_U64 => FieldRShift64,
+            BPF_CORE_TYPE_ID_LOCAL => TypeIdLocal,
+            BPF_CORE_TYPE_ID_TARGET => TypeIdTarget,
+            BPF_CORE_TYPE_EXISTS => TypeExists,
+            BPF_CORE_TYPE_SIZE => TypeSize,
+            BPF_CORE_ENUMVAL_EXISTS => EnumVariantExists,
+            BPF_CORE_ENUMVAL_VALUE => EnumVariantValue,
             kind => return Err(BtfError::InvalidRelocationKind { kind }),
         })
     }
