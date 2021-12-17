@@ -1,6 +1,7 @@
 //! User space probes.
 use libc::pid_t;
 use object::{Object, ObjectSymbol};
+use procfs::process::Process;
 use std::{
     error::Error,
     ffi::CStr,
@@ -121,6 +122,63 @@ impl UProbe {
 
         attach(&mut self.data, self.kind, &path, sym_offset + offset, pid)
     }
+
+    /// Attaches the program to an address within userspace process' own
+    /// address space.
+    ///
+    /// Attaches the uprobe to the given address defined in the `addr`
+    /// argument. If `pid` is not `None`, the program executes only when the target
+    /// function is executed by the given `pid`.
+    ///
+    /// If the program is an `uprobe`, it is attached to the *start* address of the target
+    /// function. Instead if the program is an `uretprobe`, it is attached to the return address of
+    /// the target function. The function has **not** to be mangled and inlined.
+    ///
+    /// # Examples
+    ///
+    /// In a separate crate (let's assume it's a `my-uprobes` crate) in
+    /// `lib.rs`:
+    ///
+    /// ```no_run
+    /// #[no_mangle]
+    /// #[inline(never)]
+    /// pub extern "C" fn my_function(_retp: *mut i32, _val: i32) {}
+    /// ```
+    ///
+    /// Main code:
+    ///
+    /// ```no_run
+    /// # use aya::{Bpf, programs::{ProgramError, UProbe}};
+    /// # use std::convert::TryInto;
+    /// # #[no_mangle]
+    /// # #[inline(never)]
+    /// # extern "C" fn my_function(_retp: *mut i32, _val: i32) {}
+    /// # #[derive(thiserror::Error, Debug)]
+    /// # enum Error {
+    /// #     #[error(transparent)]
+    /// #     Program(#[from] aya::programs::ProgramError),
+    /// #     #[error(transparent)]
+    /// #     Bpf(#[from] aya::BpfError),
+    /// # }
+    /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
+    ///
+    /// let program: &mut UProbe = bpf.program_mut("uprobe_my_function").unwrap().try_into()?;
+    /// program.load()?;
+    /// program.attach_own_addr(None, my_function as *const () as u64)?;
+    /// # Ok::<(), Error>(())
+    /// ```
+    pub fn attach_own_addr(
+        &mut self,
+        pid: Option<pid_t>,
+        addr: u64,
+    ) -> Result<LinkRef, ProgramError> {
+        let target: &str = "/proc/self/exe";
+
+        let base_addr = get_base_addr()?;
+        let offset = addr - base_addr;
+
+        attach(&mut self.data, self.kind, target, offset, pid)
+    }
 }
 
 /// The type returned when attaching an [`UProbe`] fails.
@@ -152,6 +210,12 @@ pub enum UProbeError {
         #[source]
         io_error: io::Error,
     },
+
+    #[error(transparent)]
+    Proc(#[from] procfs::ProcError),
+
+    #[error("failed to find executable region")]
+    BaseAddrNotFound,
 }
 
 fn proc_maps_libs(pid: pid_t) -> Result<Vec<(String, String)>, io::Error> {
@@ -298,4 +362,17 @@ fn resolve_symbol(path: &str, symbol: &str) -> Result<u64, ResolveSymbolError> {
         .find(|sym| sym.name().map(|name| name == symbol).unwrap_or(false))
         .map(|s| s.address())
         .ok_or_else(|| ResolveSymbolError::Unknown(symbol.to_string()))
+}
+
+fn get_base_addr() -> Result<u64, UProbeError> {
+    let me = Process::myself()?;
+    let maps = me.maps()?;
+
+    for entry in maps {
+        if entry.perms.contains("r-xp") {
+            return Ok(entry.address.0 - entry.offset);
+        }
+    }
+
+    Err(UProbeError::BaseAddrNotFound)
 }
