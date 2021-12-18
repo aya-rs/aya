@@ -386,6 +386,13 @@ impl Btf {
             // datasec sizes aren't set by llvm
             // we need to fix them here before loading the btf to the kernel
             match t {
+                BtfType::Ptr(mut ty) => {
+                    // Rust emits names for pointer types, which the kernel doesn't like
+                    // While I figure out if this needs fixing in the Kernel or LLVM, we'll
+                    // do a fixup here
+                    ty.name_off = 0;
+                    types.push(BtfType::Ptr(ty));
+                }
                 BtfType::DataSec(mut ty, data) => {
                     // Start DataSec Fixups
                     let sec_name = self.type_name(t)?.ok_or(BtfError::InvalidTypeInfo)?;
