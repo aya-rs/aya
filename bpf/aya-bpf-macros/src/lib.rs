@@ -168,7 +168,7 @@ pub fn raw_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// Marks a function as an LSM program that can be attached to Linux LSM hooks.
 /// Used to implement security policy and audit logging.
 ///
-/// LSM probes can be attached to the kernel's [security hooks][1] to implement mandatory
+/// LSM probes can be attached to the kernel's security hooks to implement mandatory
 /// access control policy and security auditing.
 ///
 /// LSM probes require a kernel compiled with `CONFIG_BPF_LSM=y` and `CONFIG_DEBUG_INFO_BTF=y`.
