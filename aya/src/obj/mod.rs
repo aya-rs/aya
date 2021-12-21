@@ -19,7 +19,7 @@ use relocation::*;
 
 use crate::{
     bpf_map_def,
-    generated::{bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY},
+    generated::{bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_F_RDONLY_PROG},
     obj::btf::{Btf, BtfError, BtfExt},
     BpfError,
 };
@@ -43,11 +43,34 @@ pub struct Object {
     pub(crate) symbols_by_index: HashMap<usize, Symbol>,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum MapKind {
+    Bss,
+    Data,
+    Rodata,
+    Other,
+}
+
+impl From<&str> for MapKind {
+    fn from(s: &str) -> Self {
+        if s == ".bss" {
+            MapKind::Bss
+        } else if s.starts_with(".data") {
+            MapKind::Data
+        } else if s.starts_with(".rodata") {
+            MapKind::Rodata
+        } else {
+            MapKind::Other
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Map {
     pub(crate) def: bpf_map_def,
     pub(crate) section_index: usize,
     pub(crate) data: Vec<u8>,
+    pub(crate) kind: MapKind,
 }
 
 #[derive(Debug, Clone)]
@@ -238,6 +261,51 @@ impl Object {
         }
     }
 
+    pub fn patch_map_data(&mut self, globals: HashMap<&str, &[u8]>) -> Result<(), ParseError> {
+        let symbols: HashMap<String, &Symbol> = self
+            .symbols_by_index
+            .iter()
+            .filter(|(_, s)| s.name.is_some())
+            .map(|(_, s)| (s.name.as_ref().unwrap().clone(), s))
+            .collect();
+
+        for (name, data) in globals {
+            if let Some(symbol) = symbols.get(name) {
+                if data.len() as u64 != symbol.size {
+                    return Err(ParseError::InvalidGlobalData {
+                        name: name.to_string(),
+                        sym_size: symbol.size,
+                        data_size: data.len(),
+                    });
+                }
+                let (_, map) = self
+                    .maps
+                    .iter_mut()
+                    // assumption: there is only one map created per section where we're trying to
+                    // patch data. this assumption holds true for the .rodata section at least
+                    .find(|(_, m)| symbol.section_index == Some(SectionIndex(m.section_index)))
+                    .ok_or_else(|| ParseError::MapNotFound {
+                        index: symbol.section_index.unwrap_or(SectionIndex(0)).0,
+                    })?;
+                let start = symbol.address as usize;
+                let end = start + symbol.size as usize;
+                if start > end || end > map.data.len() {
+                    return Err(ParseError::InvalidGlobalData {
+                        name: name.to_string(),
+                        sym_size: symbol.size,
+                        data_size: data.len(),
+                    });
+                }
+                map.data.splice(start..end, data.iter().cloned());
+            } else {
+                return Err(ParseError::SymbolNotFound {
+                    name: name.to_owned(),
+                });
+            }
+        }
+        Ok(())
+    }
+
     fn parse_btf(&mut self, section: &Section) -> Result<(), BtfError> {
         self.btf = Some(Btf::parse(section.data, self.endianness)?);
 
@@ -417,6 +485,19 @@ pub enum ParseError {
 
     #[error("invalid symbol, index `{index}` name: {}", .name.as_ref().unwrap_or(&"[unknown]".into()))]
     InvalidSymbol { index: usize, name: Option<String> },
+
+    #[error("symbol {name} has size `{sym_size}`, but provided data is of size `{data_size}`")]
+    InvalidGlobalData {
+        name: String,
+        sym_size: u64,
+        data_size: usize,
+    },
+
+    #[error("symbol with name {name} not found in the symbols table")]
+    SymbolNotFound { name: String },
+
+    #[error("map for section with index {index} not found")]
+    MapNotFound { index: usize },
 }
 
 #[derive(Debug)]
@@ -570,27 +651,32 @@ impl From<KernelVersion> for u32 {
 }
 
 fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
-    let (def, data) = if name == ".bss" || name.starts_with(".data") || name.starts_with(".rodata")
-    {
-        let def = bpf_map_def {
-            map_type: BPF_MAP_TYPE_ARRAY as u32,
-            key_size: mem::size_of::<u32>() as u32,
-            // We need to use section.size here since
-            // .bss will always have data.len() == 0
-            value_size: section.size as u32,
-            max_entries: 1,
-            map_flags: 0, /* FIXME: set rodata readonly */
-            ..Default::default()
-        };
-        (def, section.data.to_vec())
-    } else {
-        (parse_map_def(name, section.data)?, Vec::new())
+    let kind = MapKind::from(name);
+    let (def, data) = match kind {
+        MapKind::Bss | MapKind::Data | MapKind::Rodata => {
+            let def = bpf_map_def {
+                map_type: BPF_MAP_TYPE_ARRAY as u32,
+                key_size: mem::size_of::<u32>() as u32,
+                // We need to use section.size here since
+                // .bss will always have data.len() == 0
+                value_size: section.size as u32,
+                max_entries: 1,
+                map_flags: if kind == MapKind::Rodata {
+                    BPF_F_RDONLY_PROG
+                } else {
+                    0
+                },
+                ..Default::default()
+            };
+            (def, section.data.to_vec())
+        }
+        MapKind::Other => (parse_map_def(name, section.data)?, Vec::new()),
     };
-
     Ok(Map {
         section_index: section.index.0,
         def,
         data,
+        kind,
     })
 }
 
@@ -634,7 +720,6 @@ fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
 mod tests {
     use matches::assert_matches;
     use object::Endianness;
-    use std::slice;
 
     use super::*;
     use crate::PinningType;
@@ -662,8 +747,8 @@ mod tests {
     }
 
     fn bytes_of<T>(val: &T) -> &[u8] {
-        let size = mem::size_of::<T>();
-        unsafe { slice::from_raw_parts(slice::from_ref(val).as_ptr().cast(), size) }
+        // Safety: This is for testing only
+        unsafe { crate::util::bytes_of(val) }
     }
 
     #[test]
@@ -786,7 +871,7 @@ mod tests {
     #[test]
     fn test_parse_map_error() {
         assert!(matches!(
-            parse_map(&fake_section(BpfSectionKind::Maps, "maps/foo", &[]), "foo"),
+            parse_map(&fake_section(BpfSectionKind::Maps, "maps/foo", &[]), "foo",),
             Err(ParseError::InvalidMapDefinition { .. })
         ));
     }
@@ -821,7 +906,8 @@ mod tests {
                     id: 0,
                     pinning: PinningType::None,
                 },
-                data
+                data,
+                ..
             }) if data.is_empty()
         ))
     }
@@ -849,8 +935,9 @@ mod tests {
                     id: 0,
                     pinning: PinningType::None,
                 },
-                data
-            }) if data == map_data && value_size == map_data.len() as u32
+                data,
+                kind
+            }) if data == map_data && value_size == map_data.len() as u32 && kind == MapKind::Bss
         ))
     }
 
@@ -871,7 +958,7 @@ mod tests {
                 BpfSectionKind::Program,
                 "kprobe/foo",
                 &42u32.to_ne_bytes(),
-            ),),
+            )),
             Err(ParseError::InvalidProgramCode)
         );
     }
@@ -913,7 +1000,7 @@ mod tests {
                     map_flags: 5,
                     ..Default::default()
                 })
-            ),),
+            )),
             Ok(())
         );
         assert!(obj.maps.get("foo").is_some());
@@ -923,13 +1010,13 @@ mod tests {
     fn test_parse_section_data() {
         let mut obj = fake_obj();
         assert_matches!(
-            obj.parse_section(fake_section(BpfSectionKind::Data, ".bss", b"map data"),),
+            obj.parse_section(fake_section(BpfSectionKind::Data, ".bss", b"map data")),
             Ok(())
         );
         assert!(obj.maps.get(".bss").is_some());
 
         assert_matches!(
-            obj.parse_section(fake_section(BpfSectionKind::Data, ".rodata", b"map data"),),
+            obj.parse_section(fake_section(BpfSectionKind::Data, ".rodata", b"map data")),
             Ok(())
         );
         assert!(obj.maps.get(".rodata").is_some());
@@ -939,19 +1026,19 @@ mod tests {
                 BpfSectionKind::Data,
                 ".rodata.boo",
                 b"map data"
-            ),),
+            )),
             Ok(())
         );
         assert!(obj.maps.get(".rodata.boo").is_some());
 
         assert_matches!(
-            obj.parse_section(fake_section(BpfSectionKind::Data, ".data", b"map data"),),
+            obj.parse_section(fake_section(BpfSectionKind::Data, ".data", b"map data")),
             Ok(())
         );
         assert!(obj.maps.get(".data").is_some());
 
         assert_matches!(
-            obj.parse_section(fake_section(BpfSectionKind::Data, ".data.boo", b"map data"),),
+            obj.parse_section(fake_section(BpfSectionKind::Data, ".data.boo", b"map data")),
             Ok(())
         );
         assert!(obj.maps.get(".data.boo").is_some());
@@ -1239,5 +1326,46 @@ mod tests {
                 ..
             })
         );
+    }
+
+    #[test]
+    fn test_patch_map_data() {
+        let mut obj = fake_obj();
+        obj.maps.insert(
+            ".rodata".to_string(),
+            Map {
+                def: bpf_map_def {
+                    map_type: BPF_MAP_TYPE_ARRAY as u32,
+                    key_size: mem::size_of::<u32>() as u32,
+                    value_size: 3,
+                    max_entries: 1,
+                    map_flags: BPF_F_RDONLY_PROG,
+                    id: 1,
+                    pinning: PinningType::None,
+                },
+                section_index: 1,
+                data: vec![0, 0, 0],
+                kind: MapKind::Rodata,
+            },
+        );
+        obj.symbols_by_index.insert(
+            1,
+            Symbol {
+                index: 1,
+                section_index: Some(SectionIndex(1)),
+                name: Some("my_config".to_string()),
+                address: 0,
+                size: 3,
+                is_definition: true,
+                is_text: false,
+            },
+        );
+
+        let test_data: &[u8] = &[1, 2, 3];
+        obj.patch_map_data(HashMap::from([("my_config", test_data)]))
+            .unwrap();
+
+        let map = obj.maps.get(".rodata").unwrap();
+        assert_eq!(test_data, map.data);
     }
 }
