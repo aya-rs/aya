@@ -1,3 +1,4 @@
+#![feature(never_type)]
 #![allow(clippy::missing_safety_doc)]
 #![no_std]
 
