@@ -24,9 +24,11 @@ use crate::{
 /// # unsafe fn try_test(ctx: &LsmContext) -> Result<(), c_long> {
 /// let index: u32 = 13;
 ///
-/// let res = JUMP_TABLE.tail_call(ctx, index);
+/// if let Err(e) = JUMP_TABLE.tail_call(ctx, index) {
+///     return Err(e);
+/// }
 ///
-/// # res
+/// # Err(-1)
 /// }
 /// ```
 #[repr(transparent)]
@@ -65,16 +67,23 @@ impl ProgramArray {
 
     /// Perform a tail call into a program indexed by this map.
     ///
+    /// # Safety
+    ///
+    /// This function is inherently unsafe, since it causes control flow to jump into
+    /// another eBPF program. This can have side effects, such as drop methods not being
+    /// called. Note that tail calling into an eBPF program is not the same thing as
+    /// a function call -- control flow never returns to the caller.
+    ///
     /// # Return Value
     ///
     /// On success, this function **does not return** into the original program.
     /// On failure, a negative error is returned, wrapped in `Err()`.
-    pub fn tail_call<C: BpfContext>(&mut self, ctx: &C, index: u32) -> Result<(), c_long> {
-        let res = unsafe { bpf_tail_call(ctx.as_ptr(), &mut self.def as *mut _ as *mut _, index) };
+    pub unsafe fn tail_call<C: BpfContext>(&mut self, ctx: &C, index: u32) -> Result<!, c_long> {
+        let res = bpf_tail_call(ctx.as_ptr(), &mut self.def as *mut _ as *mut _, index);
         if res != 0 {
             Err(res)
         } else {
-            unsafe { unreachable_unchecked() }
+            unreachable_unchecked()
         }
     }
 }
