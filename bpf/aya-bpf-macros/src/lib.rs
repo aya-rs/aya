@@ -358,18 +358,20 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
+/// # #![allow(non_camel_case_types)]
 /// use aya_bpf::{macros::fentry, programs::FEntryContext};
-/// use vmlinux::{filename, path};
+/// # type filename = u32;
+/// # type path = u32;
 ///
 /// #[fentry(name = "filename_lookup")]
 /// fn filename_lookup(ctx: FEntryContext) -> i32 {
-///     match { try_filename_lookup(ctx) } {
+///     match unsafe { try_filename_lookup(ctx) } {
 ///         Ok(ret) => ret,
 ///         Err(ret) => ret,
 ///     }
 /// }
 ///
-/// unsafe fn try_filename_lookup(ctx: FEntryContext) -> Result<u32, u32> {
+/// unsafe fn try_filename_lookup(ctx: FEntryContext) -> Result<i32, i32> {
 ///     let _f: *const filename = ctx.arg(1);
 ///     let _p: *const path = ctx.arg(3);
 ///
@@ -400,18 +402,20 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
+/// # #![allow(non_camel_case_types)]
 /// use aya_bpf::{macros::fexit, programs::FExitContext};
-/// use vmlinux::{filename, path};
+/// # type filename = u32;
+/// # type path = u32;
 ///
 /// #[fexit(name = "filename_lookup")]
 /// fn filename_lookup(ctx: FExitContext) -> i32 {
-///     match { try_filename_lookup(ctx) } {
+///     match unsafe { try_filename_lookup(ctx) } {
 ///         Ok(ret) => ret,
 ///         Err(ret) => ret,
 ///     }
 /// }
 ///
-/// unsafe fn try_filename_lookup(ctx: FExitContext) -> Result<u32, u32> {
+/// unsafe fn try_filename_lookup(ctx: FExitContext) -> Result<i32, i32> {
 ///     let _f: *const filename = ctx.arg(1);
 ///     let _p: *const path = ctx.arg(3);
 ///
