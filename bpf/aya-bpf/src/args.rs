@@ -120,6 +120,55 @@ impl<T> FromPtRegs for *const T {
     }
 }
 
+#[cfg(bpf_target_arch = "x86_64")]
+impl<T> FromPtRegs for *mut T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        match n {
+            0 => ctx.rdi().map(|v| v as _),
+            1 => ctx.rsi().map(|v| v as _),
+            2 => ctx.rdx().map(|v| v as _),
+            3 => ctx.rcx().map(|v| v as _),
+            4 => ctx.r8().map(|v| v as _),
+            5 => ctx.r9().map(|v| v as _),
+            _ => None,
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        ctx.rax().map(|v| v as _)
+    }
+}
+
+#[cfg(bpf_target_arch = "armv7")]
+impl<T> FromPtRegs for *mut T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        if n <= 6 {
+            ctx.uregs().map(|regs| regs[n] as _)
+        } else {
+            None
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        ctx.uregs().map(|regs| regs[0] as _)
+    }
+}
+
+#[cfg(bpf_target_arch = "aarch64")]
+impl<T> FromPtRegs for *mut T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        if n <= 7 {
+            ctx.regs().map(|regs| regs[n] as _)
+        } else {
+            None
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        ctx.regs().map(|regs| regs[0] as _)
+    }
+}
+
 /// Helper macro to implement [`FromPtRegs`] for a primitive type.
 macro_rules! impl_from_pt_regs {
     ($type:ident) => {
