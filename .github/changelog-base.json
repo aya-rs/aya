@@ -6,13 +6,23 @@
         "exhaustive": true
       },
       {
-        "title": "## 🐛 Fixes",
+        "title": "## 🐛 Fixes and 🤏 Small Changes",
         "labels": ["fix"],
         "exhaustive": true
       },
       {
         "title": "## 🧪 Tests",
         "labels": ["test"],
+        "exhaustive": true
+      },
+      {
+        "title": "## 🤝 Dependencies and 🤖 Generated Code",
+        "labels": ["dependencies"],
+        "exhaustive": true
+      },
+      {
+        "title": "## 📃 Documentation",
+        "labels": ["documentation"],
         "exhaustive": true
       }
     ],
