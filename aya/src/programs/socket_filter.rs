@@ -16,6 +16,7 @@ pub enum SocketFilterError {
     /// Setting the `SO_ATTACH_BPF` socket option failed.
     #[error("setsockopt SO_ATTACH_BPF failed")]
     SoAttachBpfError {
+        /// original [`io::Error`]
         #[source]
         io_error: io::Error,
     },

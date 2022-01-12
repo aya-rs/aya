@@ -140,14 +140,21 @@ pub enum ProgramError {
 
     /// The network interface does not exist.
     #[error("unknown network interface {name}")]
-    UnknownInterface { name: String },
+    UnknownInterface {
+        /// interface name
+        name: String,
+    },
 
     /// The program is not of the expected type.
     #[error("unexpected program type")]
     UnexpectedProgramType,
 
+    /// Invalid pin path
     #[error("invalid pin path `{error}`")]
-    InvalidPinPath { error: String },
+    InvalidPinPath {
+        /// the error message
+        error: String,
+    },
 
     /// A map error occurred while loading or attaching a program.
     #[error(transparent)]
@@ -187,37 +194,63 @@ pub enum ProgramError {
 
     /// The program is not attached.
     #[error("the program name `{name}` is invalid")]
-    InvalidName { name: String },
+    InvalidName {
+        /// program name
+        name: String,
+    },
 
     /// The program is too long.
-    #[error("the program name `{name}` it longer than 16 characters")]
-    NameTooLong { name: String },
+    #[error("the program name `{name}` iss longer than 16 characters")]
+    NameTooLong {
+        /// program name
+        name: String,
+    },
 }
 
+/// Allows the Fd of a loaded [`Program`] to be retrieved
 pub trait ProgramFd {
+    /// Returns the [`RawFd`] of the program if it has been loaded, or `None`
     fn fd(&self) -> Option<RawFd>;
 }
 
 /// eBPF program type.
 #[derive(Debug)]
 pub enum Program {
+    /// A [`KProbe`] program
     KProbe(KProbe),
+    /// A [`UProbe`] program
     UProbe(UProbe),
+    /// A [`TracePoint`] program
     TracePoint(TracePoint),
+    /// A [`SocketFilter`] program
     SocketFilter(SocketFilter),
+    /// A [`Xdp`] program
     Xdp(Xdp),
+    /// A [`SkMsg`] program
     SkMsg(SkMsg),
+    /// A [`SkSkb`] program
     SkSkb(SkSkb),
+    /// A [`SockOps`] program
     SockOps(SockOps),
+    /// A [`SchedClassifier`] program
     SchedClassifier(SchedClassifier),
+    /// A [`CgroupSkb`] program
     CgroupSkb(CgroupSkb),
+    /// A [`LircMode2`] program
     LircMode2(LircMode2),
+    /// A [`PerfEvent`] program
     PerfEvent(PerfEvent),
+    /// A [`RawTracePoint`] program
     RawTracePoint(RawTracePoint),
+    /// A [`Lsm`] program
     Lsm(Lsm),
+    /// A [`BtfTracePoint`] program
     BtfTracePoint(BtfTracePoint),
+    /// A [`FEntry`] program
     FEntry(FEntry),
+    /// A [`FExit`] program
     FExit(FExit),
+    /// A [`Extension`] program
     Extension(Extension),
 }
 
@@ -489,6 +522,7 @@ pub(crate) fn query<T: AsRawFd>(
 
 /// Detach an attached program
 pub trait Link: std::fmt::Debug {
+    /// detaches an attached program
     fn detach(&mut self) -> Result<(), ProgramError>;
 }
 

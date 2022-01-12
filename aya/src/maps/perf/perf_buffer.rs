@@ -24,11 +24,15 @@ use crate::{
 pub enum PerfBufferError {
     /// the page count value passed to [`PerfEventArray::open`](crate::maps::PerfEventArray::open) is invalid.
     #[error("invalid page count {page_count}, the value must be a power of two")]
-    InvalidPageCount { page_count: usize },
+    InvalidPageCount {
+        /// the page count
+        page_count: usize,
+    },
 
     /// `perf_event_open` failed.
     #[error("perf_event_open failed: {io_error}")]
     OpenError {
+        /// the source of this error
         #[source]
         io_error: io::Error,
     },
@@ -36,6 +40,7 @@ pub enum PerfBufferError {
     /// `mmap`-ping the buffer failed.
     #[error("mmap failed: {io_error}")]
     MMapError {
+        /// the source of this error
         #[source]
         io_error: io::Error,
     },
@@ -44,6 +49,7 @@ pub enum PerfBufferError {
     #[error("PERF_EVENT_IOC_ENABLE failed: {io_error}")]
     PerfEventEnableError {
         #[source]
+        /// the source of this error
         io_error: io::Error,
     },
 
@@ -54,7 +60,10 @@ pub enum PerfBufferError {
     /// `read_events()` was called with a buffer that is not large enough to
     /// contain the next event in the perf buffer.
     #[error("the buffer needs to be of at least {size} bytes")]
-    MoreSpaceNeeded { size: usize },
+    MoreSpaceNeeded {
+        /// expected size
+        size: usize,
+    },
 
     /// An IO error occurred.
     #[error(transparent)]

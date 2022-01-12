@@ -14,6 +14,7 @@ use crate::{
 /// The type returned when loading or attaching an [`Extension`] fails
 #[derive(Debug, Error)]
 pub enum ExtensionError {
+    /// target BPF program does not have BTF loaded to the kernel
     #[error("target BPF program does not have BTF loaded to the kernel")]
     NoBTF,
 }

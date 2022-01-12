@@ -8,9 +8,12 @@ use super::{load_program, perf_attach, LinkRef, ProgramData, ProgramError};
 /// The type returned when attaching a [`TracePoint`] fails.
 #[derive(Debug, Error)]
 pub enum TracePointError {
+    /// Error detaching from debugfs
     #[error("`{filename}`")]
     FileError {
+        /// The file name
         filename: String,
+        /// The [`io::Error`] returned from the file operation
         #[source]
         io_error: io::Error,
     },

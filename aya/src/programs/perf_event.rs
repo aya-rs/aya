@@ -12,31 +12,61 @@ pub use crate::generated::{
 
 use super::{load_program, perf_attach, LinkRef, ProgramData, ProgramError};
 
+/// The type of perf event
 #[repr(u32)]
 #[derive(Debug, Clone)]
 pub enum PerfTypeId {
+    /// PERF_TYPE_HARDWARE
     Hardware = PERF_TYPE_HARDWARE as u32,
+    /// PERF_TYPE_SOFTWARE
     Software = PERF_TYPE_SOFTWARE as u32,
+    /// PERF_TYPE_TRACEPOINT
     TracePoint = PERF_TYPE_TRACEPOINT as u32,
+    /// PERF_TYPE_HW_CACHE
     HwCache = PERF_TYPE_HW_CACHE as u32,
+    /// PERF_TYPE_RAW
     Raw = PERF_TYPE_RAW as u32,
+    /// PERF_TYPE_BREAKPOINT
     Breakpoint = PERF_TYPE_BREAKPOINT as u32,
 }
 
+/// Sample Policy
 #[derive(Debug, Clone)]
 pub enum SamplePolicy {
+    /// Period
     Period(u64),
+    /// Frequency
     Frequency(u64),
 }
 
+/// The scope of a PerfEvent
 #[derive(Debug, Clone)]
 #[allow(clippy::enum_variant_names)]
 pub enum PerfEventScope {
+    /// Calling process, any cpu
     CallingProcessAnyCpu,
-    CallingProcessOneCpu { cpu: u32 },
-    OneProcessAnyCpu { pid: u32 },
-    OneProcessOneCpu { cpu: u32, pid: u32 },
-    AllProcessesOneCpu { cpu: u32 },
+    /// calling process, one cpu
+    CallingProcessOneCpu {
+        /// cpu id
+        cpu: u32,
+    },
+    /// one process, any cpu
+    OneProcessAnyCpu {
+        /// process id
+        pid: u32,
+    },
+    /// one process, one cpu
+    OneProcessOneCpu {
+        /// cpu id
+        cpu: u32,
+        /// process id
+        pid: u32,
+    },
+    /// all processes, one cpu
+    AllProcessesOneCpu {
+        /// cpu id
+        cpu: u32,
+    },
 }
 
 /// A program that can be attached at a perf event.

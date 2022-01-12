@@ -29,7 +29,7 @@
 //!
 //! [tokio]: https://docs.rs/tokio
 //! [async-std]: https://docs.rs/async-std
-#![deny(clippy::all)]
+#![deny(clippy::all, missing_docs)]
 #![allow(clippy::missing_safety_doc, clippy::len_without_is_empty)]
 
 #[macro_use]
