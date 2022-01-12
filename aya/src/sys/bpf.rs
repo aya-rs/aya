@@ -109,9 +109,12 @@ pub(crate) fn bpf_load_program(aya_attr: BpfLoadProgramAttrs) -> SysResult {
     u.license = aya_attr.license.as_ptr() as u64;
     u.kern_version = aya_attr.kernel_version;
 
+    // these must be allocated here to ensure the slice outlives the pointer
+    // so .as_ptr below won't point to garbage
+    let line_info_buf = aya_attr.line_info.line_info_bytes();
+    let func_info_buf = aya_attr.func_info.func_info_bytes();
+
     if let Some(btf_fd) = aya_attr.prog_btf_fd {
-        let line_info_buf = aya_attr.line_info.line_info_bytes();
-        let func_info_buf = aya_attr.func_info.func_info_bytes();
         u.prog_btf_fd = btf_fd as u32;
         if aya_attr.line_info_rec_size > 0 {
             u.line_info = line_info_buf.as_ptr() as *const _ as u64;
