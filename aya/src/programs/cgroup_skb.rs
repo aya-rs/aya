@@ -88,13 +88,12 @@ impl CgroupSkb {
         };
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 7, 0) {
-            let link_fd =
-                bpf_link_create(prog_fd, cgroup_fd, attach_type, 0).map_err(|(_, io_error)| {
-                    ProgramError::SyscallError {
-                        call: "bpf_link_create".to_owned(),
-                        io_error,
-                    }
-                })? as RawFd;
+            let link_fd = bpf_link_create(prog_fd, cgroup_fd, attach_type, None, 0).map_err(
+                |(_, io_error)| ProgramError::SyscallError {
+                    call: "bpf_link_create".to_owned(),
+                    io_error,
+                },
+            )? as RawFd;
             Ok(self.data.link(FdLink { fd: Some(link_fd) }))
         } else {
             bpf_prog_attach(prog_fd, cgroup_fd, attach_type).map_err(|(_, io_error)| {

@@ -25,6 +25,8 @@ use crate::{
 };
 use std::slice::from_raw_parts_mut;
 
+use self::btf::{FuncSecInfo, LineSecInfo};
+
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
 /// The first five __u32 of `bpf_map_def` must be defined.
 const MINIMUM_MAP_SIZE: usize = mem::size_of::<u32>() * 5;
@@ -41,6 +43,10 @@ pub struct Object {
     pub(crate) functions: HashMap<u64, Function>,
     pub(crate) relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
     pub(crate) symbols_by_index: HashMap<usize, Symbol>,
+    pub(crate) section_sizes: HashMap<String, u64>,
+    // symbol_offset_by_name caches symbols that could be referenced from a
+    // BTF VAR type so the offsets can be fixed up
+    pub(crate) symbol_offset_by_name: HashMap<String, u64>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -88,6 +94,10 @@ pub(crate) struct Function {
     pub(crate) section_index: SectionIndex,
     pub(crate) section_offset: usize,
     pub(crate) instructions: Vec<bpf_insn>,
+    pub(crate) func_info: FuncSecInfo,
+    pub(crate) line_info: LineSecInfo,
+    pub(crate) func_info_rec_size: usize,
+    pub(crate) line_info_rec_size: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -113,6 +123,7 @@ pub enum ProgramSection {
     BtfTracePoint { name: String },
     FEntry { name: String },
     FExit { name: String },
+    Extension { name: String },
 }
 
 impl ProgramSection {
@@ -139,6 +150,7 @@ impl ProgramSection {
             ProgramSection::BtfTracePoint { name } => name,
             ProgramSection::FEntry { name } => name,
             ProgramSection::FExit { name } => name,
+            ProgramSection::Extension { name } => name,
         }
     }
 }
@@ -194,6 +206,7 @@ impl FromStr for ProgramSection {
             "lsm" => Lsm { name },
             "fentry" => FEntry { name },
             "fexit" => FExit { name },
+            "freplace" => Extension { name },
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),
@@ -224,9 +237,14 @@ impl Object {
 
         if let Some(symbol_table) = obj.symbol_table() {
             for symbol in symbol_table.symbols() {
+                let name = symbol
+                    .name()
+                    .ok()
+                    .map(String::from)
+                    .ok_or(BtfError::InvalidSymbolName)?;
                 let sym = Symbol {
                     index: symbol.index().0,
-                    name: symbol.name().ok().map(String::from),
+                    name: Some(name.clone()),
                     section_index: symbol.section().index(),
                     address: symbol.address(),
                     size: symbol.size(),
@@ -236,10 +254,30 @@ impl Object {
                 bpf_obj
                     .symbols_by_index
                     .insert(symbol.index().0, sym.clone());
+
+                if symbol.is_global() || symbol.kind() == SymbolKind::Data {
+                    bpf_obj.symbol_offset_by_name.insert(name, symbol.address());
+                }
+            }
+        }
+
+        // .BTF and .BTF.ext sections must be parsed first
+        // as they're required to prepare function and line information
+        // when parsing program sections
+        if let Some(s) = obj.section_by_name(".BTF") {
+            bpf_obj.parse_section(Section::try_from(&s)?)?;
+            if let Some(s) = obj.section_by_name(".BTF.ext") {
+                bpf_obj.parse_section(Section::try_from(&s)?)?;
             }
         }
 
         for s in obj.sections() {
+            if let Ok(name) = s.name() {
+                if name == ".BTF" || name == ".BTF.ext" {
+                    continue;
+                }
+            }
+
             bpf_obj.parse_section(Section::try_from(&s)?)?;
         }
 
@@ -258,6 +296,8 @@ impl Object {
             functions: HashMap::new(),
             relocations: HashMap::new(),
             symbols_by_index: HashMap::new(),
+            section_sizes: HashMap::new(),
+            symbol_offset_by_name: HashMap::new(),
         }
     }
 
@@ -313,13 +353,32 @@ impl Object {
     }
 
     fn parse_btf_ext(&mut self, section: &Section) -> Result<(), BtfError> {
-        self.btf_ext = Some(BtfExt::parse(section.data, self.endianness)?);
+        self.btf_ext = Some(BtfExt::parse(
+            section.data,
+            self.endianness,
+            self.btf.as_ref().unwrap(),
+        )?);
         Ok(())
     }
 
     fn parse_program(&self, section: &Section) -> Result<Program, ParseError> {
         let prog_sec = ProgramSection::from_str(section.name)?;
         let name = prog_sec.name().to_owned();
+
+        let (func_info, line_info, func_info_rec_size, line_info_rec_size) =
+            if let Some(btf_ext) = &self.btf_ext {
+                let func_info = btf_ext.func_info.get(section.name);
+                let line_info = btf_ext.line_info.get(section.name);
+                (
+                    func_info,
+                    line_info,
+                    btf_ext.func_info_rec_size(),
+                    btf_ext.line_info_rec_size(),
+                )
+            } else {
+                (FuncSecInfo::default(), LineSecInfo::default(), 0, 0)
+            };
+
         Ok(Program {
             license: self.license.clone(),
             kernel_version: self.kernel_version,
@@ -330,6 +389,10 @@ impl Object {
                 section_index: section.index,
                 section_offset: 0,
                 instructions: copy_instructions(section.data)?,
+                func_info,
+                line_info,
+                func_info_rec_size,
+                line_info_rec_size,
             },
         })
     }
@@ -365,6 +428,38 @@ impl Object {
                 });
             }
 
+            let (func_info, line_info, func_info_rec_size, line_info_rec_size) =
+                if let Some(btf_ext) = &self.btf_ext {
+                    let bytes_offset = offset as u32 / INS_SIZE as u32;
+                    let section_size_bytes = sym.size as u32 / INS_SIZE as u32;
+
+                    let mut func_info = btf_ext.func_info.get(section.name);
+                    func_info.func_info = func_info
+                        .func_info
+                        .into_iter()
+                        .filter(|f| f.insn_off == bytes_offset)
+                        .collect();
+
+                    let mut line_info = btf_ext.line_info.get(section.name);
+                    line_info.line_info = line_info
+                        .line_info
+                        .into_iter()
+                        .filter(|l| {
+                            l.insn_off >= bytes_offset
+                                && l.insn_off < (bytes_offset + section_size_bytes) as u32
+                        })
+                        .collect();
+
+                    (
+                        func_info,
+                        line_info,
+                        btf_ext.func_info_rec_size(),
+                        btf_ext.line_info_rec_size(),
+                    )
+                } else {
+                    (FuncSecInfo::default(), LineSecInfo::default(), 0, 0)
+                };
+
             self.functions.insert(
                 sym.address,
                 Function {
@@ -375,6 +470,10 @@ impl Object {
                     instructions: copy_instructions(
                         &section.data[offset..offset + sym.size as usize],
                     )?,
+                    func_info,
+                    line_info,
+                    func_info_rec_size,
+                    line_info_rec_size,
                 },
             );
 
@@ -407,7 +506,8 @@ impl Object {
         {
             parts.push(parts[0]);
         }
-
+        self.section_sizes
+            .insert(section.name.to_owned(), section.size);
         match section.kind {
             BpfSectionKind::Data => {
                 self.maps
@@ -436,8 +536,10 @@ impl Object {
                     );
                 }
             }
-
-            _ => {}
+            BpfSectionKind::Undefined
+            | BpfSectionKind::BtfMaps
+            | BpfSectionKind::License
+            | BpfSectionKind::Version => {}
         }
 
         Ok(())
@@ -700,7 +802,7 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     }
 }
 
-fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
+pub(crate) fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
     if data.len() % mem::size_of::<bpf_insn>() > 0 {
         return Err(ParseError::InvalidProgramCode);
     }
@@ -978,9 +1080,8 @@ mod tests {
                     address: 0,
                     section_index: SectionIndex(0),
                     section_offset: 0,
-                    instructions
-                }
-            }) if license.to_string_lossy() == "GPL" && name == "foo" && instructions.len() == 1
+                    instructions,
+                    ..} }) if license.to_string_lossy() == "GPL" && name == "foo" && instructions.len() == 1
         );
     }
 

@@ -13,7 +13,7 @@ use crate::{
     BpfError,
 };
 
-const INS_SIZE: usize = mem::size_of::<bpf_insn>();
+pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
 
 #[derive(Debug, Error)]
 enum RelocationError {
@@ -227,6 +227,11 @@ impl<'a> FunctionLinker<'a> {
         // at `start_ins`. We'll use `start_ins` to do pc-relative calls.
         let start_ins = program.instructions.len();
         program.instructions.extend(&fun.instructions);
+
+        // link func and line info into the main program
+        // the offset needs to be adjusted
+        self.link_func_and_line_info(program, fun, start_ins)?;
+
         self.linked_functions.insert(fun.address, start_ins);
 
         // relocate `fun`, recursively linking in all the callees
@@ -294,6 +299,33 @@ impl<'a> FunctionLinker<'a> {
             };
         }
 
+        Ok(())
+    }
+
+    fn link_func_and_line_info(
+        &mut self,
+        program: &mut Function,
+        fun: &Function,
+        start: usize,
+    ) -> Result<(), RelocationError> {
+        let off_adj = start - (fun.section_offset as usize / INS_SIZE);
+        let func_info = &fun.func_info.func_info;
+        let func_info = func_info.iter().map(|f| {
+            let mut new = *f;
+            new.insn_off = f.insn_off + off_adj as u32;
+            new
+        });
+        program.func_info.func_info.extend(func_info);
+        program.func_info.num_info = program.func_info.func_info.len() as u32;
+
+        let line_info = &fun.line_info.line_info;
+        let line_info = line_info.iter().map(|l| {
+            let mut new = *l;
+            new.insn_off = l.insn_off + off_adj as u32;
+            new
+        });
+        program.line_info.line_info.extend(line_info);
+        program.line_info.num_info = program.func_info.func_info.len() as u32;
         Ok(())
     }
 }

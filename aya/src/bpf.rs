@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     error::Error,
     ffi::CString,
     fs, io,
@@ -8,6 +8,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use log::debug;
 use thiserror::Error;
 
 use crate::{
@@ -21,12 +22,16 @@ use crate::{
         MapKind, Object, ParseError, ProgramSection,
     },
     programs::{
-        BtfTracePoint, CgroupSkb, CgroupSkbAttachType, FEntry, FExit, KProbe, LircMode2, Lsm,
-        PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier,
-        SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        BtfTracePoint, CgroupSkb, CgroupSkbAttachType, Extension, FEntry, FExit, KProbe, LircMode2,
+        Lsm, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
+        SchedClassifier, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
-    sys::{bpf_map_freeze, bpf_map_update_elem_ptr},
-    util::{bytes_of, possible_cpus, POSSIBLE_CPUS},
+    sys::{
+        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_btf_datasec_supported,
+        is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
+        is_btf_supported, is_prog_name_supported,
+    },
+    util::{bytes_of, possible_cpus, VerifierLog, POSSIBLE_CPUS},
 };
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
@@ -77,6 +82,47 @@ impl Default for PinningType {
     }
 }
 
+// Features implements BPF and BTF feature detection
+#[derive(Default, Debug)]
+pub(crate) struct Features {
+    pub bpf_name: bool,
+    pub btf: bool,
+    pub btf_func: bool,
+    pub btf_func_global: bool,
+    pub btf_datasec: bool,
+    pub btf_float: bool,
+}
+
+impl Features {
+    fn probe_features(&mut self) {
+        self.bpf_name = is_prog_name_supported();
+        debug!("[FEAT PROBE] BPF program name support: {}", self.bpf_name);
+
+        self.btf = is_btf_supported();
+        debug!("[FEAT PROBE] BTF support: {}", self.btf);
+
+        if self.btf {
+            self.btf_func = is_btf_func_supported();
+            debug!("[FEAT PROBE] BTF func support: {}", self.btf_func);
+
+            self.btf_func_global = is_btf_func_global_supported();
+            debug!(
+                "[FEAT PROBE] BTF global func support: {}",
+                self.btf_func_global
+            );
+
+            self.btf_datasec = is_btf_datasec_supported();
+            debug!(
+                "[FEAT PROBE] BTF var and datasec support: {}",
+                self.btf_datasec
+            );
+
+            self.btf_float = is_btf_float_supported();
+            debug!("[FEAT PROBE] BTF float support: {}", self.btf_float);
+        }
+    }
+}
+
 /// Builder style API for advanced loading of eBPF programs.
 ///
 /// Loading eBPF code involves a few steps, including loading maps and applying
@@ -103,15 +149,21 @@ pub struct BpfLoader<'a> {
     btf: Option<Cow<'a, Btf>>,
     map_pin_path: Option<PathBuf>,
     globals: HashMap<&'a str, &'a [u8]>,
+    features: Features,
+    extensions: HashSet<&'a str>,
 }
 
 impl<'a> BpfLoader<'a> {
     /// Creates a new loader instance.
     pub fn new() -> BpfLoader<'a> {
+        let mut features = Features::default();
+        features.probe_features();
         BpfLoader {
             btf: Btf::from_sys_fs().ok().map(Cow::Owned),
             map_pin_path: None,
             globals: HashMap::new(),
+            features,
+            extensions: HashSet::new(),
         }
     }
 
@@ -187,6 +239,28 @@ impl<'a> BpfLoader<'a> {
         self
     }
 
+    /// Treat the provided program as an [`Extension`]
+    ///
+    /// When attempting to load the program with the provided `name`
+    /// the program type is forced to be ] [`Extension`] and is not
+    /// inferred from the ELF section name.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::BpfLoader;
+    ///
+    /// let bpf = BpfLoader::new()
+    ///     .extension("myfunc")
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
+    ///
+    pub fn extension(&mut self, name: &'a str) -> &mut BpfLoader<'a> {
+        self.extensions.insert(name);
+        self
+    }
+
     /// Loads eBPF bytecode from a file.
     ///
     /// # Examples
@@ -220,6 +294,39 @@ impl<'a> BpfLoader<'a> {
     pub fn load(&mut self, data: &[u8]) -> Result<Bpf, BpfError> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(self.globals.clone())?;
+
+        let btf_fd = if self.features.btf {
+            if let Some(ref mut obj_btf) = obj.btf {
+                // fixup btf
+                let section_data = obj.section_sizes.clone();
+                let symbol_offsets = obj.symbol_offset_by_name.clone();
+                obj_btf.fixup(&section_data, &symbol_offsets)?;
+                let btf = obj_btf.sanitize(&self.features)?;
+
+                // load btf to the kernel
+                let raw_btf = btf.to_bytes();
+                let mut log_buf = VerifierLog::new();
+                log_buf.grow();
+                let ret = bpf_load_btf(raw_btf.as_slice(), &mut log_buf);
+                match ret {
+                    Ok(fd) => Some(fd),
+                    Err(io_error) => {
+                        log_buf.truncate();
+                        return Err(BpfError::BtfError(BtfError::LoadError {
+                            io_error,
+                            verifier_log: log_buf
+                                .as_c_str()
+                                .map(|s| s.to_string_lossy().to_string())
+                                .unwrap_or_else(|| "[none]".to_owned()),
+                        }));
+                    }
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        };
 
         if let Some(btf) = &self.btf {
             obj.relocate_btf(btf)?;
@@ -288,76 +395,90 @@ impl<'a> BpfLoader<'a> {
             .programs
             .drain()
             .map(|(name, obj)| {
+                let prog_name = if self.features.bpf_name {
+                    Some(name.clone())
+                } else {
+                    None
+                };
                 let data = ProgramData {
+                    name: prog_name,
                     obj,
                     fd: None,
                     links: Vec::new(),
                     expected_attach_type: None,
                     attach_btf_obj_fd: None,
                     attach_btf_id: None,
+                    attach_prog_fd: None,
+                    btf_fd,
                 };
-                let program = match &data.obj.section {
-                    ProgramSection::KProbe { .. } => Program::KProbe(KProbe {
-                        data,
-                        kind: ProbeKind::KProbe,
-                    }),
-                    ProgramSection::KRetProbe { .. } => Program::KProbe(KProbe {
-                        data,
-                        kind: ProbeKind::KRetProbe,
-                    }),
-                    ProgramSection::UProbe { .. } => Program::UProbe(UProbe {
-                        data,
-                        kind: ProbeKind::UProbe,
-                    }),
-                    ProgramSection::URetProbe { .. } => Program::UProbe(UProbe {
-                        data,
-                        kind: ProbeKind::URetProbe,
-                    }),
-                    ProgramSection::TracePoint { .. } => Program::TracePoint(TracePoint { data }),
-                    ProgramSection::SocketFilter { .. } => {
-                        Program::SocketFilter(SocketFilter { data })
-                    }
-                    ProgramSection::Xdp { .. } => Program::Xdp(Xdp { data }),
-                    ProgramSection::SkMsg { .. } => Program::SkMsg(SkMsg { data }),
-                    ProgramSection::SkSkbStreamParser { .. } => Program::SkSkb(SkSkb {
-                        data,
-                        kind: SkSkbKind::StreamParser,
-                    }),
-                    ProgramSection::SkSkbStreamVerdict { .. } => Program::SkSkb(SkSkb {
-                        data,
-                        kind: SkSkbKind::StreamVerdict,
-                    }),
-                    ProgramSection::SockOps { .. } => Program::SockOps(SockOps { data }),
-                    ProgramSection::SchedClassifier { .. } => {
-                        Program::SchedClassifier(SchedClassifier {
+                let program = if self.extensions.contains(name.as_str()) {
+                    Program::Extension(Extension { data })
+                } else {
+                    match &data.obj.section {
+                        ProgramSection::KProbe { .. } => Program::KProbe(KProbe {
                             data,
-                            name: unsafe {
-                                CString::from_vec_unchecked(Vec::from(name.clone()))
-                                    .into_boxed_c_str()
-                            },
-                        })
+                            kind: ProbeKind::KProbe,
+                        }),
+                        ProgramSection::KRetProbe { .. } => Program::KProbe(KProbe {
+                            data,
+                            kind: ProbeKind::KRetProbe,
+                        }),
+                        ProgramSection::UProbe { .. } => Program::UProbe(UProbe {
+                            data,
+                            kind: ProbeKind::UProbe,
+                        }),
+                        ProgramSection::URetProbe { .. } => Program::UProbe(UProbe {
+                            data,
+                            kind: ProbeKind::URetProbe,
+                        }),
+                        ProgramSection::TracePoint { .. } => {
+                            Program::TracePoint(TracePoint { data })
+                        }
+                        ProgramSection::SocketFilter { .. } => {
+                            Program::SocketFilter(SocketFilter { data })
+                        }
+                        ProgramSection::Xdp { .. } => Program::Xdp(Xdp { data }),
+                        ProgramSection::SkMsg { .. } => Program::SkMsg(SkMsg { data }),
+                        ProgramSection::SkSkbStreamParser { .. } => Program::SkSkb(SkSkb {
+                            data,
+                            kind: SkSkbKind::StreamParser,
+                        }),
+                        ProgramSection::SkSkbStreamVerdict { .. } => Program::SkSkb(SkSkb {
+                            data,
+                            kind: SkSkbKind::StreamVerdict,
+                        }),
+                        ProgramSection::SockOps { .. } => Program::SockOps(SockOps { data }),
+                        ProgramSection::SchedClassifier { .. } => {
+                            Program::SchedClassifier(SchedClassifier {
+                                data,
+                                name: unsafe {
+                                    CString::from_vec_unchecked(Vec::from(name.clone()))
+                                        .into_boxed_c_str()
+                                },
+                            })
+                        }
+                        ProgramSection::CgroupSkbIngress { .. } => Program::CgroupSkb(CgroupSkb {
+                            data,
+                            expected_attach_type: Some(CgroupSkbAttachType::Ingress),
+                        }),
+                        ProgramSection::CgroupSkbEgress { .. } => Program::CgroupSkb(CgroupSkb {
+                            data,
+                            expected_attach_type: Some(CgroupSkbAttachType::Egress),
+                        }),
+                        ProgramSection::LircMode2 { .. } => Program::LircMode2(LircMode2 { data }),
+                        ProgramSection::PerfEvent { .. } => Program::PerfEvent(PerfEvent { data }),
+                        ProgramSection::RawTracePoint { .. } => {
+                            Program::RawTracePoint(RawTracePoint { data })
+                        }
+                        ProgramSection::Lsm { .. } => Program::Lsm(Lsm { data }),
+                        ProgramSection::BtfTracePoint { .. } => {
+                            Program::BtfTracePoint(BtfTracePoint { data })
+                        }
+                        ProgramSection::FEntry { .. } => Program::FEntry(FEntry { data }),
+                        ProgramSection::FExit { .. } => Program::FExit(FExit { data }),
+                        ProgramSection::Extension { .. } => Program::Extension(Extension { data }),
                     }
-                    ProgramSection::CgroupSkbIngress { .. } => Program::CgroupSkb(CgroupSkb {
-                        data,
-                        expected_attach_type: Some(CgroupSkbAttachType::Ingress),
-                    }),
-                    ProgramSection::CgroupSkbEgress { .. } => Program::CgroupSkb(CgroupSkb {
-                        data,
-                        expected_attach_type: Some(CgroupSkbAttachType::Egress),
-                    }),
-                    ProgramSection::LircMode2 { .. } => Program::LircMode2(LircMode2 { data }),
-                    ProgramSection::PerfEvent { .. } => Program::PerfEvent(PerfEvent { data }),
-                    ProgramSection::RawTracePoint { .. } => {
-                        Program::RawTracePoint(RawTracePoint { data })
-                    }
-                    ProgramSection::Lsm { .. } => Program::Lsm(Lsm { data }),
-                    ProgramSection::BtfTracePoint { .. } => {
-                        Program::BtfTracePoint(BtfTracePoint { data })
-                    }
-                    ProgramSection::FEntry { .. } => Program::FEntry(FEntry { data }),
-                    ProgramSection::FExit { .. } => Program::FExit(FExit { data }),
                 };
-
                 (name, program)
             })
             .collect();

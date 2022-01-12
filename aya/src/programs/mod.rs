@@ -37,6 +37,7 @@
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [`maps`]: crate::maps
 mod cgroup_skb;
+mod extension;
 mod fentry;
 mod fexit;
 mod kprobe;
@@ -60,9 +61,8 @@ mod xdp;
 use libc::{close, dup, ENOSPC};
 use std::{
     cell::RefCell,
-    cmp,
     convert::TryFrom,
-    ffi::{CStr, CString},
+    ffi::CString,
     io,
     os::unix::io::{AsRawFd, RawFd},
     path::Path,
@@ -71,6 +71,7 @@ use std::{
 use thiserror::Error;
 
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
+pub use extension::{Extension, ExtensionError};
 pub use fentry::FEntry;
 pub use fexit::FExit;
 pub use kprobe::{KProbe, KProbeError};
@@ -95,6 +96,7 @@ use crate::{
     maps::MapError,
     obj::{self, btf::BtfError, Function, KernelVersion},
     sys::{bpf_load_program, bpf_pin_object, bpf_prog_detach, bpf_prog_query, BpfLoadProgramAttrs},
+    util::VerifierLog,
 };
 
 /// Error type returned when working with programs.
@@ -175,9 +177,21 @@ pub enum ProgramError {
     #[error(transparent)]
     TcError(#[from] TcError),
 
+    /// An error occurred while working with an [`Extension`] program.
+    #[error(transparent)]
+    ExtensionError(#[from] ExtensionError),
+
     /// An error occurred while working with BTF.
     #[error(transparent)]
     Btf(#[from] BtfError),
+
+    /// The program is not attached.
+    #[error("the program name `{name}` is invalid")]
+    InvalidName { name: String },
+
+    /// The program is too long.
+    #[error("the program name `{name}` it longer than 16 characters")]
+    NameTooLong { name: String },
 }
 
 pub trait ProgramFd {
@@ -204,6 +218,7 @@ pub enum Program {
     BtfTracePoint(BtfTracePoint),
     FEntry(FEntry),
     FExit(FExit),
+    Extension(Extension),
 }
 
 impl Program {
@@ -242,6 +257,7 @@ impl Program {
             Program::BtfTracePoint(_) => BPF_PROG_TYPE_TRACING,
             Program::FEntry(_) => BPF_PROG_TYPE_TRACING,
             Program::FExit(_) => BPF_PROG_TYPE_TRACING,
+            Program::Extension(_) => BPF_PROG_TYPE_EXT,
         }
     }
 
@@ -269,6 +285,7 @@ impl Program {
             Program::BtfTracePoint(p) => &p.data,
             Program::FEntry(p) => &p.data,
             Program::FExit(p) => &p.data,
+            Program::Extension(p) => &p.data,
         }
     }
 
@@ -291,18 +308,22 @@ impl Program {
             Program::BtfTracePoint(p) => &mut p.data,
             Program::FEntry(p) => &mut p.data,
             Program::FExit(p) => &mut p.data,
+            Program::Extension(p) => &mut p.data,
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct ProgramData {
+    pub(crate) name: Option<String>,
     pub(crate) obj: obj::Program,
     pub(crate) fd: Option<RawFd>,
     pub(crate) links: Vec<Rc<RefCell<dyn Link>>>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
     pub(crate) attach_btf_obj_fd: Option<u32>,
     pub(crate) attach_btf_id: Option<u32>,
+    pub(crate) attach_prog_fd: Option<RawFd>,
+    pub(crate) btf_fd: Option<RawFd>,
 }
 
 impl ProgramData {
@@ -334,67 +355,21 @@ impl ProgramData {
     }
 }
 
-const MIN_LOG_BUF_SIZE: usize = 1024 * 10;
-const MAX_LOG_BUF_SIZE: usize = (std::u32::MAX >> 8) as usize;
-
-pub(crate) struct VerifierLog {
-    buf: Vec<u8>,
-}
-
-impl VerifierLog {
-    fn new() -> VerifierLog {
-        VerifierLog { buf: Vec::new() }
-    }
-
-    pub(crate) fn buf(&mut self) -> &mut Vec<u8> {
-        &mut self.buf
-    }
-
-    fn grow(&mut self) {
-        let len = cmp::max(
-            MIN_LOG_BUF_SIZE,
-            cmp::min(MAX_LOG_BUF_SIZE, self.buf.capacity() * 10),
-        );
-        self.buf.resize(len, 0);
-        self.reset();
-    }
-
-    fn reset(&mut self) {
-        if !self.buf.is_empty() {
-            self.buf[0] = 0;
-        }
-    }
-
-    fn truncate(&mut self) {
-        if self.buf.is_empty() {
-            return;
-        }
-
-        let pos = self
-            .buf
-            .iter()
-            .position(|b| *b == 0)
-            .unwrap_or(self.buf.len() - 1);
-        self.buf[pos] = 0;
-        self.buf.truncate(pos + 1);
-    }
-
-    pub fn as_c_str(&self) -> Option<&CStr> {
-        if self.buf.is_empty() {
-            None
-        } else {
-            Some(CStr::from_bytes_with_nul(&self.buf).unwrap())
-        }
-    }
-}
-
 fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), ProgramError> {
     let ProgramData { obj, fd, .. } = data;
     if fd.is_some() {
         return Err(ProgramError::AlreadyLoaded);
     }
     let crate::obj::Program {
-        function: Function { instructions, .. },
+        function:
+            Function {
+                instructions,
+                func_info,
+                line_info,
+                func_info_rec_size,
+                line_info_rec_size,
+                ..
+            },
         license,
         kernel_version,
         ..
@@ -411,16 +386,37 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
     let mut log_buf = VerifierLog::new();
     let mut retries = 0;
     let mut ret;
+
+    let prog_name = if let Some(name) = &data.name {
+        let name = name.clone();
+        let prog_name = CString::new(name.clone())
+            .map_err(|_| ProgramError::InvalidName { name: name.clone() })?;
+
+        if prog_name.to_bytes().len() > 16 {
+            return Err(ProgramError::NameTooLong { name });
+        }
+        Some(prog_name)
+    } else {
+        None
+    };
+
     loop {
         let attr = BpfLoadProgramAttrs {
+            name: prog_name.clone(),
             ty: prog_type,
             insns: instructions,
             license,
             kernel_version: target_kernel_version,
             expected_attach_type: data.expected_attach_type,
+            prog_btf_fd: data.btf_fd,
             attach_btf_obj_fd: data.attach_btf_obj_fd,
             attach_btf_id: data.attach_btf_id,
+            attach_prog_fd: data.attach_prog_fd,
             log: &mut log_buf,
+            func_info_rec_size: *func_info_rec_size,
+            func_info: func_info.clone(),
+            line_info_rec_size: *line_info_rec_size,
+            line_info: line_info.clone(),
         };
         ret = bpf_load_program(attr);
         match &ret {
@@ -491,7 +487,7 @@ pub(crate) fn query<T: AsRawFd>(
     }
 }
 
-/// Detach an attached program.
+/// Detach an attached program
 pub trait Link: std::fmt::Debug {
     fn detach(&mut self) -> Result<(), ProgramError>;
 }
@@ -599,6 +595,12 @@ macro_rules! impl_program_fd {
                     self.data.fd
                 }
             }
+
+            impl ProgramFd for &mut $struct_name {
+                fn fd(&self) -> Option<RawFd> {
+                    self.data.fd
+                }
+            }
         )+
     }
 }
@@ -620,6 +622,7 @@ impl_program_fd!(
     BtfTracePoint,
     FEntry,
     FExit,
+    Extension,
 );
 
 macro_rules! impl_try_from_program {
@@ -668,6 +671,7 @@ impl_try_from_program!(
     BtfTracePoint,
     FEntry,
     FExit,
+    Extension,
 );
 
 /// Provides information about a loaded program, like name, id and statistics
