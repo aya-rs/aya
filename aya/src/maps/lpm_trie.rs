@@ -32,7 +32,6 @@ pub struct LpmTrie<T: Deref<Target = Map>, K, V> {
     _v: PhantomData<V>,
 }
 
-#[derive(Clone, Copy)]
 #[repr(packed)]
 pub struct Key<K: Pod> {
     pub key_base: bpf_lpm_trie_key,
@@ -48,6 +47,14 @@ impl<K: Pod> Key<K> {
             },
             data: data,
         }
+    }
+}
+
+impl<K:Pod> Copy for Key<K> { }
+
+impl<K:Pod> Clone for Key<K> {
+    fn clone(&self) -> Self {
+        *self
     }
 }
 
