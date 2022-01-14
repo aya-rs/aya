@@ -95,7 +95,10 @@ use crate::{
     generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
     maps::MapError,
     obj::{self, btf::BtfError, Function, KernelVersion},
-    sys::{bpf_load_program, bpf_pin_object, bpf_prog_detach, bpf_prog_query, BpfLoadProgramAttrs},
+    sys::{
+        bpf_get_object, bpf_load_program, bpf_obj_get_info_by_fd, bpf_pin_object, bpf_prog_detach,
+        bpf_prog_get_fd_by_id, bpf_prog_query, BpfLoadProgramAttrs,
+    },
     util::VerifierLog,
 };
 
@@ -701,5 +704,45 @@ impl ProgramInfo {
     /// The program id for this program. Each program has a unique id.
     pub fn id(&self) -> u32 {
         self.0.id
+    }
+
+    /// Returns the fd associated with the program.
+    ///
+    /// The returned fd must be closed when no longer needed.
+    pub fn fd(&self) -> Result<RawFd, ProgramError> {
+        let fd =
+            bpf_prog_get_fd_by_id(self.0.id).map_err(|io_error| ProgramError::SyscallError {
+                call: "bpf_prog_get_fd_by_id".to_owned(),
+                io_error,
+            })?;
+        Ok(fd as RawFd)
+    }
+
+    /// Loads a program from a pinned path in bpffs.
+    pub fn from_pinned<P: AsRef<Path>>(path: P) -> Result<ProgramInfo, ProgramError> {
+        let path_string = match CString::new(path.as_ref().to_str().unwrap()) {
+            Ok(s) => s,
+            Err(e) => {
+                return Err(ProgramError::InvalidPinPath {
+                    error: e.to_string(),
+                })
+            }
+        };
+        let fd =
+            bpf_get_object(&path_string).map_err(|(_, io_error)| ProgramError::SyscallError {
+                call: "bpf_obj_get".to_owned(),
+                io_error,
+            })? as RawFd;
+
+        let info = bpf_obj_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
+            call: "bpf_obj_get_info_by_fd".to_owned(),
+            io_error,
+        })?;
+
+        unsafe {
+            libc::close(fd);
+        }
+
+        Ok(ProgramInfo(info))
     }
 }
