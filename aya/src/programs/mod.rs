@@ -97,7 +97,7 @@ use crate::{
     obj::{self, btf::BtfError, Function, KernelVersion},
     sys::{
         bpf_get_object, bpf_load_program, bpf_obj_get_info_by_fd, bpf_pin_object, bpf_prog_detach,
-        bpf_prog_get_fd_by_id, bpf_prog_query, BpfLoadProgramAttrs,
+        bpf_prog_get_fd_by_id, bpf_prog_query, retry_with_verifier_logs, BpfLoadProgramAttrs,
     },
     util::VerifierLog,
 };
@@ -412,9 +412,7 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
         _ => (*kernel_version).into(),
     };
 
-    let mut log_buf = VerifierLog::new();
-    let mut retries = 0;
-    let mut ret;
+    let mut logger = VerifierLog::new();
 
     let prog_name = if let Some(name) = &data.name {
         let mut name = name.clone();
@@ -428,53 +426,40 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
         None
     };
 
-    loop {
-        let attr = BpfLoadProgramAttrs {
-            name: prog_name.clone(),
-            ty: prog_type,
-            insns: instructions,
-            license,
-            kernel_version: target_kernel_version,
-            expected_attach_type: data.expected_attach_type,
-            prog_btf_fd: data.btf_fd,
-            attach_btf_obj_fd: data.attach_btf_obj_fd,
-            attach_btf_id: data.attach_btf_id,
-            attach_prog_fd: data.attach_prog_fd,
-            log: &mut log_buf,
-            func_info_rec_size: *func_info_rec_size,
-            func_info: func_info.clone(),
-            line_info_rec_size: *line_info_rec_size,
-            line_info: line_info.clone(),
-        };
-        ret = bpf_load_program(attr);
-        match &ret {
-            Ok(prog_fd) => {
-                *fd = Some(*prog_fd as RawFd);
-                return Ok(());
-            }
-            Err((_, io_error)) if retries == 0 || io_error.raw_os_error() == Some(ENOSPC) => {
-                if retries == 10 {
-                    break;
-                }
-                retries += 1;
-                log_buf.grow();
-            }
-            Err(_) => break,
-        };
-    }
+    let attr = BpfLoadProgramAttrs {
+        name: prog_name,
+        ty: prog_type,
+        insns: instructions,
+        license,
+        kernel_version: target_kernel_version,
+        expected_attach_type: data.expected_attach_type,
+        prog_btf_fd: data.btf_fd,
+        attach_btf_obj_fd: data.attach_btf_obj_fd,
+        attach_btf_id: data.attach_btf_id,
+        attach_prog_fd: data.attach_prog_fd,
+        func_info_rec_size: *func_info_rec_size,
+        func_info: func_info.clone(),
+        line_info_rec_size: *line_info_rec_size,
+        line_info: line_info.clone(),
+    };
+    let ret = retry_with_verifier_logs(10, &mut logger, |logger| bpf_load_program(&attr, logger));
 
-    if let Err((_, io_error)) = ret {
-        log_buf.truncate();
-        return Err(ProgramError::LoadError {
-            io_error,
-            verifier_log: log_buf
-                .as_c_str()
-                .map(|s| s.to_string_lossy().to_string())
-                .unwrap_or_else(|| "[none]".to_owned()),
-        });
+    match ret {
+        Ok(prog_fd) => {
+            *fd = Some(prog_fd as RawFd);
+            Ok(())
+        }
+        Err((_, io_error)) => {
+            logger.truncate();
+            return Err(ProgramError::LoadError {
+                io_error,
+                verifier_log: logger
+                    .as_c_str()
+                    .map(|s| s.to_string_lossy().to_string())
+                    .unwrap_or_else(|| "[none]".to_owned()),
+            });
+        }
     }
-
-    Ok(())
 }
 
 pub(crate) fn query<T: AsRawFd>(

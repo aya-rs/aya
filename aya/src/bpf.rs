@@ -30,6 +30,7 @@ use crate::{
         bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_btf_datasec_supported,
         is_btf_decl_tag_supported, is_btf_float_supported, is_btf_func_global_supported,
         is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_prog_name_supported,
+        retry_with_verifier_logs,
     },
     util::{bytes_of, possible_cpus, VerifierLog, POSSIBLE_CPUS},
 };
@@ -314,22 +315,8 @@ impl<'a> BpfLoader<'a> {
 
                 // load btf to the kernel
                 let raw_btf = btf.to_bytes();
-                let mut log_buf = VerifierLog::new();
-                log_buf.grow();
-                let ret = bpf_load_btf(raw_btf.as_slice(), &mut log_buf);
-                match ret {
-                    Ok(fd) => Some(fd),
-                    Err(io_error) => {
-                        log_buf.truncate();
-                        return Err(BpfError::BtfError(BtfError::LoadError {
-                            io_error,
-                            verifier_log: log_buf
-                                .as_c_str()
-                                .map(|s| s.to_string_lossy().to_string())
-                                .unwrap_or_else(|| "[none]".to_owned()),
-                        }));
-                    }
-                }
+                let fd = load_btf(raw_btf)?;
+                Some(fd)
             } else {
                 None
             }
@@ -767,4 +754,24 @@ pub enum BpfError {
     #[error("program error")]
     /// A program error
     ProgramError(#[from] ProgramError),
+}
+
+fn load_btf(raw_btf: Vec<u8>) -> Result<RawFd, BtfError> {
+    let mut logger = VerifierLog::new();
+    let ret = retry_with_verifier_logs(10, &mut logger, |logger| {
+        bpf_load_btf(raw_btf.as_slice(), logger)
+    });
+    match ret {
+        Ok(fd) => Ok(fd as RawFd),
+        Err((_, io_error)) => {
+            logger.truncate();
+            Err(BtfError::LoadError {
+                io_error,
+                verifier_log: logger
+                    .as_c_str()
+                    .map(|s| s.to_string_lossy().to_string())
+                    .unwrap_or_else(|| "[none]".to_owned()),
+            })
+        }
+    }
 }

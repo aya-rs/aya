@@ -3,7 +3,7 @@ use crate::{
     obj::{btf::BtfType, copy_instructions},
     Btf,
 };
-use libc::{c_char, c_long, close, ENOENT};
+use libc::{c_char, c_long, close, ENOENT, ENOSPC};
 
 use std::{
     cmp::{self, min},
@@ -78,19 +78,21 @@ pub(crate) struct BpfLoadProgramAttrs<'a> {
     pub(crate) attach_btf_obj_fd: Option<u32>,
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<RawFd>,
-    pub(crate) log: &'a mut VerifierLog,
     pub(crate) func_info_rec_size: usize,
     pub(crate) func_info: FuncSecInfo,
     pub(crate) line_info_rec_size: usize,
     pub(crate) line_info: LineSecInfo,
 }
 
-pub(crate) fn bpf_load_program(aya_attr: BpfLoadProgramAttrs) -> SysResult {
+pub(crate) fn bpf_load_program(
+    aya_attr: &BpfLoadProgramAttrs,
+    logger: &mut VerifierLog,
+) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
-    if let Some(prog_name) = aya_attr.name {
+    if let Some(prog_name) = &aya_attr.name {
         let mut name: [c_char; 16] = [0; 16];
         let name_bytes = prog_name.to_bytes();
         let len = min(name.len(), name_bytes.len());
@@ -127,7 +129,7 @@ pub(crate) fn bpf_load_program(aya_attr: BpfLoadProgramAttrs) -> SysResult {
             u.func_info_rec_size = aya_attr.func_info_rec_size as u32;
         }
     }
-    let log_buf = aya_attr.log.buf();
+    let log_buf = logger.buf();
     if log_buf.capacity() > 0 {
         u.log_level = 7;
         u.log_buf = log_buf.as_mut_ptr() as u64;
@@ -443,7 +445,7 @@ pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> Sy
     sys_bpf(bpf_cmd::BPF_RAW_TRACEPOINT_OPEN, &attr)
 }
 
-pub(crate) fn bpf_load_btf(raw_btf: &[u8], log: &mut VerifierLog) -> Result<RawFd, io::Error> {
+pub(crate) fn bpf_load_btf(raw_btf: &[u8], log: &mut VerifierLog) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_7 };
     u.btf = raw_btf.as_ptr() as *const _ as u64;
@@ -454,10 +456,7 @@ pub(crate) fn bpf_load_btf(raw_btf: &[u8], log: &mut VerifierLog) -> Result<RawF
         u.btf_log_buf = log_buf.as_mut_ptr() as u64;
         u.btf_log_size = log_buf.capacity() as u32;
     }
-    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
-        Ok(v) => Ok(v as RawFd),
-        Err((_, err)) => Err(err),
-    }
+    sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr)
 }
 
 pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<RawFd, io::Error> {
@@ -732,4 +731,38 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
 
 pub fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult {
     syscall(Syscall::Bpf { cmd, attr })
+}
+
+pub(crate) fn retry_with_verifier_logs<F>(
+    max_retries: usize,
+    log: &mut VerifierLog,
+    f: F,
+) -> SysResult
+where
+    F: Fn(&mut VerifierLog) -> SysResult,
+{
+    // 1. Try the syscall
+    let ret = f(log);
+    if ret.is_ok() {
+        return ret;
+    }
+
+    // 2. Grow the log buffer so we can capture verifier output
+    //    Retry this up to max_retries times
+    log.grow();
+    let mut retries = 0;
+
+    loop {
+        let ret = f(log);
+        match ret {
+            Err((v, io_error)) if retries == 0 || io_error.raw_os_error() == Some(ENOSPC) => {
+                if retries == max_retries {
+                    return Err((v, io_error));
+                }
+                retries += 1;
+                log.grow();
+            }
+            r => return r,
+        }
+    }
 }
