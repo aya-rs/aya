@@ -355,7 +355,7 @@ impl<'a> BpfLoader<'a> {
                         None => return Err(BpfError::NoPinPath),
                     };
                     // try to open map in case it's already pinned
-                    match map.from_pinned(&name, path) {
+                    match map.open_pinned(&name, path) {
                         Ok(fd) => {
                             map.pinned = true;
                             fd as RawFd

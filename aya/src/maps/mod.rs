@@ -168,7 +168,7 @@ impl Map {
         Ok(fd)
     }
 
-    pub(crate) fn from_pinned<P: AsRef<Path>>(
+    pub(crate) fn open_pinned<P: AsRef<Path>>(
         &mut self,
         name: &str,
         path: P,
