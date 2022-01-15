@@ -81,6 +81,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "btf_var",
         "btf_var_secinfo",
         "btf_func_linkage",
+        "btf_decl_tag",
         // PERF
         "perf_event_attr",
         "perf_sw_ids",
