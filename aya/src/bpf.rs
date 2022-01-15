@@ -28,8 +28,8 @@ use crate::{
     },
     sys::{
         bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_btf_datasec_supported,
-        is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
-        is_btf_supported, is_prog_name_supported,
+        is_btf_decl_tag_supported, is_btf_float_supported, is_btf_func_global_supported,
+        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_prog_name_supported,
     },
     util::{bytes_of, possible_cpus, VerifierLog, POSSIBLE_CPUS},
 };
@@ -91,6 +91,8 @@ pub(crate) struct Features {
     pub btf_func_global: bool,
     pub btf_datasec: bool,
     pub btf_float: bool,
+    pub btf_decl_tag: bool,
+    pub btf_type_tag: bool,
 }
 
 impl Features {
@@ -119,6 +121,12 @@ impl Features {
 
             self.btf_float = is_btf_float_supported();
             debug!("[FEAT PROBE] BTF float support: {}", self.btf_float);
+
+            self.btf_decl_tag = is_btf_decl_tag_supported();
+            debug!("[FEAT PROBE] BTF decl_tag support: {}", self.btf_decl_tag);
+
+            self.btf_type_tag = is_btf_type_tag_supported();
+            debug!("[FEAT PROBE] BTF type_tag support: {}", self.btf_type_tag);
         }
     }
 }

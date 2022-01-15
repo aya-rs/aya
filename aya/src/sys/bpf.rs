@@ -670,6 +670,66 @@ pub(crate) fn is_btf_float_supported() -> bool {
     }
 }
 
+pub(crate) fn is_btf_decl_tag_supported() -> bool {
+    let mut btf = Btf::new();
+    let name_offset = btf.add_string("int".to_string());
+    let int_type = BtfType::new_int(name_offset, 4, BTF_INT_SIGNED, 0);
+    let int_type_id = btf.add_type(int_type);
+
+    let name_offset = btf.add_string("foo".to_string());
+    let var_type = BtfType::new_var(name_offset, int_type_id, BTF_VAR_STATIC);
+    let var_type_id = btf.add_type(var_type);
+
+    let name_offset = btf.add_string("decl_tag".to_string());
+    let decl_tag = BtfType::new_decl_tag(name_offset, var_type_id, -1);
+    btf.add_type(decl_tag);
+
+    let btf_bytes = btf.to_bytes();
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_7 };
+    u.btf = btf_bytes.as_ptr() as u64;
+    u.btf_size = btf_bytes.len() as u32;
+
+    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
+        Ok(v) => {
+            let fd = v as RawFd;
+            unsafe { close(fd) };
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+pub(crate) fn is_btf_type_tag_supported() -> bool {
+    let mut btf = Btf::new();
+
+    let int_type = BtfType::new_int(0, 4, BTF_INT_SIGNED, 0);
+    let int_type_id = btf.add_type(int_type);
+
+    let name_offset = btf.add_string("int".to_string());
+    let type_tag = BtfType::new_type_tag(name_offset, int_type_id);
+    let type_tag_type = btf.add_type(type_tag);
+
+    btf.add_type(BtfType::new_ptr(type_tag_type));
+
+    let btf_bytes = btf.to_bytes();
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_7 };
+    u.btf = btf_bytes.as_ptr() as u64;
+    u.btf_size = btf_bytes.len() as u32;
+
+    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
+        Ok(v) => {
+            let fd = v as RawFd;
+            unsafe { close(fd) };
+            true
+        }
+        Err(_) => false,
+    }
+}
+
 pub fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult {
     syscall(Syscall::Bpf { cmd, attr })
 }
