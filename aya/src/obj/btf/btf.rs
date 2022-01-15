@@ -138,7 +138,7 @@ impl Btf {
                 str_len: 0x00,
             },
             strings: vec![0],
-            types: vec![],
+            types: vec![BtfType::Unknown],
             _endianness: Endianness::default(),
         }
     }
@@ -153,10 +153,11 @@ impl Btf {
 
     pub(crate) fn add_type(&mut self, type_: BtfType) -> u32 {
         let size = type_.type_info_size() as u32;
+        let type_id = self.types.len();
         self.types.push(type_);
         self.header.type_len += size;
         self.header.str_off += size;
-        self.types.len() as u32
+        type_id as u32
     }
 
     /// Loads BTF metadata from `/sys/kernel/btf/vmlinux`.
@@ -364,7 +365,8 @@ impl Btf {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
         // Safety: btf_header is POD
         let mut buf = unsafe { bytes_of::<btf_header>(&self.header).to_vec() };
-        for t in self.types() {
+        // Skip the first type since it's always BtfType::Unknown for type_by_id to work
+        for t in self.types().skip(1) {
             let b = t.to_bytes();
             buf.put(b.as_slice())
         }
