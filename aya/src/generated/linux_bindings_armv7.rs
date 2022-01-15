@@ -899,6 +899,11 @@ pub struct btf_var_secinfo {
     pub offset: __u32,
     pub size: __u32,
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct btf_decl_tag {
+    pub component_idx: __s32,
+}
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum perf_type_id {
