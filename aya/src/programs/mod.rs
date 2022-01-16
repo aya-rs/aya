@@ -201,13 +201,6 @@ pub enum ProgramError {
         /// program name
         name: String,
     },
-
-    /// The program is too long.
-    #[error("the program name `{name}` iss longer than 16 characters")]
-    NameTooLong {
-        /// program name
-        name: String,
-    },
 }
 
 /// Allows the Fd of a loaded [`Program`] to be retrieved
@@ -424,13 +417,12 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
     let mut ret;
 
     let prog_name = if let Some(name) = &data.name {
-        let name = name.clone();
+        let mut name = name.clone();
+        if name.len() > 16 {
+            name.truncate(16);
+        }
         let prog_name = CString::new(name.clone())
             .map_err(|_| ProgramError::InvalidName { name: name.clone() })?;
-
-        if prog_name.to_bytes().len() > 16 {
-            return Err(ProgramError::NameTooLong { name });
-        }
         Some(prog_name)
     } else {
         None
