@@ -1,6 +1,6 @@
 use std::{collections::HashMap, mem};
 
-use object::SectionIndex;
+use object::{SectionIndex, SymbolKind};
 use thiserror::Error;
 
 use crate::{
@@ -52,6 +52,8 @@ pub(crate) struct Relocation {
 #[derive(Debug, Clone)]
 pub(crate) struct Symbol {
     pub(crate) index: usize,
+    pub(crate) kind: SymbolKind,
+    pub(crate) is_local: bool,
     pub(crate) section_index: Option<SectionIndex>,
     pub(crate) name: Option<String>,
     pub(crate) address: u64,
@@ -82,6 +84,7 @@ impl Object {
                     relocations.values(),
                     &maps_by_section,
                     &self.symbols_by_index,
+                    &self.text_section_index,
                 )
                 .map_err(|error| BpfError::RelocationError {
                     function: function.name.clone(),
@@ -114,6 +117,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     relocations: I,
     maps_by_section: &HashMap<usize, (&str, &Map)>,
     symbol_table: &HashMap<usize, Symbol>,
+    text_section_index: &SectionIndex,
 ) -> Result<(), RelocationError> {
     let section_offset = fun.section_offset;
     let instructions = &mut fun.instructions;
@@ -153,6 +157,19 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             // this is not a map relocation
             None => continue,
         };
+
+        if is_sub_prog(sym, &section_index, text_section_index) {
+            // this isn't a map relocation, it's a subprog relocation
+            // we'll apply this here anyway since iterations are expensive
+            let symbol_offset = sym.address;
+            if symbol_offset % INS_SIZE as u64 != 0 {
+                panic!()
+            }
+            // symbol_offset + insn->imm is the byte offset in the other section
+            instructions[ins_index].imm =
+                (instructions[ins_index].imm + symbol_offset as i32) / INS_SIZE as i32;
+            continue;
+        }
 
         let (name, map) =
             maps_by_section
@@ -341,4 +358,15 @@ fn is_call(ins: &bpf_insn) -> bool {
         && ins.src_reg() as u32 == BPF_PSEUDO_CALL
         && ins.dst_reg() == 0
         && ins.off == 0
+}
+
+fn is_sub_prog(sym: &Symbol, index: &SectionIndex, text_section_index: &SectionIndex) -> bool {
+    if index != text_section_index {
+        return false;
+    }
+    match sym.kind {
+        SymbolKind::Section if sym.is_local => true,
+        SymbolKind::Text if !sym.is_local => true,
+        _ => false,
+    }
 }

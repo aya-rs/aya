@@ -47,6 +47,7 @@ pub struct Object {
     // symbol_offset_by_name caches symbols that could be referenced from a
     // BTF VAR type so the offsets can be fixed up
     pub(crate) symbol_offset_by_name: HashMap<String, u64>,
+    pub(crate) text_section_index: SectionIndex,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -244,6 +245,8 @@ impl Object {
                     .ok_or(BtfError::InvalidSymbolName)?;
                 let sym = Symbol {
                     index: symbol.index().0,
+                    kind: symbol.kind(),
+                    is_local: symbol.is_local(),
                     name: Some(name.clone()),
                     section_index: symbol.section().index(),
                     address: symbol.address(),
@@ -298,6 +301,7 @@ impl Object {
             symbols_by_index: HashMap::new(),
             section_sizes: HashMap::new(),
             symbol_offset_by_name: HashMap::new(),
+            text_section_index: SectionIndex(0),
         }
     }
 
@@ -513,7 +517,10 @@ impl Object {
                 self.maps
                     .insert(section.name.to_string(), parse_map(&section, section.name)?);
             }
-            BpfSectionKind::Text => self.parse_text_section(section)?,
+            BpfSectionKind::Text => {
+                self.text_section_index = section.index;
+                self.parse_text_section(section)?
+            }
             BpfSectionKind::Btf => self.parse_btf(&section)?,
             BpfSectionKind::BtfExt => self.parse_btf_ext(&section)?,
             BpfSectionKind::Maps => {
@@ -1453,6 +1460,8 @@ mod tests {
             1,
             Symbol {
                 index: 1,
+                kind: SymbolKind::Text,
+                is_local: false,
                 section_index: Some(SectionIndex(1)),
                 name: Some("my_config".to_string()),
                 address: 0,
