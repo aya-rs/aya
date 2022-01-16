@@ -192,6 +192,7 @@ impl<'a> BpfLoader<'a> {
     /// Sets the base directory path for pinned maps.
     ///
     /// Pinned maps will be loaded from `path/MAP_NAME`.
+    /// The caller is responsible for ensuring the directory exists.
     ///
     /// # Example
     ///
@@ -705,38 +706,57 @@ impl Bpf {
 /// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].
 #[derive(Debug, Error)]
 pub enum BpfError {
+    /// Error loading file
     #[error("error loading {path}")]
     FileError {
+        /// The file path
         path: PathBuf,
         #[source]
+        /// The original io::Error
         error: io::Error,
     },
 
+    /// Pinning requested but no path provided
     #[error("pinning requested but no path provided")]
     NoPinPath,
 
+    /// Unexpected pinning type
     #[error("unexpected pinning type {name}")]
-    UnexpectedPinningType { name: u32 },
+    UnexpectedPinningType {
+        /// The value encountered
+        name: u32,
+    },
 
+    /// Invalid path
     #[error("invalid path `{error}`")]
-    InvalidPath { error: String },
+    InvalidPath {
+        /// The error message
+        error: String,
+    },
 
+    /// Error parsing BPF object
     #[error("error parsing BPF object")]
     ParseError(#[from] ParseError),
 
+    /// Error parsing BTF object
     #[error("BTF error")]
     BtfError(#[from] BtfError),
 
+    /// Error performing relocations
     #[error("error relocating `{function}`")]
     RelocationError {
+        /// The function name
         function: String,
         #[source]
+        /// The original error
         error: Box<dyn Error + Send + Sync>,
     },
 
     #[error("map error")]
+    /// A map error
     MapError(#[from] MapError),
 
     #[error("program error")]
+    /// A program error
     ProgramError(#[from] ProgramError),
 }

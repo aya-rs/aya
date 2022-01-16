@@ -66,75 +66,142 @@ pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
 
 #[derive(Error, Debug)]
+/// Errors occuring from working with Maps
 pub enum MapError {
+    /// Unable to find the map
     #[error("map `{name}` not found ")]
-    MapNotFound { name: String },
+    MapNotFound {
+        /// Map name
+        name: String,
+    },
 
+    /// Invalid map type encontered
     #[error("invalid map type {map_type}")]
-    InvalidMapType { map_type: u32 },
+    InvalidMapType {
+        /// The map type
+        map_type: u32,
+    },
 
+    /// Invalid map name encountered
     #[error("invalid map name `{name}`")]
-    InvalidName { name: String },
+    InvalidName {
+        /// The map name
+        name: String,
+    },
 
+    /// Pin path is invalid
     #[error("invalid map path `{error}`")]
-    InvalidPinPath { error: String },
+    InvalidPinPath {
+        /// The error message
+        error: String,
+    },
 
+    /// The map has not been created
     #[error("the map has not been created")]
     NotCreated,
 
+    /// The map has already been created
     #[error("the map `{name}` has already been created")]
-    AlreadyCreated { name: String },
+    AlreadyCreated {
+        /// Map name
+        name: String,
+    },
 
+    /// The map has already been pinned
     #[error("the map `{name}` has already been pinned")]
-    AlreadyPinned { name: String },
+    AlreadyPinned {
+        /// Map name
+        name: String,
+    },
 
+    /// Failed to create map
     #[error("failed to create map `{name}` with code {code}")]
     CreateError {
+        /// Map name
         name: String,
+        /// Error code
         code: libc::c_long,
         #[source]
+        /// Original io::Error
         io_error: io::Error,
     },
 
+    /// Failed to pin map
     #[error("failed to pin map `{name}` with code {code}")]
     PinError {
+        /// Map Name
         name: String,
+        /// Error code
         code: libc::c_long,
         #[source]
+        /// Original io::Error
         io_error: io::Error,
     },
 
+    /// Invalid key size
     #[error("invalid key size {size}, expected {expected}")]
-    InvalidKeySize { size: usize, expected: usize },
+    InvalidKeySize {
+        /// Size encountered
+        size: usize,
+        /// Size expected
+        expected: usize,
+    },
 
+    /// Invalid value size
     #[error("invalid value size {size}, expected {expected}")]
-    InvalidValueSize { size: usize, expected: usize },
+    InvalidValueSize {
+        /// Size encountered
+        size: usize,
+        /// Size expected
+        expected: usize,
+    },
 
+    /// Index is out of bounds
     #[error("the index is {index} but `max_entries` is {max_entries}")]
-    OutOfBounds { index: u32, max_entries: u32 },
+    OutOfBounds {
+        /// Index accessed
+        index: u32,
+        /// Map size
+        max_entries: u32,
+    },
 
+    /// Key not found
     #[error("key not found")]
     KeyNotFound,
 
+    /// Element not found
     #[error("element not found")]
     ElementNotFound,
 
+    /// Progam Not Loaded
     #[error("the program is not loaded")]
     ProgramNotLoaded,
 
+    /// Syscall failed
     #[error("the `{call}` syscall failed with code {code}")]
     SyscallError {
+        /// Syscall Name
         call: String,
+        /// Error code
         code: libc::c_long,
         #[source]
+        /// Original io::Error
         io_error: io::Error,
     },
 
+    /// Map is borrowed mutably
     #[error("map `{name}` is borrowed mutably")]
-    BorrowError { name: String },
+    BorrowError {
+        /// Map name
+        name: String,
+    },
 
+    /// Map is already borrowed
     #[error("map `{name}` is already borrowed")]
-    BorrowMutError { name: String },
+    BorrowMutError {
+        /// Map name
+        name: String,
+    },
 }
 
 /// A generic handle to a BPF map.
@@ -144,10 +211,12 @@ pub enum MapError {
 pub struct Map {
     pub(crate) obj: obj::Map,
     pub(crate) fd: Option<RawFd>,
+    /// Indicates if this map has been pinned to bpffs
     pub pinned: bool,
 }
 
 impl Map {
+    /// Creates a new map with the provided `name`
     pub fn create(&mut self, name: &str) -> Result<RawFd, MapError> {
         if self.fd.is_some() {
             return Err(MapError::AlreadyCreated { name: name.into() });
@@ -196,6 +265,7 @@ impl Map {
         Ok(fd)
     }
 
+    /// Returns the [`bpf_map_type`] of this map
     pub fn map_type(&self) -> Result<bpf_map_type, MapError> {
         bpf_map_type::try_from(self.obj.def.map_type)
     }
@@ -234,9 +304,12 @@ impl Drop for Map {
     }
 }
 
+/// An iterable map
 pub trait IterableMap<K: Pod, V> {
+    /// Get a generic map handle
     fn map(&self) -> &Map;
 
+    /// Get the value for the provided `key`
     fn get(&self, key: &K) -> Result<V, MapError>;
 }
 

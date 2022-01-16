@@ -11,7 +11,9 @@ use crate::{
 /// The kind of [`SkSkb`] program.
 #[derive(Copy, Clone, Debug)]
 pub enum SkSkbKind {
+    /// A Stream Parser
     StreamParser,
+    /// A Stream Verdict
     StreamVerdict,
 }
 

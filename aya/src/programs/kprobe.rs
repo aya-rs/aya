@@ -73,9 +73,12 @@ impl KProbe {
 /// The type returned when attaching a [`KProbe`] fails.
 #[derive(Debug, Error)]
 pub enum KProbeError {
+    /// Error detaching from debugfs
     #[error("`{filename}`")]
     FileError {
+        /// The file name
         filename: String,
+        /// The [`io::Error`] returned from the file operation
         #[source]
         io_error: io::Error,
     },

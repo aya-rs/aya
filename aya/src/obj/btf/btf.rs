@@ -34,56 +34,98 @@ pub(crate) const MAX_SPEC_LEN: usize = 64;
 /// The error type returned when `BTF` operations fail.
 #[derive(Error, Debug)]
 pub enum BtfError {
+    /// Error parsing file
     #[error("error parsing {path}")]
     FileError {
+        /// file path
         path: PathBuf,
+        /// source of the error
         #[source]
         error: io::Error,
     },
 
+    /// Error parsing BTF header
     #[error("error parsing BTF header")]
     InvalidHeader,
 
+    /// invalid BTF type info segment
     #[error("invalid BTF type info segment")]
     InvalidTypeInfo,
 
+    /// invalid BTF relocation info segment
     #[error("invalid BTF relocation info segment")]
     InvalidRelocationInfo,
 
+    /// invalid BTF type kind
     #[error("invalid BTF type kind `{kind}`")]
-    InvalidTypeKind { kind: u32 },
+    InvalidTypeKind {
+        /// type kind
+        kind: u32,
+    },
 
+    /// invalid BTF relocation kind
     #[error("invalid BTF relocation kind `{kind}`")]
-    InvalidRelocationKind { kind: u32 },
+    InvalidRelocationKind {
+        /// type kind
+        kind: u32,
+    },
 
+    /// invalid BTF string offset
     #[error("invalid BTF string offset: {offset}")]
-    InvalidStringOffset { offset: usize },
+    InvalidStringOffset {
+        /// offset
+        offset: usize,
+    },
 
+    /// invalid BTF info
     #[error("invalid BTF info, offset: {offset} len: {len} section_len: {section_len}")]
     InvalidInfo {
+        /// offset
         offset: usize,
+        /// length
         len: usize,
+        /// section length
         section_len: usize,
     },
 
+    /// invalid BTF line infos
     #[error("invalid BTF line info, offset: {offset} len: {len} section_len: {section_len}")]
     InvalidLineInfo {
+        /// offset
         offset: usize,
+        /// length
         len: usize,
+        /// section length
         section_len: usize,
     },
 
+    /// unknown BTF type id
     #[error("Unknown BTF type id `{type_id}`")]
-    UnknownBtfType { type_id: u32 },
+    UnknownBtfType {
+        /// type id
+        type_id: u32,
+    },
 
+    /// unexpected btf type id
     #[error("Unexpected BTF type id `{type_id}`")]
-    UnexpectedBtfType { type_id: u32 },
+    UnexpectedBtfType {
+        /// type id
+        type_id: u32,
+    },
 
+    /// unknown BTF type
     #[error("Unknown BTF type `{type_name}`")]
-    UnknownBtfTypeName { type_name: String },
+    UnknownBtfTypeName {
+        /// type name
+        type_name: String,
+    },
 
+    /// maximum depth reached resolving BTF type
     #[error("maximum depth reached resolving BTF type")]
-    MaximumTypeDepthReached { type_id: u32 },
+    MaximumTypeDepthReached {
+        /// type id
+        type_id: u32,
+    },
 
     /// Loading the btf failed
     #[error("the BPF_BTF_LOAD syscall failed. Verifier output: {verifier_log}")]
@@ -95,15 +137,25 @@ pub enum BtfError {
         verifier_log: String,
     },
 
+    /// offset not found for symbol
     #[error("Offset not found for symbol `{symbol_name}`")]
-    SymbolOffsetNotFound { symbol_name: String },
+    SymbolOffsetNotFound {
+        /// name of the symbol
+        symbol_name: String,
+    },
 
+    /// btf type that is not VAR found in DATASEC
     #[error("BTF type that is not VAR was found in DATASEC")]
     InvalidDatasec,
 
+    /// unable to determine the size of section
     #[error("Unable to determine the size of section `{section_name}`")]
-    UnknownSectionSize { section_name: String },
+    UnknownSectionSize {
+        /// name of the section
+        section_name: String,
+    },
 
+    /// unable to get symbol name
     #[error("Unable to get symbol name")]
     InvalidSymbolName,
 }

@@ -14,6 +14,7 @@ use crate::{
     sys::{kernel_version, perf_event_open_probe, perf_event_open_trace_point},
 };
 
+/// Kind of probe program
 #[derive(Debug, Copy, Clone)]
 pub enum ProbeKind {
     /// Kernel probe

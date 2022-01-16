@@ -17,8 +17,10 @@ use crate::{
 /// The type returned when attaching an [`Xdp`] program fails on kernels `< 5.9`.
 #[derive(Debug, Error)]
 pub enum XdpError {
+    /// netlink error while attaching XDP program
     #[error("netlink error while attaching XDP program")]
     NetlinkError {
+        /// the [`io::Error`] from the netlink call
         #[source]
         io_error: io::Error,
     },

@@ -76,13 +76,17 @@ pub struct SchedClassifier {
     pub(crate) name: Box<CStr>,
 }
 
+/// Errors from TC programs
 #[derive(Debug, Error)]
 pub enum TcError {
+    /// netlink error while attaching ebpf program
     #[error("netlink error while attaching ebpf program to tc")]
     NetlinkError {
+        /// the [`io::Error`] from the netlink call
         #[source]
         io_error: io::Error,
     },
+    /// the clsact qdisc is already attached
     #[error("the clsact qdisc is already attached")]
     AlreadyAttached,
 }
