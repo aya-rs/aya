@@ -418,8 +418,8 @@ fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), 
 
     let prog_name = if let Some(name) = &data.name {
         let mut name = name.clone();
-        if name.len() > 16 {
-            name.truncate(16);
+        if name.len() > 15 {
+            name.truncate(15);
         }
         let prog_name = CString::new(name.clone())
             .map_err(|_| ProgramError::InvalidName { name: name.clone() })?;
