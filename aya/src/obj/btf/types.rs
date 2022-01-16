@@ -394,6 +394,20 @@ impl BtfType {
         btf_type.__bindgen_anon_1.type_ = type_;
         BtfType::Typedef(btf_type)
     }
+
+    #[cfg(test)]
+    pub(crate) fn new_array(name_off: u32, type_: u32, index_type: u32, nelems: u32) -> BtfType {
+        let info = (BTF_KIND_ARRAY) << 24;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = name_off;
+        btf_type.info = info;
+        let btf_array = btf_array {
+            type_,
+            index_type,
+            nelems,
+        };
+        BtfType::Array(btf_type, btf_array)
+    }
 }
 
 fn type_kind(ty: &btf_type) -> Result<BtfKind, BtfError> {
@@ -453,8 +467,10 @@ pub(crate) fn types_are_compatible(
                 return Ok(true)
             }
             Int(_, local_off) => {
+                let local_off = (local_off >> 16) & 0xFF;
                 if let Int(_, target_off) = target_ty {
-                    return Ok(*local_off == 0 && *target_off == 0);
+                    let target_off = (target_off >> 16) & 0xFF;
+                    return Ok(local_off == 0 && target_off == 0);
                 }
             }
             Ptr(l_ty) => {
@@ -467,13 +483,10 @@ pub(crate) fn types_are_compatible(
                     continue;
                 }
             }
-            Array(l_ty, _) => {
-                if let Array(t_ty, _) = target_ty {
-                    // Safety: union
-                    unsafe {
-                        local_id = l_ty.__bindgen_anon_1.type_;
-                        target_id = t_ty.__bindgen_anon_1.type_;
-                    }
+            Array(_, l_ty) => {
+                if let Array(_, t_ty) = target_ty {
+                    local_id = l_ty.type_;
+                    target_id = t_ty.type_;
                     continue;
                 }
             }
@@ -546,13 +559,11 @@ pub(crate) fn fields_are_compatible(
             }
             Float(_) => return Ok(true),
             Ptr(_) => return Ok(true),
-            Array(l_ty, _) => {
-                if let Array(t_ty, _) = target_ty {
-                    // Safety: union
-                    unsafe {
-                        local_id = l_ty.__bindgen_anon_1.type_;
-                        target_id = t_ty.__bindgen_anon_1.type_;
-                    }
+            Array(_, l_ty) => {
+                if let Array(_, t_ty) = target_ty {
+                    local_id = l_ty.type_;
+                    target_id = t_ty.type_;
+
                     continue;
                 }
             }
@@ -917,5 +928,21 @@ mod tests {
             Ok(t) => panic!("expected func proto type, got {:#?}", t),
             Err(_) => panic!("unexpected error"),
         }
+    }
+
+    #[test]
+    fn test_types_are_compatible() {
+        let mut btf = Btf::new();
+        let name_offset = btf.add_string("u32".to_string());
+        let u32t = btf.add_type(BtfType::new_int(name_offset, 4, 0, 0));
+        let name_offset = btf.add_string("u64".to_string());
+        let u64t = btf.add_type(BtfType::new_int(name_offset, 8, 0, 0));
+        let name_offset = btf.add_string("widgets".to_string());
+        let array_type = btf.add_type(BtfType::new_array(name_offset, u64t, u32t, 16));
+
+        assert!(types_are_compatible(&btf, u32t, &btf, u32t).unwrap());
+        // int types are compatible if offsets match. size and encoding aren't compared
+        assert!(types_are_compatible(&btf, u32t, &btf, u64t).unwrap());
+        assert!(types_are_compatible(&btf, array_type, &btf, array_type).unwrap());
     }
 }
