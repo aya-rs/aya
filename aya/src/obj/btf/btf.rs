@@ -437,11 +437,8 @@ impl Btf {
         section_sizes: &HashMap<String, u64>,
         symbol_offsets: &HashMap<String, u64>,
     ) -> Result<(), BtfError> {
-        // FIXME: there is probably a more elegant way of doing operation in place
-        // for now, and to keep on the good side of the borrow checker, we'll create
-        // a new Vec and populate it as we go
-        let mut types = vec![];
-        for t in &self.types {
+        let mut types = self.types.split_off(0);
+        for t in &mut types {
             let kind = t.kind()?.unwrap_or_default();
             // datasec sizes aren't set by llvm
             // we need to fix them here before loading the btf to the kernel
@@ -451,18 +448,16 @@ impl Btf {
                     // While I figure out if this needs fixing in the Kernel or LLVM, we'll
                     // do a fixup here
                     ty.name_off = 0;
-                    types.push(BtfType::Ptr(ty));
                 }
                 BtfType::DataSec(mut ty, data) => {
                     // Start DataSec Fixups
-                    let sec_name = self.type_name(t)?.ok_or(BtfError::InvalidTypeInfo)?;
+                    let sec_name = self.string_at(ty.name_off)?;
                     let name = sec_name.to_string();
                     // There are cases when the compiler does indeed populate the
                     // size. If we hit this case, push to the types vector and
                     // continue
                     if unsafe { ty.__bindgen_anon_1.size > 0 } {
                         debug!("{} {}: fixup not required", kind, name);
-                        types.push(BtfType::DataSec(ty, data.clone()));
                         continue;
                     }
 
@@ -481,7 +476,6 @@ impl Btf {
                     // we need to get the offset from the ELF file.
                     // This was also cached during initial parsing and
                     // we can query by name in symbol_offsets
-                    let mut adjusted_data: Vec<btf_var_secinfo> = vec![];
                     for d in data {
                         let var_type = self.type_by_id(d.type_)?;
                         let var_kind = var_type.kind()?.unwrap();
@@ -492,7 +486,6 @@ impl Btf {
                                     "{} {}: {} {}: fixup not required",
                                     kind, name, var_kind, var_name
                                 );
-                                adjusted_data.push(*d);
                                 continue;
                             }
 
@@ -501,11 +494,7 @@ impl Btf {
                                     symbol_name: var_name.clone(),
                                 },
                             )?;
-                            adjusted_data.push(btf_var_secinfo {
-                                type_: d.type_,
-                                offset: *offset as u32,
-                                size: d.size,
-                            });
+                            d.offset = *offset as u32;
                             debug!(
                                 "{} {}: {} {}: fixup offset {}",
                                 kind, name, var_kind, var_name, offset
@@ -514,11 +503,9 @@ impl Btf {
                             return Err(BtfError::InvalidDatasec);
                         }
                     }
-                    types.push(BtfType::DataSec(ty, adjusted_data))
                 }
                 // The type does not need fixing up
-                // Push it to the new types vec unmodified
-                ty => types.push(ty.clone()),
+                _ => {}
             }
         }
         self.types = types;
