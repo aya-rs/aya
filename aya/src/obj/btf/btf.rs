@@ -596,7 +596,8 @@ impl Btf {
                             "{}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
                             kind
                         );
-                        ty.info |= (btf_func_linkage::BTF_FUNC_STATIC as u32) & 0xFFFF;
+                        ty.info = (ty.info & 0xFFFF0000)
+                            | (btf_func_linkage::BTF_FUNC_STATIC as u32) & 0xFFFF;
                         btf.add_type(BtfType::Func(ty));
                     } else {
                         btf.add_type(BtfType::Func(ty));
