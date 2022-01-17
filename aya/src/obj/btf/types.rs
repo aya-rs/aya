@@ -8,11 +8,12 @@ use object::Endianness;
 
 use crate::{
     generated::{
-        btf_array, btf_enum, btf_func_linkage, btf_member, btf_param, btf_type,
+        btf_array, btf_decl_tag, btf_enum, btf_func_linkage, btf_member, btf_param, btf_type,
         btf_type__bindgen_ty_1, btf_var, btf_var_secinfo, BTF_KIND_ARRAY, BTF_KIND_CONST,
-        BTF_KIND_DATASEC, BTF_KIND_ENUM, BTF_KIND_FLOAT, BTF_KIND_FUNC, BTF_KIND_FUNC_PROTO,
-        BTF_KIND_FWD, BTF_KIND_INT, BTF_KIND_PTR, BTF_KIND_RESTRICT, BTF_KIND_STRUCT,
-        BTF_KIND_TYPEDEF, BTF_KIND_UNION, BTF_KIND_UNKN, BTF_KIND_VAR, BTF_KIND_VOLATILE,
+        BTF_KIND_DATASEC, BTF_KIND_DECL_TAG, BTF_KIND_ENUM, BTF_KIND_FLOAT, BTF_KIND_FUNC,
+        BTF_KIND_FUNC_PROTO, BTF_KIND_FWD, BTF_KIND_INT, BTF_KIND_PTR, BTF_KIND_RESTRICT,
+        BTF_KIND_STRUCT, BTF_KIND_TYPEDEF, BTF_KIND_TYPE_TAG, BTF_KIND_UNION, BTF_KIND_UNKN,
+        BTF_KIND_VAR, BTF_KIND_VOLATILE,
     },
     obj::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH},
 };
@@ -36,6 +37,8 @@ pub(crate) enum BtfType {
     FuncProto(btf_type, Vec<btf_param>),
     Var(btf_type, btf_var),
     DataSec(btf_type, Vec<btf_var_secinfo>),
+    DeclTag(btf_type, btf_decl_tag),
+    TypeTag(btf_type),
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -58,6 +61,8 @@ pub(crate) enum BtfKind {
     FuncProto = BTF_KIND_FUNC_PROTO,
     Var = BTF_KIND_VAR,
     DataSec = BTF_KIND_DATASEC,
+    DeclTag = BTF_KIND_DECL_TAG,
+    TypeTag = BTF_KIND_TYPE_TAG,
 }
 
 impl TryFrom<u32> for BtfKind {
@@ -83,6 +88,8 @@ impl TryFrom<u32> for BtfKind {
             BTF_KIND_FUNC_PROTO => FuncProto,
             BTF_KIND_VAR => Var,
             BTF_KIND_DATASEC => DataSec,
+            BTF_KIND_DECL_TAG => DeclTag,
+            BTF_KIND_TYPE_TAG => TypeTag,
             kind => return Err(BtfError::InvalidTypeKind { kind }),
         })
     }
@@ -108,6 +115,8 @@ impl Display for BtfKind {
             BtfKind::FuncProto => write!(f, "[FUNC_PROTO]"),
             BtfKind::Var => write!(f, "[VAR]"),
             BtfKind::DataSec => write!(f, "[DATASEC]"),
+            BtfKind::DeclTag => write!(f, "[DECL_TAG]"),
+            BtfKind::TypeTag => write!(f, "[TYPE_TAG]"),
         }
     }
 }
@@ -177,6 +186,8 @@ impl BtfType {
             BtfKind::FuncProto => FuncProto(ty, unsafe { read_array(data, vlen)? }),
             BtfKind::Var => Var(ty, unsafe { read(data)? }),
             BtfKind::DataSec => DataSec(ty, unsafe { read_array(data, vlen)? }),
+            BtfKind::DeclTag => DeclTag(ty, unsafe { read(data)? }),
+            BtfKind::TypeTag => TypeTag(ty),
         })
     }
 
@@ -193,7 +204,8 @@ impl BtfType {
             | BtfType::Ptr(btf_type)
             | BtfType::Typedef(btf_type)
             | BtfType::Func(btf_type)
-            | BtfType::Float(btf_type) => bytes_of::<btf_type>(btf_type).to_vec(),
+            | BtfType::Float(btf_type)
+            | BtfType::TypeTag(btf_type) => bytes_of::<btf_type>(btf_type).to_vec(),
             BtfType::Int(btf_type, len) => {
                 let mut buf = bytes_of::<btf_type>(btf_type).to_vec();
                 buf.append(&mut len.to_ne_bytes().to_vec());
@@ -238,6 +250,11 @@ impl BtfType {
                 buf
             }
             BtfType::Unknown => vec![],
+            BtfType::DeclTag(btf_type, btf_decl_tag) => {
+                let mut buf = bytes_of::<btf_type>(btf_type).to_vec();
+                buf.append(&mut bytes_of::<btf_decl_tag>(btf_decl_tag).to_vec());
+                buf
+            }
         }
     }
 
@@ -248,7 +265,7 @@ impl BtfType {
         match self {
             Unknown => ty_size,
             Fwd(_) | Const(_) | Volatile(_) | Restrict(_) | Ptr(_) | Typedef(_) | Func(_)
-            | Float(_) => ty_size,
+            | Float(_) | TypeTag(_) => ty_size,
             Int(_, _) => ty_size + mem::size_of::<u32>(),
             Enum(ty, _) => ty_size + type_vlen(ty) * mem::size_of::<btf_enum>(),
             Array(_, _) => ty_size + mem::size_of::<btf_array>(),
@@ -257,6 +274,7 @@ impl BtfType {
             FuncProto(ty, _) => ty_size + type_vlen(ty) * mem::size_of::<btf_param>(),
             Var(_, _) => ty_size + mem::size_of::<btf_var>(),
             DataSec(ty, _) => ty_size + type_vlen(ty) * mem::size_of::<btf_var_secinfo>(),
+            DeclTag(_, _) => ty_size + mem::size_of::<btf_decl_tag>(),
         }
     }
 
@@ -280,6 +298,8 @@ impl BtfType {
             FuncProto(ty, _) => ty,
             Var(ty, _) => ty,
             DataSec(ty, _) => ty,
+            DeclTag(ty, _) => ty,
+            TypeTag(ty) => ty,
         })
     }
 
@@ -407,6 +427,43 @@ impl BtfType {
             nelems,
         };
         BtfType::Array(btf_type, btf_array)
+    }
+
+    pub(crate) fn new_decl_tag(name_off: u32, type_: u32, component_idx: i32) -> BtfType {
+        let info = (BTF_KIND_DECL_TAG) << 24;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = name_off;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.type_ = type_;
+        let btf_decl_tag = btf_decl_tag { component_idx };
+        BtfType::DeclTag(btf_type, btf_decl_tag)
+    }
+
+    pub(crate) fn new_type_tag(name_off: u32, type_: u32) -> BtfType {
+        let info = (BTF_KIND_TYPE_TAG) << 24;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = name_off;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.type_ = type_;
+        BtfType::TypeTag(btf_type)
+    }
+
+    pub(crate) fn new_ptr(type_: u32) -> BtfType {
+        let info = (BTF_KIND_PTR) << 24;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = 0;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.type_ = type_;
+        BtfType::Ptr(btf_type)
+    }
+
+    pub(crate) fn new_const(type_: u32) -> BtfType {
+        let info = (BTF_KIND_CONST) << 24;
+        let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
+        btf_type.name_off = 0;
+        btf_type.info = info;
+        btf_type.__bindgen_anon_1.type_ = type_;
+        BtfType::Const(btf_type)
     }
 }
 

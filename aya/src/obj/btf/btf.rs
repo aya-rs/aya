@@ -323,7 +323,7 @@ impl Btf {
 
             use BtfType::*;
             match ty {
-                Volatile(ty) | Const(ty) | Restrict(ty) | Typedef(ty) => {
+                Volatile(ty) | Const(ty) | Restrict(ty) | Typedef(ty) | TypeTag(ty) => {
                     // Safety: union
                     type_id = unsafe { ty.__bindgen_anon_1.type_ };
                     continue;
@@ -391,7 +391,13 @@ impl Btf {
                     unsafe { ty.__bindgen_anon_1.size as usize }
                 }
                 Ptr(_) => mem::size_of::<*const c_void>(), // FIXME
-                Typedef(ty) | Volatile(ty) | Const(ty) | Restrict(ty) | Var(ty, _) => {
+                Typedef(ty)
+                | Volatile(ty)
+                | Const(ty)
+                | Restrict(ty)
+                | Var(ty, _)
+                | DeclTag(ty, _)
+                | TypeTag(ty) => {
                     // Safety: union
                     type_id = unsafe { ty.__bindgen_anon_1.type_ };
                     continue;
@@ -604,6 +610,24 @@ impl Btf {
                         btf.add_type(struct_ty);
                     } else {
                         btf.add_type(BtfType::Float(*ty));
+                    }
+                }
+                BtfType::DeclTag(ty, btf_decl_tag) => {
+                    if !features.btf_decl_tag {
+                        debug!("{}: not supported. replacing with INT", kind);
+                        let int_type = BtfType::new_int(ty.name_off, 1, 0, 0);
+                        btf.add_type(int_type);
+                    } else {
+                        btf.add_type(BtfType::DeclTag(*ty, *btf_decl_tag));
+                    }
+                }
+                BtfType::TypeTag(ty) => {
+                    if !features.btf_type_tag {
+                        debug!("{}: not supported. replacing with CONST", kind);
+                        let const_type = BtfType::new_const(unsafe { ty.__bindgen_anon_1.type_ });
+                        btf.add_type(const_type);
+                    } else {
+                        btf.add_type(BtfType::TypeTag(*ty));
                     }
                 }
                 // The type does not need sanitizing
@@ -1028,6 +1052,14 @@ mod tests {
         let func = BtfType::new_func(add, func_proto_type_id, btf_func_linkage::BTF_FUNC_GLOBAL);
         btf.add_type(func);
 
+        let name_offset = btf.add_string("int".to_string());
+        let type_tag = BtfType::new_type_tag(name_offset, int_type_id);
+        btf.add_type(type_tag);
+
+        let name_offset = btf.add_string("decl_tag".to_string());
+        let decl_tag = BtfType::new_decl_tag(name_offset, var_type_id, -1);
+        btf.add_type(decl_tag);
+
         let cases = HashMap::from([
             (
                 "noop",
@@ -1038,6 +1070,8 @@ mod tests {
                     btf_func_global: true,
                     btf_datasec: true,
                     btf_float: true,
+                    btf_decl_tag: true,
+                    btf_type_tag: true,
                 },
             ),
             (
@@ -1049,6 +1083,8 @@ mod tests {
                     btf_func_global: true,
                     btf_datasec: false,
                     btf_float: true,
+                    btf_decl_tag: true,
+                    btf_type_tag: true,
                 },
             ),
             (
@@ -1060,6 +1096,8 @@ mod tests {
                     btf_func_global: true,
                     btf_datasec: true,
                     btf_float: false,
+                    btf_decl_tag: true,
+                    btf_type_tag: true,
                 },
             ),
             (
@@ -1071,6 +1109,8 @@ mod tests {
                     btf_func_global: true,
                     btf_datasec: true,
                     btf_float: true,
+                    btf_decl_tag: true,
+                    btf_type_tag: true,
                 },
             ),
             (
@@ -1082,6 +1122,34 @@ mod tests {
                     btf_func_global: false,
                     btf_datasec: true,
                     btf_float: true,
+                    btf_decl_tag: true,
+                    btf_type_tag: true,
+                },
+            ),
+            (
+                "no decl tag",
+                Features {
+                    bpf_name: true,
+                    btf: true,
+                    btf_func: true,
+                    btf_func_global: true,
+                    btf_datasec: true,
+                    btf_float: true,
+                    btf_decl_tag: false,
+                    btf_type_tag: true,
+                },
+            ),
+            (
+                "no type tag",
+                Features {
+                    bpf_name: true,
+                    btf: true,
+                    btf_func: true,
+                    btf_func_global: true,
+                    btf_datasec: true,
+                    btf_float: true,
+                    btf_decl_tag: true,
+                    btf_type_tag: false,
                 },
             ),
             (
@@ -1093,6 +1161,8 @@ mod tests {
                     btf_func_global: false,
                     btf_datasec: false,
                     btf_float: false,
+                    btf_decl_tag: false,
+                    btf_type_tag: false,
                 },
             ),
         ]);
