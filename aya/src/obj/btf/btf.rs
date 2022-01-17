@@ -15,9 +15,7 @@ use object::Endianness;
 use thiserror::Error;
 
 use crate::{
-    generated::{
-        btf_enum, btf_ext_header, btf_func_linkage, btf_header, btf_member, btf_var_secinfo,
-    },
+    generated::{btf_enum, btf_ext_header, btf_func_linkage, btf_header, btf_member},
     obj::btf::{relocation::Relocation, BtfKind, BtfType},
     util::bytes_of,
     Features,
@@ -504,6 +502,13 @@ impl Btf {
                         }
                     }
                 }
+                BtfType::FuncProto(_ty, params) => {
+                    for (i, mut param) in params.iter_mut().enumerate() {
+                        if param.name_off == 0 && param.type_ != 0 {
+                            param.name_off = self.add_string(format!("param{}", i));
+                        }
+                    }
+                }
                 // The type does not need fixing up
                 _ => {}
             }
@@ -860,7 +865,7 @@ pub(crate) struct SecInfo<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::generated::{btf_param, BTF_INT_SIGNED, BTF_VAR_STATIC};
+    use crate::generated::{btf_param, btf_var_secinfo, BTF_INT_SIGNED, BTF_VAR_STATIC};
 
     use super::*;
 
