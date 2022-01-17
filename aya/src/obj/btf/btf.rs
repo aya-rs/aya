@@ -170,7 +170,7 @@ pub enum BtfError {
 pub struct Btf {
     header: btf_header,
     strings: Vec<u8>,
-    types: Vec<BtfType>,
+    types: BtfTypes,
     _endianness: Endianness,
 }
 
@@ -188,9 +188,13 @@ impl Btf {
                 str_len: 0x00,
             },
             strings: vec![0],
-            types: vec![BtfType::Unknown],
+            types: BtfTypes::default(),
             _endianness: Endianness::default(),
         }
+    }
+
+    pub(crate) fn types(&self) -> impl Iterator<Item = &BtfType> {
+        self.types.types.iter()
     }
 
     pub(crate) fn add_string(&mut self, name: String) -> u32 {
@@ -256,7 +260,7 @@ impl Btf {
         header: &btf_header,
         data: &[u8],
         endianness: Endianness,
-    ) -> Result<Vec<BtfType>, BtfError> {
+    ) -> Result<BtfTypes, BtfError> {
         let hdr_len = header.hdr_len as usize;
         let type_off = header.type_off as usize;
         let type_len = header.type_len as usize;
@@ -266,7 +270,7 @@ impl Btf {
         }
 
         let mut data = &data[base..base + type_len];
-        let mut types = vec![BtfType::Unknown];
+        let mut types = BtfTypes::default();
         while !data.is_empty() {
             // Safety:
             // read() reads POD values from ELF, which is sound, but the values can still contain
@@ -305,34 +309,11 @@ impl Btf {
     }
 
     pub(crate) fn type_by_id(&self, type_id: u32) -> Result<&BtfType, BtfError> {
-        self.types
-            .get(type_id as usize)
-            .ok_or(BtfError::UnknownBtfType { type_id })
-    }
-
-    pub(crate) fn types(&self) -> impl Iterator<Item = &BtfType> {
-        self.types.iter()
+        self.types.type_by_id(type_id)
     }
 
     pub(crate) fn resolve_type(&self, root_type_id: u32) -> Result<u32, BtfError> {
-        let mut type_id = root_type_id;
-        for _ in 0..MAX_RESOLVE_DEPTH {
-            let ty = self.type_by_id(type_id)?;
-
-            use BtfType::*;
-            match ty {
-                Volatile(ty) | Const(ty) | Restrict(ty) | Typedef(ty) | TypeTag(ty) => {
-                    // Safety: union
-                    type_id = unsafe { ty.__bindgen_anon_1.type_ };
-                    continue;
-                }
-                _ => return Ok(type_id),
-            }
-        }
-
-        Err(BtfError::MaximumTypeDepthReached {
-            type_id: root_type_id,
-        })
+        self.types.resolve_type(root_type_id)
     }
 
     pub(crate) fn type_name(&self, ty: &BtfType) -> Result<Option<Cow<'_, str>>, BtfError> {
@@ -375,7 +356,7 @@ impl Btf {
         let mut type_id = root_type_id;
         let mut n_elems = 1;
         for _ in 0..MAX_RESOLVE_DEPTH {
-            let ty = self.type_by_id(type_id)?;
+            let ty = self.types.type_by_id(type_id)?;
 
             use BtfType::*;
             let size = match ty {
@@ -422,143 +403,125 @@ impl Btf {
         // Safety: btf_header is POD
         let mut buf = unsafe { bytes_of::<btf_header>(&self.header).to_vec() };
         // Skip the first type since it's always BtfType::Unknown for type_by_id to work
-        for t in self.types().skip(1) {
-            let b = t.to_bytes();
-            buf.put(b.as_slice())
-        }
+        buf.extend(self.types.to_bytes());
         buf.put(self.strings.as_slice());
         buf
     }
 
-    pub(crate) fn fixup(
+    pub(crate) fn fixup_and_sanitize(
         &mut self,
         section_sizes: &HashMap<String, u64>,
         symbol_offsets: &HashMap<String, u64>,
+        features: &Features,
     ) -> Result<(), BtfError> {
-        let mut types = self.types.split_off(0);
-        for t in &mut types {
-            let kind = t.kind()?.unwrap_or_default();
+        let mut types = mem::take(&mut self.types);
+        for i in 0..types.types.len() {
+            let kind = types.types.get(i).unwrap().kind()?.unwrap_or_default();
             // datasec sizes aren't set by llvm
             // we need to fix them here before loading the btf to the kernel
-            match t {
-                BtfType::Ptr(mut ty) => {
-                    // Rust emits names for pointer types, which the kernel doesn't like
-                    // While I figure out if this needs fixing in the Kernel or LLVM, we'll
-                    // do a fixup here
-                    ty.name_off = 0;
-                }
-                BtfType::DataSec(mut ty, data) => {
-                    // Start DataSec Fixups
-                    let sec_name = self.string_at(ty.name_off)?;
-                    let name = sec_name.to_string();
-                    // There are cases when the compiler does indeed populate the
-                    // size. If we hit this case, push to the types vector and
-                    // continue
-                    if unsafe { ty.__bindgen_anon_1.size > 0 } {
-                        debug!("{} {}: fixup not required", kind, name);
-                        continue;
-                    }
-
-                    // We need to get the size of the section from the ELF file
-                    // Fortunately, we cached these when parsing it initially
-                    // and we can this up by name in section_sizes
-                    if let Some(size) = section_sizes.get(&name) {
-                        debug!("{} {}: fixup size to {}", kind, name, size);
-                        ty.__bindgen_anon_1.size = *size as u32;
-                    } else {
-                        return Err(BtfError::UnknownSectionSize { section_name: name });
-                    }
-
-                    // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
-                    // that need to have their offsets adjusted. To do this,
-                    // we need to get the offset from the ELF file.
-                    // This was also cached during initial parsing and
-                    // we can query by name in symbol_offsets
-                    for d in data {
-                        let var_type = self.type_by_id(d.type_)?;
-                        let var_kind = var_type.kind()?.unwrap();
-                        if let BtfType::Var(vty, var) = var_type {
-                            let var_name = self.string_at(vty.name_off)?.to_string();
-                            if var.linkage == btf_func_linkage::BTF_FUNC_STATIC as u32 {
-                                debug!(
-                                    "{} {}: {} {}: fixup not required",
-                                    kind, name, var_kind, var_name
-                                );
-                                continue;
-                            }
-
-                            let offset = symbol_offsets.get(&var_name).ok_or(
-                                BtfError::SymbolOffsetNotFound {
-                                    symbol_name: var_name.clone(),
-                                },
-                            )?;
-                            d.offset = *offset as u32;
-                            debug!(
-                                "{} {}: {} {}: fixup offset {}",
-                                kind, name, var_kind, var_name, offset
-                            );
-                        } else {
-                            return Err(BtfError::InvalidDatasec);
-                        }
+            match kind {
+                // Fixup PTR for Rust
+                // LLVM emits names for Rust pointer types, which the kernel doesn't like
+                // While I figure out if this needs fixing in the Kernel or LLVM, we'll
+                // do a fixup here
+                BtfKind::Ptr => {
+                    if let Some(BtfType::Ptr(mut ty)) = types.types.get_mut(i) {
+                        ty.name_off = 0;
                     }
                 }
-                BtfType::FuncProto(_ty, params) => {
-                    for (i, mut param) in params.iter_mut().enumerate() {
-                        if param.name_off == 0 && param.type_ != 0 {
-                            param.name_off = self.add_string(format!("param{}", i));
-                        }
+                // Sanitize VAR if they are not supported
+                BtfKind::Var if !features.btf_datasec => {
+                    if let Some(BtfType::Var(ty, _)) = types.types.get(i) {
+                        types.types[i] = BtfType::new_int(ty.name_off, 1, 0, 0);
                     }
                 }
-                // The type does not need fixing up
-                _ => {}
-            }
-        }
-        self.types = types;
-        Ok(())
-    }
-
-    pub(crate) fn sanitize(&self, features: &Features) -> Result<Btf, BtfError> {
-        let mut btf = Btf::new();
-
-        btf.strings = self.strings.to_vec();
-        btf.header.str_len = btf.strings.len() as u32;
-
-        // Skip the first type as it's only there
-        // to make type_by_id work
-        for t in &self.types[1..] {
-            let kind = t.kind()?.unwrap_or_default();
-            match t {
-                BtfType::Var(ty, vars) => {
-                    if !features.btf_datasec {
-                        debug!("{}: not supported. replacing with INT", kind);
-                        let int_type = BtfType::new_int(ty.name_off, 1, 0, 0);
-                        btf.add_type(int_type);
-                    } else {
-                        btf.add_type(BtfType::Var(*ty, *vars));
-                    }
-                }
-                BtfType::DataSec(ty, data) => {
-                    if !features.btf_datasec {
+                // Sanitize DATASEC if they are not supported
+                BtfKind::DataSec if !features.btf_datasec => {
+                    if let Some(BtfType::DataSec(ty, data)) = types.types.get(i) {
                         debug!("{}: not supported. replacing with STRUCT", kind);
-                        let members: Vec<btf_member> = data
-                            .iter()
-                            .map(|p| -> btf_member {
-                                let mt = self.type_by_id(p.type_).unwrap();
-                                btf_member {
-                                    name_off: mt.btf_type().unwrap().name_off,
-                                    type_: p.type_,
-                                    offset: p.offset * 8,
-                                }
+                        let mut members = vec![];
+                        for member in data {
+                            let mt = types.type_by_id(member.type_).unwrap();
+                            members.push(btf_member {
+                                name_off: mt.btf_type().unwrap().name_off,
+                                type_: member.type_,
+                                offset: member.offset * 8,
                             })
-                            .collect();
+                        }
                         let struct_type = BtfType::new_struct(ty.name_off, members, 0);
-                        btf.add_type(struct_type);
-                    } else {
-                        btf.add_type(BtfType::DataSec(*ty, data.to_vec()));
+                        types.types[i] = struct_type;
                     }
                 }
-                BtfType::FuncProto(ty, vars) => {
-                    if !features.btf_func {
+                // Fixup DATASEC
+                BtfKind::DataSec if features.btf_datasec => {
+                    if let Some(BtfType::DataSec(ty, data)) = types.types.get_mut(i) {
+                        // Start DataSec Fixups
+                        let sec_name = self.string_at(ty.name_off)?;
+                        let name = sec_name.to_string();
+                        // There are some cases when the compiler does indeed populate the
+                        // size
+                        if unsafe { ty.__bindgen_anon_1.size > 0 } {
+                            debug!("{} {}: fixup not required", kind, name);
+                            continue;
+                        }
+
+                        // We need to get the size of the section from the ELF file
+                        // Fortunately, we cached these when parsing it initially
+                        // and we can this up by name in section_sizes
+                        if let Some(size) = section_sizes.get(&name) {
+                            debug!("{} {}: fixup size to {}", kind, name, size);
+                            ty.__bindgen_anon_1.size = *size as u32;
+                        } else {
+                            return Err(BtfError::UnknownSectionSize { section_name: name });
+                        }
+
+                        // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
+                        // that need to have their offsets adjusted. To do this,
+                        // we need to get the offset from the ELF file.
+                        // This was also cached during initial parsing and
+                        // we can query by name in symbol_offsets
+                        for d in data {
+                            let var_type = types.type_by_id(d.type_)?;
+                            let var_kind = var_type.kind()?.unwrap();
+                            if let BtfType::Var(vty, var) = var_type {
+                                let var_name = self.string_at(vty.name_off)?.to_string();
+                                if var.linkage == btf_func_linkage::BTF_FUNC_STATIC as u32 {
+                                    debug!(
+                                        "{} {}: {} {}: fixup not required",
+                                        kind, name, var_kind, var_name
+                                    );
+                                    continue;
+                                }
+
+                                let offset = symbol_offsets.get(&var_name).ok_or(
+                                    BtfError::SymbolOffsetNotFound {
+                                        symbol_name: var_name.clone(),
+                                    },
+                                )?;
+                                d.offset = *offset as u32;
+                                debug!(
+                                    "{} {}: {} {}: fixup offset {}",
+                                    kind, name, var_kind, var_name, offset
+                                );
+                            } else {
+                                return Err(BtfError::InvalidDatasec);
+                            }
+                        }
+                    }
+                }
+                // Fixup FUNC_PROTO
+                BtfKind::FuncProto if features.btf_func => {
+                    if let Some(BtfType::FuncProto(_, params)) = types.types.get_mut(i) {
+                        for (i, mut param) in params.iter_mut().enumerate() {
+                            if param.name_off == 0 && param.type_ != 0 {
+                                param.name_off = self.add_string(format!("param{}", i));
+                            }
+                        }
+                    }
+                }
+                // Sanitize FUNC_PROTO
+                BtfKind::FuncProto if features.btf_func => {
+                    if let Some(BtfType::FuncProto(ty, vars)) = types.types.get(i) {
                         debug!("{}: not supported. replacing with ENUM", kind);
                         let members: Vec<btf_enum> = vars
                             .iter()
@@ -570,66 +533,62 @@ impl Btf {
                             })
                             .collect();
                         let enum_type = BtfType::new_enum(ty.name_off, members);
-                        btf.add_type(enum_type);
-                    } else {
-                        btf.add_type(BtfType::FuncProto(*ty, vars.to_vec()));
+                        types.types[i] = enum_type;
                     }
                 }
-                BtfType::Func(mut ty) => {
-                    if !features.btf_func {
+                // Sanitize FUNC
+                BtfKind::Func if !features.btf_func => {
+                    if let Some(BtfType::Func(ty)) = types.types.get(i) {
                         debug!("{}: not supported. replacing with TYPEDEF", kind);
                         let typedef_type =
                             BtfType::new_typedef(ty.name_off, unsafe { ty.__bindgen_anon_1.type_ });
-                        btf.add_type(typedef_type);
-                    } else if type_vlen(&ty) == btf_func_linkage::BTF_FUNC_GLOBAL as usize
-                        && !features.btf_func_global
-                    {
-                        debug!(
-                            "{}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
-                            kind
-                        );
-                        ty.info = (ty.info & 0xFFFF0000)
-                            | (btf_func_linkage::BTF_FUNC_STATIC as u32) & 0xFFFF;
-                        btf.add_type(BtfType::Func(ty));
-                    } else {
-                        btf.add_type(BtfType::Func(ty));
+                        types.types[i] = typedef_type;
                     }
                 }
-                BtfType::Float(ty) => {
-                    if !features.btf_float {
+                // Sanitize BTF_FUNC_GLOBAL
+                BtfKind::Func if !features.btf_func_global => {
+                    if let Some(BtfType::Func(ty)) = types.types.get_mut(i) {
+                        if type_vlen(ty) == btf_func_linkage::BTF_FUNC_GLOBAL as usize {
+                            debug!(
+                                "{}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
+                                kind
+                            );
+                            ty.info = (ty.info & 0xFFFF0000)
+                                | (btf_func_linkage::BTF_FUNC_STATIC as u32) & 0xFFFF;
+                        }
+                    }
+                }
+                // Sanitize FLOAT
+                BtfKind::Float if !features.btf_float => {
+                    if let Some(BtfType::Float(ty)) = types.types.get(i) {
                         debug!("{}: not supported. replacing with STRUCT", kind);
                         let struct_ty =
                             BtfType::new_struct(0, vec![], unsafe { ty.__bindgen_anon_1.size });
-                        btf.add_type(struct_ty);
-                    } else {
-                        btf.add_type(BtfType::Float(*ty));
+                        types.types[i] = struct_ty;
                     }
                 }
-                BtfType::DeclTag(ty, btf_decl_tag) => {
-                    if !features.btf_decl_tag {
+                // Sanitize DECL_TAG
+                BtfKind::DeclTag if !features.btf_decl_tag => {
+                    if let Some(BtfType::DeclTag(ty, _)) = types.types.get(i) {
                         debug!("{}: not supported. replacing with INT", kind);
                         let int_type = BtfType::new_int(ty.name_off, 1, 0, 0);
-                        btf.add_type(int_type);
-                    } else {
-                        btf.add_type(BtfType::DeclTag(*ty, *btf_decl_tag));
+                        types.types[i] = int_type;
                     }
                 }
-                BtfType::TypeTag(ty) => {
-                    if !features.btf_type_tag {
+                // Sanitize TYPE_TAG
+                BtfKind::TypeTag if !features.btf_type_tag => {
+                    if let Some(BtfType::TypeTag(ty)) = types.types.get(i) {
                         debug!("{}: not supported. replacing with CONST", kind);
                         let const_type = BtfType::new_const(unsafe { ty.__bindgen_anon_1.type_ });
-                        btf.add_type(const_type);
-                    } else {
-                        btf.add_type(BtfType::TypeTag(*ty));
+                        types.types[i] = const_type;
                     }
                 }
-                // The type does not need sanitizing
-                ty => {
-                    btf.add_type(ty.clone());
-                }
+                // The type does not need fixing up or sanitization
+                _ => {}
             }
         }
-        Ok(btf)
+        self.types = types;
+        Ok(())
     }
 }
 
@@ -857,6 +816,67 @@ impl<'a> Iterator for SecInfoIter<'a> {
     }
 }
 
+/// BtfTypes allows for access and manipulation of a
+/// collection of BtfType objects
+#[derive(Debug, Clone)]
+pub(crate) struct BtfTypes {
+    pub(crate) types: Vec<BtfType>,
+}
+
+impl Default for BtfTypes {
+    fn default() -> Self {
+        Self {
+            types: vec![BtfType::Unknown],
+        }
+    }
+}
+
+impl BtfTypes {
+    pub(crate) fn to_bytes(&self) -> Vec<u8> {
+        let mut buf = vec![];
+        for t in self.types.iter().skip(1) {
+            let b = t.to_bytes();
+            buf.put(b.as_slice())
+        }
+        buf
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.types.len()
+    }
+
+    pub(crate) fn push(&mut self, value: BtfType) {
+        self.types.push(value)
+    }
+
+    pub(crate) fn type_by_id(&self, type_id: u32) -> Result<&BtfType, BtfError> {
+        self.types
+            .get(type_id as usize)
+            .ok_or(BtfError::UnknownBtfType { type_id })
+    }
+
+    pub(crate) fn resolve_type(&self, root_type_id: u32) -> Result<u32, BtfError> {
+        let mut type_id = root_type_id;
+        for _ in 0..MAX_RESOLVE_DEPTH {
+            let ty = self.type_by_id(type_id)?;
+
+            use BtfType::*;
+            match ty {
+                Volatile(ty) | Const(ty) | Restrict(ty) | Typedef(ty) | TypeTag(ty) => {
+                    // Safety: union
+                    type_id = unsafe { ty.__bindgen_anon_1.type_ };
+                    continue;
+                }
+                _ => return Ok(type_id),
+            }
+        }
+
+        Err(BtfError::MaximumTypeDepthReached {
+            type_id: root_type_id,
+        })
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct SecInfo<'a> {
     sec_name_off: u32,
@@ -1045,14 +1065,6 @@ mod tests {
         let func = BtfType::new_func(add, func_proto_type_id, btf_func_linkage::BTF_FUNC_GLOBAL);
         btf.add_type(func);
 
-        let name_offset = btf.add_string("int".to_string());
-        let type_tag = BtfType::new_type_tag(name_offset, int_type_id);
-        btf.add_type(type_tag);
-
-        let name_offset = btf.add_string("decl_tag".to_string());
-        let decl_tag = BtfType::new_decl_tag(name_offset, var_type_id, -1);
-        btf.add_type(decl_tag);
-
         let cases = HashMap::from([
             (
                 "noop",
@@ -1162,8 +1174,9 @@ mod tests {
 
         for (name, features) in cases {
             println!("[CASE] Sanitize {}", name);
-            let new_btf = btf.sanitize(&features).unwrap();
-            let raw_new_btf = new_btf.to_bytes();
+            btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+                .unwrap();
+            let raw_new_btf = btf.to_bytes();
             Btf::parse(&raw_new_btf, Endianness::default()).unwrap();
         }
     }
