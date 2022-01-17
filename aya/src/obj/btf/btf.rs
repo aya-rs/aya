@@ -454,7 +454,7 @@ impl Btf {
                 }
                 // Fixup DATASEC
                 BtfKind::DataSec if features.btf_datasec => {
-                    if let Some(BtfType::DataSec(ty, data)) = types.types.get_mut(i) {
+                    if let Some(BtfType::DataSec(ty, data)) = types.types.get(i) {
                         // Start DataSec Fixups
                         let sec_name = self.string_at(ty.name_off)?;
                         let name = sec_name.to_string();
@@ -465,22 +465,25 @@ impl Btf {
                             continue;
                         }
 
+                        let mut fixed_ty = *ty;
+                        let mut fixed_data = data.clone();
                         // We need to get the size of the section from the ELF file
                         // Fortunately, we cached these when parsing it initially
                         // and we can this up by name in section_sizes
-                        if let Some(size) = section_sizes.get(&name) {
-                            debug!("{} {}: fixup size to {}", kind, name, size);
-                            ty.__bindgen_anon_1.size = *size as u32;
-                        } else {
-                            return Err(BtfError::UnknownSectionSize { section_name: name });
-                        }
+                        let size = section_sizes.get(&name).ok_or_else(|| {
+                            BtfError::UnknownSectionSize {
+                                section_name: name.clone(),
+                            }
+                        })?;
+                        debug!("{} {}: fixup size to {}", kind, name, size);
+                        fixed_ty.__bindgen_anon_1.size = *size as u32;
 
                         // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
                         // that need to have their offsets adjusted. To do this,
                         // we need to get the offset from the ELF file.
                         // This was also cached during initial parsing and
                         // we can query by name in symbol_offsets
-                        for d in data {
+                        for d in &mut fixed_data {
                             let var_type = types.type_by_id(d.type_)?;
                             let var_kind = var_type.kind()?.unwrap();
                             if let BtfType::Var(vty, var) = var_type {
@@ -507,6 +510,7 @@ impl Btf {
                                 return Err(BtfError::InvalidDatasec);
                             }
                         }
+                        types.types[i] = BtfType::DataSec(fixed_ty, fixed_data);
                     }
                 }
                 // Fixup FUNC_PROTO
