@@ -453,57 +453,64 @@ impl Btf {
                     // Start DataSec Fixups
                     let sec_name = self.string_at(ty.name_off)?;
                     let name = sec_name.to_string();
-                    // There are some cases when the compiler does indeed populate the
-                    // size
-                    if unsafe { ty.__bindgen_anon_1.size > 0 } {
-                        debug!("{} {}: fixup not required", kind, name);
-                        continue;
-                    }
 
                     let mut fixed_ty = *ty;
                     let mut fixed_data = data.clone();
-                    // We need to get the size of the section from the ELF file
-                    // Fortunately, we cached these when parsing it initially
-                    // and we can this up by name in section_sizes
-                    let size =
-                        section_sizes
-                            .get(&name)
-                            .ok_or_else(|| BtfError::UnknownSectionSize {
+
+                    // Handle any "/" characters in section names
+                    // Example: "maps/hashmap"
+                    let fixed_name = name.replace('/', ".");
+                    if fixed_name != name {
+                        fixed_ty.name_off = self.add_string(fixed_name);
+                    }
+
+                    // There are some cases when the compiler does indeed populate the
+                    // size
+                    if unsafe { ty.__bindgen_anon_1.size > 0 } {
+                        debug!("{} {}: size fixup not required", kind, name);
+                    } else {
+                        // We need to get the size of the section from the ELF file
+                        // Fortunately, we cached these when parsing it initially
+                        // and we can this up by name in section_sizes
+                        let size = section_sizes.get(&name).ok_or_else(|| {
+                            BtfError::UnknownSectionSize {
                                 section_name: name.clone(),
-                            })?;
-                    debug!("{} {}: fixup size to {}", kind, name, size);
-                    fixed_ty.__bindgen_anon_1.size = *size as u32;
-
-                    // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
-                    // that need to have their offsets adjusted. To do this,
-                    // we need to get the offset from the ELF file.
-                    // This was also cached during initial parsing and
-                    // we can query by name in symbol_offsets
-                    for d in &mut fixed_data {
-                        let var_type = types.type_by_id(d.type_)?;
-                        let var_kind = var_type.kind()?.unwrap();
-                        if let BtfType::Var(vty, var) = var_type {
-                            let var_name = self.string_at(vty.name_off)?.to_string();
-                            if var.linkage == btf_func_linkage::BTF_FUNC_STATIC as u32 {
-                                debug!(
-                                    "{} {}: {} {}: fixup not required",
-                                    kind, name, var_kind, var_name
-                                );
-                                continue;
                             }
+                        })?;
+                        debug!("{} {}: fixup size to {}", kind, name, size);
+                        fixed_ty.__bindgen_anon_1.size = *size as u32;
 
-                            let offset = symbol_offsets.get(&var_name).ok_or(
-                                BtfError::SymbolOffsetNotFound {
-                                    symbol_name: var_name.clone(),
-                                },
-                            )?;
-                            d.offset = *offset as u32;
-                            debug!(
-                                "{} {}: {} {}: fixup offset {}",
-                                kind, name, var_kind, var_name, offset
-                            );
-                        } else {
-                            return Err(BtfError::InvalidDatasec);
+                        // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
+                        // that need to have their offsets adjusted. To do this,
+                        // we need to get the offset from the ELF file.
+                        // This was also cached during initial parsing and
+                        // we can query by name in symbol_offsets
+                        for d in &mut fixed_data {
+                            let var_type = types.type_by_id(d.type_)?;
+                            let var_kind = var_type.kind()?.unwrap();
+                            if let BtfType::Var(vty, var) = var_type {
+                                let var_name = self.string_at(vty.name_off)?.to_string();
+                                if var.linkage == btf_func_linkage::BTF_FUNC_STATIC as u32 {
+                                    debug!(
+                                        "{} {}: {} {}: fixup not required",
+                                        kind, name, var_kind, var_name
+                                    );
+                                    continue;
+                                }
+
+                                let offset = symbol_offsets.get(&var_name).ok_or(
+                                    BtfError::SymbolOffsetNotFound {
+                                        symbol_name: var_name.clone(),
+                                    },
+                                )?;
+                                d.offset = *offset as u32;
+                                debug!(
+                                    "{} {}: {} {}: fixup offset {}",
+                                    kind, name, var_kind, var_name, offset
+                                );
+                            } else {
+                                return Err(BtfError::InvalidDatasec);
+                            }
                         }
                     }
                     types.types[i] = BtfType::DataSec(fixed_ty, fixed_data);
@@ -1097,7 +1104,7 @@ mod tests {
             BTF_VAR_GLOBAL_EXTERN,
         ));
 
-        let name_offset = btf.add_string(".data".to_string());
+        let name_offset = btf.add_string(".data/foo".to_string());
         let variables = vec![btf_var_secinfo {
             type_: var_type_id,
             offset: 0,
@@ -1111,14 +1118,14 @@ mod tests {
         };
 
         btf.fixup_and_sanitize(
-            &HashMap::from([(".data".to_string(), 32u64)]),
+            &HashMap::from([(".data/foo".to_string(), 32u64)]),
             &HashMap::from([("foo".to_string(), 64u64)]),
             &features,
         )
         .unwrap();
 
         if let BtfType::DataSec(fixed, sec_info) = btf.type_by_id(datasec_type_id).unwrap() {
-            assert!(fixed.name_off == name_offset);
+            assert!(fixed.name_off != name_offset);
             assert!(unsafe { fixed.__bindgen_anon_1.size } == 32);
             assert!(sec_info.len() == 1);
             assert!(sec_info[0].type_ == var_type_id);
@@ -1126,7 +1133,8 @@ mod tests {
                 sec_info[0].offset == 64,
                 "expected 64, got {}",
                 sec_info[0].offset
-            )
+            );
+            assert!(btf.string_at(fixed.name_off).unwrap() == ".data.foo")
         } else {
             panic!("not a datasec")
         }
