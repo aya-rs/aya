@@ -310,13 +310,10 @@ impl<'a> BpfLoader<'a> {
                 // fixup btf
                 let section_data = obj.section_sizes.clone();
                 let symbol_offsets = obj.symbol_offset_by_name.clone();
-                obj_btf.fixup(&section_data, &symbol_offsets)?;
-                let btf = obj_btf.sanitize(&self.features)?;
-
+                obj_btf.fixup_and_sanitize(&section_data, &symbol_offsets, &self.features)?;
                 // load btf to the kernel
-                let raw_btf = btf.to_bytes();
-                let fd = load_btf(raw_btf)?;
-                Some(fd)
+                let raw_btf = obj_btf.to_bytes();
+                Some(load_btf(raw_btf)?)
             } else {
                 None
             }

@@ -448,10 +448,10 @@ impl BtfType {
         BtfType::TypeTag(btf_type)
     }
 
-    pub(crate) fn new_ptr(type_: u32) -> BtfType {
+    pub(crate) fn new_ptr(name_off: u32, type_: u32) -> BtfType {
         let info = (BTF_KIND_PTR) << 24;
         let mut btf_type = unsafe { std::mem::zeroed::<btf_type>() };
-        btf_type.name_off = 0;
+        btf_type.name_off = name_off;
         btf_type.info = info;
         btf_type.__bindgen_anon_1.type_ = type_;
         BtfType::Ptr(btf_type)
