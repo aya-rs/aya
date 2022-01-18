@@ -710,7 +710,7 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
     let type_tag = BtfType::new_type_tag(name_offset, int_type_id);
     let type_tag_type = btf.add_type(type_tag);
 
-    btf.add_type(BtfType::new_ptr(type_tag_type));
+    btf.add_type(BtfType::new_ptr(0, type_tag_type));
 
     let btf_bytes = btf.to_bytes();
 
