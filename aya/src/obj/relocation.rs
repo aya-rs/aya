@@ -1,11 +1,12 @@
 use std::{collections::HashMap, mem};
 
-use object::SectionIndex;
+use log::debug;
+use object::{SectionIndex, SymbolKind};
 use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_insn, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_MAP_FD,
+        bpf_insn, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
         BPF_PSEUDO_MAP_VALUE,
     },
     maps::Map,
@@ -52,12 +53,12 @@ pub(crate) struct Relocation {
 #[derive(Debug, Clone)]
 pub(crate) struct Symbol {
     pub(crate) index: usize,
-    pub(crate) section_index: Option<SectionIndex>,
+    pub(crate) section_index: Option<usize>,
     pub(crate) name: Option<String>,
     pub(crate) address: u64,
     pub(crate) size: u64,
     pub(crate) is_definition: bool,
-    pub(crate) is_text: bool,
+    pub(crate) kind: SymbolKind,
 }
 
 impl Object {
@@ -82,6 +83,7 @@ impl Object {
                     relocations.values(),
                     &maps_by_section,
                     &self.symbols_by_index,
+                    self.text_section_index,
                 )
                 .map_err(|error| BpfError::RelocationError {
                     function: function.name.clone(),
@@ -95,8 +97,12 @@ impl Object {
 
     pub fn relocate_calls(&mut self) -> Result<(), BpfError> {
         for (name, program) in self.programs.iter_mut() {
-            let linker =
-                FunctionLinker::new(&self.functions, &self.relocations, &self.symbols_by_index);
+            let linker = FunctionLinker::new(
+                self.text_section_index,
+                &self.functions,
+                &self.relocations,
+                &self.symbols_by_index,
+            );
             linker
                 .link(program)
                 .map_err(|error| BpfError::RelocationError {
@@ -114,6 +120,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     relocations: I,
     maps_by_section: &HashMap<usize, (&str, &Map)>,
     symbol_table: &HashMap<usize, Symbol>,
+    text_section_index: Option<usize>,
 ) -> Result<(), RelocationError> {
     let section_offset = fun.section_offset;
     let instructions = &mut fun.instructions;
@@ -136,11 +143,6 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
         }
         let ins_index = ins_offset / INS_SIZE;
 
-        // calls are relocated in a separate step
-        if is_call(&instructions[ins_index]) {
-            continue;
-        }
-
         // a map relocation points to the ELF section that contains the map
         let sym = symbol_table
             .get(&rel.symbol_index)
@@ -154,18 +156,23 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             None => continue,
         };
 
+        // calls and relocation to .text symbols are handled in a separate step
+        if insn_is_call(&instructions[ins_index]) || sym.section_index == text_section_index {
+            continue;
+        }
+
         let (name, map) =
             maps_by_section
-                .get(&section_index.0)
+                .get(&section_index)
                 .ok_or(RelocationError::SectionNotFound {
                     symbol_index: rel.symbol_index,
                     symbol_name: sym.name.clone(),
-                    section_index: section_index.0,
+                    section_index,
                 })?;
 
         let map_fd = map.fd.ok_or_else(|| RelocationError::MapNotCreated {
             name: (*name).into(),
-            section_index: section_index.0,
+            section_index,
         })?;
 
         if !map.obj.data.is_empty() {
@@ -181,6 +188,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
 }
 
 struct FunctionLinker<'a> {
+    text_section_index: Option<usize>,
     functions: &'a HashMap<u64, Function>,
     linked_functions: HashMap<u64, usize>,
     relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
@@ -189,11 +197,13 @@ struct FunctionLinker<'a> {
 
 impl<'a> FunctionLinker<'a> {
     fn new(
+        text_section_index: Option<usize>,
         functions: &'a HashMap<u64, Function>,
         relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
         symbol_table: &'a HashMap<usize, Symbol>,
     ) -> FunctionLinker<'a> {
         FunctionLinker {
+            text_section_index,
             functions,
             linked_functions: HashMap::new(),
             relocations,
@@ -242,17 +252,8 @@ impl<'a> FunctionLinker<'a> {
 
     fn relocate(&mut self, program: &mut Function, fun: &Function) -> Result<(), RelocationError> {
         let relocations = self.relocations.get(&fun.section_index);
-        let rel_info = |offset| relocations.and_then(|rels| rels.get(&offset));
-        let rel_target_address = |rel: &Relocation, symbol_table: &HashMap<usize, Symbol>| {
-            let sym =
-                symbol_table
-                    .get(&rel.symbol_index)
-                    .ok_or(RelocationError::UnknownSymbol {
-                        index: rel.symbol_index,
-                    })?;
 
-            Ok(sym.address)
-        };
+        debug!("relocating program {} function {}", program.name, fun.name);
 
         let n_instructions = fun.instructions.len();
         let start_ins = program.instructions.len() - n_instructions;
@@ -260,25 +261,65 @@ impl<'a> FunctionLinker<'a> {
         // process all the instructions. We can't only loop over relocations since we need to
         // patch pc-relative calls too.
         for ins_index in start_ins..start_ins + n_instructions {
-            if !is_call(&program.instructions[ins_index]) {
+            let ins = program.instructions[ins_index];
+            let is_call = insn_is_call(&ins);
+
+            // only resolve relocations for calls or for instructions that
+            // reference symbols in the .text section (eg let callback =
+            // &some_fun)
+            let rel = if let Some(relocations) = relocations {
+                self.text_relocation_info(
+                    relocations,
+                    (fun.section_offset + (ins_index - start_ins) * INS_SIZE) as u64,
+                )?
+                // if not a call and not a .text reference, ignore the
+                // relocation (see relocate_maps())
+                .and_then(|(_, sym)| {
+                    if is_call {
+                        return Some(sym.address);
+                    }
+
+                    match sym.kind {
+                        SymbolKind::Text => Some(sym.address),
+                        SymbolKind::Section if sym.section_index == self.text_section_index => {
+                            Some(sym.address + ins.imm as u64)
+                        }
+                        _ => None,
+                    }
+                })
+            } else {
+                None
+            };
+
+            // some_fun() or let x = &some_fun trigger linking, everything else
+            // can be ignored here
+            if !is_call && rel.is_none() {
                 continue;
             }
 
-            let callee_address = if let Some(rel) =
-                rel_info((fun.section_offset + (ins_index - start_ins) * INS_SIZE) as u64)
-            {
+            let callee_address = if let Some(address) = rel {
                 // We have a relocation entry for the instruction at `ins_index`, the address of
                 // the callee is the address of the relocation's target symbol.
-                rel_target_address(rel, self.symbol_table)?
+                address
             } else {
                 // The caller and the callee are in the same ELF section and this is a pc-relative
                 // call. Resolve the pc-relative imm to an absolute address.
                 let ins_size = INS_SIZE as i64;
                 (fun.section_offset as i64
                     + ((ins_index - start_ins) as i64) * ins_size
-                    + (program.instructions[ins_index].imm + 1) as i64 * ins_size)
-                    as u64
+                    + (ins.imm + 1) as i64 * ins_size) as u64
             };
+
+            debug!(
+                "relocating {} to callee address {} ({})",
+                if is_call { "call" } else { "reference" },
+                callee_address,
+                if rel.is_some() {
+                    "relocation"
+                } else {
+                    "relative"
+                },
+            );
 
             // lookup and link the callee if it hasn't been linked already. `callee_ins_index` will
             // contain the instruction index of the callee inside the program.
@@ -289,6 +330,9 @@ impl<'a> FunctionLinker<'a> {
                         address: callee_address,
                         caller_name: fun.name.clone(),
                     })?;
+
+            debug!("callee is {}", callee.name);
+
             let callee_ins_index = self.link_function(program, callee)?;
 
             let mut ins = &mut program.instructions[ins_index];
@@ -297,7 +341,15 @@ impl<'a> FunctionLinker<'a> {
             } else {
                 (callee_ins_index - ins_index - 1) as i32
             };
+            if !is_call {
+                ins.set_src_reg(BPF_PSEUDO_FUNC as u8);
+            }
         }
+
+        debug!(
+            "finished relocating program {} function {}",
+            program.name, fun.name
+        );
 
         Ok(())
     }
@@ -321,16 +373,35 @@ impl<'a> FunctionLinker<'a> {
         let line_info = &fun.line_info.line_info;
         let line_info = line_info.iter().map(|l| {
             let mut new = *l;
-            new.insn_off = l.insn_off + off_adj as u32;
+            new.insn_off = start as u32 + l.insn_off;
             new
         });
         program.line_info.line_info.extend(line_info);
         program.line_info.num_info = program.func_info.func_info.len() as u32;
         Ok(())
     }
+
+    fn text_relocation_info(
+        &self,
+        relocations: &HashMap<u64, Relocation>,
+        offset: u64,
+    ) -> Result<Option<(Relocation, Symbol)>, RelocationError> {
+        if let Some(rel) = relocations.get(&offset) {
+            let sym =
+                self.symbol_table
+                    .get(&rel.symbol_index)
+                    .ok_or(RelocationError::UnknownSymbol {
+                        index: rel.symbol_index,
+                    })?;
+
+            Ok(Some((*rel, sym.clone())))
+        } else {
+            Ok(None)
+        }
+    }
 }
 
-fn is_call(ins: &bpf_insn) -> bool {
+fn insn_is_call(ins: &bpf_insn) -> bool {
     let klass = (ins.code & 0x07) as u32;
     let op = (ins.code & 0xF0) as u32;
     let src = (ins.code & 0x08) as u32;

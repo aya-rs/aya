@@ -47,6 +47,7 @@ pub struct Object {
     // symbol_offset_by_name caches symbols that could be referenced from a
     // BTF VAR type so the offsets can be fixed up
     pub(crate) symbol_offset_by_name: HashMap<String, u64>,
+    pub(crate) text_section_index: Option<usize>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -245,15 +246,13 @@ impl Object {
                 let sym = Symbol {
                     index: symbol.index().0,
                     name: Some(name.clone()),
-                    section_index: symbol.section().index(),
+                    section_index: symbol.section().index().map(|i| i.0),
                     address: symbol.address(),
                     size: symbol.size(),
                     is_definition: symbol.is_definition(),
-                    is_text: symbol.kind() == SymbolKind::Text,
+                    kind: symbol.kind(),
                 };
-                bpf_obj
-                    .symbols_by_index
-                    .insert(symbol.index().0, sym.clone());
+                bpf_obj.symbols_by_index.insert(symbol.index().0, sym);
 
                 if symbol.is_global() || symbol.kind() == SymbolKind::Data {
                     bpf_obj.symbol_offset_by_name.insert(name, symbol.address());
@@ -298,6 +297,7 @@ impl Object {
             symbols_by_index: HashMap::new(),
             section_sizes: HashMap::new(),
             symbol_offset_by_name: HashMap::new(),
+            text_section_index: None,
         }
     }
 
@@ -323,9 +323,9 @@ impl Object {
                     .iter_mut()
                     // assumption: there is only one map created per section where we're trying to
                     // patch data. this assumption holds true for the .rodata section at least
-                    .find(|(_, m)| symbol.section_index == Some(SectionIndex(m.section_index)))
+                    .find(|(_, m)| symbol.section_index == Some(m.section_index))
                     .ok_or_else(|| ParseError::MapNotFound {
-                        index: symbol.section_index.unwrap_or(SectionIndex(0)).0,
+                        index: symbol.section_index.unwrap_or(0),
                     })?;
                 let start = symbol.address as usize;
                 let end = start + symbol.size as usize;
@@ -398,10 +398,15 @@ impl Object {
     }
 
     fn parse_text_section(&mut self, mut section: Section) -> Result<(), ParseError> {
+        self.text_section_index = Some(section.index.0);
+
         let mut symbols_by_address = HashMap::new();
 
         for sym in self.symbols_by_index.values() {
-            if sym.is_definition && sym.is_text && sym.section_index == Some(section.index) {
+            if sym.is_definition
+                && sym.kind == SymbolKind::Text
+                && sym.section_index == Some(section.index.0)
+            {
                 if symbols_by_address.contains_key(&sym.address) {
                     return Err(ParseError::SymbolTableConflict {
                         section_index: section.index.0,
@@ -1453,12 +1458,12 @@ mod tests {
             1,
             Symbol {
                 index: 1,
-                section_index: Some(SectionIndex(1)),
+                section_index: Some(1),
                 name: Some("my_config".to_string()),
                 address: 0,
                 size: 3,
                 is_definition: true,
-                is_text: false,
+                kind: SymbolKind::Data,
             },
         );
 
