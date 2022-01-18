@@ -360,24 +360,30 @@ impl<'a> FunctionLinker<'a> {
         fun: &Function,
         start: usize,
     ) -> Result<(), RelocationError> {
-        let off_adj = start - (fun.section_offset as usize / INS_SIZE);
         let func_info = &fun.func_info.func_info;
-        let func_info = func_info.iter().map(|f| {
-            let mut new = *f;
-            new.insn_off = f.insn_off + off_adj as u32;
-            new
+        let func_info = func_info.iter().cloned().map(|mut info| {
+            // `start` is the new instruction offset of `fun` within `program`
+            info.insn_off = start as u32;
+            info
         });
         program.func_info.func_info.extend(func_info);
         program.func_info.num_info = program.func_info.func_info.len() as u32;
 
         let line_info = &fun.line_info.line_info;
-        let line_info = line_info.iter().map(|l| {
-            let mut new = *l;
-            new.insn_off = start as u32 + l.insn_off;
-            new
-        });
-        program.line_info.line_info.extend(line_info);
-        program.line_info.num_info = program.func_info.func_info.len() as u32;
+        if !line_info.is_empty() {
+            // this is the original offset
+            let original_start_off = line_info[0].insn_off;
+
+            let line_info = line_info.iter().cloned().map(|mut info| {
+                // rebase offsets on top of start, which is the offset of the
+                // function in the program being linked
+                info.insn_off = start as u32 + (info.insn_off - original_start_off);
+                info
+            });
+
+            program.line_info.line_info.extend(line_info);
+            program.line_info.num_info = program.func_info.func_info.len() as u32;
+        }
         Ok(())
     }
 
