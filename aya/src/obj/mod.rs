@@ -519,6 +519,36 @@ impl Object {
         Ok(())
     }
 
+    fn parse_map_section(
+        &mut self,
+        section: &Section,
+        symbols: Vec<Symbol>,
+    ) -> Result<(), ParseError> {
+        if symbols.is_empty() {
+            return Err(ParseError::NoSymbolsInMapSection {});
+        }
+        for (i, sym) in symbols.iter().enumerate() {
+            let start = sym.address as usize;
+            let end = start + sym.size as usize;
+            let data = &section.data[start..end];
+            let name = sym
+                .name
+                .as_ref()
+                .ok_or(ParseError::MapSymbolNameNotFound { i })?;
+            let def = parse_map_def(name, data)?;
+            self.maps.insert(
+                name.to_string(),
+                Map {
+                    section_index: section.index.0,
+                    def,
+                    data: Vec::new(),
+                    kind: MapKind::Other,
+                },
+            );
+        }
+        Ok(())
+    }
+
     fn parse_section(&mut self, mut section: Section) -> Result<(), BpfError> {
         let mut parts = section.name.rsplitn(2, '/').collect::<Vec<_>>();
         parts.reverse();
@@ -542,9 +572,19 @@ impl Object {
             BpfSectionKind::Btf => self.parse_btf(&section)?,
             BpfSectionKind::BtfExt => self.parse_btf_ext(&section)?,
             BpfSectionKind::Maps => {
-                let name = section.name.splitn(2, '/').last().unwrap();
-                self.maps
-                    .insert(name.to_string(), parse_map(&section, name)?);
+                let symbols: Vec<Symbol> = self
+                    .symbols_by_index
+                    .values()
+                    .filter(|s| {
+                        if let Some(idx) = s.section_index {
+                            idx == section.index.0
+                        } else {
+                            false
+                        }
+                    })
+                    .cloned()
+                    .collect();
+                self.parse_map_section(&section, symbols)?
             }
             BpfSectionKind::Program => {
                 let program = self.parse_program(&section)?;
@@ -625,6 +665,12 @@ pub enum ParseError {
 
     #[error("map for section with index {index} not found")]
     MapNotFound { index: usize },
+
+    #[error("the map number {i} in the `maps` section doesn't have a symbol name")]
+    MapSymbolNameNotFound { i: usize },
+
+    #[error("no symbols found for the maps included in the maps section")]
+    NoSymbolsInMapSection {},
 }
 
 #[derive(Debug)]
@@ -873,6 +919,22 @@ mod tests {
         }
     }
 
+    fn fake_sym(obj: &mut Object, section_index: usize, address: u64, name: &str, size: u64) {
+        let idx = obj.symbols_by_index.len();
+        obj.symbols_by_index.insert(
+            idx + 1,
+            Symbol {
+                index: idx + 1,
+                section_index: Some(section_index),
+                name: Some(name.to_string()),
+                address,
+                size,
+                is_definition: false,
+                kind: SymbolKind::Data,
+            },
+        );
+    }
+
     fn bytes_of<T>(val: &T) -> &[u8] {
         // Safety: This is for testing only
         unsafe { crate::util::bytes_of(val) }
@@ -1113,7 +1175,7 @@ mod tests {
     #[test]
     fn test_parse_section_map() {
         let mut obj = fake_obj();
-
+        fake_sym(&mut obj, 0, 0, "foo", mem::size_of::<bpf_map_def>() as u64);
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Maps,
@@ -1130,6 +1192,39 @@ mod tests {
             Ok(())
         );
         assert!(obj.maps.get("foo").is_some());
+    }
+
+    #[test]
+    fn test_parse_section_multiple_maps() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", mem::size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 28, "bar", mem::size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 60, "baz", mem::size_of::<bpf_map_def>() as u64);
+        let def = &bpf_map_def {
+            map_type: 1,
+            key_size: 2,
+            value_size: 3,
+            max_entries: 4,
+            map_flags: 5,
+            ..Default::default()
+        };
+        let map_data = bytes_of(def).to_vec();
+        let mut buf = vec![];
+        buf.extend(&map_data);
+        buf.extend(&map_data);
+        // throw in some padding
+        buf.extend(&[0, 0, 0, 0]);
+        buf.extend(&map_data);
+        assert_matches!(
+            obj.parse_section(fake_section(BpfSectionKind::Maps, "maps", buf.as_slice(),)),
+            Ok(())
+        );
+        assert!(obj.maps.get("foo").is_some());
+        assert!(obj.maps.get("bar").is_some());
+        assert!(obj.maps.get("baz").is_some());
+        for (_, m) in &obj.maps {
+            assert_eq!(&m.def, def);
+        }
     }
 
     #[test]
