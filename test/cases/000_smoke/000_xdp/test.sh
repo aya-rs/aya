@@ -11,8 +11,8 @@ set -e
 NAME=pass
 
 clean_up() {
-    rm -rf ebpf user ${NAME}.o ${NAME}
-    exec_vm rm -f pass pass.o
+    rm -rf ${NAME}.o ${NAME}
+    exec_vm rm -f ${NAME} ${NAME}.o
 }
 
 trap clean_up EXIT
@@ -21,9 +21,9 @@ trap clean_up EXIT
 compile_ebpf "$(pwd)/${NAME}.ebpf.rs"
 compile_user "$(pwd)/${NAME}.rs"
 
-scp_vm pass.o
-scp_vm pass
+scp_vm ${NAME}.o
+scp_vm ${NAME}
 
-exec_vm sudo ./pass
+exec_vm sudo ./${NAME}
 
 exit 0

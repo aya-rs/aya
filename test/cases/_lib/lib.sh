@@ -54,6 +54,17 @@ EOF
     cargo build -q --manifest-path "${dir}/ebpf/Cargo.toml"
     mv "${dir}/ebpf/target/bpfel-unknown-none/debug/${artifact}" "${dir}/${base}.o"
     rm -rf "${dir}/.cargo"
+    rm -rf "${dir}/ebpf"
+}
+
+# compile a C BPF file
+compile_c_ebpf() {
+    file=$(basename "$1")
+    dir=$(dirname "$1")
+    base=$(echo "${file}" | cut -f1 -d '.')
+
+    rust-script "${RT_PROJECT_ROOT}/_lib/compile-ebpf.ers" "${1}" "${dir}/${base}.o"
+    rm -rf "${dir}/include"
 }
 
 # compiles the userspace program by using rust-script to create a temporary
@@ -75,6 +86,7 @@ members = []
 EOF
     cargo build -q --release --manifest-path "${dir}/user/Cargo.toml" --target=x86_64-unknown-linux-musl
     mv "${dir}/user/target/x86_64-unknown-linux-musl/release/${artifact}" "${dir}/${base}"
+    rm -rf "${dir}/user"
 }
 
 download_images() {
