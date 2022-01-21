@@ -18,6 +18,8 @@ clean_up() {
 trap clean_up EXIT
 
 # Test code goes here
+min_kernel_version 5.9
+
 compile_c_ebpf "$(pwd)/main.bpf.c"
 compile_c_ebpf "$(pwd)/${NAME}.bpf.c"
 compile_user "$(pwd)/${NAME}.rs"

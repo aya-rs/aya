@@ -9,6 +9,9 @@ AYA_TMPDIR="${RT_PROJECT_ROOT}/_tmp"
 # Directory for VM images
 AYA_IMGDIR="${RT_PROJECT_ROOT}/_images"
 
+# Cancel Exit Code
+RT_CANCEL=253
+
 # Test Architecture
 if [ -z "${AYA_TEST_ARCH}" ]; then
     AYA_TEST_ARCH="$(uname -m)"
@@ -238,4 +241,21 @@ cleanup_vm() {
     if [ "$?" != "0" ]; then
         stop_vm
     fi
+}
+
+# Check that host machine meets minimum kernel requirement
+# Must be in format {major}.{minor}
+min_kernel_version() {
+    target_major=$(echo "$1" | cut -d '.' -f1)
+    target_minor=$(echo "$1" | cut -d '.' -f2)
+
+    vm_kernel=$(exec_vm uname -r)
+    vm_major=$(echo "${vm_kernel}" | cut -d '.' -f1)
+    vm_minor=$(echo "${vm_kernel}" | cut -d '.' -f2)
+
+    if [ "${vm_major}" -lt "${target_major}" ] || [ "${vm_minor}" -lt "${target_minor}" ]; then
+        echo "Test not supported on kernel ${vm_major}.${vm_minor}"
+        return ${RT_CANCEL}
+    fi
+    return 0
 }
