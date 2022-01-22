@@ -8,19 +8,23 @@ set -e
 #. "${RT_LIB}"
 . "${RT_PROJECT_ROOT}/_lib/lib.sh"
 
-NAME=pass
+NAME=ext
 
 clean_up() {
-    rm -rf ${NAME}.o ${NAME}
-    exec_vm rm -f ${NAME} ${NAME}.o
+    rm -rf main.o ${NAME}.o ${NAME}
+    exec_vm rm -f main.o ${NAME}.o ${NAME}
 }
 
 trap clean_up EXIT
 
 # Test code goes here
-compile_ebpf "$(pwd)/${NAME}.ebpf.rs"
+min_kernel_version 5.9
+
+compile_c_ebpf "$(pwd)/main.bpf.c"
+compile_c_ebpf "$(pwd)/${NAME}.bpf.c"
 compile_user "$(pwd)/${NAME}.rs"
 
+scp_vm main.o
 scp_vm ${NAME}.o
 scp_vm ${NAME}
 

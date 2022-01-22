@@ -1,0 +1,38 @@
+FROM fedora:35
+
+# Rust Nightly
+RUN curl https://sh.rustup.rs -sSf | sh -s -- \
+    --default-toolchain nightly \
+    --component rustfmt \
+    --component clippy \
+    --component rust-src \
+    --target x86_64-unknown-linux-musl \
+    -y
+
+ENV PATH "/root/.cargo/bin:$PATH"
+
+# Pre-requisites
+RUN dnf install \
+    --setopt=install_weak_deps=False --best -qy \
+    golang \
+    qemu-system-x86 \
+    cloud-utils \
+    genisoimage \
+    libbpf-devel \
+    clang \
+    openssl-devel \
+    musl-libc \
+    git && dnf clean all \
+  	&& rm -rf /var/cache/yum
+
+RUN cargo install \
+    bpf-linker \
+    rust-script \
+    sccache
+
+RUN go install github.com/linuxkit/rtf@latest
+ENV PATH "/root/go/bin:$PATH"
+ENV RUSTC_WRAPPER "sccache"
+
+ENTRYPOINT ["rtf"]
+CMD ["-vvv", "run"]
