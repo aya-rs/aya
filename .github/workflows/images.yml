@@ -8,6 +8,13 @@ on:
       - 'main'
     paths:
       - 'images/**'
+      - '.github/workflows/images.yml'
+  pull_request:
+    branches:
+      - 'main'
+    paths:
+      - 'images/**'
+      - '.github/workflows/images.yml'
 
 env:
   REGISTRY: ghcr.io
@@ -39,8 +46,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
-          path: ./images
-          file: Dockerfile.rtf
+          context: images
+          file: images/Dockerfile.rtf
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
