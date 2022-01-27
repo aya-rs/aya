@@ -13,7 +13,7 @@ pub fn user_builder() -> Builder {
 pub fn bpf_builder() -> Builder {
     bindgen::builder()
         .use_core()
-        .ctypes_prefix("::aya_bpf::cty")
+        .ctypes_prefix("aya_bpf_cty")
         .layout_tests(false)
         .generate_comments(false)
         .clang_arg("-Wno-unknown-attributes")
