@@ -17,7 +17,7 @@ object = { version = "0.28", default-features = false, features = ["std", "read_
 bitflags = "1.2.1"
 bytes = "1"
 lazy_static = "1"
-parking_lot = { version = "0.11.1", features = ["send_guard"] }
+parking_lot = { version = "0.12.0", features = ["send_guard"] }
 futures = { version = "0.3.12", optional = true, default-features = false, features = ["std"] }
 tokio = { version = "1.2.0", features = ["macros", "rt", "rt-multi-thread", "net"], optional = true }
 async-std = { version = "1.9.0", optional = true }
