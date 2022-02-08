@@ -54,6 +54,9 @@ macro_rules! unsafe_impl_pod {
 
 unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64, u128, i128);
 
+// It only makes sense that an array of POD types is itself POD
+unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
+
 #[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
