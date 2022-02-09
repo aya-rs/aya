@@ -115,6 +115,7 @@ pub enum ProgramSection {
     SkSkbStreamVerdict { name: String },
     SockOps { name: String },
     SchedClassifier { name: String },
+    CgroupSkb { name: String },
     CgroupSkbIngress { name: String },
     CgroupSkbEgress { name: String },
     LircMode2 { name: String },
@@ -142,6 +143,7 @@ impl ProgramSection {
             ProgramSection::SkSkbStreamVerdict { name } => name,
             ProgramSection::SockOps { name } => name,
             ProgramSection::SchedClassifier { name } => name,
+            ProgramSection::CgroupSkb { name } => name,
             ProgramSection::CgroupSkbIngress { name } => name,
             ProgramSection::CgroupSkbEgress { name } => name,
             ProgramSection::LircMode2 { name } => name,
@@ -199,8 +201,26 @@ impl FromStr for ProgramSection {
             "sk_skb/stream_verdict" => SkSkbStreamVerdict { name },
             "sockops" => SockOps { name },
             "classifier" => SchedClassifier { name },
+            "cgroup_skb" => match &*name {
+                "ingress" => CgroupSkbIngress { name },
+                "egress" => CgroupSkbEgress { name },
+                _ => {
+                    return Err(ParseError::InvalidProgramSection {
+                        section: section.to_owned(),
+                    })
+                }
+            },
             "cgroup_skb/ingress" => CgroupSkbIngress { name },
             "cgroup_skb/egress" => CgroupSkbEgress { name },
+            "cgroup/skb" => CgroupSkb { name },
+            "cgroup" => match &*name {
+                "skb" => CgroupSkb { name },
+                _ => {
+                    return Err(ParseError::InvalidProgramSection {
+                        section: section.to_owned(),
+                    })
+                }
+            },
             "lirc_mode2" => LircMode2 { name },
             "perf_event" => PerfEvent { name },
             "raw_tp" | "raw_tracepoint" => RawTracePoint { name },
@@ -1429,6 +1449,90 @@ mod tests {
             obj.programs.get("foo"),
             Some(Program {
                 section: ProgramSection::FExit { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_cgroup_skb_ingress_unnamed() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "cgroup_skb/ingress",
+                bytes_of(&fake_ins())
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("ingress"),
+            Some(Program {
+                section: ProgramSection::CgroupSkbIngress { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_cgroup_skb_ingress_named() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "cgroup_skb/ingress/foo",
+                bytes_of(&fake_ins())
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::CgroupSkbIngress { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_cgroup_skb_no_direction_unamed() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "cgroup/skb",
+                bytes_of(&fake_ins())
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("skb"),
+            Some(Program {
+                section: ProgramSection::CgroupSkb { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_cgroup_skb_no_direction_named() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "cgroup/skb/foo",
+                bytes_of(&fake_ins())
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::CgroupSkb { .. },
                 ..
             })
         );

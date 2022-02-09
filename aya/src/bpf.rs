@@ -450,6 +450,10 @@ impl<'a> BpfLoader<'a> {
                                 },
                             })
                         }
+                        ProgramSection::CgroupSkb { .. } => Program::CgroupSkb(CgroupSkb {
+                            data,
+                            expected_attach_type: None,
+                        }),
                         ProgramSection::CgroupSkbIngress { .. } => Program::CgroupSkb(CgroupSkb {
                             data,
                             expected_attach_type: Some(CgroupSkbAttachType::Ingress),
