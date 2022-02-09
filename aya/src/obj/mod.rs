@@ -184,7 +184,7 @@ impl FromStr for ProgramSection {
                 let name = section.splitn(2, '/').last().unwrap().to_owned();
                 TracePoint { name }
             }
-            "socket_filter" => SocketFilter { name },
+            "socket" => SocketFilter { name },
             "sk_msg" => SkMsg { name },
             "sk_skb" => match &*name {
                 "stream_parser" => SkSkbStreamParser { name },
