@@ -201,6 +201,15 @@ impl FromStr for ProgramSection {
             "classifier" => SchedClassifier { name },
             "cgroup_skb/ingress" => CgroupSkbIngress { name },
             "cgroup_skb/egress" => CgroupSkbEgress { name },
+            "cgroup_skb" => match &*name {
+                "ingress" => CgroupSkbIngress { name },
+                "egress" => CgroupSkbEgress { name },
+                _ => {
+                    return Err(ParseError::InvalidProgramSection {
+                        section: section.to_owned(),
+                    })
+                }
+            },
             "lirc_mode2" => LircMode2 { name },
             "perf_event" => PerfEvent { name },
             "raw_tp" | "raw_tracepoint" => RawTracePoint { name },

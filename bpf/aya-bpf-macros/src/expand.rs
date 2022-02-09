@@ -238,10 +238,8 @@ impl CgroupSkb {
             } else {
                 format!("cgroup_skb/{}", attach)
             }
-        } else if let Some(name) = &self.name {
-            format!("cgroup/skb/{}", name)
         } else {
-            ("cgroup/skb").to_owned()
+            return Err(Error::new_spanned(&self.expected_attach_type, "missing attach type"));
         };
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
@@ -611,7 +609,7 @@ mod tests {
     }
 
     #[test]
-    fn cgroup_skb_with_name() {
+    fn cgroup_skb_no_attach() {
         let prog = CgroupSkb::from_syn(
             parse_quote!(name = "foo"),
             parse_quote!(
@@ -621,14 +619,12 @@ mod tests {
             ),
         )
         .unwrap();
-        let stream = prog.expand().unwrap();
-        assert!(stream
-            .to_string()
-            .contains("[link_section = \"cgroup/skb/foo\"]"));
+        let err = prog.expand().unwrap_err();
+        assert_eq!(err.to_string(), "missing attach type")
     }
 
     #[test]
-    fn cgroup_skb_no_name() {
+    fn cgroup_skb_no_name_no_attach() {
         let prog = CgroupSkb::from_syn(
             parse_quote!(),
             parse_quote!(
@@ -638,10 +634,8 @@ mod tests {
             ),
         )
         .unwrap();
-        let stream = prog.expand().unwrap();
-        assert!(stream
-            .to_string()
-            .contains("[link_section = \"cgroup/skb\"]"));
+        let err = prog.expand().unwrap_err();
+        assert_eq!(err.to_string(), "missing attach type")
     }
 
     #[test]
