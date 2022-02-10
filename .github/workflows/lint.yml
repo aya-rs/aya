@@ -47,7 +47,7 @@ jobs:
         env:
           MIRIFLAGS: -Zmiri-disable-stacked-borrows
         run: |
-          cargo miri test
+          cargo miri test --all-targets
           pushd bpf
           cargo miri test
           popd
