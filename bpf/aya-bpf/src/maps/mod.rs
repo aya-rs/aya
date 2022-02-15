@@ -7,6 +7,7 @@ pub(crate) enum PinningType {
 
 pub mod array;
 pub mod hash_map;
+pub mod lpm_trie;
 pub mod per_cpu_array;
 pub mod perf;
 pub mod program_array;
@@ -17,6 +18,7 @@ pub mod stack_trace;
 
 pub use array::Array;
 pub use hash_map::{HashMap, LruHashMap, LruPerCpuHashMap, PerCpuHashMap};
+pub use lpm_trie::LpmTrie;
 pub use per_cpu_array::PerCpuArray;
 pub use perf::{PerfEventArray, PerfEventByteArray};
 pub use program_array::ProgramArray;
