@@ -71,7 +71,7 @@ let ingress: &mut CgroupSkb = bpf.program_mut("ingress_filter")?.try_into()?;
 // load the program into the kernel
 ingress.load()?;
 
-// attach th program to the root cgroup. `ingress_filter` will be called for all
+// attach the program to the root cgroup. `ingress_filter` will be called for all
 // incoming packets.
 let cgroup = File::open("/sys/fs/cgroup/unified")?;
 ingress.attach(cgroup, CgroupSkbAttachType::Ingress)?;
