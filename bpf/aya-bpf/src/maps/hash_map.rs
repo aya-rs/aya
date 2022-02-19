@@ -41,6 +41,11 @@ impl<K, V> HashMap<K, V> {
     }
 
     #[inline]
+    pub fn get_mut(&mut self, key: &K) -> Option<&mut V> {
+        get_mut(&mut self.def, key)
+    }
+
+    #[inline]
     pub fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
         insert(&mut self.def, key, value, flags)
     }
@@ -83,6 +88,11 @@ impl<K, V> LruHashMap<K, V> {
     #[inline]
     pub fn get(&mut self, key: &K) -> Option<&V> {
         get(&mut self.def, key)
+    }
+
+    #[inline]
+    pub fn get_mut(&mut self, key: &K) -> Option<&mut V> {
+        get_mut(&mut self.def, key)
     }
 
     #[inline]
@@ -136,6 +146,11 @@ impl<K, V> PerCpuHashMap<K, V> {
     }
 
     #[inline]
+    pub fn get_mut(&mut self, key: &K) -> Option<&mut V> {
+        get_mut(&mut self.def, key)
+    }
+
+    #[inline]
     pub fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
         insert(&mut self.def, key, value, flags)
     }
@@ -186,6 +201,11 @@ impl<K, V> LruPerCpuHashMap<K, V> {
     }
 
     #[inline]
+    pub fn get_mut(&mut self, key: &K) -> Option<&mut V> {
+        get_mut(&mut self.def, key)
+    }
+
+    #[inline]
     pub fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
         insert(&mut self.def, key, value, flags)
     }
@@ -214,6 +234,15 @@ fn get<'a, K, V>(def: &mut bpf_map_def, key: &K) -> Option<&'a V> {
         let value = bpf_map_lookup_elem(def as *mut _ as *mut _, key as *const _ as *const c_void);
         // FIXME: alignment
         NonNull::new(value as *mut V).map(|p| p.as_ref())
+    }
+}
+
+#[inline]
+fn get_mut<'a, K, V>(def: &mut bpf_map_def, key: &K) -> Option<&'a mut V> {
+    unsafe {
+        let value = bpf_map_lookup_elem(def as *mut _ as *mut _, key as *const _ as *const c_void);
+        // FIXME: alignment
+        NonNull::new(value as *mut V).map(|mut p| p.as_mut())
     }
 }
 
