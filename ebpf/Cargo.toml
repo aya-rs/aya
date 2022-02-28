@@ -1,0 +1,2 @@
+[workspace]
+members = ["aya-log-ebpf", "aya-log-ebpf-macros"]
