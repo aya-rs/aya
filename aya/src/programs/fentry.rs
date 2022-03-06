@@ -10,7 +10,7 @@ use crate::{
 ///
 /// [`FEntry`] programs are similar to [kprobes](crate::programs::KProbe), but
 /// the difference is that fentry has practically zero overhead to call before
-/// kernel function. Fentry programs can be also attaached to other eBPF
+/// kernel function. Fentry programs can be also attached to other eBPF
 /// programs.
 ///
 /// # Minimum kernel version
