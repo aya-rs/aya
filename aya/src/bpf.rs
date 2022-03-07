@@ -222,9 +222,18 @@ impl<'a> BpfLoader<'a> {
     /// Sets the value of a global variable
     ///
     /// From Rust eBPF, a global variable would be constructed as follows:
-    /// ```no run
+    /// ```no_run
     /// #[no_mangle]
-    /// const VERSION = 0;
+    /// static VERSION: i32 = 0;
+    /// ```
+    /// Then it would be accessed with `core::ptr::read_volatile` inside
+    /// functions:
+    /// ```no_run
+    /// # #[no_mangle]
+    /// # static VERSION: i32 = 0;
+    /// # unsafe fn try_test() {
+    /// let version = core::ptr::read_volatile(&VERSION);
+    /// # }
     /// ```
     /// If using a struct, ensure that it is `#[repr(C)]` to ensure the size will
     /// match that of the corresponding ELF symbol.
