@@ -216,7 +216,7 @@ fn relocate_btf_program<'target>(
         let access_str = &*local_btf.string_at(rel.access_str_offset)?;
         let local_spec = AccessSpec::new(local_btf, rel.type_id, access_str, *rel)?;
 
-        let mut matches = match rel.kind {
+        let matches = match rel.kind {
             RelocationKind::TypeIdLocal => Vec::new(), // we don't need to look at target types to relocate this value
             _ => {
                 let candidates = match candidates_cache.get(&rel.type_id) {
@@ -244,7 +244,7 @@ fn relocate_btf_program<'target>(
         };
 
         let comp_rel = if !matches.is_empty() {
-            let mut matches = matches.drain(..);
+            let mut matches = matches.into_iter();
             let (_, target_spec, target_comp_rel) = matches.next().unwrap();
 
             // if there's more than one candidate, make sure that they all resolve to the

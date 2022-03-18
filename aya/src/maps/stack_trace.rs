@@ -124,7 +124,7 @@ impl<T: Deref<Target = Map>> StackTraceMap<T> {
             .ok_or(MapError::KeyNotFound)?;
 
         let frames = frames
-            .drain(..)
+            .into_iter()
             .take_while(|ip| *ip != 0)
             .map(|ip| StackFrame {
                 ip,
