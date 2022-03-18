@@ -4,8 +4,8 @@ use core::{
 };
 
 use aya_bpf_bindings::helpers::{
-    bpf_clone_redirect, bpf_l3_csum_replace, bpf_l4_csum_replace, bpf_skb_adjust_room,
-    bpf_skb_change_type, bpf_skb_load_bytes, bpf_skb_store_bytes,
+    bpf_clone_redirect, bpf_get_socket_uid, bpf_l3_csum_replace, bpf_l4_csum_replace,
+    bpf_skb_adjust_room, bpf_skb_change_type, bpf_skb_load_bytes, bpf_skb_store_bytes,
 };
 use aya_bpf_cty::c_long;
 
@@ -39,6 +39,12 @@ impl SkBuffContext {
     #[inline]
     pub fn cb_mut(&mut self) -> &mut [u32] {
         unsafe { &mut (*self.skb).cb }
+    }
+
+    /// Returns the owner UID of the socket associated to the SKB context.
+    #[inline]
+    pub fn get_socket_uid(&self) -> u32 {
+        unsafe { bpf_get_socket_uid(self.skb) }
     }
 
     #[inline]
