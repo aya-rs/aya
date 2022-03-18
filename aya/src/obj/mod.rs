@@ -186,7 +186,7 @@ impl FromStr for ProgramSection {
                 let name = section.splitn(2, '/').last().unwrap().to_owned();
                 TracePoint { name }
             }
-            "socket_filter" => SocketFilter { name },
+            "socket" => SocketFilter { name },
             "sk_msg" => SkMsg { name },
             "sk_skb" => match &*name {
                 "stream_parser" => SkSkbStreamParser { name },
@@ -1256,7 +1256,7 @@ mod tests {
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
-                "socket_filter/foo",
+                "socket/foo",
                 bytes_of(&fake_ins())
             )),
             Ok(())
