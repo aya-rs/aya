@@ -62,7 +62,7 @@ impl<'a> GetterList<'a> {
                     .get(field_ty_ident)
                     .unwrap_or_else(|| panic!("{}", field_ty_ident.to_string()))
                     .1;
-                getters.extend(self.getters(field_ident, sub_fields).drain(..).map(
+                getters.extend(self.getters(field_ident, sub_fields).into_iter().map(
                     |mut getter| {
                         getter.prefix.insert(0, ident);
                         getter
