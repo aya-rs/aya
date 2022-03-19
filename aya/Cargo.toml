@@ -1,6 +1,6 @@
 [package]
 name = "aya"
-version = "0.10.6"
+version = "0.10.7"
 description = "An eBPF library with a focus on developer experience and operability."
 keywords = ["ebpf", "bpf", "linux", "kernel"]
 license = "MIT OR Apache-2.0"
