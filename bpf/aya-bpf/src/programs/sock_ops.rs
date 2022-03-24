@@ -5,7 +5,7 @@ use aya_bpf_bindings::helpers::bpf_sock_ops_cb_flags_set;
 use crate::{bindings::bpf_sock_ops, BpfContext};
 
 pub struct SockOpsContext {
-    ops: *mut bpf_sock_ops,
+    pub ops: *mut bpf_sock_ops,
 }
 
 impl SockOpsContext {
