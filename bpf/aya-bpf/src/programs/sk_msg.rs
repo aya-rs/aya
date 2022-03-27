@@ -7,7 +7,7 @@ use crate::{
 };
 
 pub struct SkMsgContext {
-    msg: *mut sk_msg_md,
+    pub msg: *mut sk_msg_md,
 }
 
 impl SkMsgContext {
