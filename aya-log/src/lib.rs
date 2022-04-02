@@ -59,11 +59,12 @@
 //! [Log]: https://docs.rs/log/0.4.14/log/trait.Log.html
 //! [log]: https://docs.rs/log
 //!
-use std::{convert::TryInto, io, mem, ptr, sync::Arc};
+use std::{convert::TryInto, io, mem, ptr, str, sync::Arc};
 
-use aya_log_common::{RecordField, LOG_BUF_CAPACITY, LOG_FIELDS};
+use aya_log_common::{ArgType, RecordField, LOG_BUF_CAPACITY, LOG_FIELDS};
 use bytes::BytesMut;
-use log::{Level, Log, Record};
+use dyn_fmt::AsStrFormatExt;
+use log::{error, Level, Log, Record};
 use thiserror::Error;
 
 use aya::{
@@ -157,6 +158,7 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
     let mut file = None;
     let mut line = None;
     let mut log = None;
+    let mut num_args = None;
 
     for _ in 0..LOG_FIELDS {
         let (attr, rest) = unsafe { TagLenValue::<'_, RecordField>::try_read(buf)? };
@@ -177,6 +179,9 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
             RecordField::Line => {
                 line = Some(u32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?));
             }
+            RecordField::NumArgs => {
+                num_args = Some(usize::from_ne_bytes(attr.value.try_into().map_err(|_| ())?));
+            }
             RecordField::Log => {
                 log = Some(std::str::from_utf8(attr.value).map_err(|_| ())?);
             }
@@ -185,9 +190,103 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
         buf = rest;
     }
 
+    let log_msg = log.ok_or(())?;
+    let full_log_msg = match num_args {
+        Some(n) => {
+            let mut args: Vec<String> = Vec::new();
+            for _ in 0..n {
+                let (attr, rest) = unsafe { TagLenValue::<'_, ArgType>::try_read(buf)? };
+
+                match attr.tag {
+                    ArgType::I8 => {
+                        args.push(
+                            i8::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::I16 => {
+                        args.push(
+                            i16::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::I32 => {
+                        args.push(
+                            i32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::I64 => {
+                        args.push(
+                            i64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::I128 => {
+                        args.push(
+                            i128::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::Isize => {
+                        args.push(
+                            isize::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                                .to_string(),
+                        );
+                    }
+                    ArgType::U8 => {
+                        args.push(
+                            u8::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::U16 => {
+                        args.push(
+                            u16::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::U32 => {
+                        args.push(
+                            u32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::U64 => {
+                        args.push(
+                            u64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::U128 => {
+                        args.push(
+                            u128::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::Usize => {
+                        args.push(
+                            usize::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                                .to_string(),
+                        );
+                    }
+                    ArgType::F32 => {
+                        args.push(
+                            f32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::F64 => {
+                        args.push(
+                            f64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
+                        );
+                    }
+                    ArgType::Str => match str::from_utf8(attr.value) {
+                        Ok(v) => args.push(v.to_string()),
+                        Err(e) => error!("received invalid utf8 string: {}", e),
+                    },
+                }
+
+                buf = rest;
+            }
+
+            log_msg.format(&args)
+        }
+        None => log_msg.to_string(),
+    };
+
     logger.log(
         &Record::builder()
-            .args(format_args!("{}", log.ok_or(())?))
+            .args(format_args!("{}", full_log_msg))
             .target(target.ok_or(())?)
             .level(level)
             .module_path(module)
