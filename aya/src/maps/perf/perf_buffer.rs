@@ -59,6 +59,10 @@ pub enum PerfBufferError {
 
     /// `read_events()` was called with a buffer that is not large enough to
     /// contain the next event in the perf buffer.
+    #[deprecated(
+        since = "0.10.8",
+        note = "read_events() now calls BytesMut::reserve() internally, so this error is never returned"
+    )]
     #[error("the buffer needs to be of at least {size} bytes")]
     MoreSpaceNeeded {
         /// expected size
@@ -192,10 +196,7 @@ impl PerfBuffer {
             match event_type {
                 x if x == PERF_RECORD_SAMPLE as u32 => {
                     buf.clear();
-                    if sample_size > buf.capacity() {
-                        return Err(PerfBufferError::MoreSpaceNeeded { size: sample_size });
-                    }
-
+                    buf.reserve(sample_size);
                     unsafe { buf.set_len(sample_size) };
 
                     fill_buf(sample_start, base, self.size, buf);
@@ -239,12 +240,6 @@ impl PerfBuffer {
                     events.lost += lost;
                 }
                 Ok(None) => { /* skip unknown event type */ }
-                Err(PerfBufferError::MoreSpaceNeeded { .. }) if events.read > 0 => {
-                    // we have processed some events so we're going to return those. In the
-                    // next read_events() we'll return an error unless the caller increases the
-                    // buffer size
-                    break;
-                }
                 Err(e) => {
                     // we got an error and we didn't process any events, propagate the error
                     // and give the caller a chance to increase buffers

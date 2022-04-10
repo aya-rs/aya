@@ -51,9 +51,6 @@ impl<T: DerefMut<Target = Map>> PerfEventArrayBuffer<T> {
     /// # Errors
     ///
     /// [`PerfBufferError::NoBuffers`] is returned when `out_bufs` is empty.
-    ///
-    /// [`PerfBufferError::MoreSpaceNeeded { size }`](PerfBufferError) is returned when the size of the events is
-    /// bigger than the size of the out_bufs provided.
     pub fn read_events(&mut self, out_bufs: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
         self.buf.read_events(out_bufs)
     }
