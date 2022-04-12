@@ -8,6 +8,20 @@ use crate::{
     maps::PinningType,
 };
 
+/// A fixed-size array that can be shared between eBPF programs and user-space.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 3.19.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{macros::map, maps::Array};
+///
+/// #[map]
+/// static MY_ARRAY: Array<u32> = Array::with_max_entries(1024, 0);
+/// ```
 #[repr(transparent)]
 pub struct Array<T> {
     def: UnsafeCell<bpf_map_def>,

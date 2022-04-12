@@ -21,7 +21,10 @@ pub struct SockHash<K> {
 
 unsafe impl<K: Sync> Sync for SockHash<K> {}
 
+/// A hash map that stores sockets to which messages or socket buffers can be
+/// redirected.
 impl<K> SockHash<K> {
+    /// Creates a `SockHash` map with the maximum number of elements.
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> SockHash<K> {
         SockHash {
             def: UnsafeCell::new(bpf_map_def {
@@ -37,6 +40,8 @@ impl<K> SockHash<K> {
         }
     }
 
+    /// Creates a `SockHash` map pinned in the BPPFS filesystem, with the
+    /// maximum number of elements.
     pub const fn pinned(max_entries: u32, flags: u32) -> SockHash<K> {
         SockHash {
             def: UnsafeCell::new(bpf_map_def {
@@ -52,7 +57,14 @@ impl<K> SockHash<K> {
         }
     }
 
-    pub fn update(&self, key: &mut K, sk_ops: &mut bpf_sock_ops, flags: u64) -> Result<(), i64> {
+    /// Adds an entry or updates an existing one in the map referencing
+    /// sockets.
+    pub fn update(
+        &self,
+        key: &mut K,
+        sk_ops: &mut bpf_sock_ops,
+        flags: u64,
+    ) -> Result<(), i64> {
         let ret = unsafe {
             bpf_sock_hash_update(
                 sk_ops as *mut _,
@@ -64,6 +76,7 @@ impl<K> SockHash<K> {
         (ret == 0).then_some(()).ok_or(ret)
     }
 
+    /// Redirects a message to the socket associated with the given key.
     pub fn redirect_msg(&self, ctx: &SkMsgContext, key: &mut K, flags: u64) -> i64 {
         unsafe {
             bpf_msg_redirect_hash(
@@ -75,6 +88,7 @@ impl<K> SockHash<K> {
         }
     }
 
+    /// Redirects a socket buffer to the socket associated with the given key.
     pub fn redirect_skb(&self, ctx: &SkBuffContext, key: &mut K, flags: u64) -> i64 {
         unsafe {
             bpf_sk_redirect_hash(
