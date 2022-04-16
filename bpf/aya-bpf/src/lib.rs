@@ -43,3 +43,12 @@ pub unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
         *((base + i) as *mut u8) = c as u8;
     }
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *mut u8, n: usize) {
+    let dest_base = dest as usize;
+    let src_base = src as usize;
+    for i in 0..n {
+        *((dest_base + i) as *mut u8) = *((src_base + i) as *mut u8);
+    }
+}
