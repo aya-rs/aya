@@ -96,6 +96,7 @@ impl WriteToBuf for str {
 
 #[allow(clippy::result_unit_err)]
 #[doc(hidden)]
+#[inline(always)]
 pub fn write_record_header(
     buf: &mut [u8],
     target: &str,
