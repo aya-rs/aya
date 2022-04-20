@@ -410,7 +410,7 @@ pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), 
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf:: helpers::bpf_get_current_comm;
+/// # use aya_bpf::helpers::bpf_get_current_comm;
 /// let comm = bpf_get_current_comm();
 ///
 /// // Do something with comm
@@ -447,7 +447,7 @@ pub fn bpf_get_current_comm() -> Result<[c_char; 16], c_long> {
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf:: helpers::bpf_get_current_pid_tgid;
+/// # use aya_bpf::helpers::bpf_get_current_pid_tgid;
 /// let tgid = (bpf_get_current_pid_tgid() >> 32) as u32;
 /// let pid = bpf_get_current_pid_tgid() as u32;
 ///
