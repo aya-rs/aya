@@ -1,0 +1,7 @@
+pre-release-commit-message = "aya-log, aya-log-common: release version {{version}}"
+post-release-commit-message = "aya-log, aya-log-common: start next development iteration {{next_version}}"
+consolidate-pushes = true
+consolidate-commits = true
+shared-version = true
+dev-version = true
+dev-version-ext = "dev.0"
