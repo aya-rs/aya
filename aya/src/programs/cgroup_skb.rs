@@ -9,7 +9,8 @@ use crate::{
         bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB,
     },
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
+        define_link_wrapper, load_program, FdLink, Link, OwnedLink, ProgAttachLink, ProgramData,
+        ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };
@@ -116,6 +117,17 @@ impl CgroupSkb {
         }
     }
 
+    /// Takes ownership of the link referenced by the provided link_id.
+    ///
+    /// The link will be detached on `Drop` and the caller is now responsible
+    /// for managing its lifetime.
+    pub fn forget_link(
+        &mut self,
+        link_id: CgroupSkbLinkId,
+    ) -> Result<OwnedLink<CgroupSkbLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    }
+
     /// Detaches the program.
     ///
     /// See [CgroupSkb::attach].
@@ -155,6 +167,7 @@ impl Link for CgroupSkbLinkInner {
 }
 
 define_link_wrapper!(
+    /// The link used by [CgroupSkb] programs.
     CgroupSkbLink,
     /// The type returned by [CgroupSkb::attach]. Can be passed to [CgroupSkb::detach].
     CgroupSkbLinkId,

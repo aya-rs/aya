@@ -11,7 +11,7 @@ use crate::{
 pub struct PerfLinkId(RawFd);
 
 #[derive(Debug)]
-pub(crate) struct PerfLink {
+pub struct PerfLink {
     perf_fd: RawFd,
     probe_kind: Option<ProbeKind>,
     event_alias: Option<String>,

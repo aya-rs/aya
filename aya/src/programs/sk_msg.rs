@@ -2,8 +2,8 @@ use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
     maps::sock::SocketMap,
     programs::{
-        define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
-        ProgramError,
+        define_link_wrapper, load_program, OwnedLink, ProgAttachLink, ProgAttachLinkId,
+        ProgramData, ProgramError,
     },
     sys::bpf_prog_attach,
 };
@@ -94,9 +94,21 @@ impl SkMsg {
     pub fn detach(&mut self, link_id: SkMsgLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
+
+    /// Takes ownership of the link referenced by the provided link_id.
+    ///
+    /// The link will be detached on `Drop` and the caller is now responsible
+    /// for managing its lifetime.
+    pub fn forget_link(
+        &mut self,
+        link_id: SkMsgLinkId,
+    ) -> Result<OwnedLink<SkMsgLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    }
 }
 
 define_link_wrapper!(
+    /// The link used by [SkMsg] programs.
     SkMsgLink,
     /// The type returned by [SkMsg::attach]. Can be passed to [SkMsg::detach].
     SkMsgLinkId,

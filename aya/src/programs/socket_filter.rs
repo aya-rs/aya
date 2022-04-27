@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use crate::{
     generated::{bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF},
-    programs::{load_program, Link, ProgramData, ProgramError},
+    programs::{load_program, Link, OwnedLink, ProgramData, ProgramError},
 };
 
 /// The type returned when attaching a [`SocketFilter`] fails.
@@ -101,14 +101,26 @@ impl SocketFilter {
     pub fn detach(&mut self, link_id: SocketFilterLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
+
+    /// Takes ownership of the link referenced by the provided link_id.
+    ///
+    /// The link will be detached on `Drop` and the caller is now responsible
+    /// for managing its lifetime.
+    pub fn forget_link(
+        &mut self,
+        link_id: SocketFilterLinkId,
+    ) -> Result<OwnedLink<SocketFilterLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    }
 }
 
 /// The type returned by [SocketFilter::attach]. Can be passed to [SocketFilter::detach].
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct SocketFilterLinkId(RawFd, RawFd);
 
+/// A SocketFilter Link
 #[derive(Debug)]
-pub(crate) struct SocketFilterLink {
+pub struct SocketFilterLink {
     socket: RawFd,
     prog_fd: RawFd,
 }

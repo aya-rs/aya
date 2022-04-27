@@ -6,7 +6,9 @@ use object::Endianness;
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_INET_INGRESS, bpf_prog_type::BPF_PROG_TYPE_EXT},
     obj::btf::BtfKind,
-    programs::{define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError},
+    programs::{
+        define_link_wrapper, load_program, FdLink, FdLinkId, OwnedLink, ProgramData, ProgramError,
+    },
     sys::{self, bpf_link_create},
     Btf,
 };
@@ -146,9 +148,21 @@ impl Extension {
     pub fn detach(&mut self, link_id: ExtensionLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
+
+    /// Takes ownership of the link referenced by the provided link_id.
+    ///
+    /// The link will be detached on `Drop` and the caller is now responsible
+    /// for managing its lifetime.
+    pub fn forget_link(
+        &mut self,
+        link_id: ExtensionLinkId,
+    ) -> Result<OwnedLink<ExtensionLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    }
 }
 
 define_link_wrapper!(
+    /// The link used by [Extension] programs.
     ExtensionLink,
     /// The type returned by [Extension::attach]. Can be passed to [Extension::detach].
     ExtensionLinkId,

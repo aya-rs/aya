@@ -10,7 +10,9 @@ use crate::{
         XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE,
         XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
-    programs::{define_link_wrapper, load_program, FdLink, Link, ProgramData, ProgramError},
+    programs::{
+        define_link_wrapper, load_program, FdLink, Link, OwnedLink, ProgramData, ProgramError,
+    },
     sys::{bpf_link_create, kernel_version, netlink_set_xdp_fd},
 };
 
@@ -130,6 +132,14 @@ impl Xdp {
     pub fn detach(&mut self, link_id: XdpLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
+
+    /// Takes ownership of the link referenced by the provided link_id.
+    ///
+    /// The link will be detached on `Drop` and the caller is now responsible
+    /// for managing its lifetime.
+    pub fn forget_link(&mut self, link_id: XdpLinkId) -> Result<OwnedLink<XdpLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    }
 }
 
 #[derive(Debug)]
@@ -159,13 +169,13 @@ impl Link for NlLink {
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
-enum XdpLinkIdInner {
+pub(crate) enum XdpLinkIdInner {
     FdLinkId(<FdLink as Link>::Id),
     NlLinkId(<NlLink as Link>::Id),
 }
 
 #[derive(Debug)]
-enum XdpLinkInner {
+pub(crate) enum XdpLinkInner {
     FdLink(FdLink),
     NlLink(NlLink),
 }
@@ -189,6 +199,7 @@ impl Link for XdpLinkInner {
 }
 
 define_link_wrapper!(
+    /// The link used by [Xdp] programs.
     XdpLink,
     /// The type returned by [Xdp::attach]. Can be passed to [Xdp::detach].
     XdpLinkId,
