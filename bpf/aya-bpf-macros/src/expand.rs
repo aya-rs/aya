@@ -49,11 +49,13 @@ impl Map {
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
-        let section_name = format!("maps/{}", self.name);
+        let section_name = "maps".to_string();
+        let name = &self.name;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
+            #[export_name = #name]
             #item
         })
     }
