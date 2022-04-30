@@ -7,7 +7,7 @@ common usage behaviours work on real Linux distros
 
 This assumes you have a working Rust and Go toolchain on the host machine
 
-1. `rustup toolchain add x86_64-unknown-linux-musl`
+1. `rustup target add x86_64-unknown-linux-musl`
 1. Install [`rtf`](https://github.com/linuxkit/rtf): `go install github.com/linuxkit/rtf@latest`
 1. Install rust-script: `cargo install rust-script`
 1. Install `qemu` and `cloud-init-utils` package - or any package that provides `cloud-localds`
