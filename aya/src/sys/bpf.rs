@@ -21,12 +21,10 @@ use crate::{
     },
     maps::PerCpuValues,
     obj::btf::{FuncSecInfo, LineSecInfo},
-    sys::{kernel_version, SysResult},
+    sys::{kernel_version, syscall, SysResult, Syscall},
     util::VerifierLog,
     Pod, BPF_OBJ_NAME_LEN,
 };
-
-use super::{syscall, Syscall};
 
 pub(crate) fn bpf_create_map(name: &CStr, def: &bpf_map_def) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };

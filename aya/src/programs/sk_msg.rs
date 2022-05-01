@@ -1,7 +1,10 @@
 use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
     maps::sock::SocketMap,
-    programs::{load_program, LinkRef, ProgAttachLink, ProgramData, ProgramError},
+    programs::{
+        define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
+        ProgramError,
+    },
     sys::bpf_prog_attach,
 };
 
@@ -56,19 +59,19 @@ use crate::{
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_SK_MSG")]
 pub struct SkMsg {
-    pub(crate) data: ProgramData,
+    pub(crate) data: ProgramData<SkMsgLink>,
 }
 
 impl SkMsg {
     /// Loads the program inside the kernel.
-    ///
-    /// See also [`Program::load`](crate::programs::Program::load).
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SK_MSG, &mut self.data)
     }
 
     /// Attaches the program to the given sockmap.
-    pub fn attach(&mut self, map: &dyn SocketMap) -> Result<LinkRef, ProgramError> {
+    ///
+    /// The returned value can be used to detach, see [SkMsg::detach].
+    pub fn attach(&mut self, map: &dyn SocketMap) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let map_fd = map.fd_or_err()?;
 
@@ -78,8 +81,25 @@ impl SkMsg {
                 io_error,
             }
         })?;
-        Ok(self
-            .data
-            .link(ProgAttachLink::new(prog_fd, map_fd, BPF_SK_MSG_VERDICT)))
+        self.data.links.insert(SkMsgLink(ProgAttachLink::new(
+            prog_fd,
+            map_fd,
+            BPF_SK_MSG_VERDICT,
+        )))
+    }
+
+    /// Detaches the program from a sockmap.
+    ///
+    /// See [SkMsg::attach].
+    pub fn detach(&mut self, link_id: SkMsgLinkId) -> Result<(), ProgramError> {
+        self.data.links.remove(link_id)
     }
 }
+
+define_link_wrapper!(
+    SkMsgLink,
+    /// The type returned by [SkMsg::attach]. Can be passed to [SkMsg::detach].
+    SkMsgLinkId,
+    ProgAttachLink,
+    ProgAttachLinkId
+);

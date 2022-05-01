@@ -41,6 +41,7 @@ mod extension;
 mod fentry;
 mod fexit;
 mod kprobe;
+mod links;
 mod lirc_mode2;
 mod lsm;
 mod perf_attach;
@@ -58,37 +59,36 @@ mod uprobe;
 mod utils;
 mod xdp;
 
-use libc::{close, dup, ENOSPC};
+use libc::ENOSPC;
 use std::{
-    cell::RefCell,
     convert::TryFrom,
     ffi::CString,
     io,
     os::unix::io::{AsRawFd, RawFd},
     path::Path,
-    rc::Rc,
 };
 use thiserror::Error;
 
-pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
-pub use extension::{Extension, ExtensionError};
-pub use fentry::FEntry;
-pub use fexit::FExit;
-pub use kprobe::{KProbe, KProbeError};
-pub use lirc_mode2::LircMode2;
-pub use lsm::Lsm;
+pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType, CgroupSkbLinkId};
+pub use extension::{Extension, ExtensionError, ExtensionLinkId};
+pub use fentry::{FEntry, FEntryLinkId};
+pub use fexit::{FExit, FExitLinkId};
+pub use kprobe::{KProbe, KProbeError, KProbeLinkId};
+use links::*;
+pub use lirc_mode2::{LircLinkId, LircMode2};
+pub use lsm::{Lsm, LsmLinkId};
 use perf_attach::*;
 pub use perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy};
 pub use probe::ProbeKind;
-pub use raw_trace_point::RawTracePoint;
-pub use sk_msg::SkMsg;
-pub use sk_skb::{SkSkb, SkSkbKind};
-pub use sock_ops::SockOps;
-pub use socket_filter::{SocketFilter, SocketFilterError};
-pub use tc::{SchedClassifier, TcAttachType, TcError};
-pub use tp_btf::BtfTracePoint;
-pub use trace_point::{TracePoint, TracePointError};
-pub use uprobe::{UProbe, UProbeError};
+pub use raw_trace_point::{RawTracePoint, RawTracePointLinkId};
+pub use sk_msg::{SkMsg, SkMsgLinkId};
+pub use sk_skb::{SkSkb, SkSkbKind, SkSkbLinkId};
+pub use sock_ops::{SockOps, SockOpsLinkId};
+pub use socket_filter::{SocketFilter, SocketFilterError, SocketFilterLinkId};
+pub use tc::{SchedClassifier, SchedClassifierLinkId, TcAttachType, TcError};
+pub use tp_btf::{BtfTracePoint, BtfTracePointLinkId};
+pub use trace_point::{TracePoint, TracePointError, TracePointLinkId};
+pub use uprobe::{UProbe, UProbeError, UProbeLinkId};
 pub use xdp::{Xdp, XdpError, XdpFlags};
 
 use crate::{
@@ -96,7 +96,7 @@ use crate::{
     maps::MapError,
     obj::{self, btf::BtfError, Function, KernelVersion},
     sys::{
-        bpf_get_object, bpf_load_program, bpf_obj_get_info_by_fd, bpf_pin_object, bpf_prog_detach,
+        bpf_get_object, bpf_load_program, bpf_obj_get_info_by_fd, bpf_pin_object,
         bpf_prog_get_fd_by_id, bpf_prog_query, retry_with_verifier_logs, BpfLoadProgramAttrs,
     },
     util::VerifierLog,
@@ -113,9 +113,9 @@ pub enum ProgramError {
     #[error("the program is not loaded")]
     NotLoaded,
 
-    /// The program is already detached.
-    #[error("the program was already detached")]
-    AlreadyDetached,
+    /// The program is already attached.
+    #[error("the program was already attached")]
+    AlreadyAttached,
 
     /// The program is not attached.
     #[error("the program is not attached")]
@@ -251,20 +251,6 @@ pub enum Program {
 }
 
 impl Program {
-    /// Loads the program in the kernel.
-    ///
-    /// # Errors
-    ///
-    /// If the load operation fails, the method returns
-    /// [`ProgramError::LoadError`] and the error's `verifier_log` field
-    /// contains the output from the kernel verifier.
-    ///
-    /// If the program is already loaded, [`ProgramError::AlreadyLoaded`] is
-    /// returned.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(self.prog_type(), self.data_mut())
-    }
-
     /// Returns the low level program type.
     pub fn prog_type(&self) -> bpf_prog_type {
         use crate::generated::bpf_prog_type::*;
@@ -292,62 +278,35 @@ impl Program {
 
     /// Pin the program to the provided path
     pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
-        self.data_mut().pin(path)
-    }
-
-    fn data(&self) -> &ProgramData {
         match self {
-            Program::KProbe(p) => &p.data,
-            Program::UProbe(p) => &p.data,
-            Program::TracePoint(p) => &p.data,
-            Program::SocketFilter(p) => &p.data,
-            Program::Xdp(p) => &p.data,
-            Program::SkMsg(p) => &p.data,
-            Program::SkSkb(p) => &p.data,
-            Program::SockOps(p) => &p.data,
-            Program::SchedClassifier(p) => &p.data,
-            Program::CgroupSkb(p) => &p.data,
-            Program::LircMode2(p) => &p.data,
-            Program::PerfEvent(p) => &p.data,
-            Program::RawTracePoint(p) => &p.data,
-            Program::Lsm(p) => &p.data,
-            Program::BtfTracePoint(p) => &p.data,
-            Program::FEntry(p) => &p.data,
-            Program::FExit(p) => &p.data,
-            Program::Extension(p) => &p.data,
-        }
-    }
-
-    fn data_mut(&mut self) -> &mut ProgramData {
-        match self {
-            Program::KProbe(p) => &mut p.data,
-            Program::UProbe(p) => &mut p.data,
-            Program::TracePoint(p) => &mut p.data,
-            Program::SocketFilter(p) => &mut p.data,
-            Program::Xdp(p) => &mut p.data,
-            Program::SkMsg(p) => &mut p.data,
-            Program::SkSkb(p) => &mut p.data,
-            Program::SockOps(p) => &mut p.data,
-            Program::SchedClassifier(p) => &mut p.data,
-            Program::CgroupSkb(p) => &mut p.data,
-            Program::LircMode2(p) => &mut p.data,
-            Program::PerfEvent(p) => &mut p.data,
-            Program::RawTracePoint(p) => &mut p.data,
-            Program::Lsm(p) => &mut p.data,
-            Program::BtfTracePoint(p) => &mut p.data,
-            Program::FEntry(p) => &mut p.data,
-            Program::FExit(p) => &mut p.data,
-            Program::Extension(p) => &mut p.data,
+            Program::KProbe(p) => p.data.pin(path),
+            Program::UProbe(p) => p.data.pin(path),
+            Program::TracePoint(p) => p.data.pin(path),
+            Program::SocketFilter(p) => p.data.pin(path),
+            Program::Xdp(p) => p.data.pin(path),
+            Program::SkMsg(p) => p.data.pin(path),
+            Program::SkSkb(p) => p.data.pin(path),
+            Program::SockOps(p) => p.data.pin(path),
+            Program::SchedClassifier(p) => p.data.pin(path),
+            Program::CgroupSkb(p) => p.data.pin(path),
+            Program::LircMode2(p) => p.data.pin(path),
+            Program::PerfEvent(p) => p.data.pin(path),
+            Program::RawTracePoint(p) => p.data.pin(path),
+            Program::Lsm(p) => p.data.pin(path),
+            Program::BtfTracePoint(p) => p.data.pin(path),
+            Program::FEntry(p) => p.data.pin(path),
+            Program::FExit(p) => p.data.pin(path),
+            Program::Extension(p) => p.data.pin(path),
         }
     }
 }
 
-#[derive(Debug, Clone)]
-pub(crate) struct ProgramData {
+#[derive(Debug)]
+pub(crate) struct ProgramData<T: Link> {
     pub(crate) name: Option<String>,
     pub(crate) obj: obj::Program,
     pub(crate) fd: Option<RawFd>,
-    pub(crate) links: Vec<Rc<RefCell<dyn Link>>>,
+    pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
     pub(crate) attach_btf_obj_fd: Option<u32>,
     pub(crate) attach_btf_id: Option<u32>,
@@ -355,15 +314,29 @@ pub(crate) struct ProgramData {
     pub(crate) btf_fd: Option<RawFd>,
 }
 
-impl ProgramData {
+impl<T: Link> ProgramData<T> {
+    pub(crate) fn new(
+        name: Option<String>,
+        obj: obj::Program,
+        btf_fd: Option<RawFd>,
+    ) -> ProgramData<T> {
+        ProgramData {
+            name,
+            obj,
+            fd: None,
+            links: LinkMap::new(),
+            expected_attach_type: None,
+            attach_btf_obj_fd: None,
+            attach_btf_id: None,
+            attach_prog_fd: None,
+            btf_fd,
+        }
+    }
+}
+
+impl<T: Link> ProgramData<T> {
     fn fd_or_err(&self) -> Result<RawFd, ProgramError> {
         self.fd.ok_or(ProgramError::NotLoaded)
-    }
-
-    pub fn link<T: Link + 'static>(&mut self, link: T) -> LinkRef {
-        let link: Rc<RefCell<dyn Link>> = Rc::new(RefCell::new(link));
-        self.links.push(Rc::clone(&link));
-        LinkRef::new(link)
     }
 
     pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
@@ -384,7 +357,10 @@ impl ProgramData {
     }
 }
 
-fn load_program(prog_type: bpf_prog_type, data: &mut ProgramData) -> Result<(), ProgramError> {
+fn load_program<T: Link>(
+    prog_type: bpf_prog_type,
+    data: &mut ProgramData<T>,
+) -> Result<(), ProgramError> {
     let ProgramData { obj, fd, .. } = data;
     if fd.is_some() {
         return Err(ProgramError::AlreadyLoaded);
@@ -500,98 +476,28 @@ pub(crate) fn query<T: AsRawFd>(
     }
 }
 
-/// Detach an attached program
-pub trait Link: std::fmt::Debug {
-    /// detaches an attached program
-    fn detach(&mut self) -> Result<(), ProgramError>;
-}
-
-/// The return type of `program.attach(...)`.
-///
-/// [`LinkRef`] implements the [`Link`] trait and can be used to detach a
-/// program.
-#[derive(Debug)]
-pub struct LinkRef {
-    inner: Rc<RefCell<dyn Link>>,
-}
-
-impl LinkRef {
-    fn new(link: Rc<RefCell<dyn Link>>) -> LinkRef {
-        LinkRef { inner: link }
-    }
-}
-
-impl Link for LinkRef {
-    fn detach(&mut self) -> Result<(), ProgramError> {
-        self.inner.borrow_mut().detach()
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct FdLink {
-    fd: Option<RawFd>,
-}
-
-impl Link for FdLink {
-    fn detach(&mut self) -> Result<(), ProgramError> {
-        if let Some(fd) = self.fd.take() {
-            unsafe { close(fd) };
-            Ok(())
-        } else {
-            Err(ProgramError::AlreadyDetached)
-        }
-    }
-}
-
-impl Drop for FdLink {
-    fn drop(&mut self) {
-        let _ = self.detach();
-    }
-}
-
-#[derive(Debug)]
-struct ProgAttachLink {
-    prog_fd: Option<RawFd>,
-    target_fd: Option<RawFd>,
-    attach_type: bpf_attach_type,
-}
-
-impl ProgAttachLink {
-    pub(crate) fn new(
-        prog_fd: RawFd,
-        target_fd: RawFd,
-        attach_type: bpf_attach_type,
-    ) -> ProgAttachLink {
-        ProgAttachLink {
-            prog_fd: Some(prog_fd),
-            target_fd: Some(unsafe { dup(target_fd) }),
-            attach_type,
-        }
-    }
-}
-
-impl Link for ProgAttachLink {
-    fn detach(&mut self) -> Result<(), ProgramError> {
-        if let Some(prog_fd) = self.prog_fd.take() {
-            let target_fd = self.target_fd.take().unwrap();
-            let _ = bpf_prog_detach(prog_fd, target_fd, self.attach_type);
-            unsafe { close(target_fd) };
-            Ok(())
-        } else {
-            Err(ProgramError::AlreadyDetached)
-        }
-    }
-}
-
-impl Drop for ProgAttachLink {
-    fn drop(&mut self) {
-        let _ = self.detach();
-    }
-}
-
 impl ProgramFd for Program {
     fn fd(&self) -> Option<RawFd> {
-        self.data().fd
+        match self {
+            Program::KProbe(p) => p.data.fd,
+            Program::UProbe(p) => p.data.fd,
+            Program::TracePoint(p) => p.data.fd,
+            Program::SocketFilter(p) => p.data.fd,
+            Program::Xdp(p) => p.data.fd,
+            Program::SkMsg(p) => p.data.fd,
+            Program::SkSkb(p) => p.data.fd,
+            Program::SockOps(p) => p.data.fd,
+            Program::SchedClassifier(p) => p.data.fd,
+            Program::CgroupSkb(p) => p.data.fd,
+            Program::LircMode2(p) => p.data.fd,
+            Program::PerfEvent(p) => p.data.fd,
+            Program::RawTracePoint(p) => p.data.fd,
+            Program::Lsm(p) => p.data.fd,
+            Program::BtfTracePoint(p) => p.data.fd,
+            Program::FEntry(p) => p.data.fd,
+            Program::FExit(p) => p.data.fd,
+            Program::Extension(p) => p.data.fd,
+        }
     }
 }
 
