@@ -1878,3 +1878,94 @@ pub unsafe fn bpf_get_func_arg_cnt(ctx: *mut ::aya_bpf_cty::c_void) -> ::aya_bpf
         ::core::mem::transmute(185usize);
     fun(ctx)
 }
+pub unsafe fn bpf_get_retval() -> ::aya_bpf_cty::c_int {
+    let fun: unsafe extern "C" fn() -> ::aya_bpf_cty::c_int = ::core::mem::transmute(186usize);
+    fun()
+}
+pub unsafe fn bpf_set_retval(retval: ::aya_bpf_cty::c_int) -> ::aya_bpf_cty::c_int {
+    let fun: unsafe extern "C" fn(retval: ::aya_bpf_cty::c_int) -> ::aya_bpf_cty::c_int =
+        ::core::mem::transmute(187usize);
+    fun(retval)
+}
+pub unsafe fn bpf_xdp_get_buff_len(xdp_md: *mut xdp_md) -> __u64 {
+    let fun: unsafe extern "C" fn(xdp_md: *mut xdp_md) -> __u64 = ::core::mem::transmute(188usize);
+    fun(xdp_md)
+}
+pub unsafe fn bpf_xdp_load_bytes(
+    xdp_md: *mut xdp_md,
+    offset: __u32,
+    buf: *mut ::aya_bpf_cty::c_void,
+    len: __u32,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        xdp_md: *mut xdp_md,
+        offset: __u32,
+        buf: *mut ::aya_bpf_cty::c_void,
+        len: __u32,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(189usize);
+    fun(xdp_md, offset, buf, len)
+}
+pub unsafe fn bpf_xdp_store_bytes(
+    xdp_md: *mut xdp_md,
+    offset: __u32,
+    buf: *mut ::aya_bpf_cty::c_void,
+    len: __u32,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        xdp_md: *mut xdp_md,
+        offset: __u32,
+        buf: *mut ::aya_bpf_cty::c_void,
+        len: __u32,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(190usize);
+    fun(xdp_md, offset, buf, len)
+}
+pub unsafe fn bpf_copy_from_user_task(
+    dst: *mut ::aya_bpf_cty::c_void,
+    size: __u32,
+    user_ptr: *const ::aya_bpf_cty::c_void,
+    tsk: *mut task_struct,
+    flags: __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        dst: *mut ::aya_bpf_cty::c_void,
+        size: __u32,
+        user_ptr: *const ::aya_bpf_cty::c_void,
+        tsk: *mut task_struct,
+        flags: __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(191usize);
+    fun(dst, size, user_ptr, tsk, flags)
+}
+pub unsafe fn bpf_skb_set_tstamp(
+    skb: *mut __sk_buff,
+    tstamp: __u64,
+    tstamp_type: __u32,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        skb: *mut __sk_buff,
+        tstamp: __u64,
+        tstamp_type: __u32,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(192usize);
+    fun(skb, tstamp, tstamp_type)
+}
+pub unsafe fn bpf_ima_file_hash(
+    file: *mut file,
+    dst: *mut ::aya_bpf_cty::c_void,
+    size: __u32,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        file: *mut file,
+        dst: *mut ::aya_bpf_cty::c_void,
+        size: __u32,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(193usize);
+    fun(file, dst, size)
+}
+pub unsafe fn bpf_kptr_xchg(
+    map_value: *mut ::aya_bpf_cty::c_void,
+    ptr: *mut ::aya_bpf_cty::c_void,
+) -> *mut ::aya_bpf_cty::c_void {
+    let fun: unsafe extern "C" fn(
+        map_value: *mut ::aya_bpf_cty::c_void,
+        ptr: *mut ::aya_bpf_cty::c_void,
+    ) -> *mut ::aya_bpf_cty::c_void = ::core::mem::transmute(194usize);
+    fun(map_value, ptr)
+}
