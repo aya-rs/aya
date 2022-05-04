@@ -19,4 +19,11 @@ pub fn bpf_builder() -> Builder {
         .clang_arg("-Wno-unknown-attributes")
         .default_enum_style(EnumVariation::ModuleConsts)
         .prepend_enum_name(false)
+        // NOTE(vadorovsky): It's a workaround for the upstream bindgen issue:
+        // https://github.com/rust-lang/rust-bindgen/issues/2083
+        // tl;dr: Rust nightly complains about #[repr(packed)] structs deriving
+        // Debug without Copy.
+        // It needs to be fixed properly upstream, but for now we have to
+        // disable Debug derive here.
+        .derive_debug(false)
 }
