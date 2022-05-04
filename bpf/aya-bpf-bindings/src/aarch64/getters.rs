@@ -107,6 +107,9 @@ impl __sk_buff {
     pub fn gso_size(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.gso_size) }.ok()
     }
+    pub fn tstamp_type(&self) -> Option<__u8> {
+        unsafe { crate::bpf_probe_read(&self.tstamp_type) }.ok()
+    }
     pub fn hwtstamp(&self) -> Option<__u64> {
         unsafe { crate::bpf_probe_read(&self.hwtstamp) }.ok()
     }
@@ -218,7 +221,7 @@ impl bpf_sock {
     pub fn src_port(&self) -> Option<__u32> {
         unsafe { crate::bpf_probe_read(&self.src_port) }.ok()
     }
-    pub fn dst_port(&self) -> Option<__u32> {
+    pub fn dst_port(&self) -> Option<__be16> {
         unsafe { crate::bpf_probe_read(&self.dst_port) }.ok()
     }
     pub fn dst_ip4(&self) -> Option<__u32> {
