@@ -76,6 +76,7 @@ impl From<&str> for MapKind {
 pub struct Map {
     pub(crate) def: bpf_map_def,
     pub(crate) section_index: usize,
+    pub(crate) symbol_index: usize,
     pub(crate) data: Vec<u8>,
     pub(crate) kind: MapKind,
 }
@@ -540,6 +541,7 @@ impl Object {
                 name.to_string(),
                 Map {
                     section_index: section.index.0,
+                    symbol_index: sym.index,
                     def,
                     data: Vec::new(),
                     kind: MapKind::Other,
@@ -847,6 +849,7 @@ fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
     };
     Ok(Map {
         section_index: section.index.0,
+        symbol_index: 0,
         def,
         data,
         kind,
@@ -1115,6 +1118,7 @@ mod tests {
             ),
             Ok(Map {
                 section_index: 0,
+                symbol_index: 0,
                 def: bpf_map_def {
                     map_type: _map_type,
                     key_size: 4,
@@ -1649,6 +1653,7 @@ mod tests {
                     pinning: PinningType::None,
                 },
                 section_index: 1,
+                symbol_index: 1,
                 data: vec![0, 0, 0],
                 kind: MapKind::Rodata,
             },

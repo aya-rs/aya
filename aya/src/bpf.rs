@@ -393,7 +393,7 @@ impl<'a> BpfLoader<'a> {
             maps.insert(name, map);
         }
 
-        obj.relocate_maps(maps.iter().map(|(name, map)| (name.as_str(), map)))?;
+        obj.relocate_maps(&maps)?;
         obj.relocate_calls()?;
 
         let programs = obj

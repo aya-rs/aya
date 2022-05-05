@@ -62,12 +62,15 @@ pub(crate) struct Symbol {
 }
 
 impl Object {
-    pub fn relocate_maps<'a>(
-        &'a mut self,
-        maps: impl Iterator<Item = (&'a str, &'a Map)>,
-    ) -> Result<(), BpfError> {
+    pub fn relocate_maps(&mut self, maps: &HashMap<String, Map>) -> Result<(), BpfError> {
         let maps_by_section = maps
-            .map(|(name, map)| (map.obj.section_index, (name, map)))
+            .iter()
+            .map(|(name, map)| (map.obj.section_index, (name.as_str(), map)))
+            .collect::<HashMap<_, _>>();
+
+        let maps_by_symbol = maps
+            .iter()
+            .map(|(name, map)| (map.obj.symbol_index, (name.as_str(), map)))
             .collect::<HashMap<_, _>>();
 
         let functions = self
@@ -82,6 +85,7 @@ impl Object {
                     function,
                     relocations.values(),
                     &maps_by_section,
+                    &maps_by_symbol,
                     &self.symbols_by_index,
                     self.text_section_index,
                 )
@@ -119,6 +123,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     fun: &mut Function,
     relocations: I,
     maps_by_section: &HashMap<usize, (&str, &Map)>,
+    maps_by_symbol: &HashMap<usize, (&str, &Map)>,
     symbol_table: &HashMap<usize, Symbol>,
     text_section_index: Option<usize>,
 ) -> Result<(), RelocationError> {
@@ -161,14 +166,23 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             continue;
         }
 
-        let (name, map) =
+        let (name, map) = if maps_by_symbol.contains_key(&rel.symbol_index) {
+            maps_by_symbol
+                .get(&rel.symbol_index)
+                .ok_or(RelocationError::SectionNotFound {
+                    symbol_index: rel.symbol_index,
+                    symbol_name: sym.name.clone(),
+                    section_index,
+                })?
+        } else {
             maps_by_section
                 .get(&section_index)
                 .ok_or(RelocationError::SectionNotFound {
                     symbol_index: rel.symbol_index,
                     symbol_name: sym.name.clone(),
                     section_index,
-                })?;
+                })?
+        };
 
         let map_fd = map.fd.ok_or_else(|| RelocationError::MapNotCreated {
             name: (*name).into(),

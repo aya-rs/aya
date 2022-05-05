@@ -239,6 +239,7 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
+            symbol_index: 0,
             data: Vec::new(),
             kind: obj::MapKind::Other,
         }
@@ -292,6 +293,7 @@ mod tests {
                     ..Default::default()
                 },
                 section_index: 0,
+                symbol_index: 0,
                 data: Vec::new(),
                 kind: obj::MapKind::Other,
             },
