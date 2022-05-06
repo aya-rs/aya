@@ -60,7 +60,7 @@ pub(crate) fn attach<T: Link + From<PerfLink>>(
 pub(crate) fn detach_debug_fs(kind: ProbeKind, event_alias: &str) -> Result<(), ProgramError> {
     use ProbeKind::*;
 
-    let _ = match kind {
+    match kind {
         KProbe | KRetProbe => delete_probe_event(kind, event_alias)
             .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
         UProbe | URetProbe => delete_probe_event(kind, event_alias)
