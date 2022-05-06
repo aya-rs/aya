@@ -8,7 +8,7 @@ use thiserror::Error;
 
 use crate::{
     generated::{bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF},
-    programs::{load_program, Link, OwnedLink, ProgramData, ProgramError},
+    programs::{load_program, unload_program, Link, OwnedLink, ProgramData, ProgramError},
 };
 
 /// The type returned when attaching a [`SocketFilter`] fails.
@@ -68,6 +68,14 @@ impl SocketFilter {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SOCKET_FILTER, &mut self.data)
+    }
+
+    /// Unloads the program from the kernel.
+    ///
+    /// If `detach` is true, links will be detached before unloading the program.
+    /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
+    pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
+        unload_program(&mut self.data, detach)
     }
 
     /// Attaches the filter on the given socket.

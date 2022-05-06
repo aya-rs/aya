@@ -7,8 +7,8 @@ use std::{
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SYSCTL, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL},
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, OwnedLink, ProgAttachLink, ProgramData,
-        ProgramError,
+        define_link_wrapper, load_program, unload_program, FdLink, Link, OwnedLink, ProgAttachLink,
+        ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };
@@ -57,6 +57,14 @@ impl CgroupSysctl {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_CGROUP_SYSCTL, &mut self.data)
+    }
+
+    /// Unloads the program from the kernel.
+    ///
+    /// If `detach` is true, links will be detached before unloading the program.
+    /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
+    pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
+        unload_program(&mut self.data, detach)
     }
 
     /// Attaches the program to the given cgroup.

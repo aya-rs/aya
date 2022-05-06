@@ -12,7 +12,8 @@ use crate::{
         XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, OwnedLink, ProgramData, ProgramError,
+        define_link_wrapper, load_program, unload_program, FdLink, Link, OwnedLink, ProgramData,
+        ProgramError,
     },
     sys::{bpf_link_create, kernel_version, netlink_set_xdp_fd},
 };
@@ -79,6 +80,14 @@ impl Xdp {
     pub fn load(&mut self) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(bpf_attach_type::BPF_XDP);
         load_program(BPF_PROG_TYPE_XDP, &mut self.data)
+    }
+
+    /// Unloads the program from the kernel.
+    ///
+    /// If `detach` is true, links will be detached before unloading the program.
+    /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
+    pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
+        unload_program(&mut self.data, detach)
     }
 
     /// Attaches the program to the given `interface`.

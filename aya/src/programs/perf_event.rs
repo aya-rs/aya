@@ -14,7 +14,7 @@ use crate::{
     programs::{
         load_program, perf_attach,
         perf_attach::{PerfLink, PerfLinkId},
-        OwnedLink, ProgramData, ProgramError,
+        unload_program, OwnedLink, ProgramData, ProgramError,
     },
     sys::perf_event_open,
 };
@@ -126,6 +126,14 @@ impl PerfEvent {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_PERF_EVENT, &mut self.data)
+    }
+
+    /// Unloads the program from the kernel.
+    ///
+    /// If `detach` is true, links will be detached before unloading the program.
+    /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
+    pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
+        unload_program(&mut self.data, detach)
     }
 
     /// Attaches to the given perf event.

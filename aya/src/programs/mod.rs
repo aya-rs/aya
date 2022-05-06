@@ -386,6 +386,18 @@ impl<T: Link> ProgramData<T> {
     }
 }
 
+fn unload_program<T: Link>(data: &mut ProgramData<T>, detach: bool) -> Result<(), ProgramError> {
+    if detach {
+        data.links.remove_all()?;
+    }
+    let fd = data.fd_or_err()?;
+    unsafe {
+        libc::close(fd);
+    }
+    data.fd = None;
+    Ok(())
+}
+
 fn load_program<T: Link>(
     prog_type: bpf_prog_type,
     data: &mut ProgramData<T>,

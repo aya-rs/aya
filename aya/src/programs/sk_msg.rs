@@ -3,8 +3,8 @@ use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
     maps::sock::SocketMap,
     programs::{
-        define_link_wrapper, load_program, OwnedLink, ProgAttachLink, ProgAttachLinkId,
-        ProgramData, ProgramError,
+        define_link_wrapper, load_program, unload_program, OwnedLink, ProgAttachLink,
+        ProgAttachLinkId, ProgramData, ProgramError,
     },
     sys::bpf_prog_attach,
 };
@@ -67,6 +67,14 @@ impl SkMsg {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SK_MSG, &mut self.data)
+    }
+
+    /// Unloads the program from the kernel.
+    ///
+    /// If `detach` is true, links will be detached before unloading the program.
+    /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
+    pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
+        unload_program(&mut self.data, detach)
     }
 
     /// Attaches the program to the given sockmap.

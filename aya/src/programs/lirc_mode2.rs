@@ -3,7 +3,10 @@ use std::os::unix::prelude::{AsRawFd, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
-    programs::{load_program, query, Link, OwnedLink, ProgramData, ProgramError, ProgramInfo},
+    programs::{
+        load_program, query, unload_program, Link, OwnedLink, ProgramData, ProgramError,
+        ProgramInfo,
+    },
     sys::{bpf_obj_get_info_by_fd, bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
 };
 
@@ -56,6 +59,14 @@ impl LircMode2 {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_LIRC_MODE2, &mut self.data)
+    }
+
+    /// Unloads the program from the kernel.
+    ///
+    /// If `detach` is true, links will be detached before unloading the program.
+    /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
+    pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
+        unload_program(&mut self.data, detach)
     }
 
     /// Attaches the program to the given lirc device.

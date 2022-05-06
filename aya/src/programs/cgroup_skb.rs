@@ -10,8 +10,8 @@ use crate::{
         bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB,
     },
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, OwnedLink, ProgAttachLink, ProgramData,
-        ProgramError,
+        define_link_wrapper, load_program, unload_program, FdLink, Link, OwnedLink, ProgAttachLink,
+        ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };
@@ -70,6 +70,14 @@ impl CgroupSkb {
                     CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
                 });
         load_program(BPF_PROG_TYPE_CGROUP_SKB, &mut self.data)
+    }
+
+    /// Unloads the program from the kernel.
+    ///
+    /// If `detach` is true, links will be detached before unloading the program.
+    /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
+    pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
+        unload_program(&mut self.data, detach)
     }
 
     /// Returns the expected attach type of the program.

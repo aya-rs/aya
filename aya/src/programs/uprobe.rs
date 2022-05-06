@@ -19,7 +19,7 @@ use crate::{
         define_link_wrapper, load_program,
         perf_attach::{PerfLink, PerfLinkId},
         probe::{attach, ProbeKind},
-        OwnedLink, ProgramData, ProgramError,
+        unload_program, OwnedLink, ProgramData, ProgramError,
     },
 };
 
@@ -49,6 +49,14 @@ impl UProbe {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
+    }
+
+    /// Unloads the program from the kernel.
+    ///
+    /// If `detach` is true, links will be detached before unloading the program.
+    /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
+    pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
+        unload_program(&mut self.data, detach)
     }
 
     /// Returns `UProbe` if the program is a `uprobe`, or `URetProbe` if the
