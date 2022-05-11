@@ -12,7 +12,7 @@ use aya_bpf_cty::c_long;
 use crate::{bindings::__sk_buff, BpfContext};
 
 pub struct SkBuffContext {
-    skb: *mut __sk_buff,
+    pub skb: *mut __sk_buff,
 }
 
 impl SkBuffContext {
