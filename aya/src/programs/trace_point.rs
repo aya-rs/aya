@@ -6,7 +6,7 @@ use crate::{
     programs::{
         define_link_wrapper, load_program,
         perf_attach::{perf_attach, PerfLink, PerfLinkId},
-        ProgramData, ProgramError,
+        OwnedLink, ProgramData, ProgramError,
     },
     sys::perf_event_open_trace_point,
 };
@@ -94,9 +94,21 @@ impl TracePoint {
     pub fn detach(&mut self, link_id: TracePointLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
+
+    /// Takes ownership of the link referenced by the provided link_id.
+    ///
+    /// The link will be detached on `Drop` and the caller is now responsible
+    /// for managing its lifetime.
+    pub fn forget_link(
+        &mut self,
+        link_id: TracePointLinkId,
+    ) -> Result<OwnedLink<TracePointLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    }
 }
 
 define_link_wrapper!(
+    /// The link used by [TracePoint] programs.
     TracePointLink,
     /// The type returned by [TracePoint::attach]. Can be passed to [TracePoint::detach].
     TracePointLinkId,

@@ -2,7 +2,7 @@ use std::os::unix::prelude::{AsRawFd, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
-    programs::{load_program, query, Link, ProgramData, ProgramError, ProgramInfo},
+    programs::{load_program, query, Link, OwnedLink, ProgramData, ProgramError, ProgramInfo},
     sys::{bpf_obj_get_info_by_fd, bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
 };
 
@@ -81,6 +81,17 @@ impl LircMode2 {
         self.data.links.remove(link_id)
     }
 
+    /// Takes ownership of the link referenced by the provided link_id.
+    ///
+    /// The link will be detached on `Drop` and the caller is now responsible
+    /// for managing its lifetime.
+    pub fn forget_link(
+        &mut self,
+        link_id: LircLinkId,
+    ) -> Result<OwnedLink<LircLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    }
+
     /// Queries the lirc device for attached programs.
     pub fn query<T: AsRawFd>(target_fd: T) -> Result<Vec<LircLink>, ProgramError> {
         let prog_ids = query(target_fd.as_raw_fd(), BPF_LIRC_MODE2, 0, &mut None)?;
@@ -108,6 +119,7 @@ impl LircMode2 {
 pub struct LircLinkId(RawFd, RawFd);
 
 #[derive(Debug)]
+/// An LircMode2 Link
 pub struct LircLink {
     prog_fd: RawFd,
     target_fd: RawFd,
@@ -121,6 +133,7 @@ impl LircLink {
         }
     }
 
+    /// Get ProgramInfo from this link
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
         match bpf_obj_get_info_by_fd(self.prog_fd) {
             Ok(info) => Ok(ProgramInfo(info)),

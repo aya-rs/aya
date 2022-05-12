@@ -1,17 +1,51 @@
 use libc::{close, dup};
+
 use std::{
+    borrow::Borrow,
     collections::{hash_map::Entry, HashMap},
+    ops::Deref,
     os::unix::prelude::RawFd,
 };
 
 use crate::{generated::bpf_attach_type, programs::ProgramError, sys::bpf_prog_detach};
 
-pub(crate) trait Link: std::fmt::Debug + 'static {
+/// A Link
+pub trait Link: std::fmt::Debug + 'static {
+    /// Unique Id
     type Id: std::fmt::Debug + std::hash::Hash + Eq + PartialEq;
 
+    /// Returns the link id
     fn id(&self) -> Self::Id;
 
+    /// Detaches the Link
     fn detach(self) -> Result<(), ProgramError>;
+}
+
+/// An owned link that automatically detaches the inner link when dropped.
+pub struct OwnedLink<T: Link> {
+    inner: Option<T>,
+}
+
+impl<T: Link> OwnedLink<T> {
+    pub(crate) fn new(inner: T) -> Self {
+        Self { inner: Some(inner) }
+    }
+}
+
+impl<T: Link> Deref for OwnedLink<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        self.inner.borrow().as_ref().unwrap()
+    }
+}
+
+impl<T: Link> Drop for OwnedLink<T> {
+    fn drop(&mut self) {
+        if let Some(link) = self.inner.take() {
+            link.detach().unwrap();
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -43,6 +77,10 @@ impl<T: Link> LinkMap<T> {
             .ok_or(ProgramError::NotAttached)?
             .detach()
     }
+
+    pub(crate) fn forget(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
+        self.links.remove(&link_id).ok_or(ProgramError::NotAttached)
+    }
 }
 
 impl<T: Link> Drop for LinkMap<T> {
@@ -58,7 +96,7 @@ pub(crate) struct FdLinkId(pub(crate) RawFd);
 
 #[derive(Debug)]
 pub(crate) struct FdLink {
-    fd: RawFd,
+    pub(crate) fd: RawFd,
 }
 
 impl FdLink {
@@ -119,13 +157,14 @@ impl Link for ProgAttachLink {
 }
 
 macro_rules! define_link_wrapper {
-    ($wrapper:ident, #[$doc:meta] $wrapper_id:ident, $base:ident, $base_id:ident) => {
-        #[$doc]
+    (#[$doc1:meta] $wrapper:ident, #[$doc2:meta] $wrapper_id:ident, $base:ident, $base_id:ident) => {
+        #[$doc2]
         #[derive(Debug, Hash, Eq, PartialEq)]
         pub struct $wrapper_id($base_id);
 
+        #[$doc1]
         #[derive(Debug)]
-        pub(crate) struct $wrapper($base);
+        pub struct $wrapper($base);
 
         impl crate::programs::Link for $wrapper {
             type Id = $wrapper_id;
@@ -153,7 +192,7 @@ pub(crate) use define_link_wrapper;
 mod tests {
     use std::{cell::RefCell, rc::Rc};
 
-    use crate::programs::ProgramError;
+    use crate::programs::{OwnedLink, ProgramError};
 
     use super::{Link, LinkMap};
 
@@ -254,6 +293,60 @@ mod tests {
             assert!(*l2_detached.borrow() == 0);
         }
         // remove the other on drop
+        assert!(*l1_detached.borrow() == 1);
+        assert!(*l2_detached.borrow() == 1);
+    }
+
+    #[test]
+    fn test_owned_detach() {
+        let l1 = TestLink::new(1, 2);
+        let l1_detached = Rc::clone(&l1.detached);
+        let l2 = TestLink::new(1, 3);
+        let l2_detached = Rc::clone(&l2.detached);
+
+        let owned_l1 = {
+            let mut links = LinkMap::new();
+            let id1 = links.insert(l1).unwrap();
+            links.insert(l2).unwrap();
+            // manually forget one link
+            let owned_l1 = links.forget(id1);
+            assert!(*l1_detached.borrow() == 0);
+            assert!(*l2_detached.borrow() == 0);
+            owned_l1.unwrap()
+        };
+
+        // l2 is detached on `Drop`, but l1 is still alive
+        assert!(*l1_detached.borrow() == 0);
+        assert!(*l2_detached.borrow() == 1);
+
+        // manually detach l1
+        assert!(owned_l1.detach().is_ok());
+        assert!(*l1_detached.borrow() == 1);
+        assert!(*l2_detached.borrow() == 1);
+    }
+
+    #[test]
+    fn test_owned_drop() {
+        let l1 = TestLink::new(1, 2);
+        let l1_detached = Rc::clone(&l1.detached);
+        let l2 = TestLink::new(1, 3);
+        let l2_detached = Rc::clone(&l2.detached);
+
+        {
+            let mut links = LinkMap::new();
+            let id1 = links.insert(l1).unwrap();
+            links.insert(l2).unwrap();
+
+            // manually forget one link and wrap in OwnedLink
+            let _ = OwnedLink {
+                inner: Some(links.forget(id1).unwrap()),
+            };
+
+            // OwnedLink was dropped in the statement above
+            assert!(*l1_detached.borrow() == 1);
+            assert!(*l2_detached.borrow() == 0);
+        };
+
         assert!(*l1_detached.borrow() == 1);
         assert!(*l2_detached.borrow() == 1);
     }

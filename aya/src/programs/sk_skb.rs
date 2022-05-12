@@ -5,8 +5,8 @@ use crate::{
     },
     maps::sock::SocketMap,
     programs::{
-        define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
-        ProgramError,
+        define_link_wrapper, load_program, OwnedLink, ProgAttachLink, ProgAttachLinkId,
+        ProgramData, ProgramError,
     },
     sys::bpf_prog_attach,
 };
@@ -89,9 +89,21 @@ impl SkSkb {
     pub fn detach(&mut self, link_id: SkSkbLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
+
+    /// Takes ownership of the link referenced by the provided link_id.
+    ///
+    /// The link will be detached on `Drop` and the caller is now responsible
+    /// for managing its lifetime.
+    pub fn forget_link(
+        &mut self,
+        link_id: SkSkbLinkId,
+    ) -> Result<OwnedLink<SkSkbLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    }
 }
 
 define_link_wrapper!(
+    /// The link used by [SkSkb] programs.
     SkSkbLink,
     /// The type returned by [SkSkb::attach]. Can be passed to [SkSkb::detach].
     SkSkbLinkId,

@@ -69,26 +69,27 @@ use std::{
 };
 use thiserror::Error;
 
-pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType, CgroupSkbLinkId};
-pub use extension::{Extension, ExtensionError, ExtensionLinkId};
-pub use fentry::{FEntry, FEntryLinkId};
-pub use fexit::{FExit, FExitLinkId};
-pub use kprobe::{KProbe, KProbeError, KProbeLinkId};
+pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
+pub use extension::{Extension, ExtensionError};
+pub use fentry::FEntry;
+pub use fexit::FExit;
+pub use kprobe::{KProbe, KProbeError};
 use links::*;
-pub use lirc_mode2::{LircLinkId, LircMode2};
-pub use lsm::{Lsm, LsmLinkId};
+pub use links::{Link, OwnedLink};
+pub use lirc_mode2::LircMode2;
+pub use lsm::Lsm;
 use perf_attach::*;
 pub use perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy};
 pub use probe::ProbeKind;
-pub use raw_trace_point::{RawTracePoint, RawTracePointLinkId};
-pub use sk_msg::{SkMsg, SkMsgLinkId};
-pub use sk_skb::{SkSkb, SkSkbKind, SkSkbLinkId};
-pub use sock_ops::{SockOps, SockOpsLinkId};
-pub use socket_filter::{SocketFilter, SocketFilterError, SocketFilterLinkId};
-pub use tc::{SchedClassifier, SchedClassifierLinkId, TcAttachType, TcError};
-pub use tp_btf::{BtfTracePoint, BtfTracePointLinkId};
-pub use trace_point::{TracePoint, TracePointError, TracePointLinkId};
-pub use uprobe::{UProbe, UProbeError, UProbeLinkId};
+pub use raw_trace_point::RawTracePoint;
+pub use sk_msg::SkMsg;
+pub use sk_skb::{SkSkb, SkSkbKind};
+pub use sock_ops::SockOps;
+pub use socket_filter::{SocketFilter, SocketFilterError};
+pub use tc::{SchedClassifier, TcAttachType, TcError};
+pub use tp_btf::BtfTracePoint;
+pub use trace_point::{TracePoint, TracePointError};
+pub use uprobe::{UProbe, UProbeError};
 pub use xdp::{Xdp, XdpError, XdpFlags};
 
 use crate::{
@@ -354,6 +355,10 @@ impl<T: Link> ProgramData<T> {
             }
         })?;
         Ok(())
+    }
+
+    pub(crate) fn forget_link(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
+        self.links.forget(link_id)
     }
 }
 

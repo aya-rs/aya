@@ -10,7 +10,7 @@ use crate::{
     generated::{
         bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS, TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     },
-    programs::{define_link_wrapper, load_program, Link, ProgramData, ProgramError},
+    programs::{define_link_wrapper, load_program, Link, OwnedLink, ProgramData, ProgramError},
     sys::{
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
         netlink_qdisc_detach,
@@ -141,6 +141,17 @@ impl SchedClassifier {
     pub fn detach(&mut self, link_id: SchedClassifierLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
+
+    /// Takes ownership of the link referenced by the provided link_id.
+    ///
+    /// The link will be detached on `Drop` and the caller is now responsible
+    /// for managing its lifetime.
+    pub fn forget_link(
+        &mut self,
+        link_id: SchedClassifierLinkId,
+    ) -> Result<OwnedLink<SchedClassifierLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    }
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
@@ -168,6 +179,7 @@ impl Link for TcLink {
 }
 
 define_link_wrapper!(
+    /// The link used by [SchedClassifier] programs.
     SchedClassifierLink,
     /// The type returned by [SchedClassifier::attach]. Can be passed to [SchedClassifier::detach].
     SchedClassifierLinkId,

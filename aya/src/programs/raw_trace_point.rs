@@ -5,7 +5,7 @@ use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT,
     programs::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
-        ProgramData, ProgramError,
+        OwnedLink, ProgramData, ProgramError,
     },
 };
 
@@ -59,9 +59,21 @@ impl RawTracePoint {
     pub fn detach(&mut self, link_id: RawTracePointLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
+
+    /// Takes ownership of the link referenced by the provided link_id.
+    ///
+    /// The link will be detached on `Drop` and the caller is now responsible
+    /// for managing its lifetime.
+    pub fn forget_link(
+        &mut self,
+        link_id: RawTracePointLinkId,
+    ) -> Result<OwnedLink<RawTracePointLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    }
 }
 
 define_link_wrapper!(
+    /// The link used by [RawTracePoint] programs.
     RawTracePointLink,
     /// The type returned by [RawTracePoint::attach]. Can be passed to [RawTracePoint::detach].
     RawTracePointLinkId,

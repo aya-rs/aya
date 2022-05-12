@@ -4,7 +4,7 @@ use crate::{
     obj::btf::{Btf, BtfKind},
     programs::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
-        ProgramData, ProgramError,
+        OwnedLink, ProgramData, ProgramError,
     },
 };
 
@@ -78,9 +78,21 @@ impl BtfTracePoint {
     pub fn detach(&mut self, link_id: BtfTracePointLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
+
+    /// Takes ownership of the link referenced by the provided link_id.
+    ///
+    /// The link will be detached on `Drop` and the caller is now responsible
+    /// for managing its lifetime.
+    pub fn forget_link(
+        &mut self,
+        link_id: BtfTracePointLinkId,
+    ) -> Result<OwnedLink<BtfTracePointLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    }
 }
 
 define_link_wrapper!(
+    /// The link used by [BtfTracePoint] programs.
     BtfTracePointLink,
     /// The type returned by [BtfTracePoint::attach]. Can be passed to [BtfTracePoint::detach].
     BtfTracePointLinkId,
