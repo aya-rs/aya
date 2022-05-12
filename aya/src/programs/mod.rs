@@ -37,6 +37,7 @@
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [`maps`]: crate::maps
 mod cgroup_skb;
+mod cgroup_sysctl;
 mod extension;
 mod fentry;
 mod fexit;
@@ -70,6 +71,7 @@ use std::{
 use thiserror::Error;
 
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
+pub use cgroup_sysctl::CgroupSysctl;
 pub use extension::{Extension, ExtensionError};
 pub use fentry::FEntry;
 pub use fexit::FExit;
@@ -233,6 +235,8 @@ pub enum Program {
     SchedClassifier(SchedClassifier),
     /// A [`CgroupSkb`] program
     CgroupSkb(CgroupSkb),
+    /// A [`CgroupSysctl`] program
+    CgroupSysctl(CgroupSysctl),
     /// A [`LircMode2`] program
     LircMode2(LircMode2),
     /// A [`PerfEvent`] program
@@ -266,6 +270,7 @@ impl Program {
             Program::SockOps(_) => BPF_PROG_TYPE_SOCK_OPS,
             Program::SchedClassifier(_) => BPF_PROG_TYPE_SCHED_CLS,
             Program::CgroupSkb(_) => BPF_PROG_TYPE_CGROUP_SKB,
+            Program::CgroupSysctl(_) => BPF_PROG_TYPE_CGROUP_SYSCTL,
             Program::LircMode2(_) => BPF_PROG_TYPE_LIRC_MODE2,
             Program::PerfEvent(_) => BPF_PROG_TYPE_PERF_EVENT,
             Program::RawTracePoint(_) => BPF_PROG_TYPE_RAW_TRACEPOINT,
@@ -290,6 +295,7 @@ impl Program {
             Program::SockOps(p) => p.data.pin(path),
             Program::SchedClassifier(p) => p.data.pin(path),
             Program::CgroupSkb(p) => p.data.pin(path),
+            Program::CgroupSysctl(p) => p.data.pin(path),
             Program::LircMode2(p) => p.data.pin(path),
             Program::PerfEvent(p) => p.data.pin(path),
             Program::RawTracePoint(p) => p.data.pin(path),
@@ -494,6 +500,7 @@ impl ProgramFd for Program {
             Program::SockOps(p) => p.data.fd,
             Program::SchedClassifier(p) => p.data.fd,
             Program::CgroupSkb(p) => p.data.fd,
+            Program::CgroupSysctl(p) => p.data.fd,
             Program::LircMode2(p) => p.data.fd,
             Program::PerfEvent(p) => p.data.fd,
             Program::RawTracePoint(p) => p.data.fd,
@@ -540,6 +547,7 @@ impl_program_fd!(
     SkSkb,
     SchedClassifier,
     CgroupSkb,
+    CgroupSysctl,
     LircMode2,
     PerfEvent,
     Lsm,
@@ -589,6 +597,7 @@ impl_try_from_program!(
     SockOps,
     SchedClassifier,
     CgroupSkb,
+    CgroupSysctl,
     LircMode2,
     PerfEvent,
     Lsm,

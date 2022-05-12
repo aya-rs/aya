@@ -22,9 +22,10 @@ use crate::{
         MapKind, Object, ParseError, ProgramSection,
     },
     programs::{
-        BtfTracePoint, CgroupSkb, CgroupSkbAttachType, Extension, FEntry, FExit, KProbe, LircMode2,
-        Lsm, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
-        SchedClassifier, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        BtfTracePoint, CgroupSkb, CgroupSkbAttachType, CgroupSysctl, Extension, FEntry, FExit,
+        KProbe, LircMode2, Lsm, PerfEvent, ProbeKind, Program, ProgramData, ProgramError,
+        RawTracePoint, SchedClassifier, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
+        UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_btf_datasec_supported,
@@ -443,6 +444,11 @@ impl<'a> BpfLoader<'a> {
                         ProgramSection::SkMsg { .. } => Program::SkMsg(SkMsg {
                             data: ProgramData::new(prog_name, obj, btf_fd),
                         }),
+                        ProgramSection::CgroupSysctl { .. } => {
+                            Program::CgroupSysctl(CgroupSysctl {
+                                data: ProgramData::new(prog_name, obj, btf_fd),
+                            })
+                        }
                         ProgramSection::SkSkbStreamParser { .. } => Program::SkSkb(SkSkb {
                             data: ProgramData::new(prog_name, obj, btf_fd),
                             kind: SkSkbKind::StreamParser,

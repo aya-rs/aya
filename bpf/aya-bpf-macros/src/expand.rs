@@ -215,6 +215,38 @@ impl SchedClassifier {
     }
 }
 
+pub struct CgroupSysctl {
+    item: ItemFn,
+    name: Option<String>,
+}
+
+impl CgroupSysctl {
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<CgroupSysctl> {
+        let name = name_arg(&mut args)?;
+
+        Ok(CgroupSysctl { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = if let Some(name) = &self.name {
+            format!("cgroup/sysctl/{}", name)
+        } else {
+            ("cgroup/sysctl").to_owned()
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sysctl) -> i32 {
+                return #fn_name(::aya_bpf::programs::SysctlContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
+
 pub struct CgroupSkb {
     item: ItemFn,
     expected_attach_type: Option<String>,
