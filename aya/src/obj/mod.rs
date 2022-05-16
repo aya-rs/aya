@@ -216,15 +216,16 @@ impl FromStr for ProgramSection {
             "cgroup_skb/ingress" => CgroupSkbIngress { name },
             "cgroup_skb/egress" => CgroupSkbEgress { name },
             "cgroup/skb" => CgroupSkb { name },
+            "cgroup/sysctl" => CgroupSysctl { name },
             "cgroup" => match &*name {
                 "skb" => CgroupSkb { name },
+                "sysctl" => CgroupSysctl { name },
                 _ => {
                     return Err(ParseError::InvalidProgramSection {
                         section: section.to_owned(),
                     })
                 }
             },
-            "cgroup/sysctl" => CgroupSysctl { name },
             "lirc_mode2" => LircMode2 { name },
             "perf_event" => PerfEvent { name },
             "raw_tp" | "raw_tracepoint" => RawTracePoint { name },
