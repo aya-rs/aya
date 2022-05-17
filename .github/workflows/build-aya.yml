@@ -1,4 +1,4 @@
-name: Build aya
+name: build-aya
 
 on:
   push:

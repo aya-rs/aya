@@ -1,4 +1,4 @@
-name: Build aya-bpf
+name: build-aya-bpf
 
 on:
   push:

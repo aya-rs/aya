@@ -1,0 +1,7 @@
+[build]
+  publish = "target/doc"
+  command = "rustup toolchain install nightly && cargo xtask docs"
+
+[[redirects]]
+  from = "/"
+  to = "/aya"

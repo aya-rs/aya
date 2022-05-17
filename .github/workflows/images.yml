@@ -1,4 +1,4 @@
-name: Aya test image
+name: aya-test-image
 
 on:
   schedule:
