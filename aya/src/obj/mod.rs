@@ -119,6 +119,7 @@ pub enum ProgramSection {
     CgroupSkb { name: String },
     CgroupSkbIngress { name: String },
     CgroupSkbEgress { name: String },
+    CgroupSysctl { name: String },
     LircMode2 { name: String },
     PerfEvent { name: String },
     RawTracePoint { name: String },
@@ -147,6 +148,7 @@ impl ProgramSection {
             ProgramSection::CgroupSkb { name } => name,
             ProgramSection::CgroupSkbIngress { name } => name,
             ProgramSection::CgroupSkbEgress { name } => name,
+            ProgramSection::CgroupSysctl { name } => name,
             ProgramSection::LircMode2 { name } => name,
             ProgramSection::PerfEvent { name } => name,
             ProgramSection::RawTracePoint { name } => name,
@@ -214,8 +216,10 @@ impl FromStr for ProgramSection {
             "cgroup_skb/ingress" => CgroupSkbIngress { name },
             "cgroup_skb/egress" => CgroupSkbEgress { name },
             "cgroup/skb" => CgroupSkb { name },
+            "cgroup/sysctl" => CgroupSysctl { name },
             "cgroup" => match &*name {
                 "skb" => CgroupSkb { name },
+                "sysctl" => CgroupSysctl { name },
                 _ => {
                     return Err(ParseError::InvalidProgramSection {
                         section: section.to_owned(),
