@@ -3,20 +3,36 @@
 [![Crates.io][crates-badge]][crates-url]
 ![License][license-badge]
 ![Build status][build-badge]
-[![Documentaiton][docs-badge]][docs-url]
+[![Book][book-badge]][book-url]
 
-[crates-badge]: https://img.shields.io/crates/v/aya.svg
+
+[crates-badge]: https://img.shields.io/crates/v/aya.svg?style=for-the-badge&logo=rust
 [crates-url]: https://crates.io/crates/aya
-[license-badge]: https://img.shields.io/badge/license-MIT%2FApache--2.0-blue
-[build-badge]: https://github.com/aya-rs/aya/actions/workflows/build-aya.yml/badge.svg
-[docs-badge]: https://img.shields.io/badge/docs-website-blue.svg
-[docs-url]: http://aya-rs.github.io/book/
+[license-badge]: https://img.shields.io/badge/license-MIT%2FApache--2.0-blue?style=for-the-badge
+[build-badge]: https://img.shields.io/github/workflow/status/aya-rs/aya/build-aya?style=for-the-badge&logo=github
+[book-badge]: https://img.shields.io/badge/read%20the-book-9cf.svg?style=for-the-badge&logo=mdbook
+[book-url]: http://aya-rs.github.io/book/
 
-[API docs][api-docs] | [Chat][chat-url] | [Aya-Related Projects][awesome-aya]
+## API Documentation
 
+[![Unreleased Documentation][git-docs-badge]][git-api-docs] [![Documentaiton][api-docs-badge]][api-docs]
+
+[git-docs-badge]: https://img.shields.io/badge/docs-unreleased-red.svg?style=for-the-badge&logo=docsdotrs
+[git-api-docs]: https://aya-rs.netlify.app
+[api-docs-badge]: https://img.shields.io/badge/docs-released-blue.svg?style=for-the-badge&logo=docsdotrs
 [api-docs]: https://docs.rs/aya
+
+## Community
+
+[![Discord][discord-badge]][chat-url] [![Awesome][awesome-badge]][awesome-aya]
+
+Join [the conversation on Discord][chat-url] to discuss anything related to Aya, or discover
+and contribute to a list of [Awesome Aya][awesome-aya] projects.
+
+[discord-badge]: https://img.shields.io/badge/Discord-chat-5865F2?style=for-the-badge&logo=discord
 [chat-url]: https://discord.gg/xHW2cb2N6G
 [awesome-aya]: https://github.com/aya-rs/awesome-aya
+[awesome-badge]: https://img.shields.io/badge/Awesome-Aya-FC60A8?style=for-the-badge&logo=awesomelists
 
 ## Overview
 
@@ -77,10 +93,6 @@ ingress.load()?;
 let cgroup = File::open("/sys/fs/cgroup/unified")?;
 ingress.attach(cgroup, CgroupSkbAttachType::Ingress)?;
 ```
-
-## Community
-
-Join [the conversation on Discord][chat-url] to discuss anything related to aya.
 
 ## Contributing
 
