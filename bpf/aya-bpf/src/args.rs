@@ -56,6 +56,26 @@ unsafe_impl_from_btf_argument!(i64);
 unsafe_impl_from_btf_argument!(usize);
 unsafe_impl_from_btf_argument!(isize);
 
+pub struct PtRegs {
+    regs: *mut pt_regs,
+}
+
+/// PtRegs is a portable wrapper around
+/// pt_regs and user_pt_regs
+impl PtRegs {
+
+    pub fn new(ctx: *mut c_void) -> Self {
+        PtRegs {
+            regs: ctx as *mut _,
+        }
+    }
+
+    /// Returns the `n`th argument to passed to the probe function, starting from 0.
+    pub fn arg<T: FromPtRegs>(&self, n: usize) -> Option<T> {
+        T::from_argument( unsafe { &*self.regs } , n)
+    }
+}
+
 /// A trait that indicates a valid type for an argument which can be coerced from
 /// a pt_regs context.
 ///
