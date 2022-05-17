@@ -1,4 +1,5 @@
 mod codegen;
+mod docs;
 
 use std::process::exit;
 
@@ -12,6 +13,7 @@ pub struct Options {
 #[derive(StructOpt)]
 enum Command {
     Codegen(codegen::Options),
+    Docs,
 }
 
 fn main() {
@@ -20,6 +22,7 @@ fn main() {
     use Command::*;
     let ret = match opts.command {
         Codegen(opts) => codegen::codegen(opts),
+        Docs => docs::docs(),
     };
 
     if let Err(e) = ret {
