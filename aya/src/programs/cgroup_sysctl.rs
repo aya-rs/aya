@@ -12,12 +12,10 @@ use crate::{
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };
 
-/// A program used to hook for sysctl.
+/// A program used to watch for sysctl changes.
+///
 /// [`CgroupSysctl`] programs can be attached to a cgroup and will be called every
-/// time a process inside that cgroup tries to read from or write to sysctl knob in proc.
-///
-///
-/// [cgroup]: https://man7.org/linux/man-pages/man7/cgroups.7.html
+/// time a process inside that cgroup tries to read from or write to a sysctl knob in proc.
 ///
 /// # Minimum kernel version
 ///
