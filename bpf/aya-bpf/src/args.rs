@@ -56,6 +56,32 @@ unsafe_impl_from_btf_argument!(i64);
 unsafe_impl_from_btf_argument!(usize);
 unsafe_impl_from_btf_argument!(isize);
 
+pub struct PtRegs {
+    regs: *mut pt_regs,
+}
+
+/// A portable wrapper around pt_regs and user_pt_regs.
+impl PtRegs {
+    pub fn new(regs: *mut pt_regs) -> Self {
+        PtRegs { regs }
+    }
+
+    /// Returns the value of the register used to pass arg `n`.
+    pub fn arg<T: FromPtRegs>(&self, n: usize) -> Option<T> {
+        T::from_argument(unsafe { &*self.regs }, n)
+    }
+
+    /// Returns the value of the register used to pass the return value.
+    pub fn ret<T: FromPtRegs>(&self) -> Option<T> {
+        T::from_retval(unsafe { &*self.regs })
+    }
+
+    /// Returns a pointer to the wrapped value.
+    pub fn as_ptr(&self) -> *mut pt_regs {
+        self.regs
+    }
+}
+
 /// A trait that indicates a valid type for an argument which can be coerced from
 /// a pt_regs context.
 ///
