@@ -60,6 +60,27 @@ impl Parse for SockAddrArgs {
     }
 }
 
+pub struct SockoptArgs {
+    pub(crate) attach_type: Ident,
+    pub(crate) args: Args,
+}
+
+impl Parse for SockoptArgs {
+    fn parse(input: ParseStream) -> Result<SockoptArgs> {
+        let attach_type: Ident = input.parse()?;
+        match attach_type.to_string().as_str() {
+            "getsockopt" | "setsockopt" => (),
+            _ => return Err(input.error("invalid attach type")),
+        }
+        let args = if input.parse::<Token![,]>().is_ok() {
+            Args::parse(input)?
+        } else {
+            Args { args: vec![] }
+        };
+        Ok(SockoptArgs { attach_type, args })
+    }
+}
+
 pub struct Map {
     item: ItemStatic,
     name: String,
@@ -263,6 +284,43 @@ impl CgroupSysctl {
             #[link_section = #section_name]
             fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sysctl) -> i32 {
                 return #fn_name(::aya_bpf::programs::SysctlContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
+
+pub struct CgroupSockopt {
+    item: ItemFn,
+    attach_type: String,
+    name: Option<String>,
+}
+
+impl CgroupSockopt {
+    pub fn from_syn(mut args: Args, item: ItemFn, attach_type: String) -> Result<CgroupSockopt> {
+        let name = pop_arg(&mut args, "name");
+        err_on_unknown_args(&args)?;
+
+        Ok(CgroupSockopt {
+            item,
+            attach_type,
+            name,
+        })
+    }
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = if let Some(name) = &self.name {
+            format!("cgroup/{}/{}", self.attach_type, name)
+        } else {
+            format!("cgroup/{}", self.attach_type)
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sockopt) -> i32 {
+                return #fn_name(::aya_bpf::programs::SockoptContext::new(ctx));
 
                 #item
             }
