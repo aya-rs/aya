@@ -2,8 +2,8 @@ mod expand;
 
 use expand::{
     Args, BtfTracePoint, CgroupSkb, CgroupSockAddr, CgroupSockopt, CgroupSysctl, FEntry, FExit,
-    Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint, SchedClassifier, SkMsg, SkSkb, SkSkbKind,
-    SockAddrArgs, SockOps, SocketFilter, SockoptArgs, TracePoint, Xdp,
+    Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb,
+    SkSkbKind, SockAddrArgs, SockOps, SocketFilter, SockoptArgs, TracePoint, Xdp,
 };
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemFn, ItemStatic};
@@ -463,6 +463,35 @@ pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let item = parse_macro_input!(item as ItemFn);
 
     FExit::from_syn(args, item)
+        .and_then(|u| u.expand())
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+/// Marks a function as an eBPF Socket Lookup program that can be attached to
+/// a network namespace.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 5.9
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{macros::sk_lookup, programs::SkLookupContext};
+///
+/// #[sk_lookup(name = "redirect")]
+/// pub fn accept_all(_ctx: SkLookupContext) -> u32 {
+///     // use sk_assign to redirect
+///     return 0
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attrs as Args);
+    let item = parse_macro_input!(item as ItemFn);
+
+    SkLookup::from_syn(args, item)
         .and_then(|u| u.expand())
         .unwrap_or_else(|err| err.to_compile_error())
         .into()

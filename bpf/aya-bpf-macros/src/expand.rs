@@ -743,6 +743,38 @@ impl FExit {
     }
 }
 
+pub struct SkLookup {
+    item: ItemFn,
+    name: Option<String>,
+}
+
+impl SkLookup {
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<SkLookup> {
+        let name = name_arg(&mut args)?;
+
+        Ok(SkLookup { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = if let Some(name) = &self.name {
+            format!("sk_lookup/{}", name)
+        } else {
+            "sk_lookup".to_owned()
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sk_lookup) -> u32 {
+                return #fn_name(::aya_bpf::programs::SkLookupContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use syn::parse_quote;
