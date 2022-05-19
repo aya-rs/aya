@@ -185,6 +185,9 @@ pub enum ProgramSection {
     Extension {
         name: String,
     },
+    SkLookup {
+        name: String,
+    },
 }
 
 impl ProgramSection {
@@ -216,6 +219,7 @@ impl ProgramSection {
             ProgramSection::FEntry { name } => name,
             ProgramSection::FExit { name } => name,
             ProgramSection::Extension { name } => name,
+            ProgramSection::SkLookup { name } => name,
         }
     }
 }
@@ -361,6 +365,7 @@ impl FromStr for ProgramSection {
             "fentry" => FEntry { name },
             "fexit" => FExit { name },
             "freplace" => Extension { name },
+            "sk_lookup" => SkLookup { name },
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),

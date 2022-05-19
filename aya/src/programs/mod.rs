@@ -50,11 +50,12 @@ pub mod lsm;
 pub mod perf_attach;
 pub mod perf_event;
 mod probe;
-pub mod raw_trace_point;
-pub mod sk_msg;
-pub mod sk_skb;
-pub mod sock_ops;
-pub mod socket_filter;
+mod raw_trace_point;
+mod sk_lookup;
+mod sk_msg;
+mod sk_skb;
+mod sock_ops;
+mod socket_filter;
 pub mod tc;
 pub mod tp_btf;
 pub mod trace_point;
@@ -88,6 +89,7 @@ use perf_attach::*;
 pub use perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy};
 pub use probe::ProbeKind;
 pub use raw_trace_point::RawTracePoint;
+pub use sk_lookup::SkLookup;
 pub use sk_msg::SkMsg;
 pub use sk_skb::{SkSkb, SkSkbKind};
 pub use sock_ops::SockOps;
@@ -261,6 +263,8 @@ pub enum Program {
     FExit(FExit),
     /// A [`Extension`] program
     Extension(Extension),
+    /// A [`SkLookup`] program
+    SkLookup(SkLookup),
 }
 
 impl Program {
@@ -289,6 +293,7 @@ impl Program {
             Program::FExit(_) => BPF_PROG_TYPE_TRACING,
             Program::Extension(_) => BPF_PROG_TYPE_EXT,
             Program::CgroupSockAddr(_) => BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
+            Program::SkLookup(_) => BPF_PROG_TYPE_SK_LOOKUP,
         }
     }
 
@@ -316,6 +321,7 @@ impl Program {
             Program::FExit(p) => p.data.pin(path),
             Program::Extension(p) => p.data.pin(path),
             Program::CgroupSockAddr(p) => p.data.pin(path),
+            Program::SkLookup(p) => p.data.pin(path),
         }
     }
 }
@@ -523,6 +529,7 @@ impl ProgramFd for Program {
             Program::FExit(p) => p.data.fd,
             Program::Extension(p) => p.data.fd,
             Program::CgroupSockAddr(p) => p.data.fd,
+            Program::SkLookup(p) => p.data.fd,
         }
     }
 }
@@ -572,6 +579,7 @@ impl_program_fd!(
     FExit,
     Extension,
     CgroupSockAddr,
+    SkLookup,
 );
 
 macro_rules! impl_try_from_program {
@@ -624,6 +632,7 @@ impl_try_from_program!(
     FExit,
     Extension,
     CgroupSockAddr,
+    SkLookup,
 );
 
 /// Provides information about a loaded program, like name, id and statistics
