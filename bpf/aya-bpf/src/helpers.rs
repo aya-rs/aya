@@ -10,6 +10,7 @@
 use core::mem::{self, MaybeUninit};
 
 pub use aya_bpf_bindings::helpers as gen;
+#[doc(hidden)]
 pub use gen::*;
 
 use crate::cty::{c_char, c_long, c_void};
