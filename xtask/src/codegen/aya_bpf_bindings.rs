@@ -46,7 +46,7 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
             .constified_enum("BPF_FLOW_.*");
 
         let types = [
-            "bpf_map_.*",
+            "bpf_.*",
             "sk_action",
             "pt_regs",
             "user_pt_regs",
