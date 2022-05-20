@@ -26,6 +26,17 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
+/// # #[derive(Debug, thiserror::Error)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::fs::File;
 /// use std::convert::TryInto;
@@ -35,7 +46,7 @@ use crate::{
 /// let program: &mut CgroupSockopt = bpf.program_mut("cgroup_sockopt").unwrap().try_into()?;
 /// program.load()?;
 /// program.attach(file)?;
-/// # Ok::<(), anyhow::Error>(())
+/// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_CGROUP_SOCKOPT")]
