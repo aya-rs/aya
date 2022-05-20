@@ -37,6 +37,7 @@
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [`maps`]: crate::maps
 mod cgroup_skb;
+mod cgroup_sock_addr;
 mod cgroup_sysctl;
 mod extension;
 mod fentry;
@@ -71,6 +72,7 @@ use std::{
 use thiserror::Error;
 
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
+pub use cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType};
 pub use cgroup_sysctl::CgroupSysctl;
 pub use extension::{Extension, ExtensionError};
 pub use fentry::FEntry;
@@ -229,6 +231,8 @@ pub enum Program {
     SkMsg(SkMsg),
     /// A [`SkSkb`] program
     SkSkb(SkSkb),
+    /// A [`CgroupSockAddr`] program
+    CgroupSockAddr(CgroupSockAddr),
     /// A [`SockOps`] program
     SockOps(SockOps),
     /// A [`SchedClassifier`] program
@@ -279,6 +283,7 @@ impl Program {
             Program::FEntry(_) => BPF_PROG_TYPE_TRACING,
             Program::FExit(_) => BPF_PROG_TYPE_TRACING,
             Program::Extension(_) => BPF_PROG_TYPE_EXT,
+            Program::CgroupSockAddr(_) => BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
         }
     }
 
@@ -304,6 +309,7 @@ impl Program {
             Program::FEntry(p) => p.data.pin(path),
             Program::FExit(p) => p.data.pin(path),
             Program::Extension(p) => p.data.pin(path),
+            Program::CgroupSockAddr(p) => p.data.pin(path),
         }
     }
 }
@@ -509,6 +515,7 @@ impl ProgramFd for Program {
             Program::FEntry(p) => p.data.fd,
             Program::FExit(p) => p.data.fd,
             Program::Extension(p) => p.data.fd,
+            Program::CgroupSockAddr(p) => p.data.fd,
         }
     }
 }
@@ -556,6 +563,7 @@ impl_program_fd!(
     FEntry,
     FExit,
     Extension,
+    CgroupSockAddr,
 );
 
 macro_rules! impl_try_from_program {
@@ -606,6 +614,7 @@ impl_try_from_program!(
     FEntry,
     FExit,
     Extension,
+    CgroupSockAddr,
 );
 
 /// Provides information about a loaded program, like name, id and statistics

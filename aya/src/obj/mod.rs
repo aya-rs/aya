@@ -21,6 +21,7 @@ use crate::{
     bpf_map_def,
     generated::{bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_F_RDONLY_PROG},
     obj::btf::{Btf, BtfError, BtfExt},
+    programs::CgroupSockAddrAttachType,
     BpfError,
 };
 use std::slice::from_raw_parts_mut;
@@ -104,30 +105,82 @@ pub(crate) struct Function {
 
 #[derive(Debug, Clone)]
 pub enum ProgramSection {
-    KRetProbe { name: String },
-    KProbe { name: String },
-    UProbe { name: String },
-    URetProbe { name: String },
-    TracePoint { name: String },
-    SocketFilter { name: String },
-    Xdp { name: String },
-    SkMsg { name: String },
-    SkSkbStreamParser { name: String },
-    SkSkbStreamVerdict { name: String },
-    SockOps { name: String },
-    SchedClassifier { name: String },
-    CgroupSkb { name: String },
-    CgroupSkbIngress { name: String },
-    CgroupSkbEgress { name: String },
-    CgroupSysctl { name: String },
-    LircMode2 { name: String },
-    PerfEvent { name: String },
-    RawTracePoint { name: String },
-    Lsm { name: String },
-    BtfTracePoint { name: String },
-    FEntry { name: String },
-    FExit { name: String },
-    Extension { name: String },
+    KRetProbe {
+        name: String,
+    },
+    KProbe {
+        name: String,
+    },
+    UProbe {
+        name: String,
+    },
+    URetProbe {
+        name: String,
+    },
+    TracePoint {
+        name: String,
+    },
+    SocketFilter {
+        name: String,
+    },
+    Xdp {
+        name: String,
+    },
+    SkMsg {
+        name: String,
+    },
+    SkSkbStreamParser {
+        name: String,
+    },
+    SkSkbStreamVerdict {
+        name: String,
+    },
+    SockOps {
+        name: String,
+    },
+    SchedClassifier {
+        name: String,
+    },
+    CgroupSkb {
+        name: String,
+    },
+    CgroupSkbIngress {
+        name: String,
+    },
+    CgroupSkbEgress {
+        name: String,
+    },
+    CgroupSockAddr {
+        name: String,
+        attach_type: CgroupSockAddrAttachType,
+    },
+    CgroupSysctl {
+        name: String,
+    },
+    LircMode2 {
+        name: String,
+    },
+    PerfEvent {
+        name: String,
+    },
+    RawTracePoint {
+        name: String,
+    },
+    Lsm {
+        name: String,
+    },
+    BtfTracePoint {
+        name: String,
+    },
+    FEntry {
+        name: String,
+    },
+    FExit {
+        name: String,
+    },
+    Extension {
+        name: String,
+    },
 }
 
 impl ProgramSection {
@@ -145,9 +198,10 @@ impl ProgramSection {
             ProgramSection::SkSkbStreamVerdict { name } => name,
             ProgramSection::SockOps { name } => name,
             ProgramSection::SchedClassifier { name } => name,
-            ProgramSection::CgroupSkb { name } => name,
-            ProgramSection::CgroupSkbIngress { name } => name,
-            ProgramSection::CgroupSkbEgress { name } => name,
+            ProgramSection::CgroupSkb { name, .. } => name,
+            ProgramSection::CgroupSkbIngress { name, .. } => name,
+            ProgramSection::CgroupSkbEgress { name, .. } => name,
+            ProgramSection::CgroupSockAddr { name, .. } => name,
             ProgramSection::CgroupSysctl { name } => name,
             ProgramSection::LircMode2 { name } => name,
             ProgramSection::PerfEvent { name } => name,
@@ -221,10 +275,62 @@ impl FromStr for ProgramSection {
                 "skb" => CgroupSkb { name },
                 "sysctl" => CgroupSysctl { name },
                 _ => {
-                    return Err(ParseError::InvalidProgramSection {
-                        section: section.to_owned(),
-                    })
+                    if let Ok(attach_type) = CgroupSockAddrAttachType::try_from(name.as_str()) {
+                        CgroupSockAddr { name, attach_type }
+                    } else {
+                        return Err(ParseError::InvalidProgramSection {
+                            section: section.to_owned(),
+                        });
+                    }
                 }
+            },
+            "cgroup/bind4" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::Bind4,
+            },
+            "cgroup/bind6" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::Bind6,
+            },
+            "cgroup/connect4" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::Connect4,
+            },
+            "cgroup/connect6" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::Connect6,
+            },
+            "cgroup/getpeername4" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::GetPeerName4,
+            },
+            "cgroup/getpeername6" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::GetPeerName6,
+            },
+            "cgroup/getsockname4" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::GetSockName4,
+            },
+            "cgroup/getsockname6" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::GetSockName6,
+            },
+            "cgroup/sendmsg4" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::UDPSendMsg4,
+            },
+            "cgroup/sendmsg6" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::UDPSendMsg6,
+            },
+            "cgroup/recvmsg4" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::UDPRecvMsg4,
+            },
+            "cgroup/recvmsg6" => CgroupSockAddr {
+                name,
+                attach_type: CgroupSockAddrAttachType::UDPRecvMsg6,
             },
             "lirc_mode2" => LircMode2 { name },
             "perf_event" => PerfEvent { name },
@@ -1636,6 +1742,54 @@ mod tests {
             obj.programs.get("foo"),
             Some(Program {
                 section: ProgramSection::CgroupSkb { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_sock_addr_named() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "cgroup/connect4/foo",
+                bytes_of(&fake_ins())
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::Connect4,
+                    ..
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_sock_addr_unnamed() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "cgroup/connect4",
+                bytes_of(&fake_ins())
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("connect4"),
+            Some(Program {
+                section: ProgramSection::CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::Connect4,
+                    ..
+                },
                 ..
             })
         );

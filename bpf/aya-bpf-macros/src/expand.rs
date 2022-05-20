@@ -37,6 +37,29 @@ impl Parse for Args {
     }
 }
 
+pub struct SockAddrArgs {
+    pub(crate) attach_type: Ident,
+    pub(crate) args: Args,
+}
+
+impl Parse for SockAddrArgs {
+    fn parse(input: ParseStream) -> Result<SockAddrArgs> {
+        let attach_type: Ident = input.parse()?;
+        match attach_type.to_string().as_str() {
+            "connect4" | "connect6" | "bind4" | "bind6" | "getpeername4" | "getpeername6"
+            | "getsockname4" | "getsockname6" | "sendmsg4" | "sendmsg6" | "recvmsg4"
+            | "recvmsg6" => (),
+            _ => return Err(input.error("invalid attach type")),
+        }
+        let args = if input.parse::<Token![,]>().is_ok() {
+            Args::parse(input)?
+        } else {
+            Args { args: vec![] }
+        };
+        Ok(SockAddrArgs { attach_type, args })
+    }
+}
+
 pub struct Map {
     item: ItemStatic,
     name: String,
@@ -257,6 +280,7 @@ impl CgroupSkb {
     pub fn from_syn(mut args: Args, item: ItemFn) -> Result<CgroupSkb> {
         let name = pop_arg(&mut args, "name");
         let expected_attach_type = pop_arg(&mut args, "attach");
+        err_on_unknown_args(&args)?;
 
         Ok(CgroupSkb {
             item,
@@ -284,6 +308,44 @@ impl CgroupSkb {
             #[link_section = #section_name]
             fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
                 return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
+
+pub struct CgroupSockAddr {
+    item: ItemFn,
+    attach_type: String,
+    name: Option<String>,
+}
+
+impl CgroupSockAddr {
+    pub fn from_syn(mut args: Args, item: ItemFn, attach_type: String) -> Result<CgroupSockAddr> {
+        let name = pop_arg(&mut args, "name");
+        err_on_unknown_args(&args)?;
+
+        Ok(CgroupSockAddr {
+            item,
+            attach_type,
+            name,
+        })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = if let Some(name) = &self.name {
+            format!("cgroup/{}/{}", self.attach_type, name)
+        } else {
+            format!("cgroup/{}", self.attach_type)
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
+                return #fn_name(::aya_bpf::programs::SockAddrContext::new(ctx));
 
                 #item
             }
@@ -507,6 +569,8 @@ pub struct SkSkb {
 impl SkSkb {
     pub fn from_syn(kind: SkSkbKind, mut args: Args, item: ItemFn) -> Result<SkSkb> {
         let name = pop_arg(&mut args, "name");
+        err_on_unknown_args(&args)?;
+
         Ok(SkSkb { item, kind, name })
     }
 
@@ -539,6 +603,7 @@ pub struct SocketFilter {
 impl SocketFilter {
     pub fn from_syn(mut args: Args, item: ItemFn) -> Result<SocketFilter> {
         let name = name_arg(&mut args)?;
+        err_on_unknown_args(&args)?;
 
         Ok(SocketFilter { item, name })
     }
