@@ -38,6 +38,7 @@
 //! [`maps`]: crate::maps
 mod cgroup_skb;
 mod cgroup_sock_addr;
+mod cgroup_sockopt;
 mod cgroup_sysctl;
 mod extension;
 mod fentry;
@@ -73,6 +74,7 @@ use thiserror::Error;
 
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
 pub use cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType};
+pub use cgroup_sockopt::{CgroupSockopt, CgroupSockoptAttachType};
 pub use cgroup_sysctl::CgroupSysctl;
 pub use extension::{Extension, ExtensionError};
 pub use fentry::FEntry;
@@ -241,6 +243,8 @@ pub enum Program {
     CgroupSkb(CgroupSkb),
     /// A [`CgroupSysctl`] program
     CgroupSysctl(CgroupSysctl),
+    /// A [`CgroupSockopt`] program
+    CgroupSockopt(CgroupSockopt),
     /// A [`LircMode2`] program
     LircMode2(LircMode2),
     /// A [`PerfEvent`] program
@@ -275,6 +279,7 @@ impl Program {
             Program::SchedClassifier(_) => BPF_PROG_TYPE_SCHED_CLS,
             Program::CgroupSkb(_) => BPF_PROG_TYPE_CGROUP_SKB,
             Program::CgroupSysctl(_) => BPF_PROG_TYPE_CGROUP_SYSCTL,
+            Program::CgroupSockopt(_) => BPF_PROG_TYPE_CGROUP_SOCKOPT,
             Program::LircMode2(_) => BPF_PROG_TYPE_LIRC_MODE2,
             Program::PerfEvent(_) => BPF_PROG_TYPE_PERF_EVENT,
             Program::RawTracePoint(_) => BPF_PROG_TYPE_RAW_TRACEPOINT,
@@ -301,6 +306,7 @@ impl Program {
             Program::SchedClassifier(p) => p.data.pin(path),
             Program::CgroupSkb(p) => p.data.pin(path),
             Program::CgroupSysctl(p) => p.data.pin(path),
+            Program::CgroupSockopt(p) => p.data.pin(path),
             Program::LircMode2(p) => p.data.pin(path),
             Program::PerfEvent(p) => p.data.pin(path),
             Program::RawTracePoint(p) => p.data.pin(path),
@@ -507,6 +513,7 @@ impl ProgramFd for Program {
             Program::SchedClassifier(p) => p.data.fd,
             Program::CgroupSkb(p) => p.data.fd,
             Program::CgroupSysctl(p) => p.data.fd,
+            Program::CgroupSockopt(p) => p.data.fd,
             Program::LircMode2(p) => p.data.fd,
             Program::PerfEvent(p) => p.data.fd,
             Program::RawTracePoint(p) => p.data.fd,
@@ -555,6 +562,7 @@ impl_program_fd!(
     SchedClassifier,
     CgroupSkb,
     CgroupSysctl,
+    CgroupSockopt,
     LircMode2,
     PerfEvent,
     Lsm,
@@ -606,6 +614,7 @@ impl_try_from_program!(
     SchedClassifier,
     CgroupSkb,
     CgroupSysctl,
+    CgroupSockopt,
     LircMode2,
     PerfEvent,
     Lsm,
