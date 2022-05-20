@@ -17,7 +17,7 @@ use crate::{
 /// A program that can be used to get or set options on sockets.
 ///
 /// [`CgroupSockopt`] programs can be attached to a cgroup and will be called every
-/// time a process executes getsockopt or getsockopt system call.
+/// time a process executes getsockopt or setsockopt system call.
 ///
 /// # Minimum kernel version
 ///
