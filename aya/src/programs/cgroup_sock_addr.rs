@@ -17,9 +17,9 @@ use crate::{
 
 /// A program that can be used to inspect or modify socket addresses (`struct sockaddr`).
 ///
-/// [`SockAddr`] programs can be used to inspect or modify socket addresses passed to
+/// [`CgroupSockAddr`] programs can be used to inspect or modify socket addresses passed to
 /// various syscalls within a [cgroup]. They can be attached to a number of different
-/// places as described in [`SockAddrAttachType`].
+/// places as described in [`CgroupSockAddrAttachType`].
 ///
 /// [cgroup]: https://man7.org/linux/man-pages/man7/cgroups.7.html
 ///
@@ -68,7 +68,7 @@ impl CgroupSockAddr {
 
     /// Attaches the program to the given cgroup.
     ///
-    /// The returned value can be used to detach, see [SockAddr::detach].
+    /// The returned value can be used to detach, see [CgroupSockAddr::detach].
     pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<CgroupSockAddrLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let cgroup_fd = cgroup.as_raw_fd();
@@ -115,7 +115,7 @@ impl CgroupSockAddr {
 
     /// Detaches the program.
     ///
-    /// See [SockAddr::attach].
+    /// See [CgroupSockAddr::attach].
     pub fn detach(&mut self, link_id: CgroupSockAddrLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
@@ -152,15 +152,15 @@ impl Link for CgroupSockAddrLinkInner {
 }
 
 define_link_wrapper!(
-    /// The link used by [SockAddr] programs.
+    /// The link used by [CgroupSockAddr] programs.
     CgroupSockAddrLink,
-    /// The type returned by [SockAddr::attach]. Can be passed to [SockAddr::detach].
+    /// The type returned by [CgroupSockAddr::attach]. Can be passed to [CgroupSockAddr::detach].
     CgroupSockAddrLinkId,
     CgroupSockAddrLinkInner,
     CgroupSockAddrLinkIdInner
 );
 
-/// Defines where to attach a [`SockAddr`] program.
+/// Defines where to attach a [`CgroupSockAddr`] program.
 #[derive(Copy, Clone, Debug)]
 pub enum CgroupSockAddrAttachType {
     /// Attach to IPv4 bind events.
