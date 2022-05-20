@@ -1969,3 +1969,15 @@ pub unsafe fn bpf_kptr_xchg(
     ) -> *mut ::aya_bpf_cty::c_void = ::core::mem::transmute(194usize);
     fun(map_value, ptr)
 }
+pub unsafe fn bpf_map_lookup_percpu_elem(
+    map: *mut ::aya_bpf_cty::c_void,
+    key: *const ::aya_bpf_cty::c_void,
+    cpu: __u32,
+) -> *mut ::aya_bpf_cty::c_void {
+    let fun: unsafe extern "C" fn(
+        map: *mut ::aya_bpf_cty::c_void,
+        key: *const ::aya_bpf_cty::c_void,
+        cpu: __u32,
+    ) -> *mut ::aya_bpf_cty::c_void = ::core::mem::transmute(195usize);
+    fun(map, key, cpu)
+}
