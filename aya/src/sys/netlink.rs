@@ -559,7 +559,7 @@ struct NlAttr<'a> {
     data: &'a [u8],
 }
 
-#[derive(Debug, Error, PartialEq)]
+#[derive(Debug, Error, PartialEq, Eq)]
 enum NlAttrError {
     #[error("invalid buffer size `{size}`, expected `{expected}`")]
     InvalidBufferLength { size: usize, expected: usize },

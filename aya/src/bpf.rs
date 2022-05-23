@@ -60,7 +60,7 @@ unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Default, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct bpf_map_def {
     // minimum features required by old BPF programs
     pub(crate) map_type: u32,
@@ -74,7 +74,7 @@ pub(crate) struct bpf_map_def {
 }
 
 #[repr(u32)]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(crate) enum PinningType {
     None = 0,
     #[allow(dead_code)] // ByName is constructed from the BPF side
