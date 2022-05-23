@@ -1,5 +1,5 @@
 #[repr(u32)]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(crate) enum PinningType {
     None = 0,
     ByName = 1,

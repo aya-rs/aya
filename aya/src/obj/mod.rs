@@ -51,7 +51,7 @@ pub struct Object {
     pub(crate) text_section_index: Option<usize>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum MapKind {
     Bss,
     Data,
@@ -942,7 +942,7 @@ fn parse_version(data: &[u8], endianness: object::Endianness) -> Result<KernelVe
     })
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum KernelVersion {
     Version(u32),
     Any,

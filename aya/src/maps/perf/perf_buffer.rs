@@ -75,7 +75,7 @@ pub enum PerfBufferError {
 }
 
 /// Return type of `read_events()`.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Events {
     /// The number of events read.
     pub read: usize,
