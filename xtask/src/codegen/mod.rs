@@ -10,6 +10,7 @@ const SUPPORTED_ARCHS: &[Architecture] = &[
     Architecture::X86_64,
     Architecture::ARMv7,
     Architecture::AArch64,
+    Architecture::RISCV64,
 ];
 
 #[derive(Debug, Copy, Clone)]
@@ -17,6 +18,7 @@ pub enum Architecture {
     X86_64,
     ARMv7,
     AArch64,
+    RISCV64,
 }
 
 impl Architecture {
@@ -33,6 +35,7 @@ impl std::str::FromStr for Architecture {
             "x86_64" => Architecture::X86_64,
             "armv7" => Architecture::ARMv7,
             "aarch64" => Architecture::AArch64,
+            "riscv64" => Architecture::RISCV64,
             _ => return Err("invalid architecture".to_owned()),
         })
     }
@@ -44,6 +47,7 @@ impl std::fmt::Display for Architecture {
             Architecture::X86_64 => "x86_64",
             Architecture::ARMv7 => "armv7",
             Architecture::AArch64 => "aarch64",
+            Architecture::RISCV64 => "riscv64",
         })
     }
 }
@@ -63,6 +67,9 @@ pub struct Options {
 
     #[structopt(long, default_value = "/usr/arm-linux-gnueabi/include")]
     armv7_sysroot: PathBuf,
+
+    #[structopt(long, default_value = "/usr/riscv64-linux-gnu/include")]
+    riscv64_sysroot: PathBuf,
 
     #[structopt(subcommand)]
     command: Option<Command>,
