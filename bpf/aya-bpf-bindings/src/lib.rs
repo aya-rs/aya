@@ -10,6 +10,9 @@ mod armv7;
 #[cfg(bpf_target_arch = "aarch64")]
 mod aarch64;
 
+#[cfg(bpf_target_arch = "riscv64")]
+mod riscv64;
+
 mod gen {
     #[cfg(bpf_target_arch = "x86_64")]
     pub use super::x86_64::*;
@@ -19,6 +22,9 @@ mod gen {
 
     #[cfg(bpf_target_arch = "aarch64")]
     pub use super::aarch64::*;
+
+    #[cfg(bpf_target_arch = "riscv64")]
+    pub use super::riscv64::*;
 }
 pub use gen::{getters, helpers};
 
