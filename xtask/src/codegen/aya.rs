@@ -171,6 +171,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
             Architecture::X86_64 => "x86_64-unknown-linux-gnu",
             Architecture::ARMv7 => "armv7-unknown-linux-gnu",
             Architecture::AArch64 => "aarch64-unknown-linux-gnu",
+            Architecture::RISCV64 => "riscv64-unknown-linux-gnu",
         };
         bindgen = bindgen.clang_args(&["-target", target]);
 
@@ -180,6 +181,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
             Architecture::X86_64 => &opts.x86_64_sysroot,
             Architecture::ARMv7 => &opts.armv7_sysroot,
             Architecture::AArch64 => &opts.aarch64_sysroot,
+            Architecture::RISCV64 => &opts.riscv64_sysroot,
         };
         bindgen = bindgen.clang_args(&["-I", &*sysroot.to_string_lossy()]);
 
