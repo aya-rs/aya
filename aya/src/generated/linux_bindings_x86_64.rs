@@ -633,6 +633,7 @@ pub union bpf_attr__bindgen_ty_14__bindgen_ty_2 {
     pub __bindgen_anon_1: bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_1,
     pub perf_event: bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_2,
     pub kprobe_multi: bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_3,
+    pub tracing: bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_4,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -653,6 +654,12 @@ pub struct bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_3 {
     pub syms: __u64,
     pub addrs: __u64,
     pub cookies: __u64,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_4 {
+    pub target_btf_id: __u32,
+    pub cookie: __u64,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

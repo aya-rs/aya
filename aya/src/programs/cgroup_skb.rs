@@ -62,6 +62,12 @@ pub struct CgroupSkb {
 impl CgroupSkb {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
+        self.data.expected_attach_type =
+            self.expected_attach_type
+                .map(|attach_type| match attach_type {
+                    CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
+                    CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
+                });
         load_program(BPF_PROG_TYPE_CGROUP_SKB, &mut self.data)
     }
 

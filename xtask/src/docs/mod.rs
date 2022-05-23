@@ -3,7 +3,7 @@ use std::{
     process::Command,
 };
 
-use std::{fs, io};
+use std::{fs, io, io::Write};
 
 pub fn docs() -> Result<(), anyhow::Error> {
     let mut working_dir = PathBuf::from(".");
@@ -32,6 +32,13 @@ pub fn docs() -> Result<(), anyhow::Error> {
     assert!(status.success());
 
     copy_dir_all("./bpf/target/doc", "./target/doc")?;
+
+    let crates_js = b"window.ALL_CRATES = [\"aya\", \"aya_bpf\", \"aya_bpf_bindings\", \"aya_bpf_cty\", \"aya_bpf_macros\", \"aya_gen\"];\n";
+    let mut file = fs::File::options()
+        .read(true)
+        .write(true)
+        .open("./target/doc/crates.js")?;
+    file.write_all(crates_js)?;
 
     Ok(())
 }

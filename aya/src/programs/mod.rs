@@ -37,6 +37,8 @@
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [`maps`]: crate::maps
 mod cgroup_skb;
+mod cgroup_sock_addr;
+mod cgroup_sockopt;
 mod cgroup_sysctl;
 mod extension;
 mod fentry;
@@ -71,6 +73,8 @@ use std::{
 use thiserror::Error;
 
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
+pub use cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType};
+pub use cgroup_sockopt::{CgroupSockopt, CgroupSockoptAttachType};
 pub use cgroup_sysctl::CgroupSysctl;
 pub use extension::{Extension, ExtensionError};
 pub use fentry::FEntry;
@@ -229,6 +233,8 @@ pub enum Program {
     SkMsg(SkMsg),
     /// A [`SkSkb`] program
     SkSkb(SkSkb),
+    /// A [`CgroupSockAddr`] program
+    CgroupSockAddr(CgroupSockAddr),
     /// A [`SockOps`] program
     SockOps(SockOps),
     /// A [`SchedClassifier`] program
@@ -237,6 +243,8 @@ pub enum Program {
     CgroupSkb(CgroupSkb),
     /// A [`CgroupSysctl`] program
     CgroupSysctl(CgroupSysctl),
+    /// A [`CgroupSockopt`] program
+    CgroupSockopt(CgroupSockopt),
     /// A [`LircMode2`] program
     LircMode2(LircMode2),
     /// A [`PerfEvent`] program
@@ -271,6 +279,7 @@ impl Program {
             Program::SchedClassifier(_) => BPF_PROG_TYPE_SCHED_CLS,
             Program::CgroupSkb(_) => BPF_PROG_TYPE_CGROUP_SKB,
             Program::CgroupSysctl(_) => BPF_PROG_TYPE_CGROUP_SYSCTL,
+            Program::CgroupSockopt(_) => BPF_PROG_TYPE_CGROUP_SOCKOPT,
             Program::LircMode2(_) => BPF_PROG_TYPE_LIRC_MODE2,
             Program::PerfEvent(_) => BPF_PROG_TYPE_PERF_EVENT,
             Program::RawTracePoint(_) => BPF_PROG_TYPE_RAW_TRACEPOINT,
@@ -279,6 +288,7 @@ impl Program {
             Program::FEntry(_) => BPF_PROG_TYPE_TRACING,
             Program::FExit(_) => BPF_PROG_TYPE_TRACING,
             Program::Extension(_) => BPF_PROG_TYPE_EXT,
+            Program::CgroupSockAddr(_) => BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
         }
     }
 
@@ -296,6 +306,7 @@ impl Program {
             Program::SchedClassifier(p) => p.data.pin(path),
             Program::CgroupSkb(p) => p.data.pin(path),
             Program::CgroupSysctl(p) => p.data.pin(path),
+            Program::CgroupSockopt(p) => p.data.pin(path),
             Program::LircMode2(p) => p.data.pin(path),
             Program::PerfEvent(p) => p.data.pin(path),
             Program::RawTracePoint(p) => p.data.pin(path),
@@ -304,6 +315,7 @@ impl Program {
             Program::FEntry(p) => p.data.pin(path),
             Program::FExit(p) => p.data.pin(path),
             Program::Extension(p) => p.data.pin(path),
+            Program::CgroupSockAddr(p) => p.data.pin(path),
         }
     }
 }
@@ -501,6 +513,7 @@ impl ProgramFd for Program {
             Program::SchedClassifier(p) => p.data.fd,
             Program::CgroupSkb(p) => p.data.fd,
             Program::CgroupSysctl(p) => p.data.fd,
+            Program::CgroupSockopt(p) => p.data.fd,
             Program::LircMode2(p) => p.data.fd,
             Program::PerfEvent(p) => p.data.fd,
             Program::RawTracePoint(p) => p.data.fd,
@@ -509,6 +522,7 @@ impl ProgramFd for Program {
             Program::FEntry(p) => p.data.fd,
             Program::FExit(p) => p.data.fd,
             Program::Extension(p) => p.data.fd,
+            Program::CgroupSockAddr(p) => p.data.fd,
         }
     }
 }
@@ -548,6 +562,7 @@ impl_program_fd!(
     SchedClassifier,
     CgroupSkb,
     CgroupSysctl,
+    CgroupSockopt,
     LircMode2,
     PerfEvent,
     Lsm,
@@ -556,6 +571,7 @@ impl_program_fd!(
     FEntry,
     FExit,
     Extension,
+    CgroupSockAddr,
 );
 
 macro_rules! impl_try_from_program {
@@ -598,6 +614,7 @@ impl_try_from_program!(
     SchedClassifier,
     CgroupSkb,
     CgroupSysctl,
+    CgroupSockopt,
     LircMode2,
     PerfEvent,
     Lsm,
@@ -606,6 +623,7 @@ impl_try_from_program!(
     FEntry,
     FExit,
     Extension,
+    CgroupSockAddr,
 );
 
 /// Provides information about a loaded program, like name, id and statistics

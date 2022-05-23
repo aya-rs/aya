@@ -22,10 +22,10 @@ use crate::{
         MapKind, Object, ParseError, ProgramSection,
     },
     programs::{
-        BtfTracePoint, CgroupSkb, CgroupSkbAttachType, CgroupSysctl, Extension, FEntry, FExit,
-        KProbe, LircMode2, Lsm, PerfEvent, ProbeKind, Program, ProgramData, ProgramError,
-        RawTracePoint, SchedClassifier, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
-        UProbe, Xdp,
+        BtfTracePoint, CgroupSkb, CgroupSkbAttachType, CgroupSockAddr, CgroupSockopt, CgroupSysctl,
+        Extension, FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent, ProbeKind, Program,
+        ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkMsg, SkSkb, SkSkbKind,
+        SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_btf_datasec_supported,
@@ -449,6 +449,12 @@ impl<'a> BpfLoader<'a> {
                                 data: ProgramData::new(prog_name, obj, btf_fd),
                             })
                         }
+                        ProgramSection::CgroupSockopt { attach_type, .. } => {
+                            Program::CgroupSockopt(CgroupSockopt {
+                                data: ProgramData::new(prog_name, obj, btf_fd),
+                                attach_type: *attach_type,
+                            })
+                        }
                         ProgramSection::SkSkbStreamParser { .. } => Program::SkSkb(SkSkb {
                             data: ProgramData::new(prog_name, obj, btf_fd),
                             kind: SkSkbKind::StreamParser,
@@ -481,6 +487,12 @@ impl<'a> BpfLoader<'a> {
                             data: ProgramData::new(prog_name, obj, btf_fd),
                             expected_attach_type: Some(CgroupSkbAttachType::Egress),
                         }),
+                        ProgramSection::CgroupSockAddr { attach_type, .. } => {
+                            Program::CgroupSockAddr(CgroupSockAddr {
+                                data: ProgramData::new(prog_name, obj, btf_fd),
+                                attach_type: *attach_type,
+                            })
+                        }
                         ProgramSection::LircMode2 { .. } => Program::LircMode2(LircMode2 {
                             data: ProgramData::new(prog_name, obj, btf_fd),
                         }),

@@ -78,6 +78,36 @@ where
         }
     }
 }
+#[repr(C)]
+#[derive(Default)]
+pub struct __IncompleteArrayField<T>(::core::marker::PhantomData<T>, [T; 0]);
+impl<T> __IncompleteArrayField<T> {
+    #[inline]
+    pub const fn new() -> Self {
+        __IncompleteArrayField(::core::marker::PhantomData, [])
+    }
+    #[inline]
+    pub fn as_ptr(&self) -> *const T {
+        self as *const _ as *const T
+    }
+    #[inline]
+    pub fn as_mut_ptr(&mut self) -> *mut T {
+        self as *mut _ as *mut T
+    }
+    #[inline]
+    pub unsafe fn as_slice(&self, len: usize) -> &[T] {
+        ::core::slice::from_raw_parts(self.as_ptr(), len)
+    }
+    #[inline]
+    pub unsafe fn as_mut_slice(&mut self, len: usize) -> &mut [T] {
+        ::core::slice::from_raw_parts_mut(self.as_mut_ptr(), len)
+    }
+}
+impl<T> ::core::fmt::Debug for __IncompleteArrayField<T> {
+    fn fmt(&self, fmt: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        fmt.write_str("__IncompleteArrayField")
+    }
+}
 pub const BPF_LD: u32 = 0;
 pub const BPF_LDX: u32 = 1;
 pub const BPF_ST: u32 = 2;
@@ -249,6 +279,7 @@ pub const TC_ACT_TRAP: u32 = 8;
 pub const TC_ACT_VALUE_MAX: u32 = 8;
 pub const TC_ACT_EXT_VAL_MASK: u32 = 268435455;
 pub type __u8 = ::aya_bpf_cty::c_uchar;
+pub type __s16 = ::aya_bpf_cty::c_short;
 pub type __u16 = ::aya_bpf_cty::c_ushort;
 pub type __s32 = ::aya_bpf_cty::c_int;
 pub type __u32 = ::aya_bpf_cty::c_uint;
@@ -270,6 +301,113 @@ pub const BPF_REG_9: ::aya_bpf_cty::c_uint = 9;
 pub const BPF_REG_10: ::aya_bpf_cty::c_uint = 10;
 pub const __MAX_BPF_REG: ::aya_bpf_cty::c_uint = 11;
 pub type _bindgen_ty_1 = ::aya_bpf_cty::c_uint;
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_insn {
+    pub code: __u8,
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 1usize]>,
+    pub off: __s16,
+    pub imm: __s32,
+}
+impl bpf_insn {
+    #[inline]
+    pub fn dst_reg(&self) -> __u8 {
+        unsafe { ::core::mem::transmute(self._bitfield_1.get(0usize, 4u8) as u8) }
+    }
+    #[inline]
+    pub fn set_dst_reg(&mut self, val: __u8) {
+        unsafe {
+            let val: u8 = ::core::mem::transmute(val);
+            self._bitfield_1.set(0usize, 4u8, val as u64)
+        }
+    }
+    #[inline]
+    pub fn src_reg(&self) -> __u8 {
+        unsafe { ::core::mem::transmute(self._bitfield_1.get(4usize, 4u8) as u8) }
+    }
+    #[inline]
+    pub fn set_src_reg(&mut self, val: __u8) {
+        unsafe {
+            let val: u8 = ::core::mem::transmute(val);
+            self._bitfield_1.set(4usize, 4u8, val as u64)
+        }
+    }
+    #[inline]
+    pub fn new_bitfield_1(dst_reg: __u8, src_reg: __u8) -> __BindgenBitfieldUnit<[u8; 1usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 1usize]> = Default::default();
+        __bindgen_bitfield_unit.set(0usize, 4u8, {
+            let dst_reg: u8 = unsafe { ::core::mem::transmute(dst_reg) };
+            dst_reg as u64
+        });
+        __bindgen_bitfield_unit.set(4usize, 4u8, {
+            let src_reg: u8 = unsafe { ::core::mem::transmute(src_reg) };
+            src_reg as u64
+        });
+        __bindgen_bitfield_unit
+    }
+}
+#[repr(C)]
+pub struct bpf_lpm_trie_key {
+    pub prefixlen: __u32,
+    pub data: __IncompleteArrayField<__u8>,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_cgroup_storage_key {
+    pub cgroup_inode_id: __u64,
+    pub attach_type: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_iter_link_info {
+    pub map: bpf_iter_link_info__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_iter_link_info__bindgen_ty_1 {
+    pub map_fd: __u32,
+}
+pub mod bpf_cmd {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_MAP_CREATE: Type = 0;
+    pub const BPF_MAP_LOOKUP_ELEM: Type = 1;
+    pub const BPF_MAP_UPDATE_ELEM: Type = 2;
+    pub const BPF_MAP_DELETE_ELEM: Type = 3;
+    pub const BPF_MAP_GET_NEXT_KEY: Type = 4;
+    pub const BPF_PROG_LOAD: Type = 5;
+    pub const BPF_OBJ_PIN: Type = 6;
+    pub const BPF_OBJ_GET: Type = 7;
+    pub const BPF_PROG_ATTACH: Type = 8;
+    pub const BPF_PROG_DETACH: Type = 9;
+    pub const BPF_PROG_TEST_RUN: Type = 10;
+    pub const BPF_PROG_RUN: Type = 10;
+    pub const BPF_PROG_GET_NEXT_ID: Type = 11;
+    pub const BPF_MAP_GET_NEXT_ID: Type = 12;
+    pub const BPF_PROG_GET_FD_BY_ID: Type = 13;
+    pub const BPF_MAP_GET_FD_BY_ID: Type = 14;
+    pub const BPF_OBJ_GET_INFO_BY_FD: Type = 15;
+    pub const BPF_PROG_QUERY: Type = 16;
+    pub const BPF_RAW_TRACEPOINT_OPEN: Type = 17;
+    pub const BPF_BTF_LOAD: Type = 18;
+    pub const BPF_BTF_GET_FD_BY_ID: Type = 19;
+    pub const BPF_TASK_FD_QUERY: Type = 20;
+    pub const BPF_MAP_LOOKUP_AND_DELETE_ELEM: Type = 21;
+    pub const BPF_MAP_FREEZE: Type = 22;
+    pub const BPF_BTF_GET_NEXT_ID: Type = 23;
+    pub const BPF_MAP_LOOKUP_BATCH: Type = 24;
+    pub const BPF_MAP_LOOKUP_AND_DELETE_BATCH: Type = 25;
+    pub const BPF_MAP_UPDATE_BATCH: Type = 26;
+    pub const BPF_MAP_DELETE_BATCH: Type = 27;
+    pub const BPF_LINK_CREATE: Type = 28;
+    pub const BPF_LINK_UPDATE: Type = 29;
+    pub const BPF_LINK_GET_FD_BY_ID: Type = 30;
+    pub const BPF_LINK_GET_NEXT_ID: Type = 31;
+    pub const BPF_ENABLE_STATS: Type = 32;
+    pub const BPF_ITER_CREATE: Type = 33;
+    pub const BPF_LINK_DETACH: Type = 34;
+    pub const BPF_PROG_BIND_MAP: Type = 35;
+}
 pub mod bpf_map_type {
     pub type Type = ::aya_bpf_cty::c_uint;
     pub const BPF_MAP_TYPE_UNSPEC: Type = 0;
@@ -304,6 +442,102 @@ pub mod bpf_map_type {
     pub const BPF_MAP_TYPE_TASK_STORAGE: Type = 29;
     pub const BPF_MAP_TYPE_BLOOM_FILTER: Type = 30;
 }
+pub mod bpf_prog_type {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_PROG_TYPE_UNSPEC: Type = 0;
+    pub const BPF_PROG_TYPE_SOCKET_FILTER: Type = 1;
+    pub const BPF_PROG_TYPE_KPROBE: Type = 2;
+    pub const BPF_PROG_TYPE_SCHED_CLS: Type = 3;
+    pub const BPF_PROG_TYPE_SCHED_ACT: Type = 4;
+    pub const BPF_PROG_TYPE_TRACEPOINT: Type = 5;
+    pub const BPF_PROG_TYPE_XDP: Type = 6;
+    pub const BPF_PROG_TYPE_PERF_EVENT: Type = 7;
+    pub const BPF_PROG_TYPE_CGROUP_SKB: Type = 8;
+    pub const BPF_PROG_TYPE_CGROUP_SOCK: Type = 9;
+    pub const BPF_PROG_TYPE_LWT_IN: Type = 10;
+    pub const BPF_PROG_TYPE_LWT_OUT: Type = 11;
+    pub const BPF_PROG_TYPE_LWT_XMIT: Type = 12;
+    pub const BPF_PROG_TYPE_SOCK_OPS: Type = 13;
+    pub const BPF_PROG_TYPE_SK_SKB: Type = 14;
+    pub const BPF_PROG_TYPE_CGROUP_DEVICE: Type = 15;
+    pub const BPF_PROG_TYPE_SK_MSG: Type = 16;
+    pub const BPF_PROG_TYPE_RAW_TRACEPOINT: Type = 17;
+    pub const BPF_PROG_TYPE_CGROUP_SOCK_ADDR: Type = 18;
+    pub const BPF_PROG_TYPE_LWT_SEG6LOCAL: Type = 19;
+    pub const BPF_PROG_TYPE_LIRC_MODE2: Type = 20;
+    pub const BPF_PROG_TYPE_SK_REUSEPORT: Type = 21;
+    pub const BPF_PROG_TYPE_FLOW_DISSECTOR: Type = 22;
+    pub const BPF_PROG_TYPE_CGROUP_SYSCTL: Type = 23;
+    pub const BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE: Type = 24;
+    pub const BPF_PROG_TYPE_CGROUP_SOCKOPT: Type = 25;
+    pub const BPF_PROG_TYPE_TRACING: Type = 26;
+    pub const BPF_PROG_TYPE_STRUCT_OPS: Type = 27;
+    pub const BPF_PROG_TYPE_EXT: Type = 28;
+    pub const BPF_PROG_TYPE_LSM: Type = 29;
+    pub const BPF_PROG_TYPE_SK_LOOKUP: Type = 30;
+    pub const BPF_PROG_TYPE_SYSCALL: Type = 31;
+}
+pub mod bpf_attach_type {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_CGROUP_INET_INGRESS: Type = 0;
+    pub const BPF_CGROUP_INET_EGRESS: Type = 1;
+    pub const BPF_CGROUP_INET_SOCK_CREATE: Type = 2;
+    pub const BPF_CGROUP_SOCK_OPS: Type = 3;
+    pub const BPF_SK_SKB_STREAM_PARSER: Type = 4;
+    pub const BPF_SK_SKB_STREAM_VERDICT: Type = 5;
+    pub const BPF_CGROUP_DEVICE: Type = 6;
+    pub const BPF_SK_MSG_VERDICT: Type = 7;
+    pub const BPF_CGROUP_INET4_BIND: Type = 8;
+    pub const BPF_CGROUP_INET6_BIND: Type = 9;
+    pub const BPF_CGROUP_INET4_CONNECT: Type = 10;
+    pub const BPF_CGROUP_INET6_CONNECT: Type = 11;
+    pub const BPF_CGROUP_INET4_POST_BIND: Type = 12;
+    pub const BPF_CGROUP_INET6_POST_BIND: Type = 13;
+    pub const BPF_CGROUP_UDP4_SENDMSG: Type = 14;
+    pub const BPF_CGROUP_UDP6_SENDMSG: Type = 15;
+    pub const BPF_LIRC_MODE2: Type = 16;
+    pub const BPF_FLOW_DISSECTOR: Type = 17;
+    pub const BPF_CGROUP_SYSCTL: Type = 18;
+    pub const BPF_CGROUP_UDP4_RECVMSG: Type = 19;
+    pub const BPF_CGROUP_UDP6_RECVMSG: Type = 20;
+    pub const BPF_CGROUP_GETSOCKOPT: Type = 21;
+    pub const BPF_CGROUP_SETSOCKOPT: Type = 22;
+    pub const BPF_TRACE_RAW_TP: Type = 23;
+    pub const BPF_TRACE_FENTRY: Type = 24;
+    pub const BPF_TRACE_FEXIT: Type = 25;
+    pub const BPF_MODIFY_RETURN: Type = 26;
+    pub const BPF_LSM_MAC: Type = 27;
+    pub const BPF_TRACE_ITER: Type = 28;
+    pub const BPF_CGROUP_INET4_GETPEERNAME: Type = 29;
+    pub const BPF_CGROUP_INET6_GETPEERNAME: Type = 30;
+    pub const BPF_CGROUP_INET4_GETSOCKNAME: Type = 31;
+    pub const BPF_CGROUP_INET6_GETSOCKNAME: Type = 32;
+    pub const BPF_XDP_DEVMAP: Type = 33;
+    pub const BPF_CGROUP_INET_SOCK_RELEASE: Type = 34;
+    pub const BPF_XDP_CPUMAP: Type = 35;
+    pub const BPF_SK_LOOKUP: Type = 36;
+    pub const BPF_XDP: Type = 37;
+    pub const BPF_SK_SKB_VERDICT: Type = 38;
+    pub const BPF_SK_REUSEPORT_SELECT: Type = 39;
+    pub const BPF_SK_REUSEPORT_SELECT_OR_MIGRATE: Type = 40;
+    pub const BPF_PERF_EVENT: Type = 41;
+    pub const BPF_TRACE_KPROBE_MULTI: Type = 42;
+    pub const __MAX_BPF_ATTACH_TYPE: Type = 43;
+}
+pub mod bpf_link_type {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_LINK_TYPE_UNSPEC: Type = 0;
+    pub const BPF_LINK_TYPE_RAW_TRACEPOINT: Type = 1;
+    pub const BPF_LINK_TYPE_TRACING: Type = 2;
+    pub const BPF_LINK_TYPE_CGROUP: Type = 3;
+    pub const BPF_LINK_TYPE_ITER: Type = 4;
+    pub const BPF_LINK_TYPE_NETNS: Type = 5;
+    pub const BPF_LINK_TYPE_XDP: Type = 6;
+    pub const BPF_LINK_TYPE_PERF_EVENT: Type = 7;
+    pub const BPF_LINK_TYPE_KPROBE_MULTI: Type = 8;
+    pub const BPF_LINK_TYPE_STRUCT_OPS: Type = 9;
+    pub const MAX_BPF_LINK_TYPE: Type = 10;
+}
 pub const BPF_ANY: ::aya_bpf_cty::c_uint = 0;
 pub const BPF_NOEXIST: ::aya_bpf_cty::c_uint = 1;
 pub const BPF_EXIST: ::aya_bpf_cty::c_uint = 2;
@@ -323,6 +557,508 @@ pub const BPF_F_MMAPABLE: ::aya_bpf_cty::c_uint = 1024;
 pub const BPF_F_PRESERVE_ELEMS: ::aya_bpf_cty::c_uint = 2048;
 pub const BPF_F_INNER_MAP: ::aya_bpf_cty::c_uint = 4096;
 pub type _bindgen_ty_3 = ::aya_bpf_cty::c_uint;
+pub mod bpf_stats_type {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_STATS_RUN_TIME: Type = 0;
+}
+pub mod bpf_stack_build_id_status {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_STACK_BUILD_ID_EMPTY: Type = 0;
+    pub const BPF_STACK_BUILD_ID_VALID: Type = 1;
+    pub const BPF_STACK_BUILD_ID_IP: Type = 2;
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_stack_build_id {
+    pub status: __s32,
+    pub build_id: [::aya_bpf_cty::c_uchar; 20usize],
+    pub __bindgen_anon_1: bpf_stack_build_id__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_stack_build_id__bindgen_ty_1 {
+    pub offset: __u64,
+    pub ip: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_attr {
+    pub __bindgen_anon_1: bpf_attr__bindgen_ty_1,
+    pub __bindgen_anon_2: bpf_attr__bindgen_ty_2,
+    pub batch: bpf_attr__bindgen_ty_3,
+    pub __bindgen_anon_3: bpf_attr__bindgen_ty_4,
+    pub __bindgen_anon_4: bpf_attr__bindgen_ty_5,
+    pub __bindgen_anon_5: bpf_attr__bindgen_ty_6,
+    pub test: bpf_attr__bindgen_ty_7,
+    pub __bindgen_anon_6: bpf_attr__bindgen_ty_8,
+    pub info: bpf_attr__bindgen_ty_9,
+    pub query: bpf_attr__bindgen_ty_10,
+    pub raw_tracepoint: bpf_attr__bindgen_ty_11,
+    pub __bindgen_anon_7: bpf_attr__bindgen_ty_12,
+    pub task_fd_query: bpf_attr__bindgen_ty_13,
+    pub link_create: bpf_attr__bindgen_ty_14,
+    pub link_update: bpf_attr__bindgen_ty_15,
+    pub link_detach: bpf_attr__bindgen_ty_16,
+    pub enable_stats: bpf_attr__bindgen_ty_17,
+    pub iter_create: bpf_attr__bindgen_ty_18,
+    pub prog_bind_map: bpf_attr__bindgen_ty_19,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_1 {
+    pub map_type: __u32,
+    pub key_size: __u32,
+    pub value_size: __u32,
+    pub max_entries: __u32,
+    pub map_flags: __u32,
+    pub inner_map_fd: __u32,
+    pub numa_node: __u32,
+    pub map_name: [::aya_bpf_cty::c_char; 16usize],
+    pub map_ifindex: __u32,
+    pub btf_fd: __u32,
+    pub btf_key_type_id: __u32,
+    pub btf_value_type_id: __u32,
+    pub btf_vmlinux_value_type_id: __u32,
+    pub map_extra: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_2 {
+    pub map_fd: __u32,
+    pub key: __u64,
+    pub __bindgen_anon_1: bpf_attr__bindgen_ty_2__bindgen_ty_1,
+    pub flags: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_attr__bindgen_ty_2__bindgen_ty_1 {
+    pub value: __u64,
+    pub next_key: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_3 {
+    pub in_batch: __u64,
+    pub out_batch: __u64,
+    pub keys: __u64,
+    pub values: __u64,
+    pub count: __u32,
+    pub map_fd: __u32,
+    pub elem_flags: __u64,
+    pub flags: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_4 {
+    pub prog_type: __u32,
+    pub insn_cnt: __u32,
+    pub insns: __u64,
+    pub license: __u64,
+    pub log_level: __u32,
+    pub log_size: __u32,
+    pub log_buf: __u64,
+    pub kern_version: __u32,
+    pub prog_flags: __u32,
+    pub prog_name: [::aya_bpf_cty::c_char; 16usize],
+    pub prog_ifindex: __u32,
+    pub expected_attach_type: __u32,
+    pub prog_btf_fd: __u32,
+    pub func_info_rec_size: __u32,
+    pub func_info: __u64,
+    pub func_info_cnt: __u32,
+    pub line_info_rec_size: __u32,
+    pub line_info: __u64,
+    pub line_info_cnt: __u32,
+    pub attach_btf_id: __u32,
+    pub __bindgen_anon_1: bpf_attr__bindgen_ty_4__bindgen_ty_1,
+    pub core_relo_cnt: __u32,
+    pub fd_array: __u64,
+    pub core_relos: __u64,
+    pub core_relo_rec_size: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_attr__bindgen_ty_4__bindgen_ty_1 {
+    pub attach_prog_fd: __u32,
+    pub attach_btf_obj_fd: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_5 {
+    pub pathname: __u64,
+    pub bpf_fd: __u32,
+    pub file_flags: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_6 {
+    pub target_fd: __u32,
+    pub attach_bpf_fd: __u32,
+    pub attach_type: __u32,
+    pub attach_flags: __u32,
+    pub replace_bpf_fd: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_7 {
+    pub prog_fd: __u32,
+    pub retval: __u32,
+    pub data_size_in: __u32,
+    pub data_size_out: __u32,
+    pub data_in: __u64,
+    pub data_out: __u64,
+    pub repeat: __u32,
+    pub duration: __u32,
+    pub ctx_size_in: __u32,
+    pub ctx_size_out: __u32,
+    pub ctx_in: __u64,
+    pub ctx_out: __u64,
+    pub flags: __u32,
+    pub cpu: __u32,
+    pub batch_size: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_8 {
+    pub __bindgen_anon_1: bpf_attr__bindgen_ty_8__bindgen_ty_1,
+    pub next_id: __u32,
+    pub open_flags: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_attr__bindgen_ty_8__bindgen_ty_1 {
+    pub start_id: __u32,
+    pub prog_id: __u32,
+    pub map_id: __u32,
+    pub btf_id: __u32,
+    pub link_id: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_9 {
+    pub bpf_fd: __u32,
+    pub info_len: __u32,
+    pub info: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_10 {
+    pub target_fd: __u32,
+    pub attach_type: __u32,
+    pub query_flags: __u32,
+    pub attach_flags: __u32,
+    pub prog_ids: __u64,
+    pub prog_cnt: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_11 {
+    pub name: __u64,
+    pub prog_fd: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_12 {
+    pub btf: __u64,
+    pub btf_log_buf: __u64,
+    pub btf_size: __u32,
+    pub btf_log_size: __u32,
+    pub btf_log_level: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_13 {
+    pub pid: __u32,
+    pub fd: __u32,
+    pub flags: __u32,
+    pub buf_len: __u32,
+    pub buf: __u64,
+    pub prog_id: __u32,
+    pub fd_type: __u32,
+    pub probe_offset: __u64,
+    pub probe_addr: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_14 {
+    pub prog_fd: __u32,
+    pub __bindgen_anon_1: bpf_attr__bindgen_ty_14__bindgen_ty_1,
+    pub attach_type: __u32,
+    pub flags: __u32,
+    pub __bindgen_anon_2: bpf_attr__bindgen_ty_14__bindgen_ty_2,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_attr__bindgen_ty_14__bindgen_ty_1 {
+    pub target_fd: __u32,
+    pub target_ifindex: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_attr__bindgen_ty_14__bindgen_ty_2 {
+    pub target_btf_id: __u32,
+    pub __bindgen_anon_1: bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_1,
+    pub perf_event: bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_2,
+    pub kprobe_multi: bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_3,
+    pub tracing: bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_4,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_1 {
+    pub iter_info: __u64,
+    pub iter_info_len: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_2 {
+    pub bpf_cookie: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_3 {
+    pub flags: __u32,
+    pub cnt: __u32,
+    pub syms: __u64,
+    pub addrs: __u64,
+    pub cookies: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_14__bindgen_ty_2__bindgen_ty_4 {
+    pub target_btf_id: __u32,
+    pub cookie: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_15 {
+    pub link_fd: __u32,
+    pub new_prog_fd: __u32,
+    pub flags: __u32,
+    pub old_prog_fd: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_16 {
+    pub link_fd: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_17 {
+    pub type_: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_18 {
+    pub link_fd: __u32,
+    pub flags: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_19 {
+    pub prog_fd: __u32,
+    pub map_fd: __u32,
+    pub flags: __u32,
+}
+pub mod bpf_func_id {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_FUNC_unspec: Type = 0;
+    pub const BPF_FUNC_map_lookup_elem: Type = 1;
+    pub const BPF_FUNC_map_update_elem: Type = 2;
+    pub const BPF_FUNC_map_delete_elem: Type = 3;
+    pub const BPF_FUNC_probe_read: Type = 4;
+    pub const BPF_FUNC_ktime_get_ns: Type = 5;
+    pub const BPF_FUNC_trace_printk: Type = 6;
+    pub const BPF_FUNC_get_prandom_u32: Type = 7;
+    pub const BPF_FUNC_get_smp_processor_id: Type = 8;
+    pub const BPF_FUNC_skb_store_bytes: Type = 9;
+    pub const BPF_FUNC_l3_csum_replace: Type = 10;
+    pub const BPF_FUNC_l4_csum_replace: Type = 11;
+    pub const BPF_FUNC_tail_call: Type = 12;
+    pub const BPF_FUNC_clone_redirect: Type = 13;
+    pub const BPF_FUNC_get_current_pid_tgid: Type = 14;
+    pub const BPF_FUNC_get_current_uid_gid: Type = 15;
+    pub const BPF_FUNC_get_current_comm: Type = 16;
+    pub const BPF_FUNC_get_cgroup_classid: Type = 17;
+    pub const BPF_FUNC_skb_vlan_push: Type = 18;
+    pub const BPF_FUNC_skb_vlan_pop: Type = 19;
+    pub const BPF_FUNC_skb_get_tunnel_key: Type = 20;
+    pub const BPF_FUNC_skb_set_tunnel_key: Type = 21;
+    pub const BPF_FUNC_perf_event_read: Type = 22;
+    pub const BPF_FUNC_redirect: Type = 23;
+    pub const BPF_FUNC_get_route_realm: Type = 24;
+    pub const BPF_FUNC_perf_event_output: Type = 25;
+    pub const BPF_FUNC_skb_load_bytes: Type = 26;
+    pub const BPF_FUNC_get_stackid: Type = 27;
+    pub const BPF_FUNC_csum_diff: Type = 28;
+    pub const BPF_FUNC_skb_get_tunnel_opt: Type = 29;
+    pub const BPF_FUNC_skb_set_tunnel_opt: Type = 30;
+    pub const BPF_FUNC_skb_change_proto: Type = 31;
+    pub const BPF_FUNC_skb_change_type: Type = 32;
+    pub const BPF_FUNC_skb_under_cgroup: Type = 33;
+    pub const BPF_FUNC_get_hash_recalc: Type = 34;
+    pub const BPF_FUNC_get_current_task: Type = 35;
+    pub const BPF_FUNC_probe_write_user: Type = 36;
+    pub const BPF_FUNC_current_task_under_cgroup: Type = 37;
+    pub const BPF_FUNC_skb_change_tail: Type = 38;
+    pub const BPF_FUNC_skb_pull_data: Type = 39;
+    pub const BPF_FUNC_csum_update: Type = 40;
+    pub const BPF_FUNC_set_hash_invalid: Type = 41;
+    pub const BPF_FUNC_get_numa_node_id: Type = 42;
+    pub const BPF_FUNC_skb_change_head: Type = 43;
+    pub const BPF_FUNC_xdp_adjust_head: Type = 44;
+    pub const BPF_FUNC_probe_read_str: Type = 45;
+    pub const BPF_FUNC_get_socket_cookie: Type = 46;
+    pub const BPF_FUNC_get_socket_uid: Type = 47;
+    pub const BPF_FUNC_set_hash: Type = 48;
+    pub const BPF_FUNC_setsockopt: Type = 49;
+    pub const BPF_FUNC_skb_adjust_room: Type = 50;
+    pub const BPF_FUNC_redirect_map: Type = 51;
+    pub const BPF_FUNC_sk_redirect_map: Type = 52;
+    pub const BPF_FUNC_sock_map_update: Type = 53;
+    pub const BPF_FUNC_xdp_adjust_meta: Type = 54;
+    pub const BPF_FUNC_perf_event_read_value: Type = 55;
+    pub const BPF_FUNC_perf_prog_read_value: Type = 56;
+    pub const BPF_FUNC_getsockopt: Type = 57;
+    pub const BPF_FUNC_override_return: Type = 58;
+    pub const BPF_FUNC_sock_ops_cb_flags_set: Type = 59;
+    pub const BPF_FUNC_msg_redirect_map: Type = 60;
+    pub const BPF_FUNC_msg_apply_bytes: Type = 61;
+    pub const BPF_FUNC_msg_cork_bytes: Type = 62;
+    pub const BPF_FUNC_msg_pull_data: Type = 63;
+    pub const BPF_FUNC_bind: Type = 64;
+    pub const BPF_FUNC_xdp_adjust_tail: Type = 65;
+    pub const BPF_FUNC_skb_get_xfrm_state: Type = 66;
+    pub const BPF_FUNC_get_stack: Type = 67;
+    pub const BPF_FUNC_skb_load_bytes_relative: Type = 68;
+    pub const BPF_FUNC_fib_lookup: Type = 69;
+    pub const BPF_FUNC_sock_hash_update: Type = 70;
+    pub const BPF_FUNC_msg_redirect_hash: Type = 71;
+    pub const BPF_FUNC_sk_redirect_hash: Type = 72;
+    pub const BPF_FUNC_lwt_push_encap: Type = 73;
+    pub const BPF_FUNC_lwt_seg6_store_bytes: Type = 74;
+    pub const BPF_FUNC_lwt_seg6_adjust_srh: Type = 75;
+    pub const BPF_FUNC_lwt_seg6_action: Type = 76;
+    pub const BPF_FUNC_rc_repeat: Type = 77;
+    pub const BPF_FUNC_rc_keydown: Type = 78;
+    pub const BPF_FUNC_skb_cgroup_id: Type = 79;
+    pub const BPF_FUNC_get_current_cgroup_id: Type = 80;
+    pub const BPF_FUNC_get_local_storage: Type = 81;
+    pub const BPF_FUNC_sk_select_reuseport: Type = 82;
+    pub const BPF_FUNC_skb_ancestor_cgroup_id: Type = 83;
+    pub const BPF_FUNC_sk_lookup_tcp: Type = 84;
+    pub const BPF_FUNC_sk_lookup_udp: Type = 85;
+    pub const BPF_FUNC_sk_release: Type = 86;
+    pub const BPF_FUNC_map_push_elem: Type = 87;
+    pub const BPF_FUNC_map_pop_elem: Type = 88;
+    pub const BPF_FUNC_map_peek_elem: Type = 89;
+    pub const BPF_FUNC_msg_push_data: Type = 90;
+    pub const BPF_FUNC_msg_pop_data: Type = 91;
+    pub const BPF_FUNC_rc_pointer_rel: Type = 92;
+    pub const BPF_FUNC_spin_lock: Type = 93;
+    pub const BPF_FUNC_spin_unlock: Type = 94;
+    pub const BPF_FUNC_sk_fullsock: Type = 95;
+    pub const BPF_FUNC_tcp_sock: Type = 96;
+    pub const BPF_FUNC_skb_ecn_set_ce: Type = 97;
+    pub const BPF_FUNC_get_listener_sock: Type = 98;
+    pub const BPF_FUNC_skc_lookup_tcp: Type = 99;
+    pub const BPF_FUNC_tcp_check_syncookie: Type = 100;
+    pub const BPF_FUNC_sysctl_get_name: Type = 101;
+    pub const BPF_FUNC_sysctl_get_current_value: Type = 102;
+    pub const BPF_FUNC_sysctl_get_new_value: Type = 103;
+    pub const BPF_FUNC_sysctl_set_new_value: Type = 104;
+    pub const BPF_FUNC_strtol: Type = 105;
+    pub const BPF_FUNC_strtoul: Type = 106;
+    pub const BPF_FUNC_sk_storage_get: Type = 107;
+    pub const BPF_FUNC_sk_storage_delete: Type = 108;
+    pub const BPF_FUNC_send_signal: Type = 109;
+    pub const BPF_FUNC_tcp_gen_syncookie: Type = 110;
+    pub const BPF_FUNC_skb_output: Type = 111;
+    pub const BPF_FUNC_probe_read_user: Type = 112;
+    pub const BPF_FUNC_probe_read_kernel: Type = 113;
+    pub const BPF_FUNC_probe_read_user_str: Type = 114;
+    pub const BPF_FUNC_probe_read_kernel_str: Type = 115;
+    pub const BPF_FUNC_tcp_send_ack: Type = 116;
+    pub const BPF_FUNC_send_signal_thread: Type = 117;
+    pub const BPF_FUNC_jiffies64: Type = 118;
+    pub const BPF_FUNC_read_branch_records: Type = 119;
+    pub const BPF_FUNC_get_ns_current_pid_tgid: Type = 120;
+    pub const BPF_FUNC_xdp_output: Type = 121;
+    pub const BPF_FUNC_get_netns_cookie: Type = 122;
+    pub const BPF_FUNC_get_current_ancestor_cgroup_id: Type = 123;
+    pub const BPF_FUNC_sk_assign: Type = 124;
+    pub const BPF_FUNC_ktime_get_boot_ns: Type = 125;
+    pub const BPF_FUNC_seq_printf: Type = 126;
+    pub const BPF_FUNC_seq_write: Type = 127;
+    pub const BPF_FUNC_sk_cgroup_id: Type = 128;
+    pub const BPF_FUNC_sk_ancestor_cgroup_id: Type = 129;
+    pub const BPF_FUNC_ringbuf_output: Type = 130;
+    pub const BPF_FUNC_ringbuf_reserve: Type = 131;
+    pub const BPF_FUNC_ringbuf_submit: Type = 132;
+    pub const BPF_FUNC_ringbuf_discard: Type = 133;
+    pub const BPF_FUNC_ringbuf_query: Type = 134;
+    pub const BPF_FUNC_csum_level: Type = 135;
+    pub const BPF_FUNC_skc_to_tcp6_sock: Type = 136;
+    pub const BPF_FUNC_skc_to_tcp_sock: Type = 137;
+    pub const BPF_FUNC_skc_to_tcp_timewait_sock: Type = 138;
+    pub const BPF_FUNC_skc_to_tcp_request_sock: Type = 139;
+    pub const BPF_FUNC_skc_to_udp6_sock: Type = 140;
+    pub const BPF_FUNC_get_task_stack: Type = 141;
+    pub const BPF_FUNC_load_hdr_opt: Type = 142;
+    pub const BPF_FUNC_store_hdr_opt: Type = 143;
+    pub const BPF_FUNC_reserve_hdr_opt: Type = 144;
+    pub const BPF_FUNC_inode_storage_get: Type = 145;
+    pub const BPF_FUNC_inode_storage_delete: Type = 146;
+    pub const BPF_FUNC_d_path: Type = 147;
+    pub const BPF_FUNC_copy_from_user: Type = 148;
+    pub const BPF_FUNC_snprintf_btf: Type = 149;
+    pub const BPF_FUNC_seq_printf_btf: Type = 150;
+    pub const BPF_FUNC_skb_cgroup_classid: Type = 151;
+    pub const BPF_FUNC_redirect_neigh: Type = 152;
+    pub const BPF_FUNC_per_cpu_ptr: Type = 153;
+    pub const BPF_FUNC_this_cpu_ptr: Type = 154;
+    pub const BPF_FUNC_redirect_peer: Type = 155;
+    pub const BPF_FUNC_task_storage_get: Type = 156;
+    pub const BPF_FUNC_task_storage_delete: Type = 157;
+    pub const BPF_FUNC_get_current_task_btf: Type = 158;
+    pub const BPF_FUNC_bprm_opts_set: Type = 159;
+    pub const BPF_FUNC_ktime_get_coarse_ns: Type = 160;
+    pub const BPF_FUNC_ima_inode_hash: Type = 161;
+    pub const BPF_FUNC_sock_from_file: Type = 162;
+    pub const BPF_FUNC_check_mtu: Type = 163;
+    pub const BPF_FUNC_for_each_map_elem: Type = 164;
+    pub const BPF_FUNC_snprintf: Type = 165;
+    pub const BPF_FUNC_sys_bpf: Type = 166;
+    pub const BPF_FUNC_btf_find_by_name_kind: Type = 167;
+    pub const BPF_FUNC_sys_close: Type = 168;
+    pub const BPF_FUNC_timer_init: Type = 169;
+    pub const BPF_FUNC_timer_set_callback: Type = 170;
+    pub const BPF_FUNC_timer_start: Type = 171;
+    pub const BPF_FUNC_timer_cancel: Type = 172;
+    pub const BPF_FUNC_get_func_ip: Type = 173;
+    pub const BPF_FUNC_get_attach_cookie: Type = 174;
+    pub const BPF_FUNC_task_pt_regs: Type = 175;
+    pub const BPF_FUNC_get_branch_snapshot: Type = 176;
+    pub const BPF_FUNC_trace_vprintk: Type = 177;
+    pub const BPF_FUNC_skc_to_unix_sock: Type = 178;
+    pub const BPF_FUNC_kallsyms_lookup_name: Type = 179;
+    pub const BPF_FUNC_find_vma: Type = 180;
+    pub const BPF_FUNC_loop: Type = 181;
+    pub const BPF_FUNC_strncmp: Type = 182;
+    pub const BPF_FUNC_get_func_arg: Type = 183;
+    pub const BPF_FUNC_get_func_ret: Type = 184;
+    pub const BPF_FUNC_get_func_arg_cnt: Type = 185;
+    pub const BPF_FUNC_get_retval: Type = 186;
+    pub const BPF_FUNC_set_retval: Type = 187;
+    pub const BPF_FUNC_xdp_get_buff_len: Type = 188;
+    pub const BPF_FUNC_xdp_load_bytes: Type = 189;
+    pub const BPF_FUNC_xdp_store_bytes: Type = 190;
+    pub const BPF_FUNC_copy_from_user_task: Type = 191;
+    pub const BPF_FUNC_skb_set_tstamp: Type = 192;
+    pub const BPF_FUNC_ima_file_hash: Type = 193;
+    pub const BPF_FUNC_kptr_xchg: Type = 194;
+    pub const BPF_FUNC_map_lookup_percpu_elem: Type = 195;
+    pub const __BPF_FUNC_MAX_ID: Type = 196;
+}
 pub const BPF_F_RECOMPUTE_CSUM: ::aya_bpf_cty::c_uint = 1;
 pub const BPF_F_INVALIDATE_HASH: ::aya_bpf_cty::c_uint = 2;
 pub type _bindgen_ty_4 = ::aya_bpf_cty::c_uint;
@@ -394,6 +1130,17 @@ pub mod bpf_adj_room_mode {
     pub type Type = ::aya_bpf_cty::c_uint;
     pub const BPF_ADJ_ROOM_NET: Type = 0;
     pub const BPF_ADJ_ROOM_MAC: Type = 1;
+}
+pub mod bpf_hdr_start_off {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_HDR_START_MAC: Type = 0;
+    pub const BPF_HDR_START_NET: Type = 1;
+}
+pub mod bpf_lwt_encap_mode {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_LWT_ENCAP_SEG6: Type = 0;
+    pub const BPF_LWT_ENCAP_SEG6_INLINE: Type = 1;
+    pub const BPF_LWT_ENCAP_IP: Type = 2;
 }
 pub const BPF_F_BPRM_SECUREEXEC: ::aya_bpf_cty::c_uint = 1;
 pub type _bindgen_ty_23 = ::aya_bpf_cty::c_uint;
@@ -489,12 +1236,19 @@ pub struct bpf_tunnel_key {
     pub tunnel_ttl: __u8,
     pub tunnel_ext: __u16,
     pub tunnel_label: __u32,
+    pub __bindgen_anon_2: bpf_tunnel_key__bindgen_ty_2,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union bpf_tunnel_key__bindgen_ty_1 {
     pub remote_ipv4: __u32,
     pub remote_ipv6: [__u32; 4usize],
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_tunnel_key__bindgen_ty_2 {
+    pub local_ipv4: __u32,
+    pub local_ipv6: [__u32; 4usize],
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -510,6 +1264,13 @@ pub struct bpf_xfrm_state {
 pub union bpf_xfrm_state__bindgen_ty_1 {
     pub remote_ipv4: __u32,
     pub remote_ipv6: [__u32; 4usize],
+}
+pub mod bpf_ret_code {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_OK: Type = 0;
+    pub const BPF_DROP: Type = 2;
+    pub const BPF_REDIRECT: Type = 7;
+    pub const BPF_LWT_REROUTE: Type = 128;
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -595,6 +1356,11 @@ pub struct bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2 {
     pub sport: __be16,
     pub dport: __be16,
 }
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_xdp_sock {
+    pub queue_id: __u32,
+}
 pub mod xdp_action {
     pub type Type = ::aya_bpf_cty::c_uint;
     pub const XDP_ABORTED: Type = 0;
@@ -612,6 +1378,30 @@ pub struct xdp_md {
     pub ingress_ifindex: __u32,
     pub rx_queue_index: __u32,
     pub egress_ifindex: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_devmap_val {
+    pub ifindex: __u32,
+    pub bpf_prog: bpf_devmap_val__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_devmap_val__bindgen_ty_1 {
+    pub fd: ::aya_bpf_cty::c_int,
+    pub id: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_cpumap_val {
+    pub qsize: __u32,
+    pub bpf_prog: bpf_cpumap_val__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_cpumap_val__bindgen_ty_1 {
+    pub fd: ::aya_bpf_cty::c_int,
+    pub id: __u32,
 }
 pub mod sk_action {
     pub type Type = ::aya_bpf_cty::c_uint;
@@ -746,6 +1536,69 @@ impl sk_reuseport_md__bindgen_ty_4 {
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
+pub struct bpf_prog_info {
+    pub type_: __u32,
+    pub id: __u32,
+    pub tag: [__u8; 8usize],
+    pub jited_prog_len: __u32,
+    pub xlated_prog_len: __u32,
+    pub jited_prog_insns: __u64,
+    pub xlated_prog_insns: __u64,
+    pub load_time: __u64,
+    pub created_by_uid: __u32,
+    pub nr_map_ids: __u32,
+    pub map_ids: __u64,
+    pub name: [::aya_bpf_cty::c_char; 16usize],
+    pub ifindex: __u32,
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
+    pub netns_dev: __u64,
+    pub netns_ino: __u64,
+    pub nr_jited_ksyms: __u32,
+    pub nr_jited_func_lens: __u32,
+    pub jited_ksyms: __u64,
+    pub jited_func_lens: __u64,
+    pub btf_id: __u32,
+    pub func_info_rec_size: __u32,
+    pub func_info: __u64,
+    pub nr_func_info: __u32,
+    pub nr_line_info: __u32,
+    pub line_info: __u64,
+    pub jited_line_info: __u64,
+    pub nr_jited_line_info: __u32,
+    pub line_info_rec_size: __u32,
+    pub jited_line_info_rec_size: __u32,
+    pub nr_prog_tags: __u32,
+    pub prog_tags: __u64,
+    pub run_time_ns: __u64,
+    pub run_cnt: __u64,
+    pub recursion_misses: __u64,
+    pub verified_insns: __u32,
+}
+impl bpf_prog_info {
+    #[inline]
+    pub fn gpl_compatible(&self) -> __u32 {
+        unsafe { ::core::mem::transmute(self._bitfield_1.get(0usize, 1u8) as u32) }
+    }
+    #[inline]
+    pub fn set_gpl_compatible(&mut self, val: __u32) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            self._bitfield_1.set(0usize, 1u8, val as u64)
+        }
+    }
+    #[inline]
+    pub fn new_bitfield_1(gpl_compatible: __u32) -> __BindgenBitfieldUnit<[u8; 4usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
+        __bindgen_bitfield_unit.set(0usize, 1u8, {
+            let gpl_compatible: u32 = unsafe { ::core::mem::transmute(gpl_compatible) };
+            gpl_compatible as u64
+        });
+        __bindgen_bitfield_unit
+    }
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
 pub struct bpf_map_info {
     pub type_: __u32,
     pub id: __u32,
@@ -771,6 +1624,81 @@ impl bpf_map_info {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
         __bindgen_bitfield_unit
     }
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_btf_info {
+    pub btf: __u64,
+    pub btf_size: __u32,
+    pub id: __u32,
+    pub name: __u64,
+    pub name_len: __u32,
+    pub kernel_btf: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_link_info {
+    pub type_: __u32,
+    pub id: __u32,
+    pub prog_id: __u32,
+    pub __bindgen_anon_1: bpf_link_info__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_link_info__bindgen_ty_1 {
+    pub raw_tracepoint: bpf_link_info__bindgen_ty_1__bindgen_ty_1,
+    pub tracing: bpf_link_info__bindgen_ty_1__bindgen_ty_2,
+    pub cgroup: bpf_link_info__bindgen_ty_1__bindgen_ty_3,
+    pub iter: bpf_link_info__bindgen_ty_1__bindgen_ty_4,
+    pub netns: bpf_link_info__bindgen_ty_1__bindgen_ty_5,
+    pub xdp: bpf_link_info__bindgen_ty_1__bindgen_ty_6,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_1 {
+    pub tp_name: __u64,
+    pub tp_name_len: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_2 {
+    pub attach_type: __u32,
+    pub target_obj_id: __u32,
+    pub target_btf_id: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_3 {
+    pub cgroup_id: __u64,
+    pub attach_type: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_4 {
+    pub target_name: __u64,
+    pub target_name_len: __u32,
+    pub __bindgen_anon_1: bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1 {
+    pub map: bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1 {
+    pub map_id: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_5 {
+    pub netns_ino: __u32,
+    pub attach_type: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_6 {
+    pub ifindex: __u32,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -956,6 +1884,17 @@ pub type _bindgen_ty_32 = ::aya_bpf_cty::c_uint;
 pub const BPF_DEVCG_DEV_BLOCK: ::aya_bpf_cty::c_uint = 1;
 pub const BPF_DEVCG_DEV_CHAR: ::aya_bpf_cty::c_uint = 2;
 pub type _bindgen_ty_33 = ::aya_bpf_cty::c_uint;
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_cgroup_dev_ctx {
+    pub access_type: __u32,
+    pub major: __u32,
+    pub minor: __u32,
+}
+#[repr(C)]
+pub struct bpf_raw_tracepoint_args {
+    pub args: __IncompleteArrayField<__u64>,
+}
 pub const BPF_FIB_LOOKUP_DIRECT: ::aya_bpf_cty::c_uint = 1;
 pub const BPF_FIB_LOOKUP_OUTPUT: ::aya_bpf_cty::c_uint = 2;
 pub type _bindgen_ty_34 = ::aya_bpf_cty::c_uint;
@@ -1023,6 +1962,25 @@ pub union bpf_redir_neigh__bindgen_ty_1 {
     pub ipv4_nh: __be32,
     pub ipv6_nh: [__u32; 4usize],
 }
+pub mod bpf_check_mtu_flags {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_MTU_CHK_SEGS: Type = 1;
+}
+pub mod bpf_check_mtu_ret {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_MTU_CHK_RET_SUCCESS: Type = 0;
+    pub const BPF_MTU_CHK_RET_FRAG_NEEDED: Type = 1;
+    pub const BPF_MTU_CHK_RET_SEGS_TOOBIG: Type = 2;
+}
+pub mod bpf_task_fd_type {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_FD_TYPE_RAW_TRACEPOINT: Type = 0;
+    pub const BPF_FD_TYPE_TRACEPOINT: Type = 1;
+    pub const BPF_FD_TYPE_KPROBE: Type = 2;
+    pub const BPF_FD_TYPE_KRETPROBE: Type = 3;
+    pub const BPF_FD_TYPE_UPROBE: Type = 4;
+    pub const BPF_FD_TYPE_URETPROBE: Type = 5;
+}
 pub const BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG: ::aya_bpf_cty::c_uint = 1;
 pub const BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL: ::aya_bpf_cty::c_uint = 2;
 pub const BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP: ::aya_bpf_cty::c_uint = 4;
@@ -1064,6 +2022,20 @@ pub struct bpf_flow_keys__bindgen_ty_1__bindgen_ty_2 {
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
+pub struct bpf_func_info {
+    pub insn_off: __u32,
+    pub type_id: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_line_info {
+    pub insn_off: __u32,
+    pub file_name_off: __u32,
+    pub line_off: __u32,
+    pub line_col: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
 pub struct bpf_spin_lock {
     pub val: __u32,
 }
@@ -1089,9 +2061,105 @@ pub struct bpf_sysctl {
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
+pub struct bpf_sockopt {
+    pub __bindgen_anon_1: bpf_sockopt__bindgen_ty_1,
+    pub __bindgen_anon_2: bpf_sockopt__bindgen_ty_2,
+    pub __bindgen_anon_3: bpf_sockopt__bindgen_ty_3,
+    pub level: __s32,
+    pub optname: __s32,
+    pub optlen: __s32,
+    pub retval: __s32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_sockopt__bindgen_ty_1 {
+    pub sk: *mut bpf_sock,
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
+}
+impl bpf_sockopt__bindgen_ty_1 {
+    #[inline]
+    pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
+        __bindgen_bitfield_unit
+    }
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_sockopt__bindgen_ty_2 {
+    pub optval: *mut ::aya_bpf_cty::c_void,
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
+}
+impl bpf_sockopt__bindgen_ty_2 {
+    #[inline]
+    pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
+        __bindgen_bitfield_unit
+    }
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_sockopt__bindgen_ty_3 {
+    pub optval_end: *mut ::aya_bpf_cty::c_void,
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
+}
+impl bpf_sockopt__bindgen_ty_3 {
+    #[inline]
+    pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
+        __bindgen_bitfield_unit
+    }
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
 pub struct bpf_pidns_info {
     pub pid: __u32,
     pub tgid: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_sk_lookup {
+    pub __bindgen_anon_1: bpf_sk_lookup__bindgen_ty_1,
+    pub family: __u32,
+    pub protocol: __u32,
+    pub remote_ip4: __u32,
+    pub remote_ip6: [__u32; 4usize],
+    pub remote_port: __be16,
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 2usize]>,
+    pub local_ip4: __u32,
+    pub local_ip6: [__u32; 4usize],
+    pub local_port: __u32,
+    pub ingress_ifindex: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_sk_lookup__bindgen_ty_1 {
+    pub __bindgen_anon_1: bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1,
+    pub cookie: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1 {
+    pub sk: *mut bpf_sock,
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
+}
+impl bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1 {
+    #[inline]
+    pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
+        __bindgen_bitfield_unit
+    }
+}
+impl bpf_sk_lookup {
+    #[inline]
+    pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 2usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 2usize]> = Default::default();
+        __bindgen_bitfield_unit
+    }
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1099,6 +2167,29 @@ pub struct btf_ptr {
     pub ptr: *mut ::aya_bpf_cty::c_void,
     pub type_id: __u32,
     pub flags: __u32,
+}
+pub mod bpf_core_relo_kind {
+    pub type Type = ::aya_bpf_cty::c_uint;
+    pub const BPF_CORE_FIELD_BYTE_OFFSET: Type = 0;
+    pub const BPF_CORE_FIELD_BYTE_SIZE: Type = 1;
+    pub const BPF_CORE_FIELD_EXISTS: Type = 2;
+    pub const BPF_CORE_FIELD_SIGNED: Type = 3;
+    pub const BPF_CORE_FIELD_LSHIFT_U64: Type = 4;
+    pub const BPF_CORE_FIELD_RSHIFT_U64: Type = 5;
+    pub const BPF_CORE_TYPE_ID_LOCAL: Type = 6;
+    pub const BPF_CORE_TYPE_ID_TARGET: Type = 7;
+    pub const BPF_CORE_TYPE_EXISTS: Type = 8;
+    pub const BPF_CORE_TYPE_SIZE: Type = 9;
+    pub const BPF_CORE_ENUMVAL_EXISTS: Type = 10;
+    pub const BPF_CORE_ENUMVAL_VALUE: Type = 11;
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct bpf_core_relo {
+    pub insn_off: __u32,
+    pub type_id: __u32,
+    pub access_str_off: __u32,
+    pub kind: bpf_core_relo_kind::Type,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
