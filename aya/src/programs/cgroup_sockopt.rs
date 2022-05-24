@@ -1,3 +1,4 @@
+//! Cgroup socket option programs.
 use thiserror::Error;
 
 use std::{

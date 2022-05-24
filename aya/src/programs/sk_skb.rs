@@ -1,3 +1,4 @@
+//! Skskb programs.
 use crate::{
     generated::{
         bpf_attach_type::{BPF_SK_SKB_STREAM_PARSER, BPF_SK_SKB_STREAM_VERDICT},

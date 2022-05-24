@@ -1,3 +1,4 @@
+//! Cgroup skb programs.
 use std::{
     hash::Hash,
     os::unix::prelude::{AsRawFd, RawFd},

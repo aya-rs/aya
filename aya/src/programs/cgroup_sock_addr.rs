@@ -1,3 +1,4 @@
+//! Cgroup socket address programs.
 use thiserror::Error;
 
 use crate::generated::bpf_attach_type;

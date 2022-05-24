@@ -1,3 +1,4 @@
+//! Socket option programs.
 use std::os::unix::io::AsRawFd;
 
 use crate::{

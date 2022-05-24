@@ -1,4 +1,4 @@
-//! fentry programs.
+//! Fentry programs.
 
 use crate::{
     generated::{bpf_attach_type::BPF_TRACE_FENTRY, bpf_prog_type::BPF_PROG_TYPE_TRACING},

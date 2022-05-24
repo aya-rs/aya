@@ -1,3 +1,4 @@
+//! Lirc programs.
 use std::os::unix::prelude::{AsRawFd, RawFd};
 
 use crate::{

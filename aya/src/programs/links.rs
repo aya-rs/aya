@@ -1,3 +1,4 @@
+//! Program links.
 use libc::{close, dup};
 
 use std::{
@@ -9,7 +10,7 @@ use std::{
 
 use crate::{generated::bpf_attach_type, programs::ProgramError, sys::bpf_prog_detach};
 
-/// A Link
+/// A Link.
 pub trait Link: std::fmt::Debug + 'static {
     /// Unique Id
     type Id: std::fmt::Debug + std::hash::Hash + Eq + PartialEq;
@@ -91,11 +92,13 @@ impl<T: Link> Drop for LinkMap<T> {
     }
 }
 
+/// The identifier of an `FdLink`.
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub(crate) struct FdLinkId(pub(crate) RawFd);
+pub struct FdLinkId(pub(crate) RawFd);
 
+/// A file descriptor link.
 #[derive(Debug)]
-pub(crate) struct FdLink {
+pub struct FdLink {
     pub(crate) fd: RawFd,
 }
 
@@ -118,11 +121,13 @@ impl Link for FdLink {
     }
 }
 
+/// The identifier of a `ProgAttachLink`.
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub(crate) struct ProgAttachLinkId(RawFd, RawFd, bpf_attach_type);
+pub struct ProgAttachLinkId(RawFd, RawFd, bpf_attach_type);
 
+/// The Link type used by programs that are attached with `bpf_prog_attach`.
 #[derive(Debug)]
-pub(crate) struct ProgAttachLink {
+pub struct ProgAttachLink {
     prog_fd: RawFd,
     target_fd: RawFd,
     attach_type: bpf_attach_type,

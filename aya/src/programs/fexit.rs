@@ -1,4 +1,4 @@
-//! fexit programs.
+//! Fexit programs.
 
 use crate::{
     generated::{bpf_attach_type::BPF_TRACE_FEXIT, bpf_prog_type::BPF_PROG_TYPE_TRACING},

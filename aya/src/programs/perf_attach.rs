@@ -1,3 +1,4 @@
+//! Perf attach links.
 use libc::close;
 use std::os::unix::io::RawFd;
 
@@ -7,9 +8,11 @@ use crate::{
     PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE, PERF_EVENT_IOC_SET_BPF,
 };
 
+/// The identifer of a PerfLink.
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct PerfLinkId(RawFd);
 
+/// The attachment type of PerfEvent programs.
 #[derive(Debug)]
 pub struct PerfLink {
     perf_fd: RawFd,
