@@ -1,3 +1,4 @@
+//! Extension programs.
 use std::os::unix::prelude::{AsRawFd, RawFd};
 use thiserror::Error;
 

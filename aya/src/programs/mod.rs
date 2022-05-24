@@ -36,31 +36,31 @@
 //! [`Bpf::program`]: crate::Bpf::program
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [`maps`]: crate::maps
-mod cgroup_skb;
-mod cgroup_sock_addr;
-mod cgroup_sockopt;
-mod cgroup_sysctl;
-mod extension;
-mod fentry;
-mod fexit;
-mod kprobe;
-mod links;
-mod lirc_mode2;
-mod lsm;
-mod perf_attach;
+pub mod cgroup_skb;
+pub mod cgroup_sock_addr;
+pub mod cgroup_sockopt;
+pub mod cgroup_sysctl;
+pub mod extension;
+pub mod fentry;
+pub mod fexit;
+pub mod kprobe;
+pub mod links;
+pub mod lirc_mode2;
+pub mod lsm;
+pub mod perf_attach;
 pub mod perf_event;
 mod probe;
-mod raw_trace_point;
-mod sk_msg;
-mod sk_skb;
-mod sock_ops;
-mod socket_filter;
+pub mod raw_trace_point;
+pub mod sk_msg;
+pub mod sk_skb;
+pub mod sock_ops;
+pub mod socket_filter;
 pub mod tc;
-mod tp_btf;
-mod trace_point;
-mod uprobe;
+pub mod tp_btf;
+pub mod trace_point;
+pub mod uprobe;
 mod utils;
-mod xdp;
+pub mod xdp;
 
 use libc::ENOSPC;
 use std::{

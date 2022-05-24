@@ -1,3 +1,4 @@
+//! Tracepoint programs.
 use std::{fs, io};
 use thiserror::Error;
 

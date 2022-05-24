@@ -1,3 +1,4 @@
+//! Socket filter programs.
 use libc::{setsockopt, SOL_SOCKET};
 use std::{
     io, mem,
