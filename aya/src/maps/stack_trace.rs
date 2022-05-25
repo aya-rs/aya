@@ -115,7 +115,7 @@ impl<T: Deref<Target = Map>> StackTraceMap<T> {
         let fd = self.inner.fd_or_err()?;
 
         let mut frames = vec![0; self.max_stack_depth];
-        bpf_map_lookup_elem_ptr(fd, stack_id, frames.as_mut_ptr(), flags)
+        bpf_map_lookup_elem_ptr(fd, Some(stack_id), frames.as_mut_ptr(), flags)
             .map_err(|(code, io_error)| MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
                 code,
