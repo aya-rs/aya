@@ -1,4 +1,5 @@
-use std::{collections::HashMap, mem};
+use crate::obj::{btf::relocate_btf_program, ProgramSection};
+use std::{collections::HashMap, mem, str::FromStr};
 
 use log::debug;
 use object::{SectionIndex, SymbolKind};
@@ -11,13 +12,18 @@ use crate::{
     },
     maps::Map,
     obj::{Function, Object, Program},
-    BpfError,
+    BpfError, Btf,
 };
+
+use super::btf::{Candidate, ErrorWrapper};
 
 pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
 
 #[derive(Debug, Error)]
 enum RelocationError {
+    #[error("program not found")]
+    ProgramNotFound,
+
     #[error("unknown symbol, index `{index}`")]
     UnknownSymbol { index: usize },
 
@@ -113,6 +119,50 @@ impl Object {
                     function: name.clone(),
                     error: Box::new(error),
                 })?;
+        }
+
+        Ok(())
+    }
+
+    pub fn relocate_btf(&mut self, target_btf: &Btf) -> Result<(), BpfError> {
+        let (local_btf, btf_ext) = match (&self.btf, &self.btf_ext) {
+            (Some(btf), Some(btf_ext)) => (btf, btf_ext),
+            _ => return Ok(()),
+        };
+
+        let mut candidates_cache = HashMap::<u32, Vec<Candidate>>::new();
+        for (sec_name_off, relos) in btf_ext.relocations() {
+            let section_name = local_btf.string_at(*sec_name_off)?;
+
+            let program_section = match ProgramSection::from_str(&section_name) {
+                Ok(program) => program,
+                Err(_) => continue,
+            };
+            let section_name = program_section.name();
+
+            let program = self
+                .programs
+                .get_mut(section_name)
+                .ok_or(BpfError::RelocationError {
+                    function: section_name.to_owned(),
+                    error: Box::new(RelocationError::ProgramNotFound),
+                })?;
+            match relocate_btf_program(
+                &mut program.function.instructions,
+                relos,
+                local_btf,
+                target_btf,
+                &mut candidates_cache,
+            ) {
+                Ok(_) => {}
+                Err(ErrorWrapper::BtfError(e)) => return Err(e.into()),
+                Err(ErrorWrapper::RelocationError(error)) => {
+                    return Err(BpfError::RelocationError {
+                        function: section_name.to_owned(),
+                        error: Box::new(error),
+                    })
+                }
+            }
         }
 
         Ok(())

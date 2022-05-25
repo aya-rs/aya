@@ -530,7 +530,11 @@ impl<'a> BpfLoader<'a> {
             .drain()
             .map(|(name, map)| (name, MapLock::new(map)))
             .collect();
-        Ok(Bpf { maps, programs })
+        Ok(Bpf {
+            maps,
+            programs,
+            btf: obj.btf,
+        })
     }
 }
 
@@ -543,6 +547,7 @@ impl<'a> Default for BpfLoader<'a> {
 /// The main entry point into the library, used to work with eBPF programs and maps.
 #[derive(Debug)]
 pub struct Bpf {
+    btf: Option<Btf>,
     maps: HashMap<String, MapLock>,
     programs: HashMap<String, Program>,
 }
@@ -743,6 +748,20 @@ impl Bpf {
     /// ```
     pub fn programs_mut(&mut self) -> impl Iterator<Item = (&str, &mut Program)> {
         self.programs.iter_mut().map(|(s, p)| (s.as_str(), p))
+    }
+
+    /// Retrive the object BTF.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use std::path::Path;
+    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// let btf = bpf.btf().unwrap();
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
+    #[cfg(feature = "btf")]
+    pub fn btf(&mut self) -> Option<&Btf> {
+        self.btf.as_ref()
     }
 }
 

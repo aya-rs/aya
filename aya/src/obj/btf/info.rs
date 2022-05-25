@@ -20,7 +20,7 @@ use crate::{
  *   ......
  */
 #[derive(Debug, Clone, Default)]
-pub(crate) struct FuncSecInfo {
+pub struct FuncSecInfo {
     pub _sec_name_offset: u32,
     pub num_info: u32,
     pub func_info: Vec<bpf_func_info>,
@@ -79,7 +79,7 @@ impl FuncSecInfo {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct FuncInfo {
+pub struct FuncInfo {
     pub data: HashMap<String, FuncSecInfo>,
 }
 
@@ -99,7 +99,7 @@ impl FuncInfo {
 }
 
 #[derive(Debug, Clone, Default)]
-pub(crate) struct LineSecInfo {
+pub struct LineSecInfo {
     // each line info section has a header
     pub _sec_name_offset: u32,
     pub num_info: u32,
@@ -169,7 +169,7 @@ impl LineSecInfo {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct LineInfo {
+pub struct LineInfo {
     pub data: HashMap<String, LineSecInfo>,
 }
 

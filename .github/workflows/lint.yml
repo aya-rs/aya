@@ -36,11 +36,11 @@ jobs:
 
       - name: Run clippy
         run: |
-          cargo clippy -p aya -- --deny warnings
-          cargo clippy -p aya-gen -- --deny warnings
-          cargo clippy -p xtask -- --deny warnings
+          cargo clippy --all-features -p aya -- --deny warnings
+          cargo clippy --all-features -p aya-gen -- --deny warnings
+          cargo clippy --all-features -p xtask -- --deny warnings
           pushd bpf
-          cargo clippy -p aya-bpf -- --deny warnings
+          cargo clippy --all-features -p aya-bpf -- --deny warnings
           popd
 
       - name: Run miri

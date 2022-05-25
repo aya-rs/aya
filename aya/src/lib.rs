@@ -46,5 +46,10 @@ mod sys;
 pub mod util;
 
 pub use bpf::*;
+
+#[cfg(feature = "btf")]
+pub use obj::btf;
+
 pub use obj::btf::{Btf, BtfError};
+
 pub use object::Endianness;

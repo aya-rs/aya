@@ -18,50 +18,91 @@ use crate::{
     obj::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH},
 };
 
+/// The BTF Type
 #[derive(Clone, Debug)]
-pub(crate) enum BtfType {
+
+pub enum BtfType {
+    /// An unknown type.
     Unknown,
+    /// Forward declaration.
     Fwd(btf_type),
+    /// Constant.
     Const(btf_type),
+    /// Volatile.
     Volatile(btf_type),
+    /// Restrict.
     Restrict(btf_type),
+    /// Pointer.
     Ptr(btf_type),
+    /// Type definition.
     Typedef(btf_type),
+    /// Function.
     Func(btf_type),
+    /// Integer.
     Int(btf_type, u32),
+    /// Floating point.
     Float(btf_type),
+    /// Enumeration.
     Enum(btf_type, Vec<btf_enum>),
+    /// Array.
     Array(btf_type, btf_array),
+    /// Struct.
     Struct(btf_type, Vec<btf_member>),
+    /// Union.
     Union(btf_type, Vec<btf_member>),
+    /// Function prototype
     FuncProto(btf_type, Vec<btf_param>),
+    /// Variable
     Var(btf_type, btf_var),
+    /// Data section
     DataSec(btf_type, Vec<btf_var_secinfo>),
+    /// Declaration Tag
     DeclTag(btf_type, btf_decl_tag),
+    /// Type Tag
     TypeTag(btf_type),
 }
 
+/// BTF Kind
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
-pub(crate) enum BtfKind {
+pub enum BtfKind {
+    /// BTF_KIND_UNKN
     Unknown = BTF_KIND_UNKN,
+    /// BTF_KIND_INT
     Int = BTF_KIND_INT,
+    /// BTF_KIND_FLOAT
     Float = BTF_KIND_FLOAT,
+    /// BTF_KIND_PTR
     Ptr = BTF_KIND_PTR,
+    /// BTF_KIND_ARRAY
     Array = BTF_KIND_ARRAY,
+    /// BTF_KIND_STRUCT
     Struct = BTF_KIND_STRUCT,
+    /// BTF_KIND_UNION
     Union = BTF_KIND_UNION,
+    /// BTF_KIND_ENUM
     Enum = BTF_KIND_ENUM,
+    /// BTF_KIND_FWD
     Fwd = BTF_KIND_FWD,
+    /// BTF_KIND_TYPEDEF
     Typedef = BTF_KIND_TYPEDEF,
+    /// BTF_KIND_VOLATILE
     Volatile = BTF_KIND_VOLATILE,
+    /// BTF_KIND_CONST
     Const = BTF_KIND_CONST,
+    /// BTF_KIND_RESTRICT
     Restrict = BTF_KIND_RESTRICT,
+    /// BTF_KIND_FUNC
     Func = BTF_KIND_FUNC,
+    /// BTF_KIND_FUNC_PROTO
     FuncProto = BTF_KIND_FUNC_PROTO,
+    /// BTF_KIND_VAR
     Var = BTF_KIND_VAR,
+    /// BTF_KIND_DATASEC
     DataSec = BTF_KIND_DATASEC,
+    /// BTF_KIND_DECL_TAG
     DeclTag = BTF_KIND_DECL_TAG,
+    /// BTF_KIND_TYPE_TAG
     TypeTag = BTF_KIND_TYPE_TAG,
 }
 
@@ -98,25 +139,25 @@ impl TryFrom<u32> for BtfKind {
 impl Display for BtfKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            BtfKind::Unknown => write!(f, "[UNKNOWN]"),
-            BtfKind::Int => write!(f, "[INT]"),
-            BtfKind::Float => write!(f, "[FLOAT]"),
-            BtfKind::Ptr => write!(f, "[PTR]"),
-            BtfKind::Array => write!(f, "[ARRAY]"),
-            BtfKind::Struct => write!(f, "[STRUCT]"),
-            BtfKind::Union => write!(f, "[UNION]"),
-            BtfKind::Enum => write!(f, "[ENUM]"),
-            BtfKind::Fwd => write!(f, "[FWD]"),
-            BtfKind::Typedef => write!(f, "[TYPEDEF]"),
-            BtfKind::Volatile => write!(f, "[VOLATILE]"),
-            BtfKind::Const => write!(f, "[CONST]"),
-            BtfKind::Restrict => write!(f, "[RESTRICT]"),
-            BtfKind::Func => write!(f, "[FUNC]"),
-            BtfKind::FuncProto => write!(f, "[FUNC_PROTO]"),
-            BtfKind::Var => write!(f, "[VAR]"),
-            BtfKind::DataSec => write!(f, "[DATASEC]"),
-            BtfKind::DeclTag => write!(f, "[DECL_TAG]"),
-            BtfKind::TypeTag => write!(f, "[TYPE_TAG]"),
+            BtfKind::Unknown => write!(f, "UNKNOWN"),
+            BtfKind::Int => write!(f, "INT"),
+            BtfKind::Float => write!(f, "FLOAT"),
+            BtfKind::Ptr => write!(f, "PTR"),
+            BtfKind::Array => write!(f, "ARRAY"),
+            BtfKind::Struct => write!(f, "STRUCT"),
+            BtfKind::Union => write!(f, "UNION"),
+            BtfKind::Enum => write!(f, "ENUM"),
+            BtfKind::Fwd => write!(f, "FWD"),
+            BtfKind::Typedef => write!(f, "TYPEDEF"),
+            BtfKind::Volatile => write!(f, "VOLATILE"),
+            BtfKind::Const => write!(f, "CONST"),
+            BtfKind::Restrict => write!(f, "RESTRICT"),
+            BtfKind::Func => write!(f, "FUNC"),
+            BtfKind::FuncProto => write!(f, "FUNC_PROTO"),
+            BtfKind::Var => write!(f, "VAR"),
+            BtfKind::DataSec => write!(f, "DATASEC"),
+            BtfKind::DeclTag => write!(f, "DECL_TAG"),
+            BtfKind::TypeTag => write!(f, "TYPE_TAG"),
         }
     }
 }
@@ -307,11 +348,13 @@ impl BtfType {
         self.btf_type().map(|ty| ty.info)
     }
 
-    pub(crate) fn name_offset(&self) -> Option<u32> {
+    /// Returns the offset of the name of this type.
+    pub fn name_offset(&self) -> Option<u32> {
         self.btf_type().map(|ty| ty.name_off)
     }
 
-    pub(crate) fn kind(&self) -> Result<Option<BtfKind>, BtfError> {
+    /// Returns the BtfKind of this type.
+    pub fn kind(&self) -> Result<Option<BtfKind>, BtfError> {
         self.btf_type().map(type_kind).transpose()
     }
 
@@ -471,11 +514,13 @@ fn type_kind(ty: &btf_type) -> Result<BtfKind, BtfError> {
     ((ty.info >> 24) & 0x1F).try_into()
 }
 
-pub(crate) fn type_vlen(ty: &btf_type) -> usize {
+/// Returns the vlen of the btf_type.
+pub fn type_vlen(ty: &btf_type) -> usize {
     (ty.info & 0xFFFF) as usize
 }
 
-pub(crate) fn member_bit_offset(info: u32, member: &btf_member) -> usize {
+/// The bit offset of a struct or union member
+pub fn member_bit_offset(info: u32, member: &btf_member) -> usize {
     let k_flag = info >> 31 == 1;
     let bit_offset = if k_flag {
         member.offset & 0xFFFFFF

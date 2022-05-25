@@ -1,4 +1,4 @@
-pub(crate) mod btf;
+pub mod btf;
 mod relocation;
 
 use object::{
@@ -26,7 +26,7 @@ use crate::{
 };
 use std::slice::from_raw_parts_mut;
 
-use self::btf::{FuncSecInfo, LineSecInfo};
+use crate::obj::btf::{FuncSecInfo, LineSecInfo};
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
 /// The first five __u32 of `bpf_map_def` must be defined.

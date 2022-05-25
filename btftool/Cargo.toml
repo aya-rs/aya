@@ -1,0 +1,12 @@
+[package]
+name = "btftool"
+version = "0.1.0"
+authors = ["The Aya Contributors"]
+edition = "2018"
+
+[dependencies]
+clap = { version = "3", features=["derive"] }
+aya = { path = "../aya", features = ["btf"] }
+anyhow = "1"
+object = "0.28"
+thiserror = "1"

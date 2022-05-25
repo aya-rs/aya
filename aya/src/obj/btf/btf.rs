@@ -27,7 +27,6 @@ use super::{
 };
 
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
-pub(crate) const MAX_SPEC_LEN: usize = 64;
 
 /// The error type returned when `BTF` operations fail.
 #[derive(Error, Debug)]
@@ -193,7 +192,8 @@ impl Btf {
         }
     }
 
-    pub(crate) fn types(&self) -> impl Iterator<Item = &BtfType> {
+    /// Returns an iterator over the BTF types.
+    pub fn types(&self) -> impl Iterator<Item = &BtfType> {
         self.types.types.iter()
     }
 
@@ -231,7 +231,8 @@ impl Btf {
         )
     }
 
-    pub(crate) fn parse(data: &[u8], endianness: Endianness) -> Result<Btf, BtfError> {
+    /// Parses a byte slice into BTF.
+    pub fn parse(data: &[u8], endianness: Endianness) -> Result<Btf, BtfError> {
         if data.len() < mem::size_of::<btf_header>() {
             return Err(BtfError::InvalidHeader);
         }
@@ -282,7 +283,8 @@ impl Btf {
         Ok(types)
     }
 
-    pub(crate) fn string_at(&self, offset: u32) -> Result<Cow<'_, str>, BtfError> {
+    /// Returns the string at the provided offset.
+    pub fn string_at(&self, offset: u32) -> Result<Cow<'_, str>, BtfError> {
         let btf_header {
             hdr_len,
             mut str_off,
@@ -308,15 +310,18 @@ impl Btf {
         Ok(s.to_string_lossy())
     }
 
-    pub(crate) fn type_by_id(&self, type_id: u32) -> Result<&BtfType, BtfError> {
+    /// Returns the BTF type for a given id.
+    pub fn type_by_id(&self, type_id: u32) -> Result<&BtfType, BtfError> {
         self.types.type_by_id(type_id)
     }
 
-    pub(crate) fn resolve_type(&self, root_type_id: u32) -> Result<u32, BtfError> {
+    /// Resolves the base type id by traversing the type heirarchy starting from root_type_id.
+    pub fn resolve_type(&self, root_type_id: u32) -> Result<u32, BtfError> {
         self.types.resolve_type(root_type_id)
     }
 
-    pub(crate) fn type_name(&self, ty: &BtfType) -> Result<Option<Cow<'_, str>>, BtfError> {
+    /// Returns the name of the BTF type.
+    pub fn type_name(&self, ty: &BtfType) -> Result<Option<Cow<'_, str>>, BtfError> {
         ty.name_offset().map(|off| self.string_at(off)).transpose()
     }
 
@@ -325,7 +330,8 @@ impl Btf {
             .and_then(|off| self.string_at(off).ok().map(String::from))
     }
 
-    pub(crate) fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
+    /// Returns the BTF id of the type with the provided name and of the provided kind.
+    pub fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
         for (type_id, ty) in self.types().enumerate() {
             match ty.kind()? {
                 Some(k) => {
@@ -399,7 +405,8 @@ impl Btf {
         })
     }
 
-    pub(crate) fn to_bytes(&self) -> Vec<u8> {
+    /// Writes the BTF to bytes.
+    pub fn to_bytes(&self) -> Vec<u8> {
         // Safety: btf_header is POD
         let mut buf = unsafe { bytes_of::<btf_header>(&self.header).to_vec() };
         // Skip the first type since it's always BtfType::Unknown for type_by_id to work
@@ -597,6 +604,7 @@ unsafe fn read_btf_header(data: &[u8]) -> btf_header {
     ptr::read_unaligned(data.as_ptr() as *const btf_header)
 }
 
+/// Extended BTF Information
 #[derive(Debug, Clone)]
 pub struct BtfExt {
     data: Vec<u8>,
@@ -611,11 +619,8 @@ pub struct BtfExt {
 }
 
 impl BtfExt {
-    pub(crate) fn parse(
-        data: &[u8],
-        endianness: Endianness,
-        btf: &Btf,
-    ) -> Result<BtfExt, BtfError> {
+    /// Parses a byte slice to BtfExt using the provided BTF.
+    pub fn parse(data: &[u8], endianness: Endianness, btf: &Btf) -> Result<BtfExt, BtfError> {
         // Safety: btf_ext_header is POD so read_unaligned is safe
         let header = unsafe {
             ptr::read_unaligned::<btf_ext_header>(data.as_ptr() as *const btf_ext_header)
@@ -757,8 +762,18 @@ impl BtfExt {
         self.func_info_rec_size
     }
 
+    /// Returns the function information
+    pub fn func_info(&self) -> &FuncInfo {
+        &self.func_info
+    }
+
     pub(crate) fn line_info_rec_size(&self) -> usize {
         self.line_info_rec_size
+    }
+
+    /// Returns the line information
+    pub fn line_info(&self) -> &LineInfo {
+        &self.line_info
     }
 }
 
