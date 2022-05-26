@@ -19,14 +19,14 @@ use relocation::*;
 
 use crate::{
     bpf_map_def,
-    generated::{bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY, btf_var_secinfo, BPF_F_RDONLY_PROG},
+    generated::{bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_F_RDONLY_PROG},
     obj::btf::{Btf, BtfError, BtfExt, BtfType},
     programs::{CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType},
     BpfError, BtfMapDef, PinningType,
 };
 use std::slice::from_raw_parts_mut;
 
-use self::btf::{BtfKind, FuncSecInfo, LineSecInfo};
+use self::btf::{Array, DataSecEntry, FuncSecInfo, LineSecInfo};
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
 /// The first five __u32 of `bpf_map_def` must be defined.
@@ -830,14 +830,14 @@ impl Object {
         let btf = self.btf.as_ref().unwrap();
 
         for t in btf.types() {
-            if let BtfType::DataSec(_, sec_info) = &t {
+            if let BtfType::DataSec(datasec) = &t {
                 let type_name = match btf.type_name(t) {
-                    Ok(Some(name)) => name,
+                    Ok(name) => name,
                     _ => continue,
                 };
                 if type_name == section.name {
                     // each btf_var_secinfo contains a map
-                    for info in sec_info {
+                    for info in &datasec.entries {
                         let (map_name, def) = parse_btf_map_def(btf, info)?;
                         let symbol_index = symbols
                             .get(&map_name)
@@ -1144,20 +1144,20 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
         BtfType::Ptr(pty) => pty,
         other => {
             return Err(BtfError::UnexpectedBtfType {
-                type_id: other.kind()?.unwrap_or(BtfKind::Unknown) as u32,
+                type_id: other.btf_type().unwrap_or(0) as u32,
             })
         }
     };
     // Safety: union
-    let arr = match &btf.type_by_id(unsafe { pty.__bindgen_anon_1.type_ })? {
-        BtfType::Array(_, arr) => arr,
+    let arr = match &btf.type_by_id(pty.btf_type)? {
+        BtfType::Array(Array { array, .. }) => array,
         other => {
             return Err(BtfError::UnexpectedBtfType {
-                type_id: other.kind()?.unwrap_or(BtfKind::Unknown) as u32,
+                type_id: other.btf_type().unwrap_or(0) as u32,
             })
         }
     };
-    Ok(arr.nelems)
+    Ok(arr.len)
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -1226,68 +1226,71 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     }
 }
 
-fn parse_btf_map_def(btf: &Btf, info: &btf_var_secinfo) -> Result<(String, BtfMapDef), BtfError> {
-    let ty = match btf.type_by_id(info.type_)? {
-        BtfType::Var(ty, _) => ty,
+fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDef), BtfError> {
+    let ty = match btf.type_by_id(info.btf_type)? {
+        BtfType::Var(var) => var,
         other => {
             return Err(BtfError::UnexpectedBtfType {
-                type_id: other.kind()?.unwrap_or(BtfKind::Unknown) as u32,
+                type_id: other.btf_type().unwrap_or(0) as u32,
             })
         }
     };
-    let map_name = btf.string_at(ty.name_off)?;
+    let map_name = btf.string_at(ty.name_offset)?;
     let mut map_def = BtfMapDef::default();
 
     // Safety: union
-    let root_type = btf.resolve_type(unsafe { ty.__bindgen_anon_1.type_ })?;
-    let members = match btf.type_by_id(root_type)? {
-        BtfType::Struct(_, members) => members,
+    let root_type = btf.resolve_type(ty.btf_type)?;
+    let s = match btf.type_by_id(root_type)? {
+        BtfType::Struct(s) => s,
         other => {
             return Err(BtfError::UnexpectedBtfType {
-                type_id: other.kind()?.unwrap_or(BtfKind::Unknown) as u32,
+                type_id: other.btf_type().unwrap_or(0) as u32,
             })
         }
     };
 
-    for m in members {
-        match btf.string_at(m.name_off)?.as_ref() {
+    for m in &s.members {
+        match btf.string_at(m.name_offset)?.as_ref() {
             "type" => {
-                map_def.map_type = get_map_field(btf, m.type_)?;
+                map_def.map_type = get_map_field(btf, m.btf_type)?;
             }
             "key" => {
-                if let BtfType::Ptr(pty) = btf.type_by_id(m.type_)? {
+                if let BtfType::Ptr(pty) = btf.type_by_id(m.btf_type)? {
                     // Safety: union
-                    let t = unsafe { pty.__bindgen_anon_1.type_ };
+                    let t = pty.btf_type;
                     map_def.key_size = btf.type_size(t)? as u32;
                     map_def.btf_key_type_id = t;
                 } else {
-                    return Err(BtfError::UnexpectedBtfType { type_id: m.type_ });
+                    return Err(BtfError::UnexpectedBtfType {
+                        type_id: m.btf_type,
+                    });
                 }
             }
             "key_size" => {
-                map_def.key_size = get_map_field(btf, m.type_)?;
+                map_def.key_size = get_map_field(btf, m.btf_type)?;
             }
             "value" => {
-                if let BtfType::Ptr(pty) = btf.type_by_id(m.type_)? {
-                    // Safety: union
-                    let t = unsafe { pty.__bindgen_anon_1.type_ };
+                if let BtfType::Ptr(pty) = btf.type_by_id(m.btf_type)? {
+                    let t = pty.btf_type;
                     map_def.value_size = btf.type_size(t)? as u32;
                     map_def.btf_value_type_id = t;
                 } else {
-                    return Err(BtfError::UnexpectedBtfType { type_id: m.type_ });
+                    return Err(BtfError::UnexpectedBtfType {
+                        type_id: m.btf_type,
+                    });
                 }
             }
             "value_size" => {
-                map_def.value_size = get_map_field(btf, m.type_)?;
+                map_def.value_size = get_map_field(btf, m.btf_type)?;
             }
             "max_entries" => {
-                map_def.max_entries = get_map_field(btf, m.type_)?;
+                map_def.max_entries = get_map_field(btf, m.btf_type)?;
             }
             "map_flags" => {
-                map_def.map_flags = get_map_field(btf, m.type_)?;
+                map_def.map_flags = get_map_field(btf, m.btf_type)?;
             }
             "pinning" => {
-                let pinning = get_map_field(btf, m.type_)?;
+                let pinning = get_map_field(btf, m.btf_type)?;
                 map_def.pinning = PinningType::try_from(pinning).unwrap_or_else(|_| {
                     debug!("{} is not a valid pin type. using PIN_NONE", pinning);
                     PinningType::None
