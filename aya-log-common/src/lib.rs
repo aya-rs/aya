@@ -1,6 +1,6 @@
 #![no_std]
 
-pub const LOG_BUF_CAPACITY: usize = 1024;
+pub const LOG_BUF_CAPACITY: usize = 8192;
 
 pub const LOG_FIELDS: usize = 7;
 
