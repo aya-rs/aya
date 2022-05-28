@@ -51,7 +51,7 @@ impl<T> Queue<T> {
                 flags,
             )
         };
-        (ret >= 0).then(|| ()).ok_or(ret)
+        (ret == 0).then(|| ()).ok_or(ret)
     }
 
     pub fn pop(&mut self) -> Option<T> {
@@ -61,7 +61,7 @@ impl<T> Queue<T> {
                 &mut self.def as *mut _ as *mut _,
                 value.as_mut_ptr() as *mut _,
             );
-            (ret >= 0).then(|| value.assume_init())
+            (ret == 0).then(|| value.assume_init())
         }
     }
 }
