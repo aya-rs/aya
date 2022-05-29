@@ -306,6 +306,18 @@ impl Drop for Map {
     }
 }
 
+/// Allows the Fd of a loaded [`Map`] to be retrieved
+pub trait MapFd {
+    /// Returns the [`RawFd`] of the program if it has been loaded, or `None`
+    fn fd(&self) -> Option<RawFd>;
+}
+
+impl MapFd for Map {
+    fn fd(&self) -> Option<RawFd> {
+        self.fd
+    }
+}
+
 /// An iterable map
 pub trait IterableMap<K: Pod, V> {
     /// Get a generic map handle
