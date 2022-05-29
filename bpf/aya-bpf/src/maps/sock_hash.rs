@@ -4,9 +4,12 @@ use aya_bpf_cty::c_void;
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKHASH, bpf_sock_ops},
-    helpers::{bpf_msg_redirect_hash, bpf_sk_redirect_hash, bpf_sock_hash_update},
+    helpers::{
+        bpf_map_lookup_elem, bpf_msg_redirect_hash, bpf_sk_assign, bpf_sk_redirect_hash,
+        bpf_sk_release, bpf_sock_hash_update,
+    },
     maps::PinningType,
-    programs::{SkBuffContext, SkMsgContext},
+    programs::{SkBuffContext, SkLookupContext, SkMsgContext},
     BpfContext,
 };
 
@@ -83,6 +86,26 @@ impl<K> SockHash<K> {
                 key as *mut _ as *mut _,
                 flags,
             )
+        }
+    }
+
+    pub fn redirect_sk_lookup(
+        &mut self,
+        ctx: &SkLookupContext,
+        key: K,
+        flags: u64,
+    ) -> Result<(), u32> {
+        unsafe {
+            let sk = bpf_map_lookup_elem(
+                &mut self.def as *mut _ as *mut _,
+                &key as *const _ as *const c_void,
+            );
+            if sk.is_null() {
+                return Err(1);
+            }
+            let ret = bpf_sk_assign(ctx.as_ptr() as *mut _, sk, flags);
+            bpf_sk_release(sk);
+            (ret >= 0).then(|| ()).ok_or(1)
         }
     }
 }
