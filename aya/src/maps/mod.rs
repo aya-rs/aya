@@ -56,6 +56,7 @@ pub mod queue;
 pub mod sock;
 pub mod stack;
 pub mod stack_trace;
+pub mod xdp;
 
 pub use array::{Array, PerCpuArray, ProgramArray};
 pub use hash_map::{HashMap, PerCpuHashMap};
@@ -65,6 +66,7 @@ pub use queue::Queue;
 pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
+pub use xdp::XskMap;
 
 #[derive(Error, Debug)]
 /// Errors occuring from working with Maps
