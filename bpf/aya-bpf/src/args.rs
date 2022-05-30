@@ -101,18 +101,18 @@ pub trait FromPtRegs: Sized {
 impl<T> FromPtRegs for *const T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         match n {
-            0 => ctx.rdi().map(|v| v as _),
-            1 => ctx.rsi().map(|v| v as _),
-            2 => ctx.rdx().map(|v| v as _),
-            3 => ctx.rcx().map(|v| v as _),
-            4 => ctx.r8().map(|v| v as _),
-            5 => ctx.r9().map(|v| v as _),
+            0 => Some(ctx.rdi as *const _),
+            1 => Some(ctx.rsi as *const _),
+            2 => Some(ctx.rdx as *const _),
+            3 => Some(ctx.rcx as *const _),
+            4 => Some(ctx.r8 as *const _),
+            5 => Some(ctx.r9 as *const _),
             _ => None,
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        ctx.rax().map(|v| v as _)
+        Some(ctx.rax as *const _)
     }
 }
 
@@ -120,14 +120,14 @@ impl<T> FromPtRegs for *const T {
 impl<T> FromPtRegs for *const T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 6 {
-            ctx.uregs().map(|regs| regs[n] as _)
+            Some(ctx.uregs.regs[n] as *const _)
         } else {
             None
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        ctx.uregs().map(|regs| regs[0] as _)
+        Some(ctx.uregs.regs[0] as *const _)
     }
 }
 
@@ -135,7 +135,7 @@ impl<T> FromPtRegs for *const T {
 impl<T> FromPtRegs for *const T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 7 {
-            ctx.regs().map(|regs| regs[n] as _)
+            Some(ctx.regs.regs[n] as *const _)
         } else {
             None
         }
@@ -150,18 +150,18 @@ impl<T> FromPtRegs for *const T {
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         match n {
-            0 => ctx.rdi().map(|v| v as _),
-            1 => ctx.rsi().map(|v| v as _),
-            2 => ctx.rdx().map(|v| v as _),
-            3 => ctx.rcx().map(|v| v as _),
-            4 => ctx.r8().map(|v| v as _),
-            5 => ctx.r9().map(|v| v as _),
+            0 => Some(ctx.rdi as *mut _),
+            1 => Some(ctx.rsi as *mut _),
+            2 => Some(ctx.rdx as *mut _),
+            3 => Some(ctx.rcx as *mut _),
+            4 => Some(ctx.r8 as *mut _),
+            5 => Some(ctx.r9 as *mut _),
             _ => None,
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        ctx.rax().map(|v| v as _)
+        Some(ctx.rax as *mut _)
     }
 }
 
@@ -169,14 +169,14 @@ impl<T> FromPtRegs for *mut T {
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 6 {
-            ctx.uregs().map(|regs| regs[n] as _)
+            Some(ctx.uregs.regs[n] as *mut _)
         } else {
             None
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        ctx.uregs().map(|regs| regs[0] as _)
+        Some(ctx.uregs.regs[0] as *mut _)
     }
 }
 
@@ -184,14 +184,14 @@ impl<T> FromPtRegs for *mut T {
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 7 {
-            ctx.regs().map(|regs| regs[n] as _)
+            Some(ctx.regs.regs[n] as *mut _)
         } else {
             None
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        ctx.regs().map(|regs| regs[0] as _)
+        Some(ctx.regs.regs[0] as *mut _)
     }
 }
 
@@ -202,18 +202,18 @@ macro_rules! impl_from_pt_regs {
         impl FromPtRegs for $type {
             fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
                 match n {
-                    0 => ctx.rdi().map(|v| v as _),
-                    1 => ctx.rsi().map(|v| v as _),
-                    2 => ctx.rdx().map(|v| v as _),
-                    3 => ctx.rcx().map(|v| v as _),
-                    4 => ctx.r8().map(|v| v as _),
-                    5 => ctx.r9().map(|v| v as _),
+                    0 => Some(ctx.rdi as *const $type as _),
+                    1 => Some(ctx.rsi as *const $type as _),
+                    2 => Some(ctx.rdx as *const $type as _),
+                    3 => Some(ctx.rcx as *const $type as _),
+                    4 => Some(ctx.r8 as *const $type as _),
+                    5 => Some(ctx.r9 as *const $type as _),
                     _ => None,
                 }
             }
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
-                ctx.rax().map(|v| v as _)
+                Some(ctx.rax as *const $type as _)
             }
         }
 
@@ -221,14 +221,14 @@ macro_rules! impl_from_pt_regs {
         impl FromPtRegs for $type {
             fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
                 if n <= 6 {
-                    ctx.uregs().map(|regs| regs[n] as _)
+                    Some(ctx.uregs.regs[n] as *const $type as _)
                 } else {
                     None
                 }
             }
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
-                ctx.uregs().map(|regs| regs[0] as _)
+                Some(ctx.uregs.regs[0] as *const $type as _)
             }
         }
 
@@ -236,14 +236,14 @@ macro_rules! impl_from_pt_regs {
         impl FromPtRegs for $type {
             fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
                 if n <= 7 {
-                    ctx.regs().map(|regs| regs[n] as _)
+                    Some(ctx.regs.regs[n] as *const $type as _)
                 } else {
                     None
                 }
             }
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
-                ctx.regs().map(|regs| regs[0] as _)
+                Some(ctx.regs.regs[0] as *const $type as _)
             }
         }
     };
