@@ -2,11 +2,7 @@ use std::{io, path::Path, process::Command, str::from_utf8};
 
 use thiserror::Error;
 
-use crate::{
-    bindgen,
-    getters::{generate_getters_for_items, read_getter},
-    rustfmt,
-};
+use crate::bindgen;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -23,11 +19,7 @@ pub enum Error {
     Rustfmt(#[source] io::Error),
 }
 
-pub fn generate<T: AsRef<str>>(
-    btf_file: &Path,
-    types: &[T],
-    probe_read_getters: bool,
-) -> Result<String, Error> {
+pub fn generate<T: AsRef<str>>(btf_file: &Path, types: &[T]) -> Result<String, Error> {
     let mut bindgen = bindgen::bpf_builder();
 
     let c_header = c_header_from_btf(btf_file)?;
@@ -38,17 +30,6 @@ pub fn generate<T: AsRef<str>>(
     }
 
     let bindings = bindgen.generate().or(Err(Error::Bindgen))?.to_string();
-    if !probe_read_getters {
-        return Ok(bindings);
-    }
-
-    let tree = syn::parse_str::<syn::File>(&bindings).unwrap();
-    let bpf_probe_read = syn::parse_str::<syn::Path>("::aya_bpf::helpers::bpf_probe_read").unwrap();
-    let getters =
-        generate_getters_for_items(&tree.items, |getter| read_getter(getter, &bpf_probe_read));
-    let getters = rustfmt::format(&getters.to_string()).map_err(Error::Rustfmt)?;
-
-    let bindings = format!("{}\n{}", bindings, getters);
 
     Ok(bindings)
 }

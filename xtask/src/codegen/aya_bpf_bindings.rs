@@ -3,11 +3,7 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use std::path::PathBuf;
 
-use aya_gen::{
-    bindgen,
-    getters::{generate_getters_for_items, read_getter},
-    write_to_file_fmt,
-};
+use aya_gen::{bindgen, write_to_file_fmt};
 use syn::{parse_str, Item};
 
 use crate::codegen::{
@@ -115,19 +111,6 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
         write_to_file_fmt(
             &generated.join("helpers.rs"),
             &format!("use super::bindings::*; {}", helpers),
-        )?;
-
-        // write the bpf_probe_read() getters
-        let bpf_probe_read = syn::parse_str("crate::bpf_probe_read").unwrap();
-        write_to_file_fmt(
-            &generated.join("getters.rs"),
-            &format!(
-                "use super::bindings::*; {}",
-                &generate_getters_for_items(&tree.items, |getter| {
-                    read_getter(getter, &bpf_probe_read)
-                })
-                .to_string()
-            ),
         )?;
     }
 
