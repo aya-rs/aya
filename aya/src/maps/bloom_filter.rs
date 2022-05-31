@@ -27,8 +27,8 @@ use crate::{
 ///
 /// bloom_filter.insert(1, 0)?;
 ///
-/// assert!(bloom_filter.contains(1, 0).is_ok());
-/// assert!(bloom_filter.contains(2, 0).is_err());
+/// assert!(bloom_filter.contains(&1, 0).is_ok());
+/// assert!(bloom_filter.contains(&2, 0).is_err());
 ///
 /// # Ok::<(), aya::BpfError>(())
 /// ```
@@ -64,8 +64,8 @@ impl<T: Deref<Target = Map>, V: Pod> BloomFilter<T, V> {
         })
     }
 
-    /// Query the existence of the elelment.
-    pub fn contains(&self, mut value: V, flags: u64) -> Result<(), MapError> {
+    /// Query the existence of the element.
+    pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.deref().fd_or_err()?;
 
         bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
@@ -284,7 +284,7 @@ mod tests {
         let bloom_filter = BloomFilter::<_, u32>::new(&map).unwrap();
 
         assert!(matches!(
-            bloom_filter.contains(1, 0),
+            bloom_filter.contains(&1, 0),
             Err(MapError::SyscallError { call, code: -1, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
@@ -306,7 +306,7 @@ mod tests {
         let bloom_filter = BloomFilter::<_, u32>::new(&map).unwrap();
 
         assert!(matches!(
-            bloom_filter.contains(1, 0),
+            bloom_filter.contains(&1, 0),
             Err(MapError::ElementNotFound)
         ));
     }
