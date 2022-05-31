@@ -193,7 +193,7 @@ pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
     flags: u64,
 ) -> Result<Option<PerCpuValues<V>>, (c_long, io::Error)> {
     let mut mem = PerCpuValues::<V>::alloc_kernel_mem().map_err(|io_error| (-1, io_error))?;
-    match bpf_map_lookup_elem_ptr(fd, key, mem.as_mut_ptr(), flags) {
+    match bpf_map_lookup_elem_ptr(fd, Some(key), mem.as_mut_ptr(), flags) {
         Ok(_) => Ok(Some(unsafe { PerCpuValues::from_kernel_mem(mem) })),
         Err((_, io_error)) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
         Err(e) => Err(e),
@@ -202,7 +202,7 @@ pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
 
 pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
     fd: RawFd,
-    key: &K,
+    key: Option<&K>,
     value: *mut V,
     flags: u64,
 ) -> Result<Option<()>, (c_long, io::Error)> {
@@ -210,7 +210,9 @@ pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd as u32;
-    u.key = key as *const _ as u64;
+    if let Some(key) = key {
+        u.key = key as *const _ as u64;
+    }
     u.__bindgen_anon_1.value = value as u64;
     u.flags = flags;
 

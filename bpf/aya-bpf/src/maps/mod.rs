@@ -6,6 +6,7 @@ pub(crate) enum PinningType {
 }
 
 pub mod array;
+pub mod bloom_filter;
 pub mod hash_map;
 pub mod lpm_trie;
 pub mod per_cpu_array;
@@ -18,6 +19,7 @@ pub mod stack;
 pub mod stack_trace;
 
 pub use array::Array;
+pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, LruHashMap, LruPerCpuHashMap, PerCpuHashMap};
 pub use lpm_trie::LpmTrie;
 pub use per_cpu_array::PerCpuArray;
