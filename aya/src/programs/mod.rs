@@ -552,6 +552,47 @@ impl<'a, P: ProgramFd> ProgramFd for &'a P {
     }
 }
 
+macro_rules! impl_program_unload {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl $struct_name {
+                /// Unloads the program from the kernel.
+                ///
+                /// If `detach` is true, links will be detached before unloading the program.
+                /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
+                pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
+                    unload_program(&mut self.data, detach)
+                }
+            }
+        )+
+    }
+}
+
+impl_program_unload!(
+    KProbe,
+    UProbe,
+    TracePoint,
+    SocketFilter,
+    Xdp,
+    SkMsg,
+    SkSkb,
+    SchedClassifier,
+    CgroupSkb,
+    CgroupSysctl,
+    CgroupSockopt,
+    LircMode2,
+    PerfEvent,
+    Lsm,
+    RawTracePoint,
+    BtfTracePoint,
+    FEntry,
+    FExit,
+    Extension,
+    CgroupSockAddr,
+    SkLookup,
+    SockOps
+);
+
 macro_rules! impl_program_fd {
     ($($struct_name:ident),+ $(,)?) => {
         $(

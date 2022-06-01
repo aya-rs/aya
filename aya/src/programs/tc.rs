@@ -10,10 +10,7 @@ use crate::{
     generated::{
         bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS, TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     },
-    programs::{
-        define_link_wrapper, load_program, unload_program, Link, OwnedLink, ProgramData,
-        ProgramError,
-    },
+    programs::{define_link_wrapper, load_program, Link, OwnedLink, ProgramData, ProgramError},
     sys::{
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
         netlink_qdisc_detach,
@@ -107,14 +104,6 @@ impl SchedClassifier {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SCHED_CLS, &mut self.data)
-    }
-
-    /// Unloads the program from the kernel.
-    ///
-    /// If `detach` is true, links will be detached before unloading the program.
-    /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
-    pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
-        unload_program(&mut self.data, detach)
     }
 
     /// Attaches the program to the given `interface`.

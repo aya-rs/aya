@@ -3,8 +3,8 @@ use crate::{
     generated::{bpf_attach_type::BPF_TRACE_RAW_TP, bpf_prog_type::BPF_PROG_TYPE_TRACING},
     obj::btf::{Btf, BtfKind},
     programs::{
-        define_link_wrapper, load_program, unload_program, utils::attach_raw_tracepoint, FdLink,
-        FdLinkId, OwnedLink, ProgramData, ProgramError,
+        define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
+        OwnedLink, ProgramData, ProgramError,
     },
 };
 
@@ -63,14 +63,6 @@ impl BtfTracePoint {
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Typedef)?);
         load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
-    }
-
-    /// Unloads the program from the kernel.
-    ///
-    /// If `detach` is true, links will be detached before unloading the program.
-    /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
-    pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
-        unload_program(&mut self.data, detach)
     }
 
     /// Attaches the program.

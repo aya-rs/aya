@@ -12,8 +12,6 @@ use crate::{
     },
 };
 
-use super::unload_program;
-
 /// A kernel probe.
 ///
 /// Kernel probes are eBPF programs that can be attached to almost any function inside
@@ -49,14 +47,6 @@ impl KProbe {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
-    }
-
-    /// Unloads the program from the kernel.
-    ///
-    /// If `detach` is true, links will be detached before unloading the program.
-    /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
-    pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
-        unload_program(&mut self.data, detach)
     }
 
     /// Returns `KProbe` if the program is a `kprobe`, or `KRetProbe` if the
