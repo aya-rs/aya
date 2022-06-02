@@ -386,15 +386,15 @@ impl<T: Link> ProgramData<T> {
     }
 }
 
-fn unload_program<T: Link>(data: &mut ProgramData<T>, detach: bool) -> Result<(), ProgramError> {
-    if detach {
-        data.links.remove_all()?;
+fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError> {
+    data.links.remove_all()?;
+    if let Some(fd) = data.fd.take() {
+        unsafe {
+            libc::close(fd);
+        }
+    } else {
+        return Err(ProgramError::NotLoaded);
     }
-    let fd = data.fd_or_err()?;
-    unsafe {
-        libc::close(fd);
-    }
-    data.fd = None;
     Ok(())
 }
 
@@ -558,10 +558,10 @@ macro_rules! impl_program_unload {
             impl $struct_name {
                 /// Unloads the program from the kernel.
                 ///
-                /// If `detach` is true, links will be detached before unloading the program.
-                /// Note that OwnedLinks you obtained using [KProbe::forget_link] will not be detached.
-                pub fn unload(&mut self, detach: bool) -> Result<(), ProgramError> {
-                    unload_program(&mut self.data, detach)
+                /// Links will be detached before unloading the program.
+                /// Note that OwnedLinks you obtained using ´forget_link()´ will not be detached.
+                pub fn unload(&mut self) -> Result<(), ProgramError> {
+                    unload_program(&mut self.data)
                 }
             }
         )+
@@ -601,30 +601,29 @@ mod tests {
     // When a new program is added, this fn will break as a reminder: consider adding unload()
     // See [impl_program_unload!()]
     fn program_implements_unload(a: Program) {
-        let detach = false;
         let _ = match a {
-            Program::KProbe(mut p) => p.unload(detach),
-            Program::UProbe(mut p) => p.unload(detach),
-            Program::TracePoint(mut p) => p.unload(detach),
-            Program::SocketFilter(mut p) => p.unload(detach),
-            Program::Xdp(mut p) => p.unload(detach),
-            Program::SkMsg(mut p) => p.unload(detach),
-            Program::SkSkb(mut p) => p.unload(detach),
-            Program::SockOps(mut p) => p.unload(detach),
-            Program::SchedClassifier(mut p) => p.unload(detach),
-            Program::CgroupSkb(mut p) => p.unload(detach),
-            Program::CgroupSysctl(mut p) => p.unload(detach),
-            Program::CgroupSockopt(mut p) => p.unload(detach),
-            Program::LircMode2(mut p) => p.unload(detach),
-            Program::PerfEvent(mut p) => p.unload(detach),
-            Program::RawTracePoint(mut p) => p.unload(detach),
-            Program::Lsm(mut p) => p.unload(detach),
-            Program::BtfTracePoint(mut p) => p.unload(detach),
-            Program::FEntry(mut p) => p.unload(detach),
-            Program::FExit(mut p) => p.unload(detach),
-            Program::Extension(mut p) => p.unload(detach),
-            Program::CgroupSockAddr(mut p) => p.unload(detach),
-            Program::SkLookup(mut p) => p.unload(detach),
+            Program::KProbe(mut p) => p.unload(),
+            Program::UProbe(mut p) => p.unload(),
+            Program::TracePoint(mut p) => p.unload(),
+            Program::SocketFilter(mut p) => p.unload(),
+            Program::Xdp(mut p) => p.unload(),
+            Program::SkMsg(mut p) => p.unload(),
+            Program::SkSkb(mut p) => p.unload(),
+            Program::SockOps(mut p) => p.unload(),
+            Program::SchedClassifier(mut p) => p.unload(),
+            Program::CgroupSkb(mut p) => p.unload(),
+            Program::CgroupSysctl(mut p) => p.unload(),
+            Program::CgroupSockopt(mut p) => p.unload(),
+            Program::LircMode2(mut p) => p.unload(),
+            Program::PerfEvent(mut p) => p.unload(),
+            Program::RawTracePoint(mut p) => p.unload(),
+            Program::Lsm(mut p) => p.unload(),
+            Program::BtfTracePoint(mut p) => p.unload(),
+            Program::FEntry(mut p) => p.unload(),
+            Program::FExit(mut p) => p.unload(),
+            Program::Extension(mut p) => p.unload(),
+            Program::CgroupSockAddr(mut p) => p.unload(),
+            Program::SkLookup(mut p) => p.unload(),
         };
     }
 }
