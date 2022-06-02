@@ -1,5 +1,5 @@
 #!/bin/sh
-# SUMMARY: Check that long names are properly truncated
+# SUMMARY: Check that the program can be unloaded
 # LABELS:
 
 set -ex
