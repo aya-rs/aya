@@ -13,7 +13,7 @@ use std::process::Command;
 fn is_loaded() -> bool {
     let output = Command::new("bpftool").args(&["prog"]).output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
-    stdout.contains("xdp  name ihaveaverylongn  tag")
+    stdout.contains("test_unload")
 }
 
 fn assert_loaded(loaded: bool) {
@@ -27,11 +27,7 @@ fn assert_loaded(loaded: bool) {
 fn main() {
     println!("Loading XDP program");
     let mut bpf = Bpf::load_file("test.o").unwrap();
-    let dispatcher: &mut Xdp = bpf
-        .program_mut("ihaveaverylongname")
-        .unwrap()
-        .try_into()
-        .unwrap();
+    let dispatcher: &mut Xdp = bpf.program_mut("test_unload").unwrap().try_into().unwrap();
 
     dispatcher.load().unwrap();
 
