@@ -33,11 +33,13 @@ fn main() {
 
     let link = dispatcher.attach("eth0", XdpFlags::default()).unwrap();
 
-    dispatcher.unload(false).unwrap();
+    {
+        let link_owned = dispatcher.forget_link(link);
 
-    assert_loaded(true);
+        dispatcher.unload().unwrap();
 
-    dispatcher.detach(link).unwrap();
+        assert_loaded(true);
+    };
 
     assert_loaded(false);
 
@@ -49,7 +51,7 @@ fn main() {
 
     assert_loaded(true);
 
-    dispatcher.unload(true).unwrap();
+    dispatcher.unload().unwrap();
 
     assert_loaded(false);
 }
