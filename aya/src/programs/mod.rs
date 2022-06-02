@@ -388,12 +388,9 @@ impl<T: Link> ProgramData<T> {
 
 fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError> {
     data.links.remove_all()?;
-    if let Some(fd) = data.fd.take() {
-        unsafe {
-            libc::close(fd);
-        }
-    } else {
-        return Err(ProgramError::NotLoaded);
+    let fd = data.fd.take().ok_or(ProgramError::NotLoaded)?;
+    unsafe {
+        libc::close(fd);
     }
     Ok(())
 }
