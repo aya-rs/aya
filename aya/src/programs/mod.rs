@@ -593,6 +593,42 @@ impl_program_unload!(
     SockOps
 );
 
+#[cfg(test)]
+mod tests {
+    use super::Program;
+
+    #[allow(dead_code)]
+    // When a new program is added, this fn will break as a reminder: consider adding unload()
+    // See [impl_program_unload!()]
+    fn program_implements_unload(a: Program) {
+        let detach = false;
+        let _ = match a {
+            Program::KProbe(mut p) => p.unload(detach),
+            Program::UProbe(mut p) => p.unload(detach),
+            Program::TracePoint(mut p) => p.unload(detach),
+            Program::SocketFilter(mut p) => p.unload(detach),
+            Program::Xdp(mut p) => p.unload(detach),
+            Program::SkMsg(mut p) => p.unload(detach),
+            Program::SkSkb(mut p) => p.unload(detach),
+            Program::SockOps(mut p) => p.unload(detach),
+            Program::SchedClassifier(mut p) => p.unload(detach),
+            Program::CgroupSkb(mut p) => p.unload(detach),
+            Program::CgroupSysctl(mut p) => p.unload(detach),
+            Program::CgroupSockopt(mut p) => p.unload(detach),
+            Program::LircMode2(mut p) => p.unload(detach),
+            Program::PerfEvent(mut p) => p.unload(detach),
+            Program::RawTracePoint(mut p) => p.unload(detach),
+            Program::Lsm(mut p) => p.unload(detach),
+            Program::BtfTracePoint(mut p) => p.unload(detach),
+            Program::FEntry(mut p) => p.unload(detach),
+            Program::FExit(mut p) => p.unload(detach),
+            Program::Extension(mut p) => p.unload(detach),
+            Program::CgroupSockAddr(mut p) => p.unload(detach),
+            Program::SkLookup(mut p) => p.unload(detach),
+        };
+    }
+}
+
 macro_rules! impl_program_fd {
     ($($struct_name:ident),+ $(,)?) => {
         $(
