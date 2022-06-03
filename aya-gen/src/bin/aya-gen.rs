@@ -2,18 +2,19 @@ use aya_gen::btf_types;
 
 use std::{path::PathBuf, process::exit};
 
-use structopt::StructOpt;
-#[derive(StructOpt)]
+use clap::Parser;
+
+#[derive(Parser)]
 pub struct Options {
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     command: Command,
 }
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 enum Command {
-    #[structopt(name = "btf-types")]
+    #[clap(name = "btf-types")]
     BtfTypes {
-        #[structopt(long, default_value = "/sys/kernel/btf/vmlinux")]
+        #[clap(long, default_value = "/sys/kernel/btf/vmlinux")]
         btf: PathBuf,
         names: Vec<String>,
     },
@@ -27,7 +28,7 @@ fn main() {
 }
 
 fn try_main() -> Result<(), anyhow::Error> {
-    let opts = Options::from_args();
+    let opts = Options::parse();
     match opts.command {
         Command::BtfTypes { btf, names } => {
             let bindings = btf_types::generate(&btf, &names)?;
