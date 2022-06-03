@@ -1,4 +1,4 @@
-use aya_gen::btf_types;
+use aya_gen::btf_types::{generate, InputFile};
 
 use std::{path::PathBuf, process::exit};
 
@@ -12,10 +12,12 @@ pub struct Options {
 
 #[derive(Parser)]
 enum Command {
-    #[clap(name = "btf-types")]
-    BtfTypes {
+    #[clap(name = "generate")]
+    Generate {
         #[clap(long, default_value = "/sys/kernel/btf/vmlinux")]
         btf: PathBuf,
+        #[clap(long, conflicts_with = "btf")]
+        header: Option<PathBuf>,
         names: Vec<String>,
     },
 }
@@ -30,8 +32,13 @@ fn main() {
 fn try_main() -> Result<(), anyhow::Error> {
     let opts = Options::parse();
     match opts.command {
-        Command::BtfTypes { btf, names } => {
-            let bindings = btf_types::generate(&btf, &names)?;
+        Command::Generate { btf, header, names } => {
+            let bindings: String;
+            if let Some(header) = header {
+                bindings = generate(InputFile::Header(header), &names)?;
+            } else {
+                bindings = generate(InputFile::Btf(btf), &names)?;
+            }
             println!("{}", bindings);
         }
     };

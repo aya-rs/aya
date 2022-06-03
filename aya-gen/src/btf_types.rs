@@ -1,4 +1,9 @@
-use std::{io, path::Path, process::Command, str::from_utf8};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+    process::Command,
+    str::from_utf8,
+};
 
 use thiserror::Error;
 
@@ -17,13 +22,30 @@ pub enum Error {
 
     #[error("rustfmt failed")]
     Rustfmt(#[source] io::Error),
+
+    #[error("error reading header file")]
+    ReadHeaderFile,
 }
 
-pub fn generate<T: AsRef<str>>(btf_file: &Path, types: &[T]) -> Result<String, Error> {
+pub enum InputFile {
+    Btf(PathBuf),
+    Header(PathBuf),
+}
+
+pub fn generate<T: AsRef<str>>(input_file: InputFile, types: &[T]) -> Result<String, Error> {
     let mut bindgen = bindgen::bpf_builder();
 
-    let c_header = c_header_from_btf(btf_file)?;
-    bindgen = bindgen.header_contents("kernel_types.h", &c_header);
+    match input_file {
+        InputFile::Btf(path) => {
+            let c_header = c_header_from_btf(&path)?;
+            bindgen = bindgen.header_contents("kernel_types.h", &c_header);
+        }
+        InputFile::Header(header) => {
+            let c_header = fs::read_to_string(&header).map_err(|_| Error::ReadHeaderFile)?;
+            let name = Path::new(&header).file_name().unwrap().to_str().unwrap();
+            bindgen = bindgen.header_contents(name, &c_header);
+        }
+    }
 
     for ty in types {
         bindgen = bindgen.allowlist_type(ty);
