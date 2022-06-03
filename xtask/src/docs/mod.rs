@@ -1,6 +1,4 @@
 use std::{
-    fs::File,
-    io::BufRead,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -42,32 +40,7 @@ pub fn docs() -> Result<(), anyhow::Error> {
         .open("./target/doc/crates.js")?;
     file.write_all(crates_js)?;
 
-    let mut search_indexes = read_lines("./target/doc/search-index.js")?
-        .map(|l| l.unwrap())
-        .collect::<Vec<_>>();
-    search_indexes.truncate(search_indexes.len() - 2);
-    let mut last = search_indexes.pop().unwrap();
-    last = last.trim_end_matches('\\').to_string() + ",\\";
-    search_indexes.push(last);
-
-    for l in read_lines("./bpf/target/doc/search-index.js")?.skip(1) {
-        search_indexes.push(l.unwrap());
-    }
-    let mut file = fs::File::options()
-        .read(true)
-        .write(true)
-        .open("./target/doc/search-index.js")?;
-    file.write_all(search_indexes.join("\n").as_bytes())?;
-
     Ok(())
-}
-
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
 }
 
 fn copy_dir_all<P: AsRef<Path>>(src: P, dst: P) -> io::Result<()> {
