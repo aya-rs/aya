@@ -386,6 +386,15 @@ impl<T: Link> ProgramData<T> {
     }
 }
 
+fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError> {
+    data.links.remove_all()?;
+    let fd = data.fd.take().ok_or(ProgramError::NotLoaded)?;
+    unsafe {
+        libc::close(fd);
+    }
+    Ok(())
+}
+
 fn load_program<T: Link>(
     prog_type: bpf_prog_type,
     data: &mut ProgramData<T>,
@@ -537,6 +546,83 @@ impl ProgramFd for Program {
 impl<'a, P: ProgramFd> ProgramFd for &'a P {
     fn fd(&self) -> Option<RawFd> {
         (*self).fd()
+    }
+}
+
+macro_rules! impl_program_unload {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl $struct_name {
+                /// Unloads the program from the kernel.
+                ///
+                /// Links will be detached before unloading the program.  Note
+                /// that owned links obtained using `forget_link()` will not be
+                /// detached.
+                pub fn unload(&mut self) -> Result<(), ProgramError> {
+                    unload_program(&mut self.data)
+                }
+            }
+        )+
+    }
+}
+
+impl_program_unload!(
+    KProbe,
+    UProbe,
+    TracePoint,
+    SocketFilter,
+    Xdp,
+    SkMsg,
+    SkSkb,
+    SchedClassifier,
+    CgroupSkb,
+    CgroupSysctl,
+    CgroupSockopt,
+    LircMode2,
+    PerfEvent,
+    Lsm,
+    RawTracePoint,
+    BtfTracePoint,
+    FEntry,
+    FExit,
+    Extension,
+    CgroupSockAddr,
+    SkLookup,
+    SockOps
+);
+
+#[cfg(test)]
+mod tests {
+    use super::Program;
+
+    #[allow(dead_code)]
+    // When a new program is added, this fn will break as a reminder: consider adding unload()
+    // See [impl_program_unload!()]
+    fn program_implements_unload(a: Program) {
+        let _ = match a {
+            Program::KProbe(mut p) => p.unload(),
+            Program::UProbe(mut p) => p.unload(),
+            Program::TracePoint(mut p) => p.unload(),
+            Program::SocketFilter(mut p) => p.unload(),
+            Program::Xdp(mut p) => p.unload(),
+            Program::SkMsg(mut p) => p.unload(),
+            Program::SkSkb(mut p) => p.unload(),
+            Program::SockOps(mut p) => p.unload(),
+            Program::SchedClassifier(mut p) => p.unload(),
+            Program::CgroupSkb(mut p) => p.unload(),
+            Program::CgroupSysctl(mut p) => p.unload(),
+            Program::CgroupSockopt(mut p) => p.unload(),
+            Program::LircMode2(mut p) => p.unload(),
+            Program::PerfEvent(mut p) => p.unload(),
+            Program::RawTracePoint(mut p) => p.unload(),
+            Program::Lsm(mut p) => p.unload(),
+            Program::BtfTracePoint(mut p) => p.unload(),
+            Program::FEntry(mut p) => p.unload(),
+            Program::FExit(mut p) => p.unload(),
+            Program::Extension(mut p) => p.unload(),
+            Program::CgroupSockAddr(mut p) => p.unload(),
+            Program::SkLookup(mut p) => p.unload(),
+        };
     }
 }
 
