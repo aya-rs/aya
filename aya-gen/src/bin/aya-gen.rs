@@ -1,4 +1,4 @@
-use aya_gen::btf_types::{generate, InputFile};
+use aya_gen::generate::{generate, InputFile};
 
 use std::{path::PathBuf, process::exit};
 
@@ -19,6 +19,8 @@ enum Command {
         #[clap(long, conflicts_with = "btf")]
         header: Option<PathBuf>,
         names: Vec<String>,
+        #[clap(last = true)]
+        bindgen_args: Vec<String>,
     },
 }
 
@@ -32,12 +34,17 @@ fn main() {
 fn try_main() -> Result<(), anyhow::Error> {
     let opts = Options::parse();
     match opts.command {
-        Command::Generate { btf, header, names } => {
+        Command::Generate {
+            btf,
+            header,
+            names,
+            bindgen_args,
+        } => {
             let bindings: String;
             if let Some(header) = header {
-                bindings = generate(InputFile::Header(header), &names)?;
+                bindings = generate(InputFile::Header(header), &names, &bindgen_args)?;
             } else {
-                bindings = generate(InputFile::Btf(btf), &names)?;
+                bindings = generate(InputFile::Btf(btf), &names, &bindgen_args)?;
             }
             println!("{}", bindings);
         }
