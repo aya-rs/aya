@@ -733,6 +733,10 @@ pub const BPF_F_SYSCTL_BASE_NAME: ::std::os::raw::c_uint = 1;
 pub type _bindgen_ty_16 = ::std::os::raw::c_uint;
 pub const BPF_F_GET_BRANCH_RECORDS_SIZE: ::std::os::raw::c_uint = 1;
 pub type _bindgen_ty_18 = ::std::os::raw::c_uint;
+pub const BPF_RINGBUF_BUSY_BIT: ::std::os::raw::c_uint = 2147483648;
+pub const BPF_RINGBUF_DISCARD_BIT: ::std::os::raw::c_uint = 1073741824;
+pub const BPF_RINGBUF_HDR_SZ: ::std::os::raw::c_uint = 8;
+pub type _bindgen_ty_21 = ::std::os::raw::c_uint;
 pub const BPF_F_BPRM_SECUREEXEC: ::std::os::raw::c_uint = 1;
 pub type _bindgen_ty_23 = ::std::os::raw::c_uint;
 pub const BPF_F_BROADCAST: ::std::os::raw::c_uint = 8;
@@ -1897,30 +1901,17 @@ pub enum perf_event_type {
     PERF_RECORD_AUX_OUTPUT_HW_ID = 21,
     PERF_RECORD_MAX = 22,
 }
-pub const IFLA_XDP_UNSPEC: _bindgen_ty_85 = _bindgen_ty_85::IFLA_XDP_UNSPEC;
-pub const IFLA_XDP_FD: _bindgen_ty_85 = _bindgen_ty_85::IFLA_XDP_FD;
-pub const IFLA_XDP_ATTACHED: _bindgen_ty_85 = _bindgen_ty_85::IFLA_XDP_ATTACHED;
-pub const IFLA_XDP_FLAGS: _bindgen_ty_85 = _bindgen_ty_85::IFLA_XDP_FLAGS;
-pub const IFLA_XDP_PROG_ID: _bindgen_ty_85 = _bindgen_ty_85::IFLA_XDP_PROG_ID;
-pub const IFLA_XDP_DRV_PROG_ID: _bindgen_ty_85 = _bindgen_ty_85::IFLA_XDP_DRV_PROG_ID;
-pub const IFLA_XDP_SKB_PROG_ID: _bindgen_ty_85 = _bindgen_ty_85::IFLA_XDP_SKB_PROG_ID;
-pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_85 = _bindgen_ty_85::IFLA_XDP_HW_PROG_ID;
-pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_85 = _bindgen_ty_85::IFLA_XDP_EXPECTED_FD;
-pub const __IFLA_XDP_MAX: _bindgen_ty_85 = _bindgen_ty_85::__IFLA_XDP_MAX;
-#[repr(u32)]
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_85 {
-    IFLA_XDP_UNSPEC = 0,
-    IFLA_XDP_FD = 1,
-    IFLA_XDP_ATTACHED = 2,
-    IFLA_XDP_FLAGS = 3,
-    IFLA_XDP_PROG_ID = 4,
-    IFLA_XDP_DRV_PROG_ID = 5,
-    IFLA_XDP_SKB_PROG_ID = 6,
-    IFLA_XDP_HW_PROG_ID = 7,
-    IFLA_XDP_EXPECTED_FD = 8,
-    __IFLA_XDP_MAX = 9,
-}
+pub const IFLA_XDP_UNSPEC: ::std::os::raw::c_uint = 0;
+pub const IFLA_XDP_FD: ::std::os::raw::c_uint = 1;
+pub const IFLA_XDP_ATTACHED: ::std::os::raw::c_uint = 2;
+pub const IFLA_XDP_FLAGS: ::std::os::raw::c_uint = 3;
+pub const IFLA_XDP_PROG_ID: ::std::os::raw::c_uint = 4;
+pub const IFLA_XDP_DRV_PROG_ID: ::std::os::raw::c_uint = 5;
+pub const IFLA_XDP_SKB_PROG_ID: ::std::os::raw::c_uint = 6;
+pub const IFLA_XDP_HW_PROG_ID: ::std::os::raw::c_uint = 7;
+pub const IFLA_XDP_EXPECTED_FD: ::std::os::raw::c_uint = 8;
+pub const __IFLA_XDP_MAX: ::std::os::raw::c_uint = 9;
+pub type _bindgen_ty_85 = ::std::os::raw::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ifinfomsg {
@@ -1942,72 +1933,37 @@ pub struct tcmsg {
     pub tcm_parent: __u32,
     pub tcm_info: __u32,
 }
-pub const TCA_UNSPEC: _bindgen_ty_98 = _bindgen_ty_98::TCA_UNSPEC;
-pub const TCA_KIND: _bindgen_ty_98 = _bindgen_ty_98::TCA_KIND;
-pub const TCA_OPTIONS: _bindgen_ty_98 = _bindgen_ty_98::TCA_OPTIONS;
-pub const TCA_STATS: _bindgen_ty_98 = _bindgen_ty_98::TCA_STATS;
-pub const TCA_XSTATS: _bindgen_ty_98 = _bindgen_ty_98::TCA_XSTATS;
-pub const TCA_RATE: _bindgen_ty_98 = _bindgen_ty_98::TCA_RATE;
-pub const TCA_FCNT: _bindgen_ty_98 = _bindgen_ty_98::TCA_FCNT;
-pub const TCA_STATS2: _bindgen_ty_98 = _bindgen_ty_98::TCA_STATS2;
-pub const TCA_STAB: _bindgen_ty_98 = _bindgen_ty_98::TCA_STAB;
-pub const TCA_PAD: _bindgen_ty_98 = _bindgen_ty_98::TCA_PAD;
-pub const TCA_DUMP_INVISIBLE: _bindgen_ty_98 = _bindgen_ty_98::TCA_DUMP_INVISIBLE;
-pub const TCA_CHAIN: _bindgen_ty_98 = _bindgen_ty_98::TCA_CHAIN;
-pub const TCA_HW_OFFLOAD: _bindgen_ty_98 = _bindgen_ty_98::TCA_HW_OFFLOAD;
-pub const TCA_INGRESS_BLOCK: _bindgen_ty_98 = _bindgen_ty_98::TCA_INGRESS_BLOCK;
-pub const TCA_EGRESS_BLOCK: _bindgen_ty_98 = _bindgen_ty_98::TCA_EGRESS_BLOCK;
-pub const __TCA_MAX: _bindgen_ty_98 = _bindgen_ty_98::__TCA_MAX;
-#[repr(u32)]
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_98 {
-    TCA_UNSPEC = 0,
-    TCA_KIND = 1,
-    TCA_OPTIONS = 2,
-    TCA_STATS = 3,
-    TCA_XSTATS = 4,
-    TCA_RATE = 5,
-    TCA_FCNT = 6,
-    TCA_STATS2 = 7,
-    TCA_STAB = 8,
-    TCA_PAD = 9,
-    TCA_DUMP_INVISIBLE = 10,
-    TCA_CHAIN = 11,
-    TCA_HW_OFFLOAD = 12,
-    TCA_INGRESS_BLOCK = 13,
-    TCA_EGRESS_BLOCK = 14,
-    __TCA_MAX = 15,
-}
-pub const TCA_BPF_UNSPEC: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_UNSPEC;
-pub const TCA_BPF_ACT: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_ACT;
-pub const TCA_BPF_POLICE: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_POLICE;
-pub const TCA_BPF_CLASSID: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_CLASSID;
-pub const TCA_BPF_OPS_LEN: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_OPS_LEN;
-pub const TCA_BPF_OPS: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_OPS;
-pub const TCA_BPF_FD: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_FD;
-pub const TCA_BPF_NAME: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_NAME;
-pub const TCA_BPF_FLAGS: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_FLAGS;
-pub const TCA_BPF_FLAGS_GEN: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_FLAGS_GEN;
-pub const TCA_BPF_TAG: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_TAG;
-pub const TCA_BPF_ID: _bindgen_ty_154 = _bindgen_ty_154::TCA_BPF_ID;
-pub const __TCA_BPF_MAX: _bindgen_ty_154 = _bindgen_ty_154::__TCA_BPF_MAX;
-#[repr(u32)]
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_154 {
-    TCA_BPF_UNSPEC = 0,
-    TCA_BPF_ACT = 1,
-    TCA_BPF_POLICE = 2,
-    TCA_BPF_CLASSID = 3,
-    TCA_BPF_OPS_LEN = 4,
-    TCA_BPF_OPS = 5,
-    TCA_BPF_FD = 6,
-    TCA_BPF_NAME = 7,
-    TCA_BPF_FLAGS = 8,
-    TCA_BPF_FLAGS_GEN = 9,
-    TCA_BPF_TAG = 10,
-    TCA_BPF_ID = 11,
-    __TCA_BPF_MAX = 12,
-}
+pub const TCA_UNSPEC: ::std::os::raw::c_uint = 0;
+pub const TCA_KIND: ::std::os::raw::c_uint = 1;
+pub const TCA_OPTIONS: ::std::os::raw::c_uint = 2;
+pub const TCA_STATS: ::std::os::raw::c_uint = 3;
+pub const TCA_XSTATS: ::std::os::raw::c_uint = 4;
+pub const TCA_RATE: ::std::os::raw::c_uint = 5;
+pub const TCA_FCNT: ::std::os::raw::c_uint = 6;
+pub const TCA_STATS2: ::std::os::raw::c_uint = 7;
+pub const TCA_STAB: ::std::os::raw::c_uint = 8;
+pub const TCA_PAD: ::std::os::raw::c_uint = 9;
+pub const TCA_DUMP_INVISIBLE: ::std::os::raw::c_uint = 10;
+pub const TCA_CHAIN: ::std::os::raw::c_uint = 11;
+pub const TCA_HW_OFFLOAD: ::std::os::raw::c_uint = 12;
+pub const TCA_INGRESS_BLOCK: ::std::os::raw::c_uint = 13;
+pub const TCA_EGRESS_BLOCK: ::std::os::raw::c_uint = 14;
+pub const __TCA_MAX: ::std::os::raw::c_uint = 15;
+pub type _bindgen_ty_98 = ::std::os::raw::c_uint;
+pub const TCA_BPF_UNSPEC: ::std::os::raw::c_uint = 0;
+pub const TCA_BPF_ACT: ::std::os::raw::c_uint = 1;
+pub const TCA_BPF_POLICE: ::std::os::raw::c_uint = 2;
+pub const TCA_BPF_CLASSID: ::std::os::raw::c_uint = 3;
+pub const TCA_BPF_OPS_LEN: ::std::os::raw::c_uint = 4;
+pub const TCA_BPF_OPS: ::std::os::raw::c_uint = 5;
+pub const TCA_BPF_FD: ::std::os::raw::c_uint = 6;
+pub const TCA_BPF_NAME: ::std::os::raw::c_uint = 7;
+pub const TCA_BPF_FLAGS: ::std::os::raw::c_uint = 8;
+pub const TCA_BPF_FLAGS_GEN: ::std::os::raw::c_uint = 9;
+pub const TCA_BPF_TAG: ::std::os::raw::c_uint = 10;
+pub const TCA_BPF_ID: ::std::os::raw::c_uint = 11;
+pub const __TCA_BPF_MAX: ::std::os::raw::c_uint = 12;
+pub type _bindgen_ty_154 = ::std::os::raw::c_uint;
 pub const AYA_PERF_EVENT_IOC_ENABLE: ::std::os::raw::c_int = 9216;
 pub const AYA_PERF_EVENT_IOC_DISABLE: ::std::os::raw::c_int = 9217;
 pub const AYA_PERF_EVENT_IOC_SET_BPF: ::std::os::raw::c_int = 1074013192;
