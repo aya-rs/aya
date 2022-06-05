@@ -3,21 +3,21 @@ mod docs;
 
 use std::process::exit;
 
-use structopt::StructOpt;
-#[derive(StructOpt)]
+use clap::Parser;
+#[derive(Parser)]
 pub struct Options {
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     command: Command,
 }
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 enum Command {
     Codegen(codegen::Options),
     Docs,
 }
 
 fn main() {
-    let opts = Options::from_args();
+    let opts = Options::parse();
 
     use Command::*;
     let ret = match opts.command {
