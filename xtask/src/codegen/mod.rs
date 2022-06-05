@@ -4,7 +4,7 @@ mod helpers;
 
 use std::path::PathBuf;
 
-use structopt::StructOpt;
+use clap::Parser;
 
 const SUPPORTED_ARCHS: &[Architecture] = &[
     Architecture::X86_64,
@@ -52,34 +52,34 @@ impl std::fmt::Display for Architecture {
     }
 }
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 pub struct Options {
-    #[structopt(long)]
+    #[clap(long)]
     libbpf_dir: PathBuf,
 
     // sysroot options. Default to ubuntu headers installed by the
     // libc6-dev-{arm64,armel}-cross packages.
-    #[structopt(long, default_value = "/usr/include/x86_64-linux-gnu")]
+    #[clap(long, default_value = "/usr/include/x86_64-linux-gnu")]
     x86_64_sysroot: PathBuf,
 
-    #[structopt(long, default_value = "/usr/aarch64-linux-gnu/include")]
+    #[clap(long, default_value = "/usr/aarch64-linux-gnu/include")]
     aarch64_sysroot: PathBuf,
 
-    #[structopt(long, default_value = "/usr/arm-linux-gnueabi/include")]
+    #[clap(long, default_value = "/usr/arm-linux-gnueabi/include")]
     armv7_sysroot: PathBuf,
 
-    #[structopt(long, default_value = "/usr/riscv64-linux-gnu/include")]
+    #[clap(long, default_value = "/usr/riscv64-linux-gnu/include")]
     riscv64_sysroot: PathBuf,
 
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     command: Option<Command>,
 }
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 enum Command {
-    #[structopt(name = "aya")]
+    #[clap(name = "aya")]
     Aya,
-    #[structopt(name = "aya-bpf-bindings")]
+    #[clap(name = "aya-bpf-bindings")]
     AyaBpfBindings,
 }
 
