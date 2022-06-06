@@ -86,11 +86,8 @@ impl LircMode2 {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn forget_link(
-        &mut self,
-        link_id: LircLinkId,
-    ) -> Result<OwnedLink<LircLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.forget_link(link_id)?))
+    pub fn take_link(&mut self, link_id: LircLinkId) -> Result<OwnedLink<LircLink>, ProgramError> {
+        Ok(OwnedLink::new(self.data.take_link(link_id)?))
     }
 
     /// Queries the lirc device for attached programs.
