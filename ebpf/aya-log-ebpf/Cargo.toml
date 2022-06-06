@@ -10,12 +10,3 @@ aya-log-ebpf-macros = { path = "../aya-log-ebpf-macros" }
 
 [lib]
 path = "src/lib.rs"
-
-[profile.dev]
-panic = "abort"
-debug = 1
-opt-level = 2
-overflow-checks = false
-
-[profile.release]
-panic = "abort"
