@@ -1,0 +1,37 @@
+name: build-bpf
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: rust-src
+          override: true
+
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Pre-requisites
+        run: cargo install bpf-linker
+
+      - name: Build
+        run: |
+          pushd ebpf
+          cargo build --verbose
+          popd
