@@ -381,7 +381,7 @@ impl<T: Link> ProgramData<T> {
         Ok(())
     }
 
-    pub(crate) fn forget_link(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
+    pub(crate) fn take_link(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
         self.links.forget(link_id)
     }
 }
@@ -556,7 +556,7 @@ macro_rules! impl_program_unload {
                 /// Unloads the program from the kernel.
                 ///
                 /// Links will be detached before unloading the program.  Note
-                /// that owned links obtained using `forget_link()` will not be
+                /// that owned links obtained using `take_link()` will not be
                 /// detached.
                 pub fn unload(&mut self) -> Result<(), ProgramError> {
                     unload_program(&mut self.data)

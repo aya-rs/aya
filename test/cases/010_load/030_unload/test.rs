@@ -34,7 +34,7 @@ fn main() {
     let link = dispatcher.attach("eth0", XdpFlags::default()).unwrap();
 
     {
-        let link_owned = dispatcher.forget_link(link);
+        let link_owned = dispatcher.take_link(link);
 
         dispatcher.unload().unwrap();
 
