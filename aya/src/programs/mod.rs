@@ -324,6 +324,40 @@ impl Program {
             Program::SkLookup(p) => p.data.pin(path),
         }
     }
+
+    /// Unload the program
+    fn unload(&mut self) -> Result<(), ProgramError> {
+        match self {
+            Program::KProbe(p) => p.unload(),
+            Program::UProbe(p) => p.unload(),
+            Program::TracePoint(p) => p.unload(),
+            Program::SocketFilter(p) => p.unload(),
+            Program::Xdp(p) => p.unload(),
+            Program::SkMsg(p) => p.unload(),
+            Program::SkSkb(p) => p.unload(),
+            Program::SockOps(p) => p.unload(),
+            Program::SchedClassifier(p) => p.unload(),
+            Program::CgroupSkb(p) => p.unload(),
+            Program::CgroupSysctl(p) => p.unload(),
+            Program::CgroupSockopt(p) => p.unload(),
+            Program::LircMode2(p) => p.unload(),
+            Program::PerfEvent(p) => p.unload(),
+            Program::RawTracePoint(p) => p.unload(),
+            Program::Lsm(p) => p.unload(),
+            Program::BtfTracePoint(p) => p.unload(),
+            Program::FEntry(p) => p.unload(),
+            Program::FExit(p) => p.unload(),
+            Program::Extension(p) => p.unload(),
+            Program::CgroupSockAddr(p) => p.unload(),
+            Program::SkLookup(p) => p.unload(),
+        }
+    }
+}
+
+impl Drop for Program {
+    fn drop(&mut self) {
+        let _ = self.unload();
+    }
 }
 
 #[derive(Debug)]
@@ -590,41 +624,6 @@ impl_program_unload!(
     SkLookup,
     SockOps
 );
-
-#[cfg(test)]
-mod tests {
-    use super::Program;
-
-    #[allow(dead_code)]
-    // When a new program is added, this fn will break as a reminder: consider adding unload()
-    // See [impl_program_unload!()]
-    fn program_implements_unload(a: Program) {
-        let _ = match a {
-            Program::KProbe(mut p) => p.unload(),
-            Program::UProbe(mut p) => p.unload(),
-            Program::TracePoint(mut p) => p.unload(),
-            Program::SocketFilter(mut p) => p.unload(),
-            Program::Xdp(mut p) => p.unload(),
-            Program::SkMsg(mut p) => p.unload(),
-            Program::SkSkb(mut p) => p.unload(),
-            Program::SockOps(mut p) => p.unload(),
-            Program::SchedClassifier(mut p) => p.unload(),
-            Program::CgroupSkb(mut p) => p.unload(),
-            Program::CgroupSysctl(mut p) => p.unload(),
-            Program::CgroupSockopt(mut p) => p.unload(),
-            Program::LircMode2(mut p) => p.unload(),
-            Program::PerfEvent(mut p) => p.unload(),
-            Program::RawTracePoint(mut p) => p.unload(),
-            Program::Lsm(mut p) => p.unload(),
-            Program::BtfTracePoint(mut p) => p.unload(),
-            Program::FEntry(mut p) => p.unload(),
-            Program::FExit(mut p) => p.unload(),
-            Program::Extension(mut p) => p.unload(),
-            Program::CgroupSockAddr(mut p) => p.unload(),
-            Program::SkLookup(mut p) => p.unload(),
-        };
-    }
-}
 
 macro_rules! impl_program_fd {
     ($($struct_name:ident),+ $(,)?) => {
