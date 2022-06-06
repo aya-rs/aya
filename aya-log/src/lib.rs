@@ -34,7 +34,7 @@
 //!
 //! With the following eBPF code:
 //!
-//! ```no_run
+//! ```ignore
 //! # let ctx = ();
 //! use aya_log_ebpf::{debug, error, info, trace, warn};
 //!
@@ -326,5 +326,56 @@ impl<'a, T: Pod> TagLenValue<'a, T> {
             },
             &buf[len..],
         ))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use aya_log_common::{write_record_header, write_record_message, WriteToBuf};
+    use log::logger;
+    use testing_logger;
+
+    fn new_log(msg: &str, args: usize) -> Result<(usize, Vec<u8>), ()> {
+        let mut buf = vec![0; 8192];
+        let mut len = write_record_header(
+            &mut buf,
+            "test",
+            aya_log_common::Level::Info,
+            "test",
+            "test.rs",
+            123,
+            args,
+        )?;
+        len += write_record_message(&mut buf[len..], msg)?;
+        Ok((len, buf))
+    }
+
+    #[test]
+    fn test_str() {
+        testing_logger::setup();
+        let (_, input) = new_log("test", 0).unwrap();
+        let logger = logger();
+        let _ = log_buf(&input, logger);
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "test");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_str_with_args() {
+        testing_logger::setup();
+        let (len, mut input) = new_log("hello {}", 1).unwrap();
+        let name = "test";
+        (*name).write(&mut input[len..]).unwrap();
+        let logger = logger();
+        let _ = log_buf(&input, logger);
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "hello test");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
     }
 }
