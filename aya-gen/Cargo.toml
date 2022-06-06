@@ -5,7 +5,7 @@ authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-bindgen = "0.59"
+bindgen = "0.60"
 structopt = {version = "0.3", default-features = false }
 anyhow = "1"
 thiserror = "1"
