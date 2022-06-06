@@ -1,2 +1,12 @@
 [workspace]
-members = ["aya-log-ebpf", "aya-log-ebpf-macros"]
+members = ["aya-log-ebpf", "aya-log-ebpf-macros", "example"]
+
+
+[profile.dev]
+panic = "abort"
+debug = 1
+opt-level = 2
+overflow-checks = false
+
+[profile.release]
+panic = "abort"

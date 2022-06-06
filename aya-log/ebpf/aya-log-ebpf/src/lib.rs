@@ -1,9 +1,11 @@
 #![no_std]
 use aya_bpf::{
     macros::map,
-    maps::{PerCpuArray, PerfEventByteArray}
+    maps::{PerCpuArray, PerfEventByteArray},
 };
-pub use aya_log_common::{Level, LOG_BUF_CAPACITY, write_record_header, write_record_message, WriteToBuf};
+pub use aya_log_common::{
+    write_record_header, write_record_message, Level, WriteToBuf, LOG_BUF_CAPACITY,
+};
 pub use aya_log_ebpf_macros::{debug, error, info, log, trace, warn};
 
 #[doc(hidden)]
