@@ -142,7 +142,7 @@ impl<T> FromPtRegs for *const T {
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        ctx.regs().map(|regs| regs[0] as _)
+        Some(ctx.regs.regs[0] as *const _)
     }
 }
 
