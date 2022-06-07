@@ -15,6 +15,14 @@ env:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        arch:
+          - x86_64
+          - aarch64
+          - arm
+          # Disable riscv64 due to missing pt_regs handling in aya-bpf/args.rs
+          # - riscv64
     runs-on: ubuntu-20.04
 
     steps:
@@ -28,7 +36,17 @@ jobs:
       - uses: Swatinem/rust-cache@v1
 
       - name: Build
-        run: cargo build --manifest-path bpf/Cargo.toml --verbose
+        env:
+          CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          pushd bpf
+          cargo build --workspace --exclude aya-bpf-macros --verbose
+          popd
 
       - name: Run tests
-        run: RUST_BACKTRACE=full cargo test --manifest-path bpf/Cargo.toml --verbose
+        env:
+          CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          pushd bpf
+          cargo test --workspace --exclude aya-bpf-macros --verbose
+          popd

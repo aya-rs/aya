@@ -116,18 +116,18 @@ impl<T> FromPtRegs for *const T {
     }
 }
 
-#[cfg(bpf_target_arch = "armv7")]
+#[cfg(bpf_target_arch = "arm")]
 impl<T> FromPtRegs for *const T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 6 {
-            Some(ctx.uregs.regs[n] as *const _)
+            Some(ctx.uregs[n] as *const _)
         } else {
             None
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        Some(ctx.uregs.regs[0] as *const _)
+        Some(ctx.uregs[0] as *const _)
     }
 }
 
@@ -135,14 +135,14 @@ impl<T> FromPtRegs for *const T {
 impl<T> FromPtRegs for *const T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 7 {
-            Some(ctx.regs.regs[n] as *const _)
+            Some(ctx.regs[n] as *const _)
         } else {
             None
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        Some(ctx.regs.regs[0] as *const _)
+        Some(ctx.regs[0] as *const _)
     }
 }
 
@@ -165,18 +165,18 @@ impl<T> FromPtRegs for *mut T {
     }
 }
 
-#[cfg(bpf_target_arch = "armv7")]
+#[cfg(bpf_target_arch = "arm")]
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 6 {
-            Some(ctx.uregs.regs[n] as *mut _)
+            Some(ctx.uregs[n] as *mut _)
         } else {
             None
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        Some(ctx.uregs.regs[0] as *mut _)
+        Some(ctx.uregs[0] as *mut _)
     }
 }
 
@@ -184,14 +184,14 @@ impl<T> FromPtRegs for *mut T {
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 7 {
-            Some(ctx.regs.regs[n] as *mut _)
+            Some(ctx.regs[n] as *mut _)
         } else {
             None
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        Some(ctx.regs.regs[0] as *mut _)
+        Some(ctx.regs[0] as *mut _)
     }
 }
 
@@ -217,18 +217,18 @@ macro_rules! impl_from_pt_regs {
             }
         }
 
-        #[cfg(bpf_target_arch = "armv7")]
+        #[cfg(bpf_target_arch = "arm")]
         impl FromPtRegs for $type {
             fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
                 if n <= 6 {
-                    Some(ctx.uregs.regs[n] as *const $type as _)
+                    Some(ctx.uregs[n] as *const $type as _)
                 } else {
                     None
                 }
             }
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
-                Some(ctx.uregs.regs[0] as *const $type as _)
+                Some(ctx.uregs[0] as *const $type as _)
             }
         }
 
@@ -236,14 +236,14 @@ macro_rules! impl_from_pt_regs {
         impl FromPtRegs for $type {
             fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
                 if n <= 7 {
-                    Some(ctx.regs.regs[n] as *const $type as _)
+                    Some(ctx.regs[n] as *const $type as _)
                 } else {
                     None
                 }
             }
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
-                Some(ctx.regs.regs[0] as *const $type as _)
+                Some(ctx.regs[0] as *const $type as _)
             }
         }
     };
