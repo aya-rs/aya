@@ -116,7 +116,7 @@ impl<T> FromPtRegs for *const T {
     }
 }
 
-#[cfg(bpf_target_arch = "armv7")]
+#[cfg(bpf_target_arch = "arm")]
 impl<T> FromPtRegs for *const T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 6 {
@@ -165,7 +165,7 @@ impl<T> FromPtRegs for *mut T {
     }
 }
 
-#[cfg(bpf_target_arch = "armv7")]
+#[cfg(bpf_target_arch = "arm")]
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 6 {
@@ -217,7 +217,7 @@ macro_rules! impl_from_pt_regs {
             }
         }
 
-        #[cfg(bpf_target_arch = "armv7")]
+        #[cfg(bpf_target_arch = "arm")]
         impl FromPtRegs for $type {
             fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
                 if n <= 6 {
