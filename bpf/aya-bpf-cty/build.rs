@@ -1,6 +1,7 @@
 use std::env;
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=CARGO_CFG_BPF_TARGET_ARCH");
     if let Ok(arch) = env::var("CARGO_CFG_BPF_TARGET_ARCH") {
         println!("cargo:rustc-cfg=bpf_target_arch=\"{}\"", arch);
     } else {
