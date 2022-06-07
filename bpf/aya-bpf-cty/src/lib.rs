@@ -20,7 +20,7 @@ mod ad {
     pub type c_int = i32;
     pub type c_uint = u32;
 
-    #[cfg(bpf_target_arch = "arm")]
+    #[cfg(bpf_target_arch = "armv7")]
     pub type c_char = super::c_uchar;
 
     #[cfg(bpf_target_arch = "aarch64")]

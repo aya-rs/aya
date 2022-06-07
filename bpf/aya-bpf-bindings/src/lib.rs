@@ -4,7 +4,7 @@
 #[cfg(bpf_target_arch = "x86_64")]
 mod x86_64;
 
-#[cfg(bpf_target_arch = "arm")]
+#[cfg(bpf_target_arch = "armv7")]
 mod armv7;
 
 #[cfg(bpf_target_arch = "aarch64")]
@@ -17,7 +17,7 @@ mod gen {
     #[cfg(bpf_target_arch = "x86_64")]
     pub use super::x86_64::*;
 
-    #[cfg(bpf_target_arch = "arm")]
+    #[cfg(bpf_target_arch = "armv7")]
     pub use super::armv7::*;
 
     #[cfg(bpf_target_arch = "aarch64")]
