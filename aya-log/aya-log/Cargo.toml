@@ -11,7 +11,7 @@ documentation = "https://docs.rs/aya-log"
 edition = "2018"
 
 [dependencies]
-aya = { version = "0.10.7", features=["async_tokio"] }
+aya = { version = "0.11.0", features=["async_tokio"] }
 aya-log-common = { version = "0.1.10-dev.0", path = "../aya-log-common", features=["userspace"] }
 dyn-fmt = "0.3.0"
 thiserror = "1"
