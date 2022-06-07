@@ -8,7 +8,7 @@ pub mod bindgen;
 pub mod generate;
 pub mod rustfmt;
 
-pub use generate::{InputFile, generate};
+pub use generate::{generate, InputFile};
 
 pub fn write_to_file<T: AsRef<Path>>(path: T, code: &str) -> Result<(), io::Error> {
     let mut file = File::create(path)?;
