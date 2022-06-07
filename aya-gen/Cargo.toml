@@ -6,10 +6,11 @@ edition = "2018"
 
 [dependencies]
 bindgen = "0.60"
-structopt = {version = "0.3", default-features = false }
+clap = { version = "3", features = ["derive"] }
 anyhow = "1"
 thiserror = "1"
 syn = "1"
 quote = "1"
 proc-macro2 = "1"
 indexmap = "1.6"
+tempfile = "3"

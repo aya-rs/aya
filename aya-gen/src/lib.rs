@@ -5,7 +5,7 @@ use std::{
 };
 
 pub mod bindgen;
-pub mod btf_types;
+pub mod generate;
 pub mod rustfmt;
 
 pub fn write_to_file<T: AsRef<Path>>(path: T, code: &str) -> Result<(), io::Error> {
