@@ -136,7 +136,8 @@ mod test {
     }
 
     #[test]
-    fn combine_arguments_test() {
+    #[test]
+    fn test_combine_flags() {
         assert_eq!(
             combine_flags(&to_vec("a b"), &to_vec("c d"),).join(" "),
             "a b c d".to_string(),
