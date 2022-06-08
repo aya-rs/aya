@@ -17,6 +17,10 @@ impl SockOpsContext {
         unsafe { (*self.ops).op }
     }
 
+    pub fn family(&self) -> u32 {
+        unsafe { (*self.ops).family }
+    }
+
     pub fn cb_flags(&self) -> u32 {
         unsafe { (*self.ops).bpf_sock_ops_cb_flags }
     }
@@ -28,6 +32,30 @@ impl SockOpsContext {
         } else {
             Ok(())
         }
+    }
+
+    pub fn remote_ip4(&self) -> u32 {
+        unsafe { (*self.ops).remote_ip4 }
+    }
+
+    pub fn local_ip4(&self) -> u32 {
+        unsafe { (*self.ops).local_ip4 }
+    }
+
+    pub fn remote_ip6(&self) -> [u32; 4] {
+        unsafe { (*self.ops).remote_ip6 }
+    }
+
+    pub fn local_ip6(&self) -> [u32; 4] {
+        unsafe { (*self.ops).local_ip6 }
+    }
+
+    pub fn local_port(&self) -> u32 {
+        unsafe { (*self.ops).local_port }
+    }
+
+    pub fn remote_port(&self) -> u32 {
+        unsafe { (*self.ops).remote_port }
     }
 
     pub fn arg(&self, n: usize) -> u32 {
