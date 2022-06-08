@@ -1,6 +1,6 @@
 [package]
 name = "aya-log-common"
-version = "0.1.10"
+version = "0.1.11-dev.0"
 description = "A logging library for eBPF programs."
 keywords = ["ebpf", "bpf", "log", "logging"]
 license = "MIT OR Apache-2.0"
