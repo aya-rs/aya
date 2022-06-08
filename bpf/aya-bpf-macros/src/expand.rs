@@ -410,6 +410,51 @@ impl CgroupSockAddr {
     }
 }
 
+pub struct CgroupSock {
+    item: ItemFn,
+    attach_type: Option<String>,
+    name: Option<String>,
+}
+
+impl CgroupSock {
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<CgroupSock> {
+        let name = pop_arg(&mut args, "name");
+        let attach_type = pop_arg(&mut args, "attach");
+        err_on_unknown_args(&args)?;
+
+        Ok(CgroupSock {
+            item,
+            attach_type,
+            name,
+        })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = if let Some(name) = &self.name {
+            if let Some(attach_type) = &self.attach_type {
+                format!("cgroup/{}/{}", attach_type, name)
+            } else {
+                format!("cgroup/sock/{}", name)
+            }
+        } else if let Some(attach_type) = &self.attach_type {
+            format!("cgroup/{}", attach_type)
+        } else {
+            "cgroup/sock".to_string()
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock) -> i32 {
+                return #fn_name(::aya_bpf::programs::SockContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
+
 fn pop_arg(args: &mut Args, name: &str) -> Option<String> {
     match args.args.iter().position(|arg| arg.name == name) {
         Some(index) => Some(args.args.remove(index).value.value()),
