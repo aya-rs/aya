@@ -105,13 +105,13 @@ fn c_header_from_btf(path: &Path) -> Result<String, Error> {
 }
 
 fn combine_flags(s1: &[String], s2: &[String]) -> Vec<String> {
-    let mut args = Vec::new();
+    let mut flags = Vec::new();
     let mut extra = Vec::new();
 
     for s in [s1, s2] {
         let mut s = s.splitn(2, |el| el == "--");
         // append args
-        args.extend(s.next().unwrap().iter().cloned());
+        flags.extend(s.next().unwrap().iter().cloned());
         if let Some(e) = s.next() {
             // append extra args
             extra.extend(e.iter().cloned());
@@ -120,11 +120,11 @@ fn combine_flags(s1: &[String], s2: &[String]) -> Vec<String> {
 
     // append extra args
     if !extra.is_empty() {
-        args.push("--".to_string());
-        args.extend(extra);
+        flags.push("--".to_string());
+        flags.extend(extra);
     }
 
-    args
+    flags
 }
 
 #[cfg(test)]
