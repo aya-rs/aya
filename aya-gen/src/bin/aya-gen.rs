@@ -40,12 +40,10 @@ fn try_main() -> Result<(), anyhow::Error> {
             names,
             bindgen_args,
         } => {
-            let bindings: String;
-            if let Some(header) = header {
-                bindings = generate(InputFile::Header(header), &names, &bindgen_args)?;
-            } else {
-                bindings = generate(InputFile::Btf(btf), &names, &bindgen_args)?;
-            }
+            let bindings = match header {
+                Some(header) => generate(InputFile::Header(header), &names, &bindgen_args)?,
+                None => generate(InputFile::Btf(btf), &names, &bindgen_args)?,
+            };
             println!("{}", bindings);
         }
     };
