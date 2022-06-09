@@ -1,4 +1,4 @@
-use core::{hint::unreachable_unchecked, mem};
+use core::{cell::UnsafeCell, hint::unreachable_unchecked, mem};
 
 use aya_bpf_cty::c_long;
 
@@ -19,7 +19,7 @@ use crate::{
 /// # use aya_bpf::{programs::LsmContext};
 ///
 /// #[map]
-/// static mut JUMP_TABLE: ProgramArray = ProgramArray::with_max_entries(16, 0);
+/// static JUMP_TABLE: ProgramArray = ProgramArray::with_max_entries(16, 0);
 ///
 /// # unsafe fn try_test(ctx: &LsmContext) -> Result<(), c_long> {
 /// let index: u32 = 13;
@@ -33,13 +33,15 @@ use crate::{
 /// ```
 #[repr(transparent)]
 pub struct ProgramArray {
-    def: bpf_map_def,
+    def: UnsafeCell<bpf_map_def>,
 }
+
+unsafe impl Sync for ProgramArray {}
 
 impl ProgramArray {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> ProgramArray {
         ProgramArray {
-            def: bpf_map_def {
+            def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_PROG_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
                 value_size: mem::size_of::<u32>() as u32,
@@ -47,13 +49,13 @@ impl ProgramArray {
                 map_flags: flags,
                 id: 0,
                 pinning: PinningType::None as u32,
-            },
+            }),
         }
     }
 
     pub const fn pinned(max_entries: u32, flags: u32) -> ProgramArray {
         ProgramArray {
-            def: bpf_map_def {
+            def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_PROG_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
                 value_size: mem::size_of::<u32>() as u32,
@@ -61,7 +63,7 @@ impl ProgramArray {
                 map_flags: flags,
                 id: 0,
                 pinning: PinningType::ByName as u32,
-            },
+            }),
         }
     }
 
@@ -78,8 +80,8 @@ impl ProgramArray {
     ///
     /// On success, this function **does not return** into the original program.
     /// On failure, a negative error is returned, wrapped in `Err()`.
-    pub unsafe fn tail_call<C: BpfContext>(&mut self, ctx: &C, index: u32) -> Result<!, c_long> {
-        let res = bpf_tail_call(ctx.as_ptr(), &mut self.def as *mut _ as *mut _, index);
+    pub unsafe fn tail_call<C: BpfContext>(&self, ctx: &C, index: u32) -> Result<!, c_long> {
+        let res = bpf_tail_call(ctx.as_ptr(), self.def.get() as *mut _, index);
         if res != 0 {
             Err(res)
         } else {

@@ -14,10 +14,10 @@ use aya_bpf::{
 };
 
 #[map]
-static mut FOO: Array<u32> = Array::<u32>::with_max_entries(10, 0);
+static FOO: Array<u32> = Array::<u32>::with_max_entries(10, 0);
 
 #[map(name = "BAR")]
-static mut BAZ: Array<u32> = Array::<u32>::with_max_entries(10, 0);
+static BAZ: Array<u32> = Array::<u32>::with_max_entries(10, 0);
 
 #[xdp]
 pub fn pass(ctx: XdpContext) -> u32 {
