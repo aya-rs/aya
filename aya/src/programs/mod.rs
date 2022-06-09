@@ -37,6 +37,7 @@
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [`maps`]: crate::maps
 pub mod cgroup_skb;
+pub mod cgroup_sock;
 pub mod cgroup_sock_addr;
 pub mod cgroup_sockopt;
 pub mod cgroup_sysctl;
@@ -74,6 +75,7 @@ use std::{
 use thiserror::Error;
 
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
+pub use cgroup_sock::{CgroupSock, CgroupSockAttachType};
 pub use cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType};
 pub use cgroup_sockopt::{CgroupSockopt, CgroupSockoptAttachType};
 pub use cgroup_sysctl::CgroupSysctl;
@@ -265,6 +267,8 @@ pub enum Program {
     Extension(Extension),
     /// A [`SkLookup`] program
     SkLookup(SkLookup),
+    /// A [`CgroupSock`] program
+    CgroupSock(CgroupSock),
 }
 
 impl Program {
@@ -294,6 +298,7 @@ impl Program {
             Program::Extension(_) => BPF_PROG_TYPE_EXT,
             Program::CgroupSockAddr(_) => BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
             Program::SkLookup(_) => BPF_PROG_TYPE_SK_LOOKUP,
+            Program::CgroupSock(_) => BPF_PROG_TYPE_CGROUP_SOCK,
         }
     }
 
@@ -322,6 +327,7 @@ impl Program {
             Program::Extension(p) => p.data.pin(path),
             Program::CgroupSockAddr(p) => p.data.pin(path),
             Program::SkLookup(p) => p.data.pin(path),
+            Program::CgroupSock(p) => p.data.pin(path),
         }
     }
 
@@ -350,6 +356,7 @@ impl Program {
             Program::Extension(p) => p.unload(),
             Program::CgroupSockAddr(p) => p.unload(),
             Program::SkLookup(p) => p.unload(),
+            Program::CgroupSock(p) => p.unload(),
         }
     }
 }
@@ -573,6 +580,7 @@ impl ProgramFd for Program {
             Program::Extension(p) => p.data.fd,
             Program::CgroupSockAddr(p) => p.data.fd,
             Program::SkLookup(p) => p.data.fd,
+            Program::CgroupSock(p) => p.data.fd,
         }
     }
 }
@@ -622,7 +630,8 @@ impl_program_unload!(
     Extension,
     CgroupSockAddr,
     SkLookup,
-    SockOps
+    SockOps,
+    CgroupSock,
 );
 
 macro_rules! impl_program_fd {
@@ -665,6 +674,7 @@ impl_program_fd!(
     Extension,
     CgroupSockAddr,
     SkLookup,
+    CgroupSock,
 );
 
 macro_rules! impl_try_from_program {
@@ -718,6 +728,7 @@ impl_try_from_program!(
     Extension,
     CgroupSockAddr,
     SkLookup,
+    CgroupSock,
 );
 
 /// Provides information about a loaded program, like name, id and statistics

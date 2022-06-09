@@ -21,7 +21,7 @@ use crate::{
     bpf_map_def,
     generated::{bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_F_RDONLY_PROG},
     obj::btf::{Btf, BtfError, BtfExt},
-    programs::{CgroupSockAddrAttachType, CgroupSockoptAttachType},
+    programs::{CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType},
     BpfError,
 };
 use std::slice::from_raw_parts_mut;
@@ -188,6 +188,10 @@ pub enum ProgramSection {
     SkLookup {
         name: String,
     },
+    CgroupSock {
+        name: String,
+        attach_type: CgroupSockAttachType,
+    },
 }
 
 impl ProgramSection {
@@ -220,6 +224,7 @@ impl ProgramSection {
             ProgramSection::FExit { name } => name,
             ProgramSection::Extension { name } => name,
             ProgramSection::SkLookup { name } => name,
+            ProgramSection::CgroupSock { name, .. } => name,
         }
     }
 }
@@ -279,6 +284,10 @@ impl FromStr for ProgramSection {
             "cgroup_skb/ingress" => CgroupSkbIngress { name },
             "cgroup_skb/egress" => CgroupSkbEgress { name },
             "cgroup/skb" => CgroupSkb { name },
+            "cgroup/sock" => CgroupSock {
+                name,
+                attach_type: CgroupSockAttachType::default(),
+            },
             "cgroup/sysctl" => CgroupSysctl { name },
             "cgroup/getsockopt" => CgroupSockopt {
                 name,
@@ -300,6 +309,19 @@ impl FromStr for ProgramSection {
                         });
                     }
                 }
+                "sock" => CgroupSock {
+                    name,
+                    attach_type: CgroupSockAttachType::default(),
+                },
+                "post_bind4" | "post_bind6" | "sock_create" | "sock_release" => {
+                    if let Ok(attach_type) = CgroupSockAttachType::try_from(name.as_str()) {
+                        CgroupSock { name, attach_type }
+                    } else {
+                        return Err(ParseError::InvalidProgramSection {
+                            section: section.to_owned(),
+                        });
+                    }
+                }
                 _ => {
                     if let Ok(attach_type) = CgroupSockAddrAttachType::try_from(name.as_str()) {
                         CgroupSockAddr { name, attach_type }
@@ -309,6 +331,22 @@ impl FromStr for ProgramSection {
                         });
                     }
                 }
+            },
+            "cgroup/post_bind4" => CgroupSock {
+                name,
+                attach_type: CgroupSockAttachType::PostBind4,
+            },
+            "cgroup/post_bind6" => CgroupSock {
+                name,
+                attach_type: CgroupSockAttachType::PostBind6,
+            },
+            "cgroup/sock_create" => CgroupSock {
+                name,
+                attach_type: CgroupSockAttachType::SockCreate,
+            },
+            "cgroup/sock_release" => CgroupSock {
+                name,
+                attach_type: CgroupSockAttachType::SockRelease,
             },
             "cgroup/bind4" => CgroupSockAddr {
                 name,

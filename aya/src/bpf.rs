@@ -22,9 +22,9 @@ use crate::{
         MapKind, Object, ParseError, ProgramSection,
     },
     programs::{
-        BtfTracePoint, CgroupSkb, CgroupSkbAttachType, CgroupSockAddr, CgroupSockopt, CgroupSysctl,
-        Extension, FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent, ProbeKind, Program,
-        ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb,
+        BtfTracePoint, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr, CgroupSockopt,
+        CgroupSysctl, Extension, FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent, ProbeKind,
+        Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb,
         SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
@@ -524,6 +524,12 @@ impl<'a> BpfLoader<'a> {
                         ProgramSection::SkLookup { .. } => Program::SkLookup(SkLookup {
                             data: ProgramData::new(prog_name, obj, btf_fd),
                         }),
+                        ProgramSection::CgroupSock { attach_type, .. } => {
+                            Program::CgroupSock(CgroupSock {
+                                data: ProgramData::new(prog_name, obj, btf_fd),
+                                attach_type: *attach_type,
+                            })
+                        }
                     }
                 };
                 (name, program)
