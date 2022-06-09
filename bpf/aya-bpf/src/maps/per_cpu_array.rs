@@ -56,11 +56,13 @@ impl<T> PerCpuArray<T> {
     }
 
     #[inline(always)]
-    pub fn get_mut(&self, index: u32) -> Option<&mut T> {
-        unsafe {
-            // FIXME: alignment
-            self.lookup(index).map(|mut p| p.as_mut())
-        }
+    pub fn get_ptr(&self, index: u32) -> Option<*const T> {
+        unsafe { self.lookup(index).map(|p| p.as_ptr() as *const T) }
+    }
+
+    #[inline(always)]
+    pub fn get_ptr_mut(&self, index: u32) -> Option<*mut T> {
+        unsafe { self.lookup(index).map(|p| p.as_ptr()) }
     }
 
     #[inline(always)]
