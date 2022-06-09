@@ -1,10 +1,10 @@
 use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
 
-use aya_bpf_cty::c_void;
+use aya_bpf_cty::{c_void, c_long};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY},
-    helpers::bpf_map_lookup_elem,
+    helpers::{bpf_map_lookup_elem, bpf_map_update_elem},
     maps::PinningType,
 };
 
@@ -72,5 +72,19 @@ impl<T> PerCpuArray<T> {
             &index as *const _ as *const c_void,
         );
         NonNull::new(ptr as *mut T)
+    }
+
+    pub fn set(&self, index: u32, value: &T, flags: u64) -> Result<(), c_long> {
+        unsafe {
+            let ret = unsafe {
+                bpf_map_update_elem(
+                    self.def.get() as *mut _,
+                    &index as *const _ as *const c_void,
+                    value as *const _ as *const _,
+                    flags,
+                )
+            };
+            (ret >= 0).then(|| ()).ok_or(ret)
+        }
     }
 }
