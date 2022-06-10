@@ -35,12 +35,6 @@ jobs:
       - name: Run test
         run: RUST_BACKTRACE=full cross test --verbose
 
-      - name: Build bpf macros
-        run: cross build --manifest-path ./bpf/Cargo.toml -p aya-bpf-macros --verbose
-
-      - name: Test bpf macros
-        run: RUST_BACKTRACE=full cross test --manifest-path ./bpf/Cargo.toml -p aya-bpf-macros --verbose
-
   test:
     runs-on: ubuntu-20.04
     needs: build
