@@ -14,7 +14,7 @@ pub struct PerCpuArray<T> {
     _t: PhantomData<T>,
 }
 
-unsafe impl<T: Sync> Sync for PerCpuArray<T> {}
+unsafe impl<T> Sync for PerCpuArray<T> {}
 
 impl<T> PerCpuArray<T> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> PerCpuArray<T> {
