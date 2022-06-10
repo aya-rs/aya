@@ -35,6 +35,9 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
+      - name: Prereqs
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
       - name: Build
         env:
           CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.arch }}
@@ -49,4 +52,38 @@ jobs:
         run: |
           pushd bpf
           cargo test --workspace --exclude aya-bpf-macros --verbose
+          popd
+
+  build-macros:
+    strategy:
+      matrix:
+        arch:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - armv7-unknown-linux-gnueabi
+          - riscv64gc-unknown-none-elf
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Prereqs
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build bpf macros
+        run: |
+          pushd bpf
+          cross build -p aya-bpf-macros --verbose
+          popd
+
+      - name: Test bpf macros
+        run: |
+          pushd bpf
+          RUST_BACKTRACE=full cross test -p aya-bpf-macros --verbose
           popd
