@@ -49,7 +49,7 @@ pub fn generate<T: AsRef<str>>(
         .collect::<Vec<_>>();
 
     let mut bindgen = bindgen::bpf_builder();
-    let (additional_flags, ctypes_prefix) = strip_ctypes_prefix(&additional_flags);
+    let (additional_flags, ctypes_prefix) = extract_ctypes_prefix(&additional_flags);
 
     if let Some(prefix) = ctypes_prefix {
         bindgen = bindgen.ctypes_prefix(prefix)
@@ -108,18 +108,18 @@ fn c_header_from_btf(path: &Path) -> Result<String, Error> {
     Ok(str::from_utf8(&output.stdout).unwrap().to_owned())
 }
 
-fn strip_ctypes_prefix(s: &[String]) -> (Vec<String>, Option<String>) {
-    let mut it = s.splitn(2, |el| el == "--ctypes-prefix");
-    let mut prefix = None;
-    let mut flags = Vec::new();
-    flags.extend_from_slice(it.next().unwrap());
-
-    if let Some(after) = it.next() {
-        prefix = after.get(0).cloned();
-        flags.extend_from_slice(&after[1..]);
+fn extract_ctypes_prefix(s: &[String]) -> (Vec<String>, Option<String>) {
+    if let Some(index) = s.iter().position(|el| el == "--ctypes-prefix") {
+        if index < s.len() - 1 {
+            let mut flags = Vec::new();
+            flags.extend_from_slice(&s[0..index]);
+            // skip ["--ctypes-prefix", "value"]
+            flags.extend_from_slice(&s[index + 2..]);
+            return (flags, s.get(index + 1).cloned());
+        }
     }
 
-    (flags, prefix)
+    (s.to_vec(), None)
 }
 
 fn combine_flags(s1: &[String], s2: &[String]) -> Vec<String> {
@@ -147,20 +147,33 @@ fn combine_flags(s1: &[String], s2: &[String]) -> Vec<String> {
 
 #[cfg(test)]
 mod test {
-    use super::{combine_flags, strip_ctypes_prefix};
+    use super::{combine_flags, extract_ctypes_prefix};
 
     fn to_vec(s: &str) -> Vec<String> {
         s.split(" ").map(|x| x.into()).collect()
     }
 
     #[test]
-    fn test_strip_ctypes_prefix() {
-        let (flags, prefix) = strip_ctypes_prefix(&to_vec("asd --ctypes-prefix foo dsa"));
-        assert_eq!(flags, to_vec("asd dsa"));
+    fn test_extract_ctypes_prefix() {
+        let (flags, prefix) = extract_ctypes_prefix(&to_vec("foo --ctypes-prefix bar baz"));
+        assert_eq!(flags, to_vec("foo baz"));
+        assert_eq!(prefix, Some("bar".to_string()));
+
+        let (flags, prefix) = extract_ctypes_prefix(&to_vec("foo --ctypes-prefi bar baz"));
+        assert_eq!(flags, to_vec("foo --ctypes-prefi bar baz"));
+        assert_eq!(prefix, None);
+
+        let (flags, prefix) = extract_ctypes_prefix(&to_vec("--foo bar --ctypes-prefix"));
+        assert_eq!(flags, to_vec("--foo bar --ctypes-prefix"));
+        assert_eq!(prefix, None);
+
+        let (flags, prefix) = extract_ctypes_prefix(&to_vec("--ctypes-prefix foo"));
+        let empty: Vec<String> = Vec::new();
+        assert_eq!(flags, empty);
         assert_eq!(prefix, Some("foo".to_string()));
 
-        let (flags, prefix) = strip_ctypes_prefix(&to_vec("asd --ctypes-prefi foo dsa"));
-        assert_eq!(flags, to_vec("asd --ctypes-prefi foo dsa"));
+        let (flags, prefix) = extract_ctypes_prefix(&to_vec("--ctypes-prefix"));
+        assert_eq!(flags, to_vec("--ctypes-prefix"));
         assert_eq!(prefix, None);
     }
 
