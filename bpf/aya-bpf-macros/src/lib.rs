@@ -1,9 +1,9 @@
 mod expand;
 
 use expand::{
-    Args, BtfTracePoint, CgroupSkb, CgroupSockAddr, CgroupSockopt, CgroupSysctl, FEntry, FExit,
-    Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb,
-    SkSkbKind, SockAddrArgs, SockOps, SocketFilter, SockoptArgs, TracePoint, Xdp,
+    Args, BtfTracePoint, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt, CgroupSysctl,
+    FEntry, FExit, Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint, SchedClassifier, SkLookup,
+    SkMsg, SkSkb, SkSkbKind, SockAddrArgs, SockOps, SocketFilter, SockoptArgs, TracePoint, Xdp,
 };
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemFn, ItemStatic};
@@ -124,6 +124,17 @@ pub fn cgroup_sock_addr(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let item = parse_macro_input!(item as ItemFn);
 
     CgroupSockAddr::from_syn(args.args, item, attach_type)
+        .and_then(|u| u.expand())
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+#[proc_macro_attribute]
+pub fn cgroup_sock(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attrs as Args);
+    let item = parse_macro_input!(item as ItemFn);
+
+    CgroupSock::from_syn(args, item)
         .and_then(|u| u.expand())
         .unwrap_or_else(|err| err.to_compile_error())
         .into()
