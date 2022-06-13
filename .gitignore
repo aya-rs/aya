@@ -3,3 +3,5 @@ target/
 libbpf/
 .vscode/
 !.vscode/settings.json
+site/
+header.html
