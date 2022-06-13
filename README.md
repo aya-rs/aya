@@ -1,4 +1,4 @@
-# Aya
+# [![Aya](assets/logo.svg)](https://aya-rs.dev)
 
 [![Crates.io][crates-badge]][crates-url]
 ![License][license-badge]
@@ -11,14 +11,14 @@
 [license-badge]: https://img.shields.io/badge/license-MIT%2FApache--2.0-blue?style=for-the-badge
 [build-badge]: https://img.shields.io/github/workflow/status/aya-rs/aya/build-aya?style=for-the-badge&logo=github
 [book-badge]: https://img.shields.io/badge/read%20the-book-9cf.svg?style=for-the-badge&logo=mdbook
-[book-url]: http://aya-rs.github.io/book/
+[book-url]: https://aya-rs.dev/book
 
 ## API Documentation
 
 [![Unreleased Documentation][git-docs-badge]][git-api-docs] [![Documentaiton][api-docs-badge]][api-docs]
 
 [git-docs-badge]: https://img.shields.io/badge/docs-unreleased-red.svg?style=for-the-badge&logo=docsdotrs
-[git-api-docs]: https://aya-rs.netlify.app
+[git-api-docs]: https://docs.aya-rs.dev
 [api-docs-badge]: https://img.shields.io/badge/docs-released-blue.svg?style=for-the-badge&logo=docsdotrs
 [api-docs]: https://docs.rs/aya
 

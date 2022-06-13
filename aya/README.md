@@ -1,21 +1,38 @@
-# Aya
+# [![Aya](../assets/logo.svg)](https://aya-rs.dev)
 
 [![Crates.io][crates-badge]][crates-url]
 ![License][license-badge]
 ![Build status][build-badge]
-[![Documentaiton][docs-badge]][docs-url]
+[![Book][book-badge]][book-url]
 
-[crates-badge]: https://img.shields.io/crates/v/aya.svg
+
+[crates-badge]: https://img.shields.io/crates/v/aya.svg?style=for-the-badge&logo=rust
 [crates-url]: https://crates.io/crates/aya
-[license-badge]: https://img.shields.io/badge/license-MIT%2FApache--2.0-blue
-[build-badge]: https://github.com/aya-rs/aya/actions/workflows/build-test.yml/badge.svg
-[docs-badge]: https://img.shields.io/badge/docs-website-blue.svg
-[docs-url]: http://aya-rs.github.io/book/
+[license-badge]: https://img.shields.io/badge/license-MIT%2FApache--2.0-blue?style=for-the-badge
+[build-badge]: https://img.shields.io/github/workflow/status/aya-rs/aya/build-aya?style=for-the-badge&logo=github
+[book-badge]: https://img.shields.io/badge/read%20the-book-9cf.svg?style=for-the-badge&logo=mdbook
+[book-url]: https://aya-rs.dev/book
 
-[API docs][api-docs] | [Chat][chat-url]
+## API Documentation
 
+[![Unreleased Documentation][git-docs-badge]][git-api-docs] [![Documentaiton][api-docs-badge]][api-docs]
+
+[git-docs-badge]: https://img.shields.io/badge/docs-unreleased-red.svg?style=for-the-badge&logo=docsdotrs
+[git-api-docs]: https://docs.aya-rs.dev
+[api-docs-badge]: https://img.shields.io/badge/docs-released-blue.svg?style=for-the-badge&logo=docsdotrs
 [api-docs]: https://docs.rs/aya
+
+## Community
+
+[![Discord][discord-badge]][chat-url] [![Awesome][awesome-badge]][awesome-aya]
+
+Join [the conversation on Discord][chat-url] to discuss anything related to Aya, or discover
+and contribute to a list of [Awesome Aya][awesome-aya] projects.
+
+[discord-badge]: https://img.shields.io/badge/Discord-chat-5865F2?style=for-the-badge&logo=discord
 [chat-url]: https://discord.gg/xHW2cb2N6G
+[awesome-aya]: https://github.com/aya-rs/awesome-aya
+[awesome-badge]: https://img.shields.io/badge/Awesome-Aya-FC60A8?style=for-the-badge&logo=awesomelists
 
 ## Overview
 
@@ -46,7 +63,7 @@ Some of the major features provided include:
 [libbpf]: https://github.com/libbpf/libbpf
 [bcc]: https://github.com/iovisor/bcc
 [libc]: https://docs.rs/libc
-[co-re]: https://facebookmicrosites.github.io/bpf/blog/2020/02/19/bpf-portability-and-co-re.html 
+[co-re]: https://facebookmicrosites.github.io/bpf/blog/2020/02/19/bpf-portability-and-co-re.html
 [tokio]: https://docs.rs/tokio
 [async-std]: https://docs.rs/async-std
 
@@ -65,7 +82,7 @@ use aya::programs::{CgroupSkb, CgroupSkbAttachType};
 // load the BPF code
 let mut bpf = Bpf::load_file("bpf.o")?;
 
-// get the `ingress_filter` program compiled into `bpf.o`. 
+// get the `ingress_filter` program compiled into `bpf.o`.
 let ingress: &mut CgroupSkb = bpf.program_mut("ingress_filter")?.try_into()?;
 
 // load the program into the kernel
@@ -77,10 +94,6 @@ let cgroup = File::open("/sys/fs/cgroup/unified")?;
 ingress.attach(cgroup, CgroupSkbAttachType::Ingress)?;
 ```
 
-## Community
-
-Join [the conversation on Discord][chat-url] to discuss anything related to aya.
-
 ## Contributing
 
 Please see the [contributing guide](https://github.com/aya-rs/aya/blob/main/CONTRIBUTING.md).
@@ -89,7 +102,7 @@ Please see the [contributing guide](https://github.com/aya-rs/aya/blob/main/CONT
 Aya is distributed under the terms of either the [MIT license] or the [Apache License] (version
 2.0), at your option.
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this crate by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions. 
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this crate by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
 
 [MIT license]: https://github.com/aya-rs/aya/blob/main/LICENSE-MIT
 [Apache license]: https://github.com/aya-rs/aya/blob/main/LICENSE-APACHE
