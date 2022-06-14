@@ -12,14 +12,15 @@ pub struct Options {
 
 #[derive(Parser)]
 enum Command {
-    #[clap(name = "generate")]
+    #[clap(name = "generate", action)]
     Generate {
-        #[clap(long, default_value = "/sys/kernel/btf/vmlinux")]
+        #[clap(long, default_value = "/sys/kernel/btf/vmlinux", action)]
         btf: PathBuf,
-        #[clap(long, conflicts_with = "btf")]
+        #[clap(long, conflicts_with = "btf", action)]
         header: Option<PathBuf>,
+        #[clap(action)]
         names: Vec<String>,
-        #[clap(last = true)]
+        #[clap(last = true, action)]
         bindgen_args: Vec<String>,
     },
 }
@@ -40,12 +41,11 @@ fn try_main() -> Result<(), anyhow::Error> {
             names,
             bindgen_args,
         } => {
-            let bindings: String;
-            if let Some(header) = header {
-                bindings = generate(InputFile::Header(header), &names, &bindgen_args)?;
+            let bindings: String = if let Some(header) = header {
+                generate(InputFile::Header(header), &names, &bindgen_args)?
             } else {
-                bindings = generate(InputFile::Btf(btf), &names, &bindgen_args)?;
-            }
+                generate(InputFile::Btf(btf), &names, &bindgen_args)?
+            };
             println!("{}", bindings);
         }
     };
