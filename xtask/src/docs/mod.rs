@@ -25,7 +25,7 @@ pub fn docs() -> Result<(), anyhow::Error> {
     header_path.push("header.html");
     let mut header = fs::File::create(&header_path).expect("can't create header.html");
     header
-        .write(r#"<meta name="robots" content="noindex">"#.as_bytes())
+        .write_all(r#"<meta name="robots" content="noindex">"#.as_bytes())
         .expect("can't write header.html contents");
     header.flush().expect("couldn't flush contents");
 
@@ -78,7 +78,7 @@ pub fn docs() -> Result<(), anyhow::Error> {
 
     let mut robots = fs::File::create("site/robots.txt").expect("can't create robots.txt");
     robots
-        .write(
+        .write_all(
             indoc! {r#"
     User-Agent:*
     Disallow: /
@@ -89,7 +89,7 @@ pub fn docs() -> Result<(), anyhow::Error> {
 
     let mut index = fs::File::create("site/index.html").expect("can't create index.html");
     index
-        .write(
+        .write_all(
             indoc! {r#"
         <html>
             <meta name="robots" content="noindex">
