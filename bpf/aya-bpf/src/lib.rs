@@ -1,3 +1,14 @@
+//! [![](https://aya-rs.dev/assets/images/aya_logo_docs.svg)](https://aya-rs.dev)
+//!
+//! A library to write eBPF programs.
+//!
+//! Aya-bpf is an eBPF library built with a focus on operability and developer experience.
+//! It is the kernel-space counterpart of [Aya](https://docs.rs/aya)
+
+#![doc(
+    html_logo_url = "https://aya-rs.dev/assets/images/crabby.svg",
+    html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
+)]
 #![feature(never_type)]
 #![allow(clippy::missing_safety_doc)]
 #![no_std]

@@ -1,3 +1,5 @@
+//! [![](https://aya-rs.dev/assets/images/aya_logo_docs.svg)](https://aya-rs.dev)
+//!
 //! A library to work with eBPF programs.
 //!
 //! eBPF is a technology that allows running user-supplied programs inside the
@@ -29,6 +31,11 @@
 //!
 //! [tokio]: https://docs.rs/tokio
 //! [async-std]: https://docs.rs/async-std
+
+#![doc(
+    html_logo_url = "https://aya-rs.dev/assets/images/crabby.svg",
+    html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
+)]
 #![deny(clippy::all, missing_docs)]
 #![allow(clippy::missing_safety_doc, clippy::len_without_is_empty)]
 
