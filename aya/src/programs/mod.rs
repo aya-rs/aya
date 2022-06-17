@@ -214,10 +214,14 @@ pub enum ProgramError {
     },
 }
 
-/// Allows the Fd of a loaded [`Program`] to be retrieved
-pub trait ProgramFd {
-    /// Returns the [`RawFd`] of the program if it has been loaded, or `None`
-    fn fd(&self) -> Option<RawFd>;
+/// A [`Program`] file descriptor.
+#[derive(Copy, Clone)]
+pub struct ProgramFd(RawFd);
+
+impl AsRawFd for ProgramFd {
+    fn as_raw_fd(&self) -> RawFd {
+        self.0
+    }
 }
 
 /// eBPF program type.
@@ -357,6 +361,38 @@ impl Program {
             Program::CgroupSockAddr(p) => p.unload(),
             Program::SkLookup(p) => p.unload(),
             Program::CgroupSock(p) => p.unload(),
+        }
+    }
+
+    /// Returns the file descriptor of a program.
+    ///
+    /// Can be used to add a program to a [`crate::maps::ProgramArray`] or attach an [`Extension`] program.
+    /// Can be converted to [`RawFd`] using [`AsRawFd`].
+    pub fn fd(&self) -> Option<ProgramFd> {
+        match self {
+            Program::KProbe(p) => p.fd(),
+            Program::UProbe(p) => p.fd(),
+            Program::TracePoint(p) => p.fd(),
+            Program::SocketFilter(p) => p.fd(),
+            Program::Xdp(p) => p.fd(),
+            Program::SkMsg(p) => p.fd(),
+            Program::SkSkb(p) => p.fd(),
+            Program::SockOps(p) => p.fd(),
+            Program::SchedClassifier(p) => p.fd(),
+            Program::CgroupSkb(p) => p.fd(),
+            Program::CgroupSysctl(p) => p.fd(),
+            Program::CgroupSockopt(p) => p.fd(),
+            Program::LircMode2(p) => p.fd(),
+            Program::PerfEvent(p) => p.fd(),
+            Program::RawTracePoint(p) => p.fd(),
+            Program::Lsm(p) => p.fd(),
+            Program::BtfTracePoint(p) => p.fd(),
+            Program::FEntry(p) => p.fd(),
+            Program::FExit(p) => p.fd(),
+            Program::Extension(p) => p.fd(),
+            Program::CgroupSockAddr(p) => p.fd(),
+            Program::SkLookup(p) => p.fd(),
+            Program::CgroupSock(p) => p.fd(),
         }
     }
 }
@@ -555,42 +591,6 @@ pub(crate) fn query<T: AsRawFd>(
     }
 }
 
-impl ProgramFd for Program {
-    fn fd(&self) -> Option<RawFd> {
-        match self {
-            Program::KProbe(p) => p.data.fd,
-            Program::UProbe(p) => p.data.fd,
-            Program::TracePoint(p) => p.data.fd,
-            Program::SocketFilter(p) => p.data.fd,
-            Program::Xdp(p) => p.data.fd,
-            Program::SkMsg(p) => p.data.fd,
-            Program::SkSkb(p) => p.data.fd,
-            Program::SockOps(p) => p.data.fd,
-            Program::SchedClassifier(p) => p.data.fd,
-            Program::CgroupSkb(p) => p.data.fd,
-            Program::CgroupSysctl(p) => p.data.fd,
-            Program::CgroupSockopt(p) => p.data.fd,
-            Program::LircMode2(p) => p.data.fd,
-            Program::PerfEvent(p) => p.data.fd,
-            Program::RawTracePoint(p) => p.data.fd,
-            Program::Lsm(p) => p.data.fd,
-            Program::BtfTracePoint(p) => p.data.fd,
-            Program::FEntry(p) => p.data.fd,
-            Program::FExit(p) => p.data.fd,
-            Program::Extension(p) => p.data.fd,
-            Program::CgroupSockAddr(p) => p.data.fd,
-            Program::SkLookup(p) => p.data.fd,
-            Program::CgroupSock(p) => p.data.fd,
-        }
-    }
-}
-
-impl<'a, P: ProgramFd> ProgramFd for &'a P {
-    fn fd(&self) -> Option<RawFd> {
-        (*self).fd()
-    }
-}
-
 macro_rules! impl_program_unload {
     ($($struct_name:ident),+ $(,)?) => {
         $(
@@ -634,25 +634,20 @@ impl_program_unload!(
     CgroupSock,
 );
 
-macro_rules! impl_program_fd {
+macro_rules! impl_fd {
     ($($struct_name:ident),+ $(,)?) => {
         $(
-            impl ProgramFd for $struct_name {
-                fn fd(&self) -> Option<RawFd> {
-                    self.data.fd
-                }
-            }
-
-            impl ProgramFd for &mut $struct_name {
-                fn fd(&self) -> Option<RawFd> {
-                    self.data.fd
+            impl $struct_name {
+                /// Returns the file descriptor of this Program.
+                pub fn fd(&self) -> Option<ProgramFd> {
+                    self.data.fd.map(|fd| ProgramFd(fd))
                 }
             }
         )+
     }
 }
 
-impl_program_fd!(
+impl_fd!(
     KProbe,
     UProbe,
     TracePoint,
@@ -674,6 +669,7 @@ impl_program_fd!(
     Extension,
     CgroupSockAddr,
     SkLookup,
+    SockOps,
     CgroupSock,
 );
 
