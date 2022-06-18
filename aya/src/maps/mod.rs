@@ -33,8 +33,15 @@
 //! versa. Because of that, all map values must be plain old data and therefore
 //! implement the [Pod] trait.
 use std::{
-    convert::TryFrom, ffi::CString, io, marker::PhantomData, mem, ops::Deref, os::unix::io::RawFd,
-    path::Path, ptr,
+    convert::TryFrom,
+    ffi::CString,
+    io,
+    marker::PhantomData,
+    mem,
+    ops::Deref,
+    os::unix::{io::RawFd, prelude::AsRawFd},
+    path::Path,
+    ptr,
 };
 use thiserror::Error;
 
@@ -206,6 +213,15 @@ pub enum MapError {
     },
 }
 
+/// A map file descriptor.
+pub struct MapFd(RawFd);
+
+impl AsRawFd for MapFd {
+    fn as_raw_fd(&self) -> RawFd {
+        self.0
+    }
+}
+
 /// A generic handle to a BPF map.
 ///
 /// You should never need to use this unless you're implementing a new map type.
@@ -294,6 +310,13 @@ impl Map {
         })?;
         self.pinned = true;
         Ok(())
+    }
+
+    /// Returns the file descriptor of the map.
+    ///
+    /// Can be converted to [`RawFd`] using [`AsRawFd`].
+    pub fn fd(&self) -> Option<MapFd> {
+        self.fd.map(MapFd)
     }
 }
 
