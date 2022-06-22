@@ -78,7 +78,7 @@ impl<K, V> LpmTrie<K, V> {
                 flags,
             )
         };
-        (ret >= 0).then(|| ()).ok_or(ret)
+        (ret == 0).then(|| ()).ok_or(ret)
     }
 
     #[inline]
@@ -86,7 +86,7 @@ impl<K, V> LpmTrie<K, V> {
         let ret = unsafe {
             bpf_map_delete_elem(self.def.get() as *mut _, key as *const _ as *const c_void)
         };
-        (ret >= 0).then(|| ()).ok_or(ret)
+        (ret == 0).then(|| ()).ok_or(ret)
     }
 }
 

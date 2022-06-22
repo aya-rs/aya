@@ -48,11 +48,11 @@ pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
         mem::size_of::<T>() as u32,
         src as *const c_void,
     );
-    if ret < 0 {
-        return Err(ret);
+    if ret == 0 {
+        Ok(v.assume_init())
+    } else {
+        Err(ret)
     }
-
-    Ok(v.assume_init())
 }
 
 /// Read bytes from the pointer `src` into the provided destination buffer.
@@ -84,11 +84,11 @@ pub unsafe fn bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c
         dst.len() as u32,
         src as *const c_void,
     );
-    if ret < 0 {
-        return Err(ret);
+    if ret == 0 {
+        Ok(())
+    } else {
+        Err(ret)
     }
-
-    Ok(())
 }
 
 /// Read bytes stored at the _user space_ pointer `src` and store them as a `T`.
@@ -121,11 +121,11 @@ pub unsafe fn bpf_probe_read_user<T>(src: *const T) -> Result<T, c_long> {
         mem::size_of::<T>() as u32,
         src as *const c_void,
     );
-    if ret < 0 {
-        return Err(ret);
+    if ret == 0 {
+        Ok(v.assume_init())
+    } else {
+        Err(ret)
     }
-
-    Ok(v.assume_init())
 }
 
 /// Read bytes from the _user space_ pointer `src` into the provided destination
@@ -155,11 +155,11 @@ pub unsafe fn bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> Result<
         dst.len() as u32,
         src as *const c_void,
     );
-    if ret < 0 {
-        return Err(ret);
+    if ret == 0 {
+        Ok(())
+    } else {
+        Err(ret)
     }
-
-    Ok(())
 }
 
 /// Read bytes stored at the _kernel space_ pointer `src` and store them as a `T`.
@@ -192,11 +192,11 @@ pub unsafe fn bpf_probe_read_kernel<T>(src: *const T) -> Result<T, c_long> {
         mem::size_of::<T>() as u32,
         src as *const c_void,
     );
-    if ret < 0 {
-        return Err(ret);
+    if ret == 0 {
+        Ok(v.assume_init())
+    } else {
+        Err(ret)
     }
-
-    Ok(v.assume_init())
 }
 
 /// Read bytes from the _kernel space_ pointer `src` into the provided destination
@@ -226,11 +226,11 @@ pub unsafe fn bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> Resul
         dst.len() as u32,
         src as *const c_void,
     );
-    if ret < 0 {
-        return Err(ret);
+    if ret == 0 {
+        Ok(())
+    } else {
+        Err(ret)
     }
-
-    Ok(())
 }
 
 /// Read a null-terminated string stored at `src` into `dest`.
@@ -397,11 +397,11 @@ pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), 
         src as *const c_void,
         mem::size_of::<T>() as u32,
     );
-    if ret < 0 {
-        return Err(ret);
+    if ret == 0 {
+        Ok(())
+    } else {
+        Err(ret)
     }
-
-    Ok(())
 }
 
 /// Read the `comm` field associated with the current task struct
