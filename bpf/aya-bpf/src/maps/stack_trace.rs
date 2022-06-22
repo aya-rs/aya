@@ -47,10 +47,10 @@ impl StackTrace {
 
     pub unsafe fn get_stackid<C: BpfContext>(&self, ctx: &C, flags: u64) -> Result<i64, i64> {
         let ret = bpf_get_stackid(ctx.as_ptr(), self.def.get() as *mut _, flags);
-        if ret < 0 {
-            Err(ret)
+        if ret == 0 {
+            Ok(())
         } else {
-            Ok(ret)
+            Err(ret)
         }
     }
 }

@@ -27,10 +27,10 @@ impl SockOpsContext {
 
     pub fn set_cb_flags(&self, flags: i32) -> Result<(), i64> {
         let ret = unsafe { bpf_sock_ops_cb_flags_set(self.ops, flags) };
-        if ret < 0 {
-            Err(ret)
-        } else {
+        if ret == 0 {
             Ok(())
+        } else {
+            Err(ret)
         }
     }
 

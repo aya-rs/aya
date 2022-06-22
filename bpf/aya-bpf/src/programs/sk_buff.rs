@@ -57,11 +57,11 @@ impl SkBuffContext {
                 &mut data as *mut _ as *mut _,
                 mem::size_of::<T>() as u32,
             );
-            if ret < 0 {
-                return Err(ret);
+            if ret == 0 {
+                Ok(data.assume_init())
+            } else {
+                Err(ret)
             }
-
-            Ok(data.assume_init())
         }
     }
 
@@ -75,12 +75,12 @@ impl SkBuffContext {
                 mem::size_of::<T>() as u32,
                 flags,
             );
-            if ret < 0 {
-                return Err(ret);
+            if ret == 0 {
+                Ok(())
+            } else {
+                Err(ret)
             }
         }
-
-        Ok(())
     }
 
     #[inline]
@@ -93,12 +93,12 @@ impl SkBuffContext {
     ) -> Result<(), c_long> {
         unsafe {
             let ret = bpf_l3_csum_replace(self.skb as *mut _, offset as u32, from, to, size);
-            if ret < 0 {
-                return Err(ret);
+            if ret == 0 {
+                Ok(())
+            } else {
+                Err(ret)
             }
         }
-
-        Ok(())
     }
 
     #[inline]
@@ -111,41 +111,41 @@ impl SkBuffContext {
     ) -> Result<(), c_long> {
         unsafe {
             let ret = bpf_l4_csum_replace(self.skb as *mut _, offset as u32, from, to, flags);
-            if ret < 0 {
-                return Err(ret);
+            if ret == 0 {
+                Ok(())
+            } else {
+                Err(ret)
             }
         }
-
-        Ok(())
     }
 
     #[inline]
     pub fn adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> Result<(), c_long> {
         let ret = unsafe { bpf_skb_adjust_room(self.as_ptr() as *mut _, len_diff, mode, flags) };
-        if ret < 0 {
-            return Err(ret);
+        if ret == 0 {
+            Ok(())
+        } else {
+            Err(ret)
         }
-
-        Ok(())
     }
 
     #[inline]
     pub fn clone_redirect(&self, if_index: u32, flags: u64) -> Result<(), c_long> {
         let ret = unsafe { bpf_clone_redirect(self.as_ptr() as *mut _, if_index, flags) };
-        if ret < 0 {
-            Err(ret)
-        } else {
+        if ret == 0 {
             Ok(())
+        } else {
+            Err(ret)
         }
     }
 
     #[inline]
     pub fn change_type(&self, ty: u32) -> Result<(), c_long> {
         let ret = unsafe { bpf_skb_change_type(self.as_ptr() as *mut _, ty) };
-        if ret < 0 {
-            Err(ret)
-        } else {
+        if ret == 0 {
             Ok(())
+        } else {
+            Err(ret)
         }
     }
 }

@@ -78,7 +78,7 @@ impl<K, V> LpmTrie<K, V> {
                 flags,
             )
         };
-        (ret >= 0).then(|| ()).ok_or(ret)
+        (ret == 0).then(|| ()).ok_or(ret)
     }
 
     #[inline]

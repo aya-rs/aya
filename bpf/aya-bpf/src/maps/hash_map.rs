@@ -348,7 +348,7 @@ fn insert<K, V>(def: *mut bpf_map_def, key: &K, value: &V, flags: u64) -> Result
             flags,
         )
     };
-    (ret >= 0).then(|| ()).ok_or(ret)
+    (ret == 0).then(|| ()).ok_or(ret)
 }
 
 #[inline]
