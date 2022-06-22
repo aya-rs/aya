@@ -11,10 +11,12 @@ impl XdpContext {
         XdpContext { ctx }
     }
 
+    #[inline]
     pub fn data(&self) -> usize {
         unsafe { (*self.ctx).data as usize }
     }
 
+    #[inline]
     pub fn data_end(&self) -> usize {
         unsafe { (*self.ctx).data_end as usize }
     }
