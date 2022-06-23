@@ -103,7 +103,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
         self.check_bounds(index)?;
         let prog_fd = program.fd().ok_or(MapError::ProgramNotLoaded)?;
 
-        bpf_map_update_elem(fd, &index, &prog_fd, flags).map_err(|(code, io_error)| {
+        bpf_map_update_elem(fd, Some(&index), &prog_fd, flags).map_err(|(code, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 code,

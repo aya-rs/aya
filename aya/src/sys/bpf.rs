@@ -223,12 +223,19 @@ pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
     }
 }
 
-pub(crate) fn bpf_map_update_elem<K, V>(fd: RawFd, key: &K, value: &V, flags: u64) -> SysResult {
+pub(crate) fn bpf_map_update_elem<K, V>(
+    fd: RawFd,
+    key: Option<&K>,
+    value: &V,
+    flags: u64,
+) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd as u32;
-    u.key = key as *const _ as u64;
+    if let Some(key) = key {
+        u.key = key as *const _ as u64;
+    }
     u.__bindgen_anon_1.value = value as *const _ as u64;
     u.flags = flags;
 

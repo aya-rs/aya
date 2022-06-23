@@ -90,7 +90,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> SockMap<T> {
     pub fn set<I: AsRawFd>(&mut self, index: u32, socket: &I, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(index)?;
-        bpf_map_update_elem(fd, &index, &socket.as_raw_fd(), flags).map_err(
+        bpf_map_update_elem(fd, Some(&index), &socket.as_raw_fd(), flags).map_err(
             |(code, io_error)| MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 code,

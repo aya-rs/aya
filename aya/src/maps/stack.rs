@@ -99,7 +99,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Stack<T, V> {
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
     pub fn push(&mut self, value: V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
-        bpf_map_update_elem(fd, &0, &value, flags).map_err(|(code, io_error)| {
+        bpf_map_update_elem(fd, None::<&u32>, &value, flags).map_err(|(code, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 code,
