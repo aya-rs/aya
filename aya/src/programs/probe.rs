@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     programs::{
-        kprobe::KProbeError, perf_attach, perf_attach::PerfLink, perf_attach_debugfs,
+        kprobe::KProbeError, perf_attach, perf_attach::PerfLinkInner, perf_attach_debugfs,
         trace_point::read_sys_fs_trace_point_id, uprobe::UProbeError, Link, ProgramData,
         ProgramError,
     },
@@ -36,7 +36,7 @@ impl ProbeKind {
     }
 }
 
-pub(crate) fn attach<T: Link + From<PerfLink>>(
+pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     program_data: &mut ProgramData<T>,
     kind: ProbeKind,
     fn_name: &str,
@@ -49,12 +49,19 @@ pub(crate) fn attach<T: Link + From<PerfLink>>(
     if k_ver < (4, 17, 0) {
         let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
 
-        return perf_attach_debugfs(program_data, fd, kind, event_alias);
+        let link = T::from(perf_attach_debugfs(
+            program_data.fd_or_err()?,
+            fd,
+            kind,
+            event_alias,
+        )?);
+        return program_data.links.insert(link);
     };
 
-    let fd = create_as_probe(kind, fn_name, offset, pid)?;
+    let fd = create_as_probe(kind, fn_name, offset, pid, None)?;
 
-    perf_attach(program_data, fd)
+    let link = T::from(perf_attach(program_data.fd_or_err()?, fd, None)?);
+    program_data.links.insert(link)
 }
 
 pub(crate) fn detach_debug_fs(kind: ProbeKind, event_alias: &str) -> Result<(), ProgramError> {
@@ -70,11 +77,12 @@ pub(crate) fn detach_debug_fs(kind: ProbeKind, event_alias: &str) -> Result<(), 
     Ok(())
 }
 
-fn create_as_probe(
+pub(crate) fn create_as_probe(
     kind: ProbeKind,
     fn_name: &str,
     offset: u64,
     pid: Option<pid_t>,
+    ref_cnt_offset: Option<u64>,
 ) -> Result<i32, ProgramError> {
     use ProbeKind::*;
 
@@ -97,7 +105,7 @@ fn create_as_probe(
         _ => None,
     };
 
-    let fd = perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid).map_err(
+    let fd = perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid, ref_cnt_offset).map_err(
         |(_code, io_error)| ProgramError::SyscallError {
             call: "perf_event_open".to_owned(),
             io_error,

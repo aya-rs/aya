@@ -60,6 +60,7 @@ pub mod tc;
 pub mod tp_btf;
 pub mod trace_point;
 pub mod uprobe;
+pub mod usdt;
 mod utils;
 pub mod xdp;
 
@@ -98,6 +99,7 @@ pub use tc::{SchedClassifier, TcAttachType, TcError};
 pub use tp_btf::BtfTracePoint;
 pub use trace_point::{TracePoint, TracePointError};
 pub use uprobe::{UProbe, UProbeError};
+pub use usdt::{Usdt, UsdtError};
 pub use xdp::{Xdp, XdpError, XdpFlags};
 
 use crate::{
@@ -198,6 +200,10 @@ pub enum ProgramError {
     #[error(transparent)]
     Btf(#[from] BtfError),
 
+    /// An error occurred while working with a Usdt program.
+    #[error(transparent)]
+    Usdt(#[from] UsdtError),
+
     /// The program is not attached.
     #[error("the program name `{name}` is invalid")]
     InvalidName {
@@ -265,6 +271,8 @@ pub enum Program {
     SkLookup(SkLookup),
     /// A [`CgroupSock`] program
     CgroupSock(CgroupSock),
+    /// A [`Usdt`] program
+    Usdt(Usdt),
 }
 
 impl Program {
@@ -295,6 +303,7 @@ impl Program {
             Program::CgroupSockAddr(_) => BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
             Program::SkLookup(_) => BPF_PROG_TYPE_SK_LOOKUP,
             Program::CgroupSock(_) => BPF_PROG_TYPE_CGROUP_SOCK,
+            Program::Usdt(_) => BPF_PROG_TYPE_KPROBE,
         }
     }
 
@@ -324,6 +333,7 @@ impl Program {
             Program::CgroupSockAddr(p) => p.pin(path),
             Program::SkLookup(p) => p.pin(path),
             Program::CgroupSock(p) => p.pin(path),
+            Program::Usdt(p) => p.pin(path),
         }
     }
 
@@ -353,6 +363,7 @@ impl Program {
             Program::CgroupSockAddr(p) => p.unload(),
             Program::SkLookup(p) => p.unload(),
             Program::CgroupSock(p) => p.unload(),
+            Program::Usdt(p) => p.unload(),
         }
     }
 
@@ -385,6 +396,7 @@ impl Program {
             Program::CgroupSockAddr(p) => p.fd(),
             Program::SkLookup(p) => p.fd(),
             Program::CgroupSock(p) => p.fd(),
+            Program::Usdt(p) => p.fd(),
         }
     }
 }
@@ -637,6 +649,7 @@ impl_program_unload!(
     SkLookup,
     SockOps,
     CgroupSock,
+    Usdt,
 );
 
 macro_rules! impl_fd {
@@ -676,6 +689,7 @@ impl_fd!(
     SkLookup,
     SockOps,
     CgroupSock,
+    Usdt,
 );
 
 macro_rules! impl_program_pin{
@@ -720,6 +734,7 @@ impl_program_pin!(
     SkLookup,
     SockOps,
     CgroupSock,
+    Usdt,
 );
 
 macro_rules! impl_try_from_program {
@@ -774,6 +789,7 @@ impl_try_from_program!(
     CgroupSockAddr,
     SkLookup,
     CgroupSock,
+    Usdt,
 );
 
 /// Provides information about a loaded program, like name, id and statistics

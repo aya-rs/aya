@@ -109,12 +109,11 @@ impl Xdp {
 
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 9, 0) {
-            let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, None, flags.bits).map_err(
-                |(_, io_error)| ProgramError::SyscallError {
+            let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, None, None, flags.bits)
+                .map_err(|(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_link_create".to_owned(),
                     io_error,
-                },
-            )? as RawFd;
+                })? as RawFd;
             self.data
                 .links
                 .insert(XdpLink(XdpLinkInner::FdLink(FdLink::new(link_fd))))

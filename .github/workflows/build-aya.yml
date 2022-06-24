@@ -42,7 +42,7 @@ jobs:
         env:
           RUST_BACKTRACE: full
         run: |
-          cross test --verbose --target ${{matrix.arch}}
+          cross test --verbose --target ${{matrix.arch}} --all-features
 
   test:
     runs-on: ubuntu-20.04

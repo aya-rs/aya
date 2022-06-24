@@ -293,6 +293,9 @@ pub enum ProgramSection {
         name: String,
         attach_type: CgroupSockAttachType,
     },
+    Usdt {
+        name: String,
+    },
 }
 
 impl ProgramSection {
@@ -326,6 +329,7 @@ impl ProgramSection {
             ProgramSection::Extension { name } => name,
             ProgramSection::SkLookup { name } => name,
             ProgramSection::CgroupSock { name, .. } => name,
+            ProgramSection::Usdt { name } => name,
         }
     }
 }
@@ -349,6 +353,7 @@ impl FromStr for ProgramSection {
             "kprobe" => KProbe { name },
             "kretprobe" => KRetProbe { name },
             "uprobe" => UProbe { name },
+            "usdt" => Usdt { name },
             "uretprobe" => URetProbe { name },
             "xdp" => Xdp { name },
             "tp_btf" => BtfTracePoint { name },
@@ -1684,7 +1689,7 @@ mod tests {
         buf.extend(&map_data);
         buf.extend(&map_data);
         // throw in some padding
-        buf.extend(&[0, 0, 0, 0]);
+        buf.extend([0, 0, 0, 0]);
         buf.extend(&map_data);
         assert_matches!(
             obj.parse_section(fake_section(BpfSectionKind::Maps, "maps", buf.as_slice(),)),

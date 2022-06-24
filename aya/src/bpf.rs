@@ -25,7 +25,7 @@ use crate::{
         BtfTracePoint, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr, CgroupSockopt,
         CgroupSysctl, Extension, FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent, ProbeKind,
         Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb,
-        SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Usdt, Xdp,
     },
     sys::{
         bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_cookie_supported,
@@ -643,6 +643,9 @@ impl<'a> BpfLoader<'a> {
                                 attach_type: *attach_type,
                             })
                         }
+                        ProgramSection::Usdt { .. } => Program::Usdt(Usdt {
+                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                        }),
                     }
                 };
                 (name, program)
@@ -934,6 +937,11 @@ pub enum BpfError {
     #[error("program error")]
     /// A program error
     ProgramError(#[from] ProgramError),
+
+    /// Required map not found
+    #[error("required map {0} not found. did you enable the usdt feature (aya) or include usdt.bpf.h (libbpf)?")]
+    /// A program error
+    MissingMap(String),
 }
 
 fn load_btf(raw_btf: Vec<u8>) -> Result<RawFd, BtfError> {

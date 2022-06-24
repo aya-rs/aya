@@ -66,12 +66,11 @@ impl CgroupSysctl {
 
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL, None, 0).map_err(
-                |(_, io_error)| ProgramError::SyscallError {
+            let link_fd = bpf_link_create(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL, None, None, 0)
+                .map_err(|(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_link_create".to_owned(),
                     io_error,
-                },
-            )? as RawFd;
+                })? as RawFd;
             self.data
                 .links
                 .insert(CgroupSysctlLink(CgroupSysctlLinkInner::Fd(FdLink::new(
