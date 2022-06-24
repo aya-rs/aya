@@ -3,13 +3,16 @@ use libc::pid_t;
 use object::{Object, ObjectSection, ObjectSymbol};
 use std::{
     borrow::Cow,
+    collections::HashMap,
     error::Error,
     ffi::CStr,
     fs,
     io::{self, BufRead, Cursor, Read},
     mem,
+    num::ParseIntError,
     os::{fd::AsFd as _, raw::c_char},
     path::{Path, PathBuf},
+    str::FromStr,
     sync::Arc,
 };
 use thiserror::Error;
@@ -136,12 +139,17 @@ fn resolve_attach_path<T: AsRef<Path>>(
     };
     let target_str = target.to_str().ok_or_else(invalid_target)?;
     pid.and_then(|pid| {
-        find_lib_in_proc_maps(pid, target_str)
-            .map_err(|io_error| UProbeError::FileError {
-                filename: format!("/proc/{pid}/maps"),
-                io_error,
+        ProcMap::new(pid)
+            .map_err(|source| UProbeError::ProcMap { pid, source })
+            .and_then(|proc_map_libs| {
+                proc_map_libs
+                    .find_library_path_by_name(target_str)
+                    .map_err(|io_error| UProbeError::FileError {
+                        filename: format!("/proc/{pid}/maps"),
+                        io_error,
+                    })
+                    .map(|v| v.map(|v| Cow::Owned(v.to_owned())))
             })
-            .map(|v| v.map(Cow::Owned))
             .transpose()
     })
     .or_else(|| target.is_absolute().then(|| Ok(Cow::Borrowed(target_str))))
@@ -216,7 +224,7 @@ pub enum UProbeError {
     /// There was an error parsing `/etc/ld.so.cache`.
     #[error("error reading `{}` file", LD_SO_CACHE_FILE)]
     InvalidLdSoCache {
-        /// the original [`io::Error`]
+        /// the original [`io::Error`].
         #[source]
         io_error: Arc<io::Error>,
     },
@@ -224,16 +232,16 @@ pub enum UProbeError {
     /// The target program could not be found.
     #[error("could not resolve uprobe target `{path}`")]
     InvalidTarget {
-        /// path to target
+        /// path to target.
         path: PathBuf,
     },
 
     /// There was an error resolving the target symbol.
     #[error("error resolving symbol")]
     SymbolError {
-        /// symbol name
+        /// symbol name.
         symbol: String,
-        /// the original error
+        /// the original error.
         #[source]
         error: Box<dyn Error + Send + Sync>,
     },
@@ -241,49 +249,23 @@ pub enum UProbeError {
     /// There was an error accessing `filename`.
     #[error("`{filename}`")]
     FileError {
-        /// The file name
+        /// The file name.
         filename: String,
-        /// The [`io::Error`] returned from the file operation
+        /// The [`io::Error`] returned from the file operation.
         #[source]
         io_error: io::Error,
     },
+
+    /// There was en error fetching the memory map for `pid`.
+    #[error("error fetching libs for {pid}")]
+    ProcMap {
+        /// The pid.
+        pid: i32,
+        /// The [`ProcMapError`] that caused the error.
+        #[source]
+        source: ProcMapError,
+    },
 }
-
-fn proc_maps_libs(pid: pid_t) -> Result<Vec<(String, String)>, io::Error> {
-    let maps_file = format!("/proc/{pid}/maps");
-    let data = fs::read_to_string(maps_file)?;
-
-    Ok(data
-        .lines()
-        .filter_map(|line| {
-            let line = line.split_whitespace().last()?;
-            if line.starts_with('/') {
-                let path = PathBuf::from(line);
-                let key = path.file_name().unwrap().to_string_lossy().into_owned();
-                Some((key, path.to_string_lossy().to_string()))
-            } else {
-                None
-            }
-        })
-        .collect())
-}
-
-fn find_lib_in_proc_maps(pid: pid_t, lib: &str) -> Result<Option<String>, io::Error> {
-    let libs = proc_maps_libs(pid)?;
-
-    let ret = if lib.contains(".so") {
-        libs.into_iter().find(|(k, _)| k.as_str().starts_with(lib))
-    } else {
-        libs.into_iter().find(|(k, _)| {
-            k.strip_prefix(lib)
-                .map(|k| k.starts_with(".so") || k.starts_with('-'))
-                .unwrap_or_default()
-        })
-    };
-
-    Ok(ret.map(|(_, v)| v))
-}
-
 #[derive(Debug)]
 pub(crate) struct CacheEntry {
     key: String,
@@ -448,5 +430,309 @@ fn resolve_symbol(path: &str, symbol: &str) -> Result<u64, ResolveSymbolError> {
             )
         })?;
         Ok(sym.address() - section.address() + offset)
+    }
+}
+
+/// Error reading from /proc/pid/maps.
+#[derive(Debug, Error)]
+pub enum ProcMapError {
+    /// Unable to read /proc/pid/maps.
+    #[error(transparent)]
+    Read(io::Error),
+
+    /// Error parsing an integer.
+    #[error(transparent)]
+    ParseInt(#[from] ParseIntError),
+
+    /// Error parsing a line of /proc/pid/maps.
+    #[error("proc map entry parse error")]
+    Parse,
+}
+
+/// The memory maps of a process.
+///
+/// This is read from /proc/`pid`/maps.
+///
+/// The information here may be used to resolve addresses to paths.
+pub struct ProcMap {
+    entries: Vec<ProcMapEntry>,
+    libraries: HashMap<String, String>,
+}
+
+impl ProcMap {
+    /// Create a new [`ProcMap`] from a given pid.
+    pub fn new(pid: pid_t) -> Result<Self, ProcMapError> {
+        let maps_file = format!("/proc/{}/maps", pid);
+        let data = fs::read_to_string(maps_file).map_err(ProcMapError::Read)?;
+        Self::from_str(&data)
+    }
+
+    // Find the full path of a library by its name.
+    //
+    // This isn't part of the public API since it's really only useful for
+    // attaching uprobes.
+    fn find_library_path_by_name(&self, lib: &str) -> Result<Option<&str>, io::Error> {
+        let ret = if lib.contains(".so") {
+            self.libraries
+                .iter()
+                .find(|(k, _)| k.as_str().starts_with(lib))
+        } else {
+            self.libraries.iter().find(|(k, _)| {
+                k.strip_prefix(lib)
+                    .map(|k| k.starts_with(".so") || k.starts_with('-'))
+                    .unwrap_or_default()
+            })
+        };
+
+        Ok(ret.map(|(_, v)| v.as_str()))
+    }
+
+    /// Iterate parsed memory map entries for the process.
+    ///
+    /// This is useful to resolve instruction pointers to a the shared object
+    /// they belong to.
+    pub fn entries(&self) -> impl Iterator<Item = &ProcMapEntry> {
+        self.entries.iter()
+    }
+}
+
+impl FromStr for ProcMap {
+    type Err = ProcMapError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut entries = vec![];
+        let mut libraries = HashMap::new();
+        for line in s.lines() {
+            let entry = ProcMapEntry::from_str(line)?;
+            if let Some(path) = &entry.path {
+                let p = PathBuf::from(path);
+                let filename = p.file_name().unwrap().to_string_lossy().into_owned();
+                let library_path = p.to_string_lossy().into_owned();
+                libraries.entry(filename).or_insert(library_path);
+            }
+            entries.push(entry);
+        }
+        Ok(ProcMap { entries, libraries })
+    }
+}
+
+/// A entry that has been parsed from /proc/`pid`/maps.
+///
+/// This contains information about a mapped portion of memory
+/// for the process, ranging from address to address_end.
+#[derive(Debug)]
+pub struct ProcMapEntry {
+    address: u64,
+    address_end: u64,
+    perms: String,
+    offset: u64,
+    dev: String,
+    inode: u32,
+    path: Option<String>,
+}
+
+impl ProcMapEntry {
+    /// The start address of the mapped memory.
+    pub fn address(&self) -> u64 {
+        self.address
+    }
+
+    /// The end address of the mapped memory
+    pub fn address_end(&self) -> u64 {
+        self.address_end
+    }
+
+    /// The permissions of the mapped memory.
+    pub fn perms(&self) -> &str {
+        &self.perms
+    }
+
+    /// The offset of the mapped memory.
+    pub fn offset(&self) -> u64 {
+        self.offset
+    }
+
+    /// The device of the mapped memory.
+    pub fn dev(&self) -> &str {
+        &self.dev
+    }
+
+    /// The inode of the mapped memory.
+    pub fn inode(&self) -> u32 {
+        self.inode
+    }
+
+    /// The destination path of the mapped memory.
+    pub fn path(&self) -> Option<&str> {
+        self.path.as_deref()
+    }
+}
+
+impl FromStr for ProcMapEntry {
+    type Err = ProcMapError;
+
+    fn from_str(line: &str) -> Result<Self, Self::Err> {
+        let mut parts = line.split_whitespace();
+        let mut next = || parts.next().ok_or(ProcMapError::Parse);
+        let (address, address_end) = next()?
+            .split_once('-')
+            .ok_or(ProcMapError::Parse)
+            .and_then(|(start, end)| {
+                let start = u64::from_str_radix(start, 16)?;
+                let end = u64::from_str_radix(end, 16)?;
+                Ok((start, end))
+            })?;
+        let perms = next()?;
+        let offset = u64::from_str_radix(next()?, 16)?;
+        let dev = next()?;
+        let inode = next()?.parse().map_err(ProcMapError::ParseInt)?;
+        let path = parts
+            .next()
+            .and_then(|s| s.starts_with('/').then(|| s.to_string()));
+        Ok(ProcMapEntry {
+            address,
+            address_end,
+            perms: perms.to_string(),
+            offset,
+            dev: dev.to_string(),
+            inode,
+            path,
+        })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use assert_matches::assert_matches;
+
+    #[test]
+    fn test_parse_proc_map_entry_shared_lib() {
+        let s = "7ffd6fbea000-7ffd6fbec000 r-xp 00000000 00:00 0                          [vdso]";
+        let proc_map = ProcMapEntry::from_str(s).unwrap();
+        assert_eq!(proc_map.address, 0x7ffd6fbea000);
+        assert_eq!(proc_map.address_end, 0x7ffd6fbec000);
+        assert_eq!(proc_map.perms, "r-xp");
+        assert_eq!(proc_map.offset, 0x0);
+        assert_eq!(proc_map.dev, "00:00");
+        assert_eq!(proc_map.inode, 0);
+        assert_eq!(proc_map.path, None);
+    }
+
+    #[test]
+    fn test_parse_proc_map_entry_absolute_path() {
+        let s = "7f1bca83a000-7f1bca83c000 rw-p 00036000 fd:01 2895508                    /usr/lib64/ld-linux-x86-64.so.2";
+        let proc_map = ProcMapEntry::from_str(s).unwrap();
+        assert_eq!(proc_map.address, 0x7f1bca83a000);
+        assert_eq!(proc_map.address_end, 0x7f1bca83c000);
+        assert_eq!(proc_map.perms, "rw-p");
+        assert_eq!(proc_map.offset, 0x00036000);
+        assert_eq!(proc_map.dev, "fd:01");
+        assert_eq!(proc_map.inode, 2895508);
+        assert_eq!(
+            proc_map.path,
+            Some("/usr/lib64/ld-linux-x86-64.so.2".to_string())
+        );
+    }
+
+    #[test]
+    fn test_parse_proc_map_entry_all_zeros() {
+        let s = "7f1bca5f9000-7f1bca601000 rw-p 00000000 00:00 0";
+        let proc_map = ProcMapEntry::from_str(s).unwrap();
+        assert_eq!(proc_map.address, 0x7f1bca5f9000);
+        assert_eq!(proc_map.address_end, 0x7f1bca601000);
+        assert_eq!(proc_map.perms, "rw-p");
+        assert_eq!(proc_map.offset, 0x0);
+        assert_eq!(proc_map.dev, "00:00");
+        assert_eq!(proc_map.inode, 0);
+        assert_eq!(proc_map.path, None);
+    }
+
+    #[test]
+    fn test_parse_proc_map_entry_parse_errors() {
+        assert_matches!(
+            ProcMapEntry::from_str(
+                "zzzz-7ffd6fbea000 r-xp 00000000 00:00 0                          [vdso]"
+            ),
+            Err(ProcMapError::ParseInt(_))
+        );
+
+        assert_matches!(
+            ProcMapEntry::from_str(
+                "zzzz-7ffd6fbea000 r-xp 00000000 00:00 0                          [vdso]"
+            ),
+            Err(ProcMapError::ParseInt(_))
+        );
+
+        assert_matches!(
+            ProcMapEntry::from_str(
+                "7f1bca5f9000-7f1bca601000 r-xp zzzz 00:00 0                          [vdso]"
+            ),
+            Err(ProcMapError::ParseInt(_))
+        );
+
+        assert_matches!(
+            ProcMapEntry::from_str(
+                "7f1bca5f9000-7f1bca601000 r-xp 00000000 00:00 zzzz                          [vdso]"
+            ),
+            Err(ProcMapError::ParseInt(_))
+        );
+
+        assert_matches!(
+            ProcMapEntry::from_str(
+                "7f1bca5f90007ffd6fbea000 r-xp 00000000 00:00 0                          [vdso]"
+            ),
+            Err(ProcMapError::Parse)
+        );
+
+        assert_matches!(
+            ProcMapEntry::from_str("7f1bca5f9000-7f1bca601000 r-xp 00000000"),
+            Err(ProcMapError::Parse)
+        );
+    }
+
+    #[test]
+    fn test_proc_map_find_lib_by_name() {
+        let proc_map_libs = ProcMap::from_str(
+            r#"7fc4a9800000-7fc4a98ad000 r--p 00000000 00:24 18147308                   /usr/lib64/libcrypto.so.3.0.9"# 
+        ).unwrap();
+
+        assert_eq!(
+            proc_map_libs
+                .find_library_path_by_name("libcrypto.so.3.0.9")
+                .unwrap(),
+            Some("/usr/lib64/libcrypto.so.3.0.9")
+        );
+    }
+
+    #[test]
+    fn test_proc_map_find_lib_by_partial_name() {
+        let proc_map_libs = ProcMap::from_str(
+            r#"7fc4a9800000-7fc4a98ad000 r--p 00000000 00:24 18147308                   /usr/lib64/libcrypto.so.3.0.9"# 
+        ).unwrap();
+
+        assert_eq!(
+            proc_map_libs
+                .find_library_path_by_name("libcrypto")
+                .unwrap(),
+            Some("/usr/lib64/libcrypto.so.3.0.9")
+        );
+    }
+
+    #[test]
+    fn test_proc_map_with_multiple_lib_entries() {
+        let proc_map_libs = ProcMap::from_str(
+            r#"7f372868000-7f3722869000 r--p 00000000 00:24 18097875                   /usr/lib64/ld-linux-x86-64.so.2
+            7f3722869000-7f372288f000 r-xp 00001000 00:24 18097875                   /usr/lib64/ld-linux-x86-64.so.2
+            7f372288f000-7f3722899000 r--p 00027000 00:24 18097875                   /usr/lib64/ld-linux-x86-64.so.2
+            7f3722899000-7f372289b000 r--p 00030000 00:24 18097875                   /usr/lib64/ld-linux-x86-64.so.2
+            7f372289b000-7f372289d000 rw-p 00032000 00:24 18097875                   /usr/lib64/ld-linux-x86-64.so.2"#)
+            .unwrap();
+        assert_eq!(
+            proc_map_libs
+                .find_library_path_by_name("ld-linux-x86-64.so.2")
+                .unwrap(),
+            Some("/usr/lib64/ld-linux-x86-64.so.2")
+        );
     }
 }
