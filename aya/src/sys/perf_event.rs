@@ -67,11 +67,16 @@ pub(crate) fn perf_event_open_probe(
     name: &str,
     offset: u64,
     pid: Option<pid_t>,
+    ref_cnt_offset: Option<u64>,
 ) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     if let Some(ret_bit) = ret_bit {
         attr.config = 1 << ret_bit;
+    }
+
+    if let Some(ref_cnt_offset) = ref_cnt_offset {
+        attr.config |= ref_cnt_offset << 32;
     }
 
     let c_name = CString::new(name).unwrap();

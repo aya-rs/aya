@@ -13,11 +13,13 @@ use crate::{
     },
     programs::{
         load_program, perf_attach,
-        perf_attach::{PerfLink, PerfLinkId},
+        perf_attach::{PerfLinkIdInner, PerfLinkInner},
         OwnedLink, ProgramData, ProgramError,
     },
     sys::perf_event_open,
 };
+
+use super::links::define_link_wrapper;
 
 /// The type of perf event
 #[repr(u32)]
@@ -119,7 +121,7 @@ pub enum PerfEventScope {
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_PERF_EVENT")]
 pub struct PerfEvent {
-    pub(crate) data: ProgramData<PerfLink>,
+    pub(crate) data: ProgramData<PerfEventLink>,
 }
 
 impl PerfEvent {
@@ -141,7 +143,7 @@ impl PerfEvent {
         config: u64,
         scope: PerfEventScope,
         sample_policy: SamplePolicy,
-    ) -> Result<PerfLinkId, ProgramError> {
+    ) -> Result<PerfEventLinkId, ProgramError> {
         let (sample_period, sample_frequency) = match sample_policy {
             SamplePolicy::Period(period) => (period, None),
             SamplePolicy::Frequency(frequency) => (0, Some(frequency)),
@@ -168,13 +170,14 @@ impl PerfEvent {
             io_error,
         })? as i32;
 
-        perf_attach(&mut self.data, fd)
+        let link = perf_attach(self.data.fd_or_err()?, fd, None)?;
+        self.data.links.insert(PerfEventLink(link))
     }
 
     /// Detaches the program.
     ///
     /// See [PerfEvent::attach].
-    pub fn detach(&mut self, link_id: PerfLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: PerfEventLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
 
@@ -182,7 +185,19 @@ impl PerfEvent {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: PerfLinkId) -> Result<OwnedLink<PerfLink>, ProgramError> {
+    pub fn take_link(
+        &mut self,
+        link_id: PerfEventLinkId,
+    ) -> Result<OwnedLink<PerfEventLink>, ProgramError> {
         Ok(OwnedLink::new(self.data.take_link(link_id)?))
     }
 }
+
+define_link_wrapper!(
+    /// The link used by [PerfEvent] programs.
+    PerfEventLink,
+    /// The type returned by [PerfEvent::attach]. Can be passed to [PerfEvent::detach].
+    PerfEventLinkId,
+    PerfLinkInner,
+    PerfLinkIdInner
+);

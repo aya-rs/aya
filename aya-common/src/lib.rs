@@ -177,7 +177,10 @@ pub mod with_std {
             // This needs testing and potentially updating
             r if r.starts_with('x') => {
                 let n: usize = r.strip_prefix('x').unwrap().parse().unwrap();
-                Ok((offset_of!(pt_regs, uregs) + (mem::size_of::<std::os::raw::c_long>() * n)) as i16)
+                Ok(
+                    (offset_of!(pt_regs, uregs) + (mem::size_of::<std::os::raw::c_long>() * n))
+                        as i16,
+                )
             }
             _ => Err(ParseError::UsdtArgSpecError(format!(
                 "unknown register: {}",

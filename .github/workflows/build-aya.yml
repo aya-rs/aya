@@ -33,7 +33,7 @@ jobs:
         run: cross build --verbose
 
       - name: Run test
-        run: RUST_BACKTRACE=full cross test --verbose
+        run: RUST_BACKTRACE=full cross test --verbose --all-features
 
   test:
     runs-on: ubuntu-20.04

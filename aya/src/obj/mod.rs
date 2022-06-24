@@ -192,6 +192,9 @@ pub enum ProgramSection {
         name: String,
         attach_type: CgroupSockAttachType,
     },
+    Usdt {
+        name: String,
+    },
 }
 
 impl ProgramSection {
@@ -225,6 +228,7 @@ impl ProgramSection {
             ProgramSection::Extension { name } => name,
             ProgramSection::SkLookup { name } => name,
             ProgramSection::CgroupSock { name, .. } => name,
+            ProgramSection::Usdt { name } => name,
         }
     }
 }
@@ -248,6 +252,7 @@ impl FromStr for ProgramSection {
             "kprobe" => KProbe { name },
             "kretprobe" => KRetProbe { name },
             "uprobe" => UProbe { name },
+            "usdt" => Usdt { name },
             "uretprobe" => URetProbe { name },
             "xdp" => Xdp { name },
             "tp_btf" => BtfTracePoint { name },
