@@ -4319,6 +4319,40 @@ pub fn aya::programs::trace_point::TracePointLinkId::borrow_mut(&mut self) -> &m
 impl<T> core::convert::From<T> for aya::programs::trace_point::TracePointLinkId
 pub fn aya::programs::trace_point::TracePointLinkId::from(t: T) -> T
 pub mod aya::programs::uprobe
+pub enum aya::programs::uprobe::ProcMapError
+pub aya::programs::uprobe::ProcMapError::IoError(std::io::error::Error)
+pub aya::programs::uprobe::ProcMapError::ParseError
+impl core::error::Error for aya::programs::uprobe::ProcMapError
+pub fn aya::programs::uprobe::ProcMapError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Display for aya::programs::uprobe::ProcMapError
+pub fn aya::programs::uprobe::ProcMapError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Debug for aya::programs::uprobe::ProcMapError
+pub fn aya::programs::uprobe::ProcMapError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya::programs::uprobe::ProcMapError
+impl core::marker::Sync for aya::programs::uprobe::ProcMapError
+impl core::marker::Unpin for aya::programs::uprobe::ProcMapError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::ProcMapError
+impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::ProcMapError
+impl<E> core::any::Provider for aya::programs::uprobe::ProcMapError where E: core::error::Error + core::marker::Sized
+pub fn aya::programs::uprobe::ProcMapError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
+impl<T, U> core::convert::Into<U> for aya::programs::uprobe::ProcMapError where U: core::convert::From<T>
+pub fn aya::programs::uprobe::ProcMapError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::uprobe::ProcMapError where U: core::convert::Into<T>
+pub type aya::programs::uprobe::ProcMapError::Error = core::convert::Infallible
+pub fn aya::programs::uprobe::ProcMapError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::uprobe::ProcMapError where U: core::convert::TryFrom<T>
+pub type aya::programs::uprobe::ProcMapError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::uprobe::ProcMapError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya::programs::uprobe::ProcMapError where T: core::fmt::Display + core::marker::Sized
+pub fn aya::programs::uprobe::ProcMapError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya::programs::uprobe::ProcMapError where T: 'static + core::marker::Sized
+pub fn aya::programs::uprobe::ProcMapError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::uprobe::ProcMapError where T: core::marker::Sized
+pub fn aya::programs::uprobe::ProcMapError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::uprobe::ProcMapError where T: core::marker::Sized
+pub fn aya::programs::uprobe::ProcMapError::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::uprobe::ProcMapError
+pub fn aya::programs::uprobe::ProcMapError::from(t: T) -> T
 pub enum aya::programs::uprobe::UProbeError
 pub aya::programs::uprobe::UProbeError::FileError
 pub aya::programs::uprobe::UProbeError::FileError::filename: alloc::string::String
@@ -4327,6 +4361,9 @@ pub aya::programs::uprobe::UProbeError::InvalidLdSoCache
 pub aya::programs::uprobe::UProbeError::InvalidLdSoCache::io_error: alloc::sync::Arc<std::io::error::Error>
 pub aya::programs::uprobe::UProbeError::InvalidTarget
 pub aya::programs::uprobe::UProbeError::InvalidTarget::path: std::path::PathBuf
+pub aya::programs::uprobe::UProbeError::ProcMapError
+pub aya::programs::uprobe::UProbeError::ProcMapError::pid: i32
+pub aya::programs::uprobe::UProbeError::ProcMapError::source: aya::programs::uprobe::ProcMapError
 pub aya::programs::uprobe::UProbeError::SymbolError
 pub aya::programs::uprobe::UProbeError::SymbolError::error: alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync)>
 pub aya::programs::uprobe::UProbeError::SymbolError::symbol: alloc::string::String
@@ -4363,6 +4400,64 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::uprobe::UProbeError where 
 pub fn aya::programs::uprobe::UProbeError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::uprobe::UProbeError
 pub fn aya::programs::uprobe::UProbeError::from(t: T) -> T
+pub struct aya::programs::uprobe::ProcMap
+impl aya::programs::uprobe::ProcMap
+pub fn aya::programs::uprobe::ProcMap::entries(&self) -> impl core::iter::traits::iterator::Iterator<Item = &aya::programs::uprobe::ProcMapEntry>
+pub fn aya::programs::uprobe::ProcMap::new(pid: libc::unix::pid_t) -> core::result::Result<Self, aya::programs::uprobe::ProcMapError>
+impl core::marker::Send for aya::programs::uprobe::ProcMap
+impl core::marker::Sync for aya::programs::uprobe::ProcMap
+impl core::marker::Unpin for aya::programs::uprobe::ProcMap
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::ProcMap
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::ProcMap
+impl<T, U> core::convert::Into<U> for aya::programs::uprobe::ProcMap where U: core::convert::From<T>
+pub fn aya::programs::uprobe::ProcMap::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::uprobe::ProcMap where U: core::convert::Into<T>
+pub type aya::programs::uprobe::ProcMap::Error = core::convert::Infallible
+pub fn aya::programs::uprobe::ProcMap::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::uprobe::ProcMap where U: core::convert::TryFrom<T>
+pub type aya::programs::uprobe::ProcMap::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::uprobe::ProcMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::uprobe::ProcMap where T: 'static + core::marker::Sized
+pub fn aya::programs::uprobe::ProcMap::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::uprobe::ProcMap where T: core::marker::Sized
+pub fn aya::programs::uprobe::ProcMap::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::uprobe::ProcMap where T: core::marker::Sized
+pub fn aya::programs::uprobe::ProcMap::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::uprobe::ProcMap
+pub fn aya::programs::uprobe::ProcMap::from(t: T) -> T
+pub struct aya::programs::uprobe::ProcMapEntry
+impl aya::programs::uprobe::ProcMapEntry
+pub fn aya::programs::uprobe::ProcMapEntry::address(&self) -> u64
+pub fn aya::programs::uprobe::ProcMapEntry::address_end(&self) -> u64
+pub fn aya::programs::uprobe::ProcMapEntry::dev(&self) -> &str
+pub fn aya::programs::uprobe::ProcMapEntry::inode(&self) -> u32
+pub fn aya::programs::uprobe::ProcMapEntry::offset(&self) -> u64
+pub fn aya::programs::uprobe::ProcMapEntry::path(&self) -> core::option::Option<&str>
+pub fn aya::programs::uprobe::ProcMapEntry::perms(&self) -> &str
+impl core::str::traits::FromStr for aya::programs::uprobe::ProcMapEntry
+pub type aya::programs::uprobe::ProcMapEntry::Err = aya::programs::uprobe::ProcMapError
+pub fn aya::programs::uprobe::ProcMapEntry::from_str(line: &str) -> core::result::Result<Self, Self::Err>
+impl core::marker::Send for aya::programs::uprobe::ProcMapEntry
+impl core::marker::Sync for aya::programs::uprobe::ProcMapEntry
+impl core::marker::Unpin for aya::programs::uprobe::ProcMapEntry
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::ProcMapEntry
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::ProcMapEntry
+impl<T, U> core::convert::Into<U> for aya::programs::uprobe::ProcMapEntry where U: core::convert::From<T>
+pub fn aya::programs::uprobe::ProcMapEntry::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::uprobe::ProcMapEntry where U: core::convert::Into<T>
+pub type aya::programs::uprobe::ProcMapEntry::Error = core::convert::Infallible
+pub fn aya::programs::uprobe::ProcMapEntry::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::uprobe::ProcMapEntry where U: core::convert::TryFrom<T>
+pub type aya::programs::uprobe::ProcMapEntry::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::uprobe::ProcMapEntry::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::uprobe::ProcMapEntry where T: 'static + core::marker::Sized
+pub fn aya::programs::uprobe::ProcMapEntry::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::uprobe::ProcMapEntry where T: core::marker::Sized
+pub fn aya::programs::uprobe::ProcMapEntry::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::uprobe::ProcMapEntry where T: core::marker::Sized
+pub fn aya::programs::uprobe::ProcMapEntry::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::uprobe::ProcMapEntry
+pub fn aya::programs::uprobe::ProcMapEntry::from(t: T) -> T
 pub struct aya::programs::uprobe::UProbe
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::attach<T: core::convert::AsRef<std::path::Path>>(&mut self, fn_name: core::option::Option<&str>, offset: u64, target: T, pid: core::option::Option<libc::unix::pid_t>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
@@ -5454,6 +5549,9 @@ pub aya::programs::UProbeError::InvalidLdSoCache
 pub aya::programs::UProbeError::InvalidLdSoCache::io_error: alloc::sync::Arc<std::io::error::Error>
 pub aya::programs::UProbeError::InvalidTarget
 pub aya::programs::UProbeError::InvalidTarget::path: std::path::PathBuf
+pub aya::programs::UProbeError::ProcMapError
+pub aya::programs::UProbeError::ProcMapError::pid: i32
+pub aya::programs::UProbeError::ProcMapError::source: aya::programs::uprobe::ProcMapError
 pub aya::programs::UProbeError::SymbolError
 pub aya::programs::UProbeError::SymbolError::error: alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync)>
 pub aya::programs::UProbeError::SymbolError::symbol: alloc::string::String
