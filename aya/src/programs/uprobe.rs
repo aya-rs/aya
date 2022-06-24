@@ -2,6 +2,7 @@
 use libc::pid_t;
 use object::{Object, ObjectSection, ObjectSymbol};
 use std::{
+    collections::HashMap,
     error::Error,
     ffi::CStr,
     fs,
@@ -86,10 +87,14 @@ impl UProbe {
         let target_str = &*target.as_os_str().to_string_lossy();
 
         let mut path = if let Some(pid) = pid {
-            find_lib_in_proc_maps(pid, target_str).map_err(|io_error| UProbeError::FileError {
-                filename: format!("/proc/{pid}/maps"),
-                io_error,
-            })?
+            let proc_map_libs =
+                ProcMap::new(pid).map_err(|e| UProbeError::ProcMapError { pid, source: e })?;
+            proc_map_libs
+                .find_by_name(target_str)
+                .map_err(|io_error| UProbeError::FileError {
+                    filename: format!("/proc/{}/maps", pid),
+                    io_error,
+                })?
         } else {
             None
         };
@@ -227,43 +232,17 @@ pub enum UProbeError {
         #[source]
         io_error: io::Error,
     },
+
+    /// There was en error resolving a path
+    #[error("error fetching libs for {pid}")]
+    ProcMapError {
+        /// The pid
+        pid: i32,
+        /// The [`ProcMapError`] that caused the error
+        #[source]
+        source: ProcMapError,
+    },
 }
-
-fn proc_maps_libs(pid: pid_t) -> Result<Vec<(String, String)>, io::Error> {
-    let maps_file = format!("/proc/{pid}/maps");
-    let data = fs::read_to_string(maps_file)?;
-
-    Ok(data
-        .lines()
-        .filter_map(|line| {
-            let line = line.split_whitespace().last()?;
-            if line.starts_with('/') {
-                let path = PathBuf::from(line);
-                let key = path.file_name().unwrap().to_string_lossy().into_owned();
-                Some((key, path.to_string_lossy().to_string()))
-            } else {
-                None
-            }
-        })
-        .collect())
-}
-
-fn find_lib_in_proc_maps(pid: pid_t, lib: &str) -> Result<Option<String>, io::Error> {
-    let libs = proc_maps_libs(pid)?;
-
-    let ret = if lib.contains(".so") {
-        libs.iter().find(|(k, _)| k.as_str().starts_with(lib))
-    } else {
-        let lib = lib.to_string();
-        let lib1 = lib.clone() + ".so";
-        let lib2 = lib + "-";
-        libs.iter()
-            .find(|(k, _)| k.starts_with(&lib1) || k.starts_with(&lib2))
-    };
-
-    Ok(ret.map(|(_, v)| v.clone()))
-}
-
 #[derive(Debug)]
 pub(crate) struct CacheEntry {
     key: String,
@@ -428,5 +407,154 @@ fn resolve_symbol(path: &str, symbol: &str) -> Result<u64, ResolveSymbolError> {
             )
         })?;
         Ok(sym.address() - section.address() + offset)
+    }
+}
+
+/// Error reading from /proc/pid/maps
+#[derive(Debug, Error)]
+pub enum ProcMapError {
+    /// An [`io::Error`]
+    #[error(transparent)]
+    IoError(io::Error),
+
+    /// Error parsing a line of /proc/pid/maps
+    #[error("proc map entry parse error")]
+    ParseError,
+}
+
+pub(crate) struct ProcMap {
+    _entries: Vec<ProcMapEntry>,
+    paths: HashMap<String, String>,
+}
+
+impl ProcMap {
+    fn new(pid: pid_t) -> Result<Self, ProcMapError> {
+        let maps_file = format!("/proc/{}/maps", pid);
+        let data = fs::read_to_string(maps_file).map_err(ProcMapError::IoError)?;
+        let mut entries = vec![];
+        let mut paths = HashMap::new();
+        for line in data.lines() {
+            let entry = ProcMapEntry::parse(line)?;
+            if let Some(path) = &entry.path {
+                let p = PathBuf::from(path);
+                let key = p.file_name().unwrap().to_string_lossy().into_owned();
+                let value = p.to_string_lossy().to_string();
+                paths.insert(key, value);
+            }
+            entries.push(entry);
+        }
+        Ok(ProcMap {
+            _entries: entries,
+            paths,
+        })
+    }
+
+    fn find_by_name(&self, lib: &str) -> Result<Option<String>, io::Error> {
+        let ret = if lib.contains(".so") {
+            self.paths.iter().find(|(k, _)| k.as_str().starts_with(lib))
+        } else {
+            let lib = lib.to_string();
+            let lib1 = lib.clone() + ".so";
+            let lib2 = lib + "-";
+            self.paths
+                .iter()
+                .find(|(k, _)| k.starts_with(&lib1) || k.starts_with(&lib2))
+        };
+
+        Ok(ret.map(|(_, v)| v.clone()))
+    }
+}
+
+pub(crate) struct ProcMapEntry {
+    _address: u64,
+    _address_end: u64,
+    _perms: String,
+    _offset: u64,
+    _dev: String,
+    _inode: u32,
+    path: Option<String>,
+}
+
+impl ProcMapEntry {
+    fn parse(line: &str) -> Result<Self, ProcMapError> {
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() < 5 {
+            return Err(ProcMapError::ParseError);
+        }
+        let addr_parts: Vec<&str> = parts[0].split('-').collect();
+        let address =
+            u64::from_str_radix(addr_parts[0], 16).map_err(|_| ProcMapError::ParseError)?;
+        let address_end =
+            u64::from_str_radix(addr_parts[1], 16).map_err(|_| ProcMapError::ParseError)?;
+        let perms = parts[1];
+        let offset = u64::from_str_radix(parts[2], 16).map_err(|_| ProcMapError::ParseError)?;
+        let dev = parts[3];
+        let inode = parts[4].parse().map_err(|_| ProcMapError::ParseError)?;
+        let path = if parts.len() == 6 {
+            if parts[5].starts_with('/') {
+                Some(parts[5].to_string())
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        Ok(ProcMapEntry {
+            _address: address,
+            _address_end: address_end,
+            _perms: perms.to_string(),
+            _offset: offset,
+            _dev: dev.to_string(),
+            _inode: inode,
+            path,
+        })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_parse_proc_map_entry_shared_lib() {
+        let s = "7ffd6fbea000-7ffd6fbec000 r-xp 00000000 00:00 0                          [vdso]";
+        let proc_map = ProcMapEntry::parse(s).unwrap();
+        assert_eq!(proc_map._address, 0x7ffd6fbea000);
+        assert_eq!(proc_map._address_end, 0x7ffd6fbec000);
+        assert_eq!(proc_map._perms, "r-xp");
+        assert_eq!(proc_map._offset, 0x0);
+        assert_eq!(proc_map._dev, "00:00");
+        assert_eq!(proc_map._inode, 0);
+        assert_eq!(proc_map.path, None);
+    }
+
+    #[test]
+    fn test_parse_proc_map_entry_absolute_path() {
+        let s = "7f1bca83a000-7f1bca83c000 rw-p 00036000 fd:01 2895508                    /usr/lib64/ld-linux-x86-64.so.2";
+        let proc_map = ProcMapEntry::parse(s).unwrap();
+        assert_eq!(proc_map._address, 0x7f1bca83a000);
+        assert_eq!(proc_map._address_end, 0x7f1bca83c000);
+        assert_eq!(proc_map._perms, "rw-p");
+        assert_eq!(proc_map._offset, 0x00036000);
+        assert_eq!(proc_map._dev, "fd:01");
+        assert_eq!(proc_map._inode, 2895508);
+        assert_eq!(
+            proc_map.path,
+            Some("/usr/lib64/ld-linux-x86-64.so.2".to_string())
+        );
+    }
+
+    #[test]
+    fn test_parse_proc_map_entry_all_zeros() {
+        let s = "7f1bca5f9000-7f1bca601000 rw-p 00000000 00:00 0";
+        let proc_map = ProcMapEntry::parse(s).unwrap();
+        assert_eq!(proc_map._address, 0x7f1bca5f9000);
+        assert_eq!(proc_map._address_end, 0x7f1bca601000);
+        assert_eq!(proc_map._perms, "rw-p");
+        assert_eq!(proc_map._offset, 0x0);
+        assert_eq!(proc_map._dev, "00:00");
+        assert_eq!(proc_map._inode, 0);
+        assert_eq!(proc_map.path, None);
     }
 }
