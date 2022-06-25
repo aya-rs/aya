@@ -1,5 +1,7 @@
 use crate::{
-    generated::{btf_func_linkage, btf_param, btf_var_secinfo, BTF_INT_SIGNED, BTF_VAR_STATIC},
+    generated::{
+        btf_func_linkage, btf_param, btf_var_secinfo, BPF_F_REPLACE, BTF_INT_SIGNED, BTF_VAR_STATIC,
+    },
     obj::{btf::BtfType, copy_instructions},
     Btf,
 };
@@ -331,6 +333,27 @@ pub(crate) fn bpf_link_create(
     }
 
     sys_bpf(bpf_cmd::BPF_LINK_CREATE, &attr)
+}
+
+// since kernel 5.7
+pub(crate) fn bpf_link_update(
+    link_fd: RawFd,
+    new_prog_fd: RawFd,
+    old_prog_fd: Option<RawFd>,
+    flags: u32,
+) -> SysResult {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    attr.link_update.link_fd = link_fd as u32;
+    attr.link_update.new_prog_fd = new_prog_fd as u32;
+    if let Some(fd) = old_prog_fd {
+        attr.link_update.old_prog_fd = fd as u32;
+        attr.link_update.flags = flags | BPF_F_REPLACE;
+    } else {
+        attr.link_update.flags = flags;
+    }
+
+    sys_bpf(bpf_cmd::BPF_LINK_UPDATE, &attr)
 }
 
 pub(crate) fn bpf_prog_attach(

@@ -4,7 +4,7 @@ use std::{
     convert::TryFrom,
     mem,
     ops::{Deref, DerefMut},
-    os::unix::prelude::RawFd,
+    os::unix::prelude::{AsRawFd, RawFd},
 };
 
 use crate::{
@@ -26,26 +26,28 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::ProgramArray;
-/// use aya::programs::{CgroupSkb, ProgramFd};
+/// use aya::programs::CgroupSkb;
 /// use std::convert::{TryFrom, TryInto};
 ///
 /// let mut prog_array = ProgramArray::try_from(bpf.map_mut("JUMP_TABLE")?)?;
 /// let prog_0: &CgroupSkb = bpf.program("example_prog_0").unwrap().try_into()?;
+/// let prog_0_fd =  prog_0.fd().unwrap();
 /// let prog_1: &CgroupSkb = bpf.program("example_prog_1").unwrap().try_into()?;
+/// let prog_1_fd = prog_1.fd().unwrap();
 /// let prog_2: &CgroupSkb = bpf.program("example_prog_2").unwrap().try_into()?;
-///
+/// let prog_2_fd = prog_2.fd().unwrap();
 /// let flags = 0;
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 0) will jump to prog_0
-/// prog_array.set(0, prog_0, flags);
+/// prog_array.set(0, prog_0_fd, flags);
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 1) will jump to prog_1
-/// prog_array.set(1, prog_1, flags);
+/// prog_array.set(1, prog_1_fd, flags);
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 2) will jump to prog_2
-/// prog_array.set(2, prog_2, flags);
+/// prog_array.set(2, prog_2_fd, flags);
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_PROG_ARRAY")]
@@ -98,10 +100,10 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
     ///
     /// When an eBPF program calls `bpf_tail_call(ctx, prog_array, index)`, control
     /// flow will jump to `program`.
-    pub fn set(&mut self, index: u32, program: impl ProgramFd, flags: u64) -> Result<(), MapError> {
+    pub fn set(&mut self, index: u32, program: ProgramFd, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(index)?;
-        let prog_fd = program.fd().ok_or(MapError::ProgramNotLoaded)?;
+        let prog_fd = program.as_raw_fd();
 
         bpf_map_update_elem(fd, &index, &prog_fd, flags).map_err(|(code, io_error)| {
             MapError::SyscallError {

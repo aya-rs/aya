@@ -1,7 +1,7 @@
 //! eXpress Data Path (XDP) programs.
 use bitflags;
 use libc::if_nametoindex;
-use std::{ffi::CString, hash::Hash, io, os::unix::io::RawFd};
+use std::{ffi::CString, hash::Hash, io, mem, os::unix::io::RawFd};
 use thiserror::Error;
 
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, Link, OwnedLink, ProgramData, ProgramError,
     },
-    sys::{bpf_link_create, kernel_version, netlink_set_xdp_fd},
+    sys::{bpf_link_create, bpf_link_update, kernel_version, netlink_set_xdp_fd},
 };
 
 /// The type returned when attaching an [`Xdp`] program fails on kernels `< 5.9`.
@@ -140,6 +140,46 @@ impl Xdp {
     /// for managing its lifetime.
     pub fn take_link(&mut self, link_id: XdpLinkId) -> Result<OwnedLink<XdpLink>, ProgramError> {
         Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    }
+
+    /// Atomically replaces the program referenced by the provided link.
+    ///
+    /// Ownership of the link will transfer to this program.
+    pub fn attach_to_link(&mut self, link: OwnedLink<XdpLink>) -> Result<XdpLinkId, ProgramError> {
+        let prog_fd = self.data.fd_or_err()?;
+        match &link.0 {
+            XdpLinkInner::FdLink(fd_link) => {
+                let link_fd = fd_link.fd;
+                bpf_link_update(link_fd, prog_fd, None, 0).map_err(|(_, io_error)| {
+                    ProgramError::SyscallError {
+                        call: "bpf_link_update".to_string(),
+                        io_error,
+                    }
+                })?;
+                // dispose of link and avoid detach on drop
+                mem::forget(link);
+                self.data
+                    .links
+                    .insert(XdpLink(XdpLinkInner::FdLink(FdLink::new(link_fd))))
+            }
+            XdpLinkInner::NlLink(nl_link) => {
+                let if_index = nl_link.if_index;
+                let old_prog_fd = nl_link.prog_fd;
+                let flags = nl_link.flags;
+                let replace_flags = flags | XdpFlags::REPLACE;
+                unsafe {
+                    netlink_set_xdp_fd(if_index, prog_fd, Some(old_prog_fd), replace_flags.bits())
+                        .map_err(|io_error| XdpError::NetlinkError { io_error })?;
+                }
+                // dispose of link and avoid detach on drop
+                mem::forget(link);
+                self.data.links.insert(XdpLink(XdpLinkInner::NlLink(NlLink {
+                    if_index,
+                    prog_fd,
+                    flags,
+                })))
+            }
+        }
     }
 }
 
