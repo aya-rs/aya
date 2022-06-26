@@ -29,7 +29,7 @@ pub(crate) fn check_kv_size<K, V>(map: &Map) -> Result<(), MapError> {
 
 pub(crate) fn insert<K, V>(map: &mut Map, key: K, value: V, flags: u64) -> Result<(), MapError> {
     let fd = map.fd_or_err()?;
-    bpf_map_update_elem(fd, &key, &value, flags).map_err(|(code, io_error)| {
+    bpf_map_update_elem(fd, Some(&key), &value, flags).map_err(|(code, io_error)| {
         MapError::SyscallError {
             call: "bpf_map_update_elem".to_owned(),
             code,

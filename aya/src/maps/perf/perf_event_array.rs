@@ -191,7 +191,7 @@ impl<T: DerefMut<Target = Map>> PerfEventArray<T> {
         // this cannot fail as new() checks that the fd is open
         let map_fd = self.map.fd_or_err().unwrap();
         let buf = PerfBuffer::open(index, self.page_size, page_count.unwrap_or(2))?;
-        bpf_map_update_elem(map_fd, &index, &buf.as_raw_fd(), 0)
+        bpf_map_update_elem(map_fd, Some(&index), &buf.as_raw_fd(), 0)
             .map_err(|(_, io_error)| io_error)?;
 
         Ok(PerfEventArrayBuffer {

@@ -145,7 +145,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Inserts a key value pair into the map.
     pub fn insert(&self, key: &Key<K>, value: V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.deref().fd_or_err()?;
-        bpf_map_update_elem(fd, key, &value, flags).map_err(|(code, io_error)| {
+        bpf_map_update_elem(fd, Some(key), &value, flags).map_err(|(code, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 code,
