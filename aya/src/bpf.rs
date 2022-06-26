@@ -87,6 +87,10 @@ impl Default for PinningType {
     }
 }
 
+lazy_static! {
+    pub(crate) static ref FEATURES: Features = Features::new();
+}
+
 // Features implements BPF and BTF feature detection
 #[derive(Default, Debug)]
 pub(crate) struct Features {
@@ -102,41 +106,43 @@ pub(crate) struct Features {
 }
 
 impl Features {
-    fn probe_features(&mut self) {
-        self.bpf_name = is_prog_name_supported();
-        debug!("[FEAT PROBE] BPF program name support: {}", self.bpf_name);
+    fn new() -> Self {
+        let mut f = Features {
+            bpf_name: is_prog_name_supported(),
+            bpf_cookie: is_bpf_cookie_supported(),
+            btf: is_btf_supported(),
+            ..Default::default()
+        };
+        debug!("[FEAT PROBE] BPF program name support: {}", f.bpf_name);
+        debug!("[FEAT PROBE] BPF cookie support: {}", f.bpf_cookie);
+        debug!("[FEAT PROBE] BTF support: {}", f.btf);
 
-        self.bpf_cookie = is_bpf_cookie_supported();
-        debug!("[FEAT PROBE] BPF cookie support: {}", self.bpf_cookie);
+        if f.btf {
+            f.btf_func = is_btf_func_supported();
+            debug!("[FEAT PROBE] BTF func support: {}", f.btf_func);
 
-        self.btf = is_btf_supported();
-        debug!("[FEAT PROBE] BTF support: {}", self.btf);
-
-        if self.btf {
-            self.btf_func = is_btf_func_supported();
-            debug!("[FEAT PROBE] BTF func support: {}", self.btf_func);
-
-            self.btf_func_global = is_btf_func_global_supported();
+            f.btf_func_global = is_btf_func_global_supported();
             debug!(
                 "[FEAT PROBE] BTF global func support: {}",
-                self.btf_func_global
+                f.btf_func_global
             );
 
-            self.btf_datasec = is_btf_datasec_supported();
+            f.btf_datasec = is_btf_datasec_supported();
             debug!(
                 "[FEAT PROBE] BTF var and datasec support: {}",
-                self.btf_datasec
+                f.btf_datasec
             );
 
-            self.btf_float = is_btf_float_supported();
-            debug!("[FEAT PROBE] BTF float support: {}", self.btf_float);
+            f.btf_float = is_btf_float_supported();
+            debug!("[FEAT PROBE] BTF float support: {}", f.btf_float);
 
-            self.btf_decl_tag = is_btf_decl_tag_supported();
-            debug!("[FEAT PROBE] BTF decl_tag support: {}", self.btf_decl_tag);
+            f.btf_decl_tag = is_btf_decl_tag_supported();
+            debug!("[FEAT PROBE] BTF decl_tag support: {}", f.btf_decl_tag);
 
-            self.btf_type_tag = is_btf_type_tag_supported();
-            debug!("[FEAT PROBE] BTF type_tag support: {}", self.btf_type_tag);
+            f.btf_type_tag = is_btf_type_tag_supported();
+            debug!("[FEAT PROBE] BTF type_tag support: {}", f.btf_type_tag);
         }
+        f
     }
 }
 
@@ -166,20 +172,16 @@ pub struct BpfLoader<'a> {
     btf: Option<Cow<'a, Btf>>,
     map_pin_path: Option<PathBuf>,
     globals: HashMap<&'a str, &'a [u8]>,
-    features: Features,
     extensions: HashSet<&'a str>,
 }
 
 impl<'a> BpfLoader<'a> {
     /// Creates a new loader instance.
     pub fn new() -> BpfLoader<'a> {
-        let mut features = Features::default();
-        features.probe_features();
         BpfLoader {
             btf: Btf::from_sys_fs().ok().map(Cow::Owned),
             map_pin_path: None,
             globals: HashMap::new(),
-            features,
             extensions: HashSet::new(),
         }
     }
@@ -322,12 +324,12 @@ impl<'a> BpfLoader<'a> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(self.globals.clone())?;
 
-        let btf_fd = if self.features.btf {
+        let btf_fd = if FEATURES.btf {
             if let Some(ref mut obj_btf) = obj.btf {
                 // fixup btf
                 let section_data = obj.section_sizes.clone();
                 let symbol_offsets = obj.symbol_offset_by_name.clone();
-                obj_btf.fixup_and_sanitize(&section_data, &symbol_offsets, &self.features)?;
+                obj_btf.fixup_and_sanitize(&section_data, &symbol_offsets, &FEATURES)?;
                 // load btf to the kernel
                 let raw_btf = obj_btf.to_bytes();
                 Some(load_btf(raw_btf)?)
@@ -405,7 +407,7 @@ impl<'a> BpfLoader<'a> {
             .programs
             .drain()
             .map(|(name, obj)| {
-                let prog_name = if self.features.bpf_name {
+                let prog_name = if FEATURES.bpf_name {
                     Some(name.clone())
                 } else {
                     None
