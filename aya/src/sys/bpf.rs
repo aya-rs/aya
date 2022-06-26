@@ -719,6 +719,33 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
     false
 }
 
+pub(crate) fn is_bpf_cookie_supported() -> bool {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+
+    let prog: &[u8] = &[
+        0x85, 0x00, 0x00, 0x00, 0xae, 0x00, 0x00, 0x00, // call bpf_get_attach_cookie
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+
+    let insns = copy_instructions(prog).unwrap();
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_KPROBE as u32;
+
+    match sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
+        Ok(v) => {
+            let fd = v as RawFd;
+            unsafe { close(fd) };
+            true
+        }
+        Err(_) => false,
+    }
+}
+
 pub(crate) fn is_btf_supported() -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int".to_string());

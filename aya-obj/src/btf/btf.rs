@@ -166,12 +166,68 @@ pub enum BtfError {
 #[derive(Default, Debug)]
 #[allow(missing_docs)]
 pub struct BtfFeatures {
-    pub btf_func: bool,
-    pub btf_func_global: bool,
-    pub btf_datasec: bool,
-    pub btf_float: bool,
-    pub btf_decl_tag: bool,
-    pub btf_type_tag: bool,
+    btf_func: bool,
+    btf_func_global: bool,
+    btf_datasec: bool,
+    btf_float: bool,
+    btf_decl_tag: bool,
+    btf_type_tag: bool,
+}
+
+impl BtfFeatures {
+    #[doc(hidden)]
+    pub fn new(
+        btf_func: bool,
+        btf_func_global: bool,
+        btf_datasec: bool,
+        btf_float: bool,
+        btf_decl_tag: bool,
+        btf_type_tag: bool,
+    ) -> Self {
+        BtfFeatures {
+            btf_func,
+            btf_func_global,
+            btf_datasec,
+            btf_float,
+            btf_decl_tag,
+            btf_type_tag,
+        }
+    }
+
+    /// Returns true if the BTF_TYPE_FUNC is supported.
+    pub fn btf_func(&self) -> bool {
+        self.btf_func
+    }
+
+    /// Returns true if the BTF_TYPE_FUNC_GLOBAL is supported.
+    pub fn btf_func_global(&self) -> bool {
+        self.btf_func_global
+    }
+
+    /// Returns true if the BTF_TYPE_DATASEC is supported.
+    pub fn btf_datasec(&self) -> bool {
+        self.btf_datasec
+    }
+
+    /// Returns true if the BTF_FLOAT is supported.
+    pub fn btf_float(&self) -> bool {
+        self.btf_float
+    }
+
+    /// Returns true if the BTF_DECL_TAG is supported.
+    pub fn btf_decl_tag(&self) -> bool {
+        self.btf_decl_tag
+    }
+
+    /// Returns true if the BTF_TYPE_TAG is supported.
+    pub fn btf_type_tag(&self) -> bool {
+        self.btf_type_tag
+    }
+
+    /// Returns true if the BTF_KIND_FUNC_PROTO is supported.
+    pub fn btf_kind_func_proto(&self) -> bool {
+        self.btf_func && self.btf_decl_tag
+    }
 }
 
 /// Bpf Type Format metadata.

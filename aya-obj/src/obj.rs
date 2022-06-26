@@ -42,11 +42,63 @@ const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
 #[derive(Default, Debug)]
 #[allow(missing_docs)]
 pub struct Features {
-    pub bpf_name: bool,
-    pub bpf_probe_read_kernel: bool,
-    pub bpf_perf_link: bool,
-    pub bpf_global_data: bool,
-    pub btf: Option<BtfFeatures>,
+    bpf_name: bool,
+    bpf_probe_read_kernel: bool,
+    bpf_perf_link: bool,
+    bpf_global_data: bool,
+    bpf_cookie: bool,
+    btf: Option<BtfFeatures>,
+}
+
+impl Features {
+    #[doc(hidden)]
+    pub fn new(
+        bpf_name: bool,
+        bpf_probe_read_kernel: bool,
+        bpf_perf_link: bool,
+        bpf_global_data: bool,
+        bpf_cookie: bool,
+        btf: Option<BtfFeatures>,
+    ) -> Self {
+        Self {
+            bpf_name,
+            bpf_probe_read_kernel,
+            bpf_perf_link,
+            bpf_global_data,
+            bpf_cookie,
+            btf,
+        }
+    }
+
+    /// Returns whether BPF program names are supported.
+    pub fn bpf_name(&self) -> bool {
+        self.bpf_name
+    }
+
+    /// Returns whether the bpf_probe_read_kernel helper is supported.
+    pub fn bpf_probe_read_kernel(&self) -> bool {
+        self.bpf_probe_read_kernel
+    }
+
+    /// Returns whether bpf_links are supported for Kprobes/Uprobes/Tracepoints.
+    pub fn bpf_perf_link(&self) -> bool {
+        self.bpf_perf_link
+    }
+
+    /// Returns whether BPF program global data is supported.
+    pub fn bpf_global_data(&self) -> bool {
+        self.bpf_global_data
+    }
+
+    /// Returns whether BPF program cookie is supported.
+    pub fn bpf_cookie(&self) -> bool {
+        self.bpf_cookie
+    }
+
+    /// If BTF is supported, returns which BTF features are supported.
+    pub fn btf(&self) -> Option<&BtfFeatures> {
+        self.btf.as_ref()
+    }
 }
 
 /// The loaded object file representation
