@@ -28,10 +28,10 @@ use crate::{
         SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
-        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_btf_datasec_supported,
-        is_btf_decl_tag_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_prog_name_supported,
-        retry_with_verifier_logs,
+        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_cookie_supported,
+        is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_float_supported,
+        is_btf_func_global_supported, is_btf_func_supported, is_btf_supported,
+        is_btf_type_tag_supported, is_prog_name_supported, retry_with_verifier_logs,
     },
     util::{bytes_of, possible_cpus, VerifierLog, POSSIBLE_CPUS},
 };
@@ -120,6 +120,7 @@ impl Default for PinningType {
 #[derive(Default, Debug)]
 pub(crate) struct Features {
     pub bpf_name: bool,
+    pub bpf_cookie: bool,
     pub btf: bool,
     pub btf_func: bool,
     pub btf_func_global: bool,
@@ -133,6 +134,9 @@ impl Features {
     fn probe_features(&mut self) {
         self.bpf_name = is_prog_name_supported();
         debug!("[FEAT PROBE] BPF program name support: {}", self.bpf_name);
+
+        self.bpf_cookie = is_bpf_cookie_supported();
+        debug!("[FEAT PROBE] BPF cookie support: {}", self.bpf_cookie);
 
         self.btf = is_btf_supported();
         debug!("[FEAT PROBE] BTF support: {}", self.btf);
