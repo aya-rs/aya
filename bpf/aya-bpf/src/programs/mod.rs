@@ -14,6 +14,8 @@ pub mod sockopt;
 pub mod sysctl;
 pub mod tp_btf;
 pub mod tracepoint;
+#[cfg(feature = "usdt")]
+pub mod usdt;
 pub mod xdp;
 
 pub use fentry::FEntryContext;
@@ -32,4 +34,6 @@ pub use sockopt::SockoptContext;
 pub use sysctl::SysctlContext;
 pub use tp_btf::BtfTracePointContext;
 pub use tracepoint::TracePointContext;
+#[cfg(feature = "usdt")]
+pub use usdt::UsdtContext;
 pub use xdp::XdpContext;

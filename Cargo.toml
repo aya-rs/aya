@@ -1,2 +1,2 @@
 [workspace]
-members = ["aya", "aya-gen", "xtask"]
+members = ["aya", "aya-common", "aya-gen", "xtask"]

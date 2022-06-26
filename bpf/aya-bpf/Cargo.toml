@@ -8,3 +8,8 @@ edition = "2021"
 aya-bpf-cty = { path = "../aya-bpf-cty" }
 aya-bpf-macros = { path = "../aya-bpf-macros" }
 aya-bpf-bindings = { path = "../aya-bpf-bindings" }
+aya-common = { path = "../../aya-common" }
+
+[features]
+usdt = []
+cookie = []

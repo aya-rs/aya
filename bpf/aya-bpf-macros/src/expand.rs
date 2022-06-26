@@ -820,6 +820,34 @@ impl SkLookup {
     }
 }
 
+pub struct Usdt {
+    item: ItemFn,
+    name: String,
+}
+
+impl Usdt {
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<Usdt> {
+        let name = name_arg(&mut args)?.unwrap_or_else(|| item.sig.ident.to_string());
+        Ok(Usdt { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = format!("usdt/{}", self.name);
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
+                let _ = #fn_name(::aya_bpf::programs::UsdtContext::new(ctx));
+                return 0;
+
+                #item
+            }
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use syn::parse_quote;
