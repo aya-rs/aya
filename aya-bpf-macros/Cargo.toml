@@ -13,4 +13,4 @@ quote = "1.0"
 syn = {version = "1.0", features = ["full"]}
 
 [dev-dependencies]
-aya-bpf = { path = "../bpf/aya-bpf" }
+aya-bpf = { path = "../bpf/aya-bpf", features = ["usdt"] }

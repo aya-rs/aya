@@ -3,7 +3,8 @@ mod expand;
 use expand::{
     Args, BtfTracePoint, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt, CgroupSysctl,
     FEntry, FExit, Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint, SchedClassifier, SkLookup,
-    SkMsg, SkSkb, SkSkbKind, SockAddrArgs, SockOps, SocketFilter, SockoptArgs, TracePoint, Xdp,
+    SkMsg, SkSkb, SkSkbKind, SockAddrArgs, SockOps, SocketFilter, SockoptArgs, TracePoint, Usdt,
+    Xdp,
 };
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemFn, ItemStatic};
@@ -503,6 +504,33 @@ pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let item = parse_macro_input!(item as ItemFn);
 
     SkLookup::from_syn(args, item)
+        .and_then(|u| u.expand())
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+/// Marks a function as an User Statically-Defined Tracepoint program.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.20
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{macros::usdt, programs::UsdtContext};
+///
+/// #[usdt]
+/// pub fn tick(_ctx: UsdtContext) -> u32 {
+///     return 0
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn usdt(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attrs as Args);
+    let item = parse_macro_input!(item as ItemFn);
+
+    Usdt::from_syn(args, item)
         .and_then(|u| u.expand())
         .unwrap_or_else(|err| err.to_compile_error())
         .into()

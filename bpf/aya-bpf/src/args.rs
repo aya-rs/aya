@@ -76,6 +76,11 @@ impl PtRegs {
         T::from_retval(unsafe { &*self.regs })
     }
 
+    /// Returns the value of the register used to pass the IP
+    pub fn ip<T: FromPtRegs>(&self) -> Option<T> {
+        T::from_ip(unsafe { &*self.regs })
+    }
+
     /// Returns a pointer to the wrapped value.
     pub fn as_ptr(&self) -> *mut pt_regs {
         self.regs
@@ -95,6 +100,9 @@ pub trait FromPtRegs: Sized {
 
     /// Coerces a `T` from the return value of a pt_regs context.
     fn from_retval(ctx: &pt_regs) -> Option<Self>;
+
+    /// Coerces a `T` from the ip value of a pt_regs context.
+    fn from_ip(ctx: &pt_regs) -> Option<Self>;
 }
 
 #[cfg(bpf_target_arch = "x86_64")]
@@ -114,6 +122,10 @@ impl<T> FromPtRegs for *const T {
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
         unsafe { bpf_probe_read(&ctx.rax).map(|v| v as *const _).ok() }
     }
+
+    fn from_ip(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.rip).map(|v| v as *const _).ok() }
+    }
 }
 
 #[cfg(bpf_target_arch = "arm")]
@@ -129,6 +141,10 @@ impl<T> FromPtRegs for *const T {
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
         unsafe { bpf_probe_read(&ctx.uregs[0]).map(|v| v as *const _).ok() }
     }
+
+    fn from_ip(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.uregs[12]).map(|v| v as *const _).ok() }
+    }
 }
 
 #[cfg(bpf_target_arch = "aarch64")]
@@ -143,6 +159,10 @@ impl<T> FromPtRegs for *const T {
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
         unsafe { bpf_probe_read(&ctx.regs[0]).map(|v| v as *const _).ok() }
+    }
+
+    fn from_ip(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.pc).map(|v| v as *const _).ok() }
     }
 }
 
@@ -163,6 +183,10 @@ impl<T> FromPtRegs for *mut T {
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
         unsafe { bpf_probe_read(&ctx.rax).map(|v| v as *mut _).ok() }
     }
+
+    fn from_ip(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.rip).map(|v| v as *mut _).ok() }
+    }
 }
 
 #[cfg(bpf_target_arch = "arm")]
@@ -178,6 +202,10 @@ impl<T> FromPtRegs for *mut T {
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
         unsafe { bpf_probe_read(&ctx.uregs[0]).map(|v| v as *mut _).ok() }
     }
+
+    fn from_ip(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.uregs[12]).map(|v| v as *mut _).ok() }
+    }
 }
 
 #[cfg(bpf_target_arch = "aarch64")]
@@ -192,6 +220,10 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
         unsafe { bpf_probe_read(&ctx.regs[0]).map(|v| v as *mut _).ok() }
+    }
+
+    fn from_ip(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.pc).map(|v| v as *mut _).ok() }
     }
 }
 
@@ -215,6 +247,10 @@ macro_rules! impl_from_pt_regs {
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
                 Some(ctx.rax as *const $type as _)
             }
+
+            fn from_ip(ctx: &pt_regs) -> Option<Self> {
+                Some(ctx.rip as *const $type as _)
+            }
         }
 
         #[cfg(bpf_target_arch = "arm")]
@@ -230,6 +266,10 @@ macro_rules! impl_from_pt_regs {
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
                 Some(ctx.uregs[0] as *const $type as _)
             }
+
+            fn from_ip(ctx: &pt_regs) -> Option<Self> {
+                Some(ctx.uregs[12] as *const $type as _)
+            }
         }
 
         #[cfg(bpf_target_arch = "aarch64")]
@@ -244,6 +284,10 @@ macro_rules! impl_from_pt_regs {
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
                 Some(ctx.regs[0] as *const $type as _)
+            }
+
+            fn from_ip(ctx: &pt_regs) -> Option<Self> {
+                Some(ctx.pc as *const $type as _)
             }
         }
     };

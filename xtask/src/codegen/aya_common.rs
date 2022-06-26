@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use std::path::PathBuf;
 
-use aya_gen::{bindgen, write_to_file};
+use aya_tool::{bindgen, write_to_file};
 
 use crate::codegen::{Architecture, Options};
 
