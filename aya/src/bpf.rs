@@ -65,6 +65,10 @@ unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 
 pub use aya_obj::maps::{bpf_map_def, PinningType};
 
+lazy_static! {
+    pub(crate) static ref FEATURES: Features = Features::new();
+}
+
 // Features implements BPF and BTF feature detection
 #[derive(Default, Debug)]
 pub(crate) struct Features {
@@ -73,42 +77,40 @@ pub(crate) struct Features {
 }
 
 impl Features {
-    fn probe_features(&mut self) {
-        self.bpf_name = is_prog_name_supported();
-        debug!("[FEAT PROBE] BPF program name support: {}", self.bpf_name);
-
-        self.btf = if is_btf_supported() {
-            Some(BtfFeatures::default())
+    fn new() -> Self {
+        let btf = if is_btf_supported() {
+            Some(BtfFeatures {
+                btf_func: is_btf_func_supported(),
+                btf_func_global: is_btf_func_global_supported(),
+                btf_datasec: is_btf_datasec_supported(),
+                btf_float: is_btf_float_supported(),
+                btf_decl_tag: is_btf_decl_tag_supported(),
+                btf_type_tag: is_btf_type_tag_supported(),
+            })
         } else {
             None
         };
-        debug!("[FEAT PROBE] BTF support: {}", self.btf.is_some());
+        let f = Features {
+            bpf_name: is_prog_name_supported(),
+            btf,
+        };
 
-        if let Some(ref mut btf) = self.btf {
-            btf.btf_func = is_btf_func_supported();
-            debug!("[FEAT PROBE] BTF func support: {}", btf.btf_func);
-
-            btf.btf_func_global = is_btf_func_global_supported();
-            debug!(
-                "[FEAT PROBE] BTF global func support: {}",
-                btf.btf_func_global
-            );
-
-            btf.btf_datasec = is_btf_datasec_supported();
-            debug!(
-                "[FEAT PROBE] BTF var and datasec support: {}",
-                btf.btf_datasec
-            );
-
-            btf.btf_float = is_btf_float_supported();
-            debug!("[FEAT PROBE] BTF float support: {}", btf.btf_float);
-
-            btf.btf_decl_tag = is_btf_decl_tag_supported();
-            debug!("[FEAT PROBE] BTF decl_tag support: {}", btf.btf_decl_tag);
-
-            btf.btf_type_tag = is_btf_type_tag_supported();
-            debug!("[FEAT PROBE] BTF type_tag support: {}", btf.btf_type_tag);
+        debug!("{}", f);
+        if let Some(btf) = f.btf.as_ref() {
+            debug!("{}", btf)
         }
+        f
+    }
+}
+
+impl std::fmt::Display for Features {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "[FEAT PROBE] BPF program name support: {}\n\
+             [FEAT PROBE] BTF support: {}",
+            self.bpf_name,
+            self.btf.is_some()
+        ))
     }
 }
 
@@ -139,7 +141,6 @@ pub struct BpfLoader<'a> {
     map_pin_path: Option<PathBuf>,
     globals: HashMap<&'a str, &'a [u8]>,
     max_entries: HashMap<&'a str, u32>,
-    features: Features,
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
 }
@@ -169,14 +170,11 @@ impl Default for VerifierLogLevel {
 impl<'a> BpfLoader<'a> {
     /// Creates a new loader instance.
     pub fn new() -> BpfLoader<'a> {
-        let mut features = Features::default();
-        features.probe_features();
         BpfLoader {
             btf: Btf::from_sys_fs().ok().map(Cow::Owned),
             map_pin_path: None,
             globals: HashMap::new(),
             max_entries: HashMap::new(),
-            features,
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
         }
@@ -360,8 +358,8 @@ impl<'a> BpfLoader<'a> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(self.globals.clone())?;
 
-        let btf_fd = if let Some(ref btf) = self.features.btf {
-            if let Some(btf) = obj.fixup_and_sanitize_btf(btf)? {
+        let btf_fd = if let Some(ref features) = FEATURES.btf {
+            if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
                 // load btf to the kernel
                 Some(load_btf(btf.to_bytes())?)
             } else {
@@ -449,7 +447,7 @@ impl<'a> BpfLoader<'a> {
             .programs
             .drain()
             .map(|(name, obj)| {
-                let prog_name = if self.features.bpf_name {
+                let prog_name = if FEATURES.bpf_name {
                     Some(name.clone())
                 } else {
                     None

@@ -172,6 +172,25 @@ pub struct BtfFeatures {
     pub btf_type_tag: bool,
 }
 
+impl std::fmt::Display for BtfFeatures {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_fmt(format_args!(
+            "[FEAT PROBE] BTF func support: {}\n\
+             [FEAT PROBE] BTF global func support: {}\n\
+             [FEAT PROBE] BTF var and datasec support: {}\n\
+             [FEAT PROBE] BTF float support: {}\n\
+             [FEAT PROBE] BTF decl_tag support: {}\n\
+             [FEAT PROBE] BTF type_tag support: {}",
+            self.btf_func,
+            self.btf_func_global,
+            self.btf_datasec,
+            self.btf_float,
+            self.btf_decl_tag,
+            self.btf_type_tag,
+        ))
+    }
+}
+
 /// Bpf Type Format metadata.
 ///
 /// BTF is a kind of debug metadata that allows eBPF programs compiled against one kernel version
