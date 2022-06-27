@@ -31,7 +31,8 @@ use crate::{
         bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_cookie_supported,
         is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_float_supported,
         is_btf_func_global_supported, is_btf_func_supported, is_btf_supported,
-        is_btf_type_tag_supported, is_prog_name_supported, retry_with_verifier_logs,
+        is_btf_type_tag_supported, is_perf_link_supported, is_prog_name_supported,
+        retry_with_verifier_logs,
     },
     util::{bytes_of, possible_cpus, VerifierLog, POSSIBLE_CPUS},
 };
@@ -96,6 +97,7 @@ lazy_static! {
 pub(crate) struct Features {
     pub bpf_name: bool,
     pub bpf_cookie: bool,
+    pub bpf_perf_link: bool,
     pub btf: bool,
     pub btf_func: bool,
     pub btf_func_global: bool,
@@ -110,11 +112,13 @@ impl Features {
         let mut f = Features {
             bpf_name: is_prog_name_supported(),
             bpf_cookie: is_bpf_cookie_supported(),
+            bpf_perf_link: is_perf_link_supported(),
             btf: is_btf_supported(),
             ..Default::default()
         };
         debug!("[FEAT PROBE] BPF program name support: {}", f.bpf_name);
         debug!("[FEAT PROBE] BPF cookie support: {}", f.bpf_cookie);
+        debug!("[FEAT PROBE] BPF probe link support: {}", f.bpf_perf_link);
         debug!("[FEAT PROBE] BTF support: {}", f.btf);
 
         if f.btf {
