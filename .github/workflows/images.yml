@@ -7,13 +7,13 @@ on:
     branches:
       - 'main'
     paths:
-      - 'images/**'
+      - 'images/Dockerfile.rtf'
       - '.github/workflows/images.yml'
   pull_request:
     branches:
       - 'main'
     paths:
-      - 'images/**'
+      - 'images/Dockerfile.rtf'
       - '.github/workflows/images.yml'
 
 env:
@@ -48,6 +48,6 @@ jobs:
         with:
           context: images
           file: images/Dockerfile.rtf
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
