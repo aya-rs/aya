@@ -1,5 +1,6 @@
 mod aya;
 mod aya_bpf_bindings;
+mod aya_common;
 mod helpers;
 
 use std::path::PathBuf;
@@ -90,7 +91,8 @@ pub fn codegen(opts: Options) -> Result<(), anyhow::Error> {
         Some(AyaBpfBindings) => aya_bpf_bindings::codegen(&opts),
         None => {
             aya::codegen(&opts)?;
-            aya_bpf_bindings::codegen(&opts)
+            aya_bpf_bindings::codegen(&opts)?;
+            aya_common::codegen(&opts)
         }
     }
 }
