@@ -35,8 +35,8 @@ use crate::{
     sys::{
         bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_btf_datasec_supported,
         is_btf_decl_tag_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_prog_name_supported,
-        retry_with_verifier_logs,
+        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
+        is_prog_name_supported, retry_with_verifier_logs,
     },
     util::{bytes_of, possible_cpus, VerifierLog, POSSIBLE_CPUS},
 };
@@ -73,6 +73,7 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub(crate) struct Features {
     pub bpf_name: bool,
+    pub bpf_perf_link: bool,
     pub btf: Option<BtfFeatures>,
 }
 
@@ -92,6 +93,7 @@ impl Features {
         };
         let f = Features {
             bpf_name: is_prog_name_supported(),
+            bpf_perf_link: is_perf_link_supported(),
             btf,
         };
 
@@ -107,8 +109,10 @@ impl std::fmt::Display for Features {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
             "[FEAT PROBE] BPF program name support: {}\n\
+             [FEAT PROBE] bpf_link support for kprobe/uprobe/tracepoint: {}\n\
              [FEAT PROBE] BTF support: {}",
             self.bpf_name,
+            self.bpf_perf_link,
             self.btf.is_some()
         ))
     }
@@ -358,7 +362,7 @@ impl<'a> BpfLoader<'a> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(self.globals.clone())?;
 
-        let btf_fd = if let Some(ref features) = FEATURES.btf {
+        let btf_fd = if let Some(features) = &FEATURES.btf {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
                 // load btf to the kernel
                 Some(load_btf(btf.to_bytes())?)
