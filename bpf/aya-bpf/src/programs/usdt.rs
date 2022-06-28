@@ -29,23 +29,27 @@ pub struct UsdtContext {
 }
 
 impl UsdtContext {
+    /// Creates a new Usdtcontext.
     pub fn new(ctx: *mut c_void) -> UsdtContext {
         UsdtContext {
             regs: ctx as *mut pt_regs,
         }
     }
 
+    /// Access the register that holds the next instruction pointer.
     #[inline(always)]
     fn ip<T: FromPtRegs>(&self) -> Option<T> {
         T::from_ip(unsafe { &*self.regs })
     }
 
+    /// Access the spec_id from the BPF Attach Cookie.
     #[cfg(feature = "cookie")]
     #[inline(always)]
     fn spec_id(&self) -> Result<u32, ()> {
         unsafe { Ok(aya_bpf_bindings::helpers::bpf_get_attach_cookie(self.as_ptr()) as u32) }
     }
 
+    /// Access the spec_id using the `USDT_IP_TO_SPEC_ID` map
     #[cfg(not(feature = "cookie"))]
     #[inline(always)]
     fn spec_id(&self) -> Result<u32, ()> {
@@ -54,6 +58,10 @@ impl UsdtContext {
         Ok(*spec)
     }
 
+    /// Returns the value of the USDT argument `n` as a u64.
+    ///
+    /// This uses the USDT_SPEC_MAP to determine the correct specification to use in order
+    /// to read the value of argument `n` from the eBPF Context.
     #[inline(always)]
     pub fn arg(&self, n: usize) -> Result<u64, ()> {
         if n > USDT_MAX_ARG_COUNT {
