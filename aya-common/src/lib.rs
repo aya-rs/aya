@@ -4,13 +4,16 @@ pub const USDT_MAX_SPEC_COUNT: u32 = 256;
 pub const USDT_MAX_IP_COUNT: u32 = 4 * USDT_MAX_SPEC_COUNT;
 pub const USDT_MAX_ARG_COUNT: usize = 12;
 
-/// The type of argument in a USDT program
+/// The type of argument in a USDT program.
 #[repr(u32)]
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "user", derive(Debug))]
 pub enum UsdtArgType {
+    /// Value is Constant.
     Const,
+    /// Value is stored in a Register.
     Reg,
+    /// Value is stored in a Register and requires dereferencing.
     RegDeref,
 }
 
@@ -20,31 +23,37 @@ impl Default for UsdtArgType {
     }
 }
 
-/// The specifcation of an argument in a USDT program
+/// The specifcation of an argument in a USDT program.
 #[repr(C)]
 #[derive(Copy, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "user", derive(Debug))]
 pub struct UsdtArgSpec {
-    /// scalar interpreted depending on arg_type
+    /// Meaning of val_off differs based on `arg_type`.
+    /// If Constant, this holds the scalar value of unknow type, up to u64 in size.
+    /// If RegDeref, this contains an offset which is an i64.
     pub val_off: u64,
-    /// arg location case
+    /// Type of Argument.
     pub arg_type: UsdtArgType,
-    /// offset of referenced register within struct pt_regs
+    /// Offset of the register within the BPF context
     pub reg_off: i16,
-    /// whether arg should be interpreted as signed value
+    /// Whether the value should be interpreted as signed
     pub arg_signed: bool,
-    /// number of bits that need to be cleared and, optionally,
+    /// Number of bits that need to be cleared and, optionally,
     /// sign-extended to cast arguments that are 1, 2, or 4 bytes
-    /// long into final 8-byte u64/s64 value returned to user
+    /// long into final 8-byte u64/s64 value returned to user.
     pub arg_bitshift: i8,
 }
 
+/// The specification of a USDT
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "user", derive(Debug))]
 pub struct UsdtSpec {
+    /// Specification used to access arguments.
     pub args: [UsdtArgSpec; USDT_MAX_ARG_COUNT],
+    /// User supplied cookie since the BPF Attach Cookie is used internally.
     pub cookie: u64,
+    /// Number of args in this tracepoint
     pub arg_count: i16,
 }
 

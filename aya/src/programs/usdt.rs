@@ -36,7 +36,50 @@ pub const USDT_SPEC_MAP: &str = "__bpf_usdt_specs";
 /// Name of the map used for USDT to IP mappings.
 pub const USDT_IP_TO_SPEC_MAP: &str = "__bpf_usdt_ip_to_spec_id";
 
-/// A user statically-defined tracepoint
+/// A user statically-defined tracepoint program.
+///
+/// USDT programs are the fastest of the userspace tracing programs and can be
+/// used to trace events instrumented libraries or binaries. Unlike uprobes and
+/// uretprobes that have access to all CPU registers, USDTs provide a structured
+/// specification for accessing the arguments for each tracepoint. When compliled
+/// a single tracepoint may have mutliple different entrypoints in the same program.
+/// In order to simply access to arguments from eBPF, Aya keeps state in 2 maps:
+///
+///   - [`USDT_SPEC_MAP`] which keeps track of USDT specifications
+///   - [`USDT_IP_TO_SPEC_MAP`] which keeps track of Instructio Pointers to USDT specs.
+///
+/// The last map is not used on kernels which support the BPF Attach Cookie feature.
+///
+/// # Minimum kernel version
+///
+/// While support was added to the kenel in 4.19, Aya depends on a feature that
+/// allows the kernel to manage semaphore reference counting which was added in
+/// 4.20.
+///
+/// The minimum supported kernel version is 4.20.
+///
+/// # Examples
+///
+/// ```no_run
+/// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
+/// use aya::{Bpf, programs::{Usdt, usdt::{USDT_SPEC_MAP, USDT_IP_TO_SPEC_MAP}}};
+/// use aya::maps::{Array, HashMap};
+/// use std::convert::TryInto;
+///
+/// let spec_map = Array::try_from(bpf.map_mut(USDT_SPEC_MAP).unwrap())?;
+/// let ip_to_spec_map = HashMap::try_from(bpf.map_mut(USDT_IP_TO_SPEC_MAP).unwrap())?;
+/// let program: &mut Usdt = bpf.program_mut("usdt").unwrap().try_into()?;
+/// program.load()?;
+/// program.attach(
+///     spec_map,
+///     ip_to_spec_map,
+///     "clock",
+///     "loop",
+///     "/path/to/target/debug/clock",
+///     Some(12345),
+/// )?;
+/// # Ok::<(), aya::BpfError>(())
+/// ```
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_KPROBE")]
 pub struct Usdt {
@@ -51,12 +94,18 @@ impl Usdt {
 
     /// Attaches the program.
     ///
-    /// Attaches the uprobe to the tracepoint `tp_provider`/`tp_name` defined in the `target`.
+    /// Attaches the USDT to the tracepoint with a matching `tp_provider` and `tp_name`
+    /// in the `target`.
+    ///
     /// If `pid` is not `None`, the program executes only when the target
-    /// function is executed by the given `pid`.
+    /// function is executed by the given `pid`. This is only supported in kernels which
+    /// provide the BPF Attach Cookie feature.
     ///
     /// The `target` argument can be an absolute path to a binary or library, or
     /// a library name (eg: `"libc"`).
+    ///
+    /// Since there a single tracepoint can have multiple entrypoints, a single `UsdtLinkId`
+    /// may be comprised of multiple links.
     ///
     /// The returned value can be used to detach, see [Usdt::detach].
     pub fn attach<T: AsRef<Path>>(
@@ -158,11 +207,11 @@ impl Usdt {
 
 /// The identifer of a MultiPerfLink.
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub struct MultiPerfLinkId(Vec<PerfLinkIdInner>);
+pub(crate) struct MultiPerfLinkId(Vec<PerfLinkIdInner>);
 
-/// The attachment type of USDT programs.
+// A wrapper around multiple PerfLinkInner
 #[derive(Debug)]
-pub struct MultiPerfLink {
+pub(crate) struct MultiPerfLink {
     perf_links: Vec<PerfLinkInner>,
 }
 
@@ -191,7 +240,7 @@ define_link_wrapper!(
     MultiPerfLinkId
 );
 
-/// The type returned when attaching an [`UProbe`] fails.
+/// The type returned when attaching a [`Usdt`] fails.
 #[derive(Debug, Error)]
 pub enum UsdtError {
     /// There was an error parsing `/etc/ld.so.cache`.
@@ -384,6 +433,7 @@ fn find_segment_by_address<Elf: FileHeader<Endian = Endianness>>(
     })
 }
 
+// A resolved Usdt target.
 #[derive(Debug)]
 pub(crate) struct UsdtTarget {
     abs_ip: u64,
@@ -393,6 +443,7 @@ pub(crate) struct UsdtTarget {
     spec: UsdtSpec,
 }
 
+// A parsed note from an ELF stapsdt note.
 #[derive(Debug)]
 pub(crate) struct UsdtNote {
     loc_addr: u64,

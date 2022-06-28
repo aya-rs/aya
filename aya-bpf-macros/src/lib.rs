@@ -521,7 +521,9 @@ pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// use aya_bpf::{macros::usdt, programs::UsdtContext};
 ///
 /// #[usdt]
-/// pub fn tick(_ctx: UsdtContext) -> u32 {
+/// pub fn tick(ctx: UsdtContext) -> u32 {
+///     let arg = ctx.arg(0);
+///     // Use aya-log to print the value to userspace
 ///     return 0
 /// }
 /// ```
