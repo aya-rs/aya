@@ -1,4 +1,4 @@
-use crate::{cty::c_void, helpers::bpf_probe_read_kernel};
+use crate::{cty::c_void, helpers::bpf_probe_read};
 
 // aarch64 uses user_pt_regs instead of pt_regs
 #[cfg(not(bpf_target_arch = "aarch64"))]
@@ -101,18 +101,18 @@ pub trait FromPtRegs: Sized {
 impl<T> FromPtRegs for *const T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         match n {
-            0 => unsafe { bpf_probe_read_kernel(&ctx.rdi).map(|v| v as *const _).ok() },
-            1 => unsafe { bpf_probe_read_kernel(&ctx.rsi).map(|v| v as *const _).ok() },
-            2 => unsafe { bpf_probe_read_kernel(&ctx.rdx).map(|v| v as *const _).ok() },
-            3 => unsafe { bpf_probe_read_kernel(&ctx.rcx).map(|v| v as *const _).ok() },
-            4 => unsafe { bpf_probe_read_kernel(&ctx.r8).map(|v| v as *const _).ok() },
-            5 => unsafe { bpf_probe_read_kernel(&ctx.r9).map(|v| v as *const _).ok() },
+            0 => unsafe { bpf_probe_read(&ctx.rdi).map(|v| v as *const _).ok() },
+            1 => unsafe { bpf_probe_read(&ctx.rsi).map(|v| v as *const _).ok() },
+            2 => unsafe { bpf_probe_read(&ctx.rdx).map(|v| v as *const _).ok() },
+            3 => unsafe { bpf_probe_read(&ctx.rcx).map(|v| v as *const _).ok() },
+            4 => unsafe { bpf_probe_read(&ctx.r8).map(|v| v as *const _).ok() },
+            5 => unsafe { bpf_probe_read(&ctx.r9).map(|v| v as *const _).ok() },
             _ => None,
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        unsafe { bpf_probe_read_kernel(&ctx.rax).map(|v| v as *const _).ok() }
+        unsafe { bpf_probe_read(&ctx.rax).map(|v| v as *const _).ok() }
     }
 }
 
@@ -120,22 +120,14 @@ impl<T> FromPtRegs for *const T {
 impl<T> FromPtRegs for *const T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 6 {
-            unsafe {
-                bpf_probe_read_kernel(&ctx.uregs[n])
-                    .map(|v| v as *const _)
-                    .ok()
-            }
+            unsafe { bpf_probe_read(&ctx.uregs[n]).map(|v| v as *const _).ok() }
         } else {
             None
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        unsafe {
-            bpf_probe_read_kernel(&ctx.uregs[0])
-                .map(|v| v as *const _)
-                .ok()
-        }
+        unsafe { bpf_probe_read(&ctx.uregs[0]).map(|v| v as *const _).ok() }
     }
 }
 
@@ -143,22 +135,14 @@ impl<T> FromPtRegs for *const T {
 impl<T> FromPtRegs for *const T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 7 {
-            unsafe {
-                bpf_probe_read_kernel(&ctx.regs[n])
-                    .map(|v| v as *const _)
-                    .ok()
-            }
+            unsafe { bpf_probe_read(&ctx.regs[n]).map(|v| v as *const _).ok() }
         } else {
             None
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        unsafe {
-            bpf_probe_read_kernel(&ctx.regs[0])
-                .map(|v| v as *const _)
-                .ok()
-        }
+        unsafe { bpf_probe_read(&ctx.regs[0]).map(|v| v as *const _).ok() }
     }
 }
 
@@ -166,18 +150,18 @@ impl<T> FromPtRegs for *const T {
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         match n {
-            0 => unsafe { bpf_probe_read_kernel(&ctx.rdi).map(|v| v as *mut _).ok() },
-            1 => unsafe { bpf_probe_read_kernel(&ctx.rsi).map(|v| v as *mut _).ok() },
-            2 => unsafe { bpf_probe_read_kernel(&ctx.rdx).map(|v| v as *mut _).ok() },
-            3 => unsafe { bpf_probe_read_kernel(&ctx.rcx).map(|v| v as *mut _).ok() },
-            4 => unsafe { bpf_probe_read_kernel(&ctx.r8).map(|v| v as *mut _).ok() },
-            5 => unsafe { bpf_probe_read_kernel(&ctx.r9).map(|v| v as *mut _).ok() },
+            0 => unsafe { bpf_probe_read(&ctx.rdi).map(|v| v as *mut _).ok() },
+            1 => unsafe { bpf_probe_read(&ctx.rsi).map(|v| v as *mut _).ok() },
+            2 => unsafe { bpf_probe_read(&ctx.rdx).map(|v| v as *mut _).ok() },
+            3 => unsafe { bpf_probe_read(&ctx.rcx).map(|v| v as *mut _).ok() },
+            4 => unsafe { bpf_probe_read(&ctx.r8).map(|v| v as *mut _).ok() },
+            5 => unsafe { bpf_probe_read(&ctx.r9).map(|v| v as *mut _).ok() },
             _ => None,
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        unsafe { bpf_probe_read_kernel(&ctx.rax).map(|v| v as *mut _).ok() }
+        unsafe { bpf_probe_read(&ctx.rax).map(|v| v as *mut _).ok() }
     }
 }
 
@@ -185,22 +169,14 @@ impl<T> FromPtRegs for *mut T {
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 6 {
-            unsafe {
-                bpf_probe_read_kernel(&ctx.uregs[n])
-                    .map(|v| v as *mut _)
-                    .ok()
-            }
+            unsafe { bpf_probe_read(&ctx.uregs[n]).map(|v| v as *mut _).ok() }
         } else {
             None
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        unsafe {
-            bpf_probe_read_kernel(&ctx.uregs[0])
-                .map(|v| v as *mut _)
-                .ok()
-        }
+        unsafe { bpf_probe_read(&ctx.uregs[0]).map(|v| v as *mut _).ok() }
     }
 }
 
@@ -208,22 +184,14 @@ impl<T> FromPtRegs for *mut T {
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         if n <= 7 {
-            unsafe {
-                bpf_probe_read_kernel(&ctx.regs[n])
-                    .map(|v| v as *mut _)
-                    .ok()
-            }
+            unsafe { bpf_probe_read(&ctx.regs[n]).map(|v| v as *mut _).ok() }
         } else {
             None
         }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
-        unsafe {
-            bpf_probe_read_kernel(&ctx.regs[0])
-                .map(|v| v as *mut _)
-                .ok()
-        }
+        unsafe { bpf_probe_read(&ctx.regs[0]).map(|v| v as *mut _).ok() }
     }
 }
 
