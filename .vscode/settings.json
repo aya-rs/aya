@@ -1,3 +1,4 @@
 {
-  "rust-analyzer.linkedProjects": ["Cargo.toml", "bpf/Cargo.toml"]
+  "rust-analyzer.linkedProjects": ["Cargo.toml", "bpf/Cargo.toml", "test/integration-ebpf/Cargo.toml"],
+  "rust-analyzer.checkOnSave.allTargets": false
 }
