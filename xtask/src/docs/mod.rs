@@ -30,13 +30,7 @@ pub fn docs() -> Result<(), anyhow::Error> {
     header.flush().expect("couldn't flush contents");
 
     let abs_header_path = fs::canonicalize(&header_path).unwrap();
-    let args = vec![
-        "+nightly",
-        "doc",
-        "--workspace",
-        "--no-deps",
-        "--all-features",
-    ];
+    let args = vec!["+nightly", "doc", "--no-deps", "--all-features"];
 
     let status = Command::new("cargo")
         .current_dir(&working_dir)

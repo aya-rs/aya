@@ -24,24 +24,22 @@ jobs:
         with:
           profile: minimal
           toolchain: nightly
-          components: rustfmt, clippy, miri
+          components: rustfmt, clippy, miri, rust-src
           override: true
 
       - name: Check formatting
         run: |
           cargo fmt --all -- --check
-          pushd bpf
-          cargo fmt --all -- --check
-          popd
+          (cd bpf && cargo fmt --all -- --check)
+          (cd test/integration-ebpf && cargo fmt --all -- --check)
 
       - name: Run clippy
         run: |
           cargo clippy -p aya -- --deny warnings
           cargo clippy -p aya-gen -- --deny warnings
           cargo clippy -p xtask -- --deny warnings
-          pushd bpf
-          cargo clippy -p aya-bpf -- --deny warnings
-          popd
+          (cd bpf && cargo clippy -p aya-bpf -- --deny warnings)
+          (cd test/integration-ebpf && cargo clippy -- --deny warnings)
 
       - name: Run miri
         env:

@@ -1,2 +1,3 @@
 [workspace]
-members = ["aya", "aya-gen", "xtask"]
+members = ["aya", "aya-gen", "test/integration-test", "test/integration-test-macros", "xtask"]
+default-members = ["aya", "aya-gen"]

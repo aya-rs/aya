@@ -38,14 +38,35 @@ jobs:
   test:
     runs-on: ubuntu-20.04
     needs: build
-    container:
-      image: ghcr.io/aya-rs/aya-test-rtf:main
 
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          repository: libbpf/libbpf
+          path: libbpf
 
-      - name: Run regression tests
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: rustfmt, clippy, rust-src
+          target: x86_64-unknown-linux-musl
+          override: true
+
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Install Pre-requisites
         run: |
-          ln -s /root/.rustup ${HOME}/.rustup
-          cd test
-          rtf -vvv run
+          sudo apt-get -qy install linux-tools-common qemu-system-x86 cloud-image-utils openssh-client libelf-dev gcc-multilib
+          cargo install bpf-linker
+
+
+      - name: Lint integration tests
+        run: |
+          cargo xtask build-integration-test-ebpf --libbpf-dir ./libbpf
+          cargo clippy -p integration-test -- --deny warnings
+          cargo clippy -p integration-test-macros -- --deny warnings
+
+      - name: Run integration tests
+        run: |
+          (cd test && ./run.sh ../libbpf)
