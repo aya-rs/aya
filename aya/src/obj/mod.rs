@@ -635,21 +635,13 @@ impl Object {
                     let section_size_bytes = sym.size as u32 / INS_SIZE as u32;
 
                     let mut func_info = btf_ext.func_info.get(section.name);
-                    func_info.func_info = func_info
-                        .func_info
-                        .into_iter()
-                        .filter(|f| f.insn_off == bytes_offset)
-                        .collect();
+                    func_info.func_info.retain(|f| f.insn_off == bytes_offset);
 
                     let mut line_info = btf_ext.line_info.get(section.name);
-                    line_info.line_info = line_info
-                        .line_info
-                        .into_iter()
-                        .filter(|l| {
-                            l.insn_off >= bytes_offset
-                                && l.insn_off < (bytes_offset + section_size_bytes) as u32
-                        })
-                        .collect();
+                    line_info.line_info.retain(|l| {
+                        l.insn_off >= bytes_offset
+                            && l.insn_off < (bytes_offset + section_size_bytes) as u32
+                    });
 
                     (
                         func_info,
@@ -1401,7 +1393,7 @@ mod tests {
         assert!(obj.maps.get("foo").is_some());
         assert!(obj.maps.get("bar").is_some());
         assert!(obj.maps.get("baz").is_some());
-        for (_, m) in &obj.maps {
+        for m in obj.maps.values() {
             assert_eq!(&m.def, def);
         }
     }
