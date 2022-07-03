@@ -62,7 +62,7 @@ impl Deref for MapRef {
     type Target = Map;
 
     fn deref(&self) -> &Map {
-        &*self.guard
+        &self.guard
     }
 }
 
@@ -70,12 +70,12 @@ impl Deref for MapRefMut {
     type Target = Map;
 
     fn deref(&self) -> &Map {
-        &*self.guard
+        &self.guard
     }
 }
 
 impl DerefMut for MapRefMut {
     fn deref_mut(&mut self) -> &mut Map {
-        &mut *self.guard
+        &mut self.guard
     }
 }

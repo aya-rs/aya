@@ -150,7 +150,7 @@ mod test {
     use super::{combine_flags, extract_ctypes_prefix};
 
     fn to_vec(s: &str) -> Vec<String> {
-        s.split(" ").map(|x| x.into()).collect()
+        s.split(' ').map(|x| x.into()).collect()
     }
 
     #[test]

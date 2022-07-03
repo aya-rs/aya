@@ -602,8 +602,8 @@ pub(crate) fn fields_are_compatible(
                 let flavorless_name =
                     |name: &str| name.split_once("___").map_or(name, |x| x.0).to_string();
 
-                let local_name = flavorless_name(&*local_btf.type_name(local_ty)?.unwrap());
-                let target_name = flavorless_name(&*target_btf.type_name(target_ty)?.unwrap());
+                let local_name = flavorless_name(&local_btf.type_name(local_ty)?.unwrap());
+                let target_name = flavorless_name(&target_btf.type_name(target_ty)?.unwrap());
 
                 return Ok(local_name == target_name);
             }
