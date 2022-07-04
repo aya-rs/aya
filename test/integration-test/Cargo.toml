@@ -7,7 +7,7 @@ publish = false
 [dependencies]
 anyhow = "1"
 aya = { path = "../../aya" }
-inventory = "0.2"
+inventory = "0.3"
 integration-test-macros = { path = "../integration-test-macros" }
 lazy_static = "1"
 libc = { version = "0.2.105" }
