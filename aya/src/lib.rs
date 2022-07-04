@@ -49,6 +49,7 @@ mod generated;
 pub mod maps;
 mod obj;
 pub mod programs;
+pub mod symbols;
 mod sys;
 pub mod util;
 
