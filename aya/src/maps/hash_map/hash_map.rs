@@ -19,7 +19,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::HashMap;
 ///
 /// let mut redirect_ports = HashMap::try_from(bpf.map_mut("REDIRECT_PORTS")?)?;

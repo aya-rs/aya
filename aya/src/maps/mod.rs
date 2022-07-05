@@ -2,20 +2,20 @@
 //!
 //! The eBPF platform provides data structures - maps in eBPF speak - that are
 //! used to setup and share data with eBPF programs. When you call
-//! [`Bpf::load_file`](crate::Bpf::load_file) or
-//! [`Bpf::load`](crate::Bpf::load), all the maps defined in the eBPF code get
-//! initialized and can then be accessed using [`Bpf::map`](crate::Bpf::map) and
-//! [`Bpf::map_mut`](crate::Bpf::map_mut).
+//! [`Ebpf::load_file`](crate::Ebpf::load_file) or
+//! [`Ebpf::load`](crate::Ebpf::load), all the maps defined in the eBPF code get
+//! initialized and can then be accessed using [`Ebpf::map`](crate::Ebpf::map) and
+//! [`Ebpf::map_mut`](crate::Ebpf::map_mut).
 //!
 //! # Typed maps
 //!
 //! The eBPF API includes many map types each supporting different operations.
-//! [`Bpf::map`](crate::Bpf::map) and [`Bpf::map_mut`](crate::Bpf::map_mut) always return the
+//! [`Ebpf::map`](crate::Ebpf::map) and [`Ebpf::map_mut`](crate::Ebpf::map_mut) always return the
 //! opaque [`MapRef`] and [`MapRefMut`] types respectively. Those two types can be converted to
 //! *typed maps* using the [`TryFrom`](std::convert::TryFrom) trait. For example:
 //!
 //! ```no_run
-//! # let mut bpf = aya::Bpf::load(&[])?;
+//! # let mut bpf = aya::Ebpf::load(&[])?;
 //! use aya::maps::SockMap;
 //! use aya::programs::SkMsg;
 //!
@@ -564,7 +564,7 @@ impl PerCpuKernelMem {
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::PerCpuValues;
 /// use aya::util::nr_cpus;
 ///

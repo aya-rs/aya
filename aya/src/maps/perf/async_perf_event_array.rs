@@ -45,7 +45,7 @@ use crate::maps::{
 /// # }
 /// # #[cfg(feature = "async_tokio")]
 /// # async fn try_main() -> Result<(), Error> {
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::perf::{AsyncPerfEventArray, PerfBufferError};
 /// use aya::util::online_cpus;
 /// use futures::future;

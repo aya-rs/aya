@@ -31,8 +31,8 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError),
 /// # }
-/// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
-/// use aya::{Bpf, programs::BtfTracePoint, BtfError, Btf};
+/// # let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
+/// use aya::{Ebpf, programs::BtfTracePoint, BtfError, Btf};
 ///
 /// let btf = Btf::from_sys_fs()?;
 /// let program: &mut BtfTracePoint = bpf.program_mut("sched_process_fork").unwrap().try_into()?;

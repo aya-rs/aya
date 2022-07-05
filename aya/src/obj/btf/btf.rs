@@ -163,9 +163,9 @@ pub enum BtfError {
 /// BTF is a kind of debug metadata that allows eBPF programs compiled against one kernel version
 /// to be loaded into different kernel versions.
 ///
-/// Aya automatically loads BTF metadata if you use [`Bpf::load_file`](crate::Bpf::load_file). You
+/// Aya automatically loads BTF metadata if you use [`Ebpf::load_file`](crate::Ebpf::load_file). You
 /// only need to explicitly use this type if you want to load BTF from a non-standard
-/// location or if you are using [`Bpf::load`](crate::Bpf::load).
+/// location or if you are using [`Ebpf::load`](crate::Ebpf::load).
 #[derive(Clone, Debug)]
 pub struct Btf {
     header: btf_header,

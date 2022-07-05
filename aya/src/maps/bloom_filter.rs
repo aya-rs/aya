@@ -19,7 +19,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::bloom_filter::BloomFilter;
 ///
 /// let mut bloom_filter = BloomFilter::try_from(bpf.map_mut("BLOOM_FILTER")?)?;

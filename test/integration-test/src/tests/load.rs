@@ -7,7 +7,7 @@ use aya::{
         links::{FdLink, PinnedLink},
         TracePoint, Xdp, XdpFlags,
     },
-    Bpf,
+    Ebpf,
 };
 
 use super::{integration_test, IntegrationTest};
@@ -15,7 +15,7 @@ use super::{integration_test, IntegrationTest};
 #[integration_test]
 fn long_name() -> anyhow::Result<()> {
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/name_test");
-    let mut bpf = Bpf::load(bytes)?;
+    let mut bpf = Ebpf::load(bytes)?;
     let name_prog: &mut Xdp = bpf.program_mut("ihaveaverylongname").unwrap().try_into()?;
     name_prog.load().unwrap();
     name_prog.attach("lo", XdpFlags::default())?;
@@ -31,7 +31,7 @@ fn long_name() -> anyhow::Result<()> {
 fn multiple_maps() -> anyhow::Result<()> {
     let bytes =
         include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/multimap.bpf.o");
-    let mut bpf = Bpf::load(bytes)?;
+    let mut bpf = Ebpf::load(bytes)?;
     let pass: &mut Xdp = bpf.program_mut("stats").unwrap().try_into().unwrap();
     pass.load().unwrap();
     pass.attach("lo", XdpFlags::default()).unwrap();
@@ -42,7 +42,7 @@ fn multiple_maps() -> anyhow::Result<()> {
 fn multiple_btf_maps() -> anyhow::Result<()> {
     let bytes =
         include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/multimap-btf.bpf.o");
-    let mut bpf = Bpf::load(bytes)?;
+    let mut bpf = Ebpf::load(bytes)?;
 
     let map_1: Array<MapRefMut, u64> = Array::try_from(bpf.map_mut("map_1")?)?;
     let map_2: Array<MapRefMut, u64> = Array::try_from(bpf.map_mut("map_2")?)?;
@@ -80,7 +80,7 @@ fn assert_loaded(name: &str, loaded: bool) {
 #[integration_test]
 fn unload() -> anyhow::Result<()> {
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/test");
-    let mut bpf = Bpf::load(bytes)?;
+    let mut bpf = Ebpf::load(bytes)?;
     let prog: &mut Xdp = bpf.program_mut("test_unload").unwrap().try_into().unwrap();
     prog.load().unwrap();
     let link = prog.attach("lo", XdpFlags::default()).unwrap();
@@ -106,7 +106,7 @@ fn unload() -> anyhow::Result<()> {
 #[integration_test]
 fn pin_link() -> anyhow::Result<()> {
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/test");
-    let mut bpf = Bpf::load(bytes)?;
+    let mut bpf = Ebpf::load(bytes)?;
     let prog: &mut Xdp = bpf.program_mut("test_unload").unwrap().try_into().unwrap();
     prog.load().unwrap();
     let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
@@ -137,7 +137,7 @@ fn pin_lifecycle() -> anyhow::Result<()> {
 
     // 1. Load Program and Pin
     {
-        let mut bpf = Bpf::load(bytes)?;
+        let mut bpf = Ebpf::load(bytes)?;
         let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
         prog.load().unwrap();
         let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
@@ -151,7 +151,7 @@ fn pin_lifecycle() -> anyhow::Result<()> {
 
     // 2. Load a new version of the program, unpin link, and atomically replace old program
     {
-        let mut bpf = Bpf::load(bytes)?;
+        let mut bpf = Ebpf::load(bytes)?;
         let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
         prog.load().unwrap();
 

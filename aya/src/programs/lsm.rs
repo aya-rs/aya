@@ -34,8 +34,8 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError),
 /// # }
-/// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
-/// use aya::{Bpf, programs::Lsm, BtfError, Btf};
+/// # let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
+/// use aya::{Ebpf, programs::Lsm, BtfError, Btf};
 ///
 /// let btf = Btf::from_sys_fs()?;
 /// let program: &mut Lsm = bpf.program_mut("lsm_prog").unwrap().try_into()?;

@@ -17,7 +17,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::lpm_trie::{LpmTrie, Key};
 /// use std::net::Ipv4Addr;
 ///

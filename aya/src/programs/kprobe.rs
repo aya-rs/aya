@@ -27,8 +27,8 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
-/// use aya::{Bpf, programs::KProbe};
+/// # let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
+/// use aya::{Ebpf, programs::KProbe};
 ///
 /// let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 /// program.load()?;

@@ -40,7 +40,7 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::io::Write;
 /// use std::net::TcpStream;
 /// use std::os::unix::io::AsRawFd;

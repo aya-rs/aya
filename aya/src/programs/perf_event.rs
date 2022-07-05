@@ -96,7 +96,7 @@ pub enum PerfEventScope {
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::util::online_cpus;
 /// use aya::programs::perf_event::{
 ///     perf_sw_ids::PERF_COUNT_SW_CPU_CLOCK, PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy,

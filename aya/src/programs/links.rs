@@ -113,7 +113,7 @@ impl FdLink {
     /// #     #[error(transparent)]
     /// #     Program(#[from] aya::programs::ProgramError)
     /// # }
-    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
     /// # let prog: &mut Extension = bpf.program_mut("example").unwrap().try_into()?;
     /// let link_id = prog.attach()?;
     /// let owned_link = prog.take_link(link_id)?;

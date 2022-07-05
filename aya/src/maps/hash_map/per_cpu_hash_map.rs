@@ -26,7 +26,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::PerCpuHashMap;
 ///
 /// const CPU_IDS: u8 = 1;
@@ -110,7 +110,7 @@ impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// #     #[error(transparent)]
     /// #     Bpf(#[from] aya::BpfError)
     /// # }
-    /// # let bpf = aya::Bpf::load(&[])?;
+    /// # let bpf = aya::Ebpf::load(&[])?;
     /// use aya::maps::{PerCpuHashMap, PerCpuValues};
     /// use aya::util::nr_cpus;
     ///

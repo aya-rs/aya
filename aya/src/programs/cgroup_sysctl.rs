@@ -35,7 +35,7 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::fs::File;
 /// use aya::programs::CgroupSysctl;
 ///

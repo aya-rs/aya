@@ -19,7 +19,7 @@ use crate::{
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 4.6.
-///  
+///
 /// # Examples
 ///
 /// ```no_run
@@ -32,7 +32,7 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::StackTraceMap;
 /// use aya::util::kernel_symbols;
 ///

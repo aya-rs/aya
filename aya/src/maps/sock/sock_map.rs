@@ -19,7 +19,7 @@ use crate::{
 /// sockets.
 ///
 /// A `SockMap` can also be used to redirect packets to sockets contained by the
-/// map using `bpf_redirect_map()`, `bpf_sk_redirect_map()` etc.    
+/// map using `bpf_redirect_map()`, `bpf_sk_redirect_map()` etc.
 ///
 /// # Minimum kernel version
 ///
@@ -28,7 +28,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::SockMap;
 /// use aya::programs::SkSkb;
 ///

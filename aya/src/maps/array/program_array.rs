@@ -25,7 +25,7 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::ProgramArray;
 /// use aya::programs::CgroupSkb;
 ///

@@ -31,7 +31,7 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::{PerCpuArray, PerCpuValues};
 /// use aya::util::nr_cpus;
 ///

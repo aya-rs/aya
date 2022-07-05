@@ -34,7 +34,7 @@ pub enum SkSkbKind {
 /// # Examples
 ///
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::SockMap;
 /// use aya::programs::SkSkb;
 ///

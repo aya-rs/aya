@@ -5,18 +5,18 @@
 //!
 //! # Loading and attaching programs
 //!
-//! When you call [`Bpf::load_file`] or [`Bpf::load`], all the programs included
+//! When you call [`Ebpf::load_file`] or [`Ebpf::load`], all the programs included
 //! in the object code are parsed and relocated. Programs are not loaded
 //! automatically though, since often you will need to do some application
 //! specific setup before you can actually load them.
 //!
-//! In order to load and attach a program, you need to retrieve it using [`Bpf::program_mut`],
+//! In order to load and attach a program, you need to retrieve it using [`Ebpf::program_mut`],
 //! then call the `load()` and `attach()` methods, for example:
 //!
 //! ```no_run
-//! use aya::{Bpf, programs::KProbe};
+//! use aya::{Ebpf, programs::KProbe};
 //!
-//! let mut bpf = Bpf::load_file("ebpf_programs.o")?;
+//! let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
 //! // intercept_wakeups is the name of the program we want to load
 //! let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 //! program.load()?;
@@ -29,11 +29,11 @@
 //! The signature of the `attach()` method varies depending on what kind of
 //! program you're trying to attach.
 //!
-//! [`Bpf::load_file`]: crate::Bpf::load_file
-//! [`Bpf::load`]: crate::Bpf::load
-//! [`Bpf::programs`]: crate::Bpf::programs
-//! [`Bpf::program`]: crate::Bpf::program
-//! [`Bpf::program_mut`]: crate::Bpf::program_mut
+//! [`Ebpf::load_file`]: crate::Ebpf::load_file
+//! [`Ebpf::load`]: crate::Ebpf::load
+//! [`Ebpf::programs`]: crate::Ebpf::programs
+//! [`Ebpf::program`]: crate::Ebpf::program
+//! [`Ebpf::program_mut`]: crate::Ebpf::program_mut
 //! [`maps`]: crate::maps
 pub mod cgroup_skb;
 pub mod cgroup_sock;

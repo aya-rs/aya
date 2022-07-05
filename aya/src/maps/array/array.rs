@@ -22,7 +22,7 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::Array;
 ///
 /// let mut array = Array::try_from(bpf.map_mut("ARRAY")?)?;
