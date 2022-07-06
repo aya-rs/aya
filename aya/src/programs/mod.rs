@@ -64,11 +64,12 @@ pub mod uprobe;
 mod utils;
 pub mod xdp;
 
-use libc::ENOSPC;
+use libc::{getrlimit, rlimit, ENOSPC, RLIMIT_MEMLOCK, RLIM_INFINITY};
+use log::warn;
 use std::{
     convert::TryFrom,
     ffi::CString,
-    io,
+    fmt, io,
     os::unix::io::{AsRawFd, RawFd},
     path::Path,
 };
@@ -212,6 +213,20 @@ pub enum ProgramError {
         /// program name
         name: String,
     },
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct RlimitSize(u64);
+impl fmt::Display for RlimitSize {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.0 < 1024 {
+            write!(f, "{} bytes", self.0)
+        } else if self.0 < 1024 * 1024 {
+            write!(f, "{} KiB", self.0 / 1024)
+        } else {
+            write!(f, "{} MiB", self.0 / 1024 / 1024)
+        }
+    }
 }
 
 /// A [`Program`] file descriptor.
@@ -472,6 +487,22 @@ fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError
     Ok(())
 }
 
+fn check_rlimit() {
+    let mut limit = std::mem::MaybeUninit::<rlimit>::uninit();
+    let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
+    if ret == 0 {
+        let limit = unsafe { limit.assume_init() };
+        let limit: RlimitSize = RlimitSize(limit.rlim_cur);
+        if limit.0 == RLIM_INFINITY {
+            return;
+        }
+        warn!(
+            "RLIMIT_MEMLOCK value is {}, not RLIM_INFNITY; if experiencing problems with creating maps, try raising RMILIT_MEMLOCK to RLIM_INFINITY",
+            limit
+        );
+    }
+}
+
 fn load_program<T: Link>(
     prog_type: bpf_prog_type,
     data: &mut ProgramData<T>,
@@ -502,6 +533,10 @@ fn load_program<T: Link>(
         }
         _ => (*kernel_version).into(),
     };
+    let version_5_11 = (5 << 16) + (11 << 8);
+    if target_kernel_version < version_5_11 {
+        check_rlimit();
+    }
 
     let mut logger = VerifierLog::new();
 
