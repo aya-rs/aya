@@ -309,29 +309,29 @@ impl Program {
     /// Pin the program to the provided path
     pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
         match self {
-            Program::KProbe(p) => p.data.pin(path),
-            Program::UProbe(p) => p.data.pin(path),
-            Program::TracePoint(p) => p.data.pin(path),
-            Program::SocketFilter(p) => p.data.pin(path),
-            Program::Xdp(p) => p.data.pin(path),
-            Program::SkMsg(p) => p.data.pin(path),
-            Program::SkSkb(p) => p.data.pin(path),
-            Program::SockOps(p) => p.data.pin(path),
-            Program::SchedClassifier(p) => p.data.pin(path),
-            Program::CgroupSkb(p) => p.data.pin(path),
-            Program::CgroupSysctl(p) => p.data.pin(path),
-            Program::CgroupSockopt(p) => p.data.pin(path),
-            Program::LircMode2(p) => p.data.pin(path),
-            Program::PerfEvent(p) => p.data.pin(path),
-            Program::RawTracePoint(p) => p.data.pin(path),
-            Program::Lsm(p) => p.data.pin(path),
-            Program::BtfTracePoint(p) => p.data.pin(path),
-            Program::FEntry(p) => p.data.pin(path),
-            Program::FExit(p) => p.data.pin(path),
-            Program::Extension(p) => p.data.pin(path),
-            Program::CgroupSockAddr(p) => p.data.pin(path),
-            Program::SkLookup(p) => p.data.pin(path),
-            Program::CgroupSock(p) => p.data.pin(path),
+            Program::KProbe(p) => p.pin(path),
+            Program::UProbe(p) => p.pin(path),
+            Program::TracePoint(p) => p.pin(path),
+            Program::SocketFilter(p) => p.pin(path),
+            Program::Xdp(p) => p.pin(path),
+            Program::SkMsg(p) => p.pin(path),
+            Program::SkSkb(p) => p.pin(path),
+            Program::SockOps(p) => p.pin(path),
+            Program::SchedClassifier(p) => p.pin(path),
+            Program::CgroupSkb(p) => p.pin(path),
+            Program::CgroupSysctl(p) => p.pin(path),
+            Program::CgroupSockopt(p) => p.pin(path),
+            Program::LircMode2(p) => p.pin(path),
+            Program::PerfEvent(p) => p.pin(path),
+            Program::RawTracePoint(p) => p.pin(path),
+            Program::Lsm(p) => p.pin(path),
+            Program::BtfTracePoint(p) => p.pin(path),
+            Program::FEntry(p) => p.pin(path),
+            Program::FExit(p) => p.pin(path),
+            Program::Extension(p) => p.pin(path),
+            Program::CgroupSockAddr(p) => p.pin(path),
+            Program::SkLookup(p) => p.pin(path),
+            Program::CgroupSock(p) => p.pin(path),
         }
     }
 
@@ -441,23 +441,6 @@ impl<T: Link> ProgramData<T> {
         self.fd.ok_or(ProgramError::NotLoaded)
     }
 
-    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
-        let fd = self.fd_or_err()?;
-        let path_string =
-            CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
-                MapError::InvalidPinPath {
-                    error: e.to_string(),
-                }
-            })?;
-        bpf_pin_object(fd, &path_string).map_err(|(_code, io_error)| {
-            ProgramError::SyscallError {
-                call: "BPF_OBJ_PIN".to_string(),
-                io_error,
-            }
-        })?;
-        Ok(())
-    }
-
     pub(crate) fn take_link(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
         self.links.forget(link_id)
     }
@@ -469,6 +452,23 @@ fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError
     unsafe {
         libc::close(fd);
     }
+    Ok(())
+}
+
+fn pin_program<T: Link, P: AsRef<Path>>(
+    data: &mut ProgramData<T>,
+    path: P,
+) -> Result<(), ProgramError> {
+    let fd = data.fd_or_err()?;
+    let path_string = CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
+        ProgramError::InvalidPinPath {
+            error: e.to_string(),
+        }
+    })?;
+    bpf_pin_object(fd, &path_string).map_err(|(_code, io_error)| ProgramError::SyscallError {
+        call: "BPF_OBJ_PIN".to_string(),
+        io_error,
+    })?;
     Ok(())
 }
 
@@ -648,6 +648,50 @@ macro_rules! impl_fd {
 }
 
 impl_fd!(
+    KProbe,
+    UProbe,
+    TracePoint,
+    SocketFilter,
+    Xdp,
+    SkMsg,
+    SkSkb,
+    SchedClassifier,
+    CgroupSkb,
+    CgroupSysctl,
+    CgroupSockopt,
+    LircMode2,
+    PerfEvent,
+    Lsm,
+    RawTracePoint,
+    BtfTracePoint,
+    FEntry,
+    FExit,
+    Extension,
+    CgroupSockAddr,
+    SkLookup,
+    SockOps,
+    CgroupSock,
+);
+
+macro_rules! impl_program_pin{
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl $struct_name {
+                /// Pins the program to a BPF filesystem.
+                ///
+                /// When a BPF object is pinned to a BPF filesystem it will remain loaded after
+                /// Aya has unloaded the program.
+                /// To remove the program, the file on the BPF filesystem must be remove.
+                /// Any directories in the the path provided should have been created by the caller.
+                pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
+                    pin_program(&mut self.data, path)
+                }
+            }
+        )+
+    }
+}
+
+impl_program_pin!(
     KProbe,
     UProbe,
     TracePoint,
