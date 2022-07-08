@@ -35,7 +35,7 @@
 use std::{
     convert::TryFrom,
     ffi::CString,
-    io,
+    fmt, io,
     marker::PhantomData,
     mem,
     ops::Deref,
@@ -43,12 +43,15 @@ use std::{
     path::Path,
     ptr,
 };
+
+use libc::{getrlimit, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
+use log::warn;
 use thiserror::Error;
 
 use crate::{
     generated::bpf_map_type,
     obj,
-    sys::{bpf_create_map, bpf_get_object, bpf_map_get_next_key, bpf_pin_object},
+    sys::{bpf_create_map, bpf_get_object, bpf_map_get_next_key, bpf_pin_object, kernel_version},
     util::nr_cpus,
     Pod,
 };
@@ -222,6 +225,40 @@ impl AsRawFd for MapFd {
     }
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct RlimitSize(u64);
+impl fmt::Display for RlimitSize {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.0 < 1024 {
+            write!(f, "{} bytes", self.0)
+        } else if self.0 < 1024 * 1024 {
+            write!(f, "{} KiB", self.0 / 1024)
+        } else {
+            write!(f, "{} MiB", self.0 / 1024 / 1024)
+        }
+    }
+}
+
+/// Raises a warning about rlimit. Should be used only if creating a map was not
+/// successful.
+fn maybe_warn_rlimit() {
+    let mut limit = std::mem::MaybeUninit::<rlimit>::uninit();
+    let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
+    if ret == 0 {
+        let limit = unsafe { limit.assume_init() };
+        let limit: RlimitSize = RlimitSize(limit.rlim_cur);
+        if limit.0 == RLIM_INFINITY {
+            return;
+        }
+        warn!(
+            "RLIMIT_MEMLOCK value is {}, not RLIM_INFNITY; if experiencing problems with creating \
+            maps, try raising RMILIT_MEMLOCK either to RLIM_INFINITY or to a higher value sufficient \
+            for size of your maps",
+            limit
+        );
+    }
+}
+
 /// A generic handle to a BPF map.
 ///
 /// You should never need to use this unless you're implementing a new map type.
@@ -243,6 +280,11 @@ impl Map {
         let c_name = CString::new(name).map_err(|_| MapError::InvalidName { name: name.into() })?;
 
         let fd = bpf_create_map(&c_name, &self.obj.def).map_err(|(code, io_error)| {
+            let k_ver = kernel_version().unwrap();
+            if k_ver < (5, 11, 0) {
+                maybe_warn_rlimit();
+            }
+
             MapError::CreateError {
                 name: name.into(),
                 code,
