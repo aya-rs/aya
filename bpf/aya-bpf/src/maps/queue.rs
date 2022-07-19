@@ -53,14 +53,14 @@ impl<T> Queue<T> {
                 flags,
             )
         };
-        (ret == 0).then(|| ()).ok_or(ret)
+        (ret == 0).then_some(()).ok_or(ret)
     }
 
     pub fn pop(&self) -> Option<T> {
         unsafe {
             let mut value = mem::MaybeUninit::uninit();
             let ret = bpf_map_pop_elem(self.def.get() as *mut _, value.as_mut_ptr() as *mut _);
-            (ret == 0).then(|| value.assume_init())
+            (ret == 0).then_some(value.assume_init())
         }
     }
 }

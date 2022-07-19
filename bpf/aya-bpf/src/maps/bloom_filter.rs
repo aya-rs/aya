@@ -47,7 +47,7 @@ impl<T> BloomFilter<T> {
                 value as *const _ as *mut c_void,
             )
         };
-        (ret == 0).then(|| ()).ok_or(ret)
+        (ret == 0).then_some(()).ok_or(ret)
     }
 
     #[inline]
@@ -59,7 +59,7 @@ impl<T> BloomFilter<T> {
                 flags,
             )
         };
-        (ret == 0).then(|| ()).ok_or(ret)
+        (ret == 0).then_some(()).ok_or(ret)
     }
 }
 

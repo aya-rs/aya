@@ -102,7 +102,7 @@ impl SockMap {
             }
             let ret = bpf_sk_assign(ctx.as_ptr() as *mut _, sk, flags);
             bpf_sk_release(sk);
-            (ret == 0).then(|| ()).ok_or(1)
+            (ret == 0).then_some(()).ok_or(1)
         }
     }
 }
