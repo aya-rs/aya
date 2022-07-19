@@ -61,7 +61,7 @@ impl<K> SockHash<K> {
                 flags,
             )
         };
-        (ret == 0).then(|| ()).ok_or(ret)
+        (ret == 0).then_some(()).ok_or(ret)
     }
 
     pub fn redirect_msg(&self, ctx: &SkMsgContext, key: &mut K, flags: u64) -> i64 {
@@ -102,7 +102,7 @@ impl<K> SockHash<K> {
             }
             let ret = bpf_sk_assign(ctx.as_ptr() as *mut _, sk, flags);
             bpf_sk_release(sk);
-            (ret == 0).then(|| ()).ok_or(1)
+            (ret == 0).then_some(()).ok_or(1)
         }
     }
 }

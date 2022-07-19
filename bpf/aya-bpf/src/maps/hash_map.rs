@@ -348,11 +348,11 @@ fn insert<K, V>(def: *mut bpf_map_def, key: &K, value: &V, flags: u64) -> Result
             flags,
         )
     };
-    (ret == 0).then(|| ()).ok_or(ret)
+    (ret == 0).then_some(()).ok_or(ret)
 }
 
 #[inline]
 fn remove<K>(def: *mut bpf_map_def, key: &K) -> Result<(), c_long> {
     let ret = unsafe { bpf_map_delete_elem(def as *mut _, key as *const _ as *const c_void) };
-    (ret == 0).then(|| ()).ok_or(ret)
+    (ret == 0).then_some(()).ok_or(ret)
 }
