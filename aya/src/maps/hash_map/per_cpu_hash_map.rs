@@ -52,7 +52,7 @@ pub struct PerCpuHashMap<T: Deref<Target = Map>, K: Pod, V: Pod> {
 
 impl<T: Deref<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     pub(crate) fn new(map: T) -> Result<PerCpuHashMap<T, K, V>, MapError> {
-        let map_type = map.obj.def.map_type;
+        let map_type = map.obj.map_type();
 
         // validate the map definition
         if map_type != BPF_MAP_TYPE_PERCPU_HASH as u32

@@ -1,8 +1,13 @@
-use std::{convert::TryInto, process::Command};
+use std::{
+    convert::{TryFrom, TryInto},
+    process::Command,
+    thread, time,
+};
 
 use aya::{
     include_bytes_aligned,
-    programs::{Xdp, XdpFlags},
+    maps::{Array, MapRefMut},
+    programs::{TracePoint, Xdp, XdpFlags},
     Bpf,
 };
 
@@ -31,6 +36,31 @@ fn multiple_maps() -> anyhow::Result<()> {
     let pass: &mut Xdp = bpf.program_mut("stats").unwrap().try_into().unwrap();
     pass.load().unwrap();
     pass.attach("lo", XdpFlags::default()).unwrap();
+    Ok(())
+}
+
+#[integration_test]
+fn multiple_btf_maps() -> anyhow::Result<()> {
+    let bytes =
+        include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/multimap-btf.bpf.o");
+    let mut bpf = Bpf::load(bytes)?;
+
+    let map_1: Array<MapRefMut, u64> = Array::try_from(bpf.map_mut("map_1")?)?;
+    let map_2: Array<MapRefMut, u64> = Array::try_from(bpf.map_mut("map_2")?)?;
+
+    let prog: &mut TracePoint = bpf.program_mut("tracepoint").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+    prog.attach("sched", "sched_switch").unwrap();
+
+    thread::sleep(time::Duration::from_secs(3));
+
+    let key = 0;
+    let val_1 = map_1.get(&key, 0)?;
+    let val_2 = map_2.get(&key, 0)?;
+
+    assert_eq!(val_1, 24);
+    assert_eq!(val_2, 42);
+
     Ok(())
 }
 

@@ -69,7 +69,7 @@ pub struct SockHash<T: Deref<Target = Map>, K> {
 
 impl<T: Deref<Target = Map>, K: Pod> SockHash<T, K> {
     pub(crate) fn new(map: T) -> Result<SockHash<T, K>, MapError> {
-        let map_type = map.obj.def.map_type;
+        let map_type = map.obj.map_type();
 
         // validate the map definition
         if map_type != BPF_MAP_TYPE_SOCKHASH as u32 {

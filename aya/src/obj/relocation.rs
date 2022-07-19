@@ -65,12 +65,12 @@ impl Object {
     pub fn relocate_maps(&mut self, maps: &HashMap<String, Map>) -> Result<(), BpfError> {
         let maps_by_section = maps
             .iter()
-            .map(|(name, map)| (map.obj.section_index, (name.as_str(), map)))
+            .map(|(name, map)| (map.obj.section_index(), (name.as_str(), map)))
             .collect::<HashMap<_, _>>();
 
         let maps_by_symbol = maps
             .iter()
-            .map(|(name, map)| (map.obj.symbol_index, (name.as_str(), map)))
+            .map(|(name, map)| (map.obj.symbol_index(), (name.as_str(), map)))
             .collect::<HashMap<_, _>>();
 
         let functions = self
@@ -189,7 +189,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             section_index,
         })?;
 
-        if !map.obj.data.is_empty() {
+        if !map.obj.data().is_empty() {
             instructions[ins_index].set_src_reg(BPF_PSEUDO_MAP_VALUE as u8);
             instructions[ins_index + 1].imm = instructions[ins_index].imm + sym.address as i32;
         } else {
@@ -432,4 +432,269 @@ fn insn_is_call(ins: &bpf_insn) -> bool {
         && ins.src_reg() as u32 == BPF_PSEUDO_CALL
         && ins.dst_reg() == 0
         && ins.off == 0
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        bpf_map_def,
+        obj::{self, BtfMap, LegacyMap, MapKind},
+        BtfMapDef,
+    };
+
+    use super::*;
+
+    fn fake_sym(index: usize, section_index: usize, address: u64, name: &str, size: u64) -> Symbol {
+        Symbol {
+            index,
+            section_index: Some(section_index),
+            name: Some(name.to_string()),
+            address,
+            size,
+            is_definition: false,
+            kind: SymbolKind::Data,
+        }
+    }
+
+    fn ins(bytes: &[u8]) -> bpf_insn {
+        unsafe { std::ptr::read_unaligned(bytes.as_ptr() as *const _) }
+    }
+
+    fn fake_legacy_map(fd: i32, symbol_index: usize) -> Map {
+        Map {
+            obj: obj::Map::Legacy(LegacyMap {
+                def: bpf_map_def {
+                    ..Default::default()
+                },
+                section_index: 0,
+                symbol_index,
+                data: Vec::new(),
+                kind: MapKind::Other,
+            }),
+            fd: Some(fd),
+            btf_fd: None,
+            pinned: false,
+        }
+    }
+
+    fn fake_btf_map(fd: i32, symbol_index: usize) -> Map {
+        Map {
+            obj: obj::Map::Btf(BtfMap {
+                def: BtfMapDef {
+                    ..Default::default()
+                },
+                section_index: 0,
+                symbol_index,
+                data: Vec::new(),
+                kind: MapKind::Other,
+            }),
+            fd: Some(fd),
+            btf_fd: None,
+            pinned: false,
+        }
+    }
+
+    fn fake_func(name: &str, instructions: Vec<bpf_insn>) -> Function {
+        Function {
+            address: Default::default(),
+            name: name.to_string(),
+            section_index: SectionIndex(0),
+            section_offset: Default::default(),
+            instructions,
+            func_info: Default::default(),
+            line_info: Default::default(),
+            func_info_rec_size: Default::default(),
+            line_info_rec_size: Default::default(),
+        }
+    }
+
+    #[test]
+    fn test_single_legacy_map_relocation() {
+        let mut fun = fake_func(
+            "test",
+            vec![ins(&[
+                0x18, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00,
+            ])],
+        );
+
+        let symbol_table = HashMap::from([(1, fake_sym(1, 0, 0, "test_map", 0))]);
+
+        let relocations = vec![Relocation {
+            offset: 0x0,
+            symbol_index: 1,
+        }];
+        let maps_by_section = HashMap::new();
+
+        let map = fake_legacy_map(1, 1);
+        let maps_by_symbol = HashMap::from([(1, ("test_map", &map))]);
+
+        relocate_maps(
+            &mut fun,
+            relocations.iter(),
+            &maps_by_section,
+            &maps_by_symbol,
+            &symbol_table,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(fun.instructions[0].src_reg(), BPF_PSEUDO_MAP_FD as u8);
+        assert_eq!(fun.instructions[0].imm, 1);
+
+        mem::forget(map);
+    }
+
+    #[test]
+    fn test_multiple_legacy_map_relocation() {
+        let mut fun = fake_func(
+            "test",
+            vec![
+                ins(&[
+                    0x18, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00,
+                ]),
+                ins(&[
+                    0x18, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00,
+                ]),
+            ],
+        );
+
+        let symbol_table = HashMap::from([
+            (1, fake_sym(1, 0, 0, "test_map_1", 0)),
+            (2, fake_sym(2, 0, 0, "test_map_2", 0)),
+        ]);
+
+        let relocations = vec![
+            Relocation {
+                offset: 0x0,
+                symbol_index: 1,
+            },
+            Relocation {
+                offset: mem::size_of::<bpf_insn>() as u64,
+                symbol_index: 2,
+            },
+        ];
+        let maps_by_section = HashMap::new();
+
+        let map_1 = fake_legacy_map(1, 1);
+        let map_2 = fake_legacy_map(2, 2);
+        let maps_by_symbol =
+            HashMap::from([(1, ("test_map_1", &map_1)), (2, ("test_map_2", &map_2))]);
+
+        relocate_maps(
+            &mut fun,
+            relocations.iter(),
+            &maps_by_section,
+            &maps_by_symbol,
+            &symbol_table,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(fun.instructions[0].src_reg(), BPF_PSEUDO_MAP_FD as u8);
+        assert_eq!(fun.instructions[0].imm, 1);
+
+        assert_eq!(fun.instructions[1].src_reg(), BPF_PSEUDO_MAP_FD as u8);
+        assert_eq!(fun.instructions[1].imm, 2);
+
+        mem::forget(map_1);
+        mem::forget(map_2);
+    }
+
+    #[test]
+    fn test_single_btf_map_relocation() {
+        let mut fun = fake_func(
+            "test",
+            vec![ins(&[
+                0x18, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00,
+            ])],
+        );
+
+        let symbol_table = HashMap::from([(1, fake_sym(1, 0, 0, "test_map", 0))]);
+
+        let relocations = vec![Relocation {
+            offset: 0x0,
+            symbol_index: 1,
+        }];
+        let maps_by_section = HashMap::new();
+
+        let map = fake_btf_map(1, 1);
+        let maps_by_symbol = HashMap::from([(1, ("test_map", &map))]);
+
+        relocate_maps(
+            &mut fun,
+            relocations.iter(),
+            &maps_by_section,
+            &maps_by_symbol,
+            &symbol_table,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(fun.instructions[0].src_reg(), BPF_PSEUDO_MAP_FD as u8);
+        assert_eq!(fun.instructions[0].imm, 1);
+
+        mem::forget(map);
+    }
+
+    #[test]
+    fn test_multiple_btf_map_relocation() {
+        let mut fun = fake_func(
+            "test",
+            vec![
+                ins(&[
+                    0x18, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00,
+                ]),
+                ins(&[
+                    0x18, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00,
+                ]),
+            ],
+        );
+
+        let symbol_table = HashMap::from([
+            (1, fake_sym(1, 0, 0, "test_map_1", 0)),
+            (2, fake_sym(2, 0, 0, "test_map_2", 0)),
+        ]);
+
+        let relocations = vec![
+            Relocation {
+                offset: 0x0,
+                symbol_index: 1,
+            },
+            Relocation {
+                offset: mem::size_of::<bpf_insn>() as u64,
+                symbol_index: 2,
+            },
+        ];
+        let maps_by_section = HashMap::new();
+
+        let map_1 = fake_btf_map(1, 1);
+        let map_2 = fake_btf_map(2, 2);
+        let maps_by_symbol =
+            HashMap::from([(1, ("test_map_1", &map_1)), (2, ("test_map_2", &map_2))]);
+
+        relocate_maps(
+            &mut fun,
+            relocations.iter(),
+            &maps_by_section,
+            &maps_by_symbol,
+            &symbol_table,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(fun.instructions[0].src_reg(), BPF_PSEUDO_MAP_FD as u8);
+        assert_eq!(fun.instructions[0].imm, 1);
+
+        assert_eq!(fun.instructions[1].src_reg(), BPF_PSEUDO_MAP_FD as u8);
+        assert_eq!(fun.instructions[1].imm, 2);
+
+        mem::forget(map_1);
+        mem::forget(map_2);
+    }
 }

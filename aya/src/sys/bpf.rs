@@ -17,26 +17,34 @@ use std::{
 };
 
 use crate::{
-    bpf_map_def,
     generated::{
         bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_prog_info, bpf_prog_type,
     },
     maps::PerCpuValues,
-    obj::btf::{FuncSecInfo, LineSecInfo},
+    obj::{
+        self,
+        btf::{FuncSecInfo, LineSecInfo},
+    },
     sys::{kernel_version, syscall, SysResult, Syscall},
     util::VerifierLog,
     Pod, BPF_OBJ_NAME_LEN,
 };
 
-pub(crate) fn bpf_create_map(name: &CStr, def: &bpf_map_def) -> SysResult {
+pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_1 };
-    u.map_type = def.map_type;
-    u.key_size = def.key_size;
-    u.value_size = def.value_size;
-    u.max_entries = def.max_entries;
-    u.map_flags = def.map_flags;
+    u.map_type = def.map_type();
+    u.key_size = def.key_size();
+    u.value_size = def.value_size();
+    u.max_entries = def.max_entries();
+    u.map_flags = def.map_flags();
+
+    if let obj::Map::Btf(m) = def {
+        u.btf_key_type_id = m.def.btf_key_type_id;
+        u.btf_value_type_id = m.def.btf_value_type_id;
+        u.btf_fd = btf_fd.unwrap() as u32;
+    }
 
     // https://github.com/torvalds/linux/commit/ad5b177bd73f5107d97c36f56395c4281fb6f089
     // The map name was added as a parameter in kernel 4.15+ so we skip adding it on

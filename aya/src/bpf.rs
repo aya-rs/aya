@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
+    convert::TryFrom,
     error::Error,
     ffi::CString,
     fs, io,
@@ -73,12 +74,41 @@ pub(crate) struct bpf_map_def {
     pub(crate) pinning: PinningType,
 }
 
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) struct BtfMapDef {
+    pub(crate) map_type: u32,
+    pub(crate) key_size: u32,
+    pub(crate) value_size: u32,
+    pub(crate) max_entries: u32,
+    pub(crate) map_flags: u32,
+    pub(crate) pinning: PinningType,
+    pub(crate) btf_key_type_id: u32,
+    pub(crate) btf_value_type_id: u32,
+}
+
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(crate) enum PinningType {
     None = 0,
-    #[allow(dead_code)] // ByName is constructed from the BPF side
     ByName = 1,
+}
+
+#[derive(Debug, Error)]
+pub(crate) enum PinningError {
+    #[error("unsupported pinning type")]
+    Unsupported,
+}
+
+impl TryFrom<u32> for PinningType {
+    type Error = PinningError;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(PinningType::None),
+            1 => Ok(PinningType::ByName),
+            _ => Err(PinningError::Unsupported),
+        }
+    }
 }
 
 impl Default for PinningType {
@@ -340,21 +370,23 @@ impl<'a> BpfLoader<'a> {
 
         let mut maps = HashMap::new();
         for (name, mut obj) in obj.maps.drain() {
-            if obj.def.map_type == BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 && obj.def.max_entries == 0
-            {
-                obj.def.max_entries = possible_cpus()
-                    .map_err(|error| BpfError::FileError {
-                        path: PathBuf::from(POSSIBLE_CPUS),
-                        error,
-                    })?
-                    .len() as u32;
+            if obj.map_type() == BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 && obj.max_entries() == 0 {
+                obj.set_max_entries(
+                    possible_cpus()
+                        .map_err(|error| BpfError::FileError {
+                            path: PathBuf::from(POSSIBLE_CPUS),
+                            error,
+                        })?
+                        .len() as u32,
+                );
             }
             let mut map = Map {
                 obj,
                 fd: None,
                 pinned: false,
+                btf_fd,
             };
-            let fd = match map.obj.def.pinning {
+            let fd = match map.obj.pinning() {
                 PinningType::ByName => {
                     let path = match &self.map_pin_path {
                         Some(p) => p,
@@ -375,16 +407,15 @@ impl<'a> BpfLoader<'a> {
                 }
                 PinningType::None => map.create(&name)?,
             };
-            if !map.obj.data.is_empty() && map.obj.kind != MapKind::Bss {
-                bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data.as_mut_ptr(), 0).map_err(
-                    |(code, io_error)| MapError::SyscallError {
+            if !map.obj.data().is_empty() && map.obj.kind() != MapKind::Bss {
+                bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
+                    .map_err(|(code, io_error)| MapError::SyscallError {
                         call: "bpf_map_update_elem".to_owned(),
                         code,
                         io_error,
-                    },
-                )?;
+                    })?;
             }
-            if map.obj.kind == MapKind::Rodata {
+            if map.obj.kind() == MapKind::Rodata {
                 bpf_map_freeze(fd).map_err(|(code, io_error)| MapError::SyscallError {
                     call: "bpf_map_freeze".to_owned(),
                     code,
@@ -803,6 +834,10 @@ pub enum BpfError {
         /// The original error
         error: Box<dyn Error + Send + Sync>,
     },
+
+    /// No BTF parsed for object
+    #[error("no BTF parsed for object")]
+    NoBTF,
 
     #[error("map error")]
     /// A map error

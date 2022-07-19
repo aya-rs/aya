@@ -42,7 +42,7 @@ pub struct HashMap<T: Deref<Target = Map>, K, V> {
 
 impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     pub(crate) fn new(map: T) -> Result<HashMap<T, K, V>, MapError> {
-        let map_type = map.obj.def.map_type;
+        let map_type = map.obj.map_type();
 
         // validate the map definition
         if map_type != BPF_MAP_TYPE_HASH as u32 && map_type != BPF_MAP_TYPE_LRU_HASH as u32 {
@@ -159,7 +159,7 @@ mod tests {
     use super::*;
 
     fn new_obj_map() -> obj::Map {
-        obj::Map {
+        obj::Map::Legacy(obj::LegacyMap {
             def: bpf_map_def {
                 map_type: BPF_MAP_TYPE_HASH as u32,
                 key_size: 4,
@@ -171,7 +171,7 @@ mod tests {
             data: Vec::new(),
             kind: obj::MapKind::Other,
             symbol_index: 0,
-        }
+        })
     }
 
     fn sys_error(value: i32) -> SysResult {
@@ -184,6 +184,7 @@ mod tests {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
+            btf_fd: None,
         };
         assert!(matches!(
             HashMap::<_, u8, u32>::new(&map),
@@ -200,6 +201,7 @@ mod tests {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
+            btf_fd: None,
         };
         assert!(matches!(
             HashMap::<_, u32, u16>::new(&map),
@@ -213,7 +215,7 @@ mod tests {
     #[test]
     fn test_try_from_wrong_map() {
         let map = Map {
-            obj: obj::Map {
+            obj: obj::Map::Legacy(obj::LegacyMap {
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32,
                     key_size: 4,
@@ -225,9 +227,10 @@ mod tests {
                 symbol_index: 0,
                 data: Vec::new(),
                 kind: obj::MapKind::Other,
-            },
+            }),
             fd: None,
             pinned: false,
+            btf_fd: None,
         };
 
         assert!(matches!(
@@ -242,6 +245,7 @@ mod tests {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
+            btf_fd: None,
         };
 
         assert!(matches!(
@@ -256,6 +260,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
 
         assert!(HashMap::<_, u32, u32>::new(&mut map).is_ok());
@@ -267,6 +272,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
     }
@@ -274,7 +280,7 @@ mod tests {
     #[test]
     fn test_try_from_ok_lru() {
         let map = Map {
-            obj: obj::Map {
+            obj: obj::Map::Legacy(obj::LegacyMap {
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_LRU_HASH as u32,
                     key_size: 4,
@@ -286,9 +292,10 @@ mod tests {
                 symbol_index: 0,
                 data: Vec::new(),
                 kind: obj::MapKind::Other,
-            },
+            }),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
 
         assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
@@ -302,6 +309,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
@@ -325,6 +333,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
@@ -339,6 +348,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
@@ -362,6 +372,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
@@ -375,6 +386,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -397,6 +409,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -433,6 +446,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
         let keys = hm.keys().collect::<Result<Vec<_>, _>>();
@@ -477,6 +491,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -505,6 +520,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -535,6 +551,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
         let items = hm.iter().collect::<Result<Vec<_>, _>>().unwrap();
@@ -568,6 +585,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -602,6 +620,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -642,6 +661,7 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
+            btf_fd: None,
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
