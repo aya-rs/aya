@@ -1,4 +1,5 @@
 use core::{
+    cmp,
     ffi::c_void,
     mem::{self, MaybeUninit},
 };
@@ -62,6 +63,81 @@ impl SkBuffContext {
             } else {
                 Err(ret)
             }
+        }
+    }
+
+    /// Reads some bytes from the packet into the specified buffer, returning
+    /// how many bytes were read.
+    ///
+    /// Starts reading at `offset` and reads at most `dst.len()` or
+    /// `self.len() - offset` bytes, depending on which one is smaller.
+    ///
+    /// # Examples
+    ///
+    /// Read into a `PerCpuArray`.
+    ///
+    /// ```no_run
+    /// use core::mem;
+    ///
+    /// use aya_bpf::{bindings::TC_ACT_PIPE, macros::map, maps::PerCpuArray, programs::SkBuffContext};
+    /// # #[allow(non_camel_case_types)]
+    /// # struct ethhdr {};
+    /// # #[allow(non_camel_case_types)]
+    /// # struct iphdr {};
+    /// # #[allow(non_camel_case_types)]
+    /// # struct tcphdr {};
+    ///
+    /// const ETH_HDR_LEN: usize = mem::size_of::<ethhdr>();
+    /// const IP_HDR_LEN: usize = mem::size_of::<iphdr>();
+    /// const TCP_HDR_LEN: usize = mem::size_of::<tcphdr>();
+    ///
+    /// #[repr(C)]
+    /// pub struct Buf {
+    ///    pub buf: [u8; 1500],
+    /// }
+    ///
+    /// #[map]
+    /// pub static mut BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
+    ///
+    /// fn try_classifier(ctx: SkBuffContext) -> Result<i32, i32> {
+    ///     let buf = unsafe {
+    ///         let ptr = BUF.get_ptr_mut(0).ok_or(TC_ACT_PIPE)?;
+    ///         &mut *ptr
+    ///     };
+    ///     let offset = ETH_HDR_LEN + IP_HDR_LEN + TCP_HDR_LEN;
+    ///     ctx.load_bytes(offset, &mut buf.buf).map_err(|_| TC_ACT_PIPE)?;
+    ///
+    ///     // do something with `buf`
+    ///
+    ///     Ok(TC_ACT_PIPE)
+    /// }
+    /// ```
+    #[inline(always)]
+    pub fn load_bytes(&self, offset: usize, dst: &mut [u8]) -> Result<usize, c_long> {
+        if offset >= self.len() as usize {
+            return Err(-1);
+        }
+        let len = cmp::min(self.len() as isize - offset as isize, dst.len() as isize);
+        // The verifier rejects the program if it can't see that `len > 0`.
+        if len <= 0 {
+            return Err(-1);
+        }
+        // This is only needed to ensure the verifier can see the upper bound.
+        if len > dst.len() as isize {
+            return Err(-1);
+        }
+        let ret = unsafe {
+            bpf_skb_load_bytes(
+                self.skb as *const _,
+                offset as u32,
+                dst.as_mut_ptr() as *mut _,
+                len as u32,
+            )
+        };
+        if ret == 0 {
+            Ok(len as usize)
+        } else {
+            Err(ret)
         }
     }
 
