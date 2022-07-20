@@ -90,7 +90,9 @@ where
 
     pub(crate) fn write(&self, mut buf: &mut [u8]) -> Result<usize, ()> {
         let size = mem::size_of::<T>() + mem::size_of::<usize>() + self.value.len();
-        if buf.len() < size {
+        // The verifier rejects the program if it can't see that `size` doesn't
+        // exceed the buffer size.
+        if size > LOG_BUF_CAPACITY {
             return Err(());
         }
 
@@ -101,6 +103,11 @@ where
         buf = &mut buf[mem::size_of::<usize>()..];
 
         let len = cmp::min(buf.len(), self.value.len());
+        // The verifier rejects the program if it can't see that `size` doesn't
+        // exceed the buffer size.
+        if len > LOG_BUF_CAPACITY {
+            return Err(());
+        }
         buf[..len].copy_from_slice(&self.value[..len]);
         Ok(size)
     }
