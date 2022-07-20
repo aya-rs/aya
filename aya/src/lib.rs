@@ -48,6 +48,7 @@ mod bpf;
 mod generated;
 pub mod maps;
 mod obj;
+pub mod pin;
 pub mod programs;
 mod sys;
 pub mod util;

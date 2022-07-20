@@ -106,6 +106,7 @@ use crate::{
     generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
     maps::MapError,
     obj::{self, btf::BtfError, Function, KernelVersion},
+    pin::PinError,
     sys::{
         bpf_get_object, bpf_load_program, bpf_obj_get_info_by_fd, bpf_pin_object,
         bpf_prog_get_fd_by_id, bpf_prog_query, retry_with_verifier_logs, BpfLoadProgramAttrs,
@@ -162,13 +163,6 @@ pub enum ProgramError {
     /// The program is not of the expected type.
     #[error("unexpected program type")]
     UnexpectedProgramType,
-
-    /// Invalid pin path
-    #[error("invalid pin path `{error}`")]
-    InvalidPinPath {
-        /// the error message
-        error: String,
-    },
 
     /// A map error occurred while loading or attaching a program.
     #[error(transparent)]
@@ -307,7 +301,7 @@ impl Program {
     }
 
     /// Pin the program to the provided path
-    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
+    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
         match self {
             Program::KProbe(p) => p.pin(path),
             Program::UProbe(p) => p.pin(path),
@@ -458,15 +452,21 @@ fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError
 fn pin_program<T: Link, P: AsRef<Path>>(
     data: &mut ProgramData<T>,
     path: P,
-) -> Result<(), ProgramError> {
-    let fd = data.fd_or_err()?;
+) -> Result<(), PinError> {
+    let fd = data.fd.ok_or(PinError::NoFd {
+        name: data
+            .name
+            .as_ref()
+            .unwrap_or(&"<unknown program>".to_string())
+            .to_string(),
+    })?;
     let path_string = CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
-        ProgramError::InvalidPinPath {
+        PinError::InvalidPinPath {
             error: e.to_string(),
         }
     })?;
-    bpf_pin_object(fd, &path_string).map_err(|(_code, io_error)| ProgramError::SyscallError {
-        call: "BPF_OBJ_PIN".to_string(),
+    bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
+        name: "BPF_OBJ_PIN".to_string(),
         io_error,
     })?;
     Ok(())
@@ -681,9 +681,9 @@ macro_rules! impl_program_pin{
                 ///
                 /// When a BPF object is pinned to a BPF filesystem it will remain loaded after
                 /// Aya has unloaded the program.
-                /// To remove the program, the file on the BPF filesystem must be remove.
+                /// To remove the program, the file on the BPF filesystem must be removed.
                 /// Any directories in the the path provided should have been created by the caller.
-                pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
+                pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
                     pin_program(&mut self.data, path)
                 }
             }
@@ -814,17 +814,10 @@ impl ProgramInfo {
 
     /// Loads a program from a pinned path in bpffs.
     pub fn from_pinned<P: AsRef<Path>>(path: P) -> Result<ProgramInfo, ProgramError> {
-        let path_string = match CString::new(path.as_ref().to_str().unwrap()) {
-            Ok(s) => s,
-            Err(e) => {
-                return Err(ProgramError::InvalidPinPath {
-                    error: e.to_string(),
-                })
-            }
-        };
+        let path_string = CString::new(path.as_ref().to_str().unwrap()).unwrap();
         let fd =
             bpf_get_object(&path_string).map_err(|(_, io_error)| ProgramError::SyscallError {
-                call: "bpf_obj_get".to_owned(),
+                call: "BPF_OBJ_GET".to_owned(),
                 io_error,
             })? as RawFd;
 
@@ -832,7 +825,6 @@ impl ProgramInfo {
             call: "bpf_obj_get_info_by_fd".to_owned(),
             io_error,
         })?;
-
         unsafe {
             libc::close(fd);
         }
