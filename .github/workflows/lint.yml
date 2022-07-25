@@ -30,22 +30,11 @@ jobs:
       - name: Check formatting
         run: |
           cargo fmt --all -- --check
-          (cd bpf && cargo fmt --all -- --check)
-          (cd test/integration-ebpf && cargo fmt --all -- --check)
 
       - name: Run clippy
         run: |
-          cargo clippy -p aya -- --deny warnings
-          cargo clippy -p aya-gen -- --deny warnings
-          cargo clippy -p xtask -- --deny warnings
-          (cd bpf && cargo clippy -p aya-bpf -- --deny warnings)
-          (cd test/integration-ebpf && cargo clippy -- --deny warnings)
+          cargo clippy --workspace --exclude integration-test -- --deny warnings
 
       - name: Run miri
-        env:
-          MIRIFLAGS: -Zmiri-disable-stacked-borrows
         run: |
           cargo miri test --all-targets
-          pushd bpf
-          cargo miri test
-          popd
