@@ -13,7 +13,7 @@ pub use aya_bpf_bindings::helpers as gen;
 #[doc(hidden)]
 pub use gen::*;
 
-use crate::cty::{c_char, c_long, c_void};
+use crate::cty::{c_long, c_void};
 
 /// Read bytes stored at `src` and store them as a `T`.
 ///
@@ -625,7 +625,7 @@ pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), 
 }
 
 /// Read the `comm` field associated with the current task struct
-/// as a `[c_char; 16]`.
+/// as a `[u8; 16]`.
 ///
 /// # Examples
 ///
@@ -641,8 +641,8 @@ pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), 
 ///
 /// On failure, this function returns a negative value wrapped in an `Err`.
 #[inline]
-pub fn bpf_get_current_comm() -> Result<[c_char; 16], c_long> {
-    let mut comm: [c_char; 16usize] = [0; 16];
+pub fn bpf_get_current_comm() -> Result<[u8; 16], c_long> {
+    let mut comm: [u8; 16usize] = [0; 16];
     let ret = unsafe { gen::bpf_get_current_comm(&mut comm as *mut _ as *mut c_void, 16u32) };
     if ret == 0 {
         Ok(comm)
