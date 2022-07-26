@@ -13,7 +13,7 @@ pub use aya_bpf_bindings::helpers as gen;
 #[doc(hidden)]
 pub use gen::*;
 
-use crate::cty::{c_long, c_void, c_char};
+use crate::cty::{c_char, c_long, c_void};
 
 /// Read bytes stored at `src` and store them as a `T`.
 ///
@@ -735,7 +735,9 @@ pub fn bpf_get_current_uid_gid() -> u64 {
 ///
 /// ```no_run
 /// # use aya_bpf::helpers::bpf_printk;
-/// bpf_printk!(b"hi there! dec: %d, hex: 0x%08X", 42, 0x1234);
+/// unsafe {
+///   bpf_printk!(b"hi there! dec: %d, hex: 0x%08X", 42, 0x1234);
+/// }
 /// ```
 ///
 /// [fmt]: https://www.kernel.org/doc/html/latest/core-api/printk-formats.html#printk-specifiers
@@ -743,22 +745,16 @@ pub fn bpf_get_current_uid_gid() -> u64 {
 macro_rules! bpf_printk {
     ($fmt:literal $(,)? $($arg:expr),* $(,)?) => {{
         use $crate::helpers::PrintkArg;
-        // Arguments must be placed on the stack to pass the verifier.
-        let fmt = unsafe {
-            // `concat_bytes!` is still unstable, so we have to emulate it manually.
-            let mut fmt = ::core::mem::MaybeUninit::<[u8; $fmt.len() + 1]>::uninit();
-            ::core::ptr::copy_nonoverlapping($fmt.as_ptr(), fmt.as_mut_ptr() as _, 1);
-            (*fmt.as_mut_ptr()).as_mut_ptr().add($fmt.len()).write(0);
-            fmt.assume_init()
-        };
+        const FMT: [u8; { $fmt.len() + 1 }] = $crate::helpers::zero_pad_array::<
+            { $fmt.len() }, { $fmt.len() + 1 }>(*$fmt);
         let data = [$(PrintkArg::from($arg)),*];
-        $crate::helpers::bpf_printk_impl(&fmt, &data)
+        $crate::helpers::bpf_printk_impl(&FMT, &data)
     }};
 }
 
 // Macros are always exported from the crate root. Also export it from `helpers`.
 #[doc(inline)]
-pub use bpf_printk as bpf_printk;
+pub use bpf_printk;
 
 /// Argument ready to be passed to `printk` BPF helper.
 #[repr(transparent)]
@@ -813,6 +809,27 @@ impl<T> From<*mut T> for PrintkArg {
     fn from(x: *mut T) -> Self {
         PrintkArg(x as usize as u64)
     }
+}
+
+/// Expands the given byte array to `DST_LEN`, right-padding it with zeros. If
+/// `DST_LEN` is smaller than `SRC_LEN`, the array is instead truncated.
+///
+/// This function serves as a helper for the [`bpf_printk!`] macro.
+#[doc(hidden)]
+pub const fn zero_pad_array<const SRC_LEN: usize, const DST_LEN: usize>(
+    src: [u8; SRC_LEN],
+) -> [u8; DST_LEN] {
+    let mut out: [u8; DST_LEN] = [0u8; DST_LEN];
+
+    // The `min` function is not `const`. Hand-roll it.
+    let mut i = if DST_LEN > SRC_LEN { SRC_LEN } else { DST_LEN };
+
+    while i > 0 {
+        i -= 1;
+        out[i] = src[i];
+    }
+
+    out
 }
 
 /// Internal helper function for the [`bpf_printk!`] macro.
