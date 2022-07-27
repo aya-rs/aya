@@ -9,7 +9,7 @@
     html_logo_url = "https://aya-rs.dev/assets/images/crabby.svg",
     html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
-#![feature(never_type)]
+#![cfg_attr(unstable, feature(never_type))]
 #![allow(clippy::missing_safety_doc)]
 #![no_std]
 

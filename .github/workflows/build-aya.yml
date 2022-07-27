@@ -31,11 +31,6 @@ jobs:
           toolchain: stable
           override: true
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: false
-
       - uses: Swatinem/rust-cache@v1
       - name: Prereqs
         run: cargo install cross --git https://github.com/cross-rs/cross
@@ -47,12 +42,7 @@ jobs:
         env:
           RUST_BACKTRACE: full
         run: |
-          cross test --verbose -p aya --target ${{matrix.arch}}
-          cross test --verbose -p aya-gen --target ${{matrix.arch}}
-          cross test --verbose -p aya-log --target ${{matrix.arch}}
-          cross test --verbose -p aya-log-ebpf-macros --target ${{matrix.arch}}
-          # aya-bpf-macros can only be tested on nightly since its tests depend on aya-bpf, which requires the never type
-          cross +nightly test --verbose -p aya-bpf-macros --target ${{matrix.arch}}
+          cross test --verbose --target ${{matrix.arch}}
 
   test:
     runs-on: ubuntu-20.04

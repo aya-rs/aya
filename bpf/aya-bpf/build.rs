@@ -1,6 +1,7 @@
 use std::env;
 
 fn main() {
+    check_rust_version();
     println!("cargo:rerun-if-env-changed=CARGO_CFG_BPF_TARGET_ARCH");
     if let Ok(arch) = env::var("CARGO_CFG_BPF_TARGET_ARCH") {
         println!("cargo:rustc-cfg=bpf_target_arch=\"{}\"", arch);
@@ -10,3 +11,11 @@ fn main() {
         println!("cargo:rustc-cfg=bpf_target_arch=\"{}\"", arch);
     }
 }
+
+#[rustversion::nightly]
+fn check_rust_version() {
+    println!("cargo:rustc-cfg=unstable");
+}
+
+#[rustversion::not(nightly)]
+fn check_rust_version() {}
