@@ -33,7 +33,7 @@
 //! versa. Because of that, all map values must be plain old data and therefore
 //! implement the [Pod] trait.
 use std::{
-    convert::TryFrom,
+    convert::{TryFrom, TryInto},
     ffi::CString,
     fmt, io,
     marker::PhantomData,
@@ -226,7 +226,7 @@ impl AsRawFd for MapFd {
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct RlimitSize(u64);
+struct RlimitSize(usize);
 impl fmt::Display for RlimitSize {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.0 < 1024 {
@@ -246,8 +246,9 @@ fn maybe_warn_rlimit() {
     let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
     if ret == 0 {
         let limit = unsafe { limit.assume_init() };
-        let limit: RlimitSize = RlimitSize(limit.rlim_cur);
-        if limit.0 == RLIM_INFINITY {
+
+        let limit: RlimitSize = RlimitSize(limit.rlim_cur.try_into().unwrap());
+        if limit.0 == RLIM_INFINITY.try_into().unwrap() {
             return;
         }
         warn!(
