@@ -13,7 +13,7 @@ pub use aya_bpf_bindings::helpers as gen;
 #[doc(hidden)]
 pub use gen::*;
 
-use crate::cty::{c_long, c_void};
+use crate::cty::{c_char, c_long, c_void};
 
 /// Read bytes stored at `src` and store them as a `T`.
 ///
@@ -700,4 +700,164 @@ pub fn bpf_get_current_pid_tgid() -> u64 {
 #[inline]
 pub fn bpf_get_current_uid_gid() -> u64 {
     unsafe { gen::bpf_get_current_uid_gid() }
+}
+
+/// Prints a debug message to the BPF debugging pipe.
+///
+/// The [format string syntax][fmt] is the same as that of the `printk` kernel
+/// function. It is passed in as a fixed-size byte array (`&[u8; N]`), so you
+/// will have to prefix your string literal with a `b`. A terminating zero byte
+/// is appended automatically.
+///
+/// The macro can read from arbitrary pointers, so it must be used in an `unsafe`
+/// scope in order to compile.
+///
+/// Invocations with less than 4 arguments call the `bpf_trace_printk` helper,
+/// otherwise the `bpf_trace_vprintk` function is called. The latter function
+/// requires a kernel version >= 5.16 whereas the former has been around since
+/// the dawn of eBPF. The return value of the BPF helper is also returned from
+/// this macro.
+///
+/// Messages can be read by executing the following command in a second terminal:
+///
+/// ```bash
+/// sudo cat /sys/kernel/debug/tracing/trace_pipe
+/// ```
+///
+/// If no messages are printed when calling [`bpf_printk!`] after executing the
+/// above command, it is possible that tracing must first be enabled by running:
+///
+/// ```bash
+/// echo 1 | sudo tee /sys/kernel/debug/tracing/tracing_on
+/// ```
+///
+/// # Example
+///
+/// ```no_run
+/// # use aya_bpf::helpers::bpf_printk;
+/// unsafe {
+///   bpf_printk!(b"hi there! dec: %d, hex: 0x%08X", 42, 0x1234);
+/// }
+/// ```
+///
+/// [fmt]: https://www.kernel.org/doc/html/latest/core-api/printk-formats.html#printk-specifiers
+#[macro_export]
+macro_rules! bpf_printk {
+    ($fmt:literal $(,)? $($arg:expr),* $(,)?) => {{
+        use $crate::helpers::PrintkArg;
+        const FMT: [u8; { $fmt.len() + 1 }] = $crate::helpers::zero_pad_array::<
+            { $fmt.len() }, { $fmt.len() + 1 }>(*$fmt);
+        let data = [$(PrintkArg::from($arg)),*];
+        $crate::helpers::bpf_printk_impl(&FMT, &data)
+    }};
+}
+
+// Macros are always exported from the crate root. Also export it from `helpers`.
+#[doc(inline)]
+pub use bpf_printk;
+
+/// Argument ready to be passed to `printk` BPF helper.
+#[repr(transparent)]
+#[derive(Copy, Clone)]
+pub struct PrintkArg(u64);
+
+impl PrintkArg {
+    /// Manually construct a `printk` BPF helper argument.
+    #[inline]
+    pub fn from_raw(x: u64) -> Self {
+        Self(x)
+    }
+}
+
+macro_rules! impl_integer_promotion {
+    ($($ty:ty : via $via:ty),* $(,)?) => {$(
+        /// Create `printk` arguments from integer types.
+        impl From<$ty> for PrintkArg {
+            #[inline]
+            fn from(x: $ty) -> PrintkArg {
+                PrintkArg(x as $via as u64)
+            }
+        }
+    )*}
+}
+
+impl_integer_promotion!(
+  char:  via u64,
+  u8:    via u64,
+  u16:   via u64,
+  u32:   via u64,
+  u64:   via u64,
+  usize: via u64,
+  i8:    via i64,
+  i16:   via i64,
+  i32:   via i64,
+  i64:   via i64,
+  isize: via i64,
+);
+
+/// Construct `printk` BPF helper arguments from constant pointers.
+impl<T> From<*const T> for PrintkArg {
+    #[inline]
+    fn from(x: *const T) -> Self {
+        PrintkArg(x as usize as u64)
+    }
+}
+
+/// Construct `printk` BPF helper arguments from mutable pointers.
+impl<T> From<*mut T> for PrintkArg {
+    #[inline]
+    fn from(x: *mut T) -> Self {
+        PrintkArg(x as usize as u64)
+    }
+}
+
+/// Expands the given byte array to `DST_LEN`, right-padding it with zeros. If
+/// `DST_LEN` is smaller than `SRC_LEN`, the array is instead truncated.
+///
+/// This function serves as a helper for the [`bpf_printk!`] macro.
+#[doc(hidden)]
+pub const fn zero_pad_array<const SRC_LEN: usize, const DST_LEN: usize>(
+    src: [u8; SRC_LEN],
+) -> [u8; DST_LEN] {
+    let mut out: [u8; DST_LEN] = [0u8; DST_LEN];
+
+    // The `min` function is not `const`. Hand-roll it.
+    let mut i = if DST_LEN > SRC_LEN { SRC_LEN } else { DST_LEN };
+
+    while i > 0 {
+        i -= 1;
+        out[i] = src[i];
+    }
+
+    out
+}
+
+/// Internal helper function for the [`bpf_printk!`] macro.
+///
+/// The BPF helpers require the length for both the format string as well as
+/// the argument array to be of constant size to pass the verifier. Const
+/// generics are used to represent this requirement in Rust.
+#[inline]
+#[doc(hidden)]
+pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
+    fmt: &[u8; FMT_LEN],
+    args: &[PrintkArg; NUM_ARGS],
+) -> i64 {
+    // This function can't be wrapped in `helpers.rs` because it has variadic
+    // arguments. We also can't turn the definitions in `helpers.rs` into
+    // `const`s because MIRI believes casting arbitrary integers to function
+    // pointers to be an error.
+    let printk: unsafe extern "C" fn(fmt: *const c_char, fmt_size: u32, ...) -> c_long =
+        mem::transmute(6usize);
+
+    let fmt_ptr = fmt.as_ptr() as *const c_char;
+    let fmt_size = fmt.len() as u32;
+
+    match NUM_ARGS {
+        0 => printk(fmt_ptr, fmt_size),
+        1 => printk(fmt_ptr, fmt_size, args[0]),
+        2 => printk(fmt_ptr, fmt_size, args[0], args[1]),
+        3 => printk(fmt_ptr, fmt_size, args[0], args[1], args[2]),
+        _ => gen::bpf_trace_vprintk(fmt_ptr, fmt_size, args.as_ptr() as _, (NUM_ARGS * 8) as _),
+    }
 }
