@@ -1,0 +1,12 @@
+[package]
+name = "aya-log-ebpf"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+aya-bpf = { path = "../aya-bpf" }
+aya-log-common = { path = "../../aya-log-common" }
+aya-log-ebpf-macros = { path = "../../aya-log-ebpf-macros" }
+
+[lib]
+path = "src/lib.rs"

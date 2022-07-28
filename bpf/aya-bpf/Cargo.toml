@@ -6,5 +6,8 @@ edition = "2018"
 
 [dependencies]
 aya-bpf-cty = { path = "../aya-bpf-cty" }
-aya-bpf-macros = { path = "../aya-bpf-macros" }
+aya-bpf-macros = { path = "../../aya-bpf-macros" }
 aya-bpf-bindings = { path = "../aya-bpf-bindings" }
+
+[build-dependencies]
+rustversion = "1.0"

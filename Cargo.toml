@@ -1,3 +1,22 @@
 [workspace]
-members = ["aya", "aya-gen", "test/integration-test", "test/integration-test-macros", "xtask"]
-default-members = ["aya", "aya-gen"]
+members = [
+    "aya", "aya-gen", "aya-log", "aya-log-common", "test/integration-test", "test/integration-test-macros", "xtask",
+    # macros
+    "aya-bpf-macros", "aya-log-ebpf-macros",
+    # ebpf crates
+    "bpf/aya-bpf", "bpf/aya-bpf-bindings", "bpf/aya-log-ebpf", "test/integration-ebpf"
+]
+default-members = ["aya", "aya-gen", "aya-log", "aya-bpf-macros", "aya-log-ebpf-macros"]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+[profile.dev.package.integration-ebpf]
+opt-level = 2
+overflow-checks = false
+
+[profile.release.package.integration-ebpf]
+debug = 2
