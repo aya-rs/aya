@@ -50,14 +50,12 @@ pub enum ArgType {
     I16,
     I32,
     I64,
-    I128,
     Isize,
 
     U8,
     U16,
     U32,
     U64,
-    U128,
     Usize,
 
     F32,
@@ -132,14 +130,12 @@ impl_write_to_buf!(i8, ArgType::I8);
 impl_write_to_buf!(i16, ArgType::I16);
 impl_write_to_buf!(i32, ArgType::I32);
 impl_write_to_buf!(i64, ArgType::I64);
-impl_write_to_buf!(i128, ArgType::I128);
 impl_write_to_buf!(isize, ArgType::Isize);
 
 impl_write_to_buf!(u8, ArgType::U8);
 impl_write_to_buf!(u16, ArgType::U16);
 impl_write_to_buf!(u32, ArgType::U32);
 impl_write_to_buf!(u64, ArgType::U64);
-impl_write_to_buf!(u128, ArgType::U128);
 impl_write_to_buf!(usize, ArgType::Usize);
 
 impl_write_to_buf!(f32, ArgType::F32);

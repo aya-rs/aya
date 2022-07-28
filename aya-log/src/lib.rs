@@ -218,11 +218,6 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
                             i64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
                         );
                     }
-                    ArgType::I128 => {
-                        args.push(
-                            i128::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
-                        );
-                    }
                     ArgType::Isize => {
                         args.push(
                             isize::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
@@ -247,11 +242,6 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
                     ArgType::U64 => {
                         args.push(
                             u64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
-                        );
-                    }
-                    ArgType::U128 => {
-                        args.push(
-                            u128::from_ne_bytes(attr.value.try_into().map_err(|_| ())?).to_string(),
                         );
                     }
                     ArgType::Usize => {
