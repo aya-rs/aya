@@ -1,0 +1,10 @@
+[package]
+name = "aya-log-parser"
+version = "0.1.11-dev.0"
+edition = "2018"
+
+[dependencies]
+aya-log-common = { path = "../aya-log-common" }
+
+[lib]
+path = "src/lib.rs"

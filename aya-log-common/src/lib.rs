@@ -1,10 +1,12 @@
 #![no_std]
 
-use core::{cmp, mem, ptr};
+use core::{cmp, mem, ptr, slice};
+
+use num_enum::IntoPrimitive;
 
 pub const LOG_BUF_CAPACITY: usize = 8192;
 
-pub const LOG_FIELDS: usize = 7;
+pub const LOG_FIELDS: usize = 6;
 
 #[repr(usize)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
@@ -40,12 +42,13 @@ pub enum RecordField {
     File,
     Line,
     NumArgs,
-    Log,
 }
 
 #[repr(usize)]
 #[derive(Copy, Clone, Debug)]
-pub enum ArgType {
+pub enum Argument {
+    DisplayHint,
+
     I8,
     I16,
     I32,
@@ -61,7 +64,26 @@ pub enum ArgType {
     F32,
     F64,
 
+    ArrU8Len16,
+    ArrU16Len8,
+
     Str,
+}
+
+/// All display hints
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, IntoPrimitive)]
+pub enum DisplayHint {
+    /// Default string representation.
+    Default = 1,
+    /// `:x`
+    LowerHex,
+    /// `:X`
+    UpperHex,
+    /// `:ipv4`
+    Ipv4,
+    /// `:ipv6`
+    Ipv6,
 }
 
 #[cfg(feature = "userspace")]
@@ -69,7 +91,8 @@ mod userspace {
     use super::*;
 
     unsafe impl aya::Pod for RecordField {}
-    unsafe impl aya::Pod for ArgType {}
+    unsafe impl aya::Pod for Argument {}
+    unsafe impl aya::Pod for DisplayHint {}
 }
 
 struct TagLenValue<'a, T> {
@@ -120,30 +143,51 @@ macro_rules! impl_write_to_buf {
     ($type:ident, $arg_type:expr) => {
         impl WriteToBuf for $type {
             fn write(&self, buf: &mut [u8]) -> Result<usize, ()> {
-                TagLenValue::<ArgType>::new($arg_type, &self.to_ne_bytes()).write(buf)
+                TagLenValue::<Argument>::new($arg_type, &self.to_ne_bytes()).write(buf)
             }
         }
     };
 }
 
-impl_write_to_buf!(i8, ArgType::I8);
-impl_write_to_buf!(i16, ArgType::I16);
-impl_write_to_buf!(i32, ArgType::I32);
-impl_write_to_buf!(i64, ArgType::I64);
-impl_write_to_buf!(isize, ArgType::Isize);
+impl_write_to_buf!(i8, Argument::I8);
+impl_write_to_buf!(i16, Argument::I16);
+impl_write_to_buf!(i32, Argument::I32);
+impl_write_to_buf!(i64, Argument::I64);
+impl_write_to_buf!(isize, Argument::Isize);
 
-impl_write_to_buf!(u8, ArgType::U8);
-impl_write_to_buf!(u16, ArgType::U16);
-impl_write_to_buf!(u32, ArgType::U32);
-impl_write_to_buf!(u64, ArgType::U64);
-impl_write_to_buf!(usize, ArgType::Usize);
+impl_write_to_buf!(u8, Argument::U8);
+impl_write_to_buf!(u16, Argument::U16);
+impl_write_to_buf!(u32, Argument::U32);
+impl_write_to_buf!(u64, Argument::U64);
+impl_write_to_buf!(usize, Argument::Usize);
 
-impl_write_to_buf!(f32, ArgType::F32);
-impl_write_to_buf!(f64, ArgType::F64);
+impl_write_to_buf!(f32, Argument::F32);
+impl_write_to_buf!(f64, Argument::F64);
+
+impl WriteToBuf for [u8; 16] {
+    fn write(&self, buf: &mut [u8]) -> Result<usize, ()> {
+        TagLenValue::<Argument>::new(Argument::ArrU8Len16, self).write(buf)
+    }
+}
+
+impl WriteToBuf for [u16; 8] {
+    fn write(&self, buf: &mut [u8]) -> Result<usize, ()> {
+        let ptr = self.as_ptr().cast::<u8>();
+        let bytes = unsafe { slice::from_raw_parts(ptr, 16) };
+        TagLenValue::<Argument>::new(Argument::ArrU16Len8, bytes).write(buf)
+    }
+}
 
 impl WriteToBuf for str {
     fn write(&self, buf: &mut [u8]) -> Result<usize, ()> {
-        TagLenValue::<ArgType>::new(ArgType::Str, self.as_bytes()).write(buf)
+        TagLenValue::<Argument>::new(Argument::Str, self.as_bytes()).write(buf)
+    }
+}
+
+impl WriteToBuf for DisplayHint {
+    fn write(&self, buf: &mut [u8]) -> Result<usize, ()> {
+        let v: u8 = (*self).into();
+        TagLenValue::<Argument>::new(Argument::DisplayHint, &v.to_ne_bytes()).write(buf)
     }
 }
 
@@ -172,10 +216,4 @@ pub fn write_record_header(
     }
 
     Ok(size)
-}
-
-#[allow(clippy::result_unit_err)]
-#[doc(hidden)]
-pub fn write_record_message(buf: &mut [u8], msg: &str) -> Result<usize, ()> {
-    TagLenValue::<RecordField>::new(RecordField::Log, msg.as_bytes()).write(buf)
 }
