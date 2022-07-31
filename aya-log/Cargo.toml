@@ -13,7 +13,6 @@ edition = "2021"
 [dependencies]
 aya = { path = "../aya", version = "0.11.0", features=["async_tokio"] }
 aya-log-common = { path = "../aya-log-common", version = "0.1.11-dev.0", features=["userspace"] }
-dyn-fmt = "0.3.0"
 thiserror = "1"
 log = "0.4"
 bytes = "1.1"

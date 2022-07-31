@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "aya", "aya-gen", "aya-log", "aya-log-common", "test/integration-test", "test/integration-test-macros", "xtask",
+    "aya", "aya-gen", "aya-log", "aya-log-common", "aya-log-parser", "test/integration-test", "test/integration-test-macros", "xtask",
     # macros
     "aya-bpf-macros", "aya-log-ebpf-macros",
     # ebpf crates
