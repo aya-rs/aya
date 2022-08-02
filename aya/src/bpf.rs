@@ -400,7 +400,10 @@ impl<'a> BpfLoader<'a> {
                         }
                         Err(_) => {
                             let fd = map.create(&name)?;
-                            map.pin(&name, path)?;
+                            map.pin(&name, path).map_err(|error| MapError::PinError {
+                                name: name.to_string(),
+                                error,
+                            })?;
                             fd
                         }
                     }
@@ -774,12 +777,19 @@ impl Bpf {
     /// # Examples
     /// ```no_run
     /// # use std::path::Path;
+    /// # #[derive(thiserror::Error, Debug)]
+    /// # enum Error {
+    /// #     #[error(transparent)]
+    /// #     Bpf(#[from] aya::BpfError),
+    /// #     #[error(transparent)]
+    /// #     Pin(#[from] aya::pin::PinError)
+    /// # }
     /// # let mut bpf = aya::Bpf::load(&[])?;
     /// # let pin_path = Path::new("/tmp/pin_path");
     /// for (_, program) in bpf.programs_mut() {
     ///     program.pin(pin_path)?;
     /// }
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), Error>(())
     /// ```
     pub fn programs_mut(&mut self) -> impl Iterator<Item = (&str, &mut Program)> {
         self.programs.iter_mut().map(|(s, p)| (s.as_str(), p))

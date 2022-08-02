@@ -51,6 +51,7 @@ use thiserror::Error;
 use crate::{
     generated::bpf_map_type,
     obj,
+    pin::PinError,
     sys::{bpf_create_map, bpf_get_object, bpf_map_get_next_key, bpf_pin_object, kernel_version},
     util::nr_cpus,
     Pod,
@@ -119,29 +120,10 @@ pub enum MapError {
         name: String,
     },
 
-    /// The map has already been pinned
-    #[error("the map `{name}` has already been pinned")]
-    AlreadyPinned {
-        /// Map name
-        name: String,
-    },
-
     /// Failed to create map
     #[error("failed to create map `{name}` with code {code}")]
     CreateError {
         /// Map name
-        name: String,
-        /// Error code
-        code: libc::c_long,
-        #[source]
-        /// Original io::Error
-        io_error: io::Error,
-    },
-
-    /// Failed to pin map
-    #[error("failed to pin map `{name}` with code {code}")]
-    PinError {
-        /// Map Name
         name: String,
         /// Error code
         code: libc::c_long,
@@ -213,6 +195,16 @@ pub enum MapError {
     BorrowMutError {
         /// Map name
         name: String,
+    },
+
+    /// Could not pin map by name
+    #[error("map `{name}` requested pinning by name. pinning failed")]
+    PinError {
+        /// The map name
+        name: String,
+        /// The reason for the failure
+        #[source]
+        error: PinError,
     },
 }
 
@@ -316,11 +308,12 @@ impl Map {
                 })
             }
         };
-        let fd = bpf_get_object(&path_string).map_err(|(code, io_error)| MapError::PinError {
-            name: name.into(),
-            code,
-            io_error,
-        })? as RawFd;
+        let fd =
+            bpf_get_object(&path_string).map_err(|(code, io_error)| MapError::SyscallError {
+                call: "BPF_OBJ_GET".to_string(),
+                code,
+                io_error,
+            })? as RawFd;
 
         self.fd = Some(fd);
 
@@ -336,20 +329,21 @@ impl Map {
         self.fd.ok_or(MapError::NotCreated)
     }
 
-    pub(crate) fn pin<P: AsRef<Path>>(&mut self, name: &str, path: P) -> Result<(), MapError> {
+    pub(crate) fn pin<P: AsRef<Path>>(&mut self, name: &str, path: P) -> Result<(), PinError> {
         if self.pinned {
-            return Err(MapError::AlreadyPinned { name: name.into() });
+            return Err(PinError::AlreadyPinned { name: name.into() });
         }
         let map_path = path.as_ref().join(name);
-        let fd = self.fd_or_err()?;
+        let fd = self.fd.ok_or(PinError::NoFd {
+            name: name.to_string(),
+        })?;
         let path_string = CString::new(map_path.to_string_lossy().into_owned()).map_err(|e| {
-            MapError::InvalidPinPath {
+            PinError::InvalidPinPath {
                 error: e.to_string(),
             }
         })?;
-        bpf_pin_object(fd, &path_string).map_err(|(code, io_error)| MapError::SyscallError {
-            call: "BPF_OBJ_PIN".to_string(),
-            code,
+        bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
+            name: "BPF_OBJ_GET".to_string(),
             io_error,
         })?;
         self.pinned = true;

@@ -4,11 +4,18 @@ use libc::{close, dup};
 use std::{
     borrow::Borrow,
     collections::{hash_map::Entry, HashMap},
+    ffi::CString,
     ops::Deref,
     os::unix::prelude::RawFd,
+    path::Path,
 };
 
-use crate::{generated::bpf_attach_type, programs::ProgramError, sys::bpf_prog_detach};
+use crate::{
+    generated::bpf_attach_type,
+    pin::PinError,
+    programs::ProgramError,
+    sys::{bpf_pin_object, bpf_prog_detach},
+};
 
 /// A Link.
 pub trait Link: std::fmt::Debug + 'static {
@@ -110,6 +117,26 @@ pub struct FdLink {
 impl FdLink {
     pub(crate) fn new(fd: RawFd) -> FdLink {
         FdLink { fd }
+    }
+
+    /// Pins the FdLink to a BPF filesystem.
+    ///
+    /// When a BPF object is pinned to a BPF filesystem it will remain attached after
+    /// Aya has detached the link.
+    /// To remove the attachment, the file on the BPF filesystem must be removed.
+    /// Any directories in the the path provided should have been created by the caller.
+    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
+        let path_string =
+            CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
+                PinError::InvalidPinPath {
+                    error: e.to_string(),
+                }
+            })?;
+        bpf_pin_object(self.fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
+            name: "BPF_OBJ_PIN".to_string(),
+            io_error,
+        })?;
+        Ok(())
     }
 }
 
