@@ -102,13 +102,6 @@ pub enum MapError {
         name: String,
     },
 
-    /// Pin path is invalid
-    #[error("invalid map path `{error}`")]
-    InvalidPinPath {
-        /// The error message
-        error: String,
-    },
-
     /// The map has not been created
     #[error("the map has not been created")]
     NotCreated,
@@ -300,14 +293,7 @@ impl Map {
             return Err(MapError::AlreadyCreated { name: name.into() });
         }
         let map_path = path.as_ref().join(name);
-        let path_string = match CString::new(map_path.to_str().unwrap()) {
-            Ok(s) => s,
-            Err(e) => {
-                return Err(MapError::InvalidPinPath {
-                    error: e.to_string(),
-                })
-            }
-        };
+        let path_string = CString::new(map_path.to_str().unwrap()).unwrap();
         let fd =
             bpf_get_object(&path_string).map_err(|(code, io_error)| MapError::SyscallError {
                 call: "BPF_OBJ_GET".to_string(),
