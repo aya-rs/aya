@@ -64,7 +64,7 @@ pub enum TcAttachType {
 ///
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach("eth0", TcAttachType::Ingress)?;
+/// prog.attach("eth0", TcAttachType::Ingress, 0)?;
 ///
 /// # Ok::<(), Error>(())
 /// ```
@@ -108,6 +108,10 @@ impl SchedClassifier {
 
     /// Attaches the program to the given `interface`.
     ///
+    /// Valid priority values range from 0 - 65535 with lower number = higher priority.
+    /// 0 means let the system choose the next highest priority, or 49152 if no filters exist yet.
+    /// All other values in the range are taken as an explicit priority setting (aka "preference").
+    ///
     /// The returned value can be used to detach, see [SchedClassifier::detach].
     ///
     /// # Errors
@@ -120,13 +124,15 @@ impl SchedClassifier {
         &mut self,
         interface: &str,
         attach_type: TcAttachType,
+        priority: u16,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let if_index = ifindex_from_ifname(interface)
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
-        let priority =
-            unsafe { netlink_qdisc_attach(if_index as i32, &attach_type, prog_fd, &self.name) }
-                .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        let priority = unsafe {
+            netlink_qdisc_attach(if_index as i32, &attach_type, prog_fd, &self.name, priority)
+        }
+        .map_err(|io_error| TcError::NetlinkError { io_error })?;
 
         self.data.links.insert(SchedClassifierLink(TcLink {
             if_index: if_index as i32,
@@ -155,13 +161,13 @@ impl SchedClassifier {
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub(crate) struct TcLinkId(i32, TcAttachType, u32);
+pub(crate) struct TcLinkId(i32, TcAttachType, u16);
 
 #[derive(Debug)]
 struct TcLink {
     if_index: i32,
     attach_type: TcAttachType,
-    priority: u32,
+    priority: u16,
 }
 
 impl Link for TcLink {

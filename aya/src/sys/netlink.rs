@@ -103,9 +103,9 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     attach_type: &TcAttachType,
     prog_fd: RawFd,
     prog_name: &CStr,
-) -> Result<u32, io::Error> {
+    priority: u16,
+) -> Result<u16, io::Error> {
     let sock = NetlinkSocket::open()?;
-    let priority = 0;
     let mut req = mem::zeroed::<TcRequest>();
 
     let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>();
@@ -120,7 +120,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     req.tc_info.tcm_handle = 0; // auto-assigned, if not provided
     req.tc_info.tcm_ifindex = if_index;
     req.tc_info.tcm_parent = attach_type.parent();
-    req.tc_info.tcm_info = tc_handler_make(priority << 16, htons(ETH_P_ALL as u16) as u32);
+    req.tc_info.tcm_info = tc_handler_make((priority as u32) << 16, htons(ETH_P_ALL as u16) as u32);
 
     let attrs_buf = request_attributes(&mut req, nlmsg_len);
 
@@ -159,14 +159,14 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         }
     };
 
-    let priority = ((tc_info & TC_H_MAJ_MASK) >> 16) as u32;
+    let priority = ((tc_info & TC_H_MAJ_MASK) >> 16) as u16;
     Ok(priority)
 }
 
 pub(crate) unsafe fn netlink_qdisc_detach(
     if_index: i32,
     attach_type: &TcAttachType,
-    priority: u32,
+    priority: u16,
 ) -> Result<(), io::Error> {
     let sock = NetlinkSocket::open()?;
     let mut req = mem::zeroed::<TcRequest>();
@@ -181,7 +181,7 @@ pub(crate) unsafe fn netlink_qdisc_detach(
 
     req.tc_info.tcm_family = AF_UNSPEC as u8;
     req.tc_info.tcm_handle = 0; // auto-assigned, if not provided
-    req.tc_info.tcm_info = tc_handler_make(priority << 16, htons(ETH_P_ALL as u16) as u32);
+    req.tc_info.tcm_info = tc_handler_make((priority as u32) << 16, htons(ETH_P_ALL as u16) as u32);
     req.tc_info.tcm_parent = attach_type.parent();
     req.tc_info.tcm_ifindex = if_index;
 
@@ -196,7 +196,7 @@ pub(crate) unsafe fn netlink_find_filter_with_name(
     if_index: i32,
     attach_type: TcAttachType,
     name: &CStr,
-) -> Result<Vec<u32>, io::Error> {
+) -> Result<Vec<u16>, io::Error> {
     let mut req = mem::zeroed::<TcRequest>();
 
     let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>();
@@ -222,7 +222,7 @@ pub(crate) unsafe fn netlink_find_filter_with_name(
         }
 
         let tc_msg = ptr::read_unaligned(msg.data.as_ptr() as *const tcmsg);
-        let priority = tc_msg.tcm_info >> 16;
+        let priority = (tc_msg.tcm_info >> 16) as u16;
         let attrs = parse_attrs(&msg.data[mem::size_of::<tcmsg>()..])?;
 
         if let Some(opts) = attrs.get(&(TCA_OPTIONS as u16)) {
