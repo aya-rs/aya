@@ -9,24 +9,14 @@
 //!
 //! # Example:
 //!
-//! This example uses the [simplelog] crate to log messages to the terminal.
+//! This example uses the [env_logger] crate to log messages to the terminal.
 //!
 //! ```no_run
 //! # let mut bpf = aya::Bpf::load(&[]).unwrap();
-//! use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
 //! use aya_log::BpfLogger;
 //!
-//! // initialize simplelog::TermLogger as the default logger
-//! TermLogger::init(
-//!     LevelFilter::Debug,
-//!     ConfigBuilder::new()
-//!         .set_target_level(LevelFilter::Error)
-//!         .set_location_level(LevelFilter::Error)
-//!         .build(),
-//!     TerminalMode::Mixed,
-//!     ColorChoice::Auto,
-//! )
-//! .unwrap();
+//! // initialize env_logger as the default logger
+//! env_logger::init();
 //!
 //! // start reading aya-log records and log them using the default logger
 //! BpfLogger::init(&mut bpf).unwrap();
@@ -55,7 +45,7 @@
 //! ```
 //!
 //! [Aya]: https://docs.rs/aya
-//! [simplelog]: https://docs.rs/simplelog
+//! [env_logger]: https://docs.rs/env_logger
 //! [Log]: https://docs.rs/log/0.4.14/log/trait.Log.html
 //! [log]: https://docs.rs/log
 //!

@@ -27,25 +27,15 @@ aya-log-ebpf = { git = "https://github.com/aya-rs/aya-log", branch = "main" }
 
 ## Example
 
-Here's an example that uses `aya-log` in conjunction with the [simplelog] crate
+Here's an example that uses `aya-log` in conjunction with the [env_logger] crate
 to log eBPF messages to the terminal.
 
 ### User space code
 
 ```rust
-use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TermLogger, TerminalMode};
 use aya_log::BpfLogger;
 
-TermLogger::init(
-    LevelFilter::Debug,
-    ConfigBuilder::new()
-        .set_target_level(LevelFilter::Error)
-        .set_location_level(LevelFilter::Error)
-        .build(),
-    TerminalMode::Mixed,
-    ColorChoice::Auto,
-)
-.unwrap();
+env_logger::init();
 
 // Will log using the default logger, which is TermLogger in this case
 BpfLogger::init(&mut bpf).unwrap();
@@ -70,4 +60,4 @@ fn try_xdp_firewall(ctx: XdpContext) -> Result<u32, ()> {
 
 [aya]: https://github.com/aya-rs/aya
 [log]: https://docs.rs/log
-[simplelog]: https://docs.rs/simplelog
+[env_logger]: https://docs.rs/env_logger
