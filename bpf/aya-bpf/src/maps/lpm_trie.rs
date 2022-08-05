@@ -19,7 +19,7 @@ unsafe impl<K: Sync, V: Sync> Sync for LpmTrie<K, V> {}
 
 #[repr(packed)]
 pub struct Key<K> {
-    /// Represents the number of bytes matched against.
+    /// Represents the number of bits matched against.
     pub prefix_len: u32,
     /// Represents arbitrary data stored in the LpmTrie.
     pub data: K,
