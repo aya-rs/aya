@@ -13,7 +13,7 @@ Add `aya-log` to `Cargo.toml`:
 
 ```toml
 [dependencies]
-aya-log = { git = "https://github.com/aya-rs/aya-log", branch = "main" }
+aya-log = { git = "https://github.com/aya-rs/aya", branch = "main" }
 ```
 
 ### eBPF side
@@ -22,7 +22,7 @@ Add `aya-log-ebpf` to `Cargo.toml`:
 
 ```toml
 [dependencies]
-aya-log-ebpf = { git = "https://github.com/aya-rs/aya-log", branch = "main" }
+aya-log-ebpf = { git = "https://github.com/aya-rs/aya", branch = "main" }
 ```
 
 ## Example
