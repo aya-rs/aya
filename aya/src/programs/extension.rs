@@ -8,8 +8,7 @@ use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_INET_INGRESS, bpf_prog_type::BPF_PROG_TYPE_EXT},
     obj::btf::BtfKind,
     programs::{
-        define_link_wrapper, load_program, FdLink, FdLinkId, OwnedLink, ProgramData, ProgramError,
-        ProgramFd,
+        define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd,
     },
     sys::{self, bpf_link_create},
     Btf,
@@ -140,11 +139,8 @@ impl Extension {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(
-        &mut self,
-        link_id: ExtensionLinkId,
-    ) -> Result<OwnedLink<ExtensionLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    pub fn take_link(&mut self, link_id: ExtensionLinkId) -> Result<ExtensionLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 }
 

@@ -1,7 +1,7 @@
 //! eXpress Data Path (XDP) programs.
 use bitflags;
 use libc::if_nametoindex;
-use std::{ffi::CString, hash::Hash, io, mem, os::unix::io::RawFd};
+use std::{convert::TryFrom, ffi::CString, hash::Hash, io, mem, os::unix::io::RawFd};
 use thiserror::Error;
 
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
         XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, OwnedLink, ProgramData, ProgramError,
+        define_link_wrapper, load_program, FdLink, Link, LinkError, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_link_update, kernel_version, netlink_set_xdp_fd},
 };
@@ -138,18 +138,18 @@ impl Xdp {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: XdpLinkId) -> Result<OwnedLink<XdpLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    pub fn take_link(&mut self, link_id: XdpLinkId) -> Result<XdpLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 
     /// Atomically replaces the program referenced by the provided link.
     ///
     /// Ownership of the link will transfer to this program.
-    pub fn attach_to_link(&mut self, link: OwnedLink<XdpLink>) -> Result<XdpLinkId, ProgramError> {
+    pub fn attach_to_link(&mut self, link: XdpLink) -> Result<XdpLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         match &link.0 {
             XdpLinkInner::FdLink(fd_link) => {
-                let link_fd = fd_link.fd;
+                let link_fd = fd_link.fd.unwrap();
                 bpf_link_update(link_fd, prog_fd, None, 0).map_err(|(_, io_error)| {
                     ProgramError::SyscallError {
                         call: "bpf_link_update".to_string(),
@@ -235,6 +235,18 @@ impl Link for XdpLinkInner {
         match self {
             XdpLinkInner::FdLink(link) => link.detach(),
             XdpLinkInner::NlLink(link) => link.detach(),
+        }
+    }
+}
+
+impl TryFrom<XdpLink> for FdLink {
+    type Error = LinkError;
+
+    fn try_from(value: XdpLink) -> Result<Self, Self::Error> {
+        if let XdpLinkInner::FdLink(fd) = value.0 {
+            Ok(fd)
+        } else {
+            Err(LinkError::InvalidLink)
         }
     }
 }

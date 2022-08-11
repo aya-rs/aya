@@ -3,8 +3,8 @@ use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
     maps::sock::SocketMap,
     programs::{
-        define_link_wrapper, load_program, OwnedLink, ProgAttachLink, ProgAttachLinkId,
-        ProgramData, ProgramError,
+        define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
+        ProgramError,
     },
     sys::bpf_prog_attach,
 };
@@ -100,11 +100,8 @@ impl SkMsg {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(
-        &mut self,
-        link_id: SkMsgLinkId,
-    ) -> Result<OwnedLink<SkMsgLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    pub fn take_link(&mut self, link_id: SkMsgLinkId) -> Result<SkMsgLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 }
 
