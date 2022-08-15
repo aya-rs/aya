@@ -142,7 +142,7 @@ impl SkBuffContext {
     }
 
     #[inline]
-    pub fn store<T>(&mut self, offset: usize, v: &T, flags: u64) -> Result<(), c_long> {
+    pub fn store<T>(&self, offset: usize, v: &T, flags: u64) -> Result<(), c_long> {
         unsafe {
             let ret = bpf_skb_store_bytes(
                 self.skb as *mut _,
