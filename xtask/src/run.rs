@@ -30,7 +30,8 @@ fn build(opts: &Options) -> Result<(), anyhow::Error> {
     if opts.release {
         args.push("--release")
     }
-    args.push("--workspace");
+    args.push("-p");
+    args.push("integration-test");
     let status = Command::new("cargo")
         .args(&args)
         .status()
@@ -49,7 +50,6 @@ pub fn run(opts: Options) -> Result<(), anyhow::Error> {
     })
     .context("Error while building eBPF program")?;
     build(&opts).context("Error while building userspace application")?;
-
     // profile we are building (release or debug)
     let profile = if opts.release { "release" } else { "debug" };
     let bin_path = format!("target/{}/integration-test", profile);
