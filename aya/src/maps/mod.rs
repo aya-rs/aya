@@ -16,7 +16,6 @@
 //!
 //! ```no_run
 //! # let mut bpf = aya::Bpf::load(&[])?;
-//! use std::convert::{TryFrom, TryInto};
 //! use aya::maps::SockMap;
 //! use aya::programs::SkMsg;
 //!
@@ -33,7 +32,6 @@
 //! versa. Because of that, all map values must be plain old data and therefore
 //! implement the [Pod] trait.
 use std::{
-    convert::{TryFrom, TryInto},
     ffi::CString,
     fmt, io,
     marker::PhantomData,
@@ -523,7 +521,6 @@ impl PerCpuKernelMem {
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::PerCpuValues;
 /// use aya::util::nr_cpus;
-/// use std::convert::TryFrom;
 ///
 /// let values = PerCpuValues::try_from(vec![42u32; nr_cpus()?])?;
 /// # Ok::<(), Error>(())

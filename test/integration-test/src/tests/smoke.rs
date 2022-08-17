@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use aya::{
     include_bytes_aligned,
     programs::{Extension, Xdp, XdpFlags},

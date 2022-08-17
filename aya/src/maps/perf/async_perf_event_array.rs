@@ -1,6 +1,5 @@
 use bytes::BytesMut;
 use std::{
-    convert::TryFrom,
     ops::DerefMut,
     os::unix::prelude::{AsRawFd, RawFd},
 };
@@ -49,7 +48,6 @@ use crate::maps::{
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::perf::{AsyncPerfEventArray, PerfBufferError};
 /// use aya::util::online_cpus;
-/// use std::convert::TryFrom;
 /// use futures::future;
 /// use bytes::BytesMut;
 /// use tokio::task; // or async_std::task

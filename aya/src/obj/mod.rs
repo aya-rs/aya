@@ -9,7 +9,6 @@ use object::{
 };
 use std::{
     collections::HashMap,
-    convert::{TryFrom, TryInto},
     ffi::{CStr, CString},
     mem, ptr,
     str::FromStr,

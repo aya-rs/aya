@@ -1,6 +1,5 @@
 //! A LIFO stack.
 use std::{
-    convert::TryFrom,
     marker::PhantomData,
     mem,
     ops::{Deref, DerefMut},
@@ -23,7 +22,6 @@ use crate::{
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::Stack;
-/// use std::convert::TryFrom;
 ///
 /// let mut stack = Stack::try_from(bpf.map_mut("STACK")?)?;
 /// stack.push(42, 0)?;

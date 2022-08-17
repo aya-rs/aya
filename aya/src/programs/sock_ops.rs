@@ -36,7 +36,6 @@ use crate::{
 /// # }
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::fs::File;
-/// use std::convert::TryInto;
 /// use aya::programs::SockOps;
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;

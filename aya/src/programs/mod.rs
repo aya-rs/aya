@@ -15,7 +15,6 @@
 //!
 //! ```no_run
 //! use aya::{Bpf, programs::KProbe};
-//! use std::convert::TryInto;
 //!
 //! let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 //! // intercept_wakeups is the name of the program we want to load
@@ -66,7 +65,6 @@ pub mod xdp;
 
 use libc::ENOSPC;
 use std::{
-    convert::TryFrom,
     ffi::CString,
     io,
     os::unix::io::{AsRawFd, RawFd},

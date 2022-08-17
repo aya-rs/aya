@@ -1,7 +1,6 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    convert::TryFrom,
     error::Error,
     ffi::CString,
     fs, io,
@@ -743,7 +742,6 @@ impl Bpf {
     /// ```no_run
     /// # let mut bpf = aya::Bpf::load(&[])?;
     /// use aya::programs::UProbe;
-    /// use std::convert::TryInto;
     ///
     /// let program: &mut UProbe = bpf.program_mut("SSL_read").unwrap().try_into()?;
     /// program.load()?;

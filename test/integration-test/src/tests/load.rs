@@ -1,8 +1,4 @@
-use std::{
-    convert::{TryFrom, TryInto},
-    process::Command,
-    thread, time,
-};
+use std::{process::Command, thread, time};
 
 use aya::{
     include_bytes_aligned,

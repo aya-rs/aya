@@ -1,5 +1,4 @@
 use std::{
-    convert::TryFrom,
     marker::PhantomData,
     mem,
     ops::{Deref, DerefMut},
@@ -25,7 +24,6 @@ use crate::{
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::Array;
-/// use std::convert::TryFrom;
 ///
 /// let mut array = Array::try_from(bpf.map_mut("ARRAY")?)?;
 /// array.set(1, 42, 0)?;

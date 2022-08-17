@@ -1,8 +1,4 @@
-use std::{
-    convert::{TryFrom, TryInto},
-    fmt::Display,
-    mem, ptr,
-};
+use std::{fmt::Display, mem, ptr};
 
 use object::Endianness;
 

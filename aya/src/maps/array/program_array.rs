@@ -1,7 +1,6 @@
 //! An array of eBPF program file descriptors used as a jump table.
 
 use std::{
-    convert::TryFrom,
     mem,
     ops::{Deref, DerefMut},
     os::unix::prelude::{AsRawFd, RawFd},
@@ -29,7 +28,6 @@ use crate::{
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::ProgramArray;
 /// use aya::programs::CgroupSkb;
-/// use std::convert::{TryFrom, TryInto};
 ///
 /// let mut prog_array = ProgramArray::try_from(bpf.map_mut("JUMP_TABLE")?)?;
 /// let prog_0: &CgroupSkb = bpf.program("example_prog_0").unwrap().try_into()?;

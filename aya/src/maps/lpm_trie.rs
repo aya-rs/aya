@@ -1,5 +1,5 @@
 //! A LPM Trie.
-use std::{convert::TryFrom, marker::PhantomData, mem, ops::Deref};
+use std::{marker::PhantomData, mem, ops::Deref};
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_LPM_TRIE,
@@ -19,7 +19,6 @@ use crate::{
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::lpm_trie::{LpmTrie, Key};
-/// use std::convert::TryFrom;
 /// use std::net::Ipv4Addr;
 ///
 /// let mut trie = LpmTrie::try_from(bpf.map_mut("LPM_TRIE")?)?;
@@ -56,7 +55,6 @@ pub struct LpmTrie<T: Deref<Target = Map>, K, V> {
 ///
 /// ```no_run
 /// use aya::maps::lpm_trie::{LpmTrie, Key};
-/// use std::convert::TryFrom;
 /// use std::net::Ipv4Addr;
 ///
 /// let ipaddr = Ipv4Addr::new(8,8,8,8);
@@ -77,7 +75,6 @@ impl<K: Pod> Key<K> {
     ///
     /// ```no_run
     /// use aya::maps::lpm_trie::{LpmTrie, Key};
-    /// use std::convert::TryFrom;
     /// use std::net::Ipv4Addr;
     ///
     /// let ipaddr = Ipv4Addr::new(8, 8, 8, 8);

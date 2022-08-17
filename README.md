@@ -75,7 +75,6 @@ Aya supports a large chunk of the eBPF API. The following example shows how to u
 
 ```rust
 use std::fs::File;
-use std::convert::TryInto;
 use aya::Bpf;
 use aya::programs::{CgroupSkb, CgroupSkbAttachType};
 

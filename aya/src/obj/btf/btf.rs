@@ -1,7 +1,6 @@
 use std::{
     borrow::Cow,
     collections::HashMap,
-    convert::TryInto,
     ffi::{c_void, CStr, CString},
     fs, io, mem,
     path::{Path, PathBuf},

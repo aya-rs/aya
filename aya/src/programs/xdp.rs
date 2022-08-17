@@ -62,7 +62,6 @@ bitflags! {
 /// ```no_run
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 /// use aya::{Bpf, programs::{Xdp, XdpFlags}};
-/// use std::convert::TryInto;
 ///
 /// let program: &mut Xdp = bpf.program_mut("intercept_packets").unwrap().try_into()?;
 /// program.attach("eth0", XdpFlags::default())?;

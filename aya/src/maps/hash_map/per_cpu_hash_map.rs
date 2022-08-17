@@ -1,6 +1,5 @@
 //! Per-CPU hash map.
 use std::{
-    convert::TryFrom,
     marker::PhantomData,
     ops::{Deref, DerefMut},
 };
@@ -29,7 +28,6 @@ use crate::{
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::PerCpuHashMap;
-/// use std::convert::TryFrom;
 ///
 /// const CPU_IDS: u8 = 1;
 /// const WAKEUPS: u8 = 2;
@@ -116,7 +114,6 @@ impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// # let bpf = aya::Bpf::load(&[])?;
     /// use aya::maps::{PerCpuHashMap, PerCpuValues};
     /// use aya::util::nr_cpus;
-    /// use std::convert::TryFrom;
     ///
     /// const RETRIES: u8 = 1;
     ///
