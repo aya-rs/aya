@@ -33,7 +33,6 @@ use crate::{
 /// # }
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 /// use aya::{Bpf, programs::BtfTracePoint, BtfError, Btf};
-/// use std::convert::TryInto;
 ///
 /// let btf = Btf::from_sys_fs()?;
 /// let program: &mut BtfTracePoint = bpf.program_mut("sched_process_fork").unwrap().try_into()?;

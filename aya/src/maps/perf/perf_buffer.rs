@@ -318,7 +318,7 @@ mod tests {
         generated::perf_event_mmap_page,
         sys::{override_syscall, Syscall, TEST_MMAP_RET},
     };
-    use std::{convert::TryInto, fmt::Debug, mem};
+    use std::{fmt::Debug, mem};
 
     const PAGE_SIZE: usize = 4096;
     union MMappedBuf {

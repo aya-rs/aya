@@ -1,9 +1,7 @@
 //! A hash map of kernel or user space stack traces.
 //!
 //! See [`StackTraceMap`] for documentation and examples.
-use std::{
-    collections::BTreeMap, convert::TryFrom, fs, io, mem, ops::Deref, path::Path, str::FromStr,
-};
+use std::{collections::BTreeMap, fs, io, mem, ops::Deref, path::Path, str::FromStr};
 
 use crate::{
     generated::bpf_map_type::BPF_MAP_TYPE_STACK_TRACE,
@@ -37,7 +35,6 @@ use crate::{
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::StackTraceMap;
 /// use aya::util::kernel_symbols;
-/// use std::convert::TryFrom;
 ///
 /// let mut stack_traces = StackTraceMap::try_from(bpf.map("STACK_TRACES")?)?;
 /// // load kernel symbols from /proc/kallsyms

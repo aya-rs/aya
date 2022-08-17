@@ -49,7 +49,7 @@
 //! [Log]: https://docs.rs/log/0.4.14/log/trait.Log.html
 //! [log]: https://docs.rs/log
 //!
-use std::{convert::TryInto, io, mem, ptr, str, sync::Arc};
+use std::{io, mem, ptr, str, sync::Arc};
 
 use aya_log_common::{ArgType, RecordField, LOG_BUF_CAPACITY, LOG_FIELDS};
 use bytes::BytesMut;

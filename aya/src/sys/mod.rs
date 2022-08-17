@@ -7,7 +7,7 @@ mod fake;
 
 use std::io;
 #[cfg(not(test))]
-use std::{convert::TryInto, ffi::CString, mem};
+use std::{ffi::CString, mem};
 
 #[cfg(not(test))]
 use libc::utsname;

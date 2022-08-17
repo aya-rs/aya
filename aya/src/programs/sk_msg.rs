@@ -34,7 +34,6 @@ use crate::{
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
 /// # let mut bpf = aya::Bpf::load(&[])?;
-/// use std::convert::{TryFrom, TryInto};
 /// use std::io::Write;
 /// use std::net::TcpStream;
 /// use std::os::unix::io::AsRawFd;

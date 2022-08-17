@@ -1,5 +1,4 @@
 use std::{
-    convert::TryFrom,
     marker::PhantomData,
     mem,
     ops::{Deref, DerefMut},
@@ -35,7 +34,6 @@ use crate::{
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::{PerCpuArray, PerCpuValues};
 /// use aya::util::nr_cpus;
-/// use std::convert::TryFrom;
 ///
 /// let mut array = PerCpuArray::try_from(bpf.map_mut("ARRAY")?)?;
 ///

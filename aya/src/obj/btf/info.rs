@@ -1,4 +1,4 @@
-use std::{collections::HashMap, convert::TryInto};
+use std::collections::HashMap;
 
 use bytes::BufMut;
 use object::Endianness;

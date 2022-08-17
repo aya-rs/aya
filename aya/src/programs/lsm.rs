@@ -36,7 +36,6 @@ use crate::{
 /// # }
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 /// use aya::{Bpf, programs::Lsm, BtfError, Btf};
-/// use std::convert::TryInto;
 ///
 /// let btf = Btf::from_sys_fs()?;
 /// let program: &mut Lsm = bpf.program_mut("lsm_prog").unwrap().try_into()?;

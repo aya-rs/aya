@@ -1,5 +1,5 @@
 //! A Bloom Filter.
-use std::{convert::TryFrom, marker::PhantomData, ops::Deref};
+use std::{marker::PhantomData, ops::Deref};
 
 use core::mem;
 
@@ -21,7 +21,6 @@ use crate::{
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::bloom_filter::BloomFilter;
-/// use std::convert::TryFrom;
 ///
 /// let mut bloom_filter = BloomFilter::try_from(bpf.map_mut("BLOOM_FILTER")?)?;
 ///

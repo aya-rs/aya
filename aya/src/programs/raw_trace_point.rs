@@ -26,7 +26,6 @@ use crate::{
 /// ```no_run
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 /// use aya::{Bpf, programs::RawTracePoint};
-/// use std::convert::TryInto;
 ///
 /// let program: &mut RawTracePoint = bpf.program_mut("sys_enter").unwrap().try_into()?;
 /// program.load()?;

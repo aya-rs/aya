@@ -29,7 +29,6 @@ use crate::{
 /// ```no_run
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 /// use aya::{Bpf, programs::KProbe};
-/// use std::convert::TryInto;
 ///
 /// let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 /// program.load()?;

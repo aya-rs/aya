@@ -51,7 +51,6 @@ pub enum TracePointError {
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
 /// # let mut bpf = aya::Bpf::load(&[])?;
-/// use std::convert::TryInto;
 /// use aya::programs::TracePoint;
 ///
 /// let prog: &mut TracePoint = bpf.program_mut("trace_context_switch").unwrap().try_into()?;

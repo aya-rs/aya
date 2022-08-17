@@ -36,7 +36,6 @@ use libc::{close, dup};
 /// # }
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::fs::File;
-/// use std::convert::TryInto;
 /// use aya::programs::LircMode2;
 ///
 /// let file = File::open("/dev/lirc0")?;

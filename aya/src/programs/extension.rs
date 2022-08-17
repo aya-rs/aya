@@ -36,7 +36,6 @@ pub enum ExtensionError {
 ///
 /// ```no_run
 /// use aya::{BpfLoader, programs::{Xdp, XdpFlags, Extension}};
-/// use std::convert::TryInto;
 ///
 /// let mut bpf = BpfLoader::new().extension("extension").load_file("app.o")?;
 /// let prog: &mut Xdp = bpf.program_mut("main").unwrap().try_into()?;

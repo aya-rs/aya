@@ -1,6 +1,5 @@
 //! A FIFO queue.
 use std::{
-    convert::TryFrom,
     marker::PhantomData,
     mem,
     ops::{Deref, DerefMut},
@@ -23,7 +22,6 @@ use crate::{
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::Queue;
-/// use std::convert::TryFrom;
 ///
 /// let mut queue = Queue::try_from(bpf.map_mut("ARRAY")?)?;
 /// queue.push(42, 0)?;

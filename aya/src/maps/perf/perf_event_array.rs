@@ -2,7 +2,6 @@
 //!
 //! [`perf`]: https://perf.wiki.kernel.org/index.php/Main_Page.
 use std::{
-    convert::TryFrom,
     ops::DerefMut,
     os::unix::io::{AsRawFd, RawFd},
     sync::Arc,
@@ -109,7 +108,6 @@ impl<T: DerefMut<Target = Map>> AsRawFd for PerfEventArrayBuffer<T> {
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::PerfEventArray;
 /// use aya::util::online_cpus;
-/// use std::convert::{TryFrom, TryInto};
 /// use bytes::BytesMut;
 ///
 /// let mut perf_array = PerfEventArray::try_from(bpf.map_mut("EVENTS")?)?;

@@ -36,7 +36,6 @@ use super::links::FdLink;
 /// # }
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::fs::File;
-/// use std::convert::TryInto;
 /// use aya::programs::SkLookup;
 ///
 /// let file = File::open("/var/run/netns/test")?;

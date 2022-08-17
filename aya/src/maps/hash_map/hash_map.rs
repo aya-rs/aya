@@ -1,5 +1,4 @@
 use std::{
-    convert::TryFrom,
     marker::PhantomData,
     ops::{Deref, DerefMut},
 };
@@ -22,7 +21,6 @@ use crate::{
 /// ```no_run
 /// # let bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::HashMap;
-/// use std::convert::TryFrom;
 ///
 /// let mut redirect_ports = HashMap::try_from(bpf.map_mut("REDIRECT_PORTS")?)?;
 ///

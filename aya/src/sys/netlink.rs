@@ -590,7 +590,7 @@ fn bytes_of<T>(val: &T) -> &[u8] {
 
 #[cfg(test)]
 mod tests {
-    use std::{convert::TryInto, ffi::CString};
+    use std::ffi::CString;
 
     use super::*;
 
