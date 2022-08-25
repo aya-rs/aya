@@ -1,5 +1,6 @@
 use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
 
+use aya_bpf_bindings::bindings::BPF_F_NO_PREALLOC;
 use aya_bpf_cty::{c_long, c_void};
 
 use crate::{
@@ -33,6 +34,7 @@ impl<K> Key<K> {
 
 impl<K, V> LpmTrie<K, V> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> LpmTrie<K, V> {
+        let flags = flags | BPF_F_NO_PREALLOC;
         LpmTrie {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_LPM_TRIE,
@@ -46,6 +48,7 @@ impl<K, V> LpmTrie<K, V> {
     }
 
     pub const fn pinned(max_entries: u32, flags: u32) -> LpmTrie<K, V> {
+        let flags = flags | BPF_F_NO_PREALLOC;
         LpmTrie {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_LPM_TRIE,
