@@ -6,7 +6,8 @@ use core::{
 
 use aya_bpf_bindings::helpers::{
     bpf_clone_redirect, bpf_get_socket_uid, bpf_l3_csum_replace, bpf_l4_csum_replace,
-    bpf_skb_adjust_room, bpf_skb_change_type, bpf_skb_load_bytes, bpf_skb_store_bytes,
+    bpf_skb_adjust_room, bpf_skb_change_type, bpf_skb_load_bytes, bpf_skb_pull_data,
+    bpf_skb_store_bytes,
 };
 use aya_bpf_cty::c_long;
 
@@ -218,6 +219,40 @@ impl SkBuffContext {
     #[inline]
     pub fn change_type(&self, ty: u32) -> Result<(), c_long> {
         let ret = unsafe { bpf_skb_change_type(self.as_ptr() as *mut _, ty) };
+        if ret == 0 {
+            Ok(())
+        } else {
+            Err(ret)
+        }
+    }
+
+    /// Pulls in non-linear data in case the skb is non-linear.
+    ///
+    /// Make len bytes from skb readable and writable. If a zero value is passed for
+    /// `len`, then the whole length of the skb is pulled. This helper is only needed
+    /// for reading and writing with direct packet access.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// mod bindings;
+    /// use bindings::{ethhdr, iphdr, udphdr};
+    ///
+    /// const ETH_HLEN: usize = core::mem::size_of::<ethhdr>();
+    /// const IP_HLEN: usize = core::mem::size_of::<iphdr>();
+    /// const UDP_HLEN: usize = core::mem::size_of::<udphdr>();
+    ///
+    /// fn try_classifier(ctx: SkBuffContext) -> Result<i32, i32> {
+    ///     let len = ETH_HLEN + IP_HLEN + UDP_HLEN;
+    ///     match ctx.pull_data(len as u32) {
+    ///         Ok(_) => return Ok(0),
+    ///         Err(ret) => return Err(ret as i32),
+    ///     }
+    /// }
+    /// ```
+    #[inline(always)]
+    pub fn pull_data(&self, len: u32) -> Result<(), c_long> {
+        let ret = unsafe { bpf_skb_pull_data(self.as_ptr() as *mut _, len) };
         if ret == 0 {
             Ok(())
         } else {
