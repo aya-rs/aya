@@ -408,6 +408,7 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<RawFd>,
     pub(crate) btf_fd: Option<RawFd>,
+    pub(crate) verifier_log_level: u32,
 }
 
 impl<T: Link> ProgramData<T> {
@@ -415,6 +416,7 @@ impl<T: Link> ProgramData<T> {
         name: Option<String>,
         obj: obj::Program,
         btf_fd: Option<RawFd>,
+        verifier_log_level: u32,
     ) -> ProgramData<T> {
         ProgramData {
             name,
@@ -426,6 +428,7 @@ impl<T: Link> ProgramData<T> {
             attach_btf_id: None,
             attach_prog_fd: None,
             btf_fd,
+            verifier_log_level,
         }
     }
 }
@@ -533,7 +536,11 @@ fn load_program<T: Link>(
         line_info_rec_size: *line_info_rec_size,
         line_info: line_info.clone(),
     };
-    let ret = retry_with_verifier_logs(10, &mut logger, |logger| bpf_load_program(&attr, logger));
+
+    let verifier_log_level = data.verifier_log_level;
+    let ret = retry_with_verifier_logs(10, &mut logger, |logger| {
+        bpf_load_program(&attr, logger, verifier_log_level)
+    });
 
     match ret {
         Ok(prog_fd) => {
