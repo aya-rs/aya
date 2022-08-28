@@ -194,7 +194,31 @@ pub struct BpfLoader<'a> {
     globals: HashMap<&'a str, &'a [u8]>,
     features: Features,
     extensions: HashSet<&'a str>,
-    verifier_log_level: u32,
+    verifier_log_level: VerifierLogLevel,
+}
+
+/// Used to set the verifier log level in [BpfLoader](BpfLoader::verifier_log_level()).
+#[repr(u32)]
+#[non_exhaustive]
+#[derive(Debug, Clone, Copy)]
+pub enum VerifierLogLevel {
+    /// Disable all logging.
+    Disable = 0,
+
+    /// Sets logging to level 1.
+    Level1 = 1,
+
+    /// Sets logging to level 2.
+    Level2 = 3,
+
+    /// Only show verifier stats without any tracing.
+    Stats = 4,
+
+    /// Show stats along with traces corresponding to level 1.
+    StatsLevel1 = 5,
+
+    /// Show stats along with traces corresponding to level 2.
+    StatsLevel2 = 7,
 }
 
 impl<'a> BpfLoader<'a> {
@@ -208,7 +232,7 @@ impl<'a> BpfLoader<'a> {
             globals: HashMap::new(),
             features,
             extensions: HashSet::new(),
-            verifier_log_level: 7,
+            verifier_log_level: VerifierLogLevel::Stats,
         }
     }
 
@@ -321,15 +345,15 @@ impl<'a> BpfLoader<'a> {
     /// # Example
     ///
     /// ```no_run
-    /// use aya::BpfLoader;
+    /// use aya::{BpfLoader, VerifierLogLevel};
     ///
     /// let bpf = BpfLoader::new()
-    ///     .verifier_log_level(3)
+    ///     .verifier_log_level(VerifierLogLevel::Level1)
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
     ///
-    pub fn verifier_log_level(&mut self, level: u32) -> &mut BpfLoader<'a> {
+    pub fn verifier_log_level(&mut self, level: VerifierLogLevel) -> &mut BpfLoader<'a> {
         self.verifier_log_level = level;
         self
     }
@@ -365,7 +389,7 @@ impl<'a> BpfLoader<'a> {
     /// # Ok::<(), aya::BpfError>(())
     /// ```
     pub fn load(&mut self, data: &[u8]) -> Result<Bpf, BpfError> {
-        let verifier_log_level = self.verifier_log_level;
+        let verifier_log_level = self.verifier_log_level as u32;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(self.globals.clone())?;
 
