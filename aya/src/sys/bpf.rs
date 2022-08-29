@@ -95,6 +95,7 @@ pub(crate) struct BpfLoadProgramAttrs<'a> {
 pub(crate) fn bpf_load_program(
     aya_attr: &BpfLoadProgramAttrs,
     logger: &mut VerifierLog,
+    verifier_log_level: u32,
 ) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -139,7 +140,7 @@ pub(crate) fn bpf_load_program(
     }
     let log_buf = logger.buf();
     if log_buf.capacity() > 0 {
-        u.log_level = 7;
+        u.log_level = verifier_log_level;
         u.log_buf = log_buf.as_mut_ptr() as u64;
         u.log_size = log_buf.capacity() as u32;
     }
