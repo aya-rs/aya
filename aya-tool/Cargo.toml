@@ -1,5 +1,5 @@
 [package]
-name = "aya-gen"
+name = "aya-tool"
 version = "0.1.0"
 authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
 edition = "2021"
