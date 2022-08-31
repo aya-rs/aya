@@ -5,7 +5,7 @@ authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-aya-gen = { path = "../aya-gen" }
+aya-tool = { path = "../aya-tool" }
 clap = { version = "3", features = ["derive"] }
 anyhow = "1"
 syn = "1"

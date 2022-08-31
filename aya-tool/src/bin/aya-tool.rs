@@ -1,4 +1,4 @@
-use aya_gen::generate::{generate, InputFile};
+use aya_tool::generate::{generate, InputFile};
 
 use std::{path::PathBuf, process::exit};
 
@@ -12,6 +12,7 @@ pub struct Options {
 
 #[derive(Parser)]
 enum Command {
+    /// Generate Rust bindings to Kernel types using bpftool
     #[clap(name = "generate", action)]
     Generate {
         #[clap(long, default_value = "/sys/kernel/btf/vmlinux", action)]

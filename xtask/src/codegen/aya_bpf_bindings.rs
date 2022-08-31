@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use std::path::PathBuf;
 
-use aya_gen::{bindgen, write_to_file_fmt};
+use aya_tool::{bindgen, write_to_file_fmt};
 use syn::{parse_str, Item};
 
 use crate::codegen::{
@@ -17,7 +17,7 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
             .header(&*dir.join("include/bindings.h").to_string_lossy())
-            // aya-gen uses aya_bpf::cty. We can't use that here since aya-bpf
+            // aya-tool uses aya_bpf::cty. We can't use that here since aya-bpf
             // depends on aya-bpf-bindings so it would create a circular dep.
             .ctypes_prefix("::aya_bpf_cty")
             .clang_args(&[
