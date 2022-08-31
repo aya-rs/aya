@@ -1,13 +1,13 @@
 //! Program links.
 use libc::{close, dup};
+use thiserror::Error;
 
 use std::{
-    borrow::Borrow,
     collections::{hash_map::Entry, HashMap},
     ffi::CString,
-    ops::Deref,
+    io,
     os::unix::prelude::RawFd,
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use crate::{
@@ -25,35 +25,8 @@ pub trait Link: std::fmt::Debug + 'static {
     /// Returns the link id
     fn id(&self) -> Self::Id;
 
-    /// Detaches the Link
+    /// Detaches the LinkOwnedLink is gone... but this doesn't work :(
     fn detach(self) -> Result<(), ProgramError>;
-}
-
-/// An owned link that automatically detaches the inner link when dropped.
-pub struct OwnedLink<T: Link> {
-    inner: Option<T>,
-}
-
-impl<T: Link> OwnedLink<T> {
-    pub(crate) fn new(inner: T) -> Self {
-        Self { inner: Some(inner) }
-    }
-}
-
-impl<T: Link> Deref for OwnedLink<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        self.inner.borrow().as_ref().unwrap()
-    }
-}
-
-impl<T: Link> Drop for OwnedLink<T> {
-    fn drop(&mut self) {
-        if let Some(link) = self.inner.take() {
-            link.detach().unwrap();
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -106,37 +79,63 @@ impl<T: Link> Drop for LinkMap<T> {
 
 /// The identifier of an `FdLink`.
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub struct FdLinkId(pub(crate) RawFd);
+pub struct FdLinkId(pub(crate) Option<RawFd>);
 
 /// A file descriptor link.
 #[derive(Debug)]
 pub struct FdLink {
-    pub(crate) fd: RawFd,
+    pub(crate) fd: Option<RawFd>,
 }
 
 impl FdLink {
     pub(crate) fn new(fd: RawFd) -> FdLink {
-        FdLink { fd }
+        FdLink { fd: Some(fd) }
     }
 
-    /// Pins the FdLink to a BPF filesystem.
+    /// Pins the link to a BPF file system.
     ///
-    /// When a BPF object is pinned to a BPF filesystem it will remain attached after
-    /// Aya has detached the link.
-    /// To remove the attachment, the file on the BPF filesystem must be removed.
-    /// Any directories in the the path provided should have been created by the caller.
-    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
+    /// When a link is pinned it will remain attached even after the link instance is dropped,
+    /// and will only be detached once the pinned file is removed. To unpin, see [PinnedFd::unpin].
+    ///
+    /// The parent directories in the provided path must already exist before calling this method,
+    /// and must be on a BPF file system (bpffs).
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use aya::programs::{links::FdLink, Extension};
+    /// # use std::convert::TryInto;
+    /// # #[derive(thiserror::Error, Debug)]
+    /// # enum Error {
+    /// #     #[error(transparent)]
+    /// #     Bpf(#[from] aya::BpfError),
+    /// #     #[error(transparent)]
+    /// #     Pin(#[from] aya::pin::PinError),
+    /// #     #[error(transparent)]
+    /// #     Program(#[from] aya::programs::ProgramError)
+    /// # }
+    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let prog: &mut Extension = bpf.program_mut("example").unwrap().try_into()?;
+    /// let link_id = prog.attach()?;
+    /// let owned_link = prog.take_link(link_id)?;
+    /// let fd_link: FdLink = owned_link.into();
+    /// let pinned_link = fd_link.pin("/sys/fs/bpf/example")?;
+    /// # Ok::<(), Error>(())
+    /// ```
+    pub fn pin<P: AsRef<Path>>(mut self, path: P) -> Result<PinnedLink, PinError> {
+        let fd = self.fd.take().ok_or_else(|| PinError::NoFd {
+            name: "link".to_string(),
+        })?;
         let path_string =
             CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
                 PinError::InvalidPinPath {
                     error: e.to_string(),
                 }
             })?;
-        bpf_pin_object(self.fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
+        bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
             name: "BPF_OBJ_PIN".to_string(),
             io_error,
         })?;
-        Ok(())
+        Ok(PinnedLink::new(PathBuf::from(path.as_ref()), fd))
     }
 }
 
@@ -148,8 +147,44 @@ impl Link for FdLink {
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        unsafe { close(self.fd) };
+        // detach is a noop since it consumes self. once self is consumed,
+        // drop will be triggered and the link will be detached.
         Ok(())
+    }
+}
+
+impl Drop for FdLink {
+    fn drop(&mut self) {
+        if let Some(fd) = self.fd.take() {
+            // Safety: libc
+            unsafe { close(fd) };
+        }
+    }
+}
+
+/// A pinned file descriptor link.
+///
+/// This link has been pinned to the BPF filesystem. On drop, the file descriptor that backs
+/// this link will be closed. Whether or not the program remains attached is dependent
+/// on the presence of the file in BPFFS.
+#[derive(Debug)]
+pub struct PinnedLink {
+    inner: FdLink,
+    path: PathBuf,
+}
+
+impl PinnedLink {
+    fn new(path: PathBuf, fd: RawFd) -> Self {
+        PinnedLink {
+            inner: FdLink::new(fd),
+            path,
+        }
+    }
+
+    /// Removes the pinned link from the filesystem and returns an [`FdLink`].
+    pub fn unpin(self) -> Result<FdLink, io::Error> {
+        std::fs::remove_file(self.path)?;
+        Ok(self.inner)
     }
 }
 
@@ -220,18 +255,32 @@ macro_rules! define_link_wrapper {
                 $wrapper(b)
             }
         }
+
+        impl From<$wrapper> for $base {
+            fn from(w: $wrapper) -> $base {
+                w.into()
+            }
+        }
     };
 }
 
 pub(crate) use define_link_wrapper;
 
+#[derive(Error, Debug)]
+/// Errors from operations on links.
+pub enum LinkError {
+    /// Invalid link.
+    #[error("Invalid link")]
+    InvalidLink,
+}
+
 #[cfg(test)]
 mod tests {
-    use std::{cell::RefCell, rc::Rc};
+    use std::{cell::RefCell, env, fs::File, mem, os::unix::io::AsRawFd, rc::Rc};
 
-    use crate::programs::{OwnedLink, ProgramError};
+    use crate::{programs::ProgramError, sys::override_syscall};
 
-    use super::{Link, LinkMap};
+    use super::{FdLink, Link, LinkMap};
 
     #[derive(Debug, Hash, Eq, PartialEq)]
     struct TestLinkId(u8, u8);
@@ -363,28 +412,23 @@ mod tests {
     }
 
     #[test]
-    fn test_owned_drop() {
-        let l1 = TestLink::new(1, 2);
-        let l1_detached = Rc::clone(&l1.detached);
-        let l2 = TestLink::new(1, 3);
-        let l2_detached = Rc::clone(&l2.detached);
+    #[cfg_attr(miri, ignore)]
+    fn test_pin() {
+        let dir = env::temp_dir();
+        let f1 = File::create(dir.join("f1")).expect("unable to create file in tmpdir");
+        let fd_link = FdLink::new(f1.as_raw_fd());
 
-        {
-            let mut links = LinkMap::new();
-            let id1 = links.insert(l1).unwrap();
-            links.insert(l2).unwrap();
+        // leak the fd, it will get closed when our pinned link is dropped
+        mem::forget(f1);
 
-            // manually forget one link and wrap in OwnedLink
-            let _ = OwnedLink {
-                inner: Some(links.forget(id1).unwrap()),
-            };
+        // override syscall to allow for pin to happen in our tmpdir
+        override_syscall(|_| Ok(0));
+        // create the file that would have happened as a side-effect of a real pin operation
+        File::create(dir.join("f1-pin")).expect("unable to create file in tmpdir");
+        assert!(dir.join("f1-pin").exists());
 
-            // OwnedLink was dropped in the statement above
-            assert!(*l1_detached.borrow() == 1);
-            assert!(*l2_detached.borrow() == 0);
-        };
-
-        assert!(*l1_detached.borrow() == 1);
-        assert!(*l2_detached.borrow() == 1);
+        let pinned_link = fd_link.pin(dir.join("f1-pin")).expect("pin failed");
+        pinned_link.unpin().expect("unpin failed");
+        assert!(!dir.join("f1-pin").exists());
     }
 }

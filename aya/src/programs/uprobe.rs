@@ -19,7 +19,7 @@ use crate::{
         define_link_wrapper, load_program,
         perf_attach::{PerfLink, PerfLinkId},
         probe::{attach, ProbeKind},
-        OwnedLink, ProgramData, ProgramError,
+        ProgramData, ProgramError,
     },
 };
 
@@ -133,11 +133,8 @@ impl UProbe {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(
-        &mut self,
-        link_id: UProbeLinkId,
-    ) -> Result<OwnedLink<UProbeLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    pub fn take_link(&mut self, link_id: UProbeLinkId) -> Result<UProbeLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 }
 

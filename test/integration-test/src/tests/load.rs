@@ -3,7 +3,7 @@ use std::{process::Command, thread, time};
 use aya::{
     include_bytes_aligned,
     maps::{Array, MapRefMut},
-    programs::{TracePoint, Xdp, XdpFlags},
+    programs::{links::FdLink, TracePoint, Xdp, XdpFlags},
     Bpf,
 };
 
@@ -97,5 +97,35 @@ fn unload() -> anyhow::Result<()> {
     prog.unload().unwrap();
 
     assert_loaded(false);
+    Ok(())
+}
+
+#[integration_test]
+fn pin_link() -> anyhow::Result<()> {
+    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/test");
+    let mut bpf = Bpf::load(bytes)?;
+    let prog: &mut Xdp = bpf.program_mut("test_unload").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+    let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
+    let link = prog.take_link(link_id)?;
+    assert_loaded(true);
+
+    let fd_link: FdLink = link.try_into()?;
+    let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo")?;
+
+    // because of the pin, the program is still attached
+    prog.unload()?;
+    assert_loaded(true);
+
+    // delete the pin, but the program is still attached
+    let new_link = pinned.unpin()?;
+    println!("third assert");
+    assert_loaded(true);
+
+    // finally when new_link is dropped we're detached
+    drop(new_link);
+    println!("final assert");
+    assert_loaded(false);
+
     Ok(())
 }

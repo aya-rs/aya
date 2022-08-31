@@ -10,7 +10,7 @@ use crate::{
     generated::{
         bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS, TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     },
-    programs::{define_link_wrapper, load_program, Link, OwnedLink, ProgramData, ProgramError},
+    programs::{define_link_wrapper, load_program, Link, ProgramData, ProgramError},
     sys::{
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
         netlink_qdisc_detach,
@@ -154,8 +154,8 @@ impl SchedClassifier {
     pub fn take_link(
         &mut self,
         link_id: SchedClassifierLinkId,
-    ) -> Result<OwnedLink<SchedClassifierLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    ) -> Result<SchedClassifierLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 }
 

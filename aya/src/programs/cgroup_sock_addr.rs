@@ -10,8 +10,7 @@ use std::{
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, OwnedLink, ProgAttachLink, ProgramData,
-        ProgramError,
+        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };
@@ -109,8 +108,8 @@ impl CgroupSockAddr {
     pub fn take_link(
         &mut self,
         link_id: CgroupSockAddrLinkId,
-    ) -> Result<OwnedLink<CgroupSockAddrLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    ) -> Result<CgroupSockAddrLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 
     /// Detaches the program.

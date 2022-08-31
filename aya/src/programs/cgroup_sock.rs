@@ -10,8 +10,7 @@ use std::{
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK,
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, OwnedLink, ProgAttachLink, ProgramData,
-        ProgramError,
+        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };
@@ -105,11 +104,8 @@ impl CgroupSock {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(
-        &mut self,
-        link_id: CgroupSockLinkId,
-    ) -> Result<OwnedLink<CgroupSockLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    pub fn take_link(&mut self, link_id: CgroupSockLinkId) -> Result<CgroupSockLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 
     /// Detaches the program.

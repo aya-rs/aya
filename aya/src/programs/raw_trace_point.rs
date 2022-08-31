@@ -5,7 +5,7 @@ use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT,
     programs::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
-        OwnedLink, ProgramData, ProgramError,
+        ProgramData, ProgramError,
     },
 };
 
@@ -66,8 +66,8 @@ impl RawTracePoint {
     pub fn take_link(
         &mut self,
         link_id: RawTracePointLinkId,
-    ) -> Result<OwnedLink<RawTracePointLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    ) -> Result<RawTracePointLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 }
 

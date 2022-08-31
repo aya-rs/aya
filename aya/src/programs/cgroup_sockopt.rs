@@ -9,8 +9,8 @@ use std::{
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCKOPT,
     programs::{
-        bpf_attach_type, define_link_wrapper, load_program, FdLink, Link, OwnedLink,
-        ProgAttachLink, ProgramData, ProgramError,
+        bpf_attach_type, define_link_wrapper, load_program, FdLink, Link, ProgAttachLink,
+        ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };
@@ -105,8 +105,8 @@ impl CgroupSockopt {
     pub fn take_link(
         &mut self,
         link_id: CgroupSockoptLinkId,
-    ) -> Result<OwnedLink<CgroupSockoptLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    ) -> Result<CgroupSockoptLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 
     /// Detaches the program.

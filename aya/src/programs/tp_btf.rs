@@ -4,7 +4,7 @@ use crate::{
     obj::btf::{Btf, BtfKind},
     programs::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
-        OwnedLink, ProgramData, ProgramError,
+        ProgramData, ProgramError,
     },
 };
 
@@ -85,8 +85,8 @@ impl BtfTracePoint {
     pub fn take_link(
         &mut self,
         link_id: BtfTracePointLinkId,
-    ) -> Result<OwnedLink<BtfTracePointLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    ) -> Result<BtfTracePointLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 }
 

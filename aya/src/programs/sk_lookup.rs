@@ -2,7 +2,7 @@ use std::os::unix::prelude::{AsRawFd, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP},
-    programs::{define_link_wrapper, load_program, FdLinkId, OwnedLink, ProgramData, ProgramError},
+    programs::{define_link_wrapper, load_program, FdLinkId, ProgramData, ProgramError},
     sys::bpf_link_create,
 };
 
@@ -77,11 +77,8 @@ impl SkLookup {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(
-        &mut self,
-        link_id: SkLookupLinkId,
-    ) -> Result<OwnedLink<SkLookupLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    pub fn take_link(&mut self, link_id: SkLookupLinkId) -> Result<SkLookupLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 
     /// Detaches the program.

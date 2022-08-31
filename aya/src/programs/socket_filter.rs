@@ -8,7 +8,7 @@ use thiserror::Error;
 
 use crate::{
     generated::{bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF},
-    programs::{load_program, Link, OwnedLink, ProgramData, ProgramError},
+    programs::{load_program, Link, ProgramData, ProgramError},
 };
 
 /// The type returned when attaching a [`SocketFilter`] fails.
@@ -109,8 +109,8 @@ impl SocketFilter {
     pub fn take_link(
         &mut self,
         link_id: SocketFilterLinkId,
-    ) -> Result<OwnedLink<SocketFilterLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    ) -> Result<SocketFilterLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 }
 

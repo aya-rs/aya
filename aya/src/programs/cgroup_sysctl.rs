@@ -7,8 +7,7 @@ use std::{
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SYSCTL, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL},
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, OwnedLink, ProgAttachLink, ProgramData,
-        ProgramError,
+        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };
@@ -101,8 +100,8 @@ impl CgroupSysctl {
     pub fn take_link(
         &mut self,
         link_id: CgroupSysctlLinkId,
-    ) -> Result<OwnedLink<CgroupSysctlLink>, ProgramError> {
-        Ok(OwnedLink::new(self.data.take_link(link_id)?))
+    ) -> Result<CgroupSysctlLink, ProgramError> {
+        self.data.take_link(link_id)
     }
 
     /// Detaches the program.
