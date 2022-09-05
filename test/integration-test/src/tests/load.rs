@@ -61,7 +61,7 @@ fn multiple_btf_maps() -> anyhow::Result<()> {
 }
 
 fn is_loaded() -> bool {
-    let output = Command::new("bpftool").args(&["prog"]).output().unwrap();
+    let output = Command::new("bpftool").args(["prog"]).output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
     stdout.contains("test_unload")
 }

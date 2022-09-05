@@ -258,7 +258,7 @@ macro_rules! define_link_wrapper {
 
         impl From<$wrapper> for $base {
             fn from(w: $wrapper) -> $base {
-                w.into()
+                w.0
             }
         }
     };
