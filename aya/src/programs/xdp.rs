@@ -250,6 +250,12 @@ impl TryFrom<XdpLink> for FdLink {
     }
 }
 
+impl From<FdLink> for XdpLink {
+    fn from(fd_link: FdLink) -> Self {
+        XdpLink(XdpLinkInner::FdLink(fd_link))
+    }
+}
+
 define_link_wrapper!(
     /// The link used by [Xdp] programs.
     XdpLink,

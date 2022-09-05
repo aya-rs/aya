@@ -14,7 +14,7 @@ use crate::{
     generated::bpf_attach_type,
     pin::PinError,
     programs::ProgramError,
-    sys::{bpf_pin_object, bpf_prog_detach},
+    sys::{bpf_get_object, bpf_pin_object, bpf_prog_detach},
 };
 
 /// A Link.
@@ -162,6 +162,12 @@ impl Drop for FdLink {
     }
 }
 
+impl From<PinnedLink> for FdLink {
+    fn from(p: PinnedLink) -> Self {
+        p.inner
+    }
+}
+
 /// A pinned file descriptor link.
 ///
 /// This link has been pinned to the BPF filesystem. On drop, the file descriptor that backs
@@ -179,6 +185,18 @@ impl PinnedLink {
             inner: FdLink::new(fd),
             path,
         }
+    }
+
+    /// Creates a [`PinnedLink`] from a valid path on bpffs
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, LinkError> {
+        let path_string = CString::new(path.as_ref().to_string_lossy().to_string()).unwrap();
+        let fd =
+            bpf_get_object(&path_string).map_err(|(code, io_error)| LinkError::SyscallError {
+                call: "BPF_OBJ_GET".to_string(),
+                code,
+                io_error,
+            })? as RawFd;
+        Ok(PinnedLink::new(path.as_ref().to_path_buf(), fd))
     }
 
     /// Removes the pinned link from the filesystem and returns an [`FdLink`].
@@ -272,6 +290,17 @@ pub enum LinkError {
     /// Invalid link.
     #[error("Invalid link")]
     InvalidLink,
+    /// Syscall failed.
+    #[error("the `{call}` syscall failed with code {code}")]
+    SyscallError {
+        /// Syscall Name.
+        call: String,
+        /// Error code.
+        code: libc::c_long,
+        #[source]
+        /// Original io::Error.
+        io_error: io::Error,
+    },
 }
 
 #[cfg(test)]
