@@ -129,10 +129,9 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Returns a copy of the value associated with the longest prefix matching key in the LpmTrie.
     pub fn get(&self, key: &Key<K>, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.deref().fd_or_err()?;
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(code, io_error)| {
+        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
-                code,
                 io_error,
             }
         })?;
@@ -142,10 +141,9 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Inserts a key value pair into the map.
     pub fn insert(&self, key: &Key<K>, value: V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.deref().fd_or_err()?;
-        bpf_map_update_elem(fd, Some(key), &value, flags).map_err(|(code, io_error)| {
+        bpf_map_update_elem(fd, Some(key), &value, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
-                code,
                 io_error,
             }
         })?;
@@ -160,9 +158,8 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         let fd = self.inner.deref().fd_or_err()?;
         bpf_map_delete_elem(fd, key)
             .map(|_| ())
-            .map_err(|(code, io_error)| MapError::SyscallError {
+            .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_delete_elem".to_owned(),
-                code,
                 io_error,
             })
     }
@@ -360,7 +357,7 @@ mod tests {
         let key = Key::new(16, u32::from(ipaddr).to_be());
         assert!(matches!(
             trie.insert(&key, 1, 0),
-            Err(MapError::SyscallError { call, code: -1, io_error }) if call == "bpf_map_update_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_update_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 
@@ -402,7 +399,7 @@ mod tests {
         let key = Key::new(16, u32::from(ipaddr).to_be());
         assert!(matches!(
             trie.remove(&key),
-            Err(MapError::SyscallError { call, code: -1, io_error }) if call == "bpf_map_delete_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_delete_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 
@@ -443,7 +440,7 @@ mod tests {
 
         assert!(matches!(
             trie.get(&key, 0),
-            Err(MapError::SyscallError { call, code: -1, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 

@@ -103,10 +103,9 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
         self.check_bounds(index)?;
         let prog_fd = program.as_raw_fd();
 
-        bpf_map_update_elem(fd, Some(&index), &prog_fd, flags).map_err(|(code, io_error)| {
+        bpf_map_update_elem(fd, Some(&index), &prog_fd, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
-                code,
                 io_error,
             }
         })?;
@@ -122,9 +121,8 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> ProgramArray<T> {
         self.check_bounds(*index)?;
         bpf_map_delete_elem(fd, index)
             .map(|_| ())
-            .map_err(|(code, io_error)| MapError::SyscallError {
+            .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_delete_elem".to_owned(),
-                code,
                 io_error,
             })
     }

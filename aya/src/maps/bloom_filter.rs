@@ -68,9 +68,8 @@ impl<T: Deref<Target = Map>, V: Pod> BloomFilter<T, V> {
         let fd = self.inner.deref().fd_or_err()?;
 
         bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
-            .map_err(|(code, io_error)| MapError::SyscallError {
+            .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
-                code,
                 io_error,
             })?
             .ok_or(MapError::ElementNotFound)?;
@@ -80,12 +79,9 @@ impl<T: Deref<Target = Map>, V: Pod> BloomFilter<T, V> {
     /// Inserts a value into the map.
     pub fn insert(&self, value: V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.deref().fd_or_err()?;
-        bpf_map_push_elem(fd, &value, flags).map_err(|(code, io_error)| {
-            MapError::SyscallError {
-                call: "bpf_map_push_elem".to_owned(),
-                code,
-                io_error,
-            }
+        bpf_map_push_elem(fd, &value, flags).map_err(|(_, io_error)| MapError::SyscallError {
+            call: "bpf_map_push_elem".to_owned(),
+            io_error,
         })?;
         Ok(())
     }
@@ -254,7 +250,7 @@ mod tests {
 
         assert!(matches!(
             bloom_filter.insert(1, 0),
-            Err(MapError::SyscallError { call, code: -1, io_error }) if call == "bpf_map_push_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_push_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 
@@ -292,7 +288,7 @@ mod tests {
 
         assert!(matches!(
             bloom_filter.contains(&1, 0),
-            Err(MapError::SyscallError { call, code: -1, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 

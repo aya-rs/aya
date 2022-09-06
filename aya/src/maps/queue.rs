@@ -81,9 +81,8 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Queue<T, V> {
         let fd = self.inner.fd_or_err()?;
 
         let value = bpf_map_lookup_and_delete_elem::<u32, _>(fd, None, flags).map_err(
-            |(code, io_error)| MapError::SyscallError {
+            |(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_lookup_and_delete_elem".to_owned(),
-                code,
                 io_error,
             },
         )?;
@@ -97,12 +96,9 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Queue<T, V> {
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
     pub fn push(&mut self, value: V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
-        bpf_map_push_elem(fd, &value, flags).map_err(|(code, io_error)| {
-            MapError::SyscallError {
-                call: "bpf_map_push_elem".to_owned(),
-                code,
-                io_error,
-            }
+        bpf_map_push_elem(fd, &value, flags).map_err(|(_, io_error)| MapError::SyscallError {
+            call: "bpf_map_push_elem".to_owned(),
+            io_error,
         })?;
         Ok(())
     }

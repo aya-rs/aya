@@ -50,7 +50,10 @@ use crate::{
     generated::bpf_map_type,
     obj,
     pin::PinError,
-    sys::{bpf_create_map, bpf_get_object, bpf_map_get_next_key, bpf_pin_object, kernel_version},
+    sys::{
+        bpf_create_map, bpf_get_object, bpf_map_get_info_by_fd, bpf_map_get_next_key,
+        bpf_pin_object, kernel_version,
+    },
     util::nr_cpus,
     Pod,
 };
@@ -163,13 +166,10 @@ pub enum MapError {
     ProgramNotLoaded,
 
     /// Syscall failed
-    #[error("the `{call}` syscall failed with code {code}")]
+    #[error("the `{call}` syscall failed")]
     SyscallError {
         /// Syscall Name
         call: String,
-        /// Error code
-        code: libc::c_long,
-        #[source]
         /// Original io::Error
         io_error: io::Error,
     },
@@ -189,10 +189,10 @@ pub enum MapError {
     },
 
     /// Could not pin map by name
-    #[error("map `{name}` requested pinning by name. pinning failed")]
+    #[error("map `{name:?}` requested pinning by name. pinning failed")]
     PinError {
         /// The map name
-        name: String,
+        name: Option<String>,
         /// The reason for the failure
         #[source]
         error: PinError,
@@ -292,16 +292,63 @@ impl Map {
         }
         let map_path = path.as_ref().join(name);
         let path_string = CString::new(map_path.to_str().unwrap()).unwrap();
-        let fd =
-            bpf_get_object(&path_string).map_err(|(code, io_error)| MapError::SyscallError {
-                call: "BPF_OBJ_GET".to_string(),
-                code,
-                io_error,
-            })? as RawFd;
+        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| MapError::SyscallError {
+            call: "BPF_OBJ_GET".to_string(),
+            io_error,
+        })? as RawFd;
 
         self.fd = Some(fd);
 
         Ok(fd)
+    }
+
+    /// Loads a map from a pinned path in bpffs.
+    pub fn from_pinned<P: AsRef<Path>>(path: P) -> Result<Map, MapError> {
+        let path_string =
+            CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
+                MapError::PinError {
+                    name: None,
+                    error: PinError::InvalidPinPath {
+                        error: e.to_string(),
+                    },
+                }
+            })?;
+
+        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| MapError::SyscallError {
+            call: "BPF_OBJ_GET".to_owned(),
+            io_error,
+        })? as RawFd;
+
+        let info = bpf_map_get_info_by_fd(fd).map_err(|io_error| MapError::SyscallError {
+            call: "BPF_MAP_GET_INFO_BY_FD".to_owned(),
+            io_error,
+        })?;
+
+        Ok(Map {
+            obj: obj::parse_map_info(info, crate::PinningType::ByName),
+            fd: Some(fd),
+            btf_fd: None,
+            pinned: true,
+        })
+    }
+
+    /// Loads a map from a [`RawFd`].
+    ///
+    /// If loading from a BPF Filesystem (bpffs) you should use [`Map::from_pinned`].
+    /// This API is intended for cases where you have received a valid BPF FD from some other means.
+    /// For example, you received an FD over Unix Domain Socket.
+    pub fn from_fd(fd: RawFd) -> Result<Map, MapError> {
+        let info = bpf_map_get_info_by_fd(fd).map_err(|io_error| MapError::SyscallError {
+            call: "BPF_OBJ_GET".to_owned(),
+            io_error,
+        })?;
+
+        Ok(Map {
+            obj: obj::parse_map_info(info, crate::PinningType::None),
+            fd: Some(fd),
+            btf_fd: None,
+            pinned: false,
+        })
     }
 
     /// Returns the [`bpf_map_type`] of this map
@@ -402,11 +449,10 @@ impl<K: Pod> Iterator for MapKeys<'_, K> {
                 self.key = None;
                 None
             }
-            Err((code, io_error)) => {
+            Err((_, io_error)) => {
                 self.err = true;
                 Some(Err(MapError::SyscallError {
                     call: "bpf_map_get_next_key".to_owned(),
-                    code,
                     io_error,
                 }))
             }

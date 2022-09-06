@@ -175,7 +175,7 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
                 let btf_info =
                     sys::btf_obj_get_info_by_fd(btf_fd, &mut buf).map_err(|io_error| {
                         ProgramError::SyscallError {
-                            call: "btf_obj_get_info_by_fd".to_owned(),
+                            call: "bpf_prog_get_info_by_fd".to_owned(),
                             io_error,
                         }
                     })?;
@@ -185,7 +185,7 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
             }
         }
         Err(io_error) => Err(ProgramError::SyscallError {
-            call: "btf_obj_get_info_by_fd".to_owned(),
+            call: "bpf_prog_get_info_by_fd".to_owned(),
             io_error,
         }),
     }?;

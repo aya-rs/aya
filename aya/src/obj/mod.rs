@@ -19,7 +19,7 @@ use relocation::*;
 
 use crate::{
     bpf_map_def,
-    generated::{bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_F_RDONLY_PROG},
+    generated::{bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_F_RDONLY_PROG},
     obj::btf::{Btf, BtfError, BtfExt, BtfType},
     programs::{CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType},
     BpfError, BtfMapDef, PinningType,
@@ -1303,6 +1303,45 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         }
     }
     Ok((map_name.to_string(), map_def))
+}
+
+pub(crate) fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
+    if info.btf_key_type_id != 0 {
+        Map::Btf(BtfMap {
+            def: BtfMapDef {
+                map_type: info.type_,
+                key_size: info.key_size,
+                value_size: info.value_size,
+                max_entries: info.max_entries,
+                map_flags: info.map_flags,
+                pinning: pinned,
+                btf_key_type_id: info.btf_key_type_id,
+                btf_value_type_id: info.btf_value_type_id,
+            },
+            section_index: 0,
+            symbol_index: 0,
+            data: Vec::new(),
+            // We should never be loading the .bss or .data or .rodata FDs
+            kind: MapKind::Other,
+        })
+    } else {
+        Map::Legacy(LegacyMap {
+            def: bpf_map_def {
+                map_type: info.type_,
+                key_size: info.key_size,
+                value_size: info.value_size,
+                max_entries: info.max_entries,
+                map_flags: info.map_flags,
+                pinning: pinned,
+                id: info.id,
+            },
+            section_index: 0,
+            symbol_index: 0,
+            data: Vec::new(),
+            // We should never be loading the .bss or .data or .rodata FDs
+            kind: MapKind::Other,
+        })
+    }
 }
 
 pub(crate) fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
