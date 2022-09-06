@@ -205,7 +205,7 @@ bitflags! {
         const DEBUG = 1;
         /// Enables verbose verifier logging.
         const VERBOSE = 2 | Self::DEBUG.bits;
-        /// Enables verifier stats
+        /// Enables verifier stats.
         const STATS = 4;
     }
 }
