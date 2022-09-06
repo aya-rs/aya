@@ -67,6 +67,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "bpf_prog_info",
         "bpf_map_info",
         "bpf_link_info",
+        "bpf_link_type",
         "bpf_btf_info",
         "bpf_func_info",
         "bpf_line_info",
