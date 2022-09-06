@@ -197,15 +197,15 @@ pub struct BpfLoader<'a> {
 }
 
 bitflags! {
-    /// Used to set the verifier log level in [BpfLoader](BpfLoader::verifier_log_level()).
+    /// Used to set the verifier log level flags in [BpfLoader](BpfLoader::verifier_log_level()).
     pub struct VerifierLogLevel: u32 {
-        /// Used to disable all logging.
+        /// Sets no verifier logging.
         const DISABLE = 0;
-        ///  Logs tracing with details level 1
-        const LEVEL1 = 1;
-        /// Log tracing with details level 2
-        const LEVEL2 = 2 | Self::LEVEL1.bits;
-        /// Logs eBPF verifier stats
+        /// Enables debug verifier logging.
+        const DEBUG = 1;
+        /// Enables verbose verifier logging.
+        const VERBOSE = 2 | Self::DEBUG.bits;
+        /// Enables verifier stats
         const STATS = 4;
     }
 }
@@ -213,7 +213,7 @@ bitflags! {
 impl Default for VerifierLogLevel {
     fn default() -> Self {
         Self {
-            bits: Self::LEVEL1.bits | Self::STATS.bits,
+            bits: Self::DEBUG.bits | Self::STATS.bits,
         }
     }
 }
@@ -345,7 +345,7 @@ impl<'a> BpfLoader<'a> {
     /// use aya::{BpfLoader, VerifierLogLevel};
     ///
     /// let bpf = BpfLoader::new()
-    ///     .verifier_log_level(VerifierLogLevel::LEVEL2 | VerifierLogLevel::STATS)
+    ///     .verifier_log_level(VerifierLogLevel::VERBOSE | VerifierLogLevel::STATS)
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
