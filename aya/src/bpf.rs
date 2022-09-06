@@ -196,22 +196,26 @@ pub struct BpfLoader<'a> {
     verifier_log_level: VerifierLogLevel,
 }
 
-/// Used to set the verifier log level in [BpfLoader](BpfLoader::verifier_log_level()).
-#[repr(u32)]
-#[non_exhaustive]
-#[derive(Debug, Clone, Copy)]
-pub enum VerifierLogLevel {
-    /// Disable all logging.
-    Disable = 0,
+bitflags! {
+    /// Used to set the verifier log level flags in [BpfLoader](BpfLoader::verifier_log_level()).
+    pub struct VerifierLogLevel: u32 {
+        /// Sets no verifier logging.
+        const DISABLE = 0;
+        /// Enables debug verifier logging.
+        const DEBUG = 1;
+        /// Enables verbose verifier logging.
+        const VERBOSE = 2 | Self::DEBUG.bits;
+        /// Enables verifier stats.
+        const STATS = 4;
+    }
+}
 
-    /// Default level of logging, shows verifier stats.
-    Default = 4,
-
-    /// Prints verbose logs showing tracing.
-    Verbose = 1,
-
-    /// Prints full debug details.
-    Debug = 7,
+impl Default for VerifierLogLevel {
+    fn default() -> Self {
+        Self {
+            bits: Self::DEBUG.bits | Self::STATS.bits,
+        }
+    }
 }
 
 impl<'a> BpfLoader<'a> {
@@ -225,7 +229,7 @@ impl<'a> BpfLoader<'a> {
             globals: HashMap::new(),
             features,
             extensions: HashSet::new(),
-            verifier_log_level: VerifierLogLevel::Default,
+            verifier_log_level: VerifierLogLevel::default(),
         }
     }
 
@@ -341,7 +345,7 @@ impl<'a> BpfLoader<'a> {
     /// use aya::{BpfLoader, VerifierLogLevel};
     ///
     /// let bpf = BpfLoader::new()
-    ///     .verifier_log_level(VerifierLogLevel::Verbose)
+    ///     .verifier_log_level(VerifierLogLevel::VERBOSE | VerifierLogLevel::STATS)
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
@@ -382,7 +386,7 @@ impl<'a> BpfLoader<'a> {
     /// # Ok::<(), aya::BpfError>(())
     /// ```
     pub fn load(&mut self, data: &[u8]) -> Result<Bpf, BpfError> {
-        let verifier_log_level = self.verifier_log_level as u32;
+        let verifier_log_level = self.verifier_log_level.bits;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(self.globals.clone())?;
 
