@@ -1981,3 +1981,128 @@ pub unsafe fn bpf_map_lookup_percpu_elem(
     ) -> *mut ::aya_bpf_cty::c_void = ::core::mem::transmute(195usize);
     fun(map, key, cpu)
 }
+pub unsafe fn bpf_skc_to_mptcp_sock(sk: *mut ::aya_bpf_cty::c_void) -> *mut mptcp_sock {
+    let fun: unsafe extern "C" fn(sk: *mut ::aya_bpf_cty::c_void) -> *mut mptcp_sock =
+        ::core::mem::transmute(196usize);
+    fun(sk)
+}
+pub unsafe fn bpf_dynptr_from_mem(
+    data: *mut ::aya_bpf_cty::c_void,
+    size: __u32,
+    flags: __u64,
+    ptr: *mut bpf_dynptr,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        data: *mut ::aya_bpf_cty::c_void,
+        size: __u32,
+        flags: __u64,
+        ptr: *mut bpf_dynptr,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(197usize);
+    fun(data, size, flags, ptr)
+}
+pub unsafe fn bpf_ringbuf_reserve_dynptr(
+    ringbuf: *mut ::aya_bpf_cty::c_void,
+    size: __u32,
+    flags: __u64,
+    ptr: *mut bpf_dynptr,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        ringbuf: *mut ::aya_bpf_cty::c_void,
+        size: __u32,
+        flags: __u64,
+        ptr: *mut bpf_dynptr,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(198usize);
+    fun(ringbuf, size, flags, ptr)
+}
+pub unsafe fn bpf_ringbuf_submit_dynptr(ptr: *mut bpf_dynptr, flags: __u64) {
+    let fun: unsafe extern "C" fn(ptr: *mut bpf_dynptr, flags: __u64) =
+        ::core::mem::transmute(199usize);
+    fun(ptr, flags)
+}
+pub unsafe fn bpf_ringbuf_discard_dynptr(ptr: *mut bpf_dynptr, flags: __u64) {
+    let fun: unsafe extern "C" fn(ptr: *mut bpf_dynptr, flags: __u64) =
+        ::core::mem::transmute(200usize);
+    fun(ptr, flags)
+}
+pub unsafe fn bpf_dynptr_read(
+    dst: *mut ::aya_bpf_cty::c_void,
+    len: __u32,
+    src: *mut bpf_dynptr,
+    offset: __u32,
+    flags: __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        dst: *mut ::aya_bpf_cty::c_void,
+        len: __u32,
+        src: *mut bpf_dynptr,
+        offset: __u32,
+        flags: __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(201usize);
+    fun(dst, len, src, offset, flags)
+}
+pub unsafe fn bpf_dynptr_write(
+    dst: *mut bpf_dynptr,
+    offset: __u32,
+    src: *mut ::aya_bpf_cty::c_void,
+    len: __u32,
+    flags: __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        dst: *mut bpf_dynptr,
+        offset: __u32,
+        src: *mut ::aya_bpf_cty::c_void,
+        len: __u32,
+        flags: __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(202usize);
+    fun(dst, offset, src, len, flags)
+}
+pub unsafe fn bpf_dynptr_data(
+    ptr: *mut bpf_dynptr,
+    offset: __u32,
+    len: __u32,
+) -> *mut ::aya_bpf_cty::c_void {
+    let fun: unsafe extern "C" fn(
+        ptr: *mut bpf_dynptr,
+        offset: __u32,
+        len: __u32,
+    ) -> *mut ::aya_bpf_cty::c_void = ::core::mem::transmute(203usize);
+    fun(ptr, offset, len)
+}
+pub unsafe fn bpf_tcp_raw_gen_syncookie_ipv4(
+    iph: *mut iphdr,
+    th: *mut tcphdr,
+    th_len: __u32,
+) -> __s64 {
+    let fun: unsafe extern "C" fn(iph: *mut iphdr, th: *mut tcphdr, th_len: __u32) -> __s64 =
+        ::core::mem::transmute(204usize);
+    fun(iph, th, th_len)
+}
+pub unsafe fn bpf_tcp_raw_gen_syncookie_ipv6(
+    iph: *mut ipv6hdr,
+    th: *mut tcphdr,
+    th_len: __u32,
+) -> __s64 {
+    let fun: unsafe extern "C" fn(iph: *mut ipv6hdr, th: *mut tcphdr, th_len: __u32) -> __s64 =
+        ::core::mem::transmute(205usize);
+    fun(iph, th, th_len)
+}
+pub unsafe fn bpf_tcp_raw_check_syncookie_ipv4(
+    iph: *mut iphdr,
+    th: *mut tcphdr,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(iph: *mut iphdr, th: *mut tcphdr) -> ::aya_bpf_cty::c_long =
+        ::core::mem::transmute(206usize);
+    fun(iph, th)
+}
+pub unsafe fn bpf_tcp_raw_check_syncookie_ipv6(
+    iph: *mut ipv6hdr,
+    th: *mut tcphdr,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(iph: *mut ipv6hdr, th: *mut tcphdr) -> ::aya_bpf_cty::c_long =
+        ::core::mem::transmute(207usize);
+    fun(iph, th)
+}
+pub unsafe fn bpf_ktime_get_tai_ns() -> __u64 {
+    let fun: unsafe extern "C" fn() -> __u64 = ::core::mem::transmute(208usize);
+    fun()
+}
