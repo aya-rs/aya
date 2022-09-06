@@ -106,8 +106,8 @@ use crate::{
     obj::{self, btf::BtfError, Function, KernelVersion},
     pin::PinError,
     sys::{
-        bpf_get_object, bpf_load_program, bpf_obj_get_info_by_fd, bpf_pin_object,
-        bpf_prog_get_fd_by_id, bpf_prog_query, retry_with_verifier_logs, BpfLoadProgramAttrs,
+        bpf_get_object, bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id,
+        bpf_prog_get_info_by_fd, bpf_prog_query, retry_with_verifier_logs, BpfLoadProgramAttrs,
     },
     util::VerifierLog,
 };
@@ -826,8 +826,8 @@ impl ProgramInfo {
                 io_error,
             })? as RawFd;
 
-        let info = bpf_obj_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_obj_get_info_by_fd".to_owned(),
+        let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
+            call: "bpf_prog_get_info_by_fd".to_owned(),
             io_error,
         })?;
         unsafe {

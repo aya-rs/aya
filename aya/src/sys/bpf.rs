@@ -442,7 +442,7 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<RawFd, io::Error> {
     }
 }
 
-pub(crate) fn bpf_obj_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_prog_info, io::Error> {
+pub(crate) fn bpf_prog_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_prog_info, io::Error> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     // info gets entirely populated by the kernel
     let info = unsafe { MaybeUninit::zeroed().assume_init() };
