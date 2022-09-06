@@ -1,16 +1,3 @@
-use crate::{
-    generated::BPF_F_REPLACE,
-    obj::{
-        btf::{
-            BtfParam, BtfType, DataSec, DataSecEntry, DeclTag, Float, Func, FuncLinkage, FuncProto,
-            Int, IntEncoding, Ptr, TypeTag, Var, VarLinkage,
-        },
-        copy_instructions,
-    },
-    Btf,
-};
-use libc::{c_char, c_long, close, ENOENT, ENOSPC};
-
 use std::{
     cmp::{self, min},
     ffi::{CStr, CString},
@@ -20,18 +7,25 @@ use std::{
     slice,
 };
 
+use libc::{c_char, c_long, close, ENOENT, ENOSPC};
+
 use crate::{
     generated::{
-        bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_prog_info, bpf_prog_type,
+        bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_prog_info,
+        bpf_prog_type, BPF_F_REPLACE,
     },
     maps::PerCpuValues,
     obj::{
         self,
-        btf::{FuncSecInfo, LineSecInfo},
+        btf::{
+            BtfParam, BtfType, DataSec, DataSecEntry, DeclTag, Float, Func, FuncLinkage, FuncProto,
+            FuncSecInfo, Int, IntEncoding, LineSecInfo, Ptr, TypeTag, Var, VarLinkage,
+        },
+        copy_instructions,
     },
     sys::{kernel_version, syscall, SysResult, Syscall},
     util::VerifierLog,
-    Pod, BPF_OBJ_NAME_LEN,
+    Btf, Pod, BPF_OBJ_NAME_LEN,
 };
 
 pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>) -> SysResult {
@@ -450,6 +444,21 @@ pub(crate) fn bpf_prog_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_prog_info, i
     attr.info.bpf_fd = prog_fd as u32;
     attr.info.info = &info as *const _ as u64;
     attr.info.info_len = mem::size_of::<bpf_prog_info>() as u32;
+
+    match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &attr) {
+        Ok(_) => Ok(info),
+        Err((_, err)) => Err(err),
+    }
+}
+
+pub(crate) fn bpf_link_get_info_by_fd(link_fd: RawFd) -> Result<bpf_link_info, io::Error> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    // info gets entirely populated by the kernel
+    let info = unsafe { MaybeUninit::zeroed().assume_init() };
+
+    attr.info.bpf_fd = link_fd as u32;
+    attr.info.info = &info as *const _ as u64;
+    attr.info.info_len = mem::size_of::<bpf_link_info>() as u32;
 
     match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &attr) {
         Ok(_) => Ok(info),

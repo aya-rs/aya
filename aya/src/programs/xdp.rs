@@ -7,6 +7,7 @@ use thiserror::Error;
 use crate::{
     generated::{
         bpf_attach_type::{self, BPF_XDP},
+        bpf_link_type,
         bpf_prog_type::BPF_PROG_TYPE_XDP,
         XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE,
         XDP_FLAGS_UPDATE_IF_NOEXIST,
@@ -14,7 +15,10 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, Link, LinkError, ProgramData, ProgramError,
     },
-    sys::{bpf_link_create, bpf_link_update, kernel_version, netlink_set_xdp_fd},
+    sys::{
+        bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, kernel_version,
+        netlink_set_xdp_fd,
+    },
 };
 
 /// The type returned when attaching an [`Xdp`] program fails on kernels `< 5.9`.
@@ -250,9 +254,22 @@ impl TryFrom<XdpLink> for FdLink {
     }
 }
 
-impl From<FdLink> for XdpLink {
-    fn from(fd_link: FdLink) -> Self {
-        XdpLink(XdpLinkInner::FdLink(fd_link))
+impl TryFrom<FdLink> for XdpLink {
+    type Error = LinkError;
+
+    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
+        // unwrap of fd_link.fd will not panic since it's only None when being dropped.
+        let info = bpf_link_get_info_by_fd(fd_link.fd.unwrap()).map_err(|io_error| {
+            LinkError::SyscallError {
+                call: "BPF_OBJ_GET_INFO_BY_FD".to_string(),
+                code: 0,
+                io_error,
+            }
+        })?;
+        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_XDP as u32) {
+            return Ok(XdpLink(XdpLinkInner::FdLink(fd_link)));
+        }
+        Err(LinkError::InvalidLink)
     }
 }
 
