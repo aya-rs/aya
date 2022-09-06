@@ -288,18 +288,18 @@ pub type __u64 = ::aya_bpf_cty::c_ulonglong;
 pub type __be16 = __u16;
 pub type __be32 = __u32;
 pub type __wsum = __u32;
-pub const BPF_REG_0: ::aya_bpf_cty::c_uint = 0;
-pub const BPF_REG_1: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_REG_2: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_REG_3: ::aya_bpf_cty::c_uint = 3;
-pub const BPF_REG_4: ::aya_bpf_cty::c_uint = 4;
-pub const BPF_REG_5: ::aya_bpf_cty::c_uint = 5;
-pub const BPF_REG_6: ::aya_bpf_cty::c_uint = 6;
-pub const BPF_REG_7: ::aya_bpf_cty::c_uint = 7;
-pub const BPF_REG_8: ::aya_bpf_cty::c_uint = 8;
-pub const BPF_REG_9: ::aya_bpf_cty::c_uint = 9;
-pub const BPF_REG_10: ::aya_bpf_cty::c_uint = 10;
-pub const __MAX_BPF_REG: ::aya_bpf_cty::c_uint = 11;
+pub const BPF_REG_0: _bindgen_ty_1 = 0;
+pub const BPF_REG_1: _bindgen_ty_1 = 1;
+pub const BPF_REG_2: _bindgen_ty_1 = 2;
+pub const BPF_REG_3: _bindgen_ty_1 = 3;
+pub const BPF_REG_4: _bindgen_ty_1 = 4;
+pub const BPF_REG_5: _bindgen_ty_1 = 5;
+pub const BPF_REG_6: _bindgen_ty_1 = 6;
+pub const BPF_REG_7: _bindgen_ty_1 = 7;
+pub const BPF_REG_8: _bindgen_ty_1 = 8;
+pub const BPF_REG_9: _bindgen_ty_1 = 9;
+pub const BPF_REG_10: _bindgen_ty_1 = 10;
+pub const __MAX_BPF_REG: _bindgen_ty_1 = 11;
 pub type _bindgen_ty_1 = ::aya_bpf_cty::c_uint;
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -522,7 +522,8 @@ pub mod bpf_attach_type {
     pub const BPF_SK_REUSEPORT_SELECT_OR_MIGRATE: Type = 40;
     pub const BPF_PERF_EVENT: Type = 41;
     pub const BPF_TRACE_KPROBE_MULTI: Type = 42;
-    pub const __MAX_BPF_ATTACH_TYPE: Type = 43;
+    pub const BPF_LSM_CGROUP: Type = 43;
+    pub const __MAX_BPF_ATTACH_TYPE: Type = 44;
 }
 pub mod bpf_link_type {
     pub type Type = ::aya_bpf_cty::c_uint;
@@ -538,24 +539,24 @@ pub mod bpf_link_type {
     pub const BPF_LINK_TYPE_STRUCT_OPS: Type = 9;
     pub const MAX_BPF_LINK_TYPE: Type = 10;
 }
-pub const BPF_ANY: ::aya_bpf_cty::c_uint = 0;
-pub const BPF_NOEXIST: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_EXIST: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_F_LOCK: ::aya_bpf_cty::c_uint = 4;
+pub const BPF_ANY: _bindgen_ty_2 = 0;
+pub const BPF_NOEXIST: _bindgen_ty_2 = 1;
+pub const BPF_EXIST: _bindgen_ty_2 = 2;
+pub const BPF_F_LOCK: _bindgen_ty_2 = 4;
 pub type _bindgen_ty_2 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_NO_PREALLOC: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_F_NO_COMMON_LRU: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_F_NUMA_NODE: ::aya_bpf_cty::c_uint = 4;
-pub const BPF_F_RDONLY: ::aya_bpf_cty::c_uint = 8;
-pub const BPF_F_WRONLY: ::aya_bpf_cty::c_uint = 16;
-pub const BPF_F_STACK_BUILD_ID: ::aya_bpf_cty::c_uint = 32;
-pub const BPF_F_ZERO_SEED: ::aya_bpf_cty::c_uint = 64;
-pub const BPF_F_RDONLY_PROG: ::aya_bpf_cty::c_uint = 128;
-pub const BPF_F_WRONLY_PROG: ::aya_bpf_cty::c_uint = 256;
-pub const BPF_F_CLONE: ::aya_bpf_cty::c_uint = 512;
-pub const BPF_F_MMAPABLE: ::aya_bpf_cty::c_uint = 1024;
-pub const BPF_F_PRESERVE_ELEMS: ::aya_bpf_cty::c_uint = 2048;
-pub const BPF_F_INNER_MAP: ::aya_bpf_cty::c_uint = 4096;
+pub const BPF_F_NO_PREALLOC: _bindgen_ty_3 = 1;
+pub const BPF_F_NO_COMMON_LRU: _bindgen_ty_3 = 2;
+pub const BPF_F_NUMA_NODE: _bindgen_ty_3 = 4;
+pub const BPF_F_RDONLY: _bindgen_ty_3 = 8;
+pub const BPF_F_WRONLY: _bindgen_ty_3 = 16;
+pub const BPF_F_STACK_BUILD_ID: _bindgen_ty_3 = 32;
+pub const BPF_F_ZERO_SEED: _bindgen_ty_3 = 64;
+pub const BPF_F_RDONLY_PROG: _bindgen_ty_3 = 128;
+pub const BPF_F_WRONLY_PROG: _bindgen_ty_3 = 256;
+pub const BPF_F_CLONE: _bindgen_ty_3 = 512;
+pub const BPF_F_MMAPABLE: _bindgen_ty_3 = 1024;
+pub const BPF_F_PRESERVE_ELEMS: _bindgen_ty_3 = 2048;
+pub const BPF_F_INNER_MAP: _bindgen_ty_3 = 4096;
 pub type _bindgen_ty_3 = ::aya_bpf_cty::c_uint;
 pub mod bpf_stats_type {
     pub type Type = ::aya_bpf_cty::c_uint;
@@ -749,6 +750,7 @@ pub struct bpf_attr__bindgen_ty_10 {
     pub attach_flags: __u32,
     pub prog_ids: __u64,
     pub prog_cnt: __u32,
+    pub prog_attach_flags: __u64,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1057,74 +1059,87 @@ pub mod bpf_func_id {
     pub const BPF_FUNC_ima_file_hash: Type = 193;
     pub const BPF_FUNC_kptr_xchg: Type = 194;
     pub const BPF_FUNC_map_lookup_percpu_elem: Type = 195;
-    pub const __BPF_FUNC_MAX_ID: Type = 196;
+    pub const BPF_FUNC_skc_to_mptcp_sock: Type = 196;
+    pub const BPF_FUNC_dynptr_from_mem: Type = 197;
+    pub const BPF_FUNC_ringbuf_reserve_dynptr: Type = 198;
+    pub const BPF_FUNC_ringbuf_submit_dynptr: Type = 199;
+    pub const BPF_FUNC_ringbuf_discard_dynptr: Type = 200;
+    pub const BPF_FUNC_dynptr_read: Type = 201;
+    pub const BPF_FUNC_dynptr_write: Type = 202;
+    pub const BPF_FUNC_dynptr_data: Type = 203;
+    pub const BPF_FUNC_tcp_raw_gen_syncookie_ipv4: Type = 204;
+    pub const BPF_FUNC_tcp_raw_gen_syncookie_ipv6: Type = 205;
+    pub const BPF_FUNC_tcp_raw_check_syncookie_ipv4: Type = 206;
+    pub const BPF_FUNC_tcp_raw_check_syncookie_ipv6: Type = 207;
+    pub const BPF_FUNC_ktime_get_tai_ns: Type = 208;
+    pub const __BPF_FUNC_MAX_ID: Type = 209;
 }
-pub const BPF_F_RECOMPUTE_CSUM: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_F_INVALIDATE_HASH: ::aya_bpf_cty::c_uint = 2;
+pub const BPF_F_RECOMPUTE_CSUM: _bindgen_ty_4 = 1;
+pub const BPF_F_INVALIDATE_HASH: _bindgen_ty_4 = 2;
 pub type _bindgen_ty_4 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_HDR_FIELD_MASK: ::aya_bpf_cty::c_uint = 15;
+pub const BPF_F_HDR_FIELD_MASK: _bindgen_ty_5 = 15;
 pub type _bindgen_ty_5 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_PSEUDO_HDR: ::aya_bpf_cty::c_uint = 16;
-pub const BPF_F_MARK_MANGLED_0: ::aya_bpf_cty::c_uint = 32;
-pub const BPF_F_MARK_ENFORCE: ::aya_bpf_cty::c_uint = 64;
+pub const BPF_F_PSEUDO_HDR: _bindgen_ty_6 = 16;
+pub const BPF_F_MARK_MANGLED_0: _bindgen_ty_6 = 32;
+pub const BPF_F_MARK_ENFORCE: _bindgen_ty_6 = 64;
 pub type _bindgen_ty_6 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_INGRESS: ::aya_bpf_cty::c_uint = 1;
+pub const BPF_F_INGRESS: _bindgen_ty_7 = 1;
 pub type _bindgen_ty_7 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_TUNINFO_IPV6: ::aya_bpf_cty::c_uint = 1;
+pub const BPF_F_TUNINFO_IPV6: _bindgen_ty_8 = 1;
 pub type _bindgen_ty_8 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_SKIP_FIELD_MASK: ::aya_bpf_cty::c_uint = 255;
-pub const BPF_F_USER_STACK: ::aya_bpf_cty::c_uint = 256;
-pub const BPF_F_FAST_STACK_CMP: ::aya_bpf_cty::c_uint = 512;
-pub const BPF_F_REUSE_STACKID: ::aya_bpf_cty::c_uint = 1024;
-pub const BPF_F_USER_BUILD_ID: ::aya_bpf_cty::c_uint = 2048;
+pub const BPF_F_SKIP_FIELD_MASK: _bindgen_ty_9 = 255;
+pub const BPF_F_USER_STACK: _bindgen_ty_9 = 256;
+pub const BPF_F_FAST_STACK_CMP: _bindgen_ty_9 = 512;
+pub const BPF_F_REUSE_STACKID: _bindgen_ty_9 = 1024;
+pub const BPF_F_USER_BUILD_ID: _bindgen_ty_9 = 2048;
 pub type _bindgen_ty_9 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_ZERO_CSUM_TX: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_F_DONT_FRAGMENT: ::aya_bpf_cty::c_uint = 4;
-pub const BPF_F_SEQ_NUMBER: ::aya_bpf_cty::c_uint = 8;
+pub const BPF_F_ZERO_CSUM_TX: _bindgen_ty_10 = 2;
+pub const BPF_F_DONT_FRAGMENT: _bindgen_ty_10 = 4;
+pub const BPF_F_SEQ_NUMBER: _bindgen_ty_10 = 8;
 pub type _bindgen_ty_10 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_INDEX_MASK: ::aya_bpf_cty::c_ulong = 4294967295;
-pub const BPF_F_CURRENT_CPU: ::aya_bpf_cty::c_ulong = 4294967295;
-pub const BPF_F_CTXLEN_MASK: ::aya_bpf_cty::c_ulong = 4503595332403200;
+pub const BPF_F_INDEX_MASK: _bindgen_ty_11 = 4294967295;
+pub const BPF_F_CURRENT_CPU: _bindgen_ty_11 = 4294967295;
+pub const BPF_F_CTXLEN_MASK: _bindgen_ty_11 = 4503595332403200;
 pub type _bindgen_ty_11 = ::aya_bpf_cty::c_ulong;
-pub const BPF_F_CURRENT_NETNS: ::aya_bpf_cty::c_int = -1;
+pub const BPF_F_CURRENT_NETNS: _bindgen_ty_12 = -1;
 pub type _bindgen_ty_12 = ::aya_bpf_cty::c_int;
-pub const BPF_CSUM_LEVEL_QUERY: ::aya_bpf_cty::c_uint = 0;
-pub const BPF_CSUM_LEVEL_INC: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_CSUM_LEVEL_DEC: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_CSUM_LEVEL_RESET: ::aya_bpf_cty::c_uint = 3;
+pub const BPF_CSUM_LEVEL_QUERY: _bindgen_ty_13 = 0;
+pub const BPF_CSUM_LEVEL_INC: _bindgen_ty_13 = 1;
+pub const BPF_CSUM_LEVEL_DEC: _bindgen_ty_13 = 2;
+pub const BPF_CSUM_LEVEL_RESET: _bindgen_ty_13 = 3;
 pub type _bindgen_ty_13 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_ADJ_ROOM_FIXED_GSO: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_F_ADJ_ROOM_ENCAP_L3_IPV4: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_F_ADJ_ROOM_ENCAP_L3_IPV6: ::aya_bpf_cty::c_uint = 4;
-pub const BPF_F_ADJ_ROOM_ENCAP_L4_GRE: ::aya_bpf_cty::c_uint = 8;
-pub const BPF_F_ADJ_ROOM_ENCAP_L4_UDP: ::aya_bpf_cty::c_uint = 16;
-pub const BPF_F_ADJ_ROOM_NO_CSUM_RESET: ::aya_bpf_cty::c_uint = 32;
-pub const BPF_F_ADJ_ROOM_ENCAP_L2_ETH: ::aya_bpf_cty::c_uint = 64;
+pub const BPF_F_ADJ_ROOM_FIXED_GSO: _bindgen_ty_14 = 1;
+pub const BPF_F_ADJ_ROOM_ENCAP_L3_IPV4: _bindgen_ty_14 = 2;
+pub const BPF_F_ADJ_ROOM_ENCAP_L3_IPV6: _bindgen_ty_14 = 4;
+pub const BPF_F_ADJ_ROOM_ENCAP_L4_GRE: _bindgen_ty_14 = 8;
+pub const BPF_F_ADJ_ROOM_ENCAP_L4_UDP: _bindgen_ty_14 = 16;
+pub const BPF_F_ADJ_ROOM_NO_CSUM_RESET: _bindgen_ty_14 = 32;
+pub const BPF_F_ADJ_ROOM_ENCAP_L2_ETH: _bindgen_ty_14 = 64;
 pub type _bindgen_ty_14 = ::aya_bpf_cty::c_uint;
-pub const BPF_ADJ_ROOM_ENCAP_L2_MASK: ::aya_bpf_cty::c_uint = 255;
-pub const BPF_ADJ_ROOM_ENCAP_L2_SHIFT: ::aya_bpf_cty::c_uint = 56;
+pub const BPF_ADJ_ROOM_ENCAP_L2_MASK: _bindgen_ty_15 = 255;
+pub const BPF_ADJ_ROOM_ENCAP_L2_SHIFT: _bindgen_ty_15 = 56;
 pub type _bindgen_ty_15 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_SYSCTL_BASE_NAME: ::aya_bpf_cty::c_uint = 1;
+pub const BPF_F_SYSCTL_BASE_NAME: _bindgen_ty_16 = 1;
 pub type _bindgen_ty_16 = ::aya_bpf_cty::c_uint;
-pub const BPF_LOCAL_STORAGE_GET_F_CREATE: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_SK_STORAGE_GET_F_CREATE: ::aya_bpf_cty::c_uint = 1;
+pub const BPF_LOCAL_STORAGE_GET_F_CREATE: _bindgen_ty_17 = 1;
+pub const BPF_SK_STORAGE_GET_F_CREATE: _bindgen_ty_17 = 1;
 pub type _bindgen_ty_17 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_GET_BRANCH_RECORDS_SIZE: ::aya_bpf_cty::c_uint = 1;
+pub const BPF_F_GET_BRANCH_RECORDS_SIZE: _bindgen_ty_18 = 1;
 pub type _bindgen_ty_18 = ::aya_bpf_cty::c_uint;
-pub const BPF_RB_NO_WAKEUP: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_RB_FORCE_WAKEUP: ::aya_bpf_cty::c_uint = 2;
+pub const BPF_RB_NO_WAKEUP: _bindgen_ty_19 = 1;
+pub const BPF_RB_FORCE_WAKEUP: _bindgen_ty_19 = 2;
 pub type _bindgen_ty_19 = ::aya_bpf_cty::c_uint;
-pub const BPF_RB_AVAIL_DATA: ::aya_bpf_cty::c_uint = 0;
-pub const BPF_RB_RING_SIZE: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_RB_CONS_POS: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_RB_PROD_POS: ::aya_bpf_cty::c_uint = 3;
+pub const BPF_RB_AVAIL_DATA: _bindgen_ty_20 = 0;
+pub const BPF_RB_RING_SIZE: _bindgen_ty_20 = 1;
+pub const BPF_RB_CONS_POS: _bindgen_ty_20 = 2;
+pub const BPF_RB_PROD_POS: _bindgen_ty_20 = 3;
 pub type _bindgen_ty_20 = ::aya_bpf_cty::c_uint;
-pub const BPF_RINGBUF_BUSY_BIT: ::aya_bpf_cty::c_uint = 2147483648;
-pub const BPF_RINGBUF_DISCARD_BIT: ::aya_bpf_cty::c_uint = 1073741824;
-pub const BPF_RINGBUF_HDR_SZ: ::aya_bpf_cty::c_uint = 8;
+pub const BPF_RINGBUF_BUSY_BIT: _bindgen_ty_21 = 2147483648;
+pub const BPF_RINGBUF_DISCARD_BIT: _bindgen_ty_21 = 1073741824;
+pub const BPF_RINGBUF_HDR_SZ: _bindgen_ty_21 = 8;
 pub type _bindgen_ty_21 = ::aya_bpf_cty::c_uint;
-pub const BPF_SK_LOOKUP_F_REPLACE: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_SK_LOOKUP_F_NO_REUSEPORT: ::aya_bpf_cty::c_uint = 2;
+pub const BPF_SK_LOOKUP_F_REPLACE: _bindgen_ty_22 = 1;
+pub const BPF_SK_LOOKUP_F_NO_REUSEPORT: _bindgen_ty_22 = 2;
 pub type _bindgen_ty_22 = ::aya_bpf_cty::c_uint;
 pub mod bpf_adj_room_mode {
     pub type Type = ::aya_bpf_cty::c_uint;
@@ -1142,10 +1157,10 @@ pub mod bpf_lwt_encap_mode {
     pub const BPF_LWT_ENCAP_SEG6_INLINE: Type = 1;
     pub const BPF_LWT_ENCAP_IP: Type = 2;
 }
-pub const BPF_F_BPRM_SECUREEXEC: ::aya_bpf_cty::c_uint = 1;
+pub const BPF_F_BPRM_SECUREEXEC: _bindgen_ty_23 = 1;
 pub type _bindgen_ty_23 = ::aya_bpf_cty::c_uint;
-pub const BPF_F_BROADCAST: ::aya_bpf_cty::c_uint = 8;
-pub const BPF_F_EXCLUDE_INGRESS: ::aya_bpf_cty::c_uint = 16;
+pub const BPF_F_BROADCAST: _bindgen_ty_24 = 8;
+pub const BPF_F_EXCLUDE_INGRESS: _bindgen_ty_24 = 16;
 pub type _bindgen_ty_24 = ::aya_bpf_cty::c_uint;
 pub mod _bindgen_ty_25 {
     pub type Type = ::aya_bpf_cty::c_uint;
@@ -1574,6 +1589,8 @@ pub struct bpf_prog_info {
     pub run_cnt: __u64,
     pub recursion_misses: __u64,
     pub verified_insns: __u32,
+    pub attach_btf_obj_id: __u32,
+    pub attach_btf_id: __u32,
 }
 impl bpf_prog_info {
     #[inline]
@@ -1821,45 +1838,45 @@ impl bpf_sock_ops__bindgen_ty_4 {
         __bindgen_bitfield_unit
     }
 }
-pub const BPF_SOCK_OPS_RTO_CB_FLAG: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_SOCK_OPS_RETRANS_CB_FLAG: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_SOCK_OPS_STATE_CB_FLAG: ::aya_bpf_cty::c_uint = 4;
-pub const BPF_SOCK_OPS_RTT_CB_FLAG: ::aya_bpf_cty::c_uint = 8;
-pub const BPF_SOCK_OPS_PARSE_ALL_HDR_OPT_CB_FLAG: ::aya_bpf_cty::c_uint = 16;
-pub const BPF_SOCK_OPS_PARSE_UNKNOWN_HDR_OPT_CB_FLAG: ::aya_bpf_cty::c_uint = 32;
-pub const BPF_SOCK_OPS_WRITE_HDR_OPT_CB_FLAG: ::aya_bpf_cty::c_uint = 64;
-pub const BPF_SOCK_OPS_ALL_CB_FLAGS: ::aya_bpf_cty::c_uint = 127;
+pub const BPF_SOCK_OPS_RTO_CB_FLAG: _bindgen_ty_26 = 1;
+pub const BPF_SOCK_OPS_RETRANS_CB_FLAG: _bindgen_ty_26 = 2;
+pub const BPF_SOCK_OPS_STATE_CB_FLAG: _bindgen_ty_26 = 4;
+pub const BPF_SOCK_OPS_RTT_CB_FLAG: _bindgen_ty_26 = 8;
+pub const BPF_SOCK_OPS_PARSE_ALL_HDR_OPT_CB_FLAG: _bindgen_ty_26 = 16;
+pub const BPF_SOCK_OPS_PARSE_UNKNOWN_HDR_OPT_CB_FLAG: _bindgen_ty_26 = 32;
+pub const BPF_SOCK_OPS_WRITE_HDR_OPT_CB_FLAG: _bindgen_ty_26 = 64;
+pub const BPF_SOCK_OPS_ALL_CB_FLAGS: _bindgen_ty_26 = 127;
 pub type _bindgen_ty_26 = ::aya_bpf_cty::c_uint;
-pub const BPF_SOCK_OPS_VOID: ::aya_bpf_cty::c_uint = 0;
-pub const BPF_SOCK_OPS_TIMEOUT_INIT: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_SOCK_OPS_RWND_INIT: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_SOCK_OPS_TCP_CONNECT_CB: ::aya_bpf_cty::c_uint = 3;
-pub const BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB: ::aya_bpf_cty::c_uint = 4;
-pub const BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB: ::aya_bpf_cty::c_uint = 5;
-pub const BPF_SOCK_OPS_NEEDS_ECN: ::aya_bpf_cty::c_uint = 6;
-pub const BPF_SOCK_OPS_BASE_RTT: ::aya_bpf_cty::c_uint = 7;
-pub const BPF_SOCK_OPS_RTO_CB: ::aya_bpf_cty::c_uint = 8;
-pub const BPF_SOCK_OPS_RETRANS_CB: ::aya_bpf_cty::c_uint = 9;
-pub const BPF_SOCK_OPS_STATE_CB: ::aya_bpf_cty::c_uint = 10;
-pub const BPF_SOCK_OPS_TCP_LISTEN_CB: ::aya_bpf_cty::c_uint = 11;
-pub const BPF_SOCK_OPS_RTT_CB: ::aya_bpf_cty::c_uint = 12;
-pub const BPF_SOCK_OPS_PARSE_HDR_OPT_CB: ::aya_bpf_cty::c_uint = 13;
-pub const BPF_SOCK_OPS_HDR_OPT_LEN_CB: ::aya_bpf_cty::c_uint = 14;
-pub const BPF_SOCK_OPS_WRITE_HDR_OPT_CB: ::aya_bpf_cty::c_uint = 15;
+pub const BPF_SOCK_OPS_VOID: _bindgen_ty_27 = 0;
+pub const BPF_SOCK_OPS_TIMEOUT_INIT: _bindgen_ty_27 = 1;
+pub const BPF_SOCK_OPS_RWND_INIT: _bindgen_ty_27 = 2;
+pub const BPF_SOCK_OPS_TCP_CONNECT_CB: _bindgen_ty_27 = 3;
+pub const BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB: _bindgen_ty_27 = 4;
+pub const BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB: _bindgen_ty_27 = 5;
+pub const BPF_SOCK_OPS_NEEDS_ECN: _bindgen_ty_27 = 6;
+pub const BPF_SOCK_OPS_BASE_RTT: _bindgen_ty_27 = 7;
+pub const BPF_SOCK_OPS_RTO_CB: _bindgen_ty_27 = 8;
+pub const BPF_SOCK_OPS_RETRANS_CB: _bindgen_ty_27 = 9;
+pub const BPF_SOCK_OPS_STATE_CB: _bindgen_ty_27 = 10;
+pub const BPF_SOCK_OPS_TCP_LISTEN_CB: _bindgen_ty_27 = 11;
+pub const BPF_SOCK_OPS_RTT_CB: _bindgen_ty_27 = 12;
+pub const BPF_SOCK_OPS_PARSE_HDR_OPT_CB: _bindgen_ty_27 = 13;
+pub const BPF_SOCK_OPS_HDR_OPT_LEN_CB: _bindgen_ty_27 = 14;
+pub const BPF_SOCK_OPS_WRITE_HDR_OPT_CB: _bindgen_ty_27 = 15;
 pub type _bindgen_ty_27 = ::aya_bpf_cty::c_uint;
-pub const BPF_TCP_ESTABLISHED: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_TCP_SYN_SENT: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_TCP_SYN_RECV: ::aya_bpf_cty::c_uint = 3;
-pub const BPF_TCP_FIN_WAIT1: ::aya_bpf_cty::c_uint = 4;
-pub const BPF_TCP_FIN_WAIT2: ::aya_bpf_cty::c_uint = 5;
-pub const BPF_TCP_TIME_WAIT: ::aya_bpf_cty::c_uint = 6;
-pub const BPF_TCP_CLOSE: ::aya_bpf_cty::c_uint = 7;
-pub const BPF_TCP_CLOSE_WAIT: ::aya_bpf_cty::c_uint = 8;
-pub const BPF_TCP_LAST_ACK: ::aya_bpf_cty::c_uint = 9;
-pub const BPF_TCP_LISTEN: ::aya_bpf_cty::c_uint = 10;
-pub const BPF_TCP_CLOSING: ::aya_bpf_cty::c_uint = 11;
-pub const BPF_TCP_NEW_SYN_RECV: ::aya_bpf_cty::c_uint = 12;
-pub const BPF_TCP_MAX_STATES: ::aya_bpf_cty::c_uint = 13;
+pub const BPF_TCP_ESTABLISHED: _bindgen_ty_28 = 1;
+pub const BPF_TCP_SYN_SENT: _bindgen_ty_28 = 2;
+pub const BPF_TCP_SYN_RECV: _bindgen_ty_28 = 3;
+pub const BPF_TCP_FIN_WAIT1: _bindgen_ty_28 = 4;
+pub const BPF_TCP_FIN_WAIT2: _bindgen_ty_28 = 5;
+pub const BPF_TCP_TIME_WAIT: _bindgen_ty_28 = 6;
+pub const BPF_TCP_CLOSE: _bindgen_ty_28 = 7;
+pub const BPF_TCP_CLOSE_WAIT: _bindgen_ty_28 = 8;
+pub const BPF_TCP_LAST_ACK: _bindgen_ty_28 = 9;
+pub const BPF_TCP_LISTEN: _bindgen_ty_28 = 10;
+pub const BPF_TCP_CLOSING: _bindgen_ty_28 = 11;
+pub const BPF_TCP_NEW_SYN_RECV: _bindgen_ty_28 = 12;
+pub const BPF_TCP_MAX_STATES: _bindgen_ty_28 = 13;
 pub type _bindgen_ty_28 = ::aya_bpf_cty::c_uint;
 pub mod _bindgen_ty_30 {
     pub type Type = ::aya_bpf_cty::c_uint;
@@ -1877,12 +1894,12 @@ pub struct bpf_perf_event_value {
     pub enabled: __u64,
     pub running: __u64,
 }
-pub const BPF_DEVCG_ACC_MKNOD: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_DEVCG_ACC_READ: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_DEVCG_ACC_WRITE: ::aya_bpf_cty::c_uint = 4;
+pub const BPF_DEVCG_ACC_MKNOD: _bindgen_ty_32 = 1;
+pub const BPF_DEVCG_ACC_READ: _bindgen_ty_32 = 2;
+pub const BPF_DEVCG_ACC_WRITE: _bindgen_ty_32 = 4;
 pub type _bindgen_ty_32 = ::aya_bpf_cty::c_uint;
-pub const BPF_DEVCG_DEV_BLOCK: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_DEVCG_DEV_CHAR: ::aya_bpf_cty::c_uint = 2;
+pub const BPF_DEVCG_DEV_BLOCK: _bindgen_ty_33 = 1;
+pub const BPF_DEVCG_DEV_CHAR: _bindgen_ty_33 = 2;
 pub type _bindgen_ty_33 = ::aya_bpf_cty::c_uint;
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1895,18 +1912,18 @@ pub struct bpf_cgroup_dev_ctx {
 pub struct bpf_raw_tracepoint_args {
     pub args: __IncompleteArrayField<__u64>,
 }
-pub const BPF_FIB_LOOKUP_DIRECT: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_FIB_LOOKUP_OUTPUT: ::aya_bpf_cty::c_uint = 2;
+pub const BPF_FIB_LOOKUP_DIRECT: _bindgen_ty_34 = 1;
+pub const BPF_FIB_LOOKUP_OUTPUT: _bindgen_ty_34 = 2;
 pub type _bindgen_ty_34 = ::aya_bpf_cty::c_uint;
-pub const BPF_FIB_LKUP_RET_SUCCESS: ::aya_bpf_cty::c_uint = 0;
-pub const BPF_FIB_LKUP_RET_BLACKHOLE: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_FIB_LKUP_RET_UNREACHABLE: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_FIB_LKUP_RET_PROHIBIT: ::aya_bpf_cty::c_uint = 3;
-pub const BPF_FIB_LKUP_RET_NOT_FWDED: ::aya_bpf_cty::c_uint = 4;
-pub const BPF_FIB_LKUP_RET_FWD_DISABLED: ::aya_bpf_cty::c_uint = 5;
-pub const BPF_FIB_LKUP_RET_UNSUPP_LWT: ::aya_bpf_cty::c_uint = 6;
-pub const BPF_FIB_LKUP_RET_NO_NEIGH: ::aya_bpf_cty::c_uint = 7;
-pub const BPF_FIB_LKUP_RET_FRAG_NEEDED: ::aya_bpf_cty::c_uint = 8;
+pub const BPF_FIB_LKUP_RET_SUCCESS: _bindgen_ty_35 = 0;
+pub const BPF_FIB_LKUP_RET_BLACKHOLE: _bindgen_ty_35 = 1;
+pub const BPF_FIB_LKUP_RET_UNREACHABLE: _bindgen_ty_35 = 2;
+pub const BPF_FIB_LKUP_RET_PROHIBIT: _bindgen_ty_35 = 3;
+pub const BPF_FIB_LKUP_RET_NOT_FWDED: _bindgen_ty_35 = 4;
+pub const BPF_FIB_LKUP_RET_FWD_DISABLED: _bindgen_ty_35 = 5;
+pub const BPF_FIB_LKUP_RET_UNSUPP_LWT: _bindgen_ty_35 = 6;
+pub const BPF_FIB_LKUP_RET_NO_NEIGH: _bindgen_ty_35 = 7;
+pub const BPF_FIB_LKUP_RET_FRAG_NEEDED: _bindgen_ty_35 = 8;
 pub type _bindgen_ty_35 = ::aya_bpf_cty::c_uint;
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1981,9 +1998,9 @@ pub mod bpf_task_fd_type {
     pub const BPF_FD_TYPE_UPROBE: Type = 4;
     pub const BPF_FD_TYPE_URETPROBE: Type = 5;
 }
-pub const BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG: ::aya_bpf_cty::c_uint = 1;
-pub const BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL: ::aya_bpf_cty::c_uint = 2;
-pub const BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP: ::aya_bpf_cty::c_uint = 4;
+pub const BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG: _bindgen_ty_36 = 1;
+pub const BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL: _bindgen_ty_36 = 2;
+pub const BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP: _bindgen_ty_36 = 4;
 pub type _bindgen_ty_36 = ::aya_bpf_cty::c_uint;
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -2047,6 +2064,20 @@ pub struct bpf_timer {
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 16usize]>,
 }
 impl bpf_timer {
+    #[inline]
+    pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 16usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 16usize]> = Default::default();
+        __bindgen_bitfield_unit
+    }
+}
+#[repr(C)]
+#[repr(align(8))]
+#[derive(Copy, Clone)]
+pub struct bpf_dynptr {
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 16usize]>,
+}
+impl bpf_dynptr {
     #[inline]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 16usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 16usize]> = Default::default();
@@ -2182,6 +2213,7 @@ pub mod bpf_core_relo_kind {
     pub const BPF_CORE_TYPE_SIZE: Type = 9;
     pub const BPF_CORE_ENUMVAL_EXISTS: Type = 10;
     pub const BPF_CORE_ENUMVAL_VALUE: Type = 11;
+    pub const BPF_CORE_TYPE_MATCHES: Type = 12;
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -2276,5 +2308,20 @@ pub struct socket {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct file {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct mptcp_sock {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct iphdr {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct ipv6hdr {
     _unused: [u8; 0],
 }
