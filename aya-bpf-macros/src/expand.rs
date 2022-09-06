@@ -250,7 +250,7 @@ impl SchedClassifier {
             #[no_mangle]
             #[link_section = #section_name]
             fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
+                return #fn_name(::aya_bpf::programs::TcContext::new(ctx));
 
                 #item
             }
