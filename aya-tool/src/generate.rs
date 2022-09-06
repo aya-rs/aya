@@ -62,7 +62,7 @@ pub fn generate<T: AsRef<str>>(
     let (c_header, name) = match &input_file {
         InputFile::Btf(path) => (c_header_from_btf(path)?, "kernel_types.h"),
         InputFile::Header(header) => (
-            fs::read_to_string(&header).map_err(Error::ReadHeaderFile)?,
+            fs::read_to_string(header).map_err(Error::ReadHeaderFile)?,
             header.file_name().unwrap().to_str().unwrap(),
         ),
     };
@@ -92,9 +92,9 @@ pub fn generate<T: AsRef<str>>(
 
 fn c_header_from_btf(path: &Path) -> Result<String, Error> {
     let output = Command::new("bpftool")
-        .args(&["btf", "dump", "file"])
+        .args(["btf", "dump", "file"])
         .arg(path)
-        .args(&["format", "c"])
+        .args(["format", "c"])
         .output()
         .map_err(Error::BpfTool)?;
 
