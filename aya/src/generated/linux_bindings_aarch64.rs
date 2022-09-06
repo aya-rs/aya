@@ -395,6 +395,21 @@ pub enum bpf_attach_type {
     BPF_LSM_CGROUP = 43,
     __MAX_BPF_ATTACH_TYPE = 44,
 }
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum bpf_link_type {
+    BPF_LINK_TYPE_UNSPEC = 0,
+    BPF_LINK_TYPE_RAW_TRACEPOINT = 1,
+    BPF_LINK_TYPE_TRACING = 2,
+    BPF_LINK_TYPE_CGROUP = 3,
+    BPF_LINK_TYPE_ITER = 4,
+    BPF_LINK_TYPE_NETNS = 5,
+    BPF_LINK_TYPE_XDP = 6,
+    BPF_LINK_TYPE_PERF_EVENT = 7,
+    BPF_LINK_TYPE_KPROBE_MULTI = 8,
+    BPF_LINK_TYPE_STRUCT_OPS = 9,
+    MAX_BPF_LINK_TYPE = 10,
+}
 pub const BPF_ANY: _bindgen_ty_2 = 0;
 pub const BPF_NOEXIST: _bindgen_ty_2 = 1;
 pub const BPF_EXIST: _bindgen_ty_2 = 2;
