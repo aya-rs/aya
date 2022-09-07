@@ -187,7 +187,7 @@ impl PinnedLink {
         }
     }
 
-    /// Creates a [`PinnedLink`] from a valid path on bpffs
+    /// Creates a [`PinnedLink`] from a valid path on bpffs.
     pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, LinkError> {
         let path_string = CString::new(path.as_ref().to_string_lossy().to_string()).unwrap();
         let fd =
