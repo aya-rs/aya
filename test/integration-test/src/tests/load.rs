@@ -1,11 +1,11 @@
-use std::{process::Command, thread, time};
+use std::{convert::TryInto, process::Command, thread, time};
 
 use aya::{
     include_bytes_aligned,
     maps::{Array, MapRefMut},
     programs::{
         links::{FdLink, PinnedLink},
-        TracePoint, Xdp, XdpFlags,
+        PinnedProgram, TracePoint, Xdp, XdpFlags,
     },
     Bpf,
 };
@@ -69,12 +69,22 @@ fn is_loaded(name: &str) -> bool {
     stdout.contains(name)
 }
 
-fn assert_loaded(name: &str, loaded: bool) {
-    let state = is_loaded(name);
-    if state == loaded {
-        return;
-    }
-    panic!("Expected loaded: {} but was loaded: {}", loaded, state);
+macro_rules! assert_loaded {
+    ($name:literal) => {
+        let state = is_loaded($name);
+        if state != true {
+            panic!("Expected loaded: {} but was not loaded", $name);
+        }
+    };
+}
+
+macro_rules! assert_not_loaded {
+    ($name:literal) => {
+        let state = is_loaded($name);
+        if state != false {
+            panic!("Expected not loaded: {} but was loaded", $name);
+        }
+    };
 }
 
 #[integration_test]
@@ -87,19 +97,19 @@ fn unload() -> anyhow::Result<()> {
     {
         let _link_owned = prog.take_link(link);
         prog.unload().unwrap();
-        assert_loaded("test_unload", true);
+        assert_loaded!("test_unload");
     };
 
-    assert_loaded("test_unload", false);
+    assert_not_loaded!("test_unload");
     prog.load().unwrap();
 
-    assert_loaded("test_unload", true);
+    assert_loaded!("test_unload");
     prog.attach("lo", XdpFlags::default()).unwrap();
 
-    assert_loaded("test_unload", true);
+    assert_loaded!("test_unload");
     prog.unload().unwrap();
 
-    assert_loaded("test_unload", false);
+    assert_not_loaded!("test_unload");
     Ok(())
 }
 
@@ -111,22 +121,22 @@ fn pin_link() -> anyhow::Result<()> {
     prog.load().unwrap();
     let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
     let link = prog.take_link(link_id)?;
-    assert_loaded("test_unload", true);
+    assert_loaded!("test_unload");
 
     let fd_link: FdLink = link.try_into()?;
     let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo")?;
 
     // because of the pin, the program is still attached
     prog.unload()?;
-    assert_loaded("test_unload", true);
+    assert_loaded!("test_unload");
 
     // delete the pin, but the program is still attached
     let new_link = pinned.unpin()?;
-    assert_loaded("test_unload", true);
+    assert_loaded!("test_unload");
 
     // finally when new_link is dropped we're detached
     drop(new_link);
-    assert_loaded("test_unload", false);
+    assert_not_loaded!("test_unload");
 
     Ok(())
 }
@@ -147,7 +157,7 @@ fn pin_lifecycle() -> anyhow::Result<()> {
     }
 
     // should still be loaded since link was pinned
-    assert_loaded("pass", true);
+    assert_loaded!("pass");
 
     // 2. Load a new version of the program, unpin link, and atomically replace old program
     {
@@ -157,11 +167,48 @@ fn pin_lifecycle() -> anyhow::Result<()> {
 
         let link = PinnedLink::from_pin("/sys/fs/bpf/aya-xdp-test-lo")?.unpin()?;
         prog.attach_to_link(link.try_into()?)?;
-        assert_loaded("pass", true);
+        assert_loaded!("pass");
     }
 
     // program should be unloaded
-    assert_loaded("pass", false);
+    assert_not_loaded!("pass");
+
+    Ok(())
+}
+
+#[integration_test]
+fn pin_prog_lifecycle() -> anyhow::Result<()> {
+    assert_not_loaded!("pass");
+
+    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/pass");
+
+    // 1. Load Program and Pin
+    {
+        let mut bpf = Bpf::load(bytes)?;
+        let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+        prog.load().unwrap();
+        prog.pin("/sys/fs/bpf/aya-xdp-test-prog")?;
+    }
+
+    // should still be loaded since prog was pinned
+    assert_loaded!("pass");
+
+    // 2. Load program from bpffs
+    {
+        let mut pinned = PinnedProgram::from_pin("/sys/fs/bpf/aya-xdp-test-prog")?;
+
+        // I can perform an attach operatoin here
+        let prog: &mut Xdp = pinned.as_mut().try_into()?;
+        prog.attach("lo", XdpFlags::default()).unwrap();
+        assert_loaded!("pass");
+
+        // Unpin the program. We need to keep this in scope though to avoid it being dropped.
+        let _unpinned_prog = pinned.unpin().unwrap();
+        assert_loaded!("pass");
+    }
+
+    // program should be unloaded
+    assert_not_loaded!("pass");
 
     Ok(())
 }
