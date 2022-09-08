@@ -4,6 +4,7 @@ pub use aya_obj::programs::CgroupSockAddrAttachType;
 use std::{
     hash::Hash,
     os::unix::prelude::{AsRawFd, RawFd},
+    path::Path,
 };
 
 use crate::{
@@ -118,6 +119,20 @@ impl CgroupSockAddr {
     /// See [CgroupSockAddr::attach].
     pub fn detach(&mut self, link_id: CgroupSockAddrLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
+    }
+
+    /// Creates a program from a pinned entry on a bpffs.
+    ///
+    /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
+    ///
+    /// On drop, any managed links are detached and the program is unloaded. This will not result in
+    /// the program being unloaded from the kernel if it is still pinned.
+    pub fn from_pin<P: AsRef<Path>>(
+        path: P,
+        attach_type: CgroupSockAddrAttachType,
+    ) -> Result<Self, ProgramError> {
+        let data = ProgramData::from_pinned_path(path)?;
+        Ok(Self { data, attach_type })
     }
 }
 

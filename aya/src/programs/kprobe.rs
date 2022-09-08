@@ -1,5 +1,5 @@
 //! Kernel space probes.
-use std::io;
+use std::{io, path::Path};
 use thiserror::Error;
 
 use crate::{
@@ -82,6 +82,17 @@ impl KProbe {
     /// for managing its lifetime.
     pub fn take_link(&mut self, link_id: KProbeLinkId) -> Result<KProbeLink, ProgramError> {
         self.data.take_link(link_id)
+    }
+
+    /// Creates a program from a pinned entry on a bpffs.
+    ///
+    /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
+    ///
+    /// On drop, any managed links are detached and the program is unloaded. This will not result in
+    /// the program being unloaded from the kernel if it is still pinned.
+    pub fn from_pin<P: AsRef<Path>>(path: P, kind: ProbeKind) -> Result<Self, ProgramError> {
+        let data = ProgramData::from_pinned_path(path)?;
+        Ok(Self { data, kind })
     }
 }
 
