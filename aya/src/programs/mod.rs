@@ -66,9 +66,9 @@ pub mod xdp;
 use libc::ENOSPC;
 use std::{
     ffi::CString,
-    io,
+    fs, io,
     os::unix::io::{AsRawFd, RawFd},
-    path::Path,
+    path::{Path, PathBuf},
 };
 use thiserror::Error;
 
@@ -106,8 +106,9 @@ use crate::{
     obj::{self, btf::BtfError, Function, KernelVersion},
     pin::PinError,
     sys::{
-        bpf_get_object, bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id,
-        bpf_prog_get_info_by_fd, bpf_prog_query, retry_with_verifier_logs, BpfLoadProgramAttrs,
+        bpf_btf_get_fd_by_id, bpf_get_object, bpf_load_program, bpf_pin_object,
+        bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, bpf_prog_query, retry_with_verifier_logs,
+        BpfLoadProgramAttrs,
     },
     util::VerifierLog,
 };
@@ -204,6 +205,10 @@ pub enum ProgramError {
         /// program name
         name: String,
     },
+
+    /// The program defintion is incomplete.
+    #[error("incomplete program defintion. {0}")]
+    IncompleteProgramDefinition(String),
 }
 
 /// A [`Program`] file descriptor.
@@ -395,10 +400,209 @@ impl Drop for Program {
     }
 }
 
+/// A Pinned Program.
+pub struct PinnedProgram {
+    path: PathBuf,
+    inner: Program,
+}
+
+impl PinnedProgram {
+    /// Loads a program from a pinned entry on a bpffs.
+    ///
+    /// Not all programs can be loaded since we can't correctly convert them into a [`Program`] since
+    /// there is missing information in `bpf_prog_info`. Attempting to load an unsupported or
+    /// unimplemented program type will result in an error. You may use `ProgramInfo::from_pinned` which
+    /// offers limited interactions with these program types.
+    ///
+    /// Existing links will not be populated. To work with existing links you should use [`PinnedLink`].
+    ///
+    /// On drop, any managed links are detached and the program is unloaded. This will not result in
+    /// the program being unloaded from the kernel if it is still pinned.
+    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
+        let path_string = CString::new(path.as_ref().to_str().unwrap()).unwrap();
+        let fd =
+            bpf_get_object(&path_string).map_err(|(_, io_error)| ProgramError::SyscallError {
+                call: "bpf_obj_get".to_owned(),
+                io_error,
+            })? as RawFd;
+
+        let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
+            call: "bpf_prog_get_info_by_fd".to_owned(),
+            io_error,
+        })?;
+
+        let info = ProgramInfo(info);
+        let name = info.name_as_str().map(|s| s.to_string());
+
+        let p = match info.prog_type()? {
+            bpf_prog_type::BPF_PROG_TYPE_UNSPEC => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "unknown program type.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER => Program::SocketFilter(SocketFilter {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_KPROBE => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "unable to determine probe kind.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS => {
+                let cname = CString::new(name.clone().unwrap_or_default())
+                    .unwrap()
+                    .into_boxed_c_str();
+                Program::SchedClassifier(SchedClassifier {
+                    data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+                    name: cname,
+                })
+            }
+            bpf_prog_type::BPF_PROG_TYPE_SCHED_ACT => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "not implemented.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT => Program::TracePoint(TracePoint {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_XDP => Program::Xdp(Xdp {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT => Program::PerfEvent(PerfEvent {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB => Program::CgroupSkb(CgroupSkb {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+                expected_attach_type: None,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK => Program::CgroupSock(CgroupSock {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+                attach_type: None, // pick one because we don't know for sure
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_LWT_IN => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "not implemented.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_LWT_OUT => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "not implemented.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_LWT_XMIT => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "not implemented.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS => Program::SockOps(SockOps {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_SK_SKB => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "unable to determine parser or verdict program.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "not implemented.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_SK_MSG => Program::SkMsg(SkMsg {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT => Program::RawTracePoint(RawTracePoint {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK_ADDR => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "unable to determine attach type.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_LWT_SEG6LOCAL => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "not implemented.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2 => Program::LircMode2(LircMode2 {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_SK_REUSEPORT => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "not implemented.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_FLOW_DISSECTOR => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "not implemented.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL => Program::CgroupSysctl(CgroupSysctl {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "not implemented.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCKOPT => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "unable to determine attach type".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_TRACING => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "unable to distinguish between fentry and fexit.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_STRUCT_OPS => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "not implemented.".to_string(),
+                ))
+            }
+            bpf_prog_type::BPF_PROG_TYPE_EXT => Program::Extension(Extension {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_LSM => Program::Lsm(Lsm {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP => Program::SkLookup(SkLookup {
+                data: ProgramData::from_bpf_prog_info(name, fd, info.0)?,
+            }),
+            bpf_prog_type::BPF_PROG_TYPE_SYSCALL => {
+                return Err(ProgramError::IncompleteProgramDefinition(
+                    "not implemented.".to_string(),
+                ))
+            }
+        };
+        Ok(PinnedProgram {
+            path: PathBuf::from(path.as_ref()),
+            inner: p,
+        })
+    }
+
+    /// Removes the pinned program from bpffs.
+    pub fn unpin(self) -> Result<Program, io::Error> {
+        fs::remove_file(self.path.clone())?;
+        Ok(self.inner)
+    }
+}
+
+impl AsRef<Program> for PinnedProgram {
+    fn as_ref(&self) -> &Program {
+        &self.inner
+    }
+}
+
+impl AsMut<Program> for PinnedProgram {
+    fn as_mut(&mut self) -> &mut Program {
+        &mut self.inner
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct ProgramData<T: Link> {
     pub(crate) name: Option<String>,
-    pub(crate) obj: obj::Program,
+    pub(crate) obj: Option<obj::Program>,
     pub(crate) fd: Option<RawFd>,
     pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
@@ -418,7 +622,7 @@ impl<T: Link> ProgramData<T> {
     ) -> ProgramData<T> {
         ProgramData {
             name,
-            obj,
+            obj: Some(obj),
             fd: None,
             links: LinkMap::new(),
             expected_attach_type: None,
@@ -428,6 +632,42 @@ impl<T: Link> ProgramData<T> {
             btf_fd,
             verifier_log_level,
         }
+    }
+
+    pub(crate) fn from_bpf_prog_info(
+        name: Option<String>,
+        fd: RawFd,
+        info: bpf_prog_info,
+    ) -> Result<ProgramData<T>, ProgramError> {
+        let attach_btf_id = if info.attach_btf_id > 0 {
+            Some(info.attach_btf_id)
+        } else {
+            None
+        };
+        let attach_btf_obj_fd = if info.attach_btf_obj_id > 0 {
+            let fd = bpf_btf_get_fd_by_id(info.attach_btf_obj_id).map_err(|io_error| {
+                ProgramError::SyscallError {
+                    call: "bpf_btf_get_fd_by_id".to_string(),
+                    io_error,
+                }
+            })?;
+            Some(fd as u32)
+        } else {
+            None
+        };
+
+        Ok(ProgramData {
+            name,
+            obj: None,
+            fd: Some(fd),
+            links: LinkMap::new(),
+            expected_attach_type: None,
+            attach_btf_obj_fd,
+            attach_btf_id,
+            attach_prog_fd: None,
+            btf_fd: None,
+            verifier_log_level: 0,
+        })
     }
 }
 
@@ -481,6 +721,11 @@ fn load_program<T: Link>(
     if fd.is_some() {
         return Err(ProgramError::AlreadyLoaded);
     }
+    if obj.is_none() {
+        // This program was loaded from a pin in bpffs
+        return Err(ProgramError::AlreadyLoaded);
+    }
+    let obj = obj.as_ref().unwrap();
     let crate::obj::Program {
         function:
             Function {
@@ -833,7 +1078,55 @@ impl ProgramInfo {
         unsafe {
             libc::close(fd);
         }
-
         Ok(ProgramInfo(info))
+    }
+
+    /// Returns the program type.
+    pub fn prog_type(&self) -> Result<bpf_prog_type, ProgramError> {
+        self.0.type_.try_into()
+    }
+}
+
+impl TryFrom<u32> for bpf_prog_type {
+    type Error = ProgramError;
+
+    fn try_from(v: u32) -> Result<Self, Self::Error> {
+        use bpf_prog_type::*;
+        let type_ = match v {
+            0 => BPF_PROG_TYPE_UNSPEC,
+            1 => BPF_PROG_TYPE_SOCKET_FILTER,
+            2 => BPF_PROG_TYPE_KPROBE,
+            3 => BPF_PROG_TYPE_SCHED_CLS,
+            4 => BPF_PROG_TYPE_SCHED_ACT,
+            5 => BPF_PROG_TYPE_TRACEPOINT,
+            6 => BPF_PROG_TYPE_XDP,
+            7 => BPF_PROG_TYPE_PERF_EVENT,
+            8 => BPF_PROG_TYPE_CGROUP_SKB,
+            9 => BPF_PROG_TYPE_CGROUP_SOCK,
+            10 => BPF_PROG_TYPE_LWT_IN,
+            11 => BPF_PROG_TYPE_LWT_OUT,
+            12 => BPF_PROG_TYPE_LWT_XMIT,
+            13 => BPF_PROG_TYPE_SOCK_OPS,
+            14 => BPF_PROG_TYPE_SK_SKB,
+            15 => BPF_PROG_TYPE_CGROUP_DEVICE,
+            16 => BPF_PROG_TYPE_SK_MSG,
+            17 => BPF_PROG_TYPE_RAW_TRACEPOINT,
+            18 => BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
+            19 => BPF_PROG_TYPE_LWT_SEG6LOCAL,
+            20 => BPF_PROG_TYPE_LIRC_MODE2,
+            21 => BPF_PROG_TYPE_SK_REUSEPORT,
+            22 => BPF_PROG_TYPE_FLOW_DISSECTOR,
+            23 => BPF_PROG_TYPE_CGROUP_SYSCTL,
+            24 => BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE,
+            25 => BPF_PROG_TYPE_CGROUP_SOCKOPT,
+            26 => BPF_PROG_TYPE_TRACING,
+            27 => BPF_PROG_TYPE_STRUCT_OPS,
+            28 => BPF_PROG_TYPE_EXT,
+            29 => BPF_PROG_TYPE_LSM,
+            30 => BPF_PROG_TYPE_SK_LOOKUP,
+            31 => BPF_PROG_TYPE_SYSCALL,
+            _ => return Err(ProgramError::UnexpectedProgramType),
+        };
+        Ok(type_)
     }
 }

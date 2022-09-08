@@ -54,13 +54,18 @@ use crate::{
 #[doc(alias = "BPF_PROG_TYPE_CGROUP_SOCK")]
 pub struct CgroupSock {
     pub(crate) data: ProgramData<CgroupSockLink>,
-    pub(crate) attach_type: CgroupSockAttachType,
+    pub(crate) attach_type: Option<CgroupSockAttachType>,
 }
 
 impl CgroupSock {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(self.attach_type.into());
+        if self.attach_type.is_none() {
+            return Err(ProgramError::IncompleteProgramDefinition(
+                "missing attach_type".to_string(),
+            ));
+        }
+        self.data.expected_attach_type = Some(self.attach_type.unwrap().into());
         load_program(BPF_PROG_TYPE_CGROUP_SOCK, &mut self.data)
     }
 

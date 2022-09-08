@@ -630,7 +630,7 @@ impl<'a> BpfLoader<'a> {
                         ProgramSection::CgroupSock { attach_type, .. } => {
                             Program::CgroupSock(CgroupSock {
                                 data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
-                                attach_type: *attach_type,
+                                attach_type: Some(*attach_type),
                             })
                         }
                     }
