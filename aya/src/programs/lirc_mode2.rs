@@ -4,7 +4,7 @@ use std::os::unix::prelude::{AsRawFd, RawFd};
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
     programs::{load_program, query, Link, ProgramData, ProgramError, ProgramInfo},
-    sys::{bpf_obj_get_info_by_fd, bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
+    sys::{bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd},
 };
 
 use libc::{close, dup};
@@ -132,10 +132,10 @@ impl LircLink {
 
     /// Get ProgramInfo from this link
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-        match bpf_obj_get_info_by_fd(self.prog_fd) {
+        match bpf_prog_get_info_by_fd(self.prog_fd) {
             Ok(info) => Ok(ProgramInfo(info)),
             Err(io_error) => Err(ProgramError::SyscallError {
-                call: "bpf_obj_get_info_by_fd".to_owned(),
+                call: "bpf_prog_get_info_by_fd".to_owned(),
                 io_error,
             }),
         }
