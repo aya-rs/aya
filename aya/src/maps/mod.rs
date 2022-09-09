@@ -48,14 +48,14 @@ use thiserror::Error;
 
 use crate::{
     generated::bpf_map_type,
-    obj,
+    obj::{self, parse_map_info},
     pin::PinError,
     sys::{
         bpf_create_map, bpf_get_object, bpf_map_get_info_by_fd, bpf_map_get_next_key,
         bpf_pin_object, kernel_version,
     },
     util::nr_cpus,
-    Pod,
+    PinningType, Pod,
 };
 
 mod map_lock;
@@ -325,7 +325,7 @@ impl Map {
         })?;
 
         Ok(Map {
-            obj: obj::parse_map_info(info, crate::PinningType::ByName),
+            obj: parse_map_info(info, PinningType::ByName),
             fd: Some(fd),
             btf_fd: None,
             pinned: true,
@@ -344,7 +344,7 @@ impl Map {
         })?;
 
         Ok(Map {
-            obj: obj::parse_map_info(info, crate::PinningType::None),
+            obj: parse_map_info(info, PinningType::None),
             fd: Some(fd),
             btf_fd: None,
             pinned: false,
