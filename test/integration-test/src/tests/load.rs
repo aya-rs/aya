@@ -155,7 +155,7 @@ fn pin_lifecycle() -> anyhow::Result<()> {
         let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
         prog.load().unwrap();
 
-        let link = PinnedLink::from_path("/sys/fs/bpf/aya-xdp-test-lo")?.unpin()?;
+        let link = PinnedLink::from_pin("/sys/fs/bpf/aya-xdp-test-lo")?.unpin()?;
         prog.attach_to_link(link.try_into()?)?;
         assert_loaded("pass", true);
     }

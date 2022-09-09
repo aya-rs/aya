@@ -303,7 +303,7 @@ impl Map {
     }
 
     /// Loads a map from a pinned path in bpffs.
-    pub fn from_pinned<P: AsRef<Path>>(path: P) -> Result<Map, MapError> {
+    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Map, MapError> {
         let path_string =
             CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
                 MapError::PinError {
@@ -334,7 +334,7 @@ impl Map {
 
     /// Loads a map from a [`RawFd`].
     ///
-    /// If loading from a BPF Filesystem (bpffs) you should use [`Map::from_pinned`].
+    /// If loading from a BPF Filesystem (bpffs) you should use [`Map::from_pin`].
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
     pub fn from_fd(fd: RawFd) -> Result<Map, MapError> {

@@ -818,7 +818,7 @@ impl ProgramInfo {
     }
 
     /// Loads a program from a pinned path in bpffs.
-    pub fn from_pinned<P: AsRef<Path>>(path: P) -> Result<ProgramInfo, ProgramError> {
+    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<ProgramInfo, ProgramError> {
         let path_string = CString::new(path.as_ref().to_str().unwrap()).unwrap();
         let fd =
             bpf_get_object(&path_string).map_err(|(_, io_error)| ProgramError::SyscallError {
