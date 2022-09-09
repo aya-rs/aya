@@ -80,10 +80,9 @@ impl<T: Deref<Target = Map>, V: Pod> Array<T, V> {
         self.check_bounds(*index)?;
         let fd = self.inner.fd_or_err()?;
 
-        let value = bpf_map_lookup_elem(fd, index, flags).map_err(|(code, io_error)| {
+        let value = bpf_map_lookup_elem(fd, index, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
-                code,
                 io_error,
             }
         })?;
@@ -116,10 +115,9 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Array<T, V> {
     pub fn set(&mut self, index: u32, value: V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(index)?;
-        bpf_map_update_elem(fd, Some(&index), &value, flags).map_err(|(code, io_error)| {
+        bpf_map_update_elem(fd, Some(&index), &value, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
-                code,
                 io_error,
             }
         })?;

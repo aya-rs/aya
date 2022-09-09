@@ -61,10 +61,9 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Returns a copy of the value associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.deref().fd_or_err()?;
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(code, io_error)| {
+        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
-                code,
                 io_error,
             }
         })?;
@@ -313,7 +312,7 @@ mod tests {
 
         assert!(matches!(
             hm.insert(1, 42, 0),
-            Err(MapError::SyscallError { call, code: -1, io_error }) if call == "bpf_map_update_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_update_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 
@@ -352,7 +351,7 @@ mod tests {
 
         assert!(matches!(
             hm.remove(&1),
-            Err(MapError::SyscallError { call, code: -1, io_error }) if call == "bpf_map_delete_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_delete_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 
@@ -390,7 +389,7 @@ mod tests {
 
         assert!(matches!(
             hm.get(&1, 0),
-            Err(MapError::SyscallError { call, code: -1, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
 

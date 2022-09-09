@@ -73,10 +73,9 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// Returns a slice of values - one for each CPU - associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<PerCpuValues<V>, MapError> {
         let fd = self.inner.deref().fd_or_err()?;
-        let values = bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|(code, io_error)| {
+        let values = bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
-                code,
                 io_error,
             }
         })?;
@@ -127,10 +126,9 @@ impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// ```
     pub fn insert(&mut self, key: K, values: PerCpuValues<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.fd_or_err()?;
-        bpf_map_update_elem_per_cpu(fd, &key, &values, flags).map_err(|(code, io_error)| {
+        bpf_map_update_elem_per_cpu(fd, &key, &values, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
-                code,
                 io_error,
             }
         })?;

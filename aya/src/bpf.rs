@@ -443,7 +443,7 @@ impl<'a> BpfLoader<'a> {
                         Err(_) => {
                             let fd = map.create(&name)?;
                             map.pin(&name, path).map_err(|error| MapError::PinError {
-                                name: name.to_string(),
+                                name: Some(name.to_string()),
                                 error,
                             })?;
                             fd
@@ -454,16 +454,14 @@ impl<'a> BpfLoader<'a> {
             };
             if !map.obj.data().is_empty() && map.obj.kind() != MapKind::Bss {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
-                    .map_err(|(code, io_error)| MapError::SyscallError {
+                    .map_err(|(_, io_error)| MapError::SyscallError {
                         call: "bpf_map_update_elem".to_owned(),
-                        code,
                         io_error,
                     })?;
             }
             if map.obj.kind() == MapKind::Rodata {
-                bpf_map_freeze(fd).map_err(|(code, io_error)| MapError::SyscallError {
+                bpf_map_freeze(fd).map_err(|(_, io_error)| MapError::SyscallError {
                     call: "bpf_map_freeze".to_owned(),
-                    code,
                     io_error,
                 })?;
             }

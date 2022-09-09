@@ -89,9 +89,8 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> SockMap<T> {
         let fd = self.inner.fd_or_err()?;
         self.check_bounds(index)?;
         bpf_map_update_elem(fd, Some(&index), &socket.as_raw_fd(), flags).map_err(
-            |(code, io_error)| MapError::SyscallError {
+            |(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
-                code,
                 io_error,
             },
         )?;
@@ -104,9 +103,8 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>> SockMap<T> {
         self.check_bounds(*index)?;
         bpf_map_delete_elem(fd, index)
             .map(|_| ())
-            .map_err(|(code, io_error)| MapError::SyscallError {
+            .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_delete_elem".to_owned(),
-                code,
                 io_error,
             })
     }

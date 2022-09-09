@@ -86,7 +86,6 @@ impl<T: Deref<Target = Map>> StackTraceMap<T> {
             sysctl::<usize>("kernel/perf_event_max_stack").map_err(|io_error| {
                 MapError::SyscallError {
                     call: "sysctl".to_owned(),
-                    code: -1,
                     io_error,
                 }
             })?;
@@ -113,9 +112,8 @@ impl<T: Deref<Target = Map>> StackTraceMap<T> {
 
         let mut frames = vec![0; self.max_stack_depth];
         bpf_map_lookup_elem_ptr(fd, Some(stack_id), frames.as_mut_ptr(), flags)
-            .map_err(|(code, io_error)| MapError::SyscallError {
+            .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
-                code,
                 io_error,
             })?
             .ok_or(MapError::KeyNotFound)?;
