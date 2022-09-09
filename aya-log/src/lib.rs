@@ -53,7 +53,7 @@ use std::{
     fmt::{LowerHex, UpperHex},
     io, mem,
     net::{Ipv4Addr, Ipv6Addr},
-    ptr, slice, str,
+    ptr, str,
     sync::Arc,
 };
 
@@ -412,10 +412,11 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             Argument::ArrU16Len8 => {
-                let ptr = attr.value.as_ptr().cast::<u16>();
-                let slice = unsafe { slice::from_raw_parts(ptr, 8) };
+                let data: [u8; 16] = attr.value.try_into().map_err(|_| ())?;
                 let mut value: [u16; 8] = Default::default();
-                value.copy_from_slice(slice);
+                for (i, s) in data.chunks_exact(2).enumerate() {
+                    value[i] = ((s[1] as u16) << 8) | s[0] as u16;
+                }
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             Argument::Str => match str::from_utf8(attr.value) {
