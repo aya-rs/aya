@@ -55,7 +55,7 @@ pub fn docs() -> Result<(), anyhow::Error> {
 
 fn build_docs(working_dir: &PathBuf, abs_header_path: &Path) -> Result<(), anyhow::Error> {
     let replace = Command::new("sed")
-        .current_dir(&working_dir)
+        .current_dir(working_dir)
         .args(vec!["-i.bak", "s/crabby.svg/crabby_dev.svg/", "src/lib.rs"])
         .status()
         .expect("failed to replace logo");
@@ -64,7 +64,7 @@ fn build_docs(working_dir: &PathBuf, abs_header_path: &Path) -> Result<(), anyho
     let args = vec!["+nightly", "doc", "--no-deps", "--all-features"];
 
     let status = Command::new("cargo")
-        .current_dir(&working_dir)
+        .current_dir(working_dir)
         .env(
             "RUSTDOCFLAGS",
             format!("--html-in-header {}", abs_header_path.to_str().unwrap()),

@@ -81,7 +81,7 @@ fn build_rust_ebpf(opts: &Options) -> anyhow::Result<()> {
 
 fn get_libbpf_headers<P: AsRef<Path>>(libbpf_dir: P, include_path: P) -> anyhow::Result<()> {
     let dir = include_path.as_ref();
-    fs::create_dir_all(&dir)?;
+    fs::create_dir_all(dir)?;
     let status = Command::new("make")
         .current_dir(libbpf_dir.as_ref().join("src"))
         .arg(format!("INCLUDEDIR={}", dir.as_os_str().to_string_lossy()))
