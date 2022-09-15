@@ -399,6 +399,18 @@ impl Btf {
                     fixed_ty.name_offset = 0;
                     types.types[i] = BtfType::Ptr(fixed_ty)
                 }
+                // Fixup STRUCT for Rust
+                // LLVM emits names that include characters that aren't valid C idents.
+                // Rather than replace all unsupported characters, just omit the name entirely.
+                BtfType::Struct(s) => {
+                    let name = self.string_at(s.name_offset)?.to_string();
+                    if name.contains(['<', '>', ' ', ':', ',']) {
+                        debug!("STRUCT name {} not supported. Omitted from BTF", name);
+                        let mut fixed_ty = s.clone();
+                        fixed_ty.name_offset = 0;
+                        types.types[i] = BtfType::Struct(fixed_ty)
+                    }
+                }
                 // Sanitize VAR if they are not supported
                 BtfType::Var(v) if !features.btf_datasec => {
                     types.types[i] = BtfType::Int(Int::new(v.name_offset, 1, IntEncoding::None, 0));
