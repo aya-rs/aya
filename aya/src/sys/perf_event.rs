@@ -30,7 +30,7 @@ pub(crate) fn perf_event_open(
     attr.type_ = perf_type;
     attr.sample_type = PERF_SAMPLE_RAW as u64;
     // attr.inherits = if pid > 0 { 1 } else { 0 };
-    attr.__bindgen_anon_2.wakeup_events = if wakeup { 1 } else { 0 };
+    attr.__bindgen_anon_2.wakeup_events = u32::from(wakeup);
 
     if let Some(frequency) = sample_frequency {
         attr.set_freq(1);

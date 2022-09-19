@@ -22,7 +22,7 @@ enum RelocationError {
     UnknownSymbol { index: usize },
 
     #[error("section `{section_index}` not found, referenced by symbol `{}` #{symbol_index}",
-            .symbol_name.clone().unwrap_or_else(|| "".to_string()))]
+            .symbol_name.clone().unwrap_or_default())]
     SectionNotFound {
         section_index: usize,
         symbol_index: usize,
