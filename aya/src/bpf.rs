@@ -191,6 +191,7 @@ pub struct BpfLoader<'a> {
     btf: Option<Cow<'a, Btf>>,
     map_pin_path: Option<PathBuf>,
     globals: HashMap<&'a str, &'a [u8]>,
+    max_entries: HashMap<&'a str, u32>,
     features: Features,
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
@@ -227,6 +228,7 @@ impl<'a> BpfLoader<'a> {
             btf: Btf::from_sys_fs().ok().map(Cow::Owned),
             map_pin_path: None,
             globals: HashMap::new(),
+            max_entries: HashMap::new(),
             features,
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
@@ -312,6 +314,27 @@ impl<'a> BpfLoader<'a> {
         // Safety: value is POD
         let data = unsafe { bytes_of(value) };
         self.globals.insert(name, data);
+        self
+    }
+
+    /// Set the max_entries for specified map.
+    ///
+    /// Overwrite the value of max_entries of the map that matches
+    /// the provided name before the map is created.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::BpfLoader;
+    ///
+    /// let bpf = BpfLoader::new()
+    ///     .set_max_entries("map", 64)
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
+    ///
+    pub fn set_max_entries(&mut self, name: &'a str, size: u32) -> &mut BpfLoader<'a> {
+        self.max_entries.insert(name, size);
         self
     }
 
@@ -409,18 +432,24 @@ impl<'a> BpfLoader<'a> {
         if let Some(btf) = &self.btf {
             obj.relocate_btf(btf)?;
         }
-
         let mut maps = HashMap::new();
         for (name, mut obj) in obj.maps.drain() {
-            if obj.map_type() == BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 && obj.max_entries() == 0 {
-                obj.set_max_entries(
-                    possible_cpus()
-                        .map_err(|error| BpfError::FileError {
-                            path: PathBuf::from(POSSIBLE_CPUS),
-                            error,
-                        })?
-                        .len() as u32,
-                );
+            match self.max_entries.get(name.as_str()) {
+                Some(size) => obj.set_max_entries(*size),
+                None => {
+                    if obj.map_type() == BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32
+                        && obj.max_entries() == 0
+                    {
+                        obj.set_max_entries(
+                            possible_cpus()
+                                .map_err(|error| BpfError::FileError {
+                                    path: PathBuf::from(POSSIBLE_CPUS),
+                                    error,
+                                })?
+                                .len() as u32,
+                        );
+                    }
+                }
             }
             let mut map = Map {
                 obj,
