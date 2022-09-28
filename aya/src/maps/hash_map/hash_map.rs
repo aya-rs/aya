@@ -1,11 +1,10 @@
 use std::{
+    convert::{AsMut, AsRef},
     marker::PhantomData,
-    ops::{Deref, DerefMut},
 };
 
 use crate::{
-    generated::bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_LRU_HASH},
-    maps::{hash_map, IterableMap, Map, MapError, MapIter, MapKeys, MapRef, MapRefMut},
+    maps::{hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
     sys::bpf_map_lookup_elem,
     Pod,
 };
@@ -19,10 +18,10 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::HashMap;
 ///
-/// let mut redirect_ports = HashMap::try_from(bpf.map_mut("REDIRECT_PORTS")?)?;
+/// let mut redirect_ports: HashMap<_, u32, u32> = bpf.map_mut("REDIRECT_PORTS")?.try_into()?;
 ///
 /// // redirect port 80 to 8080
 /// redirect_ports.insert(80, 8080, 0);
@@ -32,22 +31,18 @@ use crate::{
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_HASH")]
 #[doc(alias = "BPF_MAP_TYPE_LRU_HASH")]
-pub struct HashMap<T: Deref<Target = Map>, K, V> {
+#[derive(Debug)]
+pub struct HashMap<T, K, V> {
     inner: T,
     _k: PhantomData<K>,
     _v: PhantomData<V>,
 }
 
-impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
+impl<T: AsRef<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     pub(crate) fn new(map: T) -> Result<HashMap<T, K, V>, MapError> {
-        let map_type = map.obj.map_type();
-
-        // validate the map definition
-        if map_type != BPF_MAP_TYPE_HASH as u32 && map_type != BPF_MAP_TYPE_LRU_HASH as u32 {
-            return Err(MapError::InvalidMapType { map_type });
-        }
-        hash_map::check_kv_size::<K, V>(&map)?;
-        let _ = map.fd_or_err()?;
+        let data = map.as_ref();
+        hash_map::check_kv_size::<K, V>(data)?;
+        let _ = data.fd_or_err()?;
 
         Ok(HashMap {
             inner: map,
@@ -58,7 +53,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
 
     /// Returns a copy of the value associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<V, MapError> {
-        let fd = self.inner.deref().fd_or_err()?;
+        let fd = self.inner.as_ref().fd_or_err()?;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
@@ -77,61 +72,29 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// An iterator visiting all keys in arbitrary order. The iterator element
     /// type is `Result<K, MapError>`.
     pub fn keys(&self) -> MapKeys<'_, K> {
-        MapKeys::new(&self.inner)
+        MapKeys::new(self.inner.as_ref())
     }
 }
 
-impl<T: DerefMut<Target = Map>, K: Pod, V: Pod> HashMap<T, K, V> {
+impl<T: AsMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Inserts a key-value pair into the map.
     pub fn insert(&mut self, key: K, value: V, flags: u64) -> Result<(), MapError> {
-        hash_map::insert(&mut self.inner, key, value, flags)
+        hash_map::insert(self.inner.as_mut(), key, value, flags)
     }
 
     /// Removes a key from the map.
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
-        hash_map::remove(&mut self.inner, key)
+        hash_map::remove(self.inner.as_mut(), key)
     }
 }
 
-impl<T: Deref<Target = Map>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> {
-    fn map(&self) -> &Map {
-        &self.inner
+impl<T: AsRef<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> {
+    fn map(&self) -> &MapData {
+        self.inner.as_ref()
     }
 
     fn get(&self, key: &K) -> Result<V, MapError> {
         HashMap::get(self, key, 0)
-    }
-}
-
-impl<K: Pod, V: Pod> TryFrom<MapRef> for HashMap<MapRef, K, V> {
-    type Error = MapError;
-
-    fn try_from(a: MapRef) -> Result<HashMap<MapRef, K, V>, MapError> {
-        HashMap::new(a)
-    }
-}
-
-impl<K: Pod, V: Pod> TryFrom<MapRefMut> for HashMap<MapRefMut, K, V> {
-    type Error = MapError;
-
-    fn try_from(a: MapRefMut) -> Result<HashMap<MapRefMut, K, V>, MapError> {
-        HashMap::new(a)
-    }
-}
-
-impl<'a, K: Pod, V: Pod> TryFrom<&'a Map> for HashMap<&'a Map, K, V> {
-    type Error = MapError;
-
-    fn try_from(a: &'a Map) -> Result<HashMap<&'a Map, K, V>, MapError> {
-        HashMap::new(a)
-    }
-}
-
-impl<'a, K: Pod, V: Pod> TryFrom<&'a mut Map> for HashMap<&'a mut Map, K, V> {
-    type Error = MapError;
-
-    fn try_from(a: &'a mut Map) -> Result<HashMap<&'a mut Map, K, V>, MapError> {
-        HashMap::new(a)
     }
 }
 
@@ -145,8 +108,9 @@ mod tests {
         bpf_map_def,
         generated::{
             bpf_attr, bpf_cmd,
-            bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
+            bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_LRU_HASH},
         },
+        maps::{Map, MapData},
         obj,
         sys::{override_syscall, SysResult, Syscall},
     };
@@ -175,7 +139,7 @@ mod tests {
 
     #[test]
     fn test_wrong_key_size() {
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
@@ -192,7 +156,7 @@ mod tests {
 
     #[test]
     fn test_wrong_value_size() {
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
@@ -209,34 +173,42 @@ mod tests {
 
     #[test]
     fn test_try_from_wrong_map() {
-        let map = Map {
-            obj: obj::Map::Legacy(obj::LegacyMap {
-                def: bpf_map_def {
-                    map_type: BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32,
-                    key_size: 4,
-                    value_size: 4,
-                    max_entries: 1024,
-                    ..Default::default()
-                },
-                section_index: 0,
-                symbol_index: 0,
-                data: Vec::new(),
-                kind: obj::MapKind::Other,
-            }),
+        let map_data = MapData {
+            obj: new_obj_map(),
             fd: None,
             pinned: false,
             btf_fd: None,
         };
 
+        let map = Map::Array(map_data);
         assert!(matches!(
-            HashMap::<_, u32, u32>::try_from(&map),
-            Err(MapError::InvalidMapType { .. })
+            HashMap::<_, u8, u32>::try_from(&map),
+            Err(MapError::UnexpectedMapType)
+        ));
+    }
+
+    #[test]
+    fn test_try_from_wrong_map_values() {
+        let map_data = MapData {
+            obj: new_obj_map(),
+            fd: None,
+            pinned: false,
+            btf_fd: None,
+        };
+
+        let map = Map::HashMap(map_data);
+        assert!(matches!(
+            HashMap::<_, u32, u16>::try_from(&map),
+            Err(MapError::InvalidValueSize {
+                size: 2,
+                expected: 4
+            })
         ));
     }
 
     #[test]
     fn test_new_not_created() {
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
@@ -251,7 +223,7 @@ mod tests {
 
     #[test]
     fn test_new_ok() {
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -263,18 +235,20 @@ mod tests {
 
     #[test]
     fn test_try_from_ok() {
-        let map = Map {
+        let map_data = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
             btf_fd: None,
         };
+
+        let map = Map::HashMap(map_data);
         assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
     }
 
     #[test]
     fn test_try_from_ok_lru() {
-        let map = Map {
+        let map_data = MapData {
             obj: obj::Map::Legacy(obj::LegacyMap {
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_LRU_HASH as u32,
@@ -293,6 +267,8 @@ mod tests {
             btf_fd: None,
         };
 
+        let map = Map::HashMap(map_data);
+
         assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
     }
 
@@ -300,7 +276,7 @@ mod tests {
     fn test_insert_syscall_error() {
         override_syscall(|_| sys_error(EFAULT));
 
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -324,7 +300,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -339,7 +315,7 @@ mod tests {
     fn test_remove_syscall_error() {
         override_syscall(|_| sys_error(EFAULT));
 
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -363,7 +339,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -377,7 +353,7 @@ mod tests {
     #[test]
     fn test_get_syscall_error() {
         override_syscall(|_| sys_error(EFAULT));
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -400,7 +376,7 @@ mod tests {
             } => sys_error(ENOENT),
             _ => sys_error(EFAULT),
         });
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -437,7 +413,7 @@ mod tests {
             } => sys_error(ENOENT),
             _ => sys_error(EFAULT),
         });
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -486,7 +462,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -519,7 +495,7 @@ mod tests {
             }
             _ => sys_error(EFAULT),
         });
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -554,7 +530,7 @@ mod tests {
             } => lookup_elem(attr),
             _ => sys_error(EFAULT),
         });
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -592,7 +568,7 @@ mod tests {
             }
             _ => sys_error(EFAULT),
         });
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -631,7 +607,7 @@ mod tests {
             } => lookup_elem(attr),
             _ => sys_error(EFAULT),
         });
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -676,7 +652,7 @@ mod tests {
             }
             _ => sys_error(EFAULT),
         });
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,

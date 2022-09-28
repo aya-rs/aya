@@ -40,7 +40,7 @@ use crate::{
 /// use aya::maps::SockHash;
 /// use aya::programs::SkMsg;
 ///
-/// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+/// let mut intercept_egress: SockHash<_, u32> = bpf.take_map("INTERCEPT_EGRESS")?.try_into()?;
 /// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach(&intercept_egress)?;

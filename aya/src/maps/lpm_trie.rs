@@ -1,9 +1,12 @@
 //! A LPM Trie.
-use std::{marker::PhantomData, mem, ops::Deref};
+use std::{
+    convert::{AsMut, AsRef},
+    marker::PhantomData,
+    mem,
+};
 
 use crate::{
-    generated::bpf_map_type::BPF_MAP_TYPE_LPM_TRIE,
-    maps::{IterableMap, Map, MapError, MapRef, MapRefMut},
+    maps::{IterableMap, MapData, MapError},
     sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
     Pod,
 };
@@ -17,11 +20,11 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::lpm_trie::{LpmTrie, Key};
 /// use std::net::Ipv4Addr;
 ///
-/// let mut trie = LpmTrie::try_from(bpf.map_mut("LPM_TRIE")?)?;
+/// let mut trie: LpmTrie<_,u32,u32> = bpf.map_mut("LPM_TRIE")?.try_into()?;
 /// let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
 /// // The following represents a key for the "8.8.8.8/16" subnet.
 /// // The first argument - the prefix length - represents how many bytes should be matched against. The second argument is the actual data to be matched.
@@ -43,7 +46,7 @@ use crate::{
 /// ```
 
 #[doc(alias = "BPF_MAP_TYPE_LPM_TRIE")]
-pub struct LpmTrie<T: Deref<Target = Map>, K, V> {
+pub struct LpmTrie<T, K, V> {
     inner: T,
     _k: PhantomData<K>,
     _v: PhantomData<V>,
@@ -96,26 +99,21 @@ impl<K: Pod> Clone for Key<K> {
 // A Pod impl is required as Key struct is a key for a map.
 unsafe impl<K: Pod> Pod for Key<K> {}
 
-impl<T: Deref<Target = Map>, K: Pod, V: Pod> LpmTrie<T, K, V> {
+impl<T: AsRef<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     pub(crate) fn new(map: T) -> Result<LpmTrie<T, K, V>, MapError> {
-        let map_type = map.obj.map_type();
-
-        // validate the map definition
-        if map_type != BPF_MAP_TYPE_LPM_TRIE as u32 {
-            return Err(MapError::InvalidMapType { map_type });
-        }
+        let data = map.as_ref();
         let size = mem::size_of::<Key<K>>();
-        let expected = map.obj.key_size() as usize;
+        let expected = data.obj.key_size() as usize;
         if size != expected {
             return Err(MapError::InvalidKeySize { size, expected });
         }
         let size = mem::size_of::<V>();
-        let expected = map.obj.value_size() as usize;
+        let expected = data.obj.value_size() as usize;
         if size != expected {
             return Err(MapError::InvalidValueSize { size, expected });
         };
 
-        let _ = map.fd_or_err()?;
+        let _ = data.fd_or_err()?;
 
         Ok(LpmTrie {
             inner: map,
@@ -126,7 +124,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> LpmTrie<T, K, V> {
 
     /// Returns a copy of the value associated with the longest prefix matching key in the LpmTrie.
     pub fn get(&self, key: &Key<K>, flags: u64) -> Result<V, MapError> {
-        let fd = self.inner.deref().fd_or_err()?;
+        let fd = self.inner.as_ref().fd_or_err()?;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
@@ -135,10 +133,12 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         })?;
         value.ok_or(MapError::KeyNotFound)
     }
+}
 
+impl<T: AsMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Inserts a key value pair into the map.
-    pub fn insert(&self, key: &Key<K>, value: V, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.deref().fd_or_err()?;
+    pub fn insert(&mut self, key: &Key<K>, value: V, flags: u64) -> Result<(), MapError> {
+        let fd = self.inner.as_mut().fd_or_err()?;
         bpf_map_update_elem(fd, Some(key), &value, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
@@ -152,8 +152,8 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Removes an element from the map.
     ///
     /// Both the prefix and data must match exactly - this method does not do a longest prefix match.
-    pub fn remove(&self, key: &Key<K>) -> Result<(), MapError> {
-        let fd = self.inner.deref().fd_or_err()?;
+    pub fn remove(&mut self, key: &Key<K>) -> Result<(), MapError> {
+        let fd = self.inner.as_mut().fd_or_err()?;
         bpf_map_delete_elem(fd, key)
             .map(|_| ())
             .map_err(|(_, io_error)| MapError::SyscallError {
@@ -163,46 +163,14 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     }
 }
 
-impl<T: Deref<Target = Map>, K: Pod, V: Pod> IterableMap<K, V> for LpmTrie<T, K, V> {
-    fn map(&self) -> &Map {
-        &self.inner
+impl<T: AsRef<MapData>, K: Pod, V: Pod> IterableMap<K, V> for LpmTrie<T, K, V> {
+    fn map(&self) -> &MapData {
+        self.inner.as_ref()
     }
 
     fn get(&self, key: &K) -> Result<V, MapError> {
         let lookup = Key::new(mem::size_of::<K>() as u32, *key);
         self.get(&lookup, 0)
-    }
-}
-
-impl<K: Pod, V: Pod> TryFrom<MapRef> for LpmTrie<MapRef, K, V> {
-    type Error = MapError;
-
-    fn try_from(a: MapRef) -> Result<LpmTrie<MapRef, K, V>, MapError> {
-        LpmTrie::new(a)
-    }
-}
-
-impl<K: Pod, V: Pod> TryFrom<MapRefMut> for LpmTrie<MapRefMut, K, V> {
-    type Error = MapError;
-
-    fn try_from(a: MapRefMut) -> Result<LpmTrie<MapRefMut, K, V>, MapError> {
-        LpmTrie::new(a)
-    }
-}
-
-impl<'a, K: Pod, V: Pod> TryFrom<&'a Map> for LpmTrie<&'a Map, K, V> {
-    type Error = MapError;
-
-    fn try_from(a: &'a Map) -> Result<LpmTrie<&'a Map, K, V>, MapError> {
-        LpmTrie::new(a)
-    }
-}
-
-impl<'a, K: Pod, V: Pod> TryFrom<&'a mut Map> for LpmTrie<&'a mut Map, K, V> {
-    type Error = MapError;
-
-    fn try_from(a: &'a mut Map) -> Result<LpmTrie<&'a mut Map, K, V>, MapError> {
-        LpmTrie::new(a)
     }
 }
 
@@ -215,6 +183,7 @@ mod tests {
             bpf_cmd,
             bpf_map_type::{BPF_MAP_TYPE_LPM_TRIE, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
         },
+        maps::{Map, MapData},
         obj,
         sys::{override_syscall, SysResult, Syscall},
     };
@@ -243,7 +212,7 @@ mod tests {
 
     #[test]
     fn test_wrong_key_size() {
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
@@ -260,7 +229,7 @@ mod tests {
 
     #[test]
     fn test_wrong_value_size() {
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
@@ -277,7 +246,7 @@ mod tests {
 
     #[test]
     fn test_try_from_wrong_map() {
-        let map = Map {
+        let map_data = MapData {
             obj: obj::Map::Legacy(obj::LegacyMap {
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32,
@@ -296,15 +265,17 @@ mod tests {
             pinned: false,
         };
 
+        let map = Map::PerfEventArray(map_data);
+
         assert!(matches!(
             LpmTrie::<_, u32, u32>::try_from(&map),
-            Err(MapError::InvalidMapType { .. })
+            Err(MapError::UnexpectedMapType)
         ));
     }
 
     #[test]
     fn test_new_not_created() {
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
@@ -319,7 +290,7 @@ mod tests {
 
     #[test]
     fn test_new_ok() {
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -331,12 +302,14 @@ mod tests {
 
     #[test]
     fn test_try_from_ok() {
-        let map = Map {
+        let map_data = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
             btf_fd: None,
         };
+
+        let map = Map::LpmTrie(map_data);
         assert!(LpmTrie::<_, u32, u32>::try_from(&map).is_ok())
     }
 
@@ -344,13 +317,13 @@ mod tests {
     fn test_insert_syscall_error() {
         override_syscall(|_| sys_error(EFAULT));
 
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
             btf_fd: None,
         };
-        let trie = LpmTrie::<_, u32, u32>::new(&mut map).unwrap();
+        let mut trie = LpmTrie::<_, u32, u32>::new(&mut map).unwrap();
         let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
         let key = Key::new(16, u32::from(ipaddr).to_be());
         assert!(matches!(
@@ -369,14 +342,14 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
             btf_fd: None,
         };
 
-        let trie = LpmTrie::<_, u32, u32>::new(&mut map).unwrap();
+        let mut trie = LpmTrie::<_, u32, u32>::new(&mut map).unwrap();
         let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
         let key = Key::new(16, u32::from(ipaddr).to_be());
         assert!(trie.insert(&key, 1, 0).is_ok());
@@ -386,13 +359,13 @@ mod tests {
     fn test_remove_syscall_error() {
         override_syscall(|_| sys_error(EFAULT));
 
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
             btf_fd: None,
         };
-        let trie = LpmTrie::<_, u32, u32>::new(&mut map).unwrap();
+        let mut trie = LpmTrie::<_, u32, u32>::new(&mut map).unwrap();
         let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
         let key = Key::new(16, u32::from(ipaddr).to_be());
         assert!(matches!(
@@ -411,13 +384,13 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
             btf_fd: None,
         };
-        let trie = LpmTrie::<_, u32, u32>::new(&mut map).unwrap();
+        let mut trie = LpmTrie::<_, u32, u32>::new(&mut map).unwrap();
         let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
         let key = Key::new(16, u32::from(ipaddr).to_be());
         assert!(trie.remove(&key).is_ok());
@@ -426,7 +399,7 @@ mod tests {
     #[test]
     fn test_get_syscall_error() {
         override_syscall(|_| sys_error(EFAULT));
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -451,7 +424,7 @@ mod tests {
             } => sys_error(ENOENT),
             _ => sys_error(EFAULT),
         });
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,

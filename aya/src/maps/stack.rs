@@ -1,13 +1,12 @@
 //! A LIFO stack.
 use std::{
+    convert::{AsMut, AsRef},
     marker::PhantomData,
     mem,
-    ops::{Deref, DerefMut},
 };
 
 use crate::{
-    generated::bpf_map_type::BPF_MAP_TYPE_STACK,
-    maps::{Map, MapError, MapRef, MapRefMut},
+    maps::{MapData, MapError},
     sys::{bpf_map_lookup_and_delete_elem, bpf_map_update_elem},
     Pod,
 };
@@ -20,39 +19,36 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::Stack;
 ///
-/// let mut stack = Stack::try_from(bpf.map_mut("STACK")?)?;
+/// let mut stack: Stack<_, u32> = bpf.map_mut("STACK")?.try_into()?;
 /// stack.push(42, 0)?;
 /// stack.push(43, 0)?;
 /// assert_eq!(stack.pop(0)?, 43);
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_STACK")]
-pub struct Stack<T: Deref<Target = Map>, V: Pod> {
+pub struct Stack<T, V: Pod> {
     inner: T,
     _v: PhantomData<V>,
 }
 
-impl<T: Deref<Target = Map>, V: Pod> Stack<T, V> {
-    fn new(map: T) -> Result<Stack<T, V>, MapError> {
-        let map_type = map.obj.map_type();
-        if map_type != BPF_MAP_TYPE_STACK as u32 {
-            return Err(MapError::InvalidMapType { map_type });
-        }
+impl<T: AsRef<MapData>, V: Pod> Stack<T, V> {
+    pub(crate) fn new(map: T) -> Result<Stack<T, V>, MapError> {
+        let data = map.as_ref();
         let expected = 0;
-        let size = map.obj.key_size() as usize;
+        let size = data.obj.key_size() as usize;
         if size != expected {
             return Err(MapError::InvalidKeySize { size, expected });
         }
 
         let expected = mem::size_of::<V>();
-        let size = map.obj.value_size() as usize;
+        let size = data.obj.value_size() as usize;
         if size != expected {
             return Err(MapError::InvalidValueSize { size, expected });
         }
-        let _fd = map.fd_or_err()?;
+        let _fd = data.fd_or_err()?;
 
         Ok(Stack {
             inner: map,
@@ -64,11 +60,11 @@ impl<T: Deref<Target = Map>, V: Pod> Stack<T, V> {
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
     pub fn capacity(&self) -> u32 {
-        self.inner.obj.max_entries()
+        self.inner.as_ref().obj.max_entries()
     }
 }
 
-impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Stack<T, V> {
+impl<T: AsMut<MapData>, V: Pod> Stack<T, V> {
     /// Removes the last element and returns it.
     ///
     /// # Errors
@@ -76,7 +72,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Stack<T, V> {
     /// Returns [`MapError::ElementNotFound`] if the stack is empty, [`MapError::SyscallError`]
     /// if `bpf_map_lookup_and_delete_elem` fails.
     pub fn pop(&mut self, flags: u64) -> Result<V, MapError> {
-        let fd = self.inner.fd_or_err()?;
+        let fd = self.inner.as_mut().fd_or_err()?;
 
         let value = bpf_map_lookup_and_delete_elem::<u32, _>(fd, None, flags).map_err(
             |(_, io_error)| MapError::SyscallError {
@@ -93,7 +89,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Stack<T, V> {
     ///
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
     pub fn push(&mut self, value: V, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.fd_or_err()?;
+        let fd = self.inner.as_mut().fd_or_err()?;
         bpf_map_update_elem(fd, None::<&u32>, &value, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
@@ -101,21 +97,5 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Stack<T, V> {
             }
         })?;
         Ok(())
-    }
-}
-
-impl<V: Pod> TryFrom<MapRef> for Stack<MapRef, V> {
-    type Error = MapError;
-
-    fn try_from(a: MapRef) -> Result<Stack<MapRef, V>, MapError> {
-        Stack::new(a)
-    }
-}
-
-impl<V: Pod> TryFrom<MapRefMut> for Stack<MapRefMut, V> {
-    type Error = MapError;
-
-    fn try_from(a: MapRefMut) -> Result<Stack<MapRefMut, V>, MapError> {
-        Stack::new(a)
     }
 }

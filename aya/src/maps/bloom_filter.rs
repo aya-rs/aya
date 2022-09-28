@@ -1,11 +1,10 @@
 //! A Bloom Filter.
-use std::{marker::PhantomData, ops::Deref};
+use std::{convert::AsRef, marker::PhantomData};
 
 use core::mem;
 
 use crate::{
-    generated::bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER,
-    maps::{Map, MapError, MapRef, MapRefMut},
+    maps::{MapData, MapError},
     sys::{bpf_map_lookup_elem_ptr, bpf_map_push_elem},
     Pod,
 };
@@ -19,10 +18,10 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::bloom_filter::BloomFilter;
 ///
-/// let mut bloom_filter = BloomFilter::try_from(bpf.map_mut("BLOOM_FILTER")?)?;
+/// let mut bloom_filter: BloomFilter<_,u32> = bpf.map_mut("BLOOM_FILTER")?.try_into()?;
 ///
 /// bloom_filter.insert(1, 0)?;
 ///
@@ -33,27 +32,21 @@ use crate::{
 /// ```
 
 #[doc(alias = "BPF_MAP_TYPE_BLOOM_FILTER")]
-pub struct BloomFilter<T: Deref<Target = Map>, V: Pod> {
+pub struct BloomFilter<T, V: Pod> {
     inner: T,
     _v: PhantomData<V>,
 }
 
-impl<T: Deref<Target = Map>, V: Pod> BloomFilter<T, V> {
+impl<T: AsRef<MapData>, V: Pod> BloomFilter<T, V> {
     pub(crate) fn new(map: T) -> Result<BloomFilter<T, V>, MapError> {
-        let map_type = map.obj.map_type();
-
-        // validate the map definition
-        if map_type != BPF_MAP_TYPE_BLOOM_FILTER as u32 {
-            return Err(MapError::InvalidMapType { map_type });
-        }
-
+        let data = map.as_ref();
         let size = mem::size_of::<V>();
-        let expected = map.obj.value_size() as usize;
+        let expected = data.obj.value_size() as usize;
         if size != expected {
             return Err(MapError::InvalidValueSize { size, expected });
         };
 
-        let _ = map.fd_or_err()?;
+        let _ = data.fd_or_err()?;
 
         Ok(BloomFilter {
             inner: map,
@@ -63,7 +56,7 @@ impl<T: Deref<Target = Map>, V: Pod> BloomFilter<T, V> {
 
     /// Query the existence of the element.
     pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.deref().fd_or_err()?;
+        let fd = self.inner.as_ref().fd_or_err()?;
 
         bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
             .map_err(|(_, io_error)| MapError::SyscallError {
@@ -76,44 +69,12 @@ impl<T: Deref<Target = Map>, V: Pod> BloomFilter<T, V> {
 
     /// Inserts a value into the map.
     pub fn insert(&self, value: V, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.deref().fd_or_err()?;
+        let fd = self.inner.as_ref().fd_or_err()?;
         bpf_map_push_elem(fd, &value, flags).map_err(|(_, io_error)| MapError::SyscallError {
             call: "bpf_map_push_elem".to_owned(),
             io_error,
         })?;
         Ok(())
-    }
-}
-
-impl<V: Pod> TryFrom<MapRef> for BloomFilter<MapRef, V> {
-    type Error = MapError;
-
-    fn try_from(a: MapRef) -> Result<BloomFilter<MapRef, V>, MapError> {
-        BloomFilter::new(a)
-    }
-}
-
-impl<V: Pod> TryFrom<MapRefMut> for BloomFilter<MapRefMut, V> {
-    type Error = MapError;
-
-    fn try_from(a: MapRefMut) -> Result<BloomFilter<MapRefMut, V>, MapError> {
-        BloomFilter::new(a)
-    }
-}
-
-impl<'a, V: Pod> TryFrom<&'a Map> for BloomFilter<&'a Map, V> {
-    type Error = MapError;
-
-    fn try_from(a: &'a Map) -> Result<BloomFilter<&'a Map, V>, MapError> {
-        BloomFilter::new(a)
-    }
-}
-
-impl<'a, V: Pod> TryFrom<&'a mut Map> for BloomFilter<&'a mut Map, V> {
-    type Error = MapError;
-
-    fn try_from(a: &'a mut Map) -> Result<BloomFilter<&'a mut Map, V>, MapError> {
-        BloomFilter::new(a)
     }
 }
 
@@ -126,6 +87,7 @@ mod tests {
             bpf_cmd,
             bpf_map_type::{BPF_MAP_TYPE_BLOOM_FILTER, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
         },
+        maps::{Map, MapData},
         obj,
         sys::{override_syscall, SysResult, Syscall},
     };
@@ -154,7 +116,7 @@ mod tests {
 
     #[test]
     fn test_wrong_value_size() {
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
@@ -171,7 +133,7 @@ mod tests {
 
     #[test]
     fn test_try_from_wrong_map() {
-        let map = Map {
+        let map_data = MapData {
             obj: obj::Map::Legacy(obj::LegacyMap {
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32,
@@ -190,15 +152,17 @@ mod tests {
             btf_fd: None,
         };
 
+        let map = Map::PerfEventArray(map_data);
+
         assert!(matches!(
             BloomFilter::<_, u32>::try_from(&map),
-            Err(MapError::InvalidMapType { .. })
+            Err(MapError::UnexpectedMapType)
         ));
     }
 
     #[test]
     fn test_new_not_created() {
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
@@ -213,7 +177,7 @@ mod tests {
 
     #[test]
     fn test_new_ok() {
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -225,12 +189,14 @@ mod tests {
 
     #[test]
     fn test_try_from_ok() {
-        let map = Map {
+        let map_data = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
             btf_fd: None,
         };
+
+        let map = Map::BloomFilter(map_data);
         assert!(BloomFilter::<_, u32>::try_from(&map).is_ok())
     }
 
@@ -238,7 +204,7 @@ mod tests {
     fn test_insert_syscall_error() {
         override_syscall(|_| sys_error(EFAULT));
 
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -262,7 +228,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        let mut map = Map {
+        let mut map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -276,7 +242,7 @@ mod tests {
     #[test]
     fn test_contains_syscall_error() {
         override_syscall(|_| sys_error(EFAULT));
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
@@ -299,7 +265,7 @@ mod tests {
             } => sys_error(ENOENT),
             _ => sys_error(EFAULT),
         });
-        let map = Map {
+        let map = MapData {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,

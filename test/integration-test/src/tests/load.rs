@@ -2,7 +2,7 @@ use std::{process::Command, thread, time};
 
 use aya::{
     include_bytes_aligned,
-    maps::{Array, MapRefMut},
+    maps::Array,
     programs::{
         links::{FdLink, PinnedLink},
         TracePoint, Xdp, XdpFlags,
@@ -36,8 +36,8 @@ fn multiple_btf_maps() -> anyhow::Result<()> {
         include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/multimap-btf.bpf.o");
     let mut bpf = Bpf::load(bytes)?;
 
-    let map_1: Array<MapRefMut, u64> = Array::try_from(bpf.map_mut("map_1")?)?;
-    let map_2: Array<MapRefMut, u64> = Array::try_from(bpf.map_mut("map_2")?)?;
+    let map_1: Array<_, u64> = bpf.take_map("map_1")?.try_into()?;
+    let map_2: Array<_, u64> = bpf.take_map("map_2")?.try_into()?;
 
     let prog: &mut TracePoint = bpf.program_mut("tracepoint").unwrap().try_into().unwrap();
     prog.load().unwrap();

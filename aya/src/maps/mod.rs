@@ -4,22 +4,25 @@
 //! used to setup and share data with eBPF programs. When you call
 //! [`Bpf::load_file`](crate::Bpf::load_file) or
 //! [`Bpf::load`](crate::Bpf::load), all the maps defined in the eBPF code get
-//! initialized and can then be accessed using [`Bpf::map`](crate::Bpf::map) and
-//! [`Bpf::map_mut`](crate::Bpf::map_mut).
+//! initialized and can then be accessed using [`Bpf::map`](crate::Bpf::map),
+//! [`Bpf::map_mut`](crate::Bpf::map_mut), [`Bpf::take_map`](crate::Bpf::map)
+//! or [`Bpf::map_mut`](crate::Bpf::take_map).
 //!
 //! # Typed maps
 //!
 //! The eBPF API includes many map types each supporting different operations.
-//! [`Bpf::map`](crate::Bpf::map) and [`Bpf::map_mut`](crate::Bpf::map_mut) always return the
-//! opaque [`MapRef`] and [`MapRefMut`] types respectively. Those two types can be converted to
-//! *typed maps* using the [`TryFrom`](std::convert::TryFrom) trait. For example:
+//! [`Bpf::map`](crate::Bpf::map), [`Bpf::map_mut`](crate::Bpf::map_mut), and
+//! [`Bpf::map_mut`](crate::Bpf::take_map) always return the
+//! opaque [`&Map`], [`&mut Map`], and [`Map`] types respectively. Those three types can be converted to
+//! *typed maps* using the [`TryFrom`](std::convert::TryFrom) or [`TryInto`](std::convert::TryInto)
+//! trait. For example:
 //!
 //! ```no_run
 //! # let mut bpf = aya::Bpf::load(&[])?;
 //! use aya::maps::SockMap;
 //! use aya::programs::SkMsg;
 //!
-//! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+//! let intercept_egress: SockMap<_> = bpf.take_map("INTERCEPT_EGRESS")?.try_into()?;
 //! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 //! prog.load()?;
 //! prog.attach(&intercept_egress)?;
@@ -32,6 +35,7 @@
 //! versa. Because of that, all map values must be plain old data and therefore
 //! implement the [Pod] trait.
 use std::{
+    convert::{AsMut, AsRef},
     ffi::CString,
     fmt, io,
     marker::PhantomData,
@@ -58,8 +62,6 @@ use crate::{
     PinningType, Pod,
 };
 
-mod map_lock;
-
 pub mod array;
 pub mod bloom_filter;
 pub mod hash_map;
@@ -71,8 +73,11 @@ pub mod stack;
 pub mod stack_trace;
 
 pub use array::{Array, PerCpuArray, ProgramArray};
+pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
-pub use map_lock::*;
+pub use lpm_trie::LpmTrie;
+#[cfg(any(feature = "async", doc))]
+pub use perf::AsyncPerfEventArray;
 pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use sock::{SockHash, SockMap};
@@ -174,20 +179,6 @@ pub enum MapError {
         io_error: io::Error,
     },
 
-    /// Map is borrowed mutably
-    #[error("map `{name}` is borrowed mutably")]
-    BorrowError {
-        /// Map name
-        name: String,
-    },
-
-    /// Map is already borrowed
-    #[error("map `{name}` is already borrowed")]
-    BorrowMutError {
-        /// Map name
-        name: String,
-    },
-
     /// Could not pin map by name
     #[error("map `{name:?}` requested pinning by name. pinning failed")]
     PinError {
@@ -197,6 +188,10 @@ pub enum MapError {
         #[source]
         error: PinError,
     },
+
+    /// The map is not of the expected type.
+    #[error("unexpected map type")]
+    UnexpectedMapType,
 }
 
 /// A map file descriptor.
@@ -243,11 +238,181 @@ fn maybe_warn_rlimit() {
     }
 }
 
+/// eBPF map types.
+#[derive(Debug)]
+pub enum Map {
+    /// A ['Array`] map
+    Array(MapData),
+    /// A [`PerCpuArray`] map
+    PerCpuArray(MapData),
+    /// A [`ProgramArray`] map
+    ProgramArray(MapData),
+    /// A [`HashMap`] map
+    HashMap(MapData),
+    /// A ['PerCpuHashMap'] map
+    PerCpuHashMap(MapData),
+    /// A [`PerfEventArray`] map
+    PerfEventArray(MapData),
+    /// A [`SockMap`] map
+    SockMap(MapData),
+    /// A [`SockHash`] map
+    SockHash(MapData),
+    /// A [`BloomFilter`] map
+    BloomFilter(MapData),
+    /// A [`LpmTrie`] map
+    LpmTrie(MapData),
+    /// A [`Stack`] map
+    Stack(MapData),
+    /// A [`StackTrace`] map
+    StackTraceMap(MapData),
+    /// A [`Queue`] map
+    Queue(MapData),
+}
+
+macro_rules! impl_try_from_map {
+    ($($tx:ident from Map::$ty:ident),+ $(,)?) => {
+        $(
+            impl<'a> TryFrom<&'a Map> for $tx<&'a MapData> {
+                type Error = MapError;
+
+                fn try_from(map: &'a Map) -> Result<$tx<&'a MapData>, MapError> {
+                    match map {
+                        Map::$ty(m) => {
+                            $tx::<&'a MapData>::new(m)
+                        },
+                        _ => Err(MapError::UnexpectedMapType),
+                    }
+                }
+            }
+
+            impl<'a,> TryFrom<&'a mut Map> for $tx<&'a mut MapData> {
+                type Error = MapError;
+
+                fn try_from(map: &'a mut Map) -> Result<$tx<&'a mut MapData>, MapError> {
+                    match map {
+                        Map::$ty(m) => {
+                            $tx::<&'a mut MapData>::new(m)
+                        },
+                        _ => Err(MapError::UnexpectedMapType),
+                    }
+                }
+            }
+
+            impl TryFrom<Map> for $tx<MapData> {
+                type Error = MapError;
+
+                fn try_from(map: Map) -> Result<$tx<MapData>, MapError> {
+                    match map {
+                        Map::$ty(m) => {
+                            $tx::<MapData>::new(m)
+                        },
+                        _ => Err(MapError::UnexpectedMapType),
+                    }
+                }
+            }
+       )+
+   }
+}
+
+impl_try_from_map!(
+    ProgramArray from Map::ProgramArray,
+    SockMap from Map::SockMap,
+    PerfEventArray from Map::PerfEventArray,
+    StackTraceMap from Map::StackTraceMap,
+);
+
+#[cfg(feature = "async")]
+#[cfg_attr(docsrs, doc(cfg(feature = "async")))]
+impl_try_from_map!(
+    AsyncPerfEventArray from Map::PerfEventArray,
+);
+
+macro_rules! impl_try_from_map_generic_key_or_value {
+    ($($ty:ident),+ $(,)?) => {
+        $(
+            impl<'a, V:Pod> TryFrom<&'a Map> for $ty<&'a MapData, V> {
+                type Error = MapError;
+
+                fn try_from(map: &'a Map) -> Result<$ty<&'a MapData , V>, MapError> {
+                    match map {
+                        Map::$ty(m) => {
+                            $ty::<&'a MapData,V>::new(m)
+                        },
+                        _ => Err(MapError::UnexpectedMapType),
+                    }
+                }
+            }
+
+            impl<'a,V: Pod> TryFrom<&'a mut Map> for $ty<&'a mut MapData, V> {
+                type Error = MapError;
+
+                fn try_from(map: &'a mut Map) -> Result<$ty<&'a mut MapData, V>, MapError> {
+                    match map {
+                        Map::$ty(m) => {
+                            $ty::<&'a mut MapData,V>::new(m)
+                        },
+                        _ => Err(MapError::UnexpectedMapType),
+                    }
+                }
+            }
+
+            impl<V: Pod> TryFrom<Map> for $ty<MapData, V> {
+                type Error = MapError;
+
+                fn try_from(map: Map) -> Result<$ty<MapData, V>, MapError> {
+                    match map {
+                        Map::$ty(m) => {
+                            $ty::<MapData,V>::new(m)
+                        },
+                        _ => Err(MapError::UnexpectedMapType),
+                    }
+                }
+            }
+       )+
+   }
+}
+
+impl_try_from_map_generic_key_or_value!(Array, PerCpuArray, SockHash, BloomFilter, Queue, Stack,);
+
+macro_rules! impl_try_from_map_generic_key_and_value {
+    ($($ty:ident),+ $(,)?) => {
+        $(
+            impl<'a, V: Pod, K: Pod> TryFrom<&'a Map> for $ty<&'a MapData, V, K> {
+                type Error = MapError;
+
+                fn try_from(map: &'a Map) -> Result<$ty<&'a MapData,V,K>, MapError> {
+                    match map {
+                        Map::$ty(m) => {
+                            $ty::<&'a MapData,V,K>::new(m)
+                        },
+                        _ => Err(MapError::UnexpectedMapType),
+                    }
+                }
+            }
+
+            impl<'a,V: Pod,K: Pod> TryFrom<&'a mut Map> for $ty<&'a mut MapData, V, K> {
+                type Error = MapError;
+
+                fn try_from(map: &'a mut Map) -> Result<$ty<&'a mut MapData, V, K>, MapError> {
+                    match map {
+                        Map::$ty(m) => {
+                            $ty::<&'a mut MapData,V,K>::new(m)
+                        },
+                        _ => Err(MapError::UnexpectedMapType),
+                }
+            }
+            }
+       )+
+   }
+}
+
+impl_try_from_map_generic_key_and_value!(HashMap, PerCpuHashMap, LpmTrie);
+
 /// A generic handle to a BPF map.
 ///
 /// You should never need to use this unless you're implementing a new map type.
-#[derive(Debug)]
-pub struct Map {
+#[derive(Debug, Clone)]
+pub struct MapData {
     pub(crate) obj: obj::Map,
     pub(crate) fd: Option<RawFd>,
     pub(crate) btf_fd: Option<RawFd>,
@@ -255,7 +420,19 @@ pub struct Map {
     pub pinned: bool,
 }
 
-impl Map {
+impl AsRef<MapData> for MapData {
+    fn as_ref(&self) -> &MapData {
+        self
+    }
+}
+
+impl AsMut<MapData> for MapData {
+    fn as_mut(&mut self) -> &mut MapData {
+        self
+    }
+}
+
+impl MapData {
     /// Creates a new map with the provided `name`
     pub fn create(&mut self, name: &str) -> Result<RawFd, MapError> {
         if self.fd.is_some() {
@@ -303,7 +480,7 @@ impl Map {
     }
 
     /// Loads a map from a pinned path in bpffs.
-    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Map, MapError> {
+    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<MapData, MapError> {
         let path_string =
             CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
                 MapError::PinError {
@@ -324,7 +501,7 @@ impl Map {
             io_error,
         })?;
 
-        Ok(Map {
+        Ok(MapData {
             obj: parse_map_info(info, PinningType::ByName),
             fd: Some(fd),
             btf_fd: None,
@@ -337,13 +514,13 @@ impl Map {
     /// If loading from a BPF Filesystem (bpffs) you should use [`Map::from_pin`].
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
-    pub fn from_fd(fd: RawFd) -> Result<Map, MapError> {
+    pub fn from_fd(fd: RawFd) -> Result<MapData, MapError> {
         let info = bpf_map_get_info_by_fd(fd).map_err(|io_error| MapError::SyscallError {
             call: "BPF_OBJ_GET".to_owned(),
             io_error,
         })?;
 
-        Ok(Map {
+        Ok(MapData {
             obj: parse_map_info(info, PinningType::None),
             fd: Some(fd),
             btf_fd: None,
@@ -389,7 +566,7 @@ impl Map {
     }
 }
 
-impl Drop for Map {
+impl Drop for MapData {
     fn drop(&mut self) {
         // TODO: Replace this with an OwnedFd once that is stabilized.
         if let Some(fd) = self.fd.take() {
@@ -401,7 +578,7 @@ impl Drop for Map {
 /// An iterable map
 pub trait IterableMap<K: Pod, V> {
     /// Get a generic map handle
-    fn map(&self) -> &Map;
+    fn map(&self) -> &MapData;
 
     /// Get the value for the provided `key`
     fn get(&self, key: &K) -> Result<V, MapError>;
@@ -409,13 +586,13 @@ pub trait IterableMap<K: Pod, V> {
 
 /// Iterator returned by `map.keys()`.
 pub struct MapKeys<'coll, K: Pod> {
-    map: &'coll Map,
+    map: &'coll MapData,
     err: bool,
     key: Option<K>,
 }
 
 impl<'coll, K: Pod> MapKeys<'coll, K> {
-    fn new(map: &'coll Map) -> MapKeys<'coll, K> {
+    fn new(map: &'coll MapData) -> MapKeys<'coll, K> {
         MapKeys {
             map,
             err: false,
@@ -643,6 +820,7 @@ mod tests {
     use crate::{
         bpf_map_def,
         generated::{bpf_cmd, bpf_map_type::BPF_MAP_TYPE_HASH},
+        maps::MapData,
         obj::MapKind,
         sys::{override_syscall, Syscall},
     };
@@ -665,8 +843,8 @@ mod tests {
         })
     }
 
-    fn new_map() -> Map {
-        Map {
+    fn new_map() -> MapData {
+        MapData {
             obj: new_obj_map(),
             fd: None,
             pinned: false,

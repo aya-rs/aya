@@ -9,7 +9,7 @@ use crate::{
         bpf_insn, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
         BPF_PSEUDO_MAP_VALUE,
     },
-    maps::Map,
+    maps::MapData,
     obj::{Function, Object, Program},
     BpfError,
 };
@@ -62,7 +62,7 @@ pub(crate) struct Symbol {
 }
 
 impl Object {
-    pub fn relocate_maps(&mut self, maps: &HashMap<String, Map>) -> Result<(), BpfError> {
+    pub fn relocate_maps(&mut self, maps: &HashMap<String, MapData>) -> Result<(), BpfError> {
         let maps_by_section = maps
             .iter()
             .map(|(name, map)| (map.obj.section_index(), (name.as_str(), map)))
@@ -122,8 +122,8 @@ impl Object {
 fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     fun: &mut Function,
     relocations: I,
-    maps_by_section: &HashMap<usize, (&str, &Map)>,
-    maps_by_symbol: &HashMap<usize, (&str, &Map)>,
+    maps_by_section: &HashMap<usize, (&str, &MapData)>,
+    maps_by_symbol: &HashMap<usize, (&str, &MapData)>,
     symbol_table: &HashMap<usize, Symbol>,
     text_section_index: Option<usize>,
 ) -> Result<(), RelocationError> {
@@ -438,6 +438,7 @@ fn insn_is_call(ins: &bpf_insn) -> bool {
 mod test {
     use crate::{
         bpf_map_def,
+        maps::MapData,
         obj::{self, BtfMap, LegacyMap, MapKind},
         BtfMapDef,
     };
@@ -460,8 +461,8 @@ mod test {
         unsafe { std::ptr::read_unaligned(bytes.as_ptr() as *const _) }
     }
 
-    fn fake_legacy_map(fd: i32, symbol_index: usize) -> Map {
-        Map {
+    fn fake_legacy_map(fd: i32, symbol_index: usize) -> MapData {
+        MapData {
             obj: obj::Map::Legacy(LegacyMap {
                 def: bpf_map_def {
                     ..Default::default()
@@ -477,8 +478,8 @@ mod test {
         }
     }
 
-    fn fake_btf_map(fd: i32, symbol_index: usize) -> Map {
-        Map {
+    fn fake_btf_map(fd: i32, symbol_index: usize) -> MapData {
+        MapData {
             obj: obj::Map::Btf(BtfMap {
                 def: BtfMapDef {
                     ..Default::default()
