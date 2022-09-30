@@ -10,6 +10,8 @@ use syn::{
 use aya_log_common::DisplayHint;
 use aya_log_parser::{parse, Fragment};
 
+use crate::{LevelFilter, MAX_LEVEL};
+
 pub(crate) struct LogArgs {
     pub(crate) ctx: Expr,
     pub(crate) target: Option<Expr>,
@@ -90,10 +92,23 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
         Some(t) => quote! { #t },
         None => quote! { module_path!() },
     };
-    let lvl: TokenStream = if let Some(l) = level {
-        l
-    } else if let Some(l) = args.level {
-        quote! { #l }
+    let level: TokenStream = if let Some(level) = level {
+        // Level was chosen by calling concrete macros like error!, warn!, etc.
+        level
+    } else if let Some(level) = args.level {
+        // Level was chosen by passing an argument to the log! macro.
+        // We need to apply the max log level filter here.
+        let level_str = format!("{:?}", level);
+        if (level_str.contains("Error") && LevelFilter::Error > MAX_LEVEL)
+            || (level_str.contains("Warn") && LevelFilter::Warn > MAX_LEVEL)
+            || (level_str.contains("Info") && LevelFilter::Info > MAX_LEVEL)
+            || (level_str.contains("Debug") && LevelFilter::Debug > MAX_LEVEL)
+            || (level_str.contains("Trace") && LevelFilter::Trace > MAX_LEVEL)
+        {
+            return Ok(TokenStream::new());
+        }
+
+        quote! { #level }
     } else {
         return Err(Error::new(
             args.format_string.span(),
@@ -140,7 +155,7 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
                 if let Ok(header_len) = ::aya_log_ebpf::write_record_header(
                     &mut buf.buf,
                     #target,
-                    #lvl,
+                    #level,
                     module_path!(),
                     file!(),
                     line!(),

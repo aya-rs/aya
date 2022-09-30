@@ -22,5 +22,20 @@ tokio = { version = "1.2.0" }
 env_logger = "0.9"
 testing_logger = "0.1.1"
 
+[features]
+max_level_off = ["log/max_level_off"]
+max_level_error = ["log/max_level_error"]
+max_level_warn = ["log/max_level_warn"]
+max_level_info = ["log/max_level_info"]
+max_level_debug = ["log/max_level_debug"]
+max_level_trace = ["log/max_level_trace"]
+
+release_max_level_off = ["log/release_max_level_off"]
+release_max_level_error = ["log/release_max_level_error"]
+release_max_level_warn = ["log/release_max_level_warn"]
+release_max_level_info = ["log/release_max_level_info"]
+release_max_level_debug = ["log/release_max_level_debug"]
+release_max_level_trace = ["log/release_max_level_trace"]
+
 [lib]
 path = "src/lib.rs"
