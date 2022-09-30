@@ -894,12 +894,12 @@ unsafe fn read_array<T>(data: &[u8], len: usize) -> Result<Vec<T>, BtfError> {
     if mem::size_of::<T>() * len > data.len() {
         return Err(BtfError::InvalidTypeInfo);
     }
-
-    Ok((0..len)
-        .map(|i| {
-            ptr::read_unaligned::<T>((data.as_ptr() as usize + i * mem::size_of::<T>()) as *const T)
-        })
-        .collect::<Vec<T>>())
+    let data = &data[0..mem::size_of::<T>() * len];
+    let r = data
+        .chunks(mem::size_of::<T>())
+        .map(|chunk| ptr::read_unaligned(chunk.as_ptr() as *const T))
+        .collect();
+    Ok(r)
 }
 
 impl BtfType {
