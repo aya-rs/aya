@@ -28,17 +28,6 @@ fn long_name() -> anyhow::Result<()> {
 }
 
 #[integration_test]
-fn multiple_maps() -> anyhow::Result<()> {
-    let bytes =
-        include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/multimap.bpf.o");
-    let mut bpf = Bpf::load(bytes)?;
-    let pass: &mut Xdp = bpf.program_mut("stats").unwrap().try_into().unwrap();
-    pass.load().unwrap();
-    pass.attach("lo", XdpFlags::default()).unwrap();
-    Ok(())
-}
-
-#[integration_test]
 fn multiple_btf_maps() -> anyhow::Result<()> {
     let bytes =
         include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/multimap-btf.bpf.o");

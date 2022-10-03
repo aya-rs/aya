@@ -1348,15 +1348,10 @@ pub(crate) fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError
     if data.len() % mem::size_of::<bpf_insn>() > 0 {
         return Err(ParseError::InvalidProgramCode);
     }
-    let num_instructions = data.len() / mem::size_of::<bpf_insn>();
-    let instructions = (0..num_instructions)
-        .map(|i| unsafe {
-            ptr::read_unaligned(
-                (data.as_ptr() as usize + i * mem::size_of::<bpf_insn>()) as *const bpf_insn,
-            )
-        })
+    let instructions = data
+        .chunks_exact(mem::size_of::<bpf_insn>())
+        .map(|d| unsafe { ptr::read_unaligned(d.as_ptr() as *const bpf_insn) })
         .collect::<Vec<_>>();
-
     Ok(instructions)
 }
 

@@ -475,6 +475,10 @@ mod tests {
     }
 
     #[test]
+    // Syscall overrides are performing integer-to-pointer conversions, which
+    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
+    // to support stable as well.
+    #[cfg_attr(miri, ignore)]
     fn test_keys() {
         override_syscall(|call| match call {
             Syscall::Bpf {
@@ -497,6 +501,10 @@ mod tests {
     }
 
     #[test]
+    // Syscall overrides are performing integer-to-pointer conversions, which
+    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
+    // to support stable as well.
+    #[cfg_attr(miri, ignore)]
     fn test_keys_error() {
         override_syscall(|call| match call {
             Syscall::Bpf {
@@ -532,6 +540,10 @@ mod tests {
     }
 
     #[test]
+    // Syscall overrides are performing integer-to-pointer conversions, which
+    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
+    // to support stable as well.
+    #[cfg_attr(miri, ignore)]
     fn test_iter() {
         override_syscall(|call| match call {
             Syscall::Bpf {
@@ -556,6 +568,10 @@ mod tests {
     }
 
     #[test]
+    // Syscall overrides are performing integer-to-pointer conversions, which
+    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
+    // to support stable as well.
+    #[cfg_attr(miri, ignore)]
     fn test_iter_key_deleted() {
         override_syscall(|call| match call {
             Syscall::Bpf {
@@ -591,6 +607,10 @@ mod tests {
     }
 
     #[test]
+    // Syscall overrides are performing integer-to-pointer conversions, which
+    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
+    // to support stable as well.
+    #[cfg_attr(miri, ignore)]
     fn test_iter_key_error() {
         override_syscall(|call| match call {
             Syscall::Bpf {
@@ -632,6 +652,10 @@ mod tests {
     }
 
     #[test]
+    // Syscall overrides are performing integer-to-pointer conversions, which
+    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
+    // to support stable as well.
+    #[cfg_attr(miri, ignore)]
     fn test_iter_value_error() {
         override_syscall(|call| match call {
             Syscall::Bpf {
