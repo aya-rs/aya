@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    maps::{sock::SocketMap, MapData, MapError, MapKeys},
+    maps::{sock::SockMapFd, MapData, MapError, MapKeys},
     sys::{bpf_map_delete_elem, bpf_map_update_elem},
 };
 
@@ -31,14 +31,17 @@ use crate::{
 /// use aya::maps::SockMap;
 /// use aya::programs::SkSkb;
 ///
-/// let intercept_ingress: SockMap<_> = bpf.take_map("INTERCEPT_INGRESS")?.try_into()?;
+/// let intercept_ingress: SockMap<_> = bpf.map("INTERCEPT_INGRESS")?.try_into()?;
+/// let map_fd = intercept_ingress.fd()?;
+///
 /// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(&intercept_ingress)?;
+/// prog.attach(map_fd)?;
+///
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_SOCKMAP")]
-pub struct SockMap<T: AsRef<MapData>> {
+pub struct SockMap<T> {
     pub(crate) inner: T,
 }
 
@@ -67,20 +70,17 @@ impl<T: AsRef<MapData>> SockMap<T> {
         MapKeys::new(self.inner.as_ref())
     }
 
-    fn check_bounds(&self, index: u32) -> Result<(), MapError> {
-        let max_entries = self.inner.as_ref().obj.max_entries();
-        if index >= self.inner.as_ref().obj.max_entries() {
-            Err(MapError::OutOfBounds { index, max_entries })
-        } else {
-            Ok(())
-        }
+    /// Returns the map's file descriptor, used for instances where programs
+    /// are attached to maps.
+    pub fn fd(&self) -> Result<SockMapFd, MapError> {
+        Ok(SockMapFd(self.inner.as_ref().fd_or_err()?))
     }
 }
 
-impl<T: AsRef<MapData> + AsMut<MapData>> SockMap<T> {
+impl<T: AsMut<MapData>> SockMap<T> {
     /// Stores a socket into the map.
     pub fn set<I: AsRawFd>(&mut self, index: u32, socket: &I, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.as_mut().fd_or_err()?;
         self.check_bounds(index)?;
         bpf_map_update_elem(fd, Some(&index), &socket.as_raw_fd(), flags).map_err(
             |(_, io_error)| MapError::SyscallError {
@@ -93,7 +93,7 @@ impl<T: AsRef<MapData> + AsMut<MapData>> SockMap<T> {
 
     /// Removes the socket stored at `index` from the map.
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.as_mut().fd_or_err()?;
         self.check_bounds(*index)?;
         bpf_map_delete_elem(fd, index)
             .map(|_| ())
@@ -102,10 +102,13 @@ impl<T: AsRef<MapData> + AsMut<MapData>> SockMap<T> {
                 io_error,
             })
     }
-}
 
-impl<T: AsRef<MapData> + AsMut<MapData>> SocketMap for SockMap<T> {
-    fn fd_or_err(&self) -> Result<RawFd, MapError> {
-        self.inner.as_ref().fd_or_err()
+    fn check_bounds(&mut self, index: u32) -> Result<(), MapError> {
+        let max_entries = self.inner.as_mut().obj.max_entries();
+        if index >= self.inner.as_mut().obj.max_entries() {
+            Err(MapError::OutOfBounds { index, max_entries })
+        } else {
+            Ok(())
+        }
     }
 }

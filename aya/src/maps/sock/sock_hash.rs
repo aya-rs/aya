@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-    maps::{hash_map, sock::SocketMap, IterableMap, MapData, MapError, MapIter, MapKeys},
+    maps::{hash_map, sock::SockMapFd, IterableMap, MapData, MapError, MapIter, MapKeys},
     sys::bpf_map_lookup_elem,
     Pod,
 };
@@ -44,12 +44,16 @@ use crate::{
 /// use aya::maps::SockHash;
 /// use aya::programs::SkMsg;
 ///
-/// let mut intercept_egress: SockHash<_, u32> = bpf.take_map("INTERCEPT_EGRESS")?.try_into()?;
+/// let intercept_egress: SockHash<_, u32> = bpf.map("INTERCEPT_EGRESS")?.try_into()?;
+/// let map_fd = intercept_egress.fd()?;
+///
 /// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(&intercept_egress)?;
+/// prog.attach(map_fd)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
+/// let mut intercept_egress: SockHash<_, u32> = bpf.map_mut("INTERCEPT_EGRESS")?.try_into()?;
+///
 /// intercept_egress.insert(1234, client.as_raw_fd(), 0)?;
 ///
 /// // the write will be intercepted
@@ -97,6 +101,12 @@ impl<T: AsRef<MapData>, K: Pod> SockHash<T, K> {
     pub fn keys(&self) -> MapKeys<'_, K> {
         MapKeys::new(self.inner.as_ref())
     }
+
+    /// Returns the map's file descriptor, used for instances where programs
+    /// are attached to maps.
+    pub fn fd(&self) -> Result<SockMapFd, MapError> {
+        Ok(SockMapFd(self.inner.as_ref().fd_or_err()?))
+    }
 }
 
 impl<T: AsMut<MapData>, K: Pod> SockHash<T, K> {
@@ -118,11 +128,5 @@ impl<T: AsRef<MapData>, K: Pod> IterableMap<K, RawFd> for SockHash<T, K> {
 
     fn get(&self, key: &K) -> Result<RawFd, MapError> {
         SockHash::get(self, key, 0)
-    }
-}
-
-impl<T: AsRef<MapData>, K: Pod> SocketMap for SockHash<T, K> {
-    fn fd_or_err(&self) -> Result<RawFd, MapError> {
-        self.inner.as_ref().fd_or_err()
     }
 }

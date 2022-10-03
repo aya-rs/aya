@@ -22,10 +22,12 @@
 //! use aya::maps::SockMap;
 //! use aya::programs::SkMsg;
 //!
-//! let intercept_egress: SockMap<_> = bpf.take_map("INTERCEPT_EGRESS")?.try_into()?;
+//! let mut intercept_egress: SockMap<_> = bpf.map_mut("INTERCEPT_EGRESS")?.try_into()?;
+//! let map_fd = intercept_egress.fd()?;
 //! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 //! prog.load()?;
-//! prog.attach(&intercept_egress)?;
+//! prog.attach(map_fd)?;
+//!
 //! # Ok::<(), aya::BpfError>(())
 //! ```
 //!
