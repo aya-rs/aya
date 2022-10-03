@@ -413,7 +413,7 @@ impl_try_from_map_generic_key_and_value!(HashMap, PerCpuHashMap, LpmTrie);
 /// A generic handle to a BPF map.
 ///
 /// You should never need to use this unless you're implementing a new map type.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct MapData {
     pub(crate) obj: obj::Map,
     pub(crate) fd: Option<RawFd>,
@@ -573,6 +573,22 @@ impl Drop for MapData {
         // TODO: Replace this with an OwnedFd once that is stabilized.
         if let Some(fd) = self.fd.take() {
             unsafe { libc::close(fd) };
+        }
+    }
+}
+
+impl Clone for MapData {
+    fn clone(&self) -> MapData {
+        MapData {
+            obj: self.obj.clone(),
+            fd: {
+                if let Some(fd) = self.fd {
+                    unsafe { Some(libc::dup(fd)) };
+                }
+                None
+            },
+            btf_fd: self.btf_fd,
+            pinned: self.pinned,
         }
     }
 }
