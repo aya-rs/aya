@@ -95,7 +95,7 @@ impl FdLink {
     /// Pins the link to a BPF file system.
     ///
     /// When a link is pinned it will remain attached even after the link instance is dropped,
-    /// and will only be detached once the pinned file is removed. To unpin, see [PinnedFd::unpin].
+    /// and will only be detached once the pinned file is removed. To unpin, see [`PinnedLink::unpin()`].
     ///
     /// The parent directories in the provided path must already exist before calling this method,
     /// and must be on a BPF file system (bpffs).

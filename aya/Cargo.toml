@@ -32,3 +32,7 @@ default = []
 async = ["futures"]
 async_tokio = ["tokio", "async"]
 async_std = ["async-std", "async-io", "async"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
