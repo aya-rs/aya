@@ -6,7 +6,7 @@ use std::{
 };
 
 use crate::{
-    maps::{IterableMap, MapData, MapError},
+    maps::{check_kv_size, IterableMap, MapData, MapError},
     sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
     Pod,
 };
@@ -102,16 +102,7 @@ unsafe impl<K: Pod> Pod for Key<K> {}
 impl<T: AsRef<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     pub(crate) fn new(map: T) -> Result<LpmTrie<T, K, V>, MapError> {
         let data = map.as_ref();
-        let size = mem::size_of::<Key<K>>();
-        let expected = data.obj.key_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidKeySize { size, expected });
-        }
-        let size = mem::size_of::<V>();
-        let expected = data.obj.value_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidValueSize { size, expected });
-        };
+        check_kv_size::<Key<K>, V>(data)?;
 
         let _ = data.fd_or_err()?;
 

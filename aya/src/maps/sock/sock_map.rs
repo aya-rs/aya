@@ -2,12 +2,11 @@
 
 use std::{
     convert::{AsMut, AsRef},
-    mem,
     os::unix::{io::AsRawFd, prelude::RawFd},
 };
 
 use crate::{
-    maps::{sock::SockMapFd, MapData, MapError, MapKeys},
+    maps::{check_bounds, check_kv_size, sock::SockMapFd, MapData, MapError, MapKeys},
     sys::{bpf_map_delete_elem, bpf_map_update_elem},
 };
 
@@ -48,17 +47,8 @@ pub struct SockMap<T> {
 impl<T: AsRef<MapData>> SockMap<T> {
     pub(crate) fn new(map: T) -> Result<SockMap<T>, MapError> {
         let data = map.as_ref();
-        let expected = mem::size_of::<u32>();
-        let size = data.obj.key_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidKeySize { size, expected });
-        }
+        check_kv_size::<u32, RawFd>(data)?;
 
-        let expected = mem::size_of::<RawFd>();
-        let size = data.obj.value_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidValueSize { size, expected });
-        }
         let _fd = data.fd_or_err()?;
 
         Ok(SockMap { inner: map })
@@ -80,8 +70,9 @@ impl<T: AsRef<MapData>> SockMap<T> {
 impl<T: AsMut<MapData>> SockMap<T> {
     /// Stores a socket into the map.
     pub fn set<I: AsRawFd>(&mut self, index: u32, socket: &I, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.as_mut().fd_or_err()?;
-        self.check_bounds(index)?;
+        let data = self.inner.as_mut();
+        let fd = data.fd_or_err()?;
+        check_bounds(data, index)?;
         bpf_map_update_elem(fd, Some(&index), &socket.as_raw_fd(), flags).map_err(
             |(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
@@ -93,22 +84,14 @@ impl<T: AsMut<MapData>> SockMap<T> {
 
     /// Removes the socket stored at `index` from the map.
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
-        let fd = self.inner.as_mut().fd_or_err()?;
-        self.check_bounds(*index)?;
+        let data = self.inner.as_mut();
+        let fd = data.fd_or_err()?;
+        check_bounds(data, *index)?;
         bpf_map_delete_elem(fd, index)
             .map(|_| ())
             .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_delete_elem".to_owned(),
                 io_error,
             })
-    }
-
-    fn check_bounds(&mut self, index: u32) -> Result<(), MapError> {
-        let max_entries = self.inner.as_mut().obj.max_entries();
-        if index >= self.inner.as_mut().obj.max_entries() {
-            Err(MapError::OutOfBounds { index, max_entries })
-        } else {
-            Ok(())
-        }
     }
 }

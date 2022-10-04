@@ -2,11 +2,10 @@
 use std::{
     convert::{AsMut, AsRef},
     marker::PhantomData,
-    mem,
 };
 
 use crate::{
-    maps::{MapData, MapError},
+    maps::{check_kv_size, MapData, MapError},
     sys::{bpf_map_lookup_and_delete_elem, bpf_map_update_elem},
     Pod,
 };
@@ -37,17 +36,8 @@ pub struct Stack<T, V: Pod> {
 impl<T: AsRef<MapData>, V: Pod> Stack<T, V> {
     pub(crate) fn new(map: T) -> Result<Stack<T, V>, MapError> {
         let data = map.as_ref();
-        let expected = 0;
-        let size = data.obj.key_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidKeySize { size, expected });
-        }
+        check_kv_size::<(), V>(data)?;
 
-        let expected = mem::size_of::<V>();
-        let size = data.obj.value_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidValueSize { size, expected });
-        }
         let _fd = data.fd_or_err()?;
 
         Ok(Stack {

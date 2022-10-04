@@ -2,12 +2,11 @@
 
 use std::{
     convert::{AsMut, AsRef},
-    mem,
     os::unix::prelude::{AsRawFd, RawFd},
 };
 
 use crate::{
-    maps::{array, MapData, MapError, MapKeys},
+    maps::{check_bounds, check_kv_size, MapData, MapError, MapKeys},
     programs::ProgramFd,
     sys::{bpf_map_delete_elem, bpf_map_update_elem},
 };
@@ -55,17 +54,8 @@ pub struct ProgramArray<T> {
 impl<T: AsRef<MapData>> ProgramArray<T> {
     pub(crate) fn new(map: T) -> Result<ProgramArray<T>, MapError> {
         let data = map.as_ref();
-        let expected = mem::size_of::<u32>();
-        let size = data.obj.key_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidKeySize { size, expected });
-        }
+        check_kv_size::<u32, RawFd>(data)?;
 
-        let expected = mem::size_of::<RawFd>();
-        let size = data.obj.value_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidValueSize { size, expected });
-        }
         let _fd = data.fd_or_err()?;
 
         Ok(ProgramArray { inner: map })
@@ -85,7 +75,7 @@ impl<T: AsMut<MapData>> ProgramArray<T> {
     /// flow will jump to `program`.
     pub fn set(&mut self, index: u32, program: ProgramFd, flags: u64) -> Result<(), MapError> {
         let data = self.inner.as_mut();
-        array::check_bounds(data, index)?;
+        check_bounds(data, index)?;
         let fd = data.fd_or_err()?;
         let prog_fd = program.as_raw_fd();
 
@@ -104,7 +94,7 @@ impl<T: AsMut<MapData>> ProgramArray<T> {
     /// error.
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
         let data = self.inner.as_mut();
-        array::check_bounds(data, *index)?;
+        check_bounds(data, *index)?;
         let fd = self.inner.as_mut().fd_or_err()?;
 
         bpf_map_delete_elem(fd, index)

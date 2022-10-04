@@ -1,11 +1,10 @@
 use std::{
     convert::{AsMut, AsRef},
     marker::PhantomData,
-    mem,
 };
 
 use crate::{
-    maps::{array, IterableMap, MapData, MapError, PerCpuValues},
+    maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError, PerCpuValues},
     sys::{bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu},
     Pod,
 };
@@ -57,17 +56,8 @@ pub struct PerCpuArray<T, V: Pod> {
 impl<T: AsRef<MapData>, V: Pod> PerCpuArray<T, V> {
     pub(crate) fn new(map: T) -> Result<PerCpuArray<T, V>, MapError> {
         let data = map.as_ref();
-        let expected = mem::size_of::<u32>();
-        let size = data.obj.key_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidKeySize { size, expected });
-        }
+        check_kv_size::<u32, V>(data)?;
 
-        let expected = mem::size_of::<V>();
-        let size = data.obj.value_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidValueSize { size, expected });
-        }
         let _fd = data.fd_or_err()?;
 
         Ok(PerCpuArray {
@@ -91,7 +81,7 @@ impl<T: AsRef<MapData>, V: Pod> PerCpuArray<T, V> {
     /// if `bpf_map_lookup_elem` fails.
     pub fn get(&self, index: &u32, flags: u64) -> Result<PerCpuValues<V>, MapError> {
         let data = self.inner.as_ref();
-        array::check_bounds(data, *index)?;
+        check_bounds(data, *index)?;
         let fd = data.fd_or_err()?;
 
         let value = bpf_map_lookup_elem_per_cpu(fd, index, flags).map_err(|(_, io_error)| {
@@ -119,7 +109,7 @@ impl<T: AsMut<MapData>, V: Pod> PerCpuArray<T, V> {
     /// if `bpf_map_update_elem` fails.
     pub fn set(&mut self, index: u32, values: PerCpuValues<V>, flags: u64) -> Result<(), MapError> {
         let data = self.inner.as_mut();
-        array::check_bounds(data, index)?;
+        check_bounds(data, index)?;
         let fd = data.fd_or_err()?;
 
         bpf_map_update_elem_per_cpu(fd, &index, &values, flags).map_err(|(_, io_error)| {

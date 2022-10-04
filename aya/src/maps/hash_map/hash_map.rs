@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    maps::{hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
+    maps::{check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
     sys::bpf_map_lookup_elem,
     Pod,
 };
@@ -41,7 +41,7 @@ pub struct HashMap<T, K, V> {
 impl<T: AsRef<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     pub(crate) fn new(map: T) -> Result<HashMap<T, K, V>, MapError> {
         let data = map.as_ref();
-        hash_map::check_kv_size::<K, V>(data)?;
+        check_kv_size::<K, V>(data)?;
         let _ = data.fd_or_err()?;
 
         Ok(HashMap {

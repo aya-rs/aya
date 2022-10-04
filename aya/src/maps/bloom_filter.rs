@@ -1,10 +1,8 @@
 //! A Bloom Filter.
 use std::{convert::AsRef, marker::PhantomData};
 
-use core::mem;
-
 use crate::{
-    maps::{MapData, MapError},
+    maps::{check_v_size, MapData, MapError},
     sys::{bpf_map_lookup_elem_ptr, bpf_map_push_elem},
     Pod,
 };
@@ -40,11 +38,7 @@ pub struct BloomFilter<T, V: Pod> {
 impl<T: AsRef<MapData>, V: Pod> BloomFilter<T, V> {
     pub(crate) fn new(map: T) -> Result<BloomFilter<T, V>, MapError> {
         let data = map.as_ref();
-        let size = mem::size_of::<V>();
-        let expected = data.obj.value_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidValueSize { size, expected });
-        };
+        check_v_size::<V>(data)?;
 
         let _ = data.fd_or_err()?;
 

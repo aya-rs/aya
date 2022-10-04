@@ -78,7 +78,8 @@ pub use array::{Array, PerCpuArray, ProgramArray};
 pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use lpm_trie::LpmTrie;
-#[cfg(any(feature = "async", doc))]
+#[cfg(feature = "async")]
+#[cfg_attr(docsrs, doc(cfg(feature = "async")))]
 pub use perf::AsyncPerfEventArray;
 pub use perf::PerfEventArray;
 pub use queue::Queue;
@@ -410,6 +411,38 @@ macro_rules! impl_try_from_map_generic_key_and_value {
 
 impl_try_from_map_generic_key_and_value!(HashMap, PerCpuHashMap, LpmTrie);
 
+pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
+    let max_entries = map.obj.max_entries();
+    if index >= max_entries {
+        Err(MapError::OutOfBounds { index, max_entries })
+    } else {
+        Ok(())
+    }
+}
+
+pub(crate) fn check_kv_size<K, V>(map: &MapData) -> Result<(), MapError> {
+    let size = mem::size_of::<K>();
+    let expected = map.obj.key_size() as usize;
+    if size != expected {
+        return Err(MapError::InvalidKeySize { size, expected });
+    }
+    let size = mem::size_of::<V>();
+    let expected = map.obj.value_size() as usize;
+    if size != expected {
+        return Err(MapError::InvalidValueSize { size, expected });
+    };
+    Ok(())
+}
+
+pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
+    let size = mem::size_of::<V>();
+    let expected = map.obj.value_size() as usize;
+    if size != expected {
+        return Err(MapError::InvalidValueSize { size, expected });
+    };
+    Ok(())
+}
+
 /// A generic handle to a BPF map.
 ///
 /// You should never need to use this unless you're implementing a new map type.
@@ -528,11 +561,6 @@ impl MapData {
             btf_fd: None,
             pinned: false,
         })
-    }
-
-    /// Returns the [`bpf_map_type`] of this map
-    pub fn map_type(&self) -> Result<bpf_map_type, MapError> {
-        bpf_map_type::try_from(self.obj.map_type())
     }
 
     pub(crate) fn fd_or_err(&self) -> Result<RawFd, MapError> {

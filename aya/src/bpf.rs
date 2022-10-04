@@ -13,7 +13,7 @@ use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_map_type::*, AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE,
+        bpf_map_type, bpf_map_type::*, AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE,
         AYA_PERF_EVENT_IOC_SET_BPF,
     },
     maps::{Map, MapData, MapError},
@@ -650,14 +650,16 @@ impl<'a> BpfLoader<'a> {
 fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
     let name = data.0;
     let map = data.1;
-    let map_type = map.map_type().map_err(BpfError::MapError)?;
+    let map_type = bpf_map_type::try_from(map.obj.map_type())?;
     let map = match map_type {
         BPF_MAP_TYPE_ARRAY => Ok(Map::Array(map)),
         BPF_MAP_TYPE_PERCPU_ARRAY => Ok(Map::PerCpuArray(map)),
         BPF_MAP_TYPE_PROG_ARRAY => Ok(Map::ProgramArray(map)),
         BPF_MAP_TYPE_HASH => Ok(Map::HashMap(map)),
         BPF_MAP_TYPE_PERCPU_HASH => Ok(Map::PerCpuHashMap(map)),
-        BPF_MAP_TYPE_PERF_EVENT_ARRAY => Ok(Map::PerfEventArray(map)),
+        BPF_MAP_TYPE_PERF_EVENT_ARRAY | BPF_MAP_TYPE_LRU_PERCPU_HASH => {
+            Ok(Map::PerfEventArray(map))
+        }
         BPF_MAP_TYPE_SOCKHASH => Ok(Map::SockHash(map)),
         BPF_MAP_TYPE_SOCKMAP => Ok(Map::SockMap(map)),
         BPF_MAP_TYPE_BLOOM_FILTER => Ok(Map::BloomFilter(map)),
@@ -770,9 +772,13 @@ impl Bpf {
             })
     }
 
-    /// Returns a map with the given name.
+    /// Takes ownership of a map with the given name.
     ///
-    /// WARNING: This transfers ownership of the map to the user.
+    /// This API is intended for cases where the map must be moved into spawned
+    /// task. For example, when using an [`AsyncPerfEventArray`]. For map interactions
+    /// without taking ownership, see `map` or `map_mut`. An owned map will be
+    /// closed on `Drop`, therefore the the caller is now responsible for managing
+    /// its lifetime.
     ///
     /// The returned type is mostly opaque. In order to do anything useful with it you need to
     /// convert it to a [typed map](crate::maps).

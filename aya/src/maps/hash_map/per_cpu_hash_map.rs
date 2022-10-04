@@ -5,8 +5,9 @@ use std::{
 };
 
 use crate::{
-    generated::bpf_map_type::{BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH},
-    maps::{hash_map, IterableMap, MapData, MapError, MapIter, MapKeys, PerCpuValues},
+    maps::{
+        check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys, PerCpuValues,
+    },
     sys::{bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu},
     Pod,
 };
@@ -49,15 +50,8 @@ pub struct PerCpuHashMap<T, K: Pod, V: Pod> {
 impl<T: AsRef<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     pub(crate) fn new(map: T) -> Result<PerCpuHashMap<T, K, V>, MapError> {
         let data = map.as_ref();
-        let map_type = data.obj.map_type();
+        check_kv_size::<K, V>(data)?;
 
-        // validate the map definition
-        if map_type != BPF_MAP_TYPE_PERCPU_HASH as u32
-            && map_type != BPF_MAP_TYPE_LRU_PERCPU_HASH as u32
-        {
-            return Err(MapError::InvalidMapType { map_type });
-        }
-        hash_map::check_kv_size::<K, V>(data)?;
         let _ = data.fd_or_err()?;
 
         Ok(PerCpuHashMap {

@@ -5,7 +5,9 @@ use std::{
 };
 
 use crate::{
-    maps::{hash_map, sock::SockMapFd, IterableMap, MapData, MapError, MapIter, MapKeys},
+    maps::{
+        check_kv_size, hash_map, sock::SockMapFd, IterableMap, MapData, MapError, MapIter, MapKeys,
+    },
     sys::bpf_map_lookup_elem,
     Pod,
 };
@@ -69,7 +71,7 @@ pub struct SockHash<T, K> {
 impl<T: AsRef<MapData>, K: Pod> SockHash<T, K> {
     pub(crate) fn new(map: T) -> Result<SockHash<T, K>, MapError> {
         let data = map.as_ref();
-        hash_map::check_kv_size::<K, u32>(data)?;
+        check_kv_size::<K, u32>(data)?;
         let _ = data.fd_or_err()?;
 
         Ok(SockHash {
