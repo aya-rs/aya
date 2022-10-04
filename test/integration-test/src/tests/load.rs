@@ -12,6 +12,9 @@ use aya::{
 
 use super::{integration_test, IntegrationTest};
 
+const MAX_RETRIES: u32 = 100;
+const RETRY_DURATION_MS: u64 = 10;
+
 #[integration_test]
 fn long_name() -> anyhow::Result<()> {
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/name_test");
@@ -58,12 +61,19 @@ fn is_loaded(name: &str) -> bool {
     stdout.contains(name)
 }
 
-fn assert_loaded(name: &str, loaded: bool) {
-    let state = is_loaded(name);
-    if state == loaded {
-        return;
-    }
-    panic!("Expected loaded: {} but was loaded: {}", loaded, state);
+macro_rules! assert_loaded {
+    ($name:literal, $loaded:expr) => {
+        for i in 0..(MAX_RETRIES + 1) {
+            let state = is_loaded($name);
+            if state == $loaded {
+                break;
+            }
+            if i == MAX_RETRIES {
+                panic!("Expected loaded: {} but was loaded: {}", $loaded, state);
+            }
+            thread::sleep(time::Duration::from_millis(RETRY_DURATION_MS));
+        }
+    };
 }
 
 #[integration_test]
@@ -76,19 +86,19 @@ fn unload() -> anyhow::Result<()> {
     {
         let _link_owned = prog.take_link(link);
         prog.unload().unwrap();
-        assert_loaded("test_unload", true);
+        assert_loaded!("test_unload", true);
     };
 
-    assert_loaded("test_unload", false);
+    assert_loaded!("test_unload", false);
     prog.load().unwrap();
 
-    assert_loaded("test_unload", true);
+    assert_loaded!("test_unload", true);
     prog.attach("lo", XdpFlags::default()).unwrap();
 
-    assert_loaded("test_unload", true);
+    assert_loaded!("test_unload", true);
     prog.unload().unwrap();
 
-    assert_loaded("test_unload", false);
+    assert_loaded!("test_unload", false);
     Ok(())
 }
 
@@ -100,22 +110,22 @@ fn pin_link() -> anyhow::Result<()> {
     prog.load().unwrap();
     let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
     let link = prog.take_link(link_id)?;
-    assert_loaded("test_unload", true);
+    assert_loaded!("test_unload", true);
 
     let fd_link: FdLink = link.try_into()?;
     let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo")?;
 
     // because of the pin, the program is still attached
     prog.unload()?;
-    assert_loaded("test_unload", true);
+    assert_loaded!("test_unload", true);
 
     // delete the pin, but the program is still attached
     let new_link = pinned.unpin()?;
-    assert_loaded("test_unload", true);
+    assert_loaded!("test_unload", true);
 
     // finally when new_link is dropped we're detached
     drop(new_link);
-    assert_loaded("test_unload", false);
+    assert_loaded!("test_unload", false);
 
     Ok(())
 }
@@ -136,7 +146,7 @@ fn pin_lifecycle() -> anyhow::Result<()> {
     }
 
     // should still be loaded since link was pinned
-    assert_loaded("pass", true);
+    assert_loaded!("pass", true);
 
     // 2. Load a new version of the program, unpin link, and atomically replace old program
     {
@@ -146,11 +156,11 @@ fn pin_lifecycle() -> anyhow::Result<()> {
 
         let link = PinnedLink::from_pin("/sys/fs/bpf/aya-xdp-test-lo")?.unpin()?;
         prog.attach_to_link(link.try_into()?)?;
-        assert_loaded("pass", true);
+        assert_loaded!("pass", true);
     }
 
     // program should be unloaded
-    assert_loaded("pass", false);
+    assert_loaded!("pass", false);
 
     Ok(())
 }
