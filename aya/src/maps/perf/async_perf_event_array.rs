@@ -137,7 +137,7 @@ pub struct AsyncPerfEventArrayBuffer<T: DerefMut<Target = Map>> {
     async_fd: Async<RawFd>,
 }
 
-#[cfg(any(feature = "async_tokio", doc))]
+#[cfg(any(feature = "async_tokio"))]
 impl<T: DerefMut<Target = Map>> AsyncPerfEventArrayBuffer<T> {
     /// Reads events from the buffer.
     ///

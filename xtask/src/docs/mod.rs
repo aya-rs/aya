@@ -67,7 +67,10 @@ fn build_docs(working_dir: &PathBuf, abs_header_path: &Path) -> Result<(), anyho
         .current_dir(working_dir)
         .env(
             "RUSTDOCFLAGS",
-            format!("--html-in-header {}", abs_header_path.to_str().unwrap()),
+            format!(
+                "--cfg docsrs --html-in-header {}",
+                abs_header_path.to_str().unwrap()
+            ),
         )
         .args(&args)
         .status()
