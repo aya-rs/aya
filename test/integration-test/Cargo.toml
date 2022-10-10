@@ -7,6 +7,8 @@ publish = false
 [dependencies]
 anyhow = "1"
 aya = { path = "../../aya" }
+clap = { version = "3", features = ["derive"] }
+env_logger = "0.9"
 inventory = "0.2"
 integration-test-macros = { path = "../integration-test-macros" }
 lazy_static = "1"
@@ -14,4 +16,3 @@ libc = { version = "0.2.105" }
 log = "0.4"
 object = { version = "0.29", default-features = false, features = ["std", "read_core", "elf"] }
 regex = "1"
-env_logger = "0.9"
