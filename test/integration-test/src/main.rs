@@ -21,7 +21,7 @@ enum Command {
     /// Run one or more tests: ... -- run -t test1 -t test2
     Run(RunOptions),
     /// List all the tests: ... -- list
-    List
+    List,
 }
 
 macro_rules! exec_test {
@@ -39,22 +39,20 @@ fn main() -> anyhow::Result<()> {
     let cmd = Command::parse();
 
     match cmd {
-        Command::Run(opts) => {
-            match opts.tests {
-                Some(tests) => {
-                    for t in inventory::iter::<IntegrationTest> {
-                        if tests.contains(&t.name.into()) {
-                            exec_test!(t)
-                        }
-                    }
-                }
-                None => {
-                    for t in inventory::iter::<IntegrationTest> {
+        Command::Run(opts) => match opts.tests {
+            Some(tests) => {
+                for t in inventory::iter::<IntegrationTest> {
+                    if tests.contains(&t.name.into()) {
                         exec_test!(t)
                     }
                 }
             }
-        }
+            None => {
+                for t in inventory::iter::<IntegrationTest> {
+                    exec_test!(t)
+                }
+            }
+        },
         Command::List => {
             for t in inventory::iter::<IntegrationTest> {
                 info!("{}", t.name);
