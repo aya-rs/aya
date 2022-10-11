@@ -1,6 +1,5 @@
 //! Utility functions.
 use std::{
-    cmp,
     collections::BTreeMap,
     ffi::{CStr, CString},
     fs::{self, File},
@@ -173,10 +172,7 @@ impl VerifierLog {
     }
 
     pub(crate) fn grow(&mut self) {
-        let len = cmp::max(
-            MIN_LOG_BUF_SIZE,
-            cmp::min(MAX_LOG_BUF_SIZE, self.buf.capacity() * 10),
-        );
+        let len = (self.buf.capacity() * 10).clamp(MIN_LOG_BUF_SIZE, MAX_LOG_BUF_SIZE);
         self.buf.resize(len, 0);
         self.reset();
     }

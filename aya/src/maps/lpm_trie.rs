@@ -102,9 +102,7 @@ impl<T: Deref<Target = Map>, K: Pod, V: Pod> LpmTrie<T, K, V> {
 
         // validate the map definition
         if map_type != BPF_MAP_TYPE_LPM_TRIE as u32 {
-            return Err(MapError::InvalidMapType {
-                map_type: map_type as u32,
-            });
+            return Err(MapError::InvalidMapType { map_type });
         }
         let size = mem::size_of::<Key<K>>();
         let expected = map.obj.key_size() as usize;

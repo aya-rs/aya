@@ -196,7 +196,7 @@ fn relocate_btf_program<'target>(
 ) -> Result<(), ErrorWrapper> {
     for rel in relos {
         let instructions = &mut program.function.instructions;
-        let ins_index = rel.ins_offset as usize / std::mem::size_of::<bpf_insn>();
+        let ins_index = rel.ins_offset / std::mem::size_of::<bpf_insn>();
         if ins_index >= instructions.len() {
             return Err(RelocationError::InvalidInstructionIndex {
                 index: ins_index,
@@ -616,7 +616,7 @@ impl<'a> AccessSpec<'a> {
                     index: parts[0],
                     name: None,
                 }];
-                let mut bit_offset = accessors[0].index as usize * btf.type_size(type_id)?;
+                let mut bit_offset = accessors[0].index * btf.type_size(type_id)?;
                 for index in parts.iter().skip(1).cloned() {
                     type_id = btf.resolve_type(type_id)?;
                     let ty = btf.type_by_id(type_id)?;
@@ -770,12 +770,12 @@ impl ComputedRelocation {
     ) -> Result<(), ErrorWrapper> {
         let instructions = &mut program.function.instructions;
         let num_instructions = instructions.len();
-        let ins_index = rel.ins_offset as usize / std::mem::size_of::<bpf_insn>();
+        let ins_index = rel.ins_offset / std::mem::size_of::<bpf_insn>();
         let mut ins =
             instructions
                 .get_mut(ins_index)
                 .ok_or(RelocationError::InvalidInstructionIndex {
-                    index: rel.ins_offset as usize,
+                    index: rel.ins_offset,
                     num_instructions,
                     relocation_number: rel.number,
                 })?;

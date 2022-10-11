@@ -279,7 +279,7 @@ pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usiz
         // bounded
         len = dest.len();
     }
-    Ok(len as usize)
+    Ok(len)
 }
 
 /// Read a null-terminated string from _user space_ stored at `src` into `dest`.
@@ -323,7 +323,7 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
         // bounded
         len = dest.len();
     }
-    Ok(len as usize)
+    Ok(len)
 }
 
 /// Returns a byte slice read from _user space_ address `src`.
@@ -474,7 +474,7 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
         // bounded
         len = dest.len();
     }
-    Ok(len as usize)
+    Ok(len)
 }
 
 /// Returns a byte slice read from _kernel space_ address `src`.
