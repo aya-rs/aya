@@ -28,7 +28,7 @@ impl SkMsgContext {
     }
 
     pub fn push_data(&self, start: u32, len: u32, flags: u64) -> Result<(), i64> {
-        let ret = unsafe { bpf_msg_push_data(self.msg, start, len as u32, flags) };
+        let ret = unsafe { bpf_msg_push_data(self.msg, start, len, flags) };
         if ret == 0 {
             Ok(())
         } else {
@@ -37,7 +37,7 @@ impl SkMsgContext {
     }
 
     pub fn pop_data(&self, start: u32, len: u32, flags: u64) -> Result<(), i64> {
-        let ret = unsafe { bpf_msg_pop_data(self.msg, start, len as u32, flags) };
+        let ret = unsafe { bpf_msg_pop_data(self.msg, start, len, flags) };
         if ret == 0 {
             Ok(())
         } else {

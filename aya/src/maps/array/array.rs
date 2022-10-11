@@ -40,9 +40,7 @@ impl<T: Deref<Target = Map>, V: Pod> Array<T, V> {
     fn new(map: T) -> Result<Array<T, V>, MapError> {
         let map_type = map.obj.map_type();
         if map_type != BPF_MAP_TYPE_ARRAY as u32 {
-            return Err(MapError::InvalidMapType {
-                map_type: map_type as u32,
-            });
+            return Err(MapError::InvalidMapType { map_type });
         }
         let expected = mem::size_of::<u32>();
         let size = map.obj.key_size() as usize;

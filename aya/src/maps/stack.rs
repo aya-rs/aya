@@ -39,9 +39,7 @@ impl<T: Deref<Target = Map>, V: Pod> Stack<T, V> {
     fn new(map: T) -> Result<Stack<T, V>, MapError> {
         let map_type = map.obj.map_type();
         if map_type != BPF_MAP_TYPE_STACK as u32 {
-            return Err(MapError::InvalidMapType {
-                map_type: map_type as u32,
-            });
+            return Err(MapError::InvalidMapType { map_type });
         }
         let expected = 0;
         let size = map.obj.key_size() as usize;
