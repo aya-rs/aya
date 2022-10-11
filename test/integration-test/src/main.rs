@@ -4,16 +4,19 @@ mod tests;
 use tests::IntegrationTest;
 
 use clap::Parser;
+
 #[derive(Debug, Parser)]
+#[clap(author, version, about, long_about = None)]
+#[clap(propagate_version = true)]
 pub struct RunOptions {
     #[clap(short, long, value_parser)]
     tests: Option<Vec<String>>,
 }
 
 #[derive(Debug, Parser)]
-struct Options {
+struct Cli {
     #[clap(subcommand)]
-    command: Command,
+    command: Option<Command>,
 }
 
 #[derive(Debug, Parser)]
@@ -33,13 +36,21 @@ macro_rules! exec_test {
     }};
 }
 
+macro_rules! exec_all_tests {
+    () => {{
+        for t in inventory::iter::<IntegrationTest> {
+            exec_test!(t)
+        }
+    }};
+}
+
 fn main() -> anyhow::Result<()> {
     env_logger::init();
 
-    let cmd = Command::parse();
+    let cli = Cli::parse();
 
-    match cmd {
-        Command::Run(opts) => match opts.tests {
+    match &cli.command {
+        Some(Command::Run(opts)) => match &opts.tests {
             Some(tests) => {
                 for t in inventory::iter::<IntegrationTest> {
                     if tests.contains(&t.name.into()) {
@@ -48,15 +59,16 @@ fn main() -> anyhow::Result<()> {
                 }
             }
             None => {
-                for t in inventory::iter::<IntegrationTest> {
-                    exec_test!(t)
-                }
+                exec_all_tests!()
             }
         },
-        Command::List => {
+        Some(Command::List) => {
             for t in inventory::iter::<IntegrationTest> {
                 info!("{}", t.name);
             }
+        }
+        None => {
+            exec_all_tests!()
         }
     }
 
