@@ -24,6 +24,15 @@ enum Command {
     List
 }
 
+macro_rules! exec_test {
+    ($test:expr) => {{
+        info!("Running {}", $test.name);
+        if let Err(e) = ($test.test_fn)() {
+            panic!("{}", e)
+        }
+    }};
+}
+
 fn main() -> anyhow::Result<()> {
     env_logger::init();
 
@@ -35,19 +44,13 @@ fn main() -> anyhow::Result<()> {
                 Some(tests) => {
                     for t in inventory::iter::<IntegrationTest> {
                         if tests.contains(&t.name.into()) {
-                            info!("Running {}", t.name);
-                            if let Err(e) = (t.test_fn)() {
-                                panic!("{}", e)
-                            }
+                            exec_test!(t)
                         }
                     }
                 }
                 None => {
                     for t in inventory::iter::<IntegrationTest> {
-                        info!("Running {}", t.name);
-                        if let Err(e) = (t.test_fn)() {
-                            panic!("{}", e)
-                        }
+                        exec_test!(t)
                     }
                 }
             }
