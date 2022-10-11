@@ -90,7 +90,7 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), io::E
     // add the TCA_KIND attribute
     let attrs_buf = request_attributes(&mut req, nlmsg_len);
     let attr_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"clsact\0")?;
-    req.header.nlmsg_len += align_to(attr_len as usize, NLA_ALIGNTO as usize) as u32;
+    req.header.nlmsg_len += align_to(attr_len, NLA_ALIGNTO as usize) as u32;
 
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
     sock.recv()?;
@@ -135,7 +135,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     options.write_attr(TCA_BPF_FLAGS as u16, flags)?;
     let options_len = options.finish()?;
 
-    req.header.nlmsg_len += align_to(kind_len + options_len as usize, NLA_ALIGNTO as usize) as u32;
+    req.header.nlmsg_len += align_to(kind_len + options_len, NLA_ALIGNTO as usize) as u32;
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
 
     // find the RTM_NEWTFILTER reply and read the tcm_info field which we'll
@@ -440,7 +440,7 @@ impl<'a> NestedAttrs<'a> {
     fn finish(self) -> Result<usize, io::Error> {
         let nla_len = self.offset;
         let attr = nlattr {
-            nla_type: NLA_F_NESTED as u16 | self.top_attr_type as u16,
+            nla_type: NLA_F_NESTED as u16 | self.top_attr_type,
             nla_len: nla_len as u16,
         };
 
@@ -467,7 +467,7 @@ fn write_attr_bytes(
     value: &[u8],
 ) -> Result<usize, io::Error> {
     let attr = nlattr {
-        nla_type: attr_type as u16,
+        nla_type: attr_type,
         nla_len: ((NLA_HDR_LEN + value.len()) as u16),
     };
 
@@ -575,10 +575,7 @@ impl From<NlAttrError> for io::Error {
 }
 
 unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
-    let attrs_addr = align_to(
-        req as *const _ as usize + msg_len as usize,
-        NLMSG_ALIGNTO as usize,
-    );
+    let attrs_addr = align_to(req as *const _ as usize + msg_len, NLMSG_ALIGNTO as usize);
     let attrs_end = req as *const _ as usize + mem::size_of::<T>();
     slice::from_raw_parts_mut(attrs_addr as *mut u8, attrs_end - attrs_addr)
 }

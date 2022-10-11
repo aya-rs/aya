@@ -164,9 +164,7 @@ impl<T: DerefMut<Target = Map>> PerfEventArray<T> {
     pub(crate) fn new(map: T) -> Result<PerfEventArray<T>, MapError> {
         let map_type = map.obj.map_type();
         if map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 {
-            return Err(MapError::InvalidMapType {
-                map_type: map_type as u32,
-            });
+            return Err(MapError::InvalidMapType { map_type });
         }
         let _fd = map.fd_or_err()?;
 

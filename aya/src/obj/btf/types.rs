@@ -907,7 +907,7 @@ impl BtfType {
     pub(crate) unsafe fn read(data: &[u8], endianness: Endianness) -> Result<BtfType, BtfError> {
         let ty = unsafe { read_array::<u32>(data, 3)? };
         let data = &data[mem::size_of::<u32>() * 3..];
-        let vlen = type_vlen(ty[1]) as usize;
+        let vlen = type_vlen(ty[1]);
         Ok(match type_kind(ty[1])? {
             BtfKind::Unknown => BtfType::Unknown,
             BtfKind::Fwd => BtfType::Fwd(Fwd {

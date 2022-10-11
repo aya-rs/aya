@@ -741,7 +741,7 @@ impl Object {
                     let mut line_info = btf_ext.line_info.get(section.name);
                     line_info.line_info.retain(|l| {
                         l.insn_off >= bytes_offset
-                            && l.insn_off < (bytes_offset + section_size_bytes) as u32
+                            && l.insn_off < (bytes_offset + section_size_bytes)
                     });
 
                     (
@@ -1144,7 +1144,7 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
         BtfType::Ptr(pty) => pty,
         other => {
             return Err(BtfError::UnexpectedBtfType {
-                type_id: other.btf_type().unwrap_or(0) as u32,
+                type_id: other.btf_type().unwrap_or(0),
             })
         }
     };
@@ -1153,7 +1153,7 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
         BtfType::Array(Array { array, .. }) => array,
         other => {
             return Err(BtfError::UnexpectedBtfType {
-                type_id: other.btf_type().unwrap_or(0) as u32,
+                type_id: other.btf_type().unwrap_or(0),
             })
         }
     };
@@ -1231,7 +1231,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         BtfType::Var(var) => var,
         other => {
             return Err(BtfError::UnexpectedBtfType {
-                type_id: other.btf_type().unwrap_or(0) as u32,
+                type_id: other.btf_type().unwrap_or(0),
             })
         }
     };
@@ -1244,7 +1244,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         BtfType::Struct(s) => s,
         other => {
             return Err(BtfError::UnexpectedBtfType {
-                type_id: other.btf_type().unwrap_or(0) as u32,
+                type_id: other.btf_type().unwrap_or(0),
             })
         }
     };
