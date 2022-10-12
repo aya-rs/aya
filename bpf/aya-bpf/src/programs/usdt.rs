@@ -28,6 +28,15 @@ pub struct UsdtContext {
     pub regs: *mut pt_regs,
 }
 
+/// Errors from Usdt map operations
+#[derive(Debug, Clone)]
+pub enum UsdtError {
+    MaxArgCount,
+    SpecIdNotFound,
+    ValueError,
+    IpNotFound,
+}
+
 impl UsdtContext {
     /// Creates a new Usdtcontext.
     pub fn new(ctx: *mut c_void) -> UsdtContext {
@@ -52,9 +61,13 @@ impl UsdtContext {
     /// Access the spec_id using the `USDT_IP_TO_SPEC_ID` map
     #[cfg(not(feature = "cookie"))]
     #[inline(always)]
-    fn spec_id(&self) -> Result<u32, ()> {
-        let ip: i64 = self.ip().ok_or(())?;
-        let spec = unsafe { USDT_IP_TO_SPEC_ID.get(&ip).ok_or(())? };
+    fn spec_id(&self) -> Result<u32, UsdtError> {
+        let ip: i64 = self.ip().ok_or(UsdtError::IpNotFound)?;
+        let spec = unsafe {
+            USDT_IP_TO_SPEC_ID
+                .get(&ip)
+                .ok_or(UsdtError::SpecIdNotFound)?
+        };
         Ok(*spec)
     }
 
@@ -63,15 +76,15 @@ impl UsdtContext {
     /// This uses the USDT_SPEC_MAP to determine the correct specification to use in order
     /// to read the value of argument `n` from the eBPF Context.
     #[inline(always)]
-    pub fn arg(&self, n: usize) -> Result<u64, ()> {
+    pub fn arg(&self, n: usize) -> Result<u64, UsdtError> {
         if n > USDT_MAX_ARG_COUNT {
-            return Err(());
+            return Err(UsdtError::MaxArgCount);
         }
         let spec_id = self.spec_id()?;
-        let spec = USDT_SPECS.get(spec_id).ok_or(())?;
+        let spec = USDT_SPECS.get(spec_id).ok_or(UsdtError::SpecIdNotFound)?;
 
         if n > (spec.arg_count as usize) {
-            return Err(());
+            return Err(UsdtError::MaxArgCount);
         }
 
         let arg_spec = &spec.args[n];
@@ -79,15 +92,16 @@ impl UsdtContext {
             UsdtArgType::Const => arg_spec.val_off,
             UsdtArgType::Reg => unsafe {
                 bpf_probe_read_kernel(self.as_ptr().offset(arg_spec.reg_off as isize) as *const _)
-                    .map_err(|_| ())?
+                    .map_err(|_| UsdtError::ValueError)?
             },
             UsdtArgType::RegDeref => unsafe {
                 let ptr: u64 = bpf_probe_read_kernel(
                     self.as_ptr().offset(arg_spec.reg_off as isize) as *const _,
                 )
-                .map_err(|_| ())?;
+                .map_err(|_| UsdtError::ValueError)?;
                 let ptr = ptr as *const u64;
-                bpf_probe_read_user::<u64>(ptr.offset(arg_spec.val_off as isize)).map_err(|_| ())?
+                bpf_probe_read_user::<u64>(ptr.offset(arg_spec.val_off as isize))
+                    .map_err(|_| UsdtError::ValueError)?
                 // TODO: libbpf applies a bitshift here if the arch is big endian
             },
         };
