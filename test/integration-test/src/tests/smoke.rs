@@ -32,11 +32,14 @@ fn extension() {
         return;
     }
     let mut bpf = Bpf::load(crate::MAIN).unwrap();
-    let pass: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    let pass: &mut Xdp = bpf.program_mut("xdp_pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
     pass.attach("lo", XdpFlags::default()).unwrap();
 
-    let mut bpf = BpfLoader::new().extension("drop").load(crate::EXT).unwrap();
-    let drop_: &mut Extension = bpf.program_mut("drop").unwrap().try_into().unwrap();
+    let mut bpf = BpfLoader::new()
+        .extension("xdp_drop")
+        .load(crate::EXT)
+        .unwrap();
+    let drop_: &mut Extension = bpf.program_mut("xdp_drop").unwrap().try_into().unwrap();
     drop_.load(pass.fd().unwrap(), "xdp_pass").unwrap();
 }
