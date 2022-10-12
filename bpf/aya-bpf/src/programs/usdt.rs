@@ -5,7 +5,6 @@ use aya_common::{
 };
 
 use crate::{
-    args::FromPtRegs,
     helpers::{bpf_probe_read_kernel, bpf_probe_read_user},
     macros::map,
     maps::{Array, HashMap},
@@ -17,6 +16,9 @@ use crate::{
 use crate::bindings::pt_regs;
 #[cfg(bpf_target_arch = "aarch64")]
 use crate::bindings::user_pt_regs as pt_regs;
+
+#[cfg(not(feature = "cookie"))]
+use crate::args::FromPtRegs;
 
 #[map(name = "__bpf_usdt_specs")]
 static USDT_SPECS: Array<UsdtSpec> = Array::with_max_entries(USDT_MAX_SPEC_COUNT, 0);
@@ -46,6 +48,7 @@ impl UsdtContext {
     }
 
     /// Access the register that holds the next instruction pointer.
+    #[cfg(not(feature = "cookie"))]
     #[inline(always)]
     fn ip<T: FromPtRegs>(&self) -> Option<T> {
         T::from_ip(unsafe { &*self.regs })
@@ -80,7 +83,7 @@ impl UsdtContext {
         if n > USDT_MAX_ARG_COUNT {
             return Err(UsdtError::MaxArgCount);
         }
-        let spec_id = self.spec_id()?;
+        let spec_id = self.spec_id().map_err(|_| UsdtError::SpecIdNotFound)?;
         let spec = USDT_SPECS.get(spec_id).ok_or(UsdtError::SpecIdNotFound)?;
 
         if n > (spec.arg_count as usize) {

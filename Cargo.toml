@@ -6,7 +6,7 @@ members = [
     # ebpf crates
     "bpf/aya-bpf", "bpf/aya-bpf-bindings", "bpf/aya-log-ebpf", "test/integration-ebpf"
 ]
-default-members = ["aya", "aya-tool", "aya-log", "aya-bpf-macros", "aya-log-ebpf-macros"]
+default-members = ["aya", "aya-common", "aya-tool", "aya-log", "aya-bpf-macros", "aya-log-ebpf-macros"]
 
 [profile.dev]
 panic = "abort"

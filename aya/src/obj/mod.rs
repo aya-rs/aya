@@ -1488,7 +1488,6 @@ mod tests {
             map_flags: 5,
             id: 0,
             pinning: PinningType::None,
-            ..Default::default()
         };
 
         assert_eq!(
@@ -1507,7 +1506,6 @@ mod tests {
             map_flags: 5,
             id: 6,
             pinning: PinningType::ByName,
-            ..Default::default()
         };
 
         assert_eq!(parse_map_def("foo", bytes_of(&def)).unwrap(), def);
@@ -1523,7 +1521,6 @@ mod tests {
             map_flags: 5,
             id: 6,
             pinning: PinningType::ByName,
-            ..Default::default()
         };
         let mut buf = [0u8; 128];
         unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, def) };
@@ -1554,7 +1551,6 @@ mod tests {
                         map_flags: 5,
                         id: 0,
                         pinning: PinningType::None,
-                        ..Default::default()
                     })
                 ),
                 "foo"
@@ -2223,7 +2219,6 @@ mod tests {
                     map_flags: BPF_F_RDONLY_PROG,
                     id: 1,
                     pinning: PinningType::None,
-                    ..Default::default()
                 },
                 section_index: 1,
                 symbol_index: 1,
