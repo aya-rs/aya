@@ -3,7 +3,7 @@
 
 use aya_bpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
 
-#[xdp(name = "ihaveaverylongname")]
+#[xdp]
 pub fn ihaveaverylongname(ctx: XdpContext) -> u32 {
     match unsafe { try_pass(ctx) } {
         Ok(ret) => ret,
