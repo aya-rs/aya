@@ -5764,7 +5764,8 @@ pub aya_obj::obj::ParseError::MapSymbolNameNotFound::i: usize
 pub aya_obj::obj::ParseError::MissingLicenseNullTerminator
 pub aya_obj::obj::ParseError::MissingLicenseNullTerminator::data: alloc::vec::Vec<u8>
 pub aya_obj::obj::ParseError::NoBTF
-pub aya_obj::obj::ParseError::NoSymbolsForMapsSection
+pub aya_obj::obj::ParseError::NoSymbolsForSection
+pub aya_obj::obj::ParseError::NoSymbolsForSection::section_name: alloc::string::String
 pub aya_obj::obj::ParseError::SectionError
 pub aya_obj::obj::ParseError::SectionError::error: object::read::Error
 pub aya_obj::obj::ParseError::SectionError::index: usize
@@ -6511,7 +6512,8 @@ pub aya_obj::ParseError::MapSymbolNameNotFound::i: usize
 pub aya_obj::ParseError::MissingLicenseNullTerminator
 pub aya_obj::ParseError::MissingLicenseNullTerminator::data: alloc::vec::Vec<u8>
 pub aya_obj::ParseError::NoBTF
-pub aya_obj::ParseError::NoSymbolsForMapsSection
+pub aya_obj::ParseError::NoSymbolsForSection
+pub aya_obj::ParseError::NoSymbolsForSection::section_name: alloc::string::String
 pub aya_obj::ParseError::SectionError
 pub aya_obj::ParseError::SectionError::error: object::read::Error
 pub aya_obj::ParseError::SectionError::index: usize
