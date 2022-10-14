@@ -5,3 +5,4 @@ libbpf/
 !.vscode/settings.json
 site/
 header.html
+.idea/

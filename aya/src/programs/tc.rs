@@ -63,7 +63,7 @@ pub enum TcAttachType {
 ///
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach("eth0", TcAttachType::Ingress, 0)?;
+/// prog.attach("eth0", TcAttachType::Ingress, 0, 0)?;
 ///
 /// # Ok::<(), Error>(())
 /// ```
@@ -111,6 +111,9 @@ impl SchedClassifier {
     /// 0 means let the system choose the next highest priority, or 49152 if no filters exist yet.
     /// All other values in the range are taken as an explicit priority setting (aka "preference").
     ///
+    /// `handle` is used to uniquely identify a program at a given priority level.  
+    /// If set to 0, the system will choose a handle.
+    ///
     /// The returned value can be used to detach, see [SchedClassifier::detach].
     ///
     /// # Errors
@@ -124,12 +127,20 @@ impl SchedClassifier {
         interface: &str,
         attach_type: TcAttachType,
         priority: u16,
+        handle: u32,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let if_index = ifindex_from_ifname(interface)
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
-        let priority = unsafe {
-            netlink_qdisc_attach(if_index as i32, &attach_type, prog_fd, &self.name, priority)
+        let (priority, handle) = unsafe {
+            netlink_qdisc_attach(
+                if_index as i32,
+                &attach_type,
+                prog_fd,
+                &self.name,
+                priority,
+                handle,
+            )
         }
         .map_err(|io_error| TcError::NetlinkError { io_error })?;
 
@@ -137,6 +148,7 @@ impl SchedClassifier {
             if_index: if_index as i32,
             attach_type,
             priority,
+            handle,
         }))
     }
 
@@ -160,25 +172,28 @@ impl SchedClassifier {
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub(crate) struct TcLinkId(i32, TcAttachType, u16);
+pub(crate) struct TcLinkId(i32, TcAttachType, u16, u32);
 
 #[derive(Debug)]
 struct TcLink {
     if_index: i32,
     attach_type: TcAttachType,
     priority: u16,
+    handle: u32,
 }
 
 impl Link for TcLink {
     type Id = TcLinkId;
 
     fn id(&self) -> Self::Id {
-        TcLinkId(self.if_index, self.attach_type, self.priority)
+        TcLinkId(self.if_index, self.attach_type, self.priority, self.handle)
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        unsafe { netlink_qdisc_detach(self.if_index, &self.attach_type, self.priority) }
-            .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        unsafe {
+            netlink_qdisc_detach(self.if_index, &self.attach_type, self.priority, self.handle)
+        }
+        .map_err(|io_error| TcError::NetlinkError { io_error })?;
         Ok(())
     }
 }
@@ -233,16 +248,16 @@ fn qdisc_detach_program_fast(
 ) -> Result<(), io::Error> {
     let if_index = ifindex_from_ifname(if_name)? as i32;
 
-    let prios = unsafe { netlink_find_filter_with_name(if_index, attach_type, name)? };
-    if prios.is_empty() {
+    let filter_info = unsafe { netlink_find_filter_with_name(if_index, attach_type, name)? };
+    if filter_info.is_empty() {
         return Err(io::Error::new(
             io::ErrorKind::NotFound,
             name.to_string_lossy(),
         ));
     }
 
-    for prio in prios {
-        unsafe { netlink_qdisc_detach(if_index, &attach_type, prio)? };
+    for (prio, handle) in filter_info {
+        unsafe { netlink_qdisc_detach(if_index, &attach_type, prio, handle)? };
     }
 
     Ok(())
