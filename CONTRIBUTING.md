@@ -13,10 +13,22 @@ When creating a new issue, make sure to include as many details as possible to
 help us understand the problem. When reporting a bug, always specify which
 version of aya you're using and which version of the linux kernel.
 
+## Documentation
+
+If you find an API that is not documented, unclear or missing examples, please
+file an issue. If you make changes to the documentation, please read
+https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html and make sure
+your changes conform to the format outlined here
+https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html#documenting-components.
+
+If you want to make changes to the Aya Book, see the readme in the book repo
+https://github.com/aya-rs/book.
+
 ## Fixing bugs and implementing new features
 
 Make sure that your work is tracked by an issue or a (draft) pull request, this
-helps us avoid duplicating work.
+helps us avoid duplicating work. If your work includes publicly visible changes,
+make sure those are properly documented as explained in the section above.
 
 ### Commits
 
