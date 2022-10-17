@@ -53,7 +53,7 @@ use crate::maps::{
 /// use tokio::task; // or async_std::task
 ///
 /// // try to convert the PERF_ARRAY map to an AsyncPerfEventArray
-/// let mut perf_array: AsyncPerfEventArray<_> =bpf.take_map("PERF_ARRAY")?.try_into()?;
+/// let mut perf_array = AsyncPerfEventArray::try_from(bpf.take_map("PERF_ARRAY")?)?;
 ///
 /// for cpu_id in online_cpus()? {
 ///     // open a separate perf buffer for each cpu

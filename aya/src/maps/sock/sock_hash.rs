@@ -46,7 +46,7 @@ use crate::{
 /// use aya::maps::SockHash;
 /// use aya::programs::SkMsg;
 ///
-/// let intercept_egress: SockHash<_, u32> = bpf.map("INTERCEPT_EGRESS")?.try_into()?;
+/// let mut intercept_egress = SockHash::<_, u32>::try_from(bpf.map("INTERCEPT_EGRESS")?)?;
 /// let map_fd = intercept_egress.fd()?;
 ///
 /// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
@@ -54,7 +54,7 @@ use crate::{
 /// prog.attach(map_fd)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
-/// let mut intercept_egress: SockHash<_, u32> = bpf.map_mut("INTERCEPT_EGRESS")?.try_into()?;
+/// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
 ///
 /// intercept_egress.insert(1234, client.as_raw_fd(), 0)?;
 ///
@@ -104,8 +104,10 @@ impl<T: AsRef<MapData>, K: Pod> SockHash<T, K> {
         MapKeys::new(self.inner.as_ref())
     }
 
-    /// Returns the map's file descriptor, used for instances where programs
-    /// are attached to maps.
+    /// Returns the map's file descriptor.
+    ///
+    /// The returned file descriptor can be used to attach programs that work with
+    /// socket maps, like [`SkMsg`] and [`SkSkb`].
     pub fn fd(&self) -> Result<SockMapFd, MapError> {
         Ok(SockMapFd(self.inner.as_ref().fd_or_err()?))
     }

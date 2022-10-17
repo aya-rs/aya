@@ -19,7 +19,7 @@ use crate::{
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::bloom_filter::BloomFilter;
 ///
-/// let mut bloom_filter: BloomFilter<_,u32> = bpf.map_mut("BLOOM_FILTER")?.try_into()?;
+/// let mut bloom_filter = BloomFilter::try_from(bpf.map_mut("BLOOM_FILTER")?)?;
 ///
 /// bloom_filter.insert(1, 0)?;
 ///

@@ -22,7 +22,7 @@
 //! use aya::maps::SockMap;
 //! use aya::programs::SkMsg;
 //!
-//! let mut intercept_egress: SockMap<_> = bpf.map_mut("INTERCEPT_EGRESS")?.try_into()?;
+//! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
 //! let map_fd = intercept_egress.fd()?;
 //! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 //! prog.load()?;
@@ -281,7 +281,7 @@ macro_rules! impl_try_from_map {
                 fn try_from(map: &'a Map) -> Result<$tx<&'a MapData>, MapError> {
                     match map {
                         Map::$ty(m) => {
-                            $tx::<&'a MapData>::new(m)
+                            $tx::new(m)
                         },
                         _ => Err(MapError::UnexpectedMapType),
                     }
@@ -294,7 +294,7 @@ macro_rules! impl_try_from_map {
                 fn try_from(map: &'a mut Map) -> Result<$tx<&'a mut MapData>, MapError> {
                     match map {
                         Map::$ty(m) => {
-                            $tx::<&'a mut MapData>::new(m)
+                            $tx::new(m)
                         },
                         _ => Err(MapError::UnexpectedMapType),
                     }
@@ -307,7 +307,7 @@ macro_rules! impl_try_from_map {
                 fn try_from(map: Map) -> Result<$tx<MapData>, MapError> {
                     match map {
                         Map::$ty(m) => {
-                            $tx::<MapData>::new(m)
+                            $tx::new(m)
                         },
                         _ => Err(MapError::UnexpectedMapType),
                     }
@@ -339,7 +339,7 @@ macro_rules! impl_try_from_map_generic_key_or_value {
                 fn try_from(map: &'a Map) -> Result<$ty<&'a MapData , V>, MapError> {
                     match map {
                         Map::$ty(m) => {
-                            $ty::<&'a MapData,V>::new(m)
+                            $ty::new(m)
                         },
                         _ => Err(MapError::UnexpectedMapType),
                     }
@@ -352,7 +352,7 @@ macro_rules! impl_try_from_map_generic_key_or_value {
                 fn try_from(map: &'a mut Map) -> Result<$ty<&'a mut MapData, V>, MapError> {
                     match map {
                         Map::$ty(m) => {
-                            $ty::<&'a mut MapData,V>::new(m)
+                            $ty::new(m)
                         },
                         _ => Err(MapError::UnexpectedMapType),
                     }
@@ -365,7 +365,7 @@ macro_rules! impl_try_from_map_generic_key_or_value {
                 fn try_from(map: Map) -> Result<$ty<MapData, V>, MapError> {
                     match map {
                         Map::$ty(m) => {
-                            $ty::<MapData,V>::new(m)
+                            $ty::new(m)
                         },
                         _ => Err(MapError::UnexpectedMapType),
                     }
@@ -386,7 +386,7 @@ macro_rules! impl_try_from_map_generic_key_and_value {
                 fn try_from(map: &'a Map) -> Result<$ty<&'a MapData,V,K>, MapError> {
                     match map {
                         Map::$ty(m) => {
-                            $ty::<&'a MapData,V,K>::new(m)
+                            $ty::new(m)
                         },
                         _ => Err(MapError::UnexpectedMapType),
                     }
@@ -399,7 +399,7 @@ macro_rules! impl_try_from_map_generic_key_and_value {
                 fn try_from(map: &'a mut Map) -> Result<$ty<&'a mut MapData, V, K>, MapError> {
                     match map {
                         Map::$ty(m) => {
-                            $ty::<&'a mut MapData,V,K>::new(m)
+                            $ty::new(m)
                         },
                         _ => Err(MapError::UnexpectedMapType),
                 }

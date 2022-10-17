@@ -21,7 +21,7 @@ use crate::{
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::Stack;
 ///
-/// let mut stack: Stack<_, u32> = bpf.map_mut("STACK")?.try_into()?;
+/// let mut stack = Stack::try_from(bpf.map_mut("STACK")?)?;
 /// stack.push(42, 0)?;
 /// stack.push(43, 0)?;
 /// assert_eq!(stack.pop(0)?, 43);

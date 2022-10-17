@@ -110,7 +110,7 @@ impl<T: AsMut<MapData> + AsRef<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// use aya::util::online_cpus;
 /// use bytes::BytesMut;
 ///
-/// let mut perf_array: PerfEventArray<_> = bpf.map_mut("EVENTS")?.try_into()?;
+/// let mut perf_array = PerfEventArray::try_from(bpf.map_mut("EVENTS")?)?;
 ///
 /// // eBPF programs are going to write to the EVENTS perf array, using the id of the CPU they're
 /// // running on as the array index.

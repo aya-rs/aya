@@ -23,7 +23,7 @@ use crate::{
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::Array;
 ///
-/// let mut array: Array<_, u32> = bpf.map_mut("ARRAY")?.try_into()?;
+/// let mut array = Array::try_from(bpf.map_mut("ARRAY")?)?;
 /// array.set(1, 42, 0)?;
 /// assert_eq!(array.get(&1, 0)?, 42);
 /// # Ok::<(), aya::BpfError>(())

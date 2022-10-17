@@ -30,7 +30,7 @@ use crate::{
 /// use aya::maps::SockMap;
 /// use aya::programs::SkSkb;
 ///
-/// let intercept_ingress: SockMap<_> = bpf.map("INTERCEPT_INGRESS")?.try_into()?;
+/// let intercept_ingress = SockMap::try_from(bpf.map("INTERCEPT_INGRESS")?)?;
 /// let map_fd = intercept_ingress.fd()?;
 ///
 /// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
@@ -60,8 +60,10 @@ impl<T: AsRef<MapData>> SockMap<T> {
         MapKeys::new(self.inner.as_ref())
     }
 
-    /// Returns the map's file descriptor, used for instances where programs
-    /// are attached to maps.
+    /// Returns the map's file descriptor.
+    ///
+    /// The returned file descriptor can be used to attach programs that work with
+    /// socket maps, like [`SkMsg`] and [`SkSkb`].
     pub fn fd(&self) -> Result<SockMapFd, MapError> {
         Ok(SockMapFd(self.inner.as_ref().fd_or_err()?))
     }
