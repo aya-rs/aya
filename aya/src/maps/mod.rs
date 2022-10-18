@@ -191,10 +191,6 @@ pub enum MapError {
         #[source]
         error: PinError,
     },
-
-    /// The map is not of the expected type.
-    #[error("unexpected map type")]
-    UnexpectedMapType,
 }
 
 /// A map file descriptor.
@@ -283,7 +279,7 @@ macro_rules! impl_try_from_map {
                         Map::$ty(m) => {
                             $tx::new(m)
                         },
-                        _ => Err(MapError::UnexpectedMapType),
+                        _ => Err(MapError::InvalidMapType{ map_type: map.into()}),
                     }
                 }
             }
@@ -296,7 +292,7 @@ macro_rules! impl_try_from_map {
                         Map::$ty(m) => {
                             $tx::new(m)
                         },
-                        _ => Err(MapError::UnexpectedMapType),
+                        _ => Err(MapError::InvalidMapType{ map_type: map.into()}),
                     }
                 }
             }
@@ -309,7 +305,7 @@ macro_rules! impl_try_from_map {
                         Map::$ty(m) => {
                             $tx::new(m)
                         },
-                        _ => Err(MapError::UnexpectedMapType),
+                        _ => Err(MapError::InvalidMapType{ map_type: map.into()}),
                     }
                 }
             }
@@ -341,7 +337,7 @@ macro_rules! impl_try_from_map_generic_key_or_value {
                         Map::$ty(m) => {
                             $ty::new(m)
                         },
-                        _ => Err(MapError::UnexpectedMapType),
+                        _ => Err(MapError::InvalidMapType{ map_type: map.into()}),
                     }
                 }
             }
@@ -354,7 +350,7 @@ macro_rules! impl_try_from_map_generic_key_or_value {
                         Map::$ty(m) => {
                             $ty::new(m)
                         },
-                        _ => Err(MapError::UnexpectedMapType),
+                        _ => Err(MapError::InvalidMapType{ map_type: map.into()}),
                     }
                 }
             }
@@ -367,7 +363,7 @@ macro_rules! impl_try_from_map_generic_key_or_value {
                         Map::$ty(m) => {
                             $ty::new(m)
                         },
-                        _ => Err(MapError::UnexpectedMapType),
+                        _ => Err(MapError::InvalidMapType{ map_type: map.into()}),
                     }
                 }
             }
@@ -388,7 +384,7 @@ macro_rules! impl_try_from_map_generic_key_and_value {
                         Map::$ty(m) => {
                             $ty::new(m)
                         },
-                        _ => Err(MapError::UnexpectedMapType),
+                        _ => Err(MapError::InvalidMapType{ map_type: map.into()}),
                     }
                 }
             }
@@ -401,7 +397,7 @@ macro_rules! impl_try_from_map_generic_key_and_value {
                         Map::$ty(m) => {
                             $ty::new(m)
                         },
-                        _ => Err(MapError::UnexpectedMapType),
+                        _ => Err(MapError::InvalidMapType{ map_type: map.into()}),
                 }
             }
             }
@@ -761,6 +757,35 @@ impl TryFrom<u32> for bpf_map_type {
         })
     }
 }
+
+macro_rules! impl_try_from_map_generic_key_or_value {
+    ($($typ:ty),+ $(,)?) => {
+        $(
+            impl From<$typ> for u32 {
+                fn from(map_type: $typ) -> u32 {
+                    match map_type {
+                        Map::Array(map) => map.obj.map_type(),
+                        Map::PerCpuArray(map) => map.obj.map_type(),
+                        Map::ProgramArray(map) => map.obj.map_type(),
+                        Map::HashMap(map) => map.obj.map_type(),
+                        Map::PerCpuHashMap(map) => map.obj.map_type(),
+                        Map::PerfEventArray(map) => map.obj.map_type(),
+                        Map::SockHash(map) => map.obj.map_type(),
+                        Map::SockMap(map) => map.obj.map_type(),
+                        Map::BloomFilter(map) => map.obj.map_type(),
+                        Map::LpmTrie(map) => map.obj.map_type(),
+                        Map::Stack(map) => map.obj.map_type(),
+                        Map::StackTraceMap(map) => map.obj.map_type(),
+                        Map::Queue(map) => map.obj.map_type(),
+                    }
+                }
+            }
+            )+
+    }
+}
+
+impl_try_from_map_generic_key_or_value!(&Map, &mut Map, Map);
+
 pub(crate) struct PerCpuKernelMem {
     bytes: Vec<u8>,
 }

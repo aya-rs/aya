@@ -260,7 +260,7 @@ mod tests {
 
         assert!(matches!(
             LpmTrie::<_, u32, u32>::try_from(&map),
-            Err(MapError::UnexpectedMapType)
+            Err(MapError::InvalidMapType { .. })
         ));
     }
 

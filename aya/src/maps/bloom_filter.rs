@@ -150,7 +150,7 @@ mod tests {
 
         assert!(matches!(
             BloomFilter::<_, u32>::try_from(&map),
-            Err(MapError::UnexpectedMapType)
+            Err(MapError::InvalidMapType { .. })
         ));
     }
 

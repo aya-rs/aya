@@ -183,7 +183,7 @@ mod tests {
         let map = Map::Array(map_data);
         assert!(matches!(
             HashMap::<_, u8, u32>::try_from(&map),
-            Err(MapError::UnexpectedMapType)
+            Err(MapError::InvalidMapType { .. })
         ));
     }
 
