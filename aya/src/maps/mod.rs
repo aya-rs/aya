@@ -5,16 +5,16 @@
 //! [`Bpf::load_file`](crate::Bpf::load_file) or
 //! [`Bpf::load`](crate::Bpf::load), all the maps defined in the eBPF code get
 //! initialized and can then be accessed using [`Bpf::map`](crate::Bpf::map),
-//! [`Bpf::map_mut`](crate::Bpf::map_mut), [`Bpf::take_map`](crate::Bpf::map)
-//! or [`Bpf::map_mut`](crate::Bpf::take_map).
+//! [`Bpf::map_mut`](crate::Bpf::map_mut), or [`Bpf::take_map`](crate::Bpf::take_map).
 //!
 //! # Typed maps
 //!
 //! The eBPF API includes many map types each supporting different operations.
 //! [`Bpf::map`](crate::Bpf::map), [`Bpf::map_mut`](crate::Bpf::map_mut), and
-//! [`Bpf::map_mut`](crate::Bpf::take_map) always return the
-//! opaque [`&Map`], [`&mut Map`], and [`Map`] types respectively. Those three types can be converted to
-//! *typed maps* using the [`TryFrom`](std::convert::TryFrom) or [`TryInto`](std::convert::TryInto)
+//! [`Bpf::take_map`](crate::Bpf::take_map) always return the
+//! opaque [`&Map`](crate::maps::Map), [`&mut Map`](crate::maps::Map), and [`Map`](crate::maps::Map)
+//! types respectively. Those three types can be converted to *typed maps* using
+//! the [`TryFrom`](std::convert::TryFrom) or [`TryInto`](std::convert::TryInto)
 //! trait. For example:
 //!
 //! ```no_run
@@ -233,7 +233,7 @@ fn maybe_warn_rlimit() {
 /// eBPF map types.
 #[derive(Debug)]
 pub enum Map {
-    /// A ['Array`] map
+    /// A [`Array`] map
     Array(MapData),
     /// A [`PerCpuArray`] map
     PerCpuArray(MapData),
@@ -241,7 +241,7 @@ pub enum Map {
     ProgramArray(MapData),
     /// A [`HashMap`] map
     HashMap(MapData),
-    /// A ['PerCpuHashMap'] map
+    /// A [`PerCpuHashMap`] map
     PerCpuHashMap(MapData),
     /// A [`PerfEventArray`] map
     PerfEventArray(MapData),
@@ -255,7 +255,7 @@ pub enum Map {
     LpmTrie(MapData),
     /// A [`Stack`] map
     Stack(MapData),
-    /// A [`StackTrace`] map
+    /// A [`StackTraceMap`] map
     StackTraceMap(MapData),
     /// A [`Queue`] map
     Queue(MapData),
@@ -556,7 +556,7 @@ impl MapData {
 
     /// Loads a map from a [`RawFd`].
     ///
-    /// If loading from a BPF Filesystem (bpffs) you should use [`Map::from_pin`].
+    /// If loading from a BPF Filesystem (bpffs) you should use [`Map::from_pin`](crate::maps::MapData::from_pin).
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
     pub fn from_fd(fd: RawFd) -> Result<MapData, MapError> {

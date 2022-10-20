@@ -7,7 +7,7 @@ pub use sock_map::SockMap;
 
 use std::os::unix::io::{AsRawFd, RawFd};
 
-/// A [`SocketMap`] file descriptor.
+/// A socket map file descriptor.
 #[derive(Copy, Clone)]
 pub struct SockMapFd(RawFd);
 

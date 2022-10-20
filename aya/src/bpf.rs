@@ -760,11 +760,10 @@ impl Bpf {
 
     /// Takes ownership of a map with the given name.
     ///
-    /// This API is intended for cases where the map must be moved into spawned
-    /// task. For example, when using an [`AsyncPerfEventArray`]. For map interactions
-    /// without taking ownership, see `map` or `map_mut`. An owned map will be
-    /// closed on `Drop`, therefore the the caller is now responsible for managing
-    /// its lifetime.
+    /// Use this when borrowing with [`map`](crate::Bpf::map) or [`map_mut`](crate::Bpf::map_mut)
+    /// is not possible (eg when using the map from an async task). The returned
+    /// map will be closed on `Drop`, therefore the caller is responsible for
+    /// managing its lifetime.
     ///
     /// The returned type is mostly opaque. In order to do anything useful with it you need to
     /// convert it to a [typed map](crate::maps).

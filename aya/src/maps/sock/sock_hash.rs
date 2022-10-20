@@ -107,7 +107,7 @@ impl<T: AsRef<MapData>, K: Pod> SockHash<T, K> {
     /// Returns the map's file descriptor.
     ///
     /// The returned file descriptor can be used to attach programs that work with
-    /// socket maps, like [`SkMsg`] and [`SkSkb`].
+    /// socket maps, like [`SkMsg`](crate::programs::SkMsg) and [`SkSkb`](crate::programs::SkSkb).
     pub fn fd(&self) -> Result<SockMapFd, MapError> {
         Ok(SockMapFd(self.inner.as_ref().fd_or_err()?))
     }
