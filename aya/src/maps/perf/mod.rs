@@ -1,6 +1,6 @@
 //! Ring buffer types used to receive events from eBPF programs using the linux `perf` API.
 //!
-//! See the [`PerfEventArray`] and [`AsyncPerfEventArray`].
+//! See the [`PerfEventArray`](crate::maps::PerfEventArray) and [`AsyncPerfEventArray`](crate::maps::perf::AsyncPerfEventArray).
 #[cfg(any(feature = "async"))]
 #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
 mod async_perf_event_array;

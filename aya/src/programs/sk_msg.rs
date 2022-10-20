@@ -1,7 +1,10 @@
 //! Skmsg programs.
+
+use std::os::unix::io::AsRawFd;
+
 use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
-    maps::sock::SocketMap,
+    maps::sock::SockMapFd,
     programs::{
         define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
         ProgramError,
@@ -40,12 +43,16 @@ use crate::{
 /// use aya::maps::SockHash;
 /// use aya::programs::SkMsg;
 ///
-/// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+/// let intercept_egress: SockHash<_, u32> = bpf.map("INTERCEPT_EGRESS").unwrap().try_into()?;
+/// let map_fd = intercept_egress.fd()?;
+///
 /// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(&intercept_egress)?;
+/// prog.attach(map_fd)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
+/// let mut intercept_egress: SockHash<_, u32> = bpf.map_mut("INTERCEPT_EGRESS").unwrap().try_into()?;
+///
 /// intercept_egress.insert(1234, client.as_raw_fd(), 0)?;
 ///
 /// // the write will be intercepted
@@ -71,9 +78,9 @@ impl SkMsg {
     /// Attaches the program to the given sockmap.
     ///
     /// The returned value can be used to detach, see [SkMsg::detach].
-    pub fn attach(&mut self, map: &dyn SocketMap) -> Result<SkMsgLinkId, ProgramError> {
+    pub fn attach(&mut self, map: SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let map_fd = map.fd_or_err()?;
+        let map_fd = map.as_raw_fd();
 
         bpf_prog_attach(prog_fd, map_fd, BPF_SK_MSG_VERDICT).map_err(|(_, io_error)| {
             ProgramError::SyscallError {

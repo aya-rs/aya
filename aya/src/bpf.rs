@@ -13,10 +13,10 @@ use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY, AYA_PERF_EVENT_IOC_DISABLE,
-        AYA_PERF_EVENT_IOC_ENABLE, AYA_PERF_EVENT_IOC_SET_BPF,
+        bpf_map_type, bpf_map_type::*, AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE,
+        AYA_PERF_EVENT_IOC_SET_BPF,
     },
-    maps::{Map, MapError, MapLock, MapRef, MapRefMut},
+    maps::{Map, MapData, MapError},
     obj::{
         btf::{Btf, BtfError},
         MapKind, Object, ParseError, ProgramSection,
@@ -451,7 +451,7 @@ impl<'a> BpfLoader<'a> {
                     }
                 }
             }
-            let mut map = Map {
+            let mut map = MapData {
                 obj,
                 fd: None,
                 pinned: false,
@@ -638,12 +638,41 @@ impl<'a> BpfLoader<'a> {
                 (name, program)
             })
             .collect();
-        let maps = maps
-            .drain()
-            .map(|(name, map)| (name, MapLock::new(map)))
-            .collect();
-        Ok(Bpf { maps, programs })
+        let maps: Result<HashMap<String, Map>, BpfError> = maps.drain().map(parse_map).collect();
+
+        Ok(Bpf {
+            maps: maps?,
+            programs,
+        })
     }
+}
+
+fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
+    let name = data.0;
+    let map = data.1;
+    let map_type = bpf_map_type::try_from(map.obj.map_type())?;
+    let map = match map_type {
+        BPF_MAP_TYPE_ARRAY => Ok(Map::Array(map)),
+        BPF_MAP_TYPE_PERCPU_ARRAY => Ok(Map::PerCpuArray(map)),
+        BPF_MAP_TYPE_PROG_ARRAY => Ok(Map::ProgramArray(map)),
+        BPF_MAP_TYPE_HASH => Ok(Map::HashMap(map)),
+        BPF_MAP_TYPE_PERCPU_HASH => Ok(Map::PerCpuHashMap(map)),
+        BPF_MAP_TYPE_PERF_EVENT_ARRAY | BPF_MAP_TYPE_LRU_PERCPU_HASH => {
+            Ok(Map::PerfEventArray(map))
+        }
+        BPF_MAP_TYPE_SOCKHASH => Ok(Map::SockHash(map)),
+        BPF_MAP_TYPE_SOCKMAP => Ok(Map::SockMap(map)),
+        BPF_MAP_TYPE_BLOOM_FILTER => Ok(Map::BloomFilter(map)),
+        BPF_MAP_TYPE_LPM_TRIE => Ok(Map::LpmTrie(map)),
+        BPF_MAP_TYPE_STACK => Ok(Map::Stack(map)),
+        BPF_MAP_TYPE_STACK_TRACE => Ok(Map::StackTraceMap(map)),
+        BPF_MAP_TYPE_QUEUE => Ok(Map::Queue(map)),
+        m => Err(BpfError::MapError(MapError::InvalidMapType {
+            map_type: m as u32,
+        })),
+    }?;
+
+    Ok((name, map))
 }
 
 impl<'a> Default for BpfLoader<'a> {
@@ -655,7 +684,7 @@ impl<'a> Default for BpfLoader<'a> {
 /// The main entry point into the library, used to work with eBPF programs and maps.
 #[derive(Debug)]
 pub struct Bpf {
-    maps: HashMap<String, MapLock>,
+    maps: HashMap<String, Map>,
     programs: HashMap<String, Program>,
 }
 
@@ -714,22 +743,8 @@ impl Bpf {
     ///
     /// For more details and examples on maps and their usage, see the [maps module
     /// documentation][crate::maps].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`MapError::MapNotFound`] if the map does not exist. If the map is already borrowed
-    /// mutably with [map_mut](Self::map_mut) then [`MapError::BorrowError`] is returned.
-    pub fn map(&self, name: &str) -> Result<MapRef, MapError> {
-        self.maps
-            .get(name)
-            .ok_or_else(|| MapError::MapNotFound {
-                name: name.to_owned(),
-            })
-            .and_then(|lock| {
-                lock.try_read().map_err(|_| MapError::BorrowError {
-                    name: name.to_owned(),
-                })
-            })
+    pub fn map(&self, name: &str) -> Option<&Map> {
+        self.maps.get(name)
     }
 
     /// Returns a mutable reference to the map with the given name.
@@ -739,22 +754,24 @@ impl Bpf {
     ///
     /// For more details and examples on maps and their usage, see the [maps module
     /// documentation][crate::maps].
+    pub fn map_mut(&mut self, name: &str) -> Option<&mut Map> {
+        self.maps.get_mut(name)
+    }
+
+    /// Takes ownership of a map with the given name.
     ///
-    /// # Errors
+    /// Use this when borrowing with [`map`](crate::Bpf::map) or [`map_mut`](crate::Bpf::map_mut)
+    /// is not possible (eg when using the map from an async task). The returned
+    /// map will be closed on `Drop`, therefore the caller is responsible for
+    /// managing its lifetime.
     ///
-    /// Returns [`MapError::MapNotFound`] if the map does not exist. If the map is already borrowed
-    /// mutably with [map_mut](Self::map_mut) then [`MapError::BorrowError`] is returned.
-    pub fn map_mut(&self, name: &str) -> Result<MapRefMut, MapError> {
-        self.maps
-            .get(name)
-            .ok_or_else(|| MapError::MapNotFound {
-                name: name.to_owned(),
-            })
-            .and_then(|lock| {
-                lock.try_write().map_err(|_| MapError::BorrowError {
-                    name: name.to_owned(),
-                })
-            })
+    /// The returned type is mostly opaque. In order to do anything useful with it you need to
+    /// convert it to a [typed map](crate::maps).
+    ///
+    /// For more details and examples on maps and their usage, see the [maps module
+    /// documentation][crate::maps].
+    pub fn take_map(&mut self, name: &str) -> Option<Map> {
+        self.maps.remove(name)
     }
 
     /// An iterator over all the maps.
@@ -764,22 +781,14 @@ impl Bpf {
     /// # let mut bpf = aya::Bpf::load(&[])?;
     /// for (name, map) in bpf.maps() {
     ///     println!(
-    ///         "found map `{}` of type `{:?}`",
+    ///         "found map `{}`",
     ///         name,
-    ///         map?.map_type().unwrap()
     ///     );
     /// }
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn maps(&self) -> impl Iterator<Item = (&str, Result<MapRef, MapError>)> {
-        let ret = self.maps.iter().map(|(name, lock)| {
-            (
-                name.as_str(),
-                lock.try_read()
-                    .map_err(|_| MapError::BorrowError { name: name.clone() }),
-            )
-        });
-        ret
+    pub fn maps(&self) -> impl Iterator<Item = (&str, &Map)> {
+        self.maps.iter().map(|(name, map)| (name.as_str(), map))
     }
 
     /// Returns a reference to the program with the given name.

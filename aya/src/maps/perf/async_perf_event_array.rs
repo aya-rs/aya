@@ -1,6 +1,6 @@
 use bytes::BytesMut;
 use std::{
-    ops::DerefMut,
+    convert::AsMut,
     os::unix::prelude::{AsRawFd, RawFd},
 };
 
@@ -12,7 +12,7 @@ use tokio::io::unix::AsyncFd;
 
 use crate::maps::{
     perf::{Events, PerfBufferError, PerfEventArray, PerfEventArrayBuffer},
-    Map, MapError, MapRefMut,
+    MapData, MapError,
 };
 
 /// A `Future` based map that can be used to receive events from eBPF programs using the linux
@@ -45,7 +45,7 @@ use crate::maps::{
 /// # }
 /// # #[cfg(feature = "async_tokio")]
 /// # async fn try_main() -> Result<(), Error> {
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::perf::{AsyncPerfEventArray, PerfBufferError};
 /// use aya::util::online_cpus;
 /// use futures::future;
@@ -53,7 +53,7 @@ use crate::maps::{
 /// use tokio::task; // or async_std::task
 ///
 /// // try to convert the PERF_ARRAY map to an AsyncPerfEventArray
-/// let mut perf_array = AsyncPerfEventArray::try_from(bpf.map_mut("PERF_ARRAY")?)?;
+/// let mut perf_array = AsyncPerfEventArray::try_from(bpf.take_map("PERF_ARRAY").unwrap())?;
 ///
 /// for cpu_id in online_cpus()? {
 ///     // open a separate perf buffer for each cpu
@@ -85,11 +85,11 @@ use crate::maps::{
 /// # }
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_PERF_EVENT_ARRAY")]
-pub struct AsyncPerfEventArray<T: DerefMut<Target = Map>> {
+pub struct AsyncPerfEventArray<T> {
     perf_map: PerfEventArray<T>,
 }
 
-impl<T: DerefMut<Target = Map>> AsyncPerfEventArray<T> {
+impl<T: AsMut<MapData> + AsRef<MapData>> AsyncPerfEventArray<T> {
     /// Opens the perf buffer at the given index.
     ///
     /// The returned buffer will receive all the events eBPF programs send at the given index.
@@ -112,8 +112,8 @@ impl<T: DerefMut<Target = Map>> AsyncPerfEventArray<T> {
     }
 }
 
-impl<T: DerefMut<Target = Map>> AsyncPerfEventArray<T> {
-    fn new(map: T) -> Result<AsyncPerfEventArray<T>, MapError> {
+impl<T: AsRef<MapData>> AsyncPerfEventArray<T> {
+    pub(crate) fn new(map: T) -> Result<AsyncPerfEventArray<T>, MapError> {
         Ok(AsyncPerfEventArray {
             perf_map: PerfEventArray::new(map)?,
         })
@@ -127,7 +127,7 @@ impl<T: DerefMut<Target = Map>> AsyncPerfEventArray<T> {
 ///
 /// See the [`AsyncPerfEventArray` documentation](AsyncPerfEventArray) for an overview of how to
 /// use perf buffers.
-pub struct AsyncPerfEventArrayBuffer<T: DerefMut<Target = Map>> {
+pub struct AsyncPerfEventArrayBuffer<T> {
     buf: PerfEventArrayBuffer<T>,
 
     #[cfg(feature = "async_tokio")]
@@ -138,7 +138,7 @@ pub struct AsyncPerfEventArrayBuffer<T: DerefMut<Target = Map>> {
 }
 
 #[cfg(any(feature = "async_tokio"))]
-impl<T: DerefMut<Target = Map>> AsyncPerfEventArrayBuffer<T> {
+impl<T: AsMut<MapData> + AsRef<MapData>> AsyncPerfEventArrayBuffer<T> {
     /// Reads events from the buffer.
     ///
     /// This method reads events into the provided slice of buffers, filling
@@ -168,7 +168,7 @@ impl<T: DerefMut<Target = Map>> AsyncPerfEventArrayBuffer<T> {
 }
 
 #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
-impl<T: DerefMut<Target = Map>> AsyncPerfEventArrayBuffer<T> {
+impl<T: AsMut<MapData> + AsRef<MapData>> AsyncPerfEventArrayBuffer<T> {
     /// Reads events from the buffer.
     ///
     /// This method reads events into the provided slice of buffers, filling
@@ -193,13 +193,5 @@ impl<T: DerefMut<Target = Map>> AsyncPerfEventArrayBuffer<T> {
                 Err(e) => return Err(e),
             }
         }
-    }
-}
-
-impl TryFrom<MapRefMut> for AsyncPerfEventArray<MapRefMut> {
-    type Error = MapError;
-
-    fn try_from(a: MapRefMut) -> Result<AsyncPerfEventArray<MapRefMut>, MapError> {
-        AsyncPerfEventArray::new(a)
     }
 }

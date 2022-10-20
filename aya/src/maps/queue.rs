@@ -1,13 +1,11 @@
 //! A FIFO queue.
 use std::{
+    convert::{AsMut, AsRef},
     marker::PhantomData,
-    mem,
-    ops::{Deref, DerefMut},
 };
 
 use crate::{
-    generated::bpf_map_type::BPF_MAP_TYPE_QUEUE,
-    maps::{Map, MapError, MapRef, MapRefMut},
+    maps::{check_kv_size, MapData, MapError},
     sys::{bpf_map_lookup_and_delete_elem, bpf_map_push_elem},
     Pod,
 };
@@ -20,39 +18,27 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::Queue;
 ///
-/// let mut queue = Queue::try_from(bpf.map_mut("ARRAY")?)?;
+/// let mut queue = Queue::try_from(bpf.map_mut("ARRAY").unwrap())?;
 /// queue.push(42, 0)?;
 /// queue.push(43, 0)?;
 /// assert_eq!(queue.pop(0)?, 42);
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_QUEUE")]
-pub struct Queue<T: Deref<Target = Map>, V: Pod> {
+pub struct Queue<T, V: Pod> {
     inner: T,
     _v: PhantomData<V>,
 }
 
-impl<T: Deref<Target = Map>, V: Pod> Queue<T, V> {
-    fn new(map: T) -> Result<Queue<T, V>, MapError> {
-        let map_type = map.obj.map_type();
-        if map_type != BPF_MAP_TYPE_QUEUE as u32 {
-            return Err(MapError::InvalidMapType { map_type });
-        }
-        let expected = 0;
-        let size = map.obj.key_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidKeySize { size, expected });
-        }
+impl<T: AsRef<MapData>, V: Pod> Queue<T, V> {
+    pub(crate) fn new(map: T) -> Result<Queue<T, V>, MapError> {
+        let data = map.as_ref();
+        check_kv_size::<(), V>(data)?;
 
-        let expected = mem::size_of::<V>();
-        let size = map.obj.value_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidValueSize { size, expected });
-        }
-        let _fd = map.fd_or_err()?;
+        let _fd = data.fd_or_err()?;
 
         Ok(Queue {
             inner: map,
@@ -64,11 +50,11 @@ impl<T: Deref<Target = Map>, V: Pod> Queue<T, V> {
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
     pub fn capacity(&self) -> u32 {
-        self.inner.obj.max_entries()
+        self.inner.as_ref().obj.max_entries()
     }
 }
 
-impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Queue<T, V> {
+impl<T: AsMut<MapData>, V: Pod> Queue<T, V> {
     /// Removes the first element and returns it.
     ///
     /// # Errors
@@ -76,7 +62,7 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Queue<T, V> {
     /// Returns [`MapError::ElementNotFound`] if the queue is empty, [`MapError::SyscallError`]
     /// if `bpf_map_lookup_and_delete_elem` fails.
     pub fn pop(&mut self, flags: u64) -> Result<V, MapError> {
-        let fd = self.inner.fd_or_err()?;
+        let fd = self.inner.as_mut().fd_or_err()?;
 
         let value = bpf_map_lookup_and_delete_elem::<u32, _>(fd, None, flags).map_err(
             |(_, io_error)| MapError::SyscallError {
@@ -93,27 +79,11 @@ impl<T: Deref<Target = Map> + DerefMut<Target = Map>, V: Pod> Queue<T, V> {
     ///
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
     pub fn push(&mut self, value: V, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.fd_or_err()?;
+        let fd = self.inner.as_mut().fd_or_err()?;
         bpf_map_push_elem(fd, &value, flags).map_err(|(_, io_error)| MapError::SyscallError {
             call: "bpf_map_push_elem".to_owned(),
             io_error,
         })?;
         Ok(())
-    }
-}
-
-impl<V: Pod> TryFrom<MapRef> for Queue<MapRef, V> {
-    type Error = MapError;
-
-    fn try_from(a: MapRef) -> Result<Queue<MapRef, V>, MapError> {
-        Queue::new(a)
-    }
-}
-
-impl<V: Pod> TryFrom<MapRefMut> for Queue<MapRefMut, V> {
-    type Error = MapError;
-
-    fn try_from(a: MapRefMut) -> Result<Queue<MapRefMut, V>, MapError> {
-        Queue::new(a)
     }
 }

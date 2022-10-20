@@ -90,7 +90,7 @@ impl BpfLogger {
         logger: T,
     ) -> Result<BpfLogger, Error> {
         let logger = Arc::new(logger);
-        let mut logs: AsyncPerfEventArray<_> = bpf.map_mut("AYA_LOGS")?.try_into()?;
+        let mut logs: AsyncPerfEventArray<_> = bpf.take_map("AYA_LOGS").unwrap().try_into()?;
 
         for cpu_id in online_cpus().map_err(Error::InvalidOnlineCpu)? {
             let mut buf = logs.open(cpu_id, None)?;

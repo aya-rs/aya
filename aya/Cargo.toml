@@ -34,4 +34,4 @@ async_std = ["async-io", "async"]
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
+rustdoc-args = ["--cfg", "docsrs","-D", "warnings"]
