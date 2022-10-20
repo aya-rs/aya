@@ -35,7 +35,7 @@ use crate::{
 /// use aya::maps::StackTraceMap;
 /// use aya::util::kernel_symbols;
 ///
-/// let mut stack_traces = StackTraceMap::try_from(bpf.map("STACK_TRACES")?)?;
+/// let mut stack_traces = StackTraceMap::try_from(bpf.map("STACK_TRACES").unwrap())?;
 /// // load kernel symbols from /proc/kallsyms
 /// let ksyms = kernel_symbols()?;
 ///

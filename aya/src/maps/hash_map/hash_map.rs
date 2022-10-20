@@ -21,7 +21,7 @@ use crate::{
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::HashMap;
 ///
-/// let mut redirect_ports = HashMap::try_from(bpf.map_mut("REDIRECT_PORTS")?)?;
+/// let mut redirect_ports = HashMap::try_from(bpf.map_mut("REDIRECT_PORTS").unwrap())?;
 ///
 /// // redirect port 80 to 8080
 /// redirect_ports.insert(80, 8080, 0);

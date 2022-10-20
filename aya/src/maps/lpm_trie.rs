@@ -24,7 +24,7 @@ use crate::{
 /// use aya::maps::lpm_trie::{LpmTrie, Key};
 /// use std::net::Ipv4Addr;
 ///
-/// let mut trie = LpmTrie::try_from(bpf.map_mut("LPM_TRIE")?)?;
+/// let mut trie = LpmTrie::try_from(bpf.map_mut("LPM_TRIE").unwrap())?;
 /// let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
 /// // The following represents a key for the "8.8.8.8/16" subnet.
 /// // The first argument - the prefix length - represents how many bytes should be matched against. The second argument is the actual data to be matched.

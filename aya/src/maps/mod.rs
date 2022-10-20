@@ -22,7 +22,7 @@
 //! use aya::maps::SockMap;
 //! use aya::programs::SkMsg;
 //!
-//! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+//! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS").unwrap())?;
 //! let map_fd = intercept_egress.fd()?;
 //! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 //! prog.load()?;
@@ -90,13 +90,6 @@ pub use stack_trace::StackTraceMap;
 #[derive(Error, Debug)]
 /// Errors occuring from working with Maps
 pub enum MapError {
-    /// Unable to find the map
-    #[error("map `{name}` not found ")]
-    MapNotFound {
-        /// Map name
-        name: String,
-    },
-
     /// Invalid map type encontered
     #[error("invalid map type {map_type}")]
     InvalidMapType {

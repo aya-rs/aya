@@ -31,7 +31,7 @@ use crate::{
 /// const CPU_IDS: u8 = 1;
 /// const WAKEUPS: u8 = 2;
 ///
-/// let mut hm = PerCpuHashMap::<_, u8, u32>::try_from(bpf.map_mut("PER_CPU_STORAGE")?)?;
+/// let mut hm = PerCpuHashMap::<_, u8, u32>::try_from(bpf.map_mut("PER_CPU_STORAGE").unwrap())?;
 /// let cpu_ids = unsafe { hm.get(&CPU_IDS, 0)? };
 /// let wakeups = unsafe { hm.get(&WAKEUPS, 0)? };
 /// for (cpu_id, wakeups) in cpu_ids.iter().zip(wakeups.iter()) {
@@ -107,7 +107,7 @@ impl<T: AsMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     ///
     /// const RETRIES: u8 = 1;
     ///
-    /// let mut hm = PerCpuHashMap::<_, u8, u32>::try_from(bpf.map_mut("PER_CPU_STORAGE")?)?;
+    /// let mut hm = PerCpuHashMap::<_, u8, u32>::try_from(bpf.map_mut("PER_CPU_STORAGE").unwrap())?;
     /// hm.insert(
     ///     RETRIES,
     ///     PerCpuValues::try_from(vec![3u32; nr_cpus()?])?,

@@ -41,7 +41,7 @@ pub enum SkSkbKind {
 /// use aya::maps::SockMap;
 /// use aya::programs::SkSkb;
 ///
-/// let intercept_ingress: SockMap<_> = bpf.map("INTERCEPT_INGRESS")?.try_into()?;
+/// let intercept_ingress: SockMap<_> = bpf.map("INTERCEPT_INGRESS").unwrap().try_into()?;
 /// let map_fd = intercept_ingress.fd()?;
 ///
 /// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;

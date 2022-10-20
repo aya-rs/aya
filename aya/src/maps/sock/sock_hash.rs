@@ -46,7 +46,7 @@ use crate::{
 /// use aya::maps::SockHash;
 /// use aya::programs::SkMsg;
 ///
-/// let mut intercept_egress = SockHash::<_, u32>::try_from(bpf.map("INTERCEPT_EGRESS")?)?;
+/// let mut intercept_egress = SockHash::<_, u32>::try_from(bpf.map("INTERCEPT_EGRESS").unwrap())?;
 /// let map_fd = intercept_egress.fd()?;
 ///
 /// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
@@ -54,7 +54,7 @@ use crate::{
 /// prog.attach(map_fd)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
-/// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS")?)?;
+/// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS").unwrap())?;
 ///
 /// intercept_egress.insert(1234, client.as_raw_fd(), 0)?;
 ///

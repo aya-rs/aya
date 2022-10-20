@@ -743,14 +743,8 @@ impl Bpf {
     ///
     /// For more details and examples on maps and their usage, see the [maps module
     /// documentation][crate::maps].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`MapError::MapNotFound`] if the map does not exist.
-    pub fn map(&self, name: &str) -> Result<&Map, MapError> {
-        self.maps.get(name).ok_or_else(|| MapError::MapNotFound {
-            name: name.to_owned(),
-        })
+    pub fn map(&self, name: &str) -> Option<&Map> {
+        self.maps.get(name)
     }
 
     /// Returns a mutable reference to the map with the given name.
@@ -760,16 +754,8 @@ impl Bpf {
     ///
     /// For more details and examples on maps and their usage, see the [maps module
     /// documentation][crate::maps].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`MapError::MapNotFound`] if the map does not exist.
-    pub fn map_mut(&mut self, name: &str) -> Result<&mut Map, MapError> {
-        self.maps
-            .get_mut(name)
-            .ok_or_else(|| MapError::MapNotFound {
-                name: name.to_owned(),
-            })
+    pub fn map_mut(&mut self, name: &str) -> Option<&mut Map> {
+        self.maps.get_mut(name)
     }
 
     /// Takes ownership of a map with the given name.
@@ -785,14 +771,8 @@ impl Bpf {
     ///
     /// For more details and examples on maps and their usage, see the [maps module
     /// documentation][crate::maps].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`MapError::MapNotFound`] if the map does not exist.
-    pub fn take_map(&mut self, name: &str) -> Result<Map, MapError> {
-        self.maps.remove(name).ok_or_else(|| MapError::MapNotFound {
-            name: name.to_owned(),
-        })
+    pub fn take_map(&mut self, name: &str) -> Option<Map> {
+        self.maps.remove(name)
     }
 
     /// An iterator over all the maps.
@@ -808,8 +788,8 @@ impl Bpf {
     /// }
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn maps(&self) -> impl Iterator<Item = (&str, Result<&Map, MapError>)> {
-        self.maps.iter().map(|(name, map)| (name.as_str(), Ok(map)))
+    pub fn maps(&self) -> impl Iterator<Item = (&str, &Map)> {
+        self.maps.iter().map(|(name, map)| (name.as_str(), map))
     }
 
     /// Returns a reference to the program with the given name.

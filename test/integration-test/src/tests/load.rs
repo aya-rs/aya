@@ -36,8 +36,8 @@ fn multiple_btf_maps() -> anyhow::Result<()> {
         include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/multimap-btf.bpf.o");
     let mut bpf = Bpf::load(bytes)?;
 
-    let map_1: Array<_, u64> = bpf.take_map("map_1")?.try_into()?;
-    let map_2: Array<_, u64> = bpf.take_map("map_2")?.try_into()?;
+    let map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into()?;
+    let map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into()?;
 
     let prog: &mut TracePoint = bpf.program_mut("tracepoint").unwrap().try_into().unwrap();
     prog.load().unwrap();

@@ -27,7 +27,7 @@ use crate::{
 /// use aya::maps::ProgramArray;
 /// use aya::programs::CgroupSkb;
 ///
-/// let mut prog_array = ProgramArray::try_from(bpf.take_map("JUMP_TABLE")?)?;
+/// let mut prog_array = ProgramArray::try_from(bpf.take_map("JUMP_TABLE").unwrap())?;
 /// let prog_0: &CgroupSkb = bpf.program("example_prog_0").unwrap().try_into()?;
 /// let prog_0_fd =  prog_0.fd().unwrap();
 /// let prog_1: &CgroupSkb = bpf.program("example_prog_1").unwrap().try_into()?;

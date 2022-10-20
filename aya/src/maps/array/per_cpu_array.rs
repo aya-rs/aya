@@ -33,7 +33,7 @@ use crate::{
 /// use aya::maps::{PerCpuArray, PerCpuValues};
 /// use aya::util::nr_cpus;
 ///
-/// let mut array = PerCpuArray::try_from(bpf.map_mut("ARRAY")?)?;
+/// let mut array = PerCpuArray::try_from(bpf.map_mut("ARRAY").unwrap())?;
 ///
 /// // set array[1] = 42 for all cpus
 /// let nr_cpus = nr_cpus()?;

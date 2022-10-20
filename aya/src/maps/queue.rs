@@ -21,7 +21,7 @@ use crate::{
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::Queue;
 ///
-/// let mut queue = Queue::try_from(bpf.map_mut("ARRAY")?)?;
+/// let mut queue = Queue::try_from(bpf.map_mut("ARRAY").unwrap())?;
 /// queue.push(42, 0)?;
 /// queue.push(43, 0)?;
 /// assert_eq!(queue.pop(0)?, 42);
