@@ -228,6 +228,33 @@ define_link_wrapper!(
     TcLinkId
 );
 
+impl SchedClassifierLink {
+    /// Creates a new SchedClassifierLink instance
+    pub fn new(
+        interface: &str,
+        attach_type: TcAttachType,
+        priority: u16,
+        handle: u32,
+    ) -> Result<SchedClassifierLink, ProgramError> {
+        let if_index = ifindex_from_ifname(interface)
+            .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        Ok(SchedClassifierLink(TcLink {
+            if_index: if_index as i32,
+            attach_type,
+            priority,
+            handle,
+        }))
+    }
+
+    /// Returns options for a SchedClassifierLink
+    pub fn tc_options(&self) -> TcOptions {
+        TcOptions {
+            priority: self.0.priority,
+            handle: self.0.handle,
+        }
+    }
+}
+
 /// Add the `clasct` qdisc to the given interface.
 ///
 /// The `clsact` qdisc must be added to an interface before [`SchedClassifier`]
