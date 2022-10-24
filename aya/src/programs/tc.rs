@@ -55,6 +55,7 @@ pub enum TcAttachType {
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
 /// # let mut bpf = aya::Bpf::load(&[])?;
+/// use aya::programs::tc::TcOptions;
 /// use aya::programs::{tc, SchedClassifier, TcAttachType};
 ///
 /// // the clsact qdisc needs to be added before SchedClassifier programs can be
@@ -63,7 +64,7 @@ pub enum TcAttachType {
 ///
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach("eth0", TcAttachType::Ingress, 0, 0)?;
+/// prog.attach("eth0", TcAttachType::Ingress, TcOptions::default())?;
 ///
 /// # Ok::<(), Error>(())
 /// ```
@@ -99,6 +100,17 @@ impl TcAttachType {
     }
 }
 
+/// Options for SchedClassifier attach
+#[derive(Default)]
+pub struct TcOptions {
+    /// `priority`: priority assigned to tc program with lower number = higher priority.
+    ///  If set to default (0), the system chooses the next highest priority or 49152 if no filters exist yet
+    pub priority: u16,
+    /// `handle`: used to uniquely identify a program at a given priority level.  
+    /// If set to default (0), the system chooses a handle.
+    pub handle: u32,
+}
+
 impl SchedClassifier {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
@@ -106,13 +118,6 @@ impl SchedClassifier {
     }
 
     /// Attaches the program to the given `interface`.
-    ///
-    /// Valid priority values range from 0 - 65535 with lower number = higher priority.
-    /// 0 means let the system choose the next highest priority, or 49152 if no filters exist yet.
-    /// All other values in the range are taken as an explicit priority setting (aka "preference").
-    ///
-    /// `handle` is used to uniquely identify a program at a given priority level.  
-    /// If set to 0, the system will choose a handle.
     ///
     /// The returned value can be used to detach, see [SchedClassifier::detach].
     ///
@@ -126,8 +131,7 @@ impl SchedClassifier {
         &mut self,
         interface: &str,
         attach_type: TcAttachType,
-        priority: u16,
-        handle: u32,
+        options: TcOptions,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let if_index = ifindex_from_ifname(interface)
@@ -138,8 +142,8 @@ impl SchedClassifier {
                 &attach_type,
                 prog_fd,
                 &self.name,
-                priority,
-                handle,
+                options.priority,
+                options.handle,
             )
         }
         .map_err(|io_error| TcError::NetlinkError { io_error })?;
