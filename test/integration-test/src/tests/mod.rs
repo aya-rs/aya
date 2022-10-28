@@ -12,7 +12,7 @@ pub use integration_test_macros::integration_test;
 #[derive(Debug)]
 pub struct IntegrationTest {
     pub name: &'static str,
-    pub test_fn: fn() -> anyhow::Result<()>,
+    pub test_fn: fn(),
 }
 
 pub(crate) fn kernel_version() -> anyhow::Result<(u8, u8, u8)> {
