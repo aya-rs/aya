@@ -30,6 +30,9 @@ Make sure that your work is tracked by an issue or a (draft) pull request, this
 helps us avoid duplicating work. If your work includes publicly visible changes,
 make sure those are properly documented as explained in the section above.
 
+### Running tests
+Run the unit tests with `cargo test`. See [Aya Integration Tests](https://github.com/aya-rs/aya/blob/main/test/README.md) regarding running the integration tests.
+
 ### Commits
 
 It is a recommended best practice to keep your changes as logically grouped as
