@@ -49,7 +49,7 @@ fn codegen_internal_btf_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         .to_string();
 
     // write the bindings, with the original helpers removed
-    write_to_file(&generated.join("btf_internal_bindings.rs"), &bindings)?;
+    write_to_file(generated.join("btf_internal_bindings.rs"), &bindings)?;
 
     Ok(())
 }
@@ -219,7 +219,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
 
         // write the bindings, with the original helpers removed
         write_to_file(
-            &generated.join(format!("linux_bindings_{}.rs", arch)),
+            generated.join(format!("linux_bindings_{}.rs", arch)),
             &bindings.to_string(),
         )?;
     }
