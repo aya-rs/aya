@@ -1,4 +1,5 @@
 //! Hash map types.
+
 use crate::{
     maps::MapError,
     sys::{bpf_map_delete_elem, bpf_map_update_elem},
@@ -15,12 +16,12 @@ use super::MapData;
 
 pub(crate) fn insert<K, V>(
     map: &mut MapData,
-    key: K,
-    value: V,
+    key: &K,
+    value: &V,
     flags: u64,
 ) -> Result<(), MapError> {
     let fd = map.fd_or_err()?;
-    bpf_map_update_elem(fd, Some(&key), &value, flags).map_err(|(_, io_error)| {
+    bpf_map_update_elem(fd, Some(key), value, flags).map_err(|(_, io_error)| {
         MapError::SyscallError {
             call: "bpf_map_update_elem".to_owned(),
             io_error,

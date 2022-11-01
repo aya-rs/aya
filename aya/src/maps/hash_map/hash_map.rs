@@ -1,6 +1,6 @@
 use std::{
     convert::{AsMut, AsRef},
-    marker::PhantomData,
+    marker::PhantomData, borrow::Borrow,
 };
 
 use crate::{
@@ -78,8 +78,8 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
 
 impl<T: AsMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Inserts a key-value pair into the map.
-    pub fn insert(&mut self, key: K, value: V, flags: u64) -> Result<(), MapError> {
-        hash_map::insert(self.inner.as_mut(), key, value, flags)
+    pub fn insert(&mut self, key: impl Borrow<K>, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
+        hash_map::insert(self.inner.as_mut(), key.borrow(), value.borrow(), flags)
     }
 
     /// Removes a key from the map.
@@ -285,7 +285,7 @@ mod tests {
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
         assert!(matches!(
-            hm.insert(1, 42, 0),
+            hm.insert(1u32, 42u32, 0),
             Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_update_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
