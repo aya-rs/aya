@@ -285,7 +285,7 @@ mod tests {
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
         assert!(matches!(
-            hm.insert(1u32, 42u32, 0),
+            hm.insert(1, 42, 0),
             Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_update_elem" && io_error.raw_os_error() == Some(EFAULT)
         ));
     }
@@ -309,6 +309,27 @@ mod tests {
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
         assert!(hm.insert(1, 42, 0).is_ok());
+    }
+
+    #[test]
+    fn test_insert_boxed_ok() {
+        override_syscall(|call| match call {
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
+                ..
+            } => Ok(1),
+            _ => sys_error(EFAULT),
+        });
+
+        let mut map = MapData {
+            obj: new_obj_map(),
+            fd: Some(42),
+            pinned: false,
+            btf_fd: None,
+        };
+        let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
+
+        assert!(hm.insert(Box::new(1), Box::new(42), 0).is_ok());
     }
 
     #[test]

@@ -1,7 +1,7 @@
 use std::{
     convert::{AsMut, AsRef},
     marker::PhantomData,
-    os::unix::io::{AsRawFd, RawFd},
+    os::unix::io::{AsRawFd, RawFd}, borrow::Borrow,
 };
 
 use crate::{
@@ -115,7 +115,7 @@ impl<T: AsRef<MapData>, K: Pod> SockHash<T, K> {
 
 impl<T: AsMut<MapData>, K: Pod> SockHash<T, K> {
     /// Inserts a socket under the given key.
-    pub fn insert<I: AsRawFd>(&mut self, key: K, value: I, flags: u64) -> Result<(), MapError> {
+    pub fn insert<I: AsRawFd>(&mut self, key: impl Borrow<K>, value: I, flags: u64) -> Result<(), MapError> {
         hash_map::insert(self.inner.as_mut(), &key, &value.as_raw_fd(), flags)
     }
 
