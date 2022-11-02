@@ -1,7 +1,8 @@
 //! A FIFO queue.
 use std::{
+    borrow::Borrow,
     convert::{AsMut, AsRef},
-    marker::PhantomData, borrow::Borrow,
+    marker::PhantomData,
 };
 
 use crate::{

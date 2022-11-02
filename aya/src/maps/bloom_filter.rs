@@ -1,5 +1,5 @@
 //! A Bloom Filter.
-use std::{convert::AsRef, marker::PhantomData, borrow::Borrow};
+use std::{borrow::Borrow, convert::AsRef, marker::PhantomData};
 
 use crate::{
     maps::{check_v_size, MapData, MapError},

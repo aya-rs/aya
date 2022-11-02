@@ -1,4 +1,4 @@
-use core::{cell::UnsafeCell, marker::PhantomData, mem, borrow::Borrow};
+use core::{borrow::Borrow, cell::UnsafeCell, marker::PhantomData, mem};
 
 use aya_bpf_cty::c_void;
 

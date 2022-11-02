@@ -1,7 +1,8 @@
 //! A LIFO stack.
 use std::{
+    borrow::Borrow,
     convert::{AsMut, AsRef},
-    marker::PhantomData, borrow::Borrow,
+    marker::PhantomData,
 };
 
 use crate::{

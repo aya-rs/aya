@@ -1,6 +1,7 @@
 use std::{
+    borrow::Borrow,
     convert::{AsMut, AsRef},
-    marker::PhantomData, borrow::Borrow,
+    marker::PhantomData,
 };
 
 use crate::{
@@ -78,7 +79,12 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
 
 impl<T: AsMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Inserts a key-value pair into the map.
-    pub fn insert(&mut self, key: impl Borrow<K>, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
+    pub fn insert(
+        &mut self,
+        key: impl Borrow<K>,
+        value: impl Borrow<V>,
+        flags: u64,
+    ) -> Result<(), MapError> {
         hash_map::insert(self.inner.as_mut(), &key, &value, flags)
     }
 

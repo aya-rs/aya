@@ -1,8 +1,9 @@
 //! A LPM Trie.
 use std::{
+    borrow::Borrow,
     convert::{AsMut, AsRef},
     marker::PhantomData,
-    mem, borrow::Borrow,
+    mem,
 };
 
 use crate::{
@@ -128,7 +129,12 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
 
 impl<T: AsMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Inserts a key value pair into the map.
-    pub fn insert(&mut self, key: &Key<K>, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
+    pub fn insert(
+        &mut self,
+        key: &Key<K>,
+        value: impl Borrow<V>,
+        flags: u64,
+    ) -> Result<(), MapError> {
         let fd = self.inner.as_mut().fd_or_err()?;
         bpf_map_update_elem(fd, Some(key), &value, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
