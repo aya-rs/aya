@@ -30,7 +30,7 @@ pub(crate) fn insert<K: Pod, V: Pod>(
     Ok(())
 }
 
-pub(crate) fn remove<K>(map: &mut MapData, key: &K) -> Result<(), MapError> {
+pub(crate) fn remove<K: Pod>(map: &mut MapData, key: &K) -> Result<(), MapError> {
     let fd = map.fd_or_err()?;
     bpf_map_delete_elem(fd, key)
         .map(|_| ())

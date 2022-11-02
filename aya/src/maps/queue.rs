@@ -81,7 +81,7 @@ impl<T: AsMut<MapData>, V: Pod> Queue<T, V> {
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
     pub fn push(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.as_mut().fd_or_err()?;
-        bpf_map_push_elem(fd, &value, flags).map_err(|(_, io_error)| MapError::SyscallError {
+        bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| MapError::SyscallError {
             call: "bpf_map_push_elem".to_owned(),
             io_error,
         })?;

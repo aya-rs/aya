@@ -123,7 +123,7 @@ impl<T: AsMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
         flags: u64,
     ) -> Result<(), MapError> {
         let fd = self.inner.as_mut().fd_or_err()?;
-        bpf_map_update_elem_per_cpu(fd, &key, &values, flags).map_err(|(_, io_error)| {
+        bpf_map_update_elem_per_cpu(fd, key.borrow(), &values, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 io_error,

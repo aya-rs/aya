@@ -251,7 +251,7 @@ pub(crate) fn bpf_map_update_elem<K: Pod, V: Pod>(
     sys_bpf(bpf_cmd::BPF_MAP_UPDATE_ELEM, &attr)
 }
 
-pub(crate) fn bpf_map_push_elem<V>(fd: RawFd, value: &V, flags: u64) -> SysResult {
+pub(crate) fn bpf_map_push_elem<V: Pod>(fd: RawFd, value: &V, flags: u64) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -279,7 +279,7 @@ pub(crate) fn bpf_map_update_elem_ptr<K, V>(
     sys_bpf(bpf_cmd::BPF_MAP_UPDATE_ELEM, &attr)
 }
 
-pub(crate) fn bpf_map_update_elem_per_cpu<K, V: Pod>(
+pub(crate) fn bpf_map_update_elem_per_cpu<K: Pod, V: Pod>(
     fd: RawFd,
     key: &K,
     values: &PerCpuValues<V>,
@@ -289,7 +289,7 @@ pub(crate) fn bpf_map_update_elem_per_cpu<K, V: Pod>(
     bpf_map_update_elem_ptr(fd, key, mem.as_mut_ptr(), flags)
 }
 
-pub(crate) fn bpf_map_delete_elem<K>(fd: RawFd, key: &K) -> SysResult {
+pub(crate) fn bpf_map_delete_elem<K: Pod>(fd: RawFd, key: &K) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -299,7 +299,7 @@ pub(crate) fn bpf_map_delete_elem<K>(fd: RawFd, key: &K) -> SysResult {
     sys_bpf(bpf_cmd::BPF_MAP_DELETE_ELEM, &attr)
 }
 
-pub(crate) fn bpf_map_get_next_key<K>(
+pub(crate) fn bpf_map_get_next_key<K: Pod>(
     fd: RawFd,
     key: Option<&K>,
 ) -> Result<Option<K>, (c_long, io::Error)> {
