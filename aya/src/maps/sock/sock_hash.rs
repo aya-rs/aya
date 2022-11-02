@@ -122,7 +122,7 @@ impl<T: AsMut<MapData>, K: Pod> SockHash<T, K> {
         value: I,
         flags: u64,
     ) -> Result<(), MapError> {
-        hash_map::insert(self.inner.as_mut(), &key, &value.as_raw_fd(), flags)
+        hash_map::insert(self.inner.as_mut(), key.borrow(), &value.as_raw_fd(), flags)
     }
 
     /// Removes a socket from the map.

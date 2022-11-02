@@ -1,7 +1,7 @@
 //! Hash map types.
 use crate::{
     maps::MapError,
-    sys::{bpf_map_delete_elem, bpf_map_update_elem},
+    sys::{bpf_map_delete_elem, bpf_map_update_elem}, Pod,
 };
 
 #[allow(clippy::module_inception)]
@@ -13,7 +13,7 @@ pub use per_cpu_hash_map::*;
 
 use super::MapData;
 
-pub(crate) fn insert<K, V>(
+pub(crate) fn insert<K: Pod, V: Pod>(
     map: &mut MapData,
     key: &K,
     value: &V,

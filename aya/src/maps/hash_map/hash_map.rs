@@ -85,7 +85,7 @@ impl<T: AsMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
         value: impl Borrow<V>,
         flags: u64,
     ) -> Result<(), MapError> {
-        hash_map::insert(self.inner.as_mut(), &key, &value, flags)
+        hash_map::insert(self.inner.as_mut(), key.borrow(), value.borrow(), flags)
     }
 
     /// Removes a key from the map.

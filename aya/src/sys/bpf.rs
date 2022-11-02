@@ -232,7 +232,7 @@ pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
     }
 }
 
-pub(crate) fn bpf_map_update_elem<K, V>(
+pub(crate) fn bpf_map_update_elem<K: Pod, V: Pod>(
     fd: RawFd,
     key: Option<&K>,
     value: &V,
