@@ -42,7 +42,8 @@ macro_rules! exec_all_tests {
     }};
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let cli = Cli::parse();

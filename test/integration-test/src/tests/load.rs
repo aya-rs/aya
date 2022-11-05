@@ -19,6 +19,8 @@ use rtnetlink::Error::RequestFailed;
 
 const MAX_RETRIES: u32 = 100;
 const RETRY_DURATION_MS: u64 = 10;
+// veth names can be mac 15 char long
+const TEST_VETH_NAME: &str = "aya-veth1";
 
 #[integration_test]
 fn long_name() {
@@ -31,18 +33,19 @@ fn long_name() {
         .unwrap();
     name_prog.load().unwrap();
 
-    // create veth interface pair
-    let veth_name="aya-test-veth1";
-    create_veth_pair(veth_name).unwrap();
+    // Create veth interface pair
+    create_veth_pair(TEST_VETH_NAME).unwrap();
 
-    name_prog.attach(veth_name, XdpFlags::default()).unwrap();
+    name_prog
+        .attach(TEST_VETH_NAME, XdpFlags::default())
+        .unwrap();
 
     // We used to be able to assert with bpftool that the program name was short.
     // It seem though that it now uses the name from the ELF symbol table instead.
     // Therefore, as long as we were able to load the program, this is good enough.
 
-    //delete veth interface pait
-    delete_veth_pair(veth_name).unwrap();
+    // Delete veth interface pait
+    delete_veth_pair(TEST_VETH_NAME).unwrap();
 }
 
 #[integration_test]
@@ -100,11 +103,10 @@ fn unload() {
     let prog: &mut Xdp = bpf.program_mut("test_unload").unwrap().try_into().unwrap();
     prog.load().unwrap();
 
-    // create veth interface pair
-    let veth_name="aya-test-veth1";
-    create_veth_pair(veth_name).unwrap();
+    // Create veth interface pair
+    create_veth_pair(TEST_VETH_NAME).unwrap();
 
-    let link = prog.attach(veth_name, XdpFlags::default()).unwrap();
+    let link = prog.attach(TEST_VETH_NAME, XdpFlags::default()).unwrap();
     {
         let _link_owned = prog.take_link(link);
         prog.unload().unwrap();
@@ -115,15 +117,15 @@ fn unload() {
     prog.load().unwrap();
 
     assert_loaded!("test_unload", true);
-    prog.attach(veth_name, XdpFlags::default()).unwrap();
+    prog.attach(TEST_VETH_NAME, XdpFlags::default()).unwrap();
 
     assert_loaded!("test_unload", true);
     prog.unload().unwrap();
 
     assert_loaded!("test_unload", false);
 
-    //delete veth interface pait
-    delete_veth_pair(veth_name).unwrap();
+    // Delete veth interface pait
+    delete_veth_pair(TEST_VETH_NAME).unwrap();
 }
 
 #[integration_test]
@@ -132,11 +134,10 @@ fn pin_link() {
     let mut bpf = Bpf::load(bytes).unwrap();
     let prog: &mut Xdp = bpf.program_mut("test_unload").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    // create veth interface pair
-    let veth_name="aya-test-veth1";
-    create_veth_pair(veth_name).unwrap();
+    // Create veth interface pair
+    create_veth_pair(TEST_VETH_NAME).unwrap();
 
-    let link_id = prog.attach(veth_name, XdpFlags::default()).unwrap();
+    let link_id = prog.attach(TEST_VETH_NAME, XdpFlags::default()).unwrap();
     let link = prog.take_link(link_id).unwrap();
     assert_loaded!("test_unload", true);
 
@@ -155,8 +156,8 @@ fn pin_link() {
     drop(new_link);
     assert_loaded!("test_unload", false);
 
-    //delete veth interface pait
-    delete_veth_pair(veth_name).unwrap();
+    // Delete veth interface pait
+    delete_veth_pair(TEST_VETH_NAME).unwrap();
 }
 
 #[integration_test]
@@ -164,8 +165,7 @@ fn pin_lifecycle() {
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/pass");
 
     // create veth interface pair
-    let veth_name="aya-test-veth1";
-    create_veth_pair(veth_name).unwrap();
+    create_veth_pair(TEST_VETH_NAME).unwrap();
 
     // 1. Load Program and Pin
     {
@@ -173,7 +173,7 @@ fn pin_lifecycle() {
         let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
         prog.load().unwrap();
 
-        let link_id = prog.attach(veth_name, XdpFlags::default()).unwrap();
+        let link_id = prog.attach(TEST_VETH_NAME, XdpFlags::default()).unwrap();
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
         fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
@@ -199,17 +199,18 @@ fn pin_lifecycle() {
     // program should be unloaded
     assert_loaded!("pass", false);
 
-    //delete veth interface pait
-    delete_veth_pair(veth_name).unwrap();
+    // Delete veth interface pait
+    delete_veth_pair(TEST_VETH_NAME).unwrap();
 }
 
 fn create_veth_pair(veth_name: &str) -> Result<(), rtnetlink::Error> {
-    let (_, handle, _) = new_connection().unwrap();
+    let (connection, handle, _) = new_connection().unwrap();
+    tokio::spawn(connection);
     block_on(async {
         handle
             .link()
             .add()
-            .veth(veth_name.to_string(), veth_name.to_string()+"-pair")
+            .veth(veth_name.to_string(), veth_name.to_string() + "-p")
             // Execute the request, and wait for it to finish
             .execute()
             .await?;
@@ -218,14 +219,15 @@ fn create_veth_pair(veth_name: &str) -> Result<(), rtnetlink::Error> {
 }
 
 fn delete_veth_pair(veth_name: &str) -> Result<(), rtnetlink::Error> {
-    let (_, handle, _) = new_connection().unwrap();
+    let (connection, handle, _) = new_connection().unwrap();
+    tokio::spawn(connection);
     block_on(async {
         let index = match handle
             .link()
             .get()
             .match_name(veth_name.to_string())
             .execute()
-            //should return only one result
+            // should return only one result
             .try_next()
             .await?
         {
@@ -233,7 +235,7 @@ fn delete_veth_pair(veth_name: &str) -> Result<(), rtnetlink::Error> {
             None => return Err(RequestFailed),
         };
 
-        //it should be enough to delete one the pairs
+        // it should be enough to delete one the pairs
         handle.link().del(index).execute().await?;
         Ok::<(), rtnetlink::Error>(())
     })
