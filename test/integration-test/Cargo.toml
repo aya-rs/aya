@@ -16,3 +16,5 @@ libc = { version = "0.2.105" }
 log = "0.4"
 object = { version = "0.29", default-features = false, features = ["std", "read_core", "elf"] }
 regex = "1"
+rtnetlink = "0.11.0"
+futures = "0.3"
