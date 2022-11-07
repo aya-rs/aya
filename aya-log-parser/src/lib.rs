@@ -59,6 +59,8 @@ fn parse_display_hint(s: &str) -> Result<DisplayHint, String> {
         "X" => DisplayHint::UpperHex,
         "ipv4" => DisplayHint::Ipv4,
         "ipv6" => DisplayHint::Ipv6,
+        "mac" => DisplayHint::LowerMac,
+        "MAC" => DisplayHint::UpperMac,
         _ => return Err(format!("unknown display hint: {:?}", s)),
     })
 }

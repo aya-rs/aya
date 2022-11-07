@@ -44,6 +44,8 @@ pub enum RecordField {
     NumArgs,
 }
 
+/// Types which are supported by aya-log and can be safely sent from eBPF
+/// programs to userspace.
 #[repr(usize)]
 #[derive(Copy, Clone, Debug)]
 pub enum Argument {
@@ -64,7 +66,11 @@ pub enum Argument {
     F32,
     F64,
 
+    /// `[u8; 6]` array which represents a MAC address.
+    ArrU8Len6,
+    /// `[u8; 16]` array which represents an IPv6 address.
     ArrU8Len16,
+    /// `[u16; 8]` array which represents an IPv6 address.
     ArrU16Len8,
 
     Str,
@@ -84,6 +90,10 @@ pub enum DisplayHint {
     Ipv4,
     /// `:ipv6`
     Ipv6,
+    /// `:mac`
+    LowerMac,
+    /// `:MAC`
+    UpperMac,
 }
 
 #[cfg(feature = "userspace")]
@@ -175,6 +185,12 @@ impl WriteToBuf for [u16; 8] {
         let ptr = self.as_ptr().cast::<u8>();
         let bytes = unsafe { slice::from_raw_parts(ptr, 16) };
         TagLenValue::<Argument>::new(Argument::ArrU16Len8, bytes).write(buf)
+    }
+}
+
+impl WriteToBuf for [u8; 6] {
+    fn write(&self, buf: &mut [u8]) -> Result<usize, ()> {
+        TagLenValue::<Argument>::new(Argument::ArrU8Len6, self).write(buf)
     }
 }
 
