@@ -591,7 +591,7 @@ impl MapData {
             }
         })?;
         bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
-            name: "BPF_OBJ_GET".to_string(),
+            name: "BPF_OBJ_PIN".to_string(),
             io_error,
         })?;
         self.pinned = true;
