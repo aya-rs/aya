@@ -64,7 +64,12 @@ pub enum TcAttachType {
 ///
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach("eth0", TcAttachType::Ingress, TcOptions::default())?;
+///
+///  // the following demonstrates using the standard attach with default options
+/// prog.attach("eth0", TcAttachType::Ingress)?;
+///
+/// // the following demonstrates the `attach_with_options` variant
+/// prog.attach_with_options("eth0", TcAttachType::Ingress, TcOptions {priority: 50, handle: 3})?;
 ///
 /// # Ok::<(), Error>(())
 /// ```
@@ -117,7 +122,7 @@ impl SchedClassifier {
         load_program(BPF_PROG_TYPE_SCHED_CLS, &mut self.data)
     }
 
-    /// Attaches the program to the given `interface`.
+    /// Attaches the program to the given `interface` using the default options.
     ///
     /// The returned value can be used to detach, see [SchedClassifier::detach].
     ///
@@ -128,6 +133,24 @@ impl SchedClassifier {
     /// interface, see [`qdisc_add_clsact`]
     ///
     pub fn attach(
+        &mut self,
+        interface: &str,
+        attach_type: TcAttachType,
+    ) -> Result<SchedClassifierLinkId, ProgramError> {
+        self.attach_with_options(interface, attach_type, TcOptions::default())
+    }
+
+    /// Attaches the program to the given `interface` with options defined in [`TcOptions`].
+    ///
+    /// The returned value can be used to detach, see [SchedClassifier::detach].
+    ///
+    /// # Errors
+    ///
+    /// [`TcError::NetlinkError`] is returned if attaching fails. A common cause
+    /// of failure is not having added the `clsact` qdisc to the given
+    /// interface, see [`qdisc_add_clsact`]
+    ///
+    pub fn attach_with_options(
         &mut self,
         interface: &str,
         attach_type: TcAttachType,
