@@ -25,7 +25,7 @@ pub use aya_bpf_cty as cty;
 
 use core::ffi::c_void;
 use cty::{c_int, c_long};
-use helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid};
+use helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid};
 
 pub use aya_bpf_macros as macros;
 
@@ -45,6 +45,14 @@ pub trait BpfContext {
 
     fn tgid(&self) -> u32 {
         (bpf_get_current_pid_tgid() >> 32) as u32
+    }
+
+    fn uid(&self) -> u32 {
+        bpf_get_current_uid_gid() as u32
+    }
+
+    fn gid(&self) -> u32 {
+        (bpf_get_current_uid_gid() >> 32) as u32
     }
 }
 
