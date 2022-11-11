@@ -6,7 +6,7 @@ use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_KPROBE,
     programs::{
         define_link_wrapper, load_program,
-        perf_attach::{PerfLink, PerfLinkId},
+        perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{attach, ProbeKind},
         ProgramData, ProgramError,
     },
@@ -90,8 +90,8 @@ define_link_wrapper!(
     KProbeLink,
     /// The type returned by [KProbe::attach]. Can be passed to [KProbe::detach].
     KProbeLinkId,
-    PerfLink,
-    PerfLinkId
+    PerfLinkInner,
+    PerfLinkIdInner
 );
 
 /// The type returned when attaching a [`KProbe`] fails.

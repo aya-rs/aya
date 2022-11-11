@@ -25,12 +25,13 @@ use crate::{
         BtfTracePoint, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr, CgroupSockopt,
         CgroupSysctl, Extension, FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent, ProbeKind,
         Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb,
-        SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Usdt, Xdp,
     },
     sys::{
-        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_btf_datasec_supported,
-        is_btf_decl_tag_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_prog_name_supported,
+        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_cookie_supported,
+        is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_float_supported,
+        is_btf_func_global_supported, is_btf_func_supported, is_btf_supported,
+        is_btf_type_tag_supported, is_perf_link_supported, is_prog_name_supported,
         retry_with_verifier_logs,
     },
     util::{bytes_of, possible_cpus, VerifierLog, POSSIBLE_CPUS},
@@ -116,10 +117,16 @@ impl Default for PinningType {
     }
 }
 
+lazy_static! {
+    pub(crate) static ref FEATURES: Features = Features::new();
+}
+
 // Features implements BPF and BTF feature detection
 #[derive(Default, Debug)]
 pub(crate) struct Features {
     pub bpf_name: bool,
+    pub bpf_cookie: bool,
+    pub bpf_perf_link: bool,
     pub btf: bool,
     pub btf_func: bool,
     pub btf_func_global: bool,
@@ -130,38 +137,45 @@ pub(crate) struct Features {
 }
 
 impl Features {
-    fn probe_features(&mut self) {
-        self.bpf_name = is_prog_name_supported();
-        debug!("[FEAT PROBE] BPF program name support: {}", self.bpf_name);
+    fn new() -> Self {
+        let mut f = Features {
+            bpf_name: is_prog_name_supported(),
+            bpf_cookie: is_bpf_cookie_supported(),
+            bpf_perf_link: is_perf_link_supported(),
+            btf: is_btf_supported(),
+            ..Default::default()
+        };
+        debug!("[FEAT PROBE] BPF program name support: {}", f.bpf_name);
+        debug!("[FEAT PROBE] BPF cookie support: {}", f.bpf_cookie);
+        debug!("[FEAT PROBE] BPF probe link support: {}", f.bpf_perf_link);
+        debug!("[FEAT PROBE] BTF support: {}", f.btf);
 
-        self.btf = is_btf_supported();
-        debug!("[FEAT PROBE] BTF support: {}", self.btf);
+        if f.btf {
+            f.btf_func = is_btf_func_supported();
+            debug!("[FEAT PROBE] BTF func support: {}", f.btf_func);
 
-        if self.btf {
-            self.btf_func = is_btf_func_supported();
-            debug!("[FEAT PROBE] BTF func support: {}", self.btf_func);
-
-            self.btf_func_global = is_btf_func_global_supported();
+            f.btf_func_global = is_btf_func_global_supported();
             debug!(
                 "[FEAT PROBE] BTF global func support: {}",
-                self.btf_func_global
+                f.btf_func_global
             );
 
-            self.btf_datasec = is_btf_datasec_supported();
+            f.btf_datasec = is_btf_datasec_supported();
             debug!(
                 "[FEAT PROBE] BTF var and datasec support: {}",
-                self.btf_datasec
+                f.btf_datasec
             );
 
-            self.btf_float = is_btf_float_supported();
-            debug!("[FEAT PROBE] BTF float support: {}", self.btf_float);
+            f.btf_float = is_btf_float_supported();
+            debug!("[FEAT PROBE] BTF float support: {}", f.btf_float);
 
-            self.btf_decl_tag = is_btf_decl_tag_supported();
-            debug!("[FEAT PROBE] BTF decl_tag support: {}", self.btf_decl_tag);
+            f.btf_decl_tag = is_btf_decl_tag_supported();
+            debug!("[FEAT PROBE] BTF decl_tag support: {}", f.btf_decl_tag);
 
-            self.btf_type_tag = is_btf_type_tag_supported();
-            debug!("[FEAT PROBE] BTF type_tag support: {}", self.btf_type_tag);
+            f.btf_type_tag = is_btf_type_tag_supported();
+            debug!("[FEAT PROBE] BTF type_tag support: {}", f.btf_type_tag);
         }
+        f
     }
 }
 
@@ -192,7 +206,6 @@ pub struct BpfLoader<'a> {
     map_pin_path: Option<PathBuf>,
     globals: HashMap<&'a str, &'a [u8]>,
     max_entries: HashMap<&'a str, u32>,
-    features: Features,
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
 }
@@ -222,14 +235,11 @@ impl Default for VerifierLogLevel {
 impl<'a> BpfLoader<'a> {
     /// Creates a new loader instance.
     pub fn new() -> BpfLoader<'a> {
-        let mut features = Features::default();
-        features.probe_features();
         BpfLoader {
             btf: Btf::from_sys_fs().ok().map(Cow::Owned),
             map_pin_path: None,
             globals: HashMap::new(),
             max_entries: HashMap::new(),
-            features,
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
         }
@@ -413,12 +423,12 @@ impl<'a> BpfLoader<'a> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(self.globals.clone())?;
 
-        let btf_fd = if self.features.btf {
+        let btf_fd = if FEATURES.btf {
             if let Some(ref mut obj_btf) = obj.btf {
                 // fixup btf
                 let section_data = obj.section_sizes.clone();
                 let symbol_offsets = obj.symbol_offset_by_name.clone();
-                obj_btf.fixup_and_sanitize(&section_data, &symbol_offsets, &self.features)?;
+                obj_btf.fixup_and_sanitize(&section_data, &symbol_offsets, &FEATURES)?;
                 // load btf to the kernel
                 let raw_btf = obj_btf.to_bytes();
                 Some(load_btf(raw_btf)?)
@@ -504,7 +514,7 @@ impl<'a> BpfLoader<'a> {
             .programs
             .drain()
             .map(|(name, obj)| {
-                let prog_name = if self.features.bpf_name {
+                let prog_name = if FEATURES.bpf_name {
                     Some(name.clone())
                 } else {
                     None
@@ -633,6 +643,9 @@ impl<'a> BpfLoader<'a> {
                                 attach_type: *attach_type,
                             })
                         }
+                        ProgramSection::Usdt { .. } => Program::Usdt(Usdt {
+                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                        }),
                     }
                 };
                 (name, program)
@@ -933,6 +946,11 @@ pub enum BpfError {
     #[error("program error")]
     /// A program error
     ProgramError(#[from] ProgramError),
+
+    /// Required map not found
+    #[error("required map {0} not found. did you enable the usdt feature (aya) or include usdt.bpf.h (libbpf)?")]
+    /// A program error
+    MissingMap(String),
 }
 
 fn load_btf(raw_btf: Vec<u8>) -> Result<RawFd, BtfError> {

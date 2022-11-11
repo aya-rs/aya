@@ -1,0 +1,24 @@
+[package]
+name = "aya-common"
+version = "0.1.0"
+description = "Code shared between aya and aya-bpf crates."
+keywords = ["ebpf", "bpf", "linux", "kernel"]
+license = "MIT OR Apache-2.0"
+authors = ["The Aya Contributors"]
+repository = "https://github.com/aya-rs/aya"
+readme = "README.md"
+documentation = "https://docs.rs/aya"
+edition = "2021"
+
+[dependencies]
+regex = {version = "1", optional = true}
+thiserror = {version = "1", optional = true}
+memoffset = {version = "0.6", optional = true}
+lazy_static = {version = "1", optional = true}
+
+[features]
+default = []
+user = [ "regex", "thiserror", "memoffset", "lazy_static" ]
+
+[lib]
+path = "src/lib.rs"

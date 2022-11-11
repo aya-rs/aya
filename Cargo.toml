@@ -1,12 +1,12 @@
 [workspace]
 members = [
-    "aya", "aya-tool", "aya-log", "aya-log-common", "aya-log-parser", "test/integration-test", "test/integration-test-macros", "xtask",
+    "aya", "aya-common", "aya-tool", "aya-log", "aya-log-common", "aya-log-parser", "test/integration-test", "test/integration-test-macros", "xtask",
     # macros
     "aya-bpf-macros", "aya-log-ebpf-macros",
     # ebpf crates
     "bpf/aya-bpf", "bpf/aya-bpf-bindings", "bpf/aya-log-ebpf", "test/integration-ebpf"
 ]
-default-members = ["aya", "aya-tool", "aya-log", "aya-bpf-macros", "aya-log-ebpf-macros"]
+default-members = ["aya", "aya-common", "aya-tool", "aya-log", "aya-bpf-macros", "aya-log-ebpf-macros"]
 
 [profile.dev]
 panic = "abort"

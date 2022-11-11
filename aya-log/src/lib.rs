@@ -480,7 +480,6 @@ mod test {
     use super::*;
     use aya_log_common::{write_record_header, WriteToBuf};
     use log::logger;
-    use testing_logger;
 
     fn new_log(args: usize) -> Result<(usize, Vec<u8>), ()> {
         let mut buf = vec![0; 8192];

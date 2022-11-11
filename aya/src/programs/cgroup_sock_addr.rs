@@ -74,7 +74,7 @@ impl CgroupSockAddr {
         let attach_type = self.data.expected_attach_type.unwrap();
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, cgroup_fd, attach_type, None, 0).map_err(
+            let link_fd = bpf_link_create(prog_fd, cgroup_fd, attach_type, None, None, 0).map_err(
                 |(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_link_create".to_owned(),
                     io_error,

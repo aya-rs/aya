@@ -334,6 +334,7 @@ pub(crate) fn bpf_link_create(
     target_fd: RawFd,
     attach_type: bpf_attach_type,
     btf_id: Option<u32>,
+    cookie: Option<u64>,
     flags: u32,
 ) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
@@ -344,6 +345,9 @@ pub(crate) fn bpf_link_create(
     attr.link_create.flags = flags;
     if let Some(btf_id) = btf_id {
         attr.link_create.__bindgen_anon_2.target_btf_id = btf_id;
+    }
+    if let Some(cookie) = cookie {
+        attr.link_create.__bindgen_anon_2.perf_event.bpf_cookie = cookie;
     }
 
     sys_bpf(bpf_cmd::BPF_LINK_CREATE, &attr)
@@ -560,6 +564,69 @@ pub(crate) fn is_prog_name_supported() -> bool {
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
+
+    match sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
+        Ok(v) => {
+            let fd = v as RawFd;
+            unsafe { close(fd) };
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+pub(crate) fn is_perf_link_supported() -> bool {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+
+    let prog: &[u8] = &[
+        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+
+    let insns = copy_instructions(prog).unwrap();
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
+
+    if let Ok(fd) = sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
+        if let Err((code, _)) = bpf_link_create(
+            fd as i32,
+            -1,
+            bpf_attach_type::BPF_PERF_EVENT,
+            None,
+            None,
+            0,
+        ) {
+            if code == (-libc::EBADF).into() {
+                unsafe { libc::close(fd as i32) };
+                return true;
+            }
+            unsafe { libc::close(fd as i32) };
+        }
+    }
+    false
+}
+
+pub(crate) fn is_bpf_cookie_supported() -> bool {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+
+    let prog: &[u8] = &[
+        0x85, 0x00, 0x00, 0x00, 0xae, 0x00, 0x00, 0x00, // call bpf_get_attach_cookie
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+
+    let insns = copy_instructions(prog).unwrap();
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_KPROBE as u32;
 
     match sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
         Ok(v) => {

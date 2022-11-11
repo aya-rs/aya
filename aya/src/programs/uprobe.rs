@@ -1,13 +1,8 @@
 //! User space probes.
 use libc::pid_t;
-use object::{Object, ObjectSymbol};
 use std::{
     error::Error,
-    ffi::CStr,
-    fs,
-    io::{self, BufRead, Cursor, Read},
-    mem,
-    os::raw::c_char,
+    io,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -17,19 +12,12 @@ use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_KPROBE,
     programs::{
         define_link_wrapper, load_program,
-        perf_attach::{PerfLink, PerfLinkId},
+        perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{attach, ProbeKind},
+        utils::{resolve_symbol, ProcMap, ProcMapError, LD_SO_CACHE, LD_SO_CACHE_FILE},
         ProgramData, ProgramError,
     },
 };
-
-const LD_SO_CACHE_FILE: &str = "/etc/ld.so.cache";
-
-lazy_static! {
-    static ref LD_SO_CACHE: Result<LdSoCache, Arc<io::Error>> =
-        LdSoCache::load(LD_SO_CACHE_FILE).map_err(Arc::new);
-}
-const LD_SO_CACHE_HEADER: &str = "glibc-ld.so.cache1.1";
 
 /// An user space probe.
 ///
@@ -83,10 +71,14 @@ impl UProbe {
         let target_str = &*target.as_os_str().to_string_lossy();
 
         let mut path = if let Some(pid) = pid {
-            find_lib_in_proc_maps(pid, target_str).map_err(|io_error| UProbeError::FileError {
-                filename: format!("/proc/{}/maps", pid),
-                io_error,
-            })?
+            let proc_map_libs =
+                ProcMap::new(pid).map_err(|e| UProbeError::ProcMapError { pid, source: e })?;
+            proc_map_libs
+                .find_by_name(target_str)
+                .map_err(|io_error| UProbeError::FileError {
+                    filename: format!("/proc/{}/maps", pid),
+                    io_error,
+                })?
         } else {
             None
         };
@@ -143,8 +135,8 @@ define_link_wrapper!(
     UProbeLink,
     /// The type returned by [UProbe::attach]. Can be passed to [UProbe::detach].
     UProbeLinkId,
-    PerfLink,
-    PerfLinkId
+    PerfLinkInner,
+    PerfLinkIdInner
 );
 
 /// The type returned when attaching an [`UProbe`] fails.
@@ -184,150 +176,14 @@ pub enum UProbeError {
         #[source]
         io_error: io::Error,
     },
-}
 
-fn proc_maps_libs(pid: pid_t) -> Result<Vec<(String, String)>, io::Error> {
-    let maps_file = format!("/proc/{}/maps", pid);
-    let data = fs::read_to_string(maps_file)?;
-
-    Ok(data
-        .lines()
-        .filter_map(|line| {
-            let line = line.split_whitespace().last()?;
-            if line.starts_with('/') {
-                let path = PathBuf::from(line);
-                let key = path.file_name().unwrap().to_string_lossy().into_owned();
-                Some((key, path.to_string_lossy().to_string()))
-            } else {
-                None
-            }
-        })
-        .collect())
-}
-
-fn find_lib_in_proc_maps(pid: pid_t, lib: &str) -> Result<Option<String>, io::Error> {
-    let libs = proc_maps_libs(pid)?;
-
-    let ret = if lib.contains(".so") {
-        libs.iter().find(|(k, _)| k.as_str().starts_with(lib))
-    } else {
-        let lib = lib.to_string();
-        let lib1 = lib.clone() + ".so";
-        let lib2 = lib + "-";
-        libs.iter()
-            .find(|(k, _)| k.starts_with(&lib1) || k.starts_with(&lib2))
-    };
-
-    Ok(ret.map(|(_, v)| v.clone()))
-}
-
-#[derive(Debug)]
-pub(crate) struct CacheEntry {
-    key: String,
-    value: String,
-    _flags: i32,
-}
-
-#[derive(Debug)]
-pub(crate) struct LdSoCache {
-    entries: Vec<CacheEntry>,
-}
-
-impl LdSoCache {
-    pub fn load<T: AsRef<Path>>(path: T) -> Result<Self, io::Error> {
-        let data = fs::read(path)?;
-        Self::parse(&data)
-    }
-
-    fn parse(data: &[u8]) -> Result<Self, io::Error> {
-        let mut cursor = Cursor::new(data);
-
-        let read_u32 = |cursor: &mut Cursor<_>| -> Result<u32, io::Error> {
-            let mut buf = [0u8; mem::size_of::<u32>()];
-            cursor.read_exact(&mut buf)?;
-
-            Ok(u32::from_ne_bytes(buf))
-        };
-
-        let read_i32 = |cursor: &mut Cursor<_>| -> Result<i32, io::Error> {
-            let mut buf = [0u8; mem::size_of::<i32>()];
-            cursor.read_exact(&mut buf)?;
-
-            Ok(i32::from_ne_bytes(buf))
-        };
-
-        let mut buf = [0u8; LD_SO_CACHE_HEADER.len()];
-        cursor.read_exact(&mut buf)?;
-        let header = std::str::from_utf8(&buf).map_err(|_| {
-            io::Error::new(io::ErrorKind::InvalidData, "invalid ld.so.cache header")
-        })?;
-        if header != LD_SO_CACHE_HEADER {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "invalid ld.so.cache header",
-            ));
-        }
-
-        let num_entries = read_u32(&mut cursor)?;
-        let _str_tab_len = read_u32(&mut cursor)?;
-        cursor.consume(5 * mem::size_of::<u32>());
-
-        let mut entries = Vec::new();
-        for _ in 0..num_entries {
-            let flags = read_i32(&mut cursor)?;
-            let k_pos = read_u32(&mut cursor)? as usize;
-            let v_pos = read_u32(&mut cursor)? as usize;
-            cursor.consume(12);
-            let key =
-                unsafe { CStr::from_ptr(cursor.get_ref()[k_pos..].as_ptr() as *const c_char) }
-                    .to_string_lossy()
-                    .into_owned();
-            let value =
-                unsafe { CStr::from_ptr(cursor.get_ref()[v_pos..].as_ptr() as *const c_char) }
-                    .to_string_lossy()
-                    .into_owned();
-            entries.push(CacheEntry {
-                key,
-                value,
-                _flags: flags,
-            });
-        }
-
-        Ok(LdSoCache { entries })
-    }
-
-    pub fn resolve(&self, lib: &str) -> Option<&str> {
-        let lib = if !lib.contains(".so") {
-            lib.to_string() + ".so"
-        } else {
-            lib.to_string()
-        };
-        self.entries
-            .iter()
-            .find(|entry| entry.key.starts_with(&lib))
-            .map(|entry| entry.value.as_str())
-    }
-}
-
-#[derive(Error, Debug)]
-enum ResolveSymbolError {
-    #[error(transparent)]
-    Io(#[from] io::Error),
-
-    #[error("error parsing ELF")]
-    Object(#[from] object::Error),
-
-    #[error("unknown symbol `{0}`")]
-    Unknown(String),
-}
-
-fn resolve_symbol(path: &str, symbol: &str) -> Result<u64, ResolveSymbolError> {
-    let data = fs::read(path)?;
-    let obj = object::read::File::parse(&*data)?;
-
-    obj.dynamic_symbols()
-        .chain(obj.symbols())
-        .find(|sym| sym.name().map(|name| name == symbol).unwrap_or(false))
-        .map(|s| s.address())
-        .ok_or_else(|| ResolveSymbolError::Unknown(symbol.to_string()))
+    /// There was en error resolving a path
+    #[error("error fetching libs for {pid}")]
+    ProcMapError {
+        /// The pid
+        pid: i32,
+        /// The [`ProcMapError`] that caused the error
+        #[source]
+        source: ProcMapError,
+    },
 }
