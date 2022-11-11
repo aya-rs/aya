@@ -820,6 +820,37 @@ impl SkLookup {
     }
 }
 
+pub struct CgroupLsm {
+    item: ItemFn,
+    name: String,
+}
+
+impl CgroupLsm {
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<CgroupLsm> {
+        let name = name_arg(&mut args)?.unwrap_or_else(|| item.sig.ident.to_string());
+
+        Ok(CgroupLsm { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = format!("lsm_cgroup/{}", self.name);
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        // LSM probes need to return an integer corresponding to the correct
+        // policy decision. Therefore we do not simply default to a return value
+        // of 0 as in other program types.
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+                return #fn_name(::aya_bpf::programs::CgroupLsmContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use syn::parse_quote;
@@ -892,5 +923,39 @@ mod tests {
         assert!(stream
             .to_string()
             .contains("[link_section = \"cgroup_skb/egress\"]"));
+    }
+
+    #[test]
+    fn cgroup_lsm_with_name() {
+        let prog = CgroupLsm::from_syn(
+            parse_quote!(name = "foo"),
+            parse_quote!(
+                fn bar(ctx: LsmContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream
+            .to_string()
+            .contains("[link_section = \"lsm_cgroup/foo\"]"));
+    }
+
+    #[test]
+    fn cgroup_lsm_no_name() {
+        let prog = CgroupLsm::from_syn(
+            parse_quote!(),
+            parse_quote!(
+                fn foo(ct: LsmContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream
+            .to_string()
+            .contains("[link_section = \"lsm_cgroup/foo\"]"));
     }
 }

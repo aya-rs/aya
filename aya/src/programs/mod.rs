@@ -35,6 +35,7 @@
 //! [`Bpf::program`]: crate::Bpf::program
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [`maps`]: crate::maps
+pub mod cgroup_lsm;
 pub mod cgroup_skb;
 pub mod cgroup_sock;
 pub mod cgroup_sock_addr;
@@ -72,6 +73,7 @@ use std::{
 };
 use thiserror::Error;
 
+pub use cgroup_lsm::CgroupLsm;
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
 pub use cgroup_sock::{CgroupSock, CgroupSockAttachType};
 pub use cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType};
