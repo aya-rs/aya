@@ -171,6 +171,26 @@ where
     }
 }
 
+pub struct LowerMacFormatter;
+impl Formatter<[u8; 6]> for LowerMacFormatter {
+    fn format(v: [u8; 6]) -> String {
+        format!(
+            "{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
+            v[0], v[1], v[2], v[3], v[4], v[5]
+        )
+    }
+}
+
+pub struct UpperMacFormatter;
+impl Formatter<[u8; 6]> for UpperMacFormatter {
+    fn format(v: [u8; 6]) -> String {
+        format!(
+            "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
+            v[0], v[1], v[2], v[3], v[4], v[5]
+        )
+    }
+}
+
 trait Format {
     fn format(&self, last_hint: Option<DisplayHint>) -> Result<String, ()>;
 }
@@ -183,7 +203,24 @@ impl Format for u32 {
             Some(DisplayHint::UpperHex) => Ok(UpperHexFormatter::format(self)),
             Some(DisplayHint::Ipv4) => Ok(Ipv4Formatter::format(*self)),
             Some(DisplayHint::Ipv6) => Err(()),
+            Some(DisplayHint::LowerMac) => Err(()),
+            Some(DisplayHint::UpperMac) => Err(()),
             _ => Ok(DefaultFormatter::format(self)),
+        }
+    }
+}
+
+impl Format for [u8; 6] {
+    fn format(&self, last_hint: Option<DisplayHint>) -> Result<String, ()> {
+        match last_hint {
+            Some(DisplayHint::Default) => Err(()),
+            Some(DisplayHint::LowerHex) => Err(()),
+            Some(DisplayHint::UpperHex) => Err(()),
+            Some(DisplayHint::Ipv4) => Err(()),
+            Some(DisplayHint::Ipv6) => Err(()),
+            Some(DisplayHint::LowerMac) => Ok(LowerMacFormatter::format(*self)),
+            Some(DisplayHint::UpperMac) => Ok(UpperMacFormatter::format(*self)),
+            _ => Err(()),
         }
     }
 }
@@ -196,6 +233,8 @@ impl Format for [u8; 16] {
             Some(DisplayHint::UpperHex) => Err(()),
             Some(DisplayHint::Ipv4) => Err(()),
             Some(DisplayHint::Ipv6) => Ok(Ipv6Formatter::format(*self)),
+            Some(DisplayHint::LowerMac) => Err(()),
+            Some(DisplayHint::UpperMac) => Err(()),
             _ => Err(()),
         }
     }
@@ -209,6 +248,8 @@ impl Format for [u16; 8] {
             Some(DisplayHint::UpperHex) => Err(()),
             Some(DisplayHint::Ipv4) => Err(()),
             Some(DisplayHint::Ipv6) => Ok(Ipv6Formatter::format(*self)),
+            Some(DisplayHint::LowerMac) => Err(()),
+            Some(DisplayHint::UpperMac) => Err(()),
             _ => Err(()),
         }
     }
@@ -224,6 +265,8 @@ macro_rules! impl_format {
                     Some(DisplayHint::UpperHex) => Ok(UpperHexFormatter::format(self)),
                     Some(DisplayHint::Ipv4) => Err(()),
                     Some(DisplayHint::Ipv6) => Err(()),
+                    Some(DisplayHint::LowerMac) => Err(()),
+                    Some(DisplayHint::UpperMac) => Err(()),
                     _ => Ok(DefaultFormatter::format(self)),
                 }
             }
@@ -252,6 +295,8 @@ macro_rules! impl_format_float {
                     Some(DisplayHint::UpperHex) => Err(()),
                     Some(DisplayHint::Ipv4) => Err(()),
                     Some(DisplayHint::Ipv6) => Err(()),
+                    Some(DisplayHint::LowerMac) => Err(()),
+                    Some(DisplayHint::UpperMac) => Err(()),
                     _ => Ok(DefaultFormatter::format(self)),
                 }
             }
@@ -406,6 +451,10 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
                     &f64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
+            }
+            Argument::ArrU8Len6 => {
+                let value: [u8; 6] = attr.value.try_into().map_err(|_| ())?;
+                full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             Argument::ArrU8Len16 => {
                 let value: [u8; 16] = attr.value.try_into().map_err(|_| ())?;
@@ -647,6 +696,46 @@ mod test {
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "ipv6: 2001:db8::1:1");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_display_hint_lower_mac() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(3).unwrap();
+
+        len += "mac: ".write(&mut input[len..]).unwrap();
+        len += DisplayHint::LowerMac.write(&mut input[len..]).unwrap();
+        // 00:00:5e:00:53:af as byte array
+        let mac_arr: [u8; 6] = [0x00, 0x00, 0x5e, 0x00, 0x53, 0xaf];
+        mac_arr.write(&mut input[len..]).unwrap();
+
+        let logger = logger();
+        let _ = log_buf(&input, logger);
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "mac: 00:00:5e:00:53:af");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_display_hint_upper_mac() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(3).unwrap();
+
+        len += "mac: ".write(&mut input[len..]).unwrap();
+        len += DisplayHint::UpperMac.write(&mut input[len..]).unwrap();
+        // 00:00:5E:00:53:AF as byte array
+        let mac_arr: [u8; 6] = [0x00, 0x00, 0x5e, 0x00, 0x53, 0xaf];
+        mac_arr.write(&mut input[len..]).unwrap();
+
+        let logger = logger();
+        let _ = log_buf(&input, logger);
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "mac: 00:00:5E:00:53:AF");
             assert_eq!(captured_logs[0].level, Level::Info);
         });
     }

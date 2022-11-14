@@ -81,6 +81,8 @@ fn hint_to_expr(hint: DisplayHint) -> Result<Expr> {
         DisplayHint::UpperHex => parse_str("::aya_log_ebpf::macro_support::DisplayHint::UpperHex"),
         DisplayHint::Ipv4 => parse_str("::aya_log_ebpf::macro_support::DisplayHint::Ipv4"),
         DisplayHint::Ipv6 => parse_str("::aya_log_ebpf::macro_support::DisplayHint::Ipv6"),
+        DisplayHint::LowerMac => parse_str("::aya_log_ebpf::macro_support::DisplayHint::LowerMac"),
+        DisplayHint::UpperMac => parse_str("::aya_log_ebpf::macro_support::DisplayHint::UpperMac"),
     }
 }
 
