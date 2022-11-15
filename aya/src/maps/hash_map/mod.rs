@@ -1,7 +1,8 @@
 //! Hash map types.
 use crate::{
     maps::MapError,
-    sys::{bpf_map_delete_elem, bpf_map_update_elem}, Pod,
+    sys::{bpf_map_delete_elem, bpf_map_update_elem},
+    Pod,
 };
 
 #[allow(clippy::module_inception)]
