@@ -1,6 +1,5 @@
 pre-release-commit-message = "{crate_name}: release version {{version}}"
 post-release-commit-message = "{crate_name}: start next development iteration {{next_version}}"
-consolidate-pushes = true
 consolidate-commits = true
 dev-version = true
 dev-version-ext = "dev.0"
