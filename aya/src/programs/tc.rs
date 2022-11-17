@@ -55,7 +55,6 @@ pub enum TcAttachType {
 /// #     Bpf(#[from] aya::BpfError)
 /// # }
 /// # let mut bpf = aya::Bpf::load(&[])?;
-/// use aya::programs::tc::TcOptions;
 /// use aya::programs::{tc, SchedClassifier, TcAttachType};
 ///
 /// // the clsact qdisc needs to be added before SchedClassifier programs can be
@@ -64,12 +63,7 @@ pub enum TcAttachType {
 ///
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
-///
-///  // the following demonstrates using the standard attach with default options
 /// prog.attach("eth0", TcAttachType::Ingress)?;
-///
-/// // the following demonstrates the `attach_with_options` variant
-/// prog.attach_with_options("eth0", TcAttachType::Ingress, TcOptions {priority: 50, handle: 3})?;
 ///
 /// # Ok::<(), Error>(())
 /// ```
@@ -108,10 +102,10 @@ impl TcAttachType {
 /// Options for SchedClassifier attach
 #[derive(Default)]
 pub struct TcOptions {
-    /// `priority`: priority assigned to tc program with lower number = higher priority.
-    ///  If set to default (0), the system chooses the next highest priority or 49152 if no filters exist yet
+    /// Priority assigned to tc program with lower number = higher priority.
+    /// If set to default (0), the system chooses the next highest priority or 49152 if no filters exist yet
     pub priority: u16,
-    /// `handle`: used to uniquely identify a program at a given priority level.  
+    /// Handle used to uniquely identify a program at a given priority level.
     /// If set to default (0), the system chooses a handle.
     pub handle: u32,
 }
