@@ -1,4 +1,4 @@
-use core::{cell::UnsafeCell, marker::PhantomData, mem};
+use core::{borrow::Borrow, cell::UnsafeCell, marker::PhantomData, mem};
 
 use aya_bpf_cty::c_void;
 
@@ -89,7 +89,7 @@ impl<K> SockHash<K> {
     pub fn redirect_sk_lookup(
         &mut self,
         ctx: &SkLookupContext,
-        key: K,
+        key: impl Borrow<K>,
         flags: u64,
     ) -> Result<(), u32> {
         unsafe {

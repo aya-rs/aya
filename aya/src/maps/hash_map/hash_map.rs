@@ -1,4 +1,5 @@
 use std::{
+    borrow::Borrow,
     convert::{AsMut, AsRef},
     marker::PhantomData,
 };
@@ -78,8 +79,13 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
 
 impl<T: AsMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Inserts a key-value pair into the map.
-    pub fn insert(&mut self, key: K, value: V, flags: u64) -> Result<(), MapError> {
-        hash_map::insert(self.inner.as_mut(), key, value, flags)
+    pub fn insert(
+        &mut self,
+        key: impl Borrow<K>,
+        value: impl Borrow<V>,
+        flags: u64,
+    ) -> Result<(), MapError> {
+        hash_map::insert(self.inner.as_mut(), key.borrow(), value.borrow(), flags)
     }
 
     /// Removes a key from the map.
@@ -309,6 +315,27 @@ mod tests {
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
         assert!(hm.insert(1, 42, 0).is_ok());
+    }
+
+    #[test]
+    fn test_insert_boxed_ok() {
+        override_syscall(|call| match call {
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
+                ..
+            } => Ok(1),
+            _ => sys_error(EFAULT),
+        });
+
+        let mut map = MapData {
+            obj: new_obj_map(),
+            fd: Some(42),
+            pinned: false,
+            btf_fd: None,
+        };
+        let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
+
+        assert!(hm.insert(Box::new(1), Box::new(42), 0).is_ok());
     }
 
     #[test]

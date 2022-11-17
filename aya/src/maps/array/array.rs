@@ -1,4 +1,5 @@
 use std::{
+    borrow::Borrow,
     convert::{AsMut, AsRef},
     marker::PhantomData,
 };
@@ -88,11 +89,11 @@ impl<T: AsMut<MapData>, V: Pod> Array<T, V> {
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_update_elem` fails.
-    pub fn set(&mut self, index: u32, value: V, flags: u64) -> Result<(), MapError> {
+    pub fn set(&mut self, index: u32, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let data = self.inner.as_mut();
         check_bounds(data, index)?;
         let fd = data.fd_or_err()?;
-        bpf_map_update_elem(fd, Some(&index), &value, flags).map_err(|(_, io_error)| {
+        bpf_map_update_elem(fd, Some(&index), value.borrow(), flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 io_error,

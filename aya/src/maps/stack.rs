@@ -1,5 +1,6 @@
 //! A LIFO stack.
 use std::{
+    borrow::Borrow,
     convert::{AsMut, AsRef},
     marker::PhantomData,
 };
@@ -78,9 +79,9 @@ impl<T: AsMut<MapData>, V: Pod> Stack<T, V> {
     /// # Errors
     ///
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
-    pub fn push(&mut self, value: V, flags: u64) -> Result<(), MapError> {
+    pub fn push(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.as_mut().fd_or_err()?;
-        bpf_map_update_elem(fd, None::<&u32>, &value, flags).map_err(|(_, io_error)| {
+        bpf_map_update_elem(fd, None::<&u32>, value.borrow(), flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 io_error,

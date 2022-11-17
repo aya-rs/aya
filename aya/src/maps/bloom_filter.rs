@@ -1,5 +1,5 @@
 //! A Bloom Filter.
-use std::{convert::AsRef, marker::PhantomData};
+use std::{borrow::Borrow, convert::AsRef, marker::PhantomData};
 
 use crate::{
     maps::{check_v_size, MapData, MapError},
@@ -62,11 +62,13 @@ impl<T: AsRef<MapData>, V: Pod> BloomFilter<T, V> {
     }
 
     /// Inserts a value into the map.
-    pub fn insert(&self, value: V, flags: u64) -> Result<(), MapError> {
+    pub fn insert(&self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.as_ref().fd_or_err()?;
-        bpf_map_push_elem(fd, &value, flags).map_err(|(_, io_error)| MapError::SyscallError {
-            call: "bpf_map_push_elem".to_owned(),
-            io_error,
+        bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| {
+            MapError::SyscallError {
+                call: "bpf_map_push_elem".to_owned(),
+                io_error,
+            }
         })?;
         Ok(())
     }
