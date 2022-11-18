@@ -104,7 +104,8 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     prog_fd: RawFd,
     prog_name: &CStr,
     priority: u16,
-) -> Result<u16, io::Error> {
+    handle: u32,
+) -> Result<(u16, u32), io::Error> {
     let sock = NetlinkSocket::open()?;
     let mut req = mem::zeroed::<TcRequest>();
 
@@ -117,7 +118,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         nlmsg_seq: 1,
     };
     req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = 0; // auto-assigned, if not provided
+    req.tc_info.tcm_handle = handle; // auto-assigned, if zero
     req.tc_info.tcm_ifindex = if_index;
     req.tc_info.tcm_parent = attach_type.parent();
     req.tc_info.tcm_info = tc_handler_make((priority as u32) << 16, htons(ETH_P_ALL as u16) as u32);
@@ -138,17 +139,14 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     req.header.nlmsg_len += align_to(kind_len + options_len, NLA_ALIGNTO as usize) as u32;
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
 
-    // find the RTM_NEWTFILTER reply and read the tcm_info field which we'll
-    // need to detach
-    let tc_info = match sock
+    // find the RTM_NEWTFILTER reply and read the tcm_info and tcm_handle fields
+    // which we'll need to detach
+    let tc_msg = match sock
         .recv()?
         .iter()
         .find(|reply| reply.header.nlmsg_type == RTM_NEWTFILTER)
     {
-        Some(reply) => {
-            let msg = ptr::read_unaligned(reply.data.as_ptr() as *const tcmsg);
-            msg.tcm_info
-        }
+        Some(reply) => ptr::read_unaligned(reply.data.as_ptr() as *const tcmsg),
         None => {
             // if sock.recv() succeeds we should never get here unless there's a
             // bug in the kernel
@@ -159,14 +157,15 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         }
     };
 
-    let priority = ((tc_info & TC_H_MAJ_MASK) >> 16) as u16;
-    Ok(priority)
+    let priority = ((tc_msg.tcm_info & TC_H_MAJ_MASK) >> 16) as u16;
+    Ok((priority, tc_msg.tcm_handle))
 }
 
 pub(crate) unsafe fn netlink_qdisc_detach(
     if_index: i32,
     attach_type: &TcAttachType,
     priority: u16,
+    handle: u32,
 ) -> Result<(), io::Error> {
     let sock = NetlinkSocket::open()?;
     let mut req = mem::zeroed::<TcRequest>();
@@ -180,7 +179,7 @@ pub(crate) unsafe fn netlink_qdisc_detach(
     };
 
     req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = 0; // auto-assigned, if not provided
+    req.tc_info.tcm_handle = handle; // auto-assigned, if zero
     req.tc_info.tcm_info = tc_handler_make((priority as u32) << 16, htons(ETH_P_ALL as u16) as u32);
     req.tc_info.tcm_parent = attach_type.parent();
     req.tc_info.tcm_ifindex = if_index;
@@ -192,11 +191,12 @@ pub(crate) unsafe fn netlink_qdisc_detach(
     Ok(())
 }
 
+// Returns a vector of tuple (priority, handle) for filters matching the provided parameters
 pub(crate) unsafe fn netlink_find_filter_with_name(
     if_index: i32,
     attach_type: TcAttachType,
     name: &CStr,
-) -> Result<Vec<u16>, io::Error> {
+) -> Result<Vec<(u16, u32)>, io::Error> {
     let mut req = mem::zeroed::<TcRequest>();
 
     let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>();
@@ -208,14 +208,14 @@ pub(crate) unsafe fn netlink_find_filter_with_name(
         nlmsg_seq: 1,
     };
     req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = 0; // auto-assigned, if not provided
+    req.tc_info.tcm_handle = 0; // auto-assigned, if zero
     req.tc_info.tcm_ifindex = if_index;
     req.tc_info.tcm_parent = attach_type.parent();
 
     let sock = NetlinkSocket::open()?;
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
 
-    let mut prios = Vec::new();
+    let mut filter_info = Vec::new();
     for msg in sock.recv()? {
         if msg.header.nlmsg_type != RTM_NEWTFILTER {
             continue;
@@ -230,14 +230,14 @@ pub(crate) unsafe fn netlink_find_filter_with_name(
             if let Some(f_name) = opts.get(&(TCA_BPF_NAME as u16)) {
                 if let Ok(f_name) = CStr::from_bytes_with_nul(f_name.data) {
                     if name == f_name {
-                        prios.push(priority);
+                        filter_info.push((priority, tc_msg.tcm_handle));
                     }
                 }
             }
         }
     }
 
-    Ok(prios)
+    Ok(filter_info)
 }
 
 #[repr(C)]
