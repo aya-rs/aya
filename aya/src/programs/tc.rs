@@ -228,16 +228,63 @@ define_link_wrapper!(
     TcLinkId
 );
 
+/// # Examples
+///
+/// ```no_run
+/// # #[derive(Debug, thiserror::Error)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
+/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # tc::qdisc_add_clsact("eth0")?;
+/// # let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
+/// # prog.load()?;
+///
+/// use aya::programs::tc::{SchedClassifierLink};
+/// use aya::programs::{tc, Link, SchedClassifier, TcAttachType};
+///
+/// // SchedClassifier::attach returns a SchedClassifierLinkId that can be used to
+/// // detach the program.
+/// let tc_link_id = prog.attach("eth0", TcAttachType::Ingress)?;
+///
+/// // The user may take ownership of the lifetime of a link using
+/// // SchedClassifier::take_link, which returns a SchedClassifierLink
+/// let tc_link = prog.take_link(tc_link_id)?;
+///
+/// // Once ownership is taken, SchedClassifierLink::detach can be used to detach the
+/// // link. If needed, the link can be reconstructed via the SchedClassifierLink::new
+/// // using the if_name, attach_type, priority, and handle. The user knows the first
+/// // two because they were required to execute attach(); however, the user may not
+/// // know the priority, and/or handle if they let the system choose them as happens
+/// // with SchedClassifier::attach. If needed, These items may be retrieved as follows:
+/// let priority = tc_link.priority();
+/// let handle = tc_link.handle();
+///
+/// // Then, the link can be reconstructed as follows:
+/// let tc_link = SchedClassifierLink::new("eth0", TcAttachType::Ingress, priority, handle)?;
+///
+/// // And, the user can then detatch the link as follows:
+/// tc_link.detach()?;
+///
+/// # Ok::<(), Error>(())
+/// ```
 impl SchedClassifierLink {
-    /// Creates a new SchedClassifierLink instance
+    /// Creates a new `SchedClassifierLink` instance
     pub fn new(
-        interface: &str,
+        if_name: &str,
         attach_type: TcAttachType,
         priority: u16,
         handle: u32,
     ) -> Result<SchedClassifierLink, ProgramError> {
-        let if_index = ifindex_from_ifname(interface)
-            .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        let if_index =
+            ifindex_from_ifname(if_name).map_err(|io_error| TcError::NetlinkError { io_error })?;
         Ok(SchedClassifierLink(TcLink {
             if_index: if_index as i32,
             attach_type,
@@ -246,12 +293,14 @@ impl SchedClassifierLink {
         }))
     }
 
-    /// Returns options for a SchedClassifierLink
-    pub fn tc_options(&self) -> TcOptions {
-        TcOptions {
-            priority: self.0.priority,
-            handle: self.0.handle,
-        }
+    /// Returns the `priority` for a `SchedClassifierLink`
+    pub fn priority(&self) -> u16 {
+        self.0.priority
+    }
+
+    /// Returns the `handle` for a `SchedClassifierLink`
+    pub fn handle(&self) -> u32 {
+        self.0.handle
     }
 }
 
