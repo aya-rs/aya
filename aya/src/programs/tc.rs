@@ -228,6 +228,8 @@ define_link_wrapper!(
     TcLinkId
 );
 
+/// SchedClassifier link is the link type used by [`SchedClassifier`] programs.
+///
 /// # Examples
 ///
 /// ```no_run
@@ -246,37 +248,27 @@ define_link_wrapper!(
 /// # tc::qdisc_add_clsact("eth0")?;
 /// # let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// # prog.load()?;
+/// #
+/// # use aya::programs::tc::{SchedClassifierLink};
+/// # use aya::programs::{tc, Link, SchedClassifier, TcAttachType};
 ///
-/// use aya::programs::tc::{SchedClassifierLink};
-/// use aya::programs::{tc, Link, SchedClassifier, TcAttachType};
-///
-/// // SchedClassifier::attach returns a SchedClassifierLinkId that can be used to
-/// // detach the program.
 /// let tc_link_id = prog.attach("eth0", TcAttachType::Ingress)?;
 ///
-/// // The user may take ownership of the lifetime of a link using
-/// // SchedClassifier::take_link, which returns a SchedClassifierLink
 /// let tc_link = prog.take_link(tc_link_id)?;
 ///
-/// // Once ownership is taken, SchedClassifierLink::detach can be used to detach the
-/// // link. If needed, the link can be reconstructed via the SchedClassifierLink::new
-/// // using the if_name, attach_type, priority, and handle. The user knows the first
-/// // two because they were required to execute attach(); however, the user may not
-/// // know the priority, and/or handle if they let the system choose them as happens
-/// // with SchedClassifier::attach. If needed, These items may be retrieved as follows:
+/// // The priority and handle assigned during attach can be accessed as follows:
 /// let priority = tc_link.priority();
 /// let handle = tc_link.handle();
 ///
-/// // Then, the link can be reconstructed as follows:
+/// // A new SchedClassifierLink can be constructed to access an existing attachment
 /// let tc_link = SchedClassifierLink::new("eth0", TcAttachType::Ingress, priority, handle)?;
 ///
-/// // And, the user can then detatch the link as follows:
 /// tc_link.detach()?;
 ///
 /// # Ok::<(), Error>(())
 /// ```
 impl SchedClassifierLink {
-    /// Creates a new `SchedClassifierLink` instance
+    /// Creates a new link from the provided values.
     pub fn new(
         if_name: &str,
         attach_type: TcAttachType,
@@ -293,12 +285,12 @@ impl SchedClassifierLink {
         }))
     }
 
-    /// Returns the `priority` for a `SchedClassifierLink`
+    /// Returns the allocated priority. This may be different to what was provided to [`SchedClassifier::attach`].
     pub fn priority(&self) -> u16 {
         self.0.priority
     }
 
-    /// Returns the `handle` for a `SchedClassifierLink`
+    /// Returns the assigned handle. This was auto-generated if none was supplied to [`SchedClassifier::attach`].
     pub fn handle(&self) -> u32 {
         self.0.handle
     }
