@@ -228,7 +228,7 @@ define_link_wrapper!(
     TcLinkId
 );
 
-/// SchedClassifier link is the link type used by [`SchedClassifier`] programs.
+/// [`SchedClassifierLink`] is the link type used by [`SchedClassifier`] programs.
 ///
 /// # Examples
 ///
@@ -251,7 +251,6 @@ define_link_wrapper!(
 /// #
 /// # use aya::programs::tc::{SchedClassifierLink};
 /// # use aya::programs::{tc, Link, SchedClassifier, TcAttachType};
-///
 /// let tc_link_id = prog.attach("eth0", TcAttachType::Ingress)?;
 ///
 /// let tc_link = prog.take_link(tc_link_id)?;
@@ -261,14 +260,25 @@ define_link_wrapper!(
 /// let handle = tc_link.handle();
 ///
 /// // A new SchedClassifierLink can be constructed to access an existing attachment
-/// let tc_link = SchedClassifierLink::new("eth0", TcAttachType::Ingress, priority, handle)?;
+/// let new_tc_link = SchedClassifierLink::new("eth0", TcAttachType::Ingress, priority, handle)?;
 ///
-/// tc_link.detach()?;
+/// new_tc_link.detach()?;
 ///
 /// # Ok::<(), Error>(())
 /// ```
 impl SchedClassifierLink {
     /// Creates a new link from the provided values.
+    ///
+    /// This API is used to construct a [`SchedClassifierLink`] where the `if_name`, `attach_type`,
+    /// `priority` and `handle` are already known. This may have been found from a link created by
+    /// [SchedClassifier::attach], the output of the `tc filter` command or from the output of
+    /// another BPF loader.
+    ///
+    /// # Warnings
+    /// - If a program is not attached with the provided parameters, calls to
+    ///   [`SchedClassifierLink::detach`] will return a [`TcError::NetlinkError`]
+    /// - If you create a link for a program that you do not own, detaching it may have unintended
+    ///   consequences.
     pub fn new(
         if_name: &str,
         attach_type: TcAttachType,
@@ -285,12 +295,12 @@ impl SchedClassifierLink {
         }))
     }
 
-    /// Returns the allocated priority. This may be different to what was provided to [`SchedClassifier::attach`].
+    /// Returns the allocated priority. If none was provided at attach time, this was allocated for you.
     pub fn priority(&self) -> u16 {
         self.0.priority
     }
 
-    /// Returns the assigned handle. This was auto-generated if none was supplied to [`SchedClassifier::attach`].
+    /// Returns the assigned handle. If none was provided at attach time, this was allocated for you.
     pub fn handle(&self) -> u32 {
         self.0.handle
     }
