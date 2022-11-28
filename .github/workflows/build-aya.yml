@@ -66,6 +66,7 @@ jobs:
 
       - name: Install Pre-requisites
         run: |
+          sudo apt-get update
           sudo apt-get -qy install linux-tools-common qemu-system-x86 cloud-image-utils openssh-client libelf-dev gcc-multilib
           cargo install bpf-linker
 
