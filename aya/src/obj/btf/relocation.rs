@@ -432,9 +432,9 @@ fn match_candidate<'target>(
     Ok(Some(target_spec))
 }
 
-fn match_member<'local, 'target>(
+fn match_member<'target>(
     local_btf: &Btf,
-    local_spec: &AccessSpec<'local>,
+    local_spec: &AccessSpec<'_>,
     local_accessor: &Accessor,
     target_btf: &'target Btf,
     target_id: u32,
