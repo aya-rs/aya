@@ -19,7 +19,7 @@ bytes = "1.1"
 tokio = { version = "1.2.0" }
 
 [dev-dependencies]
-env_logger = "0.9"
+env_logger = "0.10"
 testing_logger = "0.1.1"
 
 [lib]
