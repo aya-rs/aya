@@ -7,7 +7,7 @@ publish = false
 [dependencies]
 anyhow = "1"
 aya = { path = "../../aya" }
-clap = { version = "3", features = ["derive"] }
+clap = { version = "4", features = ["derive"] }
 env_logger = "0.10"
 inventory = "0.2"
 integration-test-macros = { path = "../integration-test-macros" }
