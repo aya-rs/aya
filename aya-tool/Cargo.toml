@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 bindgen = "0.63"
-clap = { version = "3", features = ["derive"] }
+clap = { version = "4", features = ["derive"] }
 anyhow = "1"
 thiserror = "1"
 tempfile = "3"

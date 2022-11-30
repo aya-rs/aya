@@ -37,7 +37,7 @@ impl std::fmt::Display for Architecture {
 }
 
 #[derive(Debug, Parser)]
-pub struct Options {
+pub struct BuildEbpfOptions {
     /// Set the endianness of the BPF target
     #[clap(default_value = "bpfel-unknown-none", long)]
     pub target: Architecture,
@@ -49,12 +49,12 @@ pub struct Options {
     pub libbpf_dir: PathBuf,
 }
 
-pub fn build_ebpf(opts: Options) -> anyhow::Result<()> {
+pub fn build_ebpf(opts: BuildEbpfOptions) -> anyhow::Result<()> {
     build_rust_ebpf(&opts)?;
     build_c_ebpf(&opts)
 }
 
-fn build_rust_ebpf(opts: &Options) -> anyhow::Result<()> {
+fn build_rust_ebpf(opts: &BuildEbpfOptions) -> anyhow::Result<()> {
     let mut dir = PathBuf::from(WORKSPACE_ROOT.to_string());
     dir.push("test/integration-ebpf");
 
@@ -92,7 +92,7 @@ fn get_libbpf_headers<P: AsRef<Path>>(libbpf_dir: P, include_path: P) -> anyhow:
     Ok(())
 }
 
-fn build_c_ebpf(opts: &Options) -> anyhow::Result<()> {
+fn build_c_ebpf(opts: &BuildEbpfOptions) -> anyhow::Result<()> {
     let mut src = PathBuf::from(WORKSPACE_ROOT.to_string());
     src.push("test/integration-ebpf/src/bpf");
 

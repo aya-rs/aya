@@ -10,7 +10,7 @@ pub struct Options {
     pub musl: bool,
 
     #[clap(flatten)]
-    pub ebpf_options: build_ebpf::Options,
+    pub ebpf_options: build_ebpf::BuildEbpfOptions,
 }
 
 pub fn build_test(opts: Options) -> anyhow::Result<()> {
