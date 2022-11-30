@@ -28,9 +28,7 @@ fn relocate_field() {
         relocation_code: r#"
             __u8 memory[] = {1, 2, 3, 4};
             struct foo *ptr = (struct foo *) &memory;
-            bpf_probe_read_kernel(&value,
-                                  sizeof(__u8),
-                                  __builtin_preserve_access_index(&ptr->c));
+            value = __builtin_preserve_access_index(ptr->c);
         "#,
     }
     .build()
@@ -73,9 +71,7 @@ fn relocate_pointer() {
         relocation_code: r#"
             __u8 memory[] = {42, 0, 0, 0, 0, 0, 0, 0};
             struct bar* ptr = (struct bar *) &memory;
-            bpf_probe_read_kernel(&value,
-                                  sizeof(void *),
-                                  __builtin_preserve_access_index(&ptr->f));
+            value = (__u64) __builtin_preserve_access_index(ptr->f);
         "#,
     }
     .build()
@@ -121,14 +117,13 @@ impl RelocationTest {
                 #include <linux/bpf.h>
 
                 static long (*bpf_map_update_elem)(void *map, const void *key, const void *value, __u64 flags) = (void *) 2;
-                static long (*bpf_probe_read_kernel)(void *dst, __u32 size, const void *unsafe_ptr) = (void *) 113;
 
                 {local_definition}
 
                 struct {{
                   int (*type)[BPF_MAP_TYPE_ARRAY];
                   __u32 *key;
-                  __u32 *value;
+                  __u64 *value;
                   int (*max_entries)[1];
                 }} output_map
                 __attribute__((section(".maps"), used));
@@ -136,7 +131,7 @@ impl RelocationTest {
                 __attribute__((section("tracepoint/bpf_prog"), used))
                 int bpf_prog(void *ctx) {{
                   __u32 key = 0;
-                  __u32 value = 0;
+                  __u64 value = 0;
                   {relocation_code}
                   bpf_map_update_elem(&output_map, &key, &value, BPF_ANY);
                   return 0;
@@ -165,11 +160,9 @@ impl RelocationTest {
             r#"
                 #include <linux/bpf.h>
 
-                static long (*bpf_probe_read_kernel)(void *dst, __u32 size, const void *unsafe_ptr) = (void *) 113;
-
                 {target_btf}
                 int main() {{
-                    __u32 value = 0;
+                    __u64 value = 0;
                     // This is needed to make sure to emit BTF for the defined types,
                     // it could be dead code eliminated if we don't.
                     {relocation_code};
@@ -218,17 +211,17 @@ struct RelocationTestRunner {
 
 impl RelocationTestRunner {
     /// Run test and return the output value
-    fn run(&self) -> Result<u32> {
+    fn run(&self) -> Result<u64> {
         self.run_internal(true).context("Error running with BTF")
     }
 
     /// Run without loading btf
-    fn run_no_btf(&self) -> Result<u32> {
+    fn run_no_btf(&self) -> Result<u64> {
         self.run_internal(false)
             .context("Error running without BTF")
     }
 
-    fn run_internal(&self, with_relocations: bool) -> Result<u32> {
+    fn run_internal(&self, with_relocations: bool) -> Result<u64> {
         let mut loader = BpfLoader::new();
         if with_relocations {
             loader.btf(Some(&self.btf));
@@ -250,7 +243,7 @@ impl RelocationTestRunner {
         // To inspect the loaded eBPF bytecode, increse the timeout and run:
         // $ sudo bpftool prog dump xlated name bpf_prog
 
-        let output_map: Array<_, u32> = bpf.take_map("output_map").unwrap().try_into().unwrap();
+        let output_map: Array<_, u64> = bpf.take_map("output_map").unwrap().try_into().unwrap();
         let key = 0;
         output_map.get(&key, 0).context("Getting key 0 failed")
     }
