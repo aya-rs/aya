@@ -406,19 +406,35 @@ fn match_candidate<'target>(
             let target_ty = candidate.btf.type_by_id(target_id)?;
             // the first accessor is guaranteed to have a name by construction
             let local_variant_name = local_spec.accessors[0].name.as_ref().unwrap();
+            let match_enum =
+                |name_offset, index, target_spec: &mut AccessSpec| -> Result<_, BtfError> {
+                    let target_variant_name = candidate.btf.string_at(name_offset)?;
+                    if flavorless_name(local_variant_name) == flavorless_name(&target_variant_name)
+                    {
+                        target_spec.parts.push(index);
+                        target_spec.accessors.push(Accessor {
+                            index,
+                            type_id: target_id,
+                            name: None,
+                        });
+                        Ok(Some(()))
+                    } else {
+                        Ok(None)
+                    }
+                };
             match target_ty {
                 BtfType::Enum(en) => {
                     for (index, member) in en.variants.iter().enumerate() {
-                        let target_variant_name = candidate.btf.string_at(member.name_offset)?;
-                        if flavorless_name(local_variant_name)
-                            == flavorless_name(&target_variant_name)
+                        if let Ok(Some(_)) = match_enum(member.name_offset, index, &mut target_spec)
                         {
-                            target_spec.parts.push(index);
-                            target_spec.accessors.push(Accessor {
-                                index,
-                                type_id: target_id,
-                                name: None,
-                            });
+                            return Ok(Some(target_spec));
+                        }
+                    }
+                }
+                BtfType::Enum64(en) => {
+                    for (index, member) in en.variants.iter().enumerate() {
+                        if let Ok(Some(_)) = match_enum(member.name_offset, index, &mut target_spec)
+                        {
                             return Ok(Some(target_spec));
                         }
                     }
@@ -620,29 +636,39 @@ impl<'a> AccessSpec<'a> {
                 }
             }
             RelocationKind::EnumVariantExists | RelocationKind::EnumVariantValue => match ty {
-                BtfType::Enum(en) => {
+                BtfType::Enum(_) | BtfType::Enum64(_) => {
                     if parts.len() != 1 {
                         return Err(RelocationError::InvalidAccessString {
                             access_str: spec.to_string(),
                         });
                     }
                     let index = parts[0];
-                    if index >= en.variants.len() {
+
+                    let (n_variants, name_offset) = match ty {
+                        BtfType::Enum(en) => (
+                            en.variants.len(),
+                            en.variants.get(index).map(|v| v.name_offset),
+                        ),
+                        BtfType::Enum64(en) => (
+                            en.variants.len(),
+                            en.variants.get(index).map(|v| v.name_offset),
+                        ),
+                        _ => unreachable!(),
+                    };
+
+                    if name_offset.is_none() {
                         return Err(RelocationError::InvalidAccessIndex {
                             type_name: btf.err_type_name(ty),
                             spec: spec.to_string(),
                             index,
-                            max_index: en.variants.len(),
+                            max_index: n_variants,
                             error: "tried to access nonexistant enum variant".to_string(),
                         });
                     }
                     let accessors = vec![Accessor {
                         type_id,
                         index,
-                        name: Some(
-                            btf.string_at(en.variants.get(index).unwrap().name_offset)?
-                                .to_string(),
-                        ),
+                        name: Some(btf.string_at(name_offset.unwrap())?.to_string()),
                     }];
 
                     AccessSpec {
@@ -946,6 +972,10 @@ impl ComputedRelocation {
                             value as u64
                         }
                     }
+                    BtfType::Enum64(en) => {
+                        let variant = &en.variants[accessor.index];
+                        (variant.value_high as u64) << 32 | variant.value_low as u64
+                    }
                     // candidate selection ensures that rel_kind == local_kind == target_kind
                     _ => unreachable!(),
                 }
@@ -1079,6 +1109,7 @@ impl ComputedRelocation {
             }
             FieldSigned => match member_ty {
                 BtfType::Enum(en) => value.value = en.is_signed() as u64,
+                BtfType::Enum64(en) => value.value = en.is_signed() as u64,
                 BtfType::Int(i) => value.value = i.encoding() as u64 & IntEncoding::Signed as u64,
                 _ => (),
             },
