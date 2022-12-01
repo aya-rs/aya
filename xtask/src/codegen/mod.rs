@@ -54,32 +54,32 @@ impl std::fmt::Display for Architecture {
 
 #[derive(Parser)]
 pub struct Options {
-    #[clap(long, action)]
+    #[arg(long, action)]
     libbpf_dir: PathBuf,
 
     // sysroot options. Default to ubuntu headers installed by the
     // libc6-dev-{arm64,armel}-cross packages.
-    #[clap(long, default_value = "/usr/include/x86_64-linux-gnu", action)]
+    #[arg(long, default_value = "/usr/include/x86_64-linux-gnu", action)]
     x86_64_sysroot: PathBuf,
 
-    #[clap(long, default_value = "/usr/aarch64-linux-gnu/include", action)]
+    #[arg(long, default_value = "/usr/aarch64-linux-gnu/include", action)]
     aarch64_sysroot: PathBuf,
 
-    #[clap(long, default_value = "/usr/arm-linux-gnueabi/include", action)]
+    #[arg(long, default_value = "/usr/arm-linux-gnueabi/include", action)]
     armv7_sysroot: PathBuf,
 
-    #[clap(long, default_value = "/usr/riscv64-linux-gnu/include", action)]
+    #[arg(long, default_value = "/usr/riscv64-linux-gnu/include", action)]
     riscv64_sysroot: PathBuf,
 
-    #[clap(subcommand)]
+    #[command(subcommand)]
     command: Option<Command>,
 }
 
-#[derive(Parser)]
+#[derive(clap::Subcommand)]
 enum Command {
-    #[clap(name = "aya")]
+    #[command(name = "aya")]
     Aya,
-    #[clap(name = "aya-bpf-bindings")]
+    #[command(name = "aya-bpf-bindings")]
     AyaBpfBindings,
 }
 
