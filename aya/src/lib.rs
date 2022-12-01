@@ -33,8 +33,8 @@
 //! [async-std]: https://docs.rs/async-std
 
 #![doc(
-    html_logo_url = "https://aya-rs.dev/assets/images/crabby_dev.svg",
-    html_favicon_url = "https://aya-rs.dev/assets/images/crabby_dev.svg"
+    html_logo_url = "https://aya-rs.dev/assets/images/crabby.svg",
+    html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(clippy::all, missing_docs)]
