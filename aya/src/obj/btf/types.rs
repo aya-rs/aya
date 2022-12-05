@@ -1335,7 +1335,7 @@ mod tests {
                 let data2 = new.to_bytes();
                 assert_eq!(data, data2);
             }
-            Ok(t) => panic!("expected int type, got {:#?}", t),
+            Ok(t) => panic!("expected int type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
     }
@@ -1379,7 +1379,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Ptr(_)) => {}
-            Ok(t) => panic!("expected ptr type, got {:#?}", t),
+            Ok(t) => panic!("expected ptr type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1396,7 +1396,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Array(_)) => {}
-            Ok(t) => panic!("expected array type, got {:#?}", t),
+            Ok(t) => panic!("expected array type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1413,7 +1413,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Struct(_)) => {}
-            Ok(t) => panic!("expected struct type, got {:#?}", t),
+            Ok(t) => panic!("expected struct type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1430,7 +1430,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Union(_)) => {}
-            Ok(t) => panic!("expected union type, got {:#?}", t),
+            Ok(t) => panic!("expected union type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1447,7 +1447,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Enum(_)) => {}
-            Ok(t) => panic!("expected enum type, got {:#?}", t),
+            Ok(t) => panic!("expected enum type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1463,7 +1463,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Fwd(_)) => {}
-            Ok(t) => panic!("expected fwd type, got {:#?}", t),
+            Ok(t) => panic!("expected fwd type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1479,7 +1479,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Typedef(_)) => {}
-            Ok(t) => panic!("expected typedef type, got {:#?}", t),
+            Ok(t) => panic!("expected typedef type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1495,7 +1495,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Volatile(_)) => {}
-            Ok(t) => panic!("expected volatile type, got {:#?}", t),
+            Ok(t) => panic!("expected volatile type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1511,7 +1511,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Const(_)) => {}
-            Ok(t) => panic!("expected const type, got {:#?}", t),
+            Ok(t) => panic!("expected const type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1527,7 +1527,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Restrict(_)) => {}
-            Ok(t) => panic!("expected restrict type gpt {:#?}", t),
+            Ok(t) => panic!("expected restrict type gpt {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1543,7 +1543,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Func(_)) => {}
-            Ok(t) => panic!("expected func type gpt {:#?}", t),
+            Ok(t) => panic!("expected func type gpt {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1560,7 +1560,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::FuncProto(_)) => {}
-            Ok(t) => panic!("expected func_proto type, got {:#?}", t),
+            Ok(t) => panic!("expected func_proto type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1578,7 +1578,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Var(_)) => {}
-            Ok(t) => panic!("expected var type, got {:#?}", t),
+            Ok(t) => panic!("expected var type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         };
         let data2 = got.unwrap().to_bytes();
@@ -1600,7 +1600,7 @@ mod tests {
                 assert_eq!(0, ty.entries[0].offset);
                 assert_eq!(4, ty.entries[0].size);
             }
-            Ok(t) => panic!("expected datasec type, got {:#?}", t),
+            Ok(t) => panic!("expected datasec type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1616,7 +1616,7 @@ mod tests {
         let got = unsafe { BtfType::read(data, endianness) };
         match got {
             Ok(BtfType::Float(_)) => {}
-            Ok(t) => panic!("expected float type, got {:#?}", t),
+            Ok(t) => panic!("expected float type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
         let data2 = got.unwrap().to_bytes();
@@ -1642,7 +1642,7 @@ mod tests {
             Ok(BtfType::FuncProto(fp)) => {
                 assert_eq!(fp.params.len(), 2);
             }
-            Ok(t) => panic!("expected func proto type, got {:#?}", t),
+            Ok(t) => panic!("expected func proto type, got {t:#?}"),
             Err(_) => panic!("unexpected error"),
         }
     }

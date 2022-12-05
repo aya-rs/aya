@@ -9,7 +9,7 @@ use std::process::exit;
 
 use clap::Parser;
 #[derive(Parser)]
-pub struct Options {
+pub struct XtaskOptions {
     #[clap(subcommand)]
     command: Command,
 }
@@ -19,12 +19,12 @@ enum Command {
     Codegen(codegen::Options),
     Docs,
     BuildIntegrationTest(build_test::Options),
-    BuildIntegrationTestEbpf(build_ebpf::Options),
+    BuildIntegrationTestEbpf(build_ebpf::BuildEbpfOptions),
     IntegrationTest(run::Options),
 }
 
 fn main() {
-    let opts = Options::parse();
+    let opts = XtaskOptions::parse();
 
     use Command::*;
     let ret = match opts.command {
@@ -36,7 +36,7 @@ fn main() {
     };
 
     if let Err(e) = ret {
-        eprintln!("{:#}", e);
+        eprintln!("{e:#}");
         exit(1);
     }
 }

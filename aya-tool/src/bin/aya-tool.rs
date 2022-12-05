@@ -28,7 +28,7 @@ enum Command {
 
 fn main() {
     if let Err(e) = try_main() {
-        eprintln!("{:#}", e);
+        eprintln!("{e:#}");
         exit(1);
     }
 }
@@ -47,7 +47,7 @@ fn try_main() -> Result<(), anyhow::Error> {
             } else {
                 generate(InputFile::Btf(btf), &names, &bindgen_args)?
             };
-            println!("{}", bindings);
+            println!("{bindings}");
         }
     };
 

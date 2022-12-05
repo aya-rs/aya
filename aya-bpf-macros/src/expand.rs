@@ -148,7 +148,7 @@ impl SockOps {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = if let Some(name) = &self.name {
-            format!("sockops/{}", name)
+            format!("sockops/{name}")
         } else {
             "sockops".to_owned()
         };
@@ -208,7 +208,7 @@ impl Xdp {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = if let Some(name) = &self.name {
-            format!("xdp/{}", name)
+            format!("xdp/{name}")
         } else {
             "xdp".to_owned()
         };
@@ -240,7 +240,7 @@ impl SchedClassifier {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = if let Some(name) = &self.name {
-            format!("classifier/{}", name)
+            format!("classifier/{name}")
         } else {
             "classifier".to_owned()
         };
@@ -272,7 +272,7 @@ impl CgroupSysctl {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = if let Some(name) = &self.name {
-            format!("cgroup/sysctl/{}", name)
+            format!("cgroup/sysctl/{name}")
         } else {
             ("cgroup/sysctl").to_owned()
         };
@@ -349,12 +349,12 @@ impl CgroupSkb {
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = if let Some(attach) = &self.expected_attach_type {
             if let Some(name) = &self.name {
-                format!("cgroup_skb/{}/{}", attach, name)
+                format!("cgroup_skb/{attach}/{name}")
             } else {
-                format!("cgroup_skb/{}", attach)
+                format!("cgroup_skb/{attach}")
             }
         } else if let Some(name) = &self.name {
-            format!("cgroup/skb/{}", name)
+            format!("cgroup/skb/{name}")
         } else {
             ("cgroup/skb").to_owned()
         };
@@ -432,12 +432,12 @@ impl CgroupSock {
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = if let Some(name) = &self.name {
             if let Some(attach_type) = &self.attach_type {
-                format!("cgroup/{}/{}", attach_type, name)
+                format!("cgroup/{attach_type}/{name}")
             } else {
-                format!("cgroup/sock/{}", name)
+                format!("cgroup/sock/{name}")
             }
         } else if let Some(attach_type) = &self.attach_type {
-            format!("cgroup/{}", attach_type)
+            format!("cgroup/{attach_type}")
         } else {
             "cgroup/sock".to_string()
         };
@@ -679,9 +679,9 @@ impl SkSkb {
     pub fn expand(&self) -> Result<TokenStream> {
         let kind = &self.kind;
         let section_name = if let Some(name) = &self.name {
-            format!("sk_skb/{}/{}", kind, name)
+            format!("sk_skb/{kind}/{name}")
         } else {
-            format!("sk_skb/{}", kind)
+            format!("sk_skb/{kind}")
         };
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
@@ -712,7 +712,7 @@ impl SocketFilter {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = if let Some(name) = &self.name {
-            format!("socket/{}", name)
+            format!("socket/{name}")
         } else {
             "socket".to_owned()
         };
@@ -802,7 +802,7 @@ impl SkLookup {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = if let Some(name) = &self.name {
-            format!("sk_lookup/{}", name)
+            format!("sk_lookup/{name}")
         } else {
             "sk_lookup".to_owned()
         };

@@ -219,7 +219,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
 
         // write the bindings, with the original helpers removed
         write_to_file(
-            generated.join(format!("linux_bindings_{}.rs", arch)),
+            generated.join(format!("linux_bindings_{arch}.rs")),
             &bindings.to_string(),
         )?;
     }

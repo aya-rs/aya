@@ -84,7 +84,7 @@ impl UProbe {
 
         let mut path = if let Some(pid) = pid {
             find_lib_in_proc_maps(pid, target_str).map_err(|io_error| UProbeError::FileError {
-                filename: format!("/proc/{}/maps", pid),
+                filename: format!("/proc/{pid}/maps"),
                 io_error,
             })?
         } else {
@@ -187,7 +187,7 @@ pub enum UProbeError {
 }
 
 fn proc_maps_libs(pid: pid_t) -> Result<Vec<(String, String)>, io::Error> {
-    let maps_file = format!("/proc/{}/maps", pid);
+    let maps_file = format!("/proc/{pid}/maps");
     let data = fs::read_to_string(maps_file)?;
 
     Ok(data

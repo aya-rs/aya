@@ -71,7 +71,7 @@ impl Parse for LogArgs {
 }
 
 fn string_to_expr(s: String) -> Result<Expr> {
-    parse_str(&format!("\"{}\"", s))
+    parse_str(&format!("\"{s}\""))
 }
 
 fn hint_to_expr(hint: DisplayHint) -> Result<Expr> {
@@ -108,7 +108,7 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
     let fragments = parse(&format_string_val).map_err(|e| {
         Error::new(
             format_string.span(),
-            format!("could not parse the format string: {}", e),
+            format!("could not parse the format string: {e}"),
         )
     })?;
 

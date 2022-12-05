@@ -490,7 +490,7 @@ impl Btf {
                     let mut ty = ty.clone();
                     for (i, mut param) in ty.params.iter_mut().enumerate() {
                         if param.name_offset == 0 && param.btf_type != 0 {
-                            param.name_offset = self.add_string(format!("param{}", i));
+                            param.name_offset = self.add_string(format!("param{i}"));
                         }
                     }
                     types.types[i] = BtfType::FuncProto(ty);

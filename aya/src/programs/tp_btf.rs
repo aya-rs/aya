@@ -58,7 +58,7 @@ impl BtfTracePoint {
     /// * `btf` - btf information for the target system
     pub fn load(&mut self, tracepoint: &str, btf: &Btf) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_TRACE_RAW_TP);
-        let type_name = format!("btf_trace_{}", tracepoint);
+        let type_name = format!("btf_trace_{tracepoint}");
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Typedef)?);
         load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
