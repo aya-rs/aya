@@ -52,7 +52,7 @@ pub fn run(opts: Options) -> Result<(), anyhow::Error> {
     build(&opts).context("Error while building userspace application")?;
     // profile we are building (release or debug)
     let profile = if opts.release { "release" } else { "debug" };
-    let bin_path = format!("target/{}/integration-test", profile);
+    let bin_path = format!("target/{profile}/integration-test");
 
     // arguments to pass to the application
     let mut run_args: Vec<_> = opts.run_args.iter().map(String::as_str).collect();

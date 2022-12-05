@@ -682,7 +682,7 @@ impl<'a> AccessSpec<'a> {
                         rel_kind => {
                             return Err(RelocationError::InvalidRelocationKindForType {
                                 relocation_number: relocation.number,
-                                relocation_kind: format!("{:?}", rel_kind),
+                                relocation_kind: format!("{rel_kind:?}"),
                                 type_kind: format!("{:?}", ty.kind()),
                                 error: "field relocation on a type that doesn't have fields"
                                     .to_string(),
@@ -791,7 +791,7 @@ impl ComputedRelocation {
                     return Err(RelocationError::InvalidInstruction {
                         relocation_number: rel.number,
                         index: ins_index,
-                        error: format!("invalid src_reg={:x} expected {:x}", src_reg, BPF_K),
+                        error: format!("invalid src_reg={src_reg:x} expected {BPF_K:x}"),
                     }
                     .into());
                 }
@@ -803,7 +803,7 @@ impl ComputedRelocation {
                     return Err(RelocationError::InvalidInstruction {
                         relocation_number: rel.number,
                         index: ins_index,
-                        error: format!("value `{}` overflows 16 bits offset field", target_value),
+                        error: format!("value `{target_value}` overflows 16 bits offset field"),
                     }
                     .into());
                 }
@@ -844,7 +844,7 @@ impl ComputedRelocation {
                             return Err(RelocationError::InvalidInstruction {
                                 relocation_number: rel.number,
                                 index: ins_index,
-                                error: format!("invalid target size {}", size),
+                                error: format!("invalid target size {size}"),
                             }
                             .into())
                         }
@@ -868,7 +868,7 @@ impl ComputedRelocation {
                 return Err(RelocationError::InvalidInstruction {
                     relocation_number: rel.number,
                     index: ins_index,
-                    error: format!("invalid instruction class {:x}", class),
+                    error: format!("invalid instruction class {class:x}"),
                 }
                 .into())
             }
@@ -938,7 +938,7 @@ impl ComputedRelocation {
                     let ty = spec.btf.type_by_id(accessor.type_id)?;
                     return Err(RelocationError::InvalidRelocationKindForType {
                         relocation_number: rel.number,
-                        relocation_kind: format!("{:?}", rel_kind),
+                        relocation_kind: format!("{rel_kind:?}"),
                         type_kind: format!("{:?}", ty.kind()),
                         error: "invalid relocation kind for array type".to_string(),
                     }

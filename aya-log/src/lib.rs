@@ -137,7 +137,7 @@ where
     T: LowerHex,
 {
     fn format(v: T) -> String {
-        format!("{:x}", v)
+        format!("{v:x}")
     }
 }
 
@@ -147,7 +147,7 @@ where
     T: UpperHex,
 {
     fn format(v: T) -> String {
-        format!("{:X}", v)
+        format!("{v:X}")
     }
 }
 
@@ -481,7 +481,7 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
 
     logger.log(
         &Record::builder()
-            .args(format_args!("{}", full_log_msg))
+            .args(format_args!("{full_log_msg}"))
             .target(target.ok_or(())?)
             .level(level)
             .module_path(module)
@@ -529,7 +529,6 @@ mod test {
     use super::*;
     use aya_log_common::{write_record_header, WriteToBuf};
     use log::logger;
-    use testing_logger;
 
     fn new_log(args: usize) -> Result<(usize, Vec<u8>), ()> {
         let mut buf = vec![0; 8192];

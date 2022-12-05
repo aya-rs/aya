@@ -154,8 +154,8 @@ fn create_probe_event(
         offset
     );
     let offset_suffix = match kind {
-        KProbe => format!("+{}", offset),
-        UProbe => format!(":{:#x}", offset),
+        KProbe => format!("+{offset}"),
+        UProbe => format!(":{offset:#x}"),
         _ => "".to_string(),
     };
     let probe = format!(
@@ -193,7 +193,7 @@ fn delete_probe_event(kind: ProbeKind, event_alias: &str) -> Result<(), (String,
             .open(&events_file_name)
             .map_err(|e| (events_file_name.to_string(), e))?;
 
-        let rm = format!("-:{}\n", event_alias);
+        let rm = format!("-:{event_alias}\n");
 
         events_file
             .write_all(rm.as_bytes())
@@ -204,7 +204,7 @@ fn delete_probe_event(kind: ProbeKind, event_alias: &str) -> Result<(), (String,
 }
 
 fn read_sys_fs_perf_type(pmu: &str) -> Result<u32, (String, io::Error)> {
-    let file = format!("/sys/bus/event_source/devices/{}/type", pmu);
+    let file = format!("/sys/bus/event_source/devices/{pmu}/type");
 
     let perf_ty = fs::read_to_string(&file).map_err(|e| (file.clone(), e))?;
     let perf_ty = perf_ty
@@ -216,7 +216,7 @@ fn read_sys_fs_perf_type(pmu: &str) -> Result<u32, (String, io::Error)> {
 }
 
 fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, (String, io::Error)> {
-    let file = format!("/sys/bus/event_source/devices/{}/format/retprobe", pmu);
+    let file = format!("/sys/bus/event_source/devices/{pmu}/format/retprobe");
 
     let data = fs::read_to_string(&file).map_err(|e| (file.clone(), e))?;
 

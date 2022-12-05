@@ -110,7 +110,7 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
         // write the new helpers as expanded by expand_helpers()
         write_to_file_fmt(
             generated.join("helpers.rs"),
-            &format!("use super::bindings::*; {}", helpers),
+            &format!("use super::bindings::*; {helpers}"),
         )?;
     }
 

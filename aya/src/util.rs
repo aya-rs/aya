@@ -23,7 +23,7 @@ pub fn online_cpus() -> Result<Vec<u32>, io::Error> {
     parse_cpu_ranges(data.trim()).map_err(|_| {
         io::Error::new(
             io::ErrorKind::Other,
-            format!("unexpected {} format", ONLINE_CPUS),
+            format!("unexpected {ONLINE_CPUS} format"),
         )
     })
 }
@@ -43,7 +43,7 @@ pub(crate) fn possible_cpus() -> Result<Vec<u32>, io::Error> {
     parse_cpu_ranges(data.trim()).map_err(|_| {
         io::Error::new(
             io::ErrorKind::Other,
-            format!("unexpected {} format", POSSIBLE_CPUS),
+            format!("unexpected {POSSIBLE_CPUS} format"),
         )
     })
 }

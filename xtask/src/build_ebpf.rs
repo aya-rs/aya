@@ -140,7 +140,7 @@ fn compile_with_clang<P: Clone + AsRef<Path>>(
         .arg("-target")
         .arg("bpf")
         .arg("-c")
-        .arg(format!("-D__TARGET_ARCH_{}", arch))
+        .arg(format!("-D__TARGET_ARCH_{arch}"))
         .arg(src.as_ref().as_os_str())
         .arg("-o")
         .arg(out.as_ref().as_os_str());
