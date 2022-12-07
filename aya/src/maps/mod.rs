@@ -412,8 +412,19 @@ macro_rules! impl_try_from_map_generic_key_and_value {
                             $ty::new(m)
                         },
                         _ => Err(MapError::InvalidMapType{ map_type: map.map_type()}),
+                    }
                 }
             }
+
+            impl<V: Pod, K: Pod> TryFrom<Map> for $ty<MapData, V, K> {
+                type Error = MapError;
+
+                fn try_from(map: Map) -> Result<$ty<MapData, V, K>, MapError> {
+                    match map {
+                        Map::$ty(m) => $ty::new(m),
+                        _ => Err(MapError::InvalidMapType { map_type: map.map_type() }),
+                    }
+                }
             }
        )+
    }
