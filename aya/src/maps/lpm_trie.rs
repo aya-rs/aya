@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    maps::{check_kv_size, IterableMap, MapData, MapError},
+    maps::{check_kv_size, IterableMap, MapData, MapError, MapIter, MapKeys},
     sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
     Pod,
 };
@@ -124,6 +124,18 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
             }
         })?;
         value.ok_or(MapError::KeyNotFound)
+    }
+
+    /// An iterator visiting all key-value pairs in arbitrary order. The
+    /// iterator item type is `Result<(K, V), MapError>`.
+    pub fn iter(&self) -> MapIter<'_, K, V, Self> {
+        MapIter::new(self)
+    }
+
+    /// An iterator visiting all keys in arbitrary order. The iterator element
+    /// type is `Result<Key<K>, MapError>`.
+    pub fn keys(&self) -> MapKeys<'_, Key<K>> {
+        MapKeys::new(self.inner.as_ref())
     }
 }
 
@@ -433,4 +445,32 @@ mod tests {
 
         assert!(matches!(trie.get(&key, 0), Err(MapError::KeyNotFound)));
     }
+
+    // #[test]
+    // // Syscall overrides are performing integer-to-pointer conversions, which
+    // // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
+    // // to support stable as well.
+    // #[cfg_attr(miri, ignore)]
+    // fn test_iter() {
+    //     override_syscall(|call| match call {
+    //         Syscall::Bpf {
+    //             cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
+    //             attr,
+    //         } => get_next_key(attr),
+    //         Syscall::Bpf {
+    //             cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+    //             attr,
+    //         } => lookup_elem(attr),
+    //         _ => sys_error(EFAULT),
+    //     });
+    //     let map = MapData {
+    //         obj: new_obj_map(),
+    //         fd: None,
+    //         pinned: false,
+    //         btf_fd: None,
+    //     };
+    //     let hm = LpmTrie::<_, u32, u32>::new(&map).unwrap();
+    //     let items = hm.iter().collect::<Result<Vec<_>, _>>().unwrap();
+    //     assert_eq!(&items, &[(10, 100), (20, 200), (30, 300)])
+    // }
 }
