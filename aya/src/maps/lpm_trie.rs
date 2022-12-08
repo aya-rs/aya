@@ -3,12 +3,11 @@ use std::{
     borrow::Borrow,
     convert::{AsMut, AsRef},
     marker::PhantomData,
-    mem,
 };
 
 use crate::{
     maps::{check_kv_size, IterableMap, MapData, MapError, MapIter, MapKeys},
-    sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
+    sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem, bpf_map_get_next_key},
     Pod,
 };
 
@@ -137,6 +136,12 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     pub fn keys(&self) -> MapKeys<'_, Key<K>> {
         MapKeys::new(self.inner.as_ref())
     }
+
+    /// An iterator visiting all keys matching key. The
+    /// iterator item type is `Result<Key<K>, MapError>`.
+    pub fn iter_key(&self, key: Key<K>) -> LpnTrieKeys<'_, K> {
+        LpnTrieKeys::new(self.inner.as_ref(), key)
+    }
 }
 
 impl<T: AsMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
@@ -179,6 +184,56 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> IterableMap<Key<K>, V> for LpmTrie<T, K,
 
     fn get(&self, key: &Key<K>) -> Result<V, MapError> {
         self.get(key, 0)
+    }
+}
+
+/// Iterator returned by `LpmTrie::iter_key()`.
+pub struct LpnTrieKeys<'coll, K: Pod> {
+    map: &'coll MapData,
+    err: bool,
+    key: Key<K>,
+}
+
+impl<'coll, K: Pod> LpnTrieKeys<'coll, K> {
+    fn new(map: &'coll MapData, key: Key<K>) -> LpnTrieKeys<'coll, K> {
+        LpnTrieKeys {
+            map,
+            err: false,
+            key
+        }
+    }
+}
+
+impl<K: Pod> Iterator for LpnTrieKeys<'_, K> {
+    type Item = Result<Key<K>, MapError>;
+
+    fn next(&mut self) -> Option<Result<Key<K>, MapError>> {
+        if self.err {
+            return None;
+        }
+
+        let fd = match self.map.fd_or_err() {
+            Ok(fd) => fd,
+            Err(e) => {
+                self.err = true;
+                return Some(Err(e));
+            }
+        };
+
+        match bpf_map_get_next_key(fd, Some(&self.key)) {
+            Ok(Some(key)) => {
+                self.key = key;
+                Some(Ok(key))
+            }
+            Ok(None) => None,
+            Err((_, io_error)) => {
+                self.err = true;
+                Some(Err(MapError::SyscallError {
+                    call: "bpf_map_get_next_key".to_owned(),
+                    io_error,
+                }))
+            }
+        }
     }
 }
 
