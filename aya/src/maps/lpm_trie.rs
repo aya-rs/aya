@@ -499,32 +499,4 @@ mod tests {
 
         assert!(matches!(trie.get(&key, 0), Err(MapError::KeyNotFound)));
     }
-
-    // #[test]
-    // // Syscall overrides are performing integer-to-pointer conversions, which
-    // // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
-    // // to support stable as well.
-    // #[cfg_attr(miri, ignore)]
-    // fn test_iter() {
-    //     override_syscall(|call| match call {
-    //         Syscall::Bpf {
-    //             cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
-    //             attr,
-    //         } => get_next_key(attr),
-    //         Syscall::Bpf {
-    //             cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
-    //             attr,
-    //         } => lookup_elem(attr),
-    //         _ => sys_error(EFAULT),
-    //     });
-    //     let map = MapData {
-    //         obj: new_obj_map(),
-    //         fd: None,
-    //         pinned: false,
-    //         btf_fd: None,
-    //     };
-    //     let hm = LpmTrie::<_, u32, u32>::new(&map).unwrap();
-    //     let items = hm.iter().collect::<Result<Vec<_>, _>>().unwrap();
-    //     assert_eq!(&items, &[(10, 100), (20, 200), (30, 300)])
-    // }
 }
