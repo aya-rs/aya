@@ -128,7 +128,7 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
 
     /// An iterator visiting all key-value pairs in arbitrary order. The
     /// iterator item type is `Result<(K, V), MapError>`.
-    pub fn iter(&self) -> MapIter<'_, K, V, Self> {
+    pub fn iter(&self) -> MapIter<'_, Key<K>, V, Self> {
         MapIter::new(self)
     }
 
@@ -172,14 +172,13 @@ impl<T: AsMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     }
 }
 
-impl<T: AsRef<MapData>, K: Pod, V: Pod> IterableMap<K, V> for LpmTrie<T, K, V> {
+impl<T: AsRef<MapData>, K: Pod, V: Pod> IterableMap<Key<K>, V> for LpmTrie<T, K, V> {
     fn map(&self) -> &MapData {
         self.inner.as_ref()
     }
 
-    fn get(&self, key: &K) -> Result<V, MapError> {
-        let lookup = Key::new(mem::size_of::<K>() as u32, *key);
-        self.get(&lookup, 0)
+    fn get(&self, key: &Key<K>) -> Result<V, MapError> {
+        self.get(key, 0)
     }
 }
 
