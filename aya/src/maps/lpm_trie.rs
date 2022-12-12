@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     maps::{check_kv_size, IterableMap, MapData, MapError, MapIter, MapKeys},
-    sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem, bpf_map_get_next_key},
+    sys::{bpf_map_delete_elem, bpf_map_get_next_key, bpf_map_lookup_elem, bpf_map_update_elem},
     Pod,
 };
 
@@ -199,7 +199,7 @@ impl<'coll, K: Pod> LpnTrieKeys<'coll, K> {
         LpnTrieKeys {
             map,
             err: false,
-            key
+            key,
         }
     }
 }
