@@ -9,6 +9,9 @@ use aya::{
     },
     Bpf,
 };
+use log::warn;
+
+use crate::tests::kernel_version;
 
 use super::{integration_test, IntegrationTest};
 
@@ -107,6 +110,11 @@ fn unload() {
 
 #[integration_test]
 fn pin_link() {
+    if kernel_version().unwrap() < (5, 9, 0) {
+        warn!("skipping test, XDP uses netlink");
+        return;
+    }
+
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/test");
     let mut bpf = Bpf::load(bytes).unwrap();
     let prog: &mut Xdp = bpf.program_mut("test_unload").unwrap().try_into().unwrap();
@@ -133,6 +141,11 @@ fn pin_link() {
 
 #[integration_test]
 fn pin_lifecycle() {
+    if kernel_version().unwrap() < (5, 9, 0) {
+        warn!("skipping test, XDP uses netlink");
+        return;
+    }
+
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/pass");
 
     // 1. Load Program and Pin
