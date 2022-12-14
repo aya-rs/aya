@@ -7,7 +7,7 @@ use expand::{
     SockoptArgs, TracePoint, Xdp,
 };
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, token::Token, ItemFn, ItemStatic};
+use syn::{parse_macro_input, ItemFn, ItemStatic};
 
 #[proc_macro_attribute]
 pub fn map(attrs: TokenStream, item: TokenStream) -> TokenStream {
@@ -523,19 +523,11 @@ pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     macros::cgroup_device,
 ///     programs::DeviceContext,
 /// };
-/// use aya_log_ebpf::info;
 ///
 /// #[cgroup_device(name="cgroup_dev")]
 /// pub fn cgroup_dev(ctx: DeviceContext) -> i32 {
-///     match try_cgroup_dev(ctx) {
-///         Ok(ret) => ret,
-///         Err(ret) => ret,
-///     }
-/// }
-///
-/// fn try_cgroup_dev(ctx: DeviceContext) -> Result<i32, i32> {
-///     info!(&ctx, "device operation called");
-///     Ok(0)
+///     // Reject all device access
+///     return 0;
 /// }
 /// ```
 #[proc_macro_attribute]

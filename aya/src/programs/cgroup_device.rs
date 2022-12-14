@@ -9,7 +9,7 @@ use crate::{
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };
 
-/// A program used to watch or prevent device interaction from a cgroup
+/// A program used to watch or prevent device interaction from a cgroup.
 ///
 /// [`CgroupDevice`] programs can be attached to a cgroup and will be called every
 /// time a process inside that cgroup tries to access (e.g. read, write, mknod)
@@ -41,6 +41,7 @@ impl CgroupDevice {
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_CGROUP_DEVICE, &mut self.data)
     }
+
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupDevice::detach]
