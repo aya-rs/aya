@@ -1,9 +1,13 @@
 #![no_std]
 #![no_main]
 
-use aya_bpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
+use aya_bpf::{
+    bindings::xdp_action,
+    macros::{kprobe, xdp},
+    programs::{ProbeContext, XdpContext},
+};
 
-#[xdp(name = "test_unload")]
+#[xdp(name = "test_unload_xdp")]
 pub fn pass(ctx: XdpContext) -> u32 {
     match unsafe { try_pass(ctx) } {
         Ok(ret) => ret,
@@ -13,6 +17,12 @@ pub fn pass(ctx: XdpContext) -> u32 {
 
 unsafe fn try_pass(_ctx: XdpContext) -> Result<u32, u32> {
     Ok(xdp_action::XDP_PASS)
+}
+
+#[kprobe]
+// truncated name to match bpftool output
+pub fn test_unload_kpr(_ctx: ProbeContext) -> u32 {
+    0
 }
 
 #[panic_handler]

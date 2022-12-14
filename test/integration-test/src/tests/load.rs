@@ -5,7 +5,7 @@ use aya::{
     maps::Array,
     programs::{
         links::{FdLink, PinnedLink},
-        TracePoint, Xdp, XdpFlags,
+        KProbe, TracePoint, Xdp, XdpFlags,
     },
     Bpf,
 };
@@ -84,28 +84,63 @@ macro_rules! assert_loaded {
 }
 
 #[integration_test]
-fn unload() {
+fn unload_xdp() {
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/test");
     let mut bpf = Bpf::load(bytes).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("test_unload").unwrap().try_into().unwrap();
+    let prog: &mut Xdp = bpf
+        .program_mut("test_unload_xdp")
+        .unwrap()
+        .try_into()
+        .unwrap();
     prog.load().unwrap();
+    assert_loaded!("test_unload_xdp", true);
     let link = prog.attach("lo", XdpFlags::default()).unwrap();
     {
-        let _link_owned = prog.take_link(link);
+        let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
-        assert_loaded!("test_unload", true);
+        assert_loaded!("test_unload_xdp", true);
     };
 
-    assert_loaded!("test_unload", false);
+    assert_loaded!("test_unload_xdp", false);
     prog.load().unwrap();
 
-    assert_loaded!("test_unload", true);
+    assert_loaded!("test_unload_xdp", true);
     prog.attach("lo", XdpFlags::default()).unwrap();
 
-    assert_loaded!("test_unload", true);
+    assert_loaded!("test_unload_xdp", true);
     prog.unload().unwrap();
 
-    assert_loaded!("test_unload", false);
+    assert_loaded!("test_unload_xdp", false);
+}
+
+#[integration_test]
+fn unload_kprobe() {
+    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/test");
+    let mut bpf = Bpf::load(bytes).unwrap();
+    let prog: &mut KProbe = bpf
+        .program_mut("test_unload_kpr")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+    assert_loaded!("test_unload_kpr", true);
+    let link = prog.attach("try_to_wake_up", 0).unwrap();
+    {
+        let _link_owned = prog.take_link(link).unwrap();
+        prog.unload().unwrap();
+        assert_loaded!("test_unload_kpr", true);
+    };
+
+    assert_loaded!("test_unload_kpr", false);
+    prog.load().unwrap();
+
+    assert_loaded!("test_unload_kpr", true);
+    prog.attach("try_to_wake_up", 0).unwrap();
+
+    assert_loaded!("test_unload_kpr", true);
+    prog.unload().unwrap();
+
+    assert_loaded!("test_unload_kpr", false);
 }
 
 #[integration_test]
@@ -117,26 +152,30 @@ fn pin_link() {
 
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/test");
     let mut bpf = Bpf::load(bytes).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("test_unload").unwrap().try_into().unwrap();
+    let prog: &mut Xdp = bpf
+        .program_mut("test_unload_xdp")
+        .unwrap()
+        .try_into()
+        .unwrap();
     prog.load().unwrap();
     let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
     let link = prog.take_link(link_id).unwrap();
-    assert_loaded!("test_unload", true);
+    assert_loaded!("test_unload_xdp", true);
 
     let fd_link: FdLink = link.try_into().unwrap();
     let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
 
     // because of the pin, the program is still attached
     prog.unload().unwrap();
-    assert_loaded!("test_unload", true);
+    assert_loaded!("test_unload_xdp", true);
 
     // delete the pin, but the program is still attached
     let new_link = pinned.unpin().unwrap();
-    assert_loaded!("test_unload", true);
+    assert_loaded!("test_unload_xdp", true);
 
     // finally when new_link is dropped we're detached
     drop(new_link);
-    assert_loaded!("test_unload", false);
+    assert_loaded!("test_unload_xdp", false);
 }
 
 #[integration_test]

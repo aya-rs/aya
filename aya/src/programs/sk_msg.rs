@@ -88,7 +88,7 @@ impl SkMsg {
                 io_error,
             }
         })?;
-        self.data.links.insert(SkMsgLink(ProgAttachLink::new(
+        self.data.links.insert(SkMsgLink::new(ProgAttachLink::new(
             prog_fd,
             map_fd,
             BPF_SK_MSG_VERDICT,
