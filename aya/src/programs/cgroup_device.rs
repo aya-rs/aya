@@ -72,9 +72,9 @@ impl CgroupDevice {
             )? as RawFd;
             self.data
                 .links
-                .insert(CgroupDeviceLink(CgroupDeviceLinkInner::Fd(FdLink::new(
-                    link_fd,
-                ))))
+                .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::Fd(
+                    FdLink::new(link_fd),
+                )))
         } else {
             bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE).map_err(|(_, io_error)| {
                 ProgramError::SyscallError {
@@ -84,7 +84,7 @@ impl CgroupDevice {
             })?;
             self.data
                 .links
-                .insert(CgroupDeviceLink(CgroupDeviceLinkInner::ProgAttach(
+                .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::ProgAttach(
                     ProgAttachLink::new(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE),
                 )))
         }

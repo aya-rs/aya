@@ -105,7 +105,9 @@ impl CgroupSkb {
             )? as RawFd;
             self.data
                 .links
-                .insert(CgroupSkbLink(CgroupSkbLinkInner::Fd(FdLink::new(link_fd))))
+                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
+                    link_fd,
+                ))))
         } else {
             bpf_prog_attach(prog_fd, cgroup_fd, attach_type).map_err(|(_, io_error)| {
                 ProgramError::SyscallError {
@@ -116,7 +118,7 @@ impl CgroupSkb {
 
             self.data
                 .links
-                .insert(CgroupSkbLink(CgroupSkbLinkInner::ProgAttach(
+                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(
                     ProgAttachLink::new(prog_fd, cgroup_fd, attach_type),
                 )))
         }

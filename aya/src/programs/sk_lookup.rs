@@ -70,7 +70,9 @@ impl SkLookup {
                 io_error,
             },
         )? as RawFd;
-        self.data.links.insert(SkLookupLink(FdLink::new(link_fd)))
+        self.data
+            .links
+            .insert(SkLookupLink::new(FdLink::new(link_fd)))
     }
 
     /// Takes ownership of the link referenced by the provided link_id.

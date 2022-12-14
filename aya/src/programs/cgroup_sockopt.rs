@@ -79,9 +79,9 @@ impl CgroupSockopt {
             )? as RawFd;
             self.data
                 .links
-                .insert(CgroupSockoptLink(CgroupSockoptLinkInner::Fd(FdLink::new(
-                    link_fd,
-                ))))
+                .insert(CgroupSockoptLink::new(CgroupSockoptLinkInner::Fd(
+                    FdLink::new(link_fd),
+                )))
         } else {
             bpf_prog_attach(prog_fd, cgroup_fd, attach_type).map_err(|(_, io_error)| {
                 ProgramError::SyscallError {
@@ -92,7 +92,7 @@ impl CgroupSockopt {
 
             self.data
                 .links
-                .insert(CgroupSockoptLink(CgroupSockoptLinkInner::ProgAttach(
+                .insert(CgroupSockoptLink::new(CgroupSockoptLinkInner::ProgAttach(
                     ProgAttachLink::new(prog_fd, cgroup_fd, attach_type),
                 )))
         }

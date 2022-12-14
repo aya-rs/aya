@@ -81,7 +81,7 @@ impl CgroupSock {
             )? as RawFd;
             self.data
                 .links
-                .insert(CgroupSockLink(CgroupSockLinkInner::Fd(FdLink::new(
+                .insert(CgroupSockLink::new(CgroupSockLinkInner::Fd(FdLink::new(
                     link_fd,
                 ))))
         } else {
@@ -94,7 +94,7 @@ impl CgroupSock {
 
             self.data
                 .links
-                .insert(CgroupSockLink(CgroupSockLinkInner::ProgAttach(
+                .insert(CgroupSockLink::new(CgroupSockLinkInner::ProgAttach(
                     ProgAttachLink::new(prog_fd, cgroup_fd, attach_type),
                 )))
         }
