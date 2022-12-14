@@ -22,10 +22,10 @@ use crate::{
         MapKind, Object, ParseError, ProgramSection,
     },
     programs::{
-        BtfTracePoint, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr, CgroupSockopt,
-        CgroupSysctl, Extension, FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent, ProbeKind,
-        Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb,
-        SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
+        CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent,
+        ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkLookup,
+        SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_btf_datasec_supported,
@@ -631,6 +631,11 @@ impl<'a> BpfLoader<'a> {
                             Program::CgroupSock(CgroupSock {
                                 data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
                                 attach_type: *attach_type,
+                            })
+                        }
+                        ProgramSection::CgroupDevice { .. } => {
+                            Program::CgroupDevice(CgroupDevice {
+                                data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
                             })
                         }
                     }
