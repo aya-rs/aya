@@ -15,8 +15,8 @@ use crate::{
 /// access control policy and security auditing.
 ///
 /// LSM probes require a kernel compiled with `CONFIG_BPF_LSM=y` and `CONFIG_DEBUG_INFO_BTF=y`.
-/// In order for the probes to fire, you also need the BPF LSM to be enabled through your
-/// kernel's boot paramters (like `lsm=lockdown,yama,bpf`).
+/// If your kernel is not built with `lsm=[...],bpf` option, BPF LSM needs to be enabled
+/// through the kernel's boot parameter (like `lsm=lockdown,yama,bpf`).
 ///
 /// # Minimum kernel version
 ///
