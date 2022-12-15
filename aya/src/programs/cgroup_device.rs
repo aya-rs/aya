@@ -23,12 +23,25 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
+/// # #[derive(Debug, thiserror::Error)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::programs::CgroupDevice;
 ///
 /// let cgroup = std::fs::File::open("/sys/fs/cgroup/unified")?;
 /// let program: &mut CgroupDevice = bpf.program_mut("cgroup_dev").unwrap().try_into()?;
 /// program.load()?;
 /// program.attach(cgroup)?;
+/// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_CGROUP_DEVICE")]
