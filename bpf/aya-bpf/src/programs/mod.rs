@@ -1,3 +1,4 @@
+pub mod device;
 pub mod fentry;
 pub mod fexit;
 pub mod lsm;
@@ -17,6 +18,7 @@ pub mod tp_btf;
 pub mod tracepoint;
 pub mod xdp;
 
+pub use device::DeviceContext;
 pub use fentry::FEntryContext;
 pub use fexit::FExitContext;
 pub use lsm::LsmContext;

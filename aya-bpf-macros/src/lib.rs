@@ -1,9 +1,10 @@
 mod expand;
 
 use expand::{
-    Args, BtfTracePoint, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt, CgroupSysctl,
-    FEntry, FExit, Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint, SchedClassifier, SkLookup,
-    SkMsg, SkSkb, SkSkbKind, SockAddrArgs, SockOps, SocketFilter, SockoptArgs, TracePoint, Xdp,
+    Args, BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt,
+    CgroupSysctl, FEntry, FExit, Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint,
+    SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockAddrArgs, SockOps, SocketFilter,
+    SockoptArgs, TracePoint, Xdp,
 };
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemFn, ItemStatic};
@@ -503,6 +504,38 @@ pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let item = parse_macro_input!(item as ItemFn);
 
     SkLookup::from_syn(args, item)
+        .and_then(|u| u.expand())
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+/// Marks a function as a cgroup device eBPF program that can be attached to a
+/// cgroup.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.15.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{
+///     macros::cgroup_device,
+///     programs::DeviceContext,
+/// };
+///
+/// #[cgroup_device(name="cgroup_dev")]
+/// pub fn cgroup_dev(ctx: DeviceContext) -> i32 {
+///     // Reject all device access
+///     return 0;
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn cgroup_device(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attrs as Args);
+    let item = parse_macro_input!(item as ItemFn);
+
+    CgroupDevice::from_syn(args, item)
         .and_then(|u| u.expand())
         .unwrap_or_else(|err| err.to_compile_error())
         .into()

@@ -293,6 +293,9 @@ pub enum ProgramSection {
         name: String,
         attach_type: CgroupSockAttachType,
     },
+    CgroupDevice {
+        name: String,
+    },
 }
 
 impl ProgramSection {
@@ -326,6 +329,7 @@ impl ProgramSection {
             ProgramSection::Extension { name } => name,
             ProgramSection::SkLookup { name } => name,
             ProgramSection::CgroupSock { name, .. } => name,
+            ProgramSection::CgroupDevice { name } => name,
         }
     }
 }
@@ -390,6 +394,7 @@ impl FromStr for ProgramSection {
                 attach_type: CgroupSockAttachType::default(),
             },
             "cgroup/sysctl" => CgroupSysctl { name },
+            "cgroup/dev" => CgroupDevice { name },
             "cgroup/getsockopt" => CgroupSockopt {
                 name,
                 attach_type: CgroupSockoptAttachType::Get,
@@ -401,6 +406,7 @@ impl FromStr for ProgramSection {
             "cgroup" => match &*name {
                 "skb" => CgroupSkb { name },
                 "sysctl" => CgroupSysctl { name },
+                "dev" => CgroupDevice { name },
                 "getsockopt" | "setsockopt" => {
                     if let Ok(attach_type) = CgroupSockoptAttachType::try_from(name.as_str()) {
                         CgroupSockopt { name, attach_type }

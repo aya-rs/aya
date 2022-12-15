@@ -35,6 +35,7 @@
 //! [`Bpf::program`]: crate::Bpf::program
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [`maps`]: crate::maps
+pub mod cgroup_device;
 pub mod cgroup_skb;
 pub mod cgroup_sock;
 pub mod cgroup_sock_addr;
@@ -72,6 +73,7 @@ use std::{
 };
 use thiserror::Error;
 
+pub use cgroup_device::CgroupDevice;
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
 pub use cgroup_sock::{CgroupSock, CgroupSockAttachType};
 pub use cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType};
@@ -265,6 +267,8 @@ pub enum Program {
     SkLookup(SkLookup),
     /// A [`CgroupSock`] program
     CgroupSock(CgroupSock),
+    /// A [`CgroupDevice`] program
+    CgroupDevice(CgroupDevice),
 }
 
 impl Program {
@@ -295,6 +299,7 @@ impl Program {
             Program::CgroupSockAddr(_) => BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
             Program::SkLookup(_) => BPF_PROG_TYPE_SK_LOOKUP,
             Program::CgroupSock(_) => BPF_PROG_TYPE_CGROUP_SOCK,
+            Program::CgroupDevice(_) => BPF_PROG_TYPE_CGROUP_DEVICE,
         }
     }
 
@@ -324,6 +329,7 @@ impl Program {
             Program::CgroupSockAddr(p) => p.pin(path),
             Program::SkLookup(p) => p.pin(path),
             Program::CgroupSock(p) => p.pin(path),
+            Program::CgroupDevice(p) => p.pin(path),
         }
     }
 
@@ -353,6 +359,7 @@ impl Program {
             Program::CgroupSockAddr(p) => p.unload(),
             Program::SkLookup(p) => p.unload(),
             Program::CgroupSock(p) => p.unload(),
+            Program::CgroupDevice(p) => p.unload(),
         }
     }
 
@@ -385,6 +392,7 @@ impl Program {
             Program::CgroupSockAddr(p) => p.fd(),
             Program::SkLookup(p) => p.fd(),
             Program::CgroupSock(p) => p.fd(),
+            Program::CgroupDevice(p) => p.fd(),
         }
     }
 }
@@ -637,6 +645,7 @@ impl_program_unload!(
     SkLookup,
     SockOps,
     CgroupSock,
+    CgroupDevice,
 );
 
 macro_rules! impl_fd {
@@ -676,6 +685,7 @@ impl_fd!(
     SkLookup,
     SockOps,
     CgroupSock,
+    CgroupDevice,
 );
 
 macro_rules! impl_program_pin{
@@ -720,6 +730,7 @@ impl_program_pin!(
     SkLookup,
     SockOps,
     CgroupSock,
+    CgroupDevice,
 );
 
 macro_rules! impl_try_from_program {
@@ -774,6 +785,7 @@ impl_try_from_program!(
     CgroupSockAddr,
     SkLookup,
     CgroupSock,
+    CgroupDevice,
 );
 
 /// Provides information about a loaded program, like name, id and statistics

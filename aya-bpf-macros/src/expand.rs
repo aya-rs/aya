@@ -820,6 +820,37 @@ impl SkLookup {
     }
 }
 
+pub struct CgroupDevice {
+    item: ItemFn,
+    name: Option<String>,
+}
+
+impl CgroupDevice {
+    pub fn from_syn(mut args: Args, item: ItemFn) -> Result<Self> {
+        let name = name_arg(&mut args)?;
+
+        Ok(CgroupDevice { item, name })
+    }
+
+    pub fn expand(&self) -> Result<TokenStream> {
+        let section_name = if let Some(name) = &self.name {
+            format!("cgroup/dev/{name}")
+        } else {
+            ("cgroup/dev").to_owned()
+        };
+        let fn_name = &self.item.sig.ident;
+        let item = &self.item;
+        Ok(quote! {
+            #[no_mangle]
+            #[link_section = #section_name]
+            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_cgroup_dev_ctx) -> i32 {
+                return #fn_name(::aya_bpf::programs::DeviceContext::new(ctx));
+
+                #item
+            }
+        })
+    }
+}
 #[cfg(test)]
 mod tests {
     use syn::parse_quote;
@@ -892,5 +923,22 @@ mod tests {
         assert!(stream
             .to_string()
             .contains("[link_section = \"cgroup_skb/egress\"]"));
+    }
+
+    #[test]
+    fn cgroup_device_no_name() {
+        let prog = CgroupDevice::from_syn(
+            parse_quote!(),
+            parse_quote!(
+                fn foo(ctx: DeviceContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream
+            .to_string()
+            .contains("[link_section = \"cgroup/dev\"]"));
     }
 }
