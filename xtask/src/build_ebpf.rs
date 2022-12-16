@@ -103,6 +103,7 @@ fn build_c_ebpf(opts: &BuildEbpfOptions) -> anyhow::Result<()> {
 
     let include_path = out_path.join("include");
     get_libbpf_headers(&opts.libbpf_dir, &include_path)?;
+    std::env::set_var("LIBBPF_INCLUDE", &include_path);
     let files = fs::read_dir(&src).unwrap();
     for file in files {
         let p = file.unwrap().path();
