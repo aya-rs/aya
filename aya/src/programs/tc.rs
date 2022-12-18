@@ -279,7 +279,7 @@ impl SchedClassifierLink {
     ///   [`SchedClassifierLink::detach`] will return a [`TcError::NetlinkError`]
     /// - If you create a link for a program that you do not own, detaching it may have unintended
     ///   consequences.
-    pub fn new(
+    pub fn new_tc_link(
         if_name: &str,
         attach_type: TcAttachType,
         priority: u16,
