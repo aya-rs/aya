@@ -54,6 +54,25 @@ fn relocate_enum() {
     assert_eq!(test.run_no_btf().unwrap(), 0);
 }
 
+#[integration_test]
+fn relocate_pointer() {
+    let test = RelocationTest {
+        local_definition: r#"
+            struct foo {};
+            struct bar { struct foo *f; };
+        "#,
+        target_btf: r#""#,
+        relocation_code: r#"
+            __u8 memory[] = {0, 0, 0, 0, 0, 0, 0, 42};
+            struct foo *f = BPF_CORE_READ((struct bar *)&memory, f);
+            __u32 value = (f == (struct foo *) 42);
+        "#,
+    }
+    .build()
+    .unwrap();
+    assert_eq!(test.run().unwrap(), 1);
+}
+
 /// Utility code for running relocation tests:
 /// - Generates the eBPF program using probided local definition and relocation code
 /// - Generates the BTF from the target btf code
