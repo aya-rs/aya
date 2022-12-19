@@ -251,6 +251,7 @@ define_link_wrapper!(
 /// #
 /// # use aya::programs::tc::{SchedClassifierLink};
 /// # use aya::programs::{tc, Link, SchedClassifier, TcAttachType};
+/// # use std::mem;
 /// let tc_link_id = prog.attach("eth0", TcAttachType::Ingress)?;
 ///
 /// let tc_link = prog.take_link(tc_link_id)?;
@@ -259,9 +260,16 @@ define_link_wrapper!(
 /// let priority = tc_link.priority();
 /// let handle = tc_link.handle();
 ///
-/// // A new SchedClassifierLink can be constructed to access an existing attachment
-/// let new_tc_link = SchedClassifierLink::new("eth0", TcAttachType::Ingress, priority, handle)?;
+/// // The following call "forgets" about tc_link so that it is not detached on drop.
+///  mem::forget(tc_link);
 ///
+/// // The link can be re-instantiated and detached as shown below.
+/// let new_tc_link = SchedClassifierLink::new_tc_link(
+///     "eth0",
+///     TcAttachType::Ingress,
+///     priority,
+///     handle,
+/// )?;
 /// new_tc_link.detach()?;
 ///
 /// # Ok::<(), Error>(())
@@ -274,19 +282,19 @@ impl SchedClassifierLink {
     /// [SchedClassifier::attach], the output of the `tc filter` command or from the output of
     /// another BPF loader.
     ///
-    /// # Warnings
+    /// Note: If you create a link for a program that you do not own, detaching it may have
+    /// unintended consequences.
+    ///
+    /// # Errors
     /// - If a program is not attached with the provided parameters, calls to
     ///   [`SchedClassifierLink::detach`] will return a [`TcError::NetlinkError`]
-    /// - If you create a link for a program that you do not own, detaching it may have unintended
-    ///   consequences.
     pub fn new_tc_link(
         if_name: &str,
         attach_type: TcAttachType,
         priority: u16,
         handle: u32,
-    ) -> Result<SchedClassifierLink, ProgramError> {
-        let if_index =
-            ifindex_from_ifname(if_name).map_err(|io_error| TcError::NetlinkError { io_error })?;
+    ) -> Result<SchedClassifierLink, io::Error> {
+        let if_index = ifindex_from_ifname(if_name)?;
         Ok(SchedClassifierLink(TcLink {
             if_index: if_index as i32,
             attach_type,
