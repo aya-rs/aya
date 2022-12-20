@@ -139,8 +139,8 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
 
     /// An iterator visiting all keys matching key. The
     /// iterator item type is `Result<Key<K>, MapError>`.
-    pub fn iter_key(&self, key: Key<K>) -> LpnTrieKeys<'_, K> {
-        LpnTrieKeys::new(self.inner.as_ref(), key)
+    pub fn iter_key(&self, key: Key<K>) -> LpmTrieKeys<'_, K> {
+        LpmTrieKeys::new(self.inner.as_ref(), key)
     }
 }
 
@@ -188,15 +188,15 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> IterableMap<Key<K>, V> for LpmTrie<T, K,
 }
 
 /// Iterator returned by `LpmTrie::iter_key()`.
-pub struct LpnTrieKeys<'coll, K: Pod> {
+pub struct LpmTrieKeys<'coll, K: Pod> {
     map: &'coll MapData,
     err: bool,
     key: Key<K>,
 }
 
-impl<'coll, K: Pod> LpnTrieKeys<'coll, K> {
-    fn new(map: &'coll MapData, key: Key<K>) -> LpnTrieKeys<'coll, K> {
-        LpnTrieKeys {
+impl<'coll, K: Pod> LpmTrieKeys<'coll, K> {
+    fn new(map: &'coll MapData, key: Key<K>) -> LpmTrieKeys<'coll, K> {
+        LpmTrieKeys {
             map,
             err: false,
             key,
@@ -204,7 +204,7 @@ impl<'coll, K: Pod> LpnTrieKeys<'coll, K> {
     }
 }
 
-impl<K: Pod> Iterator for LpnTrieKeys<'_, K> {
+impl<K: Pod> Iterator for LpmTrieKeys<'_, K> {
     type Item = Result<Key<K>, MapError>;
 
     fn next(&mut self) -> Option<Result<Key<K>, MapError>> {
