@@ -25,6 +25,7 @@ pub(crate) enum BtfType {
     DataSec(DataSec),
     DeclTag(DeclTag),
     TypeTag(TypeTag),
+    Enum64(Enum64),
 }
 
 #[repr(C)]
@@ -433,6 +434,47 @@ impl Enum {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
+pub(crate) struct BtfEnum64 {
+    pub(crate) name_offset: u32,
+    pub(crate) value_low32: u32,
+    pub(crate) value_high32: u32,
+}
+
+#[repr(C)]
+#[derive(Clone, Debug)]
+pub(crate) struct Enum64 {
+    pub(crate) name_offset: u32,
+    info: u32,
+    pub(crate) size: u32,
+    pub(crate) variants: Vec<BtfEnum64>, 
+}
+
+impl Enum64 {
+    pub(crate) fn to_bytes(&self) -> Vec<u8> {
+        let mut buf = vec![];
+        buf.extend(bytes_of::<u32>(&self.name_offset));
+        buf.extend(bytes_of::<u32>(&self.info));
+        buf.extend(bytes_of::<u32>(&self.size));
+        for v in &self.variants {
+            buf.extend(bytes_of::<u32>(&v.name_offset));
+            buf.extend(bytes_of::<u32>(&v.value_low32));
+            buf.extend(bytes_of::<u32>(&v.value_high32));
+        }
+        buf
+
+    }
+
+    pub(crate) fn kind(&self) -> BtfKind {
+        BtfKind::Enum64
+    }
+
+    pub(crate) fn type_info_size(&self) -> usize {
+        mem::size_of::<Fwd>() + mem::size_of::<BtfEnum64>() * self.variants.len()
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Debug)]
 pub(crate) struct BtfMember {
     pub(crate) name_offset: u32,
     pub(crate) btf_type: u32,
@@ -818,6 +860,7 @@ pub(crate) enum BtfKind {
     Float = 16,
     DeclTag = 17,
     TypeTag = 18,
+    Enum64 = 19,
 }
 
 impl TryFrom<u32> for BtfKind {
@@ -845,6 +888,7 @@ impl TryFrom<u32> for BtfKind {
             16 => Float,
             17 => DeclTag,
             18 => TypeTag,
+            19 => Enum64,
             kind => return Err(BtfError::InvalidTypeKind { kind }),
         })
     }
@@ -872,6 +916,7 @@ impl Display for BtfKind {
             BtfKind::DataSec => write!(f, "[DATASEC]"),
             BtfKind::DeclTag => write!(f, "[DECL_TAG]"),
             BtfKind::TypeTag => write!(f, "[TYPE_TAG]"),
+            BtfKind::Enum64 => write!(f, "[ENUM64]"),
         }
     }
 }
@@ -1019,6 +1064,12 @@ impl BtfType {
                 info: ty[1],
                 btf_type: ty[2],
             }),
+            BtfKind::Enum64 => BtfType::Enum64(Enum64 { 
+                name_offset: ty[0],
+                info: ty[1],
+                size: ty[2],
+                variants: unsafe { read_array::<BtfEnum64>(data, vlen)? } 
+            }), 
         })
     }
 
@@ -1043,6 +1094,7 @@ impl BtfType {
             BtfType::DataSec(t) => t.to_bytes(),
             BtfType::DeclTag(t) => t.to_bytes(),
             BtfType::TypeTag(t) => t.to_bytes(),
+            BtfType::Enum64(t) => t.to_bytes(),
         }
     }
 
@@ -1095,6 +1147,7 @@ impl BtfType {
             BtfType::DataSec(t) => t.type_info_size(),
             BtfType::DeclTag(t) => t.type_info_size(),
             BtfType::TypeTag(t) => t.type_info_size(),
+            BtfType::Enum64(t) => t.type_info_size(),
         }
     }
 
@@ -1119,6 +1172,7 @@ impl BtfType {
             BtfType::DataSec(t) => t.name_offset,
             BtfType::DeclTag(t) => t.name_offset,
             BtfType::TypeTag(t) => t.name_offset,
+            BtfType::Enum64(t) => t.name_offset,
         }
     }
 
@@ -1143,6 +1197,7 @@ impl BtfType {
             BtfType::DataSec(t) => t.kind(),
             BtfType::DeclTag(t) => t.kind(),
             BtfType::TypeTag(t) => t.kind(),
+            BtfType::Enum64(t) => t.kind(),
         }
     }
 
