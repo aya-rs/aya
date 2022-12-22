@@ -206,6 +206,10 @@ pub enum ProgramError {
         /// program name
         name: String,
     },
+
+    /// TraceFS not found.
+    #[error("tracefs non found")]
+    TraceFsNotFound,
 }
 
 /// A [`Program`] file descriptor.

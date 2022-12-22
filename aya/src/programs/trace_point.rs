@@ -1,5 +1,5 @@
 //! Tracepoint programs.
-use std::{fs, io};
+use std::{fs, io, path::Path};
 use thiserror::Error;
 
 use crate::{
@@ -11,6 +11,8 @@ use crate::{
     },
     sys::perf_event_open_trace_point,
 };
+
+use super::utils::get_tracefs;
 
 /// The type returned when attaching a [`TracePoint`] fails.
 #[derive(Debug, Error)]
@@ -77,7 +79,8 @@ impl TracePoint {
     ///
     /// The returned value can be used to detach, see [TracePoint::detach].
     pub fn attach(&mut self, category: &str, name: &str) -> Result<TracePointLinkId, ProgramError> {
-        let id = read_sys_fs_trace_point_id(category, name)?;
+        let tracefs = get_tracefs()?;
+        let id = read_sys_fs_trace_point_id(tracefs, category, name)?;
         let fd = perf_event_open_trace_point(id, None).map_err(|(_code, io_error)| {
             ProgramError::SyscallError {
                 call: "perf_event_open".to_owned(),
@@ -114,20 +117,21 @@ define_link_wrapper!(
 );
 
 pub(crate) fn read_sys_fs_trace_point_id(
+    tracefs: &Path,
     category: &str,
     name: &str,
 ) -> Result<u32, TracePointError> {
-    let file = format!("/sys/kernel/debug/tracing/events/{category}/{name}/id");
+    let file = tracefs.join("events").join(category).join(name).join("id");
 
     let id = fs::read_to_string(&file).map_err(|io_error| TracePointError::FileError {
-        filename: file.clone(),
+        filename: file.display().to_string(),
         io_error,
     })?;
     let id = id
         .trim()
         .parse::<u32>()
         .map_err(|error| TracePointError::FileError {
-            filename: file.clone(),
+            filename: file.display().to_string(),
             io_error: io::Error::new(io::ErrorKind::Other, error),
         })?;
 
