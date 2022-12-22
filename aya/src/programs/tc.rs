@@ -228,7 +228,6 @@ define_link_wrapper!(
     TcLinkId
 );
 
-/// [`SchedClassifierLink`] is the link type used by [`SchedClassifier`] programs.
 impl SchedClassifierLink {
     /// This API is used to construct a [`SchedClassifierLink`] where the `if_name`, `attach_type`,
     /// `priority` and `handle` are already known. This may have been found from a link created by
