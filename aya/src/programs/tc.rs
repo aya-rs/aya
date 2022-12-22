@@ -229,54 +229,7 @@ define_link_wrapper!(
 );
 
 /// [`SchedClassifierLink`] is the link type used by [`SchedClassifier`] programs.
-///
-/// # Examples
-///
-/// ```no_run
-/// # #[derive(Debug, thiserror::Error)]
-/// # enum Error {
-/// #     #[error(transparent)]
-/// #     IO(#[from] std::io::Error),
-/// #     #[error(transparent)]
-/// #     Map(#[from] aya::maps::MapError),
-/// #     #[error(transparent)]
-/// #     Program(#[from] aya::programs::ProgramError),
-/// #     #[error(transparent)]
-/// #     Bpf(#[from] aya::BpfError)
-/// # }
-/// # let mut bpf = aya::Bpf::load(&[])?;
-/// # tc::qdisc_add_clsact("eth0")?;
-/// # let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
-/// # prog.load()?;
-/// #
-/// # use aya::programs::tc::{SchedClassifierLink};
-/// # use aya::programs::{tc, Link, SchedClassifier, TcAttachType};
-/// # use std::mem;
-/// let tc_link_id = prog.attach("eth0", TcAttachType::Ingress)?;
-///
-/// let tc_link = prog.take_link(tc_link_id)?;
-///
-/// // The priority and handle assigned during attach can be accessed as follows:
-/// let priority = tc_link.priority();
-/// let handle = tc_link.handle();
-///
-/// // The following call "forgets" about tc_link so that it is not detached on drop.
-///  mem::forget(tc_link);
-///
-/// // The link can be re-instantiated and detached as shown below.
-/// let new_tc_link = SchedClassifierLink::new_tc_link(
-///     "eth0",
-///     TcAttachType::Ingress,
-///     priority,
-///     handle,
-/// )?;
-/// new_tc_link.detach()?;
-///
-/// # Ok::<(), Error>(())
-/// ```
 impl SchedClassifierLink {
-    /// Creates a new link from the provided values.
-    ///
     /// This API is used to construct a [`SchedClassifierLink`] where the `if_name`, `attach_type`,
     /// `priority` and `handle` are already known. This may have been found from a link created by
     /// [SchedClassifier::attach], the output of the `tc filter` command or from the output of
@@ -288,7 +241,27 @@ impl SchedClassifierLink {
     /// # Errors
     /// - If a program is not attached with the provided parameters, calls to
     ///   [`SchedClassifierLink::detach`] will return a [`TcError::NetlinkError`]
-    pub fn new_tc_link(
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use aya::programs::tc::SchedClassifierLink;
+    /// # use aya::programs::TcAttachType;
+    /// # #[derive(Debug, thiserror::Error)]
+    /// # enum Error {
+    /// #     #[error(transparent)]
+    /// #     IO(#[from] std::io::Error),
+    /// # }
+    /// # fn read_persisted_link_details() -> (String, TcAttachType, u16, u32) {
+    /// #     ("eth0".to_string(), TcAttachType::Ingress, 50, 1)
+    /// # }
+    /// // Get the link parameters from some external source. Where and how the parameters are
+    /// // persisted is up to your application.
+    /// let (if_name, attach_type, priority, handle) = read_persisted_link_details();
+    /// let new_tc_link = SchedClassifierLink::attached(&if_name, attach_type, priority, handle)?;
+    ///
+    /// # Ok::<(), Error>(())
+    /// ```
+    pub fn attached(
         if_name: &str,
         attach_type: TcAttachType,
         priority: u16,
