@@ -79,17 +79,17 @@ impl<T: Link> Drop for LinkMap<T> {
 
 /// The identifier of an `FdLink`.
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub struct FdLinkId(pub(crate) Option<RawFd>);
+pub struct FdLinkId(pub(crate) RawFd);
 
 /// A file descriptor link.
 #[derive(Debug)]
 pub struct FdLink {
-    pub(crate) fd: Option<RawFd>,
+    pub(crate) fd: RawFd,
 }
 
 impl FdLink {
     pub(crate) fn new(fd: RawFd) -> FdLink {
-        FdLink { fd: Some(fd) }
+        FdLink { fd }
     }
 
     /// Pins the link to a BPF file system.
@@ -121,21 +121,18 @@ impl FdLink {
     /// let pinned_link = fd_link.pin("/sys/fs/bpf/example")?;
     /// # Ok::<(), Error>(())
     /// ```
-    pub fn pin<P: AsRef<Path>>(mut self, path: P) -> Result<PinnedLink, PinError> {
-        let fd = self.fd.take().ok_or_else(|| PinError::NoFd {
-            name: "link".to_string(),
-        })?;
+    pub fn pin<P: AsRef<Path>>(self, path: P) -> Result<PinnedLink, PinError> {
         let path_string =
             CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
                 PinError::InvalidPinPath {
                     error: e.to_string(),
                 }
             })?;
-        bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
+        bpf_pin_object(self.fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
             name: "BPF_OBJ_PIN".to_string(),
             io_error,
         })?;
-        Ok(PinnedLink::new(PathBuf::from(path.as_ref()), fd))
+        Ok(PinnedLink::new(PathBuf::from(path.as_ref()), self))
     }
 }
 
@@ -147,24 +144,24 @@ impl Link for FdLink {
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        // detach is a noop since it consumes self. once self is consumed,
-        // drop will be triggered and the link will be detached.
+        // detach is a noop since it consumes self. once self is consumed, drop will be triggered
+        // and the link will be detached.
+        //
+        // Other links don't need to do this since they use define_link_wrapper!, but FdLink is a
+        // bit special in that it defines a custom ::new() so it can't use the macro.
         Ok(())
-    }
-}
-
-impl Drop for FdLink {
-    fn drop(&mut self) {
-        if let Some(fd) = self.fd.take() {
-            // Safety: libc
-            unsafe { close(fd) };
-        }
     }
 }
 
 impl From<PinnedLink> for FdLink {
     fn from(p: PinnedLink) -> Self {
         p.inner
+    }
+}
+
+impl Drop for FdLink {
+    fn drop(&mut self) {
+        unsafe { close(self.fd) };
     }
 }
 
@@ -180,11 +177,8 @@ pub struct PinnedLink {
 }
 
 impl PinnedLink {
-    fn new(path: PathBuf, fd: RawFd) -> Self {
-        PinnedLink {
-            inner: FdLink::new(fd),
-            path,
-        }
+    fn new(path: PathBuf, link: FdLink) -> Self {
+        PinnedLink { inner: link, path }
     }
 
     /// Creates a [`PinnedLink`] from a valid path on bpffs.
@@ -196,7 +190,10 @@ impl PinnedLink {
                 code,
                 io_error,
             })? as RawFd;
-        Ok(PinnedLink::new(path.as_ref().to_path_buf(), fd))
+        Ok(PinnedLink::new(
+            path.as_ref().to_path_buf(),
+            FdLink::new(fd),
+        ))
     }
 
     /// Removes the pinned link from the filesystem and returns an [`FdLink`].
@@ -254,29 +251,56 @@ macro_rules! define_link_wrapper {
 
         #[$doc1]
         #[derive(Debug)]
-        pub struct $wrapper($base);
+        pub struct $wrapper(Option<$base>);
+
+        #[allow(dead_code)]
+        // allow dead code since currently XDP is the only consumer of inner and
+        // into_inner
+        impl $wrapper {
+            fn new(base: $base) -> $wrapper {
+                $wrapper(Some(base))
+            }
+
+            fn inner(&self) -> &$base {
+                self.0.as_ref().unwrap()
+            }
+
+            fn into_inner(mut self) -> $base {
+                self.0.take().unwrap()
+            }
+        }
+
+        impl Drop for $wrapper {
+            fn drop(&mut self) {
+                use crate::programs::links::Link;
+
+                if let Some(base) = self.0.take() {
+                    let _ = base.detach();
+                }
+            }
+        }
 
         impl crate::programs::Link for $wrapper {
             type Id = $wrapper_id;
 
             fn id(&self) -> Self::Id {
-                $wrapper_id(self.0.id())
+                $wrapper_id(self.0.as_ref().unwrap().id())
             }
 
-            fn detach(self) -> Result<(), ProgramError> {
-                self.0.detach()
+            fn detach(mut self) -> Result<(), ProgramError> {
+                self.0.take().unwrap().detach()
             }
         }
 
         impl From<$base> for $wrapper {
             fn from(b: $base) -> $wrapper {
-                $wrapper(b)
+                $wrapper(Some(b))
             }
         }
 
         impl From<$wrapper> for $base {
-            fn from(w: $wrapper) -> $base {
-                w.0
+            fn from(mut w: $wrapper) -> $base {
+                w.0.take().unwrap()
             }
         }
     };

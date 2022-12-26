@@ -165,7 +165,7 @@ impl SchedClassifier {
         }
         .map_err(|io_error| TcError::NetlinkError { io_error })?;
 
-        self.data.links.insert(SchedClassifierLink(TcLink {
+        self.data.links.insert(SchedClassifierLink::new(TcLink {
             if_index: if_index as i32,
             attach_type,
             priority,
