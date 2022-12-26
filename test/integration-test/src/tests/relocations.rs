@@ -14,7 +14,7 @@ fn relocate_field() {
               __u8 b;
               __u8 c;
               __u8 d;
-            } __attribute__((preserve_access_index));
+            };
         "#,
         target_btf: r#"
             struct foo {
@@ -141,6 +141,8 @@ impl RelocationTest {
         Command::new("clang")
             .current_dir(tmp_dir.path())
             .args(["-c", "-g", "-O2", "-target", "bpf"])
+            // NOTE: these tests depend on libbpf, LIBBPF_INCLUDE must point its headers.
+            // This is set automatically by the integration-test xtask.
             .args([
                 "-I",
                 &std::env::var("LIBBPF_INCLUDE").context("LIBBPF_INCLUDE not set")?,
