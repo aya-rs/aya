@@ -407,6 +407,7 @@ impl Drop for Program {
 pub(crate) struct ProgramData<T: Link> {
     pub(crate) name: Option<String>,
     pub(crate) obj: obj::Program,
+    // TODO: replace with OwnedFd, then we don't need to manually impl Drop for ProgramData
     pub(crate) fd: Option<RawFd>,
     pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
@@ -446,6 +447,12 @@ impl<T: Link> ProgramData<T> {
 
     pub(crate) fn take_link(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
         self.links.forget(link_id)
+    }
+}
+
+impl<T: Link> Drop for ProgramData<T> {
+    fn drop(&mut self) {
+        self.fd.map(|fd| unsafe { libc::close(fd) });
     }
 }
 
@@ -830,6 +837,7 @@ impl ProgramInfo {
     }
 
     /// Loads a program from a pinned path in bpffs.
+    // TODO: Switch RawFd to OwnedFd
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<ProgramInfo, ProgramError> {
         let path_string = CString::new(path.as_ref().to_str().unwrap()).unwrap();
         let fd =
@@ -838,13 +846,22 @@ impl ProgramInfo {
                 io_error,
             })? as RawFd;
 
-        let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_prog_get_info_by_fd".to_owned(),
-            io_error,
-        })?;
+        let info = Self::from_fd(&fd);
+
+        // Ensure RawFd is closed independent of the result of Self::from_fd
         unsafe {
             libc::close(fd);
         }
+
+        info
+    }
+
+    /// Create ProgramInfo from the file descriptor of a program.
+    pub fn from_fd(fd: &RawFd) -> Result<ProgramInfo, ProgramError> {
+        let info = bpf_prog_get_info_by_fd(*fd).map_err(|io_error| ProgramError::SyscallError {
+            call: "bpf_prog_get_info_by_fd".to_owned(),
+            io_error,
+        })?;
 
         Ok(ProgramInfo(info))
     }

@@ -425,6 +425,7 @@ pub(crate) fn bpf_prog_query(
     ret
 }
 
+// TODO: Replace RawFd with OwnedFd
 pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<RawFd, io::Error> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
