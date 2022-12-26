@@ -395,6 +395,36 @@ impl Program {
             Program::CgroupDevice(p) => p.fd(),
         }
     }
+
+    /// Returns ProgramInfo for a program.
+    pub fn info(&self) -> Option<Result<ProgramInfo, ProgramError>> {
+        match self {
+            Program::KProbe(p) => p.info(),
+            Program::UProbe(p) => p.info(),
+            Program::TracePoint(p) => p.info(),
+            Program::SocketFilter(p) => p.info(),
+            Program::Xdp(p) => p.info(),
+            Program::SkMsg(p) => p.info(),
+            Program::SkSkb(p) => p.info(),
+            Program::SockOps(p) => p.info(),
+            Program::SchedClassifier(p) => p.info(),
+            Program::CgroupSkb(p) => p.info(),
+            Program::CgroupSysctl(p) => p.info(),
+            Program::CgroupSockopt(p) => p.info(),
+            Program::LircMode2(p) => p.info(),
+            Program::PerfEvent(p) => p.info(),
+            Program::RawTracePoint(p) => p.info(),
+            Program::Lsm(p) => p.info(),
+            Program::BtfTracePoint(p) => p.info(),
+            Program::FEntry(p) => p.info(),
+            Program::FExit(p) => p.info(),
+            Program::Extension(p) => p.info(),
+            Program::CgroupSockAddr(p) => p.info(),
+            Program::SkLookup(p) => p.info(),
+            Program::CgroupSock(p) => p.info(),
+            Program::CgroupDevice(p) => p.info(),
+        }
+    }
 }
 
 impl Drop for Program {
@@ -669,6 +699,46 @@ macro_rules! impl_fd {
 }
 
 impl_fd!(
+    KProbe,
+    UProbe,
+    TracePoint,
+    SocketFilter,
+    Xdp,
+    SkMsg,
+    SkSkb,
+    SchedClassifier,
+    CgroupSkb,
+    CgroupSysctl,
+    CgroupSockopt,
+    LircMode2,
+    PerfEvent,
+    Lsm,
+    RawTracePoint,
+    BtfTracePoint,
+    FEntry,
+    FExit,
+    Extension,
+    CgroupSockAddr,
+    SkLookup,
+    SockOps,
+    CgroupSock,
+    CgroupDevice,
+);
+
+macro_rules! impl_info {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl $struct_name {
+                /// Returns a ProgramInfo for this Program.
+                pub fn info(&self) -> Option<Result<ProgramInfo, ProgramError>> {
+                    self.data.fd.map(|fd| ProgramInfo::from_fd(&fd))
+                }
+            }
+        )+
+    }
+}
+
+impl_info!(
     KProbe,
     UProbe,
     TracePoint,
