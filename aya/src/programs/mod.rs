@@ -396,7 +396,9 @@ impl Program {
         }
     }
 
-    /// Returns ProgramInfo for a program.
+    /// Returns infomation about a program.
+    ///
+    /// Returns [None](`std::option::Option::None`) when the program does not have a file descriptor (most likely because it isn't loaded).
     pub fn info(&self) -> Option<Result<ProgramInfo, ProgramError>> {
         match self {
             Program::KProbe(p) => p.info(),
@@ -730,6 +732,8 @@ macro_rules! impl_info {
         $(
             impl $struct_name {
                 /// Returns a ProgramInfo for this Program.
+                ///
+                /// Returns [None](`std::option::Option::None`) when the program does not have a file descriptor (most likely because it isn't loaded).
                 pub fn info(&self) -> Option<Result<ProgramInfo, ProgramError>> {
                     self.data.fd.map(|fd| ProgramInfo::from_fd(&fd))
                 }
