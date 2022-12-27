@@ -11,3 +11,10 @@ documentation = "https://docs.rs/aya-obj"
 edition = "2021"
 
 [dependencies]
+bytes = "1"
+log = "0.4"
+object = { version = "0.30", default-features = false, features = ["std", "read_core", "elf"] }
+thiserror = "1"
+
+[dev-dependencies]
+matches = "0.1.8"

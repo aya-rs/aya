@@ -5,7 +5,7 @@ use object::Endianness;
 
 use crate::{
     generated::{bpf_func_info, bpf_line_info},
-    obj::relocation::INS_SIZE,
+    relocation::INS_SIZE,
     util::bytes_of,
 };
 
@@ -20,7 +20,7 @@ use crate::{
  *   ......
  */
 #[derive(Debug, Clone, Default)]
-pub(crate) struct FuncSecInfo {
+pub struct FuncSecInfo {
     pub _sec_name_offset: u32,
     pub num_info: u32,
     pub func_info: Vec<bpf_func_info>,
@@ -64,7 +64,7 @@ impl FuncSecInfo {
         }
     }
 
-    pub(crate) fn func_info_bytes(&self) -> Vec<u8> {
+    pub fn func_info_bytes(&self) -> Vec<u8> {
         let mut buf = vec![];
         for l in &self.func_info {
             // Safety: bpf_func_info is POD
@@ -73,13 +73,13 @@ impl FuncSecInfo {
         buf
     }
 
-    pub(crate) fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.func_info.len()
     }
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct FuncInfo {
+pub struct FuncInfo {
     pub data: HashMap<String, FuncSecInfo>,
 }
 
@@ -99,7 +99,7 @@ impl FuncInfo {
 }
 
 #[derive(Debug, Clone, Default)]
-pub(crate) struct LineSecInfo {
+pub struct LineSecInfo {
     // each line info section has a header
     pub _sec_name_offset: u32,
     pub num_info: u32,
@@ -154,7 +154,7 @@ impl LineSecInfo {
         }
     }
 
-    pub(crate) fn line_info_bytes(&self) -> Vec<u8> {
+    pub fn line_info_bytes(&self) -> Vec<u8> {
         let mut buf = vec![];
         for l in &self.line_info {
             // Safety: bpf_func_info is POD
@@ -163,7 +163,7 @@ impl LineSecInfo {
         buf
     }
 
-    pub(crate) fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.line_info.len()
     }
 }

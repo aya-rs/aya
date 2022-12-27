@@ -3,19 +3,26 @@ use std::{collections::HashMap, io, mem, ptr, str::FromStr};
 use thiserror::Error;
 
 use crate::{
+    btf::{
+        fields_are_compatible, types_are_compatible, Array, Btf, BtfError, BtfMember, BtfType,
+        IntEncoding, Struct, Union, MAX_SPEC_LEN,
+    },
     generated::{
         bpf_core_relo, bpf_core_relo_kind::*, bpf_insn, BPF_ALU, BPF_ALU64, BPF_B, BPF_DW, BPF_H,
         BPF_K, BPF_LD, BPF_LDX, BPF_ST, BPF_STX, BPF_W, BTF_INT_SIGNED,
     },
-    obj::{
-        btf::{
-            fields_are_compatible, types_are_compatible, Array, BtfMember, BtfType, IntEncoding,
-            Struct, Union, MAX_SPEC_LEN,
-        },
-        Btf, BtfError, Object, Program, ProgramSection,
-    },
-    BpfError,
+    Object, Program, ProgramSection,
 };
+
+#[derive(Error, Debug)]
+#[error("error relocating `{section}`")]
+pub struct BtfRelocationError {
+    /// The function name
+    pub section: String,
+    #[source]
+    /// The original error
+    error: RelocationError,
+}
 
 #[derive(Error, Debug)]
 enum RelocationError {
@@ -78,6 +85,9 @@ enum RelocationError {
         type_id: u32,
         ins_index: usize,
     },
+
+    #[error("invalid BTF")]
+    BtfError(#[from] BtfError),
 }
 
 fn err_type_name(name: &Option<String>) -> String {
@@ -154,7 +164,7 @@ impl Relocation {
 }
 
 impl Object {
-    pub fn relocate_btf(&mut self, target_btf: &Btf) -> Result<(), BpfError> {
+    pub fn relocate_btf(&mut self, target_btf: &Btf) -> Result<(), BtfRelocationError> {
         let (local_btf, btf_ext) = match (&self.btf, &self.btf_ext) {
             (Some(btf), Some(btf_ext)) => (btf, btf_ext),
             _ => return Ok(()),
@@ -162,7 +172,10 @@ impl Object {
 
         let mut candidates_cache = HashMap::<u32, Vec<Candidate>>::new();
         for (sec_name_off, relos) in btf_ext.relocations() {
-            let section_name = local_btf.string_at(*sec_name_off)?;
+            let section_name = local_btf.string_at(*sec_name_off).map_err(|e| BtfRelocationError {
+                section: format!("section@{sec_name_off}"),
+                error: RelocationError::BtfError(e),
+            })?;
 
             let program_section = match ProgramSection::from_str(&section_name) {
                 Ok(program) => program,
@@ -173,20 +186,17 @@ impl Object {
             let program = self
                 .programs
                 .get_mut(section_name)
-                .ok_or(BpfError::RelocationError {
-                    function: section_name.to_owned(),
-                    error: Box::new(RelocationError::ProgramNotFound),
+                .ok_or(BtfRelocationError {
+                    section: section_name.to_owned(),
+                    error: RelocationError::ProgramNotFound,
                 })?;
             match relocate_btf_program(program, relos, local_btf, target_btf, &mut candidates_cache)
             {
                 Ok(_) => {}
-                Err(ErrorWrapper::BtfError(e)) => return Err(e.into()),
-                Err(ErrorWrapper::RelocationError(error)) => {
-                    return Err(BpfError::RelocationError {
-                        function: section_name.to_owned(),
-                        error: Box::new(error),
-                    })
-                }
+                Err(error) => return Err(BtfRelocationError {
+                    section: section_name.to_owned(),
+                    error,
+                }),
             }
         }
 
@@ -200,7 +210,7 @@ fn relocate_btf_program<'target>(
     local_btf: &Btf,
     target_btf: &'target Btf,
     candidates_cache: &mut HashMap<u32, Vec<Candidate<'target>>>,
-) -> Result<(), ErrorWrapper> {
+) -> Result<(), RelocationError> {
     for rel in relos {
         let instructions = &mut program.function.instructions;
         let ins_index = rel.ins_offset / std::mem::size_of::<bpf_insn>();
@@ -209,8 +219,7 @@ fn relocate_btf_program<'target>(
                 index: ins_index,
                 num_instructions: instructions.len(),
                 relocation_number: rel.number,
-            }
-            .into());
+            });
         }
 
         let local_ty = local_btf.type_by_id(rel.type_id)?;
@@ -266,8 +275,7 @@ fn relocate_btf_program<'target>(
                 return Err(RelocationError::ConflictingCandidates {
                     type_name: local_name.to_string(),
                     candidates: conflicts,
-                }
-                .into());
+                });
             }
             target_comp_rel
         } else {
@@ -317,7 +325,7 @@ fn find_candidates<'target>(
 fn match_candidate<'target>(
     local_spec: &AccessSpec,
     candidate: &'target Candidate,
-) -> Result<Option<AccessSpec<'target>>, ErrorWrapper> {
+) -> Result<Option<AccessSpec<'target>>, RelocationError> {
     let mut target_spec = AccessSpec {
         btf: candidate.btf,
         root_type_id: candidate.type_id,
@@ -419,8 +427,7 @@ fn match_candidate<'target>(
                     if target_spec.parts.len() == MAX_SPEC_LEN {
                         return Err(RelocationError::MaximumNestingLevelReached {
                             type_name: Some(candidate.name.clone()),
-                        }
-                        .into());
+                        });
                     }
 
                     target_spec.parts.push(accessor.index);
@@ -446,7 +453,7 @@ fn match_member<'target>(
     target_btf: &'target Btf,
     target_id: u32,
     target_spec: &mut AccessSpec<'target>,
-) -> Result<Option<u32>, ErrorWrapper> {
+) -> Result<Option<u32>, RelocationError> {
     let local_ty = local_btf.type_by_id(local_accessor.type_id)?;
     let local_member = match local_ty {
         // this won't panic, bounds are checked when local_spec is built in AccessSpec::new
@@ -470,8 +477,7 @@ fn match_member<'target>(
             let root_ty = target_spec.btf.type_by_id(target_spec.root_type_id)?;
             return Err(RelocationError::MaximumNestingLevelReached {
                 type_name: target_spec.btf.err_type_name(root_ty),
-            }
-            .into());
+            });
         }
 
         // this will not panic as we've already established these are fields types
@@ -532,7 +538,7 @@ impl<'a> AccessSpec<'a> {
         root_type_id: u32,
         spec: &str,
         relocation: Relocation,
-    ) -> Result<AccessSpec<'a>, ErrorWrapper> {
+    ) -> Result<AccessSpec<'a>, RelocationError> {
         let parts = spec
             .split(':')
             .map(|s| s.parse::<usize>())
@@ -552,8 +558,7 @@ impl<'a> AccessSpec<'a> {
                 if parts != [0] {
                     return Err(RelocationError::InvalidAccessString {
                         access_str: spec.to_string(),
-                    }
-                    .into());
+                    });
                 }
                 AccessSpec {
                     btf,
@@ -569,8 +574,7 @@ impl<'a> AccessSpec<'a> {
                     if parts.len() != 1 {
                         return Err(RelocationError::InvalidAccessString {
                             access_str: spec.to_string(),
-                        }
-                        .into());
+                        });
                     }
                     let index = parts[0];
                     if index >= en.variants.len() {
@@ -580,8 +584,7 @@ impl<'a> AccessSpec<'a> {
                             index,
                             max_index: en.variants.len(),
                             error: "tried to access nonexistant enum variant".to_string(),
-                        }
-                        .into());
+                        });
                     }
                     let accessors = vec![Accessor {
                         type_id,
@@ -607,8 +610,7 @@ impl<'a> AccessSpec<'a> {
                         relocation_kind: format!("{:?}", relocation.kind),
                         type_kind: format!("{:?}", ty.kind()),
                         error: "enum relocation on non-enum type".to_string(),
-                    }
-                    .into())
+                    })
                 }
             },
 
@@ -638,8 +640,7 @@ impl<'a> AccessSpec<'a> {
                                     index,
                                     max_index: members.len(),
                                     error: "out of bounds struct or union access".to_string(),
-                                }
-                                .into());
+                                });
                             }
 
                             let member = &members[index];
@@ -675,8 +676,7 @@ impl<'a> AccessSpec<'a> {
                                     index,
                                     max_index: array.len as usize,
                                     error: "array index out of bounds".to_string(),
-                                }
-                                .into());
+                                });
                             }
                             accessors.push(Accessor {
                                 type_id,
@@ -693,8 +693,7 @@ impl<'a> AccessSpec<'a> {
                                 type_kind: format!("{:?}", ty.kind()),
                                 error: "field relocation on a type that doesn't have fields"
                                     .to_string(),
-                            }
-                            .into());
+                            });
                         }
                     };
                 }
@@ -747,7 +746,7 @@ impl ComputedRelocation {
         rel: &Relocation,
         local_spec: &AccessSpec,
         target_spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocation, ErrorWrapper> {
+    ) -> Result<ComputedRelocation, RelocationError> {
         use RelocationKind::*;
         let ret = match rel.kind {
             FieldByteOffset | FieldByteSize | FieldExists | FieldSigned | FieldLShift64
@@ -774,7 +773,7 @@ impl ComputedRelocation {
         rel: &Relocation,
         local_btf: &Btf,
         target_btf: &Btf,
-    ) -> Result<(), ErrorWrapper> {
+    ) -> Result<(), RelocationError> {
         let instructions = &mut program.function.instructions;
         let num_instructions = instructions.len();
         let ins_index = rel.ins_offset / std::mem::size_of::<bpf_insn>();
@@ -799,8 +798,7 @@ impl ComputedRelocation {
                         relocation_number: rel.number,
                         index: ins_index,
                         error: format!("invalid src_reg={src_reg:x} expected {BPF_K:x}"),
-                    }
-                    .into());
+                    });
                 }
 
                 ins.imm = target_value as i32;
@@ -811,8 +809,7 @@ impl ComputedRelocation {
                         relocation_number: rel.number,
                         index: ins_index,
                         error: format!("value `{target_value}` overflows 16 bits offset field"),
-                    }
-                    .into());
+                    });
                 }
 
                 ins.off = target_value as i16;
@@ -837,8 +834,7 @@ impl ComputedRelocation {
                                     err_type_name(&target_btf.err_type_name(target_ty)),
                                     self.target.size,
                                 ),
-                            }
-                            .into())
+                            })
                         }
                     }
 
@@ -852,8 +848,7 @@ impl ComputedRelocation {
                                 relocation_number: rel.number,
                                 index: ins_index,
                                 error: format!("invalid target size {size}"),
-                            }
-                            .into())
+                            })
                         }
                     } as u8;
                     ins.code = ins.code & 0xE0 | size | ins.code & 0x07;
@@ -876,8 +871,7 @@ impl ComputedRelocation {
                     relocation_number: rel.number,
                     index: ins_index,
                     error: format!("invalid instruction class {class:x}"),
-                }
-                .into())
+                })
             }
         };
 
@@ -887,7 +881,7 @@ impl ComputedRelocation {
     fn compute_enum_relocation(
         rel: &Relocation,
         spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocationValue, ErrorWrapper> {
+    ) -> Result<ComputedRelocationValue, RelocationError> {
         use RelocationKind::*;
         let value = match (rel.kind, spec) {
             (EnumVariantExists, spec) => spec.is_some() as u32,
@@ -918,7 +912,7 @@ impl ComputedRelocation {
     fn compute_field_relocation(
         rel: &Relocation,
         spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocationValue, ErrorWrapper> {
+    ) -> Result<ComputedRelocationValue, RelocationError> {
         use RelocationKind::*;
 
         if let FieldExists = rel.kind {
@@ -963,8 +957,7 @@ impl ComputedRelocation {
                         relocation_kind: format!("{rel_kind:?}"),
                         type_kind: format!("{:?}", ty.kind()),
                         error: "invalid relocation kind for array type".to_string(),
-                    }
-                    .into());
+                    });
                 }
             };
         }
@@ -979,8 +972,7 @@ impl ComputedRelocation {
                     relocation_kind: format!("{:?}", rel.kind),
                     type_kind: format!("{:?}", ty.kind()),
                     error: "field relocation on a type that doesn't have fields".to_string(),
-                }
-                .into());
+                });
             }
         };
 
@@ -1055,7 +1047,7 @@ impl ComputedRelocation {
         rel: &Relocation,
         local_spec: &AccessSpec,
         target_spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocationValue, ErrorWrapper> {
+    ) -> Result<ComputedRelocationValue, RelocationError> {
         use RelocationKind::*;
 
         let value = match (rel.kind, target_spec) {
@@ -1080,15 +1072,4 @@ impl ComputedRelocation {
             type_id: None,
         })
     }
-}
-
-// this exists only to simplify propagating errors from relocate_btf() and to associate
-// RelocationError(s) with their respective program name
-#[derive(Error, Debug)]
-enum ErrorWrapper {
-    #[error(transparent)]
-    BtfError(#[from] BtfError),
-
-    #[error(transparent)]
-    RelocationError(#[from] RelocationError),
 }

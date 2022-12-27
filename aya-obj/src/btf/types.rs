@@ -2,10 +2,10 @@ use std::{fmt::Display, mem, ptr};
 
 use object::Endianness;
 
-use crate::obj::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH};
+use crate::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH};
 
 #[derive(Clone, Debug)]
-pub(crate) enum BtfType {
+pub enum BtfType {
     Unknown,
     Fwd(Fwd),
     Const(Const),
@@ -29,7 +29,7 @@ pub(crate) enum BtfType {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Fwd {
+pub struct Fwd {
     pub(crate) name_offset: u32,
     info: u32,
     _unused: u32,
@@ -51,7 +51,7 @@ impl Fwd {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Const {
+pub struct Const {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -82,7 +82,7 @@ impl Const {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Volatile {
+pub struct Volatile {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -103,7 +103,7 @@ impl Volatile {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct Restrict {
+pub struct Restrict {
     pub(crate) name_offset: u32,
     _info: u32,
     pub(crate) btf_type: u32,
@@ -125,7 +125,7 @@ impl Restrict {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Ptr {
+pub struct Ptr {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -144,7 +144,7 @@ impl Ptr {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, btf_type: u32) -> Self {
+    pub fn new(name_offset: u32, btf_type: u32) -> Self {
         let info = (BtfKind::Ptr as u32) << 24;
         Ptr {
             name_offset,
@@ -156,7 +156,7 @@ impl Ptr {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Typedef {
+pub struct Typedef {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -187,7 +187,7 @@ impl Typedef {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Float {
+pub struct Float {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -205,7 +205,7 @@ impl Float {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, size: u32) -> Self {
+    pub fn new(name_offset: u32, size: u32) -> Self {
         let info = (BtfKind::Float as u32) << 24;
         Float {
             name_offset,
@@ -217,7 +217,7 @@ impl Float {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Func {
+pub struct Func {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -225,7 +225,7 @@ pub(crate) struct Func {
 
 #[repr(u32)]
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum FuncLinkage {
+pub enum FuncLinkage {
     Static = 0,
     Global = 1,
     Extern = 2,
@@ -255,7 +255,7 @@ impl Func {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, proto: u32, linkage: FuncLinkage) -> Self {
+    pub fn new(name_offset: u32, proto: u32, linkage: FuncLinkage) -> Self {
         let mut info = (BtfKind::Func as u32) << 24;
         info |= (linkage as u32) & 0xFFFF;
         Func {
@@ -276,7 +276,7 @@ impl Func {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct TypeTag {
+pub struct TypeTag {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -295,7 +295,7 @@ impl TypeTag {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, btf_type: u32) -> Self {
+    pub fn new(name_offset: u32, btf_type: u32) -> Self {
         let info = (BtfKind::TypeTag as u32) << 24;
         TypeTag {
             name_offset,
@@ -307,7 +307,7 @@ impl TypeTag {
 
 #[repr(u32)]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) enum IntEncoding {
+pub enum IntEncoding {
     None,
     Signed = 1,
     Char = 2,
@@ -329,7 +329,7 @@ impl From<u32> for IntEncoding {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Int {
+pub struct Int {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -353,7 +353,7 @@ impl Int {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, size: u32, encoding: IntEncoding, offset: u32) -> Self {
+    pub fn new(name_offset: u32, size: u32, encoding: IntEncoding, offset: u32) -> Self {
         let info = (BtfKind::Int as u32) << 24;
         let mut data = 0u32;
         data |= (encoding as u32 & 0x0f) << 24;
@@ -391,7 +391,7 @@ pub(crate) struct BtfEnum {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Enum {
+pub struct Enum {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -441,7 +441,7 @@ pub(crate) struct BtfMember {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Struct {
+pub struct Struct {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -502,7 +502,7 @@ impl Struct {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Union {
+pub struct Union {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -559,7 +559,7 @@ pub(crate) struct BtfArray {
 }
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Array {
+pub struct Array {
     pub(crate) name_offset: u32,
     info: u32,
     _unused: u32,
@@ -602,14 +602,14 @@ impl Array {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct BtfParam {
-    pub(crate) name_offset: u32,
-    pub(crate) btf_type: u32,
+pub struct BtfParam {
+    pub name_offset: u32,
+    pub btf_type: u32,
 }
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct FuncProto {
+pub struct FuncProto {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) return_type: u32,
@@ -637,7 +637,7 @@ impl FuncProto {
         mem::size_of::<Fwd>() + mem::size_of::<BtfParam>() * self.params.len()
     }
 
-    pub(crate) fn new(params: Vec<BtfParam>, return_type: u32) -> Self {
+    pub fn new(params: Vec<BtfParam>, return_type: u32) -> Self {
         let mut info = (BtfKind::FuncProto as u32) << 24;
         info |= (params.len() as u32) & 0xFFFF;
         FuncProto {
@@ -651,7 +651,7 @@ impl FuncProto {
 
 #[repr(u32)]
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum VarLinkage {
+pub enum VarLinkage {
     Static,
     Global,
     Extern,
@@ -671,7 +671,7 @@ impl From<u32> for VarLinkage {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Var {
+pub struct Var {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -696,7 +696,7 @@ impl Var {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, btf_type: u32, linkage: VarLinkage) -> Self {
+    pub fn new(name_offset: u32, btf_type: u32, linkage: VarLinkage) -> Self {
         let info = (BtfKind::Var as u32) << 24;
         Var {
             name_offset,
@@ -709,15 +709,15 @@ impl Var {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct DataSecEntry {
-    pub(crate) btf_type: u32,
-    pub(crate) offset: u32,
-    pub(crate) size: u32,
+pub struct DataSecEntry {
+    pub btf_type: u32,
+    pub offset: u32,
+    pub size: u32,
 }
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct DataSec {
+pub struct DataSec {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -746,7 +746,7 @@ impl DataSec {
         mem::size_of::<Fwd>() + mem::size_of::<DataSecEntry>() * self.entries.len()
     }
 
-    pub(crate) fn new(name_offset: u32, entries: Vec<DataSecEntry>, size: u32) -> Self {
+    pub fn new(name_offset: u32, entries: Vec<DataSecEntry>, size: u32) -> Self {
         let mut info = (BtfKind::DataSec as u32) << 24;
         info |= (entries.len() as u32) & 0xFFFF;
         DataSec {
@@ -760,7 +760,7 @@ impl DataSec {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct DeclTag {
+pub struct DeclTag {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -785,7 +785,7 @@ impl DeclTag {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, btf_type: u32, component_index: i32) -> Self {
+    pub fn new(name_offset: u32, btf_type: u32, component_index: i32) -> Self {
         let info = (BtfKind::DeclTag as u32) << 24;
         DeclTag {
             name_offset,
@@ -798,7 +798,7 @@ impl DeclTag {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
-pub(crate) enum BtfKind {
+pub enum BtfKind {
     Unknown = 0,
     Int = 1,
     Ptr = 2,

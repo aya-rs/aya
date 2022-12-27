@@ -16,14 +16,13 @@ use thiserror::Error;
 
 use crate::{
     generated::{btf_ext_header, btf_header},
-    obj::btf::{
+    btf::{
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
         Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
         IntEncoding, LineInfo, Struct, Typedef, VarLinkage,
     },
     util::bytes_of,
-    Features,
 };
 
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
@@ -158,6 +157,16 @@ pub enum BtfError {
     InvalidSymbolName,
 }
 
+#[derive(Default, Debug)]
+pub struct BtfFeatures {
+    pub btf_func: bool,
+    pub btf_func_global: bool,
+    pub btf_datasec: bool,
+    pub btf_float: bool,
+    pub btf_decl_tag: bool,
+    pub btf_type_tag: bool,
+}
+
 /// Bpf Type Format metadata.
 ///
 /// BTF is a kind of debug metadata that allows eBPF programs compiled against one kernel version
@@ -175,7 +184,7 @@ pub struct Btf {
 }
 
 impl Btf {
-    pub(crate) fn new() -> Btf {
+    pub fn new() -> Btf {
         Btf {
             header: btf_header {
                 magic: 0xeb9f,
@@ -197,7 +206,7 @@ impl Btf {
         self.types.types.iter()
     }
 
-    pub(crate) fn add_string(&mut self, name: String) -> u32 {
+    pub fn add_string(&mut self, name: String) -> u32 {
         let str = CString::new(name).unwrap();
         let name_offset = self.strings.len();
         self.strings.extend(str.as_c_str().to_bytes_with_nul());
@@ -205,7 +214,7 @@ impl Btf {
         name_offset as u32
     }
 
-    pub(crate) fn add_type(&mut self, btf_type: BtfType) -> u32 {
+    pub fn add_type(&mut self, btf_type: BtfType) -> u32 {
         let size = btf_type.type_info_size() as u32;
         let type_id = self.types.len();
         self.types.push(btf_type);
@@ -231,7 +240,7 @@ impl Btf {
         )
     }
 
-    pub(crate) fn parse(data: &[u8], endianness: Endianness) -> Result<Btf, BtfError> {
+    pub fn parse(data: &[u8], endianness: Endianness) -> Result<Btf, BtfError> {
         if data.len() < mem::size_of::<btf_header>() {
             return Err(BtfError::InvalidHeader);
         }
@@ -324,7 +333,7 @@ impl Btf {
         self.string_at(ty.name_offset()).ok().map(String::from)
     }
 
-    pub(crate) fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
+    pub fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
         for (type_id, ty) in self.types().enumerate() {
             if ty.kind() != kind {
                 continue;
@@ -370,7 +379,7 @@ impl Btf {
         })
     }
 
-    pub(crate) fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(&self) -> Vec<u8> {
         // Safety: btf_header is POD
         let mut buf = unsafe { bytes_of::<btf_header>(&self.header).to_vec() };
         // Skip the first type since it's always BtfType::Unknown for type_by_id to work
@@ -379,11 +388,11 @@ impl Btf {
         buf
     }
 
-    pub(crate) fn fixup_and_sanitize(
+    pub fn fixup_and_sanitize(
         &mut self,
         section_sizes: &HashMap<String, u64>,
         symbol_offsets: &HashMap<String, u64>,
-        features: &Features,
+        features: &BtfFeatures,
     ) -> Result<(), BtfError> {
         let mut types = mem::take(&mut self.types);
         for i in 0..types.types.len() {
@@ -863,7 +872,7 @@ pub(crate) struct SecInfo<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::obj::btf::{
+    use crate::btf::{
         BtfParam, DataSec, DataSecEntry, DeclTag, Float, Func, FuncProto, Ptr, TypeTag, Var,
     };
 
@@ -996,7 +1005,7 @@ mod tests {
         let name_offset = btf.add_string("&mut int".to_string());
         let ptr_type_id = btf.add_type(BtfType::Ptr(Ptr::new(name_offset, int_type_id)));
 
-        let features = Features {
+        let features = BtfFeatures {
             ..Default::default()
         };
 
@@ -1034,7 +1043,7 @@ mod tests {
             VarLinkage::Static,
         )));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_datasec: false,
             ..Default::default()
         };
@@ -1078,7 +1087,7 @@ mod tests {
         let datasec_type_id =
             btf.add_type(BtfType::DataSec(DataSec::new(name_offset, variables, 0)));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_datasec: false,
             ..Default::default()
         };
@@ -1125,7 +1134,7 @@ mod tests {
         let datasec_type_id =
             btf.add_type(BtfType::DataSec(DataSec::new(name_offset, variables, 0)));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_datasec: true,
             ..Default::default()
         };
@@ -1186,7 +1195,7 @@ mod tests {
             FuncLinkage::Static,
         )));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_func: false,
             ..Default::default()
         };
@@ -1235,7 +1244,7 @@ mod tests {
         let func_proto = BtfType::FuncProto(FuncProto::new(params, int_type_id));
         let func_proto_type_id = btf.add_type(func_proto);
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_func: true,
             ..Default::default()
         };
@@ -1284,7 +1293,7 @@ mod tests {
             FuncLinkage::Global,
         )));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_func: true,
             btf_func_global: false,
             ..Default::default()
@@ -1309,7 +1318,7 @@ mod tests {
         let name_offset = btf.add_string("float".to_string());
         let float_type_id = btf.add_type(BtfType::Float(Float::new(name_offset, 16)));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_float: false,
             ..Default::default()
         };
@@ -1349,7 +1358,7 @@ mod tests {
         let decl_tag_type_id =
             btf.add_type(BtfType::DeclTag(DeclTag::new(name_offset, var_type_id, -1)));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_decl_tag: false,
             ..Default::default()
         };
@@ -1377,7 +1386,7 @@ mod tests {
         let type_tag_type = btf.add_type(BtfType::TypeTag(TypeTag::new(name_offset, int_type_id)));
         btf.add_type(BtfType::Ptr(Ptr::new(0, type_tag_type)));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_type_tag: false,
             ..Default::default()
         };

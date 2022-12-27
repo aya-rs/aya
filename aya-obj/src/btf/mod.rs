@@ -1,3 +1,5 @@
+//! BTF loading, parsing and relocation.
+
 #[allow(clippy::module_inception)]
 mod btf;
 mod info;
