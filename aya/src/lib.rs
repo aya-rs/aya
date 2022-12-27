@@ -46,7 +46,7 @@ extern crate lazy_static;
 extern crate bitflags;
 
 mod bpf;
-mod generated;
+use aya_obj::generated as generated;
 pub mod maps;
 mod obj;
 pub mod pin;

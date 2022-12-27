@@ -1,0 +1,13 @@
+[package]
+name = "aya-obj"
+version = "0.11.0"
+description = "A library for loading and relocating eBPF object files"
+keywords = ["ebpf", "bpf", "linux", "kernel"]
+license = "MIT OR Apache-2.0"
+authors = ["The Aya Contributors"]
+repository = "https://github.com/aya-rs/aya"
+readme = "README.md"
+documentation = "https://docs.rs/aya-obj"
+edition = "2021"
+
+[dependencies]
