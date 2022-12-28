@@ -1,10 +1,10 @@
 //! Program relocation handling.
 
-use std::{collections::HashMap, mem};
+use core::mem;
 
+use alloc::{borrow::ToOwned, string::String};
 use log::debug;
 use object::{SectionIndex, SymbolKind};
-use thiserror::Error;
 
 use crate::{
     generated::{
@@ -13,6 +13,8 @@ use crate::{
     },
     maps::Map,
     obj::{Function, Object, Program},
+    thiserror::{self, Error},
+    util::HashMap,
 };
 
 pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
@@ -472,6 +474,8 @@ fn insn_is_call(ins: &bpf_insn) -> bool {
 
 #[cfg(test)]
 mod test {
+    use alloc::{string::ToString, vec, vec::Vec};
+
     use crate::maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, MapKind};
 
     use super::*;
@@ -489,7 +493,7 @@ mod test {
     }
 
     fn ins(bytes: &[u8]) -> bpf_insn {
-        unsafe { std::ptr::read_unaligned(bytes.as_ptr() as *const _) }
+        unsafe { core::ptr::read_unaligned(bytes.as_ptr() as *const _) }
     }
 
     fn fake_legacy_map(symbol_index: usize) -> Map {

@@ -1,6 +1,12 @@
-use std::{collections::HashMap, io, mem, ptr, str::FromStr};
+use core::{mem, ptr, str::FromStr};
 
-use thiserror::Error;
+use alloc::{
+    borrow::ToOwned,
+    format,
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 
 use crate::{
     btf::{
@@ -11,6 +17,8 @@ use crate::{
         bpf_core_relo, bpf_core_relo_kind::*, bpf_insn, BPF_ALU, BPF_ALU64, BPF_B, BPF_DW, BPF_H,
         BPF_K, BPF_LD, BPF_LDX, BPF_ST, BPF_STX, BPF_W, BTF_INT_SIGNED,
     },
+    thiserror::{self, Error},
+    util::HashMap,
     Object, Program, ProgramSection,
 };
 
@@ -28,9 +36,10 @@ pub struct BtfRelocationError {
 /// Relocation failures
 #[derive(Error, Debug)]
 enum RelocationError {
+    #[cfg(not(feature = "no_std"))]
     /// I/O error
     #[error(transparent)]
-    IOError(#[from] io::Error),
+    IOError(#[from] std::io::Error),
 
     /// Program not found
     #[error("program not found")]
@@ -254,7 +263,7 @@ fn relocate_btf_program<'target>(
 ) -> Result<(), RelocationError> {
     for rel in relos {
         let instructions = &mut program.function.instructions;
-        let ins_index = rel.ins_offset / std::mem::size_of::<bpf_insn>();
+        let ins_index = rel.ins_offset / mem::size_of::<bpf_insn>();
         if ins_index >= instructions.len() {
             return Err(RelocationError::InvalidInstructionIndex {
                 index: ins_index,
@@ -817,7 +826,7 @@ impl ComputedRelocation {
     ) -> Result<(), RelocationError> {
         let instructions = &mut program.function.instructions;
         let num_instructions = instructions.len();
-        let ins_index = rel.ins_offset / std::mem::size_of::<bpf_insn>();
+        let ins_index = rel.ins_offset / mem::size_of::<bpf_insn>();
         let mut ins =
             instructions
                 .get_mut(ins_index)
@@ -845,7 +854,7 @@ impl ComputedRelocation {
                 ins.imm = target_value as i32;
             }
             BPF_LDX | BPF_ST | BPF_STX => {
-                if target_value > std::i16::MAX as u32 {
+                if target_value > i16::MAX as u32 {
                     return Err(RelocationError::InvalidInstruction {
                         relocation_number: rel.number,
                         index: ins_index,

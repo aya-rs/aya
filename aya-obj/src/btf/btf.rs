@@ -1,18 +1,17 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-    convert::TryInto,
-    ffi::{CStr, CString},
-    fs, io, mem,
-    path::{Path, PathBuf},
-    ptr,
-};
+use core::{ffi::CStr, mem, ptr};
 
+use alloc::{
+    borrow::Cow,
+    ffi::CString,
+    format,
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 use bytes::BufMut;
 
 use log::debug;
 use object::Endianness;
-use thiserror::Error;
 
 use crate::{
     btf::{
@@ -22,7 +21,8 @@ use crate::{
         IntEncoding, LineInfo, Struct, Typedef, VarLinkage,
     },
     generated::{btf_ext_header, btf_header},
-    util::bytes_of,
+    thiserror::{self, Error},
+    util::{bytes_of, HashMap},
     Object,
 };
 
@@ -32,14 +32,15 @@ pub(crate) const MAX_SPEC_LEN: usize = 64;
 /// The error type returned when `BTF` operations fail.
 #[derive(Error, Debug)]
 pub enum BtfError {
+    #[cfg(not(feature = "no_std"))]
     /// Error parsing file
     #[error("error parsing {path}")]
     FileError {
         /// file path
-        path: PathBuf,
+        path: std::path::PathBuf,
         /// source of the error
         #[source]
-        error: io::Error,
+        error: std::io::Error,
     },
 
     /// Error parsing BTF header
@@ -125,12 +126,13 @@ pub enum BtfError {
         type_id: u32,
     },
 
+    #[cfg(not(feature = "no_std"))]
     /// Loading the btf failed
     #[error("the BPF_BTF_LOAD syscall failed. Verifier output: {verifier_log}")]
     LoadError {
         /// The [`io::Error`] returned by the `BPF_BTF_LOAD` syscall.
         #[source]
-        io_error: io::Error,
+        io_error: std::io::Error,
         /// The error log produced by the kernel verifier.
         verifier_log: String,
     },
@@ -230,12 +232,18 @@ impl Btf {
     }
 
     /// Loads BTF metadata from `/sys/kernel/btf/vmlinux`.
+    #[cfg(not(feature = "no_std"))]
     pub fn from_sys_fs() -> Result<Btf, BtfError> {
         Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
     }
 
     /// Loads BTF metadata from the given `path`.
-    pub fn parse_file<P: AsRef<Path>>(path: P, endianness: Endianness) -> Result<Btf, BtfError> {
+    #[cfg(not(feature = "no_std"))]
+    pub fn parse_file<P: AsRef<std::path::Path>>(
+        path: P,
+        endianness: Endianness,
+    ) -> Result<Btf, BtfError> {
+        use std::{borrow::ToOwned, fs};
         let path = path.as_ref();
         Btf::parse(
             &fs::read(path).map_err(|error| BtfError::FileError {
@@ -1436,6 +1444,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "no_std"))]
     #[cfg_attr(miri, ignore)]
     fn test_read_btf_from_sys_fs() {
         let btf = Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default()).unwrap();

@@ -1,12 +1,11 @@
-use std::collections::HashMap;
-
+use alloc::{string::String, vec, vec::Vec};
 use bytes::BufMut;
 use object::Endianness;
 
 use crate::{
     generated::{bpf_func_info, bpf_line_info},
     relocation::INS_SIZE,
-    util::bytes_of,
+    util::{bytes_of, HashMap},
 };
 
 /* The func_info subsection layout:

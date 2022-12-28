@@ -1,7 +1,10 @@
 //! Cgroup socket address programs.
-use thiserror::Error;
+use alloc::{borrow::ToOwned, string::String};
 
-use crate::generated::bpf_attach_type;
+use crate::{
+    generated::bpf_attach_type,
+    thiserror::{self, Error},
+};
 
 /// Defines where to attach a `CgroupSockAddr` program.
 #[derive(Copy, Clone, Debug)]

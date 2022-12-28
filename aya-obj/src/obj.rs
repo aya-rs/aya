@@ -1,22 +1,24 @@
 //! Object file loading, parsing, and relocation.
 
+use alloc::{
+    borrow::ToOwned,
+    ffi::CString,
+    string::{String, ToString},
+    vec::Vec,
+};
+use core::{ffi::CStr, mem, ptr, str::FromStr};
 use log::debug;
 use object::{
     read::{Object as ElfObject, ObjectSection, Section as ObjSection},
     Endianness, ObjectSymbol, ObjectSymbolTable, RelocationTarget, SectionIndex, SectionKind,
     SymbolKind,
 };
-use std::{
-    collections::HashMap,
-    ffi::{CStr, CString},
-    mem, ptr,
-    str::FromStr,
-};
-use thiserror::Error;
 
 use crate::{
     maps::{BtfMap, LegacyMap, Map, MapKind, MINIMUM_MAP_SIZE},
     relocation::*,
+    thiserror::{self, Error},
+    util::HashMap,
 };
 
 use crate::{
@@ -25,7 +27,7 @@ use crate::{
     maps::{bpf_map_def, BtfMapDef, PinningType},
     programs::{CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType},
 };
-use std::slice::from_raw_parts_mut;
+use core::slice::from_raw_parts_mut;
 
 use crate::btf::{Array, DataSecEntry, FuncSecInfo, LineSecInfo};
 
@@ -844,7 +846,7 @@ impl Object {
 #[allow(missing_docs)]
 pub enum ParseError {
     #[error("error parsing ELF data")]
-    ElfError(#[from] object::read::Error),
+    ElfError(object::read::Error),
 
     /// Error parsing BTF object
     #[error("BTF error")]
@@ -862,8 +864,7 @@ pub enum ParseError {
     #[error("error parsing section with index {index}")]
     SectionError {
         index: usize,
-        #[source]
-        source: object::read::Error,
+        error: object::read::Error,
     },
 
     #[error("unsupported relocation target")]
@@ -968,9 +969,9 @@ impl<'data, 'file, 'a> TryFrom<&'a ObjSection<'data, 'file>> for Section<'a> {
 
     fn try_from(section: &'a ObjSection) -> Result<Section<'a>, ParseError> {
         let index = section.index();
-        let map_err = |source| ParseError::SectionError {
+        let map_err = |error| ParseError::SectionError {
             index: index.0,
-            source,
+            error,
         };
         let name = section.name().map_err(map_err)?;
         let kind = match BpfSectionKind::from_name(name) {
@@ -1272,6 +1273,7 @@ pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec;
     use matches::assert_matches;
     use object::Endianness;
 

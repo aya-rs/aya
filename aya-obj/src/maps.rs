@@ -2,7 +2,8 @@
 
 use core::mem;
 
-use thiserror::Error;
+use crate::thiserror::{self, Error};
+use alloc::vec::Vec;
 
 /// Invalid map type encontered
 pub struct InvalidMapTypeError {
