@@ -208,7 +208,7 @@ impl Relocation {
 }
 
 impl Object {
-    /// Relocate programs inside this object file with loaded BTF info.
+    /// Relocates programs inside this object file with loaded BTF info.
     pub fn relocate_btf(&mut self, target_btf: &Btf) -> Result<(), BtfRelocationError> {
         let (local_btf, btf_ext) = match (&self.btf, &self.btf_ext) {
             (Some(btf), Some(btf_ext)) => (btf, btf_ext),

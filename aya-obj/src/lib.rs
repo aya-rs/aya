@@ -3,7 +3,7 @@
 //! ## Overview
 //!
 //! eBPF programs written with [libbpf] or [aya-bpf] are usually compiled
-//! into an ELF object file, using various section to store information
+//! into an ELF object file, using various sections to store information
 //! about the eBPF programs.
 //!
 //! `aya-obj` is a library that loads, parses and processes such eBPF
@@ -49,13 +49,12 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(clippy::all, missing_docs)]
 #![allow(clippy::missing_safety_doc, clippy::len_without_is_empty)]
-
 #![cfg_attr(feature = "no_std", feature(error_in_core))]
 
-#[cfg(not(feature = "no_std"))]
-pub(crate) use thiserror_std as thiserror;
 #[cfg(feature = "no_std")]
 pub(crate) use thiserror_core as thiserror;
+#[cfg(not(feature = "no_std"))]
+pub(crate) use thiserror_std as thiserror;
 
 extern crate alloc;
 #[cfg(not(feature = "no_std"))]

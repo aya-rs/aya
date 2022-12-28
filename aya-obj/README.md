@@ -3,7 +3,7 @@
 ## Overview
 
 eBPF programs written with [libbpf] or [aya-bpf] are usually compiled
-into an ELF object file, using various section to store information
+into an ELF object file, using various sections to store information
 about the eBPF programs.
 
 `aya-obj` is a library that loads, parses and processes such eBPF

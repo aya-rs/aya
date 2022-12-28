@@ -130,7 +130,7 @@ pub enum BtfError {
     /// Loading the btf failed
     #[error("the BPF_BTF_LOAD syscall failed. Verifier output: {verifier_log}")]
     LoadError {
-        /// The [`io::Error`] returned by the `BPF_BTF_LOAD` syscall.
+        /// The [`std::io::Error`] returned by the `BPF_BTF_LOAD` syscall.
         #[source]
         io_error: std::io::Error,
         /// The error log produced by the kernel verifier.
@@ -613,7 +613,7 @@ unsafe fn read_btf_header(data: &[u8]) -> btf_header {
     ptr::read_unaligned(data.as_ptr() as *const btf_header)
 }
 
-/// Data in .BTF.ext section
+/// Data in the `.BTF.ext` section
 #[derive(Debug, Clone)]
 pub struct BtfExt {
     data: Vec<u8>,

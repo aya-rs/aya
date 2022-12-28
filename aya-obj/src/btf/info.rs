@@ -71,7 +71,7 @@ impl FuncSecInfo {
         }
     }
 
-    /// Encodes the [bpf_func_info] entries
+    /// Encodes the [bpf_func_info] entries.
     pub fn func_info_bytes(&self) -> Vec<u8> {
         let mut buf = vec![];
         for l in &self.func_info {
@@ -81,7 +81,7 @@ impl FuncSecInfo {
         buf
     }
 
-    /// Returns the number of [bpf_func_info] entries
+    /// Returns the number of [bpf_func_info] entries.
     pub fn len(&self) -> usize {
         self.func_info.len()
     }
@@ -176,7 +176,7 @@ impl LineSecInfo {
         }
     }
 
-    /// Encode the entries
+    /// Encodes the entries.
     pub fn line_info_bytes(&self) -> Vec<u8> {
         let mut buf = vec![];
         for l in &self.line_info {
@@ -186,7 +186,7 @@ impl LineSecInfo {
         buf
     }
 
-    /// Returns the number of entries
+    /// Returns the number of entries.
     pub fn len(&self) -> usize {
         self.line_info.len()
     }
