@@ -51,6 +51,7 @@ pub mod maps;
 mod obj;
 pub mod pin;
 pub mod programs;
+pub mod symbols;
 mod sys;
 pub mod util;
 
