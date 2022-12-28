@@ -1,3 +1,5 @@
+//! Program relocation handling.
+
 use std::{collections::HashMap, mem};
 
 use log::debug;
@@ -9,11 +11,13 @@ use crate::{
         bpf_insn, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
         BPF_PSEUDO_MAP_VALUE,
     },
-    obj::{Function, Object, Program}, Map,
+    maps::Map,
+    obj::{Function, Object, Program},
 };
 
 pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
 
+/// The error type returned by [`Object::relocate_maps`] and [`Object::relocate_calls`]
 #[derive(Error, Debug)]
 #[error("error relocating `{function}`")]
 pub struct BpfRelocationError {
@@ -24,34 +28,58 @@ pub struct BpfRelocationError {
     error: RelocationError,
 }
 
+/// Relocation failures
 #[derive(Debug, Error)]
 pub enum RelocationError {
+    /// Unknown symbol
     #[error("unknown symbol, index `{index}`")]
-    UnknownSymbol { index: usize },
+    UnknownSymbol {
+        /// The symbol index
+        index: usize,
+    },
 
+    /// Section not found
     #[error("section `{section_index}` not found, referenced by symbol `{}` #{symbol_index}",
             .symbol_name.clone().unwrap_or_default())]
     SectionNotFound {
+        /// The section index
         section_index: usize,
+        /// The symbol index
         symbol_index: usize,
+        /// The symbol name
         symbol_name: Option<String>,
     },
 
+    /// Unknown function
     #[error("function {address:#x} not found while relocating `{caller_name}`")]
-    UnknownFunction { address: u64, caller_name: String },
+    UnknownFunction {
+        /// The function address
+        address: u64,
+        /// The caller name
+        caller_name: String,
+    },
 
+    /// Referenced map not created yet
     #[error("the map `{name}` at section `{section_index}` has not been created")]
-    MapNotCreated { section_index: usize, name: String },
+    MapNotCreated {
+        /// The section index
+        section_index: usize,
+        /// The map name
+        name: String,
+    },
 
+    /// Invalid relocation offset
     #[error("invalid offset `{offset}` applying relocation #{relocation_number}")]
     InvalidRelocationOffset {
+        /// The relocation offset
         offset: u64,
+        /// The relocation number
         relocation_number: usize,
     },
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct Relocation {
+pub(crate) struct Relocation {
     // byte offset of the instruction to be relocated
     pub(crate) offset: u64,
     // index of the symbol to relocate to
@@ -59,7 +87,7 @@ pub struct Relocation {
 }
 
 #[derive(Debug, Clone)]
-pub struct Symbol {
+pub(crate) struct Symbol {
     pub(crate) index: usize,
     pub(crate) section_index: Option<usize>,
     pub(crate) name: Option<String>,
@@ -70,6 +98,7 @@ pub struct Symbol {
 }
 
 impl Object {
+    /// Relocates the map references
     pub fn relocate_maps<'a, I: Iterator<Item = (&'a str, Option<i32>, &'a Map)>>(
         &mut self,
         maps: I,
@@ -107,6 +136,7 @@ impl Object {
         Ok(())
     }
 
+    /// Relocates function calls
     pub fn relocate_calls(&mut self) -> Result<(), BpfRelocationError> {
         for (name, program) in self.programs.iter_mut() {
             let linker = FunctionLinker::new(
@@ -115,12 +145,10 @@ impl Object {
                 &self.relocations,
                 &self.symbols_by_index,
             );
-            linker
-                .link(program)
-                .map_err(|error| BpfRelocationError{
-                    function: name.to_owned(),
-                    error,
-                })?;
+            linker.link(program).map_err(|error| BpfRelocationError {
+                function: name.to_owned(),
+                error,
+            })?;
         }
 
         Ok(())
@@ -444,11 +472,7 @@ fn insn_is_call(ins: &bpf_insn) -> bool {
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        maps::bpf_map_def,
-        obj::{self, BtfMap, LegacyMap, MapKind},
-        maps::BtfMapDef,
-    };
+    use crate::maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, MapKind};
 
     use super::*;
 
@@ -469,7 +493,7 @@ mod test {
     }
 
     fn fake_legacy_map(symbol_index: usize) -> Map {
-        obj::Map::Legacy(LegacyMap {
+        Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 ..Default::default()
             },
@@ -481,7 +505,7 @@ mod test {
     }
 
     fn fake_btf_map(symbol_index: usize) -> Map {
-        obj::Map::Btf(BtfMap {
+        Map::Btf(BtfMap {
             def: BtfMapDef {
                 ..Default::default()
             },
@@ -578,8 +602,10 @@ mod test {
 
         let map_1 = fake_legacy_map(1);
         let map_2 = fake_legacy_map(2);
-        let maps_by_symbol =
-            HashMap::from([(1, ("test_map_1", Some(1), &map_1)), (2, ("test_map_2", Some(2), &map_2))]);
+        let maps_by_symbol = HashMap::from([
+            (1, ("test_map_1", Some(1), &map_1)),
+            (2, ("test_map_2", Some(2), &map_2)),
+        ]);
 
         relocate_maps(
             &mut fun,
@@ -673,8 +699,10 @@ mod test {
 
         let map_1 = fake_btf_map(1);
         let map_2 = fake_btf_map(2);
-        let maps_by_symbol =
-            HashMap::from([(1, ("test_map_1", Some(1), &map_1)), (2, ("test_map_2", Some(2), &map_2))]);
+        let maps_by_symbol = HashMap::from([
+            (1, ("test_map_1", Some(1), &map_1)),
+            (2, ("test_map_2", Some(2), &map_2)),
+        ]);
 
         relocate_maps(
             &mut fun,

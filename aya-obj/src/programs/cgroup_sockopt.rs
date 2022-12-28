@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use crate::generated::bpf_attach_type;
 
-/// Defines where to attach a [`CgroupSockopt`] program.
+/// Defines where to attach a `CgroupSockopt` program.
 #[derive(Copy, Clone, Debug)]
 pub enum CgroupSockoptAttachType {
     /// Attach to GetSockopt.

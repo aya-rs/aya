@@ -9,8 +9,7 @@ use std::{
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCKOPT,
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink,
-        ProgramData, ProgramError,
+        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };

@@ -844,14 +844,14 @@ mod tests {
         bpf_map_def,
         generated::{bpf_cmd, bpf_map_type::BPF_MAP_TYPE_HASH},
         maps::MapData,
-        obj::MapKind,
+        obj::maps::{LegacyMap, MapKind},
         sys::{override_syscall, Syscall},
     };
 
     use super::*;
 
     fn new_obj_map() -> obj::Map {
-        obj::Map::Legacy(obj::LegacyMap {
+        obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: BPF_MAP_TYPE_HASH as u32,
                 key_size: 4,

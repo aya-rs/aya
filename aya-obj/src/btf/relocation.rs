@@ -14,6 +14,7 @@ use crate::{
     Object, Program, ProgramSection,
 };
 
+/// The error type returned by [`Object::relocate_btf`].
 #[derive(Error, Debug)]
 #[error("error relocating `{section}`")]
 pub struct BtfRelocationError {
@@ -24,58 +25,91 @@ pub struct BtfRelocationError {
     error: RelocationError,
 }
 
+/// Relocation failures
 #[derive(Error, Debug)]
 enum RelocationError {
+    /// I/O error
     #[error(transparent)]
     IOError(#[from] io::Error),
 
+    /// Program not found
     #[error("program not found")]
     ProgramNotFound,
 
+    /// Invalid relocation access string
     #[error("invalid relocation access string {access_str}")]
-    InvalidAccessString { access_str: String },
+    InvalidAccessString {
+        /// The access string
+        access_str: String,
+    },
 
+    /// Invalid instruction index referenced by relocation
     #[error("invalid instruction index #{index} referenced by relocation #{relocation_number}, the program contains {num_instructions} instructions")]
     InvalidInstructionIndex {
+        /// The invalid instruction index
         index: usize,
+        /// Number of instructions in the program
         num_instructions: usize,
+        /// The relocation number
         relocation_number: usize,
     },
 
+    /// Multiple candidate target types found with different memory layouts
     #[error("error relocating {type_name}, multiple candidate target types found with different memory layouts: {candidates:?}")]
     ConflictingCandidates {
+        /// The type name
         type_name: String,
+        /// The candidates
         candidates: Vec<String>,
     },
 
+    /// Maximum nesting level reached evaluating candidate type
     #[error("maximum nesting level reached evaluating candidate type `{}`", err_type_name(.type_name))]
-    MaximumNestingLevelReached { type_name: Option<String> },
+    MaximumNestingLevelReached {
+        /// The type name
+        type_name: Option<String>,
+    },
 
+    /// Invalid access string
     #[error("invalid access string `{spec}` for type `{}`: {error}", err_type_name(.type_name))]
     InvalidAccessIndex {
+        /// The type name
         type_name: Option<String>,
+        /// The access string
         spec: String,
+        /// The index
         index: usize,
+        /// The max index
         max_index: usize,
+        /// The error message
         error: String,
     },
 
+    /// Relocation not valid for type
     #[error(
         "relocation #{relocation_number} of kind `{relocation_kind}` not valid for type `{type_kind}`: {error}"
     )]
     InvalidRelocationKindForType {
+        /// The relocation number
         relocation_number: usize,
+        /// The relocation kind
         relocation_kind: String,
+        /// The type kind
         type_kind: String,
+        /// The error message
         error: String,
     },
 
+    /// Invalid instruction referenced by relocation
     #[error(
         "instruction #{index} referenced by relocation #{relocation_number} is invalid: {error}"
     )]
     InvalidInstruction {
+        /// The relocation number
         relocation_number: usize,
+        /// The instruction index
         index: usize,
+        /// The error message
         error: String,
     },
 
@@ -86,6 +120,7 @@ enum RelocationError {
         ins_index: usize,
     },
 
+    /// BTF error
     #[error("invalid BTF")]
     BtfError(#[from] BtfError),
 }
@@ -136,7 +171,7 @@ impl TryFrom<u32> for RelocationKind {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct Relocation {
+pub(crate) struct Relocation {
     kind: RelocationKind,
     ins_offset: usize,
     type_id: u32,
@@ -164,6 +199,7 @@ impl Relocation {
 }
 
 impl Object {
+    /// Relocate programs inside this object file with loaded BTF info.
     pub fn relocate_btf(&mut self, target_btf: &Btf) -> Result<(), BtfRelocationError> {
         let (local_btf, btf_ext) = match (&self.btf, &self.btf_ext) {
             (Some(btf), Some(btf_ext)) => (btf, btf_ext),
@@ -172,10 +208,13 @@ impl Object {
 
         let mut candidates_cache = HashMap::<u32, Vec<Candidate>>::new();
         for (sec_name_off, relos) in btf_ext.relocations() {
-            let section_name = local_btf.string_at(*sec_name_off).map_err(|e| BtfRelocationError {
-                section: format!("section@{sec_name_off}"),
-                error: RelocationError::BtfError(e),
-            })?;
+            let section_name =
+                local_btf
+                    .string_at(*sec_name_off)
+                    .map_err(|e| BtfRelocationError {
+                        section: format!("section@{sec_name_off}"),
+                        error: RelocationError::BtfError(e),
+                    })?;
 
             let program_section = match ProgramSection::from_str(&section_name) {
                 Ok(program) => program,
@@ -193,10 +232,12 @@ impl Object {
             match relocate_btf_program(program, relos, local_btf, target_btf, &mut candidates_cache)
             {
                 Ok(_) => {}
-                Err(error) => return Err(BtfRelocationError {
-                    section: section_name.to_owned(),
-                    error,
-                }),
+                Err(error) => {
+                    return Err(BtfRelocationError {
+                        section: section_name.to_owned(),
+                        error,
+                    })
+                }
             }
         }
 

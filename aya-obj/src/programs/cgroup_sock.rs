@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use crate::generated::bpf_attach_type;
 
-/// Defines where to attach a [`CgroupSock`] program.
+/// Defines where to attach a `CgroupSock` program.
 #[derive(Copy, Clone, Debug)]
 pub enum CgroupSockAttachType {
     /// Called after the IPv4 bind events.

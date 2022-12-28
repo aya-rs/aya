@@ -7,7 +7,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use aya_obj::{btf::{BtfFeatures, BtfRelocationError}, relocation::BpfRelocationError};
+use aya_obj::{
+    btf::{BtfFeatures, BtfRelocationError},
+    relocation::BpfRelocationError,
+};
 use log::debug;
 use thiserror::Error;
 
@@ -19,7 +22,8 @@ use crate::{
     maps::{Map, MapData, MapError},
     obj::{
         btf::{Btf, BtfError},
-        MapKind, Object, ParseError, ProgramSection,
+        maps::MapKind,
+        Object, ParseError, ProgramSection,
     },
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
@@ -58,9 +62,7 @@ unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64, u128, i128);
 // It only makes sense that an array of POD types is itself POD
 unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 
-pub use aya_obj::maps::bpf_map_def;
-pub use aya_obj::maps::BtfMapDef;
-pub use aya_obj::maps::PinningType;
+pub use aya_obj::maps::{bpf_map_def, PinningType};
 
 // Features implements BPF and BTF feature detection
 #[derive(Default, Debug)]
@@ -358,14 +360,9 @@ impl<'a> BpfLoader<'a> {
         obj.patch_map_data(self.globals.clone())?;
 
         let btf_fd = if let Some(ref btf) = self.features.btf {
-            if let Some(ref mut obj_btf) = obj.btf {
-                // fixup btf
-                let section_data = obj.section_sizes.clone();
-                let symbol_offsets = obj.symbol_offset_by_name.clone();
-                obj_btf.fixup_and_sanitize(&section_data, &symbol_offsets, btf)?;
+            if let Some(btf) = obj.fixup_and_sanitize_btf(btf)? {
                 // load btf to the kernel
-                let raw_btf = obj_btf.to_bytes();
-                Some(load_btf(raw_btf)?)
+                Some(load_btf(btf.to_bytes())?)
             } else {
                 None
             }
@@ -441,7 +438,10 @@ impl<'a> BpfLoader<'a> {
             maps.insert(name, map);
         }
 
-        obj.relocate_maps(maps.iter().map(|(s, data)| (s.as_str(), data.fd, &data.obj)))?;
+        obj.relocate_maps(
+            maps.iter()
+                .map(|(s, data)| (s.as_str(), data.fd, &data.obj)),
+        )?;
         obj.relocate_calls()?;
 
         let programs = obj

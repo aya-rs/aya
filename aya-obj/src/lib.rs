@@ -5,7 +5,7 @@
     html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![deny(clippy::all)]
+#![deny(clippy::all, missing_docs)]
 #![allow(clippy::missing_safety_doc, clippy::len_without_is_empty)]
 
 pub mod btf;
@@ -16,4 +16,5 @@ pub mod programs;
 pub mod relocation;
 mod util;
 
+pub use maps::Map;
 pub use obj::*;

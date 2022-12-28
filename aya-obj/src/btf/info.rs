@@ -19,10 +19,18 @@ use crate::{
  *   a list of bpf_func_info records for section #2
  *   ......
  */
+
+/// A collection of [bpf_func_info] collected from the `btf_ext_info_sec` struct
+/// inside the [FuncInfo] subsection.
+///
+/// See [BPF Type Format (BTF) — The Linux Kernel documentation](https://docs.kernel.org/bpf/btf.html)
+/// for more information.
 #[derive(Debug, Clone, Default)]
 pub struct FuncSecInfo {
-    pub _sec_name_offset: u32,
+    pub(crate) _sec_name_offset: u32,
+    /// The number of info entries
     pub num_info: u32,
+    /// Info entries
     pub func_info: Vec<bpf_func_info>,
 }
 
@@ -64,6 +72,7 @@ impl FuncSecInfo {
         }
     }
 
+    /// Encodes the [bpf_func_info] entries
     pub fn func_info_bytes(&self) -> Vec<u8> {
         let mut buf = vec![];
         for l in &self.func_info {
@@ -73,13 +82,20 @@ impl FuncSecInfo {
         buf
     }
 
+    /// Returns the number of [bpf_func_info] entries
     pub fn len(&self) -> usize {
         self.func_info.len()
     }
 }
 
+/// A collection of [FuncSecInfo] collected from the `func_info` subsection
+/// in the `.BTF.ext` section.
+///
+/// See [BPF Type Format (BTF) — The Linux Kernel documentation](https://docs.kernel.org/bpf/btf.html)
+/// for more information.
 #[derive(Debug, Clone)]
 pub struct FuncInfo {
+    /// The [FuncSecInfo] subsections for some sections, referenced by section names
     pub data: HashMap<String, FuncSecInfo>,
 }
 
@@ -98,12 +114,19 @@ impl FuncInfo {
     }
 }
 
+/// A collection of [bpf_line_info] collected from the `btf_ext_info_sec` struct
+/// inside the `line_info` subsection.
+///
+/// See [BPF Type Format (BTF) — The Linux Kernel documentation](https://docs.kernel.org/bpf/btf.html)
+/// for more information.
 #[derive(Debug, Clone, Default)]
 pub struct LineSecInfo {
     // each line info section has a header
-    pub _sec_name_offset: u32,
+    pub(crate) _sec_name_offset: u32,
+    /// The number of entries
     pub num_info: u32,
     // followed by one or more bpf_line_info structs
+    /// The [bpf_line_info] entries
     pub line_info: Vec<bpf_line_info>,
 }
 
@@ -154,6 +177,7 @@ impl LineSecInfo {
         }
     }
 
+    /// Encode the entries
     pub fn line_info_bytes(&self) -> Vec<u8> {
         let mut buf = vec![];
         for l in &self.line_info {
@@ -163,6 +187,7 @@ impl LineSecInfo {
         buf
     }
 
+    /// Returns the number of entries
     pub fn len(&self) -> usize {
         self.line_info.len()
     }

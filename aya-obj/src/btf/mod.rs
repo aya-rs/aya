@@ -7,5 +7,6 @@ mod relocation;
 mod types;
 
 pub use btf::*;
-pub(crate) use info::*;
-pub(crate) use types::*;
+pub use info::*;
+pub use relocation::BtfRelocationError;
+pub use types::*;

@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use std::{fmt::Display, mem, ptr};
 
 use object::Endianness;

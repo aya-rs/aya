@@ -14,196 +14,90 @@ use std::{
 };
 use thiserror::Error;
 
-use crate::relocation::*;
+use crate::{
+    maps::{BtfMap, LegacyMap, Map, MapKind, MINIMUM_MAP_SIZE},
+    relocation::*,
+};
 
 use crate::{
-    maps::bpf_map_def,
     btf::{Btf, BtfError, BtfExt, BtfType},
     generated::{bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_F_RDONLY_PROG},
+    maps::{bpf_map_def, BtfMapDef, PinningType},
     programs::{CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType},
-    maps::BtfMapDef, maps::PinningType,
 };
 use std::slice::from_raw_parts_mut;
 
 use crate::btf::{Array, DataSecEntry, FuncSecInfo, LineSecInfo};
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
-/// The first five __u32 of `bpf_map_def` must be defined.
-const MINIMUM_MAP_SIZE: usize = mem::size_of::<u32>() * 5;
 
+/// The loaded object file representation
 #[derive(Clone)]
 pub struct Object {
+    /// The endianness
     pub endianness: Endianness,
+    /// Program license
     pub license: CString,
+    /// Kernel version
     pub kernel_version: KernelVersion,
+    /// Program BTF
     pub btf: Option<Btf>,
+    /// Program BTF.ext
     pub btf_ext: Option<BtfExt>,
+    /// Referenced maps
     pub maps: HashMap<String, Map>,
+    /// Programs
     pub programs: HashMap<String, Program>,
+    /// Functions
     pub functions: HashMap<u64, Function>,
-    pub relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
-    pub symbols_by_index: HashMap<usize, Symbol>,
-    pub section_sizes: HashMap<String, u64>,
+    pub(crate) relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
+    pub(crate) symbols_by_index: HashMap<usize, Symbol>,
+    pub(crate) section_sizes: HashMap<String, u64>,
     // symbol_offset_by_name caches symbols that could be referenced from a
     // BTF VAR type so the offsets can be fixed up
-    pub symbol_offset_by_name: HashMap<String, u64>,
-    pub text_section_index: Option<usize>,
+    pub(crate) symbol_offset_by_name: HashMap<String, u64>,
+    pub(crate) text_section_index: Option<usize>,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum MapKind {
-    Bss,
-    Data,
-    Rodata,
-    Other,
-}
-
-impl From<&str> for MapKind {
-    fn from(s: &str) -> Self {
-        if s == ".bss" {
-            MapKind::Bss
-        } else if s.starts_with(".data") {
-            MapKind::Data
-        } else if s.starts_with(".rodata") {
-            MapKind::Rodata
-        } else {
-            MapKind::Other
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Map {
-    Legacy(LegacyMap),
-    Btf(BtfMap),
-}
-
-impl Map {
-    pub fn map_type(&self) -> u32 {
-        match self {
-            Map::Legacy(m) => m.def.map_type,
-            Map::Btf(m) => m.def.map_type,
-        }
-    }
-
-    pub fn key_size(&self) -> u32 {
-        match self {
-            Map::Legacy(m) => m.def.key_size,
-            Map::Btf(m) => m.def.key_size,
-        }
-    }
-
-    pub fn value_size(&self) -> u32 {
-        match self {
-            Map::Legacy(m) => m.def.value_size,
-            Map::Btf(m) => m.def.value_size,
-        }
-    }
-
-    pub fn max_entries(&self) -> u32 {
-        match self {
-            Map::Legacy(m) => m.def.max_entries,
-            Map::Btf(m) => m.def.max_entries,
-        }
-    }
-
-    pub fn set_max_entries(&mut self, v: u32) {
-        match self {
-            Map::Legacy(m) => m.def.max_entries = v,
-            Map::Btf(m) => m.def.max_entries = v,
-        }
-    }
-
-    pub fn map_flags(&self) -> u32 {
-        match self {
-            Map::Legacy(m) => m.def.map_flags,
-            Map::Btf(m) => m.def.map_flags,
-        }
-    }
-
-    pub fn pinning(&self) -> PinningType {
-        match self {
-            Map::Legacy(m) => m.def.pinning,
-            Map::Btf(m) => m.def.pinning,
-        }
-    }
-
-    pub fn data(&self) -> &[u8] {
-        match self {
-            Map::Legacy(m) => &m.data,
-            Map::Btf(m) => &m.data,
-        }
-    }
-
-    pub fn data_mut(&mut self) -> &mut Vec<u8> {
-        match self {
-            Map::Legacy(m) => m.data.as_mut(),
-            Map::Btf(m) => m.data.as_mut(),
-        }
-    }
-
-    pub fn kind(&self) -> MapKind {
-        match self {
-            Map::Legacy(m) => m.kind,
-            Map::Btf(m) => m.kind,
-        }
-    }
-
-    pub fn section_index(&self) -> usize {
-        match self {
-            Map::Legacy(m) => m.section_index,
-            Map::Btf(m) => m.section_index,
-        }
-    }
-
-    pub fn symbol_index(&self) -> usize {
-        match self {
-            Map::Legacy(m) => m.symbol_index,
-            Map::Btf(m) => m.symbol_index,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct LegacyMap {
-    pub def: bpf_map_def,
-    pub section_index: usize,
-    pub symbol_index: usize,
-    pub data: Vec<u8>,
-    pub kind: MapKind,
-}
-
-#[derive(Debug, Clone)]
-pub struct BtfMap {
-    pub def: BtfMapDef,
-    pub section_index: usize,
-    pub symbol_index: usize,
-    pub kind: MapKind,
-    pub data: Vec<u8>,
-}
-
+/// An eBPF program
 #[derive(Debug, Clone)]
 pub struct Program {
+    /// The license
     pub license: CString,
+    /// The kernel version
     pub kernel_version: KernelVersion,
+    /// The section containing the program
     pub section: ProgramSection,
+    /// The function
     pub function: Function,
 }
 
+/// An eBPF function
 #[derive(Debug, Clone)]
 pub struct Function {
+    /// The address
     pub address: u64,
+    /// The function name
     pub name: String,
+    /// The section index
     pub section_index: SectionIndex,
+    /// The section offset
     pub section_offset: usize,
+    /// The eBPF byte code instructions
     pub instructions: Vec<bpf_insn>,
+    /// The function info
     pub func_info: FuncSecInfo,
+    /// The line info
     pub line_info: LineSecInfo,
+    /// Function info record size
     pub func_info_rec_size: usize,
+    /// Line info record size
     pub line_info_rec_size: usize,
 }
 
+/// Sections containing eBPF programs
 #[derive(Debug, Clone)]
+#[allow(missing_docs)]
 pub enum ProgramSection {
     KRetProbe {
         name: String,
@@ -298,6 +192,7 @@ pub enum ProgramSection {
 }
 
 impl ProgramSection {
+    /// Returns the program name
     pub fn name(&self) -> &str {
         match self {
             ProgramSection::KRetProbe { name } => name,
@@ -520,6 +415,7 @@ impl FromStr for ProgramSection {
 }
 
 impl Object {
+    /// Parses the binary data as an object file into an [Object]
     pub fn parse(data: &[u8]) -> Result<Object, ParseError> {
         let obj = object::read::File::parse(data).map_err(ParseError::ElfError)?;
         let endianness = obj.endianness();
@@ -603,6 +499,7 @@ impl Object {
         }
     }
 
+    /// Patches map data
     pub fn patch_map_data(&mut self, globals: HashMap<&str, &[u8]>) -> Result<(), ParseError> {
         let symbols: HashMap<String, &Symbol> = self
             .symbols_by_index
@@ -942,11 +839,14 @@ impl Object {
     }
 }
 
+/// Errors caught during parsing the object file
 #[derive(Debug, Error)]
+#[allow(missing_docs)]
 pub enum ParseError {
     #[error("error parsing ELF data")]
     ElfError(#[from] object::read::Error),
 
+    /// Error parsing BTF object
     #[error("BTF error")]
     BtfError(#[from] BtfError),
 
@@ -1006,6 +906,7 @@ pub enum ParseError {
     #[error("no symbols found for the maps included in the maps section")]
     NoSymbolsInMapSection {},
 
+    /// No BTF parsed for object
     #[error("no BTF parsed for object")]
     NoBTF,
 }
@@ -1169,9 +1070,12 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
     Ok(arr.len)
 }
 
+/// The parsed kernel version
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum KernelVersion {
+    /// Specified version
     Version(u32),
+    /// Any version
     Any,
 }
 
@@ -1314,6 +1218,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
     Ok((map_name.to_string(), map_def))
 }
 
+/// Parses a [bpf_map_info] into a [Map].
 pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
     if info.btf_key_type_id != 0 {
         Map::Btf(BtfMap {
@@ -1353,6 +1258,7 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
     }
 }
 
+/// Copies a block of eBPF instructions
 pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
     if data.len() % mem::size_of::<bpf_insn>() > 0 {
         return Err(ParseError::InvalidProgramCode);

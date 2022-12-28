@@ -15,14 +15,15 @@ use object::Endianness;
 use thiserror::Error;
 
 use crate::{
-    generated::{btf_ext_header, btf_header},
     btf::{
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
         Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
         IntEncoding, LineInfo, Struct, Typedef, VarLinkage,
     },
+    generated::{btf_ext_header, btf_header},
     util::bytes_of,
+    Object,
 };
 
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
@@ -157,7 +158,9 @@ pub enum BtfError {
     InvalidSymbolName,
 }
 
+/// Available BTF features
 #[derive(Default, Debug)]
+#[allow(missing_docs)]
 pub struct BtfFeatures {
     pub btf_func: bool,
     pub btf_func_global: bool,
@@ -172,9 +175,9 @@ pub struct BtfFeatures {
 /// BTF is a kind of debug metadata that allows eBPF programs compiled against one kernel version
 /// to be loaded into different kernel versions.
 ///
-/// Aya automatically loads BTF metadata if you use [`Bpf::load_file`](crate::Bpf::load_file). You
+/// Aya automatically loads BTF metadata if you use `Bpf::load_file`. You
 /// only need to explicitly use this type if you want to load BTF from a non-standard
-/// location or if you are using [`Bpf::load`](crate::Bpf::load).
+/// location or if you are using `Bpf::load`.
 #[derive(Clone, Debug)]
 pub struct Btf {
     header: btf_header,
@@ -184,6 +187,7 @@ pub struct Btf {
 }
 
 impl Btf {
+    /// Creates a new empty instance with its header initialized
     pub fn new() -> Btf {
         Btf {
             header: btf_header {
@@ -206,6 +210,7 @@ impl Btf {
         self.types.types.iter()
     }
 
+    /// Adds a string to BTF metadata, returning an offset
     pub fn add_string(&mut self, name: String) -> u32 {
         let str = CString::new(name).unwrap();
         let name_offset = self.strings.len();
@@ -214,6 +219,7 @@ impl Btf {
         name_offset as u32
     }
 
+    /// Adds a type to BTF metadata, returning a type id
     pub fn add_type(&mut self, btf_type: BtfType) -> u32 {
         let size = btf_type.type_info_size() as u32;
         let type_id = self.types.len();
@@ -240,6 +246,7 @@ impl Btf {
         )
     }
 
+    /// Parses BTF from binary data of the given endianness
     pub fn parse(data: &[u8], endianness: Endianness) -> Result<Btf, BtfError> {
         if data.len() < mem::size_of::<btf_header>() {
             return Err(BtfError::InvalidHeader);
@@ -333,6 +340,7 @@ impl Btf {
         self.string_at(ty.name_offset()).ok().map(String::from)
     }
 
+    /// Returns a type id matching the type name and [BtfKind]
     pub fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
         for (type_id, ty) in self.types().enumerate() {
             if ty.kind() != kind {
@@ -379,6 +387,7 @@ impl Btf {
         })
     }
 
+    /// Encodes the metadata as BTF format
     pub fn to_bytes(&self) -> Vec<u8> {
         // Safety: btf_header is POD
         let mut buf = unsafe { bytes_of::<btf_header>(&self.header).to_vec() };
@@ -388,7 +397,7 @@ impl Btf {
         buf
     }
 
-    pub fn fixup_and_sanitize(
+    pub(crate) fn fixup_and_sanitize(
         &mut self,
         section_sizes: &HashMap<String, u64>,
         symbol_offsets: &HashMap<String, u64>,
@@ -569,11 +578,34 @@ impl Default for Btf {
     }
 }
 
+impl Object {
+    /// Fixes up and sanitizes BTF data.
+    ///
+    /// Mostly, it removes unsupported types and works around LLVM behaviours.
+    pub fn fixup_and_sanitize_btf(
+        &mut self,
+        features: &BtfFeatures,
+    ) -> Result<Option<&Btf>, BtfError> {
+        if let Some(ref mut obj_btf) = self.btf {
+            // fixup btf
+            obj_btf.fixup_and_sanitize(
+                &self.section_sizes,
+                &self.symbol_offset_by_name,
+                features,
+            )?;
+            Ok(Some(obj_btf))
+        } else {
+            Ok(None)
+        }
+    }
+}
+
 unsafe fn read_btf_header(data: &[u8]) -> btf_header {
     // safety: btf_header is POD so read_unaligned is safe
     ptr::read_unaligned(data.as_ptr() as *const btf_header)
 }
 
+/// Data in .BTF.ext section
 #[derive(Debug, Clone)]
 pub struct BtfExt {
     data: Vec<u8>,
