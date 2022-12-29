@@ -73,34 +73,38 @@ use std::{
 };
 use thiserror::Error;
 
-pub use cgroup_device::CgroupDevice;
-pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
-pub use cgroup_sock::{CgroupSock, CgroupSockAttachType};
-pub use cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType};
-pub use cgroup_sockopt::{CgroupSockopt, CgroupSockoptAttachType};
-pub use cgroup_sysctl::CgroupSysctl;
-pub use extension::{Extension, ExtensionError};
-pub use fentry::FEntry;
-pub use fexit::FExit;
-pub use kprobe::{KProbe, KProbeError};
+pub use cgroup_device::{CgroupDevice, CgroupDeviceLink};
+pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType, CgroupSkbLink};
+pub use cgroup_sock::{CgroupSock, CgroupSockAttachType, CgroupSockLink};
+pub use cgroup_sock_addr::{
+    CgroupSockAddr, CgroupSockAddrAttachType, CgroupSockAddrLink, CgroupSockAddrLinkId,
+};
+pub use cgroup_sockopt::{
+    CgroupSockopt, CgroupSockoptAttachType, CgroupSockoptLink, CgroupSockoptLinkId,
+};
+pub use cgroup_sysctl::{CgroupSysctl, CgroupSysctlLink};
+pub use extension::{Extension, ExtensionError, ExtensionLink};
+pub use fentry::{FEntry, FEntryLink};
+pub use fexit::{FExit, FExitLink};
+pub use kprobe::{KProbe, KProbeError, KProbeLink};
 pub use links::Link;
 use links::*;
-pub use lirc_mode2::LircMode2;
-pub use lsm::Lsm;
+pub use lirc_mode2::{LircLink, LircLinkId, LircMode2};
+pub use lsm::{Lsm, LsmLink};
 use perf_attach::*;
 pub use perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy};
 pub use probe::ProbeKind;
-pub use raw_trace_point::RawTracePoint;
-pub use sk_lookup::SkLookup;
-pub use sk_msg::SkMsg;
-pub use sk_skb::{SkSkb, SkSkbKind};
-pub use sock_ops::SockOps;
-pub use socket_filter::{SocketFilter, SocketFilterError};
-pub use tc::{SchedClassifier, TcAttachType, TcError};
-pub use tp_btf::BtfTracePoint;
-pub use trace_point::{TracePoint, TracePointError};
-pub use uprobe::{UProbe, UProbeError};
-pub use xdp::{Xdp, XdpError, XdpFlags};
+pub use raw_trace_point::{RawTracePoint, RawTracePointLink};
+pub use sk_lookup::{SkLookup, SkLookupLink};
+pub use sk_msg::{SkMsg, SkMsgLink};
+pub use sk_skb::{SkSkb, SkSkbKind, SkSkbLink};
+pub use sock_ops::{SockOps, SockOpsLink};
+pub use socket_filter::{SocketFilter, SocketFilterError, SocketFilterLink};
+pub use tc::{SchedClassifier, SchedClassifierLink, SchedClassifierLinkId, TcAttachType, TcError};
+pub use tp_btf::{BtfTracePoint, BtfTracePointLink};
+pub use trace_point::{TracePoint, TracePointError, TracePointLink};
+pub use uprobe::{UProbe, UProbeError, UProbeLink};
+pub use xdp::{Xdp, XdpError, XdpFlags, XdpLink};
 
 use crate::{
     generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
@@ -686,6 +690,48 @@ impl_fd!(
     SockOps,
     CgroupSock,
     CgroupDevice,
+);
+
+macro_rules! impl_program_links{
+    ($(($struct_name:ident, $link:ident)),+ $(,)?) => {
+        $(
+            impl $struct_name {
+                /// Iterates through the link map of a BPF program.
+                ///
+                /// This iterator is immutable (read only).
+                pub fn links(&self) -> impl Iterator<Item=&$link> {
+                    self.data.links.iter()
+                }
+            }
+        )+
+    }
+}
+
+impl_program_links!(
+    (KProbe, KProbeLink),
+    (UProbe, UProbeLink),
+    (TracePoint, TracePointLink),
+    (SocketFilter, SocketFilterLink),
+    (Xdp, XdpLink),
+    (SkMsg, SkMsgLink),
+    (SkSkb, SkSkbLink),
+    (SchedClassifier, SchedClassifierLink),
+    (CgroupSkb, CgroupSkbLink),
+    (CgroupSysctl, CgroupSysctlLink),
+    (CgroupSockopt, CgroupSockoptLink),
+    (LircMode2, LircLink),
+    (PerfEvent, PerfLink),
+    (Lsm, LsmLink),
+    (RawTracePoint, RawTracePointLink),
+    (BtfTracePoint, BtfTracePointLink),
+    (FEntry, FEntryLink),
+    (FExit, FExitLink),
+    (Extension, ExtensionLink),
+    (CgroupSockAddr, CgroupSockAddrLink),
+    (SkLookup, SkLookupLink),
+    (SockOps, SockOpsLink),
+    (CgroupSock, CgroupSockLink),
+    (CgroupDevice, CgroupDeviceLink),
 );
 
 macro_rules! impl_program_pin{

@@ -3,7 +3,7 @@ use libc::{close, dup};
 use thiserror::Error;
 
 use std::{
-    collections::{hash_map::Entry, HashMap},
+    collections::{hash_map::{Entry, self}, HashMap},
     ffi::CString,
     io,
     os::unix::prelude::RawFd,
@@ -68,6 +68,10 @@ impl<T: Link> LinkMap<T> {
 
     pub(crate) fn forget(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
         self.links.remove(&link_id).ok_or(ProgramError::NotAttached)
+    }
+
+    pub(crate) fn iter(&self) -> hash_map::Values<'_, T::Id, T> {
+        self.links.values()
     }
 }
 
@@ -314,7 +318,7 @@ mod tests {
     #[derive(Debug, Hash, Eq, PartialEq)]
     struct TestLinkId(u8, u8);
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, Eq, PartialEq)]
     struct TestLink {
         id: (u8, u8),
         detached: Rc<RefCell<u8>>,
@@ -363,6 +367,26 @@ mod tests {
         assert!(links.remove(id2).is_ok());
         assert!(*l1_detached.borrow() == 1);
         assert!(*l2_detached.borrow() == 1);
+    }
+
+    #[test]
+    fn test_iter() {
+        let mut links = LinkMap::new();
+        let l1 = TestLink::new(1, 2);
+        let l2 = TestLink::new(1, 3);
+        
+        let l1_copy = l1.clone();
+        let l2_copy = l2.clone();
+
+        let _id1 = links.insert(l1).unwrap();
+        let _id2 = links.insert(l2).unwrap();
+
+        assert_eq!(links.iter().len(), 2);
+        
+        let collected: Vec<&TestLink> = links.iter().collect();
+        let expected: Vec<&TestLink> = vec![&l1_copy, &l2_copy];
+
+        assert_eq!(collected, expected);
     }
 
     #[test]

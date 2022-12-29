@@ -47,6 +47,7 @@ extern crate bitflags;
 
 mod bpf;
 mod generated;
+pub mod interface;
 pub mod maps;
 mod obj;
 pub mod pin;

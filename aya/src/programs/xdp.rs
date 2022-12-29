@@ -12,6 +12,7 @@ use crate::{
         XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE,
         XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
+    interface::NetworkInterface,
     programs::{
         define_link_wrapper, load_program, FdLink, Link, LinkError, ProgramData, ProgramError,
     },
@@ -191,6 +192,19 @@ pub(crate) struct NlLink {
     if_index: i32,
     prog_fd: RawFd,
     flags: XdpFlags,
+}
+
+impl XdpLink {
+    /// Provides a [NetworkInterface] when an XDP link is backed by a network interface.
+    /// Returns [None] when the link is backed by a file descriptor.
+    pub fn interface(self) -> Option<NetworkInterface> {
+        let index = match self.0 {
+            XdpLinkInner::NlLink(nl_link) => nl_link.if_index,
+            _ => return None,
+        };
+
+        Some(NetworkInterface { index })
+    }
 }
 
 impl Link for NlLink {
