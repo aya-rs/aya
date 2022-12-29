@@ -25,7 +25,7 @@ impl SkBuff {
     #[allow(clippy::len_without_is_empty)]
     #[inline]
     pub fn len(&self) -> u32 {
-        unsafe { *self.skb }.len
+        unsafe { (*self.skb).len }
     }
 
     #[inline]
@@ -40,7 +40,7 @@ impl SkBuff {
 
     #[inline]
     pub fn set_mark(&mut self, mark: u32) {
-        unsafe { *self.skb }.mark = mark;
+        unsafe { (*self.skb).mark = mark }
     }
 
     #[inline]
