@@ -27,8 +27,7 @@ object.relocate_calls().unwrap();
 object.relocate_maps(std::iter::empty()).unwrap();
 
 // Run with rbpf
-let program = object.programs.iter().next().unwrap().1;
-let instructions = &program.function.instructions;
+let instructions = &object.programs["prog_name"].function.instructions;
 let data = unsafe {
     core::slice::from_raw_parts(
         instructions.as_ptr() as *const u8,

@@ -48,7 +48,8 @@ pub struct Object {
     pub btf_ext: Option<BtfExt>,
     /// Referenced maps
     pub maps: HashMap<String, Map>,
-    /// Programs
+    /// A hash map of programs, using the program names parsed
+    /// in [ProgramSection]s as keys.
     pub programs: HashMap<String, Program>,
     /// Functions
     pub functions: HashMap<u64, Function>,
@@ -97,7 +98,69 @@ pub struct Function {
     pub line_info_rec_size: usize,
 }
 
-/// Sections containing eBPF programs
+/// Section types containing eBPF programs
+///
+/// # Section Name Parsing
+///
+/// Section types are parsed from the section name strings.
+///
+/// In order for Aya to treat a section as a [ProgramSection],
+/// there are a few requirements:
+/// - The section must be an executable code section.
+/// - The section name must conform to [Program Types and ELF Sections].
+///
+/// [Program Types and ELF Sections]: https://docs.kernel.org/bpf/libbpf/program_types.html
+///
+/// ## Program Name
+///
+/// Each section name is parsed into a section type and a program name.
+///
+/// Generally speaking,
+/// - if the section name does not contain any slashes,
+///   then the program name is just that section name;
+/// - if there are some slashes, the name is `section_name.rsplitn(2, '/')[0]`,
+/// - except for tracepoint programs, for which the name is
+///   `section_name.splitn(2, '/')[1]`.
+///
+/// ```rust
+/// use aya_obj::ProgramSection;
+/// use std::str::FromStr;
+///
+/// assert_eq!(
+///     ProgramSection::from_str("kprobe/do_unlinkat")
+///             .unwrap().name(),
+///     "do_unlinkat",
+/// );
+/// assert_eq!(
+///     ProgramSection::from_str("tracepoint/syscalls/sys_enter_openat")
+///             .unwrap().name(),
+///     "syscalls/sys_enter_openat",
+/// );
+/// ```
+///
+/// The program name will be used in [Object] as references to each program.
+///
+/// ## Unsupported Sections
+///
+/// Currently, the following section names are not supported yet:
+/// - `flow_dissector`: `BPF_PROG_TYPE_FLOW_DISSECTOR`
+/// - `ksyscall+` or `kretsyscall+`
+/// - `uprobe.s+` or `uretprobe.s+`
+/// - `usdt+`
+/// - `kprobe.multi+` or `kretprobe.multi+`: `BPF_TRACE_KPROBE_MULTI`
+/// - `lsm_cgroup+` or `lsm.s+`
+/// - `lwt_in`, `lwt_out`, `lwt_seg6local`, `lwt_xmit`
+/// - `raw_tp.w+`, `raw_tracepoint.w+`
+/// - `action`
+/// - `sk_reuseport/migrate`, `sk_reuseport`
+/// - `syscall`
+/// - `struct_ops+`
+/// - `fmod_ret+`, `fmod_ret.s+`
+/// - `fentry.s+`, `fexit.s+`
+/// - `iter+`, `iter.s+`
+/// - `xdp.frags/cpumap`, `xdp/cpumap`
+/// - `xdp.frags/devmap`, `xdp/devmap`
+/// - `xdp.frags`
 #[derive(Debug, Clone)]
 #[allow(missing_docs)]
 pub enum ProgramSection {

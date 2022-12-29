@@ -2,7 +2,7 @@ use core::{mem::size_of, ptr::null_mut, slice::from_raw_parts};
 use std::collections::HashMap;
 
 use aya::include_bytes_aligned;
-use aya_obj::{generated::bpf_insn, Object};
+use aya_obj::{generated::bpf_insn, Object, ProgramSection};
 
 use super::{integration_test, IntegrationTest};
 
@@ -10,7 +10,14 @@ use super::{integration_test, IntegrationTest};
 fn run_with_rbpf() {
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/pass");
     let object = Object::parse(bytes).unwrap();
+
     assert_eq!(object.programs.len(), 1);
+    assert!(matches!(
+        object.programs["pass"].section,
+        ProgramSection::Xdp { .. }
+    ));
+    assert_eq!(object.programs["pass"].section.name(), "pass");
+
     let instructions = &object.programs["pass"].function.instructions;
     let data = unsafe {
         from_raw_parts(
@@ -31,26 +38,34 @@ fn use_map_with_rbpf() {
     let bytes =
         include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/multimap-btf.bpf.o");
     let mut object = Object::parse(bytes).unwrap();
-    let mut maps = HashMap::new();
 
-    // Initializes maps:
-    // - fd: 0xCAFE00 or 0xCAFE01,
+    assert_eq!(object.programs.len(), 1);
+    assert!(matches!(
+        object.programs["tracepoint"].section,
+        ProgramSection::TracePoint { .. }
+    ));
+    assert_eq!(object.programs["tracepoint"].section.name(), "tracepoint");
+
+    // Initialize maps:
+    // - fd: 0xCAFE00 or 0xCAFE01 (the 0xCAFE00 part is used to distinguish fds from indices),
     // - Note that rbpf does not convert fds into real pointers,
     //   so we keeps the pointers to our maps in MULTIMAP_MAPS, to be used in helpers.
-    let mut map_instances = Vec::new();
-    for (map_id, (name, map)) in object.maps.iter().enumerate() {
-        maps.insert(name.to_owned(), (map_id as i32 | 0xCAFE00, map.clone()));
+    let mut maps = HashMap::new();
+    let mut map_instances = vec![vec![0u64], vec![0u64]];
+    for (name, map) in object.maps.iter() {
         assert_eq!(map.key_size(), size_of::<u32>() as u32);
         assert_eq!(map.value_size(), size_of::<u64>() as u32);
         assert_eq!(
             map.map_type(),
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY as u32
         );
-        map_instances.push(vec![0u64]);
+
+        let map_id = if name == "map_1" { 0 } else { 1 };
+        let fd = map_id as i32 | 0xCAFE00;
+        maps.insert(name.to_owned(), (fd, map.clone()));
 
         unsafe {
-            MULTIMAP_MAPS[if name == "map_1" { 0 } else { 1 }] =
-                &mut map_instances[map_id] as *mut _;
+            MULTIMAP_MAPS[map_id] = &mut map_instances[map_id] as *mut _;
         }
     }
 
@@ -60,7 +75,7 @@ fn use_map_with_rbpf() {
                 .map(|(s, (fd, map))| (s.as_ref() as &str, Some(*fd), map)),
         )
         .expect("Relocation failed");
-    // Actually there is no call involved.
+    // Actually there is no local function call involved.
     object.relocate_calls().unwrap();
 
     // Executes the program
