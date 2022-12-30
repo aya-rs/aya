@@ -10,13 +10,12 @@ use crate::{
     generated::{
         bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS, TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     },
-    interface::NetworkInterface,
     programs::{define_link_wrapper, load_program, Link, ProgramData, ProgramError},
     sys::{
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
         netlink_qdisc_detach,
     },
-    util::{ifindex_from_ifname, tc_handler_make},
+    util::{ifindex_from_ifname, tc_handler_make, NetworkInterface},
 };
 
 /// Traffic control attach type.
@@ -195,9 +194,9 @@ impl SchedClassifier {
 
 impl SchedClassifierLink {
     /// Provides the linked [NetworkInterface].
-    pub fn interface(self) -> NetworkInterface {
+    pub fn interface(&self) -> NetworkInterface {
         NetworkInterface {
-            index: self.0.if_index
+            index: self.0.if_index,
         }
     }
 }

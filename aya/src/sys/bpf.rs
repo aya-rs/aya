@@ -466,6 +466,7 @@ pub(crate) fn bpf_map_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_map_info, io:
     }
 }
 
+#[allow(dead_code)]
 pub(crate) fn bpf_link_get_info_by_fd(link_fd: RawFd) -> Result<bpf_link_info, io::Error> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     // info gets entirely populated by the kernel

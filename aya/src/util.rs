@@ -10,7 +10,7 @@ use std::{
 
 use crate::generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK};
 
-use libc::{if_nametoindex, sysconf, _SC_PAGESIZE};
+use libc::{if_nameindex, if_nametoindex, sysconf, _SC_PAGESIZE};
 
 use io::BufRead;
 
@@ -101,6 +101,22 @@ pub(crate) fn ifindex_from_ifname(if_name: &str) -> Result<u32, io::Error> {
         return Err(io::Error::last_os_error());
     }
     Ok(if_index)
+}
+
+pub(crate) fn ifname_from_ifindex(if_index: u32) -> Result<String, std::io::Error> {
+    let mut buffer: [libc::c_char; libc::IF_NAMESIZE] = [0; libc::IF_NAMESIZE];
+    let name = unsafe {
+        // Returns null on error
+        let res = libc::if_indextoname(if_index, buffer.as_mut_ptr());
+
+        if res.is_null() {
+            return Err(std::io::Error::last_os_error());
+        }
+
+        CStr::from_ptr(buffer.as_ptr())
+    };
+
+    Ok(name.to_string_lossy().to_string())
 }
 
 pub(crate) fn tc_handler_make(major: u32, minor: u32) -> u32 {
@@ -206,9 +222,68 @@ impl VerifierLog {
     }
 }
 
+#[derive(Debug, Clone)]
+/// A kernel network interface.
+// if_name isn't stored because it can change in the kernel and aya won't know
+pub struct NetworkInterface {
+    pub(crate) index: i32,
+}
+
+impl NetworkInterface {
+    /// Provides a number that can be used to identify this interface on this system.
+    pub fn index(&self) -> i32 {
+        self.index
+    }
+
+    /// Extracts the interface name from the kernel.
+    pub fn name(&self) -> Result<String, std::io::Error> {
+        ifname_from_ifindex(self.index as u32)
+    }
+
+    /// Provides a [Vec] of all operating system network interfaces, including virtual ones.
+    /// # Example
+    ///
+    /// ```
+    /// let interfaces_names: Vec<String> = NetworkInterface::list()
+    ///     .iter()
+    ///     .map(|interface| interface.name().unwrap())
+    ///     .collect();
+    /// ```
+    pub fn list() -> Vec<NetworkInterface> {
+        let mut list = Vec::new();
+
+        // The nameindex array is terminated by an interface with if_index == 0 and if_name == null
+        let head = unsafe { libc::if_nameindex() };
+        let mut curr = head;
+
+        while let Ok(interface) = NetworkInterface::from_ifnameindex(unsafe { *curr }) {
+            list.push(interface);
+            curr = unsafe { curr.add(1) };
+        }
+
+        unsafe {
+            libc::if_freenameindex(head);
+        };
+
+        list
+    }
+
+    // Returns Err is the interface is invalid (zeroed)
+    fn from_ifnameindex(value: if_nameindex) -> Result<Self, ()> {
+        if value.if_index == 0 || value.if_name.is_null() {
+            return Err(());
+        }
+
+        Ok(NetworkInterface {
+            index: value.if_index as i32,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::ffi::CString;
 
     #[test]
     fn test_parse_online_cpus() {
@@ -244,5 +319,87 @@ mod tests {
             "irq_stack_backing_store"
         );
         assert_eq!(syms.get(&0x6000u64).unwrap().as_str(), "cpu_tss_rw");
+    }
+
+    #[test]
+    fn network_interface_list() {
+        let interfaces_dir = "/sys/class/net";
+
+        let expected: Vec<String> = std::fs::read_dir(interfaces_dir)
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name().into_string().unwrap())
+            .collect();
+
+        let interfaces = NetworkInterface::list();
+
+        assert_eq!(expected.len(), interfaces.len());
+
+        for interface in interfaces {
+            let name = interface.name().unwrap().to_string();
+            assert!(expected.contains(&name));
+        }
+    }
+
+    #[test]
+    fn network_interface_from_ifnameindex() {
+        use libc::if_nameindex;
+        use std::ptr::null_mut;
+
+        let name = CString::new("eth0").unwrap();
+
+        let k_interface = if_nameindex {
+            if_index: 1,
+            if_name: name.as_ptr() as *mut i8,
+        };
+
+        let interface = NetworkInterface::from_ifnameindex(k_interface).unwrap();
+
+        assert_eq!(interface.index(), 1);
+
+        let invalid_k_interface = if_nameindex {
+            if_index: 0,
+            if_name: null_mut(),
+        };
+
+        let res = NetworkInterface::from_ifnameindex(invalid_k_interface);
+        assert_eq!(res.unwrap_err(), ());
+
+        let invalid_k_interface = if_nameindex {
+            if_index: 1,
+            if_name: null_mut(),
+        };
+
+        let res = NetworkInterface::from_ifnameindex(invalid_k_interface);
+        assert_eq!(res.unwrap_err(), ());
+    }
+
+    #[test]
+    fn network_interface_name() {
+        let interfaces_dir = "/sys/class/net";
+
+        let first_interface_path = std::fs::read_dir(interfaces_dir)
+            .expect("Failed to read sysfs interface directory")
+            .next();
+
+        if let Some(first_interface_path) = first_interface_path {
+            let (name, index) = {
+                let entry = first_interface_path.unwrap();
+                let file_name = entry.file_name();
+                let mut path = entry.path();
+                path.push("ifindex");
+                let index_contents = String::from_utf8(std::fs::read(path).unwrap()).unwrap();
+                let index = index_contents.trim().parse::<i32>().unwrap();
+                (file_name, index)
+            };
+
+            let interface = NetworkInterface { index };
+
+            assert_eq!(
+                name.to_string_lossy().to_string(),
+                interface.name().unwrap()
+            );
+        } else {
+            panic!("no interfaces found in {interfaces_dir} to test");
+        }
     }
 }

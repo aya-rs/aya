@@ -7,19 +7,15 @@ use thiserror::Error;
 use crate::{
     generated::{
         bpf_attach_type::{self, BPF_XDP},
-        bpf_link_type,
         bpf_prog_type::BPF_PROG_TYPE_XDP,
         XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE,
         XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
-    interface::NetworkInterface,
     programs::{
         define_link_wrapper, load_program, FdLink, Link, LinkError, ProgramData, ProgramError,
     },
-    sys::{
-        bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, kernel_version,
-        netlink_set_xdp_fd,
-    },
+    sys::{bpf_link_create, bpf_link_update, kernel_version, netlink_set_xdp_fd},
+    util::NetworkInterface,
 };
 
 /// The type returned when attaching an [`Xdp`] program fails on kernels `< 5.9`.
@@ -116,18 +112,25 @@ impl Xdp {
                     io_error,
                 },
             )? as RawFd;
-            self.data
-                .links
-                .insert(XdpLink(XdpLinkInner::FdLink(FdLink::new(link_fd))))
+
+            let inner = XdpLinkInner {
+                if_index,
+                link: XdpLinkInnerType::FdLink(FdLink::new(link_fd)),
+            };
+            self.data.links.insert(XdpLink(inner))
         } else {
             unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, flags.bits) }
                 .map_err(|io_error| XdpError::NetlinkError { io_error })?;
 
-            self.data.links.insert(XdpLink(XdpLinkInner::NlLink(NlLink {
+            let inner = XdpLinkInner {
                 if_index,
-                prog_fd,
-                flags,
-            })))
+                link: XdpLinkInnerType::NlLink(NlLink {
+                    if_index,
+                    prog_fd,
+                    flags,
+                }),
+            };
+            self.data.links.insert(XdpLink(inner))
         }
     }
 
@@ -151,8 +154,8 @@ impl Xdp {
     /// Ownership of the link will transfer to this program.
     pub fn attach_to_link(&mut self, link: XdpLink) -> Result<XdpLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        match &link.0 {
-            XdpLinkInner::FdLink(fd_link) => {
+        match &link.0.link {
+            XdpLinkInnerType::FdLink(fd_link) => {
                 let link_fd = fd_link.fd.unwrap();
                 bpf_link_update(link_fd, prog_fd, None, 0).map_err(|(_, io_error)| {
                     ProgramError::SyscallError {
@@ -160,13 +163,16 @@ impl Xdp {
                         io_error,
                     }
                 })?;
+                let if_index = link.0.if_index;
                 // dispose of link and avoid detach on drop
                 mem::forget(link);
-                self.data
-                    .links
-                    .insert(XdpLink(XdpLinkInner::FdLink(FdLink::new(link_fd))))
+                let inner = XdpLinkInner {
+                    if_index,
+                    link: XdpLinkInnerType::FdLink(FdLink::new(link_fd)),
+                };
+                self.data.links.insert(XdpLink(inner))
             }
-            XdpLinkInner::NlLink(nl_link) => {
+            XdpLinkInnerType::NlLink(nl_link) => {
                 let if_index = nl_link.if_index;
                 let old_prog_fd = nl_link.prog_fd;
                 let flags = nl_link.flags;
@@ -177,11 +183,15 @@ impl Xdp {
                 }
                 // dispose of link and avoid detach on drop
                 mem::forget(link);
-                self.data.links.insert(XdpLink(XdpLinkInner::NlLink(NlLink {
+                let inner = XdpLinkInner {
                     if_index,
-                    prog_fd,
-                    flags,
-                })))
+                    link: XdpLinkInnerType::NlLink(NlLink {
+                        if_index,
+                        prog_fd,
+                        flags,
+                    }),
+                };
+                self.data.links.insert(XdpLink(inner))
             }
         }
     }
@@ -197,13 +207,10 @@ pub(crate) struct NlLink {
 impl XdpLink {
     /// Provides a [NetworkInterface] when an XDP link is backed by a network interface.
     /// Returns [None] when the link is backed by a file descriptor.
-    pub fn interface(self) -> Option<NetworkInterface> {
-        let index = match self.0 {
-            XdpLinkInner::NlLink(nl_link) => nl_link.if_index,
-            _ => return None,
-        };
-
-        Some(NetworkInterface { index })
+    pub fn interface(&self) -> NetworkInterface {
+        NetworkInterface {
+            index: self.0.if_index,
+        }
     }
 }
 
@@ -233,25 +240,31 @@ pub(crate) enum XdpLinkIdInner {
 }
 
 #[derive(Debug)]
-pub(crate) enum XdpLinkInner {
+pub(crate) enum XdpLinkInnerType {
     FdLink(FdLink),
     NlLink(NlLink),
+}
+
+#[derive(Debug)]
+pub(crate) struct XdpLinkInner {
+    if_index: i32,
+    link: XdpLinkInnerType,
 }
 
 impl Link for XdpLinkInner {
     type Id = XdpLinkIdInner;
 
     fn id(&self) -> Self::Id {
-        match self {
-            XdpLinkInner::FdLink(link) => XdpLinkIdInner::FdLinkId(link.id()),
-            XdpLinkInner::NlLink(link) => XdpLinkIdInner::NlLinkId(link.id()),
+        match &self.link {
+            XdpLinkInnerType::FdLink(link) => XdpLinkIdInner::FdLinkId(link.id()),
+            XdpLinkInnerType::NlLink(link) => XdpLinkIdInner::NlLinkId(link.id()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        match self {
-            XdpLinkInner::FdLink(link) => link.detach(),
-            XdpLinkInner::NlLink(link) => link.detach(),
+        match self.link {
+            XdpLinkInnerType::FdLink(link) => link.detach(),
+            XdpLinkInnerType::NlLink(link) => link.detach(),
         }
     }
 }
@@ -260,7 +273,7 @@ impl TryFrom<XdpLink> for FdLink {
     type Error = LinkError;
 
     fn try_from(value: XdpLink) -> Result<Self, Self::Error> {
-        if let XdpLinkInner::FdLink(fd) = value.0 {
+        if let XdpLinkInnerType::FdLink(fd) = value.0.link {
             Ok(fd)
         } else {
             Err(LinkError::InvalidLink)
@@ -268,24 +281,28 @@ impl TryFrom<XdpLink> for FdLink {
     }
 }
 
-impl TryFrom<FdLink> for XdpLink {
-    type Error = LinkError;
+// impl TryFrom<FdLink> for XdpLink {
+//     type Error = LinkError;
 
-    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        // unwrap of fd_link.fd will not panic since it's only None when being dropped.
-        let info = bpf_link_get_info_by_fd(fd_link.fd.unwrap()).map_err(|io_error| {
-            LinkError::SyscallError {
-                call: "BPF_OBJ_GET_INFO_BY_FD".to_string(),
-                code: 0,
-                io_error,
-            }
-        })?;
-        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_XDP as u32) {
-            return Ok(XdpLink(XdpLinkInner::FdLink(fd_link)));
-        }
-        Err(LinkError::InvalidLink)
-    }
-}
+//     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
+//         // unwrap of fd_link.fd will not panic since it's only None when being dropped.
+//         let info = bpf_link_get_info_by_fd(fd_link.fd.unwrap()).map_err(|io_error| {
+//             LinkError::SyscallError {
+//                 call: "BPF_OBJ_GET_INFO_BY_FD".to_string(),
+//                 code: 0,
+//                 io_error,
+//             }
+//         })?;
+//         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_XDP as u32) {
+//             let inner = XdpLinkInner {
+//                 if_index: todo!(),
+//                 link: XdpLinkInnerType::FdLink(fd_link),
+//             };
+//             return Ok(XdpLink(inner));
+//         }
+//         Err(LinkError::InvalidLink)
+//     }
+// }
 
 define_link_wrapper!(
     /// The link used by [Xdp] programs.

@@ -3,7 +3,7 @@ use libc::{close, dup};
 use thiserror::Error;
 
 use std::{
-    collections::{hash_map::{Entry, self}, HashMap},
+    collections::{hash_map::Entry, HashMap},
     ffi::CString,
     io,
     os::unix::prelude::RawFd,
@@ -70,7 +70,7 @@ impl<T: Link> LinkMap<T> {
         self.links.remove(&link_id).ok_or(ProgramError::NotAttached)
     }
 
-    pub(crate) fn iter(&self) -> hash_map::Values<'_, T::Id, T> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &T> + ExactSizeIterator {
         self.links.values()
     }
 }
@@ -374,7 +374,7 @@ mod tests {
         let mut links = LinkMap::new();
         let l1 = TestLink::new(1, 2);
         let l2 = TestLink::new(1, 3);
-        
+
         let l1_copy = l1.clone();
         let l2_copy = l2.clone();
 
@@ -382,7 +382,7 @@ mod tests {
         let _id2 = links.insert(l2).unwrap();
 
         assert_eq!(links.iter().len(), 2);
-        
+
         let collected: Vec<&TestLink> = links.iter().collect();
         let expected: Vec<&TestLink> = vec![&l1_copy, &l2_copy];
 

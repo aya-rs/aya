@@ -699,7 +699,7 @@ macro_rules! impl_program_links{
                 /// Iterates through the link map of a BPF program.
                 ///
                 /// This iterator is immutable (read only).
-                pub fn links(&self) -> impl Iterator<Item=&$link> {
+                pub fn links(&self) -> impl Iterator<Item=&$link> + ExactSizeIterator {
                     self.data.links.iter()
                 }
             }
