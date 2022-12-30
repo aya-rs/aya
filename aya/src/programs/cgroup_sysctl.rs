@@ -74,9 +74,9 @@ impl CgroupSysctl {
             )? as RawFd;
             self.data
                 .links
-                .insert(CgroupSysctlLink(CgroupSysctlLinkInner::Fd(FdLink::new(
-                    link_fd,
-                ))))
+                .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::Fd(
+                    FdLink::new(link_fd),
+                )))
         } else {
             bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL).map_err(|(_, io_error)| {
                 ProgramError::SyscallError {
@@ -87,7 +87,7 @@ impl CgroupSysctl {
 
             self.data
                 .links
-                .insert(CgroupSysctlLink(CgroupSysctlLinkInner::ProgAttach(
+                .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::ProgAttach(
                     ProgAttachLink::new(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL),
                 )))
         }

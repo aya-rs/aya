@@ -84,9 +84,11 @@ impl SkSkb {
                 io_error,
             }
         })?;
-        self.data
-            .links
-            .insert(SkSkbLink(ProgAttachLink::new(prog_fd, map_fd, attach_type)))
+        self.data.links.insert(SkSkbLink::new(ProgAttachLink::new(
+            prog_fd,
+            map_fd,
+            attach_type,
+        )))
     }
 
     /// Detaches the program.

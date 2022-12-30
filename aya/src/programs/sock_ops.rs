@@ -68,7 +68,7 @@ impl SockOps {
                 io_error,
             }
         })?;
-        self.data.links.insert(SockOpsLink(ProgAttachLink::new(
+        self.data.links.insert(SockOpsLink::new(ProgAttachLink::new(
             prog_fd,
             cgroup_fd,
             BPF_CGROUP_SOCK_OPS,

@@ -95,7 +95,9 @@ impl Extension {
                 call: "bpf_link_create".to_owned(),
                 io_error,
             })? as RawFd;
-        self.data.links.insert(ExtensionLink(FdLink::new(link_fd)))
+        self.data
+            .links
+            .insert(ExtensionLink::new(FdLink::new(link_fd)))
     }
 
     /// Attaches the extension to another program.
@@ -123,7 +125,9 @@ impl Extension {
                 call: "bpf_link_create".to_owned(),
                 io_error,
             })? as RawFd;
-        self.data.links.insert(ExtensionLink(FdLink::new(link_fd)))
+        self.data
+            .links
+            .insert(ExtensionLink::new(FdLink::new(link_fd)))
     }
 
     /// Detaches the extension.

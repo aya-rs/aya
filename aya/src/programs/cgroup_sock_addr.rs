@@ -82,7 +82,7 @@ impl CgroupSockAddr {
             )? as RawFd;
             self.data
                 .links
-                .insert(CgroupSockAddrLink(CgroupSockAddrLinkInner::Fd(
+                .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
@@ -93,11 +93,13 @@ impl CgroupSockAddr {
                 }
             })?;
 
-            self.data
-                .links
-                .insert(CgroupSockAddrLink(CgroupSockAddrLinkInner::ProgAttach(
-                    ProgAttachLink::new(prog_fd, cgroup_fd, attach_type),
-                )))
+            self.data.links.insert(CgroupSockAddrLink::new(
+                CgroupSockAddrLinkInner::ProgAttach(ProgAttachLink::new(
+                    prog_fd,
+                    cgroup_fd,
+                    attach_type,
+                )),
+            ))
         }
     }
 

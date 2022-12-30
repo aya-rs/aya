@@ -57,6 +57,8 @@ use std::{
     sync::Arc,
 };
 
+const MAP_NAME: &str = "AYA_LOGS";
+
 use aya_log_common::{Argument, DisplayHint, RecordField, LOG_BUF_CAPACITY, LOG_FIELDS};
 use bytes::BytesMut;
 use log::{error, Level, Log, Record};
@@ -90,7 +92,10 @@ impl BpfLogger {
         logger: T,
     ) -> Result<BpfLogger, Error> {
         let logger = Arc::new(logger);
-        let mut logs: AsyncPerfEventArray<_> = bpf.take_map("AYA_LOGS").unwrap().try_into()?;
+        let mut logs: AsyncPerfEventArray<_> = bpf
+            .take_map(MAP_NAME)
+            .ok_or(Error::MapNotFound)?
+            .try_into()?;
 
         for cpu_id in online_cpus().map_err(Error::InvalidOnlineCpu)? {
             let mut buf = logs.open(cpu_id, None)?;
@@ -326,6 +331,9 @@ impl Log for DefaultLogger {
 
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("log event array {} doesn't exist", MAP_NAME)]
+    MapNotFound,
+
     #[error("error opening log event array")]
     MapError(#[from] MapError),
 
