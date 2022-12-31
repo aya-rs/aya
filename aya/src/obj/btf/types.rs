@@ -1054,6 +1054,7 @@ impl BtfType {
             BtfType::Struct(t) => Some(t.size),
             BtfType::Union(t) => Some(t.size),
             BtfType::DataSec(t) => Some(t.size),
+            BtfType::Ptr(_) => Some(mem::size_of::<&()>() as u32),
             _ => None,
         }
     }
