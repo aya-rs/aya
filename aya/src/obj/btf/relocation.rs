@@ -18,7 +18,7 @@ use crate::{
 };
 
 #[derive(Error, Debug)]
-pub enum RelocationError {
+enum RelocationError {
     #[error(transparent)]
     IOError(#[from] io::Error),
 
