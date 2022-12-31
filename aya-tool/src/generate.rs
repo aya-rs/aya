@@ -76,7 +76,7 @@ pub fn generate<T: AsRef<str>>(
 
     let output = Command::new("bindgen")
         .arg(file_path)
-        .args(&flags)
+        .args(flags)
         .output()
         .map_err(Error::Bindgen)?;
 

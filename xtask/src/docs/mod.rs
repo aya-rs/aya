@@ -72,7 +72,7 @@ fn build_docs(working_dir: &PathBuf, abs_header_path: &Path) -> Result<(), anyho
                 abs_header_path.to_str().unwrap()
             ),
         )
-        .args(&args)
+        .args(args)
         .status()
         .expect("failed to build aya docs");
     assert!(status.success());
