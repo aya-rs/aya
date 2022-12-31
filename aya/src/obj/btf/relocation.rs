@@ -71,6 +71,13 @@ enum RelocationError {
         index: usize,
         error: String,
     },
+
+    #[error("applying relocation `{kind:?}` missing target BTF info for type `{type_id}` at instruction #{ins_index}")]
+    MissingTargetDefinition {
+        kind: RelocationKind,
+        type_id: u32,
+        ins_index: usize,
+    },
 }
 
 fn err_type_name(name: &Option<String>) -> String {
@@ -266,7 +273,7 @@ fn relocate_btf_program<'target>(
         } else {
             // there are no candidate matches and therefore no target_spec. This might mean
             // that matching failed, or that the relocation can be applied looking at local
-            // types only
+            // types only (eg with EnumVariantExists, FieldExists etc)
             ComputedRelocation::new(rel, &local_spec, None)?
         };
 
@@ -882,18 +889,23 @@ impl ComputedRelocation {
         spec: Option<&AccessSpec>,
     ) -> Result<ComputedRelocationValue, ErrorWrapper> {
         use RelocationKind::*;
-        let value = match rel.kind {
-            EnumVariantExists => spec.is_some() as u32,
-            EnumVariantValue => {
-                let spec = spec.unwrap();
+        let value = match (rel.kind, spec) {
+            (EnumVariantExists, spec) => spec.is_some() as u32,
+            (EnumVariantValue, Some(spec)) => {
                 let accessor = &spec.accessors[0];
                 match spec.btf.type_by_id(accessor.type_id)? {
                     BtfType::Enum(en) => en.variants[accessor.index].value as u32,
-                    _ => panic!("should not be reached"),
+                    // candidate selection ensures that rel_kind == local_kind == target_kind
+                    _ => unreachable!(),
                 }
             }
-            // this function is only called for enum relocations
-            _ => panic!("should not be reached"),
+            _ => {
+                return Err(RelocationError::MissingTargetDefinition {
+                    kind: rel.kind,
+                    type_id: rel.type_id,
+                    ins_index: rel.ins_offset / mem::size_of::<bpf_insn>(),
+                })?;
+            }
         };
 
         Ok(ComputedRelocationValue {
@@ -919,7 +931,17 @@ impl ComputedRelocation {
             });
         }
 
-        let spec = spec.unwrap();
+        let spec = match spec {
+            Some(spec) => spec,
+            None => {
+                return Err(RelocationError::MissingTargetDefinition {
+                    kind: rel.kind,
+                    type_id: rel.type_id,
+                    ins_index: rel.ins_offset / mem::size_of::<bpf_insn>(),
+                })?;
+            }
+        };
+
         let accessor = spec.accessors.last().unwrap();
         if accessor.name.is_none() {
             // the last accessor is unnamed, meaning that this is an array access
@@ -1035,19 +1057,21 @@ impl ComputedRelocation {
         target_spec: Option<&AccessSpec>,
     ) -> Result<ComputedRelocationValue, ErrorWrapper> {
         use RelocationKind::*;
-        let value = match rel.kind {
-            TypeIdLocal => local_spec.root_type_id,
-            _ => match target_spec {
-                Some(target_spec) => match rel.kind {
-                    TypeIdTarget => target_spec.root_type_id,
-                    TypeExists => 1,
-                    TypeSize => target_spec.btf.type_size(target_spec.root_type_id)? as u32,
-                    _ => panic!("bug! this should not be reached"),
-                },
-                // FIXME in the case of TypeIdTarget and TypeSize this should probably fail the
-                // relocation...
-                None => 0,
-            },
+
+        let value = match (rel.kind, target_spec) {
+            (TypeIdLocal, _) => local_spec.root_type_id,
+            (TypeIdTarget, Some(target_spec)) => target_spec.root_type_id,
+            (TypeExists, target_spec) => target_spec.is_some() as u32,
+            (TypeSize, Some(target_spec)) => {
+                target_spec.btf.type_size(target_spec.root_type_id)? as u32
+            }
+            _ => {
+                return Err(RelocationError::MissingTargetDefinition {
+                    kind: rel.kind,
+                    type_id: rel.type_id,
+                    ins_index: rel.ins_offset / mem::size_of::<bpf_insn>(),
+                })?;
+            }
         };
 
         Ok(ComputedRelocationValue {
