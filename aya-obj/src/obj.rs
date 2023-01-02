@@ -140,7 +140,7 @@ pub struct Function {
 ///
 /// The program name will be used in [Object] as references to each program.
 ///
-/// ## Unsupported Sections
+/// # Unsupported Sections
 ///
 /// Currently, the following section names are not supported yet:
 /// - `flow_dissector`: `BPF_PROG_TYPE_FLOW_DISSECTOR`

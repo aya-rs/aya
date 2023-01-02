@@ -1,18 +1,32 @@
-//! A library for loading and relocating eBPF object files.
+//! An eBPF object file parsing library with BTF and relocation support.
 //!
-//! ## Overview
+//! # Status
+//!
+//! This crate includes code that started as internal API used by
+//! the [aya] crate. It has been split out so that it can be used by
+//! other projects that deal with eBPF object files. Unless you're writing
+//! low level eBPF plumbing tools, you should not need to use this crate
+//! but see the [aya] crate instead.
+//!
+//! The API as it is today has a few rough edges and is generally not as
+//! polished nor stable as the main [aya] crate API. As always,
+//! improvements welcome!
+//!
+//! [aya]: https://github.com/aya-rs/aya
+//!
+//! # Overview
 //!
 //! eBPF programs written with [libbpf] or [aya-bpf] are usually compiled
 //! into an ELF object file, using various sections to store information
 //! about the eBPF programs.
 //!
-//! `aya-obj` is a library that loads, parses and processes such eBPF
-//! object files.
+//! `aya-obj` is a library for parsing such eBPF object files, with BTF and
+//! relocation support.
 //!
 //! [libbpf]: https://github.com/libbpf/libbpf
 //! [aya-bpf]: https://github.com/aya-rs/aya
 //!
-//! ## Example
+//! # Example
 //!
 //! This example loads a simple eBPF program and runs it with [rbpf].
 //!
