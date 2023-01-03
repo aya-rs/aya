@@ -2,6 +2,7 @@ use bindgen::{self, Builder, EnumVariation};
 
 pub fn user_builder() -> Builder {
     bindgen::builder()
+        .use_core()
         .layout_tests(false)
         .generate_comments(false)
         .prepend_enum_name(false)

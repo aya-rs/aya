@@ -1,0 +1,27 @@
+[package]
+name = "aya-obj"
+version = "0.1.0"
+description = "An eBPF object file parsing library with BTF and relocation support."
+keywords = ["ebpf", "bpf", "btf", "elf", "object"]
+license = "MIT OR Apache-2.0"
+authors = ["The Aya Contributors"]
+repository = "https://github.com/aya-rs/aya"
+readme = "README.md"
+documentation = "https://docs.rs/aya-obj"
+edition = "2021"
+
+[dependencies]
+bytes = "1"
+log = "0.4"
+object = { version = "0.30", default-features = false, features = ["read_core", "elf"] }
+hashbrown = { version = "0.13", optional = true }
+thiserror-std = { package = "thiserror", version = "1" }
+thiserror-core = { version = "1", default-features = false, features = [], optional = true }
+
+[dev-dependencies]
+matches = "0.1.8"
+rbpf = "0.1.0"
+
+[features]
+default = []
+no_std = ["hashbrown", "thiserror-core"]

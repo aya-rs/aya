@@ -6,6 +6,7 @@ use std::{ffi::CStr, mem};
 
 pub mod elf;
 pub mod load;
+pub mod rbpf;
 pub mod smoke;
 
 pub use integration_test_macros::integration_test;

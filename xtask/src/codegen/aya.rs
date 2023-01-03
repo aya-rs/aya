@@ -11,7 +11,7 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
 }
 
 fn codegen_internal_btf_bindings(opts: &Options) -> Result<(), anyhow::Error> {
-    let dir = PathBuf::from("aya");
+    let dir = PathBuf::from("aya-obj");
     let generated = dir.join("src/generated");
     let mut bindgen = bindgen::user_builder()
         .clang_arg(format!(
@@ -154,7 +154,7 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         "BPF_RINGBUF_.*",
     ];
 
-    let dir = PathBuf::from("aya");
+    let dir = PathBuf::from("aya-obj");
     let generated = dir.join("src/generated");
 
     let builder = || {

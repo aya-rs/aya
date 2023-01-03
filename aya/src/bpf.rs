@@ -1,13 +1,16 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    error::Error,
     ffi::CString,
     fs, io,
     os::{raw::c_int, unix::io::RawFd},
     path::{Path, PathBuf},
 };
 
+use aya_obj::{
+    btf::{BtfFeatures, BtfRelocationError},
+    relocation::BpfRelocationError,
+};
 use log::debug;
 use thiserror::Error;
 
@@ -19,7 +22,8 @@ use crate::{
     maps::{Map, MapData, MapError},
     obj::{
         btf::{Btf, BtfError},
-        MapKind, Object, ParseError, ProgramSection,
+        maps::MapKind,
+        Object, ParseError, ProgramSection,
     },
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
@@ -58,75 +62,13 @@ unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64, u128, i128);
 // It only makes sense that an array of POD types is itself POD
 unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 
-#[allow(non_camel_case_types)]
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct bpf_map_def {
-    // minimum features required by old BPF programs
-    pub(crate) map_type: u32,
-    pub(crate) key_size: u32,
-    pub(crate) value_size: u32,
-    pub(crate) max_entries: u32,
-    pub(crate) map_flags: u32,
-    // optional features
-    pub(crate) id: u32,
-    pub(crate) pinning: PinningType,
-}
-
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct BtfMapDef {
-    pub(crate) map_type: u32,
-    pub(crate) key_size: u32,
-    pub(crate) value_size: u32,
-    pub(crate) max_entries: u32,
-    pub(crate) map_flags: u32,
-    pub(crate) pinning: PinningType,
-    pub(crate) btf_key_type_id: u32,
-    pub(crate) btf_value_type_id: u32,
-}
-
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub(crate) enum PinningType {
-    None = 0,
-    ByName = 1,
-}
-
-#[derive(Debug, Error)]
-pub(crate) enum PinningError {
-    #[error("unsupported pinning type")]
-    Unsupported,
-}
-
-impl TryFrom<u32> for PinningType {
-    type Error = PinningError;
-
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(PinningType::None),
-            1 => Ok(PinningType::ByName),
-            _ => Err(PinningError::Unsupported),
-        }
-    }
-}
-
-impl Default for PinningType {
-    fn default() -> Self {
-        PinningType::None
-    }
-}
+pub use aya_obj::maps::{bpf_map_def, PinningType};
 
 // Features implements BPF and BTF feature detection
 #[derive(Default, Debug)]
 pub(crate) struct Features {
     pub bpf_name: bool,
-    pub btf: bool,
-    pub btf_func: bool,
-    pub btf_func_global: bool,
-    pub btf_datasec: bool,
-    pub btf_float: bool,
-    pub btf_decl_tag: bool,
-    pub btf_type_tag: bool,
+    pub btf: Option<BtfFeatures>,
 }
 
 impl Features {
@@ -134,33 +76,37 @@ impl Features {
         self.bpf_name = is_prog_name_supported();
         debug!("[FEAT PROBE] BPF program name support: {}", self.bpf_name);
 
-        self.btf = is_btf_supported();
-        debug!("[FEAT PROBE] BTF support: {}", self.btf);
+        self.btf = if is_btf_supported() {
+            Some(BtfFeatures::default())
+        } else {
+            None
+        };
+        debug!("[FEAT PROBE] BTF support: {}", self.btf.is_some());
 
-        if self.btf {
-            self.btf_func = is_btf_func_supported();
-            debug!("[FEAT PROBE] BTF func support: {}", self.btf_func);
+        if let Some(ref mut btf) = self.btf {
+            btf.btf_func = is_btf_func_supported();
+            debug!("[FEAT PROBE] BTF func support: {}", btf.btf_func);
 
-            self.btf_func_global = is_btf_func_global_supported();
+            btf.btf_func_global = is_btf_func_global_supported();
             debug!(
                 "[FEAT PROBE] BTF global func support: {}",
-                self.btf_func_global
+                btf.btf_func_global
             );
 
-            self.btf_datasec = is_btf_datasec_supported();
+            btf.btf_datasec = is_btf_datasec_supported();
             debug!(
                 "[FEAT PROBE] BTF var and datasec support: {}",
-                self.btf_datasec
+                btf.btf_datasec
             );
 
-            self.btf_float = is_btf_float_supported();
-            debug!("[FEAT PROBE] BTF float support: {}", self.btf_float);
+            btf.btf_float = is_btf_float_supported();
+            debug!("[FEAT PROBE] BTF float support: {}", btf.btf_float);
 
-            self.btf_decl_tag = is_btf_decl_tag_supported();
-            debug!("[FEAT PROBE] BTF decl_tag support: {}", self.btf_decl_tag);
+            btf.btf_decl_tag = is_btf_decl_tag_supported();
+            debug!("[FEAT PROBE] BTF decl_tag support: {}", btf.btf_decl_tag);
 
-            self.btf_type_tag = is_btf_type_tag_supported();
-            debug!("[FEAT PROBE] BTF type_tag support: {}", self.btf_type_tag);
+            btf.btf_type_tag = is_btf_type_tag_supported();
+            debug!("[FEAT PROBE] BTF type_tag support: {}", btf.btf_type_tag);
         }
     }
 }
@@ -413,15 +359,10 @@ impl<'a> BpfLoader<'a> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(self.globals.clone())?;
 
-        let btf_fd = if self.features.btf {
-            if let Some(ref mut obj_btf) = obj.btf {
-                // fixup btf
-                let section_data = obj.section_sizes.clone();
-                let symbol_offsets = obj.symbol_offset_by_name.clone();
-                obj_btf.fixup_and_sanitize(&section_data, &symbol_offsets, &self.features)?;
+        let btf_fd = if let Some(ref btf) = self.features.btf {
+            if let Some(btf) = obj.fixup_and_sanitize_btf(btf)? {
                 // load btf to the kernel
-                let raw_btf = obj_btf.to_bytes();
-                Some(load_btf(raw_btf)?)
+                Some(load_btf(btf.to_bytes())?)
             } else {
                 None
             }
@@ -497,7 +438,10 @@ impl<'a> BpfLoader<'a> {
             maps.insert(name, map);
         }
 
-        obj.relocate_maps(&maps)?;
+        obj.relocate_maps(
+            maps.iter()
+                .map(|(s, data)| (s.as_str(), data.fd, &data.obj)),
+        )?;
         obj.relocate_calls()?;
 
         let programs = obj
@@ -655,7 +599,10 @@ impl<'a> BpfLoader<'a> {
 fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
     let name = data.0;
     let map = data.1;
-    let map_type = bpf_map_type::try_from(map.obj.map_type())?;
+    let map_type =
+        bpf_map_type::try_from(map.obj.map_type()).map_err(|e| MapError::InvalidMapType {
+            map_type: e.map_type,
+        })?;
     let map = match map_type {
         BPF_MAP_TYPE_ARRAY => Ok(Map::Array(map)),
         BPF_MAP_TYPE_PERCPU_ARRAY => Ok(Map::PerCpuArray(map)),
@@ -918,14 +865,12 @@ pub enum BpfError {
     BtfError(#[from] BtfError),
 
     /// Error performing relocations
-    #[error("error relocating `{function}`")]
-    RelocationError {
-        /// The function name
-        function: String,
-        #[source]
-        /// The original error
-        error: Box<dyn Error + Send + Sync>,
-    },
+    #[error("error relocating function")]
+    RelocationError(#[from] BpfRelocationError),
+
+    /// Error performing relocations
+    #[error("error relocating section")]
+    BtfRelocationError(#[from] BtfRelocationError),
 
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]

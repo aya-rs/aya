@@ -1,29 +1,29 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-    convert::TryInto,
-    ffi::{CStr, CString},
-    fs, io, mem,
-    path::{Path, PathBuf},
-    ptr,
-};
+use core::{ffi::CStr, mem, ptr};
 
+use alloc::{
+    borrow::Cow,
+    ffi::CString,
+    format,
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 use bytes::BufMut;
 
 use log::debug;
 use object::Endianness;
-use thiserror::Error;
 
 use crate::{
-    generated::{btf_ext_header, btf_header},
-    obj::btf::{
+    btf::{
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
         Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
         IntEncoding, LineInfo, Struct, Typedef, VarLinkage,
     },
-    util::bytes_of,
-    Features,
+    generated::{btf_ext_header, btf_header},
+    thiserror::{self, Error},
+    util::{bytes_of, HashMap},
+    Object,
 };
 
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
@@ -32,14 +32,15 @@ pub(crate) const MAX_SPEC_LEN: usize = 64;
 /// The error type returned when `BTF` operations fail.
 #[derive(Error, Debug)]
 pub enum BtfError {
+    #[cfg(not(feature = "no_std"))]
     /// Error parsing file
     #[error("error parsing {path}")]
     FileError {
         /// file path
-        path: PathBuf,
+        path: std::path::PathBuf,
         /// source of the error
         #[source]
-        error: io::Error,
+        error: std::io::Error,
     },
 
     /// Error parsing BTF header
@@ -125,12 +126,13 @@ pub enum BtfError {
         type_id: u32,
     },
 
+    #[cfg(not(feature = "no_std"))]
     /// Loading the btf failed
     #[error("the BPF_BTF_LOAD syscall failed. Verifier output: {verifier_log}")]
     LoadError {
-        /// The [`io::Error`] returned by the `BPF_BTF_LOAD` syscall.
+        /// The [`std::io::Error`] returned by the `BPF_BTF_LOAD` syscall.
         #[source]
-        io_error: io::Error,
+        io_error: std::io::Error,
         /// The error log produced by the kernel verifier.
         verifier_log: String,
     },
@@ -158,14 +160,26 @@ pub enum BtfError {
     InvalidSymbolName,
 }
 
+/// Available BTF features
+#[derive(Default, Debug)]
+#[allow(missing_docs)]
+pub struct BtfFeatures {
+    pub btf_func: bool,
+    pub btf_func_global: bool,
+    pub btf_datasec: bool,
+    pub btf_float: bool,
+    pub btf_decl_tag: bool,
+    pub btf_type_tag: bool,
+}
+
 /// Bpf Type Format metadata.
 ///
 /// BTF is a kind of debug metadata that allows eBPF programs compiled against one kernel version
 /// to be loaded into different kernel versions.
 ///
-/// Aya automatically loads BTF metadata if you use [`Bpf::load_file`](crate::Bpf::load_file). You
+/// Aya automatically loads BTF metadata if you use `Bpf::load_file`. You
 /// only need to explicitly use this type if you want to load BTF from a non-standard
-/// location or if you are using [`Bpf::load`](crate::Bpf::load).
+/// location or if you are using `Bpf::load`.
 #[derive(Clone, Debug)]
 pub struct Btf {
     header: btf_header,
@@ -175,7 +189,8 @@ pub struct Btf {
 }
 
 impl Btf {
-    pub(crate) fn new() -> Btf {
+    /// Creates a new empty instance with its header initialized
+    pub fn new() -> Btf {
         Btf {
             header: btf_header {
                 magic: 0xeb9f,
@@ -197,7 +212,8 @@ impl Btf {
         self.types.types.iter()
     }
 
-    pub(crate) fn add_string(&mut self, name: String) -> u32 {
+    /// Adds a string to BTF metadata, returning an offset
+    pub fn add_string(&mut self, name: String) -> u32 {
         let str = CString::new(name).unwrap();
         let name_offset = self.strings.len();
         self.strings.extend(str.as_c_str().to_bytes_with_nul());
@@ -205,7 +221,8 @@ impl Btf {
         name_offset as u32
     }
 
-    pub(crate) fn add_type(&mut self, btf_type: BtfType) -> u32 {
+    /// Adds a type to BTF metadata, returning a type id
+    pub fn add_type(&mut self, btf_type: BtfType) -> u32 {
         let size = btf_type.type_info_size() as u32;
         let type_id = self.types.len();
         self.types.push(btf_type);
@@ -215,12 +232,18 @@ impl Btf {
     }
 
     /// Loads BTF metadata from `/sys/kernel/btf/vmlinux`.
+    #[cfg(not(feature = "no_std"))]
     pub fn from_sys_fs() -> Result<Btf, BtfError> {
         Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
     }
 
     /// Loads BTF metadata from the given `path`.
-    pub fn parse_file<P: AsRef<Path>>(path: P, endianness: Endianness) -> Result<Btf, BtfError> {
+    #[cfg(not(feature = "no_std"))]
+    pub fn parse_file<P: AsRef<std::path::Path>>(
+        path: P,
+        endianness: Endianness,
+    ) -> Result<Btf, BtfError> {
+        use std::{borrow::ToOwned, fs};
         let path = path.as_ref();
         Btf::parse(
             &fs::read(path).map_err(|error| BtfError::FileError {
@@ -231,7 +254,8 @@ impl Btf {
         )
     }
 
-    pub(crate) fn parse(data: &[u8], endianness: Endianness) -> Result<Btf, BtfError> {
+    /// Parses BTF from binary data of the given endianness
+    pub fn parse(data: &[u8], endianness: Endianness) -> Result<Btf, BtfError> {
         if data.len() < mem::size_of::<btf_header>() {
             return Err(BtfError::InvalidHeader);
         }
@@ -324,7 +348,8 @@ impl Btf {
         self.string_at(ty.name_offset()).ok().map(String::from)
     }
 
-    pub(crate) fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
+    /// Returns a type id matching the type name and [BtfKind]
+    pub fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
         for (type_id, ty) in self.types().enumerate() {
             if ty.kind() != kind {
                 continue;
@@ -370,7 +395,8 @@ impl Btf {
         })
     }
 
-    pub(crate) fn to_bytes(&self) -> Vec<u8> {
+    /// Encodes the metadata as BTF format
+    pub fn to_bytes(&self) -> Vec<u8> {
         // Safety: btf_header is POD
         let mut buf = unsafe { bytes_of::<btf_header>(&self.header).to_vec() };
         // Skip the first type since it's always BtfType::Unknown for type_by_id to work
@@ -383,7 +409,7 @@ impl Btf {
         &mut self,
         section_sizes: &HashMap<String, u64>,
         symbol_offsets: &HashMap<String, u64>,
-        features: &Features,
+        features: &BtfFeatures,
     ) -> Result<(), BtfError> {
         let mut types = mem::take(&mut self.types);
         for i in 0..types.types.len() {
@@ -560,11 +586,34 @@ impl Default for Btf {
     }
 }
 
+impl Object {
+    /// Fixes up and sanitizes BTF data.
+    ///
+    /// Mostly, it removes unsupported types and works around LLVM behaviours.
+    pub fn fixup_and_sanitize_btf(
+        &mut self,
+        features: &BtfFeatures,
+    ) -> Result<Option<&Btf>, BtfError> {
+        if let Some(ref mut obj_btf) = self.btf {
+            // fixup btf
+            obj_btf.fixup_and_sanitize(
+                &self.section_sizes,
+                &self.symbol_offset_by_name,
+                features,
+            )?;
+            Ok(Some(obj_btf))
+        } else {
+            Ok(None)
+        }
+    }
+}
+
 unsafe fn read_btf_header(data: &[u8]) -> btf_header {
     // safety: btf_header is POD so read_unaligned is safe
     ptr::read_unaligned(data.as_ptr() as *const btf_header)
 }
 
+/// Data in the `.BTF.ext` section
 #[derive(Debug, Clone)]
 pub struct BtfExt {
     data: Vec<u8>,
@@ -863,7 +912,7 @@ pub(crate) struct SecInfo<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::obj::btf::{
+    use crate::btf::{
         BtfParam, DataSec, DataSecEntry, DeclTag, Float, Func, FuncProto, Ptr, TypeTag, Var,
     };
 
@@ -996,7 +1045,7 @@ mod tests {
         let name_offset = btf.add_string("&mut int".to_string());
         let ptr_type_id = btf.add_type(BtfType::Ptr(Ptr::new(name_offset, int_type_id)));
 
-        let features = Features {
+        let features = BtfFeatures {
             ..Default::default()
         };
 
@@ -1034,7 +1083,7 @@ mod tests {
             VarLinkage::Static,
         )));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_datasec: false,
             ..Default::default()
         };
@@ -1078,7 +1127,7 @@ mod tests {
         let datasec_type_id =
             btf.add_type(BtfType::DataSec(DataSec::new(name_offset, variables, 0)));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_datasec: false,
             ..Default::default()
         };
@@ -1125,7 +1174,7 @@ mod tests {
         let datasec_type_id =
             btf.add_type(BtfType::DataSec(DataSec::new(name_offset, variables, 0)));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_datasec: true,
             ..Default::default()
         };
@@ -1186,7 +1235,7 @@ mod tests {
             FuncLinkage::Static,
         )));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_func: false,
             ..Default::default()
         };
@@ -1235,7 +1284,7 @@ mod tests {
         let func_proto = BtfType::FuncProto(FuncProto::new(params, int_type_id));
         let func_proto_type_id = btf.add_type(func_proto);
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_func: true,
             ..Default::default()
         };
@@ -1284,7 +1333,7 @@ mod tests {
             FuncLinkage::Global,
         )));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_func: true,
             btf_func_global: false,
             ..Default::default()
@@ -1309,7 +1358,7 @@ mod tests {
         let name_offset = btf.add_string("float".to_string());
         let float_type_id = btf.add_type(BtfType::Float(Float::new(name_offset, 16)));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_float: false,
             ..Default::default()
         };
@@ -1349,7 +1398,7 @@ mod tests {
         let decl_tag_type_id =
             btf.add_type(BtfType::DeclTag(DeclTag::new(name_offset, var_type_id, -1)));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_decl_tag: false,
             ..Default::default()
         };
@@ -1377,7 +1426,7 @@ mod tests {
         let type_tag_type = btf.add_type(BtfType::TypeTag(TypeTag::new(name_offset, int_type_id)));
         btf.add_type(BtfType::Ptr(Ptr::new(0, type_tag_type)));
 
-        let features = Features {
+        let features = BtfFeatures {
             btf_type_tag: false,
             ..Default::default()
         };
@@ -1395,6 +1444,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "no_std"))]
     #[cfg_attr(miri, ignore)]
     fn test_read_btf_from_sys_fs() {
         let btf = Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default()).unwrap();
