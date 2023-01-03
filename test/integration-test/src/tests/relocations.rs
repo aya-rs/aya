@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
-use std::{process::Command, thread::sleep, time::Duration};
+use std::{path::PathBuf, process::Command, thread::sleep, time::Duration};
+use tempfile::TempDir;
 
 use aya::{maps::Array, programs::TracePoint, BpfLoader, Btf, Endianness};
 
@@ -51,7 +52,7 @@ fn relocate_enum() {
     .build()
     .unwrap();
     assert_eq!(test.run().unwrap(), 4);
-    assert_eq!(test.run_no_btf().unwrap(), 0);
+    assert_eq!(test.run_no_btf().unwrap(), 1);
 }
 
 #[integration_test]
@@ -61,16 +62,20 @@ fn relocate_pointer() {
             struct foo {};
             struct bar { struct foo *f; };
         "#,
-        target_btf: r#""#,
+        target_btf: r#"
+            struct foo {};
+            struct bar { struct foo *f; };
+        "#,
         relocation_code: r#"
-            __u8 memory[] = {0, 0, 0, 0, 0, 0, 0, 42};
+            __u8 memory[] = {42, 0, 0, 0, 0, 0, 0, 0};
             struct foo *f = BPF_CORE_READ((struct bar *)&memory, f);
-            __u32 value = (f == (struct foo *) 42);
+            __u32 value = ((__u64) f);
         "#,
     }
     .build()
     .unwrap();
-    assert_eq!(test.run().unwrap(), 1);
+    assert_eq!(test.run().unwrap(), 42);
+    assert_eq!(test.run_no_btf().unwrap(), 42);
 }
 
 /// Utility code for running relocation tests:
@@ -105,57 +110,37 @@ impl RelocationTest {
     fn build_ebpf(&self) -> Result<Vec<u8>> {
         let local_definition = self.local_definition;
         let relocation_code = self.relocation_code;
-        let tmp_dir = tempfile::tempdir().context("Error making temp dir")?;
-        let ebpf_file = tmp_dir.path().join("ebpf_program.c");
-        std::fs::write(
-            &ebpf_file,
-            format!(
-                r#"
-                    #include <linux/bpf.h>
+        let (_tmp_dir, compiled_file) = compile(&format!(
+            r#"
+                #include <linux/bpf.h>
 
-                    #include <bpf/bpf_core_read.h>
-                    #include <bpf/bpf_helpers.h>
-                    #include <bpf/bpf_tracing.h>
+                #include <bpf/bpf_core_read.h>
+                #include <bpf/bpf_helpers.h>
+                #include <bpf/bpf_tracing.h>
 
-                    {local_definition}
+                {local_definition}
 
-                    struct {{
-                      __uint(type, BPF_MAP_TYPE_ARRAY);
-                      __type(key, __u32);
-                      __type(value, __u32);
-                      __uint(max_entries, 1);
-                    }} output_map SEC(".maps");
+                struct {{
+                  __uint(type, BPF_MAP_TYPE_ARRAY);
+                  __type(key, __u32);
+                  __type(value, __u32);
+                  __uint(max_entries, 1);
+                }} output_map SEC(".maps");
 
-                    SEC("tracepoint/bpf_prog") int bpf_prog(void *ctx) {{
-                      __u32 key = 0;
-                      {relocation_code}
-                      bpf_map_update_elem(&output_map, &key, &value, BPF_ANY);
-                      return 0;
-                    }}
+                SEC("tracepoint/bpf_prog") int bpf_prog(void *ctx) {{
+                  __u32 key = 0;
+                  {relocation_code}
+                  bpf_map_update_elem(&output_map, &key, &value, BPF_ANY);
+                  return 0;
+                }}
 
-                    char _license[] SEC("license") = "GPL";
-                "#
-            ),
-        )
-        .context("Writing bpf program failed")?;
-        Command::new("clang")
-            .current_dir(tmp_dir.path())
-            .args(["-c", "-g", "-O2", "-target", "bpf"])
-            // NOTE: these tests depend on libbpf, LIBBPF_INCLUDE must point its headers.
-            // This is set automatically by the integration-test xtask.
-            .args([
-                "-I",
-                &std::env::var("LIBBPF_INCLUDE").context("LIBBPF_INCLUDE not set")?,
-            ])
-            .arg(&ebpf_file)
-            .status()
-            .context("Failed to run clang")?
-            .success()
-            .then_some(())
-            .context("Failed to compile eBPF program")?;
-        let ebpf = std::fs::read(ebpf_file.with_extension("o"))
-            .context("Error reading compiled eBPF program")?;
-        Ok(ebpf)
+                char _license[] SEC("license") = "GPL";
+            "#
+        ))
+        .context("Failed to compile eBPF program")?;
+        let bytecode =
+            std::fs::read(compiled_file).context("Error reading compiled eBPF program")?;
+        Ok(bytecode)
     }
 
     /// - Generate the target BTF source with a mock main()
@@ -163,36 +148,33 @@ impl RelocationTest {
     /// - Extract the BTF with pahole
     fn build_btf(&self) -> Result<Btf> {
         let target_btf = self.target_btf;
-        let tmp_dir = tempfile::tempdir().context("Error making temp dir")?;
+        let relocation_code = self.relocation_code;
         // BTF files can be generated and inspected with these commands:
         // $ clang -c -g -O2 -target bpf target.c
         // $ pahole --btf_encode_detached=target.btf -V target.o
         // $ bpftool btf dump file ./target.btf  format c
-        let btf_file = tmp_dir.path().join("target_btf.c");
-        std::fs::write(
-            &btf_file,
-            format!(
-                r#"
-                    #include <linux/types.h>
-                    {target_btf}
-                    int main() {{ return 0; }}
-                "#
-            ),
-        )
-        .context("Writing bpf program failed")?;
-        Command::new("clang")
-            .current_dir(tmp_dir.path())
-            .args(["-c", "-g", "-O2", "-target", "bpf"])
-            .arg(&btf_file)
-            .status()
-            .context("Failed to run clang")?
-            .success()
-            .then_some(())
-            .context("Failed to compile BTF")?;
+        let (tmp_dir, compiled_file) = compile(&format!(
+            r#"
+                #include <linux/bpf.h>
+
+                #include <bpf/bpf_core_read.h>
+                #include <bpf/bpf_helpers.h>
+                #include <bpf/bpf_tracing.h>
+
+                {target_btf}
+                int main() {{
+                    // This is needed to make sure to emit BTF for the defined types,
+                    // it could be dead code eliminated if we don't.
+                    {relocation_code};
+                    return value;
+                }}
+            "#
+        ))
+        .context("Failed to compile BTF")?;
         Command::new("pahole")
             .current_dir(tmp_dir.path())
             .arg("--btf_encode_detached=target.btf")
-            .arg(btf_file.with_extension("o"))
+            .arg(compiled_file)
             .status()
             .context("Failed to run pahole")?
             .success()
@@ -204,6 +186,30 @@ impl RelocationTest {
     }
 }
 
+/// Compile an eBPF program and return the path of the compiled object.
+/// Also returns a TempDir handler, dropping it will clear the created dicretory.
+fn compile(source_code: &str) -> Result<(TempDir, PathBuf)> {
+    let tmp_dir = tempfile::tempdir().context("Error making temp dir")?;
+    let source = tmp_dir.path().join("source.c");
+    std::fs::write(&source, source_code).context("Writing bpf program failed")?;
+    Command::new("clang")
+        .current_dir(&tmp_dir)
+        .args(["-c", "-g", "-O2", "-target", "bpf"])
+        // NOTE: these tests depend on libbpf, LIBBPF_INCLUDE must point its headers.
+        // This is set automatically by the integration-test xtask.
+        .args([
+            "-I",
+            &std::env::var("LIBBPF_INCLUDE").context("LIBBPF_INCLUDE not set")?,
+        ])
+        .arg(&source)
+        .status()
+        .context("Failed to run clang")?
+        .success()
+        .then_some(())
+        .context("Failed to compile eBPF source")?;
+    Ok((tmp_dir, source.with_extension("o")))
+}
+
 struct RelocationTestRunner {
     ebpf: Vec<u8>,
     btf: Btf,
@@ -212,18 +218,21 @@ struct RelocationTestRunner {
 impl RelocationTestRunner {
     /// Run test and return the output value
     fn run(&self) -> Result<u32> {
-        self.run_internal(true)
+        self.run_internal(true).context("Error running with BTF")
     }
 
     /// Run without loading btf
     fn run_no_btf(&self) -> Result<u32> {
         self.run_internal(false)
+            .context("Error running without BTF")
     }
 
     fn run_internal(&self, with_relocations: bool) -> Result<u32> {
         let mut loader = BpfLoader::new();
         if with_relocations {
             loader.btf(Some(&self.btf));
+        } else {
+            loader.btf(None);
         }
         let mut bpf = loader.load(&self.ebpf).context("Loading eBPF failed")?;
         let program: &mut TracePoint = bpf
