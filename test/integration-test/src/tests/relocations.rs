@@ -145,7 +145,7 @@ impl RelocationTest {
 
     /// - Generate the target BTF source with a mock main()
     /// - Compile it with clang
-    /// - Extract the BTF with pahole
+    /// - Extract the BTF with llvm-objcopy
     fn build_btf(&self) -> Result<Btf> {
         let target_btf = self.target_btf;
         let relocation_code = self.relocation_code;
@@ -171,12 +171,12 @@ impl RelocationTest {
             "#
         ))
         .context("Failed to compile BTF")?;
-        Command::new("pahole")
+        Command::new("llvm-objcopy")
             .current_dir(tmp_dir.path())
-            .arg("--btf_encode_detached=target.btf")
+            .args(["--dump-section", ".BTF=target.btf"])
             .arg(compiled_file)
             .status()
-            .context("Failed to run pahole")?
+            .context("Failed to run llvm-objcopy")?
             .success()
             .then_some(())
             .context("Failed to extract BTF")?;
