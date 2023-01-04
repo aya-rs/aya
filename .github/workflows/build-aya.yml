@@ -66,8 +66,12 @@ jobs:
 
       - name: Install Pre-requisites
         run: |
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main" | sudo tee -a /etc/apt/sources.list
           sudo apt-get update
-          sudo apt-get -qy install linux-tools-common qemu-system-x86 cloud-image-utils openssh-client libelf-dev gcc-multilib
+          sudo apt-get -qy install linux-tools-common qemu-system-x86 cloud-image-utils openssh-client libelf-dev gcc-multilib llvm-15 clang-15
+          sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-15 200
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 200
           cargo install bpf-linker
 
       - name: Lint integration tests
