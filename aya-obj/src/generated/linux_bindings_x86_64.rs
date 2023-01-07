@@ -275,6 +275,10 @@ pub enum bpf_cmd {
     BPF_LINK_DETACH = 34,
     BPF_PROG_BIND_MAP = 35,
 }
+impl bpf_map_type {
+    pub const BPF_MAP_TYPE_CGROUP_STORAGE: bpf_map_type =
+        bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED;
+}
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum bpf_map_type {
@@ -297,7 +301,7 @@ pub enum bpf_map_type {
     BPF_MAP_TYPE_CPUMAP = 16,
     BPF_MAP_TYPE_XSKMAP = 17,
     BPF_MAP_TYPE_SOCKHASH = 18,
-    BPF_MAP_TYPE_CGROUP_STORAGE = 19,
+    BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED = 19,
     BPF_MAP_TYPE_REUSEPORT_SOCKARRAY = 20,
     BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE = 21,
     BPF_MAP_TYPE_QUEUE = 22,
@@ -309,6 +313,8 @@ pub enum bpf_map_type {
     BPF_MAP_TYPE_INODE_STORAGE = 28,
     BPF_MAP_TYPE_TASK_STORAGE = 29,
     BPF_MAP_TYPE_BLOOM_FILTER = 30,
+    BPF_MAP_TYPE_USER_RINGBUF = 31,
+    BPF_MAP_TYPE_CGRP_STORAGE = 32,
 }
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -731,34 +737,37 @@ pub type _bindgen_ty_9 = ::core::ffi::c_uint;
 pub const BPF_F_ZERO_CSUM_TX: _bindgen_ty_10 = 2;
 pub const BPF_F_DONT_FRAGMENT: _bindgen_ty_10 = 4;
 pub const BPF_F_SEQ_NUMBER: _bindgen_ty_10 = 8;
+pub const BPF_F_NO_TUNNEL_KEY: _bindgen_ty_10 = 16;
 pub type _bindgen_ty_10 = ::core::ffi::c_uint;
-pub const BPF_F_INDEX_MASK: _bindgen_ty_11 = 4294967295;
-pub const BPF_F_CURRENT_CPU: _bindgen_ty_11 = 4294967295;
-pub const BPF_F_CTXLEN_MASK: _bindgen_ty_11 = 4503595332403200;
-pub type _bindgen_ty_11 = ::core::ffi::c_ulong;
-pub const BPF_F_CURRENT_NETNS: _bindgen_ty_12 = -1;
-pub type _bindgen_ty_12 = ::core::ffi::c_int;
-pub const BPF_F_ADJ_ROOM_FIXED_GSO: _bindgen_ty_14 = 1;
-pub const BPF_F_ADJ_ROOM_ENCAP_L3_IPV4: _bindgen_ty_14 = 2;
-pub const BPF_F_ADJ_ROOM_ENCAP_L3_IPV6: _bindgen_ty_14 = 4;
-pub const BPF_F_ADJ_ROOM_ENCAP_L4_GRE: _bindgen_ty_14 = 8;
-pub const BPF_F_ADJ_ROOM_ENCAP_L4_UDP: _bindgen_ty_14 = 16;
-pub const BPF_F_ADJ_ROOM_NO_CSUM_RESET: _bindgen_ty_14 = 32;
-pub const BPF_F_ADJ_ROOM_ENCAP_L2_ETH: _bindgen_ty_14 = 64;
-pub type _bindgen_ty_14 = ::core::ffi::c_uint;
-pub const BPF_F_SYSCTL_BASE_NAME: _bindgen_ty_16 = 1;
-pub type _bindgen_ty_16 = ::core::ffi::c_uint;
-pub const BPF_F_GET_BRANCH_RECORDS_SIZE: _bindgen_ty_18 = 1;
-pub type _bindgen_ty_18 = ::core::ffi::c_uint;
-pub const BPF_RINGBUF_BUSY_BIT: _bindgen_ty_21 = 2147483648;
-pub const BPF_RINGBUF_DISCARD_BIT: _bindgen_ty_21 = 1073741824;
-pub const BPF_RINGBUF_HDR_SZ: _bindgen_ty_21 = 8;
-pub type _bindgen_ty_21 = ::core::ffi::c_uint;
-pub const BPF_F_BPRM_SECUREEXEC: _bindgen_ty_23 = 1;
-pub type _bindgen_ty_23 = ::core::ffi::c_uint;
-pub const BPF_F_BROADCAST: _bindgen_ty_24 = 8;
-pub const BPF_F_EXCLUDE_INGRESS: _bindgen_ty_24 = 16;
+pub const BPF_F_TUNINFO_FLAGS: _bindgen_ty_11 = 16;
+pub type _bindgen_ty_11 = ::core::ffi::c_uint;
+pub const BPF_F_INDEX_MASK: _bindgen_ty_12 = 4294967295;
+pub const BPF_F_CURRENT_CPU: _bindgen_ty_12 = 4294967295;
+pub const BPF_F_CTXLEN_MASK: _bindgen_ty_12 = 4503595332403200;
+pub type _bindgen_ty_12 = ::core::ffi::c_ulong;
+pub const BPF_F_CURRENT_NETNS: _bindgen_ty_13 = -1;
+pub type _bindgen_ty_13 = ::core::ffi::c_int;
+pub const BPF_F_ADJ_ROOM_FIXED_GSO: _bindgen_ty_15 = 1;
+pub const BPF_F_ADJ_ROOM_ENCAP_L3_IPV4: _bindgen_ty_15 = 2;
+pub const BPF_F_ADJ_ROOM_ENCAP_L3_IPV6: _bindgen_ty_15 = 4;
+pub const BPF_F_ADJ_ROOM_ENCAP_L4_GRE: _bindgen_ty_15 = 8;
+pub const BPF_F_ADJ_ROOM_ENCAP_L4_UDP: _bindgen_ty_15 = 16;
+pub const BPF_F_ADJ_ROOM_NO_CSUM_RESET: _bindgen_ty_15 = 32;
+pub const BPF_F_ADJ_ROOM_ENCAP_L2_ETH: _bindgen_ty_15 = 64;
+pub type _bindgen_ty_15 = ::core::ffi::c_uint;
+pub const BPF_F_SYSCTL_BASE_NAME: _bindgen_ty_17 = 1;
+pub type _bindgen_ty_17 = ::core::ffi::c_uint;
+pub const BPF_F_GET_BRANCH_RECORDS_SIZE: _bindgen_ty_19 = 1;
+pub type _bindgen_ty_19 = ::core::ffi::c_uint;
+pub const BPF_RINGBUF_BUSY_BIT: _bindgen_ty_22 = 2147483648;
+pub const BPF_RINGBUF_DISCARD_BIT: _bindgen_ty_22 = 1073741824;
+pub const BPF_RINGBUF_HDR_SZ: _bindgen_ty_22 = 8;
+pub type _bindgen_ty_22 = ::core::ffi::c_uint;
+pub const BPF_F_BPRM_SECUREEXEC: _bindgen_ty_24 = 1;
 pub type _bindgen_ty_24 = ::core::ffi::c_uint;
+pub const BPF_F_BROADCAST: _bindgen_ty_25 = 8;
+pub const BPF_F_EXCLUDE_INGRESS: _bindgen_ty_25 = 16;
+pub type _bindgen_ty_25 = ::core::ffi::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct bpf_prog_info {
@@ -905,6 +914,7 @@ pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_4 {
     pub target_name: __u64,
     pub target_name_len: __u32,
     pub __bindgen_anon_1: bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1,
+    pub __bindgen_anon_2: bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -915,6 +925,24 @@ pub union bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1 {
 #[derive(Debug, Copy, Clone)]
 pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1 {
     pub map_id: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2 {
+    pub cgroup: bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1,
+    pub task: bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1 {
+    pub cgroup_id: __u64,
+    pub order: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2 {
+    pub tid: __u32,
+    pub pid: __u32,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -966,29 +994,29 @@ pub union btf_type__bindgen_ty_1 {
     pub size: __u32,
     pub type_: __u32,
 }
-pub const BTF_KIND_UNKN: _bindgen_ty_38 = 0;
-pub const BTF_KIND_INT: _bindgen_ty_38 = 1;
-pub const BTF_KIND_PTR: _bindgen_ty_38 = 2;
-pub const BTF_KIND_ARRAY: _bindgen_ty_38 = 3;
-pub const BTF_KIND_STRUCT: _bindgen_ty_38 = 4;
-pub const BTF_KIND_UNION: _bindgen_ty_38 = 5;
-pub const BTF_KIND_ENUM: _bindgen_ty_38 = 6;
-pub const BTF_KIND_FWD: _bindgen_ty_38 = 7;
-pub const BTF_KIND_TYPEDEF: _bindgen_ty_38 = 8;
-pub const BTF_KIND_VOLATILE: _bindgen_ty_38 = 9;
-pub const BTF_KIND_CONST: _bindgen_ty_38 = 10;
-pub const BTF_KIND_RESTRICT: _bindgen_ty_38 = 11;
-pub const BTF_KIND_FUNC: _bindgen_ty_38 = 12;
-pub const BTF_KIND_FUNC_PROTO: _bindgen_ty_38 = 13;
-pub const BTF_KIND_VAR: _bindgen_ty_38 = 14;
-pub const BTF_KIND_DATASEC: _bindgen_ty_38 = 15;
-pub const BTF_KIND_FLOAT: _bindgen_ty_38 = 16;
-pub const BTF_KIND_DECL_TAG: _bindgen_ty_38 = 17;
-pub const BTF_KIND_TYPE_TAG: _bindgen_ty_38 = 18;
-pub const BTF_KIND_ENUM64: _bindgen_ty_38 = 19;
-pub const NR_BTF_KINDS: _bindgen_ty_38 = 20;
-pub const BTF_KIND_MAX: _bindgen_ty_38 = 19;
-pub type _bindgen_ty_38 = ::core::ffi::c_uint;
+pub const BTF_KIND_UNKN: _bindgen_ty_39 = 0;
+pub const BTF_KIND_INT: _bindgen_ty_39 = 1;
+pub const BTF_KIND_PTR: _bindgen_ty_39 = 2;
+pub const BTF_KIND_ARRAY: _bindgen_ty_39 = 3;
+pub const BTF_KIND_STRUCT: _bindgen_ty_39 = 4;
+pub const BTF_KIND_UNION: _bindgen_ty_39 = 5;
+pub const BTF_KIND_ENUM: _bindgen_ty_39 = 6;
+pub const BTF_KIND_FWD: _bindgen_ty_39 = 7;
+pub const BTF_KIND_TYPEDEF: _bindgen_ty_39 = 8;
+pub const BTF_KIND_VOLATILE: _bindgen_ty_39 = 9;
+pub const BTF_KIND_CONST: _bindgen_ty_39 = 10;
+pub const BTF_KIND_RESTRICT: _bindgen_ty_39 = 11;
+pub const BTF_KIND_FUNC: _bindgen_ty_39 = 12;
+pub const BTF_KIND_FUNC_PROTO: _bindgen_ty_39 = 13;
+pub const BTF_KIND_VAR: _bindgen_ty_39 = 14;
+pub const BTF_KIND_DATASEC: _bindgen_ty_39 = 15;
+pub const BTF_KIND_FLOAT: _bindgen_ty_39 = 16;
+pub const BTF_KIND_DECL_TAG: _bindgen_ty_39 = 17;
+pub const BTF_KIND_TYPE_TAG: _bindgen_ty_39 = 18;
+pub const BTF_KIND_ENUM64: _bindgen_ty_39 = 19;
+pub const NR_BTF_KINDS: _bindgen_ty_39 = 20;
+pub const BTF_KIND_MAX: _bindgen_ty_39 = 19;
+pub type _bindgen_ty_39 = ::core::ffi::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct btf_enum {
@@ -1015,10 +1043,10 @@ pub struct btf_param {
     pub name_off: __u32,
     pub type_: __u32,
 }
-pub const BTF_VAR_STATIC: _bindgen_ty_39 = 0;
-pub const BTF_VAR_GLOBAL_ALLOCATED: _bindgen_ty_39 = 1;
-pub const BTF_VAR_GLOBAL_EXTERN: _bindgen_ty_39 = 2;
-pub type _bindgen_ty_39 = ::core::ffi::c_uint;
+pub const BTF_VAR_STATIC: _bindgen_ty_40 = 0;
+pub const BTF_VAR_GLOBAL_ALLOCATED: _bindgen_ty_40 = 1;
+pub const BTF_VAR_GLOBAL_EXTERN: _bindgen_ty_40 = 2;
+pub type _bindgen_ty_40 = ::core::ffi::c_uint;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum btf_func_linkage {
@@ -1113,7 +1141,7 @@ pub enum perf_sw_ids {
     PERF_COUNT_SW_CGROUP_SWITCHES = 11,
     PERF_COUNT_SW_MAX = 12,
 }
-#[repr(u64)]
+#[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum perf_event_sample_format {
     PERF_SAMPLE_IP = 1,
@@ -1142,7 +1170,6 @@ pub enum perf_event_sample_format {
     PERF_SAMPLE_CODE_PAGE_SIZE = 8388608,
     PERF_SAMPLE_WEIGHT_STRUCT = 16777216,
     PERF_SAMPLE_MAX = 33554432,
-    __PERF_SAMPLE_CALLCHAIN_EARLY = 9223372036854775808,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -2014,17 +2041,17 @@ pub enum perf_event_type {
     PERF_RECORD_AUX_OUTPUT_HW_ID = 21,
     PERF_RECORD_MAX = 22,
 }
-pub const IFLA_XDP_UNSPEC: _bindgen_ty_85 = 0;
-pub const IFLA_XDP_FD: _bindgen_ty_85 = 1;
-pub const IFLA_XDP_ATTACHED: _bindgen_ty_85 = 2;
-pub const IFLA_XDP_FLAGS: _bindgen_ty_85 = 3;
-pub const IFLA_XDP_PROG_ID: _bindgen_ty_85 = 4;
-pub const IFLA_XDP_DRV_PROG_ID: _bindgen_ty_85 = 5;
-pub const IFLA_XDP_SKB_PROG_ID: _bindgen_ty_85 = 6;
-pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_85 = 7;
-pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_85 = 8;
-pub const __IFLA_XDP_MAX: _bindgen_ty_85 = 9;
-pub type _bindgen_ty_85 = ::core::ffi::c_uint;
+pub const IFLA_XDP_UNSPEC: _bindgen_ty_89 = 0;
+pub const IFLA_XDP_FD: _bindgen_ty_89 = 1;
+pub const IFLA_XDP_ATTACHED: _bindgen_ty_89 = 2;
+pub const IFLA_XDP_FLAGS: _bindgen_ty_89 = 3;
+pub const IFLA_XDP_PROG_ID: _bindgen_ty_89 = 4;
+pub const IFLA_XDP_DRV_PROG_ID: _bindgen_ty_89 = 5;
+pub const IFLA_XDP_SKB_PROG_ID: _bindgen_ty_89 = 6;
+pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_89 = 7;
+pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_89 = 8;
+pub const __IFLA_XDP_MAX: _bindgen_ty_89 = 9;
+pub type _bindgen_ty_89 = ::core::ffi::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ifinfomsg {
@@ -2046,38 +2073,37 @@ pub struct tcmsg {
     pub tcm_parent: __u32,
     pub tcm_info: __u32,
 }
-pub const TCA_UNSPEC: _bindgen_ty_100 = 0;
-pub const TCA_KIND: _bindgen_ty_100 = 1;
-pub const TCA_OPTIONS: _bindgen_ty_100 = 2;
-pub const TCA_STATS: _bindgen_ty_100 = 3;
-pub const TCA_XSTATS: _bindgen_ty_100 = 4;
-pub const TCA_RATE: _bindgen_ty_100 = 5;
-pub const TCA_FCNT: _bindgen_ty_100 = 6;
-pub const TCA_STATS2: _bindgen_ty_100 = 7;
-pub const TCA_STAB: _bindgen_ty_100 = 8;
-pub const TCA_PAD: _bindgen_ty_100 = 9;
-pub const TCA_DUMP_INVISIBLE: _bindgen_ty_100 = 10;
-pub const TCA_CHAIN: _bindgen_ty_100 = 11;
-pub const TCA_HW_OFFLOAD: _bindgen_ty_100 = 12;
-pub const TCA_INGRESS_BLOCK: _bindgen_ty_100 = 13;
-pub const TCA_EGRESS_BLOCK: _bindgen_ty_100 = 14;
-pub const TCA_DUMP_FLAGS: _bindgen_ty_100 = 15;
-pub const __TCA_MAX: _bindgen_ty_100 = 16;
-pub type _bindgen_ty_100 = ::core::ffi::c_uint;
-pub const TCA_BPF_UNSPEC: _bindgen_ty_156 = 0;
-pub const TCA_BPF_ACT: _bindgen_ty_156 = 1;
-pub const TCA_BPF_POLICE: _bindgen_ty_156 = 2;
-pub const TCA_BPF_CLASSID: _bindgen_ty_156 = 3;
-pub const TCA_BPF_OPS_LEN: _bindgen_ty_156 = 4;
-pub const TCA_BPF_OPS: _bindgen_ty_156 = 5;
-pub const TCA_BPF_FD: _bindgen_ty_156 = 6;
-pub const TCA_BPF_NAME: _bindgen_ty_156 = 7;
-pub const TCA_BPF_FLAGS: _bindgen_ty_156 = 8;
-pub const TCA_BPF_FLAGS_GEN: _bindgen_ty_156 = 9;
-pub const TCA_BPF_TAG: _bindgen_ty_156 = 10;
-pub const TCA_BPF_ID: _bindgen_ty_156 = 11;
-pub const __TCA_BPF_MAX: _bindgen_ty_156 = 12;
-pub type _bindgen_ty_156 = ::core::ffi::c_uint;
+pub const TCA_UNSPEC: _bindgen_ty_102 = 0;
+pub const TCA_KIND: _bindgen_ty_102 = 1;
+pub const TCA_OPTIONS: _bindgen_ty_102 = 2;
+pub const TCA_STATS: _bindgen_ty_102 = 3;
+pub const TCA_XSTATS: _bindgen_ty_102 = 4;
+pub const TCA_RATE: _bindgen_ty_102 = 5;
+pub const TCA_FCNT: _bindgen_ty_102 = 6;
+pub const TCA_STATS2: _bindgen_ty_102 = 7;
+pub const TCA_STAB: _bindgen_ty_102 = 8;
+pub const TCA_PAD: _bindgen_ty_102 = 9;
+pub const TCA_DUMP_INVISIBLE: _bindgen_ty_102 = 10;
+pub const TCA_CHAIN: _bindgen_ty_102 = 11;
+pub const TCA_HW_OFFLOAD: _bindgen_ty_102 = 12;
+pub const TCA_INGRESS_BLOCK: _bindgen_ty_102 = 13;
+pub const TCA_EGRESS_BLOCK: _bindgen_ty_102 = 14;
+pub const __TCA_MAX: _bindgen_ty_102 = 15;
+pub type _bindgen_ty_102 = ::core::ffi::c_uint;
+pub const TCA_BPF_UNSPEC: _bindgen_ty_158 = 0;
+pub const TCA_BPF_ACT: _bindgen_ty_158 = 1;
+pub const TCA_BPF_POLICE: _bindgen_ty_158 = 2;
+pub const TCA_BPF_CLASSID: _bindgen_ty_158 = 3;
+pub const TCA_BPF_OPS_LEN: _bindgen_ty_158 = 4;
+pub const TCA_BPF_OPS: _bindgen_ty_158 = 5;
+pub const TCA_BPF_FD: _bindgen_ty_158 = 6;
+pub const TCA_BPF_NAME: _bindgen_ty_158 = 7;
+pub const TCA_BPF_FLAGS: _bindgen_ty_158 = 8;
+pub const TCA_BPF_FLAGS_GEN: _bindgen_ty_158 = 9;
+pub const TCA_BPF_TAG: _bindgen_ty_158 = 10;
+pub const TCA_BPF_ID: _bindgen_ty_158 = 11;
+pub const __TCA_BPF_MAX: _bindgen_ty_158 = 12;
+pub type _bindgen_ty_158 = ::core::ffi::c_uint;
 pub const AYA_PERF_EVENT_IOC_ENABLE: ::core::ffi::c_int = 9216;
 pub const AYA_PERF_EVENT_IOC_DISABLE: ::core::ffi::c_int = 9217;
 pub const AYA_PERF_EVENT_IOC_SET_BPF: ::core::ffi::c_int = 1074013192;
