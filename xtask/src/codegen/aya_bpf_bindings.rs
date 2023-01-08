@@ -71,6 +71,7 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
         // Set target triple. This will set the right flags (which you can see
         // running clang -target=X  -E - -dM </dev/null)
         let target = match arch {
+            Architecture::Mips => "mips-unknown-linux-gnu",
             Architecture::X86_64 => "x86_64-unknown-linux-gnu",
             Architecture::ARMv7 => "armv7-unknown-linux-gnu",
             Architecture::AArch64 => "aarch64-unknown-linux-gnu",
@@ -81,6 +82,7 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
         // Set the sysroot. This is needed to ensure that the correct arch
         // specific headers are imported.
         let sysroot = match arch {
+            Architecture::Mips => &opts.mips_sysroot,
             Architecture::X86_64 => &opts.x86_64_sysroot,
             Architecture::ARMv7 => &opts.armv7_sysroot,
             Architecture::AArch64 => &opts.aarch64_sysroot,
@@ -94,6 +96,7 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
             .to_string();
 
         let mut tree = parse_str::<syn::File>(&bindings).unwrap();
+
         let (indexes, helpers) = extract_helpers(&tree.items);
         let helpers = expand_helpers(&helpers);
         for index in indexes {

@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use clap::Parser;
 
 const SUPPORTED_ARCHS: &[Architecture] = &[
+    Architecture::Mips,
     Architecture::X86_64,
     Architecture::ARMv7,
     Architecture::AArch64,
@@ -19,6 +20,7 @@ pub enum Architecture {
     ARMv7,
     AArch64,
     RISCV64,
+    Mips,
 }
 
 impl Architecture {
@@ -32,6 +34,7 @@ impl std::str::FromStr for Architecture {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
+            "mips" => Architecture::Mips,
             "x86_64" => Architecture::X86_64,
             "armv7" => Architecture::ARMv7,
             "aarch64" => Architecture::AArch64,
@@ -44,6 +47,7 @@ impl std::str::FromStr for Architecture {
 impl std::fmt::Display for Architecture {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
+            Architecture::Mips => "mips",
             Architecture::X86_64 => "x86_64",
             Architecture::ARMv7 => "armv7",
             Architecture::AArch64 => "aarch64",
@@ -70,6 +74,9 @@ pub struct Options {
 
     #[arg(long, default_value = "/usr/riscv64-linux-gnu/include", action)]
     riscv64_sysroot: PathBuf,
+
+    #[arg(long, default_value = "/usr/mips-linux-gnu/include", action)]
+    mips_sysroot: PathBuf,
 
     #[command(subcommand)]
     command: Option<Command>,

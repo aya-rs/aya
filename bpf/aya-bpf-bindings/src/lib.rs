@@ -13,6 +13,9 @@ mod aarch64;
 #[cfg(bpf_target_arch = "riscv64")]
 mod riscv64;
 
+#[cfg(bpf_target_arch = "mips")]
+mod mips;
+
 mod gen {
     #[cfg(bpf_target_arch = "x86_64")]
     pub use super::x86_64::*;
@@ -25,6 +28,9 @@ mod gen {
 
     #[cfg(bpf_target_arch = "riscv64")]
     pub use super::riscv64::*;
+
+    #[cfg(bpf_target_arch = "mips")]
+    pub use super::mips::*;
 }
 pub use gen::helpers;
 
