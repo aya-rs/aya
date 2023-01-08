@@ -22,6 +22,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
         riscv64_sysroot,
         powerpc64_sysroot,
         s390x_sysroot,
+        mips_sysroot,
     } = opts;
 
     let dir = PathBuf::from("ebpf/aya-ebpf-bindings");
@@ -88,6 +89,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
             Architecture::RISCV64 => "riscv64-unknown-linux-gnu",
             Architecture::PowerPC64 => "powerpc64le-unknown-linux-gnu",
             Architecture::S390X => "s390x-unknown-linux-gnu",
+            Architecture::Mips => "mips-unknown-linux-gnu",
         };
         bindgen = bindgen.clang_args(&["-target", target]);
 
@@ -100,6 +102,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
             Architecture::RISCV64 => riscv64_sysroot,
             Architecture::PowerPC64 => powerpc64_sysroot,
             Architecture::S390X => s390x_sysroot,
+            Architecture::Mips => mips_sysroot,
         };
         bindgen = bindgen.clang_args(&["-I", &*sysroot.to_string_lossy()]);
 
@@ -109,6 +112,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
             .to_string();
 
         let mut tree = parse_str::<syn::File>(&bindings).unwrap();
+
         let (indexes, helpers) = extract_helpers(&tree.items);
         let helpers = expand_helpers(&helpers);
         for index in indexes {
