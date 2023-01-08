@@ -13,6 +13,8 @@ mod btf_internal_bindings;
 mod linux_bindings_aarch64;
 #[cfg(target_arch = "arm")]
 mod linux_bindings_armv7;
+#[cfg(target_arch = "mips")]
+mod linux_bindings_mips;
 #[cfg(target_arch = "powerpc64")]
 mod linux_bindings_powerpc64;
 #[cfg(target_arch = "riscv64")]
@@ -29,6 +31,8 @@ pub use btf_internal_bindings::{bpf_core_relo, bpf_core_relo_kind, btf_ext_heade
 pub use linux_bindings_aarch64::*;
 #[cfg(target_arch = "arm")]
 pub use linux_bindings_armv7::*;
+#[cfg(target_arch = "mips")]
+pub use linux_bindings_mips::*;
 #[cfg(target_arch = "powerpc64")]
 pub use linux_bindings_powerpc64::*;
 #[cfg(target_arch = "riscv64")]
