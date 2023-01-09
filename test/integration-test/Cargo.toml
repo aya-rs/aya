@@ -10,7 +10,7 @@ aya = { path = "../../aya" }
 aya-obj = { path = "../../aya-obj" }
 clap = { version = "4", features = ["derive"] }
 env_logger = "0.10"
-inventory = "0.2"
+inventory = "0.3"
 integration-test-macros = { path = "../integration-test-macros" }
 lazy_static = "1"
 libc = { version = "0.2.105" }
