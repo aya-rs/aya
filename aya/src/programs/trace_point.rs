@@ -7,12 +7,11 @@ use crate::{
     programs::{
         define_link_wrapper, load_program,
         perf_attach::{perf_attach, PerfLink, PerfLinkId},
+        utils::find_tracefs_path,
         ProgramData, ProgramError,
     },
     sys::perf_event_open_trace_point,
 };
-
-use super::utils::get_tracefs;
 
 /// The type returned when attaching a [`TracePoint`] fails.
 #[derive(Debug, Error)]
@@ -79,7 +78,7 @@ impl TracePoint {
     ///
     /// The returned value can be used to detach, see [TracePoint::detach].
     pub fn attach(&mut self, category: &str, name: &str) -> Result<TracePointLinkId, ProgramError> {
-        let tracefs = get_tracefs()?;
+        let tracefs = find_tracefs_path()?;
         let id = read_sys_fs_trace_point_id(tracefs, category, name)?;
         let fd = perf_event_open_trace_point(id, None).map_err(|(_code, io_error)| {
             ProgramError::SyscallError {

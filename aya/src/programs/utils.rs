@@ -1,5 +1,5 @@
 //! Common functions shared between multiple eBPF program types.
-use std::{ffi::CStr, os::unix::io::RawFd, path::Path};
+use std::{ffi::CStr, io, os::unix::io::RawFd, path::Path};
 
 use crate::{
     programs::{FdLink, Link, ProgramData, ProgramError},
@@ -23,24 +23,25 @@ pub(crate) fn attach_raw_tracepoint<T: Link + From<FdLink>>(
     program_data.links.insert(FdLink::new(pfd).into())
 }
 
-// Get tracefs filesystem 
-pub(crate) fn get_tracefs() -> Result<&'static Path, ProgramError> {
+/// Find tracefs filesystem path
+pub(crate) fn find_tracefs_path() -> Result<&'static Path, ProgramError> {
     lazy_static::lazy_static! {
         static ref TRACE_FS: Option<&'static Path> = {
-            let mounts = [
+            let known_mounts = [
                 Path::new("/sys/kernel/tracing"),
                 Path::new("/sys/kernel/debug/tracing"),
             ];
 
-            for mount in mounts {
+            for mount in known_mounts {
                 if mount.exists() {
                     return Some(mount);
                 }
             }
             None
-
         };
     }
 
-    TRACE_FS.as_deref().ok_or(ProgramError::TraceFsNotFound)
+    TRACE_FS
+        .as_deref()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "tracefs not found").into())
 }

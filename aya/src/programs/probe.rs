@@ -9,8 +9,8 @@ use std::{
 use crate::{
     programs::{
         kprobe::KProbeError, perf_attach, perf_attach::PerfLink, perf_attach_debugfs,
-        trace_point::read_sys_fs_trace_point_id, uprobe::UProbeError, utils::get_tracefs, Link,
-        ProgramData, ProgramError,
+        trace_point::read_sys_fs_trace_point_id, uprobe::UProbeError, utils::find_tracefs_path,
+        Link, ProgramData, ProgramError,
     },
     sys::{kernel_version, perf_event_open_probe, perf_event_open_trace_point},
 };
@@ -61,7 +61,7 @@ pub(crate) fn attach<T: Link + From<PerfLink>>(
 pub(crate) fn detach_debug_fs(kind: ProbeKind, event_alias: &str) -> Result<(), ProgramError> {
     use ProbeKind::*;
 
-    let tracefs = get_tracefs()?;
+    let tracefs = find_tracefs_path()?;
 
     match kind {
         KProbe | KRetProbe => delete_probe_event(tracefs, kind, event_alias)
@@ -118,7 +118,7 @@ fn create_as_trace_point(
 ) -> Result<(i32, String), ProgramError> {
     use ProbeKind::*;
 
-    let tracefs = get_tracefs()?;
+    let tracefs = find_tracefs_path()?;
 
     let event_alias = match kind {
         KProbe | KRetProbe => create_probe_event(tracefs, kind, name, offset)
