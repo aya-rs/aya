@@ -19,7 +19,7 @@ fn xdp() {
 #[integration_test]
 fn extension() {
     let (major, minor, _) = kernel_version().unwrap();
-    if major < 5 || minor < 9 {
+    if major < 5 || (minor == 5 && minor < 9) {
         info!(
             "skipping as {}.{} does not meet version requirement of 5.9",
             major, minor
