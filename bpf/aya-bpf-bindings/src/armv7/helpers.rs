@@ -461,12 +461,12 @@ pub unsafe fn bpf_skb_adjust_room(
 }
 pub unsafe fn bpf_redirect_map(
     map: *mut ::aya_bpf_cty::c_void,
-    key: __u32,
+    key: __u64,
     flags: __u64,
 ) -> ::aya_bpf_cty::c_long {
     let fun: unsafe extern "C" fn(
         map: *mut ::aya_bpf_cty::c_void,
-        key: __u32,
+        key: __u64,
         flags: __u64,
     ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(51usize);
     fun(map, key, flags)
@@ -2027,28 +2027,28 @@ pub unsafe fn bpf_ringbuf_discard_dynptr(ptr: *mut bpf_dynptr, flags: __u64) {
 pub unsafe fn bpf_dynptr_read(
     dst: *mut ::aya_bpf_cty::c_void,
     len: __u32,
-    src: *mut bpf_dynptr,
+    src: *const bpf_dynptr,
     offset: __u32,
     flags: __u64,
 ) -> ::aya_bpf_cty::c_long {
     let fun: unsafe extern "C" fn(
         dst: *mut ::aya_bpf_cty::c_void,
         len: __u32,
-        src: *mut bpf_dynptr,
+        src: *const bpf_dynptr,
         offset: __u32,
         flags: __u64,
     ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(201usize);
     fun(dst, len, src, offset, flags)
 }
 pub unsafe fn bpf_dynptr_write(
-    dst: *mut bpf_dynptr,
+    dst: *const bpf_dynptr,
     offset: __u32,
     src: *mut ::aya_bpf_cty::c_void,
     len: __u32,
     flags: __u64,
 ) -> ::aya_bpf_cty::c_long {
     let fun: unsafe extern "C" fn(
-        dst: *mut bpf_dynptr,
+        dst: *const bpf_dynptr,
         offset: __u32,
         src: *mut ::aya_bpf_cty::c_void,
         len: __u32,
@@ -2057,12 +2057,12 @@ pub unsafe fn bpf_dynptr_write(
     fun(dst, offset, src, len, flags)
 }
 pub unsafe fn bpf_dynptr_data(
-    ptr: *mut bpf_dynptr,
+    ptr: *const bpf_dynptr,
     offset: __u32,
     len: __u32,
 ) -> *mut ::aya_bpf_cty::c_void {
     let fun: unsafe extern "C" fn(
-        ptr: *mut bpf_dynptr,
+        ptr: *const bpf_dynptr,
         offset: __u32,
         len: __u32,
     ) -> *mut ::aya_bpf_cty::c_void = ::core::mem::transmute(203usize);
@@ -2105,4 +2105,42 @@ pub unsafe fn bpf_tcp_raw_check_syncookie_ipv6(
 pub unsafe fn bpf_ktime_get_tai_ns() -> __u64 {
     let fun: unsafe extern "C" fn() -> __u64 = ::core::mem::transmute(208usize);
     fun()
+}
+pub unsafe fn bpf_user_ringbuf_drain(
+    map: *mut ::aya_bpf_cty::c_void,
+    callback_fn: *mut ::aya_bpf_cty::c_void,
+    ctx: *mut ::aya_bpf_cty::c_void,
+    flags: __u64,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        map: *mut ::aya_bpf_cty::c_void,
+        callback_fn: *mut ::aya_bpf_cty::c_void,
+        ctx: *mut ::aya_bpf_cty::c_void,
+        flags: __u64,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(209usize);
+    fun(map, callback_fn, ctx, flags)
+}
+pub unsafe fn bpf_cgrp_storage_get(
+    map: *mut ::aya_bpf_cty::c_void,
+    cgroup: *mut cgroup,
+    value: *mut ::aya_bpf_cty::c_void,
+    flags: __u64,
+) -> *mut ::aya_bpf_cty::c_void {
+    let fun: unsafe extern "C" fn(
+        map: *mut ::aya_bpf_cty::c_void,
+        cgroup: *mut cgroup,
+        value: *mut ::aya_bpf_cty::c_void,
+        flags: __u64,
+    ) -> *mut ::aya_bpf_cty::c_void = ::core::mem::transmute(210usize);
+    fun(map, cgroup, value, flags)
+}
+pub unsafe fn bpf_cgrp_storage_delete(
+    map: *mut ::aya_bpf_cty::c_void,
+    cgroup: *mut cgroup,
+) -> ::aya_bpf_cty::c_long {
+    let fun: unsafe extern "C" fn(
+        map: *mut ::aya_bpf_cty::c_void,
+        cgroup: *mut cgroup,
+    ) -> ::aya_bpf_cty::c_long = ::core::mem::transmute(211usize);
+    fun(map, cgroup)
 }
