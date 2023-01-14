@@ -27,7 +27,10 @@ fn relocate_field() {
         "#,
         relocation_code: r#"
             __u8 memory[] = {1, 2, 3, 4};
-            __u32 value = BPF_CORE_READ((struct foo *)&memory, c);
+            struct foo *ptr = (struct foo *) &memory;
+            bpf_probe_read_kernel(&value,
+                                  sizeof(__u8),
+                                  __builtin_preserve_access_index(&ptr->c));
         "#,
     }
     .build()
@@ -46,7 +49,8 @@ fn relocate_enum() {
             enum foo { D = 4 } e1;
         "#,
         relocation_code: r#"
-            __u32 value = bpf_core_enum_value(enum foo, D);
+            #define BPF_ENUMVAL_VALUE 1
+            value = __builtin_preserve_enum_value(*(typeof(enum foo) *)D, BPF_ENUMVAL_VALUE);
         "#,
     }
     .build()
@@ -68,8 +72,10 @@ fn relocate_pointer() {
         "#,
         relocation_code: r#"
             __u8 memory[] = {42, 0, 0, 0, 0, 0, 0, 0};
-            struct foo *f = BPF_CORE_READ((struct bar *)&memory, f);
-            __u32 value = ((__u64) f);
+            struct bar* ptr = (struct bar *) &memory;
+            bpf_probe_read_kernel(&value,
+                                  sizeof(void *),
+                                  __builtin_preserve_access_index(&ptr->f));
         "#,
     }
     .build()
@@ -114,27 +120,29 @@ impl RelocationTest {
             r#"
                 #include <linux/bpf.h>
 
-                #include <bpf/bpf_core_read.h>
-                #include <bpf/bpf_helpers.h>
-                #include <bpf/bpf_tracing.h>
+                static long (*bpf_map_update_elem)(void *map, const void *key, const void *value, __u64 flags) = (void *) 2;
+                static long (*bpf_probe_read_kernel)(void *dst, __u32 size, const void *unsafe_ptr) = (void *) 113;
 
                 {local_definition}
 
                 struct {{
-                  __uint(type, BPF_MAP_TYPE_ARRAY);
-                  __type(key, __u32);
-                  __type(value, __u32);
-                  __uint(max_entries, 1);
-                }} output_map SEC(".maps");
+                  int (*type)[BPF_MAP_TYPE_ARRAY];
+                  __u32 *key;
+                  __u32 *value;
+                  int (*max_entries)[1];
+                }} output_map
+                __attribute__((section(".maps"), used));
 
-                SEC("tracepoint/bpf_prog") int bpf_prog(void *ctx) {{
+                __attribute__((section("tracepoint/bpf_prog"), used))
+                int bpf_prog(void *ctx) {{
                   __u32 key = 0;
+                  __u32 value = 0;
                   {relocation_code}
                   bpf_map_update_elem(&output_map, &key, &value, BPF_ANY);
                   return 0;
                 }}
 
-                char _license[] SEC("license") = "GPL";
+                char _license[] __attribute__((section("license"), used)) = "GPL";
             "#
         ))
         .context("Failed to compile eBPF program")?;
@@ -157,12 +165,11 @@ impl RelocationTest {
             r#"
                 #include <linux/bpf.h>
 
-                #include <bpf/bpf_core_read.h>
-                #include <bpf/bpf_helpers.h>
-                #include <bpf/bpf_tracing.h>
+                static long (*bpf_probe_read_kernel)(void *dst, __u32 size, const void *unsafe_ptr) = (void *) 113;
 
                 {target_btf}
                 int main() {{
+                    __u32 value = 0;
                     // This is needed to make sure to emit BTF for the defined types,
                     // it could be dead code eliminated if we don't.
                     {relocation_code};
@@ -195,12 +202,6 @@ fn compile(source_code: &str) -> Result<(TempDir, PathBuf)> {
     Command::new("clang")
         .current_dir(&tmp_dir)
         .args(["-c", "-g", "-O2", "-target", "bpf"])
-        // NOTE: these tests depend on libbpf, LIBBPF_INCLUDE must point its headers.
-        // This is set automatically by the integration-test xtask.
-        .args([
-            "-I",
-            &std::env::var("LIBBPF_INCLUDE").context("LIBBPF_INCLUDE not set")?,
-        ])
         .arg(&source)
         .status()
         .context("Failed to run clang")?

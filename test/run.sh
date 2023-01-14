@@ -187,8 +187,5 @@ cargo xtask build-integration-test --musl --libbpf-dir "$1"
 scp_vm ../target/x86_64-unknown-linux-musl/debug/integration-test
 exec_vm sudo ./integration-test --skip relocations
 
-# Relocation tests build the eBPF programs and require libbpf. We run them outside VM.
-export LIBBPF_INCLUDE="${AYA_TMPDIR}/libbpf/"
-mkdir -p "$LIBBPF_INCLUDE"
-(cd "$1/src" && make INCLUDEDIR="$LIBBPF_INCLUDE" install_headers)
+# Relocation tests build the eBPF programs themself. We run them outside VM.
 sudo -E ../target/x86_64-unknown-linux-musl/debug/integration-test relocations
