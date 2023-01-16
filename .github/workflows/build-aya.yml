@@ -57,7 +57,7 @@ jobs:
 
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: nightly-2023-01-10
           components: rustfmt, clippy, rust-src
           target: x86_64-unknown-linux-musl
           override: true
