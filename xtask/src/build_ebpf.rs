@@ -60,7 +60,7 @@ fn build_rust_ebpf(opts: &BuildEbpfOptions) -> anyhow::Result<()> {
 
     let target = format!("--target={}", opts.target);
     let mut args = vec![
-        "+nightly",
+        "+nightly-2023-01-10",
         "build",
         "--verbose",
         target.as_str(),
