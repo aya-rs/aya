@@ -18,7 +18,7 @@ use aya_obj::{
         BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_IMM, BPF_JMP, BPF_K, BPF_LD,
         BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_SUB, BPF_X, bpf_attach_type, bpf_attr,
         bpf_btf_info, bpf_cmd, bpf_func_id::*, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type,
-        bpf_prog_info, bpf_prog_type, bpf_stats_type,
+        bpf_prog_info, bpf_prog_type, bpf_stats_type, bpf_task_fd_type,
     },
     maps::{LegacyMap, bpf_map_def},
 };
@@ -598,6 +598,69 @@ pub(crate) fn bpf_prog_get_info_by_fd(
             info.nr_map_ids = map_ids.len() as _;
             info.map_ids = map_ids.as_mut_ptr() as _;
         }
+    })
+}
+
+#[derive(Debug)]
+pub(crate) struct TaskFdQueryOutput<'buf> {
+    pub(crate) prog_id: u32,
+    pub(crate) fd_type: bpf_task_fd_type,
+    pub(crate) name: Option<&'buf CStr>,
+    pub(crate) probe_offset: Option<u64>,
+    pub(crate) probe_addr: Option<u64>,
+}
+
+pub(crate) fn bpf_task_fd_query<'buf>(
+    pid: u32,
+    target_fd: BorrowedFd<'_>,
+    out_name_buf: Option<&mut [u8]>,
+) -> Result<TaskFdQueryOutput<'buf>, io::Error> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    attr.task_fd_query.pid = pid;
+    attr.task_fd_query.fd = target_fd.as_raw_fd() as u32;
+    let mut out_name_buf = out_name_buf;
+    if let Some(buf) = &mut out_name_buf {
+        attr.task_fd_query.buf = buf.as_mut_ptr() as u64;
+        attr.task_fd_query.buf_len = buf.len() as u32;
+    };
+
+    if let Err(io_error) = unit_sys_bpf(bpf_cmd::BPF_TASK_FD_QUERY, &mut attr) {
+        // The kernel here may leak an internal ENOTSUPP code (524), so
+        // this needs to translate it back to POSIX-defined ENOTSUPP (95).
+        return match io_error.raw_os_error() {
+            Some(524) => Err(io::Error::from_raw_os_error(95)),
+            _ => Err(io_error),
+        };
+    }
+
+    let fd_type =
+        unsafe { std::mem::transmute::<u32, bpf_task_fd_type>(attr.task_fd_query.fd_type) };
+    let name = out_name_buf.map(|buf| unsafe {
+        CStr::from_bytes_with_nul_unchecked(std::slice::from_raw_parts(
+            buf.as_ptr(),
+            attr.task_fd_query.buf_len as usize + 1,
+        ))
+    });
+    let (probe_offset, probe_addr) = match fd_type {
+        bpf_task_fd_type::BPF_FD_TYPE_KPROBE
+        | bpf_task_fd_type::BPF_FD_TYPE_KRETPROBE
+        | bpf_task_fd_type::BPF_FD_TYPE_UPROBE
+        | bpf_task_fd_type::BPF_FD_TYPE_URETPROBE => unsafe {
+            (
+                Some(attr.task_fd_query.probe_offset),
+                Some(attr.task_fd_query.probe_addr),
+            )
+        },
+        _ => (None, None),
+    };
+
+    Ok(TaskFdQueryOutput {
+        prog_id: unsafe { attr.task_fd_query.prog_id },
+        fd_type,
+        name,
+        probe_offset,
+        probe_addr,
     })
 }
 
