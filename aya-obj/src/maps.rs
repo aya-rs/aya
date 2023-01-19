@@ -81,9 +81,10 @@ pub struct BtfMapDef {
 /// Upon pinning a map, a file representation is created for the map,
 /// so that the map can be alive and retrievable across sessions.
 #[repr(u32)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
 pub enum PinningType {
     /// No pinning
+    #[default]
     None = 0,
     /// Pin by the name
     ByName = 1,
@@ -109,12 +110,6 @@ impl TryFrom<u32> for PinningType {
             1 => Ok(PinningType::ByName),
             pinning_type => Err(PinningError::Unsupported { pinning_type }),
         }
-    }
-}
-
-impl Default for PinningType {
-    fn default() -> Self {
-        PinningType::None
     }
 }
 

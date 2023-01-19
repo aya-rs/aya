@@ -7,24 +7,17 @@ use crate::{
 };
 
 /// Defines where to attach a `CgroupSock` program.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub enum CgroupSockAttachType {
     /// Called after the IPv4 bind events.
     PostBind4,
     /// Called after the IPv6 bind events.
     PostBind6,
     /// Attach to IPv4 connect events.
+    #[default]
     SockCreate,
     /// Attach to IPv6 connect events.
     SockRelease,
-}
-
-impl Default for CgroupSockAttachType {
-    // The kernel checks for a 0 attach_type and sets it to sock_create
-    // We may as well do that here also
-    fn default() -> Self {
-        CgroupSockAttachType::SockCreate
-    }
 }
 
 impl From<CgroupSockAttachType> for bpf_attach_type {
