@@ -799,9 +799,10 @@ impl DeclTag {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
 #[repr(u32)]
 pub enum BtfKind {
+    #[default]
     Unknown = 0,
     Int = 1,
     Ptr = 2,
@@ -876,12 +877,6 @@ impl Display for BtfKind {
             BtfKind::DeclTag => write!(f, "[DECL_TAG]"),
             BtfKind::TypeTag => write!(f, "[TYPE_TAG]"),
         }
-    }
-}
-
-impl Default for BtfKind {
-    fn default() -> Self {
-        BtfKind::Unknown
     }
 }
 
