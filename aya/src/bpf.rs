@@ -905,11 +905,11 @@ pub enum BpfError {
     },
 
     /// Error parsing BPF object
-    #[error("error parsing BPF object")]
+    #[error("error parsing BPF object: {0}")]
     ParseError(#[from] ParseError),
 
     /// Error parsing BTF object
-    #[error("BTF error")]
+    #[error("BTF error: {0}")]
     BtfError(#[from] BtfError),
 
     /// Error performing relocations
@@ -926,11 +926,11 @@ pub enum BpfError {
     #[error("no BTF parsed for object")]
     NoBTF,
 
-    #[error("map error")]
+    #[error("map error: {0}")]
     /// A map error
     MapError(#[from] MapError),
 
-    #[error("program error")]
+    #[error("program error: {0}")]
     /// A program error
     ProgramError(#[from] ProgramError),
 }
