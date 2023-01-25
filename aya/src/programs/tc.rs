@@ -267,22 +267,22 @@ impl SchedClassifierLink {
         handle: u32,
     ) -> Result<SchedClassifierLink, io::Error> {
         let if_index = ifindex_from_ifname(if_name)?;
-        Ok(SchedClassifierLink(TcLink {
+        Ok(SchedClassifierLink(Some(TcLink {
             if_index: if_index as i32,
             attach_type,
             priority,
             handle,
-        }))
+        })))
     }
 
     /// Returns the allocated priority. If none was provided at attach time, this was allocated for you.
     pub fn priority(&self) -> u16 {
-        self.0.priority
+        self.inner().priority
     }
 
     /// Returns the assigned handle. If none was provided at attach time, this was allocated for you.
     pub fn handle(&self) -> u32 {
-        self.0.handle
+        self.inner().handle
     }
 }
 
