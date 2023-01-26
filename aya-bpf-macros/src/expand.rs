@@ -119,12 +119,13 @@ impl Probe {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = format!("{}/{}", self.kind, self.name);
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
+            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                 let _ = #fn_name(::aya_bpf::programs::ProbeContext::new(ctx));
                 return 0;
 
@@ -152,12 +153,13 @@ impl SockOps {
         } else {
             "sockops".to_owned()
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock_ops) -> u32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock_ops) -> u32 {
                 return #fn_name(::aya_bpf::programs::SockOpsContext::new(ctx));
 
                 #item
@@ -180,12 +182,13 @@ impl SkMsg {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = format!("sk_msg/{}", self.name);
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::sk_msg_md) -> u32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::sk_msg_md) -> u32 {
                 return #fn_name(::aya_bpf::programs::SkMsgContext::new(ctx));
 
                 #item
@@ -212,12 +215,13 @@ impl Xdp {
         } else {
             "xdp".to_owned()
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::xdp_md) -> u32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::xdp_md) -> u32 {
                 return #fn_name(::aya_bpf::programs::XdpContext::new(ctx));
 
                 #item
@@ -244,12 +248,13 @@ impl SchedClassifier {
         } else {
             "classifier".to_owned()
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
                 return #fn_name(::aya_bpf::programs::TcContext::new(ctx));
 
                 #item
@@ -276,12 +281,13 @@ impl CgroupSysctl {
         } else {
             ("cgroup/sysctl").to_owned()
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sysctl) -> i32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sysctl) -> i32 {
                 return #fn_name(::aya_bpf::programs::SysctlContext::new(ctx));
 
                 #item
@@ -313,12 +319,13 @@ impl CgroupSockopt {
         } else {
             format!("cgroup/{}", self.attach_type)
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sockopt) -> i32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sockopt) -> i32 {
                 return #fn_name(::aya_bpf::programs::SockoptContext::new(ctx));
 
                 #item
@@ -358,12 +365,13 @@ impl CgroupSkb {
         } else {
             ("cgroup/skb").to_owned()
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
                 return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
 
                 #item
@@ -396,12 +404,13 @@ impl CgroupSockAddr {
         } else {
             format!("cgroup/{}", self.attach_type)
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
                 return #fn_name(::aya_bpf::programs::SockAddrContext::new(ctx));
 
                 #item
@@ -441,12 +450,13 @@ impl CgroupSock {
         } else {
             "cgroup/sock".to_string()
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock) -> i32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock) -> i32 {
                 return #fn_name(::aya_bpf::programs::SockContext::new(ctx));
 
                 #item
@@ -512,12 +522,13 @@ impl TracePoint {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = format!("tp/{}", self.name);
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
+            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                let _ = #fn_name(::aya_bpf::programs::TracePointContext::new(ctx));
                return 0;
 
@@ -541,12 +552,13 @@ impl PerfEvent {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = format!("perf_event/{}", self.name);
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
+            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                let _ = #fn_name(::aya_bpf::programs::PerfEventContext::new(ctx));
                return 0;
 
@@ -570,12 +582,13 @@ impl RawTracePoint {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = format!("raw_tp/{}", self.name);
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
+            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                 let _ = #fn_name(::aya_bpf::programs::RawTracePointContext::new(ctx));
                 return 0;
 
@@ -599,6 +612,7 @@ impl Lsm {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = format!("lsm/{}", self.name);
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         // LSM probes need to return an integer corresponding to the correct
@@ -607,7 +621,7 @@ impl Lsm {
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
                 return #fn_name(::aya_bpf::programs::LsmContext::new(ctx));
 
                 #item
@@ -630,12 +644,13 @@ impl BtfTracePoint {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = format!("tp_btf/{}", self.name);
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = #fn_name(::aya_bpf::programs::BtfTracePointContext::new(ctx));
                 return 0;
 
@@ -683,12 +698,13 @@ impl SkSkb {
         } else {
             format!("sk_skb/{kind}")
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> u32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> u32 {
                 return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
 
                 #item
@@ -716,12 +732,13 @@ impl SocketFilter {
         } else {
             "socket".to_owned()
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i64 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i64 {
                 return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
 
                 #item
@@ -744,12 +761,13 @@ impl FEntry {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = format!("fentry/{}", self.name);
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = #fn_name(::aya_bpf::programs::FEntryContext::new(ctx));
                 return 0;
 
@@ -773,12 +791,13 @@ impl FExit {
 
     pub fn expand(&self) -> Result<TokenStream> {
         let section_name = format!("fexit/{}", self.name);
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = #fn_name(::aya_bpf::programs::FExitContext::new(ctx));
                 return 0;
 
@@ -806,12 +825,13 @@ impl SkLookup {
         } else {
             "sk_lookup".to_owned()
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sk_lookup) -> u32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sk_lookup) -> u32 {
                 return #fn_name(::aya_bpf::programs::SkLookupContext::new(ctx));
 
                 #item
@@ -838,12 +858,13 @@ impl CgroupDevice {
         } else {
             ("cgroup/dev").to_owned()
         };
+        let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_cgroup_dev_ctx) -> i32 {
+            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_cgroup_dev_ctx) -> i32 {
                 return #fn_name(::aya_bpf::programs::DeviceContext::new(ctx));
 
                 #item
@@ -940,5 +961,50 @@ mod tests {
         assert!(stream
             .to_string()
             .contains("[link_section = \"cgroup/dev\"]"));
+    }
+
+    #[test]
+    fn priv_function() {
+        let prog = CgroupSkb::from_syn(
+            parse_quote!(attach = "egress"),
+            parse_quote!(
+                fn foo(ctx: SkBuffContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream.to_string().contains("] fn foo ("));
+    }
+
+    #[test]
+    fn pub_function() {
+        let prog = CgroupSkb::from_syn(
+            parse_quote!(attach = "egress"),
+            parse_quote!(
+                pub fn foo(ctx: SkBuffContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream.to_string().contains("] pub fn foo ("));
+    }
+
+    #[test]
+    fn pub_crate_function() {
+        let prog = CgroupSkb::from_syn(
+            parse_quote!(attach = "egress"),
+            parse_quote!(
+                pub(crate) fn foo(ctx: SkBuffContext) -> i32 {
+                    0
+                }
+            ),
+        )
+        .unwrap();
+        let stream = prog.expand().unwrap();
+        assert!(stream.to_string().contains("] pub (crate) fn foo ("));
     }
 }
