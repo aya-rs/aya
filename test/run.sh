@@ -139,7 +139,9 @@ EOF
         sleep 1
     done
 
-    echo "VM launched, installing dependencies"
+    echo "VM launched"
+    exec_vm uname -a
+    echo "Installing dependencies"
     exec_vm sudo dnf install -qy bpftool
 }
 
