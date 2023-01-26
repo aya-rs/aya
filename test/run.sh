@@ -15,7 +15,7 @@ fi
 
 # Test Image
 if [ -z "${AYA_TEST_IMAGE}" ]; then
-    AYA_TEST_IMAGE="fedora36"
+    AYA_TEST_IMAGE="fedora37"
 fi
 
 case "${AYA_TEST_IMAGE}" in
@@ -26,12 +26,12 @@ esac
 download_images() {
     mkdir -p "${AYA_IMGDIR}"
     case $1 in
-        fedora36)
-            if [ ! -f "${AYA_IMGDIR}/fedora36.${AYA_TEST_ARCH}.qcow2" ]; then
-                IMAGE="Fedora-Cloud-Base-36-1.5.${AYA_TEST_ARCH}.qcow2"
-                IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/36/Cloud/${AYA_TEST_ARCH}/images"
+        fedora37)
+            if [ ! -f "${AYA_IMGDIR}/fedora37.${AYA_TEST_ARCH}.qcow2" ]; then
+                IMAGE="Fedora-Cloud-Base-37-1.7.${AYA_TEST_ARCH}.qcow2"
+                IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/37/Cloud/${AYA_TEST_ARCH}/images"
                 echo "Downloading: ${IMAGE}, this may take a while..."
-                curl -o "${AYA_IMGDIR}/fedora36.${AYA_TEST_ARCH}.qcow2" -sSL "${IMAGE_URL}/${IMAGE}"
+                curl -o "${AYA_IMGDIR}/fedora37.${AYA_TEST_ARCH}.qcow2" -sSL "${IMAGE_URL}/${IMAGE}"
             fi
             ;;
         centos8)
