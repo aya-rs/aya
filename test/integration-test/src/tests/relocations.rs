@@ -6,6 +6,9 @@ use aya::{maps::Array, programs::TracePoint, BpfLoader, Btf, Endianness};
 
 use super::{integration_test, IntegrationTest};
 
+// In the tests below we often use values like 0xAAAAAAAA or -0x7AAAAAAA. Those values have no
+// special meaning, they just have "nice" bit patterns that can be helpful while debugging.
+
 #[integration_test]
 fn relocate_field() {
     let test = RelocationTest {
@@ -41,10 +44,10 @@ fn relocate_field() {
 fn relocate_enum() {
     let test = RelocationTest {
         local_definition: r#"
-            enum foo { D = 1 };
+            enum foo { D = 0xAAAAAAAA };
         "#,
         target_btf: r#"
-            enum foo { D = 4 } e1;
+            enum foo { D = 0xBBBBBBBB } e1;
         "#,
         relocation_code: r#"
             #define BPF_ENUMVAL_VALUE 1
@@ -53,8 +56,28 @@ fn relocate_enum() {
     }
     .build()
     .unwrap();
-    assert_eq!(test.run().unwrap(), 4);
-    assert_eq!(test.run_no_btf().unwrap(), 1);
+    assert_eq!(test.run().unwrap(), 0xBBBBBBBB);
+    assert_eq!(test.run_no_btf().unwrap(), 0xAAAAAAAA);
+}
+
+#[integration_test]
+fn relocate_enum_signed() {
+    let test = RelocationTest {
+        local_definition: r#"
+            enum foo { D = -0x7AAAAAAA };
+        "#,
+        target_btf: r#"
+            enum foo { D = -0x7BBBBBBB } e1;
+        "#,
+        relocation_code: r#"
+            #define BPF_ENUMVAL_VALUE 1
+            value = __builtin_preserve_enum_value(*(typeof(enum foo) *)D, BPF_ENUMVAL_VALUE);
+        "#,
+    }
+    .build()
+    .unwrap();
+    assert_eq!(test.run().unwrap() as i64, -0x7BBBBBBBi64);
+    assert_eq!(test.run_no_btf().unwrap() as i64, -0x7AAAAAAAi64);
 }
 
 #[integration_test]

@@ -938,7 +938,14 @@ impl ComputedRelocation {
             (EnumVariantValue, Some(spec)) => {
                 let accessor = &spec.accessors[0];
                 match spec.btf.type_by_id(accessor.type_id)? {
-                    BtfType::Enum(en) => en.variants[accessor.index].value as u64,
+                    BtfType::Enum(en) => {
+                        let value = en.variants[accessor.index].value;
+                        if en.is_signed() {
+                            value as i32 as u64
+                        } else {
+                            value as u64
+                        }
+                    }
                     // candidate selection ensures that rel_kind == local_kind == target_kind
                     _ => unreachable!(),
                 }
@@ -1071,7 +1078,7 @@ impl ComputedRelocation {
                 value.value = byte_size as u64;
             }
             FieldSigned => match member_ty {
-                BtfType::Enum(_) => value.value = 1,
+                BtfType::Enum(en) => value.value = en.is_signed() as u64,
                 BtfType::Int(i) => value.value = i.encoding() as u64 & IntEncoding::Signed as u64,
                 _ => (),
             },
