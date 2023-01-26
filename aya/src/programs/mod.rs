@@ -206,6 +206,10 @@ pub enum ProgramError {
         /// program name
         name: String,
     },
+
+    /// An error occurred while working with IO.
+    #[error(transparent)]
+    IOError(#[from] io::Error),
 }
 
 /// A [`Program`] file descriptor.
