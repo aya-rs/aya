@@ -61,7 +61,7 @@ fn build_docs(working_dir: &PathBuf, abs_header_path: &Path) -> Result<(), anyho
         .expect("failed to replace logo");
     assert!(replace.success());
 
-    let args = vec!["+nightly-2023-01-10", "doc", "--no-deps", "--all-features"];
+    let args = vec!["+nightly", "doc", "--no-deps", "--all-features"];
 
     let status = Command::new("cargo")
         .current_dir(working_dir)
