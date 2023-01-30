@@ -2,20 +2,45 @@
 
 set -e
 
+if [ "$(uname -s)" = "Darwin" ]; then
+    export PATH="$(dirname $(brew list gnu-getopt | grep "bin/getopt$")):$PATH"
+fi
+
+AYA_SOURCE_DIR="$(realpath $(dirname $0)/..)"
+LIBBPF_DIR=$1
+
 # Temporary directory for tests to use.
-AYA_TMPDIR="$(pwd)/.tmp"
+AYA_TMPDIR="${AYA_SOURCE_DIR}/.tmp"
 
 # Directory for VM images
 AYA_IMGDIR=${AYA_TMPDIR}
 
-# Test Architecture
-if [ -z "${AYA_TEST_ARCH}" ]; then
-    AYA_TEST_ARCH="$(uname -m)"
+if [ -z "${AYA_BUILD_TARGET}" ]; then
+    AYA_BUILD_TARGET=$(rustc -vV | sed -n 's|host: ||p')
+fi
+
+AYA_HOST_ARCH=$(uname -m)
+if [ "${AYA_HOST_ARCH}" = "arm64" ]; then
+    AYA_HOST_ARCH="aarch64"
+fi
+
+if [ -z "${AYA_GUEST_ARCH}" ]; then
+    AYA_GUEST_ARCH="${AYA_HOST_ARCH}"
+fi
+
+if [ "${AYA_GUEST_ARCH}" = "aarch64" ]; then
+    if [ -z "${AARCH64_UEFI}" ]; then
+        AARCH64_UEFI="$(brew list qemu -1 -v | grep edk2-aarch64-code.fd)"
+    fi
+fi
+
+if [ -z "$AYA_MUSL_TARGET" ]; then
+    AYA_MUSL_TARGET=${AYA_GUEST_ARCH}-unknown-linux-musl
 fi
 
 # Test Image
 if [ -z "${AYA_TEST_IMAGE}" ]; then
-    AYA_TEST_IMAGE="fedora36"
+    AYA_TEST_IMAGE="fedora37"
 fi
 
 case "${AYA_TEST_IMAGE}" in
@@ -26,20 +51,20 @@ esac
 download_images() {
     mkdir -p "${AYA_IMGDIR}"
     case $1 in
-        fedora36)
-            if [ ! -f "${AYA_IMGDIR}/fedora36.${AYA_TEST_ARCH}.qcow2" ]; then
-                IMAGE="Fedora-Cloud-Base-36-1.5.${AYA_TEST_ARCH}.qcow2"
-                IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/36/Cloud/${AYA_TEST_ARCH}/images"
+        fedora37)
+            if [ ! -f "${AYA_IMGDIR}/fedora37.${AYA_GUEST_ARCH}.qcow2" ]; then
+                IMAGE="Fedora-Cloud-Base-37-1.7.${AYA_GUEST_ARCH}.qcow2"
+                IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/37/Cloud/${AYA_GUEST_ARCH}/images"
                 echo "Downloading: ${IMAGE}, this may take a while..."
-                curl -o "${AYA_IMGDIR}/fedora36.${AYA_TEST_ARCH}.qcow2" -sSL "${IMAGE_URL}/${IMAGE}"
+                curl -o "${AYA_IMGDIR}/fedora37.${AYA_GUEST_ARCH}.qcow2" -sSL "${IMAGE_URL}/${IMAGE}"
             fi
             ;;
         centos8)
-            if [ ! -f "${AYA_IMGDIR}/centos8.${AYA_TEST_ARCH}.qcow2" ]; then
-                IMAGE="CentOS-8-GenericCloud-8.4.2105-20210603.0.${AYA_TEST_ARCH}.qcow2"
-                IMAGE_URL="https://cloud.centos.org/centos/8/${AYA_TEST_ARCH}/images"
+            if [ ! -f "${AYA_IMGDIR}/centos8.${AYA_GUEST_ARCH}.qcow2" ]; then
+                IMAGE="CentOS-8-GenericCloud-8.4.2105-20210603.0.${AYA_GUEST_ARCH}.qcow2"
+                IMAGE_URL="https://cloud.centos.org/centos/8/${AYA_GUEST_ARCH}/images"
                 echo "Downloading: ${IMAGE}, this may take a while..."
-                curl -o "${AYA_IMGDIR}/centos8.${AYA_TEST_ARCH}.qcow2" -sSL "${IMAGE_URL}/${IMAGE}"
+                curl -o "${AYA_IMGDIR}/centos8.${AYA_GUEST_ARCH}.qcow2" -sSL "${IMAGE_URL}/${IMAGE}"
             fi
             ;;
         *)
@@ -60,11 +85,6 @@ EOF
     if [ ! -f "${AYA_TMPDIR}/test_rsa" ]; then
         ssh-keygen -t rsa -b 4096 -f "${AYA_TMPDIR}/test_rsa" -N "" -C "" -q
         pub_key=$(cat "${AYA_TMPDIR}/test_rsa.pub")
-        cat > "${AYA_TMPDIR}/user-data.yaml" <<EOF
-#cloud-config
-ssh_authorized_keys:
-  - ${pub_key}
-EOF
     fi
 
     if [ ! -f "${AYA_TMPDIR}/ssh_config" ]; then
@@ -75,14 +95,20 @@ GlobalKnownHostsFile=/dev/null
 EOF
     fi
 
-    cloud-localds "${AYA_TMPDIR}/seed.img" "${AYA_TMPDIR}/user-data.yaml" "${AYA_TMPDIR}/metadata.yaml"
+    cat > "${AYA_TMPDIR}/user-data.yaml" <<EOF
+#cloud-config
+ssh_authorized_keys:
+  - ${pub_key}
+EOF
 
-    case "${AYA_TEST_ARCH}" in
+    $AYA_SOURCE_DIR/test/cloud-localds "${AYA_TMPDIR}/seed.img" "${AYA_TMPDIR}/user-data.yaml" "${AYA_TMPDIR}/metadata.yaml"
+    case "${AYA_GUEST_ARCH}" in
         x86_64)
             QEMU=qemu-system-x86_64
             machine="q35"
             cpu="qemu64"
-            if [ "$(uname -m)" = "${AYA_TEST_ARCH}" ]; then
+            nr_cpus="$(nproc --all)"
+            if [ "${AYA_HOST_ARCH}" = "${AYA_GUEST_ARCH}" ]; then
                 if [ -c /dev/kvm ]; then
                     machine="${machine},accel=kvm"
                     cpu="host"
@@ -96,34 +122,48 @@ EOF
             QEMU=qemu-system-aarch64
             machine="virt"
             cpu="cortex-a57"
-            if [ "$(uname -m)" = "${AYA_TEST_ARCH}" ]; then
+            uefi="-drive file=${AARCH64_UEFI},if=pflash,format=raw,readonly=on"
+            if [ "${AYA_HOST_ARCH}" = "${AYA_GUEST_ARCH}" ]; then
                 if [ -c /dev/kvm ]; then
                     machine="${machine},accel=kvm"
                     cpu="host"
+                    nr_cpus="$(nproc --all)"
                 elif [ "$(uname -s)" = "Darwin" ]; then
-                    machine="${machine},accel=hvf"
-                    cpu="host"
+                    machine="${machine},accel=hvf,highmem=off"
+                    cpu="cortex-a72"
+                    # nrpoc --all on apple silicon returns the two extra fancy
+                    # cores and then qemu complains that nr_cpus > actual_cores
+                    nr_cpus=8
                 fi
             fi
             ;;
         *)
-            echo "${AYA_TEST_ARCH} is not supported"
+            echo "${AYA_GUEST_ARCH} is not supported"
             return 1
         ;;
     esac
 
-    qemu-img create -F qcow2 -f qcow2 -o backing_file="${AYA_IMGDIR}/${AYA_TEST_IMAGE}.${AYA_TEST_ARCH}.qcow2" "${AYA_TMPDIR}/vm.qcow2" || return 1
+    if [ ! -f "${AYA_IMGDIR}/vm.qcow2" ]; then
+        echo "Creating VM image"
+        qemu-img create -F qcow2 -f qcow2 -o backing_file="${AYA_IMGDIR}/${AYA_TEST_IMAGE}.${AYA_GUEST_ARCH}.qcow2" "${AYA_IMGDIR}/vm.qcow2" || return 1
+        CACHED_VM=0
+    else
+        echo "Reusing existing VM image"
+        CACHED_VM=1
+    fi
     $QEMU \
         -machine "${machine}" \
         -cpu "${cpu}" \
-        -m 2G \
+        -m 3G \
+        -smp "${nr_cpus}" \
         -display none \
         -monitor none \
         -daemonize \
         -pidfile "${AYA_TMPDIR}/vm.pid" \
         -device virtio-net-pci,netdev=net0 \
         -netdev user,id=net0,hostfwd=tcp::2222-:22 \
-        -drive if=virtio,format=qcow2,file="${AYA_TMPDIR}/vm.qcow2" \
+        $uefi \
+        -drive if=virtio,format=qcow2,file="${AYA_IMGDIR}/vm.qcow2" \
         -drive if=virtio,format=raw,file="${AYA_TMPDIR}/seed.img" || return 1
 
     trap cleanup_vm EXIT
@@ -139,8 +179,14 @@ EOF
         sleep 1
     done
 
-    echo "VM launched, installing dependencies"
-    exec_vm sudo dnf install -qy bpftool
+    echo "VM launched"
+    exec_vm uname -a
+    echo "Installing dependencies"
+    exec_vm sudo dnf install -qy bpftool llvm llvm-devel clang clang-devel zlib-devel
+    exec_vm 'curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- \
+        -y --profile minimal --default-toolchain nightly --component rust-src --component clippy'
+    exec_vm 'echo source ~/.cargo/env >> ~/.bashrc'
+    exec_vm cargo install bpf-linker --no-default-features --features system-llvm
 }
 
 scp_vm() {
@@ -150,6 +196,10 @@ scp_vm() {
         -i "${AYA_TMPDIR}/test_rsa" \
         -P 2222 "${local}" \
         "${AYA_SSH_USER}@localhost:${remote}"
+}
+
+rsync_vm() {
+    rsync -a -e "ssh -p 2222 -F ${AYA_TMPDIR}/ssh_config -i ${AYA_TMPDIR}/test_rsa" $1 $AYA_SSH_USER@localhost:
 }
 
 exec_vm() {
@@ -166,26 +216,34 @@ stop_vm() {
         kill -9 "$(cat "${AYA_TMPDIR}/vm.pid")"
         rm "${AYA_TMPDIR}/vm.pid"
     fi
-    rm -f "${AYA_TMPDIR}/vm.qcow2"
 }
 
 cleanup_vm() {
+    stop_vm
     if [ "$?" != "0" ]; then
-        stop_vm
+        rm -f "${AYA_IMGDIR}/vm.qcow2"
     fi
 }
 
-if [ -z "$1" ]; then
+if [ -z "$LIBBPF_DIR" ]; then
     echo "path to libbpf required"
     exit 1
 fi
 
 start_vm
-trap stop_vm EXIT
+trap cleanup_vm EXIT
 
-cargo xtask build-integration-test --musl --libbpf-dir "$1"
-scp_vm ../target/x86_64-unknown-linux-musl/debug/integration-test
-exec_vm sudo ./integration-test --skip relocations
+# make sure we always use fresh aya and libbpf (also see comment at the end)
+exec_vm "rm -rf aya/* libbpf"
+rsync_vm "--exclude=target --exclude=.tmp $AYA_SOURCE_DIR"
+rsync_vm "$LIBBPF_DIR"
 
-# Relocation tests build the eBPF programs themself. We run them outside VM.
-sudo -E ../target/x86_64-unknown-linux-musl/debug/integration-test relocations
+# need to build or linting will fail trying to include object files
+exec_vm "cd aya; cargo xtask build-integration-test --libbpf-dir ~/libbpf"
+exec_vm "cd aya; cargo clippy -p integration-test -- --deny warnings"
+exec_vm "cd aya; cargo xtask integration-test --libbpf-dir ~/libbpf"
+
+# we rm and sync but it doesn't seem to work reliably - I guess we could sleep a
+# few seconds after but ain't nobody got time for that. Instead we also rm
+# before rsyncing.
+exec_vm "rm -rf aya/* libbpf; sync"

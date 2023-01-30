@@ -14,7 +14,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-test:
     strategy:
       matrix:
         arch:
@@ -43,42 +43,3 @@ jobs:
           RUST_BACKTRACE: full
         run: |
           cross test --verbose --target ${{matrix.arch}}
-
-  test:
-    runs-on: ubuntu-20.04
-    needs: build
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/checkout@v2
-        with:
-          repository: libbpf/libbpf
-          path: libbpf
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          components: rustfmt, clippy, rust-src
-          target: x86_64-unknown-linux-musl
-          override: true
-
-      - uses: Swatinem/rust-cache@v1
-
-      - name: Install Pre-requisites
-        run: |
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main" | sudo tee -a /etc/apt/sources.list
-          sudo apt-get update
-          sudo apt-get -qy install linux-tools-common qemu-system-x86 cloud-image-utils openssh-client libelf-dev gcc-multilib llvm-15 clang-15
-          sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-15 200
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 200
-          cargo install bpf-linker
-
-      - name: Lint integration tests
-        run: |
-          cargo xtask build-integration-test-ebpf --libbpf-dir ./libbpf
-          cargo clippy -p integration-test -- --deny warnings
-
-      - name: Run integration tests
-        run: |
-          (cd test && ./run.sh ../libbpf)
