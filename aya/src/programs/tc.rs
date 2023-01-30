@@ -228,6 +228,64 @@ define_link_wrapper!(
     TcLinkId
 );
 
+impl SchedClassifierLink {
+    /// Constructs a [`SchedClassifierLink`] where the `if_name`, `attach_type`,
+    /// `priority` and `handle` are already known. This may have been found from a link created by
+    /// [SchedClassifier::attach], the output of the `tc filter` command or from the output of
+    /// another BPF loader.
+    ///
+    /// Note: If you create a link for a program that you do not own, detaching it may have
+    /// unintended consequences.
+    ///
+    /// # Errors
+    /// Returns [`io::Error`] if `if_name` is invalid. If the other parameters are invalid this call
+    /// will succeed, but calling [`SchedClassifierLink::detach`] will return [`TcError::NetlinkError`].
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use aya::programs::tc::SchedClassifierLink;
+    /// # use aya::programs::TcAttachType;
+    /// # #[derive(Debug, thiserror::Error)]
+    /// # enum Error {
+    /// #     #[error(transparent)]
+    /// #     IO(#[from] std::io::Error),
+    /// # }
+    /// # fn read_persisted_link_details() -> (String, TcAttachType, u16, u32) {
+    /// #     ("eth0".to_string(), TcAttachType::Ingress, 50, 1)
+    /// # }
+    /// // Get the link parameters from some external source. Where and how the parameters are
+    /// // persisted is up to your application.
+    /// let (if_name, attach_type, priority, handle) = read_persisted_link_details();
+    /// let new_tc_link = SchedClassifierLink::attached(&if_name, attach_type, priority, handle)?;
+    ///
+    /// # Ok::<(), Error>(())
+    /// ```
+    pub fn attached(
+        if_name: &str,
+        attach_type: TcAttachType,
+        priority: u16,
+        handle: u32,
+    ) -> Result<SchedClassifierLink, io::Error> {
+        let if_index = ifindex_from_ifname(if_name)?;
+        Ok(SchedClassifierLink(Some(TcLink {
+            if_index: if_index as i32,
+            attach_type,
+            priority,
+            handle,
+        })))
+    }
+
+    /// Returns the allocated priority. If none was provided at attach time, this was allocated for you.
+    pub fn priority(&self) -> u16 {
+        self.inner().priority
+    }
+
+    /// Returns the assigned handle. If none was provided at attach time, this was allocated for you.
+    pub fn handle(&self) -> u32 {
+        self.inner().handle
+    }
+}
+
 /// Add the `clasct` qdisc to the given interface.
 ///
 /// The `clsact` qdisc must be added to an interface before [`SchedClassifier`]
