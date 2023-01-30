@@ -529,7 +529,7 @@ impl Btf {
                         .iter()
                         .map(|p| BtfEnum {
                             name_offset: p.name_offset,
-                            value: p.btf_type as i32,
+                            value: p.btf_type,
                         })
                         .collect();
                     let enum_type = BtfType::Enum(Enum::new(ty.name_offset, members));
@@ -1246,9 +1246,9 @@ mod tests {
             assert!(fixed.name_offset == 0);
             assert!(fixed.variants.len() == 2);
             assert!(btf.string_at(fixed.variants[0].name_offset).unwrap() == "a");
-            assert!(fixed.variants[0].value == int_type_id as i32);
+            assert!(fixed.variants[0].value == int_type_id);
             assert!(btf.string_at(fixed.variants[1].name_offset).unwrap() == "b");
-            assert!(fixed.variants[1].value == int_type_id as i32);
+            assert!(fixed.variants[1].value == int_type_id);
         } else {
             panic!("not an emum")
         }

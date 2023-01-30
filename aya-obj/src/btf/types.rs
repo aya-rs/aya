@@ -389,7 +389,7 @@ impl Int {
 #[derive(Debug, Clone)]
 pub(crate) struct BtfEnum {
     pub(crate) name_offset: u32,
-    pub(crate) value: i32,
+    pub(crate) value: u32,
 }
 
 #[repr(C)]
@@ -409,7 +409,7 @@ impl Enum {
         buf.extend(bytes_of::<u32>(&self.size));
         for v in &self.variants {
             buf.extend(bytes_of::<u32>(&v.name_offset));
-            buf.extend(bytes_of::<i32>(&v.value));
+            buf.extend(bytes_of::<u32>(&v.value));
         }
         buf
     }
@@ -431,6 +431,10 @@ impl Enum {
             size: 4,
             variants,
         }
+    }
+
+    pub(crate) fn is_signed(&self) -> bool {
+        self.info >> 31 == 1
     }
 }
 

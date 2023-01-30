@@ -786,7 +786,7 @@ struct ComputedRelocation {
 
 #[derive(Debug)]
 struct ComputedRelocationValue {
-    value: u32,
+    value: u64,
     size: u32,
     type_id: Option<u32>,
 }
@@ -854,7 +854,7 @@ impl ComputedRelocation {
                 ins.imm = target_value as i32;
             }
             BPF_LDX | BPF_ST | BPF_STX => {
-                if target_value > i16::MAX as u32 {
+                if target_value > i16::MAX as u64 {
                     return Err(RelocationError::InvalidInstruction {
                         relocation_number: rel.number,
                         index: ins_index,
@@ -914,7 +914,7 @@ impl ComputedRelocation {
                     },
                 )?;
 
-                next_ins.imm = 0;
+                next_ins.imm = (target_value >> 32) as i32;
             }
             class => {
                 return Err(RelocationError::InvalidInstruction {
@@ -934,11 +934,18 @@ impl ComputedRelocation {
     ) -> Result<ComputedRelocationValue, RelocationError> {
         use RelocationKind::*;
         let value = match (rel.kind, spec) {
-            (EnumVariantExists, spec) => spec.is_some() as u32,
+            (EnumVariantExists, spec) => spec.is_some() as u64,
             (EnumVariantValue, Some(spec)) => {
                 let accessor = &spec.accessors[0];
                 match spec.btf.type_by_id(accessor.type_id)? {
-                    BtfType::Enum(en) => en.variants[accessor.index].value as u32,
+                    BtfType::Enum(en) => {
+                        let value = en.variants[accessor.index].value;
+                        if en.is_signed() {
+                            value as i32 as u64
+                        } else {
+                            value as u64
+                        }
+                    }
                     // candidate selection ensures that rel_kind == local_kind == target_kind
                     _ => unreachable!(),
                 }
@@ -969,7 +976,7 @@ impl ComputedRelocation {
             // this is the bpf_preserve_field_info(member_access, FIELD_EXISTENCE) case. If we
             // managed to build a spec, it means the field exists.
             return Ok(ComputedRelocationValue {
-                value: spec.is_some() as u32,
+                value: spec.is_some() as u64,
                 size: 0,
                 type_id: None,
             });
@@ -991,12 +998,12 @@ impl ComputedRelocation {
             // the last accessor is unnamed, meaning that this is an array access
             return match rel.kind {
                 FieldByteOffset => Ok(ComputedRelocationValue {
-                    value: (spec.bit_offset / 8) as u32,
+                    value: (spec.bit_offset / 8) as u64,
                     size: spec.btf.type_size(accessor.type_id)? as u32,
                     type_id: Some(accessor.type_id),
                 }),
                 FieldByteSize => Ok(ComputedRelocationValue {
-                    value: spec.btf.type_size(accessor.type_id)? as u32,
+                    value: spec.btf.type_size(accessor.type_id)? as u64,
                     size: 0,
                     type_id: Some(accessor.type_id),
                 }),
@@ -1061,30 +1068,30 @@ impl ComputedRelocation {
         #[allow(clippy::wildcard_in_or_patterns)]
         match rel.kind {
             FieldByteOffset => {
-                value.value = byte_off;
+                value.value = byte_off as u64;
                 if !is_bitfield {
                     value.size = byte_size;
                     value.type_id = Some(member_type_id);
                 }
             }
             FieldByteSize => {
-                value.value = byte_size;
+                value.value = byte_size as u64;
             }
             FieldSigned => match member_ty {
-                BtfType::Enum(_) => value.value = 1,
-                BtfType::Int(i) => value.value = i.encoding() as u32 & IntEncoding::Signed as u32,
+                BtfType::Enum(en) => value.value = en.is_signed() as u64,
+                BtfType::Int(i) => value.value = i.encoding() as u64 & IntEncoding::Signed as u64,
                 _ => (),
             },
             #[cfg(target_endian = "little")]
             FieldLShift64 => {
-                value.value = 64 - (bit_off + bit_size - byte_off * 8);
+                value.value = 64 - (bit_off + bit_size - byte_off * 8) as u64;
             }
             #[cfg(target_endian = "big")]
             FieldLShift64 => {
                 value.value = (8 - byte_size) * 8 + (bit_off - byte_off * 8);
             }
             FieldRShift64 => {
-                value.value = 64 - bit_size;
+                value.value = 64 - bit_size as u64;
             }
             FieldExists // this is handled at the start of the function
             | _ => panic!("bug! this should not be reached"),
@@ -1101,11 +1108,11 @@ impl ComputedRelocation {
         use RelocationKind::*;
 
         let value = match (rel.kind, target_spec) {
-            (TypeIdLocal, _) => local_spec.root_type_id,
-            (TypeIdTarget, Some(target_spec)) => target_spec.root_type_id,
-            (TypeExists, target_spec) => target_spec.is_some() as u32,
+            (TypeIdLocal, _) => local_spec.root_type_id as u64,
+            (TypeIdTarget, Some(target_spec)) => target_spec.root_type_id as u64,
+            (TypeExists, target_spec) => target_spec.is_some() as u64,
             (TypeSize, Some(target_spec)) => {
-                target_spec.btf.type_size(target_spec.root_type_id)? as u32
+                target_spec.btf.type_size(target_spec.root_type_id)? as u64
             }
             _ => {
                 return Err(RelocationError::MissingTargetDefinition {
