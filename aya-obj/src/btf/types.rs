@@ -28,6 +28,7 @@ pub enum BtfType {
     DataSec(DataSec),
     DeclTag(DeclTag),
     TypeTag(TypeTag),
+    Enum64(Enum64),
 }
 
 #[repr(C)]
@@ -439,6 +440,50 @@ impl Enum {
 }
 
 #[repr(C)]
+#[derive(Debug, Clone)]
+pub struct BtfEnum64 {
+    pub(crate) name_offset: u32,
+    pub(crate) value_low: u32,
+    pub(crate) value_high: u32,
+}
+
+#[repr(C)]
+#[derive(Clone, Debug)]
+pub struct Enum64 {
+    pub(crate) name_offset: u32,
+    info: u32,
+    pub(crate) size: u32,
+    pub(crate) variants: Vec<BtfEnum64>,
+}
+
+impl Enum64 {
+    pub(crate) fn to_bytes(&self) -> Vec<u8> {
+        let mut buf = vec![];
+        buf.extend(bytes_of::<u32>(&self.name_offset));
+        buf.extend(bytes_of::<u32>(&self.info));
+        buf.extend(bytes_of::<u32>(&self.size));
+        for v in &self.variants {
+            buf.extend(bytes_of::<u32>(&v.name_offset));
+            buf.extend(bytes_of::<u32>(&v.value_high));
+            buf.extend(bytes_of::<u32>(&v.value_low));
+        }
+        buf
+    }
+
+    pub(crate) fn kind(&self) -> BtfKind {
+        BtfKind::Enum64
+    }
+
+    pub(crate) fn type_info_size(&self) -> usize {
+        mem::size_of::<Fwd>() + mem::size_of::<BtfEnum64>() * self.variants.len()
+    }
+
+    pub(crate) fn is_signed(&self) -> bool {
+        self.info >> 31 == 1
+    }
+}
+
+#[repr(C)]
 #[derive(Clone, Debug)]
 pub(crate) struct BtfMember {
     pub(crate) name_offset: u32,
@@ -826,6 +871,7 @@ pub enum BtfKind {
     Float = 16,
     DeclTag = 17,
     TypeTag = 18,
+    Enum64 = 19,
 }
 
 impl TryFrom<u32> for BtfKind {
@@ -853,6 +899,7 @@ impl TryFrom<u32> for BtfKind {
             16 => Float,
             17 => DeclTag,
             18 => TypeTag,
+            19 => Enum64,
             kind => return Err(BtfError::InvalidTypeKind { kind }),
         })
     }
@@ -880,6 +927,7 @@ impl Display for BtfKind {
             BtfKind::DataSec => write!(f, "[DATASEC]"),
             BtfKind::DeclTag => write!(f, "[DECL_TAG]"),
             BtfKind::TypeTag => write!(f, "[TYPE_TAG]"),
+            BtfKind::Enum64 => write!(f, "[ENUM64]"),
         }
     }
 }
@@ -974,6 +1022,12 @@ impl BtfType {
                 size: ty[2],
                 variants: unsafe { read_array::<BtfEnum>(data, vlen)? },
             }),
+            BtfKind::Enum64 => BtfType::Enum64(Enum64 {
+                name_offset: ty[0],
+                info: ty[1],
+                size: ty[2],
+                variants: unsafe { read_array::<BtfEnum64>(data, vlen)? },
+            }),
             BtfKind::Array => BtfType::Array(Array {
                 name_offset: ty[0],
                 info: ty[1],
@@ -1037,6 +1091,7 @@ impl BtfType {
             BtfType::Int(t) => t.to_bytes(),
             BtfType::Float(t) => t.to_bytes(),
             BtfType::Enum(t) => t.to_bytes(),
+            BtfType::Enum64(t) => t.to_bytes(),
             BtfType::Array(t) => t.to_bytes(),
             BtfType::Struct(t) => t.to_bytes(),
             BtfType::Union(t) => t.to_bytes(),
@@ -1053,6 +1108,7 @@ impl BtfType {
             BtfType::Int(t) => Some(t.size),
             BtfType::Float(t) => Some(t.size),
             BtfType::Enum(t) => Some(t.size),
+            BtfType::Enum64(t) => Some(t.size),
             BtfType::Struct(t) => Some(t.size),
             BtfType::Union(t) => Some(t.size),
             BtfType::DataSec(t) => Some(t.size),
@@ -1090,6 +1146,7 @@ impl BtfType {
             BtfType::Int(t) => t.type_info_size(),
             BtfType::Float(t) => t.type_info_size(),
             BtfType::Enum(t) => t.type_info_size(),
+            BtfType::Enum64(t) => t.type_info_size(),
             BtfType::Array(t) => t.type_info_size(),
             BtfType::Struct(t) => t.type_info_size(),
             BtfType::Union(t) => t.type_info_size(),
@@ -1114,6 +1171,7 @@ impl BtfType {
             BtfType::Int(t) => t.name_offset,
             BtfType::Float(t) => t.name_offset,
             BtfType::Enum(t) => t.name_offset,
+            BtfType::Enum64(t) => t.name_offset,
             BtfType::Array(t) => t.name_offset,
             BtfType::Struct(t) => t.name_offset,
             BtfType::Union(t) => t.name_offset,
@@ -1138,6 +1196,7 @@ impl BtfType {
             BtfType::Int(t) => t.kind(),
             BtfType::Float(t) => t.kind(),
             BtfType::Enum(t) => t.kind(),
+            BtfType::Enum64(t) => t.kind(),
             BtfType::Array(t) => t.kind(),
             BtfType::Struct(t) => t.kind(),
             BtfType::Union(t) => t.kind(),
@@ -1176,6 +1235,17 @@ impl BtfType {
             _ => None,
         }
     }
+
+    pub(crate) fn is_compatible(&self, other: &BtfType) -> bool {
+        if self.kind() == other.kind() {
+            return true;
+        }
+
+        matches!(
+            (self.kind(), other.kind()),
+            (BtfKind::Enum, BtfKind::Enum64) | (BtfKind::Enum64, BtfKind::Enum)
+        )
+    }
 }
 
 fn type_kind(info: u32) -> Result<BtfKind, BtfError> {
@@ -1197,7 +1267,7 @@ pub(crate) fn types_are_compatible(
     let local_ty = local_btf.type_by_id(local_id)?;
     let target_ty = target_btf.type_by_id(target_id)?;
 
-    if local_ty.kind() != target_ty.kind() {
+    if !local_ty.is_compatible(target_ty) {
         return Ok(false);
     }
 
@@ -1207,7 +1277,7 @@ pub(crate) fn types_are_compatible(
         let local_ty = local_btf.type_by_id(local_id)?;
         let target_ty = target_btf.type_by_id(target_id)?;
 
-        if local_ty.kind() != target_ty.kind() {
+        if !local_ty.is_compatible(target_ty) {
             return Ok(false);
         }
 
@@ -1216,6 +1286,7 @@ pub(crate) fn types_are_compatible(
             | BtfType::Struct(_)
             | BtfType::Union(_)
             | BtfType::Enum(_)
+            | BtfType::Enum64(_)
             | BtfType::Fwd(_)
             | BtfType::Float(_) => return Ok(true),
             BtfType::Int(local) => {
@@ -1279,12 +1350,12 @@ pub(crate) fn fields_are_compatible(
             return Ok(true);
         }
 
-        if local_ty.kind() != target_ty.kind() {
+        if !local_ty.is_compatible(target_ty) {
             return Ok(false);
         }
 
         match local_ty {
-            BtfType::Fwd(_) | BtfType::Enum(_) => {
+            BtfType::Fwd(_) | BtfType::Enum(_) | BtfType::Enum64(_) => {
                 let flavorless_name =
                     |name: &str| name.split_once("___").map_or(name, |x| x.0).to_string();
 

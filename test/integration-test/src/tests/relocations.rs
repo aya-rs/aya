@@ -81,6 +81,46 @@ fn relocate_enum_signed() {
 }
 
 #[integration_test]
+fn relocate_enum64() {
+    let test = RelocationTest {
+        local_definition: r#"
+            enum foo { D = 0xAAAAAAAABBBBBBBB };
+        "#,
+        target_btf: r#"
+            enum foo { D = 0xCCCCCCCCDDDDDDDD } e1;
+        "#,
+        relocation_code: r#"
+            #define BPF_ENUMVAL_VALUE 1
+            value = __builtin_preserve_enum_value(*(typeof(enum foo) *)D, BPF_ENUMVAL_VALUE);
+        "#,
+    }
+    .build()
+    .unwrap();
+    assert_eq!(test.run().unwrap(), 0xCCCCCCCCDDDDDDDD);
+    assert_eq!(test.run_no_btf().unwrap(), 0xAAAAAAAABBBBBBBB);
+}
+
+#[integration_test]
+fn relocate_enum64_signed() {
+    let test = RelocationTest {
+        local_definition: r#"
+            enum foo { D = -0xAAAAAAABBBBBBBB };
+        "#,
+        target_btf: r#"
+            enum foo { D = -0xCCCCCCCDDDDDDDD } e1;
+        "#,
+        relocation_code: r#"
+            #define BPF_ENUMVAL_VALUE 1
+            value = __builtin_preserve_enum_value(*(typeof(enum foo) *)D, BPF_ENUMVAL_VALUE);
+        "#,
+    }
+    .build()
+    .unwrap();
+    assert_eq!(test.run().unwrap() as i64, -0xCCCCCCCDDDDDDDDi64);
+    assert_eq!(test.run_no_btf().unwrap() as i64, -0xAAAAAAABBBBBBBBi64);
+}
+
+#[integration_test]
 fn relocate_pointer() {
     let test = RelocationTest {
         local_definition: r#"
