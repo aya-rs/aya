@@ -229,7 +229,7 @@ define_link_wrapper!(
 );
 
 impl SchedClassifierLink {
-    /// This API is used to construct a [`SchedClassifierLink`] where the `if_name`, `attach_type`,
+    /// Constructs a [`SchedClassifierLink`] where the `if_name`, `attach_type`,
     /// `priority` and `handle` are already known. This may have been found from a link created by
     /// [SchedClassifier::attach], the output of the `tc filter` command or from the output of
     /// another BPF loader.
@@ -238,8 +238,8 @@ impl SchedClassifierLink {
     /// unintended consequences.
     ///
     /// # Errors
-    /// - If a program is not attached with the provided parameters, calls to
-    ///   [`SchedClassifierLink::detach`] will return a [`TcError::NetlinkError`]
+    /// Returns [`io::Error`] if `if_name` is invalid. If the other parameters are invalid this call
+    /// will succeed, but calling [`SchedClassifierLink::detach`] will return [`TcError::NetlinkError`].
     ///
     /// # Examples
     /// ```no_run
