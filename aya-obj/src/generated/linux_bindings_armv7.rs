@@ -955,6 +955,16 @@ pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_5 {
 pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_6 {
     pub ifindex: __u32,
 }
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum bpf_task_fd_type {
+    BPF_FD_TYPE_RAW_TRACEPOINT = 0,
+    BPF_FD_TYPE_TRACEPOINT = 1,
+    BPF_FD_TYPE_KPROBE = 2,
+    BPF_FD_TYPE_KRETPROBE = 3,
+    BPF_FD_TYPE_UPROBE = 4,
+    BPF_FD_TYPE_URETPROBE = 5,
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct bpf_func_info {

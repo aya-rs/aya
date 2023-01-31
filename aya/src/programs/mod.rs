@@ -66,7 +66,7 @@ pub mod xdp;
 
 use libc::ENOSPC;
 use std::{
-    ffi::CString,
+    ffi::{CStr, CString},
     io,
     os::unix::io::{AsRawFd, RawFd},
     path::Path,
@@ -103,13 +103,14 @@ pub use uprobe::{UProbe, UProbeError};
 pub use xdp::{Xdp, XdpError, XdpFlags};
 
 use crate::{
-    generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
+    generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type, bpf_task_fd_type},
     maps::MapError,
     obj::{self, btf::BtfError, Function, KernelVersion},
     pin::PinError,
     sys::{
         bpf_get_object, bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id,
-        bpf_prog_get_info_by_fd, bpf_prog_query, retry_with_verifier_logs, BpfLoadProgramAttrs,
+        bpf_prog_get_info_by_fd, bpf_prog_query, bpf_task_fd_query, retry_with_verifier_logs,
+        BpfLoadProgramAttrs,
     },
     util::VerifierLog,
 };
@@ -851,5 +852,113 @@ impl ProgramInfo {
         }
 
         Ok(ProgramInfo(info))
+    }
+}
+
+/// Kind of a probe program from a process FD.
+#[repr(u32)]
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum TaskFdKind {
+    /// Raw tracepoint.
+    RawTracePoint = bpf_task_fd_type::BPF_FD_TYPE_RAW_TRACEPOINT as u32,
+    /// Tracepoint.
+    TracePoint = bpf_task_fd_type::BPF_FD_TYPE_TRACEPOINT as u32,
+    /// Kernel probe.
+    KProbe = bpf_task_fd_type::BPF_FD_TYPE_KPROBE as u32,
+    /// Kernel return probe.
+    KRetProbe = bpf_task_fd_type::BPF_FD_TYPE_KRETPROBE as u32,
+    /// User space probe.
+    UProbe = bpf_task_fd_type::BPF_FD_TYPE_UPROBE as u32,
+    /// User space return probe.
+    URetProbe = bpf_task_fd_type::BPF_FD_TYPE_URETPROBE as u32,
+}
+
+impl TryFrom<u32> for TaskFdKind {
+    type Error = ProgramError;
+
+    fn try_from(v: u32) -> Result<Self, Self::Error> {
+        use bpf_task_fd_type::*;
+        use TaskFdKind::*;
+        Ok(match v {
+            x if x == BPF_FD_TYPE_RAW_TRACEPOINT as u32 => RawTracePoint,
+            x if x == BPF_FD_TYPE_TRACEPOINT as u32 => TracePoint,
+            x if x == BPF_FD_TYPE_KPROBE as u32 => KProbe,
+            x if x == BPF_FD_TYPE_KRETPROBE as u32 => KRetProbe,
+            x if x == BPF_FD_TYPE_UPROBE as u32 => UProbe,
+            x if x == BPF_FD_TYPE_URETPROBE as u32 => URetProbe,
+            _ => return Err(ProgramError::UnexpectedProgramType),
+        })
+    }
+}
+
+/// Details of a probe program from a process FD.
+#[derive(Debug)]
+pub struct TaskFdDetails<'buf> {
+    /// Program ID.
+    id: u32,
+    /// Program kind.
+    kind: TaskFdKind,
+    /// Program name.
+    name: Option<&'buf CStr>,
+    /// Optional program probe address.
+    probe_addr: Option<u64>,
+    /// Optional program probe offset.
+    probe_offset: Option<u64>,
+}
+
+impl<'buf> TaskFdDetails<'buf> {
+    /// Query the details of an FD in a process (task), looking for probe programs.
+    ///
+    /// `Ok(None)` is returned if the target FD does not exist or is not a probe program.
+    pub fn query_task_fd(
+        pid: u32,
+        target_fd: RawFd,
+        out_name_buf: Option<&mut [u8]>,
+    ) -> Result<Option<TaskFdDetails<'buf>>, ProgramError> {
+        let out = match bpf_task_fd_query(pid, target_fd, out_name_buf) {
+            Ok(v) => v,
+            // ENOTSUPP (errno 95) means that the target FD is not a perf program.
+            Err(e) if e.raw_os_error() == Some(95) => return Ok(None),
+            // ENOENT (errno 2) means that the target FD or PID does not exist.
+            Err(e) if e.raw_os_error() == Some(2) => return Ok(None),
+            Err(e) => {
+                return Err(ProgramError::SyscallError {
+                    call: "bpf_task_fd_query".to_owned(),
+                    io_error: e,
+                })
+            }
+        };
+        let kind = TaskFdKind::try_from(out.fd_type as u32)?;
+        Ok(Some(TaskFdDetails {
+            id: out.prog_id,
+            kind,
+            name: out.name,
+            probe_addr: out.probe_addr,
+            probe_offset: out.probe_offset,
+        }))
+    }
+
+    /// Return the program ID.
+    pub fn id(&self) -> u32 {
+        self.id
+    }
+
+    /// Return the program kind.
+    pub fn kind(&self) -> TaskFdKind {
+        self.kind
+    }
+
+    /// Return the program name.
+    pub fn name(&self) -> Option<&CStr> {
+        self.name
+    }
+
+    /// Return the program probe address and offset.
+    pub fn address_and_offset(&self) -> Option<(u64, u64)> {
+        match (self.probe_addr, self.probe_offset) {
+            (Some(a), Some(o)) => Some((a, o)),
+            _ => None,
+        }
     }
 }

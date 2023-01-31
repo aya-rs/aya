@@ -12,7 +12,7 @@ use libc::{c_char, c_long, close, ENOENT, ENOSPC};
 use crate::{
     generated::{
         bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info,
-        bpf_prog_info, bpf_prog_type, BPF_F_REPLACE,
+        bpf_prog_info, bpf_prog_type, bpf_task_fd_type, BPF_F_REPLACE,
     },
     maps::PerCpuValues,
     obj::{
@@ -449,6 +449,68 @@ pub(crate) fn bpf_prog_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_prog_info, i
         Ok(_) => Ok(unsafe { info.assume_init() }),
         Err((_, err)) => Err(err),
     }
+}
+
+#[derive(Debug)]
+pub(crate) struct TaskFdQueryOutput<'buf> {
+    pub(crate) prog_id: u32,
+    pub(crate) fd_type: bpf_task_fd_type,
+    pub(crate) name: Option<&'buf CStr>,
+    pub(crate) probe_offset: Option<u64>,
+    pub(crate) probe_addr: Option<u64>,
+}
+
+pub(crate) fn bpf_task_fd_query<'buf>(
+    pid: u32,
+    target_fd: RawFd,
+    out_name_buf: Option<&mut [u8]>,
+) -> Result<TaskFdQueryOutput<'buf>, io::Error> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    attr.task_fd_query.pid = pid;
+    attr.task_fd_query.fd = target_fd as u32;
+    let mut out_name_buf = out_name_buf;
+    if let Some(buf) = &mut out_name_buf {
+        attr.task_fd_query.buf = buf.as_mut_ptr() as u64;
+        attr.task_fd_query.buf_len = buf.len() as u32;
+    };
+
+    if let Err((_, err)) = sys_bpf(bpf_cmd::BPF_TASK_FD_QUERY, &attr) {
+        // The kernel here may leak an internal ENOTSUPP code (524), so
+        // this needs to translate it back to POSIX-defined ENOTSUPP (95).
+        return match err.raw_os_error() {
+            Some(524) => Err(io::Error::from_raw_os_error(95)),
+            _ => Err(err),
+        };
+    }
+
+    let fd_type = unsafe { std::mem::transmute(attr.task_fd_query.fd_type) };
+    let name = out_name_buf.map(|buf| unsafe {
+        CStr::from_bytes_with_nul_unchecked(slice::from_raw_parts(
+            buf.as_ptr(),
+            attr.task_fd_query.buf_len as usize + 1,
+        ))
+    });
+    let (probe_offset, probe_addr) = match fd_type {
+        bpf_task_fd_type::BPF_FD_TYPE_KPROBE
+        | bpf_task_fd_type::BPF_FD_TYPE_KRETPROBE
+        | bpf_task_fd_type::BPF_FD_TYPE_UPROBE
+        | bpf_task_fd_type::BPF_FD_TYPE_URETPROBE => unsafe {
+            (
+                Some(attr.task_fd_query.probe_offset),
+                Some(attr.task_fd_query.probe_addr),
+            )
+        },
+        _ => (None, None),
+    };
+
+    Ok(TaskFdQueryOutput {
+        prog_id: unsafe { attr.task_fd_query.prog_id },
+        fd_type,
+        name,
+        probe_offset,
+        probe_addr,
+    })
 }
 
 pub(crate) fn bpf_map_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_map_info, io::Error> {
