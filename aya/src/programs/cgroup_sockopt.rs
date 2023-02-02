@@ -1,5 +1,5 @@
 //! Cgroup socket option programs.
-use thiserror::Error;
+pub use aya_obj::programs::CgroupSockoptAttachType;
 
 use std::{
     hash::Hash,
@@ -9,8 +9,7 @@ use std::{
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCKOPT,
     programs::{
-        bpf_attach_type, define_link_wrapper, load_program, FdLink, Link, ProgAttachLink,
-        ProgramData, ProgramError,
+        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach, kernel_version},
 };
@@ -155,35 +154,3 @@ define_link_wrapper!(
     CgroupSockoptLinkInner,
     CgroupSockoptLinkIdInner
 );
-
-/// Defines where to attach a [`CgroupSockopt`] program.
-#[derive(Copy, Clone, Debug)]
-pub enum CgroupSockoptAttachType {
-    /// Attach to GetSockopt.
-    Get,
-    /// Attach to SetSockopt.
-    Set,
-}
-
-impl From<CgroupSockoptAttachType> for bpf_attach_type {
-    fn from(s: CgroupSockoptAttachType) -> bpf_attach_type {
-        match s {
-            CgroupSockoptAttachType::Get => bpf_attach_type::BPF_CGROUP_GETSOCKOPT,
-            CgroupSockoptAttachType::Set => bpf_attach_type::BPF_CGROUP_SETSOCKOPT,
-        }
-    }
-}
-
-#[derive(Debug, Error)]
-#[error("{0} is not a valid attach type for a CGROUP_SOCKOPT program")]
-pub(crate) struct InvalidAttachType(String);
-
-impl CgroupSockoptAttachType {
-    pub(crate) fn try_from(value: &str) -> Result<CgroupSockoptAttachType, InvalidAttachType> {
-        match value {
-            "getsockopt" => Ok(CgroupSockoptAttachType::Get),
-            "setsockopt" => Ok(CgroupSockoptAttachType::Set),
-            _ => Err(InvalidAttachType(value.to_owned())),
-        }
-    }
-}

@@ -1,0 +1,43 @@
+name: integration-tests
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          repository: libbpf/libbpf
+          path: libbpf
+
+      - name: Install Pre-requisites
+        run: |
+          brew install qemu gnu-getopt coreutils cdrtools
+
+      - name: Cache tmp files
+        uses: actions/cache@v3
+        with:
+          path: |
+            .tmp/*.qcow2
+            .tmp/test_rsa
+            .tmp/test_rsa.pub
+          # FIXME: we should invalidate the cache on new bpf-linker releases.
+          # For now we must manually delete the cache when we release a new
+          # bpf-linker version.
+          key: tmp-files-${{ hashFiles('test/run.sh') }}
+
+      - name: Run integration tests
+        run: test/run.sh ./libbpf

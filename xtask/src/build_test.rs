@@ -5,9 +5,9 @@ use crate::build_ebpf;
 
 #[derive(Parser)]
 pub struct Options {
-    /// Whether to compile for the musl libc target
-    #[clap(short, long)]
-    pub musl: bool,
+    /// Target triple for which the code is compiled
+    #[clap(long)]
+    pub musl_target: Option<String>,
 
     #[clap(flatten)]
     pub ebpf_options: build_ebpf::BuildEbpfOptions,
@@ -16,9 +16,12 @@ pub struct Options {
 pub fn build_test(opts: Options) -> anyhow::Result<()> {
     build_ebpf::build_ebpf(opts.ebpf_options)?;
 
-    let mut args = vec!["build", "-p", "integration-test", "--verbose"];
-    if opts.musl {
-        args.push("--target=x86_64-unknown-linux-musl");
+    let mut args = ["build", "-p", "integration-test", "--verbose"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
+    if let Some(target) = opts.musl_target {
+        args.push(format!("--target={target}"));
     }
     let status = Command::new("cargo")
         .args(&args)

@@ -12,7 +12,7 @@ use libc::{c_char, c_long, close, ENOENT, ENOSPC};
 use crate::{
     generated::{
         bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info,
-        bpf_prog_info, bpf_prog_type, BPF_F_REPLACE,
+        bpf_map_type, bpf_prog_info, bpf_prog_type, BPF_F_REPLACE,
     },
     maps::PerCpuValues,
     obj::{
@@ -39,9 +39,36 @@ pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>)
     u.map_flags = def.map_flags();
 
     if let obj::Map::Btf(m) = def {
-        u.btf_key_type_id = m.def.btf_key_type_id;
-        u.btf_value_type_id = m.def.btf_value_type_id;
-        u.btf_fd = btf_fd.unwrap() as u32;
+        use bpf_map_type::*;
+
+        // Mimic https://github.com/libbpf/libbpf/issues/355
+        // Currently a bunch of (usually pretty specialized) BPF maps do not support
+        // specifying BTF types for the key and value.
+        match u.map_type.try_into() {
+            Ok(BPF_MAP_TYPE_PERF_EVENT_ARRAY)
+            | Ok(BPF_MAP_TYPE_CGROUP_ARRAY)
+            | Ok(BPF_MAP_TYPE_STACK_TRACE)
+            | Ok(BPF_MAP_TYPE_ARRAY_OF_MAPS)
+            | Ok(BPF_MAP_TYPE_HASH_OF_MAPS)
+            | Ok(BPF_MAP_TYPE_DEVMAP)
+            | Ok(BPF_MAP_TYPE_DEVMAP_HASH)
+            | Ok(BPF_MAP_TYPE_CPUMAP)
+            | Ok(BPF_MAP_TYPE_XSKMAP)
+            | Ok(BPF_MAP_TYPE_SOCKMAP)
+            | Ok(BPF_MAP_TYPE_SOCKHASH)
+            | Ok(BPF_MAP_TYPE_QUEUE)
+            | Ok(BPF_MAP_TYPE_STACK)
+            | Ok(BPF_MAP_TYPE_RINGBUF) => {
+                u.btf_key_type_id = 0;
+                u.btf_value_type_id = 0;
+                u.btf_fd = 0;
+            }
+            _ => {
+                u.btf_key_type_id = m.def.btf_key_type_id;
+                u.btf_value_type_id = m.def.btf_value_type_id;
+                u.btf_fd = btf_fd.unwrap() as u32;
+            }
+        }
     }
 
     // https://github.com/torvalds/linux/commit/ad5b177bd73f5107d97c36f56395c4281fb6f089

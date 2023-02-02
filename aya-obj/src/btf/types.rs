@@ -1,11 +1,14 @@
-use std::{fmt::Display, mem, ptr};
+#![allow(missing_docs)]
 
+use core::{fmt::Display, mem, ptr};
+
+use alloc::{string::ToString, vec, vec::Vec};
 use object::Endianness;
 
-use crate::obj::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH};
+use crate::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH};
 
 #[derive(Clone, Debug)]
-pub(crate) enum BtfType {
+pub enum BtfType {
     Unknown,
     Fwd(Fwd),
     Const(Const),
@@ -25,11 +28,12 @@ pub(crate) enum BtfType {
     DataSec(DataSec),
     DeclTag(DeclTag),
     TypeTag(TypeTag),
+    Enum64(Enum64),
 }
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Fwd {
+pub struct Fwd {
     pub(crate) name_offset: u32,
     info: u32,
     _unused: u32,
@@ -51,7 +55,7 @@ impl Fwd {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Const {
+pub struct Const {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -82,7 +86,7 @@ impl Const {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Volatile {
+pub struct Volatile {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -103,7 +107,7 @@ impl Volatile {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct Restrict {
+pub struct Restrict {
     pub(crate) name_offset: u32,
     _info: u32,
     pub(crate) btf_type: u32,
@@ -125,7 +129,7 @@ impl Restrict {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Ptr {
+pub struct Ptr {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -144,7 +148,7 @@ impl Ptr {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, btf_type: u32) -> Self {
+    pub fn new(name_offset: u32, btf_type: u32) -> Self {
         let info = (BtfKind::Ptr as u32) << 24;
         Ptr {
             name_offset,
@@ -156,7 +160,7 @@ impl Ptr {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Typedef {
+pub struct Typedef {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -187,7 +191,7 @@ impl Typedef {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Float {
+pub struct Float {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -205,7 +209,7 @@ impl Float {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, size: u32) -> Self {
+    pub fn new(name_offset: u32, size: u32) -> Self {
         let info = (BtfKind::Float as u32) << 24;
         Float {
             name_offset,
@@ -217,7 +221,7 @@ impl Float {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Func {
+pub struct Func {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -225,7 +229,7 @@ pub(crate) struct Func {
 
 #[repr(u32)]
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum FuncLinkage {
+pub enum FuncLinkage {
     Static = 0,
     Global = 1,
     Extern = 2,
@@ -255,7 +259,7 @@ impl Func {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, proto: u32, linkage: FuncLinkage) -> Self {
+    pub fn new(name_offset: u32, proto: u32, linkage: FuncLinkage) -> Self {
         let mut info = (BtfKind::Func as u32) << 24;
         info |= (linkage as u32) & 0xFFFF;
         Func {
@@ -276,7 +280,7 @@ impl Func {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct TypeTag {
+pub struct TypeTag {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -295,7 +299,7 @@ impl TypeTag {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, btf_type: u32) -> Self {
+    pub fn new(name_offset: u32, btf_type: u32) -> Self {
         let info = (BtfKind::TypeTag as u32) << 24;
         TypeTag {
             name_offset,
@@ -307,7 +311,7 @@ impl TypeTag {
 
 #[repr(u32)]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) enum IntEncoding {
+pub enum IntEncoding {
     None,
     Signed = 1,
     Char = 2,
@@ -329,7 +333,7 @@ impl From<u32> for IntEncoding {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Int {
+pub struct Int {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -353,7 +357,7 @@ impl Int {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, size: u32, encoding: IntEncoding, offset: u32) -> Self {
+    pub fn new(name_offset: u32, size: u32, encoding: IntEncoding, offset: u32) -> Self {
         let info = (BtfKind::Int as u32) << 24;
         let mut data = 0u32;
         data |= (encoding as u32 & 0x0f) << 24;
@@ -386,12 +390,12 @@ impl Int {
 #[derive(Debug, Clone)]
 pub(crate) struct BtfEnum {
     pub(crate) name_offset: u32,
-    pub(crate) value: i32,
+    pub(crate) value: u32,
 }
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Enum {
+pub struct Enum {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -406,7 +410,7 @@ impl Enum {
         buf.extend(bytes_of::<u32>(&self.size));
         for v in &self.variants {
             buf.extend(bytes_of::<u32>(&v.name_offset));
-            buf.extend(bytes_of::<i32>(&v.value));
+            buf.extend(bytes_of::<u32>(&v.value));
         }
         buf
     }
@@ -429,6 +433,54 @@ impl Enum {
             variants,
         }
     }
+
+    pub(crate) fn is_signed(&self) -> bool {
+        self.info >> 31 == 1
+    }
+}
+
+#[repr(C)]
+#[derive(Debug, Clone)]
+pub struct BtfEnum64 {
+    pub(crate) name_offset: u32,
+    pub(crate) value_low: u32,
+    pub(crate) value_high: u32,
+}
+
+#[repr(C)]
+#[derive(Clone, Debug)]
+pub struct Enum64 {
+    pub(crate) name_offset: u32,
+    info: u32,
+    pub(crate) size: u32,
+    pub(crate) variants: Vec<BtfEnum64>,
+}
+
+impl Enum64 {
+    pub(crate) fn to_bytes(&self) -> Vec<u8> {
+        let mut buf = vec![];
+        buf.extend(bytes_of::<u32>(&self.name_offset));
+        buf.extend(bytes_of::<u32>(&self.info));
+        buf.extend(bytes_of::<u32>(&self.size));
+        for v in &self.variants {
+            buf.extend(bytes_of::<u32>(&v.name_offset));
+            buf.extend(bytes_of::<u32>(&v.value_high));
+            buf.extend(bytes_of::<u32>(&v.value_low));
+        }
+        buf
+    }
+
+    pub(crate) fn kind(&self) -> BtfKind {
+        BtfKind::Enum64
+    }
+
+    pub(crate) fn type_info_size(&self) -> usize {
+        mem::size_of::<Fwd>() + mem::size_of::<BtfEnum64>() * self.variants.len()
+    }
+
+    pub(crate) fn is_signed(&self) -> bool {
+        self.info >> 31 == 1
+    }
 }
 
 #[repr(C)]
@@ -441,7 +493,7 @@ pub(crate) struct BtfMember {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Struct {
+pub struct Struct {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -502,7 +554,7 @@ impl Struct {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Union {
+pub struct Union {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -559,7 +611,7 @@ pub(crate) struct BtfArray {
 }
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Array {
+pub struct Array {
     pub(crate) name_offset: u32,
     info: u32,
     _unused: u32,
@@ -602,14 +654,14 @@ impl Array {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct BtfParam {
-    pub(crate) name_offset: u32,
-    pub(crate) btf_type: u32,
+pub struct BtfParam {
+    pub name_offset: u32,
+    pub btf_type: u32,
 }
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct FuncProto {
+pub struct FuncProto {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) return_type: u32,
@@ -637,7 +689,7 @@ impl FuncProto {
         mem::size_of::<Fwd>() + mem::size_of::<BtfParam>() * self.params.len()
     }
 
-    pub(crate) fn new(params: Vec<BtfParam>, return_type: u32) -> Self {
+    pub fn new(params: Vec<BtfParam>, return_type: u32) -> Self {
         let mut info = (BtfKind::FuncProto as u32) << 24;
         info |= (params.len() as u32) & 0xFFFF;
         FuncProto {
@@ -651,7 +703,7 @@ impl FuncProto {
 
 #[repr(u32)]
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum VarLinkage {
+pub enum VarLinkage {
     Static,
     Global,
     Extern,
@@ -671,7 +723,7 @@ impl From<u32> for VarLinkage {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct Var {
+pub struct Var {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -696,7 +748,7 @@ impl Var {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, btf_type: u32, linkage: VarLinkage) -> Self {
+    pub fn new(name_offset: u32, btf_type: u32, linkage: VarLinkage) -> Self {
         let info = (BtfKind::Var as u32) << 24;
         Var {
             name_offset,
@@ -709,15 +761,15 @@ impl Var {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct DataSecEntry {
-    pub(crate) btf_type: u32,
-    pub(crate) offset: u32,
-    pub(crate) size: u32,
+pub struct DataSecEntry {
+    pub btf_type: u32,
+    pub offset: u32,
+    pub size: u32,
 }
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct DataSec {
+pub struct DataSec {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) size: u32,
@@ -746,7 +798,7 @@ impl DataSec {
         mem::size_of::<Fwd>() + mem::size_of::<DataSecEntry>() * self.entries.len()
     }
 
-    pub(crate) fn new(name_offset: u32, entries: Vec<DataSecEntry>, size: u32) -> Self {
+    pub fn new(name_offset: u32, entries: Vec<DataSecEntry>, size: u32) -> Self {
         let mut info = (BtfKind::DataSec as u32) << 24;
         info |= (entries.len() as u32) & 0xFFFF;
         DataSec {
@@ -760,7 +812,7 @@ impl DataSec {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct DeclTag {
+pub struct DeclTag {
     pub(crate) name_offset: u32,
     info: u32,
     pub(crate) btf_type: u32,
@@ -785,7 +837,7 @@ impl DeclTag {
         mem::size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, btf_type: u32, component_index: i32) -> Self {
+    pub fn new(name_offset: u32, btf_type: u32, component_index: i32) -> Self {
         let info = (BtfKind::DeclTag as u32) << 24;
         DeclTag {
             name_offset,
@@ -796,9 +848,10 @@ impl DeclTag {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
 #[repr(u32)]
-pub(crate) enum BtfKind {
+pub enum BtfKind {
+    #[default]
     Unknown = 0,
     Int = 1,
     Ptr = 2,
@@ -818,6 +871,7 @@ pub(crate) enum BtfKind {
     Float = 16,
     DeclTag = 17,
     TypeTag = 18,
+    Enum64 = 19,
 }
 
 impl TryFrom<u32> for BtfKind {
@@ -845,13 +899,14 @@ impl TryFrom<u32> for BtfKind {
             16 => Float,
             17 => DeclTag,
             18 => TypeTag,
+            19 => Enum64,
             kind => return Err(BtfError::InvalidTypeKind { kind }),
         })
     }
 }
 
 impl Display for BtfKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             BtfKind::Unknown => write!(f, "[UNKNOWN]"),
             BtfKind::Int => write!(f, "[INT]"),
@@ -872,13 +927,8 @@ impl Display for BtfKind {
             BtfKind::DataSec => write!(f, "[DATASEC]"),
             BtfKind::DeclTag => write!(f, "[DECL_TAG]"),
             BtfKind::TypeTag => write!(f, "[TYPE_TAG]"),
+            BtfKind::Enum64 => write!(f, "[ENUM64]"),
         }
-    }
-}
-
-impl Default for BtfKind {
-    fn default() -> Self {
-        BtfKind::Unknown
     }
 }
 
@@ -972,6 +1022,12 @@ impl BtfType {
                 size: ty[2],
                 variants: unsafe { read_array::<BtfEnum>(data, vlen)? },
             }),
+            BtfKind::Enum64 => BtfType::Enum64(Enum64 {
+                name_offset: ty[0],
+                info: ty[1],
+                size: ty[2],
+                variants: unsafe { read_array::<BtfEnum64>(data, vlen)? },
+            }),
             BtfKind::Array => BtfType::Array(Array {
                 name_offset: ty[0],
                 info: ty[1],
@@ -1035,6 +1091,7 @@ impl BtfType {
             BtfType::Int(t) => t.to_bytes(),
             BtfType::Float(t) => t.to_bytes(),
             BtfType::Enum(t) => t.to_bytes(),
+            BtfType::Enum64(t) => t.to_bytes(),
             BtfType::Array(t) => t.to_bytes(),
             BtfType::Struct(t) => t.to_bytes(),
             BtfType::Union(t) => t.to_bytes(),
@@ -1051,9 +1108,11 @@ impl BtfType {
             BtfType::Int(t) => Some(t.size),
             BtfType::Float(t) => Some(t.size),
             BtfType::Enum(t) => Some(t.size),
+            BtfType::Enum64(t) => Some(t.size),
             BtfType::Struct(t) => Some(t.size),
             BtfType::Union(t) => Some(t.size),
             BtfType::DataSec(t) => Some(t.size),
+            BtfType::Ptr(_) => Some(mem::size_of::<&()>() as u32),
             _ => None,
         }
     }
@@ -1087,6 +1146,7 @@ impl BtfType {
             BtfType::Int(t) => t.type_info_size(),
             BtfType::Float(t) => t.type_info_size(),
             BtfType::Enum(t) => t.type_info_size(),
+            BtfType::Enum64(t) => t.type_info_size(),
             BtfType::Array(t) => t.type_info_size(),
             BtfType::Struct(t) => t.type_info_size(),
             BtfType::Union(t) => t.type_info_size(),
@@ -1111,6 +1171,7 @@ impl BtfType {
             BtfType::Int(t) => t.name_offset,
             BtfType::Float(t) => t.name_offset,
             BtfType::Enum(t) => t.name_offset,
+            BtfType::Enum64(t) => t.name_offset,
             BtfType::Array(t) => t.name_offset,
             BtfType::Struct(t) => t.name_offset,
             BtfType::Union(t) => t.name_offset,
@@ -1135,6 +1196,7 @@ impl BtfType {
             BtfType::Int(t) => t.kind(),
             BtfType::Float(t) => t.kind(),
             BtfType::Enum(t) => t.kind(),
+            BtfType::Enum64(t) => t.kind(),
             BtfType::Array(t) => t.kind(),
             BtfType::Struct(t) => t.kind(),
             BtfType::Union(t) => t.kind(),
@@ -1173,6 +1235,17 @@ impl BtfType {
             _ => None,
         }
     }
+
+    pub(crate) fn is_compatible(&self, other: &BtfType) -> bool {
+        if self.kind() == other.kind() {
+            return true;
+        }
+
+        matches!(
+            (self.kind(), other.kind()),
+            (BtfKind::Enum, BtfKind::Enum64) | (BtfKind::Enum64, BtfKind::Enum)
+        )
+    }
 }
 
 fn type_kind(info: u32) -> Result<BtfKind, BtfError> {
@@ -1194,7 +1267,7 @@ pub(crate) fn types_are_compatible(
     let local_ty = local_btf.type_by_id(local_id)?;
     let target_ty = target_btf.type_by_id(target_id)?;
 
-    if local_ty.kind() != target_ty.kind() {
+    if !local_ty.is_compatible(target_ty) {
         return Ok(false);
     }
 
@@ -1204,7 +1277,7 @@ pub(crate) fn types_are_compatible(
         let local_ty = local_btf.type_by_id(local_id)?;
         let target_ty = target_btf.type_by_id(target_id)?;
 
-        if local_ty.kind() != target_ty.kind() {
+        if !local_ty.is_compatible(target_ty) {
             return Ok(false);
         }
 
@@ -1213,6 +1286,7 @@ pub(crate) fn types_are_compatible(
             | BtfType::Struct(_)
             | BtfType::Union(_)
             | BtfType::Enum(_)
+            | BtfType::Enum64(_)
             | BtfType::Fwd(_)
             | BtfType::Float(_) => return Ok(true),
             BtfType::Int(local) => {
@@ -1276,12 +1350,12 @@ pub(crate) fn fields_are_compatible(
             return Ok(true);
         }
 
-        if local_ty.kind() != target_ty.kind() {
+        if !local_ty.is_compatible(target_ty) {
             return Ok(false);
         }
 
         match local_ty {
-            BtfType::Fwd(_) | BtfType::Enum(_) => {
+            BtfType::Fwd(_) | BtfType::Enum(_) | BtfType::Enum64(_) => {
                 let flavorless_name =
                     |name: &str| name.split_once("___").map_or(name, |x| x.0).to_string();
 

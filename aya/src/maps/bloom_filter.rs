@@ -84,14 +84,17 @@ mod tests {
             bpf_map_type::{BPF_MAP_TYPE_BLOOM_FILTER, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
         },
         maps::{Map, MapData},
-        obj,
+        obj::{
+            self,
+            maps::{LegacyMap, MapKind},
+        },
         sys::{override_syscall, SysResult, Syscall},
     };
     use libc::{EFAULT, ENOENT};
     use std::io;
 
     fn new_obj_map() -> obj::Map {
-        obj::Map::Legacy(obj::LegacyMap {
+        obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: BPF_MAP_TYPE_BLOOM_FILTER as u32,
                 key_size: 4,
@@ -102,7 +105,7 @@ mod tests {
             section_index: 0,
             symbol_index: 0,
             data: Vec::new(),
-            kind: obj::MapKind::Other,
+            kind: MapKind::Other,
         })
     }
 
@@ -130,7 +133,7 @@ mod tests {
     #[test]
     fn test_try_from_wrong_map() {
         let map_data = MapData {
-            obj: obj::Map::Legacy(obj::LegacyMap {
+            obj: obj::Map::Legacy(LegacyMap {
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32,
                     key_size: 4,
@@ -141,7 +144,7 @@ mod tests {
                 section_index: 0,
                 symbol_index: 0,
                 data: Vec::new(),
-                kind: obj::MapKind::Other,
+                kind: MapKind::Other,
             }),
             fd: None,
             pinned: false,

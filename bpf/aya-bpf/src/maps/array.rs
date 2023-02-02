@@ -47,14 +47,28 @@ impl<T> Array<T> {
         }
     }
 
+    #[inline(always)]
     pub fn get(&self, index: u32) -> Option<&T> {
-        unsafe {
-            let value = bpf_map_lookup_elem(
-                self.def.get() as *mut _,
-                &index as *const _ as *const c_void,
-            );
-            // FIXME: alignment
-            NonNull::new(value as *mut T).map(|p| p.as_ref())
-        }
+        // FIXME: alignment
+        unsafe { self.lookup(index).map(|p| p.as_ref()) }
+    }
+
+    #[inline(always)]
+    pub fn get_ptr(&self, index: u32) -> Option<*const T> {
+        unsafe { self.lookup(index).map(|p| p.as_ptr() as *const T) }
+    }
+
+    #[inline(always)]
+    pub fn get_ptr_mut(&self, index: u32) -> Option<*mut T> {
+        unsafe { self.lookup(index).map(|p| p.as_ptr()) }
+    }
+
+    #[inline(always)]
+    unsafe fn lookup(&self, index: u32) -> Option<NonNull<T>> {
+        let ptr = bpf_map_lookup_elem(
+            self.def.get() as *mut _,
+            &index as *const _ as *const c_void,
+        );
+        NonNull::new(ptr as *mut T)
     }
 }

@@ -217,6 +217,46 @@ impl SkBuff {
     pub(crate) fn as_ptr(&self) -> *mut c_void {
         self.skb as *mut _
     }
+
+    #[inline]
+    pub fn protocol(&self) -> u32 {
+        unsafe { (*self.skb).protocol }
+    }
+
+    #[inline]
+    pub fn family(&self) -> u32 {
+        unsafe { (*self.skb).family }
+    }
+
+    #[inline]
+    pub fn local_ipv4(&self) -> u32 {
+        unsafe { (*self.skb).local_ip4 }
+    }
+
+    #[inline]
+    pub fn local_ipv6(&self) -> &[u32; 4] {
+        unsafe { &(*self.skb).local_ip6 }
+    }
+
+    #[inline]
+    pub fn remote_ipv4(&self) -> u32 {
+        unsafe { (*self.skb).remote_ip4 }
+    }
+
+    #[inline]
+    pub fn remote_ipv6(&self) -> &[u32; 4] {
+        unsafe { &(*self.skb).remote_ip6 }
+    }
+
+    #[inline]
+    pub fn local_port(&self) -> u32 {
+        unsafe { (*self.skb).local_port }
+    }
+
+    #[inline]
+    pub fn remote_port(&self) -> u32 {
+        unsafe { (*self.skb).remote_port }
+    }
 }
 
 pub struct SkBuffContext {
