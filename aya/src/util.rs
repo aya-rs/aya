@@ -244,6 +244,8 @@ impl NetworkInterface {
     /// # Example
     ///
     /// ```
+    /// use aya::util::NetworkInterface;
+    /// 
     /// let interfaces_names: Vec<String> = NetworkInterface::list()
     ///     .iter()
     ///     .map(|interface| interface.name().unwrap())
