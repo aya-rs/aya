@@ -407,10 +407,11 @@ mod tests {
 
         assert_eq!(links.iter().len(), 2);
 
-        let collected: Vec<&TestLink> = links.iter().collect();
         let expected: Vec<&TestLink> = vec![&l1_copy, &l2_copy];
+        links.iter().for_each(|link| {
+            assert!(expected.contains(&link));
+        });
 
-        assert_eq!(collected, expected);
     }
 
     #[test]
