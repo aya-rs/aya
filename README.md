@@ -9,7 +9,7 @@
 [crates-badge]: https://img.shields.io/crates/v/aya.svg?style=for-the-badge&logo=rust
 [crates-url]: https://crates.io/crates/aya
 [license-badge]: https://img.shields.io/badge/license-MIT%2FApache--2.0-blue?style=for-the-badge
-[build-badge]: https://img.shields.io/github/workflow/status/aya-rs/aya/build-aya?style=for-the-badge&logo=github
+[build-badge]: https://img.shields.io/github/actions/workflow/status/aya-rs/aya/build-aya.yml?branch=main&style=for-the-badge
 [book-badge]: https://img.shields.io/badge/read%20the-book-9cf.svg?style=for-the-badge&logo=mdbook
 [book-url]: https://aya-rs.dev/book
 
