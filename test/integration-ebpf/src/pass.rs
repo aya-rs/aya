@@ -3,7 +3,7 @@
 
 use aya_bpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
 
-#[xdp(name = "pass")]
+#[xdp(name = "pass", frags = "true")]
 pub fn pass(ctx: XdpContext) -> u32 {
     match unsafe { try_pass(ctx) } {
         Ok(ret) => ret,

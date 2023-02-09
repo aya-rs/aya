@@ -313,8 +313,14 @@ impl FromStr for ProgramSection {
             "kretprobe" => KRetProbe { name },
             "uprobe" => UProbe { name },
             "uretprobe" => URetProbe { name },
-            "xdp" => Xdp { name, frags_supported: false},
-            "xdp.frags" => Xdp { name, frags_supported: true},
+            "xdp" => Xdp {
+                name,
+                frags_supported: false,
+            },
+            "xdp.frags" => Xdp {
+                name,
+                frags_supported: true,
+            },
             "tp_btf" => BtfTracePoint { name },
             _ if kind.starts_with("tracepoint") || kind.starts_with("tp") => {
                 // tracepoint sections are named `tracepoint/category/event_name`,
@@ -1853,7 +1859,10 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::Xdp { frags_supported: true, .. },
+                section: ProgramSection::Xdp {
+                    frags_supported: true,
+                    ..
+                },
                 ..
             })
         );
