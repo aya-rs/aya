@@ -1,4 +1,5 @@
 //! LSM probes.
+
 use crate::{
     generated::{bpf_attach_type::BPF_LSM_MAC, bpf_prog_type::BPF_PROG_TYPE_LSM},
     obj::btf::{Btf, BtfKind},
