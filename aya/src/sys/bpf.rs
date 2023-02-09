@@ -115,6 +115,7 @@ pub(crate) struct BpfLoadProgramAttrs<'a> {
     pub(crate) func_info: FuncSecInfo,
     pub(crate) line_info_rec_size: usize,
     pub(crate) line_info: LineSecInfo,
+    pub(crate) flags: u32,
 }
 
 pub(crate) fn bpf_load_program(
@@ -136,6 +137,7 @@ pub(crate) fn bpf_load_program(
         u.prog_name = name;
     }
 
+    u.prog_flags = aya_attr.flags;
     u.prog_type = aya_attr.ty as u32;
     if let Some(v) = aya_attr.expected_attach_type {
         u.expected_attach_type = v as u32;
@@ -179,7 +181,6 @@ pub(crate) fn bpf_load_program(
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
     }
-
     sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr)
 }
 

@@ -9,6 +9,7 @@ use std::{
 
 use aya_obj::{
     btf::{BtfFeatures, BtfRelocationError},
+    generated::BPF_F_XDP_HAS_FRAGS,
     relocation::BpfRelocationError,
 };
 use log::debug;
@@ -485,9 +486,16 @@ impl<'a> BpfLoader<'a> {
                                 data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
                             })
                         }
-                        ProgramSection::Xdp { .. } => Program::Xdp(Xdp {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
-                        }),
+                        ProgramSection::Xdp {
+                            frags_supported, ..
+                        } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, verifier_log_level);
+                            if *frags_supported {
+                                data.flags = BPF_F_XDP_HAS_FRAGS;
+                            }
+                            Program::Xdp(Xdp { data })
+                        }
                         ProgramSection::SkMsg { .. } => Program::SkMsg(SkMsg {
                             data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
                         }),
