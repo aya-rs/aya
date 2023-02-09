@@ -200,20 +200,33 @@ impl SkMsg {
 pub struct Xdp {
     item: ItemFn,
     name: Option<String>,
+    frags: bool,
 }
 
 impl Xdp {
     pub fn from_syn(mut args: Args, item: ItemFn) -> Result<Xdp> {
-        let name = name_arg(&mut args)?;
-
-        Ok(Xdp { item, name })
+        let name = pop_arg(&mut args, "name");
+        let mut frags = false;
+        if let Some(s) = pop_arg(&mut args, "frags") {
+            if let Ok(m) = s.parse() {
+                frags = m
+            } else {
+                return Err(Error::new_spanned(
+                    "mutlibuffer",
+                    "invalid value. should be 'true' or 'false'",
+                ));
+            }
+        }
+        err_on_unknown_args(&args)?;
+        Ok(Xdp { item, name, frags })
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
+        let section_prefix = if self.frags { "xdp.frags" } else { "xdp" };
         let section_name = if let Some(name) = &self.name {
-            format!("xdp/{name}")
+            format!("{section_prefix}/{name}")
         } else {
-            "xdp".to_owned()
+            section_prefix.to_string()
         };
         let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
