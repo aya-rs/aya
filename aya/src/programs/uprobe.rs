@@ -17,7 +17,7 @@ use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_KPROBE,
     programs::{
         define_link_wrapper, load_program,
-        perf_attach::{PerfLink, PerfLinkId},
+        perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{attach, ProbeKind},
         ProgramData, ProgramError,
     },
@@ -154,8 +154,8 @@ define_link_wrapper!(
     UProbeLink,
     /// The type returned by [UProbe::attach]. Can be passed to [UProbe::detach].
     UProbeLinkId,
-    PerfLink,
-    PerfLinkId
+    PerfLinkInner,
+    PerfLinkIdInner
 );
 
 /// The type returned when attaching an [`UProbe`] fails.
