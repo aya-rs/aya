@@ -96,25 +96,8 @@ impl Features {
             bpf_perf_link: is_perf_link_supported(),
             btf,
         };
-
-        debug!("{}", f);
-        if let Some(btf) = f.btf.as_ref() {
-            debug!("{}", btf)
-        }
+        debug!("BPF Feature Detection: {:#?}", f);
         f
-    }
-}
-
-impl std::fmt::Display for Features {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!(
-            "[FEAT PROBE] BPF program name support: {}\n\
-             [FEAT PROBE] bpf_link support for kprobe/uprobe/tracepoint: {}\n\
-             [FEAT PROBE] BTF support: {}",
-            self.bpf_name,
-            self.bpf_perf_link,
-            self.btf.is_some()
-        ))
     }
 }
 
