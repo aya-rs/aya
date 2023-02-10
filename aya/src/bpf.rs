@@ -13,7 +13,7 @@ use aya_obj::{
     relocation::BpfRelocationError,
     BpfSectionKind, Features,
 };
-use log::debug;
+use log::{debug, warn};
 use thiserror::Error;
 
 use crate::{
@@ -123,6 +123,7 @@ pub struct BpfLoader<'a> {
     max_entries: HashMap<&'a str, u32>,
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
+    allow_unsupported_maps: bool,
 }
 
 bitflags! {
@@ -156,6 +157,7 @@ impl<'a> BpfLoader<'a> {
             max_entries: HashMap::new(),
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
+            allow_unsupported_maps: false,
         }
     }
 
@@ -178,6 +180,29 @@ impl<'a> BpfLoader<'a> {
     /// ```
     pub fn btf(&mut self, btf: Option<&'a Btf>) -> &mut BpfLoader<'a> {
         self.btf = btf.map(Cow::Borrowed);
+        self
+    }
+
+    /// Allows bytecode containing maps unsupported by Aya to be loaded.
+    ///
+    /// By default, programs containing maps unsupported by Aya will not be loaded.
+    /// This function changes the default behavior, allowing programs to be loaded.
+    /// This should only be used in cases where you do not require access to eBPF
+    /// maps from this crate.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::BpfLoader;
+    ///
+    /// let bpf = BpfLoader::new()
+    ///     .allow_unsupported_maps()
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
+    ///
+    pub fn allow_unsupported_maps(&mut self) -> &mut BpfLoader<'a> {
+        self.allow_unsupported_maps = true;
         self
     }
 
@@ -599,12 +624,22 @@ impl<'a> BpfLoader<'a> {
                 (name, program)
             })
             .collect();
-        let maps: Result<HashMap<String, Map>, BpfError> = maps.drain().map(parse_map).collect();
+        let maps = maps
+            .drain()
+            .map(parse_map)
+            .collect::<Result<HashMap<String, Map>, BpfError>>()?;
 
-        Ok(Bpf {
-            maps: maps?,
-            programs,
-        })
+        if !self.allow_unsupported_maps
+            && maps
+                .iter()
+                .filter(|(_, x)| matches!(x, Map::Unsupported(_)))
+                .count()
+                != 0
+        {
+            return Err(BpfError::UnsupportedMap);
+        }
+
+        Ok(Bpf { maps, programs })
     }
 }
 
@@ -616,25 +651,26 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
             map_type: e.map_type,
         })?;
     let map = match map_type {
-        BPF_MAP_TYPE_ARRAY => Ok(Map::Array(map)),
-        BPF_MAP_TYPE_PERCPU_ARRAY => Ok(Map::PerCpuArray(map)),
-        BPF_MAP_TYPE_PROG_ARRAY => Ok(Map::ProgramArray(map)),
-        BPF_MAP_TYPE_HASH => Ok(Map::HashMap(map)),
-        BPF_MAP_TYPE_LRU_HASH => Ok(Map::LruHashMap(map)),
-        BPF_MAP_TYPE_PERCPU_HASH => Ok(Map::PerCpuHashMap(map)),
-        BPF_MAP_TYPE_LRU_PERCPU_HASH => Ok(Map::PerCpuLruHashMap(map)),
-        BPF_MAP_TYPE_PERF_EVENT_ARRAY => Ok(Map::PerfEventArray(map)),
-        BPF_MAP_TYPE_SOCKHASH => Ok(Map::SockHash(map)),
-        BPF_MAP_TYPE_SOCKMAP => Ok(Map::SockMap(map)),
-        BPF_MAP_TYPE_BLOOM_FILTER => Ok(Map::BloomFilter(map)),
-        BPF_MAP_TYPE_LPM_TRIE => Ok(Map::LpmTrie(map)),
-        BPF_MAP_TYPE_STACK => Ok(Map::Stack(map)),
-        BPF_MAP_TYPE_STACK_TRACE => Ok(Map::StackTraceMap(map)),
-        BPF_MAP_TYPE_QUEUE => Ok(Map::Queue(map)),
-        m => Err(BpfError::MapError(MapError::InvalidMapType {
-            map_type: m as u32,
-        })),
-    }?;
+        BPF_MAP_TYPE_ARRAY => Map::Array(map),
+        BPF_MAP_TYPE_PERCPU_ARRAY => Map::PerCpuArray(map),
+        BPF_MAP_TYPE_PROG_ARRAY => Map::ProgramArray(map),
+        BPF_MAP_TYPE_HASH => Map::HashMap(map),
+        BPF_MAP_TYPE_LRU_HASH => Map::LruHashMap(map),
+        BPF_MAP_TYPE_PERCPU_HASH => Map::PerCpuHashMap(map),
+        BPF_MAP_TYPE_LRU_PERCPU_HASH => Map::PerCpuLruHashMap(map),
+        BPF_MAP_TYPE_PERF_EVENT_ARRAY => Map::PerfEventArray(map),
+        BPF_MAP_TYPE_SOCKHASH => Map::SockHash(map),
+        BPF_MAP_TYPE_SOCKMAP => Map::SockMap(map),
+        BPF_MAP_TYPE_BLOOM_FILTER => Map::BloomFilter(map),
+        BPF_MAP_TYPE_LPM_TRIE => Map::LpmTrie(map),
+        BPF_MAP_TYPE_STACK => Map::Stack(map),
+        BPF_MAP_TYPE_STACK_TRACE => Map::StackTraceMap(map),
+        BPF_MAP_TYPE_QUEUE => Map::Queue(map),
+        m => {
+            warn!("The map {name} is of type {:#?} which is currently unsupported in Aya, use `allow_unsupported_maps()` to load it anyways", m);
+            Map::Unsupported(map)
+        }
+    };
 
     Ok((name, map))
 }
@@ -895,6 +931,10 @@ pub enum BpfError {
     #[error("program error: {0}")]
     /// A program error
     ProgramError(#[from] ProgramError),
+
+    /// Unsupported Map type
+    #[error("Unsupported map types found")]
+    UnsupportedMap,
 }
 
 fn load_btf(raw_btf: Vec<u8>) -> Result<RawFd, BtfError> {

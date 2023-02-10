@@ -261,6 +261,8 @@ pub enum Map {
     StackTraceMap(MapData),
     /// A [`Queue`] map
     Queue(MapData),
+    /// An unsupported map type
+    Unsupported(MapData),
 }
 
 impl Map {
@@ -282,6 +284,7 @@ impl Map {
             Map::Stack(map) => map.obj.map_type(),
             Map::StackTraceMap(map) => map.obj.map_type(),
             Map::Queue(map) => map.obj.map_type(),
+            Map::Unsupported(map) => map.obj.map_type(),
         }
     }
 }
