@@ -599,6 +599,37 @@ pub(crate) fn is_prog_name_supported() -> bool {
     }
 }
 
+pub(crate) fn is_perf_link_supported() -> bool {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+
+    let prog: &[u8] = &[
+        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+
+    let insns = copy_instructions(prog).unwrap();
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
+
+    if let Ok(fd) = sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
+        if let Err((code, _)) =
+            // Uses an invalid target FD so we get EBADF if supported.
+            bpf_link_create(fd as i32, -1, bpf_attach_type::BPF_PERF_EVENT, None, 0)
+        {
+            // Returns EINVAL if unsupported. EBADF if supported.
+            let res = code == (-libc::EBADF).into();
+            unsafe { libc::close(fd as i32) };
+            return res;
+        }
+    }
+    false
+}
+
 pub(crate) fn is_btf_supported() -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int".to_string());
