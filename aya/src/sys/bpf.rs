@@ -617,12 +617,12 @@ pub(crate) fn is_perf_link_supported() -> bool {
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
 
     if let Ok(fd) = sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
-        if let Err((code, _)) =
+        if let Err((_, e)) =
             // Uses an invalid target FD so we get EBADF if supported.
             bpf_link_create(fd as i32, -1, bpf_attach_type::BPF_PERF_EVENT, None, 0)
         {
             // Returns EINVAL if unsupported. EBADF if supported.
-            let res = code == (-libc::EBADF).into();
+            let res = e.raw_os_error() == Some(libc::EBADF);
             unsafe { libc::close(fd as i32) };
             return res;
         }
@@ -890,5 +890,35 @@ where
             }
             r => return r,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::sys::override_syscall;
+    use libc::{EBADF, EINVAL};
+
+    #[test]
+    fn test_perf_link_supported() {
+        override_syscall(|call| match call {
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_LINK_CREATE,
+                ..
+            } => Err((-1, io::Error::from_raw_os_error(EBADF))),
+            _ => Ok(42),
+        });
+        let supported = is_perf_link_supported();
+        assert!(supported);
+
+        override_syscall(|call| match call {
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_LINK_CREATE,
+                ..
+            } => Err((-1, io::Error::from_raw_os_error(EINVAL))),
+            _ => Ok(42),
+        });
+        let supported = is_perf_link_supported();
+        assert!(!supported);
     }
 }
