@@ -51,6 +51,7 @@ pub mod maps;
 use aya_obj as obj;
 pub mod pin;
 pub mod programs;
+pub use programs::loaded_programs;
 mod sys;
 pub mod util;
 
