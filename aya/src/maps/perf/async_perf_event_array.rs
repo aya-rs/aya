@@ -1,6 +1,6 @@
 use bytes::BytesMut;
 use std::{
-    convert::AsMut,
+    borrow::{Borrow, BorrowMut},
     os::unix::prelude::{AsRawFd, RawFd},
 };
 
@@ -89,7 +89,7 @@ pub struct AsyncPerfEventArray<T> {
     perf_map: PerfEventArray<T>,
 }
 
-impl<T: AsMut<MapData> + AsRef<MapData>> AsyncPerfEventArray<T> {
+impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArray<T> {
     /// Opens the perf buffer at the given index.
     ///
     /// The returned buffer will receive all the events eBPF programs send at the given index.
@@ -112,7 +112,7 @@ impl<T: AsMut<MapData> + AsRef<MapData>> AsyncPerfEventArray<T> {
     }
 }
 
-impl<T: AsRef<MapData>> AsyncPerfEventArray<T> {
+impl<T: Borrow<MapData>> AsyncPerfEventArray<T> {
     pub(crate) fn new(map: T) -> Result<AsyncPerfEventArray<T>, MapError> {
         Ok(AsyncPerfEventArray {
             perf_map: PerfEventArray::new(map)?,
@@ -138,7 +138,7 @@ pub struct AsyncPerfEventArrayBuffer<T> {
 }
 
 #[cfg(any(feature = "async_tokio"))]
-impl<T: AsMut<MapData> + AsRef<MapData>> AsyncPerfEventArrayBuffer<T> {
+impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArrayBuffer<T> {
     /// Reads events from the buffer.
     ///
     /// This method reads events into the provided slice of buffers, filling
@@ -168,7 +168,7 @@ impl<T: AsMut<MapData> + AsRef<MapData>> AsyncPerfEventArrayBuffer<T> {
 }
 
 #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
-impl<T: AsMut<MapData> + AsRef<MapData>> AsyncPerfEventArrayBuffer<T> {
+impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArrayBuffer<T> {
     /// Reads events from the buffer.
     ///
     /// This method reads events into the provided slice of buffers, filling

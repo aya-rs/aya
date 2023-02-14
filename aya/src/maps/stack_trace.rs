@@ -1,7 +1,7 @@
 //! A hash map of kernel or user space stack traces.
 //!
 //! See [`StackTraceMap`] for documentation and examples.
-use std::{collections::BTreeMap, convert::AsRef, fs, io, mem, path::Path, str::FromStr};
+use std::{borrow::Borrow, collections::BTreeMap, fs, io, mem, path::Path, str::FromStr};
 
 use crate::{
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys},
@@ -67,9 +67,9 @@ pub struct StackTraceMap<T> {
     max_stack_depth: usize,
 }
 
-impl<T: AsRef<MapData>> StackTraceMap<T> {
+impl<T: Borrow<MapData>> StackTraceMap<T> {
     pub(crate) fn new(map: T) -> Result<StackTraceMap<T>, MapError> {
-        let data = map.as_ref();
+        let data = map.borrow();
         let expected = mem::size_of::<u32>();
         let size = data.obj.key_size() as usize;
         if size != expected {
@@ -102,7 +102,7 @@ impl<T: AsRef<MapData>> StackTraceMap<T> {
     /// Returns [`MapError::KeyNotFound`] if there is no stack trace with the
     /// given `stack_id`, or [`MapError::SyscallError`] if `bpf_map_lookup_elem` fails.
     pub fn get(&self, stack_id: &u32, flags: u64) -> Result<StackTrace, MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.borrow().fd_or_err()?;
 
         let mut frames = vec![0; self.max_stack_depth];
         bpf_map_lookup_elem_ptr(fd, Some(stack_id), frames.as_mut_ptr(), flags)
@@ -136,13 +136,13 @@ impl<T: AsRef<MapData>> StackTraceMap<T> {
     /// An iterator visiting all the stack_ids in arbitrary order. The iterator element
     /// type is `Result<u32, MapError>`.
     pub fn stack_ids(&self) -> MapKeys<'_, u32> {
-        MapKeys::new(self.inner.as_ref())
+        MapKeys::new(self.inner.borrow())
     }
 }
 
-impl<T: AsRef<MapData>> IterableMap<u32, StackTrace> for StackTraceMap<T> {
+impl<T: Borrow<MapData>> IterableMap<u32, StackTrace> for StackTraceMap<T> {
     fn map(&self) -> &MapData {
-        self.inner.as_ref()
+        self.inner.borrow()
     }
 
     fn get(&self, index: &u32) -> Result<StackTrace, MapError> {
@@ -150,7 +150,7 @@ impl<T: AsRef<MapData>> IterableMap<u32, StackTrace> for StackTraceMap<T> {
     }
 }
 
-impl<'a, T: AsRef<MapData>> IntoIterator for &'a StackTraceMap<T> {
+impl<'a, T: Borrow<MapData>> IntoIterator for &'a StackTraceMap<T> {
     type Item = Result<(u32, StackTrace), MapError>;
     type IntoIter = MapIter<'a, u32, StackTrace, StackTraceMap<T>>;
 
