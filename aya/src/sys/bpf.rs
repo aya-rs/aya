@@ -115,6 +115,7 @@ pub(crate) struct BpfLoadProgramAttrs<'a> {
     pub(crate) func_info: FuncSecInfo,
     pub(crate) line_info_rec_size: usize,
     pub(crate) line_info: LineSecInfo,
+    pub(crate) flags: u32,
 }
 
 pub(crate) fn bpf_load_program(
@@ -136,6 +137,7 @@ pub(crate) fn bpf_load_program(
         u.prog_name = name;
     }
 
+    u.prog_flags = aya_attr.flags;
     u.prog_type = aya_attr.ty as u32;
     if let Some(v) = aya_attr.expected_attach_type {
         u.expected_attach_type = v as u32;
@@ -179,7 +181,6 @@ pub(crate) fn bpf_load_program(
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
     }
-
     sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr)
 }
 
@@ -599,6 +600,37 @@ pub(crate) fn is_prog_name_supported() -> bool {
     }
 }
 
+pub(crate) fn is_perf_link_supported() -> bool {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+
+    let prog: &[u8] = &[
+        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+
+    let insns = copy_instructions(prog).unwrap();
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
+
+    if let Ok(fd) = sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
+        if let Err((_, e)) =
+            // Uses an invalid target FD so we get EBADF if supported.
+            bpf_link_create(fd as i32, -1, bpf_attach_type::BPF_PERF_EVENT, None, 0)
+        {
+            // Returns EINVAL if unsupported. EBADF if supported.
+            let res = e.raw_os_error() == Some(libc::EBADF);
+            unsafe { libc::close(fd as i32) };
+            return res;
+        }
+    }
+    false
+}
+
 pub(crate) fn is_btf_supported() -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int".to_string());
@@ -859,5 +891,35 @@ where
             }
             r => return r,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::sys::override_syscall;
+    use libc::{EBADF, EINVAL};
+
+    #[test]
+    fn test_perf_link_supported() {
+        override_syscall(|call| match call {
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_LINK_CREATE,
+                ..
+            } => Err((-1, io::Error::from_raw_os_error(EBADF))),
+            _ => Ok(42),
+        });
+        let supported = is_perf_link_supported();
+        assert!(supported);
+
+        override_syscall(|call| match call {
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_LINK_CREATE,
+                ..
+            } => Err((-1, io::Error::from_raw_os_error(EINVAL))),
+            _ => Ok(42),
+        });
+        let supported = is_perf_link_supported();
+        assert!(!supported);
     }
 }

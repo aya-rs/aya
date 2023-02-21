@@ -69,7 +69,7 @@ use std::{
     ffi::CString,
     io,
     os::unix::io::{AsRawFd, RawFd},
-    path::Path,
+    path::{Path, PathBuf},
 };
 use thiserror::Error;
 
@@ -112,8 +112,9 @@ use crate::{
     obj::{self, btf::BtfError, Function, KernelVersion},
     pin::PinError,
     sys::{
-        bpf_get_object, bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id,
-        bpf_prog_get_info_by_fd, bpf_prog_query, retry_with_verifier_logs, BpfLoadProgramAttrs,
+        bpf_btf_get_fd_by_id, bpf_get_object, bpf_load_program, bpf_pin_object,
+        bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, bpf_prog_query, retry_with_verifier_logs,
+        BpfLoadProgramAttrs,
     },
     util::VerifierLog,
 };
@@ -341,33 +342,33 @@ impl Program {
         }
     }
 
-    /// Unload the program
-    fn unload(&mut self) -> Result<(), ProgramError> {
+    /// Unloads the program from the kernel.
+    pub fn unload(self) -> Result<(), ProgramError> {
         match self {
-            Program::KProbe(p) => p.unload(),
-            Program::UProbe(p) => p.unload(),
-            Program::TracePoint(p) => p.unload(),
-            Program::SocketFilter(p) => p.unload(),
-            Program::Xdp(p) => p.unload(),
-            Program::SkMsg(p) => p.unload(),
-            Program::SkSkb(p) => p.unload(),
-            Program::SockOps(p) => p.unload(),
-            Program::SchedClassifier(p) => p.unload(),
-            Program::CgroupSkb(p) => p.unload(),
-            Program::CgroupSysctl(p) => p.unload(),
-            Program::CgroupSockopt(p) => p.unload(),
-            Program::LircMode2(p) => p.unload(),
-            Program::PerfEvent(p) => p.unload(),
-            Program::RawTracePoint(p) => p.unload(),
-            Program::Lsm(p) => p.unload(),
-            Program::BtfTracePoint(p) => p.unload(),
-            Program::FEntry(p) => p.unload(),
-            Program::FExit(p) => p.unload(),
-            Program::Extension(p) => p.unload(),
-            Program::CgroupSockAddr(p) => p.unload(),
-            Program::SkLookup(p) => p.unload(),
-            Program::CgroupSock(p) => p.unload(),
-            Program::CgroupDevice(p) => p.unload(),
+            Program::KProbe(mut p) => p.unload(),
+            Program::UProbe(mut p) => p.unload(),
+            Program::TracePoint(mut p) => p.unload(),
+            Program::SocketFilter(mut p) => p.unload(),
+            Program::Xdp(mut p) => p.unload(),
+            Program::SkMsg(mut p) => p.unload(),
+            Program::SkSkb(mut p) => p.unload(),
+            Program::SockOps(mut p) => p.unload(),
+            Program::SchedClassifier(mut p) => p.unload(),
+            Program::CgroupSkb(mut p) => p.unload(),
+            Program::CgroupSysctl(mut p) => p.unload(),
+            Program::CgroupSockopt(mut p) => p.unload(),
+            Program::LircMode2(mut p) => p.unload(),
+            Program::PerfEvent(mut p) => p.unload(),
+            Program::RawTracePoint(mut p) => p.unload(),
+            Program::Lsm(mut p) => p.unload(),
+            Program::BtfTracePoint(mut p) => p.unload(),
+            Program::FEntry(mut p) => p.unload(),
+            Program::FExit(mut p) => p.unload(),
+            Program::Extension(mut p) => p.unload(),
+            Program::CgroupSockAddr(mut p) => p.unload(),
+            Program::SkLookup(mut p) => p.unload(),
+            Program::CgroupSock(mut p) => p.unload(),
+            Program::CgroupDevice(mut p) => p.unload(),
         }
     }
 
@@ -405,16 +406,10 @@ impl Program {
     }
 }
 
-impl Drop for Program {
-    fn drop(&mut self) {
-        let _ = self.unload();
-    }
-}
-
 #[derive(Debug)]
 pub(crate) struct ProgramData<T: Link> {
     pub(crate) name: Option<String>,
-    pub(crate) obj: obj::Program,
+    pub(crate) obj: Option<obj::Program>,
     pub(crate) fd: Option<RawFd>,
     pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
@@ -423,6 +418,8 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) attach_prog_fd: Option<RawFd>,
     pub(crate) btf_fd: Option<RawFd>,
     pub(crate) verifier_log_level: u32,
+    pub(crate) path: Option<PathBuf>,
+    pub(crate) flags: u32,
 }
 
 impl<T: Link> ProgramData<T> {
@@ -434,7 +431,7 @@ impl<T: Link> ProgramData<T> {
     ) -> ProgramData<T> {
         ProgramData {
             name,
-            obj,
+            obj: Some(obj),
             fd: None,
             links: LinkMap::new(),
             expected_attach_type: None,
@@ -443,7 +440,69 @@ impl<T: Link> ProgramData<T> {
             attach_prog_fd: None,
             btf_fd,
             verifier_log_level,
+            path: None,
+            flags: 0,
         }
+    }
+
+    pub(crate) fn from_bpf_prog_info(
+        name: Option<String>,
+        fd: RawFd,
+        path: &Path,
+        info: bpf_prog_info,
+    ) -> Result<ProgramData<T>, ProgramError> {
+        let attach_btf_id = if info.attach_btf_id > 0 {
+            Some(info.attach_btf_id)
+        } else {
+            None
+        };
+        let attach_btf_obj_fd = if info.attach_btf_obj_id > 0 {
+            let fd = bpf_btf_get_fd_by_id(info.attach_btf_obj_id).map_err(|io_error| {
+                ProgramError::SyscallError {
+                    call: "bpf_btf_get_fd_by_id".to_string(),
+                    io_error,
+                }
+            })?;
+            Some(fd as u32)
+        } else {
+            None
+        };
+
+        Ok(ProgramData {
+            name,
+            obj: None,
+            fd: Some(fd),
+            links: LinkMap::new(),
+            expected_attach_type: None,
+            attach_btf_obj_fd,
+            attach_btf_id,
+            attach_prog_fd: None,
+            btf_fd: None,
+            verifier_log_level: 0,
+            path: Some(path.to_path_buf()),
+            flags: 0,
+        })
+    }
+
+    pub(crate) fn from_pinned_path<P: AsRef<Path>>(
+        path: P,
+    ) -> Result<ProgramData<T>, ProgramError> {
+        let path_string =
+            CString::new(path.as_ref().as_os_str().to_string_lossy().as_bytes()).unwrap();
+        let fd =
+            bpf_get_object(&path_string).map_err(|(_, io_error)| ProgramError::SyscallError {
+                call: "bpf_obj_get".to_owned(),
+                io_error,
+            })? as RawFd;
+
+        let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
+            call: "bpf_prog_get_info_by_fd".to_owned(),
+            io_error,
+        })?;
+
+        let info = ProgramInfo(info);
+        let name = info.name_as_str().map(|s| s.to_string());
+        ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), info.0)
     }
 }
 
@@ -497,6 +556,11 @@ fn load_program<T: Link>(
     if fd.is_some() {
         return Err(ProgramError::AlreadyLoaded);
     }
+    if obj.is_none() {
+        // This program was loaded from a pin in bpffs
+        return Err(ProgramError::AlreadyLoaded);
+    }
+    let obj = obj.as_ref().unwrap();
     let crate::obj::Program {
         function:
             Function {
@@ -549,6 +613,7 @@ fn load_program<T: Link>(
         func_info: func_info.clone(),
         line_info_rec_size: *line_info_rec_size,
         line_info: line_info.clone(),
+        flags: data.flags,
     };
 
     let verifier_log_level = data.verifier_log_level;
@@ -623,6 +688,12 @@ macro_rules! impl_program_unload {
                 /// detached.
                 pub fn unload(&mut self) -> Result<(), ProgramError> {
                     unload_program(&mut self.data)
+                }
+            }
+
+            impl Drop for $struct_name {
+                fn drop(&mut self) {
+                    let _ = self.unload();
                 }
             }
         )+
@@ -749,7 +820,16 @@ macro_rules! impl_program_pin{
                 /// To remove the program, the file on the BPF filesystem must be removed.
                 /// Any directories in the the path provided should have been created by the caller.
                 pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+                    self.data.path = Some(path.as_ref().to_path_buf());
                     pin_program(&mut self.data, path)
+                }
+
+                /// Removes the pinned link from the filesystem.
+                pub fn unpin(mut self) -> Result<(), io::Error> {
+                    if let Some(path) = self.data.path.take() {
+                        std::fs::remove_file(path)?;
+                    }
+                    Ok(())
                 }
             }
         )+
@@ -780,6 +860,45 @@ impl_program_pin!(
     SkLookup,
     SockOps,
     CgroupSock,
+    CgroupDevice,
+);
+
+macro_rules! impl_from_pin {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl $struct_name {
+                /// Creates a program from a pinned entry on a bpffs.
+                ///
+                /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
+                ///
+                /// On drop, any managed links are detached and the program is unloaded. This will not result in
+                /// the program being unloaded from the kernel if it is still pinned.
+                pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
+                    let data = ProgramData::from_pinned_path(path)?;
+                    Ok(Self { data })
+                }
+            }
+        )+
+    }
+}
+
+// Use impl_from_pin if the program doesn't require additional data
+impl_from_pin!(
+    TracePoint,
+    SocketFilter,
+    Xdp,
+    SkMsg,
+    CgroupSysctl,
+    LircMode2,
+    PerfEvent,
+    Lsm,
+    RawTracePoint,
+    BtfTracePoint,
+    FEntry,
+    FExit,
+    Extension,
+    SkLookup,
+    SockOps,
     CgroupDevice,
 );
 
@@ -895,7 +1014,6 @@ impl ProgramInfo {
         unsafe {
             libc::close(fd);
         }
-
         Ok(ProgramInfo(info))
     }
 }

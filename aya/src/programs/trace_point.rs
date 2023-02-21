@@ -6,7 +6,7 @@ use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT,
     programs::{
         define_link_wrapper, load_program,
-        perf_attach::{perf_attach, PerfLink, PerfLinkId},
+        perf_attach::{perf_attach, PerfLinkIdInner, PerfLinkInner},
         utils::find_tracefs_path,
         ProgramData, ProgramError,
     },
@@ -87,7 +87,8 @@ impl TracePoint {
             }
         })? as i32;
 
-        perf_attach(&mut self.data, fd)
+        let link = perf_attach(self.data.fd_or_err()?, fd)?;
+        self.data.links.insert(TracePointLink::new(link))
     }
 
     /// Detaches from a trace point.
@@ -111,8 +112,8 @@ define_link_wrapper!(
     TracePointLink,
     /// The type returned by [TracePoint::attach]. Can be passed to [TracePoint::detach].
     TracePointLinkId,
-    PerfLink,
-    PerfLinkId
+    PerfLinkInner,
+    PerfLinkIdInner
 );
 
 pub(crate) fn read_sys_fs_trace_point_id(

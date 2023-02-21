@@ -1,4 +1,4 @@
-use std::{process::Command, thread, time};
+use std::{convert::TryInto, process::Command, thread, time};
 
 use aya::{
     include_bytes_aligned,
@@ -192,16 +192,36 @@ fn pin_lifecycle() {
         let mut bpf = Bpf::load(bytes).unwrap();
         let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
         prog.load().unwrap();
+        prog.pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
+    }
+
+    // should still be loaded since prog was pinned
+    assert_loaded!("pass", true);
+
+    // 2. Load program from bpffs but don't attach it
+    {
+        let _ = Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
+    }
+
+    // should still be loaded since prog was pinned
+    assert_loaded!("pass", true);
+
+    // 3. Load program from bpffs and attach
+    {
+        let mut prog = Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
         let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
         fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
+
+        // Unpin the program. It will stay attached since its links were pinned.
+        prog.unpin().unwrap();
     }
 
     // should still be loaded since link was pinned
     assert_loaded!("pass", true);
 
-    // 2. Load a new version of the program, unpin link, and atomically replace old program
+    // 4. Load a new version of the program, unpin link, and atomically replace old program
     {
         let mut bpf = Bpf::load(bytes).unwrap();
         let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();

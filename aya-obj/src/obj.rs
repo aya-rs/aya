@@ -160,7 +160,6 @@ pub struct Function {
 /// - `iter+`, `iter.s+`
 /// - `xdp.frags/cpumap`, `xdp/cpumap`
 /// - `xdp.frags/devmap`, `xdp/devmap`
-/// - `xdp.frags`
 #[derive(Debug, Clone)]
 #[allow(missing_docs)]
 pub enum ProgramSection {
@@ -184,6 +183,7 @@ pub enum ProgramSection {
     },
     Xdp {
         name: String,
+        frags_supported: bool,
     },
     SkMsg {
         name: String,
@@ -266,7 +266,7 @@ impl ProgramSection {
             ProgramSection::URetProbe { name } => name,
             ProgramSection::TracePoint { name } => name,
             ProgramSection::SocketFilter { name } => name,
-            ProgramSection::Xdp { name } => name,
+            ProgramSection::Xdp { name, .. } => name,
             ProgramSection::SkMsg { name } => name,
             ProgramSection::SkSkbStreamParser { name } => name,
             ProgramSection::SkSkbStreamVerdict { name } => name,
@@ -313,7 +313,14 @@ impl FromStr for ProgramSection {
             "kretprobe" => KRetProbe { name },
             "uprobe" => UProbe { name },
             "uretprobe" => URetProbe { name },
-            "xdp" => Xdp { name },
+            "xdp" => Xdp {
+                name,
+                frags_supported: false,
+            },
+            "xdp.frags" => Xdp {
+                name,
+                frags_supported: true,
+            },
             "tp_btf" => BtfTracePoint { name },
             _ if kind.starts_with("tracepoint") || kind.starts_with("tp") => {
                 // tracepoint sections are named `tracepoint/category/event_name`,
@@ -1832,6 +1839,30 @@ mod tests {
             obj.programs.get("foo"),
             Some(Program {
                 section: ProgramSection::Xdp { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_xdp_frags() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "xdp.frags/foo",
+                bytes_of(&fake_ins())
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::Xdp {
+                    frags_supported: true,
+                    ..
+                },
                 ..
             })
         );

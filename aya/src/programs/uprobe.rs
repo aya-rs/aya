@@ -17,7 +17,7 @@ use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_KPROBE,
     programs::{
         define_link_wrapper, load_program,
-        perf_attach::{PerfLink, PerfLinkId},
+        perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{attach, ProbeKind},
         ProgramData, ProgramError,
     },
@@ -136,6 +136,17 @@ impl UProbe {
     pub fn take_link(&mut self, link_id: UProbeLinkId) -> Result<UProbeLink, ProgramError> {
         self.data.take_link(link_id)
     }
+
+    /// Creates a program from a pinned entry on a bpffs.
+    ///
+    /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
+    ///
+    /// On drop, any managed links are detached and the program is unloaded. This will not result in
+    /// the program being unloaded from the kernel if it is still pinned.
+    pub fn from_pin<P: AsRef<Path>>(path: P, kind: ProbeKind) -> Result<Self, ProgramError> {
+        let data = ProgramData::from_pinned_path(path)?;
+        Ok(Self { data, kind })
+    }
 }
 
 define_link_wrapper!(
@@ -143,8 +154,8 @@ define_link_wrapper!(
     UProbeLink,
     /// The type returned by [UProbe::attach]. Can be passed to [UProbe::detach].
     UProbeLinkId,
-    PerfLink,
-    PerfLinkId
+    PerfLinkInner,
+    PerfLinkIdInner
 );
 
 /// The type returned when attaching an [`UProbe`] fails.

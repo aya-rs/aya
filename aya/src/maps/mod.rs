@@ -242,6 +242,10 @@ pub enum Map {
     HashMap(MapData),
     /// A [`PerCpuHashMap`] map
     PerCpuHashMap(MapData),
+    /// A [`HashMap`] map that uses a LRU eviction policy.
+    LruHashMap(MapData),
+    /// A [`PerCpuHashMap`] map that uses a LRU eviction policy.
+    PerCpuLruHashMap(MapData),
     /// A [`PerfEventArray`] map
     PerfEventArray(MapData),
     /// A [`SockMap`] map
@@ -268,7 +272,9 @@ impl Map {
             Map::PerCpuArray(map) => map.obj.map_type(),
             Map::ProgramArray(map) => map.obj.map_type(),
             Map::HashMap(map) => map.obj.map_type(),
+            Map::LruHashMap(map) => map.obj.map_type(),
             Map::PerCpuHashMap(map) => map.obj.map_type(),
+            Map::PerCpuLruHashMap(map) => map.obj.map_type(),
             Map::PerfEventArray(map) => map.obj.map_type(),
             Map::SockHash(map) => map.obj.map_type(),
             Map::SockMap(map) => map.obj.map_type(),

@@ -4,6 +4,7 @@ use thiserror::Error;
 use std::{
     ffi::{CStr, CString},
     io,
+    path::Path,
 };
 
 use crate::{
@@ -189,6 +190,20 @@ impl SchedClassifier {
         link_id: SchedClassifierLinkId,
     ) -> Result<SchedClassifierLink, ProgramError> {
         self.data.take_link(link_id)
+    }
+
+    /// Creates a program from a pinned entry on a bpffs.
+    ///
+    /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
+    ///
+    /// On drop, any managed links are detached and the program is unloaded. This will not result in
+    /// the program being unloaded from the kernel if it is still pinned.
+    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
+        let data = ProgramData::from_pinned_path(path)?;
+        let cname = CString::new(data.name.clone().unwrap_or_default())
+            .unwrap()
+            .into_boxed_c_str();
+        Ok(Self { data, name: cname })
     }
 }
 
