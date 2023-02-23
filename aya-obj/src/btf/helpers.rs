@@ -1,3 +1,6 @@
+//! Helper module containing higher level APIs to query
+//! BTF objects.
+
 use super::*;
 use alloc::{
     borrow::Cow,
@@ -165,10 +168,6 @@ impl MemberPath {
         MemberPath(vec![])
     }
 
-    pub(crate) fn with_struct_name(struct_name: String) -> Self {
-        MemberPath(vec![struct_name])
-    }
-
     pub(crate) fn from_other_with_name(o: &Self, name: String) -> Self {
         let mut new = o.clone();
         new.push_name(name);
@@ -270,10 +269,8 @@ impl MemberHelper {
     }
 }
 
+#[cfg(test)]
 mod test {
-    use std::println;
-
-    use alloc::task;
 
     use super::*;
 
