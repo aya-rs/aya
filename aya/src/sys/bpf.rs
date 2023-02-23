@@ -859,6 +859,17 @@ pub fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult {
     syscall(Syscall::Bpf { cmd, attr })
 }
 
+pub(crate) fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>, (c_long, io::Error)> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_6 };
+    u.__bindgen_anon_1.start_id = id;
+    match sys_bpf(bpf_cmd::BPF_PROG_GET_NEXT_ID, &attr) {
+        Ok(_) => Ok(Some(unsafe { attr.__bindgen_anon_6.next_id })),
+        Err((_, io_error)) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
+        Err(e) => Err(e),
+    }
+}
+
 pub(crate) fn retry_with_verifier_logs<F>(
     max_retries: usize,
     log: &mut VerifierLog,
