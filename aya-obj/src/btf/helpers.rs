@@ -39,6 +39,19 @@ impl StructHelper {
         }
     }
 
+    fn resolve_indirect_type(btf: &Btf, t: &BtfType) -> Result<BtfType, BtfError> {
+        match t {
+            BtfType::Typedef(td) => {
+                let t = btf.type_by_id(td.btf_type)?;
+                if matches!(t, BtfType::Typedef(_)) {
+                    return Self::resolve_indirect_type(btf, t);
+                }
+                Ok(t.clone())
+            }
+            _ => Ok(t.clone()),
+        }
+    }
+
     // resolve structure members recursively
     fn resolve_members_rec(
         &mut self,
@@ -51,8 +64,10 @@ impl StructHelper {
             let mut member_offset = base_offset;
             for m in members {
                 let member_name = btf.string_at(m.name_offset)?;
+
                 // we get the member type
-                let member_type = btf.type_by_id(m.btf_type)?;
+                let member_type = &Self::resolve_indirect_type(btf, btf.type_by_id(m.btf_type)?)?;
+
                 let mut member_size = member_type.size().unwrap_or_default();
 
                 let mut p = member_path.clone();
@@ -80,21 +95,17 @@ impl StructHelper {
                     }
 
                     BtfType::Array(array) => {
-                        self.members.push(MemberHelper::new(
-                            p,
-                            member_offset,
-                            member_type.clone(),
-                            Some(btf.type_by_id(array.array.element_type)?.clone()),
-                        ));
-                    }
+                        let element_type = Self::resolve_indirect_type(
+                            btf,
+                            btf.type_by_id(array.array.element_type)?,
+                        )?;
+                        member_size = array.array.len * element_type.size().unwrap_or_default();
 
-                    BtfType::Typedef(td) => {
-                        member_size = btf.type_by_id(td.btf_type)?.size().unwrap_or_default();
                         self.members.push(MemberHelper::new(
                             p,
                             member_offset,
                             member_type.clone(),
-                            None,
+                            Some(element_type.clone()),
                         ));
                     }
 
@@ -110,6 +121,9 @@ impl StructHelper {
 
                 // members of unions all have the same offset
                 if !matches!(t.kind(), BtfKind::Union) {
+                    // a zero member_size is an issue as two members
+                    // will have the same offsets
+                    debug_assert_ne!(member_size, 0);
                     member_offset += member_size;
                 }
             }
@@ -304,8 +318,11 @@ mod test {
         assert_eq!(hlist_node.get_member("next").unwrap().offset, 0);
         assert_eq!(hlist_node.get_member("pprev").unwrap().offset, ptr_size);
 
+        // might be too tight to kernel version, consider removing if problematic
         let dentry = StructHelper::from_btf(&btf, "dentry").unwrap();
         assert_eq!(dentry.get_member("d_name").unwrap().offset, 32);
+        assert_eq!(dentry.get_member("d_lockref").unwrap().offset, 88);
+        assert_eq!(dentry.get_member("d_alias").unwrap().offset, 176);
     }
 
     #[test]
