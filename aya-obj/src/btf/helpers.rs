@@ -78,13 +78,20 @@ impl StructHelper {
 
                 match member_type {
                     BtfType::Struct(_) => {
-                        // we push the structure name
-                        self.members.push(MemberHelper::new(
-                            p.clone(),
-                            member_offset,
-                            member_type.clone(),
-                            None,
-                        ));
+                        // in case of structure containing an unamed union and again
+                        // a struct the algorithm creates duplicates members so
+                        // we need to check if we aleady have the member before insertion.
+                        // this is not optimal, it would be better in a hashmap
+                        if !self.contains_member(p.to_string()) {
+                            // we push the structure name
+                            self.members.push(MemberHelper::new(
+                                p.clone(),
+                                member_offset,
+                                member_type.clone(),
+                                None,
+                            ));
+                        }
+
                         // we process all members of the structure
                         self.resolve_members_rec(btf, member_type, &p, member_offset)?;
                     }
@@ -121,9 +128,6 @@ impl StructHelper {
 
                 // members of unions all have the same offset
                 if !matches!(t.kind(), BtfKind::Union) {
-                    // a zero member_size is an issue as two members
-                    // will have the same offsets
-                    debug_assert_ne!(member_size, 0);
                     member_offset += member_size;
                 }
             }
@@ -153,6 +157,11 @@ impl StructHelper {
     pub fn get_member<P: AsRef<str>>(&self, path: P) -> Option<&MemberHelper> {
         let path = path.as_ref();
         self.members.iter().find(|m| m.is_path(path))
+    }
+
+    #[inline]
+    pub(crate) fn contains_member<P: AsRef<str>>(&self, path: P) -> bool {
+        self.get_member(path).is_some()
     }
 
     /// Returns the size of the [`StructHelper`]. This might not be the real size of
