@@ -53,8 +53,13 @@ impl StructHelper {
                 let member_name = btf.string_at(m.name_offset)?;
                 // we get the member type
                 let member_type = btf.type_by_id(m.btf_type)?;
-                let member_size = member_type.size().unwrap_or_default();
-                let p = MemberPath::from_other_with_name(member_path, member_name.to_string());
+                let mut member_size = member_type.size().unwrap_or_default();
+
+                let mut p = member_path.clone();
+                // if not anonymous
+                if !member_name.is_empty() {
+                    p = MemberPath::from_other_with_name(member_path, member_name.to_string());
+                }
 
                 match member_type {
                     BtfType::Struct(_) => {
@@ -82,6 +87,17 @@ impl StructHelper {
                             Some(btf.type_by_id(array.array.element_type)?.clone()),
                         ));
                     }
+
+                    BtfType::Typedef(td) => {
+                        member_size = btf.type_by_id(td.btf_type)?.size().unwrap_or_default();
+                        self.members.push(MemberHelper::new(
+                            p,
+                            member_offset,
+                            member_type.clone(),
+                            None,
+                        ));
+                    }
+
                     _ => {
                         self.members.push(MemberHelper::new(
                             p,
@@ -287,6 +303,9 @@ mod test {
         let hlist_node = StructHelper::from_btf(&btf, "hlist_node").unwrap();
         assert_eq!(hlist_node.get_member("next").unwrap().offset, 0);
         assert_eq!(hlist_node.get_member("pprev").unwrap().offset, ptr_size);
+
+        let dentry = StructHelper::from_btf(&btf, "dentry").unwrap();
+        assert_eq!(dentry.get_member("d_name").unwrap().offset, 32);
     }
 
     #[test]
