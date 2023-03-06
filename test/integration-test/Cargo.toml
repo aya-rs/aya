@@ -12,6 +12,7 @@ aya-log = { workspace = true }
 aya-obj = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }
+netns-rs = { workspace = true }
 object = { workspace = true }
 rbpf = { workspace = true }
 tokio = { workspace = true, default-features = false, features = [

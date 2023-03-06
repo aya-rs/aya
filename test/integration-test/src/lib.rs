@@ -18,3 +18,5 @@ pub const BPF_PROBE_READ: &[u8] =
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod utils;

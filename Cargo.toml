@@ -71,6 +71,7 @@ integration-ebpf = { path = "test/integration-ebpf", default-features = false }
 lazy_static = { version = "1", default-features = false }
 libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
+netns-rs = { version = "0.1", default-features = false }
 num_enum = { version = "0.6", default-features = false }
 object = { version = "0.31", default-features = false }
 parking_lot = { version = "0.12.0", default-features = false }
