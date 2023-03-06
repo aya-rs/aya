@@ -1,6 +1,4 @@
-use core::{borrow::Borrow, cell::UnsafeCell, marker::PhantomData, mem};
-
-use aya_bpf_cty::c_void;
+use core::{borrow::Borrow, cell::UnsafeCell, ffi::c_void, marker::PhantomData, mem};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKHASH, bpf_sock_ops},

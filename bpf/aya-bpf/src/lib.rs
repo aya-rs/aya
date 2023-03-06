@@ -21,10 +21,7 @@ pub mod helpers;
 pub mod maps;
 pub mod programs;
 
-pub use aya_bpf_cty as cty;
-
-use core::ffi::c_void;
-use cty::{c_int, c_long};
+use core::ffi::{c_int, c_long, c_void};
 use helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid};
 
 pub use aya_bpf_macros as macros;

@@ -18,7 +18,8 @@ impl FEntryContext {
     /// ```no_run
     /// # #![allow(non_camel_case_types)]
     /// # #![allow(dead_code)]
-    /// # use aya_bpf::{cty::c_int, programs::FEntryContext};
+    /// # use core::ffi::c_int;
+    /// # use aya_bpf::programs::FEntryContext;
     /// # type pid_t = c_int;
     /// # struct task_struct {
     /// #     pid: pid_t,

@@ -5,7 +5,6 @@ authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-aya-bpf-cty = { path = "../aya-bpf-cty" }
 aya-bpf-macros = { path = "../../aya-bpf-macros" }
 aya-bpf-bindings = { path = "../aya-bpf-bindings" }
 

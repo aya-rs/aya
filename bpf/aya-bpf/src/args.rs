@@ -1,4 +1,6 @@
-use crate::{cty::c_void, helpers::bpf_probe_read};
+use core::ffi::c_void;
+
+use crate::helpers::bpf_probe_read;
 
 // aarch64 uses user_pt_regs instead of pt_regs
 #[cfg(not(bpf_target_arch = "aarch64"))]

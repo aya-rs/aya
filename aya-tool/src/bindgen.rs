@@ -14,7 +14,7 @@ pub fn user_builder() -> Builder {
 pub fn bpf_builder() -> Builder {
     bindgen::builder()
         .use_core()
-        .ctypes_prefix("::aya_bpf::cty")
+        .ctypes_prefix("::core::ffi")
         .layout_tests(false)
         .generate_comments(false)
         .clang_arg("-Wno-unknown-attributes")

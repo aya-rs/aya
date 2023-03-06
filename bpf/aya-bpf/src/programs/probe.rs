@@ -26,7 +26,8 @@ impl ProbeContext {
     /// ```no_run
     /// # #![allow(non_camel_case_types)]
     /// # #![allow(dead_code)]
-    /// # use aya_bpf::{programs::ProbeContext, cty::c_int, helpers::bpf_probe_read};
+    /// # use core::ffi::c_int;
+    /// # use aya_bpf::{programs::ProbeContext, helpers::bpf_probe_read};
     /// # type pid_t = c_int;
     /// # struct task_struct {
     /// #     pid: pid_t,
@@ -50,7 +51,8 @@ impl ProbeContext {
     ///
     /// ```no_run
     /// # #![allow(dead_code)]
-    /// # use aya_bpf::{programs::ProbeContext, cty::c_int};
+    /// # use core::ffi::c_int;
+    /// # use aya_bpf::{programs::ProbeContext};
     /// unsafe fn try_kretprobe_try_to_wake_up(ctx: ProbeContext) -> Result<u32, u32> {
     ///     let retval: c_int = ctx.ret().ok_or(1u32)?;
     ///

@@ -7,13 +7,14 @@
 //! also expose bindings to the underlying helpers as a fall-back in case of a missing
 //! implementation.
 
-use core::mem::{self, MaybeUninit};
+use core::{
+    ffi::{c_char, c_long, c_void},
+    mem::{self, MaybeUninit},
+};
 
 pub use aya_bpf_bindings::helpers as gen;
 #[doc(hidden)]
 pub use gen::*;
-
-use crate::cty::{c_char, c_long, c_void};
 
 /// Read bytes stored at `src` and store them as a `T`.
 ///
@@ -27,7 +28,8 @@ use crate::cty::{c_char, c_long, c_void};
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read};
+/// # use core::ffi::{c_int, c_long};
+/// # use aya_bpf::helpers::bpf_probe_read;
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const c_int = 0 as _;
 /// let my_int: c_int = unsafe { bpf_probe_read(kernel_ptr)? };
@@ -64,7 +66,8 @@ pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_buf};
+/// # use core::ffi::{c_int, c_long};
+/// # use aya_bpf::helpers::bpf_probe_read_buf;
 /// # fn try_test() -> Result<(), c_long> {
 /// # let ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
@@ -100,7 +103,8 @@ pub unsafe fn bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_user};
+/// # use core::ffi::{c_int, c_long};
+/// # use aya_bpf::helpers::bpf_probe_read_user;
 /// # fn try_test() -> Result<(), c_long> {
 /// # let user_ptr: *const c_int = 0 as _;
 /// let my_int: c_int = unsafe { bpf_probe_read_user(user_ptr)? };
@@ -135,7 +139,8 @@ pub unsafe fn bpf_probe_read_user<T>(src: *const T) -> Result<T, c_long> {
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_user_buf};
+/// # use core::ffi::{c_int, c_long};
+/// # use aya_bpf::helpers::bpf_probe_read_user_buf;
 /// # fn try_test() -> Result<(), c_long> {
 /// # let user_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
@@ -171,7 +176,8 @@ pub unsafe fn bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> Result<
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_kernel};
+/// # use core::ffi::{c_int, c_long};
+/// # use aya_bpf::helpers::bpf_probe_read_kernel;
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const c_int = 0 as _;
 /// let my_int: c_int = unsafe { bpf_probe_read_kernel(kernel_ptr)? };
@@ -206,7 +212,8 @@ pub unsafe fn bpf_probe_read_kernel<T>(src: *const T) -> Result<T, c_long> {
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_kernel_buf};
+/// # use core::ffi::{c_int, c_long};
+/// # use aya_bpf::helpers::bpf_probe_read_kernel_buf;
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
@@ -245,7 +252,8 @@ pub unsafe fn bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> Resul
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_str};
+/// # use core::ffi::c_long;
+/// # use aya_bpf::helpers::bpf_probe_read_str;
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const u8 = 0 as _;
 /// let mut my_str = [0u8; 16];
@@ -291,7 +299,8 @@ pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usiz
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_user_str};
+/// # use core::ffi::c_long;
+/// # use aya_bpf::helpers::bpf_probe_read_user_str;
 /// # fn try_test() -> Result<(), c_long> {
 /// # let user_ptr: *const u8 = 0 as _;
 /// let mut my_str = [0u8; 16];
@@ -340,7 +349,8 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_user_str_bytes};
+/// # use core::ffi::c_long;
+/// # use aya_bpf::helpers::bpf_probe_read_user_str_bytes;
 /// # fn try_test() -> Result<(), c_long> {
 /// # let user_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
@@ -354,7 +364,8 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 /// With a `PerCpuArray` (with size defined by us):
 ///
 /// ```no_run
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_user_str_bytes};
+/// # use core::ffi::c_long;
+/// # use aya_bpf::helpers::bpf_probe_read_user_str_bytes;
 /// use aya_bpf::{macros::map, maps::PerCpuArray};
 ///
 /// #[repr(C)]
@@ -383,8 +394,8 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_user_str_bytes};
-/// # use aya_bpf::{macros::map, maps::PerCpuArray};
+/// # use core::ffi::c_long;
+/// # use aya_bpf::{helpers::bpf_probe_read_user_str_bytes, macros::map, maps::PerCpuArray};
 /// # #[repr(C)]
 /// # pub struct Buf {
 /// #     pub buf: [u8; 4096],
@@ -442,7 +453,8 @@ pub unsafe fn bpf_probe_read_user_str_bytes(
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_kernel_str};
+/// # use core::ffi::c_long;
+/// # use aya_bpf::helpers::bpf_probe_read_kernel_str;
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const u8 = 0 as _;
 /// let mut my_str = [0u8; 16];
@@ -491,7 +503,8 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
+/// # use core::ffi::c_long;
+/// # use aya_bpf::helpers::bpf_probe_read_kernel_str_bytes;
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
@@ -506,7 +519,8 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
+/// # use core::ffi::c_long;
+/// # use aya_bpf::helpers::bpf_probe_read_kernel_str_bytes;
 /// use aya_bpf::{macros::map, maps::PerCpuArray};
 ///
 /// #[repr(C)]
@@ -535,8 +549,8 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
-/// # use aya_bpf::{macros::map, maps::PerCpuArray};
+/// # use core::ffi::c_long;
+/// # use aya_bpf::{helpers::bpf_probe_read_kernel_str_bytes, macros::map, maps::PerCpuArray};
 /// # #[repr(C)]
 /// # pub struct Buf {
 /// #     pub buf: [u8; 4096],
@@ -591,8 +605,8 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
+/// # use core::ffi::{c_int, c_long}
 /// # use aya_bpf::{
-/// #     cty::{c_int, c_long},
 /// #     helpers::bpf_probe_write_user,
 /// #     programs::ProbeContext,
 /// # };

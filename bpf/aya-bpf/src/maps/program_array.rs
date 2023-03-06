@@ -1,6 +1,4 @@
-use core::{cell::UnsafeCell, hint::unreachable_unchecked, mem};
-
-use aya_bpf_cty::c_long;
+use core::{cell::UnsafeCell, ffi::c_long, hint::unreachable_unchecked, mem};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY},
@@ -15,7 +13,8 @@ use crate::{
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// use aya_bpf::{macros::map, maps::ProgramArray, cty::c_long};
+/// # use core::ffi::c_long;
+/// use aya_bpf::{macros::map, maps::ProgramArray};
 /// # use aya_bpf::{programs::LsmContext};
 ///
 /// #[map]

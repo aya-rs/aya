@@ -24,7 +24,8 @@ impl BtfTracePointContext {
     ///
     /// ```no_run
     /// # #![allow(dead_code)]
-    /// # use aya_bpf::{programs::BtfTracePointContext, cty::{c_int, c_ulong, c_char}};
+    /// # use core::ffi::{c_char, c_int, c_ulong};
+    /// # use aya_bpf::programs::BtfTracePointContext;
     /// unsafe fn try_tp_btf_sched_process_fork(ctx: BtfTracePointContext) -> Result<u32, u32> {
     ///     // Grab arguments
     ///     let parent_comm: *const c_char = ctx.arg(0);
