@@ -143,6 +143,35 @@ fn relocate_pointer() {
     assert_eq!(test.run_no_btf().unwrap(), 42);
 }
 
+#[integration_test]
+fn relocate_struct_flavors() {
+    let definition = r#"
+        struct foo {};
+        struct bar { struct foo *f; };
+        struct bar___cafe { struct foo *e; struct foo *f; };
+    "#;
+
+    let relocation_code = r#"
+        __u8 memory[] = {42, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 0};
+        struct bar* ptr = (struct bar *) &memory;
+
+        if (__builtin_preserve_field_info((((typeof(struct bar___cafe) *)0)->e), 2)) {
+            value = (__u64) __builtin_preserve_access_index(((struct bar___cafe *)ptr)->e);
+        } else {
+            value = (__u64) __builtin_preserve_access_index(ptr->f);
+        }
+    "#;
+
+    let test_no_flavor = RelocationTest {
+        local_definition: definition,
+        target_btf: definition,
+        relocation_code,
+    }
+    .build()
+    .unwrap();
+    assert_eq!(test_no_flavor.run_no_btf().unwrap(), 42);
+}
+
 /// Utility code for running relocation tests:
 /// - Generates the eBPF program using probided local definition and relocation code
 /// - Generates the BTF from the target btf code
