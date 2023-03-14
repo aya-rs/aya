@@ -23,15 +23,15 @@ impl FExitContext {
     /// # struct task_struct {
     /// #     pid: pid_t,
     /// # }
-    /// unsafe fn try_filename_lookup(ctx: FExitContext) -> Result<u32, u32> {
-    ///     let tp: *const task_struct = ctx.arg(0);
+    /// unsafe fn try_filename_lookup(ctx: FExitContext) -> Result<(), i32> {
+    ///     let tp: *const task_struct = ctx.arg(0).ok_or(-1)?;
     ///
     ///     // Do something with tp
     ///
-    ///     Ok(0)
+    ///     Ok(())
     /// }
     /// ```
-    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> T {
+    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> Option<T> {
         T::from_argument(self.ctx as *const _, n)
     }
 }
