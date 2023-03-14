@@ -27,14 +27,16 @@ pub unsafe trait FromBtfArgument: Sized {
     /// memory. In particular, the value of `n` must not exceed the number of function
     /// arguments. Moreover, `ctx` must be a valid pointer to a BTF context, and `T` must
     /// be the right type for the given argument.
-    unsafe fn from_argument(ctx: *const c_void, n: usize) -> Self;
+    unsafe fn from_argument(ctx: *const c_void, n: usize) -> Option<Self>;
 }
 
 unsafe impl<T> FromBtfArgument for *const T {
-    unsafe fn from_argument(ctx: *const c_void, n: usize) -> *const T {
+    unsafe fn from_argument(ctx: *const c_void, n: usize) -> Option<Self> {
         // BTF arguments are exposed as an array of `usize` where `usize` can
         // either be treated as a pointer or a primitive type
-        *(ctx as *const usize).add(n) as _
+        bpf_probe_read((ctx as *const usize).add(n))
+            .map(|v| v as *const _)
+            .ok()
     }
 }
 
@@ -42,10 +44,10 @@ unsafe impl<T> FromBtfArgument for *const T {
 macro_rules! unsafe_impl_from_btf_argument {
     ($type:ident) => {
         unsafe impl FromBtfArgument for $type {
-            unsafe fn from_argument(ctx: *const c_void, n: usize) -> Self {
+            unsafe fn from_argument(ctx: *const c_void, n: usize) -> Option<Self> {
                 // BTF arguments are exposed as an array of `usize` where `usize` can
                 // either be treated as a pointer or a primitive type
-                *(ctx as *const usize).add(n) as _
+                Some(*(ctx as *const usize).add(n) as _)
             }
         }
     };

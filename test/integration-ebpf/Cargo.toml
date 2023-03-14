@@ -18,6 +18,10 @@ which = { workspace = true }
 xtask = { path = "../../xtask" }
 
 [[bin]]
+name = "args"
+path = "src/args.rs"
+
+[[bin]]
 name = "bpf_probe_read"
 path = "src/bpf_probe_read.rs"
 

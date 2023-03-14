@@ -34,8 +34,8 @@ impl LsmContext {
     /// unsafe fn try_lsm_mmap_addr(ctx: LsmContext) -> Result<i32, i32> {
     ///     // In the kernel, this hook is defined as:
     ///     //   LSM_HOOK(int, 0, mmap_addr, unsigned long addr)
-    ///     let addr: c_ulong = ctx.arg(0);
-    ///     let retval: c_int = ctx.arg(1);
+    ///     let addr: c_ulong = ctx.arg(0).ok_or(-1)?;
+    ///     let retval: c_int = ctx.arg(1).ok_or(-1)?;
     ///
     ///     // You can then do stuff with addr and retval down here.
     ///
@@ -50,7 +50,7 @@ impl LsmContext {
     /// ```
     ///
     /// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
-    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> T {
+    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> Option<T> {
         T::from_argument(self.ctx as *const _, n)
     }
 }
