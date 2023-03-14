@@ -1395,7 +1395,7 @@ pub fn aya_ebpf::programs::device::DeviceContext::from(t: T) -> T
 pub mod aya_ebpf::programs::fentry
 pub struct aya_ebpf::programs::fentry::FEntryContext
 impl aya_ebpf::programs::fentry::FEntryContext
-pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: FromBtfArgument>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::fentry::FEntryContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fentry::FEntryContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1424,7 +1424,7 @@ pub fn aya_ebpf::programs::fentry::FEntryContext::from(t: T) -> T
 pub mod aya_ebpf::programs::fexit
 pub struct aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::programs::fexit::FExitContext
-pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: FromBtfArgument>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::fexit::FExitContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1453,7 +1453,7 @@ pub fn aya_ebpf::programs::fexit::FExitContext::from(t: T) -> T
 pub mod aya_ebpf::programs::lsm
 pub struct aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::programs::lsm::LsmContext
-pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: FromBtfArgument>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::lsm::LsmContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1956,7 +1956,7 @@ pub fn aya_ebpf::programs::tc::TcContext::from(t: T) -> T
 pub mod aya_ebpf::programs::tp_btf
 pub struct aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl aya_ebpf::programs::tp_btf::BtfTracePointContext
-pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: FromBtfArgument>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2046,7 +2046,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
 pub struct aya_ebpf::programs::BtfTracePointContext
 impl aya_ebpf::programs::tp_btf::BtfTracePointContext
-pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: FromBtfArgument>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2102,7 +2102,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::device::DeviceContext
 pub fn aya_ebpf::programs::device::DeviceContext::from(t: T) -> T
 pub struct aya_ebpf::programs::FEntryContext
 impl aya_ebpf::programs::fentry::FEntryContext
-pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: FromBtfArgument>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::fentry::FEntryContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fentry::FEntryContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2130,7 +2130,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::from(t: T) -> T
 pub struct aya_ebpf::programs::FExitContext
 impl aya_ebpf::programs::fexit::FExitContext
-pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: FromBtfArgument>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::fexit::FExitContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2158,7 +2158,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::from(t: T) -> T
 pub struct aya_ebpf::programs::LsmContext
 impl aya_ebpf::programs::lsm::LsmContext
-pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: FromBtfArgument>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::lsm::LsmContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::as_ptr(&self) -> *mut core::ffi::c_void
