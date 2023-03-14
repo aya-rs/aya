@@ -13,7 +13,7 @@ use log::warn;
 
 use crate::tests::kernel_version;
 
-use super::{integration_test, IntegrationTest};
+use super::integration_test;
 
 const MAX_RETRIES: u32 = 100;
 const RETRY_DURATION_MS: u64 = 10;

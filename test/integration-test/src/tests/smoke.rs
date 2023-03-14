@@ -5,7 +5,7 @@ use aya::{
 };
 use log::info;
 
-use super::{integration_test, kernel_version, IntegrationTest};
+use super::{integration_test, kernel_version};
 
 #[integration_test]
 fn xdp() {
