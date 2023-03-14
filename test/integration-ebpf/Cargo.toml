@@ -8,6 +8,10 @@ publish = false
 aya-bpf = { path = "../../bpf/aya-bpf" }
 
 [[bin]]
+name = "args"
+path = "src/args.rs"
+
+[[bin]]
 name = "map_test"
 path = "src/map_test.rs"
 
