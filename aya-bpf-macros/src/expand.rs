@@ -613,18 +613,39 @@ impl RawTracePoint {
 
 pub struct Lsm {
     item: ItemFn,
-    name: String,
+    name: Option<String>,
+    sleepable: bool,
 }
 
 impl Lsm {
     pub fn from_syn(mut args: Args, item: ItemFn) -> Result<Lsm> {
-        let name = name_arg(&mut args)?.unwrap_or_else(|| item.sig.ident.to_string());
-
-        Ok(Lsm { item, name })
+        let name = pop_arg(&mut args, "name");
+        let mut sleepable = false;
+        if let Some(s) = pop_arg(&mut args, "sleepable") {
+            if let Ok(m) = s.parse() {
+                sleepable = m
+            } else {
+                return Err(Error::new_spanned(
+                    "mutlibuffer",
+                    "invalid value. should be 'true' or 'false'",
+                ));
+            }
+        }
+        err_on_unknown_args(&args)?;
+        Ok(Lsm {
+            item,
+            name,
+            sleepable,
+        })
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
-        let section_name = format!("lsm/{}", self.name);
+        let section_prefix = if self.sleepable { "lsm.s" } else { "lsm" };
+        let section_name = if let Some(name) = &self.name {
+            format!("{section_prefix}/{name}")
+        } else {
+            section_prefix.to_string()
+        };
         let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
         let item = &self.item;
