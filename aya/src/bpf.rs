@@ -9,7 +9,7 @@ use std::{
 
 use aya_obj::{
     btf::{BtfFeatures, BtfRelocationError},
-    generated::BPF_F_XDP_HAS_FRAGS,
+    generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS},
     relocation::BpfRelocationError,
 };
 use log::debug;
@@ -551,9 +551,17 @@ impl<'a> BpfLoader<'a> {
                                 data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
                             })
                         }
-                        ProgramSection::Lsm { .. } => Program::Lsm(Lsm {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
-                        }),
+                        ProgramSection::Lsm {
+                            sleepable_supported,
+                            ..
+                        } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, verifier_log_level);
+                            if *sleepable_supported {
+                                data.flags = BPF_F_SLEEPABLE;
+                            }
+                            Program::Lsm(Lsm { data })
+                        }
                         ProgramSection::BtfTracePoint { .. } => {
                             Program::BtfTracePoint(BtfTracePoint {
                                 data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
