@@ -118,7 +118,11 @@ impl Xdp {
     /// kernels `>= 5.9.0`, and instead
     /// [`XdpError::NetlinkError`] is returned for older
     /// kernels.
-    pub fn attach_to_if_index(&mut self, if_index: libc::c_uint, flags: XdpFlags) -> Result<XdpLinkId, ProgramError> {
+    pub fn attach_to_if_index(
+        &mut self,
+        if_index: libc::c_uint,
+        flags: XdpFlags,
+    ) -> Result<XdpLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let if_index = if_index as RawFd;
 
