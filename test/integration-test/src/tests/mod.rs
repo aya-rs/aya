@@ -7,6 +7,7 @@ use std::{ffi::CStr, mem};
 pub mod btf_relocations;
 pub mod elf;
 pub mod load;
+pub mod log;
 pub mod rbpf;
 pub mod relocations;
 pub mod smoke;
