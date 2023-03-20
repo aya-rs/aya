@@ -10,6 +10,7 @@ aya = { path = "../../aya" }
 aya-obj = { path = "../../aya-obj" }
 clap = { version = "4", features = ["derive"] }
 env_logger = "0.10"
+futures-core = "0.3"
 inventory = "0.3"
 integration-test-macros = { path = "../integration-test-macros" }
 lazy_static = "1"
@@ -20,3 +21,4 @@ rbpf = "0.1.0"
 regex = "1"
 tempfile = "3.3.0"
 libtest-mimic = "0.6.0"
+tokio = { version = "1.24", features = ["rt", "rt-multi-thread"] }
