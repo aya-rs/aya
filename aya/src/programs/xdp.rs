@@ -105,10 +105,10 @@ impl Xdp {
                 name: interface.to_string(),
             });
         }
-        self.attach_by_ifindex(if_index, flags)
+        self.attach_to_if_index(if_index, flags)
     }
 
-    /// Attaches the program to the given `interface`.
+    /// Attaches the program to the given interface index.
     ///
     /// The returned value can be used to detach, see [Xdp::detach].
     ///
@@ -118,7 +118,7 @@ impl Xdp {
     /// kernels `>= 5.9.0`, and instead
     /// [`XdpError::NetlinkError`] is returned for older
     /// kernels.
-    pub fn attach_by_ifindex(&mut self, if_index: libc::c_uint, flags: XdpFlags) -> Result<XdpLinkId, ProgramError> {
+    pub fn attach_to_if_index(&mut self, if_index: libc::c_uint, flags: XdpFlags) -> Result<XdpLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let if_index = if_index as RawFd;
 
