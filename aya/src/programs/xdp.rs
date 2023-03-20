@@ -120,7 +120,7 @@ impl Xdp {
     /// kernels.
     pub fn attach_to_if_index(
         &mut self,
-        if_index: libc::c_uint,
+        if_index: u32,
         flags: XdpFlags,
     ) -> Result<XdpLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
