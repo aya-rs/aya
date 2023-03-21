@@ -98,14 +98,33 @@ impl Xdp {
     /// [`XdpError::NetlinkError`] is returned for older
     /// kernels.
     pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<XdpLinkId, ProgramError> {
-        let prog_fd = self.data.fd_or_err()?;
         let c_interface = CString::new(interface).unwrap();
-        let if_index = unsafe { if_nametoindex(c_interface.as_ptr()) } as RawFd;
+        let if_index = unsafe { if_nametoindex(c_interface.as_ptr()) };
         if if_index == 0 {
             return Err(ProgramError::UnknownInterface {
                 name: interface.to_string(),
             });
         }
+        self.attach_to_if_index(if_index, flags)
+    }
+
+    /// Attaches the program to the given interface index.
+    ///
+    /// The returned value can be used to detach, see [Xdp::detach].
+    ///
+    /// # Errors
+    ///
+    /// When attaching fails, [`ProgramError::SyscallError`] is returned for
+    /// kernels `>= 5.9.0`, and instead
+    /// [`XdpError::NetlinkError`] is returned for older
+    /// kernels.
+    pub fn attach_to_if_index(
+        &mut self,
+        if_index: u32,
+        flags: XdpFlags,
+    ) -> Result<XdpLinkId, ProgramError> {
+        let prog_fd = self.data.fd_or_err()?;
+        let if_index = if_index as RawFd;
 
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 9, 0) {
