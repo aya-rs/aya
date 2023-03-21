@@ -635,12 +635,7 @@ impl Clone for MapData {
     fn clone(&self) -> MapData {
         MapData {
             obj: self.obj.clone(),
-            fd: {
-                if let Some(fd) = self.fd {
-                    unsafe { Some(libc::dup(fd)) };
-                }
-                None
-            },
+            fd: self.fd.map(|fd| unsafe { libc::dup(fd) }),
             btf_fd: self.btf_fd,
             pinned: self.pinned,
         }
