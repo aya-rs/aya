@@ -212,7 +212,7 @@ impl Xdp {
                 frags = m
             } else {
                 return Err(Error::new_spanned(
-                    "mutlibuffer",
+                    s,
                     "invalid value. should be 'true' or 'false'",
                 ));
             }
@@ -626,7 +626,7 @@ impl Lsm {
                 sleepable = m
             } else {
                 return Err(Error::new_spanned(
-                    "mutlibuffer",
+                    s,
                     "invalid value. should be 'true' or 'false'",
                 ));
             }
