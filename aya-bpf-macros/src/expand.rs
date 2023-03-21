@@ -212,7 +212,7 @@ impl Xdp {
                 frags = m
             } else {
                 return Err(Error::new_spanned(
-                    "mutlibuffer",
+                    "multibuffer",
                     "invalid value. should be 'true' or 'false'",
                 ));
             }
