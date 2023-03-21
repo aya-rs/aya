@@ -419,7 +419,7 @@ pub unsafe fn bpf_probe_read_user_str_bytes(
         dest.len() as u32,
         src as *const c_void,
     );
-    if len < 0 {
+    if len <= 0 {
         return Err(-1);
     }
 
@@ -430,7 +430,8 @@ pub unsafe fn bpf_probe_read_user_str_bytes(
         return Err(-1);
     }
 
-    Ok(&dest[..len])
+    // len includes NULL byte
+    Ok(&dest[..len - 1])
 }
 
 /// Read a null-terminated string from _kernel space_ stored at `src` into `dest`.
@@ -571,7 +572,7 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
         dest.len() as u32,
         src as *const c_void,
     );
-    if len < 0 {
+    if len <= 0 {
         return Err(-1);
     }
 
@@ -582,7 +583,8 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
         return Err(-1);
     }
 
-    Ok(&dest[..len])
+    // len includes NULL byte
+    Ok(&dest[..len - 1])
 }
 
 /// Write bytes to the _user space_ pointer `src` and store them as a `T`.
