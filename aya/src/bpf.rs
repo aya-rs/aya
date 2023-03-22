@@ -12,6 +12,7 @@ use aya_obj::{
     generated::BPF_F_XDP_HAS_FRAGS,
     relocation::BpfRelocationError,
 };
+use bytes::BufMut;
 use log::debug;
 use thiserror::Error;
 
@@ -48,12 +49,20 @@ pub(crate) const PERF_EVENT_IOC_DISABLE: c_int = AYA_PERF_EVENT_IOC_DISABLE;
 pub(crate) const PERF_EVENT_IOC_SET_BPF: c_int = AYA_PERF_EVENT_IOC_SET_BPF;
 
 /// Marker trait for types that can safely be converted to and from byte slices.
-pub unsafe trait Pod: Copy + 'static {}
+/// Values implementing this trait must be bitwise-copyable.
+pub unsafe trait Pod: Copy + 'static {
+    /// Serializes the object into bytes
+    unsafe fn as_bytes(&self) -> Vec<u8> {
+        // Safety: These types are always safe to
+        // convert to bytes
+        crate::util::bytes_of(self).to_vec()
+    }
+}
 
 macro_rules! unsafe_impl_pod {
     ($($struct_name:ident),+ $(,)?) => {
         $(
-            unsafe impl Pod for $struct_name { }
+            unsafe impl Pod for $struct_name {}
         )+
     }
 }
@@ -62,6 +71,17 @@ unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64, u128, i128);
 
 // It only makes sense that an array of POD types is itself POD
 unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
+
+// And slices of POD types are also POD
+unsafe impl<T: Pod> Pod for &'static [T] {
+    unsafe fn as_bytes(&self) -> Vec<u8> {
+        let mut buf = vec![];
+        for i in *self {
+            buf.put(bytes_of::<T>(i))
+        }
+        buf
+    }
+}
 
 pub use aya_obj::maps::{bpf_map_def, PinningType};
 
@@ -126,7 +146,7 @@ impl Features {
 pub struct BpfLoader<'a> {
     btf: Option<Cow<'a, Btf>>,
     map_pin_path: Option<PathBuf>,
-    globals: HashMap<&'a str, &'a [u8]>,
+    globals: HashMap<&'a str, Vec<u8>>,
     max_entries: HashMap<&'a str, u32>,
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
@@ -234,18 +254,16 @@ impl<'a> BpfLoader<'a> {
     /// # Example
     ///
     /// ```no_run
-    /// use aya::BpfLoader;
+    /// use aya::{BpfLoader, Pod};
     ///
     /// let bpf = BpfLoader::new()
-    ///     .set_global("VERSION", &2)
+    ///     .set_global("VERSION", unsafe { 2.as_bytes() })
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
     ///
-    pub fn set_global<V: Pod>(&mut self, name: &'a str, value: &'a V) -> &mut BpfLoader<'a> {
-        // Safety: value is POD
-        let data = unsafe { bytes_of(value) };
-        self.globals.insert(name, data);
+    pub fn set_global(&mut self, name: &'a str, value: Vec<u8>) -> &mut BpfLoader<'a> {
+        self.globals.insert(name, value);
         self
     }
 

@@ -572,7 +572,7 @@ impl Object {
     }
 
     /// Patches map data
-    pub fn patch_map_data(&mut self, globals: HashMap<&str, &[u8]>) -> Result<(), ParseError> {
+    pub fn patch_map_data(&mut self, globals: HashMap<&str, Vec<u8>>) -> Result<(), ParseError> {
         let symbols: HashMap<String, &Symbol> = self
             .symbols_by_index
             .iter()
@@ -2245,12 +2245,12 @@ mod tests {
             },
         );
 
-        let test_data: &[u8] = &[1, 2, 3];
+        let test_data: Vec<u8> = vec![1, 2, 3];
         obj.patch_map_data(HashMap::from([("my_config", test_data)]))
             .unwrap();
 
         let map = obj.maps.get(".rodata").unwrap();
-        assert_eq!(test_data, map.data());
+        assert_eq!(vec![1, 2, 3], map.data());
     }
 
     #[test]
