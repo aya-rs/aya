@@ -33,7 +33,8 @@ pub(crate) fn find_tracefs_path() -> Result<&'static Path, ProgramError> {
             ];
 
             for mount in known_mounts {
-                if mount.exists() {
+                // Check that the mount point exists and is not empty
+                if mount.exists() && mount.read_dir().ok()?.next().is_some() {
                     return Some(mount);
                 }
             }
