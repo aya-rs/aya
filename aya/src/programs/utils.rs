@@ -34,6 +34,11 @@ pub(crate) fn find_tracefs_path() -> Result<&'static Path, ProgramError> {
 
             for mount in known_mounts {
                 // Check that the mount point exists and is not empty
+                // Documented here: (https://www.kernel.org/doc/Documentation/trace/ftrace.txt)
+                // In some cases, tracefs will only mount at /sys/kernel/debug/tracing
+                // but, the kernel will still create the directory /sys/kernel/tracing.
+                // The user may be expected to manually mount the directory in order for it to
+                // exist in /sys/kernel/tracing according to the documentation.
                 if mount.exists() && mount.read_dir().ok()?.next().is_some() {
                     return Some(mount);
                 }
