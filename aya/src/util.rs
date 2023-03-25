@@ -8,10 +8,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::{
-    generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK},
-    Pod,
-};
+use crate::generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK};
 
 use libc::{if_nametoindex, sysconf, _SC_PAGESIZE};
 
@@ -153,18 +150,9 @@ pub(crate) fn page_size() -> usize {
 }
 
 // bytes_of converts a <T> to a byte slice
-pub(crate) unsafe fn bytes_of<T: Pod>(val: &T) -> &[u8] {
+pub(crate) unsafe fn bytes_of<T>(val: &T) -> &[u8] {
     let size = mem::size_of::<T>();
     slice::from_raw_parts(slice::from_ref(val).as_ptr().cast(), size)
-}
-
-pub(crate) fn bytes_of_slice<T: Pod>(val: &[T]) -> &[u8] {
-    let size = val.len().wrapping_mul(mem::size_of::<T>());
-    // Safety:
-    // Any alignment is allowed.
-    // The size is determined in this function.
-    // The Pod trait ensures the type is valid to cast to bytes.
-    unsafe { slice::from_raw_parts(val.as_ptr().cast(), size) }
 }
 
 const MIN_LOG_BUF_SIZE: usize = 1024 * 10;
