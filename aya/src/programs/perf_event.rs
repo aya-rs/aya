@@ -6,6 +6,7 @@ pub use crate::generated::{
 
 use crate::{
     generated::{
+        bpf_link_type,
         bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT,
         perf_type_id::{
             PERF_TYPE_BREAKPOINT, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE, PERF_TYPE_RAW,
@@ -16,9 +17,9 @@ use crate::{
         links::define_link_wrapper,
         load_program, perf_attach,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
-        ProgramData, ProgramError,
+        FdLink, LinkError, ProgramData, ProgramError,
     },
-    sys::perf_event_open,
+    sys::{bpf_link_get_info_by_fd, perf_event_open},
 };
 
 /// The type of perf event
@@ -186,6 +187,35 @@ impl PerfEvent {
     /// for managing its lifetime.
     pub fn take_link(&mut self, link_id: PerfEventLinkId) -> Result<PerfEventLink, ProgramError> {
         self.data.take_link(link_id)
+    }
+}
+
+impl TryFrom<PerfEventLink> for FdLink {
+    type Error = LinkError;
+
+    fn try_from(value: PerfEventLink) -> Result<Self, Self::Error> {
+        if let PerfLinkInner::FdLink(fd) = value.into_inner() {
+            Ok(fd)
+        } else {
+            Err(LinkError::InvalidLink)
+        }
+    }
+}
+
+impl TryFrom<FdLink> for PerfEventLink {
+    type Error = LinkError;
+
+    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
+        let info =
+            bpf_link_get_info_by_fd(fd_link.fd).map_err(|io_error| LinkError::SyscallError {
+                call: "BPF_OBJ_GET_INFO_BY_FD",
+                code: 0,
+                io_error,
+            })?;
+        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as u32) {
+            return Ok(PerfEventLink::new(PerfLinkInner::FdLink(fd_link)));
+        }
+        Err(LinkError::InvalidLink)
     }
 }
 
