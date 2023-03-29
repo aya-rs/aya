@@ -5,7 +5,7 @@ use aya::{
 };
 use log::info;
 
-use super::{integration_test, kernel_version, IntegrationTest};
+use super::{integration_test, kernel_version, util::DummyInterface, IntegrationTest};
 
 #[integration_test]
 fn xdp() {
@@ -13,7 +13,10 @@ fn xdp() {
     let mut bpf = Bpf::load(bytes).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
-    dispatcher.attach("lo", XdpFlags::default()).unwrap();
+    let _iface = DummyInterface::new();
+    dispatcher
+        .attach(DummyInterface::TEST_DUMMY, XdpFlags::default())
+        .unwrap();
 }
 
 #[integration_test]
@@ -32,7 +35,9 @@ fn extension() {
     let mut bpf = Bpf::load(main_bytes).unwrap();
     let pass: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
-    pass.attach("lo", XdpFlags::default()).unwrap();
+    let _iface = DummyInterface::new();
+    pass.attach(DummyInterface::TEST_DUMMY, XdpFlags::default())
+        .unwrap();
 
     let ext_bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/ext.bpf.o");
     let mut bpf = BpfLoader::new().extension("drop").load(ext_bytes).unwrap();
