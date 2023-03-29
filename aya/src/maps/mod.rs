@@ -274,6 +274,28 @@ pub enum Map {
 }
 
 impl Map {
+    /// Returns the low level map.
+    pub(crate) fn map_data(&self) -> &MapData {
+        match self {
+            Map::Array(map) => map,
+            Map::PerCpuArray(map) => map,
+            Map::ProgramArray(map) => map,
+            Map::HashMap(map) => map,
+            Map::LruHashMap(map) => map,
+            Map::PerCpuHashMap(map) => map,
+            Map::PerCpuLruHashMap(map) => map,
+            Map::PerfEventArray(map) => map,
+            Map::SockHash(map) => map,
+            Map::SockMap(map) => map,
+            Map::BloomFilter(map) => map,
+            Map::LpmTrie(map) => map,
+            Map::Stack(map) => map,
+            Map::StackTraceMap(map) => map,
+            Map::Queue(map) => map,
+            Map::Unsupported(map) => map,
+        }
+    }
+
     /// Returns the low level map type.
     fn map_type(&self) -> u32 {
         match self {
