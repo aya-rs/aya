@@ -40,7 +40,7 @@ fi
 
 # Test Image
 if [ -z "${AYA_TEST_IMAGE}" ]; then
-    AYA_TEST_IMAGE="fedora37"
+    AYA_TEST_IMAGE="fedora38"
 fi
 
 case "${AYA_TEST_IMAGE}" in
@@ -51,12 +51,12 @@ esac
 download_images() {
     mkdir -p "${AYA_IMGDIR}"
     case $1 in
-        fedora37)
-            if [ ! -f "${AYA_IMGDIR}/fedora37.${AYA_GUEST_ARCH}.qcow2" ]; then
-                IMAGE="Fedora-Cloud-Base-37-1.7.${AYA_GUEST_ARCH}.qcow2"
-                IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/37/Cloud/${AYA_GUEST_ARCH}/images"
+        fedora38)
+            IMAGE="Fedora-Cloud-Base-38-20230328.n.0.${AYA_GUEST_ARCH}.qcow2"
+            if [ ! -f "${AYA_IMGDIR}/${IMAGE}" ]; then
+                IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/development/38/Cloud/${AYA_GUEST_ARCH}/images"
                 echo "Downloading: ${IMAGE}, this may take a while..."
-                curl -o "${AYA_IMGDIR}/fedora37.${AYA_GUEST_ARCH}.qcow2" -sSL "${IMAGE_URL}/${IMAGE}"
+                curl -o "${AYA_IMGDIR}/${AYA_TEST_IMAGE}.${AYA_GUEST_ARCH}.qcow2" -sSL "${IMAGE_URL}/${IMAGE}"
             fi
             ;;
         centos8)
@@ -182,11 +182,19 @@ EOF
     echo "VM launched"
     exec_vm uname -a
     echo "Installing dependencies"
-    exec_vm sudo dnf install -qy bpftool llvm llvm-devel clang clang-devel zlib-devel
+    exec_vm sudo dnf install -qy bpftool
     exec_vm 'curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- \
         -y --profile minimal --default-toolchain nightly --component rust-src --component clippy'
     exec_vm 'echo source ~/.cargo/env >> ~/.bashrc'
-    exec_vm cargo install bpf-linker --no-default-features --features system-llvm
+    case "${AYA_GUEST_ARCH}" in
+        x86_64)
+            exec_vm cargo install bpf-linker
+            ;;
+        *)
+            exec_vm sudo dnf install -qy llvm llvm-devel clang clang-devel zlib-devel
+            exec_vm cargo install bpf-linker --no-default-features --features system-llvm
+            ;;
+    esac
 }
 
 scp_vm() {
