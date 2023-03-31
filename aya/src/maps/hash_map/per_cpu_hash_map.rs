@@ -12,7 +12,7 @@ use crate::{
     Pod,
 };
 
-/// Similar to [`HashMap`](crate::maps::HashMap) but each CPU holds a separate value for a given key. Tipically used to
+/// Similar to [`HashMap`](crate::maps::HashMap) but each CPU holds a separate value for a given key. Typically used to
 /// minimize lock contention in eBPF programs.
 ///
 /// This type can be used with eBPF maps of type `BPF_MAP_TYPE_PERCPU_HASH` and
