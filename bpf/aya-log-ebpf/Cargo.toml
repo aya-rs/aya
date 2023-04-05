@@ -8,5 +8,20 @@ aya-bpf = { path = "../aya-bpf" }
 aya-log-common = { path = "../../aya-log-common" }
 aya-log-ebpf-macros = { path = "../../aya-log-ebpf-macros" }
 
+[features]
+max_level_off = ["aya-log-ebpf-macros/max_level_off"]
+max_level_error = ["aya-log-ebpf-macros/max_level_error"]
+max_level_warn = ["aya-log-ebpf-macros/max_level_warn"]
+max_level_info = ["aya-log-ebpf-macros/max_level_info"]
+max_level_debug = ["aya-log-ebpf-macros/max_level_debug"]
+max_level_trace = ["aya-log-ebpf-macros/max_level_trace"]
+
+release_max_level_off = ["aya-log-ebpf-macros/release_max_level_off"]
+release_max_level_error = ["aya-log-ebpf-macros/release_max_level_error"]
+release_max_level_warn = ["aya-log-ebpf-macros/release_max_level_warn"]
+release_max_level_info = ["aya-log-ebpf-macros/release_max_level_info"]
+release_max_level_debug = ["aya-log-ebpf-macros/release_max_level_debug"]
+release_max_level_trace = ["aya-log-ebpf-macros/release_max_level_trace"]
+
 [lib]
 path = "src/lib.rs"

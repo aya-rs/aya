@@ -8,7 +8,23 @@ aya-log-common = { path = "../aya-log-common" }
 aya-log-parser = { path = "../aya-log-parser" }
 proc-macro2 = "1.0"
 quote = "1.0"
-syn = "1.0"
+syn = { version = "1.0", features = ["extra-traits"] }
+cfg-if = "1.0"
+
+[features]
+max_level_off = []
+max_level_error = []
+max_level_warn = []
+max_level_info = []
+max_level_debug = []
+max_level_trace = []
+
+release_max_level_off = []
+release_max_level_error = []
+release_max_level_warn = []
+release_max_level_info = []
+release_max_level_debug = []
+release_max_level_trace = []
 
 [lib]
 proc-macro = true
