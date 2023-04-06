@@ -9,6 +9,7 @@ pub mod load;
 pub mod rbpf;
 pub mod relocations;
 pub mod smoke;
+mod util;
 
 pub use integration_test_macros::integration_test;
 #[derive(Debug)]

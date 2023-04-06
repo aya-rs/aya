@@ -11,7 +11,7 @@ use aya::{
 };
 use log::warn;
 
-use crate::tests::kernel_version;
+use crate::tests::{kernel_version, util::DummyInterface};
 
 use super::{integration_test, IntegrationTest};
 
@@ -28,7 +28,10 @@ fn long_name() {
         .try_into()
         .unwrap();
     name_prog.load().unwrap();
-    name_prog.attach("lo", XdpFlags::default()).unwrap();
+    let _iface = DummyInterface::new();
+    name_prog
+        .attach(DummyInterface::TEST_DUMMY, XdpFlags::default())
+        .unwrap();
 
     // We used to be able to assert with bpftool that the program name was short.
     // It seem though that it now uses the name from the ELF symbol table instead.
@@ -94,7 +97,10 @@ fn unload_xdp() {
         .unwrap();
     prog.load().unwrap();
     assert_loaded!("test_unload_xdp", true);
-    let link = prog.attach("lo", XdpFlags::default()).unwrap();
+    let _iface = DummyInterface::new();
+    let link = prog
+        .attach(DummyInterface::TEST_DUMMY, XdpFlags::default())
+        .unwrap();
     {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
@@ -105,7 +111,8 @@ fn unload_xdp() {
     prog.load().unwrap();
 
     assert_loaded!("test_unload_xdp", true);
-    prog.attach("lo", XdpFlags::default()).unwrap();
+    prog.attach(DummyInterface::TEST_DUMMY, XdpFlags::default())
+        .unwrap();
 
     assert_loaded!("test_unload_xdp", true);
     prog.unload().unwrap();
@@ -158,7 +165,10 @@ fn pin_link() {
         .try_into()
         .unwrap();
     prog.load().unwrap();
-    let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
+    let _iface = DummyInterface::new();
+    let link_id = prog
+        .attach(DummyInterface::TEST_DUMMY, XdpFlags::default())
+        .unwrap();
     let link = prog.take_link(link_id).unwrap();
     assert_loaded!("test_unload_xdp", true);
 
@@ -207,9 +217,12 @@ fn pin_lifecycle() {
     assert_loaded!("pass", true);
 
     // 3. Load program from bpffs and attach
+    let _iface = DummyInterface::new();
     {
         let mut prog = Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
-        let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
+        let link_id = prog
+            .attach(DummyInterface::TEST_DUMMY, XdpFlags::default())
+            .unwrap();
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
         fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
