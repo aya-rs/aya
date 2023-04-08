@@ -31,7 +31,7 @@ impl FEntryContext {
     ///     Ok(0)
     /// }
     /// ```
-    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> T {
+    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> Option<T> {
         T::from_argument(self.ctx as *const _, n)
     }
 }

@@ -50,7 +50,7 @@ impl LsmContext {
     /// ```
     ///
     /// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
-    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> T {
+    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> Option<T> {
         T::from_argument(self.ctx as *const _, n)
     }
 }
