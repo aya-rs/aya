@@ -15,7 +15,7 @@ use object::{
 };
 
 use crate::{
-    maps::{BtfMap, LegacyMap, Map, MapKind, MINIMUM_MAP_SIZE},
+    maps::{BtfMap, LegacyMap, Map, MINIMUM_MAP_SIZE},
     relocation::*,
     thiserror::{self, Error},
     util::HashMap,
@@ -794,7 +794,6 @@ impl Object {
                                 def,
                                 section_index: section.index.0,
                                 symbol_index,
-                                kind: MapKind::Other,
                                 data: Vec::new(),
                             }),
                         );
@@ -820,9 +819,9 @@ impl Object {
         self.section_sizes
             .insert(section.name.to_owned(), section.size);
         match section.kind {
-            BpfSectionKind::Data => {
+            BpfSectionKind::Data | BpfSectionKind::Rodata | BpfSectionKind::Bss => {
                 self.maps
-                    .insert(section.name.to_string(), parse_map(&section, section.name)?);
+                    .insert(section.name.to_string(), parse_data_map_section(&section)?);
             }
             BpfSectionKind::Text => self.parse_text_section(section)?,
             BpfSectionKind::Btf => self.parse_btf(&section)?,
@@ -909,16 +908,16 @@ fn parse_maps_section<'a, I: Iterator<Item = &'a Symbol>>(
             name.to_string(),
             Map::Legacy(LegacyMap {
                 section_index: section.index.0,
-                symbol_index: sym.index,
+                section_kind: section.kind,
+                symbol_index: Some(sym.index),
                 def,
                 data: Vec::new(),
-                kind: MapKind::Other,
             }),
         );
         have_symbols = true;
     }
     if !have_symbols {
-        return Err(ParseError::NoSymbolsForMapSection);
+        return Err(ParseError::NoSymbolsForMapsSection);
     }
 
     Ok(())
@@ -995,17 +994,32 @@ pub enum ParseError {
     NoBTF,
 }
 
-#[derive(Debug)]
-enum BpfSectionKind {
+/// The kind of an ELF section.
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum BpfSectionKind {
+    /// Undefined
     Undefined,
+    /// `maps`
     Maps,
+    /// `.maps`
     BtfMaps,
+    /// A program section
     Program,
+    /// `.data`
     Data,
+    /// `.rodata`
+    Rodata,
+    /// `.bss`
+    Bss,
+    /// `.text`
     Text,
+    /// `.BTF`
     Btf,
+    /// `.BTF.ext`
     BtfExt,
+    /// `license`
     License,
+    /// `version`
     Version,
 }
 
@@ -1172,10 +1186,11 @@ impl From<KernelVersion> for u32 {
     }
 }
 
-fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
-    let kind = MapKind::from(name);
-    let (def, data) = match kind {
-        MapKind::Bss | MapKind::Data | MapKind::Rodata => {
+// Parsed '.bss' '.data' and '.rodata' sections. These sections are arrays of
+// bytes and are relocated based on their section index.
+fn parse_data_map_section(section: &Section) -> Result<Map, ParseError> {
+    let (def, data) = match section.kind {
+        BpfSectionKind::Bss | BpfSectionKind::Data | BpfSectionKind::Rodata => {
             let def = bpf_map_def {
                 map_type: BPF_MAP_TYPE_ARRAY as u32,
                 key_size: mem::size_of::<u32>() as u32,
@@ -1183,7 +1198,7 @@ fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
                 // .bss will always have data.len() == 0
                 value_size: section.size as u32,
                 max_entries: 1,
-                map_flags: if kind == MapKind::Rodata {
+                map_flags: if section.kind == BpfSectionKind::Rodata {
                     BPF_F_RDONLY_PROG
                 } else {
                     0
@@ -1192,14 +1207,15 @@ fn parse_map(section: &Section, name: &str) -> Result<Map, ParseError> {
             };
             (def, section.data.to_vec())
         }
-        MapKind::Other => (parse_map_def(name, section.data)?, Vec::new()),
+        _ => unreachable!(),
     };
     Ok(Map::Legacy(LegacyMap {
         section_index: section.index.0,
-        symbol_index: 0,
+        section_kind: section.kind,
+        // Data maps don't require symbols to be relocated
+        symbol_index: None,
         def,
         data,
-        kind,
     }))
 }
 
@@ -1319,8 +1335,6 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
             section_index: 0,
             symbol_index: 0,
             data: Vec::new(),
-            // We should never be loading the .bss or .data or .rodata FDs
-            kind: MapKind::Other,
         })
     } else {
         Map::Legacy(LegacyMap {
@@ -1334,10 +1348,9 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 id: info.id,
             },
             section_index: 0,
-            symbol_index: 0,
+            symbol_index: None,
+            section_kind: BpfSectionKind::Undefined,
             data: Vec::new(),
-            // We should never be loading the .bss or .data or .rodata FDs
-            kind: MapKind::Other,
         })
     }
 }
@@ -1524,64 +1537,20 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_map_error() {
-        assert!(matches!(
-            parse_map(&fake_section(BpfSectionKind::Maps, "maps/foo", &[]), "foo",),
-            Err(ParseError::InvalidMapDefinition { .. })
-        ));
-    }
-
-    #[test]
-    fn test_parse_map() {
-        assert!(matches!(
-            parse_map(
-                &fake_section(
-                    BpfSectionKind::Maps,
-                    "maps/foo",
-                    bytes_of(&bpf_map_def {
-                        map_type: 1,
-                        key_size: 2,
-                        value_size: 3,
-                        max_entries: 4,
-                        map_flags: 5,
-                        id: 0,
-                        pinning: PinningType::None,
-                    })
-                ),
-                "foo"
-            ),
-            Ok(Map::Legacy(LegacyMap{
-                section_index: 0,
-                def: bpf_map_def {
-                    map_type: 1,
-                    key_size: 2,
-                    value_size: 3,
-                    max_entries: 4,
-                    map_flags: 5,
-                    id: 0,
-                    pinning: PinningType::None,
-                },
-                data,
-                ..
-            })) if data.is_empty()
-        ))
-    }
-
-    #[test]
     fn test_parse_map_data() {
         let map_data = b"map data";
         assert!(matches!(
-            parse_map(
+            parse_data_map_section(
                 &fake_section(
                     BpfSectionKind::Data,
                     ".bss",
                     map_data,
                 ),
-                ".bss"
             ),
             Ok(Map::Legacy(LegacyMap {
                 section_index: 0,
-                symbol_index: 0,
+                section_kind: BpfSectionKind::Data,
+                symbol_index: None,
                 def: bpf_map_def {
                     map_type: _map_type,
                     key_size: 4,
@@ -1592,8 +1561,7 @@ mod tests {
                     pinning: PinningType::None,
                 },
                 data,
-                kind
-            })) if data == map_data && value_size == map_data.len() as u32 && kind == MapKind::Bss
+            })) if data == map_data && value_size == map_data.len() as u32
         ))
     }
 
@@ -2240,9 +2208,9 @@ mod tests {
                     pinning: PinningType::None,
                 },
                 section_index: 1,
-                symbol_index: 1,
+                section_kind: BpfSectionKind::Rodata,
+                symbol_index: Some(1),
                 data: vec![0, 0, 0],
-                kind: MapKind::Rodata,
             }),
         );
         obj.symbols_by_index.insert(

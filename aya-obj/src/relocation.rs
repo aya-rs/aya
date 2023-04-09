@@ -15,6 +15,7 @@ use crate::{
     obj::{Function, Object, Program},
     thiserror::{self, Error},
     util::HashMap,
+    BpfSectionKind,
 };
 
 pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
@@ -109,7 +110,9 @@ impl Object {
         let mut maps_by_symbol = HashMap::new();
         for (name, fd, map) in maps {
             maps_by_section.insert(map.section_index(), (name, fd, map));
-            maps_by_symbol.insert(map.symbol_index(), (name, fd, map));
+            if let Some(index) = map.symbol_index() {
+                maps_by_symbol.insert(index, (name, fd, map));
+            }
         }
 
         let functions = self
@@ -193,10 +196,9 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
                 index: rel.symbol_index,
             })?;
 
-        let section_index = match sym.section_index {
-            Some(index) => index,
+        let Some(section_index) = sym.section_index else {
             // this is not a map relocation
-            None => continue,
+            continue;
         };
 
         // calls and relocation to .text symbols are handled in a separate step
@@ -204,23 +206,42 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             continue;
         }
 
-        let (name, fd, map) = if maps_by_symbol.contains_key(&rel.symbol_index) {
-            maps_by_symbol
-                .get(&rel.symbol_index)
-                .ok_or(RelocationError::SectionNotFound {
-                    symbol_index: rel.symbol_index,
-                    symbol_name: sym.name.clone(),
-                    section_index,
-                })?
+        let (name, fd, map) = if let Some(m) = maps_by_symbol.get(&rel.symbol_index) {
+            let map = &m.2;
+            debug!(
+                "relocating map by symbol index {}, kind {:?}",
+                map.section_index(),
+                map.section_kind()
+            );
+            debug_assert_eq!(map.symbol_index().unwrap(), rel.symbol_index);
+            m
         } else {
-            maps_by_section
-                .get(&section_index)
-                .ok_or(RelocationError::SectionNotFound {
+            let Some(m) = maps_by_section.get(&section_index) else {
+                debug!(
+                    "failed relocating map by section index {}",
+                    section_index
+                );
+                return Err(RelocationError::SectionNotFound {
                     symbol_index: rel.symbol_index,
                     symbol_name: sym.name.clone(),
                     section_index,
-                })?
+                });
+            };
+            let map = &m.2;
+            debug!(
+                "relocating map by section index {}, kind {:?}",
+                map.section_index(),
+                map.section_kind()
+            );
+
+            debug_assert_eq!(map.symbol_index(), None);
+            debug_assert!(matches!(
+                map.section_kind(),
+                BpfSectionKind::Bss | BpfSectionKind::Data | BpfSectionKind::Rodata
+            ),);
+            m
         };
+        debug_assert_eq!(map.section_index(), section_index);
 
         let map_fd = fd.ok_or_else(|| RelocationError::MapNotCreated {
             name: (*name).into(),
@@ -476,7 +497,10 @@ fn insn_is_call(ins: &bpf_insn) -> bool {
 mod test {
     use alloc::{string::ToString, vec, vec::Vec};
 
-    use crate::maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, MapKind};
+    use crate::{
+        maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map},
+        BpfSectionKind,
+    };
 
     use super::*;
 
@@ -498,25 +522,20 @@ mod test {
 
     fn fake_legacy_map(symbol_index: usize) -> Map {
         Map::Legacy(LegacyMap {
-            def: bpf_map_def {
-                ..Default::default()
-            },
+            def: Default::default(),
             section_index: 0,
-            symbol_index,
+            section_kind: BpfSectionKind::Undefined,
+            symbol_index: Some(symbol_index),
             data: Vec::new(),
-            kind: MapKind::Other,
         })
     }
 
     fn fake_btf_map(symbol_index: usize) -> Map {
         Map::Btf(BtfMap {
-            def: BtfMapDef {
-                ..Default::default()
-            },
+            def: Default::default(),
             section_index: 0,
             symbol_index,
             data: Vec::new(),
-            kind: MapKind::Other,
         })
     }
 

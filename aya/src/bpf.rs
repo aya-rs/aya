@@ -11,6 +11,7 @@ use aya_obj::{
     btf::{BtfFeatures, BtfRelocationError},
     generated::BPF_F_XDP_HAS_FRAGS,
     relocation::BpfRelocationError,
+    BpfSectionKind,
 };
 use log::debug;
 use thiserror::Error;
@@ -23,7 +24,6 @@ use crate::{
     maps::{Map, MapData, MapError},
     obj::{
         btf::{Btf, BtfError},
-        maps::MapKind,
         Object, ParseError, ProgramSection,
     },
     programs::{
@@ -415,14 +415,14 @@ impl<'a> BpfLoader<'a> {
                 }
                 PinningType::None => map.create(&name)?,
             };
-            if !map.obj.data().is_empty() && map.obj.kind() != MapKind::Bss {
+            if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
                     .map_err(|(_, io_error)| MapError::SyscallError {
                         call: "bpf_map_update_elem".to_owned(),
                         io_error,
                     })?;
             }
-            if map.obj.kind() == MapKind::Rodata {
+            if map.obj.section_kind() == BpfSectionKind::Rodata {
                 bpf_map_freeze(fd).map_err(|(_, io_error)| MapError::SyscallError {
                     call: "bpf_map_freeze".to_owned(),
                     io_error,

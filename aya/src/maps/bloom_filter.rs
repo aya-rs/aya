@@ -84,10 +84,7 @@ mod tests {
             bpf_map_type::{BPF_MAP_TYPE_BLOOM_FILTER, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
         },
         maps::{Map, MapData},
-        obj::{
-            self,
-            maps::{LegacyMap, MapKind},
-        },
+        obj::{self, maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
     use libc::{EFAULT, ENOENT};
@@ -103,9 +100,9 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
-            symbol_index: 0,
+            section_kind: BpfSectionKind::Maps,
+            symbol_index: None,
             data: Vec::new(),
-            kind: MapKind::Other,
         })
     }
 
@@ -142,9 +139,9 @@ mod tests {
                     ..Default::default()
                 },
                 section_index: 0,
-                symbol_index: 0,
+                section_kind: BpfSectionKind::Maps,
+                symbol_index: None,
                 data: Vec::new(),
-                kind: MapKind::Other,
             }),
             fd: None,
             pinned: false,
