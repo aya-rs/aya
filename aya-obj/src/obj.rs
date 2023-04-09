@@ -762,37 +762,6 @@ impl Object {
         Ok(())
     }
 
-    fn parse_map_section(
-        &mut self,
-        section: &Section,
-        symbols: Vec<Symbol>,
-    ) -> Result<(), ParseError> {
-        if symbols.is_empty() {
-            return Err(ParseError::NoSymbolsInMapSection {});
-        }
-        for (i, sym) in symbols.iter().enumerate() {
-            let start = sym.address as usize;
-            let end = start + sym.size as usize;
-            let data = &section.data[start..end];
-            let name = sym
-                .name
-                .as_ref()
-                .ok_or(ParseError::MapSymbolNameNotFound { i })?;
-            let def = parse_map_def(name, data)?;
-            self.maps.insert(
-                name.to_string(),
-                Map::Legacy(LegacyMap {
-                    section_index: section.index.0,
-                    symbol_index: sym.index,
-                    def,
-                    data: Vec::new(),
-                    kind: MapKind::Other,
-                }),
-            );
-        }
-        Ok(())
-    }
-
     fn parse_btf_maps(
         &mut self,
         section: &Section,
@@ -875,19 +844,24 @@ impl Object {
                 self.parse_btf_maps(&section, symbols)?
             }
             BpfSectionKind::Maps => {
-                let symbols: Vec<Symbol> = self
-                    .symbols_by_index
-                    .values()
-                    .filter(|s| {
-                        if let Some(idx) = s.section_index {
-                            idx == section.index.0
-                        } else {
-                            false
-                        }
-                    })
-                    .cloned()
-                    .collect();
-                self.parse_map_section(&section, symbols)?
+                // take out self.maps so we can borrow the iterator below
+                // without cloning or collecting
+                let mut maps = mem::take(&mut self.maps);
+
+                // extract the symbols for the .maps section, we'll need them
+                // during parsing
+                let symbols = self.symbols_by_index.values().filter(|s| {
+                    s.section_index
+                        .map(|idx| idx == section.index.0)
+                        .unwrap_or(false)
+                });
+
+                let res = parse_maps_section(&mut maps, &section, symbols);
+
+                // put the maps back
+                self.maps = maps;
+
+                res?
             }
             BpfSectionKind::Program => {
                 let program = self.parse_program(&section)?;
@@ -909,6 +883,45 @@ impl Object {
 
         Ok(())
     }
+}
+
+// Parses multiple map definition contained in a single `maps` section (which is
+// different from `.maps` which is used for BTF). We can tell where each map is
+// based on the symbol table.
+fn parse_maps_section<'a, I: Iterator<Item = &'a Symbol>>(
+    maps: &mut HashMap<String, Map>,
+    section: &Section,
+    symbols: I,
+) -> Result<(), ParseError> {
+    let mut have_symbols = false;
+
+    // each symbol in the section is a  separate map
+    for (i, sym) in symbols.enumerate() {
+        let start = sym.address as usize;
+        let end = start + sym.size as usize;
+        let data = &section.data[start..end];
+        let name = sym
+            .name
+            .as_ref()
+            .ok_or(ParseError::MapSymbolNameNotFound { i })?;
+        let def = parse_map_def(name, data)?;
+        maps.insert(
+            name.to_string(),
+            Map::Legacy(LegacyMap {
+                section_index: section.index.0,
+                symbol_index: sym.index,
+                def,
+                data: Vec::new(),
+                kind: MapKind::Other,
+            }),
+        );
+        have_symbols = true;
+    }
+    if !have_symbols {
+        return Err(ParseError::NoSymbolsForMapSection);
+    }
+
+    Ok(())
 }
 
 /// Errors caught during parsing the object file
@@ -974,8 +987,8 @@ pub enum ParseError {
     #[error("the map number {i} in the `maps` section doesn't have a symbol name")]
     MapSymbolNameNotFound { i: usize },
 
-    #[error("no symbols found for the maps included in the maps section")]
-    NoSymbolsInMapSection {},
+    #[error("no symbols for `maps` section, can't parse maps")]
+    NoSymbolsForMapsSection,
 
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
