@@ -753,7 +753,7 @@ impl Object {
                 section.index,
                 section
                     .relocations
-                    .drain(..)
+                    .into_iter()
                     .map(|rel| (rel.offset, rel))
                     .collect(),
             );
@@ -871,7 +871,7 @@ impl Object {
                         section.index,
                         section
                             .relocations
-                            .drain(..)
+                            .into_iter()
                             .map(|rel| (rel.offset, rel))
                             .collect(),
                     );
