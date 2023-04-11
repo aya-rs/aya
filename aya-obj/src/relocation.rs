@@ -1,6 +1,7 @@
 //! Program relocation handling.
 
 use core::mem;
+use std::collections::HashSet;
 
 use alloc::{borrow::ToOwned, string::String};
 use log::debug;
@@ -85,6 +86,7 @@ pub enum RelocationError {
 pub(crate) struct Relocation {
     // byte offset of the instruction to be relocated
     pub(crate) offset: u64,
+    pub(crate) size: u8,
     // index of the symbol to relocate to
     pub(crate) symbol_index: usize,
 }
@@ -105,6 +107,7 @@ impl Object {
     pub fn relocate_maps<'a, I: Iterator<Item = (&'a str, Option<i32>, &'a Map)>>(
         &mut self,
         maps: I,
+        text_sections: &HashSet<usize>,
     ) -> Result<(), BpfRelocationError> {
         let mut maps_by_section = HashMap::new();
         let mut maps_by_symbol = HashMap::new();
@@ -128,8 +131,8 @@ impl Object {
                     relocations.values(),
                     &maps_by_section,
                     &maps_by_symbol,
-                    &self.symbols_by_index,
-                    self.text_section_index,
+                    &self.symbol_table,
+                    text_sections,
                 )
                 .map_err(|error| BpfRelocationError {
                     function: function.name.clone(),
@@ -142,13 +145,16 @@ impl Object {
     }
 
     /// Relocates function calls
-    pub fn relocate_calls(&mut self) -> Result<(), BpfRelocationError> {
+    pub fn relocate_calls(
+        &mut self,
+        text_sections: &HashSet<usize>,
+    ) -> Result<(), BpfRelocationError> {
         for (name, program) in self.programs.iter_mut() {
             let linker = FunctionLinker::new(
-                self.text_section_index,
                 &self.functions,
                 &self.relocations,
-                &self.symbols_by_index,
+                &self.symbol_table,
+                text_sections,
             );
             linker.link(program).map_err(|error| BpfRelocationError {
                 function: name.to_owned(),
@@ -166,7 +172,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     maps_by_section: &HashMap<usize, (&str, Option<i32>, &Map)>,
     maps_by_symbol: &HashMap<usize, (&str, Option<i32>, &Map)>,
     symbol_table: &HashMap<usize, Symbol>,
-    text_section_index: Option<usize>,
+    text_sections: &HashSet<usize>,
 ) -> Result<(), RelocationError> {
     let section_offset = fun.section_offset;
     let instructions = &mut fun.instructions;
@@ -202,16 +208,17 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
         };
 
         // calls and relocation to .text symbols are handled in a separate step
-        if insn_is_call(&instructions[ins_index]) || sym.section_index == text_section_index {
+        if insn_is_call(&instructions[ins_index]) || text_sections.contains(&section_index) {
             continue;
         }
 
         let (name, fd, map) = if let Some(m) = maps_by_symbol.get(&rel.symbol_index) {
             let map = &m.2;
             debug!(
-                "relocating map by symbol index {}, kind {:?}",
-                map.section_index(),
-                map.section_kind()
+                "relocating map by symbol index {:?}, kind {:?} at insn {ins_index} in section {}",
+                map.symbol_index(),
+                map.section_kind(),
+                fun.section_index.0
             );
             debug_assert_eq!(map.symbol_index().unwrap(), rel.symbol_index);
             m
@@ -229,9 +236,10 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             };
             let map = &m.2;
             debug!(
-                "relocating map by section index {}, kind {:?}",
+                "relocating map by section index {}, kind {:?} at insn {ins_index} in section {}",
                 map.section_index(),
-                map.section_kind()
+                map.section_kind(),
+                fun.section_index.0,
             );
 
             debug_assert_eq!(map.symbol_index(), None);
@@ -261,26 +269,26 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
 }
 
 struct FunctionLinker<'a> {
-    text_section_index: Option<usize>,
-    functions: &'a HashMap<u64, Function>,
+    functions: &'a HashMap<(usize, u64), Function>,
     linked_functions: HashMap<u64, usize>,
     relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
     symbol_table: &'a HashMap<usize, Symbol>,
+    text_sections: &'a HashSet<usize>,
 }
 
 impl<'a> FunctionLinker<'a> {
     fn new(
-        text_section_index: Option<usize>,
-        functions: &'a HashMap<u64, Function>,
+        functions: &'a HashMap<(usize, u64), Function>,
         relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
         symbol_table: &'a HashMap<usize, Symbol>,
+        text_sections: &'a HashSet<usize>,
     ) -> FunctionLinker<'a> {
         FunctionLinker {
-            text_section_index,
             functions,
             linked_functions: HashMap::new(),
             relocations,
             symbol_table,
+            text_sections,
         }
     }
 
@@ -310,6 +318,10 @@ impl<'a> FunctionLinker<'a> {
         // at `start_ins`. We'll use `start_ins` to do pc-relative calls.
         let start_ins = program.instructions.len();
         program.instructions.extend(&fun.instructions);
+        debug!(
+            "linked function `{}` at instruction {}",
+            fun.name, start_ins
+        );
 
         // link func and line info into the main program
         // the offset needs to be adjusted
@@ -326,10 +338,13 @@ impl<'a> FunctionLinker<'a> {
     fn relocate(&mut self, program: &mut Function, fun: &Function) -> Result<(), RelocationError> {
         let relocations = self.relocations.get(&fun.section_index);
 
-        debug!("relocating program {} function {}", program.name, fun.name);
-
         let n_instructions = fun.instructions.len();
         let start_ins = program.instructions.len() - n_instructions;
+
+        debug!(
+            "relocating program `{}` function `{}` size {}",
+            program.name, fun.name, n_instructions
+        );
 
         // process all the instructions. We can't only loop over relocations since we need to
         // patch pc-relative calls too.
@@ -337,90 +352,96 @@ impl<'a> FunctionLinker<'a> {
             let ins = program.instructions[ins_index];
             let is_call = insn_is_call(&ins);
 
-            // only resolve relocations for calls or for instructions that
-            // reference symbols in the .text section (eg let callback =
-            // &some_fun)
-            let rel = if let Some(relocations) = relocations {
-                self.text_relocation_info(
-                    relocations,
-                    (fun.section_offset + (ins_index - start_ins) * INS_SIZE) as u64,
-                )?
-                // if not a call and not a .text reference, ignore the
-                // relocation (see relocate_maps())
-                .and_then(|(_, sym)| {
-                    if is_call {
-                        return Some(sym.address);
-                    }
-
-                    match sym.kind {
-                        SymbolKind::Text => Some(sym.address),
-                        SymbolKind::Section if sym.section_index == self.text_section_index => {
-                            Some(sym.address + ins.imm as u64)
-                        }
-                        _ => None,
-                    }
+            let rel = relocations
+                .and_then(|relocations| {
+                    relocations
+                        .get(&((fun.section_offset + (ins_index - start_ins) * INS_SIZE) as u64))
                 })
-            } else {
-                None
-            };
+                .and_then(|rel| {
+                    // get the symbol for the relocation
+                    self.symbol_table
+                        .get(&rel.symbol_index)
+                        .map(|sym| (rel, sym))
+                })
+                .filter(|(_rel, sym)| {
+                    // only consider text relocations, data relocations are
+                    // relocated in relocate_maps()
+                    sym.kind == SymbolKind::Text
+                        || sym
+                            .section_index
+                            .map(|section_index| self.text_sections.contains(&section_index))
+                            .unwrap_or(false)
+                });
 
-            // some_fun() or let x = &some_fun trigger linking, everything else
-            // can be ignored here
+            // not a call and not a text relocation, we don't need to do anything
             if !is_call && rel.is_none() {
                 continue;
             }
 
-            let callee_address = if let Some(address) = rel {
-                // We have a relocation entry for the instruction at `ins_index`, the address of
-                // the callee is the address of the relocation's target symbol.
-                address
+            let (callee_section_index, callee_address) = if let Some((rel, sym)) = rel {
+                let address = match sym.kind {
+                    SymbolKind::Text => sym.address,
+                    // R_BPF_64_32 this is a call
+                    SymbolKind::Section if rel.size == 32 => {
+                        sym.address + (ins.imm + 1) as u64 * INS_SIZE as u64
+                    }
+                    // R_BPF_64_64 this is a ld_imm64 text relocation
+                    SymbolKind::Section if rel.size == 64 => sym.address + ins.imm as u64,
+                    _ => todo!(), // FIXME: return an error here,
+                };
+                (sym.section_index.unwrap(), address)
             } else {
                 // The caller and the callee are in the same ELF section and this is a pc-relative
                 // call. Resolve the pc-relative imm to an absolute address.
                 let ins_size = INS_SIZE as i64;
-                (fun.section_offset as i64
-                    + ((ins_index - start_ins) as i64) * ins_size
-                    + (ins.imm + 1) as i64 * ins_size) as u64
+                (
+                    fun.section_index.0,
+                    (fun.section_offset as i64
+                        + ((ins_index - start_ins) as i64) * ins_size
+                        + (ins.imm + 1) as i64 * ins_size) as u64,
+                )
             };
 
             debug!(
-                "relocating {} to callee address {} ({})",
+                "relocating {} to callee address {:#x} in section {} ({}) at instruction {ins_index}",
                 if is_call { "call" } else { "reference" },
                 callee_address,
+                callee_section_index,
                 if rel.is_some() {
                     "relocation"
                 } else {
-                    "relative"
+                    "pc-relative"
                 },
             );
 
             // lookup and link the callee if it hasn't been linked already. `callee_ins_index` will
             // contain the instruction index of the callee inside the program.
-            let callee =
-                self.functions
-                    .get(&callee_address)
-                    .ok_or(RelocationError::UnknownFunction {
-                        address: callee_address,
-                        caller_name: fun.name.clone(),
-                    })?;
+            let callee = self
+                .functions
+                .get(&(callee_section_index, callee_address))
+                .ok_or(RelocationError::UnknownFunction {
+                    address: callee_address,
+                    caller_name: fun.name.clone(),
+                })?;
 
-            debug!("callee is {}", callee.name);
+            debug!("callee is `{}`", callee.name);
 
-            let callee_ins_index = self.link_function(program, callee)?;
+            let callee_ins_index = self.link_function(program, callee)? as i32;
 
             let mut ins = &mut program.instructions[ins_index];
-            ins.imm = if callee_ins_index < ins_index {
-                -((ins_index - callee_ins_index + 1) as i32)
-            } else {
-                (callee_ins_index - ins_index - 1) as i32
-            };
+            let ins_index = ins_index as i32;
+            ins.imm = callee_ins_index - ins_index - 1;
+            debug!(
+                "callee `{}` is at ins {callee_ins_index}, {} from current instruction {ins_index}",
+                callee.name, ins.imm
+            );
             if !is_call {
                 ins.set_src_reg(BPF_PSEUDO_FUNC as u8);
             }
         }
 
         debug!(
-            "finished relocating program {} function {}",
+            "finished relocating program `{}` function `{}`",
             program.name, fun.name
         );
 
@@ -459,25 +480,6 @@ impl<'a> FunctionLinker<'a> {
         }
         Ok(())
     }
-
-    fn text_relocation_info(
-        &self,
-        relocations: &HashMap<u64, Relocation>,
-        offset: u64,
-    ) -> Result<Option<(Relocation, Symbol)>, RelocationError> {
-        if let Some(rel) = relocations.get(&offset) {
-            let sym =
-                self.symbol_table
-                    .get(&rel.symbol_index)
-                    .ok_or(RelocationError::UnknownSymbol {
-                        index: rel.symbol_index,
-                    })?;
-
-            Ok(Some((*rel, sym.clone())))
-        } else {
-            Ok(None)
-        }
-    }
 }
 
 fn insn_is_call(ins: &bpf_insn) -> bool {
@@ -498,7 +500,7 @@ mod test {
     use alloc::{string::ToString, vec, vec::Vec};
 
     use crate::{
-        maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map},
+        maps::{BtfMap, LegacyMap, Map},
         BpfSectionKind,
     };
 
@@ -568,6 +570,7 @@ mod test {
         let relocations = vec![Relocation {
             offset: 0x0,
             symbol_index: 1,
+            size: 64,
         }];
         let maps_by_section = HashMap::new();
 
@@ -580,7 +583,7 @@ mod test {
             &maps_by_section,
             &maps_by_symbol,
             &symbol_table,
-            None,
+            &HashSet::new(),
         )
         .unwrap();
 
@@ -615,10 +618,12 @@ mod test {
             Relocation {
                 offset: 0x0,
                 symbol_index: 1,
+                size: 64,
             },
             Relocation {
                 offset: mem::size_of::<bpf_insn>() as u64,
                 symbol_index: 2,
+                size: 64,
             },
         ];
         let maps_by_section = HashMap::new();
@@ -636,7 +641,7 @@ mod test {
             &maps_by_section,
             &maps_by_symbol,
             &symbol_table,
-            None,
+            &HashSet::new(),
         )
         .unwrap();
 
@@ -665,6 +670,7 @@ mod test {
         let relocations = vec![Relocation {
             offset: 0x0,
             symbol_index: 1,
+            size: 64,
         }];
         let maps_by_section = HashMap::new();
 
@@ -677,7 +683,7 @@ mod test {
             &maps_by_section,
             &maps_by_symbol,
             &symbol_table,
-            None,
+            &HashSet::new(),
         )
         .unwrap();
 
@@ -712,10 +718,12 @@ mod test {
             Relocation {
                 offset: 0x0,
                 symbol_index: 1,
+                size: 64,
             },
             Relocation {
                 offset: mem::size_of::<bpf_insn>() as u64,
                 symbol_index: 2,
+                size: 64,
             },
         ];
         let maps_by_section = HashMap::new();
@@ -733,7 +741,7 @@ mod test {
             &maps_by_section,
             &maps_by_symbol,
             &symbol_table,
-            None,
+            &HashSet::new(),
         )
         .unwrap();
 

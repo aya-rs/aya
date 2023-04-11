@@ -431,11 +431,18 @@ impl<'a> BpfLoader<'a> {
             maps.insert(name, map);
         }
 
+        let text_sections = obj
+            .functions
+            .keys()
+            .map(|(section_index, _)| *section_index)
+            .collect();
+
         obj.relocate_maps(
             maps.iter()
                 .map(|(s, data)| (s.as_str(), data.fd, &data.obj)),
+            &text_sections,
         )?;
-        obj.relocate_calls()?;
+        obj.relocate_calls(&text_sections)?;
 
         let programs = obj
             .programs

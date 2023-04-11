@@ -52,14 +52,13 @@ pub struct Object {
     /// in [ProgramSection]s as keys.
     pub programs: HashMap<String, Program>,
     /// Functions
-    pub functions: HashMap<u64, Function>,
+    pub functions: HashMap<(usize, u64), Function>,
     pub(crate) relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
-    pub(crate) symbols_by_index: HashMap<usize, Symbol>,
+    pub(crate) symbol_table: HashMap<usize, Symbol>,
     pub(crate) section_sizes: HashMap<String, u64>,
     // symbol_offset_by_name caches symbols that could be referenced from a
     // BTF VAR type so the offsets can be fixed up
     pub(crate) symbol_offset_by_name: HashMap<String, u64>,
-    pub(crate) text_section_index: Option<usize>,
 }
 
 /// An eBPF program
@@ -522,7 +521,7 @@ impl Object {
                     is_definition: symbol.is_definition(),
                     kind: symbol.kind(),
                 };
-                bpf_obj.symbols_by_index.insert(symbol.index().0, sym);
+                bpf_obj.symbol_table.insert(symbol.index().0, sym);
 
                 if symbol.is_global() || symbol.kind() == SymbolKind::Data {
                     bpf_obj.symbol_offset_by_name.insert(name, symbol.address());
@@ -564,17 +563,16 @@ impl Object {
             programs: HashMap::new(),
             functions: HashMap::new(),
             relocations: HashMap::new(),
-            symbols_by_index: HashMap::new(),
+            symbol_table: HashMap::new(),
             section_sizes: HashMap::new(),
             symbol_offset_by_name: HashMap::new(),
-            text_section_index: None,
         }
     }
 
     /// Patches map data
     pub fn patch_map_data(&mut self, globals: HashMap<&str, &[u8]>) -> Result<(), ParseError> {
         let symbols: HashMap<String, &Symbol> = self
-            .symbols_by_index
+            .symbol_table
             .iter()
             .filter(|(_, s)| s.name.is_some())
             .map(|(_, s)| (s.name.as_ref().unwrap().clone(), s))
@@ -668,12 +666,10 @@ impl Object {
         })
     }
 
-    fn parse_text_section(&mut self, mut section: Section) -> Result<(), ParseError> {
-        self.text_section_index = Some(section.index.0);
-
+    fn parse_text_section(&mut self, section: Section) -> Result<(), ParseError> {
         let mut symbols_by_address = HashMap::new();
 
-        for sym in self.symbols_by_index.values() {
+        for sym in self.symbol_table.values() {
             if sym.is_definition
                 && sym.kind == SymbolKind::Text
                 && sym.section_index == Some(section.index.0)
@@ -729,7 +725,7 @@ impl Object {
                 };
 
             self.functions.insert(
-                sym.address,
+                (section.index.0, sym.address),
                 Function {
                     address,
                     name: sym.name.clone().unwrap(),
@@ -804,7 +800,7 @@ impl Object {
         Ok(())
     }
 
-    fn parse_section(&mut self, mut section: Section) -> Result<(), ParseError> {
+    fn parse_section(&mut self, section: Section) -> Result<(), ParseError> {
         let mut parts = section.name.rsplitn(2, '/').collect::<Vec<_>>();
         parts.reverse();
 
@@ -828,7 +824,7 @@ impl Object {
             BpfSectionKind::BtfExt => self.parse_btf_ext(&section)?,
             BpfSectionKind::BtfMaps => {
                 let symbols: HashMap<String, Symbol> = self
-                    .symbols_by_index
+                    .symbol_table
                     .values()
                     .filter(|s| {
                         if let Some(idx) = s.section_index {
@@ -849,7 +845,7 @@ impl Object {
 
                 // extract the symbols for the .maps section, we'll need them
                 // during parsing
-                let symbols = self.symbols_by_index.values().filter(|s| {
+                let symbols = self.symbol_table.values().filter(|s| {
                     s.section_index
                         .map(|idx| idx == section.index.0)
                         .unwrap_or(false)
@@ -1097,6 +1093,7 @@ impl<'data, 'file, 'a> TryFrom<&'a ObjSection<'data, 'file>> for Section<'a> {
                             _ => return Err(ParseError::UnsupportedRelocationTarget),
                         },
                         offset,
+                        size: r.size(),
                     })
                 })
                 .collect::<Result<Vec<_>, _>>()?,
@@ -1399,8 +1396,8 @@ mod tests {
     }
 
     fn fake_sym(obj: &mut Object, section_index: usize, address: u64, name: &str, size: u64) {
-        let idx = obj.symbols_by_index.len();
-        obj.symbols_by_index.insert(
+        let idx = obj.symbol_table.len();
+        obj.symbol_table.insert(
             idx + 1,
             Symbol {
                 index: idx + 1,
@@ -2213,7 +2210,7 @@ mod tests {
                 data: vec![0, 0, 0],
             }),
         );
-        obj.symbols_by_index.insert(
+        obj.symbol_table.insert(
             1,
             Symbol {
                 index: 1,
