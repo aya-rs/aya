@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use aya::include_bytes_aligned;
 use aya_obj::{generated::bpf_insn, Object, ProgramSection};
 
-use super::{integration_test, IntegrationTest};
+use super::integration_test;
 
 #[integration_test]
 fn run_with_rbpf() {

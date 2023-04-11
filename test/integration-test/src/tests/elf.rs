@@ -1,4 +1,4 @@
-use super::{integration_test, IntegrationTest};
+use super::integration_test;
 
 use aya::include_bytes_aligned;
 use object::{Object, ObjectSymbol};

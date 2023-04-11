@@ -4,7 +4,7 @@ use tempfile::TempDir;
 
 use aya::{maps::Array, programs::TracePoint, BpfLoader, Btf, Endianness};
 
-use super::{integration_test, IntegrationTest};
+use super::integration_test;
 
 // In the tests below we often use values like 0xAAAAAAAA or -0x7AAAAAAA. Those values have no
 // special meaning, they just have "nice" bit patterns that can be helpful while debugging.
