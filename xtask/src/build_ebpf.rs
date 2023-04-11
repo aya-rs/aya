@@ -41,9 +41,6 @@ pub struct BuildEbpfOptions {
     /// Set the endianness of the BPF target
     #[clap(default_value = "bpfel-unknown-none", long)]
     pub target: Architecture,
-    /// Build the release target
-    #[clap(long)]
-    pub release: bool,
     /// Libbpf dir, required for compiling C code
     #[clap(long, action)]
     pub libbpf_dir: PathBuf,
@@ -59,17 +56,15 @@ fn build_rust_ebpf(opts: &BuildEbpfOptions) -> anyhow::Result<()> {
     dir.push("test/integration-ebpf");
 
     let target = format!("--target={}", opts.target);
-    let mut args = vec![
+    let args = vec![
         "+nightly",
         "build",
+        "--release",
         "--verbose",
         target.as_str(),
         "-Z",
         "build-std=core",
     ];
-    if opts.release {
-        args.push("--release")
-    }
     let status = Command::new("cargo")
         .current_dir(&dir)
         .args(&args)
@@ -99,7 +94,7 @@ fn build_c_ebpf(opts: &BuildEbpfOptions) -> anyhow::Result<()> {
     let mut out_path = PathBuf::from(WORKSPACE_ROOT.to_string());
     out_path.push("target");
     out_path.push(opts.target.to_string());
-    out_path.push(if opts.release { "release " } else { "debug" });
+    out_path.push("release");
 
     let include_path = out_path.join("include");
     get_libbpf_headers(&opts.libbpf_dir, &include_path)?;

@@ -5,7 +5,7 @@ use object::{Object, ObjectSymbol};
 
 #[integration_test]
 fn test_maps() {
-    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/map_test");
+    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/map_test");
     let obj_file = object::File::parse(bytes).unwrap();
     if obj_file.section_by_name("maps").is_none() {
         panic!("No 'maps' ELF section");

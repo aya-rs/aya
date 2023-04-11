@@ -45,7 +45,6 @@ pub fn run(opts: Options) -> Result<(), anyhow::Error> {
     // build our ebpf program followed by our application
     build_ebpf(BuildOptions {
         target: opts.bpf_target,
-        release: opts.release,
         libbpf_dir: PathBuf::from(&opts.libbpf_dir),
     })
     .context("Error while building eBPF program")?;

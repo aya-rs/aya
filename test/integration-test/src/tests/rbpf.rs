@@ -8,7 +8,7 @@ use super::{integration_test, IntegrationTest};
 
 #[integration_test]
 fn run_with_rbpf() {
-    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/pass");
+    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/pass");
     let object = Object::parse(bytes).unwrap();
 
     assert_eq!(object.programs.len(), 1);
@@ -36,7 +36,7 @@ static mut MULTIMAP_MAPS: [*mut Vec<u64>; 2] = [null_mut(), null_mut()];
 #[integration_test]
 fn use_map_with_rbpf() {
     let bytes =
-        include_bytes_aligned!("../../../../target/bpfel-unknown-none/debug/multimap-btf.bpf.o");
+        include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/multimap-btf.bpf.o");
     let mut object = Object::parse(bytes).unwrap();
 
     assert_eq!(object.programs.len(), 1);
