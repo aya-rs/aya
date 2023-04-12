@@ -31,9 +31,32 @@ jobs:
         run: |
           cargo fmt --all -- --check
 
-      - name: Run clippy
+      - name: Run clippy (for user space crates)
         run: |
-          cargo clippy --workspace --exclude integration-test -- --deny warnings
+          cargo clippy --workspace \
+          --exclude integration-test \
+          --exclude aya-bpf \
+          --exclude aya-bpf-bindings \
+          --exclude aya-log-ebpf \
+          --exclude integration-ebpf \
+          -- --deny warnings
+
+      - name: Run clippy (for eBPF crates)
+        run: |
+          cargo +nightly clippy \
+          --target bpfel-unknown-none -Zbuild-std=core \
+          --workspace \
+          --exclude aya \
+          --exclude aya-obj \
+          --exclude aya-tool \
+          --exclude aya-log \
+          --exclude aya-log-parser \
+          --exclude integration-test \
+          --exclude integration-test-macros \
+          --exclude xtask \
+          --exclude aya-bpf-macros \
+          --exclude aya-log-ebpf-macros \
+          -- --deny warnings
 
       - name: Run miri
         run: |
