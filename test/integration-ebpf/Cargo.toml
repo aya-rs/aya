@@ -22,3 +22,7 @@ path = "src/pass.rs"
 [[bin]]
 name = "test"
 path = "src/test.rs"
+
+[[bin]]
+name = "relocations"
+path = "src/relocations.rs"

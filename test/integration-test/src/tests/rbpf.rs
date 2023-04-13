@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use aya::include_bytes_aligned;
 use aya_obj::{generated::bpf_insn, Object, ProgramSection};
 
-use super::{integration_test, IntegrationTest};
+use super::integration_test;
 
 #[integration_test]
 fn run_with_rbpf() {
@@ -69,14 +69,20 @@ fn use_map_with_rbpf() {
         }
     }
 
+    let text_sections = object
+        .functions
+        .iter()
+        .map(|((section_index, _), _)| *section_index)
+        .collect();
     object
         .relocate_maps(
             maps.iter()
                 .map(|(s, (fd, map))| (s.as_ref() as &str, Some(*fd), map)),
+            &text_sections,
         )
         .expect("Relocation failed");
     // Actually there is no local function call involved.
-    object.relocate_calls().unwrap();
+    object.relocate_calls(&text_sections).unwrap();
 
     // Executes the program
     assert_eq!(object.programs.len(), 1);

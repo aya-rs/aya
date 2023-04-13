@@ -117,10 +117,7 @@ mod tests {
             bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_LRU_HASH},
         },
         maps::{Map, MapData},
-        obj::{
-            self,
-            maps::{LegacyMap, MapKind},
-        },
+        obj::{self, maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
 
@@ -136,9 +133,9 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
+            section_kind: BpfSectionKind::Maps,
             data: Vec::new(),
-            kind: MapKind::Other,
-            symbol_index: 0,
+            symbol_index: None,
         })
     }
 
@@ -267,9 +264,9 @@ mod tests {
                     ..Default::default()
                 },
                 section_index: 0,
-                symbol_index: 0,
+                section_kind: BpfSectionKind::Maps,
+                symbol_index: None,
                 data: Vec::new(),
-                kind: MapKind::Other,
             }),
             fd: Some(42),
             pinned: false,

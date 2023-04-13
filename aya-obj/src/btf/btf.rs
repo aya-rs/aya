@@ -1045,9 +1045,7 @@ mod tests {
         let name_offset = btf.add_string("&mut int".to_string());
         let ptr_type_id = btf.add_type(BtfType::Ptr(Ptr::new(name_offset, int_type_id)));
 
-        let features = BtfFeatures {
-            ..Default::default()
-        };
+        let features = Default::default();
 
         btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
             .unwrap();

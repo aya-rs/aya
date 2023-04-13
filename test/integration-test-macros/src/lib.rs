@@ -10,7 +10,7 @@ pub fn integration_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let expanded = quote! {
         #item
 
-        inventory::submit!(IntegrationTest {
+        inventory::submit!(crate::IntegrationTest {
             name: concat!(module_path!(), "::", #name_str),
             test_fn: #name,
         });
