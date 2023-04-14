@@ -11,6 +11,7 @@ use aya_obj::{
     btf::{BtfFeatures, BtfRelocationError},
     generated::BPF_F_XDP_HAS_FRAGS,
     relocation::BpfRelocationError,
+    BpfSectionKind,
 };
 use log::debug;
 use thiserror::Error;
@@ -23,7 +24,6 @@ use crate::{
     maps::{Map, MapData, MapError},
     obj::{
         btf::{Btf, BtfError},
-        maps::MapKind,
         Object, ParseError, ProgramSection,
     },
     programs::{
@@ -38,7 +38,7 @@ use crate::{
         is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
         is_prog_name_supported, retry_with_verifier_logs,
     },
-    util::{bytes_of, possible_cpus, VerifierLog, POSSIBLE_CPUS},
+    util::{bytes_of, bytes_of_slice, possible_cpus, VerifierLog, POSSIBLE_CPUS},
 };
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
@@ -210,15 +210,17 @@ impl<'a> BpfLoader<'a> {
         self
     }
 
-    /// Sets the value of a global variable
+    /// Sets the value of a global variable.
     ///
-    /// From Rust eBPF, a global variable would be constructed as follows:
+    /// From Rust eBPF, a global variable can be defined as follows:
+    ///
     /// ```no_run
     /// #[no_mangle]
     /// static VERSION: i32 = 0;
     /// ```
-    /// Then it would be accessed with `core::ptr::read_volatile` inside
-    /// functions:
+    ///
+    /// Then it can be accessed using `core::ptr::read_volatile`:
+    ///
     /// ```no_run
     /// # #[no_mangle]
     /// # static VERSION: i32 = 0;
@@ -226,10 +228,12 @@ impl<'a> BpfLoader<'a> {
     /// let version = core::ptr::read_volatile(&VERSION);
     /// # }
     /// ```
-    /// If using a struct, ensure that it is `#[repr(C)]` to ensure the size will
-    /// match that of the corresponding ELF symbol.
     ///
-    /// From C eBPF, you would annotate a variable as `volatile const`
+    /// The type of a global variable must be `Pod` (plain old data), for instance `u8`, `u32` and
+    /// all other primitive types. You may use custom types as well, but you must ensure that those
+    /// types are `#[repr(C)]` and only contain other `Pod` types.
+    ///
+    /// From C eBPF, you would annotate a global variable as `volatile const`.
     ///
     /// # Example
     ///
@@ -238,14 +242,17 @@ impl<'a> BpfLoader<'a> {
     ///
     /// let bpf = BpfLoader::new()
     ///     .set_global("VERSION", &2)
+    ///     .set_global("PIDS", &[1234u16, 5678])
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
     ///
-    pub fn set_global<V: Pod>(&mut self, name: &'a str, value: &'a V) -> &mut BpfLoader<'a> {
-        // Safety: value is POD
-        let data = unsafe { bytes_of(value) };
-        self.globals.insert(name, data);
+    pub fn set_global<T: Into<GlobalData<'a>>>(
+        &mut self,
+        name: &'a str,
+        value: T,
+    ) -> &mut BpfLoader<'a> {
+        self.globals.insert(name, value.into().bytes);
         self
     }
 
@@ -408,14 +415,14 @@ impl<'a> BpfLoader<'a> {
                 }
                 PinningType::None => map.create(&name)?,
             };
-            if !map.obj.data().is_empty() && map.obj.kind() != MapKind::Bss {
+            if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
                     .map_err(|(_, io_error)| MapError::SyscallError {
                         call: "bpf_map_update_elem".to_owned(),
                         io_error,
                     })?;
             }
-            if map.obj.kind() == MapKind::Rodata {
+            if map.obj.section_kind() == BpfSectionKind::Rodata {
                 bpf_map_freeze(fd).map_err(|(_, io_error)| MapError::SyscallError {
                     call: "bpf_map_freeze".to_owned(),
                     io_error,
@@ -424,11 +431,18 @@ impl<'a> BpfLoader<'a> {
             maps.insert(name, map);
         }
 
+        let text_sections = obj
+            .functions
+            .keys()
+            .map(|(section_index, _)| *section_index)
+            .collect();
+
         obj.relocate_maps(
             maps.iter()
                 .map(|(s, data)| (s.as_str(), data.fd, &data.obj)),
+            &text_sections,
         )?;
-        obj.relocate_calls()?;
+        obj.relocate_calls(&text_sections)?;
 
         let programs = obj
             .programs
@@ -894,6 +908,31 @@ fn load_btf(raw_btf: Vec<u8>) -> Result<RawFd, BtfError> {
                     .map(|s| s.to_string_lossy().to_string())
                     .unwrap_or_else(|| "[none]".to_owned()),
             })
+        }
+    }
+}
+
+/// Global data that can be exported to eBPF programs before they are loaded.
+///
+/// Valid global data includes `Pod` types and slices of `Pod` types. See also
+/// [BpfLoader::set_global].
+pub struct GlobalData<'a> {
+    bytes: &'a [u8],
+}
+
+impl<'a, T: Pod> From<&'a [T]> for GlobalData<'a> {
+    fn from(s: &'a [T]) -> Self {
+        GlobalData {
+            bytes: bytes_of_slice(s),
+        }
+    }
+}
+
+impl<'a, T: Pod> From<&'a T> for GlobalData<'a> {
+    fn from(v: &'a T) -> Self {
+        GlobalData {
+            // Safety: v is Pod
+            bytes: unsafe { bytes_of(v) },
         }
     }
 }

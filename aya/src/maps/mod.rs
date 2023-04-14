@@ -845,7 +845,7 @@ mod tests {
         bpf_map_def,
         generated::{bpf_cmd, bpf_map_type::BPF_MAP_TYPE_HASH},
         maps::MapData,
-        obj::maps::{LegacyMap, MapKind},
+        obj::{maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, Syscall},
     };
 
@@ -861,9 +861,9 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
-            symbol_index: 0,
+            section_kind: BpfSectionKind::Maps,
+            symbol_index: Some(0),
             data: Vec::new(),
-            kind: MapKind::Other,
         })
     }
 

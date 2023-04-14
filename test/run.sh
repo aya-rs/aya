@@ -40,7 +40,7 @@ fi
 
 # Test Image
 if [ -z "${AYA_TEST_IMAGE}" ]; then
-    AYA_TEST_IMAGE="fedora37"
+    AYA_TEST_IMAGE="fedora38"
 fi
 
 case "${AYA_TEST_IMAGE}" in
@@ -57,6 +57,14 @@ download_images() {
                 IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/37/Cloud/${AYA_GUEST_ARCH}/images"
                 echo "Downloading: ${IMAGE}, this may take a while..."
                 curl -o "${AYA_IMGDIR}/fedora37.${AYA_GUEST_ARCH}.qcow2" -sSL "${IMAGE_URL}/${IMAGE}"
+            fi
+            ;;
+        fedora38)
+            if [ ! -f "${AYA_IMGDIR}/fedora38.${AYA_GUEST_ARCH}.qcow2" ]; then
+                IMAGE="Fedora-Cloud-Base-38_Beta-1.3.${AYA_GUEST_ARCH}.qcow2"
+                IMAGE_URL="https://fr2.rpmfind.net/linux/fedora/linux/releases/test/38_Beta/Cloud/${AYA_GUEST_ARCH}/images"
+                echo "Downloading: ${IMAGE}, this may take a while..."
+                curl -o "${AYA_IMGDIR}/fedora38.${AYA_GUEST_ARCH}.qcow2" -sSL "${IMAGE_URL}/${IMAGE}"
             fi
             ;;
         centos8)
@@ -181,6 +189,9 @@ EOF
 
     echo "VM launched"
     exec_vm uname -a
+    echo "Enabling testing repositories"
+    exec_vm sudo dnf config-manager --set-enabled updates-testing
+    exec_vm sudo dnf config-manager --set-enabled updates-testing-modular
     echo "Installing dependencies"
     exec_vm sudo dnf install -qy bpftool llvm llvm-devel clang clang-devel zlib-devel
     exec_vm 'curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- \

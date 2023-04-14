@@ -2,7 +2,10 @@
 
 use core::mem;
 
-use crate::thiserror::{self, Error};
+use crate::{
+    thiserror::{self, Error},
+    BpfSectionKind,
+};
 use alloc::vec::Vec;
 
 /// Invalid map type encontered
@@ -139,33 +142,6 @@ pub struct bpf_map_def {
 /// The first five __u32 of `bpf_map_def` must be defined.
 pub(crate) const MINIMUM_MAP_SIZE: usize = mem::size_of::<u32>() * 5;
 
-/// Kinds of maps
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum MapKind {
-    /// A map holding `.bss` section data
-    Bss,
-    /// A map holding `.data` section data
-    Data,
-    /// A map holding `.rodata` section data
-    Rodata,
-    /// Other maps
-    Other,
-}
-
-impl From<&str> for MapKind {
-    fn from(s: &str) -> Self {
-        if s == ".bss" {
-            MapKind::Bss
-        } else if s.starts_with(".data") {
-            MapKind::Data
-        } else if s.starts_with(".rodata") {
-            MapKind::Rodata
-        } else {
-            MapKind::Other
-        }
-    }
-}
-
 /// Map data defined in `maps` or `.maps` sections
 #[derive(Debug, Clone)]
 pub enum Map {
@@ -248,14 +224,6 @@ impl Map {
         }
     }
 
-    /// Returns the map kind
-    pub fn kind(&self) -> MapKind {
-        match self {
-            Map::Legacy(m) => m.kind,
-            Map::Btf(m) => m.kind,
-        }
-    }
-
     /// Returns the section index
     pub fn section_index(&self) -> usize {
         match self {
@@ -264,11 +232,22 @@ impl Map {
         }
     }
 
-    /// Returns the symbol index
-    pub fn symbol_index(&self) -> usize {
+    /// Returns the section kind.
+    pub fn section_kind(&self) -> BpfSectionKind {
+        match self {
+            Map::Legacy(m) => m.section_kind,
+            Map::Btf(_) => BpfSectionKind::BtfMaps,
+        }
+    }
+
+    /// Returns the symbol index.
+    ///
+    /// This is `None` for data maps (.bss, .data and .rodata) since those don't
+    /// need symbols in order to be relocated.
+    pub fn symbol_index(&self) -> Option<usize> {
         match self {
             Map::Legacy(m) => m.symbol_index,
-            Map::Btf(m) => m.symbol_index,
+            Map::Btf(m) => Some(m.symbol_index),
         }
     }
 }
@@ -283,12 +262,16 @@ pub struct LegacyMap {
     pub def: bpf_map_def,
     /// The section index
     pub section_index: usize,
-    /// The symbol index
-    pub symbol_index: usize,
+    /// The section kind
+    pub section_kind: BpfSectionKind,
+    /// The symbol index.
+    ///
+    /// This is None for data maps (.bss .data and .rodata).  We don't need
+    /// symbols to relocate those since they don't contain multiple maps, but
+    /// are just a flat array of bytes.
+    pub symbol_index: Option<usize>,
     /// The map data
     pub data: Vec<u8>,
-    /// The map kind
-    pub kind: MapKind,
 }
 
 /// A BTF-defined map, most likely from a `.maps` section.
@@ -298,6 +281,5 @@ pub struct BtfMap {
     pub def: BtfMapDef,
     pub(crate) section_index: usize,
     pub(crate) symbol_index: usize,
-    pub(crate) kind: MapKind,
     pub(crate) data: Vec<u8>,
 }
