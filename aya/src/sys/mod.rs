@@ -127,6 +127,33 @@ pub(crate) fn kernel_version() -> Result<(u32, u32, u32), ()> {
         let mut major = 0u32;
         let mut minor = 0u32;
         let mut patch = 0u32;
+
+        let debian_marker = CString::new("Debian").unwrap();
+
+        let p = libc::strstr(v.version.as_ptr(), debian_marker.as_ptr());
+
+        if !p.is_null() {
+            let debian_format = CString::new("Debian %u.%u.%u").map_err(|_| ())?;
+
+            if libc::sscanf(
+                p,
+                debian_format.as_ptr(),
+                &mut major as *mut u32,
+                &mut minor as *mut _,
+                &mut patch as *mut _,
+            ) == 3
+            {
+                // On Debian 10, kernels after 4.19.229 expect 4.19.255 due to broken Makefile patches.
+                let patch_level_limit = if major == 4 && minor == 19 { 230 } else { 255 };
+
+                if patch >= patch_level_limit {
+                    patch = 255;
+                }
+
+                return Ok((major, minor, patch));
+            }
+        }
+
         let format = CString::new("%u.%u.%u").unwrap();
         if libc::sscanf(
             v.release.as_ptr(),
