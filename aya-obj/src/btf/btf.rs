@@ -544,7 +544,12 @@ impl Btf {
                         let typedef_type =
                             BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
                         types.types[i] = typedef_type;
-                    } else if !features.btf_func_global || name == "memset" || name == "memcpy" {
+                    } else if !features.btf_func_global
+                        || name == "memset"
+                        || name == "memcpy"
+                        || name == "memmove"
+                        || name == "memcmp"
+                    {
                         // Sanitize BTF_FUNC_GLOBAL and memset, memcpy
                         let mut fixed_ty = ty.clone();
                         if ty.linkage() == FuncLinkage::Global {
@@ -1359,7 +1364,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sanitize_memset_memcpy() {
+    fn test_sanitize_mem_builtins() {
         let mut btf = Btf::new();
         let name_offset = btf.add_string("int".to_string());
         let int_type_id = btf.add_type(BtfType::Int(Int::new(
@@ -1382,33 +1387,35 @@ mod tests {
         let func_proto_type_id =
             btf.add_type(BtfType::FuncProto(FuncProto::new(params, int_type_id)));
 
-        ["memset", "memcpy"].iter().for_each(|fname| {
-            let func_name_offset = btf.add_string(fname.to_string());
-            let func_type_id = btf.add_type(BtfType::Func(Func::new(
-                func_name_offset,
-                func_proto_type_id,
-                FuncLinkage::Global,
-            )));
+        ["memset", "memcpy", "memcmp", "memmove"]
+            .iter()
+            .for_each(|fname| {
+                let func_name_offset = btf.add_string(fname.to_string());
+                let func_type_id = btf.add_type(BtfType::Func(Func::new(
+                    func_name_offset,
+                    func_proto_type_id,
+                    FuncLinkage::Global,
+                )));
 
-            let features = BtfFeatures {
-                btf_func: true,
-                btf_func_global: true, // to force function name check
-                ..Default::default()
-            };
+                let features = BtfFeatures {
+                    btf_func: true,
+                    btf_func_global: true, // to force function name check
+                    ..Default::default()
+                };
 
-            btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
-                .unwrap();
+                btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+                    .unwrap();
 
-            if let BtfType::Func(fixed) = btf.type_by_id(func_type_id).unwrap() {
-                assert!(fixed.linkage() == FuncLinkage::Static);
-            } else {
-                panic!("not a func")
-            }
+                if let BtfType::Func(fixed) = btf.type_by_id(func_type_id).unwrap() {
+                    assert!(fixed.linkage() == FuncLinkage::Static);
+                } else {
+                    panic!("not a func")
+                }
 
-            // Ensure we can convert to bytes and back again
-            let raw = btf.to_bytes();
-            Btf::parse(&raw, Endianness::default()).unwrap();
-        });
+                // Ensure we can convert to bytes and back again
+                let raw = btf.to_bytes();
+                Btf::parse(&raw, Endianness::default()).unwrap();
+            });
     }
 
     #[test]
