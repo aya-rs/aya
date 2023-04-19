@@ -31,6 +31,10 @@ jobs:
           toolchain: stable
           override: true
 
+      - uses: taiki-e/install-action@cargo-hack
+      - name: Check
+        run: cargo hack check --feature-powerset --ignore-private
+
       - uses: Swatinem/rust-cache@v1
       - name: Prereqs
         run: cargo install cross --git https://github.com/cross-rs/cross
