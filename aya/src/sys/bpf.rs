@@ -599,6 +599,37 @@ pub(crate) fn is_prog_name_supported() -> bool {
     }
 }
 
+pub(crate) fn is_probe_read_kernel_supported() -> bool {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+
+    let prog: &[u8] = &[
+        0xbf, 0xa1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // r1 = r10
+        0x07, 0x01, 0x00, 0x00, 0xf8, 0xff, 0xff, 0xff, // r1 -= 8
+        0xb7, 0x02, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, // r2 = 8
+        0xb7, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // r3 = 0
+        0x85, 0x00, 0x00, 0x00, 0x71, 0x00, 0x00, 0x00, // call 113
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+
+    let insns = copy_instructions(prog).unwrap();
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
+
+    match sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
+        Ok(v) => {
+            let fd = v as RawFd;
+            unsafe { close(fd) };
+            true
+        }
+        Err(_) => false,
+    }
+}
+
 pub(crate) fn is_perf_link_supported() -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };

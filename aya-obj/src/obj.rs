@@ -15,6 +15,8 @@ use object::{
 };
 
 use crate::{
+    btf::BtfFeatures,
+    generated::{BPF_CALL, BPF_JMP, BPF_K},
     maps::{BtfMap, LegacyMap, Map, MINIMUM_MAP_SIZE},
     relocation::*,
     thiserror::{self, Error},
@@ -32,6 +34,16 @@ use core::slice::from_raw_parts_mut;
 use crate::btf::{Array, DataSecEntry, FuncSecInfo, LineSecInfo};
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
+
+/// Features implements BPF and BTF feature detection
+#[derive(Default, Debug)]
+#[allow(missing_docs)]
+pub struct Features {
+    pub bpf_name: bool,
+    pub bpf_probe_read_kernel: bool,
+    pub bpf_perf_link: bool,
+    pub btf: Option<BtfFeatures>,
+}
 
 /// The loaded object file representation
 #[derive(Clone)]
@@ -877,6 +889,52 @@ impl Object {
         }
 
         Ok(())
+    }
+
+    /// Sanitize BPF programs.
+    pub fn sanitize_programs(&mut self, features: &Features) {
+        for program in self.programs.values_mut() {
+            program.sanitize(features);
+        }
+    }
+}
+
+fn insn_is_helper_call(ins: &bpf_insn) -> bool {
+    let klass = (ins.code & 0x07) as u32;
+    let op = (ins.code & 0xF0) as u32;
+    let src = (ins.code & 0x08) as u32;
+
+    klass == BPF_JMP && op == BPF_CALL && src == BPF_K && ins.src_reg() == 0 && ins.dst_reg() == 0
+}
+
+const BPF_FUNC_PROBE_READ: i32 = 4;
+const BPF_FUNC_PROBE_READ_STR: i32 = 45;
+const BPF_FUNC_PROBE_READ_USER: i32 = 112;
+const BPF_FUNC_PROBE_READ_KERNEL: i32 = 113;
+const BPF_FUNC_PROBE_READ_USER_STR: i32 = 114;
+const BPF_FUNC_PROBE_READ_KERNEL_STR: i32 = 115;
+
+impl Program {
+    fn sanitize(&mut self, features: &Features) {
+        for inst in &mut self.function.instructions {
+            if !insn_is_helper_call(inst) {
+                continue;
+            }
+
+            match inst.imm {
+                BPF_FUNC_PROBE_READ_USER | BPF_FUNC_PROBE_READ_KERNEL
+                    if !features.bpf_probe_read_kernel =>
+                {
+                    inst.imm = BPF_FUNC_PROBE_READ;
+                }
+                BPF_FUNC_PROBE_READ_USER_STR | BPF_FUNC_PROBE_READ_KERNEL_STR
+                    if !features.bpf_probe_read_kernel =>
+                {
+                    inst.imm = BPF_FUNC_PROBE_READ_STR;
+                }
+                _ => {}
+            }
+        }
     }
 }
 
