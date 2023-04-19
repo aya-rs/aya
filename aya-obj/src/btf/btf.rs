@@ -432,6 +432,19 @@ impl Btf {
                 // Sanitize DATASEC if they are not supported
                 BtfType::DataSec(d) if !features.btf_datasec => {
                     debug!("{}: not supported. replacing with STRUCT", kind);
+
+                    // STRUCT aren't allowed to have "." in their name, fixup this if needed.
+                    let mut name_offset = t.name_offset();
+                    let sec_name = self.string_at(name_offset)?;
+                    let name = sec_name.to_string();
+
+                    // Handle any "." characters in struct names
+                    // Example: ".maps"
+                    let fixed_name = name.replace('.', "_");
+                    if fixed_name != name {
+                        name_offset = self.add_string(fixed_name);
+                    }
+
                     let mut members = vec![];
                     for member in d.entries.iter() {
                         let mt = types.type_by_id(member.btf_type).unwrap();
@@ -441,7 +454,9 @@ impl Btf {
                             offset: member.offset * 8,
                         })
                     }
-                    types.types[i] = BtfType::Struct(Struct::new(t.name_offset(), members, 0));
+
+                    types.types[i] =
+                        BtfType::Struct(Struct::new(name_offset, members, d.entries.len() as u32));
                 }
                 // Fixup DATASEC
                 // DATASEC sizes aren't always set by LLVM
@@ -1116,7 +1131,7 @@ mod tests {
             VarLinkage::Static,
         )));
 
-        let name_offset = btf.add_string(".data".to_string());
+        let name_offset = btf.add_string("data".to_string());
         let variables = vec![DataSecEntry {
             btf_type: var_type_id,
             offset: 0,
