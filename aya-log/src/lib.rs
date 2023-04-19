@@ -564,7 +564,7 @@ mod test {
             .expect("could not write to the buffer");
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "test");
@@ -583,7 +583,7 @@ mod test {
         "test".write(&mut input[len..]).unwrap();
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "hello test");
@@ -601,7 +601,7 @@ mod test {
         14.write(&mut input[len..]).unwrap();
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "default hint: 14");
@@ -619,7 +619,7 @@ mod test {
         200.write(&mut input[len..]).unwrap();
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "lower hex: c8");
@@ -637,7 +637,7 @@ mod test {
         200.write(&mut input[len..]).unwrap();
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "upper hex: C8");
@@ -656,7 +656,7 @@ mod test {
         167772161u32.write(&mut input[len..]).unwrap();
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "ipv4: 10.0.0.1");
@@ -679,7 +679,7 @@ mod test {
         ipv6_arr.write(&mut input[len..]).unwrap();
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "ipv6: 2001:db8::1:1");
@@ -701,7 +701,7 @@ mod test {
         ipv6_arr.write(&mut input[len..]).unwrap();
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "ipv6: 2001:db8::1:1");
@@ -721,7 +721,7 @@ mod test {
         mac_arr.write(&mut input[len..]).unwrap();
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "mac: 00:00:5e:00:53:af");
@@ -741,7 +741,7 @@ mod test {
         mac_arr.write(&mut input[len..]).unwrap();
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "mac: 00:00:5E:00:53:AF");
