@@ -550,9 +550,9 @@ impl Btf {
                         if ty.linkage() == FuncLinkage::Global {
                             if !features.btf_func_global {
                                 debug!(
-                                "{}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
-                                kind
-                            );
+                                    "{}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
+                                    kind
+                                );
                             } else {
                                 debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
                             }
