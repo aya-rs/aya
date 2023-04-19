@@ -216,7 +216,7 @@ trait Format {
 
 impl Format for u32 {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-        match last_hint.map(|h| h.0) {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
             Some(DisplayHint::Default) => Ok(DefaultFormatter::format(self)),
             Some(DisplayHint::LowerHex) => Ok(LowerHexFormatter::format(self)),
             Some(DisplayHint::UpperHex) => Ok(UpperHexFormatter::format(self)),
@@ -231,7 +231,7 @@ impl Format for u32 {
 
 impl Format for [u8; 6] {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-        match last_hint.map(|h| h.0) {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
             Some(DisplayHint::Default) => Err(()),
             Some(DisplayHint::LowerHex) => Err(()),
             Some(DisplayHint::UpperHex) => Err(()),
@@ -246,7 +246,7 @@ impl Format for [u8; 6] {
 
 impl Format for [u8; 16] {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-        match last_hint.map(|h| h.0) {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
             Some(DisplayHint::Default) => Err(()),
             Some(DisplayHint::LowerHex) => Err(()),
             Some(DisplayHint::UpperHex) => Err(()),
@@ -261,7 +261,7 @@ impl Format for [u8; 16] {
 
 impl Format for [u16; 8] {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-        match last_hint.map(|h| h.0) {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
             Some(DisplayHint::Default) => Err(()),
             Some(DisplayHint::LowerHex) => Err(()),
             Some(DisplayHint::UpperHex) => Err(()),
@@ -278,7 +278,7 @@ macro_rules! impl_format {
     ($type:ident) => {
         impl Format for $type {
             fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-                match last_hint.map(|h| h.0) {
+                match last_hint.map(|DisplayHintWrapper(dh)| dh) {
                     Some(DisplayHint::Default) => Ok(DefaultFormatter::format(self)),
                     Some(DisplayHint::LowerHex) => Ok(LowerHexFormatter::format(self)),
                     Some(DisplayHint::UpperHex) => Ok(UpperHexFormatter::format(self)),
@@ -308,7 +308,7 @@ macro_rules! impl_format_float {
     ($type:ident) => {
         impl Format for $type {
             fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-                match last_hint.map(|h| h.0) {
+                match last_hint.map(|DisplayHintWrapper(dh)| dh) {
                     Some(DisplayHint::Default) => Ok(DefaultFormatter::format(self)),
                     Some(DisplayHint::LowerHex) => Err(()),
                     Some(DisplayHint::UpperHex) => Err(()),
@@ -367,26 +367,26 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
     let mut num_args = None;
 
     for _ in 0..LOG_FIELDS {
-        let (attr, rest) = unsafe { TagLenValue::<'_, RecordFieldWrapper>::try_read(buf)? };
+        let (RecordFieldWrapper(tag), value, rest) = try_read(buf)?;
 
-        match attr.tag.0 {
+        match tag {
             RecordField::Target => {
-                target = Some(std::str::from_utf8(attr.value).map_err(|_| ())?);
+                target = Some(std::str::from_utf8(value).map_err(|_| ())?);
             }
             RecordField::Level => {
-                level = unsafe { ptr::read_unaligned(attr.value.as_ptr() as *const _) }
+                level = unsafe { ptr::read_unaligned(value.as_ptr() as *const _) }
             }
             RecordField::Module => {
-                module = Some(std::str::from_utf8(attr.value).map_err(|_| ())?);
+                module = Some(std::str::from_utf8(value).map_err(|_| ())?);
             }
             RecordField::File => {
-                file = Some(std::str::from_utf8(attr.value).map_err(|_| ())?);
+                file = Some(std::str::from_utf8(value).map_err(|_| ())?);
             }
             RecordField::Line => {
-                line = Some(u32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?));
+                line = Some(u32::from_ne_bytes(value.try_into().map_err(|_| ())?));
             }
             RecordField::NumArgs => {
-                num_args = Some(usize::from_ne_bytes(attr.value.try_into().map_err(|_| ())?));
+                num_args = Some(usize::from_ne_bytes(value.try_into().map_err(|_| ())?));
             }
         }
 
@@ -396,101 +396,101 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
     let mut full_log_msg = String::new();
     let mut last_hint: Option<DisplayHintWrapper> = None;
     for _ in 0..num_args.ok_or(())? {
-        let (attr, rest) = unsafe { TagLenValue::<'_, ArgumentWrapper>::try_read(buf)? };
+        let (ArgumentWrapper(tag), value, rest) = try_read(buf)?;
 
-        match attr.tag.0 {
+        match tag {
             Argument::DisplayHint => {
-                last_hint = Some(unsafe { ptr::read_unaligned(attr.value.as_ptr() as *const _) });
+                last_hint = Some(unsafe { ptr::read_unaligned(value.as_ptr() as *const _) });
             }
             Argument::I8 => {
                 full_log_msg.push_str(
-                    &i8::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &i8::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::I16 => {
                 full_log_msg.push_str(
-                    &i16::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &i16::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::I32 => {
                 full_log_msg.push_str(
-                    &i32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &i32::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::I64 => {
                 full_log_msg.push_str(
-                    &i64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &i64::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::Isize => {
                 full_log_msg.push_str(
-                    &isize::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &isize::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::U8 => {
                 full_log_msg.push_str(
-                    &u8::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &u8::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::U16 => {
                 full_log_msg.push_str(
-                    &u16::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &u16::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::U32 => {
                 full_log_msg.push_str(
-                    &u32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &u32::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::U64 => {
                 full_log_msg.push_str(
-                    &u64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &u64::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::Usize => {
                 full_log_msg.push_str(
-                    &usize::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &usize::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::F32 => {
                 full_log_msg.push_str(
-                    &f32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &f32::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::F64 => {
                 full_log_msg.push_str(
-                    &f64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &f64::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::ArrU8Len6 => {
-                let value: [u8; 6] = attr.value.try_into().map_err(|_| ())?;
+                let value: [u8; 6] = value.try_into().map_err(|_| ())?;
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             Argument::ArrU8Len16 => {
-                let value: [u8; 16] = attr.value.try_into().map_err(|_| ())?;
+                let value: [u8; 16] = value.try_into().map_err(|_| ())?;
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             Argument::ArrU16Len8 => {
-                let data: [u8; 16] = attr.value.try_into().map_err(|_| ())?;
+                let data: [u8; 16] = value.try_into().map_err(|_| ())?;
                 let mut value: [u16; 8] = Default::default();
                 for (i, s) in data.chunks_exact(2).enumerate() {
                     value[i] = ((s[1] as u16) << 8) | s[0] as u16;
                 }
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
-            Argument::Str => match str::from_utf8(attr.value) {
+            Argument::Str => match str::from_utf8(value) {
                 Ok(v) => {
                     full_log_msg.push_str(v);
                 }
@@ -515,35 +515,23 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
     Ok(())
 }
 
-struct TagLenValue<'a, T: Pod> {
-    tag: T,
-    value: &'a [u8],
-}
-
-impl<'a, T: Pod> TagLenValue<'a, T> {
-    unsafe fn try_read(mut buf: &'a [u8]) -> Result<(TagLenValue<'a, T>, &'a [u8]), ()> {
-        if buf.len() < mem::size_of::<T>() + mem::size_of::<usize>() {
-            return Err(());
-        }
-
-        let tag = ptr::read_unaligned(buf.as_ptr() as *const T);
-        buf = &buf[mem::size_of::<T>()..];
-
-        let len = usize::from_ne_bytes(buf[..mem::size_of::<usize>()].try_into().unwrap());
-        buf = &buf[mem::size_of::<usize>()..];
-
-        if buf.len() < len {
-            return Err(());
-        }
-
-        Ok((
-            TagLenValue {
-                tag,
-                value: &buf[..len],
-            },
-            &buf[len..],
-        ))
+fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
+    if buf.len() < mem::size_of::<T>() + mem::size_of::<usize>() {
+        return Err(());
     }
+
+    let tag = unsafe { ptr::read_unaligned(buf.as_ptr() as *const T) };
+    buf = &buf[mem::size_of::<T>()..];
+
+    let len = usize::from_ne_bytes(buf[..mem::size_of::<usize>()].try_into().unwrap());
+    buf = &buf[mem::size_of::<usize>()..];
+
+    if buf.len() < len {
+        return Err(());
+    }
+
+    let (value, rest) = buf.split_at(len);
+    Ok((tag, value, rest))
 }
 
 #[cfg(test)]
