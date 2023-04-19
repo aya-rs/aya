@@ -66,7 +66,7 @@ pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>)
             _ => {
                 u.btf_key_type_id = m.def.btf_key_type_id;
                 u.btf_value_type_id = m.def.btf_value_type_id;
-                u.btf_fd = btf_fd.unwrap() as u32;
+                u.btf_fd = btf_fd.unwrap_or_default() as u32;
             }
         }
     }
