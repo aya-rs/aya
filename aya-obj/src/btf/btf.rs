@@ -412,6 +412,7 @@ impl Btf {
         features: &BtfFeatures,
     ) -> Result<(), BtfError> {
         let mut types = mem::take(&mut self.types);
+
         for i in 0..types.types.len() {
             let t = &types.types[i];
             let kind = t.kind();
@@ -549,10 +550,14 @@ impl Btf {
                         // Sanitize BTF_FUNC_GLOBAL and memset, memcpy
                         let mut fixed_ty = ty.clone();
                         if ty.linkage() == FuncLinkage::Global {
-                            debug!(
+                            if !features.btf_func_global {
+                                debug!(
                                 "{}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
                                 kind
                             );
+                            } else {
+                                debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
+                            }
                             fixed_ty.set_linkage(FuncLinkage::Static);
                         }
                         types.types[i] = BtfType::Func(fixed_ty);
