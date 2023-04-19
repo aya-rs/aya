@@ -160,6 +160,20 @@ where
     }
 }
 
+pub struct LowerHexDebugFormatter;
+impl<T> Formatter<&[T]> for LowerHexDebugFormatter
+where
+    T: LowerHex,
+{
+    fn format(v: &[T]) -> String {
+        let mut s = String::new();
+        for v in v {
+            let () = core::fmt::write(&mut s, format_args!("{v:x}")).unwrap();
+        }
+        s
+    }
+}
+
 pub struct UpperHexFormatter;
 impl<T> Formatter<T> for UpperHexFormatter
 where
@@ -167,6 +181,20 @@ where
 {
     fn format(v: T) -> String {
         format!("{v:X}")
+    }
+}
+
+pub struct UpperHexDebugFormatter;
+impl<T> Formatter<&[T]> for UpperHexDebugFormatter
+where
+    T: UpperHex,
+{
+    fn format(v: &[T]) -> String {
+        let mut s = String::new();
+        for v in v {
+            let () = core::fmt::write(&mut s, format_args!("{v:X}")).unwrap();
+        }
+        s
     }
 }
 
@@ -212,6 +240,16 @@ impl Formatter<[u8; 6]> for UpperMacFormatter {
 
 trait Format {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()>;
+}
+
+impl Format for &[u8] {
+    fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
+            Some(DisplayHint::LowerHex) => Ok(LowerHexDebugFormatter::format(self)),
+            Some(DisplayHint::UpperHex) => Ok(UpperHexDebugFormatter::format(self)),
+            _ => Err(()),
+        }
+    }
 }
 
 impl Format for u32 {
@@ -499,6 +537,9 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
                 }
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
+            Argument::Bytes => {
+                full_log_msg.push_str(&value.format(last_hint.take())?);
+            }
             Argument::Str => match str::from_utf8(value) {
                 Ok(v) => {
                     full_log_msg.push_str(v);
@@ -568,11 +609,11 @@ mod test {
     #[test]
     fn test_str() {
         testing_logger::setup();
-        let (len, mut input) = new_log(1).unwrap();
+        let (mut len, mut input) = new_log(1).unwrap();
 
-        "test"
-            .write(&mut input[len..])
-            .expect("could not write to the buffer");
+        len += "test".write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -588,10 +629,10 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(2).unwrap();
 
-        len += "hello "
-            .write(&mut input[len..])
-            .expect("could not write to the buffer");
-        "test".write(&mut input[len..]).unwrap();
+        len += "hello ".write(&mut input[len..]).unwrap();
+        len += "test".write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -603,13 +644,58 @@ mod test {
     }
 
     #[test]
+    fn test_bytes() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(2).unwrap();
+
+        len += DisplayHint::LowerHex.write(&mut input[len..]).unwrap();
+        len += [0xde, 0xad].write(&mut input[len..]).unwrap();
+
+        _ = len;
+
+        let logger = logger();
+        let () = log_buf(&input, logger).unwrap();
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "dead");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_bytes_with_args() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(5).unwrap();
+
+        len += DisplayHint::LowerHex.write(&mut input[len..]).unwrap();
+        len += [0xde, 0xad].write(&mut input[len..]).unwrap();
+
+        len += " ".write(&mut input[len..]).unwrap();
+
+        len += DisplayHint::UpperHex.write(&mut input[len..]).unwrap();
+        len += [0xbe, 0xef].write(&mut input[len..]).unwrap();
+
+        _ = len;
+
+        let logger = logger();
+        let () = log_buf(&input, logger).unwrap();
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "dead BEEF");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
     fn test_display_hint_default() {
         testing_logger::setup();
         let (mut len, mut input) = new_log(3).unwrap();
 
         len += "default hint: ".write(&mut input[len..]).unwrap();
         len += DisplayHint::Default.write(&mut input[len..]).unwrap();
-        14.write(&mut input[len..]).unwrap();
+        len += 14.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -627,7 +713,9 @@ mod test {
 
         len += "lower hex: ".write(&mut input[len..]).unwrap();
         len += DisplayHint::LowerHex.write(&mut input[len..]).unwrap();
-        200.write(&mut input[len..]).unwrap();
+        len += 200.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -645,7 +733,9 @@ mod test {
 
         len += "upper hex: ".write(&mut input[len..]).unwrap();
         len += DisplayHint::UpperHex.write(&mut input[len..]).unwrap();
-        200.write(&mut input[len..]).unwrap();
+        len += 200.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -664,7 +754,9 @@ mod test {
         len += "ipv4: ".write(&mut input[len..]).unwrap();
         len += DisplayHint::Ipv4.write(&mut input[len..]).unwrap();
         // 10.0.0.1 as u32
-        167772161u32.write(&mut input[len..]).unwrap();
+        len += 167772161u32.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -687,7 +779,9 @@ mod test {
             0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
             0x00, 0x01,
         ];
-        ipv6_arr.write(&mut input[len..]).unwrap();
+        len += ipv6_arr.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -709,7 +803,9 @@ mod test {
         let ipv6_arr: [u16; 8] = [
             0x2001, 0x0db8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001, 0x0001,
         ];
-        ipv6_arr.write(&mut input[len..]).unwrap();
+        len += ipv6_arr.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -729,7 +825,9 @@ mod test {
         len += DisplayHint::LowerMac.write(&mut input[len..]).unwrap();
         // 00:00:5e:00:53:af as byte array
         let mac_arr: [u8; 6] = [0x00, 0x00, 0x5e, 0x00, 0x53, 0xaf];
-        mac_arr.write(&mut input[len..]).unwrap();
+        len += mac_arr.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -749,7 +847,9 @@ mod test {
         len += DisplayHint::UpperMac.write(&mut input[len..]).unwrap();
         // 00:00:5E:00:53:AF as byte array
         let mac_arr: [u8; 6] = [0x00, 0x00, 0x5e, 0x00, 0x53, 0xaf];
-        mac_arr.write(&mut input[len..]).unwrap();
+        len += mac_arr.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();

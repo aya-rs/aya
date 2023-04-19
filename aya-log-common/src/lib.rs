@@ -75,6 +75,7 @@ pub enum Argument {
     /// `[u16; 8]` array which represents an IPv6 address.
     ArrU16Len8,
 
+    Bytes,
     Str,
 }
 
@@ -193,6 +194,12 @@ impl WriteToBuf for [u16; 8] {
 impl WriteToBuf for [u8; 6] {
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
         TagLenValue::new(Argument::ArrU8Len6, self).write(buf)
+    }
+}
+
+impl WriteToBuf for &[u8] {
+    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
+        TagLenValue::new(Argument::Bytes, self.iter().copied()).write(buf)
     }
 }
 
