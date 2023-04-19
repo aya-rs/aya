@@ -1,6 +1,6 @@
 #![no_std]
 
-use core::{cmp, mem, ptr, slice};
+use core::{mem, num, ptr, slice};
 
 use num_enum::IntoPrimitive;
 
@@ -8,8 +8,10 @@ pub const LOG_BUF_CAPACITY: usize = 8192;
 
 pub const LOG_FIELDS: usize = 6;
 
-#[repr(usize)]
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+pub type LogValueLength = u16;
+
+#[repr(u8)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, IntoPrimitive)]
 pub enum Level {
     /// The "error" level.
     ///
@@ -33,7 +35,7 @@ pub enum Level {
     Trace,
 }
 
-#[repr(usize)]
+#[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 pub enum RecordField {
     Target = 1,
@@ -46,7 +48,7 @@ pub enum RecordField {
 
 /// Types which are supported by aya-log and can be safely sent from eBPF
 /// programs to userspace.
-#[repr(usize)]
+#[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 pub enum Argument {
     DisplayHint,
@@ -111,26 +113,29 @@ where
     }
 
     pub(crate) fn write(&self, mut buf: &mut [u8]) -> Result<usize, ()> {
-        let size = mem::size_of::<T>() + mem::size_of::<usize>() + self.value.len();
-        let remaining = cmp::min(buf.len(), LOG_BUF_CAPACITY);
-        // Check if the size doesn't exceed the buffer bounds.
-        if size > remaining {
+        // Break the abstraction to please the verifier.
+        if buf.len() > LOG_BUF_CAPACITY {
+            buf = &mut buf[..LOG_BUF_CAPACITY];
+        }
+        let Self { tag, value } = self;
+        let len = value.len();
+        let wire_len: LogValueLength = value
+            .len()
+            .try_into()
+            .map_err(|num::TryFromIntError { .. }| ())?;
+        let size = mem::size_of_val(tag) + mem::size_of_val(&wire_len) + len;
+        if size > buf.len() {
             return Err(());
         }
 
-        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, self.tag) };
-        buf = &mut buf[mem::size_of::<T>()..];
+        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, *tag) };
+        buf = &mut buf[mem::size_of_val(tag)..];
 
-        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, self.value.len()) };
-        buf = &mut buf[mem::size_of::<usize>()..];
+        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, wire_len) };
+        buf = &mut buf[mem::size_of_val(&wire_len)..];
 
-        let len = cmp::min(buf.len(), self.value.len());
-        // The verifier isn't happy with `len` being unbounded, so compare it
-        // with `LOG_BUF_CAPACITY`.
-        if len > LOG_BUF_CAPACITY {
-            return Err(());
-        }
-        buf[..len].copy_from_slice(&self.value[..len]);
+        unsafe { ptr::copy_nonoverlapping(value.as_ptr(), buf.as_mut_ptr(), len) };
+
         Ok(size)
     }
 }
@@ -210,10 +215,11 @@ pub fn write_record_header(
     line: u32,
     num_args: usize,
 ) -> Result<usize, ()> {
+    let level: u8 = level.into();
     let mut size = 0;
     for attr in [
         TagLenValue::<RecordField>::new(RecordField::Target, target.as_bytes()),
-        TagLenValue::<RecordField>::new(RecordField::Level, &(level as usize).to_ne_bytes()),
+        TagLenValue::<RecordField>::new(RecordField::Level, &level.to_ne_bytes()),
         TagLenValue::<RecordField>::new(RecordField::Module, module.as_bytes()),
         TagLenValue::<RecordField>::new(RecordField::File, file.as_bytes()),
         TagLenValue::<RecordField>::new(RecordField::Line, &line.to_ne_bytes()),
@@ -223,4 +229,18 @@ pub fn write_record_header(
     }
 
     Ok(size)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn log_value_length_sufficient() {
+        assert!(
+            LOG_BUF_CAPACITY >= LogValueLength::MAX.into(),
+            "{} < {}",
+            LOG_BUF_CAPACITY,
+            LogValueLength::MAX
+        );
+    }
 }

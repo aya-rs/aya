@@ -59,9 +59,11 @@ use std::{
 
 const MAP_NAME: &str = "AYA_LOGS";
 
-use aya_log_common::{Argument, DisplayHint, RecordField, LOG_BUF_CAPACITY, LOG_FIELDS};
+use aya_log_common::{
+    Argument, DisplayHint, Level, LogValueLength, RecordField, LOG_BUF_CAPACITY, LOG_FIELDS,
+};
 use bytes::BytesMut;
-use log::{error, Level, Log, Record};
+use log::{error, Log, Record};
 use thiserror::Error;
 
 use aya::{
@@ -116,9 +118,7 @@ impl BpfLogger {
 
             let log = logger.clone();
             tokio::spawn(async move {
-                let mut buffers = (0..10)
-                    .map(|_| BytesMut::with_capacity(LOG_BUF_CAPACITY))
-                    .collect::<Vec<_>>();
+                let mut buffers = vec![BytesMut::with_capacity(LOG_BUF_CAPACITY); 10];
 
                 loop {
                     let events = buf.read_events(&mut buffers).await.unwrap();
@@ -360,7 +360,7 @@ pub enum Error {
 
 fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
     let mut target = None;
-    let mut level = Level::Trace;
+    let mut level = None;
     let mut module = None;
     let mut file = None;
     let mut line = None;
@@ -371,16 +371,25 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
 
         match tag {
             RecordField::Target => {
-                target = Some(std::str::from_utf8(value).map_err(|_| ())?);
+                target = Some(str::from_utf8(value).map_err(|_| ())?);
             }
             RecordField::Level => {
-                level = unsafe { ptr::read_unaligned(value.as_ptr() as *const _) }
+                level = Some({
+                    let level = unsafe { ptr::read_unaligned(value.as_ptr() as *const _) };
+                    match level {
+                        Level::Error => log::Level::Error,
+                        Level::Warn => log::Level::Warn,
+                        Level::Info => log::Level::Info,
+                        Level::Debug => log::Level::Debug,
+                        Level::Trace => log::Level::Trace,
+                    }
+                })
             }
             RecordField::Module => {
-                module = Some(std::str::from_utf8(value).map_err(|_| ())?);
+                module = Some(str::from_utf8(value).map_err(|_| ())?);
             }
             RecordField::File => {
-                file = Some(std::str::from_utf8(value).map_err(|_| ())?);
+                file = Some(str::from_utf8(value).map_err(|_| ())?);
             }
             RecordField::Line => {
                 line = Some(u32::from_ne_bytes(value.try_into().map_err(|_| ())?));
@@ -505,7 +514,7 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
         &Record::builder()
             .args(format_args!("{full_log_msg}"))
             .target(target.ok_or(())?)
-            .level(level)
+            .level(level.ok_or(())?)
             .module_path(module)
             .file(file)
             .line(line)
@@ -516,16 +525,18 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
 }
 
 fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
-    if buf.len() < mem::size_of::<T>() + mem::size_of::<usize>() {
+    if buf.len() < mem::size_of::<T>() + mem::size_of::<LogValueLength>() {
         return Err(());
     }
 
     let tag = unsafe { ptr::read_unaligned(buf.as_ptr() as *const T) };
     buf = &buf[mem::size_of::<T>()..];
 
-    let len = usize::from_ne_bytes(buf[..mem::size_of::<usize>()].try_into().unwrap());
-    buf = &buf[mem::size_of::<usize>()..];
+    let len =
+        LogValueLength::from_ne_bytes(buf[..mem::size_of::<LogValueLength>()].try_into().unwrap());
+    buf = &buf[mem::size_of::<LogValueLength>()..];
 
+    let len: usize = len.into();
     if buf.len() < len {
         return Err(());
     }
@@ -538,7 +549,7 @@ fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
 mod test {
     use super::*;
     use aya_log_common::{write_record_header, WriteToBuf};
-    use log::logger;
+    use log::{logger, Level};
 
     fn new_log(args: usize) -> Result<(usize, Vec<u8>), ()> {
         let mut buf = vec![0; 8192];
