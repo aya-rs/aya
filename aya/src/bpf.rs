@@ -11,7 +11,7 @@ use aya_obj::{
     btf::{BtfFeatures, BtfRelocationError},
     generated::BPF_F_XDP_HAS_FRAGS,
     relocation::BpfRelocationError,
-    BpfSectionKind,
+    BpfSectionKind, Features,
 };
 use log::debug;
 use thiserror::Error;
@@ -36,7 +36,7 @@ use crate::{
         bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_btf_datasec_supported,
         is_btf_decl_tag_supported, is_btf_float_supported, is_btf_func_global_supported,
         is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
-        is_prog_name_supported, retry_with_verifier_logs,
+        is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
     },
     util::{bytes_of, bytes_of_slice, possible_cpus, VerifierLog, POSSIBLE_CPUS},
 };
@@ -66,39 +66,30 @@ unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 pub use aya_obj::maps::{bpf_map_def, PinningType};
 
 lazy_static! {
-    pub(crate) static ref FEATURES: Features = Features::new();
+    pub(crate) static ref FEATURES: Features = detect_features();
 }
 
-// Features implements BPF and BTF feature detection
-#[derive(Default, Debug)]
-pub(crate) struct Features {
-    pub bpf_name: bool,
-    pub bpf_perf_link: bool,
-    pub btf: Option<BtfFeatures>,
-}
-
-impl Features {
-    fn new() -> Self {
-        let btf = if is_btf_supported() {
-            Some(BtfFeatures {
-                btf_func: is_btf_func_supported(),
-                btf_func_global: is_btf_func_global_supported(),
-                btf_datasec: is_btf_datasec_supported(),
-                btf_float: is_btf_float_supported(),
-                btf_decl_tag: is_btf_decl_tag_supported(),
-                btf_type_tag: is_btf_type_tag_supported(),
-            })
-        } else {
-            None
-        };
-        let f = Features {
-            bpf_name: is_prog_name_supported(),
-            bpf_perf_link: is_perf_link_supported(),
-            btf,
-        };
-        debug!("BPF Feature Detection: {:#?}", f);
-        f
-    }
+fn detect_features() -> Features {
+    let btf = if is_btf_supported() {
+        Some(BtfFeatures {
+            btf_func: is_btf_func_supported(),
+            btf_func_global: is_btf_func_global_supported(),
+            btf_datasec: is_btf_datasec_supported(),
+            btf_float: is_btf_float_supported(),
+            btf_decl_tag: is_btf_decl_tag_supported(),
+            btf_type_tag: is_btf_type_tag_supported(),
+        })
+    } else {
+        None
+    };
+    let f = Features {
+        bpf_name: is_prog_name_supported(),
+        bpf_probe_read_kernel: is_probe_read_kernel_supported(),
+        bpf_perf_link: is_perf_link_supported(),
+        btf,
+    };
+    debug!("BPF Feature Detection: {:#?}", f);
+    f
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -443,6 +434,7 @@ impl<'a> BpfLoader<'a> {
             &text_sections,
         )?;
         obj.relocate_calls(&text_sections)?;
+        obj.sanitize_programs(&FEATURES);
 
         let programs = obj
             .programs
