@@ -126,7 +126,10 @@ impl BpfLogger {
                     #[allow(clippy::needless_range_loop)]
                     for i in 0..events.read {
                         let buf = &mut buffers[i];
-                        log_buf(buf, &*log).unwrap();
+                        match log_buf(buf, &*log) {
+                            Ok(()) => {}
+                            Err(e) => error!("internal error => {:?}", e),
+                        }
                     }
                 }
             });
