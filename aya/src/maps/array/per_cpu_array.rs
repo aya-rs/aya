@@ -1,5 +1,5 @@
 use std::{
-    convert::{AsMut, AsRef},
+    borrow::{Borrow, BorrowMut},
     marker::PhantomData,
 };
 
@@ -53,9 +53,9 @@ pub struct PerCpuArray<T, V: Pod> {
     _v: PhantomData<V>,
 }
 
-impl<T: AsRef<MapData>, V: Pod> PerCpuArray<T, V> {
+impl<T: Borrow<MapData>, V: Pod> PerCpuArray<T, V> {
     pub(crate) fn new(map: T) -> Result<PerCpuArray<T, V>, MapError> {
-        let data = map.as_ref();
+        let data = map.borrow();
         check_kv_size::<u32, V>(data)?;
 
         let _fd = data.fd_or_err()?;
@@ -70,7 +70,7 @@ impl<T: AsRef<MapData>, V: Pod> PerCpuArray<T, V> {
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
     pub fn len(&self) -> u32 {
-        self.inner.as_ref().obj.max_entries()
+        self.inner.borrow().obj.max_entries()
     }
 
     /// Returns a slice of values - one for each CPU - stored at the given index.
@@ -80,7 +80,7 @@ impl<T: AsRef<MapData>, V: Pod> PerCpuArray<T, V> {
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_lookup_elem` fails.
     pub fn get(&self, index: &u32, flags: u64) -> Result<PerCpuValues<V>, MapError> {
-        let data = self.inner.as_ref();
+        let data = self.inner.borrow();
         check_bounds(data, *index)?;
         let fd = data.fd_or_err()?;
 
@@ -100,7 +100,7 @@ impl<T: AsRef<MapData>, V: Pod> PerCpuArray<T, V> {
     }
 }
 
-impl<T: AsMut<MapData>, V: Pod> PerCpuArray<T, V> {
+impl<T: BorrowMut<MapData>, V: Pod> PerCpuArray<T, V> {
     /// Sets the values - one for each CPU - at the given index.
     ///
     /// # Errors
@@ -108,7 +108,7 @@ impl<T: AsMut<MapData>, V: Pod> PerCpuArray<T, V> {
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_update_elem` fails.
     pub fn set(&mut self, index: u32, values: PerCpuValues<V>, flags: u64) -> Result<(), MapError> {
-        let data = self.inner.as_mut();
+        let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd_or_err()?;
 
@@ -122,9 +122,9 @@ impl<T: AsMut<MapData>, V: Pod> PerCpuArray<T, V> {
     }
 }
 
-impl<T: AsRef<MapData>, V: Pod> IterableMap<u32, PerCpuValues<V>> for PerCpuArray<T, V> {
+impl<T: Borrow<MapData>, V: Pod> IterableMap<u32, PerCpuValues<V>> for PerCpuArray<T, V> {
     fn map(&self) -> &MapData {
-        self.inner.as_ref()
+        self.inner.borrow()
     }
 
     fn get(&self, index: &u32) -> Result<PerCpuValues<V>, MapError> {

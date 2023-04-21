@@ -1,7 +1,6 @@
 //! Per-CPU hash map.
 use std::{
-    borrow::Borrow,
-    convert::{AsMut, AsRef},
+    borrow::{Borrow, BorrowMut},
     marker::PhantomData,
 };
 
@@ -48,9 +47,9 @@ pub struct PerCpuHashMap<T, K: Pod, V: Pod> {
     _v: PhantomData<V>,
 }
 
-impl<T: AsRef<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
+impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     pub(crate) fn new(map: T) -> Result<PerCpuHashMap<T, K, V>, MapError> {
-        let data = map.as_ref();
+        let data = map.borrow();
         check_kv_size::<K, V>(data)?;
 
         let _ = data.fd_or_err()?;
@@ -64,7 +63,7 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
 
     /// Returns a slice of values - one for each CPU - associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<PerCpuValues<V>, MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.borrow().fd_or_err()?;
         let values = bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
@@ -83,11 +82,11 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// An iterator visiting all keys in arbitrary order. The iterator element
     /// type is `Result<K, MapError>`.
     pub fn keys(&self) -> MapKeys<'_, K> {
-        MapKeys::new(self.inner.as_ref())
+        MapKeys::new(self.inner.borrow())
     }
 }
 
-impl<T: AsMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
+impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// Inserts a slice of values - one for each CPU - for the given key.
     ///
     /// # Examples
@@ -122,7 +121,7 @@ impl<T: AsMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
         values: PerCpuValues<V>,
         flags: u64,
     ) -> Result<(), MapError> {
-        let fd = self.inner.as_mut().fd_or_err()?;
+        let fd = self.inner.borrow_mut().fd_or_err()?;
         bpf_map_update_elem_per_cpu(fd, key.borrow(), &values, flags).map_err(
             |(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
@@ -135,13 +134,15 @@ impl<T: AsMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
 
     /// Removes a key from the map.
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
-        hash_map::remove(self.inner.as_mut(), key)
+        hash_map::remove(self.inner.borrow_mut(), key)
     }
 }
 
-impl<T: AsRef<MapData>, K: Pod, V: Pod> IterableMap<K, PerCpuValues<V>> for PerCpuHashMap<T, K, V> {
+impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, PerCpuValues<V>>
+    for PerCpuHashMap<T, K, V>
+{
     fn map(&self) -> &MapData {
-        self.inner.as_ref()
+        self.inner.borrow()
     }
 
     fn get(&self, key: &K) -> Result<PerCpuValues<V>, MapError> {
