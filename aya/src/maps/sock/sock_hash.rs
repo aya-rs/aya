@@ -1,6 +1,5 @@
 use std::{
-    borrow::Borrow,
-    convert::{AsMut, AsRef},
+    borrow::{Borrow, BorrowMut},
     marker::PhantomData,
     os::unix::io::{AsRawFd, RawFd},
 };
@@ -69,9 +68,9 @@ pub struct SockHash<T, K> {
     _k: PhantomData<K>,
 }
 
-impl<T: AsRef<MapData>, K: Pod> SockHash<T, K> {
+impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
     pub(crate) fn new(map: T) -> Result<SockHash<T, K>, MapError> {
-        let data = map.as_ref();
+        let data = map.borrow();
         check_kv_size::<K, u32>(data)?;
         let _ = data.fd_or_err()?;
 
@@ -83,7 +82,7 @@ impl<T: AsRef<MapData>, K: Pod> SockHash<T, K> {
 
     /// Returns the fd of the socket stored at the given key.
     pub fn get(&self, key: &K, flags: u64) -> Result<RawFd, MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.borrow().fd_or_err()?;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
@@ -102,7 +101,7 @@ impl<T: AsRef<MapData>, K: Pod> SockHash<T, K> {
     /// An iterator visiting all keys in arbitrary order. The iterator element
     /// type is `Result<K, MapError>`.
     pub fn keys(&self) -> MapKeys<'_, K> {
-        MapKeys::new(self.inner.as_ref())
+        MapKeys::new(self.inner.borrow())
     }
 
     /// Returns the map's file descriptor.
@@ -110,11 +109,11 @@ impl<T: AsRef<MapData>, K: Pod> SockHash<T, K> {
     /// The returned file descriptor can be used to attach programs that work with
     /// socket maps, like [`SkMsg`](crate::programs::SkMsg) and [`SkSkb`](crate::programs::SkSkb).
     pub fn fd(&self) -> Result<SockMapFd, MapError> {
-        Ok(SockMapFd(self.inner.as_ref().fd_or_err()?))
+        Ok(SockMapFd(self.inner.borrow().fd_or_err()?))
     }
 }
 
-impl<T: AsMut<MapData>, K: Pod> SockHash<T, K> {
+impl<T: BorrowMut<MapData>, K: Pod> SockHash<T, K> {
     /// Inserts a socket under the given key.
     pub fn insert<I: AsRawFd>(
         &mut self,
@@ -122,18 +121,23 @@ impl<T: AsMut<MapData>, K: Pod> SockHash<T, K> {
         value: I,
         flags: u64,
     ) -> Result<(), MapError> {
-        hash_map::insert(self.inner.as_mut(), key.borrow(), &value.as_raw_fd(), flags)
+        hash_map::insert(
+            self.inner.borrow_mut(),
+            key.borrow(),
+            &value.as_raw_fd(),
+            flags,
+        )
     }
 
     /// Removes a socket from the map.
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
-        hash_map::remove(self.inner.as_mut(), key)
+        hash_map::remove(self.inner.borrow_mut(), key)
     }
 }
 
-impl<T: AsRef<MapData>, K: Pod> IterableMap<K, RawFd> for SockHash<T, K> {
+impl<T: Borrow<MapData>, K: Pod> IterableMap<K, RawFd> for SockHash<T, K> {
     fn map(&self) -> &MapData {
-        self.inner.as_ref()
+        self.inner.borrow()
     }
 
     fn get(&self, key: &K) -> Result<RawFd, MapError> {

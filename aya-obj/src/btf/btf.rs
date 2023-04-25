@@ -432,6 +432,19 @@ impl Btf {
                 // Sanitize DATASEC if they are not supported
                 BtfType::DataSec(d) if !features.btf_datasec => {
                     debug!("{}: not supported. replacing with STRUCT", kind);
+
+                    // STRUCT aren't allowed to have "." in their name, fixup this if needed.
+                    let mut name_offset = t.name_offset();
+                    let sec_name = self.string_at(name_offset)?;
+                    let name = sec_name.to_string();
+
+                    // Handle any "." characters in struct names
+                    // Example: ".maps"
+                    let fixed_name = name.replace('.', "_");
+                    if fixed_name != name {
+                        name_offset = self.add_string(fixed_name);
+                    }
+
                     let mut members = vec![];
                     for member in d.entries.iter() {
                         let mt = types.type_by_id(member.btf_type).unwrap();
@@ -441,7 +454,9 @@ impl Btf {
                             offset: member.offset * 8,
                         })
                     }
-                    types.types[i] = BtfType::Struct(Struct::new(t.name_offset(), members, 0));
+
+                    types.types[i] =
+                        BtfType::Struct(Struct::new(name_offset, members, d.entries.len() as u32));
                 }
                 // Fixup DATASEC
                 // DATASEC sizes aren't always set by LLVM
@@ -536,22 +551,39 @@ impl Btf {
                     types.types[i] = enum_type;
                 }
                 // Sanitize FUNC
-                BtfType::Func(ty) if !features.btf_func => {
-                    debug!("{}: not supported. replacing with TYPEDEF", kind);
-                    let typedef_type = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
-                    types.types[i] = typedef_type;
-                }
-                // Sanitize BTF_FUNC_GLOBAL
-                BtfType::Func(ty) if !features.btf_func_global => {
-                    let mut fixed_ty = ty.clone();
-                    if ty.linkage() == FuncLinkage::Global {
-                        debug!(
-                            "{}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
-                            kind
-                        );
-                        fixed_ty.set_linkage(FuncLinkage::Static);
+                BtfType::Func(ty) => {
+                    let name = self.string_at(ty.name_offset)?;
+                    // Sanitize FUNC
+                    if !features.btf_func {
+                        debug!("{}: not supported. replacing with TYPEDEF", kind);
+                        let typedef_type =
+                            BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
+                        types.types[i] = typedef_type;
+                    } else if !features.btf_func_global
+                        || name == "memset"
+                        || name == "memcpy"
+                        || name == "memmove"
+                        || name == "memcmp"
+                    {
+                        // Sanitize BTF_FUNC_GLOBAL when not supported and ensure that
+                        // memory builtins are marked as static. Globals are type checked
+                        // and verified separately from their callers, while instead we
+                        // want tracking info (eg bound checks) to be propagated to the
+                        // memory builtins.
+                        let mut fixed_ty = ty.clone();
+                        if ty.linkage() == FuncLinkage::Global {
+                            if !features.btf_func_global {
+                                debug!(
+                                    "{}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
+                                    kind
+                                );
+                            } else {
+                                debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
+                            }
+                            fixed_ty.set_linkage(FuncLinkage::Static);
+                        }
+                        types.types[i] = BtfType::Func(fixed_ty);
                     }
-                    types.types[i] = BtfType::Func(fixed_ty);
                 }
                 // Sanitize FLOAT
                 BtfType::Float(ty) if !features.btf_float => {
@@ -1045,9 +1077,7 @@ mod tests {
         let name_offset = btf.add_string("&mut int".to_string());
         let ptr_type_id = btf.add_type(BtfType::Ptr(Ptr::new(name_offset, int_type_id)));
 
-        let features = BtfFeatures {
-            ..Default::default()
-        };
+        let features = Default::default();
 
         btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
             .unwrap();
@@ -1118,7 +1148,7 @@ mod tests {
             VarLinkage::Static,
         )));
 
-        let name_offset = btf.add_string(".data".to_string());
+        let name_offset = btf.add_string("data".to_string());
         let variables = vec![DataSecEntry {
             btf_type: var_type_id,
             offset: 0,
@@ -1350,6 +1380,60 @@ mod tests {
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
+    }
+
+    #[test]
+    fn test_sanitize_mem_builtins() {
+        let mut btf = Btf::new();
+        let name_offset = btf.add_string("int".to_string());
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(
+            name_offset,
+            4,
+            IntEncoding::Signed,
+            0,
+        )));
+
+        let params = vec![
+            BtfParam {
+                name_offset: btf.add_string("a".to_string()),
+                btf_type: int_type_id,
+            },
+            BtfParam {
+                name_offset: btf.add_string("b".to_string()),
+                btf_type: int_type_id,
+            },
+        ];
+        let func_proto_type_id =
+            btf.add_type(BtfType::FuncProto(FuncProto::new(params, int_type_id)));
+
+        let builtins = ["memset", "memcpy", "memcmp", "memmove"];
+        for fname in builtins {
+            let func_name_offset = btf.add_string(fname.to_string());
+            let func_type_id = btf.add_type(BtfType::Func(Func::new(
+                func_name_offset,
+                func_proto_type_id,
+                FuncLinkage::Global,
+            )));
+
+            let features = BtfFeatures {
+                btf_func: true,
+                btf_func_global: true, // to force function name check
+                ..Default::default()
+            };
+
+            btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+                .unwrap();
+
+            if let BtfType::Func(fixed) = btf.type_by_id(func_type_id).unwrap() {
+                assert!(fixed.linkage() == FuncLinkage::Static);
+            } else {
+                panic!("not a func")
+            }
+
+            // Ensure we can convert to bytes and back again
+            let raw = btf.to_bytes();
+            Btf::parse(&raw, Endianness::default()).unwrap();
+        }
     }
 
     #[test]

@@ -8,6 +8,8 @@ mod fake;
 use std::io;
 #[cfg(not(test))]
 use std::{ffi::CString, mem};
+#[cfg(not(test))]
+use std::{fs::File, io::Read};
 
 #[cfg(not(test))]
 use libc::utsname;
@@ -83,7 +85,39 @@ pub(crate) fn kernel_version() -> Result<(u32, u32, u32), ()> {
 }
 
 #[cfg(not(test))]
+fn ubuntu_kernel_version() -> Result<(u32, u32, u32), ()> {
+    if let Ok(mut file) = File::open("/proc/version_signature") {
+        let mut buf = String::new();
+        let mut major = 0u32;
+        let mut minor = 0u32;
+        let mut patch = 0u32;
+        let format = CString::new("%*s %*s %u.%u.%u\n").unwrap();
+
+        file.read_to_string(&mut buf).map_err(|_| ())?;
+
+        unsafe {
+            if libc::sscanf(
+                buf.as_ptr() as *const _,
+                format.as_ptr(),
+                &mut major as *mut u32,
+                &mut minor as *mut _,
+                &mut patch as *mut _,
+            ) == 3
+            {
+                return Ok((major, minor, patch));
+            }
+        }
+    }
+
+    Err(())
+}
+
+#[cfg(not(test))]
 pub(crate) fn kernel_version() -> Result<(u32, u32, u32), ()> {
+    if let Ok(version) = ubuntu_kernel_version() {
+        return Ok(version);
+    }
+
     unsafe {
         let mut v = mem::zeroed::<utsname>();
         if libc::uname(&mut v as *mut _) != 0 {
@@ -93,6 +127,33 @@ pub(crate) fn kernel_version() -> Result<(u32, u32, u32), ()> {
         let mut major = 0u32;
         let mut minor = 0u32;
         let mut patch = 0u32;
+
+        let debian_marker = CString::new("Debian").unwrap();
+
+        let p = libc::strstr(v.version.as_ptr(), debian_marker.as_ptr());
+
+        if !p.is_null() {
+            let debian_format = CString::new("Debian %u.%u.%u").map_err(|_| ())?;
+
+            if libc::sscanf(
+                p,
+                debian_format.as_ptr(),
+                &mut major as *mut u32,
+                &mut minor as *mut _,
+                &mut patch as *mut _,
+            ) == 3
+            {
+                // On Debian 10, kernels after 4.19.229 expect 4.19.255 due to broken Makefile patches.
+                let patch_level_limit = if major == 4 && minor == 19 { 230 } else { 255 };
+
+                if patch >= patch_level_limit {
+                    patch = 255;
+                }
+
+                return Ok((major, minor, patch));
+            }
+        }
+
         let format = CString::new("%u.%u.%u").unwrap();
         if libc::sscanf(
             v.release.as_ptr(),

@@ -1,5 +1,5 @@
 //! A Bloom Filter.
-use std::{borrow::Borrow, convert::AsRef, marker::PhantomData};
+use std::{borrow::Borrow, marker::PhantomData};
 
 use crate::{
     maps::{check_v_size, MapData, MapError},
@@ -35,9 +35,9 @@ pub struct BloomFilter<T, V: Pod> {
     _v: PhantomData<V>,
 }
 
-impl<T: AsRef<MapData>, V: Pod> BloomFilter<T, V> {
+impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     pub(crate) fn new(map: T) -> Result<BloomFilter<T, V>, MapError> {
-        let data = map.as_ref();
+        let data = map.borrow();
         check_v_size::<V>(data)?;
 
         let _ = data.fd_or_err()?;
@@ -50,7 +50,7 @@ impl<T: AsRef<MapData>, V: Pod> BloomFilter<T, V> {
 
     /// Query the existence of the element.
     pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.borrow().fd_or_err()?;
 
         bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
             .map_err(|(_, io_error)| MapError::SyscallError {
@@ -63,7 +63,7 @@ impl<T: AsRef<MapData>, V: Pod> BloomFilter<T, V> {
 
     /// Inserts a value into the map.
     pub fn insert(&self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.borrow().fd_or_err()?;
         bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_push_elem".to_owned(),
@@ -84,10 +84,7 @@ mod tests {
             bpf_map_type::{BPF_MAP_TYPE_BLOOM_FILTER, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
         },
         maps::{Map, MapData},
-        obj::{
-            self,
-            maps::{LegacyMap, MapKind},
-        },
+        obj::{self, maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
     use libc::{EFAULT, ENOENT};
@@ -103,9 +100,9 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
-            symbol_index: 0,
+            section_kind: BpfSectionKind::Maps,
+            symbol_index: None,
             data: Vec::new(),
-            kind: MapKind::Other,
         })
     }
 
@@ -142,9 +139,9 @@ mod tests {
                     ..Default::default()
                 },
                 section_index: 0,
-                symbol_index: 0,
+                section_kind: BpfSectionKind::Maps,
+                symbol_index: None,
                 data: Vec::new(),
-                kind: MapKind::Other,
             }),
             fd: None,
             pinned: false,

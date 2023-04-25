@@ -4,6 +4,7 @@ use libc::{uname, utsname};
 use regex::Regex;
 use std::{ffi::CStr, mem};
 
+pub mod btf_relocations;
 pub mod elf;
 pub mod load;
 pub mod rbpf;

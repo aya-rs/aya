@@ -37,8 +37,9 @@
 //! let bytes = std::fs::read("program.o").unwrap();
 //! let mut object = Object::parse(&bytes).unwrap();
 //! // Relocate the programs
-//! object.relocate_calls().unwrap();
-//! object.relocate_maps(std::iter::empty()).unwrap();
+//! let text_sections = std::collections::HashSet::new();
+//! object.relocate_calls(&text_sections).unwrap();
+//! object.relocate_maps(std::iter::empty(), &text_sections).unwrap();
 //!
 //! // Run with rbpf
 //! let instructions = &object.programs["prog_name"].function.instructions;

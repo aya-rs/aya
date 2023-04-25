@@ -1,6 +1,5 @@
 use std::{
-    borrow::Borrow,
-    convert::{AsMut, AsRef},
+    borrow::{Borrow, BorrowMut},
     marker::PhantomData,
 };
 
@@ -39,9 +38,9 @@ pub struct HashMap<T, K, V> {
     _v: PhantomData<V>,
 }
 
-impl<T: AsRef<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
+impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     pub(crate) fn new(map: T) -> Result<HashMap<T, K, V>, MapError> {
-        let data = map.as_ref();
+        let data = map.borrow();
         check_kv_size::<K, V>(data)?;
         let _ = data.fd_or_err()?;
 
@@ -54,7 +53,7 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
 
     /// Returns a copy of the value associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<V, MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.borrow().fd_or_err()?;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
@@ -73,11 +72,11 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// An iterator visiting all keys in arbitrary order. The iterator element
     /// type is `Result<K, MapError>`.
     pub fn keys(&self) -> MapKeys<'_, K> {
-        MapKeys::new(self.inner.as_ref())
+        MapKeys::new(self.inner.borrow())
     }
 }
 
-impl<T: AsMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
+impl<T: BorrowMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Inserts a key-value pair into the map.
     pub fn insert(
         &mut self,
@@ -85,18 +84,18 @@ impl<T: AsMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
         value: impl Borrow<V>,
         flags: u64,
     ) -> Result<(), MapError> {
-        hash_map::insert(self.inner.as_mut(), key.borrow(), value.borrow(), flags)
+        hash_map::insert(self.inner.borrow_mut(), key.borrow(), value.borrow(), flags)
     }
 
     /// Removes a key from the map.
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
-        hash_map::remove(self.inner.as_mut(), key)
+        hash_map::remove(self.inner.borrow_mut(), key)
     }
 }
 
-impl<T: AsRef<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> {
+impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> {
     fn map(&self) -> &MapData {
-        self.inner.as_ref()
+        self.inner.borrow()
     }
 
     fn get(&self, key: &K) -> Result<V, MapError> {
@@ -117,10 +116,7 @@ mod tests {
             bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_LRU_HASH},
         },
         maps::{Map, MapData},
-        obj::{
-            self,
-            maps::{LegacyMap, MapKind},
-        },
+        obj::{self, maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
 
@@ -136,9 +132,9 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
+            section_kind: BpfSectionKind::Maps,
             data: Vec::new(),
-            kind: MapKind::Other,
-            symbol_index: 0,
+            symbol_index: None,
         })
     }
 
@@ -267,9 +263,9 @@ mod tests {
                     ..Default::default()
                 },
                 section_index: 0,
-                symbol_index: 0,
+                section_kind: BpfSectionKind::Maps,
+                symbol_index: None,
                 data: Vec::new(),
-                kind: MapKind::Other,
             }),
             fd: Some(42),
             pinned: false,

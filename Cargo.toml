@@ -14,9 +14,6 @@ panic = "abort"
 [profile.release]
 panic = "abort"
 
-[profile.dev.package.integration-ebpf]
-opt-level = 2
-overflow-checks = false
-
 [profile.release.package.integration-ebpf]
 debug = 2
+codegen-units = 1

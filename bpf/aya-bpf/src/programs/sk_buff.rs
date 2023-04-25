@@ -6,8 +6,8 @@ use core::{
 
 use aya_bpf_bindings::helpers::{
     bpf_clone_redirect, bpf_get_socket_uid, bpf_l3_csum_replace, bpf_l4_csum_replace,
-    bpf_skb_adjust_room, bpf_skb_change_type, bpf_skb_load_bytes, bpf_skb_pull_data,
-    bpf_skb_store_bytes,
+    bpf_skb_adjust_room, bpf_skb_change_proto, bpf_skb_change_type, bpf_skb_load_bytes,
+    bpf_skb_pull_data, bpf_skb_store_bytes,
 };
 use aya_bpf_cty::c_long;
 
@@ -182,6 +182,16 @@ impl SkBuff {
     #[inline]
     pub fn clone_redirect(&self, if_index: u32, flags: u64) -> Result<(), c_long> {
         let ret = unsafe { bpf_clone_redirect(self.as_ptr() as *mut _, if_index, flags) };
+        if ret == 0 {
+            Ok(())
+        } else {
+            Err(ret)
+        }
+    }
+
+    #[inline]
+    pub fn change_proto(&self, proto: u16, flags: u64) -> Result<(), c_long> {
+        let ret = unsafe { bpf_skb_change_proto(self.as_ptr() as *mut _, proto, flags) };
         if ret == 0 {
             Ok(())
         } else {

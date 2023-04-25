@@ -1,6 +1,5 @@
 use std::{
-    borrow::Borrow,
-    convert::{AsMut, AsRef},
+    borrow::{Borrow, BorrowMut},
     marker::PhantomData,
 };
 
@@ -35,9 +34,9 @@ pub struct Array<T, V: Pod> {
     _v: PhantomData<V>,
 }
 
-impl<T: AsRef<MapData>, V: Pod> Array<T, V> {
+impl<T: Borrow<MapData>, V: Pod> Array<T, V> {
     pub(crate) fn new(map: T) -> Result<Array<T, V>, MapError> {
-        let data = map.as_ref();
+        let data = map.borrow();
         check_kv_size::<u32, V>(data)?;
 
         let _fd = data.fd_or_err()?;
@@ -52,7 +51,7 @@ impl<T: AsRef<MapData>, V: Pod> Array<T, V> {
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
     pub fn len(&self) -> u32 {
-        self.inner.as_ref().obj.max_entries()
+        self.inner.borrow().obj.max_entries()
     }
 
     /// Returns the value stored at the given index.
@@ -62,7 +61,7 @@ impl<T: AsRef<MapData>, V: Pod> Array<T, V> {
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_lookup_elem` fails.
     pub fn get(&self, index: &u32, flags: u64) -> Result<V, MapError> {
-        let data = self.inner.as_ref();
+        let data = self.inner.borrow();
         check_bounds(data, *index)?;
         let fd = data.fd_or_err()?;
 
@@ -82,7 +81,7 @@ impl<T: AsRef<MapData>, V: Pod> Array<T, V> {
     }
 }
 
-impl<T: AsMut<MapData>, V: Pod> Array<T, V> {
+impl<T: BorrowMut<MapData>, V: Pod> Array<T, V> {
     /// Sets the value of the element at the given index.
     ///
     /// # Errors
@@ -90,7 +89,7 @@ impl<T: AsMut<MapData>, V: Pod> Array<T, V> {
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_update_elem` fails.
     pub fn set(&mut self, index: u32, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
-        let data = self.inner.as_mut();
+        let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd_or_err()?;
         bpf_map_update_elem(fd, Some(&index), value.borrow(), flags).map_err(|(_, io_error)| {
@@ -103,9 +102,9 @@ impl<T: AsMut<MapData>, V: Pod> Array<T, V> {
     }
 }
 
-impl<T: AsRef<MapData>, V: Pod> IterableMap<u32, V> for Array<T, V> {
+impl<T: Borrow<MapData>, V: Pod> IterableMap<u32, V> for Array<T, V> {
     fn map(&self) -> &MapData {
-        self.inner.as_ref()
+        self.inner.borrow()
     }
 
     fn get(&self, index: &u32) -> Result<V, MapError> {

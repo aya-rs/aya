@@ -2,7 +2,7 @@
 //!
 //! [`perf`]: https://perf.wiki.kernel.org/index.php/Main_Page.
 use std::{
-    convert::AsMut,
+    borrow::{Borrow, BorrowMut},
     ops::Deref,
     os::unix::io::{AsRawFd, RawFd},
     sync::Arc,
@@ -31,7 +31,7 @@ pub struct PerfEventArrayBuffer<T> {
     buf: PerfBuffer,
 }
 
-impl<T: AsMut<MapData> + AsRef<MapData>> PerfEventArrayBuffer<T> {
+impl<T: BorrowMut<MapData> + Borrow<MapData>> PerfEventArrayBuffer<T> {
     /// Returns true if the buffer contains events that haven't been read.
     pub fn readable(&self) -> bool {
         self.buf.readable()
@@ -55,7 +55,7 @@ impl<T: AsMut<MapData> + AsRef<MapData>> PerfEventArrayBuffer<T> {
     }
 }
 
-impl<T: AsMut<MapData> + AsRef<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
+impl<T: BorrowMut<MapData> + Borrow<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
     fn as_raw_fd(&self) -> RawFd {
         self.buf.as_raw_fd()
     }
@@ -84,14 +84,14 @@ impl<T: AsMut<MapData> + AsRef<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// ```no_run
 /// # use aya::maps::perf::PerfEventArrayBuffer;
 /// # use aya::maps::MapData;
-/// # use std::convert::AsMut;
+/// # use std::borrow::BorrowMut;
 /// # struct Poll<T> { _t: std::marker::PhantomData<T> };
-/// # impl<T: AsMut<MapData>> Poll<T> {
+/// # impl<T: BorrowMut<MapData>> Poll<T> {
 /// #    fn poll_readable(&self) -> &mut [PerfEventArrayBuffer<T>] {
 /// #        &mut []
 /// #    }
 /// # }
-/// # fn poll_buffers<T: AsMut<MapData>>(bufs: Vec<PerfEventArrayBuffer<T>>) -> Poll<T> {
+/// # fn poll_buffers<T: BorrowMut<MapData>>(bufs: Vec<PerfEventArrayBuffer<T>>) -> Poll<T> {
 /// #    Poll { _t: std::marker::PhantomData }
 /// # }
 /// # #[derive(thiserror::Error, Debug)]
@@ -160,9 +160,9 @@ pub struct PerfEventArray<T> {
     page_size: usize,
 }
 
-impl<T: AsRef<MapData>> PerfEventArray<T> {
+impl<T: Borrow<MapData>> PerfEventArray<T> {
     pub(crate) fn new(map: T) -> Result<PerfEventArray<T>, MapError> {
-        let _fd = map.as_ref().fd_or_err()?;
+        let _fd = map.borrow().fd_or_err()?;
 
         Ok(PerfEventArray {
             map: Arc::new(map),
@@ -171,7 +171,7 @@ impl<T: AsRef<MapData>> PerfEventArray<T> {
     }
 }
 
-impl<T: AsMut<MapData> + AsRef<MapData>> PerfEventArray<T> {
+impl<T: BorrowMut<MapData> + Borrow<MapData>> PerfEventArray<T> {
     /// Opens the perf buffer at the given index.
     ///
     /// The returned buffer will receive all the events eBPF programs send at the given index.
@@ -183,7 +183,7 @@ impl<T: AsMut<MapData> + AsRef<MapData>> PerfEventArray<T> {
         // FIXME: keep track of open buffers
 
         // this cannot fail as new() checks that the fd is open
-        let map_data: &MapData = self.map.deref().as_ref();
+        let map_data: &MapData = self.map.deref().borrow();
         let map_fd = map_data.fd_or_err().unwrap();
         let buf = PerfBuffer::open(index, self.page_size, page_count.unwrap_or(2))?;
         bpf_map_update_elem(map_fd, Some(&index), &buf.as_raw_fd(), 0)
