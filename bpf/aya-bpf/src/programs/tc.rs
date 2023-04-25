@@ -143,6 +143,11 @@ impl TcContext {
     }
 
     #[inline]
+    pub fn change_proto(&self, proto: u16, flags: u64) -> Result<(), c_long> {
+        self.skb.change_proto(proto, flags)
+    }
+
+    #[inline]
     pub fn change_type(&self, ty: u32) -> Result<(), c_long> {
         self.skb.change_type(ty)
     }
