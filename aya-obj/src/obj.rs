@@ -161,7 +161,7 @@ pub struct Function {
 /// - `uprobe.s+` or `uretprobe.s+`
 /// - `usdt+`
 /// - `kprobe.multi+` or `kretprobe.multi+`: `BPF_TRACE_KPROBE_MULTI`
-/// - `lsm_cgroup+` or `lsm.s+`
+/// - `lsm_cgroup+`
 /// - `lwt_in`, `lwt_out`, `lwt_seg6local`, `lwt_xmit`
 /// - `raw_tp.w+`, `raw_tracepoint.w+`
 /// - `action`
@@ -196,7 +196,7 @@ pub enum ProgramSection {
     },
     Xdp {
         name: String,
-        frags_supported: bool,
+        frags: bool,
     },
     SkMsg {
         name: String,
@@ -244,6 +244,7 @@ pub enum ProgramSection {
     },
     Lsm {
         name: String,
+        sleepable: bool,
     },
     BtfTracePoint {
         name: String,
@@ -294,7 +295,7 @@ impl ProgramSection {
             ProgramSection::LircMode2 { name } => name,
             ProgramSection::PerfEvent { name } => name,
             ProgramSection::RawTracePoint { name } => name,
-            ProgramSection::Lsm { name } => name,
+            ProgramSection::Lsm { name, .. } => name,
             ProgramSection::BtfTracePoint { name } => name,
             ProgramSection::FEntry { name } => name,
             ProgramSection::FExit { name } => name,
@@ -326,14 +327,8 @@ impl FromStr for ProgramSection {
             "kretprobe" => KRetProbe { name },
             "uprobe" => UProbe { name },
             "uretprobe" => URetProbe { name },
-            "xdp" => Xdp {
-                name,
-                frags_supported: false,
-            },
-            "xdp.frags" => Xdp {
-                name,
-                frags_supported: true,
-            },
+            "xdp" => Xdp { name, frags: false },
+            "xdp.frags" => Xdp { name, frags: true },
             "tp_btf" => BtfTracePoint { name },
             _ if kind.starts_with("tracepoint") || kind.starts_with("tp") => {
                 // tracepoint sections are named `tracepoint/category/event_name`,
@@ -485,7 +480,14 @@ impl FromStr for ProgramSection {
             "lirc_mode2" => LircMode2 { name },
             "perf_event" => PerfEvent { name },
             "raw_tp" | "raw_tracepoint" => RawTracePoint { name },
-            "lsm" => Lsm { name },
+            "lsm" => Lsm {
+                name,
+                sleepable: false,
+            },
+            "lsm.s" => Lsm {
+                name,
+                sleepable: true,
+            },
             "fentry" => FEntry { name },
             "fexit" => FExit { name },
             "freplace" => Extension { name },
@@ -1876,7 +1878,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::Xdp { .. },
+                section: ProgramSection::Xdp { frags: false, .. },
                 ..
             })
         );
@@ -1897,10 +1899,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::Xdp {
-                    frags_supported: true,
-                    ..
-                },
+                section: ProgramSection::Xdp { frags: true, .. },
                 ..
             })
         );
@@ -1958,7 +1957,34 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::Lsm { .. },
+                section: ProgramSection::Lsm {
+                    sleepable: false,
+                    ..
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_lsm_sleepable() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "lsm.s/foo",
+                bytes_of(&fake_ins())
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::Lsm {
+                    sleepable: true,
+                    ..
+                },
                 ..
             })
         );
