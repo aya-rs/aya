@@ -15,7 +15,7 @@ integration-test-macros = { path = "../integration-test-macros" }
 lazy_static = "1"
 libc = { version = "0.2.105" }
 log = "0.4"
-object = { version = "0.30", default-features = false, features = ["std", "read_core", "elf"] }
+object = { version = "0.31", default-features = false, features = ["std", "read_core", "elf"] }
 rbpf = "0.1.0"
 regex = "1"
 tempfile = "3.3.0"
