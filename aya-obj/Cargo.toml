@@ -14,14 +14,13 @@ edition = "2021"
 bytes = "1"
 log = "0.4"
 object = { version = "0.30", default-features = false, features = ["read_core", "elf"] }
-hashbrown = { version = "0.13", optional = true }
-thiserror-std = { package = "thiserror", version = "1" }
-thiserror-core = { version = "1", default-features = false, features = [], optional = true }
+hashbrown = { version = "0.13" }
+thiserror = { version = "1", default-features = false }
+core-error = { version = "0.0.0" }
 
 [dev-dependencies]
 matches = "0.1.8"
 rbpf = "0.1.0"
 
 [features]
-default = []
-no_std = ["hashbrown", "thiserror-core"]
+std = []

@@ -21,18 +21,20 @@ use crate::{
         IntEncoding, LineInfo, Struct, Typedef, VarLinkage,
     },
     generated::{btf_ext_header, btf_header},
-    thiserror::{self, Error},
     util::{bytes_of, HashMap},
     Object,
 };
+
+#[cfg(not(feature = "std"))]
+use crate::std;
 
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
 pub(crate) const MAX_SPEC_LEN: usize = 64;
 
 /// The error type returned when `BTF` operations fail.
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum BtfError {
-    #[cfg(not(feature = "no_std"))]
+    #[cfg(feature = "std")]
     /// Error parsing file
     #[error("error parsing {path}")]
     FileError {
@@ -126,7 +128,7 @@ pub enum BtfError {
         type_id: u32,
     },
 
-    #[cfg(not(feature = "no_std"))]
+    #[cfg(feature = "std")]
     /// Loading the btf failed
     #[error("the BPF_BTF_LOAD syscall failed. Verifier output: {verifier_log}")]
     LoadError {
@@ -232,13 +234,13 @@ impl Btf {
     }
 
     /// Loads BTF metadata from `/sys/kernel/btf/vmlinux`.
-    #[cfg(not(feature = "no_std"))]
+    #[cfg(feature = "std")]
     pub fn from_sys_fs() -> Result<Btf, BtfError> {
         Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
     }
 
     /// Loads BTF metadata from the given `path`.
-    #[cfg(not(feature = "no_std"))]
+    #[cfg(feature = "std")]
     pub fn parse_file<P: AsRef<std::path::Path>>(
         path: P,
         endianness: Endianness,
@@ -1528,7 +1530,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "no_std"))]
+    #[cfg(feature = "std")]
     #[cfg_attr(miri, ignore)]
     fn test_read_btf_from_sys_fs() {
         let btf = Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default()).unwrap();

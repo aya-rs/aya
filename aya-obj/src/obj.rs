@@ -19,9 +19,11 @@ use crate::{
     generated::{BPF_CALL, BPF_JMP, BPF_K},
     maps::{BtfMap, LegacyMap, Map, MINIMUM_MAP_SIZE},
     relocation::*,
-    thiserror::{self, Error},
     util::HashMap,
 };
+
+#[cfg(not(feature = "std"))]
+use crate::std;
 
 use crate::{
     btf::{Btf, BtfError, BtfExt, BtfType},
@@ -978,7 +980,7 @@ fn parse_maps_section<'a, I: Iterator<Item = &'a Symbol>>(
 }
 
 /// Errors caught during parsing the object file
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum ParseError {
     #[error("error parsing ELF data")]

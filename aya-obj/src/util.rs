@@ -1,9 +1,14 @@
 use core::{mem, slice};
 
-#[cfg(feature = "no_std")]
+#[cfg(not(feature = "std"))]
 pub(crate) use hashbrown::HashMap;
-#[cfg(not(feature = "no_std"))]
+#[cfg(feature = "std")]
 pub(crate) use std::collections::HashMap;
+
+#[cfg(not(feature = "std"))]
+pub(crate) use hashbrown::HashSet;
+#[cfg(feature = "std")]
+pub(crate) use std::collections::HashSet;
 
 /// bytes_of converts a <T> to a byte slice
 pub(crate) unsafe fn bytes_of<T>(val: &T) -> &[u8] {

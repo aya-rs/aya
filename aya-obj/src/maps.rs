@@ -2,11 +2,11 @@
 
 use core::mem;
 
-use crate::{
-    thiserror::{self, Error},
-    BpfSectionKind,
-};
+use crate::BpfSectionKind;
 use alloc::vec::Vec;
+
+#[cfg(not(feature = "std"))]
+use crate::std;
 
 /// Invalid map type encontered
 pub struct InvalidMapTypeError {
@@ -94,7 +94,7 @@ pub enum PinningType {
 }
 
 /// The error type returned when failing to parse a [PinningType]
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum PinningError {
     /// Unsupported pinning type
     #[error("unsupported pinning type `{pinning_type}`")]
