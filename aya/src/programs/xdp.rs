@@ -35,7 +35,7 @@ pub enum XdpError {
 
 bitflags! {
     /// Flags passed to [`Xdp::attach()`].
-    #[derive(Default)]
+    #[derive(Clone, Copy, Debug, Default)]
     pub struct XdpFlags: u32 {
         /// Skb mode.
         const SKB_MODE = XDP_FLAGS_SKB_MODE;
@@ -128,7 +128,7 @@ impl Xdp {
 
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 9, 0) {
-            let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, None, flags.bits).map_err(
+            let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, None, flags.bits()).map_err(
                 |(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_link_create".to_owned(),
                     io_error,
@@ -138,7 +138,7 @@ impl Xdp {
                 .links
                 .insert(XdpLink::new(XdpLinkInner::FdLink(FdLink::new(link_fd))))
         } else {
-            unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, flags.bits) }
+            unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, flags.bits()) }
                 .map_err(|io_error| XdpError::NetlinkError { io_error })?;
 
             self.data
@@ -226,9 +226,9 @@ impl Link for NlLink {
     fn detach(self) -> Result<(), ProgramError> {
         let k_ver = kernel_version().unwrap();
         let flags = if k_ver >= (5, 7, 0) {
-            self.flags.bits | XDP_FLAGS_REPLACE
+            self.flags.bits() | XDP_FLAGS_REPLACE
         } else {
-            self.flags.bits
+            self.flags.bits()
         };
         let _ = unsafe { netlink_set_xdp_fd(self.if_index, -1, Some(self.prog_fd), flags) };
         Ok(())

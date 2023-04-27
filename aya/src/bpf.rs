@@ -125,13 +125,14 @@ pub struct BpfLoader<'a> {
 
 bitflags! {
     /// Used to set the verifier log level flags in [BpfLoader](BpfLoader::verifier_log_level()).
+    #[derive(Debug)]
     pub struct VerifierLogLevel: u32 {
         /// Sets no verifier logging.
         const DISABLE = 0;
         /// Enables debug verifier logging.
         const DEBUG = 1;
         /// Enables verbose verifier logging.
-        const VERBOSE = 2 | Self::DEBUG.bits;
+        const VERBOSE = 2 | Self::DEBUG.bits();
         /// Enables verifier stats.
         const STATS = 4;
     }
@@ -139,9 +140,7 @@ bitflags! {
 
 impl Default for VerifierLogLevel {
     fn default() -> Self {
-        Self {
-            bits: Self::DEBUG.bits | Self::STATS.bits,
-        }
+        Self::DEBUG | Self::STATS
     }
 }
 
@@ -339,7 +338,7 @@ impl<'a> BpfLoader<'a> {
     /// # Ok::<(), aya::BpfError>(())
     /// ```
     pub fn load(&mut self, data: &[u8]) -> Result<Bpf, BpfError> {
-        let verifier_log_level = self.verifier_log_level.bits;
+        let verifier_log_level = self.verifier_log_level.bits();
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(self.globals.clone())?;
 
