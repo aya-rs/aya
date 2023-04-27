@@ -96,15 +96,6 @@ pub enum DisplayHint {
     UpperMac,
 }
 
-#[cfg(feature = "userspace")]
-mod userspace {
-    use super::*;
-
-    unsafe impl aya::Pod for RecordField {}
-    unsafe impl aya::Pod for Argument {}
-    unsafe impl aya::Pod for DisplayHint {}
-}
-
 struct TagLenValue<'a, T> {
     tag: T,
     value: &'a [u8],
