@@ -14,7 +14,7 @@ edition = "2021"
 libc = { version = "0.2.105" }
 aya-obj = { path = "../aya-obj", version = "0.1.0", features = ["std"] }
 thiserror = "1"
-object = { version = "0.30", default-features = false, features = ["std", "read_core", "elf"] }
+object = { version = "0.31", default-features = false, features = ["std", "read_core", "elf"] }
 bitflags = "1.2.1"
 bytes = "1"
 lazy_static = "1"
