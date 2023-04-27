@@ -32,7 +32,7 @@ jobs:
 
       - uses: taiki-e/install-action@cargo-hack
       - name: Check
-        run: cargo hack check --feature-powerset --ignore-private
+        run: cargo hack check --all-targets --feature-powerset --ignore-private
 
       - uses: Swatinem/rust-cache@v1
       - name: Prereqs
