@@ -21,8 +21,7 @@ jobs:
           - x86_64
           - aarch64
           - arm
-          # Disable riscv64 due to missing pt_regs handling in aya-bpf/args.rs
-          # - riscv64
+          - riscv64
     runs-on: ubuntu-20.04
 
     steps:

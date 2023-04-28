@@ -1,10 +1,14 @@
 use crate::{cty::c_void, helpers::bpf_probe_read};
 
 // aarch64 uses user_pt_regs instead of pt_regs
-#[cfg(not(bpf_target_arch = "aarch64"))]
+#[cfg(not(any(bpf_target_arch = "aarch64", bpf_target_arch = "riscv64")))]
 use crate::bindings::pt_regs;
+
 #[cfg(bpf_target_arch = "aarch64")]
 use crate::bindings::user_pt_regs as pt_regs;
+
+#[cfg(bpf_target_arch = "riscv64")]
+use crate::bindings::user_regs_struct as pt_regs;
 
 /// A trait that indicates a valid type for an argument which can be coerced from a BTF
 /// context.
@@ -60,7 +64,7 @@ pub struct PtRegs {
     regs: *mut pt_regs,
 }
 
-/// A portable wrapper around pt_regs and user_pt_regs.
+/// A portable wrapper around pt_regs, user_pt_regs and user_regs_struct.
 impl PtRegs {
     pub fn new(regs: *mut pt_regs) -> Self {
         PtRegs { regs }
@@ -146,6 +150,27 @@ impl<T> FromPtRegs for *const T {
     }
 }
 
+#[cfg(bpf_target_arch = "riscv64")]
+impl<T> FromPtRegs for *const T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        match n {
+            0 => unsafe { bpf_probe_read(&ctx.a0).map(|v| v as *const _).ok() },
+            1 => unsafe { bpf_probe_read(&ctx.a1).map(|v| v as *const _).ok() },
+            2 => unsafe { bpf_probe_read(&ctx.a2).map(|v| v as *const _).ok() },
+            3 => unsafe { bpf_probe_read(&ctx.a3).map(|v| v as *const _).ok() },
+            4 => unsafe { bpf_probe_read(&ctx.a4).map(|v| v as *const _).ok() },
+            5 => unsafe { bpf_probe_read(&ctx.a5).map(|v| v as *const _).ok() },
+            6 => unsafe { bpf_probe_read(&ctx.a6).map(|v| v as *const _).ok() },
+            7 => unsafe { bpf_probe_read(&ctx.a7).map(|v| v as *const _).ok() },
+            _ => None,
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.ra).map(|v| v as *const _).ok() }
+    }
+}
+
 #[cfg(bpf_target_arch = "x86_64")]
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
@@ -192,6 +217,27 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
         unsafe { bpf_probe_read(&ctx.regs[0]).map(|v| v as *mut _).ok() }
+    }
+}
+
+#[cfg(bpf_target_arch = "riscv64")]
+impl<T> FromPtRegs for *mut T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        match n {
+            0 => unsafe { bpf_probe_read(&ctx.a0).map(|v| v as *mut _).ok() },
+            1 => unsafe { bpf_probe_read(&ctx.a1).map(|v| v as *mut _).ok() },
+            2 => unsafe { bpf_probe_read(&ctx.a2).map(|v| v as *mut _).ok() },
+            3 => unsafe { bpf_probe_read(&ctx.a3).map(|v| v as *mut _).ok() },
+            4 => unsafe { bpf_probe_read(&ctx.a4).map(|v| v as *mut _).ok() },
+            5 => unsafe { bpf_probe_read(&ctx.a5).map(|v| v as *mut _).ok() },
+            6 => unsafe { bpf_probe_read(&ctx.a6).map(|v| v as *mut _).ok() },
+            7 => unsafe { bpf_probe_read(&ctx.a7).map(|v| v as *mut _).ok() },
+            _ => None,
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.ra).map(|v| v as *mut _).ok() }
     }
 }
 
@@ -244,6 +290,27 @@ macro_rules! impl_from_pt_regs {
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
                 Some(ctx.regs[0] as *const $type as _)
+            }
+        }
+
+        #[cfg(bpf_target_arch = "riscv64")]
+        impl FromPtRegs for $type {
+            fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+                match n {
+                    0 => Some(ctx.a0 as *const $type as _),
+                    1 => Some(ctx.a1 as *const $type as _),
+                    2 => Some(ctx.a2 as *const $type as _),
+                    3 => Some(ctx.a3 as *const $type as _),
+                    4 => Some(ctx.a4 as *const $type as _),
+                    5 => Some(ctx.a5 as *const $type as _),
+                    6 => Some(ctx.a6 as *const $type as _),
+                    7 => Some(ctx.a7 as *const $type as _),
+                    _ => None,
+                }
+            }
+
+            fn from_retval(ctx: &pt_regs) -> Option<Self> {
+                Some(ctx.ra as *const $type as _)
             }
         }
     };
