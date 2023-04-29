@@ -20,7 +20,7 @@ impl StackTrace {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> StackTrace {
         StackTrace {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_STACK_TRACE,
+                type_: BPF_MAP_TYPE_STACK_TRACE as u32,
                 key_size: mem::size_of::<u32>() as u32,
                 value_size: mem::size_of::<u64>() as u32 * PERF_MAX_STACK_DEPTH,
                 max_entries,
@@ -34,7 +34,7 @@ impl StackTrace {
     pub const fn pinned(max_entries: u32, flags: u32) -> StackTrace {
         StackTrace {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_STACK_TRACE,
+                type_: BPF_MAP_TYPE_STACK_TRACE as u32,
                 key_size: mem::size_of::<u32>() as u32,
                 value_size: mem::size_of::<u64>() as u32 * PERF_MAX_STACK_DEPTH,
                 max_entries,

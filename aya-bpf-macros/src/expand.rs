@@ -93,7 +93,8 @@ impl Map {
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
-        let section_name = "maps".to_string();
+        // TODO(vadorovsky): Handle with feature.
+        let section_name = ".maps".to_string();
         let name = &self.name;
         let item = &self.item;
         Ok(quote! {

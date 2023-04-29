@@ -22,7 +22,7 @@ impl PerfEventByteArray {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> PerfEventByteArray {
         PerfEventByteArray {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32,
                 key_size: mem::size_of::<u32>() as u32,
                 value_size: mem::size_of::<u32>() as u32,
                 max_entries,
@@ -36,7 +36,7 @@ impl PerfEventByteArray {
     pub const fn pinned(max_entries: u32, flags: u32) -> PerfEventByteArray {
         PerfEventByteArray {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32,
                 key_size: mem::size_of::<u32>() as u32,
                 value_size: mem::size_of::<u32>() as u32,
                 max_entries,

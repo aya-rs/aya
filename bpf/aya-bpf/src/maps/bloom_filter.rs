@@ -18,7 +18,7 @@ impl<T> BloomFilter<T> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> BloomFilter<T> {
         BloomFilter {
             def: build_def::<T>(
-                BPF_MAP_TYPE_BLOOM_FILTER,
+                BPF_MAP_TYPE_BLOOM_FILTER as u32,
                 max_entries,
                 flags,
                 PinningType::None,
@@ -30,7 +30,7 @@ impl<T> BloomFilter<T> {
     pub const fn pinned(max_entries: u32, flags: u32) -> BloomFilter<T> {
         BloomFilter {
             def: build_def::<T>(
-                BPF_MAP_TYPE_BLOOM_FILTER,
+                BPF_MAP_TYPE_BLOOM_FILTER as u32,
                 max_entries,
                 flags,
                 PinningType::ByName,
