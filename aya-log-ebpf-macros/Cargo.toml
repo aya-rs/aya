@@ -8,7 +8,7 @@ aya-log-common = { path = "../aya-log-common" }
 aya-log-parser = { path = "../aya-log-parser" }
 proc-macro2 = "1.0"
 quote = "1.0"
-syn = "1.0"
+syn = "2.0"
 
 [lib]
 proc-macro = true
