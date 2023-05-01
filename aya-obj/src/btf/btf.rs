@@ -531,7 +531,7 @@ impl Btf {
                 // Fixup FUNC_PROTO
                 BtfType::FuncProto(ty) if features.btf_func => {
                     let mut ty = ty.clone();
-                    for (i, mut param) in ty.params.iter_mut().enumerate() {
+                    for (i, param) in ty.params.iter_mut().enumerate() {
                         if param.name_offset == 0 && param.btf_type != 0 {
                             param.name_offset = self.add_string(format!("param{i}"));
                         }

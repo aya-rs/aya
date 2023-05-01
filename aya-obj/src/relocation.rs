@@ -429,7 +429,7 @@ impl<'a> FunctionLinker<'a> {
 
             let callee_ins_index = self.link_function(program, callee)? as i32;
 
-            let mut ins = &mut program.instructions[ins_index];
+            let ins = &mut program.instructions[ins_index];
             let ins_index = ins_index as i32;
             ins.imm = callee_ins_index - ins_index - 1;
             debug!(
