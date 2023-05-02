@@ -18,7 +18,11 @@ fn run_with_rbpf() {
     ));
     assert_eq!(object.programs["pass"].section.name(), "pass");
 
-    let instructions = &object.programs["pass"].function.instructions;
+    let instructions = &object
+        .functions
+        .get(&object.programs["pass"].function_key())
+        .unwrap()
+        .instructions;
     let data = unsafe {
         from_raw_parts(
             instructions.as_ptr() as *const u8,
@@ -86,7 +90,11 @@ fn use_map_with_rbpf() {
 
     // Executes the program
     assert_eq!(object.programs.len(), 1);
-    let instructions = &object.programs["tracepoint"].function.instructions;
+    let instructions = &object
+        .functions
+        .get(&object.programs["tracepoint"].function_key())
+        .unwrap()
+        .instructions;
     let data = unsafe {
         from_raw_parts(
             instructions.as_ptr() as *const u8,

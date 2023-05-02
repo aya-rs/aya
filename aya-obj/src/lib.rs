@@ -42,7 +42,8 @@
 //! object.relocate_maps(std::iter::empty(), &text_sections).unwrap();
 //!
 //! // Run with rbpf
-//! let instructions = &object.programs["prog_name"].function.instructions;
+//! let function = object.functions.get(&object.programs["prog_name"].function_key()).unwrap();
+//! let instructions = &function.instructions;
 //! let data = unsafe {
 //!     core::slice::from_raw_parts(
 //!         instructions.as_ptr() as *const u8,
