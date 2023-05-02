@@ -5,7 +5,7 @@ authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-bindgen = "0.64"
+bindgen = "0.65"
 clap = { version = "4", features = ["derive"] }
 anyhow = "1"
 thiserror = "1"
