@@ -258,8 +258,7 @@ impl Format for u32 {
             Some(DisplayHint::Default) => Ok(DefaultFormatter::format(self)),
             Some(DisplayHint::LowerHex) => Ok(LowerHexFormatter::format(self)),
             Some(DisplayHint::UpperHex) => Ok(UpperHexFormatter::format(self)),
-            Some(DisplayHint::Ipv4) => Ok(Ipv4Formatter::format(*self)),
-            Some(DisplayHint::Ipv6) => Err(()),
+            Some(DisplayHint::Ip) => Ok(Ipv4Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             _ => Ok(DefaultFormatter::format(self)),
@@ -273,8 +272,7 @@ impl Format for [u8; 6] {
             Some(DisplayHint::Default) => Err(()),
             Some(DisplayHint::LowerHex) => Err(()),
             Some(DisplayHint::UpperHex) => Err(()),
-            Some(DisplayHint::Ipv4) => Err(()),
-            Some(DisplayHint::Ipv6) => Err(()),
+            Some(DisplayHint::Ip) => Err(()),
             Some(DisplayHint::LowerMac) => Ok(LowerMacFormatter::format(*self)),
             Some(DisplayHint::UpperMac) => Ok(UpperMacFormatter::format(*self)),
             _ => Err(()),
@@ -288,8 +286,7 @@ impl Format for [u8; 16] {
             Some(DisplayHint::Default) => Err(()),
             Some(DisplayHint::LowerHex) => Err(()),
             Some(DisplayHint::UpperHex) => Err(()),
-            Some(DisplayHint::Ipv4) => Err(()),
-            Some(DisplayHint::Ipv6) => Ok(Ipv6Formatter::format(*self)),
+            Some(DisplayHint::Ip) => Ok(Ipv6Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             _ => Err(()),
@@ -303,8 +300,7 @@ impl Format for [u16; 8] {
             Some(DisplayHint::Default) => Err(()),
             Some(DisplayHint::LowerHex) => Err(()),
             Some(DisplayHint::UpperHex) => Err(()),
-            Some(DisplayHint::Ipv4) => Err(()),
-            Some(DisplayHint::Ipv6) => Ok(Ipv6Formatter::format(*self)),
+            Some(DisplayHint::Ip) => Ok(Ipv6Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             _ => Err(()),
@@ -320,8 +316,7 @@ macro_rules! impl_format {
                     Some(DisplayHint::Default) => Ok(DefaultFormatter::format(self)),
                     Some(DisplayHint::LowerHex) => Ok(LowerHexFormatter::format(self)),
                     Some(DisplayHint::UpperHex) => Ok(UpperHexFormatter::format(self)),
-                    Some(DisplayHint::Ipv4) => Err(()),
-                    Some(DisplayHint::Ipv6) => Err(()),
+                    Some(DisplayHint::Ip) => Err(()),
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
                     _ => Ok(DefaultFormatter::format(self)),
@@ -350,8 +345,7 @@ macro_rules! impl_format_float {
                     Some(DisplayHint::Default) => Ok(DefaultFormatter::format(self)),
                     Some(DisplayHint::LowerHex) => Err(()),
                     Some(DisplayHint::UpperHex) => Err(()),
-                    Some(DisplayHint::Ipv4) => Err(()),
-                    Some(DisplayHint::Ipv6) => Err(()),
+                    Some(DisplayHint::Ip) => Err(()),
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
                     _ => Ok(DefaultFormatter::format(self)),
@@ -752,7 +746,7 @@ mod test {
         let (mut len, mut input) = new_log(3).unwrap();
 
         len += "ipv4: ".write(&mut input[len..]).unwrap();
-        len += DisplayHint::Ipv4.write(&mut input[len..]).unwrap();
+        len += DisplayHint::Ip.write(&mut input[len..]).unwrap();
         // 10.0.0.1 as u32
         len += 167772161u32.write(&mut input[len..]).unwrap();
 
@@ -773,7 +767,7 @@ mod test {
         let (mut len, mut input) = new_log(3).unwrap();
 
         len += "ipv6: ".write(&mut input[len..]).unwrap();
-        len += DisplayHint::Ipv6.write(&mut input[len..]).unwrap();
+        len += DisplayHint::Ip.write(&mut input[len..]).unwrap();
         // 2001:db8::1:1 as byte array
         let ipv6_arr: [u8; 16] = [
             0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
@@ -798,7 +792,7 @@ mod test {
         let (mut len, mut input) = new_log(3).unwrap();
 
         len += "ipv6: ".write(&mut input[len..]).unwrap();
-        len += DisplayHint::Ipv6.write(&mut input[len..]).unwrap();
+        len += DisplayHint::Ip.write(&mut input[len..]).unwrap();
         // 2001:db8::1:1 as u16 array
         let ipv6_arr: [u16; 8] = [
             0x2001, 0x0db8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001, 0x0001,

@@ -156,10 +156,8 @@ pub enum DisplayHint {
     LowerHex,
     /// `:X`
     UpperHex,
-    /// `:ipv4`
-    Ipv4,
-    /// `:ipv6`
-    Ipv6,
+    /// `:i`
+    Ip,
     /// `:mac`
     LowerMac,
     /// `:MAC`

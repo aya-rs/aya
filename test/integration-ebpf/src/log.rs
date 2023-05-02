@@ -12,7 +12,7 @@ pub fn test_log(ctx: ProbeContext) {
     let ipv6 = [
         32u8, 1u8, 13u8, 184u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8,
     ]; // 2001:db8::1
-    info!(&ctx, "ipv4: {:ipv4}, ipv6: {:ipv6}", ipv4, ipv6);
+    info!(&ctx, "ipv4: {:i}, ipv6: {:i}", ipv4, ipv6);
     let mac = [4u8, 32u8, 6u8, 9u8, 0u8, 64u8];
     trace!(&ctx, "mac lc: {:mac}, mac uc: {:MAC}", mac, mac);
     let hex = 0x2f;
