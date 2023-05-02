@@ -79,8 +79,7 @@ fn hint_to_expr(hint: DisplayHint) -> Result<Expr> {
         DisplayHint::Default => parse_str("::aya_log_ebpf::macro_support::DisplayHint::Default"),
         DisplayHint::LowerHex => parse_str("::aya_log_ebpf::macro_support::DisplayHint::LowerHex"),
         DisplayHint::UpperHex => parse_str("::aya_log_ebpf::macro_support::DisplayHint::UpperHex"),
-        DisplayHint::Ipv4 => parse_str("::aya_log_ebpf::macro_support::DisplayHint::Ipv4"),
-        DisplayHint::Ipv6 => parse_str("::aya_log_ebpf::macro_support::DisplayHint::Ipv6"),
+        DisplayHint::Ip => parse_str("::aya_log_ebpf::macro_support::DisplayHint::Ip"),
         DisplayHint::LowerMac => parse_str("::aya_log_ebpf::macro_support::DisplayHint::LowerMac"),
         DisplayHint::UpperMac => parse_str("::aya_log_ebpf::macro_support::DisplayHint::UpperMac"),
     }

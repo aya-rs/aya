@@ -57,8 +57,7 @@ fn parse_display_hint(s: &str) -> Result<DisplayHint, String> {
     Ok(match s {
         "x" => DisplayHint::LowerHex,
         "X" => DisplayHint::UpperHex,
-        "ipv4" => DisplayHint::Ipv4,
-        "ipv6" => DisplayHint::Ipv6,
+        "i" => DisplayHint::Ip,
         "mac" => DisplayHint::LowerMac,
         "MAC" => DisplayHint::UpperMac,
         _ => return Err(format!("unknown display hint: {s:?}")),
@@ -146,7 +145,7 @@ mod test {
     #[test]
     fn test_parse() {
         assert_eq!(
-            parse("foo {} bar {:x} test {:X} ayy {:ipv4} lmao {:ipv6} {{}} {{something}}"),
+            parse("foo {} bar {:x} test {:X} ayy {:i} lmao {{}} {{something}}"),
             Ok(vec![
                 Fragment::Literal("foo ".into()),
                 Fragment::Parameter(Parameter {
@@ -162,12 +161,9 @@ mod test {
                 }),
                 Fragment::Literal(" ayy ".into()),
                 Fragment::Parameter(Parameter {
-                    hint: DisplayHint::Ipv4
+                    hint: DisplayHint::Ip
                 }),
                 Fragment::Literal(" lmao ".into()),
-                Fragment::Parameter(Parameter {
-                    hint: DisplayHint::Ipv6
-                }),
                 Fragment::Literal(" {{}} {{something}}".into()),
             ])
         );
