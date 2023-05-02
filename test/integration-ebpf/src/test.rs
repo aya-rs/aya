@@ -3,11 +3,11 @@
 
 use aya_bpf::{
     bindings::xdp_action,
-    macros::{kprobe, xdp},
-    programs::{ProbeContext, XdpContext},
+    macros::{kprobe, tracepoint, uprobe, xdp},
+    programs::{ProbeContext, TracePointContext, XdpContext},
 };
 
-#[xdp(name = "test_unload_xdp")]
+#[xdp(name = "test_xdp")]
 pub fn pass(ctx: XdpContext) -> u32 {
     match unsafe { try_pass(ctx) } {
         Ok(ret) => ret,
@@ -20,8 +20,17 @@ unsafe fn try_pass(_ctx: XdpContext) -> Result<u32, u32> {
 }
 
 #[kprobe]
-// truncated name to match bpftool output
-pub fn test_unload_kpr(_ctx: ProbeContext) -> u32 {
+pub fn test_kprobe(_ctx: ProbeContext) -> u32 {
+    0
+}
+
+#[tracepoint]
+pub fn test_tracepoint(_ctx: TracePointContext) -> u32 {
+    0
+}
+
+#[uprobe]
+pub fn test_uprobe(_ctx: ProbeContext) -> u32 {
     0
 }
 
