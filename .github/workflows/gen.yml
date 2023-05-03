@@ -18,12 +18,10 @@ jobs:
         working-directory: libbpf
         run: echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: nightly
           components: rustfmt, clippy
-          override: true
 
       - uses: Swatinem/rust-cache@v1
 
