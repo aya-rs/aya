@@ -81,7 +81,12 @@ impl<T: Link> Drop for LinkMap<T> {
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct FdLinkId(pub(crate) RawFd);
 
-/// A file descriptor link.
+/// FdLink is a generic file descriptor link.
+///
+/// FdLinks can be pinned in order to keep probes attached and running after the loading
+/// process closes. Additionally many program specific links can be converted into
+/// FdLinks by using either into() or try_into() implementations. For examples of such functions
+/// see [`TracePointLink::try_from()`](crate::programs::trace_point::TracePointLink::try_from()) and [`FdLink::try_from()`].
 #[derive(Debug)]
 pub struct FdLink {
     pub(crate) fd: RawFd,
