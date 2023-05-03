@@ -82,6 +82,29 @@ impl<T: Link> Drop for LinkMap<T> {
 pub struct FdLinkId(pub(crate) RawFd);
 
 /// A file descriptor link.
+///
+/// Fd links are returned directly when attaching some program types (for
+/// instance [`CgroupSkb`]), or can be obtained by converting other link
+/// types (see the `TryFrom` implementations).
+///
+/// An important property of fd links is that they can be pinned. Pinning
+/// can be used keep a link attached "in background" even after the program
+/// that has created the link terminates.
+///
+/// # Example
+///
+///```no_run
+/// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
+/// use aya::{Bpf, programs::KProbe};
+///
+/// let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
+/// program.load()?;
+/// let link = program.attach("try_to_wake_up", 0)?;
+/// let fd_link: FdLink = link.try_into().unwrap();
+/// fd_link.pin("/sys/fs/bpf/intercept_wakeups_link").unwrap();
+///
+/// # Ok::<(), aya::BpfError>(())
+/// ```
 #[derive(Debug)]
 pub struct FdLink {
     pub(crate) fd: RawFd,
