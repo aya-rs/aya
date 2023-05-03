@@ -2,7 +2,7 @@
 
 use core::mem;
 
-use alloc::{borrow::ToOwned, string::String};
+use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
 use log::debug;
 use object::{SectionIndex, SymbolKind};
 
@@ -154,7 +154,7 @@ impl Object {
         text_sections: &HashSet<usize>,
     ) -> Result<(), BpfRelocationError> {
         for (name, program) in self.programs.iter() {
-            let mut linker = FunctionLinker::new(
+            let linker = FunctionLinker::new(
                 &self.functions,
                 &self.relocations,
                 &self.symbol_table,
@@ -172,14 +172,10 @@ impl Object {
                         },
                     })?;
 
-            let mut func = func_orig.clone();
-
-            linker
-                .relocate(&mut func, func_orig)
-                .map_err(|error| BpfRelocationError {
-                    function: name.to_owned(),
-                    error,
-                })?;
+            let func = linker.link(func_orig).map_err(|error| BpfRelocationError {
+                function: name.to_owned(),
+                error,
+            })?;
 
             self.functions.insert(program.function_key(), func);
         }
@@ -291,7 +287,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
 }
 
 struct FunctionLinker<'a> {
-    functions: &'a HashMap<(usize, u64), Function>,
+    functions: &'a BTreeMap<(usize, u64), Function>,
     linked_functions: HashMap<u64, usize>,
     relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
     symbol_table: &'a HashMap<usize, Symbol>,
@@ -300,7 +296,7 @@ struct FunctionLinker<'a> {
 
 impl<'a> FunctionLinker<'a> {
     fn new(
-        functions: &'a HashMap<(usize, u64), Function>,
+        functions: &'a BTreeMap<(usize, u64), Function>,
         relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
         symbol_table: &'a HashMap<usize, Symbol>,
         text_sections: &'a HashSet<usize>,
@@ -312,6 +308,17 @@ impl<'a> FunctionLinker<'a> {
             symbol_table,
             text_sections,
         }
+    }
+
+    fn link(mut self, program_function: &Function) -> Result<Function, RelocationError> {
+        let mut fun = program_function.clone();
+        // relocate calls in the program's main function. As relocation happens,
+        // it will trigger linking in all the callees.
+        self.relocate(&mut fun, program_function)?;
+
+        // this now includes the program function plus all the other functions called during
+        // execution
+        Ok(fun)
     }
 
     fn link_function(

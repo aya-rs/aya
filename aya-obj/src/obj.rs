@@ -2,6 +2,7 @@
 
 use alloc::{
     borrow::ToOwned,
+    collections::BTreeMap,
     ffi::CString,
     string::{String, ToString},
     vec::Vec,
@@ -66,10 +67,10 @@ pub struct Object {
     /// in [ProgramSection]s as keys.
     pub programs: HashMap<String, Program>,
     /// Functions
-    pub functions: HashMap<(usize, u64), Function>,
+    pub functions: BTreeMap<(usize, u64), Function>,
     pub(crate) relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
     pub(crate) symbol_table: HashMap<usize, Symbol>,
-    pub(crate) section_sizes: HashMap<String, u64>,
+    pub(crate) section_infos: HashMap<String, (SectionIndex, u64)>,
     // symbol_offset_by_name caches symbols that could be referenced from a
     // BTF VAR type so the offsets can be fixed up
     pub(crate) symbol_offset_by_name: HashMap<String, u64>,
@@ -586,10 +587,10 @@ impl Object {
             btf_ext: None,
             maps: HashMap::new(),
             programs: HashMap::new(),
-            functions: HashMap::new(),
+            functions: BTreeMap::new(),
             relocations: HashMap::new(),
             symbol_table: HashMap::new(),
-            section_sizes: HashMap::new(),
+            section_infos: HashMap::new(),
             symbol_offset_by_name: HashMap::new(),
         }
     }
@@ -843,8 +844,8 @@ impl Object {
         {
             parts.push(parts[0]);
         }
-        self.section_sizes
-            .insert(section.name.to_owned(), section.size);
+        self.section_infos
+            .insert(section.name.to_owned(), (section.index, section.size));
         match section.kind {
             BpfSectionKind::Data | BpfSectionKind::Rodata | BpfSectionKind::Bss => {
                 self.maps
