@@ -44,6 +44,7 @@ pub struct Features {
     pub bpf_name: bool,
     pub bpf_probe_read_kernel: bool,
     pub bpf_perf_link: bool,
+    pub bpf_global_data: bool,
     pub btf: Option<BtfFeatures>,
 }
 
