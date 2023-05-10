@@ -104,12 +104,12 @@ async fn log() {
 
     // Call the function that the uprobe is attached to, so it starts logging.
     trigger_ebpf_program();
-    captured_logs.wait_expected_len(5).await;
+    captured_logs.wait_expected_len(6).await;
 
     let records = captured_logs
         .lock()
         .expect("Failed to acquire a lock for reading logs");
-    assert_eq!(records.len(), 5);
+    assert_eq!(records.len(), 6);
 
     assert_eq!(records[0].body, "Hello from eBPF!");
     assert_eq!(records[0].level, Level::Debug);
@@ -133,4 +133,8 @@ async fn log() {
     assert_eq!(records[4].body, "hex lc: 2f, hex uc: 2F");
     assert_eq!(records[4].level, Level::Warn);
     assert_eq!(records[4].target, "log");
+
+    assert_eq!(records[5].body, "hex lc: deadbeef, hex uc: DEADBEEF");
+    assert_eq!(records[5].level, Level::Debug);
+    assert_eq!(records[5].target, "log");
 }

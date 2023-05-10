@@ -151,12 +151,11 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
                     let record_len = header_len;
 
                     if let Ok(record_len) = {
-                        use ::aya_log_ebpf::WriteToBuf;
                         Ok::<_, ()>(record_len) #( .and_then(|record_len| {
                             if record_len >= buf.buf.len() {
                                 return Err(());
                             }
-                            { #values_iter }.write(&mut buf.buf[record_len..]).map(|len| record_len + len)
+                            aya_log_ebpf::WriteToBuf::write({ #values_iter }, &mut buf.buf[record_len..]).map(|len| record_len + len)
                         }) )*
                     } {
                         unsafe { ::aya_log_ebpf::AYA_LOGS.output(

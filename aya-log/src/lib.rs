@@ -59,9 +59,11 @@ use std::{
 
 const MAP_NAME: &str = "AYA_LOGS";
 
-use aya_log_common::{Argument, DisplayHint, RecordField, LOG_BUF_CAPACITY, LOG_FIELDS};
+use aya_log_common::{
+    Argument, DisplayHint, Level, LogValueLength, RecordField, LOG_BUF_CAPACITY, LOG_FIELDS,
+};
 use bytes::BytesMut;
-use log::{error, Level, Log, Record};
+use log::{error, Log, Record};
 use thiserror::Error;
 
 use aya::{
@@ -116,9 +118,7 @@ impl BpfLogger {
 
             let log = logger.clone();
             tokio::spawn(async move {
-                let mut buffers = (0..10)
-                    .map(|_| BytesMut::with_capacity(LOG_BUF_CAPACITY))
-                    .collect::<Vec<_>>();
+                let mut buffers = vec![BytesMut::with_capacity(LOG_BUF_CAPACITY); 10];
 
                 loop {
                     let events = buf.read_events(&mut buffers).await.unwrap();
@@ -160,6 +160,20 @@ where
     }
 }
 
+pub struct LowerHexDebugFormatter;
+impl<T> Formatter<&[T]> for LowerHexDebugFormatter
+where
+    T: LowerHex,
+{
+    fn format(v: &[T]) -> String {
+        let mut s = String::new();
+        for v in v {
+            let () = core::fmt::write(&mut s, format_args!("{v:x}")).unwrap();
+        }
+        s
+    }
+}
+
 pub struct UpperHexFormatter;
 impl<T> Formatter<T> for UpperHexFormatter
 where
@@ -167,6 +181,20 @@ where
 {
     fn format(v: T) -> String {
         format!("{v:X}")
+    }
+}
+
+pub struct UpperHexDebugFormatter;
+impl<T> Formatter<&[T]> for UpperHexDebugFormatter
+where
+    T: UpperHex,
+{
+    fn format(v: &[T]) -> String {
+        let mut s = String::new();
+        for v in v {
+            let () = core::fmt::write(&mut s, format_args!("{v:X}")).unwrap();
+        }
+        s
     }
 }
 
@@ -214,9 +242,19 @@ trait Format {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()>;
 }
 
+impl Format for &[u8] {
+    fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
+            Some(DisplayHint::LowerHex) => Ok(LowerHexDebugFormatter::format(self)),
+            Some(DisplayHint::UpperHex) => Ok(UpperHexDebugFormatter::format(self)),
+            _ => Err(()),
+        }
+    }
+}
+
 impl Format for u32 {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-        match last_hint.map(|h| h.0) {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
             Some(DisplayHint::Default) => Ok(DefaultFormatter::format(self)),
             Some(DisplayHint::LowerHex) => Ok(LowerHexFormatter::format(self)),
             Some(DisplayHint::UpperHex) => Ok(UpperHexFormatter::format(self)),
@@ -231,7 +269,7 @@ impl Format for u32 {
 
 impl Format for [u8; 6] {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-        match last_hint.map(|h| h.0) {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
             Some(DisplayHint::Default) => Err(()),
             Some(DisplayHint::LowerHex) => Err(()),
             Some(DisplayHint::UpperHex) => Err(()),
@@ -246,7 +284,7 @@ impl Format for [u8; 6] {
 
 impl Format for [u8; 16] {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-        match last_hint.map(|h| h.0) {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
             Some(DisplayHint::Default) => Err(()),
             Some(DisplayHint::LowerHex) => Err(()),
             Some(DisplayHint::UpperHex) => Err(()),
@@ -261,7 +299,7 @@ impl Format for [u8; 16] {
 
 impl Format for [u16; 8] {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-        match last_hint.map(|h| h.0) {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
             Some(DisplayHint::Default) => Err(()),
             Some(DisplayHint::LowerHex) => Err(()),
             Some(DisplayHint::UpperHex) => Err(()),
@@ -278,7 +316,7 @@ macro_rules! impl_format {
     ($type:ident) => {
         impl Format for $type {
             fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-                match last_hint.map(|h| h.0) {
+                match last_hint.map(|DisplayHintWrapper(dh)| dh) {
                     Some(DisplayHint::Default) => Ok(DefaultFormatter::format(self)),
                     Some(DisplayHint::LowerHex) => Ok(LowerHexFormatter::format(self)),
                     Some(DisplayHint::UpperHex) => Ok(UpperHexFormatter::format(self)),
@@ -308,7 +346,7 @@ macro_rules! impl_format_float {
     ($type:ident) => {
         impl Format for $type {
             fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
-                match last_hint.map(|h| h.0) {
+                match last_hint.map(|DisplayHintWrapper(dh)| dh) {
                     Some(DisplayHint::Default) => Ok(DefaultFormatter::format(self)),
                     Some(DisplayHint::LowerHex) => Err(()),
                     Some(DisplayHint::UpperHex) => Err(()),
@@ -360,33 +398,42 @@ pub enum Error {
 
 fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
     let mut target = None;
-    let mut level = Level::Trace;
+    let mut level = None;
     let mut module = None;
     let mut file = None;
     let mut line = None;
     let mut num_args = None;
 
     for _ in 0..LOG_FIELDS {
-        let (attr, rest) = unsafe { TagLenValue::<'_, RecordFieldWrapper>::try_read(buf)? };
+        let (RecordFieldWrapper(tag), value, rest) = try_read(buf)?;
 
-        match attr.tag.0 {
+        match tag {
             RecordField::Target => {
-                target = Some(std::str::from_utf8(attr.value).map_err(|_| ())?);
+                target = Some(str::from_utf8(value).map_err(|_| ())?);
             }
             RecordField::Level => {
-                level = unsafe { ptr::read_unaligned(attr.value.as_ptr() as *const _) }
+                level = Some({
+                    let level = unsafe { ptr::read_unaligned(value.as_ptr() as *const _) };
+                    match level {
+                        Level::Error => log::Level::Error,
+                        Level::Warn => log::Level::Warn,
+                        Level::Info => log::Level::Info,
+                        Level::Debug => log::Level::Debug,
+                        Level::Trace => log::Level::Trace,
+                    }
+                })
             }
             RecordField::Module => {
-                module = Some(std::str::from_utf8(attr.value).map_err(|_| ())?);
+                module = Some(str::from_utf8(value).map_err(|_| ())?);
             }
             RecordField::File => {
-                file = Some(std::str::from_utf8(attr.value).map_err(|_| ())?);
+                file = Some(str::from_utf8(value).map_err(|_| ())?);
             }
             RecordField::Line => {
-                line = Some(u32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?));
+                line = Some(u32::from_ne_bytes(value.try_into().map_err(|_| ())?));
             }
             RecordField::NumArgs => {
-                num_args = Some(usize::from_ne_bytes(attr.value.try_into().map_err(|_| ())?));
+                num_args = Some(usize::from_ne_bytes(value.try_into().map_err(|_| ())?));
             }
         }
 
@@ -396,101 +443,104 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
     let mut full_log_msg = String::new();
     let mut last_hint: Option<DisplayHintWrapper> = None;
     for _ in 0..num_args.ok_or(())? {
-        let (attr, rest) = unsafe { TagLenValue::<'_, ArgumentWrapper>::try_read(buf)? };
+        let (ArgumentWrapper(tag), value, rest) = try_read(buf)?;
 
-        match attr.tag.0 {
+        match tag {
             Argument::DisplayHint => {
-                last_hint = Some(unsafe { ptr::read_unaligned(attr.value.as_ptr() as *const _) });
+                last_hint = Some(unsafe { ptr::read_unaligned(value.as_ptr() as *const _) });
             }
             Argument::I8 => {
                 full_log_msg.push_str(
-                    &i8::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &i8::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::I16 => {
                 full_log_msg.push_str(
-                    &i16::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &i16::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::I32 => {
                 full_log_msg.push_str(
-                    &i32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &i32::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::I64 => {
                 full_log_msg.push_str(
-                    &i64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &i64::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::Isize => {
                 full_log_msg.push_str(
-                    &isize::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &isize::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::U8 => {
                 full_log_msg.push_str(
-                    &u8::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &u8::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::U16 => {
                 full_log_msg.push_str(
-                    &u16::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &u16::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::U32 => {
                 full_log_msg.push_str(
-                    &u32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &u32::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::U64 => {
                 full_log_msg.push_str(
-                    &u64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &u64::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::Usize => {
                 full_log_msg.push_str(
-                    &usize::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &usize::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::F32 => {
                 full_log_msg.push_str(
-                    &f32::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &f32::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::F64 => {
                 full_log_msg.push_str(
-                    &f64::from_ne_bytes(attr.value.try_into().map_err(|_| ())?)
+                    &f64::from_ne_bytes(value.try_into().map_err(|_| ())?)
                         .format(last_hint.take())?,
                 );
             }
             Argument::ArrU8Len6 => {
-                let value: [u8; 6] = attr.value.try_into().map_err(|_| ())?;
+                let value: [u8; 6] = value.try_into().map_err(|_| ())?;
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             Argument::ArrU8Len16 => {
-                let value: [u8; 16] = attr.value.try_into().map_err(|_| ())?;
+                let value: [u8; 16] = value.try_into().map_err(|_| ())?;
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             Argument::ArrU16Len8 => {
-                let data: [u8; 16] = attr.value.try_into().map_err(|_| ())?;
+                let data: [u8; 16] = value.try_into().map_err(|_| ())?;
                 let mut value: [u16; 8] = Default::default();
                 for (i, s) in data.chunks_exact(2).enumerate() {
                     value[i] = ((s[1] as u16) << 8) | s[0] as u16;
                 }
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
-            Argument::Str => match str::from_utf8(attr.value) {
+            Argument::Bytes => {
+                full_log_msg.push_str(&value.format(last_hint.take())?);
+            }
+            Argument::Str => match str::from_utf8(value) {
                 Ok(v) => {
                     full_log_msg.push_str(v);
                 }
@@ -505,7 +555,7 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
         &Record::builder()
             .args(format_args!("{full_log_msg}"))
             .target(target.ok_or(())?)
-            .level(level)
+            .level(level.ok_or(())?)
             .module_path(module)
             .file(file)
             .line(line)
@@ -515,42 +565,32 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
     Ok(())
 }
 
-struct TagLenValue<'a, T: Pod> {
-    tag: T,
-    value: &'a [u8],
-}
-
-impl<'a, T: Pod> TagLenValue<'a, T> {
-    unsafe fn try_read(mut buf: &'a [u8]) -> Result<(TagLenValue<'a, T>, &'a [u8]), ()> {
-        if buf.len() < mem::size_of::<T>() + mem::size_of::<usize>() {
-            return Err(());
-        }
-
-        let tag = ptr::read_unaligned(buf.as_ptr() as *const T);
-        buf = &buf[mem::size_of::<T>()..];
-
-        let len = usize::from_ne_bytes(buf[..mem::size_of::<usize>()].try_into().unwrap());
-        buf = &buf[mem::size_of::<usize>()..];
-
-        if buf.len() < len {
-            return Err(());
-        }
-
-        Ok((
-            TagLenValue {
-                tag,
-                value: &buf[..len],
-            },
-            &buf[len..],
-        ))
+fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
+    if buf.len() < mem::size_of::<T>() + mem::size_of::<LogValueLength>() {
+        return Err(());
     }
+
+    let tag = unsafe { ptr::read_unaligned(buf.as_ptr() as *const T) };
+    buf = &buf[mem::size_of::<T>()..];
+
+    let len =
+        LogValueLength::from_ne_bytes(buf[..mem::size_of::<LogValueLength>()].try_into().unwrap());
+    buf = &buf[mem::size_of::<LogValueLength>()..];
+
+    let len: usize = len.into();
+    if buf.len() < len {
+        return Err(());
+    }
+
+    let (value, rest) = buf.split_at(len);
+    Ok((tag, value, rest))
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use aya_log_common::{write_record_header, WriteToBuf};
-    use log::logger;
+    use log::{logger, Level};
 
     fn new_log(args: usize) -> Result<(usize, Vec<u8>), ()> {
         let mut buf = vec![0; 8192];
@@ -569,14 +609,14 @@ mod test {
     #[test]
     fn test_str() {
         testing_logger::setup();
-        let (len, mut input) = new_log(1).unwrap();
+        let (mut len, mut input) = new_log(1).unwrap();
 
-        "test"
-            .write(&mut input[len..])
-            .expect("could not write to the buffer");
+        len += "test".write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "test");
@@ -589,16 +629,59 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(2).unwrap();
 
-        len += "hello "
-            .write(&mut input[len..])
-            .expect("could not write to the buffer");
-        "test".write(&mut input[len..]).unwrap();
+        len += "hello ".write(&mut input[len..]).unwrap();
+        len += "test".write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "hello test");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_bytes() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(2).unwrap();
+
+        len += DisplayHint::LowerHex.write(&mut input[len..]).unwrap();
+        len += [0xde, 0xad].write(&mut input[len..]).unwrap();
+
+        _ = len;
+
+        let logger = logger();
+        let () = log_buf(&input, logger).unwrap();
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "dead");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_bytes_with_args() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(5).unwrap();
+
+        len += DisplayHint::LowerHex.write(&mut input[len..]).unwrap();
+        len += [0xde, 0xad].write(&mut input[len..]).unwrap();
+
+        len += " ".write(&mut input[len..]).unwrap();
+
+        len += DisplayHint::UpperHex.write(&mut input[len..]).unwrap();
+        len += [0xbe, 0xef].write(&mut input[len..]).unwrap();
+
+        _ = len;
+
+        let logger = logger();
+        let () = log_buf(&input, logger).unwrap();
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "dead BEEF");
             assert_eq!(captured_logs[0].level, Level::Info);
         });
     }
@@ -610,10 +693,12 @@ mod test {
 
         len += "default hint: ".write(&mut input[len..]).unwrap();
         len += DisplayHint::Default.write(&mut input[len..]).unwrap();
-        14.write(&mut input[len..]).unwrap();
+        len += 14.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "default hint: 14");
@@ -628,10 +713,12 @@ mod test {
 
         len += "lower hex: ".write(&mut input[len..]).unwrap();
         len += DisplayHint::LowerHex.write(&mut input[len..]).unwrap();
-        200.write(&mut input[len..]).unwrap();
+        len += 200.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "lower hex: c8");
@@ -646,10 +733,12 @@ mod test {
 
         len += "upper hex: ".write(&mut input[len..]).unwrap();
         len += DisplayHint::UpperHex.write(&mut input[len..]).unwrap();
-        200.write(&mut input[len..]).unwrap();
+        len += 200.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "upper hex: C8");
@@ -665,10 +754,12 @@ mod test {
         len += "ipv4: ".write(&mut input[len..]).unwrap();
         len += DisplayHint::Ipv4.write(&mut input[len..]).unwrap();
         // 10.0.0.1 as u32
-        167772161u32.write(&mut input[len..]).unwrap();
+        len += 167772161u32.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "ipv4: 10.0.0.1");
@@ -688,10 +779,12 @@ mod test {
             0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
             0x00, 0x01,
         ];
-        ipv6_arr.write(&mut input[len..]).unwrap();
+        len += ipv6_arr.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "ipv6: 2001:db8::1:1");
@@ -710,10 +803,12 @@ mod test {
         let ipv6_arr: [u16; 8] = [
             0x2001, 0x0db8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001, 0x0001,
         ];
-        ipv6_arr.write(&mut input[len..]).unwrap();
+        len += ipv6_arr.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "ipv6: 2001:db8::1:1");
@@ -730,10 +825,12 @@ mod test {
         len += DisplayHint::LowerMac.write(&mut input[len..]).unwrap();
         // 00:00:5e:00:53:af as byte array
         let mac_arr: [u8; 6] = [0x00, 0x00, 0x5e, 0x00, 0x53, 0xaf];
-        mac_arr.write(&mut input[len..]).unwrap();
+        len += mac_arr.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "mac: 00:00:5e:00:53:af");
@@ -750,10 +847,12 @@ mod test {
         len += DisplayHint::UpperMac.write(&mut input[len..]).unwrap();
         // 00:00:5E:00:53:AF as byte array
         let mac_arr: [u8; 6] = [0x00, 0x00, 0x5e, 0x00, 0x53, 0xaf];
-        mac_arr.write(&mut input[len..]).unwrap();
+        len += mac_arr.write(&mut input[len..]).unwrap();
+
+        _ = len;
 
         let logger = logger();
-        let _ = log_buf(&input, logger);
+        let () = log_buf(&input, logger).unwrap();
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "mac: 00:00:5E:00:53:AF");

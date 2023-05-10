@@ -17,6 +17,8 @@ pub fn test_log(ctx: ProbeContext) {
     trace!(&ctx, "mac lc: {:mac}, mac uc: {:MAC}", mac, mac);
     let hex = 0x2f;
     warn!(&ctx, "hex lc: {:x}, hex uc: {:X}", hex, hex);
+    let hex = [0xde, 0xad, 0xbe, 0xef].as_slice();
+    debug!(&ctx, "hex lc: {:x}, hex uc: {:X}", hex, hex);
 }
 
 #[panic_handler]
