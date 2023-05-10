@@ -1093,11 +1093,12 @@ impl BpfSectionKind {
             BpfSectionKind::BtfMaps
         } else if name.starts_with(".text") {
             BpfSectionKind::Text
-        } else if name.starts_with(".bss")
-            || name.starts_with(".data")
-            || name.starts_with(".rodata")
-        {
+        } else if name.starts_with(".bss") {
+            BpfSectionKind::Bss
+        } else if name.starts_with(".data") {
             BpfSectionKind::Data
+        } else if name.starts_with(".rodata") {
+            BpfSectionKind::Rodata
         } else if name == ".BTF" {
             BpfSectionKind::Btf
         } else if name == ".BTF.ext" {
