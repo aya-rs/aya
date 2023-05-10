@@ -33,10 +33,11 @@ use crate::{
         SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
-        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_btf_datasec_supported,
-        is_btf_decl_tag_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
-        is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
+        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_global_data_supported,
+        is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_float_supported,
+        is_btf_func_global_supported, is_btf_func_supported, is_btf_supported,
+        is_btf_type_tag_supported, is_perf_link_supported, is_probe_read_kernel_supported,
+        is_prog_name_supported, retry_with_verifier_logs,
     },
     util::{bytes_of, bytes_of_slice, possible_cpus, VerifierLog, POSSIBLE_CPUS},
 };
@@ -86,6 +87,7 @@ fn detect_features() -> Features {
         bpf_name: is_prog_name_supported(),
         bpf_probe_read_kernel: is_probe_read_kernel_supported(),
         bpf_perf_link: is_perf_link_supported(),
+        bpf_global_data: is_bpf_global_data_supported(),
         btf,
     };
     debug!("BPF Feature Detection: {:#?}", f);
@@ -358,6 +360,12 @@ impl<'a> BpfLoader<'a> {
         }
         let mut maps = HashMap::new();
         for (name, mut obj) in obj.maps.drain() {
+            if let (false, BpfSectionKind::Bss | BpfSectionKind::Data | BpfSectionKind::Rodata) =
+                (FEATURES.bpf_global_data, obj.section_kind())
+            {
+                continue;
+            }
+
             match self.max_entries.get(name.as_str()) {
                 Some(size) => obj.set_max_entries(*size),
                 None => {

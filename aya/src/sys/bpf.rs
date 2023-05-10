@@ -8,13 +8,17 @@ use std::{
 };
 
 use libc::{c_char, c_long, close, ENOENT, ENOSPC};
+use obj::{
+    maps::{bpf_map_def, LegacyMap},
+    BpfSectionKind,
+};
 
 use crate::{
     generated::{
         bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info,
         bpf_map_type, bpf_prog_info, bpf_prog_type, BPF_F_REPLACE,
     },
-    maps::PerCpuValues,
+    maps::{MapData, PerCpuValues},
     obj::{
         self,
         btf::{
@@ -658,6 +662,60 @@ pub(crate) fn is_perf_link_supported() -> bool {
             return res;
         }
     }
+    false
+}
+
+pub(crate) fn is_bpf_global_data_supported() -> bool {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+
+    let prog: &[u8] = &[
+        0x18, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // ld_pseudo r1, 0x2, 0x0
+        0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, //
+        0x7a, 0x01, 0x00, 0x00, 0x2a, 0x00, 0x00, 0x00, // stdw [r1 + 0x0], 0x2a
+        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+
+    let mut insns = copy_instructions(prog).unwrap();
+
+    let mut map_data = MapData {
+        obj: obj::Map::Legacy(LegacyMap {
+            def: bpf_map_def {
+                map_type: bpf_map_type::BPF_MAP_TYPE_ARRAY as u32,
+                key_size: 4,
+                value_size: 32,
+                max_entries: 1,
+                ..Default::default()
+            },
+            section_index: 0,
+            section_kind: BpfSectionKind::Maps,
+            symbol_index: None,
+            data: Vec::new(),
+        }),
+        fd: None,
+        pinned: false,
+        btf_fd: None,
+    };
+
+    if let Ok(map_fd) = map_data.create("aya_global") {
+        insns[0].imm = map_fd;
+
+        let gpl = b"GPL\0";
+        u.license = gpl.as_ptr() as u64;
+        u.insn_cnt = insns.len() as u32;
+        u.insns = insns.as_ptr() as u64;
+        u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
+
+        if let Ok(v) = sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
+            let fd = v as RawFd;
+
+            unsafe { close(fd) };
+
+            return true;
+        }
+    }
+
     false
 }
 
