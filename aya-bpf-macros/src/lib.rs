@@ -118,6 +118,40 @@ pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
         .into()
 }
 
+/// Marks a function as a [`CgroupSockAddr`] eBPF program.
+///
+/// [`CgroupSockAddr`] programs can be used to inspect or modify socket addresses passed to
+/// various syscalls within a [cgroup]. The `attach_type` argument specifies a place to attach
+/// the eBPF program to. See [`CgroupSockAddrAttachType`] for more details.
+///
+/// [cgroup]: https://man7.org/linux/man-pages/man7/cgroups.7.html
+/// [`CgroupSockAddrAttachType`]: ../aya/programs/cgroup_sock_addr/enum.CgroupSockAddrAttachType.html
+/// [`CgroupSockAddr`]: ../aya/programs/cgroup_sock_addr/struct.CgroupSockAddr.html
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.17.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{macros::cgroup_sock_addr, programs::SockAddrContext};
+///
+/// #[cgroup_sock_addr(connect4)]
+/// pub fn connect4(ctx: SockAddrContext) -> i32 {
+///     match try_connect4(ctx) {
+///         Ok(ret) => ret,
+///         Err(ret) => match ret.try_into() {
+///             Ok(rt) => rt,
+///             Err(_) => 1,
+///         },
+///     }
+/// }
+///
+/// fn try_connect4(ctx: SockAddrContext) -> Result<i32, i64> {
+///     Ok(0)
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn cgroup_sock_addr(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let args = parse_macro_input!(attrs as SockAddrArgs);
