@@ -127,7 +127,7 @@ pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// [cgroup]: https://man7.org/linux/man-pages/man7/cgroups.7.html
 /// [`CgroupSockAddrAttachType`]: ../aya/programs/cgroup_sock_addr/enum.CgroupSockAddrAttachType.html
 /// [`CgroupSockAddr`]: ../aya/programs/cgroup_sock_addr/struct.CgroupSockAddr.html
-/// 
+///
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 4.17.
