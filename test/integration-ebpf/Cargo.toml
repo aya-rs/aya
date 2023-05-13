@@ -6,6 +6,11 @@ publish = false
 
 [dependencies]
 aya-bpf = { path = "../../bpf/aya-bpf" }
+aya-log-ebpf = { path = "../../bpf/aya-log-ebpf" }
+
+[[bin]]
+name = "log"
+path = "src/log.rs"
 
 [[bin]]
 name = "map_test"

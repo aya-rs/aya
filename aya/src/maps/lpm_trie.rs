@@ -1,7 +1,6 @@
 //! A LPM Trie.
 use std::{
-    borrow::Borrow,
-    convert::{AsMut, AsRef},
+    borrow::{Borrow, BorrowMut},
     marker::PhantomData,
 };
 
@@ -99,9 +98,9 @@ impl<K: Pod> Clone for Key<K> {
 // A Pod impl is required as Key struct is a key for a map.
 unsafe impl<K: Pod> Pod for Key<K> {}
 
-impl<T: AsRef<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
+impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     pub(crate) fn new(map: T) -> Result<LpmTrie<T, K, V>, MapError> {
-        let data = map.as_ref();
+        let data = map.borrow();
         check_kv_size::<Key<K>, V>(data)?;
 
         let _ = data.fd_or_err()?;
@@ -115,7 +114,7 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
 
     /// Returns a copy of the value associated with the longest prefix matching key in the LpmTrie.
     pub fn get(&self, key: &Key<K>, flags: u64) -> Result<V, MapError> {
-        let fd = self.inner.as_ref().fd_or_err()?;
+        let fd = self.inner.borrow().fd_or_err()?;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
@@ -134,17 +133,17 @@ impl<T: AsRef<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// An iterator visiting all keys in arbitrary order. The iterator element
     /// type is `Result<Key<K>, MapError>`.
     pub fn keys(&self) -> MapKeys<'_, Key<K>> {
-        MapKeys::new(self.inner.as_ref())
+        MapKeys::new(self.inner.borrow())
     }
 
     /// An iterator visiting all keys matching key. The
     /// iterator item type is `Result<Key<K>, MapError>`.
     pub fn iter_key(&self, key: Key<K>) -> LpmTrieKeys<'_, K> {
-        LpmTrieKeys::new(self.inner.as_ref(), key)
+        LpmTrieKeys::new(self.inner.borrow(), key)
     }
 }
 
-impl<T: AsMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
+impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Inserts a key value pair into the map.
     pub fn insert(
         &mut self,
@@ -152,7 +151,7 @@ impl<T: AsMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         value: impl Borrow<V>,
         flags: u64,
     ) -> Result<(), MapError> {
-        let fd = self.inner.as_mut().fd_or_err()?;
+        let fd = self.inner.borrow().fd_or_err()?;
         bpf_map_update_elem(fd, Some(key), value.borrow(), flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
@@ -167,7 +166,7 @@ impl<T: AsMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     ///
     /// Both the prefix and data must match exactly - this method does not do a longest prefix match.
     pub fn remove(&mut self, key: &Key<K>) -> Result<(), MapError> {
-        let fd = self.inner.as_mut().fd_or_err()?;
+        let fd = self.inner.borrow().fd_or_err()?;
         bpf_map_delete_elem(fd, key)
             .map(|_| ())
             .map_err(|(_, io_error)| MapError::SyscallError {
@@ -177,9 +176,9 @@ impl<T: AsMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     }
 }
 
-impl<T: AsRef<MapData>, K: Pod, V: Pod> IterableMap<Key<K>, V> for LpmTrie<T, K, V> {
+impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<Key<K>, V> for LpmTrie<T, K, V> {
     fn map(&self) -> &MapData {
-        self.inner.as_ref()
+        self.inner.borrow()
     }
 
     fn get(&self, key: &Key<K>) -> Result<V, MapError> {

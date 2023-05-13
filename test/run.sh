@@ -197,7 +197,7 @@ EOF
     exec_vm 'curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- \
         -y --profile minimal --default-toolchain nightly --component rust-src --component clippy'
     exec_vm 'echo source ~/.cargo/env >> ~/.bashrc'
-    exec_vm cargo install bpf-linker --no-default-features --features system-llvm
+    exec_vm cargo install bpf-linker --no-default-features
 }
 
 scp_vm() {

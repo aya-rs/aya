@@ -37,7 +37,6 @@
 //! versa. Because of that, all map values must be plain old data and therefore
 //! implement the [Pod] trait.
 use std::{
-    convert::{AsMut, AsRef},
     ffi::CString,
     fmt, io,
     marker::PhantomData,
@@ -479,18 +478,6 @@ pub struct MapData {
     pub(crate) btf_fd: Option<RawFd>,
     /// Indicates if this map has been pinned to bpffs
     pub pinned: bool,
-}
-
-impl AsRef<MapData> for MapData {
-    fn as_ref(&self) -> &MapData {
-        self
-    }
-}
-
-impl AsMut<MapData> for MapData {
-    fn as_mut(&mut self) -> &mut MapData {
-        self
-    }
 }
 
 impl MapData {

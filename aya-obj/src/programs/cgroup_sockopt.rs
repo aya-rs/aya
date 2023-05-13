@@ -1,10 +1,10 @@
 //! Cgroup socket option programs.
 use alloc::{borrow::ToOwned, string::String};
 
-use crate::{
-    generated::bpf_attach_type,
-    thiserror::{self, Error},
-};
+use crate::generated::bpf_attach_type;
+
+#[cfg(not(feature = "std"))]
+use crate::std;
 
 /// Defines where to attach a `CgroupSockopt` program.
 #[derive(Copy, Clone, Debug)]
@@ -24,7 +24,7 @@ impl From<CgroupSockoptAttachType> for bpf_attach_type {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 #[error("{0} is not a valid attach type for a CGROUP_SOCKOPT program")]
 pub(crate) struct InvalidAttachType(String);
 

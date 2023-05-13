@@ -63,16 +63,17 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(clippy::all, missing_docs)]
 #![allow(clippy::missing_safety_doc, clippy::len_without_is_empty)]
-#![cfg_attr(feature = "no_std", feature(error_in_core))]
-
-#[cfg(feature = "no_std")]
-pub(crate) use thiserror_core as thiserror;
-#[cfg(not(feature = "no_std"))]
-pub(crate) use thiserror_std as thiserror;
 
 extern crate alloc;
-#[cfg(not(feature = "no_std"))]
+#[cfg(feature = "std")]
 extern crate std;
+#[cfg(not(feature = "std"))]
+mod std {
+    pub mod error {
+        pub use core_error::Error;
+    }
+    pub use core::*;
+}
 
 pub mod btf;
 pub mod generated;

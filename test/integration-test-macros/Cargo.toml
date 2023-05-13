@@ -6,7 +6,8 @@ publish = false
 
 [dependencies]
 quote = "1"
-syn = {version = "1.0", features = ["full"]}
+proc-macro2 = "1.0"
+syn = {version = "2.0", features = ["full"]}
 
 [lib]
 proc-macro = true

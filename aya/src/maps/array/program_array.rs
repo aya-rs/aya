@@ -1,7 +1,7 @@
 //! An array of eBPF program file descriptors used as a jump table.
 
 use std::{
-    convert::{AsMut, AsRef},
+    borrow::{Borrow, BorrowMut},
     os::unix::prelude::{AsRawFd, RawFd},
 };
 
@@ -51,9 +51,9 @@ pub struct ProgramArray<T> {
     inner: T,
 }
 
-impl<T: AsRef<MapData>> ProgramArray<T> {
+impl<T: Borrow<MapData>> ProgramArray<T> {
     pub(crate) fn new(map: T) -> Result<ProgramArray<T>, MapError> {
-        let data = map.as_ref();
+        let data = map.borrow();
         check_kv_size::<u32, RawFd>(data)?;
 
         let _fd = data.fd_or_err()?;
@@ -64,17 +64,17 @@ impl<T: AsRef<MapData>> ProgramArray<T> {
     /// An iterator over the indices of the array that point to a program. The iterator item type
     /// is `Result<u32, MapError>`.
     pub fn indices(&self) -> MapKeys<'_, u32> {
-        MapKeys::new(self.inner.as_ref())
+        MapKeys::new(self.inner.borrow())
     }
 }
 
-impl<T: AsMut<MapData>> ProgramArray<T> {
+impl<T: BorrowMut<MapData>> ProgramArray<T> {
     /// Sets the target program file descriptor for the given index in the jump table.
     ///
     /// When an eBPF program calls `bpf_tail_call(ctx, prog_array, index)`, control
     /// flow will jump to `program`.
     pub fn set(&mut self, index: u32, program: ProgramFd, flags: u64) -> Result<(), MapError> {
-        let data = self.inner.as_mut();
+        let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd_or_err()?;
         let prog_fd = program.as_raw_fd();
@@ -93,9 +93,9 @@ impl<T: AsMut<MapData>> ProgramArray<T> {
     /// Calling `bpf_tail_call(ctx, prog_array, index)` on an index that has been cleared returns an
     /// error.
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
-        let data = self.inner.as_mut();
+        let data = self.inner.borrow_mut();
         check_bounds(data, *index)?;
-        let fd = self.inner.as_mut().fd_or_err()?;
+        let fd = self.inner.borrow_mut().fd_or_err()?;
 
         bpf_map_delete_elem(fd, index)
             .map(|_| ())

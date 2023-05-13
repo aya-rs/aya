@@ -8,7 +8,7 @@ edition = "2021"
 aya-tool = { path = "../aya-tool" }
 clap = { version = "4", features = ["derive"] }
 anyhow = "1"
-syn = "1"
+syn = "2"
 quote = "1"
 proc-macro2 = "1"
 indoc = "2.0"

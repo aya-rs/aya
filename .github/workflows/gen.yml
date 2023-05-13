@@ -7,9 +7,9 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: libbpf/libbpf
           path: libbpf
@@ -18,12 +18,10 @@ jobs:
         working-directory: libbpf
         run: echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: nightly
           components: rustfmt, clippy
-          override: true
 
       - uses: Swatinem/rust-cache@v1
 

@@ -9,12 +9,7 @@ repository = "https://github.com/aya-rs/aya-log"
 documentation = "https://docs.rs/aya-log"
 edition = "2021"
 
-[features]
-default = []
-userspace = [ "aya" ]
-
 [dependencies]
-aya = { path = "../aya", version = "0.11.0", optional=true }
 num_enum = { version = "0.6", default-features = false }
 
 [lib]

@@ -17,13 +17,15 @@ use crate::{
         bpf_core_relo, bpf_core_relo_kind::*, bpf_insn, BPF_ALU, BPF_ALU64, BPF_B, BPF_DW, BPF_H,
         BPF_K, BPF_LD, BPF_LDX, BPF_ST, BPF_STX, BPF_W, BTF_INT_SIGNED,
     },
-    thiserror::{self, Error},
     util::HashMap,
     Object, Program, ProgramSection,
 };
 
+#[cfg(not(feature = "std"))]
+use crate::std;
+
 /// The error type returned by [`Object::relocate_btf`].
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 #[error("error relocating `{section}`")]
 pub struct BtfRelocationError {
     /// The function name
@@ -34,9 +36,9 @@ pub struct BtfRelocationError {
 }
 
 /// Relocation failures
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 enum RelocationError {
-    #[cfg(not(feature = "no_std"))]
+    #[cfg(feature = "std")]
     /// I/O error
     #[error(transparent)]
     IOError(#[from] std::io::Error),
@@ -853,7 +855,7 @@ impl ComputedRelocation {
         let instructions = &mut program.function.instructions;
         let num_instructions = instructions.len();
         let ins_index = rel.ins_offset / mem::size_of::<bpf_insn>();
-        let mut ins =
+        let ins =
             instructions
                 .get_mut(ins_index)
                 .ok_or(RelocationError::InvalidInstructionIndex {
@@ -932,7 +934,7 @@ impl ComputedRelocation {
             }
             BPF_LD => {
                 ins.imm = target_value as i32;
-                let mut next_ins = instructions.get_mut(ins_index + 1).ok_or(
+                let next_ins = instructions.get_mut(ins_index + 1).ok_or(
                     RelocationError::InvalidInstructionIndex {
                         index: ins_index + 1,
                         num_instructions,
