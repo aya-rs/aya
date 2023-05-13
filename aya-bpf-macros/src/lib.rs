@@ -121,8 +121,8 @@ pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// Marks a function as a [`CgroupSockAddr`] eBPF program. 
 ///
 /// [`CgroupSockAddr`] programs can be used to inspect or modify socket addresses passed to
-/// various syscalls within a [cgroup]. They can be attached to a number of different
-/// places as described in [`CgroupSockAddrAttachType`].
+/// various syscalls within a [cgroup]. The `attach_type` argument specifies a place to attach
+/// the eBPF program to. See [`CgroupSockAddrAttachType`] for more details.
 ///
 /// [cgroup]: https://man7.org/linux/man-pages/man7/cgroups.7.html
 /// [`CgroupSockAddrAttachType`]: ../aya/programs/cgroup_sock_addr/enum.CgroupSockAddrAttachType.html
