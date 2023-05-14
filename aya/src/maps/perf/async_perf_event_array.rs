@@ -1,5 +1,6 @@
 use std::{
     borrow::{Borrow, BorrowMut},
+    os::fd::AsFd,
     path::Path,
 };
 
@@ -115,6 +116,17 @@ impl<T: BorrowMut<MapData>> AsyncPerfEventArray<T> {
     /// is deleted. All parent directories in the given `path` must already exist.
     pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         self.perf_map.pin(path)
+    }
+
+    /// Inserts a perf_event file descriptor at the given index.
+    ///
+    /// ## Errors
+    ///
+    /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
+    /// if `bpf_map_update_elem` fails.
+    pub fn set<FD: AsFd>(&mut self, index: u32, value: &FD) -> Result<(), MapError> {
+        let Self { perf_map } = self;
+        perf_map.set(index, value)
     }
 }
 

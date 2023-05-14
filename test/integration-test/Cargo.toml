@@ -10,6 +10,7 @@ assert_matches = { workspace = true }
 aya = { workspace = true }
 aya-log = { workspace = true }
 aya-obj = { workspace = true }
+bytes = { workspace = true }
 env_logger = { workspace = true }
 epoll = { workspace = true }
 futures = { workspace = true, features = ["std"] }
