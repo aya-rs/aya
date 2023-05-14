@@ -8,14 +8,16 @@ use std::{
     sync::Arc,
 };
 
+use aya_obj::generated::BPF_ANY;
 use bytes::BytesMut;
 
 use crate::{
     maps::{
+        check_bounds,
         perf::{Events, PerfBuffer, PerfBufferError},
         MapData, MapError,
     },
-    sys::bpf_map_update_elem,
+    sys::{bpf_map_update_elem, SyscallError},
     util::page_size,
 };
 
@@ -196,5 +198,28 @@ impl<T: BorrowMut<MapData>> PerfEventArray<T> {
             buf,
             _map: self.map.clone(),
         })
+    }
+
+    /// Inserts a perf_event file descriptor at the given index.
+    ///
+    /// ## Errors
+    ///
+    /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
+    /// if `bpf_map_update_elem` fails.
+    pub fn set<FD: AsFd>(&mut self, index: u32, value: &FD) -> Result<(), MapError> {
+        let data: &MapData = self.map.deref().borrow();
+        check_bounds(data, index)?;
+        let fd = data.fd().as_fd();
+
+        // only BPF_ANY or BPF_EXIST are allowed, and for arrays they do the same thing (the elements always exist)
+        let flags = BPF_ANY as u64;
+        let value = value.as_fd().as_raw_fd();
+        bpf_map_update_elem(fd, Some(&index), &value, flags).map_err(|(_, io_error)| {
+            MapError::SyscallError(SyscallError {
+                call: "bpf_map_update_elem",
+                io_error,
+            })
+        })?;
+        Ok(())
     }
 }
