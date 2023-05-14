@@ -1,4 +1,4 @@
-use std::borrow::{Borrow, BorrowMut};
+use std::{borrow::{Borrow, BorrowMut}, os::fd::AsFd};
 
 // See https://doc.rust-lang.org/cargo/reference/features.html#mutually-exclusive-features.
 //
@@ -104,6 +104,17 @@ impl<T: BorrowMut<MapData>> AsyncPerfEventArray<T> {
         #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
         let buf = Async::new(buf)?;
         Ok(AsyncPerfEventArrayBuffer { buf })
+    }
+    
+    /// Inserts a perf_event file descriptor at the given index.
+    ///
+    /// ## Errors
+    ///
+    /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
+    /// if `bpf_map_update_elem` fails.
+    pub fn set<FD: AsFd>(&mut self, index: u32, value: &FD) -> Result<(), MapError> {
+        let Self { perf_map } = self;
+        perf_map.set(index, value)
     }
 }
 
