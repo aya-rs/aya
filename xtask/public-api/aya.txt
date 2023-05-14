@@ -388,6 +388,7 @@ pub fn aya::maps::perf::PerfBufferError::from(t: T) -> T
 pub struct aya::maps::perf::AsyncPerfEventArray<T>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::AsyncPerfEventArray<T>
 pub fn aya::maps::perf::AsyncPerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::AsyncPerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
+pub fn aya::maps::perf::AsyncPerfEventArray<T>::set<FD: std::os::fd::owned::AsFd>(&mut self, index: u32, value: &FD) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -476,6 +477,7 @@ pub fn aya::maps::perf::Events::from(t: T) -> T
 pub struct aya::maps::perf::PerfEventArray<T>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::PerfEventArray<T>
 pub fn aya::maps::perf::PerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::PerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
+pub fn aya::maps::perf::PerfEventArray<T>::set<FD: std::os::fd::owned::AsFd>(&mut self, index: u32, value: &FD) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::PerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::PerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1404,6 +1406,7 @@ pub fn aya::maps::array::Array<T, V>::from(t: T) -> T
 pub struct aya::maps::AsyncPerfEventArray<T>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::AsyncPerfEventArray<T>
 pub fn aya::maps::perf::AsyncPerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::AsyncPerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
+pub fn aya::maps::perf::AsyncPerfEventArray<T>::set<FD: std::os::fd::owned::AsFd>(&mut self, index: u32, value: &FD) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1919,6 +1922,7 @@ pub fn aya::maps::PerCpuValues<T>::from(t: T) -> T
 pub struct aya::maps::PerfEventArray<T>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::PerfEventArray<T>
 pub fn aya::maps::perf::PerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::PerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
+pub fn aya::maps::perf::PerfEventArray<T>::set<FD: std::os::fd::owned::AsFd>(&mut self, index: u32, value: &FD) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::PerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::PerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -4269,6 +4273,38 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::SamplePolicy w
 pub fn aya::programs::perf_event::SamplePolicy::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::perf_event::SamplePolicy
 pub fn aya::programs::perf_event::SamplePolicy::from(t: T) -> T
+pub enum aya::programs::perf_event::WakeupPolicy
+pub aya::programs::perf_event::WakeupPolicy::Events(u32)
+pub aya::programs::perf_event::WakeupPolicy::Watermark(u32)
+impl core::clone::Clone for aya::programs::perf_event::WakeupPolicy
+pub fn aya::programs::perf_event::WakeupPolicy::clone(&self) -> aya::programs::perf_event::WakeupPolicy
+impl core::fmt::Debug for aya::programs::perf_event::WakeupPolicy
+pub fn aya::programs::perf_event::WakeupPolicy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya::programs::perf_event::WakeupPolicy
+impl core::marker::Sync for aya::programs::perf_event::WakeupPolicy
+impl core::marker::Unpin for aya::programs::perf_event::WakeupPolicy
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::WakeupPolicy
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::WakeupPolicy
+impl<T, U> core::convert::Into<U> for aya::programs::perf_event::WakeupPolicy where U: core::convert::From<T>
+pub fn aya::programs::perf_event::WakeupPolicy::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_event::WakeupPolicy where U: core::convert::Into<T>
+pub type aya::programs::perf_event::WakeupPolicy::Error = core::convert::Infallible
+pub fn aya::programs::perf_event::WakeupPolicy::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::perf_event::WakeupPolicy where U: core::convert::TryFrom<T>
+pub type aya::programs::perf_event::WakeupPolicy::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::perf_event::WakeupPolicy::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::programs::perf_event::WakeupPolicy where T: core::clone::Clone
+pub type aya::programs::perf_event::WakeupPolicy::Owned = T
+pub fn aya::programs::perf_event::WakeupPolicy::clone_into(&self, target: &mut T)
+pub fn aya::programs::perf_event::WakeupPolicy::to_owned(&self) -> T
+impl<T> core::any::Any for aya::programs::perf_event::WakeupPolicy where T: 'static + core::marker::Sized
+pub fn aya::programs::perf_event::WakeupPolicy::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::perf_event::WakeupPolicy where T: core::marker::Sized
+pub fn aya::programs::perf_event::WakeupPolicy::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::WakeupPolicy where T: core::marker::Sized
+pub fn aya::programs::perf_event::WakeupPolicy::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::perf_event::WakeupPolicy
+pub fn aya::programs::perf_event::WakeupPolicy::from(t: T) -> T
 pub struct aya::programs::perf_event::PerfEvent
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::attach(&mut self, perf_type: aya::programs::perf_event::PerfTypeId, config: u64, scope: aya::programs::perf_event::PerfEventScope, sample_policy: aya::programs::perf_event::SamplePolicy) -> core::result::Result<aya::programs::perf_event::PerfEventLinkId, aya::programs::ProgramError>
@@ -4384,6 +4420,37 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::PerfEventLinkI
 pub fn aya::programs::perf_event::PerfEventLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLinkId::from(t: T) -> T
+pub struct aya::programs::perf_event::SampleType(_)
+impl core::clone::Clone for aya::programs::perf_event::SampleType
+pub fn aya::programs::perf_event::SampleType::clone(&self) -> aya::programs::perf_event::SampleType
+impl core::fmt::Debug for aya::programs::perf_event::SampleType
+pub fn aya::programs::perf_event::SampleType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya::programs::perf_event::SampleType
+impl core::marker::Sync for aya::programs::perf_event::SampleType
+impl core::marker::Unpin for aya::programs::perf_event::SampleType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::SampleType
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::SampleType
+impl<T, U> core::convert::Into<U> for aya::programs::perf_event::SampleType where U: core::convert::From<T>
+pub fn aya::programs::perf_event::SampleType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_event::SampleType where U: core::convert::Into<T>
+pub type aya::programs::perf_event::SampleType::Error = core::convert::Infallible
+pub fn aya::programs::perf_event::SampleType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::perf_event::SampleType where U: core::convert::TryFrom<T>
+pub type aya::programs::perf_event::SampleType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::perf_event::SampleType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::programs::perf_event::SampleType where T: core::clone::Clone
+pub type aya::programs::perf_event::SampleType::Owned = T
+pub fn aya::programs::perf_event::SampleType::clone_into(&self, target: &mut T)
+pub fn aya::programs::perf_event::SampleType::to_owned(&self) -> T
+impl<T> core::any::Any for aya::programs::perf_event::SampleType where T: 'static + core::marker::Sized
+pub fn aya::programs::perf_event::SampleType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::perf_event::SampleType where T: core::marker::Sized
+pub fn aya::programs::perf_event::SampleType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::SampleType where T: core::marker::Sized
+pub fn aya::programs::perf_event::SampleType::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::perf_event::SampleType
+pub fn aya::programs::perf_event::SampleType::from(t: T) -> T
+pub fn aya::programs::perf_event::perf_event_open(perf_type: u32, config: u64, scope: aya::programs::perf_event::PerfEventScope, sampling: core::option::Option<(aya::programs::perf_event::SamplePolicy, aya::programs::perf_event::SampleType)>, wakeup: core::option::Option<aya::programs::perf_event::WakeupPolicy>, flags: u32) -> core::result::Result<std::os::fd::owned::OwnedFd, aya::programs::ProgramError>
 pub mod aya::programs::tc
 pub enum aya::programs::tc::TcAttachType
 pub aya::programs::tc::TcAttachType::Custom(u32)

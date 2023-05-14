@@ -1,6 +1,6 @@
 //! Perf event programs.
 
-use std::os::fd::AsFd as _;
+use std::os::fd::{AsFd as _, OwnedFd};
 
 pub use crate::generated::{
     perf_hw_cache_id, perf_hw_cache_op_id, perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids,
@@ -20,10 +20,10 @@ use crate::{
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
         FdLink, LinkError, ProgramData, ProgramError,
     },
-    sys::{bpf_link_get_info_by_fd, perf_event_open, SyscallError},
+    sys::{self, bpf_link_get_info_by_fd, SyscallError},
 };
 
-/// The type of perf event
+/// The type of perf event.
 #[repr(u32)]
 #[derive(Debug, Clone)]
 pub enum PerfTypeId {
@@ -41,7 +41,7 @@ pub enum PerfTypeId {
     Breakpoint = PERF_TYPE_BREAKPOINT as u32,
 }
 
-/// Sample Policy
+/// Sample Policy.
 #[derive(Debug, Clone)]
 pub enum SamplePolicy {
     /// Period
@@ -50,30 +50,44 @@ pub enum SamplePolicy {
     Frequency(u64),
 }
 
-/// The scope of a PerfEvent
+/// A flag whose bits indicate the fields to include in the event samples.
+#[derive(Debug, Clone)]
+pub struct SampleType(u64);
+
+/// "Wake up" overflow notification policy.
+/// Overflows are generated only by sampling events.
+#[derive(Debug, Clone)]
+pub enum WakeupPolicy {
+    /// Wake up after n events.
+    Events(u32),
+    /// Wake up after n bytes.
+    Watermark(u32),
+}
+
+/// The scope of a PerfEvent.
 #[derive(Debug, Clone)]
 #[allow(clippy::enum_variant_names)]
 pub enum PerfEventScope {
-    /// Calling process, any cpu
+    /// Calling process, any cpu.
     CallingProcessAnyCpu,
-    /// calling process, one cpu
+    /// Calling process, one cpu.
     CallingProcessOneCpu {
         /// cpu id
         cpu: u32,
     },
-    /// one process, any cpu
+    /// One process, any cpu.
     OneProcessAnyCpu {
         /// process id
         pid: u32,
     },
-    /// one process, one cpu
+    /// One process, one cpu.
     OneProcessOneCpu {
         /// cpu id
         cpu: u32,
         /// process id
         pid: u32,
     },
-    /// all processes, one cpu
+    /// All processes, one cpu.
     AllProcessesOneCpu {
         /// cpu id
         cpu: u32,
@@ -147,33 +161,11 @@ impl PerfEvent {
     ) -> Result<PerfEventLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let (sample_period, sample_frequency) = match sample_policy {
-            SamplePolicy::Period(period) => (period, None),
-            SamplePolicy::Frequency(frequency) => (0, Some(frequency)),
-        };
-        let (pid, cpu) = match scope {
-            PerfEventScope::CallingProcessAnyCpu => (0, -1),
-            PerfEventScope::CallingProcessOneCpu { cpu } => (0, cpu as i32),
-            PerfEventScope::OneProcessAnyCpu { pid } => (pid as i32, -1),
-            PerfEventScope::OneProcessOneCpu { cpu, pid } => (pid as i32, cpu as i32),
-            PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
-        };
-        let fd = perf_event_open(
-            perf_type as u32,
-            config,
-            pid,
-            cpu,
-            sample_period,
-            sample_frequency,
-            false,
-            0,
-        )
-        .map_err(|(_code, io_error)| SyscallError {
-            call: "perf_event_open",
-            io_error,
-        })?;
 
-        let link = perf_attach(prog_fd, fd)?;
+        let sampling = Some((sample_policy, SampleType(PERF_TYPE_RAW as u64)));
+        let event_fd = perf_event_open(perf_type as u32, config, scope, sampling, None, 0)?;
+
+        let link = perf_attach(prog_fd, event_fd)?;
         self.data.links.insert(PerfEventLink::new(link))
     }
 
@@ -225,3 +217,65 @@ define_link_wrapper!(
     PerfLinkInner,
     PerfLinkIdInner
 );
+
+/// Performs a call to `perf_event_open` and returns the event's file descriptor.
+///
+/// # Arguments
+///
+/// * `perf_type` - the type of event, see [`crate::generated::perf_type_id`] for a list of types. Note that this list is non-exhaustive, because PMUs (Performance Monitoring Units) can be added to the system. Their ids can be read from the sysfs (see the kernel documentation on perf_event_open).
+/// * `config` - the event that we want to open
+/// * `scope` - which process and cpu to monitor (logical cpu, not physical socket)
+/// * `sampling` - if not None, enables the sampling mode with the given parameters
+/// * `wakeup` - if not None, sets up the wake-up for the overflow notifications
+/// * `flags` - various flags combined with a binary OR (for ex. `FLAG_A | FLAG_B`), zero means no flag
+pub fn perf_event_open(
+    perf_type: u32,
+    config: u64,
+    scope: PerfEventScope,
+    sampling: Option<(SamplePolicy, SampleType)>,
+    wakeup: Option<WakeupPolicy>,
+    flags: u32,
+) -> Result<OwnedFd, ProgramError> {
+    let mut attr = sys::init_perf_event_attr();
+
+    // Fill in the attributes
+    attr.type_ = perf_type;
+    attr.config = config;
+    match sampling {
+        Some((SamplePolicy::Frequency(f), SampleType(t))) => {
+            attr.set_freq(1);
+            attr.__bindgen_anon_1.sample_freq = f;
+            attr.sample_type = t;
+        }
+        Some((SamplePolicy::Period(p), SampleType(t))) => {
+            attr.__bindgen_anon_1.sample_period = p;
+            attr.sample_type = t;
+        }
+        None => (),
+    };
+    match wakeup {
+        Some(WakeupPolicy::Events(n)) => {
+            attr.__bindgen_anon_2.wakeup_events = n;
+        }
+        Some(WakeupPolicy::Watermark(n)) => {
+            attr.set_watermark(1);
+            attr.__bindgen_anon_2.wakeup_watermark = n;
+        }
+        None => (),
+    };
+
+    let (pid, cpu) = match scope {
+        PerfEventScope::CallingProcessAnyCpu => (0, -1),
+        PerfEventScope::CallingProcessOneCpu { cpu } => (0, cpu as i32),
+        PerfEventScope::OneProcessAnyCpu { pid } => (pid as i32, -1),
+        PerfEventScope::OneProcessOneCpu { cpu, pid } => (pid as i32, cpu as i32),
+        PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
+    };
+
+    sys::perf_event_sys(attr, pid, cpu, flags).map_err(|(_, io_error)| {
+        ProgramError::SyscallError(SyscallError {
+            call: "perf_event_open",
+            io_error,
+        })
+    })
+}
