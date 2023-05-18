@@ -43,7 +43,6 @@ macro_rules! impl_formatter_for_types {
     };
 }
 
-// Any value impl `ToString`
 pub trait DefaultFormatter {}
 impl_formatter_for_types!(
     DefaultFormatter: {
@@ -61,23 +60,19 @@ pub trait LowerHexFormatter {}
 impl_formatter_for_types!(
     LowerHexFormatter: {
         i8, i16, i32, i64, isize,
-        u8, u16, u32, u64, usize
+        u8, u16, u32, u64, usize,
+        &[u8]
     }
 );
-
-pub trait LowerHexDebugFormatter {}
-impl LowerHexDebugFormatter for &[u8] {}
 
 pub trait UpperHexFormatter {}
 impl_formatter_for_types!(
     UpperHexFormatter: {
         i8, i16, i32, i64, isize,
-        u8, u16, u32, u64, usize
+        u8, u16, u32, u64, usize,
+        &[u8]
     }
 );
-
-pub trait UpperHexDebugFormatter {}
-impl UpperHexDebugFormatter for &[u8] {}
 
 pub trait Ipv4Formatter {}
 impl Ipv4Formatter for u32 {}
@@ -97,11 +92,7 @@ pub fn check_impl_default<T: DefaultFormatter>(_v: T) {}
 #[inline(always)]
 pub fn check_impl_lower_hex<T: LowerHexFormatter>(_v: T) {}
 #[inline(always)]
-pub fn check_impl_lower_hex_debug<T: LowerHexDebugFormatter>(_v: T) {}
-#[inline(always)]
 pub fn check_impl_upper_hex<T: UpperHexFormatter>(_v: T) {}
-#[inline(always)]
-pub fn check_impl_upper_hex_debug<T: UpperHexDebugFormatter>(_v: T) {}
 #[inline(always)]
 pub fn check_impl_ipv4<T: Ipv4Formatter>(_v: T) {}
 #[inline(always)]
