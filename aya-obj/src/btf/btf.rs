@@ -667,13 +667,58 @@ impl BtfExt {
         endianness: Endianness,
         btf: &Btf,
     ) -> Result<BtfExt, BtfError> {
-        // Safety: btf_ext_header is POD so read_unaligned is safe
+        #[repr(C)]
+        #[derive(Debug, Copy, Clone)]
+        struct MinimalHeader {
+            pub magic: u16,
+            pub version: u8,
+            pub flags: u8,
+            pub hdr_len: i32,
+        }
+
+        if data.len() < std::mem::size_of::<MinimalHeader>() {
+            return Err(BtfError::InvalidHeader);
+        }
+
+        // Safety: btf_ext_header and MinimalHeader are POD so read_unaligned is safe
         let header = unsafe {
-            ptr::read_unaligned::<btf_ext_header>(data.as_ptr() as *const btf_ext_header)
+            // first find the actual size of the header by converting into the minimal valid header
+            let minimal_header =
+                ptr::read_unaligned::<MinimalHeader>(data.as_ptr() as *const MinimalHeader);
+
+            // prevent invalid input from causing UB
+            if data.len() < minimal_header.hdr_len as usize {
+                return Err(BtfError::InvalidHeader);
+            }
+
+            // now create our full-fledge header; but start with it
+            // zeroed out so unavailable fields stay as zero on older
+            // BTF.ext sections
+            let mut header: btf_ext_header = std::mem::MaybeUninit::zeroed().assume_init();
+
+            // now copy `data` onto our `header` but only up to
+            // hdr_len bytes
+            let header_as_slice: &mut [u8] = std::slice::from_raw_parts_mut(
+                &mut header as *mut btf_ext_header as *mut u8,
+                minimal_header.hdr_len as usize,
+            );
+            header_as_slice.copy_from_slice(&data[0..minimal_header.hdr_len as usize]);
+            header
         };
 
+        let btf_ext_header {
+            hdr_len,
+            func_info_off,
+            func_info_len,
+            line_info_off,
+            line_info_len,
+            core_relo_off,
+            core_relo_len,
+            ..
+        } = header;
+
         let rec_size = |offset, len| {
-            let offset = mem::size_of::<btf_ext_header>() + offset as usize;
+            let offset = hdr_len as usize + offset as usize;
             let len = len as usize;
             // check that there's at least enough space for the `rec_size` field
             if (len > 0 && len < 4) || offset + len > data.len() {
@@ -694,16 +739,6 @@ impl BtfExt {
                 0
             })
         };
-
-        let btf_ext_header {
-            func_info_off,
-            func_info_len,
-            line_info_off,
-            line_info_len,
-            core_relo_off,
-            core_relo_len,
-            ..
-        } = header;
 
         let mut ext = BtfExt {
             header,
