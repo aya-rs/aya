@@ -210,6 +210,11 @@ impl Btf {
         }
     }
 
+    pub(crate) fn is_empty(&self) -> bool {
+        // the first one is awlays BtfType::Unknown
+        self.types.types.len() < 2
+    }
+
     pub(crate) fn types(&self) -> impl Iterator<Item = &BtfType> {
         self.types.types.iter()
     }
@@ -628,7 +633,10 @@ impl Object {
         &mut self,
         features: &BtfFeatures,
     ) -> Result<Option<&Btf>, BtfError> {
-        if let Some(ref mut obj_btf) = self.btf {
+        if let Some(ref mut obj_btf) = &mut self.btf {
+            if obj_btf.is_empty() {
+                return Ok(None);
+            }
             // fixup btf
             obj_btf.fixup_and_sanitize(
                 &self.section_sizes,
