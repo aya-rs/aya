@@ -137,7 +137,7 @@ pub struct AsyncPerfEventArrayBuffer<T> {
     async_fd: Async<RawFd>,
 }
 
-#[cfg(any(feature = "async_tokio"))]
+#[cfg(feature = "async_tokio")]
 impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArrayBuffer<T> {
     /// Reads events from the buffer.
     ///
