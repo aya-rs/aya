@@ -681,7 +681,7 @@ impl BtfExt {
             pub magic: u16,
             pub version: u8,
             pub flags: u8,
-            pub hdr_len: i32,
+            pub hdr_len: u32,
         }
 
         if data.len() < std::mem::size_of::<MinimalHeader>() {
