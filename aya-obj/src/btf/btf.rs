@@ -694,10 +694,17 @@ impl BtfExt {
             let minimal_header =
                 ptr::read_unaligned::<MinimalHeader>(data.as_ptr() as *const MinimalHeader);
 
+            let len_to_read = minimal_header.hdr_len as usize;
+
             // prevent invalid input from causing UB
-            if data.len() < minimal_header.hdr_len as usize {
+            if data.len() < len_to_read {
                 return Err(BtfError::InvalidHeader);
             }
+
+            // forwards compatibility: if newer headers are bigger
+            // than the pre-generated btf_ext_header we should only
+            // read up to btf_ext_header
+            let len_to_read = len_to_read.min(std::mem::size_of::<btf_ext_header>());
 
             // now create our full-fledge header; but start with it
             // zeroed out so unavailable fields stay as zero on older
@@ -708,9 +715,9 @@ impl BtfExt {
             // hdr_len bytes
             let header_as_slice: &mut [u8] = std::slice::from_raw_parts_mut(
                 &mut header as *mut btf_ext_header as *mut u8,
-                minimal_header.hdr_len as usize,
+                len_to_read,
             );
-            header_as_slice.copy_from_slice(&data[0..minimal_header.hdr_len as usize]);
+            header_as_slice.copy_from_slice(&data[0..len_to_read]);
             header
         };
 
