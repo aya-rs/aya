@@ -1083,6 +1083,21 @@ mod tests {
     }
 
     #[test]
+    fn parsing_older_ext_data() {
+        let btf_data = [
+            159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+        ];
+        let btf_ext_data = [
+            159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 8, 0, 0,
+            0, 16, 0, 0, 0,
+        ];
+        let btf = Btf::parse(&btf_data, Endianness::default()).unwrap();
+        let btf_ext = BtfExt::parse(&btf_ext_data, Endianness::default(), &btf).unwrap();
+        assert_eq!(btf_ext.func_info_rec_size(), 8);
+        assert_eq!(btf_ext.line_info_rec_size(), 16);
+    }
+
+    #[test]
     fn test_write_btf() {
         let mut btf = Btf::new();
         let name_offset = btf.add_string("int".to_string());

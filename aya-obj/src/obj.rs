@@ -1635,6 +1635,31 @@ mod tests {
     }
 
     #[test]
+    fn sanitizes_empty_btf_files_to_none() {
+        let mut obj = fake_obj();
+        obj.parse_section(fake_section(
+            BpfSectionKind::Btf,
+            ".BTF",
+            &[
+                159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+            ],
+        ))
+        .unwrap();
+        obj.parse_section(fake_section(
+            BpfSectionKind::BtfExt,
+            ".BTF.ext",
+            &[
+                159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 8, 0,
+                0, 0, 16, 0, 0, 0,
+            ],
+        ))
+        .unwrap();
+
+        let btf = obj.fixup_and_sanitize_btf(&BtfFeatures::default()).unwrap();
+        assert!(btf.is_none());
+    }
+
+    #[test]
     fn test_parse_program_error() {
         let obj = fake_obj();
 
