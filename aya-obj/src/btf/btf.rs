@@ -688,11 +688,12 @@ impl BtfExt {
             return Err(BtfError::InvalidHeader);
         }
 
-        // Safety: btf_ext_header and MinimalHeader are POD so read_unaligned is safe
-        let header = unsafe {
+        let header = {
             // first find the actual size of the header by converting into the minimal valid header
-            let minimal_header =
-                ptr::read_unaligned::<MinimalHeader>(data.as_ptr() as *const MinimalHeader);
+            // Safety: MinimalHeader is POD so read_unaligned is safe
+            let minimal_header = unsafe {
+                ptr::read_unaligned::<MinimalHeader>(data.as_ptr() as *const MinimalHeader)
+            };
 
             let len_to_read = minimal_header.hdr_len as usize;
 
@@ -709,14 +710,22 @@ impl BtfExt {
             // now create our full-fledge header; but start with it
             // zeroed out so unavailable fields stay as zero on older
             // BTF.ext sections
-            let mut header: btf_ext_header = std::mem::MaybeUninit::zeroed().assume_init();
+            // Safety: btf_ext_header is POD so a zero'd out struct is safe
+            let mut header: btf_ext_header =
+                unsafe { std::mem::MaybeUninit::zeroed().assume_init() };
 
             // now copy `data` onto our `header` but only up to
             // hdr_len bytes
-            let header_as_slice: &mut [u8] = std::slice::from_raw_parts_mut(
-                &mut header as *mut btf_ext_header as *mut u8,
-                len_to_read,
-            );
+
+            // Safety: len_to_read is at most btf_ext_header's size
+            // and btf_ext_header is a POD so converting it to a slice
+            // of bytes is afe
+            let header_as_slice: &mut [u8] = unsafe {
+                std::slice::from_raw_parts_mut(
+                    &mut header as *mut btf_ext_header as *mut u8,
+                    len_to_read,
+                )
+            };
             header_as_slice.copy_from_slice(&data[0..len_to_read]);
             header
         };
