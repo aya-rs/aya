@@ -710,24 +710,12 @@ impl BtfExt {
             // now create our full-fledge header; but start with it
             // zeroed out so unavailable fields stay as zero on older
             // BTF.ext sections
-            // Safety: btf_ext_header is POD so a zero'd out struct is safe
-            let mut header: btf_ext_header =
-                unsafe { std::mem::MaybeUninit::zeroed().assume_init() };
-
-            // now copy `data` onto our `header` but only up to
-            // hdr_len bytes
-
-            // Safety: len_to_read is at most btf_ext_header's size
-            // and btf_ext_header is a POD so converting it to a slice
-            // of bytes is afe
-            let header_as_slice: &mut [u8] = unsafe {
-                std::slice::from_raw_parts_mut(
-                    &mut header as *mut btf_ext_header as *mut u8,
-                    len_to_read,
-                )
-            };
-            header_as_slice.copy_from_slice(&data[0..len_to_read]);
-            header
+            let mut header = std::mem::MaybeUninit::<btf_ext_header>::zeroed();
+            // Safety: we have checked that len_to_read is less than
+            // size_of::<btf_ext_header> and less than data.len()
+            unsafe { std::ptr::copy(data.as_ptr(), header.as_mut_ptr() as *mut u8, len_to_read) };
+            // Safety: the header began initialized to zero (and we rewrote some of its initla bytes)
+            unsafe { header.assume_init() }
         };
 
         let btf_ext_header {
