@@ -712,10 +712,13 @@ impl BtfExt {
             // BTF.ext sections
             let mut header = std::mem::MaybeUninit::<btf_ext_header>::zeroed();
             // Safety: we have checked that len_to_read is less than
-            // size_of::<btf_ext_header> and less than data.len()
-            unsafe { std::ptr::copy(data.as_ptr(), header.as_mut_ptr() as *mut u8, len_to_read) };
-            // Safety: the header began initialized to zero (and we rewrote some of its initla bytes)
-            unsafe { header.assume_init() }
+            // size_of::<btf_ext_header> and less than
+            // data.len(). Additionally, we know that the header has
+            // been initialized so it's safe to call for assume_init.
+            unsafe {
+                std::ptr::copy(data.as_ptr(), header.as_mut_ptr() as *mut u8, len_to_read);
+                header.assume_init()
+            }
         };
 
         let btf_ext_header {
