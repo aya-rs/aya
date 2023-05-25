@@ -210,6 +210,11 @@ impl Btf {
         }
     }
 
+    pub(crate) fn is_empty(&self) -> bool {
+        // the first one is awlays BtfType::Unknown
+        self.types.types.len() < 2
+    }
+
     pub(crate) fn types(&self) -> impl Iterator<Item = &BtfType> {
         self.types.types.iter()
     }
@@ -628,7 +633,10 @@ impl Object {
         &mut self,
         features: &BtfFeatures,
     ) -> Result<Option<&Btf>, BtfError> {
-        if let Some(ref mut obj_btf) = self.btf {
+        if let Some(ref mut obj_btf) = &mut self.btf {
+            if obj_btf.is_empty() {
+                return Ok(None);
+            }
             // fixup btf
             obj_btf.fixup_and_sanitize(
                 &self.section_sizes,
@@ -667,13 +675,65 @@ impl BtfExt {
         endianness: Endianness,
         btf: &Btf,
     ) -> Result<BtfExt, BtfError> {
-        // Safety: btf_ext_header is POD so read_unaligned is safe
-        let header = unsafe {
-            ptr::read_unaligned::<btf_ext_header>(data.as_ptr() as *const btf_ext_header)
+        #[repr(C)]
+        #[derive(Debug, Copy, Clone)]
+        struct MinimalHeader {
+            pub magic: u16,
+            pub version: u8,
+            pub flags: u8,
+            pub hdr_len: u32,
+        }
+
+        if data.len() < std::mem::size_of::<MinimalHeader>() {
+            return Err(BtfError::InvalidHeader);
+        }
+
+        let header = {
+            // first find the actual size of the header by converting into the minimal valid header
+            // Safety: MinimalHeader is POD so read_unaligned is safe
+            let minimal_header = unsafe {
+                ptr::read_unaligned::<MinimalHeader>(data.as_ptr() as *const MinimalHeader)
+            };
+
+            let len_to_read = minimal_header.hdr_len as usize;
+
+            // prevent invalid input from causing UB
+            if data.len() < len_to_read {
+                return Err(BtfError::InvalidHeader);
+            }
+
+            // forwards compatibility: if newer headers are bigger
+            // than the pre-generated btf_ext_header we should only
+            // read up to btf_ext_header
+            let len_to_read = len_to_read.min(std::mem::size_of::<btf_ext_header>());
+
+            // now create our full-fledge header; but start with it
+            // zeroed out so unavailable fields stay as zero on older
+            // BTF.ext sections
+            let mut header = std::mem::MaybeUninit::<btf_ext_header>::zeroed();
+            // Safety: we have checked that len_to_read is less than
+            // size_of::<btf_ext_header> and less than
+            // data.len(). Additionally, we know that the header has
+            // been initialized so it's safe to call for assume_init.
+            unsafe {
+                std::ptr::copy(data.as_ptr(), header.as_mut_ptr() as *mut u8, len_to_read);
+                header.assume_init()
+            }
         };
 
+        let btf_ext_header {
+            hdr_len,
+            func_info_off,
+            func_info_len,
+            line_info_off,
+            line_info_len,
+            core_relo_off,
+            core_relo_len,
+            ..
+        } = header;
+
         let rec_size = |offset, len| {
-            let offset = mem::size_of::<btf_ext_header>() + offset as usize;
+            let offset = hdr_len as usize + offset as usize;
             let len = len as usize;
             // check that there's at least enough space for the `rec_size` field
             if (len > 0 && len < 4) || offset + len > data.len() {
@@ -694,16 +754,6 @@ impl BtfExt {
                 0
             })
         };
-
-        let btf_ext_header {
-            func_info_off,
-            func_info_len,
-            line_info_off,
-            line_info_len,
-            core_relo_off,
-            core_relo_len,
-            ..
-        } = header;
 
         let mut ext = BtfExt {
             header,
@@ -1037,6 +1087,21 @@ mod tests {
         if let Err(e) = got {
             panic!("{}", e)
         }
+    }
+
+    #[test]
+    fn parsing_older_ext_data() {
+        let btf_data = [
+            159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+        ];
+        let btf_ext_data = [
+            159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 8, 0, 0,
+            0, 16, 0, 0, 0,
+        ];
+        let btf = Btf::parse(&btf_data, Endianness::default()).unwrap();
+        let btf_ext = BtfExt::parse(&btf_ext_data, Endianness::default(), &btf).unwrap();
+        assert_eq!(btf_ext.func_info_rec_size(), 8);
+        assert_eq!(btf_ext.line_info_rec_size(), 16);
     }
 
     #[test]
