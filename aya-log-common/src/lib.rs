@@ -85,31 +85,6 @@ impl LowerMacFormatter for [u8; 6] {}
 pub trait UpperMacFormatter {}
 impl UpperMacFormatter for [u8; 6] {}
 
-#[inline(always)]
-pub fn check_impl_default<T: DefaultFormatter>(t: T) -> T {
-    t
-}
-#[inline(always)]
-pub fn check_impl_lower_hex<T: LowerHexFormatter>(t: T) -> T {
-    t
-}
-#[inline(always)]
-pub fn check_impl_upper_hex<T: UpperHexFormatter>(t: T) -> T {
-    t
-}
-#[inline(always)]
-pub fn check_impl_ip<T: IpFormatter>(t: T) -> T {
-    t
-}
-#[inline(always)]
-pub fn check_impl_lower_mac<T: LowerMacFormatter>(t: T) -> T {
-    t
-}
-#[inline(always)]
-pub fn check_impl_upper_mac<T: UpperMacFormatter>(t: T) -> T {
-    t
-}
-
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 pub enum RecordField {
