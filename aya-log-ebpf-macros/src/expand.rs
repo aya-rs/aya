@@ -4,7 +4,7 @@ use syn::{
     parse::{Parse, ParseStream},
     parse_str,
     punctuated::Punctuated,
-    Error, Expr, LitStr, Result, Token,
+    Error, Expr, ExprCall, LitStr, Result, Token,
 };
 
 use aya_log_common::DisplayHint;
@@ -125,8 +125,6 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
     let mut arg_i = 0;
 
     let mut values = Vec::new();
-    let mut f_keys = Vec::new();
-    let mut f_values = Vec::new();
     for fragment in fragments {
         match fragment {
             Fragment::Literal(s) => {
@@ -137,11 +135,16 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
                     Some(ref args) => args[arg_i].clone(),
                     None => return Err(Error::new(format_string.span(), "no arguments provided")),
                 };
-                values.push(hint_to_expr(p.hint)?);
-                values.push(arg.clone());
+                let hint = hint_to_expr(p.hint)?;
+                let format_check = hint_to_format_check(p.hint)?;
+                values.push(hint);
+                values.push(Expr::Call(ExprCall {
+                    attrs: Vec::new(),
+                    func: Box::new(format_check),
+                    paren_token: Default::default(),
+                    args: Punctuated::from_iter(std::iter::once(arg)),
+                }));
 
-                f_keys.push(hint_to_format_check(p.hint)?);
-                f_values.push(arg.clone());
                 arg_i += 1;
             }
         }
@@ -150,15 +153,8 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
     let num_args = values.len();
     let values_iter = values.iter();
 
-    let f_keys = f_keys.iter();
-    let f_values = f_values.iter();
-
     Ok(quote! {
         {
-            #(
-                #f_keys(#f_values);
-            )*
-
             if let Some(buf_ptr) = unsafe { ::aya_log_ebpf::AYA_LOG_BUF.get_ptr_mut(0) } {
                 let buf = unsafe { &mut *buf_ptr };
                 if let Ok(header_len) = ::aya_log_ebpf::write_record_header(
