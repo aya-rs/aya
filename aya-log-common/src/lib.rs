@@ -74,12 +74,10 @@ impl_formatter_for_types!(
     }
 );
 
-pub trait Ipv4Formatter {}
-impl Ipv4Formatter for u32 {}
-
-pub trait Ipv6Formatter {}
-impl Ipv6Formatter for [u8; 16] {}
-impl Ipv6Formatter for [u16; 8] {}
+pub trait IpFormatter {}
+impl IpFormatter for u32 {}
+impl IpFormatter for [u8; 16] {}
+impl IpFormatter for [u16; 8] {}
 
 pub trait LowerMacFormatter {}
 impl LowerMacFormatter for [u8; 6] {}
@@ -94,9 +92,7 @@ pub fn check_impl_lower_hex<T: LowerHexFormatter>(_v: T) {}
 #[inline(always)]
 pub fn check_impl_upper_hex<T: UpperHexFormatter>(_v: T) {}
 #[inline(always)]
-pub fn check_impl_ipv4<T: Ipv4Formatter>(_v: T) {}
-#[inline(always)]
-pub fn check_impl_ipv6<T: Ipv6Formatter>(_v: T) {}
+pub fn check_impl_ip<T: IpFormatter>(_v: T) {}
 #[inline(always)]
 pub fn check_impl_lower_mac<T: LowerMacFormatter>(_v: T) {}
 #[inline(always)]
