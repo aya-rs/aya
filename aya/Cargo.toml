@@ -9,6 +9,7 @@ repository = "https://github.com/aya-rs/aya"
 readme = "README.md"
 documentation = "https://docs.rs/aya"
 edition = "2021"
+rust-version = "1.63"
 
 [dependencies]
 libc = { version = "0.2.105" }
