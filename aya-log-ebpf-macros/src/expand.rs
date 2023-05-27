@@ -90,8 +90,7 @@ fn hint_to_format_check(hint: DisplayHint) -> Result<Expr> {
         DisplayHint::Default => parse_str("::aya_log_ebpf::macro_support::check_impl_default"),
         DisplayHint::LowerHex => parse_str("::aya_log_ebpf::macro_support::check_impl_lower_hex"),
         DisplayHint::UpperHex => parse_str("::aya_log_ebpf::macro_support::check_impl_upper_hex"),
-        DisplayHint::Ipv4 => parse_str("::aya_log_ebpf::macro_support::check_impl_ipv4"),
-        DisplayHint::Ipv6 => parse_str("::aya_log_ebpf::macro_support::check_impl_ipv6"),
+        DisplayHint::Ip => parse_str("::aya_log_ebpf::macro_support::check_impl_ip"),
         DisplayHint::LowerMac => parse_str("::aya_log_ebpf::macro_support::check_impl_lower_mac"),
         DisplayHint::UpperMac => parse_str("::aya_log_ebpf::macro_support::check_impl_upper_mac"),
     }
