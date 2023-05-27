@@ -32,6 +32,8 @@ use crate::{
     Btf, Pod, BPF_OBJ_NAME_LEN,
 };
 
+type Result<T> = std::result::Result<T, (c_long, io::Error)>;
+
 pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -193,7 +195,7 @@ fn lookup<K: Pod, V: Pod>(
     key: Option<&K>,
     flags: u64,
     cmd: bpf_cmd,
-) -> Result<Option<V>, (c_long, io::Error)> {
+) -> Result<Option<V>> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let mut value = MaybeUninit::zeroed();
 
@@ -216,7 +218,7 @@ pub(crate) fn bpf_map_lookup_elem<K: Pod, V: Pod>(
     fd: RawFd,
     key: &K,
     flags: u64,
-) -> Result<Option<V>, (c_long, io::Error)> {
+) -> Result<Option<V>> {
     lookup(fd, Some(key), flags, bpf_cmd::BPF_MAP_LOOKUP_ELEM)
 }
 
@@ -224,7 +226,7 @@ pub(crate) fn bpf_map_lookup_and_delete_elem<K: Pod, V: Pod>(
     fd: RawFd,
     key: Option<&K>,
     flags: u64,
-) -> Result<Option<V>, (c_long, io::Error)> {
+) -> Result<Option<V>> {
     lookup(fd, key, flags, bpf_cmd::BPF_MAP_LOOKUP_AND_DELETE_ELEM)
 }
 
@@ -232,7 +234,7 @@ pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
     fd: RawFd,
     key: &K,
     flags: u64,
-) -> Result<Option<PerCpuValues<V>>, (c_long, io::Error)> {
+) -> Result<Option<PerCpuValues<V>>> {
     let mut mem = PerCpuValues::<V>::alloc_kernel_mem().map_err(|io_error| (-1, io_error))?;
     match bpf_map_lookup_elem_ptr(fd, Some(key), mem.as_mut_ptr(), flags) {
         Ok(_) => Ok(Some(unsafe { PerCpuValues::from_kernel_mem(mem) })),
@@ -246,7 +248,7 @@ pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
     key: Option<&K>,
     value: *mut V,
     flags: u64,
-) -> Result<Option<()>, (c_long, io::Error)> {
+) -> Result<Option<()>> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -331,10 +333,7 @@ pub(crate) fn bpf_map_delete_elem<K: Pod>(fd: RawFd, key: &K) -> SysResult {
     sys_bpf(bpf_cmd::BPF_MAP_DELETE_ELEM, &attr)
 }
 
-pub(crate) fn bpf_map_get_next_key<K: Pod>(
-    fd: RawFd,
-    key: Option<&K>,
-) -> Result<Option<K>, (c_long, io::Error)> {
+pub(crate) fn bpf_map_get_next_key<K: Pod>(fd: RawFd, key: Option<&K>) -> Result<Option<K>> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let mut next_key = MaybeUninit::uninit();
 
@@ -457,7 +456,7 @@ pub(crate) fn bpf_prog_query(
     ret
 }
 
-pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<RawFd, io::Error> {
+pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> io::Result<RawFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_6.__bindgen_anon_1.prog_id = prog_id;
@@ -468,7 +467,7 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<RawFd, io::Error> {
     }
 }
 
-pub(crate) fn bpf_prog_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_prog_info, io::Error> {
+pub(crate) fn bpf_prog_get_info_by_fd(prog_fd: RawFd) -> io::Result<bpf_prog_info> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     // info gets entirely populated by the kernel
     let info = MaybeUninit::zeroed();
@@ -483,7 +482,7 @@ pub(crate) fn bpf_prog_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_prog_info, i
     }
 }
 
-pub(crate) fn bpf_map_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_map_info, io::Error> {
+pub(crate) fn bpf_map_get_info_by_fd(prog_fd: RawFd) -> io::Result<bpf_map_info> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     // info gets entirely populated by the kernel
     let info = MaybeUninit::zeroed();
@@ -498,7 +497,7 @@ pub(crate) fn bpf_map_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_map_info, io:
     }
 }
 
-pub(crate) fn bpf_link_get_info_by_fd(link_fd: RawFd) -> Result<bpf_link_info, io::Error> {
+pub(crate) fn bpf_link_get_info_by_fd(link_fd: RawFd) -> io::Result<bpf_link_info> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     // info gets entirely populated by the kernel
     let info = unsafe { MaybeUninit::zeroed().assume_init() };
@@ -513,10 +512,7 @@ pub(crate) fn bpf_link_get_info_by_fd(link_fd: RawFd) -> Result<bpf_link_info, i
     }
 }
 
-pub(crate) fn btf_obj_get_info_by_fd(
-    prog_fd: RawFd,
-    buf: &mut [u8],
-) -> Result<bpf_btf_info, io::Error> {
+pub(crate) fn btf_obj_get_info_by_fd(prog_fd: RawFd, buf: &mut [u8]) -> io::Result<bpf_btf_info> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let mut info = unsafe { mem::zeroed::<bpf_btf_info>() };
     let buf_size = buf.len() as u32;
@@ -558,7 +554,7 @@ pub(crate) fn bpf_load_btf(raw_btf: &[u8], log: &mut VerifierLog) -> SysResult {
     sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr)
 }
 
-pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<RawFd, io::Error> {
+pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> io::Result<RawFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     attr.__bindgen_anon_6.__bindgen_anon_1.btf_id = id;
 
@@ -975,7 +971,7 @@ pub fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult {
     syscall(Syscall::Bpf { cmd, attr })
 }
 
-pub(crate) fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>, (c_long, io::Error)> {
+pub(crate) fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_6 };
     u.__bindgen_anon_1.start_id = id;
