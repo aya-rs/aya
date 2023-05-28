@@ -186,8 +186,7 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> PerfEventArray<T> {
         let map_data: &MapData = self.map.deref().borrow();
         let map_fd = map_data.fd_or_err().unwrap();
         let buf = PerfBuffer::open(index, self.page_size, page_count.unwrap_or(2))?;
-        // TODO (AM)
-        bpf_map_update_elem(map_fd.as_raw_fd(), Some(&index), &buf.as_raw_fd(), 0)
+        bpf_map_update_elem(map_fd, Some(&index), &buf.as_raw_fd(), 0)
             .map_err(|(_, io_error)| io_error)?;
 
         Ok(PerfEventArrayBuffer {

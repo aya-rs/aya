@@ -92,18 +92,11 @@ impl Extension {
         let target_fd = self.data.attach_prog_fd.ok_or(ProgramError::NotLoaded)?;
         let btf_id = self.data.attach_btf_id.ok_or(ProgramError::NotLoaded)?;
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
-        // TODO (AM)
-        let link_fd = bpf_link_create(
-            prog_fd.as_raw_fd(),
-            target_fd,
-            BPF_CGROUP_INET_INGRESS,
-            Some(btf_id),
-            0,
-        )
-        .map_err(|(_, io_error)| ProgramError::SyscallError {
-            call: "bpf_link_create".to_owned(),
-            io_error,
-        })?;
+        let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
+            .map_err(|(_, io_error)| ProgramError::SyscallError {
+                call: "bpf_link_create".to_owned(),
+                io_error,
+            })?;
         self.data
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))
@@ -129,18 +122,11 @@ impl Extension {
         let (_, btf_id) = get_btf_info(target_fd, func_name)?;
         let prog_fd = self.data.fd_or_err()?;
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
-        // TODO (AM)
-        let link_fd = bpf_link_create(
-            prog_fd.as_raw_fd(),
-            target_fd,
-            BPF_CGROUP_INET_INGRESS,
-            Some(btf_id),
-            0,
-        )
-        .map_err(|(_, io_error)| ProgramError::SyscallError {
-            call: "bpf_link_create".to_owned(),
-            io_error,
-        })?;
+        let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
+            .map_err(|(_, io_error)| ProgramError::SyscallError {
+                call: "bpf_link_create".to_owned(),
+                io_error,
+            })?;
         self.data
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))

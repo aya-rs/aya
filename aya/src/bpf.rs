@@ -3,7 +3,11 @@ use std::{
     collections::{HashMap, HashSet},
     ffi::CString,
     fs, io,
-    os::{fd::AsRawFd, raw::c_int, unix::io::RawFd},
+    os::{
+        fd::{AsFd, AsRawFd},
+        raw::c_int,
+        unix::io::RawFd,
+    },
     path::{Path, PathBuf},
 };
 
@@ -421,23 +425,16 @@ impl<'a> BpfLoader<'a> {
                 PinningType::None => map.create(&name)?,
             };
             // OK: we just loaded the map
-            let fd = map.fd.as_ref().unwrap();
+            let fd = map.fd.as_ref().unwrap().as_fd();
             if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
-                // TODO (AM)
-                bpf_map_update_elem_ptr(
-                    fd.as_raw_fd(),
-                    &0 as *const _,
-                    map.obj.data_mut().as_mut_ptr(),
-                    0,
-                )
-                .map_err(|(_, io_error)| MapError::SyscallError {
-                    call: "bpf_map_update_elem".to_owned(),
-                    io_error,
-                })?;
+                bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
+                    .map_err(|(_, io_error)| MapError::SyscallError {
+                        call: "bpf_map_update_elem".to_owned(),
+                        io_error,
+                    })?;
             }
             if map.obj.section_kind() == BpfSectionKind::Rodata {
-                // TODO (AM)
-                bpf_map_freeze(fd.as_raw_fd()).map_err(|(_, io_error)| MapError::SyscallError {
+                bpf_map_freeze(fd).map_err(|(_, io_error)| MapError::SyscallError {
                     call: "bpf_map_freeze".to_owned(),
                     io_error,
                 })?;

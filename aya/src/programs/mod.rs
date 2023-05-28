@@ -549,12 +549,9 @@ fn pin_program<T: Link, P: AsRef<Path>>(
             error: e.to_string(),
         }
     })?;
-    // TODO (AM)
-    bpf_pin_object(fd.as_raw_fd(), &path_string).map_err(|(_, io_error)| {
-        PinError::SyscallError {
-            name: "BPF_OBJ_PIN".to_string(),
-            io_error,
-        }
+    bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
+        name: "BPF_OBJ_PIN".to_string(),
+        io_error,
     })?;
     Ok(())
 }

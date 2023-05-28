@@ -6,7 +6,10 @@ use std::{
     ffi::CString,
     hash::Hash,
     io,
-    os::{fd::AsRawFd, unix::io::RawFd},
+    os::{
+        fd::{AsFd, AsRawFd},
+        unix::io::RawFd,
+    },
 };
 use thiserror::Error;
 
@@ -134,13 +137,12 @@ impl Xdp {
 
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 9, 0) {
-            // TODO (AM)
-            let link_fd =
-                bpf_link_create(prog_fd.as_raw_fd(), if_index, BPF_XDP, None, flags.bits())
-                    .map_err(|(_, io_error)| ProgramError::SyscallError {
-                        call: "bpf_link_create".to_owned(),
-                        io_error,
-                    })?;
+            let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, None, flags.bits()).map_err(
+                |(_, io_error)| ProgramError::SyscallError {
+                    call: "bpf_link_create".to_owned(),
+                    io_error,
+                },
+            )?;
             self.data
                 .links
                 .insert(XdpLink::new(XdpLinkInner::FdLink(FdLink::new(link_fd))))
@@ -298,13 +300,13 @@ impl TryFrom<FdLink> for XdpLink {
 
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
         // unwrap of fd_link.fd will not panic since it's only None when being dropped.
-        let info =
-            // TODO (AM)
-            bpf_link_get_info_by_fd(fd_link.fd.as_raw_fd()).map_err(|io_error| LinkError::SyscallError {
+        let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd()).map_err(|io_error| {
+            LinkError::SyscallError {
                 call: "BPF_OBJ_GET_INFO_BY_FD".to_string(),
                 code: 0,
                 io_error,
-            })?;
+            }
+        })?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_XDP as u32) {
             return Ok(XdpLink::new(XdpLinkInner::FdLink(fd_link)));
         }

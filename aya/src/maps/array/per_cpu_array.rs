@@ -1,7 +1,6 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
-    os::fd::AsRawFd,
 };
 
 use crate::{
@@ -85,13 +84,12 @@ impl<T: Borrow<MapData>, V: Pod> PerCpuArray<T, V> {
         check_bounds(data, *index)?;
         let fd = data.fd_or_err()?;
 
-        // TODO (AM)
-        let value = bpf_map_lookup_elem_per_cpu(fd.as_raw_fd(), index, flags).map_err(
-            |(_, io_error)| MapError::SyscallError {
+        let value = bpf_map_lookup_elem_per_cpu(fd, index, flags).map_err(|(_, io_error)| {
+            MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
                 io_error,
-            },
-        )?;
+            }
+        })?;
         value.ok_or(MapError::KeyNotFound)
     }
 
@@ -114,13 +112,12 @@ impl<T: BorrowMut<MapData>, V: Pod> PerCpuArray<T, V> {
         check_bounds(data, index)?;
         let fd = data.fd_or_err()?;
 
-        // TODO (AM)
-        bpf_map_update_elem_per_cpu(fd.as_raw_fd(), &index, &values, flags).map_err(
-            |(_, io_error)| MapError::SyscallError {
+        bpf_map_update_elem_per_cpu(fd, &index, &values, flags).map_err(|(_, io_error)| {
+            MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 io_error,
-            },
-        )?;
+            }
+        })?;
         Ok(())
     }
 }

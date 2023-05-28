@@ -1,7 +1,6 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
-    os::fd::AsRawFd,
 };
 
 use crate::{
@@ -55,8 +54,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Returns a copy of the value associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        // TODO (AM)
-        let value = bpf_map_lookup_elem(fd.as_raw_fd(), key, flags).map_err(|(_, io_error)| {
+        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
                 io_error,

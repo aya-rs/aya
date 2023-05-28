@@ -1,7 +1,5 @@
 //! Perf event programs.
 
-use std::os::fd::AsRawFd;
-
 pub use crate::generated::{
     perf_hw_cache_id, perf_hw_cache_op_id, perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids,
 };
@@ -171,8 +169,7 @@ impl PerfEvent {
             io_error,
         })? as i32;
 
-        // TODO (AM)
-        let link = perf_attach(self.data.fd_or_err()?.as_raw_fd(), fd)?;
+        let link = perf_attach(self.data.fd_or_err()?, fd)?;
         self.data.links.insert(PerfEventLink::new(link))
     }
 

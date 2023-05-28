@@ -549,9 +549,8 @@ impl MapData {
             io_error,
         })?;
 
-        // TODO (AM)
         let info =
-            bpf_map_get_info_by_fd(fd.as_raw_fd()).map_err(|io_error| MapError::SyscallError {
+            bpf_map_get_info_by_fd(fd.as_fd()).map_err(|io_error| MapError::SyscallError {
                 call: "BPF_MAP_GET_INFO_BY_FD".to_owned(),
                 io_error,
             })?;
@@ -570,9 +569,8 @@ impl MapData {
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
     pub fn from_fd(fd: OwnedFd) -> Result<MapData, MapError> {
-        // TODO (AM)
         let info =
-            bpf_map_get_info_by_fd(fd.as_raw_fd()).map_err(|io_error| MapError::SyscallError {
+            bpf_map_get_info_by_fd(fd.as_fd()).map_err(|io_error| MapError::SyscallError {
                 call: "BPF_OBJ_GET".to_owned(),
                 io_error,
             })?;
@@ -597,7 +595,7 @@ impl MapData {
             return Err(PinError::AlreadyPinned { name: name.into() });
         }
         let map_path = path.as_ref().join(name);
-        let fd = self.fd.as_ref().ok_or(PinError::NoFd {
+        let fd = self.fd.as_ref().map(|f| f.as_fd()).ok_or(PinError::NoFd {
             name: name.to_string(),
         })?;
         let path_string = CString::new(map_path.to_string_lossy().into_owned()).map_err(|e| {
@@ -605,12 +603,9 @@ impl MapData {
                 error: e.to_string(),
             }
         })?;
-        // TODO (AM): switch to BorrowedFd
-        bpf_pin_object(fd.as_raw_fd(), &path_string).map_err(|(_, io_error)| {
-            PinError::SyscallError {
-                name: "BPF_OBJ_PIN".to_string(),
-                io_error,
-            }
+        bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
+            name: "BPF_OBJ_PIN".to_string(),
+            io_error,
         })?;
         self.pinned = true;
         Ok(())
@@ -690,8 +685,7 @@ impl<K: Pod> Iterator for MapKeys<'_, K> {
             }
         };
 
-        // TODO (AM)
-        match bpf_map_get_next_key(fd.as_raw_fd(), self.key.as_ref()) {
+        match bpf_map_get_next_key(fd, self.key.as_ref()) {
             Ok(Some(key)) => {
                 self.key = Some(key);
                 Some(Ok(key))

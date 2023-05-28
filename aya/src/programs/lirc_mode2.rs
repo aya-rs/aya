@@ -64,13 +64,12 @@ impl LircMode2 {
         let prog_fd = self.data.fd_or_err()?;
         let lircdev_fd = lircdev.as_raw_fd();
 
-        // TODO (AM)
-        bpf_prog_attach(prog_fd.as_raw_fd(), lircdev_fd, BPF_LIRC_MODE2).map_err(
-            |(_, io_error)| ProgramError::SyscallError {
+        bpf_prog_attach(prog_fd, lircdev_fd, BPF_LIRC_MODE2).map_err(|(_, io_error)| {
+            ProgramError::SyscallError {
                 call: "bpf_prog_attach".to_owned(),
                 io_error,
-            },
-        )?;
+            }
+        })?;
 
         // TODO (AM)
         self.data

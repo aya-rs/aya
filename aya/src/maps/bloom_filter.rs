@@ -1,5 +1,5 @@
 //! A Bloom Filter.
-use std::{borrow::Borrow, marker::PhantomData, os::fd::AsRawFd};
+use std::{borrow::Borrow, marker::PhantomData};
 
 use crate::{
     maps::{check_v_size, MapData, MapError},
@@ -52,8 +52,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
 
-        // TODO (AM)
-        bpf_map_lookup_elem_ptr::<u32, _>(fd.as_raw_fd(), None, &mut value, flags)
+        bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
             .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
                 io_error,
@@ -65,8 +64,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     /// Inserts a value into the map.
     pub fn insert(&self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        // TODO (AM)
-        bpf_map_push_elem(fd.as_raw_fd(), value.borrow(), flags).map_err(|(_, io_error)| {
+        bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_push_elem".to_owned(),
                 io_error,

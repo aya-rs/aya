@@ -14,8 +14,8 @@ macro_rules! read_str_bytes {
     ($fun:ident, $ptr:expr, $len:expr $(,)?) => {
         let r = unsafe {
             let Some(ptr) = RESULT.get_ptr_mut(0) else {
-                return;
-            };
+                                return;
+                            };
             &mut *ptr
         };
 

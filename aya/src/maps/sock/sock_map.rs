@@ -76,8 +76,7 @@ impl<T: BorrowMut<MapData>> SockMap<T> {
         let data = self.inner.borrow_mut();
         let fd = data.fd_or_err()?;
         check_bounds(data, index)?;
-        // TODO (AM)
-        bpf_map_update_elem(fd.as_raw_fd(), Some(&index), &socket.as_raw_fd(), flags).map_err(
+        bpf_map_update_elem(fd, Some(&index), &socket.as_raw_fd(), flags).map_err(
             |(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 io_error,
@@ -91,8 +90,7 @@ impl<T: BorrowMut<MapData>> SockMap<T> {
         let data = self.inner.borrow_mut();
         let fd = data.fd_or_err()?;
         check_bounds(data, *index)?;
-        // TODO (AM)
-        bpf_map_delete_elem(fd.as_raw_fd(), index)
+        bpf_map_delete_elem(fd, index)
             .map(|_| ())
             .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_delete_elem".to_owned(),

@@ -64,12 +64,12 @@ impl SkLookup {
         let prog_fd = self.data.fd_or_err()?;
         let netns_fd = netns.as_raw_fd();
 
-        // TODO (AM)
-        let link_fd = bpf_link_create(prog_fd.as_raw_fd(), netns_fd, BPF_SK_LOOKUP, None, 0)
-            .map_err(|(_, io_error)| ProgramError::SyscallError {
+        let link_fd = bpf_link_create(prog_fd, netns_fd, BPF_SK_LOOKUP, None, 0).map_err(
+            |(_, io_error)| ProgramError::SyscallError {
                 call: "bpf_link_create".to_owned(),
                 io_error,
-            })?;
+            },
+        )?;
         self.data
             .links
             .insert(SkLookupLink::new(FdLink::new(link_fd)))

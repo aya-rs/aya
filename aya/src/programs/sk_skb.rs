@@ -78,8 +78,7 @@ impl SkSkb {
             SkSkbKind::StreamParser => BPF_SK_SKB_STREAM_PARSER,
             SkSkbKind::StreamVerdict => BPF_SK_SKB_STREAM_VERDICT,
         };
-        // TODO (AM)
-        bpf_prog_attach(prog_fd.as_raw_fd(), map_fd, attach_type).map_err(|(_, io_error)| {
+        bpf_prog_attach(prog_fd, map_fd, attach_type).map_err(|(_, io_error)| {
             ProgramError::SyscallError {
                 call: "bpf_prog_attach".to_owned(),
                 io_error,

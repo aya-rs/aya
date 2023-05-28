@@ -79,13 +79,12 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
         let fd = data.fd_or_err()?;
         let prog_fd = program.as_raw_fd();
 
-        // TODO (AM)
-        bpf_map_update_elem(fd.as_raw_fd(), Some(&index), &prog_fd, flags).map_err(
-            |(_, io_error)| MapError::SyscallError {
+        bpf_map_update_elem(fd, Some(&index), &prog_fd, flags).map_err(|(_, io_error)| {
+            MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 io_error,
-            },
-        )?;
+            }
+        })?;
         Ok(())
     }
 
@@ -98,8 +97,7 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
         check_bounds(data, *index)?;
         let fd = self.inner.borrow_mut().fd_or_err()?;
 
-        // TODO (AM)
-        bpf_map_delete_elem(fd.as_raw_fd(), index)
+        bpf_map_delete_elem(fd, index)
             .map(|_| ())
             .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_delete_elem".to_owned(),

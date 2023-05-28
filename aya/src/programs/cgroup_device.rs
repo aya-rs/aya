@@ -64,26 +64,24 @@ impl CgroupDevice {
 
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 7, 0) {
-            // TODO (AM)
-            let link_fd =
-                bpf_link_create(prog_fd.as_raw_fd(), cgroup_fd, BPF_CGROUP_DEVICE, None, 0)
-                    .map_err(|(_, io_error)| ProgramError::SyscallError {
-                        call: "bpf_link_create".to_owned(),
-                        io_error,
-                    })?;
+            let link_fd = bpf_link_create(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE, None, 0).map_err(
+                |(_, io_error)| ProgramError::SyscallError {
+                    call: "bpf_link_create".to_owned(),
+                    io_error,
+                },
+            )?;
             self.data
                 .links
                 .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
-            // TODO (AM)
-            bpf_prog_attach(prog_fd.as_raw_fd(), cgroup_fd, BPF_CGROUP_DEVICE).map_err(
-                |(_, io_error)| ProgramError::SyscallError {
+            bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE).map_err(|(_, io_error)| {
+                ProgramError::SyscallError {
                     call: "bpf_prog_attach".to_owned(),
                     io_error,
-                },
-            )?;
+                }
+            })?;
             self.data
                 .links
                 .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::ProgAttach(

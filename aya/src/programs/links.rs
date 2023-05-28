@@ -6,7 +6,7 @@ use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::CString,
     io,
-    os::fd::{AsRawFd, OwnedFd, RawFd},
+    os::fd::{AsFd, AsRawFd, OwnedFd, RawFd},
     path::{Path, PathBuf},
 };
 
@@ -128,8 +128,7 @@ impl FdLink {
                     error: e.to_string(),
                 }
             })?;
-        // TODO (AM)
-        bpf_pin_object(self.fd.as_raw_fd(), &path_string).map_err(|(_, io_error)| {
+        bpf_pin_object(self.fd.as_fd(), &path_string).map_err(|(_, io_error)| {
             PinError::SyscallError {
                 name: "BPF_OBJ_PIN".to_string(),
                 io_error,

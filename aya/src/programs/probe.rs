@@ -2,7 +2,6 @@ use libc::pid_t;
 use std::{
     fs::{self, OpenOptions},
     io::{self, Write},
-    os::fd::AsRawFd,
     path::Path,
     process,
     sync::atomic::{AtomicUsize, Ordering},
@@ -54,8 +53,7 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     if k_ver < (4, 17, 0) {
         let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
         let link = T::from(perf_attach_debugfs(
-            // TODO (AM)
-            program_data.fd_or_err()?.as_raw_fd(),
+            program_data.fd_or_err()?,
             fd,
             kind,
             event_alias,
@@ -64,8 +62,7 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     };
 
     let fd = create_as_probe(kind, fn_name, offset, pid)?;
-    // TODO (AM)
-    let link = T::from(perf_attach(program_data.fd_or_err()?.as_raw_fd(), fd)?);
+    let link = T::from(perf_attach(program_data.fd_or_err()?, fd)?);
     program_data.links.insert(link)
 }
 
