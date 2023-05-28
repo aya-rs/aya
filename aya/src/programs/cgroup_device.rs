@@ -1,5 +1,5 @@
 //! Cgroup device programs.
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::AsRawFd;
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE},
@@ -64,28 +64,31 @@ impl CgroupDevice {
 
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE, None, 0).map_err(
-                |(_, io_error)| ProgramError::SyscallError {
-                    call: "bpf_link_create".to_owned(),
-                    io_error,
-                },
-            )? as RawFd;
+            // TODO (AM)
+            let link_fd =
+                bpf_link_create(prog_fd.as_raw_fd(), cgroup_fd, BPF_CGROUP_DEVICE, None, 0)
+                    .map_err(|(_, io_error)| ProgramError::SyscallError {
+                        call: "bpf_link_create".to_owned(),
+                        io_error,
+                    })?;
             self.data
                 .links
                 .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
-            bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE).map_err(|(_, io_error)| {
-                ProgramError::SyscallError {
+            // TODO (AM)
+            bpf_prog_attach(prog_fd.as_raw_fd(), cgroup_fd, BPF_CGROUP_DEVICE).map_err(
+                |(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_prog_attach".to_owned(),
                     io_error,
-                }
-            })?;
+                },
+            )?;
             self.data
                 .links
                 .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::ProgAttach(
-                    ProgAttachLink::new(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE),
+                    // TODO (AM)
+                    ProgAttachLink::new(prog_fd.as_raw_fd(), cgroup_fd, BPF_CGROUP_DEVICE),
                 )))
         }
     }

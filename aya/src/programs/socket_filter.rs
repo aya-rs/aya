@@ -92,6 +92,8 @@ impl SocketFilter {
             .into());
         }
 
+        // TODO (AM)
+        let prog_fd = prog_fd.as_raw_fd();
         self.data.links.insert(SocketFilterLink { socket, prog_fd })
     }
 

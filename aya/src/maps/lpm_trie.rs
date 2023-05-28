@@ -2,6 +2,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
+    os::fd::AsRawFd,
 };
 
 use crate::{
@@ -128,7 +129,8 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Returns a copy of the value associated with the longest prefix matching key in the LpmTrie.
     pub fn get(&self, key: &Key<K>, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
+        // TODO (AM)
+        let value = bpf_map_lookup_elem(fd.as_raw_fd(), key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
                 io_error,
@@ -159,12 +161,13 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         flags: u64,
     ) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        bpf_map_update_elem(fd, Some(key), value.borrow(), flags).map_err(|(_, io_error)| {
-            MapError::SyscallError {
+        // TODO (AM)
+        bpf_map_update_elem(fd.as_raw_fd(), Some(key), value.borrow(), flags).map_err(
+            |(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 io_error,
-            }
-        })?;
+            },
+        )?;
 
         Ok(())
     }
@@ -174,7 +177,8 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Both the prefix and data must match exactly - this method does not do a longest prefix match.
     pub fn remove(&mut self, key: &Key<K>) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        bpf_map_delete_elem(fd, key)
+        // TODO (AM)
+        bpf_map_delete_elem(fd.as_raw_fd(), key)
             .map(|_| ())
             .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_delete_elem".to_owned(),
@@ -207,7 +211,7 @@ mod tests {
         sys::{override_syscall, SysResult, Syscall},
     };
     use libc::{EFAULT, ENOENT};
-    use std::{io, mem, net::Ipv4Addr};
+    use std::{env, fs::File, io, mem, net::Ipv4Addr, os::fd::OwnedFd};
 
     fn new_obj_map() -> obj::Map {
         obj::Map::Legacy(LegacyMap {
@@ -311,7 +315,7 @@ mod tests {
     fn test_new_ok() {
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -323,7 +327,7 @@ mod tests {
     fn test_try_from_ok() {
         let map_data = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -338,7 +342,7 @@ mod tests {
 
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -363,7 +367,7 @@ mod tests {
 
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -380,7 +384,7 @@ mod tests {
 
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -405,7 +409,7 @@ mod tests {
 
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -420,7 +424,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -445,7 +449,7 @@ mod tests {
         });
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -454,5 +458,12 @@ mod tests {
         let key = Key::new(16, u32::from(ipaddr).to_be());
 
         assert!(matches!(trie.get(&key, 0), Err(MapError::KeyNotFound)));
+    }
+
+    fn create_fd() -> OwnedFd {
+        let dir = env::temp_dir();
+        File::create(dir.join("f1"))
+            .expect("unable to create file in tmpdir")
+            .into()
     }
 }

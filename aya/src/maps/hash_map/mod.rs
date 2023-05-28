@@ -1,4 +1,6 @@
 //! Hash map types.
+use std::os::fd::AsRawFd;
+
 use crate::{
     maps::MapError,
     sys::{bpf_map_delete_elem, bpf_map_update_elem},
@@ -21,7 +23,8 @@ pub(crate) fn insert<K: Pod, V: Pod>(
     flags: u64,
 ) -> Result<(), MapError> {
     let fd = map.fd_or_err()?;
-    bpf_map_update_elem(fd, Some(key), value, flags).map_err(|(_, io_error)| {
+    // TODO (AM)
+    bpf_map_update_elem(fd.as_raw_fd(), Some(key), value, flags).map_err(|(_, io_error)| {
         MapError::SyscallError {
             call: "bpf_map_update_elem".to_owned(),
             io_error,
@@ -33,7 +36,8 @@ pub(crate) fn insert<K: Pod, V: Pod>(
 
 pub(crate) fn remove<K: Pod>(map: &mut MapData, key: &K) -> Result<(), MapError> {
     let fd = map.fd_or_err()?;
-    bpf_map_delete_elem(fd, key)
+    // TODO (AM)
+    bpf_map_delete_elem(fd.as_raw_fd(), key)
         .map(|_| ())
         .map_err(|(_, io_error)| MapError::SyscallError {
             call: "bpf_map_delete_elem".to_owned(),

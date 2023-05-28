@@ -2,6 +2,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
+    os::fd::AsRawFd,
 };
 
 use crate::{
@@ -64,7 +65,8 @@ impl<T: BorrowMut<MapData>, V: Pod> Stack<T, V> {
     pub fn pop(&mut self, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
 
-        let value = bpf_map_lookup_and_delete_elem::<u32, _>(fd, None, flags).map_err(
+        // TODO (AM)
+        let value = bpf_map_lookup_and_delete_elem::<u32, _>(fd.as_raw_fd(), None, flags).map_err(
             |(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_lookup_and_delete_elem".to_owned(),
                 io_error,
@@ -80,12 +82,13 @@ impl<T: BorrowMut<MapData>, V: Pod> Stack<T, V> {
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
     pub fn push(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        bpf_map_update_elem(fd, None::<&u32>, value.borrow(), flags).map_err(|(_, io_error)| {
-            MapError::SyscallError {
+        // TODO (AM)
+        bpf_map_update_elem(fd.as_raw_fd(), None::<&u32>, value.borrow(), flags).map_err(
+            |(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 io_error,
-            }
-        })?;
+            },
+        )?;
         Ok(())
     }
 }

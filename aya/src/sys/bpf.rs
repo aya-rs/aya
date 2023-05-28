@@ -3,7 +3,10 @@ use std::{
     ffi::{CStr, CString},
     io,
     mem::{self, MaybeUninit},
-    os::unix::io::RawFd,
+    os::{
+        fd::{AsRawFd, FromRawFd, OwnedFd},
+        unix::io::RawFd,
+    },
     slice,
 };
 
@@ -34,7 +37,11 @@ use crate::{
 
 type Result<T> = std::result::Result<T, (c_long, io::Error)>;
 
-pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>) -> SysResult {
+pub(crate) fn bpf_create_map(
+    name: &CStr,
+    def: &obj::Map,
+    btf_fd: Option<RawFd>,
+) -> Result<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_1 };
@@ -88,7 +95,9 @@ pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>)
             .copy_from_slice(unsafe { slice::from_raw_parts(name.as_ptr(), name_len) });
     }
 
-    sys_bpf(bpf_cmd::BPF_MAP_CREATE, &attr)
+    let fd = sys_bpf(bpf_cmd::BPF_MAP_CREATE, &attr)? as RawFd;
+    // SAFETY: BPF_MAP_CREATE creates a new file descriptor
+    Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
 pub(crate) fn bpf_pin_object(fd: RawFd, path: &CStr) -> SysResult {
@@ -99,11 +108,13 @@ pub(crate) fn bpf_pin_object(fd: RawFd, path: &CStr) -> SysResult {
     sys_bpf(bpf_cmd::BPF_OBJ_PIN, &attr)
 }
 
-pub(crate) fn bpf_get_object(path: &CStr) -> SysResult {
+pub(crate) fn bpf_get_object(path: &CStr) -> Result<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_4 };
     u.pathname = path.as_ptr() as u64;
-    sys_bpf(bpf_cmd::BPF_OBJ_GET, &attr)
+    let fd = sys_bpf(bpf_cmd::BPF_OBJ_GET, &attr)? as RawFd;
+    // SAFETY: BPF_OBJ_GET creates a new file descriptor
+    Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
 pub(crate) struct BpfLoadProgramAttrs<'a> {
@@ -128,7 +139,7 @@ pub(crate) fn bpf_load_program(
     aya_attr: &BpfLoadProgramAttrs,
     logger: &mut VerifierLog,
     verifier_log_level: u32,
-) -> SysResult {
+) -> Result<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_3 };
@@ -187,7 +198,9 @@ pub(crate) fn bpf_load_program(
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
     }
-    sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr)
+    let fd = sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr)? as RawFd;
+    // SAFETY: BPF_PROG_LOAD returns a new fd
+    Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
 fn lookup<K: Pod, V: Pod>(
@@ -366,7 +379,7 @@ pub(crate) fn bpf_link_create(
     attach_type: bpf_attach_type,
     btf_id: Option<u32>,
     flags: u32,
-) -> SysResult {
+) -> Result<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.link_create.__bindgen_anon_1.prog_fd = prog_fd as u32;
@@ -377,7 +390,9 @@ pub(crate) fn bpf_link_create(
         attr.link_create.__bindgen_anon_3.target_btf_id = btf_id;
     }
 
-    sys_bpf(bpf_cmd::BPF_LINK_CREATE, &attr)
+    let fd = sys_bpf(bpf_cmd::BPF_LINK_CREATE, &attr)? as RawFd;
+    // Safety: BPF_LINK_CREATE returns a new file descriptor
+    Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
 // since kernel 5.7
@@ -528,7 +543,7 @@ pub(crate) fn btf_obj_get_info_by_fd(prog_fd: RawFd, buf: &mut [u8]) -> io::Resu
     }
 }
 
-pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> SysResult {
+pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> Result<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.raw_tracepoint.name = match name {
@@ -537,7 +552,9 @@ pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> Sy
     };
     attr.raw_tracepoint.prog_fd = prog_fd as u32;
 
-    sys_bpf(bpf_cmd::BPF_RAW_TRACEPOINT_OPEN, &attr)
+    let fd = sys_bpf(bpf_cmd::BPF_RAW_TRACEPOINT_OPEN, &attr)? as RawFd;
+    // Safety: BPF_RAW_TRACEPOINT_OPEN returns a new fd
+    Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
 pub(crate) fn bpf_load_btf(raw_btf: &[u8], log: &mut VerifierLog) -> SysResult {
@@ -694,22 +711,27 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
         btf_fd: None,
     };
 
-    if let Ok(map_fd) = map_data.create("aya_global") {
-        insns[0].imm = map_fd;
+    if map_data.create("aya_global").is_err() {
+        return false;
+    }
 
-        let gpl = b"GPL\0";
-        u.license = gpl.as_ptr() as u64;
-        u.insn_cnt = insns.len() as u32;
-        u.insns = insns.as_ptr() as u64;
-        u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
+    // OK: we just created this fd
+    let map_fd = map_data.fd.as_ref().unwrap();
 
-        if let Ok(v) = sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
-            let fd = v as RawFd;
+    insns[0].imm = map_fd.as_raw_fd();
 
-            unsafe { close(fd) };
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
 
-            return true;
-        }
+    if let Ok(v) = sys_bpf(bpf_cmd::BPF_PROG_LOAD, &attr) {
+        let fd = v as RawFd;
+
+        unsafe { close(fd) };
+
+        return true;
     }
 
     false
@@ -982,14 +1004,11 @@ pub(crate) fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>> {
     }
 }
 
-pub(crate) fn retry_with_verifier_logs<F>(
+pub(crate) fn retry_with_verifier_logs<T>(
     max_retries: usize,
     log: &mut VerifierLog,
-    f: F,
-) -> SysResult
-where
-    F: Fn(&mut VerifierLog) -> SysResult,
-{
+    f: impl Fn(&mut VerifierLog) -> Result<T>,
+) -> Result<T> {
     // 1. Try the syscall
     let ret = f(log);
     if ret.is_ok() {

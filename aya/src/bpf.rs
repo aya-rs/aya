@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
     ffi::CString,
     fs, io,
-    os::{raw::c_int, unix::io::RawFd},
+    os::{fd::AsRawFd, raw::c_int, unix::io::RawFd},
     path::{Path, PathBuf},
 };
 
@@ -398,7 +398,7 @@ impl<'a> BpfLoader<'a> {
                 pinned: false,
                 btf_fd,
             };
-            let fd = match map.obj.pinning() {
+            match map.obj.pinning() {
                 PinningType::ByName => {
                     let path = match &self.map_pin_path {
                         Some(p) => p,
@@ -406,31 +406,38 @@ impl<'a> BpfLoader<'a> {
                     };
                     // try to open map in case it's already pinned
                     match map.open_pinned(&name, path) {
-                        Ok(fd) => {
+                        Ok(_) => {
                             map.pinned = true;
-                            fd as RawFd
                         }
                         Err(_) => {
-                            let fd = map.create(&name)?;
+                            map.create(&name)?;
                             map.pin(&name, path).map_err(|error| MapError::PinError {
                                 name: Some(name.to_string()),
                                 error,
                             })?;
-                            fd
                         }
                     }
                 }
                 PinningType::None => map.create(&name)?,
             };
+            // OK: we just loaded the map
+            let fd = map.fd.as_ref().unwrap();
             if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
-                bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
-                    .map_err(|(_, io_error)| MapError::SyscallError {
-                        call: "bpf_map_update_elem".to_owned(),
-                        io_error,
-                    })?;
+                // TODO (AM)
+                bpf_map_update_elem_ptr(
+                    fd.as_raw_fd(),
+                    &0 as *const _,
+                    map.obj.data_mut().as_mut_ptr(),
+                    0,
+                )
+                .map_err(|(_, io_error)| MapError::SyscallError {
+                    call: "bpf_map_update_elem".to_owned(),
+                    io_error,
+                })?;
             }
             if map.obj.section_kind() == BpfSectionKind::Rodata {
-                bpf_map_freeze(fd).map_err(|(_, io_error)| MapError::SyscallError {
+                // TODO (AM)
+                bpf_map_freeze(fd.as_raw_fd()).map_err(|(_, io_error)| MapError::SyscallError {
                     call: "bpf_map_freeze".to_owned(),
                     io_error,
                 })?;
@@ -446,7 +453,14 @@ impl<'a> BpfLoader<'a> {
 
         obj.relocate_maps(
             maps.iter()
-                .map(|(s, data)| (s.as_str(), data.fd, &data.obj)),
+                // TODO (AM)
+                .map(|(s, data)| {
+                    (
+                        s.as_str(),
+                        data.fd.as_ref().map(|f| f.as_raw_fd()),
+                        &data.obj,
+                    )
+                }),
             &text_sections,
         )?;
         obj.relocate_calls(&text_sections)?;

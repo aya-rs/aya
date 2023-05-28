@@ -1,8 +1,5 @@
 //! Cgroup sysctl programs.
-use std::{
-    hash::Hash,
-    os::fd::{AsRawFd, RawFd},
-};
+use std::{hash::Hash, os::fd::AsRawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SYSCTL, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL},
@@ -66,29 +63,32 @@ impl CgroupSysctl {
 
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL, None, 0).map_err(
-                |(_, io_error)| ProgramError::SyscallError {
-                    call: "bpf_link_create".to_owned(),
-                    io_error,
-                },
-            )? as RawFd;
+            // TODO (AM)
+            let link_fd =
+                bpf_link_create(prog_fd.as_raw_fd(), cgroup_fd, BPF_CGROUP_SYSCTL, None, 0)
+                    .map_err(|(_, io_error)| ProgramError::SyscallError {
+                        call: "bpf_link_create".to_owned(),
+                        io_error,
+                    })?;
             self.data
                 .links
                 .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
-            bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL).map_err(|(_, io_error)| {
-                ProgramError::SyscallError {
+            // TODO (AM)
+            bpf_prog_attach(prog_fd.as_raw_fd(), cgroup_fd, BPF_CGROUP_SYSCTL).map_err(
+                |(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_prog_attach".to_owned(),
                     io_error,
-                }
-            })?;
+                },
+            )?;
 
             self.data
                 .links
                 .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::ProgAttach(
-                    ProgAttachLink::new(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL),
+                    // TODO (AM)
+                    ProgAttachLink::new(prog_fd.as_raw_fd(), cgroup_fd, BPF_CGROUP_SYSCTL),
                 )))
         }
     }

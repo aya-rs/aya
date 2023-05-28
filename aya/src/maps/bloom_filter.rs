@@ -1,5 +1,5 @@
 //! A Bloom Filter.
-use std::{borrow::Borrow, marker::PhantomData};
+use std::{borrow::Borrow, marker::PhantomData, os::fd::AsRawFd};
 
 use crate::{
     maps::{check_v_size, MapData, MapError},
@@ -52,7 +52,8 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
 
-        bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
+        // TODO (AM)
+        bpf_map_lookup_elem_ptr::<u32, _>(fd.as_raw_fd(), None, &mut value, flags)
             .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
                 io_error,
@@ -64,7 +65,8 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     /// Inserts a value into the map.
     pub fn insert(&self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| {
+        // TODO (AM)
+        bpf_map_push_elem(fd.as_raw_fd(), value.borrow(), flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_push_elem".to_owned(),
                 io_error,
@@ -88,7 +90,7 @@ mod tests {
         sys::{override_syscall, SysResult, Syscall},
     };
     use libc::{EFAULT, ENOENT};
-    use std::io;
+    use std::{env, fs::File, io, os::fd::OwnedFd};
 
     fn new_obj_map() -> obj::Map {
         obj::Map::Legacy(LegacyMap {
@@ -175,7 +177,7 @@ mod tests {
     fn test_new_ok() {
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -187,7 +189,7 @@ mod tests {
     fn test_try_from_ok() {
         let map_data = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -202,7 +204,7 @@ mod tests {
 
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -226,7 +228,7 @@ mod tests {
 
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -240,7 +242,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -263,7 +265,7 @@ mod tests {
         });
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -273,5 +275,12 @@ mod tests {
             bloom_filter.contains(&1, 0),
             Err(MapError::ElementNotFound)
         ));
+    }
+
+    fn create_fd() -> OwnedFd {
+        let dir = env::temp_dir();
+        File::create(dir.join("f1"))
+            .expect("unable to create file in tmpdir")
+            .into()
     }
 }

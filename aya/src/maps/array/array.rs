@@ -1,6 +1,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
+    os::fd::AsRawFd,
 };
 
 use crate::{
@@ -65,12 +66,14 @@ impl<T: Borrow<MapData>, V: Pod> Array<T, V> {
         check_bounds(data, *index)?;
         let fd = data.fd_or_err()?;
 
-        let value = bpf_map_lookup_elem(fd, index, flags).map_err(|(_, io_error)| {
-            MapError::SyscallError {
-                call: "bpf_map_lookup_elem".to_owned(),
-                io_error,
-            }
-        })?;
+        // TODO (AM)
+        let value =
+            bpf_map_lookup_elem(fd.as_raw_fd(), index, flags).map_err(|(_, io_error)| {
+                MapError::SyscallError {
+                    call: "bpf_map_lookup_elem".to_owned(),
+                    io_error,
+                }
+            })?;
         value.ok_or(MapError::KeyNotFound)
     }
 
@@ -92,12 +95,13 @@ impl<T: BorrowMut<MapData>, V: Pod> Array<T, V> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd_or_err()?;
-        bpf_map_update_elem(fd, Some(&index), value.borrow(), flags).map_err(|(_, io_error)| {
-            MapError::SyscallError {
+        // TODO (AM)
+        bpf_map_update_elem(fd.as_raw_fd(), Some(&index), value.borrow(), flags).map_err(
+            |(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 io_error,
-            }
-        })?;
+            },
+        )?;
         Ok(())
     }
 }

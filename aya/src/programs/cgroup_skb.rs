@@ -1,9 +1,5 @@
 //! Cgroup skb programs.
-use std::{
-    hash::Hash,
-    os::fd::{AsRawFd, RawFd},
-    path::Path,
-};
+use std::{hash::Hash, os::fd::AsRawFd, path::Path};
 
 use crate::{
     generated::{
@@ -98,29 +94,31 @@ impl CgroupSkb {
         };
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, cgroup_fd, attach_type, None, 0).map_err(
-                |(_, io_error)| ProgramError::SyscallError {
+            // TODO (AM)
+            let link_fd = bpf_link_create(prog_fd.as_raw_fd(), cgroup_fd, attach_type, None, 0)
+                .map_err(|(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_link_create".to_owned(),
                     io_error,
-                },
-            )? as RawFd;
+                })?;
             self.data
                 .links
                 .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
                     link_fd,
                 ))))
         } else {
-            bpf_prog_attach(prog_fd, cgroup_fd, attach_type).map_err(|(_, io_error)| {
-                ProgramError::SyscallError {
+            // TODO (AM)
+            bpf_prog_attach(prog_fd.as_raw_fd(), cgroup_fd, attach_type).map_err(
+                |(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_prog_attach".to_owned(),
                     io_error,
-                }
-            })?;
+                },
+            )?;
 
             self.data
                 .links
                 .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(
-                    ProgAttachLink::new(prog_fd, cgroup_fd, attach_type),
+                    // TODO (AM)
+                    ProgAttachLink::new(prog_fd.as_raw_fd(), cgroup_fd, attach_type),
                 )))
         }
     }

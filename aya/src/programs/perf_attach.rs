@@ -80,7 +80,7 @@ pub(crate) fn perf_attach(prog_fd: RawFd, fd: RawFd) -> Result<PerfLinkInner, Pr
                     call: "bpf_link_create".to_owned(),
                     io_error,
                 }
-            })? as RawFd;
+            })?;
         Ok(PerfLinkInner::FdLink(FdLink::new(link_fd)))
     } else {
         perf_attach_either(prog_fd, fd, None, None)

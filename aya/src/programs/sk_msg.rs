@@ -82,14 +82,16 @@ impl SkMsg {
         let prog_fd = self.data.fd_or_err()?;
         let map_fd = map.as_raw_fd();
 
-        bpf_prog_attach(prog_fd, map_fd, BPF_SK_MSG_VERDICT).map_err(|(_, io_error)| {
-            ProgramError::SyscallError {
+        // TODO (AM)
+        bpf_prog_attach(prog_fd.as_raw_fd(), map_fd, BPF_SK_MSG_VERDICT).map_err(
+            |(_, io_error)| ProgramError::SyscallError {
                 call: "bpf_prog_attach".to_owned(),
                 io_error,
-            }
-        })?;
+            },
+        )?;
         self.data.links.insert(SkMsgLink::new(ProgAttachLink::new(
-            prog_fd,
+            // TODO (AM)
+            prog_fd.as_raw_fd(),
             map_fd,
             BPF_SK_MSG_VERDICT,
         )))

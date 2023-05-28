@@ -17,7 +17,7 @@ use crate::{
 /// sockets.
 ///
 /// A `SockMap` can also be used to redirect packets to sockets contained by the
-/// map using `bpf_redirect_map()`, `bpf_sk_redirect_map()` etc.    
+/// map using `bpf_redirect_map()`, `bpf_sk_redirect_map()` etc.
 ///
 /// # Minimum kernel version
 ///
@@ -65,7 +65,8 @@ impl<T: Borrow<MapData>> SockMap<T> {
     /// The returned file descriptor can be used to attach programs that work with
     /// socket maps, like [`SkMsg`](crate::programs::SkMsg) and [`SkSkb`](crate::programs::SkSkb).
     pub fn fd(&self) -> Result<SockMapFd, MapError> {
-        Ok(SockMapFd(self.inner.borrow().fd_or_err()?))
+        // TODO (AM)
+        Ok(SockMapFd(self.inner.borrow().fd_or_err()?.as_raw_fd()))
     }
 }
 
@@ -75,7 +76,8 @@ impl<T: BorrowMut<MapData>> SockMap<T> {
         let data = self.inner.borrow_mut();
         let fd = data.fd_or_err()?;
         check_bounds(data, index)?;
-        bpf_map_update_elem(fd, Some(&index), &socket.as_raw_fd(), flags).map_err(
+        // TODO (AM)
+        bpf_map_update_elem(fd.as_raw_fd(), Some(&index), &socket.as_raw_fd(), flags).map_err(
             |(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 io_error,
@@ -89,7 +91,8 @@ impl<T: BorrowMut<MapData>> SockMap<T> {
         let data = self.inner.borrow_mut();
         let fd = data.fd_or_err()?;
         check_bounds(data, *index)?;
-        bpf_map_delete_elem(fd, index)
+        // TODO (AM)
+        bpf_map_delete_elem(fd.as_raw_fd(), index)
             .map(|_| ())
             .map_err(|(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_delete_elem".to_owned(),

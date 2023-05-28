@@ -1,4 +1,4 @@
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::AsRawFd;
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP},
@@ -64,12 +64,12 @@ impl SkLookup {
         let prog_fd = self.data.fd_or_err()?;
         let netns_fd = netns.as_raw_fd();
 
-        let link_fd = bpf_link_create(prog_fd, netns_fd, BPF_SK_LOOKUP, None, 0).map_err(
-            |(_, io_error)| ProgramError::SyscallError {
+        // TODO (AM)
+        let link_fd = bpf_link_create(prog_fd.as_raw_fd(), netns_fd, BPF_SK_LOOKUP, None, 0)
+            .map_err(|(_, io_error)| ProgramError::SyscallError {
                 call: "bpf_link_create".to_owned(),
                 io_error,
-            },
-        )? as RawFd;
+            })?;
         self.data
             .links
             .insert(SkLookupLink::new(FdLink::new(link_fd)))

@@ -4,6 +4,7 @@ use thiserror::Error;
 use std::{
     ffi::{CStr, CString},
     io,
+    os::fd::AsRawFd,
     path::Path,
 };
 
@@ -158,7 +159,8 @@ impl SchedClassifier {
             netlink_qdisc_attach(
                 if_index as i32,
                 &attach_type,
-                prog_fd,
+                // TODO (AM)
+                prog_fd.as_raw_fd(),
                 &self.name,
                 options.priority,
                 options.handle,

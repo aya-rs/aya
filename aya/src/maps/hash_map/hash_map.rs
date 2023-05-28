@@ -1,6 +1,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
+    os::fd::AsRawFd,
 };
 
 use crate::{
@@ -54,7 +55,8 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Returns a copy of the value associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
+        // TODO (AM)
+        let value = bpf_map_lookup_elem(fd.as_raw_fd(), key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
                 call: "bpf_map_lookup_elem".to_owned(),
                 io_error,
@@ -105,7 +107,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> 
 
 #[cfg(test)]
 mod tests {
-    use std::io;
+    use std::{env, fs::File, io, os::fd::OwnedFd};
 
     use libc::{EFAULT, ENOENT};
 
@@ -230,7 +232,7 @@ mod tests {
     fn test_new_ok() {
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -242,7 +244,7 @@ mod tests {
     fn test_try_from_ok() {
         let map_data = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -267,7 +269,7 @@ mod tests {
                 symbol_index: None,
                 data: Vec::new(),
             }),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -283,7 +285,7 @@ mod tests {
 
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -307,7 +309,7 @@ mod tests {
 
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -328,7 +330,7 @@ mod tests {
 
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -343,7 +345,7 @@ mod tests {
 
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -367,7 +369,7 @@ mod tests {
 
         let mut map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -381,7 +383,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -404,7 +406,7 @@ mod tests {
         });
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -441,7 +443,7 @@ mod tests {
         });
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -490,7 +492,7 @@ mod tests {
 
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -523,7 +525,7 @@ mod tests {
         });
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -558,7 +560,7 @@ mod tests {
         });
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -596,7 +598,7 @@ mod tests {
         });
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -635,7 +637,7 @@ mod tests {
         });
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -680,7 +682,7 @@ mod tests {
         });
         let map = MapData {
             obj: new_obj_map(),
-            fd: Some(42),
+            fd: Some(create_fd()),
             pinned: false,
             btf_fd: None,
         };
@@ -694,5 +696,12 @@ mod tests {
         ));
         assert!(matches!(iter.next(), Some(Ok((30, 300)))));
         assert!(matches!(iter.next(), None));
+    }
+
+    fn create_fd() -> OwnedFd {
+        let dir = env::temp_dir();
+        File::create(dir.join("f1"))
+            .expect("unable to create file in tmpdir")
+            .into()
     }
 }

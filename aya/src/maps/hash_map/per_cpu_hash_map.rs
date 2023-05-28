@@ -2,6 +2,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
+    os::fd::AsRawFd,
 };
 
 use crate::{
@@ -64,12 +65,14 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// Returns a slice of values - one for each CPU - associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<PerCpuValues<V>, MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        let values = bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|(_, io_error)| {
-            MapError::SyscallError {
-                call: "bpf_map_lookup_elem".to_owned(),
-                io_error,
-            }
-        })?;
+        let values =
+            // TODO (AM)
+            bpf_map_lookup_elem_per_cpu(fd.as_raw_fd(), key, flags).map_err(|(_, io_error)| {
+                MapError::SyscallError {
+                    call: "bpf_map_lookup_elem".to_owned(),
+                    io_error,
+                }
+            })?;
         values.ok_or(MapError::KeyNotFound)
     }
 
@@ -122,7 +125,8 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
         flags: u64,
     ) -> Result<(), MapError> {
         let fd = self.inner.borrow_mut().fd_or_err()?;
-        bpf_map_update_elem_per_cpu(fd, key.borrow(), &values, flags).map_err(
+        // TODO (AM)
+        bpf_map_update_elem_per_cpu(fd.as_raw_fd(), key.borrow(), &values, flags).map_err(
             |(_, io_error)| MapError::SyscallError {
                 call: "bpf_map_update_elem".to_owned(),
                 io_error,

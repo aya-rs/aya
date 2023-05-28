@@ -1,5 +1,5 @@
 //! Tracepoint programs.
-use std::{fs, io, path::Path};
+use std::{fs, io, os::fd::AsRawFd, path::Path};
 use thiserror::Error;
 
 use crate::{
@@ -87,7 +87,8 @@ impl TracePoint {
             }
         })? as i32;
 
-        let link = perf_attach(self.data.fd_or_err()?, fd)?;
+        // TODO (AM)
+        let link = perf_attach(self.data.fd_or_err()?.as_raw_fd(), fd)?;
         self.data.links.insert(TracePointLink::new(link))
     }
 
