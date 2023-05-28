@@ -421,13 +421,13 @@ pub(crate) fn bpf_link_update(
 
 pub(crate) fn bpf_prog_attach(
     prog_fd: BorrowedFd<'_>,
-    target_fd: RawFd,
+    target_fd: BorrowedFd<'_>,
     attach_type: bpf_attach_type,
 ) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_5.attach_bpf_fd = prog_fd.as_raw_fd() as u32;
-    attr.__bindgen_anon_5.target_fd = target_fd as u32;
+    attr.__bindgen_anon_5.target_fd = target_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.attach_type = attach_type as u32;
 
     sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &attr)

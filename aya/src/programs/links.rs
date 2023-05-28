@@ -1,5 +1,4 @@
 //! Program links.
-use libc::{close, dup};
 use thiserror::Error;
 
 use std::{
@@ -208,19 +207,19 @@ pub struct ProgAttachLinkId(RawFd, RawFd, bpf_attach_type);
 #[derive(Debug)]
 pub struct ProgAttachLink {
     prog_fd: RawFd,
-    target_fd: RawFd,
+    target_fd: OwnedFd,
     attach_type: bpf_attach_type,
 }
 
 impl ProgAttachLink {
     pub(crate) fn new(
         prog_fd: RawFd,
-        target_fd: RawFd,
+        target_fd: OwnedFd,
         attach_type: bpf_attach_type,
     ) -> ProgAttachLink {
         ProgAttachLink {
             prog_fd,
-            target_fd: unsafe { dup(target_fd) },
+            target_fd,
             attach_type,
         }
     }
@@ -230,12 +229,13 @@ impl Link for ProgAttachLink {
     type Id = ProgAttachLinkId;
 
     fn id(&self) -> Self::Id {
-        ProgAttachLinkId(self.prog_fd, self.target_fd, self.attach_type)
+        // TODO (AM)
+        ProgAttachLinkId(self.prog_fd, self.target_fd.as_raw_fd(), self.attach_type)
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        let _ = bpf_prog_detach(self.prog_fd, self.target_fd, self.attach_type);
-        unsafe { close(self.target_fd) };
+        // TODO (AM)
+        let _ = bpf_prog_detach(self.prog_fd, self.target_fd.as_raw_fd(), self.attach_type);
         Ok(())
     }
 }

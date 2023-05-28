@@ -1,7 +1,11 @@
 //! Cgroup socket programs.
 pub use aya_obj::programs::CgroupSockAttachType;
 
-use std::{hash::Hash, os::fd::AsRawFd, path::Path};
+use std::{
+    hash::Hash,
+    os::fd::{AsFd, AsRawFd},
+    path::Path,
+};
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK,
@@ -63,18 +67,18 @@ impl CgroupSock {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupSock::detach].
-    pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<CgroupSockLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<CgroupSockLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let cgroup_fd = cgroup.as_raw_fd();
+        let cgroup_fd = cgroup.as_fd();
         let attach_type = self.data.expected_attach_type.unwrap();
         let k_ver = kernel_version().unwrap();
         if k_ver >= (5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, cgroup_fd, attach_type, None, 0).map_err(
-                |(_, io_error)| ProgramError::SyscallError {
+            // TODO (AM)
+            let link_fd = bpf_link_create(prog_fd, cgroup_fd.as_raw_fd(), attach_type, None, 0)
+                .map_err(|(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_link_create".to_owned(),
                     io_error,
-                },
-            )?;
+                })?;
             self.data
                 .links
                 .insert(CgroupSockLink::new(CgroupSockLinkInner::Fd(FdLink::new(
@@ -92,7 +96,11 @@ impl CgroupSock {
                 .links
                 .insert(CgroupSockLink::new(CgroupSockLinkInner::ProgAttach(
                     // TODO (AM)
-                    ProgAttachLink::new(prog_fd.as_raw_fd(), cgroup_fd, attach_type),
+                    ProgAttachLink::new(
+                        prog_fd.as_raw_fd(),
+                        cgroup_fd.try_clone_to_owned()?,
+                        attach_type,
+                    ),
                 )))
         }
     }

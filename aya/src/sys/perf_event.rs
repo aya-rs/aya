@@ -1,4 +1,8 @@
-use std::{ffi::CString, mem};
+use std::{
+    ffi::CString,
+    io, mem,
+    os::fd::{FromRawFd, OwnedFd, RawFd},
+};
 
 use libc::{c_int, pid_t};
 
@@ -12,6 +16,8 @@ use crate::generated::{
 
 use super::{syscall, SysResult, Syscall};
 
+type Result = std::result::Result<OwnedFd, (libc::c_long, io::Error)>;
+
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn perf_event_open(
     perf_type: u32,
@@ -22,7 +28,7 @@ pub(crate) fn perf_event_open(
     sample_frequency: Option<u64>,
     wakeup: bool,
     flags: u32,
-) -> SysResult {
+) -> Result {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     attr.config = config;
@@ -39,16 +45,19 @@ pub(crate) fn perf_event_open(
         attr.__bindgen_anon_1.sample_period = sample_period;
     }
 
-    syscall(Syscall::PerfEventOpen {
+    let fd = syscall(Syscall::PerfEventOpen {
         attr,
         pid,
         cpu,
         group: -1,
         flags,
-    })
+    })? as RawFd;
+
+    // SAFETY: perf_event_open returns new fd
+    Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
-pub(crate) fn perf_event_open_bpf(cpu: c_int) -> SysResult {
+pub(crate) fn perf_event_open_bpf(cpu: c_int) -> Result {
     perf_event_open(
         PERF_TYPE_SOFTWARE as u32,
         PERF_COUNT_SW_BPF_OUTPUT as u64,
@@ -67,7 +76,7 @@ pub(crate) fn perf_event_open_probe(
     name: &str,
     offset: u64,
     pid: Option<pid_t>,
-) -> SysResult {
+) -> Result {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     if let Some(ret_bit) = ret_bit {
@@ -84,16 +93,19 @@ pub(crate) fn perf_event_open_probe(
     let cpu = if pid.is_some() { -1 } else { 0 };
     let pid = pid.unwrap_or(-1);
 
-    syscall(Syscall::PerfEventOpen {
+    let fd = syscall(Syscall::PerfEventOpen {
         attr,
         pid,
         cpu,
         group: -1,
         flags: PERF_FLAG_FD_CLOEXEC,
-    })
+    })? as RawFd;
+
+    // SAFETY: perf_event_open returns new fd
+    Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
-pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> SysResult {
+pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> Result {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     attr.size = mem::size_of::<perf_event_attr>() as u32;
@@ -103,13 +115,15 @@ pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> SysRes
     let cpu = if pid.is_some() { -1 } else { 0 };
     let pid = pid.unwrap_or(-1);
 
-    syscall(Syscall::PerfEventOpen {
+    let fd = syscall(Syscall::PerfEventOpen {
         attr,
         pid,
         cpu,
         group: -1,
         flags: PERF_FLAG_FD_CLOEXEC,
-    })
+    })? as RawFd;
+    // SAFETY: perf_event_open returns new fd
+    Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
 pub(crate) fn perf_event_ioctl(fd: c_int, request: c_int, arg: c_int) -> SysResult {

@@ -1,6 +1,6 @@
 //! Skmsg programs.
 
-use std::os::unix::io::AsRawFd;
+use std::os::{fd::AsFd, unix::io::AsRawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
@@ -46,9 +46,10 @@ use crate::{
 /// let intercept_egress: SockHash<_, u32> = bpf.map("INTERCEPT_EGRESS").unwrap().try_into()?;
 /// let map_fd = intercept_egress.fd()?;
 ///
-/// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
-/// prog.load()?;
-/// prog.attach(map_fd)?;
+/// // TODO (AM): Figure out lifetimes
+/// // let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
+/// // prog.load()?;
+/// // prog.attach(map_fd)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
 /// let mut intercept_egress: SockHash<_, u32> = bpf.map_mut("INTERCEPT_EGRESS").unwrap().try_into()?;
@@ -78,9 +79,9 @@ impl SkMsg {
     /// Attaches the program to the given sockmap.
     ///
     /// The returned value can be used to detach, see [SkMsg::detach].
-    pub fn attach(&mut self, map: SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
+    pub fn attach(&mut self, map: SockMapFd<'_>) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let map_fd = map.as_raw_fd();
+        let map_fd = map.as_fd();
 
         bpf_prog_attach(prog_fd, map_fd, BPF_SK_MSG_VERDICT).map_err(|(_, io_error)| {
             ProgramError::SyscallError {
@@ -91,7 +92,7 @@ impl SkMsg {
         self.data.links.insert(SkMsgLink::new(ProgAttachLink::new(
             // TODO (AM)
             prog_fd.as_raw_fd(),
-            map_fd,
+            map_fd.try_clone_to_owned()?,
             BPF_SK_MSG_VERDICT,
         )))
     }

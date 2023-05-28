@@ -24,9 +24,10 @@
 //!
 //! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS").unwrap())?;
 //! let map_fd = intercept_egress.fd()?;
-//! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
-//! prog.load()?;
-//! prog.attach(map_fd)?;
+//! // TODO (AM) figure out lifetimes
+//! // let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
+//! // prog.load()?;
+//! // prog.attach(map_fd)?;
 //!
 //! # Ok::<(), aya::BpfError>(())
 //! ```

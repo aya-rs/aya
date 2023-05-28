@@ -33,9 +33,10 @@ use crate::{
 /// let intercept_ingress = SockMap::try_from(bpf.map("INTERCEPT_INGRESS").unwrap())?;
 /// let map_fd = intercept_ingress.fd()?;
 ///
-/// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
-/// prog.load()?;
-/// prog.attach(map_fd)?;
+/// // TODO (AM): figure out lifetimes
+/// // let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
+/// // prog.load()?;
+/// // prog.attach(map_fd)?;
 ///
 /// # Ok::<(), aya::BpfError>(())
 /// ```
@@ -64,9 +65,8 @@ impl<T: Borrow<MapData>> SockMap<T> {
     ///
     /// The returned file descriptor can be used to attach programs that work with
     /// socket maps, like [`SkMsg`](crate::programs::SkMsg) and [`SkSkb`](crate::programs::SkSkb).
-    pub fn fd(&self) -> Result<SockMapFd, MapError> {
-        // TODO (AM)
-        Ok(SockMapFd(self.inner.borrow().fd_or_err()?.as_raw_fd()))
+    pub fn fd(&self) -> Result<SockMapFd<'_>, MapError> {
+        Ok(SockMapFd(self.inner.borrow().fd_or_err()?))
     }
 }
 

@@ -1,5 +1,5 @@
 //! Socket option programs.
-use std::os::unix::io::AsRawFd;
+use std::os::{fd::AsFd, unix::io::AsRawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS},
@@ -58,9 +58,9 @@ impl SockOps {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [SockOps::detach].
-    pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<SockOpsLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<SockOpsLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let cgroup_fd = cgroup.as_raw_fd();
+        let cgroup_fd = cgroup.as_fd();
 
         bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_SOCK_OPS).map_err(|(_, io_error)| {
             ProgramError::SyscallError {
@@ -71,7 +71,7 @@ impl SockOps {
         // TODO (AM)
         self.data.links.insert(SockOpsLink::new(ProgAttachLink::new(
             prog_fd.as_raw_fd(),
-            cgroup_fd,
+            cgroup_fd.try_clone_to_owned()?,
             BPF_CGROUP_SOCK_OPS,
         )))
     }
