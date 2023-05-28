@@ -563,7 +563,7 @@ pub(crate) fn bpf_raw_tracepoint_open(
     Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
-pub(crate) fn bpf_load_btf(raw_btf: &[u8], log: &mut VerifierLog) -> SysResult {
+pub(crate) fn bpf_load_btf(raw_btf: &[u8], log: &mut VerifierLog) -> Result<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_7 };
     u.btf = raw_btf.as_ptr() as *const _ as u64;
@@ -574,7 +574,9 @@ pub(crate) fn bpf_load_btf(raw_btf: &[u8], log: &mut VerifierLog) -> SysResult {
         u.btf_log_buf = log_buf.as_mut_ptr() as u64;
         u.btf_log_size = log_buf.capacity() as u32;
     }
-    sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr)
+    let fd = sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr)? as RawFd;
+    // SAFETY: BPF_BTF_LOAD returns a new fd
+    Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
 pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> io::Result<RawFd> {

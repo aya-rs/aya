@@ -4,9 +4,8 @@ use std::{
     ffi::CString,
     fs, io,
     os::{
-        fd::{AsFd, AsRawFd},
+        fd::{AsFd, AsRawFd, OwnedFd},
         raw::c_int,
-        unix::io::RawFd,
     },
     path::{Path, PathBuf},
 };
@@ -368,6 +367,9 @@ impl<'a> BpfLoader<'a> {
             None
         };
 
+        // TODO (AM)
+        let raw_btf_fd = btf_fd.as_ref().map(|f| f.as_raw_fd());
+
         if let Some(btf) = &self.btf {
             obj.relocate_btf(btf)?;
         }
@@ -400,7 +402,7 @@ impl<'a> BpfLoader<'a> {
                 obj,
                 fd: None,
                 pinned: false,
-                btf_fd,
+                btf_fd: raw_btf_fd,
             };
             match map.obj.pinning() {
                 PinningType::ByName => {
@@ -479,70 +481,90 @@ impl<'a> BpfLoader<'a> {
 
                 let program = if self.extensions.contains(name.as_str()) {
                     Program::Extension(Extension {
-                        data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                        data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                     })
                 } else {
                     match &section {
                         ProgramSection::KProbe { .. } => Program::KProbe(KProbe {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                             kind: ProbeKind::KProbe,
                         }),
                         ProgramSection::KRetProbe { .. } => Program::KProbe(KProbe {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                             kind: ProbeKind::KRetProbe,
                         }),
                         ProgramSection::UProbe { .. } => Program::UProbe(UProbe {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                             kind: ProbeKind::UProbe,
                         }),
                         ProgramSection::URetProbe { .. } => Program::UProbe(UProbe {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                             kind: ProbeKind::URetProbe,
                         }),
                         ProgramSection::TracePoint { .. } => Program::TracePoint(TracePoint {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                         }),
                         ProgramSection::SocketFilter { .. } => {
                             Program::SocketFilter(SocketFilter {
-                                data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    raw_btf_fd,
+                                    verifier_log_level,
+                                ),
                             })
                         }
                         ProgramSection::Xdp { frags, .. } => {
                             let mut data =
-                                ProgramData::new(prog_name, obj, btf_fd, verifier_log_level);
+                                ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level);
                             if *frags {
                                 data.flags = BPF_F_XDP_HAS_FRAGS;
                             }
                             Program::Xdp(Xdp { data })
                         }
                         ProgramSection::SkMsg { .. } => Program::SkMsg(SkMsg {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                         }),
                         ProgramSection::CgroupSysctl { .. } => {
                             Program::CgroupSysctl(CgroupSysctl {
-                                data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    raw_btf_fd,
+                                    verifier_log_level,
+                                ),
                             })
                         }
                         ProgramSection::CgroupSockopt { attach_type, .. } => {
                             Program::CgroupSockopt(CgroupSockopt {
-                                data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    raw_btf_fd,
+                                    verifier_log_level,
+                                ),
                                 attach_type: *attach_type,
                             })
                         }
                         ProgramSection::SkSkbStreamParser { .. } => Program::SkSkb(SkSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                             kind: SkSkbKind::StreamParser,
                         }),
                         ProgramSection::SkSkbStreamVerdict { .. } => Program::SkSkb(SkSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                             kind: SkSkbKind::StreamVerdict,
                         }),
                         ProgramSection::SockOps { .. } => Program::SockOps(SockOps {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                         }),
                         ProgramSection::SchedClassifier { .. } => {
                             Program::SchedClassifier(SchedClassifier {
-                                data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    raw_btf_fd,
+                                    verifier_log_level,
+                                ),
                                 name: unsafe {
                                     CString::from_vec_unchecked(Vec::from(name.clone()))
                                         .into_boxed_c_str()
@@ -550,37 +572,47 @@ impl<'a> BpfLoader<'a> {
                             })
                         }
                         ProgramSection::CgroupSkb { .. } => Program::CgroupSkb(CgroupSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                             expected_attach_type: None,
                         }),
                         ProgramSection::CgroupSkbIngress { .. } => Program::CgroupSkb(CgroupSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                             expected_attach_type: Some(CgroupSkbAttachType::Ingress),
                         }),
                         ProgramSection::CgroupSkbEgress { .. } => Program::CgroupSkb(CgroupSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                             expected_attach_type: Some(CgroupSkbAttachType::Egress),
                         }),
                         ProgramSection::CgroupSockAddr { attach_type, .. } => {
                             Program::CgroupSockAddr(CgroupSockAddr {
-                                data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    raw_btf_fd,
+                                    verifier_log_level,
+                                ),
                                 attach_type: *attach_type,
                             })
                         }
                         ProgramSection::LircMode2 { .. } => Program::LircMode2(LircMode2 {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                         }),
                         ProgramSection::PerfEvent { .. } => Program::PerfEvent(PerfEvent {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                         }),
                         ProgramSection::RawTracePoint { .. } => {
                             Program::RawTracePoint(RawTracePoint {
-                                data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    raw_btf_fd,
+                                    verifier_log_level,
+                                ),
                             })
                         }
                         ProgramSection::Lsm { sleepable, .. } => {
                             let mut data =
-                                ProgramData::new(prog_name, obj, btf_fd, verifier_log_level);
+                                ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level);
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
@@ -588,30 +620,45 @@ impl<'a> BpfLoader<'a> {
                         }
                         ProgramSection::BtfTracePoint { .. } => {
                             Program::BtfTracePoint(BtfTracePoint {
-                                data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    raw_btf_fd,
+                                    verifier_log_level,
+                                ),
                             })
                         }
                         ProgramSection::FEntry { .. } => Program::FEntry(FEntry {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                         }),
                         ProgramSection::FExit { .. } => Program::FExit(FExit {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                         }),
                         ProgramSection::Extension { .. } => Program::Extension(Extension {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                         }),
                         ProgramSection::SkLookup { .. } => Program::SkLookup(SkLookup {
-                            data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                            data: ProgramData::new(prog_name, obj, raw_btf_fd, verifier_log_level),
                         }),
                         ProgramSection::CgroupSock { attach_type, .. } => {
                             Program::CgroupSock(CgroupSock {
-                                data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    raw_btf_fd,
+                                    verifier_log_level,
+                                ),
                                 attach_type: *attach_type,
                             })
                         }
                         ProgramSection::CgroupDevice { .. } => {
                             Program::CgroupDevice(CgroupDevice {
-                                data: ProgramData::new(prog_name, obj, btf_fd, verifier_log_level),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    raw_btf_fd,
+                                    verifier_log_level,
+                                ),
                             })
                         }
                     }
@@ -624,6 +671,7 @@ impl<'a> BpfLoader<'a> {
         Ok(Bpf {
             maps: maps?,
             programs,
+            _btf_fd: btf_fd,
         })
     }
 }
@@ -670,6 +718,7 @@ impl<'a> Default for BpfLoader<'a> {
 pub struct Bpf {
     maps: HashMap<String, Map>,
     programs: HashMap<String, Program>,
+    _btf_fd: Option<OwnedFd>,
 }
 
 impl Bpf {
@@ -917,24 +966,21 @@ pub enum BpfError {
     ProgramError(#[from] ProgramError),
 }
 
-fn load_btf(raw_btf: Vec<u8>) -> Result<RawFd, BtfError> {
+fn load_btf(raw_btf: Vec<u8>) -> Result<OwnedFd, BtfError> {
     let mut logger = VerifierLog::new();
-    let ret = retry_with_verifier_logs(10, &mut logger, |logger| {
+    retry_with_verifier_logs(10, &mut logger, |logger| {
         bpf_load_btf(raw_btf.as_slice(), logger)
-    });
-    match ret {
-        Ok(fd) => Ok(fd as RawFd),
-        Err((_, io_error)) => {
-            logger.truncate();
-            Err(BtfError::LoadError {
-                io_error,
-                verifier_log: logger
-                    .as_c_str()
-                    .map(|s| s.to_string_lossy().to_string())
-                    .unwrap_or_else(|| "[none]".to_owned()),
-            })
+    })
+    .map_err(|(_, io_error)| {
+        logger.truncate();
+        BtfError::LoadError {
+            io_error,
+            verifier_log: logger
+                .as_c_str()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_else(|| "[none]".to_owned()),
         }
-    }
+    })
 }
 
 /// Global data that can be exported to eBPF programs before they are loaded.
