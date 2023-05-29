@@ -370,12 +370,12 @@ pub(crate) fn bpf_link_create(
 ) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
-    attr.link_create.prog_fd = prog_fd as u32;
-    attr.link_create.__bindgen_anon_1.target_fd = target_fd as u32;
+    attr.link_create.__bindgen_anon_1.prog_fd = prog_fd as u32;
+    attr.link_create.__bindgen_anon_2.target_fd = target_fd as u32;
     attr.link_create.attach_type = attach_type as u32;
     attr.link_create.flags = flags;
     if let Some(btf_id) = btf_id {
-        attr.link_create.__bindgen_anon_2.target_btf_id = btf_id;
+        attr.link_create.__bindgen_anon_3.target_btf_id = btf_id;
     }
 
     sys_bpf(bpf_cmd::BPF_LINK_CREATE, &attr)
@@ -391,9 +391,9 @@ pub(crate) fn bpf_link_update(
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.link_update.link_fd = link_fd as u32;
-    attr.link_update.new_prog_fd = new_prog_fd as u32;
+    attr.link_update.__bindgen_anon_1.new_prog_fd = new_prog_fd as u32;
     if let Some(fd) = old_prog_fd {
-        attr.link_update.old_prog_fd = fd as u32;
+        attr.link_update.__bindgen_anon_2.old_prog_fd = fd as u32;
         attr.link_update.flags = flags | BPF_F_REPLACE;
     } else {
         attr.link_update.flags = flags;
