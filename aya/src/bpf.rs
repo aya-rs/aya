@@ -441,18 +441,21 @@ impl<'a> BpfLoader<'a> {
             &text_sections,
         )?;
         obj.relocate_calls(&text_sections)?;
-        obj.sanitize_programs(&FEATURES);
+        obj.sanitize_functions(&FEATURES);
 
         let programs = obj
             .programs
             .drain()
-            .map(|(name, obj)| {
+            .map(|(name, prog_obj)| {
+                let function_obj = obj.functions.get(&prog_obj.function_key()).unwrap().clone();
+
                 let prog_name = if FEATURES.bpf_name {
                     Some(name.clone())
                 } else {
                     None
                 };
-                let section = obj.section.clone();
+                let section = prog_obj.section.clone();
+                let obj = (prog_obj, function_obj);
 
                 let program = if self.extensions.contains(name.as_str()) {
                     Program::Extension(Extension {

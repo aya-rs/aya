@@ -11,7 +11,7 @@ use alloc::{
 use bytes::BufMut;
 
 use log::debug;
-use object::Endianness;
+use object::{Endianness, SectionIndex};
 
 use crate::{
     btf::{
@@ -414,7 +414,7 @@ impl Btf {
 
     pub(crate) fn fixup_and_sanitize(
         &mut self,
-        section_sizes: &HashMap<String, u64>,
+        section_infos: &HashMap<String, (SectionIndex, u64)>,
         symbol_offsets: &HashMap<String, u64>,
         features: &BtfFeatures,
     ) -> Result<(), BtfError> {
@@ -489,8 +489,8 @@ impl Btf {
                     } else {
                         // We need to get the size of the section from the ELF file
                         // Fortunately, we cached these when parsing it initially
-                        // and we can this up by name in section_sizes
-                        let size = section_sizes.get(&name).ok_or_else(|| {
+                        // and we can this up by name in section_infos
+                        let (_, size) = section_infos.get(&name).ok_or_else(|| {
                             BtfError::UnknownSectionSize {
                                 section_name: name.clone(),
                             }
@@ -639,7 +639,7 @@ impl Object {
             }
             // fixup btf
             obj_btf.fixup_and_sanitize(
-                &self.section_sizes,
+                &self.section_infos,
                 &self.symbol_offset_by_name,
                 features,
             )?;
@@ -1277,7 +1277,7 @@ mod tests {
         };
 
         btf.fixup_and_sanitize(
-            &HashMap::from([(".data/foo".to_string(), 32u64)]),
+            &HashMap::from([(".data/foo".to_string(), (SectionIndex(0), 32u64))]),
             &HashMap::from([("foo".to_string(), 64u64)]),
             &features,
         )

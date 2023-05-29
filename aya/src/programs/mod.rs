@@ -405,7 +405,7 @@ impl Program {
 #[derive(Debug)]
 pub(crate) struct ProgramData<T: Link> {
     pub(crate) name: Option<String>,
-    pub(crate) obj: Option<obj::Program>,
+    pub(crate) obj: Option<(obj::Program, obj::Function)>,
     pub(crate) fd: Option<RawFd>,
     pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
@@ -421,7 +421,7 @@ pub(crate) struct ProgramData<T: Link> {
 impl<T: Link> ProgramData<T> {
     pub(crate) fn new(
         name: Option<String>,
-        obj: obj::Program,
+        obj: (obj::Program, obj::Function),
         btf_fd: Option<RawFd>,
         verifier_log_level: u32,
     ) -> ProgramData<T> {
@@ -557,20 +557,21 @@ fn load_program<T: Link>(
         return Err(ProgramError::AlreadyLoaded);
     }
     let obj = obj.as_ref().unwrap();
-    let crate::obj::Program {
-        function:
-            Function {
-                instructions,
-                func_info,
-                line_info,
-                func_info_rec_size,
-                line_info_rec_size,
-                ..
-            },
-        license,
-        kernel_version,
-        ..
-    } = obj;
+    let (
+        crate::obj::Program {
+            license,
+            kernel_version,
+            ..
+        },
+        Function {
+            instructions,
+            func_info,
+            line_info,
+            func_info_rec_size,
+            line_info_rec_size,
+            ..
+        },
+    ) = obj;
 
     let target_kernel_version = match *kernel_version {
         KernelVersion::Any => {

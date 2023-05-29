@@ -191,12 +191,17 @@ impl RelocationTest {
                 }} output_map
                 __attribute__((section(".maps"), used));
 
+                __attribute__ ((noinline)) int bpf_func() {{
+                    __u32 key = 0;
+                    __u64 value = 0;
+                    {relocation_code}
+                    bpf_map_update_elem(&output_map, &key, &value, BPF_ANY);
+                    return 0;
+                  }}
+
                 __attribute__((section("tracepoint/bpf_prog"), used))
                 int bpf_prog(void *ctx) {{
-                  __u32 key = 0;
-                  __u64 value = 0;
-                  {relocation_code}
-                  bpf_map_update_elem(&output_map, &key, &value, BPF_ANY);
+                  bpf_func();
                   return 0;
                 }}
 

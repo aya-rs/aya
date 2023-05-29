@@ -2,7 +2,7 @@
 
 use core::mem;
 
-use alloc::{borrow::ToOwned, string::String};
+use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
 use log::debug;
 use object::{SectionIndex, SymbolKind};
 
@@ -12,7 +12,7 @@ use crate::{
         BPF_PSEUDO_MAP_VALUE,
     },
     maps::Map,
-    obj::{Function, Object, Program},
+    obj::{Function, Object},
     util::{HashMap, HashSet},
     BpfSectionKind,
 };
@@ -62,6 +62,15 @@ pub enum RelocationError {
         address: u64,
         /// The caller name
         caller_name: String,
+    },
+
+    /// Unknown function
+    #[error("program at section {section_index} and address {address:#x} was not found while relocating")]
+    UnknownProgram {
+        /// The function section index
+        section_index: usize,
+        /// The function address
+        address: u64,
     },
 
     /// Referenced map not created yet
@@ -119,13 +128,7 @@ impl Object {
             }
         }
 
-        let functions = self
-            .programs
-            .values_mut()
-            .map(|p| &mut p.function)
-            .chain(self.functions.values_mut());
-
-        for function in functions {
+        for function in self.functions.values_mut() {
             if let Some(relocations) = self.relocations.get(&function.section_index) {
                 relocate_maps(
                     function,
@@ -150,17 +153,31 @@ impl Object {
         &mut self,
         text_sections: &HashSet<usize>,
     ) -> Result<(), BpfRelocationError> {
-        for (name, program) in self.programs.iter_mut() {
+        for (name, program) in self.programs.iter() {
             let linker = FunctionLinker::new(
                 &self.functions,
                 &self.relocations,
                 &self.symbol_table,
                 text_sections,
             );
-            linker.link(program).map_err(|error| BpfRelocationError {
+
+            let func_orig =
+                self.functions
+                    .get(&program.function_key())
+                    .ok_or_else(|| BpfRelocationError {
+                        function: name.clone(),
+                        error: RelocationError::UnknownProgram {
+                            section_index: program.section_index,
+                            address: program.address,
+                        },
+                    })?;
+
+            let func = linker.link(func_orig).map_err(|error| BpfRelocationError {
                 function: name.to_owned(),
                 error,
             })?;
+
+            self.functions.insert(program.function_key(), func);
         }
 
         Ok(())
@@ -270,7 +287,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
 }
 
 struct FunctionLinker<'a> {
-    functions: &'a HashMap<(usize, u64), Function>,
+    functions: &'a BTreeMap<(usize, u64), Function>,
     linked_functions: HashMap<u64, usize>,
     relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
     symbol_table: &'a HashMap<usize, Symbol>,
@@ -279,7 +296,7 @@ struct FunctionLinker<'a> {
 
 impl<'a> FunctionLinker<'a> {
     fn new(
-        functions: &'a HashMap<(usize, u64), Function>,
+        functions: &'a BTreeMap<(usize, u64), Function>,
         relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
         symbol_table: &'a HashMap<usize, Symbol>,
         text_sections: &'a HashSet<usize>,
@@ -293,17 +310,15 @@ impl<'a> FunctionLinker<'a> {
         }
     }
 
-    fn link(mut self, program: &mut Program) -> Result<(), RelocationError> {
-        let mut fun = program.function.clone();
+    fn link(mut self, program_function: &Function) -> Result<Function, RelocationError> {
+        let mut fun = program_function.clone();
         // relocate calls in the program's main function. As relocation happens,
         // it will trigger linking in all the callees.
-        self.relocate(&mut fun, &program.function)?;
+        self.relocate(&mut fun, program_function)?;
 
         // this now includes the program function plus all the other functions called during
         // execution
-        program.function = fun;
-
-        Ok(())
+        Ok(fun)
     }
 
     fn link_function(
