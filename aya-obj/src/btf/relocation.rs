@@ -16,8 +16,8 @@ use crate::{
         IntEncoding, Struct, Union, MAX_SPEC_LEN,
     },
     generated::{
-        bpf_core_relo, bpf_core_relo_kind::*, bpf_insn, BPF_ALU, BPF_ALU64, BPF_B, BPF_DW, BPF_H,
-        BPF_K, BPF_LD, BPF_LDX, BPF_ST, BPF_STX, BPF_W, BTF_INT_SIGNED,
+        bpf_core_relo, bpf_core_relo_kind::*, bpf_insn, BPF_ALU, BPF_ALU64, BPF_B, BPF_CALL,
+        BPF_DW, BPF_H, BPF_JMP, BPF_K, BPF_LD, BPF_LDX, BPF_ST, BPF_STX, BPF_W, BTF_INT_SIGNED,
     },
     util::HashMap,
     Function, Object,
@@ -360,13 +360,18 @@ fn relocate_btf_functions<'target>(
             // same value, else the relocation is ambiguous and can't be applied
             let conflicts = matches
                 .filter_map(|(cand_name, cand_spec, cand_comp_rel)| {
-                    if cand_spec.bit_offset != target_spec.bit_offset
-                        || cand_comp_rel.target.value != target_comp_rel.target.value
-                    {
-                        Some(cand_name)
-                    } else {
-                        None
+                    if cand_spec.bit_offset != target_spec.bit_offset {
+                        return Some(cand_name);
+                    } else if let (Some(cand_comp_rel_target), Some(target_comp_rel_target)) = (
+                        cand_comp_rel.target.as_ref(),
+                        target_comp_rel.target.as_ref(),
+                    ) {
+                        if cand_comp_rel_target.value != target_comp_rel_target.value {
+                            return Some(cand_name);
+                        }
                     }
+
+                    None
                 })
                 .collect::<Vec<_>>();
             if !conflicts.is_empty() {
@@ -857,7 +862,7 @@ struct Candidate<'a> {
 #[derive(Debug)]
 struct ComputedRelocation {
     local: ComputedRelocationValue,
-    target: ComputedRelocationValue,
+    target: Option<ComputedRelocationValue>,
 }
 
 #[derive(Debug)]
@@ -865,6 +870,14 @@ struct ComputedRelocationValue {
     value: u64,
     size: u32,
     type_id: Option<u32>,
+}
+
+fn poison_insn(ins: &mut bpf_insn) {
+    ins.code = (BPF_JMP | BPF_CALL) as u8;
+    ins.set_dst_reg(0);
+    ins.set_src_reg(0);
+    ins.off = 0;
+    ins.imm = 0xBAD2310;
 }
 
 impl ComputedRelocation {
@@ -878,15 +891,15 @@ impl ComputedRelocation {
             FieldByteOffset | FieldByteSize | FieldExists | FieldSigned | FieldLShift64
             | FieldRShift64 => ComputedRelocation {
                 local: Self::compute_field_relocation(rel, Some(local_spec))?,
-                target: Self::compute_field_relocation(rel, target_spec)?,
+                target: Self::compute_field_relocation(rel, target_spec).ok(),
             },
             TypeIdLocal | TypeIdTarget | TypeExists | TypeSize => ComputedRelocation {
                 local: Self::compute_type_relocation(rel, local_spec, target_spec)?,
-                target: Self::compute_type_relocation(rel, local_spec, target_spec)?,
+                target: Self::compute_type_relocation(rel, local_spec, target_spec).ok(),
             },
             EnumVariantExists | EnumVariantValue => ComputedRelocation {
                 local: Self::compute_enum_relocation(rel, Some(local_spec))?,
-                target: Self::compute_enum_relocation(rel, target_spec)?,
+                target: Self::compute_enum_relocation(rel, target_spec).ok(),
             },
         };
 
@@ -912,9 +925,31 @@ impl ComputedRelocation {
                     relocation_number: rel.number,
                 })?;
 
+        let target = if let Some(target) = self.target.as_ref() {
+            target
+        } else {
+            let is_ld_imm64 = ins.code == (BPF_LD | BPF_DW) as u8;
+
+            poison_insn(ins);
+
+            if is_ld_imm64 {
+                let next_ins = instructions.get_mut(ins_index + 1).ok_or(
+                    RelocationError::InvalidInstructionIndex {
+                        index: (ins_index + 1) * mem::size_of::<bpf_insn>(),
+                        num_instructions,
+                        relocation_number: rel.number,
+                    },
+                )?;
+
+                poison_insn(next_ins);
+            }
+
+            return Ok(());
+        };
+
         let class = (ins.code & 0x07) as u32;
 
-        let target_value = self.target.value;
+        let target_value = target.value;
 
         match class {
             BPF_ALU | BPF_ALU64 => {
@@ -940,9 +975,9 @@ impl ComputedRelocation {
 
                 ins.off = target_value as i16;
 
-                if self.local.size != self.target.size {
+                if self.local.size != target.size {
                     let local_ty = local_btf.type_by_id(self.local.type_id.unwrap())?;
-                    let target_ty = target_btf.type_by_id(self.target.type_id.unwrap())?;
+                    let target_ty = target_btf.type_by_id(target.type_id.unwrap())?;
                     let unsigned = |info: u32| ((info >> 24) & 0x0F) & BTF_INT_SIGNED == 0;
                     use BtfType::*;
                     match (local_ty, target_ty) {
@@ -958,13 +993,13 @@ impl ComputedRelocation {
                                     err_type_name(&local_btf.err_type_name(local_ty)),
                                     self.local.size,
                                     err_type_name(&target_btf.err_type_name(target_ty)),
-                                    self.target.size,
+                                    target.size,
                                 ),
                             })
                         }
                     }
 
-                    let size = match self.target.size {
+                    let size = match target.size {
                         8 => BPF_DW,
                         4 => BPF_W,
                         2 => BPF_H,
