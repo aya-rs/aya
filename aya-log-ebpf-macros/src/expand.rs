@@ -2,7 +2,6 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    parse_str,
     punctuated::Punctuated,
     Error, Expr, LitStr, Result, Token,
 };
@@ -70,32 +69,6 @@ impl Parse for LogArgs {
     }
 }
 
-fn string_to_expr(s: String) -> Result<Expr> {
-    parse_str(&format!("\"{s}\""))
-}
-
-fn hint_to_expr(hint: DisplayHint) -> Result<Expr> {
-    match hint {
-        DisplayHint::Default => parse_str("::aya_log_ebpf::macro_support::DisplayHint::Default"),
-        DisplayHint::LowerHex => parse_str("::aya_log_ebpf::macro_support::DisplayHint::LowerHex"),
-        DisplayHint::UpperHex => parse_str("::aya_log_ebpf::macro_support::DisplayHint::UpperHex"),
-        DisplayHint::Ip => parse_str("::aya_log_ebpf::macro_support::DisplayHint::Ip"),
-        DisplayHint::LowerMac => parse_str("::aya_log_ebpf::macro_support::DisplayHint::LowerMac"),
-        DisplayHint::UpperMac => parse_str("::aya_log_ebpf::macro_support::DisplayHint::UpperMac"),
-    }
-}
-
-fn hint_to_format_check(hint: DisplayHint) -> Result<Expr> {
-    match hint {
-        DisplayHint::Default => parse_str("::aya_log_ebpf::macro_support::check_impl_default"),
-        DisplayHint::LowerHex => parse_str("::aya_log_ebpf::macro_support::check_impl_lower_hex"),
-        DisplayHint::UpperHex => parse_str("::aya_log_ebpf::macro_support::check_impl_upper_hex"),
-        DisplayHint::Ip => parse_str("::aya_log_ebpf::macro_support::check_impl_ip"),
-        DisplayHint::LowerMac => parse_str("::aya_log_ebpf::macro_support::check_impl_lower_mac"),
-        DisplayHint::UpperMac => parse_str("::aya_log_ebpf::macro_support::check_impl_upper_mac"),
-    }
-}
-
 pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStream> {
     let ctx = args.ctx;
     let target = match args.target {
@@ -125,23 +98,43 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
     let mut arg_i = 0;
 
     let mut values = Vec::new();
-    let mut f_keys = Vec::new();
-    let mut f_values = Vec::new();
     for fragment in fragments {
         match fragment {
-            Fragment::Literal(s) => {
-                values.push(string_to_expr(s)?);
-            }
+            Fragment::Literal(s) => values.push(quote!(#s)),
             Fragment::Parameter(p) => {
                 let arg = match args.formatting_args {
                     Some(ref args) => args[arg_i].clone(),
                     None => return Err(Error::new(format_string.span(), "no arguments provided")),
                 };
-                values.push(hint_to_expr(p.hint)?);
-                values.push(arg.clone());
+                let (hint, formatter) = match p.hint {
+                    DisplayHint::Default => {
+                        (quote!(DisplayHint::Default), quote!(DefaultFormatter))
+                    }
+                    DisplayHint::LowerHex => {
+                        (quote!(DisplayHint::LowerHex), quote!(LowerHexFormatter))
+                    }
+                    DisplayHint::UpperHex => {
+                        (quote!(DisplayHint::UpperHex), quote!(UpperHexFormatter))
+                    }
+                    DisplayHint::Ip => (quote!(DisplayHint::Ip), quote!(IpFormatter)),
+                    DisplayHint::LowerMac => {
+                        (quote!(DisplayHint::LowerMac), quote!(LowerMacFormatter))
+                    }
+                    DisplayHint::UpperMac => {
+                        (quote!(DisplayHint::UpperMac), quote!(UpperMacFormatter))
+                    }
+                };
+                let hint = quote!(::aya_log_ebpf::macro_support::#hint);
+                let arg = quote!(
+                    {
+                        let tmp = #arg;
+                        let _: &dyn ::aya_log_ebpf::macro_support::#formatter = &tmp;
+                        tmp
+                    }
+                );
+                values.push(hint);
+                values.push(arg);
 
-                f_keys.push(hint_to_format_check(p.hint)?);
-                f_values.push(arg.clone());
                 arg_i += 1;
             }
         }
@@ -150,15 +143,8 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
     let num_args = values.len();
     let values_iter = values.iter();
 
-    let f_keys = f_keys.iter();
-    let f_values = f_values.iter();
-
     Ok(quote! {
         {
-            #(
-                #f_keys(#f_values);
-            )*
-
             if let Some(buf_ptr) = unsafe { ::aya_log_ebpf::AYA_LOG_BUF.get_ptr_mut(0) } {
                 let buf = unsafe { &mut *buf_ptr };
                 if let Ok(header_len) = ::aya_log_ebpf::write_record_header(

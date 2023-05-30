@@ -19,6 +19,21 @@ pub fn test_log(ctx: ProbeContext) {
     warn!(&ctx, "hex lc: {:x}, hex uc: {:X}", hex, hex);
     let hex = [0xde, 0xad, 0xbe, 0xef].as_slice();
     debug!(&ctx, "hex lc: {:x}, hex uc: {:X}", hex, hex);
+
+    // Testing compilation only.
+    if false {
+        struct NoCopy {}
+
+        impl NoCopy {
+            fn consume(self) -> u64 {
+                0xdeadbeef
+            }
+        }
+
+        let no_copy = NoCopy {};
+
+        debug!(&ctx, "{:x}", no_copy.consume());
+    }
 }
 
 #[panic_handler]

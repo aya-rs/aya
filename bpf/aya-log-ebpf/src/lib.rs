@@ -23,10 +23,8 @@ pub static mut AYA_LOGS: PerfEventByteArray = PerfEventByteArray::new(0);
 #[doc(hidden)]
 pub mod macro_support {
     pub use aya_log_common::{
-        check_impl_default, check_impl_ip, check_impl_lower_hex, check_impl_lower_mac,
-        check_impl_upper_hex, check_impl_upper_mac, DefaultFormatter, DisplayHint, IpFormatter,
-        Level, LowerHexFormatter, LowerMacFormatter, UpperHexFormatter, UpperMacFormatter,
-        LOG_BUF_CAPACITY,
+        DefaultFormatter, DisplayHint, IpFormatter, Level, LowerHexFormatter, LowerMacFormatter,
+        UpperHexFormatter, UpperMacFormatter, LOG_BUF_CAPACITY,
     };
     pub use aya_log_ebpf_macros::log;
 }
