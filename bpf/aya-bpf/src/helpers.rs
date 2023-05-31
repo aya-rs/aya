@@ -430,6 +430,11 @@ pub unsafe fn bpf_probe_read_user_str_bytes(
         return Err(-1);
     }
 
+    // verifier complains if this check is missing on v5.19
+    if len < 1 {
+        return Err(-1);
+    }
+
     // len includes NULL byte
     Ok(&dest[..len - 1])
 }
@@ -580,6 +585,11 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
     if len >= dest.len() {
         // this can never happen, it's needed to tell the verifier that len is
         // bounded
+        return Err(-1);
+    }
+
+    // verifier complains if this check is missing on v5.19
+    if len < 1 {
         return Err(-1);
     }
 
