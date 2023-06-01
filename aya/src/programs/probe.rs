@@ -166,7 +166,7 @@ fn create_probe_event(
         probe_type_prefix,
         fn_name,
         offset,
-        PROBE_NAME_INDEX.fetch_add(1, Ordering::SeqCst)
+        PROBE_NAME_INDEX.fetch_add(1, Ordering::AcqRel)
     );
     let offset_suffix = match kind {
         KProbe => format!("+{offset}"),
