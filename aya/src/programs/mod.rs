@@ -418,7 +418,7 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) fd: Option<OwnedFd>,
     pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
-    pub(crate) attach_btf_obj_fd: Option<u32>,
+    pub(crate) attach_btf_obj_fd: Option<OwnedFd>,
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<RawFd>,
     pub(crate) btf_fd: Option<RawFd>,
@@ -468,7 +468,7 @@ impl<T: Link> ProgramData<T> {
                     io_error,
                 }
             })?;
-            Some(fd as u32)
+            Some(fd)
         } else {
             None
         };
@@ -500,13 +500,11 @@ impl<T: Link> ProgramData<T> {
                 io_error,
             })?;
 
-        // TODO: AM
-        let info = bpf_prog_get_info_by_fd(fd.as_raw_fd()).map_err(|io_error| {
-            ProgramError::SyscallError {
+        let info =
+            bpf_prog_get_info_by_fd(fd.as_fd()).map_err(|io_error| ProgramError::SyscallError {
                 call: "bpf_prog_get_info_by_fd".to_owned(),
                 io_error,
-            }
-        })?;
+            })?;
 
         let info = ProgramInfo(info);
         let name = info.name_as_str().map(|s| s.to_string());
@@ -615,7 +613,7 @@ fn load_program<T: Link>(
         kernel_version: target_kernel_version,
         expected_attach_type: data.expected_attach_type,
         prog_btf_fd: data.btf_fd,
-        attach_btf_obj_fd: data.attach_btf_obj_fd,
+        attach_btf_obj_fd: data.attach_btf_obj_fd.as_ref().map(|f| f.as_fd()),
         attach_btf_id: data.attach_btf_id,
         attach_prog_fd: data.attach_prog_fd,
         func_info_rec_size: *func_info_rec_size,
@@ -955,15 +953,13 @@ impl ProgramInfo {
     }
 
     /// Returns the fd associated with the program.
-    ///
-    /// The returned fd must be closed when no longer needed.
-    pub fn fd(&self) -> Result<RawFd, ProgramError> {
+    pub fn fd(&self) -> Result<OwnedFd, ProgramError> {
         let fd =
             bpf_prog_get_fd_by_id(self.0.id).map_err(|io_error| ProgramError::SyscallError {
                 call: "bpf_prog_get_fd_by_id".to_owned(),
                 io_error,
             })?;
-        Ok(fd as RawFd)
+        Ok(fd)
     }
 
     /// Loads a program from a pinned path in bpffs.
@@ -975,13 +971,11 @@ impl ProgramInfo {
                 io_error,
             })?;
 
-        // TODO (AM)
-        let info = bpf_prog_get_info_by_fd(fd.as_raw_fd()).map_err(|io_error| {
-            ProgramError::SyscallError {
+        let info =
+            bpf_prog_get_info_by_fd(fd.as_fd()).map_err(|io_error| ProgramError::SyscallError {
                 call: "bpf_prog_get_info_by_fd".to_owned(),
                 io_error,
-            }
-        })?;
+            })?;
 
         Ok(ProgramInfo(info))
     }
@@ -1012,14 +1006,12 @@ impl Iterator for ProgramsIter {
                             io_error,
                         })
                         .and_then(|fd| {
-                            let info = bpf_prog_get_info_by_fd(fd)
+                            bpf_prog_get_info_by_fd(fd.as_fd())
                                 .map_err(|io_error| ProgramError::SyscallError {
                                     call: "bpf_prog_get_info_by_fd".to_owned(),
                                     io_error,
                                 })
-                                .map(ProgramInfo);
-                            unsafe { libc::close(fd) };
-                            info
+                                .map(ProgramInfo)
                         }),
                 )
             }

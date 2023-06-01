@@ -71,7 +71,7 @@ impl LircMode2 {
 
         // TODO (AM)
         self.data.links.insert(LircLink::new(
-            prog_fd.as_raw_fd(),
+            prog_fd.try_clone_to_owned()?,
             lircdev_fd.try_clone_to_owned()?,
         ))
     }
@@ -104,7 +104,7 @@ impl LircMode2 {
                 io_error,
             })?;
 
-            prog_fds.push(fd as RawFd);
+            prog_fds.push(fd);
         }
 
         prog_fds
@@ -121,18 +121,18 @@ pub struct LircLinkId(RawFd, RawFd);
 #[derive(Debug)]
 /// An LircMode2 Link
 pub struct LircLink {
-    prog_fd: RawFd,
+    prog_fd: OwnedFd,
     target_fd: OwnedFd,
 }
 
 impl LircLink {
-    pub(crate) fn new(prog_fd: RawFd, target_fd: OwnedFd) -> LircLink {
+    pub(crate) fn new(prog_fd: OwnedFd, target_fd: OwnedFd) -> LircLink {
         LircLink { prog_fd, target_fd }
     }
 
     /// Get ProgramInfo from this link
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-        match bpf_prog_get_info_by_fd(self.prog_fd) {
+        match bpf_prog_get_info_by_fd(self.prog_fd.as_fd()) {
             Ok(info) => Ok(ProgramInfo(info)),
             Err(io_error) => Err(ProgramError::SyscallError {
                 call: "bpf_prog_get_info_by_fd".to_owned(),
@@ -147,12 +147,16 @@ impl Link for LircLink {
 
     fn id(&self) -> Self::Id {
         // TODO (AM)
-        LircLinkId(self.prog_fd, self.target_fd.as_raw_fd())
+        LircLinkId(self.prog_fd.as_raw_fd(), self.target_fd.as_raw_fd())
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         // TODO (AM)
-        let _ = bpf_prog_detach(self.prog_fd, self.target_fd.as_raw_fd(), BPF_LIRC_MODE2);
+        let _ = bpf_prog_detach(
+            self.prog_fd.as_raw_fd(),
+            self.target_fd.as_raw_fd(),
+            BPF_LIRC_MODE2,
+        );
         Ok(())
     }
 }

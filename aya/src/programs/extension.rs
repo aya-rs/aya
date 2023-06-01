@@ -1,8 +1,8 @@
 //! Extension programs.
-use std::os::fd::{AsRawFd, RawFd};
-use thiserror::Error;
+use std::os::fd::{AsFd, AsRawFd, OwnedFd};
 
 use object::Endianness;
+use thiserror::Error;
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_INET_INGRESS, bpf_prog_type::BPF_PROG_TYPE_EXT},
@@ -71,11 +71,12 @@ impl Extension {
     /// There are no restrictions on what functions may be replaced, so you could replace
     /// the main entry point of your program with an extension.
     pub fn load(&mut self, program: ProgramFd, func_name: &str) -> Result<(), ProgramError> {
-        let target_prog_fd = program.as_raw_fd();
+        let target_prog_fd = program.as_fd();
         let (btf_fd, btf_id) = get_btf_info(target_prog_fd, func_name)?;
 
-        self.data.attach_btf_obj_fd = Some(btf_fd as u32);
-        self.data.attach_prog_fd = Some(target_prog_fd);
+        self.data.attach_btf_obj_fd = Some(btf_fd);
+        // TODO (AM)
+        self.data.attach_prog_fd = Some(target_prog_fd.as_raw_fd());
         self.data.attach_btf_id = Some(btf_id);
         load_program(BPF_PROG_TYPE_EXT, &mut self.data)
     }
@@ -118,15 +119,22 @@ impl Extension {
         program: ProgramFd,
         func_name: &str,
     ) -> Result<ExtensionLinkId, ProgramError> {
-        let target_fd = program.as_raw_fd();
+        let target_fd = program.as_fd();
         let (_, btf_id) = get_btf_info(target_fd, func_name)?;
         let prog_fd = self.data.fd_or_err()?;
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
-        let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
-            .map_err(|(_, io_error)| ProgramError::SyscallError {
-                call: "bpf_link_create".to_owned(),
-                io_error,
-            })?;
+        // TODO (AM)
+        let link_fd = bpf_link_create(
+            prog_fd,
+            target_fd.as_raw_fd(),
+            BPF_CGROUP_INET_INGRESS,
+            Some(btf_id),
+            0,
+        )
+        .map_err(|(_, io_error)| ProgramError::SyscallError {
+            call: "bpf_link_create".to_owned(),
+            io_error,
+        })?;
         self.data
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))
@@ -151,7 +159,10 @@ impl Extension {
 
 /// Retrieves the FD of the BTF object for the provided `prog_fd` and the BTF ID of the function
 /// with the name `func_name` within that BTF object.
-fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramError> {
+fn get_btf_info(
+    prog_fd: std::os::fd::BorrowedFd<'_>,
+    func_name: &str,
+) -> Result<(OwnedFd, u32), ProgramError> {
     // retrieve program information
     let info =
         sys::bpf_prog_get_info_by_fd(prog_fd).map_err(|io_error| ProgramError::SyscallError {
@@ -174,12 +185,12 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
     // we need to read the btf bytes into a buffer but we don't know the size ahead of time.
     // assume 4kb. if this is too small we can resize based on the size obtained in the response.
     let mut buf = vec![0u8; 4096];
-    let btf_info = match sys::btf_obj_get_info_by_fd(btf_fd, &mut buf) {
+    let btf_info = match sys::btf_obj_get_info_by_fd(btf_fd.as_fd(), &mut buf) {
         Ok(info) => {
             if info.btf_size > buf.len() as u32 {
                 buf.resize(info.btf_size as usize, 0u8);
                 let btf_info =
-                    sys::btf_obj_get_info_by_fd(btf_fd, &mut buf).map_err(|io_error| {
+                    sys::btf_obj_get_info_by_fd(btf_fd.as_fd(), &mut buf).map_err(|io_error| {
                         ProgramError::SyscallError {
                             call: "bpf_prog_get_info_by_fd".to_owned(),
                             io_error,

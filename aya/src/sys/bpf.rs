@@ -125,7 +125,7 @@ pub(crate) struct BpfLoadProgramAttrs<'a> {
     pub(crate) kernel_version: u32,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
     pub(crate) prog_btf_fd: Option<RawFd>,
-    pub(crate) attach_btf_obj_fd: Option<u32>,
+    pub(crate) attach_btf_obj_fd: Option<BorrowedFd<'a>>,
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<RawFd>,
     pub(crate) func_info_rec_size: usize,
@@ -189,7 +189,7 @@ pub(crate) fn bpf_load_program(
         u.log_size = log_buf.capacity() as u32;
     }
     if let Some(v) = aya_attr.attach_btf_obj_fd {
-        u.__bindgen_anon_1.attach_btf_obj_fd = v;
+        u.__bindgen_anon_1.attach_btf_obj_fd = v.as_raw_fd() as u32;
     }
     if let Some(v) = aya_attr.attach_prog_fd {
         u.__bindgen_anon_1.attach_prog_fd = v as u32;
@@ -474,23 +474,24 @@ pub(crate) fn bpf_prog_query(
     ret
 }
 
-pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> io::Result<RawFd> {
+pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> io::Result<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_6.__bindgen_anon_1.prog_id = prog_id;
 
     match sys_bpf(bpf_cmd::BPF_PROG_GET_FD_BY_ID, &attr) {
-        Ok(v) => Ok(v as RawFd),
+        // SAFETY: BPF_PROG_GET_FD_BY_ID returns new fd
+        Ok(v) => Ok(unsafe { OwnedFd::from_raw_fd(v as RawFd) }),
         Err((_, err)) => Err(err),
     }
 }
 
-pub(crate) fn bpf_prog_get_info_by_fd(prog_fd: RawFd) -> io::Result<bpf_prog_info> {
+pub(crate) fn bpf_prog_get_info_by_fd(prog_fd: BorrowedFd<'_>) -> io::Result<bpf_prog_info> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     // info gets entirely populated by the kernel
     let info = MaybeUninit::zeroed();
 
-    attr.info.bpf_fd = prog_fd as u32;
+    attr.info.bpf_fd = prog_fd.as_raw_fd() as u32;
     attr.info.info = &info as *const _ as u64;
     attr.info.info_len = mem::size_of::<bpf_prog_info>() as u32;
 
@@ -530,13 +531,16 @@ pub(crate) fn bpf_link_get_info_by_fd(link_fd: BorrowedFd<'_>) -> io::Result<bpf
     }
 }
 
-pub(crate) fn btf_obj_get_info_by_fd(prog_fd: RawFd, buf: &mut [u8]) -> io::Result<bpf_btf_info> {
+pub(crate) fn btf_obj_get_info_by_fd(
+    prog_fd: BorrowedFd<'_>,
+    buf: &mut [u8],
+) -> io::Result<bpf_btf_info> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let mut info = unsafe { mem::zeroed::<bpf_btf_info>() };
     let buf_size = buf.len() as u32;
     info.btf = buf.as_ptr() as u64;
     info.btf_size = buf_size;
-    attr.info.bpf_fd = prog_fd as u32;
+    attr.info.bpf_fd = prog_fd.as_raw_fd() as u32;
     attr.info.info = &info as *const bpf_btf_info as u64;
     attr.info.info_len = mem::size_of::<bpf_btf_info>() as u32;
 
@@ -579,12 +583,13 @@ pub(crate) fn bpf_load_btf(raw_btf: &[u8], log: &mut VerifierLog) -> Result<Owne
     Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
-pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> io::Result<RawFd> {
+pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> io::Result<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     attr.__bindgen_anon_6.__bindgen_anon_1.btf_id = id;
 
     match sys_bpf(bpf_cmd::BPF_BTF_GET_FD_BY_ID, &attr) {
-        Ok(v) => Ok(v as RawFd),
+        // SAFETY: BPF_BTF_GET_FD_BY_ID returns new fd
+        Ok(v) => Ok(unsafe { OwnedFd::from_raw_fd(v as RawFd) }),
         Err((_, err)) => Err(err),
     }
 }
