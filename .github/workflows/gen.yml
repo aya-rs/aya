@@ -23,7 +23,7 @@ jobs:
           toolchain: nightly
           components: rustfmt, clippy
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - name: Install headers
         run: |

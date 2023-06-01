@@ -34,7 +34,7 @@ jobs:
       - name: Check
         run: cargo hack check --all-targets --feature-powerset --ignore-private
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Prereqs
         run: cargo install cross --git https://github.com/cross-rs/cross
 
