@@ -4,6 +4,7 @@ use std::{
     io::{self, Write},
     path::Path,
     process,
+    sync::atomic::{AtomicUsize, Ordering},
 };
 
 use crate::{
@@ -14,6 +15,8 @@ use crate::{
     },
     sys::{kernel_version, perf_event_open_probe, perf_event_open_trace_point},
 };
+
+static PROBE_NAME_INDEX: AtomicUsize = AtomicUsize::new(0);
 
 /// Kind of probe program
 #[derive(Debug, Copy, Clone)]
@@ -158,11 +161,12 @@ fn create_probe_event(
         KRetProbe | URetProbe => 'r',
     };
     let event_alias = format!(
-        "aya_{}_{}_{}_{:#x}",
+        "aya_{}_{}_{}_{:#x}_{}",
         process::id(),
         probe_type_prefix,
         fn_name,
-        offset
+        offset,
+        PROBE_NAME_INDEX.fetch_add(1, Ordering::SeqCst)
     );
     let offset_suffix = match kind {
         KProbe => format!("+{offset}"),
