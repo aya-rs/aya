@@ -29,7 +29,8 @@ lazy_static! {
     static ref LD_SO_CACHE: Result<LdSoCache, Arc<io::Error>> =
         LdSoCache::load(LD_SO_CACHE_FILE).map_err(Arc::new);
 }
-const LD_SO_CACHE_HEADER: &str = "glibc-ld.so.cache1.1";
+const LD_SO_CACHE_HEADER_OLD: &str = "ld.so-1.7.0\0";
+const LD_SO_CACHE_HEADER_NEW: &str = "glibc-ld.so.cache1.1";
 
 /// An user space probe.
 ///
@@ -267,36 +268,65 @@ impl LdSoCache {
             Ok(i32::from_ne_bytes(buf))
         };
 
-        let mut buf = [0u8; LD_SO_CACHE_HEADER.len()];
+        // Check for new format
+        let mut buf = [0u8; LD_SO_CACHE_HEADER_NEW.len()];
         cursor.read_exact(&mut buf)?;
         let header = std::str::from_utf8(&buf).map_err(|_| {
             io::Error::new(io::ErrorKind::InvalidData, "invalid ld.so.cache header")
         })?;
-        if header != LD_SO_CACHE_HEADER {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "invalid ld.so.cache header",
-            ));
+
+        let new_format = header == LD_SO_CACHE_HEADER_NEW;
+
+        // Check for old format
+        if !new_format {
+            cursor.set_position(0);
+            let mut buf = [0u8; LD_SO_CACHE_HEADER_OLD.len()];
+            cursor.read_exact(&mut buf)?;
+            let header = std::str::from_utf8(&buf).map_err(|_| {
+                io::Error::new(io::ErrorKind::InvalidData, "invalid ld.so.cache header")
+            })?;
+
+            if header != LD_SO_CACHE_HEADER_OLD {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "invalid ld.so.cache header",
+                ));
+            }
         }
 
         let num_entries = read_u32(&mut cursor)?;
-        let _str_tab_len = read_u32(&mut cursor)?;
-        cursor.consume(5 * mem::size_of::<u32>());
+
+        if new_format {
+            cursor.consume(6 * mem::size_of::<u32>());
+        }
+
+        let offset = if !new_format {
+            cursor.position() as usize + num_entries as usize * 12
+        } else {
+            0
+        };
 
         let mut entries = Vec::new();
         for _ in 0..num_entries {
             let flags = read_i32(&mut cursor)?;
             let k_pos = read_u32(&mut cursor)? as usize;
             let v_pos = read_u32(&mut cursor)? as usize;
-            cursor.consume(12);
-            let key =
-                unsafe { CStr::from_ptr(cursor.get_ref()[k_pos..].as_ptr() as *const c_char) }
-                    .to_string_lossy()
-                    .into_owned();
-            let value =
-                unsafe { CStr::from_ptr(cursor.get_ref()[v_pos..].as_ptr() as *const c_char) }
-                    .to_string_lossy()
-                    .into_owned();
+
+            if new_format {
+                cursor.consume(12);
+            }
+
+            let key = unsafe {
+                CStr::from_ptr(cursor.get_ref()[offset + k_pos..].as_ptr() as *const c_char)
+            }
+            .to_string_lossy()
+            .into_owned();
+            let value = unsafe {
+                CStr::from_ptr(cursor.get_ref()[offset + v_pos..].as_ptr() as *const c_char)
+            }
+            .to_string_lossy()
+            .into_owned();
+
             entries.push(CacheEntry {
                 key,
                 value,
