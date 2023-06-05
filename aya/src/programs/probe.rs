@@ -160,17 +160,20 @@ fn create_probe_event(
         KProbe | UProbe => 'p',
         KRetProbe | URetProbe => 'r',
     };
+
+    let fixed_fn_name = fn_name.replace(['.', '/', '-'], "_");
+
     let event_alias = format!(
         "aya_{}_{}_{}_{:#x}_{}",
         process::id(),
         probe_type_prefix,
-        fn_name,
+        fixed_fn_name,
         offset,
         PROBE_NAME_INDEX.fetch_add(1, Ordering::AcqRel)
     );
     let offset_suffix = match kind {
         KProbe => format!("+{offset}"),
-        UProbe => format!(":{offset:#x}"),
+        UProbe | URetProbe => format!(":{offset:#x}"),
         _ => "".to_string(),
     };
     let probe = format!(
