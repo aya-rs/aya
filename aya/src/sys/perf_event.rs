@@ -1,7 +1,7 @@
 use std::{
     ffi::CString,
     io, mem,
-    os::fd::{FromRawFd, OwnedFd, RawFd},
+    os::fd::{BorrowedFd, FromRawFd, OwnedFd, RawFd},
 };
 
 use libc::{c_int, pid_t};
@@ -126,7 +126,7 @@ pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> Result
     Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
-pub(crate) fn perf_event_ioctl(fd: c_int, request: c_int, arg: c_int) -> SysResult {
+pub(crate) fn perf_event_ioctl(fd: BorrowedFd<'_>, request: c_int, arg: c_int) -> SysResult {
     let call = Syscall::PerfEventIoctl { fd, request, arg };
     #[cfg(not(test))]
     return syscall(call);

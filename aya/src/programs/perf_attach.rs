@@ -1,6 +1,6 @@
 //! Perf attach links.
 use std::os::{
-    fd::{AsRawFd, BorrowedFd, OwnedFd},
+    fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
     unix::io::RawFd,
 };
 
@@ -62,8 +62,7 @@ impl Link for PerfLink {
     }
 
     fn detach(mut self) -> Result<(), ProgramError> {
-        // TODO (AM)
-        let _ = perf_event_ioctl(self.perf_fd.as_raw_fd(), PERF_EVENT_IOC_DISABLE, 0);
+        let _ = perf_event_ioctl(self.perf_fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
 
         if let Some(probe_kind) = self.probe_kind.take() {
             if let Some(event_alias) = self.event_alias.take() {
@@ -107,15 +106,13 @@ fn perf_attach_either(
     probe_kind: Option<ProbeKind>,
     event_alias: Option<String>,
 ) -> Result<PerfLinkInner, ProgramError> {
-    // TODO (AM)
-    perf_event_ioctl(fd.as_raw_fd(), PERF_EVENT_IOC_SET_BPF, prog_fd.as_raw_fd()).map_err(
+    perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_SET_BPF, prog_fd.as_raw_fd()).map_err(
         |(_, io_error)| ProgramError::SyscallError {
             call: "PERF_EVENT_IOC_SET_BPF".to_owned(),
             io_error,
         },
     )?;
-    // TODO (AM)
-    perf_event_ioctl(fd.as_raw_fd(), PERF_EVENT_IOC_ENABLE, 0).map_err(|(_, io_error)| {
+    perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_ENABLE, 0).map_err(|(_, io_error)| {
         ProgramError::SyscallError {
             call: "PERF_EVENT_IOC_ENABLE".to_owned(),
             io_error,
