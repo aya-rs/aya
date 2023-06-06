@@ -73,6 +73,7 @@ use std::{
         unix::io::{AsRawFd, RawFd},
     },
     path::{Path, PathBuf},
+    sync::Arc,
 };
 use thiserror::Error;
 
@@ -217,16 +218,16 @@ pub enum ProgramError {
 }
 
 /// A [`Program`] file descriptor.
-#[derive(Copy, Clone)]
-pub struct ProgramFd<'f>(BorrowedFd<'f>);
+#[derive(Clone)]
+pub struct ProgramFd(Arc<OwnedFd>);
 
-impl AsRawFd for ProgramFd<'_> {
+impl AsRawFd for ProgramFd {
     fn as_raw_fd(&self) -> RawFd {
         self.0.as_raw_fd()
     }
 }
 
-impl AsFd for ProgramFd<'_> {
+impl AsFd for ProgramFd {
     fn as_fd(&self) -> BorrowedFd<'_> {
         self.0.as_fd()
     }
@@ -415,7 +416,7 @@ impl Program {
 pub(crate) struct ProgramData<T: Link> {
     pub(crate) name: Option<String>,
     pub(crate) obj: Option<(obj::Program, obj::Function)>,
-    pub(crate) fd: Option<OwnedFd>,
+    pub(crate) fd: Option<Arc<OwnedFd>>,
     pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
     pub(crate) attach_btf_obj_fd: Option<OwnedFd>,
@@ -476,7 +477,7 @@ impl<T: Link> ProgramData<T> {
         Ok(ProgramData {
             name,
             obj: None,
-            fd: Some(fd),
+            fd: Some(Arc::new(fd)),
             links: LinkMap::new(),
             expected_attach_type: None,
             attach_btf_obj_fd,
@@ -630,7 +631,7 @@ fn load_program<T: Link>(
 
     match ret {
         Ok(prog_fd) => {
-            *fd = Some(prog_fd);
+            *fd = Some(Arc::new(prog_fd));
             Ok(())
         }
         Err((_, io_error)) => {
@@ -739,8 +740,9 @@ macro_rules! impl_fd {
         $(
             impl $struct_name {
                 /// Returns the file descriptor of this Program.
-                pub fn fd(&self) -> Option<ProgramFd<'_>> {
-                    self.data.fd.as_ref().map(|fd| ProgramFd(fd.as_fd()))
+                pub fn fd(&self) -> Option<ProgramFd> {
+                    let fd = self.data.fd.clone()?;
+                    Some(ProgramFd(fd))
                 }
             }
         )+

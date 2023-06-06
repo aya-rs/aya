@@ -42,11 +42,9 @@ pub enum ExtensionError {
 /// prog.attach("eth0", XdpFlags::default())?;
 ///
 /// let prog_fd = prog.fd().unwrap();
-/// // TODO (AM): can't borrow here becauase prog_fd is holding a reference already
-/// // need to confirm what the API wants to be
-/// // let ext: &mut Extension = bpf.program_mut("extension").unwrap().try_into()?;
-/// // ext.load(prog_fd, "function_to_replace")?;
-/// // ext.attach()?;
+/// let ext: &mut Extension = bpf.program_mut("extension").unwrap().try_into()?;
+/// ext.load(prog_fd, "function_to_replace")?;
+/// ext.attach()?;
 /// Ok::<(), aya::BpfError>(())
 /// ```
 #[derive(Debug)]

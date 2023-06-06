@@ -46,10 +46,9 @@ use crate::{
 /// let intercept_egress: SockHash<_, u32> = bpf.map("INTERCEPT_EGRESS").unwrap().try_into()?;
 /// let map_fd = intercept_egress.fd()?;
 ///
-/// // TODO (AM): Figure out lifetimes
-/// // let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
-/// // prog.load()?;
-/// // prog.attach(map_fd)?;
+/// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
+/// prog.load()?;
+/// prog.attach(map_fd)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
 /// let mut intercept_egress: SockHash<_, u32> = bpf.map_mut("INTERCEPT_EGRESS").unwrap().try_into()?;
@@ -79,7 +78,7 @@ impl SkMsg {
     /// Attaches the program to the given sockmap.
     ///
     /// The returned value can be used to detach, see [SkMsg::detach].
-    pub fn attach(&mut self, map: SockMapFd<'_>) -> Result<SkMsgLinkId, ProgramError> {
+    pub fn attach(&mut self, map: SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let map_fd = map.as_fd();
 

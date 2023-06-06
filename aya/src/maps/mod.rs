@@ -46,6 +46,7 @@ use std::{
     os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd},
     path::Path,
     ptr,
+    sync::Arc,
 };
 
 use libc::{getrlimit, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
@@ -186,15 +187,15 @@ pub enum MapError {
 }
 
 /// A map file descriptor.
-pub struct MapFd<'f>(BorrowedFd<'f>);
+pub struct MapFd(Arc<OwnedFd>);
 
-impl AsRawFd for MapFd<'_> {
+impl AsRawFd for MapFd {
     fn as_raw_fd(&self) -> RawFd {
         self.0.as_raw_fd()
     }
 }
 
-impl AsFd for MapFd<'_> {
+impl AsFd for MapFd {
     fn as_fd(&self) -> BorrowedFd<'_> {
         self.0.as_fd()
     }
@@ -478,10 +479,10 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 /// A generic handle to a BPF map.
 ///
 /// You should never need to use this unless you're implementing a new map type.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MapData {
     pub(crate) obj: obj::Map,
-    pub(crate) fd: Option<OwnedFd>,
+    pub(crate) fd: Option<Arc<OwnedFd>>,
     pub(crate) btf_fd: Option<RawFd>,
     /// Indicates if this map has been pinned to bpffs
     pub pinned: bool,
@@ -509,7 +510,7 @@ impl MapData {
             }
         })?;
 
-        self.fd = Some(fd);
+        self.fd = Some(Arc::new(fd));
 
         Ok(())
     }
@@ -528,7 +529,7 @@ impl MapData {
             call: "BPF_OBJ_GET".to_string(),
             io_error,
         })?;
-        self.fd = Some(fd);
+        self.fd = Some(Arc::new(fd));
 
         Ok(())
     }
@@ -558,7 +559,7 @@ impl MapData {
 
         Ok(MapData {
             obj: parse_map_info(info, PinningType::ByName),
-            fd: Some(fd),
+            fd: Some(Arc::new(fd)),
             btf_fd: None,
             pinned: true,
         })
@@ -578,7 +579,7 @@ impl MapData {
 
         Ok(MapData {
             obj: parse_map_info(info, PinningType::None),
-            fd: Some(fd),
+            fd: Some(Arc::new(fd)),
             btf_fd: None,
             pinned: false,
         })
@@ -615,32 +616,9 @@ impl MapData {
     /// Returns the file descriptor of the map.
     ///
     /// Can be converted to [`RawFd`] using [`AsRawFd`].
-    pub fn fd(&self) -> Option<MapFd<'_>> {
-        self.fd.as_ref().map(|fd| MapFd(fd.as_fd()))
-    }
-}
-
-impl MapData {
-    /// Attempts to duplicate MapData
-    ///
-    /// Fails if if the inner file descriptor could not be cloned
-    // TODO (AM): should we return MapError? New variant? Maybe make MapError non_exhaustive?
-    pub fn try_clone(&self) -> io::Result<Self> {
-        let fd = self.fd.as_ref().map(|f| f.try_clone()).transpose()?;
-
-        Ok(MapData {
-            fd,
-            obj: self.obj.clone(),
-            btf_fd: self.btf_fd,
-            pinned: self.pinned,
-        })
-    }
-}
-
-// TODO (AM): DELETE?
-impl Clone for MapData {
-    fn clone(&self) -> MapData {
-        self.try_clone().unwrap()
+    pub fn fd(&self) -> Option<MapFd> {
+        let fd = self.fd.clone()?;
+        Some(MapFd(fd))
     }
 }
 

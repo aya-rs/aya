@@ -47,10 +47,9 @@ pub enum SkSkbKind {
 /// let intercept_ingress: SockMap<_> = bpf.map("INTERCEPT_INGRESS").unwrap().try_into()?;
 /// let map_fd = intercept_ingress.fd()?;
 ///
-/// // TODO (AM): figure out lifetimes
-/// // let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
-/// // prog.load()?;
-/// // prog.attach(map_fd)?;
+/// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
+/// prog.load()?;
+/// prog.attach(map_fd)?;
 ///
 /// # Ok::<(), aya::BpfError>(())
 /// ```
@@ -74,7 +73,7 @@ impl SkSkb {
     /// Attaches the program to the given socket map.
     ///
     /// The returned value can be used to detach, see [SkSkb::detach].
-    pub fn attach(&mut self, map: SockMapFd<'_>) -> Result<SkSkbLinkId, ProgramError> {
+    pub fn attach(&mut self, map: SockMapFd) -> Result<SkSkbLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
         let map_fd = map.as_fd();
 

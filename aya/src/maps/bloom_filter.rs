@@ -88,7 +88,7 @@ mod tests {
         sys::{override_syscall, SysResult, Syscall},
     };
     use libc::{EFAULT, ENOENT};
-    use std::{env, fs::File, io, os::fd::OwnedFd};
+    use std::{env, fs::File, io, os::fd::OwnedFd, sync::Arc};
 
     fn new_obj_map() -> obj::Map {
         obj::Map::Legacy(LegacyMap {
@@ -275,10 +275,12 @@ mod tests {
         ));
     }
 
-    fn create_fd() -> OwnedFd {
+    fn create_fd() -> Arc<OwnedFd> {
         let dir = env::temp_dir();
-        File::create(dir.join("f1"))
-            .expect("unable to create file in tmpdir")
-            .into()
+        Arc::new(
+            File::create(dir.join("f1"))
+                .expect("unable to create file in tmpdir")
+                .into(),
+        )
     }
 }

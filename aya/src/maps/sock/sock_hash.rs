@@ -49,10 +49,9 @@ use crate::{
 /// let mut intercept_egress = SockHash::<_, u32>::try_from(bpf.map("INTERCEPT_EGRESS").unwrap())?;
 /// let map_fd = intercept_egress.fd()?;
 ///
-/// // TODO (AM) : figure out lifetimes
-/// // let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
-/// // prog.load()?;
-/// // prog.attach(map_fd)?;
+/// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
+/// prog.load()?;
+/// prog.attach(map_fd)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
 /// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS").unwrap())?;
@@ -109,8 +108,10 @@ impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
     ///
     /// The returned file descriptor can be used to attach programs that work with
     /// socket maps, like [`SkMsg`](crate::programs::SkMsg) and [`SkSkb`](crate::programs::SkSkb).
-    pub fn fd(&self) -> Result<SockMapFd<'_>, MapError> {
-        Ok(SockMapFd(self.inner.borrow().fd_or_err()?))
+    pub fn fd(&self) -> Result<SockMapFd, MapError> {
+        Ok(SockMapFd(
+            self.inner.borrow().fd.clone().ok_or(MapError::NotCreated)?,
+        ))
     }
 }
 

@@ -105,7 +105,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> 
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs::File, io, os::fd::OwnedFd};
+    use std::{env, fs::File, io, os::fd::OwnedFd, sync::Arc};
 
     use libc::{EFAULT, ENOENT};
 
@@ -696,10 +696,12 @@ mod tests {
         assert!(matches!(iter.next(), None));
     }
 
-    fn create_fd() -> OwnedFd {
+    fn create_fd() -> Arc<OwnedFd> {
         let dir = env::temp_dir();
-        File::create(dir.join("f1"))
-            .expect("unable to create file in tmpdir")
-            .into()
+        Arc::new(
+            File::create(dir.join("f1"))
+                .expect("unable to create file in tmpdir")
+                .into(),
+        )
     }
 }
