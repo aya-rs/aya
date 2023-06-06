@@ -95,6 +95,39 @@ fn parse_kernel_symbols(reader: impl BufRead) -> Result<BTreeMap<u64, String>, i
     Ok(syms)
 }
 
+/// Returns the prefix used by syscalls.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya::util::syscall_prefix;
+/// let prefix = syscall_prefix().unwrap();
+/// let syscall_fname = format!("{prefix}exec");
+/// ```
+///
+/// # Errors
+///
+/// Returns [`std::io::ErrorKind::NotFound`] if the prefix can't be guessed. Returns other [`std::io::Error`] kinds if `/proc/kallsyms` can't be opened or is somehow invalid.
+pub fn syscall_prefix() -> Result<&'static str, io::Error> {
+    const PREFIXES: [&str; 7] = [
+        "sys_",
+        "__x64_sys_",
+        "__x32_compat_sys_",
+        "__ia32_compat_sys_",
+        "__arm64_sys_",
+        "__s390x_sys_",
+        "__s390_sys_",
+    ];
+    let ksym = kernel_symbols()?;
+    for p in PREFIXES {
+        let prefixed_syscall = format!("{}bpf", p);
+        if ksym.values().any(|el| *el == prefixed_syscall) {
+            return Ok(p);
+        }
+    }
+    Err(io::ErrorKind::NotFound.into())
+}
+
 pub(crate) fn ifindex_from_ifname(if_name: &str) -> Result<u32, io::Error> {
     let c_str_if_name = CString::new(if_name)?;
     let c_if_name = c_str_if_name.as_ptr();
