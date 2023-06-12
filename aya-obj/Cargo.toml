@@ -14,7 +14,7 @@ edition = "2021"
 bytes = "1"
 log = "0.4"
 object = { version = "0.31", default-features = false, features = ["read_core", "elf"] }
-hashbrown = { version = "0.13" }
+hashbrown = { version = "0.14" }
 thiserror = { version = "1", default-features = false }
 core-error = { version = "0.0.0" }
 
