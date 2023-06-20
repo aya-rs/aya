@@ -183,12 +183,13 @@ impl<'a> BpfLoader<'a> {
         self
     }
 
-    /// Allows bytecode containing maps unsupported by Aya to be loaded.
+    /// Allows programs containing unsupported maps to be loaded.
     ///
-    /// By default, programs containing maps unsupported by Aya will not be loaded.
-    /// This function changes the default behavior, allowing programs to be loaded.
-    /// This should only be used in cases where you do not require access to eBPF
-    /// maps from this crate.
+    /// By default programs containing unsupported maps will fail to load. This
+    /// method can be used to configure the loader so that unsupported maps will
+    /// be loaded, but won't be accessible from userspace. Can be useful when
+    /// using unsupported maps that are only accessed from eBPF code and don't
+    /// require any userspace interaction.
     ///
     /// # Example
     ///
@@ -629,15 +630,14 @@ impl<'a> BpfLoader<'a> {
             .map(parse_map)
             .collect::<Result<HashMap<String, Map>, BpfError>>()?;
 
-        if !self.allow_unsupported_maps
-            && maps
-                .iter()
-                .filter(|(_, x)| matches!(x, Map::Unsupported(_)))
-                .count()
-                != 0
-        {
-            return Err(BpfError::UnsupportedMap);
-        }
+        if !self.allow_unsupported_maps {
+            maps.iter().try_for_each(|(_, x)| match x {
+                Map::Unsupported(map) => Err(BpfError::MapError(MapError::Unsupported {
+                    map_type: map.obj.map_type(),
+                })),
+                _ => Ok(()),
+            })?;
+        };
 
         Ok(Bpf { maps, programs })
     }
@@ -931,10 +931,6 @@ pub enum BpfError {
     #[error("program error: {0}")]
     /// A program error
     ProgramError(#[from] ProgramError),
-
-    /// Unsupported Map type
-    #[error("Unsupported map types found")]
-    UnsupportedMap,
 }
 
 fn load_btf(raw_btf: Vec<u8>) -> Result<RawFd, BtfError> {

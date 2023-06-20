@@ -182,6 +182,13 @@ pub enum MapError {
         #[source]
         error: PinError,
     },
+
+    /// Unsupported Map type
+    #[error("Unsupported map type found {map_type}")]
+    Unsupported {
+        /// The map type
+        map_type: u32,
+    },
 }
 
 /// A map file descriptor.
