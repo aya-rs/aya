@@ -49,7 +49,7 @@
 //! implement the [Pod] trait.
 use std::{
     borrow::BorrowMut,
-    ffi::{c_long, CString},
+    ffi::{c_long, CStr, CString},
     fmt, io,
     marker::PhantomData,
     mem,
@@ -57,6 +57,7 @@ use std::{
     os::fd::{AsFd, BorrowedFd, OwnedFd},
     path::Path,
     ptr,
+    str::Utf8Error,
 };
 
 use libc::{getrlimit, rlim_t, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
@@ -119,6 +120,10 @@ pub enum MapError {
         /// The map name
         name: String,
     },
+
+    /// Map name is not valid UTF-8
+    #[error("map name is not valid UTF-8")]
+    Utf8(#[from] Utf8Error),
 
     /// Failed to create map
     #[error("failed to create map `{name}` with code {code}")]
@@ -719,6 +724,13 @@ impl MapData {
         fd
     }
 
+    /// Returns the name of the map.
+    pub fn name(&self) -> Result<String, MapError> {
+        let info = bpf_map_get_info_by_fd(self.fd.as_fd())?;
+        let name_str = unsafe { CStr::from_ptr(info.name.as_ptr()) }.to_str()?;
+        Ok(name_str.to_string())
+    }
+
     pub(crate) fn obj(&self) -> &obj::Map {
         let Self { obj, fd: _ } = self;
         obj
@@ -992,6 +1004,37 @@ mod tests {
                 fd,
             }) => assert_eq!(fd.as_fd().as_raw_fd(), 42)
         );
+    }
+
+    #[test]
+    fn test_name() {
+        use crate::generated::bpf_map_info;
+
+        const TEST_NAME: &str = "foo";
+
+        override_syscall(|call| match call {
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                ..
+            } => Ok(42),
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                attr,
+            } => {
+                assert_eq!(
+                    unsafe { attr.info.info_len },
+                    mem::size_of::<bpf_map_info>() as u32
+                );
+                let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
+                map_info.name[..TEST_NAME.len()]
+                    .copy_from_slice(unsafe { std::mem::transmute(TEST_NAME) });
+                Ok(0)
+            }
+            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+        });
+
+        let map_data = MapData::create(new_obj_map(), TEST_NAME, None).unwrap();
+        assert_eq!(TEST_NAME, map_data.name().unwrap());
     }
 
     #[test]
