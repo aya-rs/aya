@@ -1,4 +1,5 @@
 use aya::{
+    maps::loaded_maps,
     programs::{loaded_programs, Extension, TracePoint, Xdp, XdpFlags},
     util::KernelVersion,
     Bpf, BpfLoader,
@@ -97,4 +98,29 @@ fn list_loaded_programs() {
     prog.verified_instruction_count();
     prog.loaded_at();
     prog.fd().unwrap();
+}
+
+#[test]
+fn list_loaded_maps() {
+    // Load a program with maps.
+    let mut bpf = Bpf::load(crate::MAP_TEST).unwrap();
+    let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    dispatcher.load().unwrap();
+    dispatcher.attach("lo", XdpFlags::default()).unwrap();
+
+    // Ensure the loaded_maps() api doesn't panic and retrieve a map.
+    let map = loaded_maps()
+        .map(|m| m.unwrap())
+        .find(|m| m.name_as_str().unwrap() == "FOO")
+        .unwrap();
+
+    // Ensure all relevant helper functions don't panic.
+    map.name();
+    map.id();
+    map.map_type();
+    map.key_size();
+    map.value_size();
+    map.max_entries();
+    map.map_flags();
+    map.fd().unwrap();
 }
