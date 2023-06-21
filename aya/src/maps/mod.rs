@@ -65,12 +65,13 @@ use obj::maps::InvalidMapTypeError;
 use thiserror::Error;
 
 use crate::{
+    generated::bpf_map_info,
     obj::{self, parse_map_info, BpfSectionKind},
     pin::PinError,
     sys::{
         bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
         bpf_map_get_info_by_fd, bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object,
-        SyscallError,
+        iter_map_ids, SyscallError,
     },
     util::{nr_cpus, KernelVersion},
     PinningType, Pod,
@@ -639,21 +640,14 @@ impl MapData {
             call: "BPF_OBJ_GET",
             io_error,
         })?;
-        let fd = MapFd(fd);
 
-        let info = bpf_map_get_info_by_fd(fd.as_fd())?;
-
-        Ok(Self {
-            obj: parse_map_info(info, PinningType::ByName),
-            fd,
-        })
+        Self::from_fd(fd)
     }
 
     /// Loads a map from a map id.
     pub fn from_id(id: u32) -> Result<Self, MapError> {
-        bpf_map_get_fd_by_id(id)
-            .map_err(MapError::from)
-            .and_then(Self::from_fd)
+        let fd = bpf_map_get_fd_by_id(id)?;
+        Self::from_fd(fd)
     }
 
     /// Loads a map from a file descriptor.
@@ -662,12 +656,10 @@ impl MapData {
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
     pub fn from_fd(fd: OwnedFd) -> Result<Self, MapError> {
-        let info = bpf_map_get_info_by_fd(fd.as_fd())?;
-
-        let fd = MapFd(fd);
+        let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
         Ok(Self {
             obj: parse_map_info(info, PinningType::None),
-            fd,
+            fd: MapFd(fd),
         })
     }
 
@@ -722,6 +714,11 @@ impl MapData {
     pub(crate) fn obj(&self) -> &obj::Map {
         let Self { obj, fd: _ } = self;
         obj
+    }
+
+    /// Returns the kernel's information about the loaded map.
+    pub fn info(&self) -> Result<MapInfo, MapError> {
+        MapInfo::new_from_fd(self.fd.as_fd())
     }
 }
 
@@ -911,6 +908,129 @@ impl<T: Pod> Deref for PerCpuValues<T> {
     }
 }
 
+/// Provides information about a loaded map, like name, id and size.
+#[derive(Debug)]
+pub struct MapInfo(bpf_map_info);
+
+impl MapInfo {
+    fn new_from_fd(fd: BorrowedFd<'_>) -> Result<Self, MapError> {
+        let info = bpf_map_get_info_by_fd(fd.as_fd())?;
+        Ok(Self(info))
+    }
+
+    /// Loads map info from a map id.
+    pub fn from_id(id: u32) -> Result<Self, MapError> {
+        bpf_map_get_fd_by_id(id)
+            .map_err(MapError::from)
+            .and_then(|fd| Self::new_from_fd(fd.as_fd()))
+    }
+
+    /// The name of the map, limited to 16 bytes.
+    pub fn name(&self) -> &[u8] {
+        let length = self
+            .0
+            .name
+            .iter()
+            .rposition(|ch| *ch != 0)
+            .map(|pos| pos + 1)
+            .unwrap_or(0);
+
+        // The name field is defined as [std::os::raw::c_char; 16]. c_char may be signed or
+        // unsigned depending on the platform; that's why we're using from_raw_parts here.
+        unsafe { std::slice::from_raw_parts(self.0.name.as_ptr() as *const _, length) }
+    }
+
+    /// The name of the map as a &str. If the name is not valid unicode, None is returned.
+    pub fn name_as_str(&self) -> Option<&str> {
+        std::str::from_utf8(self.name()).ok()
+    }
+
+    /// The id for this map. Each map has a unique id.
+    pub fn id(&self) -> u32 {
+        self.0.id
+    }
+
+    /// The map type as defined by the linux kernel enum
+    /// [`bpf_map_type`](https://elixir.bootlin.com/linux/v6.4.4/source/include/uapi/linux/bpf.h#L905).
+    pub fn map_type(&self) -> u32 {
+        self.0.type_
+    }
+
+    /// The key size for this map.
+    pub fn key_size(&self) -> u32 {
+        self.0.key_size
+    }
+
+    /// The value size for this map.
+    pub fn value_size(&self) -> u32 {
+        self.0.value_size
+    }
+
+    /// The maximum number of entries in this map.
+    pub fn max_entries(&self) -> u32 {
+        self.0.max_entries
+    }
+
+    /// The flags for this map.
+    pub fn map_flags(&self) -> u32 {
+        self.0.map_flags
+    }
+
+    /// Returns a file descriptor referencing the map.
+    ///
+    /// The returned file descriptor can be closed at any time and doing so does
+    /// not influence the life cycle of the map.
+    pub fn fd(&self) -> Result<MapFd, MapError> {
+        let Self(info) = self;
+        let fd = bpf_map_get_fd_by_id(info.id)?;
+        Ok(MapFd(fd))
+    }
+
+    /// Loads a map from a pinned path in bpffs.
+    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, MapError> {
+        use std::os::unix::ffi::OsStrExt as _;
+
+        // TODO: avoid this unwrap by adding a new error variant.
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
+            call: "BPF_OBJ_GET",
+            io_error,
+        })?;
+
+        Self::new_from_fd(fd.as_fd())
+    }
+}
+
+/// Returns an iterator over all loaded bpf maps.
+///
+/// This differs from [`crate::Bpf::maps`] since it will return all maps
+/// listed on the host system and not only maps for a specific [`crate::Bpf`] instance.
+///
+/// # Example
+/// ```
+/// # use aya::maps::loaded_maps;
+///
+/// for m in loaded_maps() {
+///     match m {
+///         Ok(map) => println!("{:?}", map.name_as_str()),
+///         Err(e) => println!("Error iterating maps: {:?}", e),
+///     }
+/// }
+/// ```
+///
+/// # Errors
+///
+/// Returns [`MapError::SyscallError`] if any of the syscalls required to either get
+/// next map id, get the map fd, or the [`MapInfo`] fail. In cases where
+/// iteration can't be performed, for example the caller does not have the necessary privileges,
+/// a single item will be yielded containing the error that occurred.
+pub fn loaded_maps() -> impl Iterator<Item = Result<MapInfo, MapError>> {
+    iter_map_ids().map(|id| {
+        let id = id?;
+        MapInfo::from_id(id)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use std::os::fd::AsRawFd as _;
@@ -992,6 +1112,96 @@ mod tests {
                 fd,
             }) => assert_eq!(fd.as_fd().as_raw_fd(), 42)
         );
+    }
+
+    #[test]
+    // Syscall overrides are performing integer-to-pointer conversions, which
+    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
+    // to support stable as well.
+    #[cfg_attr(miri, ignore)]
+    fn test_name() {
+        use crate::generated::bpf_map_info;
+
+        const TEST_NAME: &str = "foo";
+
+        override_syscall(|call| match call {
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                ..
+            } => Ok(42),
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                attr,
+            } => {
+                assert_eq!(
+                    unsafe { attr.info.info_len },
+                    mem::size_of::<bpf_map_info>() as u32
+                );
+                let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
+                map_info.name[..TEST_NAME.len()]
+                    .copy_from_slice(unsafe { std::mem::transmute(TEST_NAME) });
+                Ok(0)
+            }
+            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+        });
+
+        let map_data = MapData::create(new_obj_map(), TEST_NAME, None).unwrap();
+        assert_eq!(TEST_NAME, map_data.info().unwrap().name_as_str().unwrap());
+    }
+
+    #[test]
+    // Syscall overrides are performing integer-to-pointer conversions, which
+    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
+    // to support stable as well.
+    #[cfg_attr(miri, ignore)]
+    fn test_loaded_maps() {
+        use crate::generated::bpf_map_info;
+
+        override_syscall(|call| match call {
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_MAP_GET_NEXT_ID,
+                attr,
+            } => unsafe {
+                let id = attr.__bindgen_anon_6.__bindgen_anon_1.start_id;
+                if id < 5 {
+                    attr.__bindgen_anon_6.next_id = id + 1;
+                    Ok(0)
+                } else {
+                    Err((-1, io::Error::from_raw_os_error(libc::ENOENT)))
+                }
+            },
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_MAP_GET_FD_BY_ID,
+                attr,
+            } => Ok((1000 + unsafe { attr.__bindgen_anon_6.__bindgen_anon_1.map_id }) as c_long),
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                attr,
+            } => {
+                let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
+                map_info.id = unsafe { attr.info.bpf_fd } - 1000;
+                map_info.key_size = 32;
+                map_info.value_size = 64;
+                map_info.map_flags = 1234;
+                map_info.max_entries = 99;
+                Ok(0)
+            }
+            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+        });
+
+        let loaded_maps: Vec<_> = loaded_maps().collect();
+        assert_eq!(loaded_maps.len(), 5);
+
+        for (i, map_info) in loaded_maps.into_iter().enumerate() {
+            let i = i + 1;
+            let map_info = map_info.unwrap();
+            assert_eq!(map_info.id(), i as u32);
+            assert_eq!(map_info.key_size(), 32);
+            assert_eq!(map_info.value_size(), 64);
+            assert_eq!(map_info.map_flags(), 1234);
+            assert_eq!(map_info.max_entries(), 99);
+            assert_eq!(map_info.fd().unwrap().as_fd().as_raw_fd(), 1000 + i as i32);
+        }
     }
 
     #[test]
