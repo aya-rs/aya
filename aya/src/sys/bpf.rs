@@ -1049,6 +1049,10 @@ pub(crate) fn iter_link_ids() -> impl Iterator<Item = Result<u32, SyscallError>>
     iter_obj_ids(bpf_cmd::BPF_LINK_GET_NEXT_ID, "bpf_link_get_next_id")
 }
 
+pub(crate) fn iter_map_ids() -> impl Iterator<Item = Result<u32, SyscallError>> {
+    iter_obj_ids(bpf_cmd::BPF_MAP_GET_NEXT_ID, "bpf_map_get_next_id")
+}
+
 pub(crate) fn retry_with_verifier_logs<T>(
     max_retries: usize,
     f: impl Fn(&mut [u8]) -> SysResult<T>,
