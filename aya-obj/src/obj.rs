@@ -597,7 +597,10 @@ impl Object {
     }
 
     /// Patches map data
-    pub fn patch_map_data(&mut self, globals: HashMap<&str, &[u8]>) -> Result<(), ParseError> {
+    pub fn patch_map_data(
+        &mut self,
+        globals: HashMap<&str, (&[u8], bool)>,
+    ) -> Result<(), ParseError> {
         let symbols: HashMap<String, &Symbol> = self
             .symbol_table
             .iter()
@@ -605,7 +608,7 @@ impl Object {
             .map(|(_, s)| (s.name.as_ref().unwrap().clone(), s))
             .collect();
 
-        for (name, data) in globals {
+        for (name, (data, must_exist)) in globals {
             if let Some(symbol) = symbols.get(name) {
                 if data.len() as u64 != symbol.size {
                     return Err(ParseError::InvalidGlobalData {
@@ -633,7 +636,7 @@ impl Object {
                     });
                 }
                 map.data_mut().splice(start..end, data.iter().cloned());
-            } else {
+            } else if must_exist {
                 return Err(ParseError::SymbolNotFound {
                     name: name.to_owned(),
                 });
@@ -2354,8 +2357,11 @@ mod tests {
         );
 
         let test_data: &[u8] = &[1, 2, 3];
-        obj.patch_map_data(HashMap::from([("my_config", test_data)]))
-            .unwrap();
+        obj.patch_map_data(HashMap::from([
+            ("my_config", (test_data, true)),
+            ("optional_variable", (test_data, false)),
+        ]))
+        .unwrap();
 
         let map = obj.maps.get(".rodata").unwrap();
         assert_eq!(test_data, map.data());
