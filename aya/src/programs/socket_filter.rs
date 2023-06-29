@@ -2,7 +2,7 @@
 use libc::{setsockopt, SOL_SOCKET};
 use std::{
     io, mem,
-    os::unix::prelude::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
 };
 use thiserror::Error;
 

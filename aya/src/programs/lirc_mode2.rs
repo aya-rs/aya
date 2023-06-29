@@ -1,5 +1,5 @@
 //! Lirc programs.
-use std::os::unix::prelude::{AsRawFd, RawFd};
+use std::os::fd::{AsRawFd, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},

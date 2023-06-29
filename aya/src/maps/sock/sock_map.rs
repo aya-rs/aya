@@ -2,7 +2,7 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
-    os::unix::{io::AsRawFd, prelude::RawFd},
+    os::fd::{AsRawFd, RawFd},
 };
 
 use crate::{

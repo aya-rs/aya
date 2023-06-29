@@ -3,7 +3,7 @@ pub use aya_obj::programs::CgroupSockoptAttachType;
 
 use std::{
     hash::Hash,
-    os::unix::prelude::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
     path::Path,
 };
 
