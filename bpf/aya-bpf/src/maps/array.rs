@@ -8,6 +8,11 @@ use crate::{
     maps::PinningType,
 };
 
+// #[cfg(feature = "btf-maps")]
+// #[repr(transparent)]
+// pub struct Array<T, const MAX_ENTRIES: usize, const FLAGS: usize = 0> {
+//     def: UnsafeCell<super>,
+// }
 #[repr(transparent)]
 pub struct Array<T> {
     def: UnsafeCell<bpf_map_def>,
@@ -20,7 +25,7 @@ impl<T> Array<T> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Array<T> {
         Array {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_ARRAY,
+                type_: BPF_MAP_TYPE_ARRAY as u32,
                 key_size: mem::size_of::<u32>() as u32,
                 value_size: mem::size_of::<T>() as u32,
                 max_entries,
@@ -35,7 +40,7 @@ impl<T> Array<T> {
     pub const fn pinned(max_entries: u32, flags: u32) -> Array<T> {
         Array {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_ARRAY,
+                type_: BPF_MAP_TYPE_ARRAY as u32,
                 key_size: mem::size_of::<u32>() as u32,
                 value_size: mem::size_of::<T>() as u32,
                 max_entries,

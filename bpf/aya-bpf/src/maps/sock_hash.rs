@@ -25,7 +25,7 @@ impl<K> SockHash<K> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> SockHash<K> {
         SockHash {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_SOCKHASH,
+                type_: BPF_MAP_TYPE_SOCKHASH as u32,
                 key_size: mem::size_of::<K>() as u32,
                 value_size: mem::size_of::<u32>() as u32,
                 max_entries,
@@ -40,7 +40,7 @@ impl<K> SockHash<K> {
     pub const fn pinned(max_entries: u32, flags: u32) -> SockHash<K> {
         SockHash {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_SOCKHASH,
+                type_: BPF_MAP_TYPE_SOCKHASH as u32,
                 key_size: mem::size_of::<K>() as u32,
                 value_size: mem::size_of::<u32>() as u32,
                 max_entries,

@@ -37,7 +37,7 @@ impl<K, V> LpmTrie<K, V> {
         let flags = flags | BPF_F_NO_PREALLOC;
         LpmTrie {
             def: UnsafeCell::new(build_def::<K, V>(
-                BPF_MAP_TYPE_LPM_TRIE,
+                BPF_MAP_TYPE_LPM_TRIE as u32,
                 max_entries,
                 flags,
                 PinningType::None,
@@ -51,7 +51,7 @@ impl<K, V> LpmTrie<K, V> {
         let flags = flags | BPF_F_NO_PREALLOC;
         LpmTrie {
             def: UnsafeCell::new(build_def::<K, V>(
-                BPF_MAP_TYPE_LPM_TRIE,
+                BPF_MAP_TYPE_LPM_TRIE as u32,
                 max_entries,
                 flags,
                 PinningType::ByName,

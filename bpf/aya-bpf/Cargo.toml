@@ -11,3 +11,7 @@ aya-bpf-bindings = { path = "../aya-bpf-bindings" }
 
 [build-dependencies]
 rustversion = "1.0"
+
+[features]
+default = []
+btf-maps = ["aya-bpf-macros/btf-maps"]

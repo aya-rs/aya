@@ -18,7 +18,7 @@ impl<T> Queue<T> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Queue<T> {
         Queue {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_QUEUE,
+                type_: BPF_MAP_TYPE_QUEUE as u32,
                 key_size: 0,
                 value_size: mem::size_of::<T>() as u32,
                 max_entries,
@@ -33,7 +33,7 @@ impl<T> Queue<T> {
     pub const fn pinned(max_entries: u32, flags: u32) -> Queue<T> {
         Queue {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_QUEUE,
+                type_: BPF_MAP_TYPE_QUEUE as u32,
                 key_size: 0,
                 value_size: mem::size_of::<T>() as u32,
                 max_entries,
