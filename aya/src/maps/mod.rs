@@ -42,7 +42,7 @@ use std::{
     marker::PhantomData,
     mem,
     ops::Deref,
-    os::unix::{io::RawFd, prelude::AsRawFd},
+    os::fd::{AsRawFd, RawFd},
     path::Path,
     ptr,
 };

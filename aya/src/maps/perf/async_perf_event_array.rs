@@ -1,7 +1,7 @@
 use bytes::BytesMut;
 use std::{
     borrow::{Borrow, BorrowMut},
-    os::unix::prelude::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
 };
 
 #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]

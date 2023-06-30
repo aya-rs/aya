@@ -6,7 +6,7 @@ use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::CString,
     io,
-    os::unix::prelude::RawFd,
+    os::fd::RawFd,
     path::{Path, PathBuf},
 };
 

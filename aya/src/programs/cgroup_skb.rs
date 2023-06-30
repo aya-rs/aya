@@ -1,7 +1,7 @@
 //! Cgroup skb programs.
 use std::{
     hash::Hash,
-    os::unix::prelude::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
     path::Path,
 };
 

@@ -1,7 +1,7 @@
 //! Cgroup sysctl programs.
 use std::{
     hash::Hash,
-    os::unix::prelude::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
 };
 
 use crate::{

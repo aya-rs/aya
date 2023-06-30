@@ -1,5 +1,5 @@
 //! Extension programs.
-use std::os::unix::prelude::{AsRawFd, RawFd};
+use std::os::fd::{AsRawFd, RawFd};
 use thiserror::Error;
 
 use object::Endianness;
