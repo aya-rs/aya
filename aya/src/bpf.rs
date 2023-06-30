@@ -203,6 +203,7 @@ impl<'a> BpfLoader<'a> {
     }
 
     /// Sets the value of a global variable.
+    ///
     /// If the `must_exist` argument is `true`, [`BpfLoader::load`] will fail with [`ParseError::SymbolNotFound`] if the loaded object code does not contain the variable.
     ///
     /// From Rust eBPF, a global variable can be defined as follows:
