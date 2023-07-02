@@ -33,11 +33,11 @@ use crate::{
         SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
-        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_global_data_supported,
-        is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_float_supported,
-        is_btf_func_global_supported, is_btf_func_supported, is_btf_supported,
-        is_btf_type_tag_supported, is_perf_link_supported, is_probe_read_kernel_supported,
-        is_prog_name_supported, retry_with_verifier_logs,
+        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_cookie_supported,
+        is_bpf_global_data_supported, is_btf_datasec_supported, is_btf_decl_tag_supported,
+        is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
+        is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
+        is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
     },
     util::{bytes_of, bytes_of_slice, possible_cpus, VerifierLog, POSSIBLE_CPUS},
 };
@@ -72,26 +72,32 @@ lazy_static! {
 
 fn detect_features() -> Features {
     let btf = if is_btf_supported() {
-        Some(BtfFeatures {
-            btf_func: is_btf_func_supported(),
-            btf_func_global: is_btf_func_global_supported(),
-            btf_datasec: is_btf_datasec_supported(),
-            btf_float: is_btf_float_supported(),
-            btf_decl_tag: is_btf_decl_tag_supported(),
-            btf_type_tag: is_btf_type_tag_supported(),
-        })
+        Some(BtfFeatures::new(
+            is_btf_func_supported(),
+            is_btf_func_global_supported(),
+            is_btf_datasec_supported(),
+            is_btf_float_supported(),
+            is_btf_decl_tag_supported(),
+            is_btf_type_tag_supported(),
+        ))
     } else {
         None
     };
-    let f = Features {
-        bpf_name: is_prog_name_supported(),
-        bpf_probe_read_kernel: is_probe_read_kernel_supported(),
-        bpf_perf_link: is_perf_link_supported(),
-        bpf_global_data: is_bpf_global_data_supported(),
+    let f = Features::new(
+        is_prog_name_supported(),
+        is_probe_read_kernel_supported(),
+        is_perf_link_supported(),
+        is_bpf_global_data_supported(),
+        is_bpf_cookie_supported(),
         btf,
-    };
+    );
     debug!("BPF Feature Detection: {:#?}", f);
     f
+}
+
+/// Returns a reference to the detected BPF features.
+pub fn features() -> &'static Features {
+    &FEATURES
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -347,7 +353,7 @@ impl<'a> BpfLoader<'a> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(self.globals.clone())?;
 
-        let btf_fd = if let Some(features) = &FEATURES.btf {
+        let btf_fd = if let Some(features) = &FEATURES.btf() {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
                 // load btf to the kernel
                 Some(load_btf(btf.to_bytes())?)
@@ -364,7 +370,7 @@ impl<'a> BpfLoader<'a> {
         let mut maps = HashMap::new();
         for (name, mut obj) in obj.maps.drain() {
             if let (false, BpfSectionKind::Bss | BpfSectionKind::Data | BpfSectionKind::Rodata) =
-                (FEATURES.bpf_global_data, obj.section_kind())
+                (FEATURES.bpf_global_data(), obj.section_kind())
             {
                 continue;
             }
@@ -452,7 +458,7 @@ impl<'a> BpfLoader<'a> {
             .map(|(name, prog_obj)| {
                 let function_obj = obj.functions.get(&prog_obj.function_key()).unwrap().clone();
 
-                let prog_name = if FEATURES.bpf_name {
+                let prog_name = if FEATURES.bpf_name() {
                     Some(name.clone())
                 } else {
                     None

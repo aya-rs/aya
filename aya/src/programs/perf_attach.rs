@@ -73,7 +73,7 @@ impl Link for PerfLink {
 }
 
 pub(crate) fn perf_attach(prog_fd: RawFd, fd: RawFd) -> Result<PerfLinkInner, ProgramError> {
-    if FEATURES.bpf_perf_link {
+    if FEATURES.bpf_perf_link() {
         let link_fd =
             bpf_link_create(prog_fd, fd, BPF_PERF_EVENT, None, 0).map_err(|(_, io_error)| {
                 ProgramError::SyscallError {
