@@ -471,17 +471,21 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<RawFd, io::Error> {
     }
 }
 
-pub(crate) fn bpf_prog_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_prog_info, io::Error> {
+pub(crate) fn bpf_prog_get_info_by_fd(
+    prog_fd: RawFd,
+    map_ids: &[u32],
+) -> Result<bpf_prog_info, io::Error> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    // info gets entirely populated by the kernel
-    let info = MaybeUninit::zeroed();
+    let mut info = unsafe { mem::zeroed::<bpf_prog_info>() };
+    info.map_ids = map_ids.as_ptr() as u64;
+    info.nr_map_ids = map_ids.len() as u32;
 
     attr.info.bpf_fd = prog_fd as u32;
     attr.info.info = &info as *const _ as u64;
     attr.info.info_len = mem::size_of::<bpf_prog_info>() as u32;
 
     match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &attr) {
-        Ok(_) => Ok(unsafe { info.assume_init() }),
+        Ok(_) => Ok(info),
         Err((_, err)) => Err(err),
     }
 }
