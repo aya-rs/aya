@@ -494,10 +494,11 @@ impl<T: Link> ProgramData<T> {
                 io_error,
             })? as RawFd;
 
-        let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_prog_get_info_by_fd",
-            io_error,
-        })?;
+        let info =
+            bpf_prog_get_info_by_fd(fd, &[]).map_err(|io_error| ProgramError::SyscallError {
+                call: "bpf_prog_get_info_by_fd",
+                io_error,
+            })?;
 
         let name = ProgramInfo(info).name_as_str().map(|s| s.to_string());
         ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), info, verifier_log_level)
@@ -967,10 +968,11 @@ impl ProgramInfo {
                 io_error,
             })? as RawFd;
 
-        let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_prog_get_info_by_fd",
-            io_error,
-        })?;
+        let info =
+            bpf_prog_get_info_by_fd(fd, &[]).map_err(|io_error| ProgramError::SyscallError {
+                call: "bpf_prog_get_info_by_fd",
+                io_error,
+            })?;
         unsafe {
             libc::close(fd);
         }
@@ -1003,7 +1005,7 @@ impl Iterator for ProgramsIter {
                             io_error,
                         })
                         .and_then(|fd| {
-                            bpf_prog_get_info_by_fd(fd.as_raw_fd())
+                            bpf_prog_get_info_by_fd(fd.as_raw_fd(), &[])
                                 .map_err(|io_error| ProgramError::SyscallError {
                                     call: "bpf_prog_get_info_by_fd",
                                     io_error,
