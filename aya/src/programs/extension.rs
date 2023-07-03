@@ -151,11 +151,12 @@ impl Extension {
 /// with the name `func_name` within that BTF object.
 fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramError> {
     // retrieve program information
-    let info =
-        sys::bpf_prog_get_info_by_fd(prog_fd).map_err(|io_error| ProgramError::SyscallError {
+    let info = sys::bpf_prog_get_info_by_fd(prog_fd, None).map_err(|io_error| {
+        ProgramError::SyscallError {
             call: "bpf_prog_get_info_by_fd",
             io_error,
-        })?;
+        }
+    })?;
 
     // btf_id refers to the ID of the program btf that was loaded with bpf(BPF_BTF_LOAD)
     if info.btf_id == 0 {
