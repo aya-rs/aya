@@ -14,7 +14,7 @@ static FOO: Array<u32> = Array::<u32>::with_max_entries(10, 0);
 #[map(name = "BAR")]
 static BAZ: Array<u32> = Array::<u32>::with_max_entries(10, 0);
 
-#[xdp(frags = "true")]
+#[xdp(frags)]
 pub fn pass(ctx: XdpContext) -> u32 {
     match unsafe { try_pass(ctx) } {
         Ok(ret) => ret,
