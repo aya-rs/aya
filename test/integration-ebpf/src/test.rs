@@ -7,7 +7,7 @@ use aya_bpf::{
     programs::{ProbeContext, TracePointContext, XdpContext},
 };
 
-#[xdp(name = "test_xdp")]
+#[xdp]
 pub fn pass(ctx: XdpContext) -> u32 {
     match unsafe { try_pass(ctx) } {
         Ok(ret) => ret,
