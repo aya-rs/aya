@@ -388,9 +388,9 @@ impl Int {
 
 #[repr(C)]
 #[derive(Debug, Clone)]
-pub(crate) struct BtfEnum {
-    pub(crate) name_offset: u32,
-    pub(crate) value: u32,
+pub struct BtfEnum {
+    pub name_offset: u32,
+    pub value: u32,
 }
 
 #[repr(C)]
@@ -423,7 +423,7 @@ impl Enum {
         mem::size_of::<Fwd>() + mem::size_of::<BtfEnum>() * self.variants.len()
     }
 
-    pub(crate) fn new(name_offset: u32, variants: Vec<BtfEnum>) -> Self {
+    pub fn new(name_offset: u32, variants: Vec<BtfEnum>) -> Self {
         let mut info = (BtfKind::Enum as u32) << 24;
         info |= (variants.len() as u32) & 0xFFFF;
         Enum {
