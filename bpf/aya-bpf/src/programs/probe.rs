@@ -44,6 +44,17 @@ impl ProbeContext {
         T::from_argument(unsafe { &*self.regs }, n)
     }
 
+    /// Returns the `n`th stack argument to passed to the probe function, starting from 0.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    ///
+    /// ```
+    pub fn stack_arg<T: FromPtRegs>(&self, n: usize) -> Option<T> {
+        T::from_stack_argument(unsafe { &*self.regs }, n)
+    }
+
     /// Returns the return value of the probed function.
     ///
     /// # Examples
