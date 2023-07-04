@@ -1,121 +1,187 @@
-mod expand;
+pub(crate) mod args;
+mod btf_tracepoint;
+mod cgroup_device;
+mod cgroup_skb;
+mod cgroup_sock;
+mod cgroup_sock_addr;
+mod cgroup_sockopt;
+mod cgroup_sysctl;
+mod fentry;
+mod fexit;
+mod kprobe;
+mod lsm;
+mod map;
+mod perf_event;
+mod raw_tracepoint;
+mod sk_lookup;
+mod sk_msg;
+mod sk_skb;
+mod sock_ops;
+mod socket_filter;
+mod tc;
+mod tracepoint;
+mod uprobe;
+mod xdp;
 
-use expand::{
-    Args, BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt,
-    CgroupSysctl, FEntry, FExit, Lsm, Map, PerfEvent, Probe, ProbeKind, RawTracePoint,
-    SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockAddrArgs, SockOps, SocketFilter,
-    SockoptArgs, TracePoint, Xdp,
-};
+use btf_tracepoint::BtfTracePoint;
+use cgroup_device::CgroupDevice;
+use cgroup_skb::CgroupSkb;
+use cgroup_sock::CgroupSock;
+use cgroup_sock_addr::CgroupSockAddr;
+use cgroup_sockopt::CgroupSockopt;
+use cgroup_sysctl::CgroupSysctl;
+use fentry::FEntry;
+use fexit::FExit;
+use kprobe::{KProbe, KProbeKind};
+use lsm::Lsm;
+use map::Map;
+use perf_event::PerfEvent;
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, ItemFn, ItemStatic};
+use proc_macro_error::{abort, proc_macro_error};
+use raw_tracepoint::RawTracePoint;
+use sk_lookup::SkLookup;
+use sk_msg::SkMsg;
+use sk_skb::{SkSkb, SkSkbKind};
+use sock_ops::SockOps;
+use socket_filter::SocketFilter;
+use uprobe::{UProbe, UProbeKind};
 
+use tc::SchedClassifier;
+use tracepoint::TracePoint;
+use xdp::Xdp;
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn map(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemStatic);
-
-    Map::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match Map::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
-
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn kprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    probe(ProbeKind::KProbe, attrs, item)
+    match KProbe::parse(KProbeKind::KProbe, attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
-
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn kretprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    probe(ProbeKind::KRetProbe, attrs, item)
+    match KProbe::parse(KProbeKind::KRetProbe, attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
-
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn uprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    probe(ProbeKind::UProbe, attrs, item)
+    match UProbe::parse(UProbeKind::UProbe, attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
-
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn uretprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    probe(ProbeKind::URetProbe, attrs, item)
+    match UProbe::parse(UProbeKind::URetProbe, attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
-
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn sock_ops(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    SockOps::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match SockOps::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn sk_msg(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    SkMsg::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match SkMsg::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn xdp(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    Xdp::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match Xdp::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
-
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn classifier(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    SchedClassifier::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match SchedClassifier::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
 #[proc_macro_attribute]
 pub fn cgroup_sysctl(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    CgroupSysctl::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match CgroupSysctl::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
-
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn cgroup_sockopt(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as SockoptArgs);
-    let attach_type = args.attach_type.to_string();
-    let item = parse_macro_input!(item as ItemFn);
-
-    CgroupSockopt::from_syn(args.args, item, attach_type)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match CgroupSockopt::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
-
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    CgroupSkb::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match CgroupSkb::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
 /// Marks a function as a [`CgroupSockAddr`] eBPF program.
@@ -152,59 +218,51 @@ pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     Ok(0)
 /// }
 /// ```
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn cgroup_sock_addr(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as SockAddrArgs);
-    let attach_type = args.attach_type.to_string();
-    let item = parse_macro_input!(item as ItemFn);
-
-    CgroupSockAddr::from_syn(args.args, item, attach_type)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match CgroupSockAddr::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
-
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn cgroup_sock(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    CgroupSock::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match CgroupSock::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
-fn probe(kind: ProbeKind, attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    Probe::from_syn(kind, args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
-}
-
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    TracePoint::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match TracePoint::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn perf_event(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    PerfEvent::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match PerfEvent::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
 /// Marks a function as a raw tracepoint eBPF program that can be attached at a
@@ -223,7 +281,7 @@ pub fn perf_event(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// ```no_run
 /// use aya_bpf::{macros::raw_tracepoint, programs::RawTracePointContext};
 ///
-/// #[raw_tracepoint(name = "sys_enter")]
+/// #[raw_tracepoint(tracepoint = "sys_enter")]
 /// pub fn sys_enter(ctx: RawTracePointContext) -> i32 {
 ///     match unsafe { try_sys_enter(ctx) } {
 ///         Ok(ret) => ret,
@@ -235,19 +293,24 @@ pub fn perf_event(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     Ok(0)
 /// }
 /// ```
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn raw_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    RawTracePoint::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match RawTracePoint::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
 /// Marks a function as an LSM program that can be attached to Linux LSM hooks.
 /// Used to implement security policy and audit logging.
+///
+/// The hook name is the first argument to the macro.
+/// You may also provide `sleepable = true` to mark the program as sleepable.
+/// Arguments should be comma separated.
 ///
 /// LSM probes can be attached to the kernel's security hooks to implement mandatory
 /// access control policy and security auditing.
@@ -265,7 +328,7 @@ pub fn raw_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// ```no_run
 /// use aya_bpf::{macros::lsm, programs::LsmContext};
 ///
-/// #[lsm(name = "file_open")]
+/// #[lsm(hook = "file_open")]
 /// pub fn file_open(ctx: LsmContext) -> i32 {
 ///     match unsafe { try_file_open(ctx) } {
 ///         Ok(ret) => ret,
@@ -277,15 +340,16 @@ pub fn raw_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     Ok(0)
 /// }
 /// ```
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn lsm(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    Lsm::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match Lsm::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
 /// Marks a function as a [BTF-enabled raw tracepoint][1] eBPF program that can be attached at
@@ -304,7 +368,7 @@ pub fn lsm(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// ```no_run
 /// use aya_bpf::{macros::btf_tracepoint, programs::BtfTracePointContext};
 ///
-/// #[btf_tracepoint(name = "sched_process_fork")]
+/// #[btf_tracepoint(function = "sched_process_fork")]
 /// pub fn sched_process_fork(ctx: BtfTracePointContext) -> u32 {
 ///     match unsafe { try_sched_process_fork(ctx) } {
 ///         Ok(ret) => ret,
@@ -318,15 +382,16 @@ pub fn lsm(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 ///
 /// [1]: https://github.com/torvalds/linux/commit/9e15db66136a14cde3f35691f1d839d950118826
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    BtfTracePoint::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match BtfTracePoint::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
 /// Marks a function as a SK_SKB Stream Parser eBPF program that can be attached
@@ -354,6 +419,7 @@ pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///    Ok(ctx.len())
 ///}
 /// ```
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn stream_parser(attrs: TokenStream, item: TokenStream) -> TokenStream {
     sk_skb(SkSkbKind::StreamParser, attrs, item)
@@ -384,19 +450,20 @@ pub fn stream_parser(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///    Ok(sk_action::SK_PASS)
 ///}
 /// ```
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn stream_verdict(attrs: TokenStream, item: TokenStream) -> TokenStream {
     sk_skb(SkSkbKind::StreamVerdict, attrs, item)
 }
 
 fn sk_skb(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    SkSkb::from_syn(kind, args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match SkSkb::parse(kind, attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
 /// Marks a function as a eBPF Socket Filter program that can be attached to
@@ -411,20 +478,21 @@ fn sk_skb(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> TokenStream
 /// ```no_run
 /// use aya_bpf::{macros::socket_filter, programs::SkBuffContext};
 ///
-/// #[socket_filter(name = "accept_all")]
+/// #[socket_filter]
 /// pub fn accept_all(_ctx: SkBuffContext) -> i64 {
 ///     return 0
 /// }
 /// ```
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    SocketFilter::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match SocketFilter::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
 /// Marks a function as a fentry eBPF program that can be attached to almost
@@ -444,7 +512,7 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # type filename = u32;
 /// # type path = u32;
 ///
-/// #[fentry(name = "filename_lookup")]
+/// #[fentry(function = "filename_lookup")]
 /// fn filename_lookup(ctx: FEntryContext) -> i32 {
 ///     match unsafe { try_filename_lookup(ctx) } {
 ///         Ok(ret) => ret,
@@ -459,15 +527,16 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     Ok(0)
 /// }
 /// ```
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    FEntry::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match FEntry::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
 /// Marks a function as a fexit eBPF program that can be attached to almost
@@ -488,7 +557,7 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # type filename = u32;
 /// # type path = u32;
 ///
-/// #[fexit(name = "filename_lookup")]
+/// #[fexit(function = "filename_lookup")]
 /// fn filename_lookup(ctx: FExitContext) -> i32 {
 ///     match unsafe { try_filename_lookup(ctx) } {
 ///         Ok(ret) => ret,
@@ -503,15 +572,16 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     Ok(0)
 /// }
 /// ```
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    FExit::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match FExit::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
 /// Marks a function as an eBPF Socket Lookup program that can be attached to
@@ -526,21 +596,22 @@ pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// ```no_run
 /// use aya_bpf::{macros::sk_lookup, programs::SkLookupContext};
 ///
-/// #[sk_lookup(name = "redirect")]
+/// #[sk_lookup]
 /// pub fn accept_all(_ctx: SkLookupContext) -> u32 {
 ///     // use sk_assign to redirect
 ///     return 0
 /// }
 /// ```
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    SkLookup::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match SkLookup::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
 
 /// Marks a function as a cgroup device eBPF program that can be attached to a
@@ -558,19 +629,20 @@ pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     programs::DeviceContext,
 /// };
 ///
-/// #[cgroup_device(name="cgroup_dev")]
+/// #[cgroup_device]
 /// pub fn cgroup_dev(ctx: DeviceContext) -> i32 {
 ///     // Reject all device access
 ///     return 0;
 /// }
 /// ```
+#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn cgroup_device(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attrs as Args);
-    let item = parse_macro_input!(item as ItemFn);
-
-    CgroupDevice::from_syn(args, item)
-        .and_then(|u| u.expand())
-        .unwrap_or_else(|err| err.to_compile_error())
-        .into()
+    match CgroupDevice::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
 }
