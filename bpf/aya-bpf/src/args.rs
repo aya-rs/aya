@@ -120,7 +120,11 @@ impl<T> FromPtRegs for *const T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         let addr: __u64 = &ctx.rsp + 8 * (n + 1) as __u64;
-        unsafe { bpf_probe_read(addr as *const c_int).map(|v| v as *const _).ok() }
+        unsafe {
+            bpf_probe_read(addr as *const c_int)
+                .map(|v| v as *const _)
+                .ok()
+        }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
@@ -140,7 +144,11 @@ impl<T> FromPtRegs for *const T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         let addr: __u64 = &ctx.uregs[13] + 8 * (n + 1) as __u64;
-        unsafe { bpf_probe_read(addr as *const c_int).map(|v| v as *const _).ok() }
+        unsafe {
+            bpf_probe_read(addr as *const c_int)
+                .map(|v| v as *const _)
+                .ok()
+        }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
@@ -160,7 +168,11 @@ impl<T> FromPtRegs for *const T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         let addr: __u64 = &ctx.sp + 8 * (n + 1) as __u64;
-        unsafe { bpf_probe_read(addr as *const c_int).map(|v| v as *const _).ok() }
+        unsafe {
+            bpf_probe_read(addr as *const c_int)
+                .map(|v| v as *const _)
+                .ok()
+        }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
@@ -184,7 +196,11 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         let addr: __u64 = &ctx.rsp + 8 * (n + 1) as __u64;
-        unsafe { bpf_probe_read(addr as *const c_int).map(|v| v as *mut _).ok() }
+        unsafe {
+            bpf_probe_read(addr as *const c_int)
+                .map(|v| v as *mut _)
+                .ok()
+        }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
@@ -204,7 +220,11 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         let addr: __u64 = &ctx.uregs[13] + 8 * (n + 1) as __u64;
-        unsafe { bpf_probe_read(addr as *const c_int).map(|v| v as *mut _).ok() }
+        unsafe {
+            bpf_probe_read(addr as *const c_int)
+                .map(|v| v as *mut _)
+                .ok()
+        }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
@@ -224,7 +244,11 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         let addr: __u64 = &ctx.sp + 8 * (n + 1) as __u64;
-        unsafe { bpf_probe_read(addr as *const c_int).map(|v| v as *mut _).ok() }
+        unsafe {
+            bpf_probe_read(addr as *const c_int)
+                .map(|v| v as *mut _)
+                .ok()
+        }
     }
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
@@ -249,6 +273,11 @@ macro_rules! impl_from_pt_regs {
                 }
             }
 
+            fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+                let addr = ctx.rsp + 8 * (n + 1) as __u64;
+                Some(addr as *const $type as _)
+            }
+
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
                 Some(ctx.rax as *const $type as _)
             }
@@ -264,6 +293,11 @@ macro_rules! impl_from_pt_regs {
                 }
             }
 
+            fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+                let addr = ctx.uregs[13] + 8 * (n + 1) as __u64;
+                Some(addr as *const $type as _)
+            }
+
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
                 Some(ctx.uregs[0] as *const $type as _)
             }
@@ -277,6 +311,11 @@ macro_rules! impl_from_pt_regs {
                 } else {
                     None
                 }
+            }
+
+            fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+                let addr = ctx.sp + 8 * (n + 1) as __u64;
+                Some(addr as *const $type as _)
             }
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
