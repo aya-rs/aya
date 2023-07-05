@@ -919,6 +919,58 @@ impl_try_from_program!(
     CgroupDevice,
 );
 
+/// Returns information about a loaded program with the [`ProgramInfo`] structure.
+///
+/// This information is populated at load time by the kernel and can be used
+/// to correlate a given [`Program`] to it's corresponding [`ProgramInfo`]
+/// metadata.
+macro_rules! impl_program_info {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl $struct_name {
+                /// Returns the file descriptor of this Program.
+                pub fn program_info(&self) -> Result<ProgramInfo, ProgramError> {
+                    let fd = self.fd().ok_or(ProgramError::NotLoaded)?;
+
+                    bpf_prog_get_info_by_fd(fd.as_raw_fd(), &[])
+                        .map_err(|io_error| ProgramError::SyscallError {
+                            call: "bpf_prog_get_info_by_fd",
+                            io_error,
+                        })
+                        .map(ProgramInfo)
+                }
+            }
+        )+
+    }
+}
+
+impl_program_info!(
+    KProbe,
+    UProbe,
+    TracePoint,
+    SocketFilter,
+    Xdp,
+    SkMsg,
+    SkSkb,
+    SchedClassifier,
+    CgroupSkb,
+    CgroupSysctl,
+    CgroupSockopt,
+    LircMode2,
+    PerfEvent,
+    Lsm,
+    RawTracePoint,
+    BtfTracePoint,
+    FEntry,
+    FExit,
+    Extension,
+    CgroupSockAddr,
+    SkLookup,
+    SockOps,
+    CgroupSock,
+    CgroupDevice,
+);
+
 /// Provides information about a loaded program, like name, id and statistics
 #[derive(Debug)]
 pub struct ProgramInfo(bpf_prog_info);
