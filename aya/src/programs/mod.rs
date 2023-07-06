@@ -999,12 +999,14 @@ impl Iterator for ProgramsIter {
                             io_error,
                         })
                         .and_then(|fd| {
-                            bpf_prog_get_info_by_fd(fd)
+                            let info = bpf_prog_get_info_by_fd(fd)
                                 .map_err(|io_error| ProgramError::SyscallError {
                                     call: "bpf_prog_get_info_by_fd".to_owned(),
                                     io_error,
                                 })
-                                .map(ProgramInfo)
+                                .map(ProgramInfo);
+                            unsafe { libc::close(fd) };
+                            info
                         }),
                 )
             }

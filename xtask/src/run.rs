@@ -36,8 +36,13 @@ fn build(opts: &Options) -> Result<(), anyhow::Error> {
         .args(&args)
         .status()
         .expect("failed to build userspace");
-    assert!(status.success());
-    Ok(())
+    match status.code() {
+        Some(code) => match code {
+            0 => Ok(()),
+            code => Err(anyhow::anyhow!("exited with status code: {code}")),
+        },
+        None => Err(anyhow::anyhow!("process terminated by signal")),
+    }
 }
 
 /// Build and run the project
