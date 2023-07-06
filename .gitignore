@@ -6,3 +6,6 @@ libbpf/
 site/
 header.html
 .idea/
+
+kerneltest/initramfs.cpio
+kerneltest/kernels/*

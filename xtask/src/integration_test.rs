@@ -27,51 +27,64 @@ pub struct Options {
 /// Configures building the integration test binary.
 pub struct BuildOptions {
     pub release: bool,
+
+    /// The target triple to build for.
+    pub target: Option<String>,
 }
 
 /// Build the project. Returns the path to the binary that was built.
-pub fn build(opts: BuildOptions) -> Result<std::path::PathBuf, anyhow::Error> {
-    let BuildOptions { release } = opts;
+pub fn build(opts: BuildOptions) -> Result<String, anyhow::Error> {
     let mut args = vec!["build"];
     if opts.release {
         args.push("--release")
     }
     args.push("-p");
     args.push("integration-test");
+    let target_path = if let Some(target) = &opts.target {
+        args.push("--target");
+        args.push(target);
+        format!("{target}/")
+    } else {
+        String::new()
+    };
     let status = Command::new("cargo")
         .args(&args)
         .status()
         .expect("failed to build userspace");
     assert!(status.success());
-    let profile = if release { "release" } else { "debug" };
-    let bin_path = format!("target/{profile}/integration-test");
-    Ok(PathBuf::from(bin_path))
+    let profile = if opts.release { "release" } else { "debug" };
+    Ok(format!("target/{target_path}{profile}/integration-test"))
 }
 
 /// Build and run the project
 pub fn run(opts: Options) -> Result<(), anyhow::Error> {
     let Options {
-        bpf_target,
-        release,
         runner,
-        libbpf_dir,
         run_args,
+        bpf_target,
+        libbpf_dir,
+        release,
     } = opts;
+
     // build our ebpf program followed by our application
     build_ebpf(BuildEbpfOptions {
         target: bpf_target,
         libbpf_dir,
     })
     .context("Error while building eBPF program")?;
-    let bin_path =
-        build(BuildOptions { release }).context("Error while building userspace application")?;
+
+    let bin_path = build(BuildOptions {
+        release,
+        target: None,
+    })
+    .context("Error while building userspace application")?;
 
     // arguments to pass to the application
     let mut run_args: Vec<_> = run_args.iter().map(String::as_str).collect();
 
     // configure args
     let mut args: Vec<_> = runner.trim().split_terminator(' ').collect();
-    args.push(bin_path.to_str().expect("Invalid binary path"));
+    args.push(&bin_path);
     args.append(&mut run_args);
 
     // spawn the command
