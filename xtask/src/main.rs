@@ -2,7 +2,8 @@ mod build_ebpf;
 mod build_test;
 mod codegen;
 mod docs;
-mod run;
+mod integration_test;
+
 pub(crate) mod utils;
 
 use std::process::exit;
@@ -20,7 +21,7 @@ enum Command {
     Docs,
     BuildIntegrationTest(build_test::Options),
     BuildIntegrationTestEbpf(build_ebpf::BuildEbpfOptions),
-    IntegrationTest(run::Options),
+    IntegrationTest(integration_test::Options),
 }
 
 fn main() {
@@ -32,7 +33,7 @@ fn main() {
         Docs => docs::docs(),
         BuildIntegrationTest(opts) => build_test::build_test(opts),
         BuildIntegrationTestEbpf(opts) => build_ebpf::build_ebpf(opts),
-        IntegrationTest(opts) => run::run(opts),
+        IntegrationTest(opts) => integration_test::run(opts),
     };
 
     if let Err(e) = ret {

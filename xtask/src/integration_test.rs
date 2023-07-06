@@ -3,7 +3,7 @@ use std::{os::unix::process::CommandExt, path::PathBuf, process::Command};
 use anyhow::Context as _;
 use clap::Parser;
 
-use crate::build_ebpf::{build_ebpf, Architecture, BuildEbpfOptions as BuildOptions};
+use crate::build_ebpf::{build_ebpf, Architecture};
 
 #[derive(Debug, Parser)]
 pub struct Options {
@@ -24,41 +24,73 @@ pub struct Options {
     pub run_args: Vec<String>,
 }
 
-/// Build the project
-fn build(opts: &Options) -> Result<(), anyhow::Error> {
+impl Options {
+    fn build_options(&self) -> BuildOptions {
+        let Self { release, .. } = self;
+        BuildOptions {
+            release: *release,
+            target: None,
+        }
+    }
+
+    fn build_ebpf_options(&self) -> crate::build_ebpf::BuildEbpfOptions {
+        let Self {
+            bpf_target,
+            libbpf_dir,
+            ..
+        } = self;
+        crate::build_ebpf::BuildEbpfOptions {
+            target: *bpf_target,
+            libbpf_dir: PathBuf::from(libbpf_dir),
+        }
+    }
+}
+
+/// Configures building the integration test binary.
+pub struct BuildOptions {
+    pub release: bool,
+    pub target: Option<String>,
+}
+
+/// Build the project. Returns the path to the binary that was built.
+pub fn build(opts: BuildOptions) -> Result<std::path::PathBuf, anyhow::Error> {
     let mut args = vec!["build"];
     if opts.release {
         args.push("--release")
     }
     args.push("-p");
     args.push("integration-test");
+    let target_path = if let Some(target) = &opts.target {
+        args.push("--target");
+        args.push(target);
+        format!("{target}/")
+    } else {
+        String::new()
+    };
     let status = Command::new("cargo")
         .args(&args)
         .status()
         .expect("failed to build userspace");
     assert!(status.success());
-    Ok(())
+    let profile = if opts.release { "release" } else { "debug" };
+
+    let bin_path = format!("target/{target_path}{profile}/integration-test");
+    Ok(PathBuf::from(bin_path))
 }
 
 /// Build and run the project
 pub fn run(opts: Options) -> Result<(), anyhow::Error> {
     // build our ebpf program followed by our application
-    build_ebpf(BuildOptions {
-        target: opts.bpf_target,
-        libbpf_dir: PathBuf::from(&opts.libbpf_dir),
-    })
-    .context("Error while building eBPF program")?;
-    build(&opts).context("Error while building userspace application")?;
-    // profile we are building (release or debug)
-    let profile = if opts.release { "release" } else { "debug" };
-    let bin_path = format!("target/{profile}/integration-test");
+    build_ebpf(opts.build_ebpf_options()).context("Error while building eBPF program")?;
+    let bin_path =
+        build(opts.build_options()).context("Error while building userspace application")?;
 
     // arguments to pass to the application
     let mut run_args: Vec<_> = opts.run_args.iter().map(String::as_str).collect();
 
     // configure args
     let mut args: Vec<_> = opts.runner.trim().split_terminator(' ').collect();
-    args.push(bin_path.as_str());
+    args.push(bin_path.to_str().expect("Invalid binary path"));
     args.append(&mut run_args);
 
     // spawn the command
