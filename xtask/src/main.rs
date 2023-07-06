@@ -3,6 +3,7 @@ mod build_test;
 mod codegen;
 mod docs;
 mod integration_test;
+mod kernel_test;
 
 pub(crate) mod utils;
 
@@ -22,6 +23,7 @@ enum Command {
     BuildIntegrationTest(build_test::Options),
     BuildIntegrationTestEbpf(build_ebpf::BuildEbpfOptions),
     IntegrationTest(integration_test::Options),
+    KernelTest(kernel_test::Options),
 }
 
 fn main() {
@@ -34,6 +36,7 @@ fn main() {
         BuildIntegrationTest(opts) => build_test::build_test(opts),
         BuildIntegrationTestEbpf(opts) => build_ebpf::build_ebpf(opts),
         IntegrationTest(opts) => integration_test::run(opts),
+        KernelTest(opts) => kernel_test::kernel_test(opts),
     };
 
     if let Err(e) = ret {
