@@ -19,6 +19,7 @@ members = [
     "bpf/aya-log-ebpf",
     "test/integration-ebpf",
 ]
+resolver = "2"
 
 default-members = [
     "aya",
