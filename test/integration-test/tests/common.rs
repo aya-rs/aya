@@ -3,24 +3,7 @@ use libc::{uname, utsname};
 use regex::Regex;
 use std::{cell::OnceCell, ffi::CStr, mem};
 
-pub mod bpf_probe_read;
-pub mod btf_relocations;
-pub mod elf;
-pub mod load;
-pub mod log;
-pub mod rbpf;
-pub mod relocations;
-pub mod smoke;
-
-pub use integration_test_macros::{integration_test, tokio_integration_test};
-
-#[derive(Debug)]
-pub struct IntegrationTest {
-    pub name: &'static str,
-    pub test_fn: fn(),
-}
-
-pub(crate) fn kernel_version() -> anyhow::Result<(u8, u8, u8)> {
+pub fn kernel_version() -> anyhow::Result<(u8, u8, u8)> {
     static mut RE: OnceCell<Regex> = OnceCell::new();
     let re =
         unsafe { &mut RE }.get_or_init(|| Regex::new(r"^([0-9]+)\.([0-9]+)\.([0-9]+)").unwrap());
@@ -38,5 +21,3 @@ pub(crate) fn kernel_version() -> anyhow::Result<(u8, u8, u8)> {
         bail!("no kernel version found");
     }
 }
-
-inventory::collect!(IntegrationTest);

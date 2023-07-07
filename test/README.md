@@ -43,11 +43,9 @@ cargo xtask integration-test --libbpf-dir /path/to/libbpf
 
 Tests should follow these guidelines:
 
-- Rust eBPF code should live in `integration-ebpf/${NAME}.rs` and included in `integration-ebpf/Cargo.toml`
+- Rust eBPF code should live in `integration-ebpf/${NAME}.rs` and included in `integration-ebpf/Cargo.toml`.
 - C eBPF code should live in `integration-test/src/bpf/${NAME}.bpf.c`. It's automatically compiled and made available as `${OUT_DIR}/${NAME}.bpf.o`.
-- Any bytecode should be included in the integration test binary using `include_bytes_aligned!`
-- Tests should be added to `integration-test/src/test`
-- You may add a new module, or use an existing one
-- Integration tests must use the `#[integration_test]` macro to be included in the build
-- Test functions should return `anyhow::Result<()>` since this allows the use of `?` to return errors.
-- You may either `panic!` when an assertion fails or `bail!`. The former is preferred since the stack trace will point directly to the failed line.
+- Any bytecode should be included in the integration test binary using `include_bytes_aligned!`.
+- Tests should be added to `integration-test/src/test`.
+- You may add a new module, or use an existing one.
+- Test functions should not return `anyhow::Result<()>` since this produces errors without stack traces. Prefer to `panic!` instead.

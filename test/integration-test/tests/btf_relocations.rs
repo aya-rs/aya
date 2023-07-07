@@ -4,12 +4,10 @@ use tempfile::TempDir;
 
 use aya::{maps::Array, programs::TracePoint, BpfLoader, Btf, Endianness};
 
-use super::integration_test;
-
 // In the tests below we often use values like 0xAAAAAAAA or -0x7AAAAAAA. Those values have no
 // special meaning, they just have "nice" bit patterns that can be helpful while debugging.
 
-#[integration_test]
+#[test]
 fn relocate_field() {
     let test = RelocationTest {
         local_definition: r#"
@@ -40,7 +38,7 @@ fn relocate_field() {
     assert_eq!(test.run_no_btf().unwrap(), 3);
 }
 
-#[integration_test]
+#[test]
 fn relocate_enum() {
     let test = RelocationTest {
         local_definition: r#"
@@ -60,7 +58,7 @@ fn relocate_enum() {
     assert_eq!(test.run_no_btf().unwrap(), 0xAAAAAAAA);
 }
 
-#[integration_test]
+#[test]
 fn relocate_enum_signed() {
     let test = RelocationTest {
         local_definition: r#"
@@ -80,7 +78,7 @@ fn relocate_enum_signed() {
     assert_eq!(test.run_no_btf().unwrap() as i64, -0x7AAAAAAAi64);
 }
 
-#[integration_test]
+#[test]
 fn relocate_enum64() {
     let test = RelocationTest {
         local_definition: r#"
@@ -100,7 +98,7 @@ fn relocate_enum64() {
     assert_eq!(test.run_no_btf().unwrap(), 0xAAAAAAAABBBBBBBB);
 }
 
-#[integration_test]
+#[test]
 fn relocate_enum64_signed() {
     let test = RelocationTest {
         local_definition: r#"
@@ -120,7 +118,7 @@ fn relocate_enum64_signed() {
     assert_eq!(test.run_no_btf().unwrap() as i64, -0xAAAAAAABBBBBBBBi64);
 }
 
-#[integration_test]
+#[test]
 fn relocate_pointer() {
     let test = RelocationTest {
         local_definition: r#"
@@ -143,7 +141,7 @@ fn relocate_pointer() {
     assert_eq!(test.run_no_btf().unwrap(), 42);
 }
 
-#[integration_test]
+#[test]
 fn relocate_struct_flavors() {
     let definition = r#"
         struct foo {};
