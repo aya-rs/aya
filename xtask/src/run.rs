@@ -1,10 +1,12 @@
 use std::{
-    os::unix::process::CommandExt,
-    path::{Path, PathBuf},
-    process::Command,
+    fmt::Write as _,
+    io::BufReader,
+    path::PathBuf,
+    process::{Command, Stdio},
 };
 
 use anyhow::Context as _;
+use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 
 use crate::build_ebpf::{build_ebpf, Architecture, BuildEbpfOptions as BuildOptions};
@@ -29,21 +31,54 @@ pub struct Options {
 }
 
 /// Build the project
-fn build(release: bool) -> Result<(), anyhow::Error> {
+fn build(release: bool) -> Result<Vec<(PathBuf, PathBuf)>, anyhow::Error> {
     let mut cmd = Command::new("cargo");
-    cmd.arg("build").arg("-p").arg("integration-test");
+    cmd.arg("build")
+        .arg("--tests")
+        .arg("--message-format=json")
+        .arg("--package=integration-test");
     if release {
         cmd.arg("--release");
     }
+    let mut cmd = cmd
+        .stdout(Stdio::piped())
+        .spawn()
+        .with_context(|| format!("failed to spawn {cmd:?}"))?;
 
-    let status = cmd.status().expect("failed to build userspace");
+    let reader = BufReader::new(cmd.stdout.take().unwrap());
+    let mut executables = Vec::new();
+    let mut compiler_messages = String::new();
+    for message in Message::parse_stream(reader) {
+        #[allow(clippy::collapsible_match)]
+        match message.context("valid JSON")? {
+            Message::CompilerArtifact(Artifact {
+                executable,
+                target: Target { src_path, .. },
+                ..
+            }) => {
+                if let Some(executable) = executable {
+                    executables.push((src_path.into(), executable.into()));
+                }
+            }
+            Message::CompilerMessage(CompilerMessage { message, .. }) => {
+                assert_eq!(writeln!(&mut compiler_messages, "{message}"), Ok(()));
+            }
+            _ => {}
+        }
+    }
+
+    let status = cmd
+        .wait()
+        .with_context(|| format!("failed to wait for {cmd:?}"))?;
 
     match status.code() {
         Some(code) => match code {
-            0 => Ok(()),
-            code => Err(anyhow::anyhow!("{cmd:?} exited with status code: {code}")),
+            0 => Ok(executables),
+            code => Err(anyhow::anyhow!(
+                "{cmd:?} exited with status code {code}:\n{compiler_messages}"
+            )),
         },
-        None => Err(anyhow::anyhow!("process terminated by signal")),
+        None => Err(anyhow::anyhow!("{cmd:?} terminated by signal")),
     }
 }
 
@@ -62,20 +97,50 @@ pub fn run(opts: Options) -> Result<(), anyhow::Error> {
         target: bpf_target,
         libbpf_dir,
     })
-    .context("Error while building eBPF program")?;
-    build(release).context("Error while building userspace application")?;
-    // profile we are building (release or debug)
-    let profile = if release { "release" } else { "debug" };
-    let bin_path = Path::new("target").join(profile).join("integration-test");
+    .context("error while building eBPF program")?;
 
+    let binaries = build(release).context("error while building userspace application")?;
     let mut args = runner.trim().split_terminator(' ');
+    let runner = args.next().ok_or(anyhow::anyhow!("no first argument"))?;
+    let args = args.collect::<Vec<_>>();
 
-    let mut cmd = Command::new(args.next().expect("No first argument"));
-    cmd.args(args).arg(bin_path).args(run_args);
+    let mut failures = String::new();
+    for (src_path, binary) in binaries {
+        let mut cmd = Command::new(runner);
+        let cmd = cmd
+            .args(args.iter())
+            .arg(binary)
+            .args(run_args.iter())
+            .arg("--test-threads=1");
 
-    // spawn the command
-    let err = cmd.exec();
+        println!("{} running {cmd:?}", src_path.display());
 
-    // we shouldn't get here unless the command failed to spawn
-    Err(anyhow::Error::from(err).context(format!("Failed to run `{cmd:?}`")))
+        let status = cmd
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .status()
+            .context("failed to run {cmd:?}")?;
+        match status.code() {
+            Some(code) => match code {
+                0 => {}
+                code => assert_eq!(
+                    writeln!(
+                        &mut failures,
+                        "{} exited with status code {code}",
+                        src_path.display()
+                    ),
+                    Ok(())
+                ),
+            },
+            None => assert_eq!(
+                writeln!(&mut failures, "{} terminated by signal", src_path.display()),
+                Ok(())
+            ),
+        }
+    }
+    if failures.is_empty() {
+        Ok(())
+    } else {
+        Err(anyhow::anyhow!("failures:\n{}", failures))
+    }
 }

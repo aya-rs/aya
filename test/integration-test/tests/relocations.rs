@@ -5,13 +5,12 @@ use aya::{
     programs::{ProgramError, UProbe},
     Bpf,
 };
-use integration_test_macros::integration_test;
 
-#[integration_test]
+#[test]
 fn relocations() {
     let bpf = load_and_attach(
         "test_64_32_call_relocs",
-        include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/relocations"),
+        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/relocations"),
     );
 
     trigger_relocations_program();
@@ -23,11 +22,11 @@ fn relocations() {
     assert_eq!(m.get(&2, 0).unwrap(), 3);
 }
 
-#[integration_test]
+#[test]
 fn text_64_64_reloc() {
     let mut bpf = load_and_attach(
         "test_text_64_64_reloc",
-        include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/text_64_64_reloc.o"),
+        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/text_64_64_reloc.o"),
     );
 
     let mut m = aya::maps::Array::<_, u64>::try_from(bpf.map_mut("RESULTS").unwrap()).unwrap();

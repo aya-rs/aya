@@ -4,7 +4,7 @@ use std::{
     ffi::{OsStr, OsString},
     fs,
     path::{Path, PathBuf},
-    process::Command,
+    process::{Command, Output},
 };
 
 use anyhow::{bail, Context};
@@ -148,16 +148,20 @@ fn compile_with_clang<P: Clone + AsRef<Path>>(
         .arg("-o")
         .arg(out.as_ref().as_os_str());
 
-    let output = cmd.output().context("Failed to execute clang")?;
-    if !output.status.success() {
+    let Output {
+        status,
+        stdout,
+        stderr,
+    } = cmd.output().context("Failed to execute clang")?;
+    if !status.success() {
         bail!(
             "Failed to compile eBPF programs\n \
             stdout=\n \
             {}\n \
             stderr=\n \
             {}\n",
-            String::from_utf8(output.stdout).unwrap(),
-            String::from_utf8(output.stderr).unwrap()
+            String::from_utf8(stdout).unwrap(),
+            String::from_utf8(stderr).unwrap()
         );
     }
 
