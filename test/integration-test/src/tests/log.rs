@@ -5,8 +5,6 @@ use aya_log::BpfLogger;
 use log::{Level, Log, Record};
 use tokio::time::{sleep, Duration};
 
-use super::tokio_integration_test;
-
 const MAX_ATTEMPTS: usize = 10;
 const TIMEOUT_MS: u64 = 10;
 
@@ -89,7 +87,7 @@ impl Log for TestingLogger {
     }
 }
 
-#[tokio_integration_test]
+#[tokio::test]
 async fn log() {
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/log");
     let mut bpf = Bpf::load(bytes).unwrap();

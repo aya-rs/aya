@@ -1,9 +1,7 @@
-use super::integration_test;
-
 use aya::include_bytes_aligned;
 use object::{Object, ObjectSymbol};
 
-#[integration_test]
+#[test]
 fn test_maps() {
     let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/map_test");
     let obj_file = object::File::parse(bytes).unwrap();
