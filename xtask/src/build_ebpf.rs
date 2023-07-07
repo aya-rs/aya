@@ -7,7 +7,7 @@ use std::{
 use anyhow::{bail, Context};
 use clap::Parser;
 
-use crate::utils::WORKSPACE_ROOT;
+use crate::utils::workspace_root;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Architecture {
@@ -52,7 +52,7 @@ pub fn build_ebpf(opts: BuildEbpfOptions) -> anyhow::Result<()> {
 }
 
 fn build_rust_ebpf(opts: &BuildEbpfOptions) -> anyhow::Result<()> {
-    let mut dir = PathBuf::from(WORKSPACE_ROOT.to_string());
+    let mut dir = PathBuf::from(workspace_root());
     dir.push("test/integration-ebpf");
 
     let target = format!("--target={}", opts.target);
@@ -88,10 +88,10 @@ fn get_libbpf_headers<P: AsRef<Path>>(libbpf_dir: P, include_path: P) -> anyhow:
 }
 
 fn build_c_ebpf(opts: &BuildEbpfOptions) -> anyhow::Result<()> {
-    let mut src = PathBuf::from(WORKSPACE_ROOT.to_string());
+    let mut src = PathBuf::from(workspace_root());
     src.push("test/integration-ebpf/src/bpf");
 
-    let mut out_path = PathBuf::from(WORKSPACE_ROOT.to_string());
+    let mut out_path = PathBuf::from(workspace_root());
     out_path.push("target");
     out_path.push(opts.target.to_string());
     out_path.push("release");

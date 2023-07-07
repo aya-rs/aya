@@ -1,8 +1,7 @@
 use anyhow::bail;
-use lazy_static::lazy_static;
 use libc::{uname, utsname};
 use regex::Regex;
-use std::{ffi::CStr, mem};
+use std::{cell::OnceCell, ffi::CStr, mem};
 
 pub mod bpf_probe_read;
 pub mod btf_relocations;
@@ -22,15 +21,15 @@ pub struct IntegrationTest {
 }
 
 pub(crate) fn kernel_version() -> anyhow::Result<(u8, u8, u8)> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"^([0-9]+)\.([0-9]+)\.([0-9]+)").unwrap();
-    }
+    static mut RE: OnceCell<Regex> = OnceCell::new();
+    let re =
+        unsafe { &mut RE }.get_or_init(|| Regex::new(r"^([0-9]+)\.([0-9]+)\.([0-9]+)").unwrap());
     let mut data: utsname = unsafe { mem::zeroed() };
     let ret = unsafe { uname(&mut data) };
     assert!(ret >= 0, "libc::uname failed.");
     let release_cstr = unsafe { CStr::from_ptr(data.release.as_ptr()) };
     let release = release_cstr.to_string_lossy();
-    if let Some(caps) = RE.captures(&release) {
+    if let Some(caps) = re.captures(&release) {
         let major = caps.get(1).unwrap().as_str().parse().unwrap();
         let minor = caps.get(2).unwrap().as_str().parse().unwrap();
         let patch = caps.get(3).unwrap().as_str().parse().unwrap();

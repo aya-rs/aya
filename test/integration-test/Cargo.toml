@@ -14,7 +14,6 @@ env_logger = "0.10"
 futures-core = "0.3"
 inventory = "0.3"
 integration-test-macros = { path = "../integration-test-macros" }
-lazy_static = "1"
 libc = { version = "0.2.105" }
 log = "0.4"
 object = { version = "0.31", default-features = false, features = ["std", "read_core", "elf"] }
