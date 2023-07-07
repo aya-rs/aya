@@ -24,15 +24,14 @@ enum Command {
 }
 
 fn main() {
-    let opts = XtaskOptions::parse();
+    let XtaskOptions { command } = Parser::parse();
 
-    use Command::*;
-    let ret = match opts.command {
-        Codegen(opts) => codegen::codegen(opts),
-        Docs => docs::docs(),
-        BuildIntegrationTest(opts) => build_test::build_test(opts),
-        BuildIntegrationTestEbpf(opts) => build_ebpf::build_ebpf(opts),
-        IntegrationTest(opts) => run::run(opts),
+    let ret = match command {
+        Command::Codegen(opts) => codegen::codegen(opts),
+        Command::Docs => docs::docs(),
+        Command::BuildIntegrationTest(opts) => build_test::build_test(opts),
+        Command::BuildIntegrationTestEbpf(opts) => build_ebpf::build_ebpf(opts),
+        Command::IntegrationTest(opts) => run::run(opts),
     };
 
     if let Err(e) = ret {
