@@ -1,10 +1,13 @@
 use std::{
-    os::unix::process::CommandExt,
-    path::{Path, PathBuf},
-    process::Command,
+    fmt::Write as _,
+    io::BufReader,
+    os::unix::process::CommandExt as _,
+    path::PathBuf,
+    process::{Command, Stdio},
 };
 
 use anyhow::Context as _;
+use cargo_metadata::{Artifact, CompilerMessage, Message};
 use clap::Parser;
 
 use crate::build_ebpf::{build_ebpf, Architecture, BuildEbpfOptions as BuildOptions};
@@ -29,19 +32,54 @@ pub struct Options {
 }
 
 /// Build the project
-fn build(release: bool) -> Result<(), anyhow::Error> {
+fn build(release: bool) -> Result<PathBuf, anyhow::Error> {
     let mut cmd = Command::new("cargo");
-    cmd.arg("build").arg("-p").arg("integration-test");
+    cmd.arg("build")
+        .arg("--tests")
+        .arg("--message-format=json")
+        .arg("--package=integration-test");
     if release {
         cmd.arg("--release");
     }
+    let mut cmd = cmd
+        .stdout(Stdio::piped())
+        .spawn()
+        .with_context(|| format!("failed to spawn {cmd:?}"))?;
 
-    let status = cmd.status().expect("failed to build userspace");
+    let reader = BufReader::new(cmd.stdout.take().unwrap());
+    let mut executables = Vec::new();
+    let mut compiler_messages = String::new();
+    for message in Message::parse_stream(reader) {
+        #[allow(clippy::collapsible_match)]
+        match message.context("valid JSON")? {
+            Message::CompilerArtifact(Artifact { executable, .. }) => {
+                if let Some(executable) = executable {
+                    executables.push(executable);
+                }
+            }
+            Message::CompilerMessage(CompilerMessage { message, .. }) => {
+                assert_eq!(writeln!(&mut compiler_messages, "{message}"), Ok(()));
+            }
+            _ => {}
+        }
+    }
+
+    let status = cmd
+        .wait()
+        .with_context(|| format!("failed to wait for {cmd:?}"))?;
 
     match status.code() {
         Some(code) => match code {
-            0 => Ok(()),
-            code => Err(anyhow::anyhow!("{cmd:?} exited with status code: {code}")),
+            0 => match &*executables.into_boxed_slice() {
+                [executable] => Ok(executable.into()),
+                executables => Err(anyhow::anyhow!(
+                    "expected one executable, found {:?}",
+                    executables
+                )),
+            },
+            code => Err(anyhow::anyhow!(
+                "{cmd:?} exited with status code {code}:\n{compiler_messages}"
+            )),
         },
         None => Err(anyhow::anyhow!("process terminated by signal")),
     }
@@ -63,15 +101,15 @@ pub fn run(opts: Options) -> Result<(), anyhow::Error> {
         libbpf_dir,
     })
     .context("Error while building eBPF program")?;
-    build(release).context("Error while building userspace application")?;
-    // profile we are building (release or debug)
-    let profile = if release { "release" } else { "debug" };
-    let bin_path = Path::new("target").join(profile).join("integration-test");
 
+    let bin_path = build(release).context("Error while building userspace application")?;
     let mut args = runner.trim().split_terminator(' ');
-
-    let mut cmd = Command::new(args.next().expect("No first argument"));
-    cmd.args(args).arg(bin_path).args(run_args);
+    let runner = args.next().ok_or(anyhow::anyhow!("no first argument"))?;
+    let mut cmd = Command::new(runner);
+    cmd.args(args)
+        .arg(bin_path)
+        .args(run_args)
+        .arg("--test-threads=1");
 
     // spawn the command
     let err = cmd.exec();

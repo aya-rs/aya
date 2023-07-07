@@ -5,9 +5,8 @@ use aya::{
     programs::{ProgramError, UProbe},
     Bpf,
 };
-use integration_test_macros::integration_test;
 
-#[integration_test]
+#[test]
 fn relocations() {
     let bpf = load_and_attach(
         "test_64_32_call_relocs",
@@ -23,7 +22,7 @@ fn relocations() {
     assert_eq!(m.get(&2, 0).unwrap(), 3);
 }
 
-#[integration_test]
+#[test]
 fn text_64_64_reloc() {
     let mut bpf = load_and_attach(
         "test_text_64_64_reloc",

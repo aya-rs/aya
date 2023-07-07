@@ -12,14 +12,6 @@ pub mod rbpf;
 pub mod relocations;
 pub mod smoke;
 
-pub use integration_test_macros::{integration_test, tokio_integration_test};
-
-#[derive(Debug)]
-pub struct IntegrationTest {
-    pub name: &'static str,
-    pub test_fn: fn(),
-}
-
 pub(crate) fn kernel_version() -> anyhow::Result<(u8, u8, u8)> {
     static mut RE: OnceCell<Regex> = OnceCell::new();
     let re =
@@ -38,5 +30,3 @@ pub(crate) fn kernel_version() -> anyhow::Result<(u8, u8, u8)> {
         bail!("no kernel version found");
     }
 }
-
-inventory::collect!(IntegrationTest);
