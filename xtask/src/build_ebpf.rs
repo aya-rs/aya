@@ -1,5 +1,8 @@
 use std::{
-    env, fs,
+    borrow::Cow,
+    env,
+    ffi::{OsStr, OsString},
+    fs,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -7,7 +10,7 @@ use std::{
 use anyhow::{bail, Context};
 use clap::Parser;
 
-use crate::utils::WORKSPACE_ROOT;
+use crate::utils::workspace_root;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Architecture {
@@ -52,7 +55,7 @@ pub fn build_ebpf(opts: BuildEbpfOptions) -> anyhow::Result<()> {
 }
 
 fn build_rust_ebpf(opts: &BuildEbpfOptions) -> anyhow::Result<()> {
-    let mut dir = PathBuf::from(WORKSPACE_ROOT.to_string());
+    let mut dir = PathBuf::from(workspace_root());
     dir.push("test/integration-ebpf");
 
     let target = format!("--target={}", opts.target);
@@ -77,9 +80,12 @@ fn build_rust_ebpf(opts: &BuildEbpfOptions) -> anyhow::Result<()> {
 fn get_libbpf_headers<P: AsRef<Path>>(libbpf_dir: P, include_path: P) -> anyhow::Result<()> {
     let dir = include_path.as_ref();
     fs::create_dir_all(dir)?;
+    let mut includedir = OsString::new();
+    includedir.push("INCLUDEDIR=");
+    includedir.push(dir.as_os_str());
     let status = Command::new("make")
         .current_dir(libbpf_dir.as_ref().join("src"))
-        .arg(format!("INCLUDEDIR={}", dir.as_os_str().to_string_lossy()))
+        .arg(includedir)
         .arg("install_headers")
         .status()
         .expect("failed to build get libbpf headers");
@@ -88,10 +94,10 @@ fn get_libbpf_headers<P: AsRef<Path>>(libbpf_dir: P, include_path: P) -> anyhow:
 }
 
 fn build_c_ebpf(opts: &BuildEbpfOptions) -> anyhow::Result<()> {
-    let mut src = PathBuf::from(WORKSPACE_ROOT.to_string());
+    let mut src = PathBuf::from(workspace_root());
     src.push("test/integration-ebpf/src/bpf");
 
-    let mut out_path = PathBuf::from(WORKSPACE_ROOT.to_string());
+    let mut out_path = PathBuf::from(workspace_root());
     out_path.push("target");
     out_path.push(opts.target.to_string());
     out_path.push("release");
@@ -119,17 +125,19 @@ fn compile_with_clang<P: Clone + AsRef<Path>>(
     out: P,
     include_path: P,
 ) -> anyhow::Result<()> {
-    let clang = match env::var("CLANG") {
-        Ok(val) => val,
-        Err(_) => String::from("/usr/bin/clang"),
+    let clang: Cow<'_, _> = match env::var_os("CLANG") {
+        Some(val) => val.into(),
+        None => OsStr::new("/usr/bin/clang").into(),
     };
-    let arch = match std::env::consts::ARCH {
+    let arch = match env::consts::ARCH {
         "x86_64" => "x86",
         "aarch64" => "arm64",
-        _ => std::env::consts::ARCH,
+        arch => arch,
     };
     let mut cmd = Command::new(clang);
-    cmd.arg(format!("-I{}", include_path.as_ref().to_string_lossy()))
+    cmd.arg("-v")
+        .arg("-I")
+        .arg(include_path.as_ref())
         .arg("-g")
         .arg("-O2")
         .arg("-target")

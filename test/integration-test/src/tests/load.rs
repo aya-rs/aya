@@ -1,11 +1,11 @@
-use std::{convert::TryInto, process::Command, thread, time};
+use std::{convert::TryInto as _, thread, time};
 
 use aya::{
     include_bytes_aligned,
     maps::Array,
     programs::{
         links::{FdLink, PinnedLink},
-        KProbe, TracePoint, Xdp, XdpFlags,
+        loaded_programs, KProbe, TracePoint, Xdp, XdpFlags,
     },
     Bpf,
 };
@@ -58,20 +58,10 @@ fn multiple_btf_maps() {
     assert_eq!(val_2, 42);
 }
 
-fn is_loaded(name: &str) -> bool {
-    let output = Command::new("bpftool").args(["prog"]).output();
-    let output = match output {
-        Err(e) => panic!("Failed to run 'bpftool prog': {e}"),
-        Ok(out) => out,
-    };
-    let stdout = String::from_utf8(output.stdout).unwrap();
-    stdout.contains(name)
-}
-
 macro_rules! assert_loaded {
     ($name:literal, $loaded:expr) => {
         for i in 0..(MAX_RETRIES + 1) {
-            let state = is_loaded($name);
+            let state = loaded_programs().any(|prog| prog.unwrap().name() == $name.as_bytes());
             if state == $loaded {
                 break;
             }
