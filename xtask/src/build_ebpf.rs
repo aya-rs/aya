@@ -135,7 +135,8 @@ fn compile_with_clang<P: Clone + AsRef<Path>>(
         arch => arch,
     };
     let mut cmd = Command::new(clang);
-    cmd.arg("-I")
+    cmd.arg("-v")
+        .arg("-I")
         .arg(include_path.as_ref())
         .arg("-g")
         .arg("-O2")
