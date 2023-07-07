@@ -1,4 +1,8 @@
-use std::{os::unix::process::CommandExt, path::PathBuf, process::Command};
+use std::{
+    os::unix::process::CommandExt,
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use anyhow::Context as _;
 use clap::Parser;
@@ -18,28 +22,26 @@ pub struct Options {
     pub runner: String,
     /// libbpf directory
     #[clap(long, action)]
-    pub libbpf_dir: String,
+    pub libbpf_dir: PathBuf,
     /// Arguments to pass to your application
     #[clap(name = "args", last = true)]
     pub run_args: Vec<String>,
 }
 
 /// Build the project
-fn build(opts: &Options) -> Result<(), anyhow::Error> {
-    let mut args = vec!["build"];
-    if opts.release {
-        args.push("--release")
+fn build(release: bool) -> Result<(), anyhow::Error> {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("build").arg("-p").arg("integration-test");
+    if release {
+        cmd.arg("--release");
     }
-    args.push("-p");
-    args.push("integration-test");
-    let status = Command::new("cargo")
-        .args(&args)
-        .status()
-        .expect("failed to build userspace");
+
+    let status = cmd.status().expect("failed to build userspace");
+
     match status.code() {
         Some(code) => match code {
             0 => Ok(()),
-            code => Err(anyhow::anyhow!("exited with status code: {code}")),
+            code => Err(anyhow::anyhow!("{cmd:?} exited with status code: {code}")),
         },
         None => Err(anyhow::anyhow!("process terminated by signal")),
     }
@@ -47,30 +49,33 @@ fn build(opts: &Options) -> Result<(), anyhow::Error> {
 
 /// Build and run the project
 pub fn run(opts: Options) -> Result<(), anyhow::Error> {
+    let Options {
+        bpf_target,
+        release,
+        runner,
+        libbpf_dir,
+        run_args,
+    } = opts;
+
     // build our ebpf program followed by our application
     build_ebpf(BuildOptions {
-        target: opts.bpf_target,
-        libbpf_dir: PathBuf::from(&opts.libbpf_dir),
+        target: bpf_target,
+        libbpf_dir,
     })
     .context("Error while building eBPF program")?;
-    build(&opts).context("Error while building userspace application")?;
+    build(release).context("Error while building userspace application")?;
     // profile we are building (release or debug)
-    let profile = if opts.release { "release" } else { "debug" };
-    let bin_path = format!("target/{profile}/integration-test");
+    let profile = if release { "release" } else { "debug" };
+    let bin_path = Path::new("target").join(profile).join("integration-test");
 
-    // arguments to pass to the application
-    let mut run_args: Vec<_> = opts.run_args.iter().map(String::as_str).collect();
+    let mut args = runner.trim().split_terminator(' ');
 
-    // configure args
-    let mut args: Vec<_> = opts.runner.trim().split_terminator(' ').collect();
-    args.push(bin_path.as_str());
-    args.append(&mut run_args);
+    let mut cmd = Command::new(args.next().expect("No first argument"));
+    cmd.args(args).arg(bin_path).args(run_args);
 
     // spawn the command
-    let err = Command::new(args.first().expect("No first argument"))
-        .args(args.iter().skip(1))
-        .exec();
+    let err = cmd.exec();
 
     // we shouldn't get here unless the command failed to spawn
-    Err(anyhow::Error::from(err).context(format!("Failed to run `{}`", args.join(" "))))
+    Err(anyhow::Error::from(err).context(format!("Failed to run `{cmd:?}`")))
 }
