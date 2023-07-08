@@ -26,6 +26,9 @@ mod ad {
     #[cfg(bpf_target_arch = "aarch64")]
     pub type c_char = super::c_uchar;
 
+    #[cfg(bpf_target_arch = "riscv64")]
+    pub type c_char = super::c_uchar;
+
     #[cfg(any(bpf_target_arch = "x86", bpf_target_arch = "x86_64"))]
     pub type c_char = super::c_schar;
 
