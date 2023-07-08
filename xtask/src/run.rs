@@ -1,6 +1,12 @@
-use std::{os::unix::process::CommandExt, path::PathBuf, process::Command};
+use std::{
+    fmt::Write as _,
+    io::BufReader,
+    path::PathBuf,
+    process::{Command, Stdio},
+};
 
 use anyhow::Context as _;
+use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 
 use crate::build_ebpf::{build_ebpf, Architecture, BuildEbpfOptions as BuildOptions};
@@ -18,59 +24,123 @@ pub struct Options {
     pub runner: String,
     /// libbpf directory
     #[clap(long, action)]
-    pub libbpf_dir: String,
+    pub libbpf_dir: PathBuf,
     /// Arguments to pass to your application
     #[clap(name = "args", last = true)]
     pub run_args: Vec<String>,
 }
 
 /// Build the project
-fn build(opts: &Options) -> Result<(), anyhow::Error> {
-    let mut args = vec!["build"];
-    if opts.release {
-        args.push("--release")
+fn build(release: bool) -> Result<Vec<(PathBuf, PathBuf)>, anyhow::Error> {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("build")
+        .arg("--tests")
+        .arg("--message-format=json")
+        .arg("--package=integration-test");
+    if release {
+        cmd.arg("--release");
     }
-    args.push("-p");
-    args.push("integration-test");
-    let status = Command::new("cargo")
-        .args(&args)
-        .status()
-        .expect("failed to build userspace");
+    let mut cmd = cmd
+        .stdout(Stdio::piped())
+        .spawn()
+        .with_context(|| format!("failed to spawn {cmd:?}"))?;
+
+    let reader = BufReader::new(cmd.stdout.take().unwrap());
+    let mut executables = Vec::new();
+    let mut compiler_messages = String::new();
+    for message in Message::parse_stream(reader) {
+        #[allow(clippy::collapsible_match)]
+        match message.context("valid JSON")? {
+            Message::CompilerArtifact(Artifact {
+                executable,
+                target: Target { src_path, .. },
+                ..
+            }) => {
+                if let Some(executable) = executable {
+                    executables.push((src_path.into(), executable.into()));
+                }
+            }
+            Message::CompilerMessage(CompilerMessage { message, .. }) => {
+                assert_eq!(writeln!(&mut compiler_messages, "{message}"), Ok(()));
+            }
+            _ => {}
+        }
+    }
+
+    let status = cmd
+        .wait()
+        .with_context(|| format!("failed to wait for {cmd:?}"))?;
+
     match status.code() {
         Some(code) => match code {
-            0 => Ok(()),
-            code => Err(anyhow::anyhow!("exited with status code: {code}")),
+            0 => Ok(executables),
+            code => Err(anyhow::anyhow!(
+                "{cmd:?} exited with status code {code}:\n{compiler_messages}"
+            )),
         },
-        None => Err(anyhow::anyhow!("process terminated by signal")),
+        None => Err(anyhow::anyhow!("{cmd:?} terminated by signal")),
     }
 }
 
 /// Build and run the project
 pub fn run(opts: Options) -> Result<(), anyhow::Error> {
+    let Options {
+        bpf_target,
+        release,
+        runner,
+        libbpf_dir,
+        run_args,
+    } = opts;
+
     // build our ebpf program followed by our application
     build_ebpf(BuildOptions {
-        target: opts.bpf_target,
-        libbpf_dir: PathBuf::from(&opts.libbpf_dir),
+        target: bpf_target,
+        libbpf_dir,
     })
-    .context("Error while building eBPF program")?;
-    build(&opts).context("Error while building userspace application")?;
-    // profile we are building (release or debug)
-    let profile = if opts.release { "release" } else { "debug" };
-    let bin_path = format!("target/{profile}/integration-test");
+    .context("error while building eBPF program")?;
 
-    // arguments to pass to the application
-    let mut run_args: Vec<_> = opts.run_args.iter().map(String::as_str).collect();
+    let binaries = build(release).context("error while building userspace application")?;
+    let mut args = runner.trim().split_terminator(' ');
+    let runner = args.next().ok_or(anyhow::anyhow!("no first argument"))?;
+    let args = args.collect::<Vec<_>>();
 
-    // configure args
-    let mut args: Vec<_> = opts.runner.trim().split_terminator(' ').collect();
-    args.push(bin_path.as_str());
-    args.append(&mut run_args);
+    let mut failures = String::new();
+    for (src_path, binary) in binaries {
+        let mut cmd = Command::new(runner);
+        let cmd = cmd
+            .args(args.iter())
+            .arg(binary)
+            .args(run_args.iter())
+            .arg("--test-threads=1");
 
-    // spawn the command
-    let err = Command::new(args.first().expect("No first argument"))
-        .args(args.iter().skip(1))
-        .exec();
+        println!("{} running {cmd:?}", src_path.display());
 
-    // we shouldn't get here unless the command failed to spawn
-    Err(anyhow::Error::from(err).context(format!("Failed to run `{}`", args.join(" "))))
+        let status = cmd
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .status()
+            .context("failed to run {cmd:?}")?;
+        match status.code() {
+            Some(code) => match code {
+                0 => {}
+                code => assert_eq!(
+                    writeln!(
+                        &mut failures,
+                        "{} exited with status code {code}",
+                        src_path.display()
+                    ),
+                    Ok(())
+                ),
+            },
+            None => assert_eq!(
+                writeln!(&mut failures, "{} terminated by signal", src_path.display()),
+                Ok(())
+            ),
+        }
+    }
+    if failures.is_empty() {
+        Ok(())
+    } else {
+        Err(anyhow::anyhow!("failures:\n{}", failures))
+    }
 }

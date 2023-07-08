@@ -46,7 +46,7 @@ mod ad {
     target_arch = "riscv64"
 ))]
 mod ad {
-    pub type c_char = ::c_uchar;
+    pub type c_char = super::c_uchar;
 
     pub type c_int = i32;
     pub type c_uint = u32;
@@ -63,7 +63,7 @@ mod ad {
     target_arch = "xtensa"
 ))]
 mod ad {
-    pub type c_char = ::c_schar;
+    pub type c_char = super::c_schar;
 
     pub type c_int = i32;
     pub type c_uint = u32;
@@ -71,7 +71,7 @@ mod ad {
 
 #[cfg(target_arch = "msp430")]
 mod ad {
-    pub type c_char = ::c_uchar;
+    pub type c_char = super::c_uchar;
 
     pub type c_int = i16;
     pub type c_uint = u16;

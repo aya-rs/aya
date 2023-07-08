@@ -9,18 +9,16 @@ use aya::{
     },
     Bpf,
 };
-use log::warn;
 
-use crate::tests::kernel_version;
-
-use super::integration_test;
+mod common;
+use common::kernel_version;
 
 const MAX_RETRIES: u32 = 100;
 const RETRY_DURATION_MS: u64 = 10;
 
-#[integration_test]
+#[test]
 fn long_name() {
-    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/name_test");
+    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/name_test");
     let mut bpf = Bpf::load(bytes).unwrap();
     let name_prog: &mut Xdp = bpf
         .program_mut("ihaveaverylongname")
@@ -35,10 +33,10 @@ fn long_name() {
     // Therefore, as long as we were able to load the program, this is good enough.
 }
 
-#[integration_test]
+#[test]
 fn multiple_btf_maps() {
     let bytes =
-        include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/multimap-btf.bpf.o");
+        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/multimap-btf.bpf.o");
     let mut bpf = Bpf::load(bytes).unwrap();
 
     let map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
@@ -73,9 +71,9 @@ macro_rules! assert_loaded {
     };
 }
 
-#[integration_test]
+#[test]
 fn unload_xdp() {
-    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/test");
+    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/test");
     let mut bpf = Bpf::load(bytes).unwrap();
     let prog: &mut Xdp = bpf
         .program_mut("test_unload_xdp")
@@ -103,9 +101,9 @@ fn unload_xdp() {
     assert_loaded!("test_unload_xdp", false);
 }
 
-#[integration_test]
+#[test]
 fn unload_kprobe() {
-    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/test");
+    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/test");
     let mut bpf = Bpf::load(bytes).unwrap();
     let prog: &mut KProbe = bpf
         .program_mut("test_unload_kpr")
@@ -133,14 +131,14 @@ fn unload_kprobe() {
     assert_loaded!("test_unload_kpr", false);
 }
 
-#[integration_test]
+#[test]
 fn pin_link() {
     if kernel_version().unwrap() < (5, 9, 0) {
-        warn!("skipping test, XDP uses netlink");
+        eprintln!("skipping test, XDP uses netlink");
         return;
     }
 
-    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/test");
+    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/test");
     let mut bpf = Bpf::load(bytes).unwrap();
     let prog: &mut Xdp = bpf
         .program_mut("test_unload_xdp")
@@ -168,14 +166,14 @@ fn pin_link() {
     assert_loaded!("test_unload_xdp", false);
 }
 
-#[integration_test]
+#[test]
 fn pin_lifecycle() {
     if kernel_version().unwrap() < (5, 9, 0) {
-        warn!("skipping test, XDP uses netlink");
+        eprintln!("skipping test, XDP uses netlink");
         return;
     }
 
-    let bytes = include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/pass");
+    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/pass");
 
     // 1. Load Program and Pin
     {
