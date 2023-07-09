@@ -15,6 +15,7 @@ use crate::{
         define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach},
+    VerifierLogLevel,
 };
 
 /// A program that can be used to inspect or modify socket addresses (`struct sockaddr`).
@@ -132,7 +133,7 @@ impl CgroupSockAddr {
         path: P,
         attach_type: CgroupSockAddrAttachType,
     ) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path)?;
+        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, attach_type })
     }
 }

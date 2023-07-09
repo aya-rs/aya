@@ -15,6 +15,7 @@ use crate::{
         define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach},
+    VerifierLogLevel,
 };
 
 /// A program that is called on socket creation, bind and release.
@@ -126,7 +127,7 @@ impl CgroupSock {
         path: P,
         attach_type: CgroupSockAttachType,
     ) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path)?;
+        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, attach_type })
     }
 }

@@ -16,6 +16,7 @@ use crate::{
         define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_prog_attach},
+    VerifierLogLevel,
 };
 
 /// A program used to inspect or filter network activity for a given cgroup.
@@ -151,7 +152,7 @@ impl CgroupSkb {
         path: P,
         expected_attach_type: CgroupSkbAttachType,
     ) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path)?;
+        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self {
             data,
             expected_attach_type: Some(expected_attach_type),
