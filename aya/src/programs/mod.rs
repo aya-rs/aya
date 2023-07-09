@@ -626,6 +626,7 @@ fn load_program<T: Link>(
     };
 
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
+        dbg!(*verifier_log_level);
         bpf_load_program(&attr, logger, *verifier_log_level)
     });
 

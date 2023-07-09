@@ -170,6 +170,7 @@ pub(crate) fn bpf_load_program(
         }
     }
     if !log_buf.is_empty() {
+        dbg!(verifier_log_level);
         u.log_level = verifier_log_level.bits();
         u.log_buf = log_buf.as_mut_ptr() as u64;
         u.log_size = log_buf.len() as u32;
