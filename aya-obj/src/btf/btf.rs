@@ -136,7 +136,7 @@ pub enum BtfError {
         #[source]
         io_error: std::io::Error,
         /// The error log produced by the kernel verifier.
-        verifier_log: String,
+        verifier_log: Cow<'static, str>,
     },
 
     /// offset not found for symbol

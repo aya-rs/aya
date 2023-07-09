@@ -66,6 +66,7 @@ pub mod xdp;
 
 use libc::ENOSPC;
 use std::{
+    borrow::Cow,
     ffi::CString,
     io,
     os::unix::io::{AsRawFd, RawFd},
@@ -112,7 +113,6 @@ use crate::{
         bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, bpf_prog_get_next_id, bpf_prog_query,
         retry_with_verifier_logs, BpfLoadProgramAttrs,
     },
-    util::VerifierLog,
 };
 
 /// Error type returned when working with programs.
@@ -141,7 +141,7 @@ pub enum ProgramError {
         #[source]
         io_error: io::Error,
         /// The error log produced by the kernel verifier.
-        verifier_log: String,
+        verifier_log: Cow<'static, str>,
     },
 
     /// A syscall failed.
@@ -581,8 +581,6 @@ fn load_program<T: Link>(
         _ => (*kernel_version).into(),
     };
 
-    let mut logger = VerifierLog::new();
-
     let prog_name = if let Some(name) = &data.name {
         let mut name = name.clone();
         if name.len() > 15 {
@@ -614,7 +612,7 @@ fn load_program<T: Link>(
     };
 
     let verifier_log_level = data.verifier_log_level;
-    let ret = retry_with_verifier_logs(10, &mut logger, |logger| {
+    let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
         bpf_load_program(&attr, logger, verifier_log_level)
     });
 
@@ -623,16 +621,10 @@ fn load_program<T: Link>(
             *fd = Some(prog_fd as RawFd);
             Ok(())
         }
-        Err((_, io_error)) => {
-            logger.truncate();
-            return Err(ProgramError::LoadError {
-                io_error,
-                verifier_log: logger
-                    .as_c_str()
-                    .map(|s| s.to_string_lossy().to_string())
-                    .unwrap_or_else(|| "[none]".to_owned()),
-            });
-        }
+        Err((_, io_error)) => Err(ProgramError::LoadError {
+            io_error,
+            verifier_log,
+        }),
     }
 }
 
