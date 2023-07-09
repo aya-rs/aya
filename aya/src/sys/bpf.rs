@@ -29,7 +29,7 @@ use crate::{
         copy_instructions,
     },
     sys::{kernel_version, syscall, SysResult, Syscall},
-    Btf, Pod, BPF_OBJ_NAME_LEN,
+    Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN,
 };
 
 pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>) -> SysResult {
@@ -125,7 +125,7 @@ pub(crate) struct BpfLoadProgramAttrs<'a> {
 pub(crate) fn bpf_load_program(
     aya_attr: &BpfLoadProgramAttrs,
     log_buf: &mut [u8],
-    verifier_log_level: u32,
+    verifier_log_level: VerifierLogLevel,
 ) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -170,7 +170,7 @@ pub(crate) fn bpf_load_program(
         }
     }
     if !log_buf.is_empty() {
-        u.log_level = verifier_log_level;
+        u.log_level = verifier_log_level.bits();
         u.log_buf = log_buf.as_mut_ptr() as u64;
         u.log_size = log_buf.len() as u32;
     }
@@ -543,13 +543,17 @@ pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> Sy
     sys_bpf(bpf_cmd::BPF_RAW_TRACEPOINT_OPEN, &attr)
 }
 
-pub(crate) fn bpf_load_btf(raw_btf: &[u8], log_buf: &mut [u8]) -> SysResult {
+pub(crate) fn bpf_load_btf(
+    raw_btf: &[u8],
+    log_buf: &mut [u8],
+    verifier_log_level: VerifierLogLevel,
+) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_7 };
     u.btf = raw_btf.as_ptr() as *const _ as u64;
     u.btf_size = mem::size_of_val(raw_btf) as u32;
     if !log_buf.is_empty() {
-        u.btf_log_level = 1;
+        u.btf_log_level = verifier_log_level.bits();
         u.btf_log_buf = log_buf.as_mut_ptr() as u64;
         u.btf_log_size = log_buf.len() as u32;
     }

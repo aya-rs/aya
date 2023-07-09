@@ -113,6 +113,7 @@ use crate::{
         bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, bpf_prog_get_next_id, bpf_prog_query,
         retry_with_verifier_logs, BpfLoadProgramAttrs,
     },
+    VerifierLogLevel,
 };
 
 /// Error type returned when working with programs.
@@ -413,7 +414,7 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<RawFd>,
     pub(crate) btf_fd: Option<RawFd>,
-    pub(crate) verifier_log_level: u32,
+    pub(crate) verifier_log_level: VerifierLogLevel,
     pub(crate) path: Option<PathBuf>,
     pub(crate) flags: u32,
 }
@@ -423,7 +424,7 @@ impl<T: Link> ProgramData<T> {
         name: Option<String>,
         obj: (obj::Program, obj::Function),
         btf_fd: Option<RawFd>,
-        verifier_log_level: u32,
+        verifier_log_level: VerifierLogLevel,
     ) -> ProgramData<T> {
         ProgramData {
             name,
@@ -474,7 +475,7 @@ impl<T: Link> ProgramData<T> {
             attach_btf_id,
             attach_prog_fd: None,
             btf_fd: None,
-            verifier_log_level: 0,
+            verifier_log_level: VerifierLogLevel::default(),
             path: Some(path.to_path_buf()),
             flags: 0,
         })
@@ -548,7 +549,20 @@ fn load_program<T: Link>(
     prog_type: bpf_prog_type,
     data: &mut ProgramData<T>,
 ) -> Result<(), ProgramError> {
-    let ProgramData { obj, fd, .. } = data;
+    let ProgramData {
+        name,
+        obj,
+        fd,
+        links: _,
+        expected_attach_type,
+        attach_btf_obj_fd,
+        attach_btf_id,
+        attach_prog_fd,
+        btf_fd,
+        verifier_log_level,
+        path: _,
+        flags,
+    } = data;
     if fd.is_some() {
         return Err(ProgramError::AlreadyLoaded);
     }
@@ -581,7 +595,7 @@ fn load_program<T: Link>(
         _ => (*kernel_version).into(),
     };
 
-    let prog_name = if let Some(name) = &data.name {
+    let prog_name = if let Some(name) = name {
         let mut name = name.clone();
         if name.len() > 15 {
             name.truncate(15);
@@ -599,21 +613,20 @@ fn load_program<T: Link>(
         insns: instructions,
         license,
         kernel_version: target_kernel_version,
-        expected_attach_type: data.expected_attach_type,
-        prog_btf_fd: data.btf_fd,
-        attach_btf_obj_fd: data.attach_btf_obj_fd,
-        attach_btf_id: data.attach_btf_id,
-        attach_prog_fd: data.attach_prog_fd,
+        expected_attach_type: *expected_attach_type,
+        prog_btf_fd: *btf_fd,
+        attach_btf_obj_fd: *attach_btf_obj_fd,
+        attach_btf_id: *attach_btf_id,
+        attach_prog_fd: *attach_prog_fd,
         func_info_rec_size: *func_info_rec_size,
         func_info: func_info.clone(),
         line_info_rec_size: *line_info_rec_size,
         line_info: line_info.clone(),
-        flags: data.flags,
+        flags: *flags,
     };
 
-    let verifier_log_level = data.verifier_log_level;
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
-        bpf_load_program(&attr, logger, verifier_log_level)
+        bpf_load_program(&attr, logger, *verifier_log_level)
     });
 
     match ret {
