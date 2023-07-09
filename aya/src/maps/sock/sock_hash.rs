@@ -1,7 +1,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
-    os::unix::io::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
 };
 
 use crate::{

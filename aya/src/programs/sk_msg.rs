@@ -1,6 +1,6 @@
 //! Skmsg programs.
 
-use std::os::{fd::AsFd, unix::io::AsRawFd};
+use std::os::fd::{AsFd, AsRawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},

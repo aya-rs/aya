@@ -68,10 +68,7 @@ use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
-    os::{
-        fd::{AsFd, BorrowedFd, OwnedFd},
-        unix::io::{AsRawFd, RawFd},
-    },
+    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd},
     path::{Path, PathBuf},
     sync::Arc,
 };

@@ -6,10 +6,7 @@ pub use sock_hash::SockHash;
 pub use sock_map::SockMap;
 
 use std::{
-    os::{
-        fd::{AsFd, BorrowedFd, OwnedFd},
-        unix::io::{AsRawFd, RawFd},
-    },
+    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd},
     sync::Arc,
 };
 

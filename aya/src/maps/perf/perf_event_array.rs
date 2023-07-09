@@ -4,7 +4,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     ops::Deref,
-    os::unix::io::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
     sync::Arc,
 };
 

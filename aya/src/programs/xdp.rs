@@ -6,10 +6,7 @@ use std::{
     ffi::CString,
     hash::Hash,
     io,
-    os::{
-        fd::{AsFd, AsRawFd},
-        unix::io::RawFd,
-    },
+    os::fd::{AsFd, AsRawFd, RawFd},
 };
 use thiserror::Error;
 

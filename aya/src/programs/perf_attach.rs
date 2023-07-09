@@ -1,8 +1,5 @@
 //! Perf attach links.
-use std::os::{
-    fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
-    unix::io::RawFd,
-};
+use std::os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd};
 
 use crate::{
     generated::bpf_attach_type::BPF_PERF_EVENT,

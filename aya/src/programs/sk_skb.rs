@@ -1,7 +1,7 @@
 //! Skskb programs.
 
 use std::{
-    os::{fd::AsFd, unix::io::AsRawFd},
+    os::fd::{AsFd, AsRawFd},
     path::Path,
 };
 

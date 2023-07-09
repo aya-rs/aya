@@ -3,10 +3,7 @@ use std::{
     ffi::{CStr, CString},
     io,
     mem::{self, MaybeUninit},
-    os::{
-        fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd},
-        unix::io::RawFd,
-    },
+    os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd},
     slice,
 };
 

@@ -1,5 +1,5 @@
 //! Socket option programs.
-use std::os::{fd::AsFd, unix::io::AsRawFd};
+use std::os::fd::{AsFd, AsRawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS},

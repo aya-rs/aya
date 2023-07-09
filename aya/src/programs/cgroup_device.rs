@@ -1,5 +1,5 @@
 //! Cgroup device programs.
-use std::os::{fd::AsFd, unix::prelude::AsRawFd};
+use std::os::fd::{AsFd, AsRawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE},
