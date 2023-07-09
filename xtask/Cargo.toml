@@ -12,5 +12,4 @@ clap = { version = "4", features = ["derive"] }
 indoc = "2.0"
 proc-macro2 = "1"
 quote = "1"
-serde_json = "1"
 syn = "2"
