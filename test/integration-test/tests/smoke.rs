@@ -17,8 +17,9 @@ fn xdp() {
 
 #[test]
 fn extension() {
-    if KernelVersion::current().unwrap() < KernelVersion::new(5, 9, 0) {
-        eprintln!("skipping test, XDP uses netlink");
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 9, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
         return;
     }
     let main_bytes =

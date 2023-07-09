@@ -1,4 +1,5 @@
 use anyhow::{bail, Context as _, Result};
+use procfs::KernelVersion;
 use std::{path::PathBuf, process::Command, thread::sleep, time::Duration};
 use tempfile::TempDir;
 
@@ -60,6 +61,11 @@ fn relocate_enum() {
 
 #[test]
 fn relocate_enum_signed() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(6, 0, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, support for signed enum was added in 6.0.0; see https://github.com/torvalds/linux/commit/6089fb3");
+        return;
+    }
     let test = RelocationTest {
         local_definition: r#"
             enum foo { D = -0x7AAAAAAA };
@@ -80,6 +86,11 @@ fn relocate_enum_signed() {
 
 #[test]
 fn relocate_enum64() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(6, 0, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, support for enum64 was added in 6.0.0; see https://github.com/torvalds/linux/commit/6089fb3");
+        return;
+    }
     let test = RelocationTest {
         local_definition: r#"
             enum foo { D = 0xAAAAAAAABBBBBBBB };
@@ -100,6 +111,11 @@ fn relocate_enum64() {
 
 #[test]
 fn relocate_enum64_signed() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(6, 0, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, support for enum64 was added in 6.0.0; see https://github.com/torvalds/linux/commit/6089fb3");
+        return;
+    }
     let test = RelocationTest {
         local_definition: r#"
             enum foo { D = -0xAAAAAAABBBBBBBB };
