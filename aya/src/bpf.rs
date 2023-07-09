@@ -39,7 +39,7 @@ use crate::{
         is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
         is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
     },
-    util::{bytes_of, bytes_of_slice, possible_cpus, VerifierLog, POSSIBLE_CPUS},
+    util::{bytes_of, bytes_of_slice, possible_cpus, POSSIBLE_CPUS},
 };
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
@@ -907,22 +907,14 @@ pub enum BpfError {
 }
 
 fn load_btf(raw_btf: Vec<u8>) -> Result<RawFd, BtfError> {
-    let mut logger = VerifierLog::new();
-    let ret = retry_with_verifier_logs(10, &mut logger, |logger| {
-        bpf_load_btf(raw_btf.as_slice(), logger)
-    });
+    let (ret, verifier_log) =
+        retry_with_verifier_logs(10, |logger| bpf_load_btf(raw_btf.as_slice(), logger));
     match ret {
         Ok(fd) => Ok(fd as RawFd),
-        Err((_, io_error)) => {
-            logger.truncate();
-            Err(BtfError::LoadError {
-                io_error,
-                verifier_log: logger
-                    .as_c_str()
-                    .map(|s| s.to_string_lossy().to_string())
-                    .unwrap_or_else(|| "[none]".to_owned()),
-            })
-        }
+        Err((_, io_error)) => Err(BtfError::LoadError {
+            io_error,
+            verifier_log,
+        }),
     }
 }
 
