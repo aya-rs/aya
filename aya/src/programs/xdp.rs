@@ -1,6 +1,8 @@
 //! eXpress Data Path (XDP) programs.
+
 use bitflags;
 use libc::if_nametoindex;
+use procfs::KernelVersion;
 use std::{convert::TryFrom, ffi::CString, hash::Hash, io, mem, os::unix::io::RawFd};
 use thiserror::Error;
 
@@ -15,10 +17,7 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, Link, LinkError, ProgramData, ProgramError,
     },
-    sys::{
-        bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, kernel_version,
-        netlink_set_xdp_fd,
-    },
+    sys::{bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, netlink_set_xdp_fd},
 };
 
 /// The type returned when attaching an [`Xdp`] program fails on kernels `< 5.9`.
@@ -126,8 +125,7 @@ impl Xdp {
         let prog_fd = self.data.fd_or_err()?;
         let if_index = if_index as RawFd;
 
-        let k_ver = kernel_version().unwrap();
-        if k_ver >= (5, 9, 0) {
+        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 9, 0) {
             let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, None, flags.bits()).map_err(
                 |(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_link_create",
@@ -224,8 +222,7 @@ impl Link for NlLink {
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        let k_ver = kernel_version().unwrap();
-        let flags = if k_ver >= (5, 7, 0) {
+        let flags = if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
             self.flags.bits() | XDP_FLAGS_REPLACE
         } else {
             self.flags.bits()

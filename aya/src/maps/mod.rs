@@ -49,6 +49,7 @@ use std::{
 
 use libc::{getrlimit, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
+use procfs::KernelVersion;
 use thiserror::Error;
 
 use crate::{
@@ -56,7 +57,7 @@ use crate::{
     pin::PinError,
     sys::{
         bpf_create_map, bpf_get_object, bpf_map_get_info_by_fd, bpf_map_get_next_key,
-        bpf_pin_object, kernel_version,
+        bpf_pin_object,
     },
     util::nr_cpus,
     PinningType, Pod,
@@ -489,18 +490,23 @@ impl MapData {
 
         let c_name = CString::new(name).map_err(|_| MapError::InvalidName { name: name.into() })?;
 
-        let fd = bpf_create_map(&c_name, &self.obj, self.btf_fd).map_err(|(code, io_error)| {
-            let k_ver = kernel_version().unwrap();
-            if k_ver < (5, 11, 0) {
-                maybe_warn_rlimit();
-            }
+        #[cfg(not(test))]
+        let kernel_version = KernelVersion::current().unwrap();
+        #[cfg(test)]
+        let kernel_version = KernelVersion::new(0xff, 0xff, 0xff);
+        let fd = bpf_create_map(&c_name, &self.obj, self.btf_fd, kernel_version).map_err(
+            |(code, io_error)| {
+                if kernel_version < KernelVersion::new(5, 11, 0) {
+                    maybe_warn_rlimit();
+                }
 
-            MapError::CreateError {
-                name: name.into(),
-                code,
-                io_error,
-            }
-        })? as RawFd;
+                MapError::CreateError {
+                    name: name.into(),
+                    code,
+                    io_error,
+                }
+            },
+        )? as RawFd;
 
         self.fd = Some(fd);
 

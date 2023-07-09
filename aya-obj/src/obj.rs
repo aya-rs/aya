@@ -109,7 +109,7 @@ pub struct Object {
     /// Program license
     pub license: CString,
     /// Kernel version
-    pub kernel_version: KernelVersion,
+    pub kernel_version: Option<u32>,
     /// Program BTF
     pub btf: Option<Btf>,
     /// Program BTF.ext
@@ -135,7 +135,7 @@ pub struct Program {
     /// The license
     pub license: CString,
     /// The kernel version
-    pub kernel_version: KernelVersion,
+    pub kernel_version: Option<u32>,
     /// The section containing the program
     pub section: ProgramSection,
     /// The section index of the program
@@ -579,7 +579,7 @@ impl Object {
         let kernel_version = if let Some(section) = obj.section_by_name("version") {
             parse_version(Section::try_from(&section)?.data, endianness)?
         } else {
-            KernelVersion::Any
+            None
         };
 
         let mut bpf_obj = Object::new(endianness, license, kernel_version);
@@ -631,7 +631,7 @@ impl Object {
         Ok(bpf_obj)
     }
 
-    fn new(endianness: Endianness, license: CString, kernel_version: KernelVersion) -> Object {
+    fn new(endianness: Endianness, license: CString, kernel_version: Option<u32>) -> Object {
         Object {
             endianness,
             license,
@@ -1256,7 +1256,7 @@ fn parse_license(data: &[u8]) -> Result<CString, ParseError> {
         .to_owned())
 }
 
-fn parse_version(data: &[u8], endianness: object::Endianness) -> Result<KernelVersion, ParseError> {
+fn parse_version(data: &[u8], endianness: object::Endianness) -> Result<Option<u32>, ParseError> {
     let data = match data.len() {
         4 => data.try_into().unwrap(),
         _ => {
@@ -1271,9 +1271,10 @@ fn parse_version(data: &[u8], endianness: object::Endianness) -> Result<KernelVe
         object::Endianness::Little => u32::from_le_bytes(data),
     };
 
-    Ok(match v {
-        KERNEL_VERSION_ANY => KernelVersion::Any,
-        v => KernelVersion::Version(v),
+    Ok(if v == KERNEL_VERSION_ANY {
+        None
+    } else {
+        Some(v)
     })
 }
 
@@ -1299,24 +1300,6 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
         }
     };
     Ok(arr.len)
-}
-
-/// The parsed kernel version
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum KernelVersion {
-    /// Specified version
-    Version(u32),
-    /// Any version
-    Any,
-}
-
-impl From<KernelVersion> for u32 {
-    fn from(version: KernelVersion) -> u32 {
-        match version {
-            KernelVersion::Any => KERNEL_VERSION_ANY,
-            KernelVersion::Version(v) => v,
-        }
-    }
 }
 
 // Parsed '.bss' '.data' and '.rodata' sections. These sections are arrays of
@@ -1592,23 +1575,20 @@ mod tests {
             Err(ParseError::InvalidKernelVersion { .. })
         ));
 
-        assert_eq!(
-            parse_version(&0xFFFF_FFFEu32.to_le_bytes(), Endianness::Little)
-                .expect("failed to parse magic version"),
-            KernelVersion::Any
-        );
+        assert!(matches!(
+            parse_version(&0xFFFF_FFFEu32.to_le_bytes(), Endianness::Little),
+            Ok(None)
+        ));
 
-        assert_eq!(
-            parse_version(&0xFFFF_FFFEu32.to_be_bytes(), Endianness::Big)
-                .expect("failed to parse magic version"),
-            KernelVersion::Any
-        );
+        assert!(matches!(
+            parse_version(&0xFFFF_FFFEu32.to_be_bytes(), Endianness::Big),
+            Ok(None)
+        ));
 
-        assert_eq!(
-            parse_version(&1234u32.to_le_bytes(), Endianness::Little)
-                .expect("failed to parse magic version"),
-            KernelVersion::Version(1234)
-        );
+        assert!(matches!(
+            parse_version(&1234u32.to_le_bytes(), Endianness::Little),
+            Ok(Some(1234))
+        ));
     }
 
     #[test]
@@ -1699,11 +1679,7 @@ mod tests {
     }
 
     fn fake_obj() -> Object {
-        Object::new(
-            Endianness::Little,
-            CString::new("GPL").unwrap(),
-            KernelVersion::Any,
-        )
+        Object::new(Endianness::Little, CString::new("GPL").unwrap(), None)
     }
 
     #[test]
@@ -1753,7 +1729,7 @@ mod tests {
             obj.parse_program(&fake_section(BpfSectionKind::Program,"kprobe/foo", bytes_of(&fake_ins()))),
             Ok((Program {
                 license,
-                kernel_version: KernelVersion::Any,
+                kernel_version: None,
                 section: ProgramSection::KProbe { .. },
                 .. }, Function {
                     name,

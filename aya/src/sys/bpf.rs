@@ -12,6 +12,7 @@ use obj::{
     maps::{bpf_map_def, LegacyMap},
     BpfSectionKind,
 };
+use procfs::KernelVersion;
 
 use crate::{
     generated::{
@@ -27,12 +28,17 @@ use crate::{
         },
         copy_instructions,
     },
-    sys::{kernel_version, syscall, SysResult, Syscall},
+    sys::{syscall, SysResult, Syscall},
     util::VerifierLog,
     Btf, Pod, BPF_OBJ_NAME_LEN,
 };
 
-pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>) -> SysResult {
+pub(crate) fn bpf_create_map(
+    name: &CStr,
+    def: &obj::Map,
+    btf_fd: Option<RawFd>,
+    kernel_version: KernelVersion,
+) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_1 };
@@ -78,8 +84,7 @@ pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>)
     // https://github.com/torvalds/linux/commit/ad5b177bd73f5107d97c36f56395c4281fb6f089
     // The map name was added as a parameter in kernel 4.15+ so we skip adding it on
     // older kernels for compatibility
-    let k_ver = kernel_version().unwrap();
-    if k_ver >= (4, 15, 0) {
+    if kernel_version >= KernelVersion::new(4, 15, 0) {
         // u.map_name is 16 bytes max and must be NULL terminated
         let name_len = cmp::min(name.to_bytes().len(), BPF_OBJ_NAME_LEN - 1);
         u.map_name[..name_len]

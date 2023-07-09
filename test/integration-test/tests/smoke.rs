@@ -1,11 +1,10 @@
+use procfs::KernelVersion;
+
 use aya::{
     include_bytes_aligned,
     programs::{Extension, Xdp, XdpFlags},
     Bpf, BpfLoader,
 };
-
-mod common;
-use common::kernel_version;
 
 #[test]
 fn xdp() {
@@ -18,15 +17,10 @@ fn xdp() {
 
 #[test]
 fn extension() {
-    let (major, minor, _) = kernel_version().unwrap();
-    if major < 5 || (minor == 5 && minor < 9) {
-        eprintln!(
-            "skipping as {}.{} does not meet version requirement of 5.9",
-            major, minor
-        );
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 9, 0) {
+        eprintln!("skipping test, XDP uses netlink");
         return;
     }
-    // TODO: Check kernel version == 5.9 or later
     let main_bytes =
         include_bytes_aligned!("../../../target/bpfel-unknown-none/release/main.bpf.o");
     let mut bpf = Bpf::load(main_bytes).unwrap();

@@ -1,3 +1,4 @@
+use procfs::KernelVersion;
 use std::{convert::TryInto as _, thread, time};
 
 use aya::{
@@ -9,9 +10,6 @@ use aya::{
     },
     Bpf,
 };
-
-mod common;
-use common::kernel_version;
 
 const MAX_RETRIES: u32 = 100;
 const RETRY_DURATION_MS: u64 = 10;
@@ -133,7 +131,7 @@ fn unload_kprobe() {
 
 #[test]
 fn pin_link() {
-    if kernel_version().unwrap() < (5, 9, 0) {
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 9, 0) {
         eprintln!("skipping test, XDP uses netlink");
         return;
     }
@@ -168,7 +166,7 @@ fn pin_link() {
 
 #[test]
 fn pin_lifecycle() {
-    if kernel_version().unwrap() < (5, 9, 0) {
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 9, 0) {
         eprintln!("skipping test, XDP uses netlink");
         return;
     }

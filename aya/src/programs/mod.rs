@@ -65,6 +65,7 @@ mod utils;
 pub mod xdp;
 
 use libc::ENOSPC;
+use procfs::KernelVersion;
 use std::{
     ffi::CString,
     io,
@@ -105,7 +106,7 @@ pub use xdp::{Xdp, XdpError, XdpFlags};
 use crate::{
     generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
     maps::MapError,
-    obj::{self, btf::BtfError, Function, KernelVersion},
+    obj::{self, btf::BtfError, Function},
     pin::PinError,
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_load_program, bpf_pin_object,
@@ -573,13 +574,14 @@ fn load_program<T: Link>(
         },
     ) = obj;
 
-    let target_kernel_version = match *kernel_version {
-        KernelVersion::Any => {
-            let (major, minor, patch) = crate::sys::kernel_version().unwrap();
-            (major << 16) + (minor << 8) + patch
-        }
-        _ => (*kernel_version).into(),
-    };
+    let target_kernel_version = kernel_version.unwrap_or_else(|| {
+        let KernelVersion {
+            major,
+            minor,
+            patch,
+        } = KernelVersion::current().unwrap();
+        (u32::from(major) << 16) + (u32::from(minor) << 8) + u32::from(patch)
+    });
 
     let mut logger = VerifierLog::new();
 

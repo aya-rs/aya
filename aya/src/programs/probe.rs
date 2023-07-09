@@ -1,4 +1,5 @@
 use libc::pid_t;
+use procfs::KernelVersion;
 use std::{
     fs::{self, OpenOptions},
     io::{self, Write},
@@ -13,7 +14,7 @@ use crate::{
         trace_point::read_sys_fs_trace_point_id, uprobe::UProbeError, utils::find_tracefs_path,
         Link, ProgramData, ProgramError,
     },
-    sys::{kernel_version, perf_event_open_probe, perf_event_open_trace_point},
+    sys::{perf_event_open_probe, perf_event_open_trace_point},
 };
 
 static PROBE_NAME_INDEX: AtomicUsize = AtomicUsize::new(0);
@@ -49,8 +50,7 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
 ) -> Result<T::Id, ProgramError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
     // Use debugfs to create probe
-    let k_ver = kernel_version().unwrap();
-    if k_ver < (4, 17, 0) {
+    if KernelVersion::current().unwrap() >= KernelVersion::new(4, 17, 0) {
         let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
         let link = T::from(perf_attach_debugfs(
             program_data.fd_or_err()?,
