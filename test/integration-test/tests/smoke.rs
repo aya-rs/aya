@@ -8,6 +8,12 @@ use aya::{
 
 #[test]
 fn xdp() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 18, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb");
+        return;
+    }
+
     let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/pass");
     let mut bpf = Bpf::load(bytes).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
