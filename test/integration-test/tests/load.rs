@@ -133,8 +133,9 @@ fn unload_kprobe() {
 
 #[test]
 fn pin_link() {
-    if kernel_version().unwrap() < (5, 9, 0) {
-        eprintln!("skipping test, XDP uses netlink");
+    let kernel_version = kernel_version().unwrap();
+    if kernel_version < (5, 9, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
         return;
     }
 
@@ -168,8 +169,9 @@ fn pin_link() {
 
 #[test]
 fn pin_lifecycle() {
-    if kernel_version().unwrap() < (5, 9, 0) {
-        eprintln!("skipping test, XDP uses netlink");
+    let kernel_version = kernel_version().unwrap();
+    if kernel_version < (5, 9, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
         return;
     }
 

@@ -4,6 +4,9 @@ use tempfile::TempDir;
 
 use aya::{maps::Array, programs::TracePoint, BpfLoader, Btf, Endianness};
 
+mod common;
+use common::kernel_version;
+
 // In the tests below we often use values like 0xAAAAAAAA or -0x7AAAAAAA. Those values have no
 // special meaning, they just have "nice" bit patterns that can be helpful while debugging.
 
@@ -60,6 +63,11 @@ fn relocate_enum() {
 
 #[test]
 fn relocate_enum_signed() {
+    let kernel_version = kernel_version().unwrap();
+    if kernel_version < (6, 0, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, support for signed enum was added in 6.0.0; see https://github.com/torvalds/linux/commit/6089fb3");
+        return;
+    }
     let test = RelocationTest {
         local_definition: r#"
             enum foo { D = -0x7AAAAAAA };
@@ -80,6 +88,11 @@ fn relocate_enum_signed() {
 
 #[test]
 fn relocate_enum64() {
+    let kernel_version = kernel_version().unwrap();
+    if kernel_version < (6, 0, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, support for enum64 was added in 6.0.0; see https://github.com/torvalds/linux/commit/6089fb3");
+        return;
+    }
     let test = RelocationTest {
         local_definition: r#"
             enum foo { D = 0xAAAAAAAABBBBBBBB };
@@ -100,6 +113,11 @@ fn relocate_enum64() {
 
 #[test]
 fn relocate_enum64_signed() {
+    let kernel_version = kernel_version().unwrap();
+    if kernel_version < (6, 0, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, support for enum64 was added in 6.0.0; see https://github.com/torvalds/linux/commit/6089fb3");
+        return;
+    }
     let test = RelocationTest {
         local_definition: r#"
             enum foo { D = -0xAAAAAAABBBBBBBB };

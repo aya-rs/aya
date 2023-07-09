@@ -18,15 +18,11 @@ fn xdp() {
 
 #[test]
 fn extension() {
-    let (major, minor, _) = kernel_version().unwrap();
-    if major < 5 || (minor == 5 && minor < 9) {
-        eprintln!(
-            "skipping as {}.{} does not meet version requirement of 5.9",
-            major, minor
-        );
+    let kernel_version = kernel_version().unwrap();
+    if kernel_version < (5, 9, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
         return;
     }
-    // TODO: Check kernel version == 5.9 or later
     let main_bytes =
         include_bytes_aligned!("../../../target/bpfel-unknown-none/release/main.bpf.o");
     let mut bpf = Bpf::load(main_bytes).unwrap();
