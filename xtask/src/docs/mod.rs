@@ -1,3 +1,5 @@
+use crate::utils::exec;
+use anyhow::{Context as _, Result};
 use std::{
     path::{Path, PathBuf},
     process::Command,
@@ -7,7 +9,7 @@ use std::{fs, io, io::Write};
 
 use indoc::indoc;
 
-pub fn docs() -> Result<(), anyhow::Error> {
+pub fn docs() -> Result<()> {
     let current_dir = PathBuf::from(".");
     let header_path = current_dir.join("header.html");
     let mut header = fs::File::create(&header_path).expect("can't create header.html");
@@ -19,8 +21,11 @@ pub fn docs() -> Result<(), anyhow::Error> {
 
     build_docs(&current_dir.join("aya"), &abs_header_path)?;
     build_docs(&current_dir.join("bpf/aya-bpf"), &abs_header_path)?;
-    copy_dir_all("./target/doc", "./site/user")?;
-    copy_dir_all("./target/bpfel-unknown-none/doc", "./site/bpf")?;
+    copy_dir_all("./target/doc".as_ref(), "./site/user".as_ref())?;
+    copy_dir_all(
+        "./target/bpfel-unknown-none/doc".as_ref(),
+        "./site/bpf".as_ref(),
+    )?;
 
     let mut robots = fs::File::create("site/robots.txt").expect("can't create robots.txt");
     robots
@@ -53,49 +58,46 @@ pub fn docs() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-fn build_docs(working_dir: &PathBuf, abs_header_path: &Path) -> Result<(), anyhow::Error> {
-    let replace = Command::new("sed")
-        .current_dir(working_dir)
-        .args(vec!["-i.bak", "s/crabby.svg/crabby_dev.svg/", "src/lib.rs"])
-        .status()
-        .expect("failed to replace logo");
-    assert!(replace.success());
+fn build_docs(working_dir: &Path, abs_header_path: &Path) -> Result<()> {
+    exec(Command::new("sed").current_dir(working_dir).args([
+        "-i.bak",
+        "s/crabby.svg/crabby_dev.svg/",
+        "src/lib.rs",
+    ]))?;
 
-    let args = vec!["+nightly", "doc", "--no-deps", "--all-features"];
+    exec(
+        Command::new("cargo")
+            .current_dir(working_dir)
+            .env(
+                "RUSTDOCFLAGS",
+                format!(
+                    "--cfg docsrs --html-in-header {} -D warnings",
+                    abs_header_path.to_str().unwrap()
+                ),
+            )
+            .args(["+nightly", "doc", "--no-deps", "--all-features"]),
+    )?;
 
-    let status = Command::new("cargo")
-        .current_dir(working_dir)
-        .env(
-            "RUSTDOCFLAGS",
-            format!(
-                "--cfg docsrs --html-in-header {} -D warnings",
-                abs_header_path.to_str().unwrap()
-            ),
-        )
-        .args(args)
-        .status()
-        .expect("failed to build aya docs");
-    assert!(status.success());
     fs::rename(
         working_dir.join("src/lib.rs.bak"),
         working_dir.join("src/lib.rs"),
     )
-    .unwrap();
-    Ok(())
+    .context("Failed to rename lib.rs.bak to lib.rs")
 }
 
-fn copy_dir_all<P1: AsRef<Path>, P2: AsRef<Path>>(src: P1, dst: P2) -> io::Result<()> {
-    fs::create_dir_all(&dst)?;
+fn copy_dir_all(src: &Path, dst: &Path) -> io::Result<()> {
+    fs::create_dir_all(dst)?;
     for entry in fs::read_dir(src)? {
         let entry = entry?;
         let ty = entry.file_type()?;
+        let src = entry.path();
+        let src = src.as_path();
+        let dst = dst.join(entry.file_name());
+        let dst = dst.as_path();
         if ty.is_dir() {
-            copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
-        } else {
-            let new_path = dst.as_ref().join(entry.file_name());
-            if !new_path.exists() {
-                fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
-            }
+            copy_dir_all(src, dst)?;
+        } else if !dst.exists() {
+            fs::copy(src, dst)?;
         }
     }
     Ok(())

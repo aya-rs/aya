@@ -1,7 +1,8 @@
+use anyhow::Result;
 use clap::Parser;
 use std::process::Command;
 
-use crate::build_ebpf;
+use crate::{build_ebpf, utils::exec};
 
 #[derive(Parser)]
 pub struct Options {
@@ -13,20 +14,19 @@ pub struct Options {
     pub ebpf_options: build_ebpf::BuildEbpfOptions,
 }
 
-pub fn build_test(opts: Options) -> anyhow::Result<()> {
-    build_ebpf::build_ebpf(opts.ebpf_options)?;
+pub fn build_test(opts: Options) -> Result<()> {
+    let Options {
+        musl_target,
+        ebpf_options,
+    } = opts;
 
-    let mut args = ["build", "-p", "integration-test", "--verbose"]
-        .iter()
-        .map(|s| s.to_string())
-        .collect::<Vec<_>>();
-    if let Some(target) = opts.musl_target {
-        args.push(format!("--target={target}"));
+    build_ebpf::build_ebpf(ebpf_options)?;
+
+    let mut cmd = Command::new("cargo");
+    cmd.args(["build", "-p", "integration-test"]);
+
+    if let Some(target) = musl_target {
+        cmd.args(["--target", &target]);
     }
-    let status = Command::new("cargo")
-        .args(&args)
-        .status()
-        .expect("failed to build bpf program");
-    assert!(status.success());
-    Ok(())
+    exec(&mut cmd)
 }
