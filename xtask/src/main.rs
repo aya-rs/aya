@@ -1,10 +1,6 @@
-mod build_ebpf;
 mod codegen;
 mod docs;
 mod run;
-pub(crate) mod utils;
-
-use std::process::exit;
 
 use clap::Parser;
 #[derive(Parser)]
@@ -20,17 +16,12 @@ enum Command {
     IntegrationTest(run::Options),
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let XtaskOptions { command } = Parser::parse();
 
-    let ret = match command {
+    match command {
         Command::Codegen(opts) => codegen::codegen(opts),
         Command::Docs => docs::docs(),
         Command::IntegrationTest(opts) => run::run(opts),
-    };
-
-    if let Err(e) = ret {
-        eprintln!("{e:#}");
-        exit(1);
     }
 }
