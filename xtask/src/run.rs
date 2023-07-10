@@ -35,7 +35,7 @@ pub struct Options {
 pub fn build(opts: BuildOptions) -> Result<Vec<(String, PathBuf)>> {
     let BuildOptions { release, target } = opts;
     let mut cmd = Command::new("cargo");
-    cmd.args([
+    cmd.env("AYA_BUILD_INTEGRATION_BPF", "true").args([
         "build",
         "--tests",
         "--message-format=json",

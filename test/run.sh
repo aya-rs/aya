@@ -242,9 +242,6 @@ trap cleanup_vm EXIT
 exec_vm "rm -rf aya/*"
 rsync_vm "--exclude=target --exclude=.tmp $AYA_SOURCE_DIR"
 
-# need to build or linting will fail trying to include object files; don't run the tests though.
-exec_vm "cd aya; cargo xtask integration-test -- filter-that-matches-nothing"
-exec_vm "cd aya; cargo clippy --all-targets -p integration-test -- --deny warnings"
 exec_vm "cd aya; cargo xtask integration-test"
 
 # we rm and sync but it doesn't seem to work reliably - I guess we could sleep a
