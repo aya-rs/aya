@@ -22,9 +22,6 @@ pub struct Options {
     /// The command used to wrap your application
     #[clap(short, long, default_value = "sudo -E")]
     pub runner: String,
-    /// libbpf directory
-    #[clap(long, action)]
-    pub libbpf_dir: PathBuf,
     /// Arguments to pass to your application
     #[clap(name = "args", last = true)]
     pub run_args: Vec<String>,
@@ -90,16 +87,11 @@ pub fn run(opts: Options) -> Result<()> {
         bpf_target,
         release,
         runner,
-        libbpf_dir,
         run_args,
     } = opts;
 
     // build our ebpf program followed by our application
-    build_ebpf(BuildOptions {
-        target: bpf_target,
-        libbpf_dir,
-    })
-    .context("error while building eBPF program")?;
+    build_ebpf(BuildOptions { target: bpf_target }).context("error while building eBPF program")?;
 
     let binaries = build(release).context("error while building userspace application")?;
     let mut args = runner.trim().split_terminator(' ');

@@ -24,10 +24,7 @@ fn relocations() {
 
 #[test]
 fn text_64_64_reloc() {
-    let mut bpf = load_and_attach(
-        "test_text_64_64_reloc",
-        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/text_64_64_reloc.o"),
-    );
+    let mut bpf = load_and_attach("test_text_64_64_reloc", integration_test::TEXT_64_64_RELOC);
 
     let mut m = aya::maps::Array::<_, u64>::try_from(bpf.map_mut("RESULTS").unwrap()).unwrap();
     m.set(0, 1, 0).unwrap();

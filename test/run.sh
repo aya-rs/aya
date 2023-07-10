@@ -7,7 +7,6 @@ if [ "$(uname -s)" = "Darwin" ]; then
 fi
 
 AYA_SOURCE_DIR="$(realpath $(dirname $0)/..)"
-LIBBPF_DIR=$1
 
 # Temporary directory for tests to use.
 AYA_TMPDIR="${AYA_SOURCE_DIR}/.tmp"
@@ -236,22 +235,16 @@ cleanup_vm() {
     fi
 }
 
-if [ -z "$LIBBPF_DIR" ]; then
-    echo "path to libbpf required"
-    exit 1
-fi
-
 start_vm
 trap cleanup_vm EXIT
 
-# make sure we always use fresh aya and libbpf (also see comment at the end)
-exec_vm "rm -rf aya/* libbpf"
+# make sure we always use fresh sources (also see comment at the end)
+exec_vm "rm -rf aya/*"
 rsync_vm "--exclude=target --exclude=.tmp $AYA_SOURCE_DIR"
-rsync_vm "$LIBBPF_DIR"
 
-exec_vm "cd aya; cargo xtask integration-test --libbpf-dir ~/libbpf"
+exec_vm "cd aya; cargo xtask integration-test"
 
 # we rm and sync but it doesn't seem to work reliably - I guess we could sleep a
 # few seconds after but ain't nobody got time for that. Instead we also rm
 # before rsyncing.
-exec_vm "rm -rf aya/* libbpf; sync"
+exec_vm "rm -rf aya/*; sync"

@@ -18,10 +18,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
-        with:
-          repository: libbpf/libbpf
-          path: libbpf
 
       - name: Install Pre-requisites
         run: |
