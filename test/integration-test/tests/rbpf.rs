@@ -1,13 +1,11 @@
 use core::{mem::size_of, ptr::null_mut, slice::from_raw_parts};
 use std::collections::HashMap;
 
-use aya::include_bytes_aligned;
 use aya_obj::{generated::bpf_insn, Object, ProgramSection};
 
 #[test]
 fn run_with_rbpf() {
-    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/pass");
-    let object = Object::parse(bytes).unwrap();
+    let object = Object::parse(integration_test::PASS).unwrap();
 
     assert_eq!(object.programs.len(), 1);
     matches::assert_matches!(object.programs["pass"].section, ProgramSection::Xdp { .. });

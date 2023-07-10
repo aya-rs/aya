@@ -9,38 +9,8 @@ use anyhow::{Context as _, Result};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 
-#[derive(Debug, Copy, Clone)]
-pub enum Architecture {
-    BpfEl,
-    BpfEb,
-}
-
-impl std::str::FromStr for Architecture {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "bpfel-unknown-none" => Architecture::BpfEl,
-            "bpfeb-unknown-none" => Architecture::BpfEb,
-            _ => return Err("invalid target"),
-        })
-    }
-}
-
-impl std::fmt::Display for Architecture {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self {
-            Architecture::BpfEl => "bpfel-unknown-none",
-            Architecture::BpfEb => "bpfeb-unknown-none",
-        })
-    }
-}
-
 #[derive(Debug, Parser)]
 pub struct Options {
-    /// Set the endianness of the BPF target
-    #[clap(default_value = "bpfel-unknown-none", long)]
-    pub bpf_target: Architecture,
     /// Build and run the release target
     #[clap(long)]
     pub release: bool,
@@ -53,7 +23,7 @@ pub struct Options {
 }
 
 /// Build the project
-fn build(release: bool) -> Result<Vec<(PathBuf, PathBuf)>> {
+fn build(release: bool) -> Result<Vec<(String, PathBuf)>> {
     let mut cmd = Command::new("cargo");
     cmd.args([
         "build",
@@ -77,16 +47,17 @@ fn build(release: bool) -> Result<Vec<(PathBuf, PathBuf)>> {
         match message.context("valid JSON")? {
             Message::CompilerArtifact(Artifact {
                 executable,
-                target: Target { src_path, .. },
+                target: Target { name, .. },
                 ..
             }) => {
                 if let Some(executable) = executable {
-                    executables.push((src_path.into(), executable.into()));
+                    executables.push((name, executable.into()));
                 }
             }
             Message::CompilerMessage(CompilerMessage { message, .. }) => {
-                assert_eq!(writeln!(&mut compiler_messages, "{message}"), Ok(()));
+                writeln!(&mut compiler_messages, "{message}").context("String write failed")?
             }
+
             _ => {}
         }
     }
@@ -109,29 +80,10 @@ fn build(release: bool) -> Result<Vec<(PathBuf, PathBuf)>> {
 /// Build and run the project
 pub fn run(opts: Options) -> Result<()> {
     let Options {
-        bpf_target,
         release,
         runner,
         run_args,
     } = opts;
-
-    let metadata = cargo_metadata::MetadataCommand::new()
-        .exec()
-        .context("cargo metadata")?;
-    let dir = metadata
-        .workspace_root
-        .into_std_path_buf()
-        .join("test")
-        .join("integration-ebpf");
-
-    crate::docs::exec(
-        Command::new("cargo")
-            .current_dir(&dir)
-            .args(["+nightly", "build", "--release", "--target"])
-            .arg(bpf_target.to_string())
-            .args(["-Z", "build-std=core"])
-            .current_dir(&dir),
-    )?;
 
     let binaries = build(release).context("error while building userspace application")?;
     let mut args = runner.trim().split_terminator(' ');
@@ -139,7 +91,7 @@ pub fn run(opts: Options) -> Result<()> {
     let args = args.collect::<Vec<_>>();
 
     let mut failures = String::new();
-    for (src_path, binary) in binaries {
+    for (name, binary) in binaries {
         let mut cmd = Command::new(runner);
         let cmd = cmd
             .args(args.iter())
@@ -147,7 +99,7 @@ pub fn run(opts: Options) -> Result<()> {
             .args(run_args.iter())
             .arg("--test-threads=1");
 
-        println!("{} running {cmd:?}", src_path.display());
+        println!("{} running {cmd:?}", name);
 
         let status = cmd
             .status()
@@ -155,19 +107,11 @@ pub fn run(opts: Options) -> Result<()> {
         match status.code() {
             Some(code) => match code {
                 0 => {}
-                code => assert_eq!(
-                    writeln!(
-                        &mut failures,
-                        "{} exited with status code {code}",
-                        src_path.display()
-                    ),
-                    Ok(())
-                ),
+                code => writeln!(&mut failures, "{} exited with status code {code}", name)
+                    .context("String write failed")?,
             },
-            None => assert_eq!(
-                writeln!(&mut failures, "{} terminated by signal", src_path.display()),
-                Ok(())
-            ),
+            None => writeln!(&mut failures, "{} terminated by signal", name)
+                .context("String write failed")?,
         }
     }
     if failures.is_empty() {

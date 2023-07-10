@@ -1,4 +1,14 @@
-use std::{env, ffi::OsString, path::PathBuf, process::Command};
+use std::{
+    env,
+    ffi::OsString,
+    fmt::Write as _,
+    fs::copy,
+    io::BufReader,
+    path::PathBuf,
+    process::{Child, Command, Stdio},
+};
+
+use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 
 fn main() {
     let manifest_dir = env::var_os("CARGO_MANIFEST_DIR").unwrap();
@@ -84,5 +94,64 @@ fn main() {
             },
             None => panic!("{cmd:?} terminated by signal"),
         }
+    }
+
+    let ebpf_dir = manifest_dir.parent().unwrap().join("integration-ebpf");
+    let target = format!("{target}-unknown-none");
+
+    let mut cmd = Command::new("cargo");
+    cmd.current_dir(&ebpf_dir).args([
+        "build",
+        "-Z",
+        "build-std=core",
+        "--release",
+        "--message-format=json",
+        "--target",
+        &target,
+    ]);
+    let mut child = cmd
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap_or_else(|err| panic!("failed to spawn {cmd:?}: {err}"));
+    let Child { stdout, .. } = &mut child;
+    let stdout = stdout.take().unwrap();
+    let reader = BufReader::new(stdout);
+    let mut executables = Vec::new();
+    let mut compiler_messages = String::new();
+    for message in Message::parse_stream(reader) {
+        #[allow(clippy::collapsible_match)]
+        match message.expect("valid JSON") {
+            Message::CompilerArtifact(Artifact {
+                executable,
+                target: Target { name, .. },
+                ..
+            }) => {
+                if let Some(executable) = executable {
+                    executables.push((name, executable.into_std_path_buf()));
+                }
+            }
+            Message::CompilerMessage(CompilerMessage { message, .. }) => {
+                writeln!(&mut compiler_messages, "{message}").unwrap()
+            }
+            _ => {}
+        }
+    }
+
+    let status = child
+        .wait()
+        .unwrap_or_else(|err| panic!("failed to wait for {cmd:?}: {err}"));
+
+    match status.code() {
+        Some(code) => match code {
+            0 => {}
+            code => panic!("{cmd:?} exited with status code {code}:\n{compiler_messages}"),
+        },
+        None => panic!("{cmd:?} terminated by signal"),
+    }
+
+    for (name, binary) in executables {
+        let dst = out_dir.join(name);
+        let _: u64 = copy(&binary, &dst)
+            .unwrap_or_else(|err| panic!("failed to copy {binary:?} to {dst:?}: {err}"));
     }
 }
