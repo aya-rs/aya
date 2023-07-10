@@ -1,7 +1,6 @@
 use procfs::KernelVersion;
 
 use aya::{
-    include_bytes_aligned,
     programs::{Extension, Xdp, XdpFlags},
     Bpf, BpfLoader,
 };
@@ -14,8 +13,7 @@ fn xdp() {
         return;
     }
 
-    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/pass");
-    let mut bpf = Bpf::load(bytes).unwrap();
+    let mut bpf = Bpf::load(integration_test::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
     dispatcher.attach("lo", XdpFlags::default()).unwrap();

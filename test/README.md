@@ -44,7 +44,8 @@ cargo xtask integration-test
 Tests should follow these guidelines:
 
 - Rust eBPF code should live in `integration-ebpf/${NAME}.rs` and included in
-  `integration-ebpf/Cargo.toml`.
+  `integration-ebpf/Cargo.toml` and `integration-test/src/lib.rs` using
+  `include_bytes_aligned!`.
 - C eBPF code should live in `integration-test/bpf/${NAME}.bpf.c`. It should be
   added to the list of files in `integration-test/build.rs` and the list of
   constants in `integration-test/src/lib.rs` using `include_bytes_aligned!`.

@@ -1,17 +1,13 @@
 use std::{process::exit, time::Duration};
 
 use aya::{
-    include_bytes_aligned,
     programs::{ProgramError, UProbe},
     Bpf,
 };
 
 #[test]
 fn relocations() {
-    let bpf = load_and_attach(
-        "test_64_32_call_relocs",
-        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/relocations"),
-    );
+    let bpf = load_and_attach("test_64_32_call_relocs", integration_test::RELOCATIONS);
 
     trigger_relocations_program();
     std::thread::sleep(Duration::from_millis(100));
