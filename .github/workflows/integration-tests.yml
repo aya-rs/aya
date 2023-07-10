@@ -18,10 +18,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
         with:
-          repository: libbpf/libbpf
-          path: libbpf
+          submodules: recursive
 
       - name: Install Pre-requisites
         run: |
@@ -40,4 +38,4 @@ jobs:
           key: tmp-files-${{ hashFiles('test/run.sh') }}
 
       - name: Run integration tests
-        run: test/run.sh ./libbpf
+        run: test/run.sh

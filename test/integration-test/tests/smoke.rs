@@ -27,15 +27,15 @@ fn extension() {
         eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
         return;
     }
-    let main_bytes =
-        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/main.bpf.o");
-    let mut bpf = Bpf::load(main_bytes).unwrap();
+    let mut bpf = Bpf::load(integration_test::MAIN).unwrap();
     let pass: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
     pass.attach("lo", XdpFlags::default()).unwrap();
 
-    let ext_bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/ext.bpf.o");
-    let mut bpf = BpfLoader::new().extension("drop").load(ext_bytes).unwrap();
+    let mut bpf = BpfLoader::new()
+        .extension("drop")
+        .load(integration_test::EXT)
+        .unwrap();
     let drop_: &mut Extension = bpf.program_mut("drop").unwrap().try_into().unwrap();
     drop_.load(pass.fd().unwrap(), "xdp_pass").unwrap();
 }

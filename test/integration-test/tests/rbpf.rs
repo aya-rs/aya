@@ -34,9 +34,7 @@ static mut MULTIMAP_MAPS: [*mut Vec<u64>; 2] = [null_mut(), null_mut()];
 
 #[test]
 fn use_map_with_rbpf() {
-    let bytes =
-        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/multimap-btf.bpf.o");
-    let mut object = Object::parse(bytes).unwrap();
+    let mut object = Object::parse(integration_test::MULTIMAP_BTF).unwrap();
 
     assert_eq!(object.programs.len(), 1);
     matches::assert_matches!(

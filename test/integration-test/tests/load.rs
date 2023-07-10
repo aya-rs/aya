@@ -33,9 +33,7 @@ fn long_name() {
 
 #[test]
 fn multiple_btf_maps() {
-    let bytes =
-        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/multimap-btf.bpf.o");
-    let mut bpf = Bpf::load(bytes).unwrap();
+    let mut bpf = Bpf::load(integration_test::MULTIMAP_BTF).unwrap();
 
     let map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
     let map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into().unwrap();
