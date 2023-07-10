@@ -82,7 +82,7 @@ impl TracePoint {
         let id = read_sys_fs_trace_point_id(tracefs, category, name)?;
         let fd = perf_event_open_trace_point(id, None).map_err(|(_code, io_error)| {
             ProgramError::SyscallError {
-                call: "perf_event_open".to_owned(),
+                call: "perf_event_open",
                 io_error,
             }
         })? as i32;

@@ -77,7 +77,7 @@ pub(crate) fn perf_attach(prog_fd: RawFd, fd: RawFd) -> Result<PerfLinkInner, Pr
         let link_fd =
             bpf_link_create(prog_fd, fd, BPF_PERF_EVENT, None, 0).map_err(|(_, io_error)| {
                 ProgramError::SyscallError {
-                    call: "bpf_link_create".to_owned(),
+                    call: "bpf_link_create",
                     io_error,
                 }
             })? as RawFd;
@@ -104,13 +104,13 @@ fn perf_attach_either(
 ) -> Result<PerfLinkInner, ProgramError> {
     perf_event_ioctl(fd, PERF_EVENT_IOC_SET_BPF, prog_fd).map_err(|(_, io_error)| {
         ProgramError::SyscallError {
-            call: "PERF_EVENT_IOC_SET_BPF".to_owned(),
+            call: "PERF_EVENT_IOC_SET_BPF",
             io_error,
         }
     })?;
     perf_event_ioctl(fd, PERF_EVENT_IOC_ENABLE, 0).map_err(|(_, io_error)| {
         ProgramError::SyscallError {
-            call: "PERF_EVENT_IOC_ENABLE".to_owned(),
+            call: "PERF_EVENT_IOC_ENABLE",
             io_error,
         }
     })?;

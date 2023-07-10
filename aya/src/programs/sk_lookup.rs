@@ -66,7 +66,7 @@ impl SkLookup {
 
         let link_fd = bpf_link_create(prog_fd, netns_fd, BPF_SK_LOOKUP, None, 0).map_err(
             |(_, io_error)| ProgramError::SyscallError {
-                call: "bpf_link_create".to_owned(),
+                call: "bpf_link_create",
                 io_error,
             },
         )? as RawFd;

@@ -130,7 +130,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         let fd = self.inner.borrow().fd_or_err()?;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
-                call: "bpf_map_lookup_elem".to_owned(),
+                call: "bpf_map_lookup_elem",
                 io_error,
             }
         })?;
@@ -161,7 +161,7 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         let fd = self.inner.borrow().fd_or_err()?;
         bpf_map_update_elem(fd, Some(key), value.borrow(), flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
-                call: "bpf_map_update_elem".to_owned(),
+                call: "bpf_map_update_elem",
                 io_error,
             }
         })?;
@@ -177,7 +177,7 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         bpf_map_delete_elem(fd, key)
             .map(|_| ())
             .map_err(|(_, io_error)| MapError::SyscallError {
-                call: "bpf_map_delete_elem".to_owned(),
+                call: "bpf_map_delete_elem",
                 io_error,
             })
     }

@@ -148,7 +148,7 @@ pub enum ProgramError {
     #[error("`{call}` failed")]
     SyscallError {
         /// The name of the syscall which failed.
-        call: String,
+        call: &'static str,
         /// The [`io::Error`] returned by the syscall.
         #[source]
         io_error: io::Error,
@@ -455,7 +455,7 @@ impl<T: Link> ProgramData<T> {
         let attach_btf_obj_fd = if info.attach_btf_obj_id > 0 {
             let fd = bpf_btf_get_fd_by_id(info.attach_btf_obj_id).map_err(|io_error| {
                 ProgramError::SyscallError {
-                    call: "bpf_btf_get_fd_by_id".to_string(),
+                    call: "bpf_btf_get_fd_by_id",
                     io_error,
                 }
             })?;
@@ -487,12 +487,12 @@ impl<T: Link> ProgramData<T> {
             CString::new(path.as_ref().as_os_str().to_string_lossy().as_bytes()).unwrap();
         let fd =
             bpf_get_object(&path_string).map_err(|(_, io_error)| ProgramError::SyscallError {
-                call: "bpf_obj_get".to_owned(),
+                call: "bpf_obj_get",
                 io_error,
             })? as RawFd;
 
         let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_prog_get_info_by_fd".to_owned(),
+            call: "bpf_prog_get_info_by_fd",
             io_error,
         })?;
 
@@ -528,8 +528,8 @@ fn pin_program<T: Link, P: AsRef<Path>>(
     let fd = data.fd.ok_or(PinError::NoFd {
         name: data
             .name
-            .as_ref()
-            .unwrap_or(&"<unknown program>".to_string())
+            .as_deref()
+            .unwrap_or("<unknown program>")
             .to_string(),
     })?;
     let path_string = CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
@@ -538,7 +538,7 @@ fn pin_program<T: Link, P: AsRef<Path>>(
         }
     })?;
     bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
-        name: "BPF_OBJ_PIN".to_string(),
+        name: "BPF_OBJ_PIN",
         io_error,
     })?;
     Ok(())
@@ -666,7 +666,7 @@ pub(crate) fn query<T: AsRawFd>(
             }
             Err((_, io_error)) => {
                 return Err(ProgramError::SyscallError {
-                    call: "bpf_prog_query".to_owned(),
+                    call: "bpf_prog_query",
                     io_error,
                 });
             }
@@ -948,7 +948,7 @@ impl ProgramInfo {
     pub fn fd(&self) -> Result<RawFd, ProgramError> {
         let fd =
             bpf_prog_get_fd_by_id(self.0.id).map_err(|io_error| ProgramError::SyscallError {
-                call: "bpf_prog_get_fd_by_id".to_owned(),
+                call: "bpf_prog_get_fd_by_id",
                 io_error,
             })?;
         Ok(fd as RawFd)
@@ -959,12 +959,12 @@ impl ProgramInfo {
         let path_string = CString::new(path.as_ref().to_str().unwrap()).unwrap();
         let fd =
             bpf_get_object(&path_string).map_err(|(_, io_error)| ProgramError::SyscallError {
-                call: "BPF_OBJ_GET".to_owned(),
+                call: "BPF_OBJ_GET",
                 io_error,
             })? as RawFd;
 
         let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_prog_get_info_by_fd".to_owned(),
+            call: "bpf_prog_get_info_by_fd",
             io_error,
         })?;
         unsafe {
@@ -995,13 +995,13 @@ impl Iterator for ProgramsIter {
                 Some(
                     bpf_prog_get_fd_by_id(next)
                         .map_err(|io_error| ProgramError::SyscallError {
-                            call: "bpf_prog_get_fd_by_id".to_owned(),
+                            call: "bpf_prog_get_fd_by_id",
                             io_error,
                         })
                         .and_then(|fd| {
                             let info = bpf_prog_get_info_by_fd(fd)
                                 .map_err(|io_error| ProgramError::SyscallError {
-                                    call: "bpf_prog_get_info_by_fd".to_owned(),
+                                    call: "bpf_prog_get_info_by_fd",
                                     io_error,
                                 })
                                 .map(ProgramInfo);
@@ -1016,7 +1016,7 @@ impl Iterator for ProgramsIter {
                 // iteration to avoid an infinite loop.
                 self.error = true;
                 Some(Err(ProgramError::SyscallError {
-                    call: "bpf_prog_get_fd_by_id".to_owned(),
+                    call: "bpf_prog_get_fd_by_id",
                     io_error,
                 }))
             }

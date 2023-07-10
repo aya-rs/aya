@@ -56,7 +56,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
         let fd = self.inner.borrow().fd_or_err()?;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
-                call: "bpf_map_lookup_elem".to_owned(),
+                call: "bpf_map_lookup_elem",
                 io_error,
             }
         })?;

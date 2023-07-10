@@ -93,7 +93,7 @@ impl Map {
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
-        let section_name = "maps".to_string();
+        let section_name = "maps";
         let name = &self.name;
         let item = &self.item;
         Ok(quote! {
@@ -148,10 +148,10 @@ impl SockOps {
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
-        let section_name = if let Some(name) = &self.name {
-            format!("sockops/{name}")
+        let section_name: std::borrow::Cow<'_, _> = if let Some(name) = &self.name {
+            format!("sockops/{name}").into()
         } else {
-            "sockops".to_owned()
+            "sockops".into()
         };
         let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
@@ -256,10 +256,10 @@ impl SchedClassifier {
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
-        let section_name = if let Some(name) = &self.name {
-            format!("classifier/{name}")
+        let section_name: std::borrow::Cow<'_, _> = if let Some(name) = &self.name {
+            format!("classifier/{name}").into()
         } else {
-            "classifier".to_owned()
+            "classifier".into()
         };
         let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
@@ -452,16 +452,16 @@ impl CgroupSock {
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
-        let section_name = if let Some(name) = &self.name {
+        let section_name: std::borrow::Cow<'_, _> = if let Some(name) = &self.name {
             if let Some(attach_type) = &self.attach_type {
-                format!("cgroup/{attach_type}/{name}")
+                format!("cgroup/{attach_type}/{name}").into()
             } else {
-                format!("cgroup/sock/{name}")
+                format!("cgroup/sock/{name}").into()
             }
         } else if let Some(attach_type) = &self.attach_type {
-            format!("cgroup/{attach_type}")
+            format!("cgroup/{attach_type}").into()
         } else {
-            "cgroup/sock".to_string()
+            "cgroup/sock".into()
         };
         let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
@@ -761,10 +761,10 @@ impl SocketFilter {
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
-        let section_name = if let Some(name) = &self.name {
-            format!("socket/{name}")
+        let section_name: std::borrow::Cow<'_, _> = if let Some(name) = &self.name {
+            format!("socket/{name}").into()
         } else {
-            "socket".to_owned()
+            "socket".into()
         };
         let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
@@ -854,10 +854,10 @@ impl SkLookup {
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
-        let section_name = if let Some(name) = &self.name {
-            format!("sk_lookup/{name}")
+        let section_name: std::borrow::Cow<'_, _> = if let Some(name) = &self.name {
+            format!("sk_lookup/{name}").into()
         } else {
-            "sk_lookup".to_owned()
+            "sk_lookup".into()
         };
         let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;
@@ -887,10 +887,10 @@ impl CgroupDevice {
     }
 
     pub fn expand(&self) -> Result<TokenStream> {
-        let section_name = if let Some(name) = &self.name {
-            format!("cgroup/dev/{name}")
+        let section_name: std::borrow::Cow<'_, _> = if let Some(name) = &self.name {
+            format!("cgroup/dev/{name}").into()
         } else {
-            ("cgroup/dev").to_owned()
+            "cgroup/dev".into()
         };
         let fn_vis = &self.item.vis;
         let fn_name = &self.item.sig.ident;

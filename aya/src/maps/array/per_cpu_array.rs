@@ -86,7 +86,7 @@ impl<T: Borrow<MapData>, V: Pod> PerCpuArray<T, V> {
 
         let value = bpf_map_lookup_elem_per_cpu(fd, index, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
-                call: "bpf_map_lookup_elem".to_owned(),
+                call: "bpf_map_lookup_elem",
                 io_error,
             }
         })?;
@@ -114,7 +114,7 @@ impl<T: BorrowMut<MapData>, V: Pod> PerCpuArray<T, V> {
 
         bpf_map_update_elem_per_cpu(fd, &index, &values, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
-                call: "bpf_map_update_elem".to_owned(),
+                call: "bpf_map_update_elem",
                 io_error,
             }
         })?;

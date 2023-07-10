@@ -66,7 +66,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Stack<T, V> {
 
         let value = bpf_map_lookup_and_delete_elem::<u32, _>(fd, None, flags).map_err(
             |(_, io_error)| MapError::SyscallError {
-                call: "bpf_map_lookup_and_delete_elem".to_owned(),
+                call: "bpf_map_lookup_and_delete_elem",
                 io_error,
             },
         )?;
@@ -82,7 +82,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Stack<T, V> {
         let fd = self.inner.borrow().fd_or_err()?;
         bpf_map_update_elem(fd, None::<&u32>, value.borrow(), flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
-                call: "bpf_map_update_elem".to_owned(),
+                call: "bpf_map_update_elem",
                 io_error,
             }
         })?;

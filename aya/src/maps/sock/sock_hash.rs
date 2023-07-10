@@ -85,7 +85,7 @@ impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
         let fd = self.inner.borrow().fd_or_err()?;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
-                call: "bpf_map_lookup_elem".to_owned(),
+                call: "bpf_map_lookup_elem",
                 io_error,
             }
         })?;

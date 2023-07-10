@@ -67,7 +67,7 @@ impl<T: Borrow<MapData>, V: Pod> Array<T, V> {
 
         let value = bpf_map_lookup_elem(fd, index, flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
-                call: "bpf_map_lookup_elem".to_owned(),
+                call: "bpf_map_lookup_elem",
                 io_error,
             }
         })?;
@@ -94,7 +94,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Array<T, V> {
         let fd = data.fd_or_err()?;
         bpf_map_update_elem(fd, Some(&index), value.borrow(), flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
-                call: "bpf_map_update_elem".to_owned(),
+                call: "bpf_map_update_elem",
                 io_error,
             }
         })?;

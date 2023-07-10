@@ -130,7 +130,7 @@ impl Xdp {
         if k_ver >= (5, 9, 0) {
             let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, None, flags.bits()).map_err(
                 |(_, io_error)| ProgramError::SyscallError {
-                    call: "bpf_link_create".to_owned(),
+                    call: "bpf_link_create",
                     io_error,
                 },
             )? as RawFd;
@@ -176,7 +176,7 @@ impl Xdp {
                 let link_fd = fd_link.fd;
                 bpf_link_update(link_fd, prog_fd, None, 0).map_err(|(_, io_error)| {
                     ProgramError::SyscallError {
-                        call: "bpf_link_update".to_string(),
+                        call: "bpf_link_update",
                         io_error,
                     }
                 })?;
@@ -284,7 +284,7 @@ impl TryFrom<FdLink> for XdpLink {
         // unwrap of fd_link.fd will not panic since it's only None when being dropped.
         let info =
             bpf_link_get_info_by_fd(fd_link.fd).map_err(|io_error| LinkError::SyscallError {
-                call: "BPF_OBJ_GET_INFO_BY_FD".to_string(),
+                call: "BPF_OBJ_GET_INFO_BY_FD",
                 code: 0,
                 io_error,
             })?;

@@ -425,13 +425,13 @@ impl<'a> BpfLoader<'a> {
             if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
                     .map_err(|(_, io_error)| MapError::SyscallError {
-                        call: "bpf_map_update_elem".to_owned(),
+                        call: "bpf_map_update_elem",
                         io_error,
                     })?;
             }
             if map.obj.section_kind() == BpfSectionKind::Rodata {
                 bpf_map_freeze(fd).map_err(|(_, io_error)| MapError::SyscallError {
-                    call: "bpf_map_freeze".to_owned(),
+                    call: "bpf_map_freeze",
                     io_error,
                 })?;
             }

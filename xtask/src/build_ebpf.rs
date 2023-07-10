@@ -19,13 +19,13 @@ pub enum Architecture {
 }
 
 impl std::str::FromStr for Architecture {
-    type Err = String;
+    type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "bpfel-unknown-none" => Architecture::BpfEl,
             "bpfeb-unknown-none" => Architecture::BpfEb,
-            _ => return Err("invalid target".to_owned()),
+            _ => return Err("invalid target"),
         })
     }
 }

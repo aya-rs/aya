@@ -168,7 +168,7 @@ pub enum MapError {
     #[error("the `{call}` syscall failed")]
     SyscallError {
         /// Syscall Name
-        call: String,
+        call: &'static str,
         /// Original io::Error
         io_error: io::Error,
     },
@@ -518,7 +518,7 @@ impl MapData {
         let map_path = path.as_ref().join(name);
         let path_string = CString::new(map_path.to_str().unwrap()).unwrap();
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| MapError::SyscallError {
-            call: "BPF_OBJ_GET".to_string(),
+            call: "BPF_OBJ_GET",
             io_error,
         })? as RawFd;
 
@@ -540,12 +540,12 @@ impl MapData {
             })?;
 
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| MapError::SyscallError {
-            call: "BPF_OBJ_GET".to_owned(),
+            call: "BPF_OBJ_GET",
             io_error,
         })? as RawFd;
 
         let info = bpf_map_get_info_by_fd(fd).map_err(|io_error| MapError::SyscallError {
-            call: "BPF_MAP_GET_INFO_BY_FD".to_owned(),
+            call: "BPF_MAP_GET_INFO_BY_FD",
             io_error,
         })?;
 
@@ -564,7 +564,7 @@ impl MapData {
     /// For example, you received an FD over Unix Domain Socket.
     pub fn from_fd(fd: RawFd) -> Result<MapData, MapError> {
         let info = bpf_map_get_info_by_fd(fd).map_err(|io_error| MapError::SyscallError {
-            call: "BPF_OBJ_GET".to_owned(),
+            call: "BPF_OBJ_GET",
             io_error,
         })?;
 
@@ -594,7 +594,7 @@ impl MapData {
             }
         })?;
         bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
-            name: "BPF_OBJ_PIN".to_string(),
+            name: "BPF_OBJ_PIN",
             io_error,
         })?;
         self.pinned = true;
@@ -683,7 +683,7 @@ impl<K: Pod> Iterator for MapKeys<'_, K> {
             Err((_, io_error)) => {
                 self.err = true;
                 Some(Err(MapError::SyscallError {
-                    call: "bpf_map_get_next_key".to_owned(),
+                    call: "bpf_map_get_next_key",
                     io_error,
                 }))
             }
