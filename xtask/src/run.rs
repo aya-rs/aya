@@ -5,7 +5,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use anyhow::Context as _;
+use anyhow::{Context as _, Result};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 
@@ -31,12 +31,14 @@ pub struct Options {
 }
 
 /// Build the project
-fn build(release: bool) -> Result<Vec<(PathBuf, PathBuf)>, anyhow::Error> {
+fn build(release: bool) -> Result<Vec<(PathBuf, PathBuf)>> {
     let mut cmd = Command::new("cargo");
-    cmd.arg("build")
-        .arg("--tests")
-        .arg("--message-format=json")
-        .arg("--package=integration-test");
+    cmd.args([
+        "build",
+        "--tests",
+        "--message-format=json",
+        "--package=integration-test",
+    ]);
     if release {
         cmd.arg("--release");
     }
@@ -83,7 +85,7 @@ fn build(release: bool) -> Result<Vec<(PathBuf, PathBuf)>, anyhow::Error> {
 }
 
 /// Build and run the project
-pub fn run(opts: Options) -> Result<(), anyhow::Error> {
+pub fn run(opts: Options) -> Result<()> {
     let Options {
         bpf_target,
         release,
@@ -116,10 +118,8 @@ pub fn run(opts: Options) -> Result<(), anyhow::Error> {
         println!("{} running {cmd:?}", src_path.display());
 
         let status = cmd
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
             .status()
-            .context("failed to run {cmd:?}")?;
+            .with_context(|| format!("failed to run {cmd:?}"))?;
         match status.code() {
             Some(code) => match code {
                 0 => {}

@@ -17,6 +17,7 @@ use crate::{
         netlink_qdisc_detach,
     },
     util::{ifindex_from_ifname, tc_handler_make},
+    VerifierLogLevel,
 };
 
 /// Traffic control attach type.
@@ -199,7 +200,7 @@ impl SchedClassifier {
     /// On drop, any managed links are detached and the program is unloaded. This will not result in
     /// the program being unloaded from the kernel if it is still pinned.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path)?;
+        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         let cname = CString::new(data.name.clone().unwrap_or_default())
             .unwrap()
             .into_boxed_c_str();

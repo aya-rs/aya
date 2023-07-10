@@ -1,4 +1,6 @@
 //! Cgroup skb programs.
+
+use procfs::KernelVersion;
 use std::{
     hash::Hash,
     os::fd::{AsRawFd, RawFd},
@@ -13,7 +15,8 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
-    sys::{bpf_link_create, bpf_prog_attach, kernel_version},
+    sys::{bpf_link_create, bpf_prog_attach},
+    VerifierLogLevel,
 };
 
 /// A program used to inspect or filter network activity for a given cgroup.
@@ -96,8 +99,7 @@ impl CgroupSkb {
             CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
             CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
         };
-        let k_ver = kernel_version().unwrap();
-        if k_ver >= (5, 7, 0) {
+        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
             let link_fd = bpf_link_create(prog_fd, cgroup_fd, attach_type, None, 0).map_err(
                 |(_, io_error)| ProgramError::SyscallError {
                     call: "bpf_link_create",
@@ -150,7 +152,7 @@ impl CgroupSkb {
         path: P,
         expected_attach_type: CgroupSkbAttachType,
     ) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path)?;
+        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self {
             data,
             expected_attach_type: Some(expected_attach_type),

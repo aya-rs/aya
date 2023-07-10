@@ -1,7 +1,7 @@
 //! Utility functions.
 use std::{
     collections::BTreeMap,
-    ffi::{CStr, CString},
+    ffi::CString,
     fs::{self, File},
     io::{self, BufReader},
     mem, slice,
@@ -198,57 +198,6 @@ pub(crate) fn bytes_of_slice<T: Pod>(val: &[T]) -> &[u8] {
     // The size is determined in this function.
     // The Pod trait ensures the type is valid to cast to bytes.
     unsafe { slice::from_raw_parts(val.as_ptr().cast(), size) }
-}
-
-const MIN_LOG_BUF_SIZE: usize = 1024 * 10;
-const MAX_LOG_BUF_SIZE: usize = (std::u32::MAX >> 8) as usize;
-
-pub(crate) struct VerifierLog {
-    buf: Vec<u8>,
-}
-
-impl VerifierLog {
-    pub(crate) fn new() -> VerifierLog {
-        VerifierLog { buf: Vec::new() }
-    }
-
-    pub(crate) fn buf(&mut self) -> &mut Vec<u8> {
-        &mut self.buf
-    }
-
-    pub(crate) fn grow(&mut self) {
-        let len = (self.buf.capacity() * 10).clamp(MIN_LOG_BUF_SIZE, MAX_LOG_BUF_SIZE);
-        self.buf.resize(len, 0);
-        self.reset();
-    }
-
-    pub(crate) fn reset(&mut self) {
-        if !self.buf.is_empty() {
-            self.buf[0] = 0;
-        }
-    }
-
-    pub(crate) fn truncate(&mut self) {
-        if self.buf.is_empty() {
-            return;
-        }
-
-        let pos = self
-            .buf
-            .iter()
-            .position(|b| *b == 0)
-            .unwrap_or(self.buf.len() - 1);
-        self.buf[pos] = 0;
-        self.buf.truncate(pos + 1);
-    }
-
-    pub(crate) fn as_c_str(&self) -> Option<&CStr> {
-        if self.buf.is_empty() {
-            None
-        } else {
-            Some(CStr::from_bytes_with_nul(&self.buf).unwrap())
-        }
-    }
 }
 
 #[cfg(test)]

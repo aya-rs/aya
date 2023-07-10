@@ -11,21 +11,31 @@ documentation = "https://docs.rs/aya"
 edition = "2021"
 
 [dependencies]
-libc = { version = "0.2.105" }
+async-io = { version = "1.3", optional = true }
 aya-obj = { path = "../aya-obj", version = "0.1.0", features = ["std"] }
-thiserror = "1"
-object = { version = "0.31", default-features = false, features = ["std", "read_core", "elf"] }
 bitflags = "2.2.1"
 bytes = "1"
 lazy_static = "1"
-parking_lot = { version = "0.12.0", features = ["send_guard"] }
-tokio = { version = "1.24.0", features = ["macros", "rt", "rt-multi-thread", "net"], optional = true }
-async-io = { version = "1.3", optional = true }
+libc = { version = "0.2.105" }
 log = "0.4"
+object = { version = "0.31", default-features = false, features = [
+    "std",
+    "read_core",
+    "elf",
+] }
+parking_lot = { version = "0.12.0", features = ["send_guard"] }
+thiserror = "1"
+tokio = { version = "1.24.0", features = [
+    "macros",
+    "rt",
+    "rt-multi-thread",
+    "net",
+], optional = true }
+procfs = { version = "0.15.1", default-features = false }
 
 [dev-dependencies]
-matches = "0.1.8"
 futures = { version = "0.3.12", default-features = false, features = ["std"] }
+matches = "0.1.8"
 
 [features]
 default = []
@@ -35,4 +45,4 @@ async_std = ["async-io", "async"]
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "docsrs","-D", "warnings"]
+rustdoc-args = ["--cfg", "docsrs", "-D", "warnings"]

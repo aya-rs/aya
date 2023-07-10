@@ -1,4 +1,5 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context as _, Result};
+use procfs::KernelVersion;
 use std::{path::PathBuf, process::Command, thread::sleep, time::Duration};
 use tempfile::TempDir;
 
@@ -60,6 +61,11 @@ fn relocate_enum() {
 
 #[test]
 fn relocate_enum_signed() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(6, 0, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, support for signed enum was added in 6.0.0; see https://github.com/torvalds/linux/commit/6089fb3");
+        return;
+    }
     let test = RelocationTest {
         local_definition: r#"
             enum foo { D = -0x7AAAAAAA };
@@ -80,6 +86,11 @@ fn relocate_enum_signed() {
 
 #[test]
 fn relocate_enum64() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(6, 0, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, support for enum64 was added in 6.0.0; see https://github.com/torvalds/linux/commit/6089fb3");
+        return;
+    }
     let test = RelocationTest {
         local_definition: r#"
             enum foo { D = 0xAAAAAAAABBBBBBBB };
@@ -100,6 +111,11 @@ fn relocate_enum64() {
 
 #[test]
 fn relocate_enum64_signed() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(6, 0, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, support for enum64 was added in 6.0.0; see https://github.com/torvalds/linux/commit/6089fb3");
+        return;
+    }
     let test = RelocationTest {
         local_definition: r#"
             enum foo { D = -0xAAAAAAABBBBBBBB };
@@ -266,15 +282,20 @@ impl RelocationTest {
             "#
         ))
         .context("Failed to compile BTF")?;
-        Command::new("llvm-objcopy")
-            .current_dir(tmp_dir.path())
+        let mut cmd = Command::new("llvm-objcopy");
+        cmd.current_dir(tmp_dir.path())
             .args(["--dump-section", ".BTF=target.btf"])
-            .arg(compiled_file)
+            .arg(compiled_file);
+        let status = cmd
             .status()
-            .context("Failed to run llvm-objcopy")?
-            .success()
-            .then_some(())
-            .context("Failed to extract BTF")?;
+            .with_context(|| format!("Failed to run {cmd:?}"))?;
+        match status.code() {
+            Some(code) => match code {
+                0 => {}
+                code => bail!("{cmd:?} exited with code {code}"),
+            },
+            None => bail!("{cmd:?} terminated by signal"),
+        }
         let btf = Btf::parse_file(tmp_dir.path().join("target.btf"), Endianness::default())
             .context("Error parsing generated BTF")?;
         Ok(btf)
@@ -287,15 +308,20 @@ fn compile(source_code: &str) -> Result<(TempDir, PathBuf)> {
     let tmp_dir = tempfile::tempdir().context("Error making temp dir")?;
     let source = tmp_dir.path().join("source.c");
     std::fs::write(&source, source_code).context("Writing bpf program failed")?;
-    Command::new("clang")
-        .current_dir(&tmp_dir)
+    let mut cmd = Command::new("clang");
+    cmd.current_dir(&tmp_dir)
         .args(["-c", "-g", "-O2", "-target", "bpf"])
-        .arg(&source)
+        .arg(&source);
+    let status = cmd
         .status()
-        .context("Failed to run clang")?
-        .success()
-        .then_some(())
-        .context("Failed to compile eBPF source")?;
+        .with_context(|| format!("Failed to run {cmd:?}"))?;
+    match status.code() {
+        Some(code) => match code {
+            0 => {}
+            code => bail!("{cmd:?} exited with code {code}"),
+        },
+        None => bail!("{cmd:?} terminated by signal"),
+    }
     Ok((tmp_dir, source.with_extension("o")))
 }
 

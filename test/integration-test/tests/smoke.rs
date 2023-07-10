@@ -1,14 +1,19 @@
+use procfs::KernelVersion;
+
 use aya::{
     include_bytes_aligned,
     programs::{Extension, Xdp, XdpFlags},
     Bpf, BpfLoader,
 };
 
-mod common;
-use common::kernel_version;
-
 #[test]
 fn xdp() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 18, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb");
+        return;
+    }
+
     let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/pass");
     let mut bpf = Bpf::load(bytes).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
@@ -18,15 +23,11 @@ fn xdp() {
 
 #[test]
 fn extension() {
-    let (major, minor, _) = kernel_version().unwrap();
-    if major < 5 || (minor == 5 && minor < 9) {
-        eprintln!(
-            "skipping as {}.{} does not meet version requirement of 5.9",
-            major, minor
-        );
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 9, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
         return;
     }
-    // TODO: Check kernel version == 5.9 or later
     let main_bytes =
         include_bytes_aligned!("../../../target/bpfel-unknown-none/release/main.bpf.o");
     let mut bpf = Bpf::load(main_bytes).unwrap();

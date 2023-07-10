@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     cmp::{self, min},
     ffi::{CStr, CString},
     io,
@@ -12,6 +13,7 @@ use obj::{
     maps::{bpf_map_def, LegacyMap},
     BpfSectionKind,
 };
+use procfs::KernelVersion;
 
 use crate::{
     generated::{
@@ -27,12 +29,16 @@ use crate::{
         },
         copy_instructions,
     },
-    sys::{kernel_version, syscall, SysResult, Syscall},
-    util::VerifierLog,
-    Btf, Pod, BPF_OBJ_NAME_LEN,
+    sys::{syscall, SysResult, Syscall},
+    Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN,
 };
 
-pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>) -> SysResult {
+pub(crate) fn bpf_create_map(
+    name: &CStr,
+    def: &obj::Map,
+    btf_fd: Option<RawFd>,
+    kernel_version: KernelVersion,
+) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_1 };
@@ -78,8 +84,7 @@ pub(crate) fn bpf_create_map(name: &CStr, def: &obj::Map, btf_fd: Option<RawFd>)
     // https://github.com/torvalds/linux/commit/ad5b177bd73f5107d97c36f56395c4281fb6f089
     // The map name was added as a parameter in kernel 4.15+ so we skip adding it on
     // older kernels for compatibility
-    let k_ver = kernel_version().unwrap();
-    if k_ver >= (4, 15, 0) {
+    if kernel_version >= KernelVersion::new(4, 15, 0) {
         // u.map_name is 16 bytes max and must be NULL terminated
         let name_len = cmp::min(name.to_bytes().len(), BPF_OBJ_NAME_LEN - 1);
         u.map_name[..name_len]
@@ -124,8 +129,8 @@ pub(crate) struct BpfLoadProgramAttrs<'a> {
 
 pub(crate) fn bpf_load_program(
     aya_attr: &BpfLoadProgramAttrs,
-    logger: &mut VerifierLog,
-    verifier_log_level: u32,
+    log_buf: &mut [u8],
+    verifier_log_level: VerifierLogLevel,
 ) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -169,11 +174,10 @@ pub(crate) fn bpf_load_program(
             u.func_info_rec_size = aya_attr.func_info_rec_size as u32;
         }
     }
-    let log_buf = logger.buf();
-    if log_buf.capacity() > 0 {
-        u.log_level = verifier_log_level;
+    if !log_buf.is_empty() {
+        u.log_level = verifier_log_level.bits();
         u.log_buf = log_buf.as_mut_ptr() as u64;
-        u.log_size = log_buf.capacity() as u32;
+        u.log_size = log_buf.len() as u32;
     }
     if let Some(v) = aya_attr.attach_btf_obj_fd {
         u.__bindgen_anon_1.attach_btf_obj_fd = v;
@@ -544,16 +548,19 @@ pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> Sy
     sys_bpf(bpf_cmd::BPF_RAW_TRACEPOINT_OPEN, &attr)
 }
 
-pub(crate) fn bpf_load_btf(raw_btf: &[u8], log: &mut VerifierLog) -> SysResult {
+pub(crate) fn bpf_load_btf(
+    raw_btf: &[u8],
+    log_buf: &mut [u8],
+    verifier_log_level: VerifierLogLevel,
+) -> SysResult {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_7 };
     u.btf = raw_btf.as_ptr() as *const _ as u64;
     u.btf_size = mem::size_of_val(raw_btf) as u32;
-    let log_buf = log.buf();
-    if log_buf.capacity() > 0 {
-        u.btf_log_level = 1;
+    if !log_buf.is_empty() {
+        u.btf_log_level = verifier_log_level.bits();
         u.btf_log_buf = log_buf.as_mut_ptr() as u64;
-        u.btf_log_size = log_buf.capacity() as u32;
+        u.btf_log_size = log_buf.len() as u32;
     }
     sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr)
 }
@@ -988,35 +995,41 @@ pub(crate) fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>, (c_long, io::
 
 pub(crate) fn retry_with_verifier_logs<F>(
     max_retries: usize,
-    log: &mut VerifierLog,
     f: F,
-) -> SysResult
+) -> (SysResult, Cow<'static, str>)
 where
-    F: Fn(&mut VerifierLog) -> SysResult,
+    F: Fn(&mut [u8]) -> SysResult,
 {
-    // 1. Try the syscall
-    let ret = f(log);
-    if ret.is_ok() {
-        return ret;
-    }
+    const MIN_LOG_BUF_SIZE: usize = 1024 * 10;
+    const MAX_LOG_BUF_SIZE: usize = (std::u32::MAX >> 8) as usize;
 
-    // 2. Grow the log buffer so we can capture verifier output
-    //    Retry this up to max_retries times
-    log.grow();
+    let mut log_buf = Vec::new();
     let mut retries = 0;
-
     loop {
-        let ret = f(log);
-        match ret {
-            Err((v, io_error)) if retries == 0 || io_error.raw_os_error() == Some(ENOSPC) => {
-                if retries == max_retries {
-                    return Err((v, io_error));
+        let ret = f(log_buf.as_mut_slice());
+        if retries != max_retries {
+            if let Err((_, io_error)) = &ret {
+                if retries == 0 || io_error.raw_os_error() == Some(ENOSPC) {
+                    let len = (log_buf.capacity() * 10).clamp(MIN_LOG_BUF_SIZE, MAX_LOG_BUF_SIZE);
+                    log_buf.resize(len, 0);
+                    if let Some(first) = log_buf.first_mut() {
+                        *first = 0;
+                    }
+                    retries += 1;
+                    continue;
                 }
-                retries += 1;
-                log.grow();
             }
-            r => return r,
         }
+        if let Some(pos) = log_buf.iter().position(|b| *b == 0) {
+            log_buf.truncate(pos);
+        }
+        let log_buf = if log_buf.is_empty() {
+            "none".into()
+        } else {
+            String::from_utf8(log_buf).unwrap().into()
+        };
+
+        break (ret, log_buf);
     }
 }
 

@@ -295,6 +295,7 @@ pub fn write_record_header(
 mod test {
     use super::*;
 
+    #[test]
     fn log_value_length_sufficient() {
         assert!(
             LOG_BUF_CAPACITY >= LogValueLength::MAX.into(),

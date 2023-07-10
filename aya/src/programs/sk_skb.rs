@@ -13,6 +13,7 @@ use crate::{
         ProgramError,
     },
     sys::bpf_prog_attach,
+    VerifierLogLevel,
 };
 
 /// The kind of [`SkSkb`] program.
@@ -113,7 +114,7 @@ impl SkSkb {
     /// On drop, any managed links are detached and the program is unloaded. This will not result in
     /// the program being unloaded from the kernel if it is still pinned.
     pub fn from_pin<P: AsRef<Path>>(path: P, kind: SkSkbKind) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path)?;
+        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, kind })
     }
 }
