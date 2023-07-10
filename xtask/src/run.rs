@@ -9,7 +9,32 @@ use anyhow::{Context as _, Result};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 
-use crate::build_ebpf::{build_ebpf, Architecture, BuildEbpfOptions as BuildOptions};
+#[derive(Debug, Copy, Clone)]
+pub enum Architecture {
+    BpfEl,
+    BpfEb,
+}
+
+impl std::str::FromStr for Architecture {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "bpfel-unknown-none" => Architecture::BpfEl,
+            "bpfeb-unknown-none" => Architecture::BpfEb,
+            _ => return Err("invalid target"),
+        })
+    }
+}
+
+impl std::fmt::Display for Architecture {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Architecture::BpfEl => "bpfel-unknown-none",
+            Architecture::BpfEb => "bpfeb-unknown-none",
+        })
+    }
+}
 
 #[derive(Debug, Parser)]
 pub struct Options {
@@ -90,8 +115,23 @@ pub fn run(opts: Options) -> Result<()> {
         run_args,
     } = opts;
 
-    // build our ebpf program followed by our application
-    build_ebpf(BuildOptions { target: bpf_target }).context("error while building eBPF program")?;
+    let metadata = cargo_metadata::MetadataCommand::new()
+        .exec()
+        .context("cargo metadata")?;
+    let dir = metadata
+        .workspace_root
+        .into_std_path_buf()
+        .join("test")
+        .join("integration-ebpf");
+
+    crate::docs::exec(
+        Command::new("cargo")
+            .current_dir(&dir)
+            .args(["+nightly", "build", "--release", "--target"])
+            .arg(bpf_target.to_string())
+            .args(["-Z", "build-std=core"])
+            .current_dir(&dir),
+    )?;
 
     let binaries = build(release).context("error while building userspace application")?;
     let mut args = runner.trim().split_terminator(' ');
