@@ -265,13 +265,13 @@ impl SchedClassifierLink {
     /// #     #[error(transparent)]
     /// #     IO(#[from] std::io::Error),
     /// # }
-    /// # fn read_persisted_link_details() -> (String, TcAttachType, u16, u32) {
-    /// #     ("eth0".to_string(), TcAttachType::Ingress, 50, 1)
+    /// # fn read_persisted_link_details() -> (&'static str, TcAttachType, u16, u32) {
+    /// #     ("eth0", TcAttachType::Ingress, 50, 1)
     /// # }
     /// // Get the link parameters from some external source. Where and how the parameters are
     /// // persisted is up to your application.
     /// let (if_name, attach_type, priority, handle) = read_persisted_link_details();
-    /// let new_tc_link = SchedClassifierLink::attached(&if_name, attach_type, priority, handle)?;
+    /// let new_tc_link = SchedClassifierLink::attached(if_name, attach_type, priority, handle)?;
     ///
     /// # Ok::<(), Error>(())
     /// ```

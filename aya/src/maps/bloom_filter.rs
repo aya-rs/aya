@@ -54,7 +54,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
 
         bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
             .map_err(|(_, io_error)| MapError::SyscallError {
-                call: "bpf_map_lookup_elem".to_owned(),
+                call: "bpf_map_lookup_elem",
                 io_error,
             })?
             .ok_or(MapError::ElementNotFound)?;
@@ -66,7 +66,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
         let fd = self.inner.borrow().fd_or_err()?;
         bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
-                call: "bpf_map_push_elem".to_owned(),
+                call: "bpf_map_push_elem",
                 io_error,
             }
         })?;

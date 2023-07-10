@@ -1,7 +1,7 @@
 use core::{mem, ops::Bound::Included, ptr};
 
 use alloc::{
-    borrow::ToOwned,
+    borrow::{Cow, ToOwned as _},
     collections::BTreeMap,
     format,
     string::{String, ToString},
@@ -99,7 +99,7 @@ enum RelocationError {
         /// The max index
         max_index: usize,
         /// The error message
-        error: String,
+        error: &'static str,
     },
 
     /// Relocation not valid for type
@@ -114,7 +114,7 @@ enum RelocationError {
         /// The type kind
         type_kind: String,
         /// The error message
-        error: String,
+        error: &'static str,
     },
 
     /// Invalid instruction referenced by relocation
@@ -127,7 +127,7 @@ enum RelocationError {
         /// The instruction index
         index: usize,
         /// The error message
-        error: String,
+        error: Cow<'static, str>,
     },
 
     #[error("applying relocation `{kind:?}` missing target BTF info for type `{type_id}` at instruction #{ins_index}")]
@@ -142,8 +142,8 @@ enum RelocationError {
     BtfError(#[from] BtfError),
 }
 
-fn err_type_name(name: &Option<String>) -> String {
-    name.clone().unwrap_or_else(|| "[unknown name]".to_string())
+fn err_type_name(name: &Option<String>) -> &str {
+    name.as_deref().unwrap_or("[unknown name]")
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -717,7 +717,7 @@ impl<'a> AccessSpec<'a> {
                             spec: spec.to_string(),
                             index,
                             max_index: n_variants,
-                            error: "tried to access nonexistant enum variant".to_string(),
+                            error: "tried to access nonexistant enum variant",
                         });
                     }
                     let accessors = vec![Accessor {
@@ -740,7 +740,7 @@ impl<'a> AccessSpec<'a> {
                         relocation_number: relocation.number,
                         relocation_kind: format!("{:?}", relocation.kind),
                         type_kind: format!("{:?}", ty.kind()),
-                        error: "enum relocation on non-enum type".to_string(),
+                        error: "enum relocation on non-enum type",
                     })
                 }
             },
@@ -770,7 +770,7 @@ impl<'a> AccessSpec<'a> {
                                     spec: spec.to_string(),
                                     index,
                                     max_index: members.len(),
-                                    error: "out of bounds struct or union access".to_string(),
+                                    error: "out of bounds struct or union access",
                                 });
                             }
 
@@ -806,7 +806,7 @@ impl<'a> AccessSpec<'a> {
                                     spec: spec.to_string(),
                                     index,
                                     max_index: array.len as usize,
-                                    error: "array index out of bounds".to_string(),
+                                    error: "array index out of bounds",
                                 });
                             }
                             accessors.push(Accessor {
@@ -822,8 +822,7 @@ impl<'a> AccessSpec<'a> {
                                 relocation_number: relocation.number,
                                 relocation_kind: format!("{rel_kind:?}"),
                                 type_kind: format!("{:?}", ty.kind()),
-                                error: "field relocation on a type that doesn't have fields"
-                                    .to_string(),
+                                error: "field relocation on a type that doesn't have fields",
                             });
                         }
                     };
@@ -958,7 +957,7 @@ impl ComputedRelocation {
                     return Err(RelocationError::InvalidInstruction {
                         relocation_number: rel.number,
                         index: ins_index,
-                        error: format!("invalid src_reg={src_reg:x} expected {BPF_K:x}"),
+                        error: format!("invalid src_reg={src_reg:x} expected {BPF_K:x}").into(),
                     });
                 }
 
@@ -969,7 +968,8 @@ impl ComputedRelocation {
                     return Err(RelocationError::InvalidInstruction {
                         relocation_number: rel.number,
                         index: ins_index,
-                        error: format!("value `{target_value}` overflows 16 bits offset field"),
+                        error: format!("value `{target_value}` overflows 16 bits offset field")
+                            .into(),
                     });
                 }
 
@@ -994,7 +994,8 @@ impl ComputedRelocation {
                                     self.local.size,
                                     err_type_name(&target_btf.err_type_name(target_ty)),
                                     target.size,
-                                ),
+                                )
+                                .into(),
                             })
                         }
                     }
@@ -1008,7 +1009,7 @@ impl ComputedRelocation {
                             return Err(RelocationError::InvalidInstruction {
                                 relocation_number: rel.number,
                                 index: ins_index,
-                                error: format!("invalid target size {size}"),
+                                error: format!("invalid target size {size}").into(),
                             })
                         }
                     } as u8;
@@ -1031,7 +1032,7 @@ impl ComputedRelocation {
                 return Err(RelocationError::InvalidInstruction {
                     relocation_number: rel.number,
                     index: ins_index,
-                    error: format!("invalid instruction class {class:x}"),
+                    error: format!("invalid instruction class {class:x}").into(),
                 })
             }
         };
@@ -1128,7 +1129,7 @@ impl ComputedRelocation {
                         relocation_number: rel.number,
                         relocation_kind: format!("{rel_kind:?}"),
                         type_kind: format!("{:?}", ty.kind()),
-                        error: "invalid relocation kind for array type".to_string(),
+                        error: "invalid relocation kind for array type",
                     });
                 }
             };
@@ -1143,7 +1144,7 @@ impl ComputedRelocation {
                     relocation_number: rel.number,
                     relocation_kind: format!("{:?}", rel.kind),
                     type_kind: format!("{:?}", ty.kind()),
-                    error: "field relocation on a type that doesn't have fields".to_string(),
+                    error: "field relocation on a type that doesn't have fields",
                 });
             }
         };

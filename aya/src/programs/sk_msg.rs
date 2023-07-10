@@ -84,7 +84,7 @@ impl SkMsg {
 
         bpf_prog_attach(prog_fd, map_fd, BPF_SK_MSG_VERDICT).map_err(|(_, io_error)| {
             ProgramError::SyscallError {
-                call: "bpf_prog_attach".to_owned(),
+                call: "bpf_prog_attach",
                 io_error,
             }
         })?;

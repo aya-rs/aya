@@ -52,8 +52,8 @@ use crate::{
 ///         frame.ip,
 ///         frame
 ///             .symbol_name
-///             .as_ref()
-///             .unwrap_or(&"[unknown symbol name]".to_owned())
+///             .as_deref()
+///             .unwrap_or("[unknown symbol name]")
 ///     );
 /// }
 ///
@@ -79,7 +79,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
         let max_stack_depth =
             sysctl::<usize>("kernel/perf_event_max_stack").map_err(|io_error| {
                 MapError::SyscallError {
-                    call: "sysctl".to_owned(),
+                    call: "sysctl",
                     io_error,
                 }
             })?;
@@ -107,7 +107,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
         let mut frames = vec![0; self.max_stack_depth];
         bpf_map_lookup_elem_ptr(fd, Some(stack_id), frames.as_mut_ptr(), flags)
             .map_err(|(_, io_error)| MapError::SyscallError {
-                call: "bpf_map_lookup_elem".to_owned(),
+                call: "bpf_map_lookup_elem",
                 io_error,
             })?
             .ok_or(MapError::KeyNotFound)?;

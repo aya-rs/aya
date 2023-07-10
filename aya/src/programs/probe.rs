@@ -110,7 +110,7 @@ fn create_as_probe(
 
     let fd = perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid).map_err(
         |(_code, io_error)| ProgramError::SyscallError {
-            call: "perf_event_open".to_owned(),
+            call: "perf_event_open",
             io_error,
         },
     )? as i32;
@@ -139,7 +139,7 @@ fn create_as_trace_point(
     let tpid = read_sys_fs_trace_point_id(tracefs, &category, &event_alias)?;
     let fd = perf_event_open_trace_point(tpid, pid).map_err(|(_code, io_error)| {
         ProgramError::SyscallError {
-            call: "perf_event_open".to_owned(),
+            call: "perf_event_open",
             io_error,
         }
     })? as i32;
@@ -174,7 +174,7 @@ fn create_probe_event(
     let offset_suffix = match kind {
         KProbe => format!("+{offset}"),
         UProbe | URetProbe => format!(":{offset:#x}"),
-        _ => "".to_string(),
+        _ => String::new(),
     };
     let probe = format!(
         "{}:{}s/{} {}{}\n",

@@ -129,7 +129,7 @@ impl FdLink {
                 }
             })?;
         bpf_pin_object(self.fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
-            name: "BPF_OBJ_PIN".to_string(),
+            name: "BPF_OBJ_PIN",
             io_error,
         })?;
         Ok(PinnedLink::new(PathBuf::from(path.as_ref()), self))
@@ -186,7 +186,7 @@ impl PinnedLink {
         let path_string = CString::new(path.as_ref().to_string_lossy().to_string()).unwrap();
         let fd =
             bpf_get_object(&path_string).map_err(|(code, io_error)| LinkError::SyscallError {
-                call: "BPF_OBJ_GET".to_string(),
+                call: "BPF_OBJ_GET",
                 code,
                 io_error,
             })? as RawFd;
@@ -318,7 +318,7 @@ pub enum LinkError {
     #[error("the `{call}` syscall failed with code {code}")]
     SyscallError {
         /// Syscall Name.
-        call: String,
+        call: &'static str,
         /// Error code.
         code: libc::c_long,
         #[source]

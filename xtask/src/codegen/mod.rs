@@ -28,7 +28,7 @@ impl Architecture {
 }
 
 impl std::str::FromStr for Architecture {
-    type Err = String;
+    type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
@@ -36,7 +36,7 @@ impl std::str::FromStr for Architecture {
             "armv7" => Architecture::ARMv7,
             "aarch64" => Architecture::AArch64,
             "riscv64" => Architecture::RISCV64,
-            _ => return Err("invalid architecture".to_owned()),
+            _ => return Err("invalid architecture"),
         })
     }
 }

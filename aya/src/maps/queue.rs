@@ -66,7 +66,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Queue<T, V> {
 
         let value = bpf_map_lookup_and_delete_elem::<u32, _>(fd, None, flags).map_err(
             |(_, io_error)| MapError::SyscallError {
-                call: "bpf_map_lookup_and_delete_elem".to_owned(),
+                call: "bpf_map_lookup_and_delete_elem",
                 io_error,
             },
         )?;
@@ -82,7 +82,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Queue<T, V> {
         let fd = self.inner.borrow().fd_or_err()?;
         bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| {
             MapError::SyscallError {
-                call: "bpf_map_push_elem".to_owned(),
+                call: "bpf_map_push_elem",
                 io_error,
             }
         })?;

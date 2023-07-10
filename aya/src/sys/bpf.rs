@@ -748,7 +748,7 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
 
 pub(crate) fn is_btf_supported() -> bool {
     let mut btf = Btf::new();
-    let name_offset = btf.add_string("int".to_string());
+    let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
     btf.add_type(int_type);
     let btf_bytes = btf.to_bytes();
@@ -770,12 +770,12 @@ pub(crate) fn is_btf_supported() -> bool {
 
 pub(crate) fn is_btf_func_supported() -> bool {
     let mut btf = Btf::new();
-    let name_offset = btf.add_string("int".to_string());
+    let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
     let int_type_id = btf.add_type(int_type);
 
-    let a_name = btf.add_string("a".to_string());
-    let b_name = btf.add_string("b".to_string());
+    let a_name = btf.add_string("a");
+    let b_name = btf.add_string("b");
     let params = vec![
         BtfParam {
             name_offset: a_name,
@@ -789,7 +789,7 @@ pub(crate) fn is_btf_func_supported() -> bool {
     let func_proto = BtfType::FuncProto(FuncProto::new(params, int_type_id));
     let func_proto_type_id = btf.add_type(func_proto);
 
-    let add = btf.add_string("inc".to_string());
+    let add = btf.add_string("inc");
     let func = BtfType::Func(Func::new(add, func_proto_type_id, FuncLinkage::Static));
     btf.add_type(func);
 
@@ -812,12 +812,12 @@ pub(crate) fn is_btf_func_supported() -> bool {
 
 pub(crate) fn is_btf_func_global_supported() -> bool {
     let mut btf = Btf::new();
-    let name_offset = btf.add_string("int".to_string());
+    let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
     let int_type_id = btf.add_type(int_type);
 
-    let a_name = btf.add_string("a".to_string());
-    let b_name = btf.add_string("b".to_string());
+    let a_name = btf.add_string("a");
+    let b_name = btf.add_string("b");
     let params = vec![
         BtfParam {
             name_offset: a_name,
@@ -831,7 +831,7 @@ pub(crate) fn is_btf_func_global_supported() -> bool {
     let func_proto = BtfType::FuncProto(FuncProto::new(params, int_type_id));
     let func_proto_type_id = btf.add_type(func_proto);
 
-    let add = btf.add_string("inc".to_string());
+    let add = btf.add_string("inc");
     let func = BtfType::Func(Func::new(add, func_proto_type_id, FuncLinkage::Global));
     btf.add_type(func);
 
@@ -854,15 +854,15 @@ pub(crate) fn is_btf_func_global_supported() -> bool {
 
 pub(crate) fn is_btf_datasec_supported() -> bool {
     let mut btf = Btf::new();
-    let name_offset = btf.add_string("int".to_string());
+    let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
     let int_type_id = btf.add_type(int_type);
 
-    let name_offset = btf.add_string("foo".to_string());
+    let name_offset = btf.add_string("foo");
     let var_type = BtfType::Var(Var::new(name_offset, int_type_id, VarLinkage::Static));
     let var_type_id = btf.add_type(var_type);
 
-    let name_offset = btf.add_string(".data".to_string());
+    let name_offset = btf.add_string(".data");
     let variables = vec![DataSecEntry {
         btf_type: var_type_id,
         offset: 0,
@@ -890,7 +890,7 @@ pub(crate) fn is_btf_datasec_supported() -> bool {
 
 pub(crate) fn is_btf_float_supported() -> bool {
     let mut btf = Btf::new();
-    let name_offset = btf.add_string("float".to_string());
+    let name_offset = btf.add_string("float");
     let float_type = BtfType::Float(Float::new(name_offset, 16));
     btf.add_type(float_type);
 
@@ -913,15 +913,15 @@ pub(crate) fn is_btf_float_supported() -> bool {
 
 pub(crate) fn is_btf_decl_tag_supported() -> bool {
     let mut btf = Btf::new();
-    let name_offset = btf.add_string("int".to_string());
+    let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
     let int_type_id = btf.add_type(int_type);
 
-    let name_offset = btf.add_string("foo".to_string());
+    let name_offset = btf.add_string("foo");
     let var_type = BtfType::Var(Var::new(name_offset, int_type_id, VarLinkage::Static));
     let var_type_id = btf.add_type(var_type);
 
-    let name_offset = btf.add_string("decl_tag".to_string());
+    let name_offset = btf.add_string("decl_tag");
     let decl_tag = BtfType::DeclTag(DeclTag::new(name_offset, var_type_id, -1));
     btf.add_type(decl_tag);
 
@@ -948,7 +948,7 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
     let int_type = BtfType::Int(Int::new(0, 4, IntEncoding::Signed, 0));
     let int_type_id = btf.add_type(int_type);
 
-    let name_offset = btf.add_string("int".to_string());
+    let name_offset = btf.add_string("int");
     let type_tag = BtfType::TypeTag(TypeTag::new(name_offset, int_type_id));
     let type_tag_type = btf.add_type(type_tag);
 

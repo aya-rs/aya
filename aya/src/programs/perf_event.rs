@@ -165,7 +165,7 @@ impl PerfEvent {
             0,
         )
         .map_err(|(_code, io_error)| ProgramError::SyscallError {
-            call: "perf_event_open".to_owned(),
+            call: "perf_event_open",
             io_error,
         })? as i32;
 

@@ -27,7 +27,7 @@ pub enum PinError {
     #[error("{name} failed")]
     SyscallError {
         /// The syscall name.
-        name: String,
+        name: &'static str,
         /// The [`io::Error`] returned by the syscall.
         #[source]
         io_error: io::Error,

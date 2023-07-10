@@ -157,7 +157,7 @@ mod test {
     fn test_extract_ctypes_prefix() {
         let (flags, prefix) = extract_ctypes_prefix(&to_vec("foo --ctypes-prefix bar baz"));
         assert_eq!(flags, to_vec("foo baz"));
-        assert_eq!(prefix, Some("bar".to_string()));
+        assert_eq!(prefix.as_deref(), Some("bar"));
 
         let (flags, prefix) = extract_ctypes_prefix(&to_vec("foo --ctypes-prefi bar baz"));
         assert_eq!(flags, to_vec("foo --ctypes-prefi bar baz"));
@@ -170,7 +170,7 @@ mod test {
         let (flags, prefix) = extract_ctypes_prefix(&to_vec("--ctypes-prefix foo"));
         let empty: Vec<String> = Vec::new();
         assert_eq!(flags, empty);
-        assert_eq!(prefix, Some("foo".to_string()));
+        assert_eq!(prefix.as_deref(), Some("foo"));
 
         let (flags, prefix) = extract_ctypes_prefix(&to_vec("--ctypes-prefix"));
         assert_eq!(flags, to_vec("--ctypes-prefix"));
@@ -181,32 +181,32 @@ mod test {
     fn test_combine_flags() {
         assert_eq!(
             combine_flags(&to_vec("a b"), &to_vec("c d"),).join(" "),
-            "a b c d".to_string(),
+            "a b c d",
         );
 
         assert_eq!(
             combine_flags(&to_vec("a -- b"), &to_vec("a b"),).join(" "),
-            "a a b -- b".to_string(),
+            "a a b -- b",
         );
 
         assert_eq!(
             combine_flags(&to_vec("a -- b"), &to_vec("c d"),).join(" "),
-            "a c d -- b".to_string(),
+            "a c d -- b",
         );
 
         assert_eq!(
             combine_flags(&to_vec("a b"), &to_vec("c -- d"),).join(" "),
-            "a b c -- d".to_string(),
+            "a b c -- d",
         );
 
         assert_eq!(
             combine_flags(&to_vec("a -- b"), &to_vec("c -- d"),).join(" "),
-            "a c -- b d".to_string(),
+            "a c -- b d",
         );
 
         assert_eq!(
             combine_flags(&to_vec("a -- b"), &to_vec("-- c d"),).join(" "),
-            "a -- b c d".to_string(),
+            "a -- b c d",
         );
     }
 }

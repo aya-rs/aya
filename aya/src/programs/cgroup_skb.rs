@@ -100,7 +100,7 @@ impl CgroupSkb {
         if k_ver >= (5, 7, 0) {
             let link_fd = bpf_link_create(prog_fd, cgroup_fd, attach_type, None, 0).map_err(
                 |(_, io_error)| ProgramError::SyscallError {
-                    call: "bpf_link_create".to_owned(),
+                    call: "bpf_link_create",
                     io_error,
                 },
             )? as RawFd;
@@ -112,7 +112,7 @@ impl CgroupSkb {
         } else {
             bpf_prog_attach(prog_fd, cgroup_fd, attach_type).map_err(|(_, io_error)| {
                 ProgramError::SyscallError {
-                    call: "bpf_prog_attach".to_owned(),
+                    call: "bpf_prog_attach",
                     io_error,
                 }
             })?;

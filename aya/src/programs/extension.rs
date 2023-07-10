@@ -92,7 +92,7 @@ impl Extension {
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
         let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
             .map_err(|(_, io_error)| ProgramError::SyscallError {
-                call: "bpf_link_create".to_owned(),
+                call: "bpf_link_create",
                 io_error,
             })? as RawFd;
         self.data
@@ -122,7 +122,7 @@ impl Extension {
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
         let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
             .map_err(|(_, io_error)| ProgramError::SyscallError {
-                call: "bpf_link_create".to_owned(),
+                call: "bpf_link_create",
                 io_error,
             })? as RawFd;
         self.data
@@ -153,7 +153,7 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
     // retrieve program information
     let info =
         sys::bpf_prog_get_info_by_fd(prog_fd).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_prog_get_info_by_fd".to_owned(),
+            call: "bpf_prog_get_info_by_fd",
             io_error,
         })?;
 
@@ -165,7 +165,7 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
     // the bpf fd of the BTF object
     let btf_fd =
         sys::bpf_btf_get_fd_by_id(info.btf_id).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_btf_get_fd_by_id".to_owned(),
+            call: "bpf_btf_get_fd_by_id",
             io_error,
         })?;
 
@@ -179,7 +179,7 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
                 let btf_info =
                     sys::btf_obj_get_info_by_fd(btf_fd, &mut buf).map_err(|io_error| {
                         ProgramError::SyscallError {
-                            call: "bpf_prog_get_info_by_fd".to_owned(),
+                            call: "bpf_prog_get_info_by_fd",
                             io_error,
                         }
                     })?;
@@ -189,7 +189,7 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
             }
         }
         Err(io_error) => Err(ProgramError::SyscallError {
-            call: "bpf_prog_get_info_by_fd".to_owned(),
+            call: "bpf_prog_get_info_by_fd",
             io_error,
         }),
     }?;

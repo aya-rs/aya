@@ -2378,7 +2378,7 @@ mod tests {
     fn test_patch_map_data() {
         let mut obj = fake_obj();
         obj.maps.insert(
-            ".rodata".to_string(),
+            ".rodata".to_owned(),
             Map::Legacy(LegacyMap {
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_ARRAY as u32,
@@ -2400,7 +2400,7 @@ mod tests {
             Symbol {
                 index: 1,
                 section_index: Some(1),
-                name: Some("my_config".to_string()),
+                name: Some("my_config".to_owned()),
                 address: 0,
                 size: 3,
                 is_definition: true,
