@@ -26,13 +26,10 @@ jobs:
           components: rustfmt, clippy, miri, rust-src
 
       - name: Check formatting
-        run: |
-          cargo fmt --all -- --check
+        run: cargo fmt --all -- --check
 
       - name: Run clippy
-        run: |
-          cargo clippy --workspace --exclude integration-test -- --deny warnings
+        run: cargo clippy --workspace -- --deny warnings
 
       - name: Run miri
-        run: |
-          cargo miri test --all-targets
+        run: cargo miri test --all-targets

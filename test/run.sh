@@ -249,9 +249,6 @@ exec_vm "rm -rf aya/* libbpf"
 rsync_vm "--exclude=target --exclude=.tmp $AYA_SOURCE_DIR"
 rsync_vm "$LIBBPF_DIR"
 
-# need to build or linting will fail trying to include object files
-exec_vm "cd aya; cargo xtask build-integration-test --libbpf-dir ~/libbpf"
-exec_vm "cd aya; cargo clippy -p integration-test -- --deny warnings"
 exec_vm "cd aya; cargo xtask integration-test --libbpf-dir ~/libbpf"
 
 # we rm and sync but it doesn't seem to work reliably - I guess we could sleep a
