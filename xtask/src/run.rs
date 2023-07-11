@@ -10,20 +10,30 @@ use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-pub struct Options {
-    /// Build and run the release target
+pub struct BuildOptions {
+    /// Pass --release to `cargo build`.
     #[clap(long)]
     pub release: bool,
-    /// The command used to wrap your application
+    /// Pass --target to `cargo build`.
+    #[clap(long)]
+    pub target: Option<String>,
+}
+
+#[derive(Debug, Parser)]
+pub struct Options {
+    #[command(flatten)]
+    pub build_options: BuildOptions,
+    /// The command used to wrap your application.
     #[clap(short, long, default_value = "sudo -E")]
     pub runner: String,
-    /// Arguments to pass to your application
+    /// Arguments to pass to your application.
     #[clap(name = "args", last = true)]
     pub run_args: Vec<String>,
 }
 
 /// Build the project
-fn build(release: bool) -> Result<Vec<(String, PathBuf)>> {
+pub fn build(opts: BuildOptions) -> Result<Vec<(String, PathBuf)>> {
+    let BuildOptions { release, target } = opts;
     let mut cmd = Command::new("cargo");
     cmd.args([
         "build",
@@ -33,6 +43,9 @@ fn build(release: bool) -> Result<Vec<(String, PathBuf)>> {
     ]);
     if release {
         cmd.arg("--release");
+    }
+    if let Some(target) = target {
+        cmd.args(["--target", &target]);
     }
     let mut cmd = cmd
         .stdout(Stdio::piped())
@@ -80,12 +93,12 @@ fn build(release: bool) -> Result<Vec<(String, PathBuf)>> {
 /// Build and run the project
 pub fn run(opts: Options) -> Result<()> {
     let Options {
-        release,
+        build_options,
         runner,
         run_args,
     } = opts;
 
-    let binaries = build(release).context("error while building userspace application")?;
+    let binaries = build(build_options).context("error while building userspace application")?;
     let mut args = runner.trim().split_terminator(' ');
     let runner = args.next().ok_or(anyhow::anyhow!("no first argument"))?;
     let args = args.collect::<Vec<_>>();
