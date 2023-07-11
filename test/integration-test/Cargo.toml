@@ -10,13 +10,16 @@ assert_matches = { workspace = true }
 aya = { workspace = true }
 aya-log = { workspace = true }
 aya-obj = { workspace = true }
+epoll = { workspace = true }
+futures = { workspace = true, features = ["std"] }
 libc = { workspace = true }
 log = { workspace = true }
 netns-rs = { workspace = true }
-object = { workspace = true }
+object = { workspace = true, features = ["elf", "read_core", "std"] }
+rand = { workspace = true, features = ["std", "std_rng"] }
 rbpf = { workspace = true }
 test-case = { workspace = true }
-tokio = { workspace = true, features = ["macros", "time"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
 
 [build-dependencies]
 cargo_metadata = { workspace = true }
