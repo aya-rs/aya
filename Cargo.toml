@@ -60,6 +60,7 @@ bytes = { version = "1", default-features = false }
 cargo_metadata = { version = "0.15.4", default-features = false }
 clap = { version = "4", default-features = false }
 core-error = { version = "0.0.0", default-features = false }
+epoll = { version = "4.3.3", default-features = false }
 env_logger = { version = "0.10", default-features = false }
 futures = { version = "0.3.12", default-features = false }
 hashbrown = { version = "0.14", default-features = false }
@@ -73,6 +74,7 @@ object = { version = "0.31", default-features = false }
 parking_lot = { version = "0.12.0", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
 quote = { version = "1", default-features = false }
+rand = { version = "0.8", default-features = false }
 rbpf = { version = "0.2.0", default-features = false }
 syn = { version = "2", default-features = false }
 tempfile = { version = "3", default-features = false }
