@@ -81,6 +81,7 @@ pub mod hash_map;
 pub mod lpm_trie;
 pub mod perf;
 pub mod queue;
+pub mod ring_buf;
 pub mod sock;
 pub mod stack;
 pub mod stack_trace;
@@ -95,6 +96,7 @@ pub use lpm_trie::LpmTrie;
 pub use perf::AsyncPerfEventArray;
 pub use perf::PerfEventArray;
 pub use queue::Queue;
+pub use ring_buf::RingBuf;
 pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
@@ -280,7 +282,9 @@ pub enum Map {
     ProgramArray(MapData),
     /// A [`Queue`] map.
     Queue(MapData),
-    /// A [`SockHash`] map.
+    /// A [`RingBuf`] map.
+    RingBuf(MapData),
+    /// A [`SockHash`] map
     SockHash(MapData),
     /// A [`SockMap`] map.
     SockMap(MapData),
@@ -312,6 +316,7 @@ impl Map {
             Self::PerfEventArray(map) => map.obj.map_type(),
             Self::ProgramArray(map) => map.obj.map_type(),
             Self::Queue(map) => map.obj.map_type(),
+            Self::RingBuf(map) => map.obj.map_type(),
             Self::SockHash(map) => map.obj.map_type(),
             Self::SockMap(map) => map.obj.map_type(),
             Self::Stack(map) => map.obj.map_type(),
@@ -341,6 +346,7 @@ impl Map {
             Self::PerfEventArray(map) => map.pin(path),
             Self::ProgramArray(map) => map.pin(path),
             Self::Queue(map) => map.pin(path),
+            Self::RingBuf(map) => map.pin(path),
             Self::SockHash(map) => map.pin(path),
             Self::SockMap(map) => map.pin(path),
             Self::Stack(map) => map.pin(path),
@@ -458,6 +464,7 @@ impl_try_from_map!(() {
     DevMapHash,
     PerfEventArray,
     ProgramArray,
+    RingBuf,
     SockMap,
     StackTraceMap,
     XskMap,
