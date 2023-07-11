@@ -45,6 +45,10 @@ fn main() {
     const C_BPF_PROBES: &[(&str, &str)] = &[
         ("ext.bpf.c", "ext.bpf.o"),
         ("main.bpf.c", "main.bpf.o"),
+        (
+            "ring_buf_sched_tracepoint.bpf.c",
+            "ring_buf_sched_tracepoint.bpf.o",
+        ),
         ("multimap-btf.bpf.c", "multimap-btf.bpf.o"),
         ("text_64_64_reloc.c", "text_64_64_reloc.o"),
     ];
