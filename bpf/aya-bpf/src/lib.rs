@@ -8,6 +8,11 @@
     html_logo_url = "https://aya-rs.dev/assets/images/crabby.svg",
     html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
+#![cfg_attr(
+    feature = "const_assert",
+    allow(incomplete_features),
+    feature(generic_const_exprs)
+)]
 #![cfg_attr(unstable, feature(never_type))]
 #![cfg_attr(target_arch = "bpf", feature(asm_experimental_arch))]
 #![allow(clippy::missing_safety_doc)]
