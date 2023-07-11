@@ -50,7 +50,7 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
 ) -> Result<T::Id, ProgramError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
     // Use debugfs to create probe
-    if KernelVersion::current().unwrap() >= KernelVersion::new(4, 17, 0) {
+    if KernelVersion::current().unwrap() < KernelVersion::new(4, 17, 0) {
         let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
         let link = T::from(perf_attach_debugfs(
             program_data.fd_or_err()?,
