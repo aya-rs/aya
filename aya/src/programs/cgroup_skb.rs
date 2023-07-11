@@ -1,6 +1,6 @@
 //! Cgroup skb programs.
 
-use procfs::KernelVersion;
+use crate::util::KernelVersion;
 use std::{
     hash::Hash,
     os::fd::{AsRawFd, RawFd},

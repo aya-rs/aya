@@ -3,8 +3,10 @@ use std::{
     collections::BTreeMap,
     ffi::CString,
     fs::{self, File},
-    io::{self, BufReader},
-    mem, slice,
+    io::{self, BufRead, BufReader},
+    mem,
+    num::ParseIntError,
+    slice,
     str::FromStr,
 };
 
@@ -15,7 +17,65 @@ use crate::{
 
 use libc::{if_nametoindex, sysconf, _SC_PAGESIZE};
 
-use io::BufRead;
+/// Represents a kernel version, in major.minor.release version.
+// Adapted from https://docs.rs/procfs/latest/procfs/sys/kernel/struct.Version.html.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd)]
+pub struct KernelVersion {
+    pub(crate) major: u8,
+    pub(crate) minor: u8,
+    pub(crate) patch: u16,
+}
+
+impl KernelVersion {
+    /// Constructor.
+    pub fn new(major: u8, minor: u8, patch: u16) -> Self {
+        Self {
+            major,
+            minor,
+            patch,
+        }
+    }
+
+    /// Returns the kernel version of the currently running kernel.
+    ///
+    /// This is taken from `/proc/sys/kernel/osrelease`;
+    pub fn current() -> Result<Self, String> {
+        let s =
+            fs::read_to_string("/proc/sys/kernel/osrelease").map_err(|err| format!("{err:?}"))?;
+        let s = s.as_str();
+
+        let pos = s.find(|c: char| c != '.' && !c.is_ascii_digit());
+        let kernel = if let Some(pos) = pos {
+            let (s, _) = s.split_at(pos);
+            s
+        } else {
+            s
+        };
+        let mut kernel_split = kernel.split('.');
+
+        let major = kernel_split
+            .next()
+            .ok_or("Missing major version component")?;
+        let minor = kernel_split
+            .next()
+            .ok_or("Missing minor version component")?;
+        let patch = kernel_split
+            .next()
+            .ok_or("Missing patch version component")?;
+
+        let major = major
+            .parse()
+            .map_err(|ParseIntError { .. }| "Failed to parse major version")?;
+        let minor = minor
+            .parse()
+            .map_err(|ParseIntError { .. }| "Failed to parse minor version")?;
+        let patch = patch
+            .parse()
+            .map_err(|ParseIntError { .. }| "Failed to parse patch version")?;
+
+        Ok(Self::new(major, minor, patch))
+    }
+}
 
 const ONLINE_CPUS: &str = "/sys/devices/system/cpu/online";
 pub(crate) const POSSIBLE_CPUS: &str = "/sys/devices/system/cpu/possible";

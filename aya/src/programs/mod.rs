@@ -64,8 +64,8 @@ pub mod uprobe;
 mod utils;
 pub mod xdp;
 
+use crate::util::KernelVersion;
 use libc::ENOSPC;
-use procfs::KernelVersion;
 use std::{
     ffi::CString,
     io,

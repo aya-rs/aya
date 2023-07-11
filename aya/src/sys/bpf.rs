@@ -7,12 +7,12 @@ use std::{
     slice,
 };
 
+use crate::util::KernelVersion;
 use libc::{c_char, c_long, close, ENOENT, ENOSPC};
 use obj::{
     maps::{bpf_map_def, LegacyMap},
     BpfSectionKind,
 };
-use procfs::KernelVersion;
 
 use crate::{
     generated::{

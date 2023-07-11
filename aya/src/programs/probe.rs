@@ -1,5 +1,5 @@
+use crate::util::KernelVersion;
 use libc::pid_t;
-use procfs::KernelVersion;
 use std::{
     fs::{self, OpenOptions},
     io::{self, Write},

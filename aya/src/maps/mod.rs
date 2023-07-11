@@ -47,9 +47,9 @@ use std::{
     ptr,
 };
 
+use crate::util::KernelVersion;
 use libc::{getrlimit, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
-use procfs::KernelVersion;
 use thiserror::Error;
 
 use crate::{

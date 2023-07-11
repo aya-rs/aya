@@ -1,9 +1,8 @@
 use anyhow::{bail, Context as _, Result};
-use procfs::KernelVersion;
 use std::{path::PathBuf, process::Command, thread::sleep, time::Duration};
 use tempfile::TempDir;
 
-use aya::{maps::Array, programs::TracePoint, BpfLoader, Btf, Endianness};
+use aya::{maps::Array, programs::TracePoint, util::KernelVersion, BpfLoader, Btf, Endianness};
 
 // In the tests below we often use values like 0xAAAAAAAA or -0x7AAAAAAA. Those values have no
 // special meaning, they just have "nice" bit patterns that can be helpful while debugging.
