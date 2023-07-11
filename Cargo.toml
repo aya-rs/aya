@@ -60,9 +60,11 @@ bitflags = { version = "2.2.1", default-features = false }
 bytes = { version = "1", default-features = false }
 cargo_metadata = { version = "0.17.0", default-features = false }
 clap = { version = "4", default-features = false }
+const-assert = { version = "1.0.1", default-features = false }
 core-error = { version = "0.0.0", default-features = false }
 dialoguer = { version = "0.10", default-features = false }
 diff = { version = "0.1.13", default-features = false }
+epoll = { version = "4.3.3", default-features = false }
 env_logger = { version = "0.10", default-features = false }
 futures = { version = "0.3.12", default-features = false }
 hashbrown = { version = "0.14", default-features = false }
@@ -79,6 +81,7 @@ proc-macro2 = { version = "1", default-features = false }
 proc-macro-error = { version = "1.0", default-features = false }
 public-api = { version = "0.31.2", default-features = false }
 quote = { version = "1", default-features = false }
+rand = { version = "0.8", default-features = false }
 rbpf = { version = "0.2.0", default-features = false }
 rustdoc-json = { version = "0.8.6", default-features = false }
 rustup-toolchain = { version = "0.1.5", default-features = false }
