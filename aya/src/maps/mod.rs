@@ -50,6 +50,7 @@ use std::{
 use crate::util::KernelVersion;
 use libc::{getrlimit, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
+use obj::maps::InvalidMapTypeError;
 use thiserror::Error;
 
 use crate::{
@@ -183,6 +184,16 @@ pub enum MapError {
         #[source]
         error: PinError,
     },
+}
+
+// Note that this is not just derived using #[from] because InvalidMapTypeError cannot implement
+// Error due the the fact that aya-obj is nostd and error_in_core is not stabilized
+// (https://github.com/rust-lang/rust/issues/103765).
+impl From<InvalidMapTypeError> for MapError {
+    fn from(e: InvalidMapTypeError) -> Self {
+        let InvalidMapTypeError { map_type } = e;
+        MapError::InvalidMapType { map_type }
+    }
 }
 
 /// A map file descriptor.
