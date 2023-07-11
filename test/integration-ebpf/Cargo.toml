@@ -35,3 +35,7 @@ path = "src/relocations.rs"
 [[bin]]
 name = "bpf_probe_read"
 path = "src/bpf_probe_read.rs"
+
+[[bin]]
+name = "ring_buf"
+path = "src/ring_buf.rs"
