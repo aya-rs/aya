@@ -9,9 +9,11 @@ anyhow = "1"
 aya = { path = "../../aya" }
 aya-log = { path = "../../aya-log" }
 aya-obj = { path = "../../aya-obj" }
+futures = "0.3.28"
 libc = { version = "0.2.105" }
 log = "0.4"
 object = { version = "0.31", default-features = false, features = ["std", "read_core", "elf"] }
+rand = { version = "0.8.5" }
 rbpf = "0.2.0"
 tempfile = "3.3.0"
 tokio = { version = "1.24", features = ["rt", "rt-multi-thread", "sync", "time"] }
