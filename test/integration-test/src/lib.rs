@@ -15,6 +15,9 @@ pub const TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/test")
 pub const RELOCATIONS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/relocations"));
 pub const BPF_PROBE_READ: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/bpf_probe_read"));
+pub const RING_BUF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ring_buf"));
+pub const RING_BUF_SCHED_TRACEPOINT: &[u8] =
+    include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ring_buf_sched_tracepoint.bpf.o"));
 
 #[cfg(test)]
 mod tests;
