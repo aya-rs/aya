@@ -8,6 +8,14 @@ edition = "2021"
 aya-bpf-cty = { path = "../aya-bpf-cty" }
 aya-bpf-macros = { path = "../../aya-bpf-macros" }
 aya-bpf-bindings = { path = "../aya-bpf-bindings" }
+const-assert = { workspace = true, optional = true }
 
 [build-dependencies]
 rustversion = { workspace = true }
+
+[features]
+default = []
+# TODO(https://github.com/rust-lang/rust/issues/76560): Always utilize the
+# logic gated behind this feature. This is not currently possible because the
+# underlying `const_generic_exprs` language feature is still incomplete.
+const_assert = ["const-assert"]
