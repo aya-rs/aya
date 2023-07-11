@@ -618,12 +618,8 @@ impl<'a> BpfLoader<'a> {
 }
 
 fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
-    let name = data.0;
-    let map = data.1;
-    let map_type =
-        bpf_map_type::try_from(map.obj.map_type()).map_err(|e| MapError::InvalidMapType {
-            map_type: e.map_type,
-        })?;
+    let (name, map) = data;
+    let map_type = bpf_map_type::try_from(map.obj.map_type()).map_err(Into::<MapError>::into)?;
     let map = match map_type {
         BPF_MAP_TYPE_ARRAY => Ok(Map::Array(map)),
         BPF_MAP_TYPE_PERCPU_ARRAY => Ok(Map::PerCpuArray(map)),
