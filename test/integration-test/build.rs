@@ -67,6 +67,7 @@ fn main() {
     const C_BPF: &[(&str, bool)] = &[
         ("ext.bpf.c", false),
         ("main.bpf.c", false),
+        ("ring_buf_sched_tracepoint.bpf.c", false),
         ("multimap-btf.bpf.c", false),
         ("reloc.bpf.c", true),
         ("text_64_64_reloc.c", false),

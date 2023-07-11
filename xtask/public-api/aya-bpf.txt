@@ -448,6 +448,65 @@ impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::queue::Queue<T> where T: c
 pub fn aya_bpf::maps::queue::Queue<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_bpf::maps::queue::Queue<T>
 pub fn aya_bpf::maps::queue::Queue<T>::from(t: T) -> T
+pub mod aya_bpf::maps::ring_buf
+#[repr(transparent)] pub struct aya_bpf::maps::ring_buf::RingBuf
+impl aya_bpf::maps::ring_buf::RingBuf
+pub fn aya_bpf::maps::ring_buf::RingBuf::output<T: core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
+pub const fn aya_bpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
+pub fn aya_bpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
+pub fn aya_bpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_bpf::maps::ring_buf::RingBufEntry<T>> where const_assert::Assert<{ _ }>: const_assert::IsTrue
+pub const fn aya_bpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
+impl core::marker::Sync for aya_bpf::maps::ring_buf::RingBuf
+impl core::marker::Send for aya_bpf::maps::ring_buf::RingBuf
+impl core::marker::Unpin for aya_bpf::maps::ring_buf::RingBuf
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_bpf::maps::ring_buf::RingBuf
+impl core::panic::unwind_safe::UnwindSafe for aya_bpf::maps::ring_buf::RingBuf
+impl<T, U> core::convert::Into<U> for aya_bpf::maps::ring_buf::RingBuf where U: core::convert::From<T>
+pub fn aya_bpf::maps::ring_buf::RingBuf::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::maps::ring_buf::RingBuf where U: core::convert::Into<T>
+pub type aya_bpf::maps::ring_buf::RingBuf::Error = core::convert::Infallible
+pub fn aya_bpf::maps::ring_buf::RingBuf::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::maps::ring_buf::RingBuf where U: core::convert::TryFrom<T>
+pub type aya_bpf::maps::ring_buf::RingBuf::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::maps::ring_buf::RingBuf::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::maps::ring_buf::RingBuf where T: 'static + core::marker::Sized
+pub fn aya_bpf::maps::ring_buf::RingBuf::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::maps::ring_buf::RingBuf where T: core::marker::Sized
+pub fn aya_bpf::maps::ring_buf::RingBuf::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::ring_buf::RingBuf where T: core::marker::Sized
+pub fn aya_bpf::maps::ring_buf::RingBuf::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::maps::ring_buf::RingBuf
+pub fn aya_bpf::maps::ring_buf::RingBuf::from(t: T) -> T
+pub struct aya_bpf::maps::ring_buf::RingBufEntry<T: 'static>(_)
+impl<T> aya_bpf::maps::ring_buf::RingBufEntry<T>
+pub fn aya_bpf::maps::ring_buf::RingBufEntry<T>::discard(self, flags: u64)
+pub fn aya_bpf::maps::ring_buf::RingBufEntry<T>::submit(self, flags: u64)
+impl<T> core::ops::deref::Deref for aya_bpf::maps::ring_buf::RingBufEntry<T>
+pub type aya_bpf::maps::ring_buf::RingBufEntry<T>::Target = core::mem::maybe_uninit::MaybeUninit<T>
+pub fn aya_bpf::maps::ring_buf::RingBufEntry<T>::deref(&self) -> &Self::Target
+impl<T> core::ops::deref::DerefMut for aya_bpf::maps::ring_buf::RingBufEntry<T>
+pub fn aya_bpf::maps::ring_buf::RingBufEntry<T>::deref_mut(&mut self) -> &mut Self::Target
+impl<T> core::marker::Send for aya_bpf::maps::ring_buf::RingBufEntry<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya_bpf::maps::ring_buf::RingBufEntry<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya_bpf::maps::ring_buf::RingBufEntry<T>
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_bpf::maps::ring_buf::RingBufEntry<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> !core::panic::unwind_safe::UnwindSafe for aya_bpf::maps::ring_buf::RingBufEntry<T>
+impl<T, U> core::convert::Into<U> for aya_bpf::maps::ring_buf::RingBufEntry<T> where U: core::convert::From<T>
+pub fn aya_bpf::maps::ring_buf::RingBufEntry<T>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::maps::ring_buf::RingBufEntry<T> where U: core::convert::Into<T>
+pub type aya_bpf::maps::ring_buf::RingBufEntry<T>::Error = core::convert::Infallible
+pub fn aya_bpf::maps::ring_buf::RingBufEntry<T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::maps::ring_buf::RingBufEntry<T> where U: core::convert::TryFrom<T>
+pub type aya_bpf::maps::ring_buf::RingBufEntry<T>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::maps::ring_buf::RingBufEntry<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::maps::ring_buf::RingBufEntry<T> where T: 'static + core::marker::Sized
+pub fn aya_bpf::maps::ring_buf::RingBufEntry<T>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::maps::ring_buf::RingBufEntry<T> where T: core::marker::Sized
+pub fn aya_bpf::maps::ring_buf::RingBufEntry<T>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::ring_buf::RingBufEntry<T> where T: core::marker::Sized
+pub fn aya_bpf::maps::ring_buf::RingBufEntry<T>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::maps::ring_buf::RingBufEntry<T>
+pub fn aya_bpf::maps::ring_buf::RingBufEntry<T>::from(t: T) -> T
 pub mod aya_bpf::maps::sock_hash
 #[repr(transparent)] pub struct aya_bpf::maps::sock_hash::SockHash<K>
 impl<K> aya_bpf::maps::sock_hash::SockHash<K>
@@ -903,6 +962,34 @@ impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::queue::Queue<T> where T: c
 pub fn aya_bpf::maps::queue::Queue<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_bpf::maps::queue::Queue<T>
 pub fn aya_bpf::maps::queue::Queue<T>::from(t: T) -> T
+#[repr(transparent)] pub struct aya_bpf::maps::RingBuf
+impl aya_bpf::maps::ring_buf::RingBuf
+pub fn aya_bpf::maps::ring_buf::RingBuf::output<T: core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
+pub const fn aya_bpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
+pub fn aya_bpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
+pub fn aya_bpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_bpf::maps::ring_buf::RingBufEntry<T>> where const_assert::Assert<{ _ }>: const_assert::IsTrue
+pub const fn aya_bpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
+impl core::marker::Sync for aya_bpf::maps::ring_buf::RingBuf
+impl core::marker::Send for aya_bpf::maps::ring_buf::RingBuf
+impl core::marker::Unpin for aya_bpf::maps::ring_buf::RingBuf
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_bpf::maps::ring_buf::RingBuf
+impl core::panic::unwind_safe::UnwindSafe for aya_bpf::maps::ring_buf::RingBuf
+impl<T, U> core::convert::Into<U> for aya_bpf::maps::ring_buf::RingBuf where U: core::convert::From<T>
+pub fn aya_bpf::maps::ring_buf::RingBuf::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::maps::ring_buf::RingBuf where U: core::convert::Into<T>
+pub type aya_bpf::maps::ring_buf::RingBuf::Error = core::convert::Infallible
+pub fn aya_bpf::maps::ring_buf::RingBuf::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::maps::ring_buf::RingBuf where U: core::convert::TryFrom<T>
+pub type aya_bpf::maps::ring_buf::RingBuf::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::maps::ring_buf::RingBuf::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::maps::ring_buf::RingBuf where T: 'static + core::marker::Sized
+pub fn aya_bpf::maps::ring_buf::RingBuf::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::maps::ring_buf::RingBuf where T: core::marker::Sized
+pub fn aya_bpf::maps::ring_buf::RingBuf::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::ring_buf::RingBuf where T: core::marker::Sized
+pub fn aya_bpf::maps::ring_buf::RingBuf::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::maps::ring_buf::RingBuf
+pub fn aya_bpf::maps::ring_buf::RingBuf::from(t: T) -> T
 #[repr(transparent)] pub struct aya_bpf::maps::SockHash<K>
 impl<K> aya_bpf::maps::sock_hash::SockHash<K>
 pub const fn aya_bpf::maps::sock_hash::SockHash<K>::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::sock_hash::SockHash<K>
