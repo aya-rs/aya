@@ -39,7 +39,8 @@ fn set_result_backward(index: u32, value: u64) {
     set_result(index, value);
 }
 
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
-    unsafe { core::hint::unreachable_unchecked() }
+    loop {}
 }

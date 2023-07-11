@@ -25,7 +25,8 @@ pub fn test_unload_kpr(_ctx: ProbeContext) -> u32 {
     0
 }
 
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
-    unsafe { core::hint::unreachable_unchecked() }
+    loop {}
 }

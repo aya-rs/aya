@@ -45,6 +45,7 @@ use crate::{
 /// ```
 
 #[doc(alias = "BPF_MAP_TYPE_LPM_TRIE")]
+#[derive(Debug)]
 pub struct LpmTrie<T, K, V> {
     inner: T,
     _k: PhantomData<K>,
@@ -207,6 +208,7 @@ mod tests {
         sys::{override_syscall, SysResult, Syscall},
     };
     use libc::{EFAULT, ENOENT};
+    use matches::assert_matches;
     use std::{io, mem, net::Ipv4Addr};
 
     fn new_obj_map() -> obj::Map {
@@ -237,13 +239,13 @@ mod tests {
             pinned: false,
             btf_fd: None,
         };
-        assert!(matches!(
+        assert_matches!(
             LpmTrie::<_, u16, u32>::new(&map),
             Err(MapError::InvalidKeySize {
                 size: 6,
                 expected: 8 // four bytes for prefixlen and four bytes for data.
             })
-        ));
+        );
     }
 
     #[test]
@@ -254,13 +256,13 @@ mod tests {
             pinned: false,
             btf_fd: None,
         };
-        assert!(matches!(
+        assert_matches!(
             LpmTrie::<_, u32, u16>::new(&map),
             Err(MapError::InvalidValueSize {
                 size: 2,
                 expected: 4
             })
-        ));
+        );
     }
 
     #[test]
@@ -286,10 +288,10 @@ mod tests {
 
         let map = Map::PerfEventArray(map_data);
 
-        assert!(matches!(
+        assert_matches!(
             LpmTrie::<_, u32, u32>::try_from(&map),
             Err(MapError::InvalidMapType { .. })
-        ));
+        );
     }
 
     #[test]
@@ -301,10 +303,10 @@ mod tests {
             btf_fd: None,
         };
 
-        assert!(matches!(
+        assert_matches!(
             LpmTrie::<_, u32, u32>::new(&mut map),
             Err(MapError::NotCreated { .. })
-        ));
+        );
     }
 
     #[test]
@@ -345,10 +347,10 @@ mod tests {
         let mut trie = LpmTrie::<_, u32, u32>::new(&mut map).unwrap();
         let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
         let key = Key::new(16, u32::from(ipaddr).to_be());
-        assert!(matches!(
+        assert_matches!(
             trie.insert(&key, 1, 0),
             Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_update_elem" && io_error.raw_os_error() == Some(EFAULT)
-        ));
+        );
     }
 
     #[test]
@@ -387,10 +389,10 @@ mod tests {
         let mut trie = LpmTrie::<_, u32, u32>::new(&mut map).unwrap();
         let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
         let key = Key::new(16, u32::from(ipaddr).to_be());
-        assert!(matches!(
+        assert_matches!(
             trie.remove(&key),
             Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_delete_elem" && io_error.raw_os_error() == Some(EFAULT)
-        ));
+        );
     }
 
     #[test]
@@ -428,10 +430,10 @@ mod tests {
         let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
         let key = Key::new(16, u32::from(ipaddr).to_be());
 
-        assert!(matches!(
+        assert_matches!(
             trie.get(&key, 0),
             Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
-        ));
+        );
     }
 
     #[test]
@@ -453,6 +455,6 @@ mod tests {
         let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
         let key = Key::new(16, u32::from(ipaddr).to_be());
 
-        assert!(matches!(trie.get(&key, 0), Err(MapError::KeyNotFound)));
+        assert_matches!(trie.get(&key, 0), Err(MapError::KeyNotFound));
     }
 }

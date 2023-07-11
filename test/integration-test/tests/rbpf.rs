@@ -10,10 +10,7 @@ fn run_with_rbpf() {
     let object = Object::parse(bytes).unwrap();
 
     assert_eq!(object.programs.len(), 1);
-    assert!(matches!(
-        object.programs["pass"].section,
-        ProgramSection::Xdp { .. }
-    ));
+    matches::assert_matches!(object.programs["pass"].section, ProgramSection::Xdp { .. });
     assert_eq!(object.programs["pass"].section.name(), "pass");
 
     let instructions = &object
@@ -42,10 +39,10 @@ fn use_map_with_rbpf() {
     let mut object = Object::parse(bytes).unwrap();
 
     assert_eq!(object.programs.len(), 1);
-    assert!(matches!(
+    matches::assert_matches!(
         object.programs["tracepoint"].section,
         ProgramSection::TracePoint { .. }
-    ));
+    );
     assert_eq!(object.programs["tracepoint"].section.name(), "tracepoint");
 
     // Initialize maps:

@@ -102,7 +102,7 @@ impl Features {
 }
 
 /// The loaded object file representation
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Object {
     /// The endianness
     pub endianness: Endianness,
@@ -1537,66 +1537,57 @@ mod tests {
 
     #[test]
     fn test_parse_generic_error() {
-        assert!(matches!(
-            Object::parse(&b"foo"[..]),
-            Err(ParseError::ElfError(_))
-        ))
+        assert_matches!(Object::parse(&b"foo"[..]), Err(ParseError::ElfError(_)))
     }
 
     #[test]
     fn test_parse_license() {
-        assert!(matches!(
-            parse_license(b""),
-            Err(ParseError::InvalidLicense { .. })
-        ));
+        assert_matches!(parse_license(b""), Err(ParseError::InvalidLicense { .. }));
 
-        assert!(matches!(
-            parse_license(b"\0"),
-            Err(ParseError::InvalidLicense { .. })
-        ));
+        assert_matches!(parse_license(b"\0"), Err(ParseError::InvalidLicense { .. }));
 
-        assert!(matches!(
+        assert_matches!(
             parse_license(b"GPL"),
             Err(ParseError::MissingLicenseNullTerminator { .. })
-        ));
+        );
 
         assert_eq!(parse_license(b"GPL\0").unwrap().to_str().unwrap(), "GPL");
     }
 
     #[test]
     fn test_parse_version() {
-        assert!(matches!(
+        assert_matches!(
             parse_version(b"", Endianness::Little),
             Err(ParseError::InvalidKernelVersion { .. })
-        ));
+        );
 
-        assert!(matches!(
+        assert_matches!(
             parse_version(b"123", Endianness::Little),
             Err(ParseError::InvalidKernelVersion { .. })
-        ));
+        );
 
-        assert!(matches!(
+        assert_matches!(
             parse_version(&0xFFFF_FFFEu32.to_le_bytes(), Endianness::Little),
             Ok(None)
-        ));
+        );
 
-        assert!(matches!(
+        assert_matches!(
             parse_version(&0xFFFF_FFFEu32.to_be_bytes(), Endianness::Big),
             Ok(None)
-        ));
+        );
 
-        assert!(matches!(
+        assert_matches!(
             parse_version(&1234u32.to_le_bytes(), Endianness::Little),
             Ok(Some(1234))
-        ));
+        );
     }
 
     #[test]
     fn test_parse_map_def_error() {
-        assert!(matches!(
+        assert_matches!(
             parse_map_def("foo", &[]),
             Err(ParseError::InvalidMapDefinition { .. })
-        ));
+        );
     }
 
     #[test]
@@ -1652,7 +1643,7 @@ mod tests {
     #[test]
     fn test_parse_map_data() {
         let map_data = b"map data";
-        assert!(matches!(
+        assert_matches!(
             parse_data_map_section(
                 &fake_section(
                     BpfSectionKind::Data,
@@ -1675,7 +1666,7 @@ mod tests {
                 },
                 data,
             })) if data == map_data && value_size == map_data.len() as u32
-        ))
+        )
     }
 
     fn fake_obj() -> Object {

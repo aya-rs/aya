@@ -438,7 +438,9 @@ fn read_str_bytes(len: i64, dest: &mut [u8]) -> Result<&[u8], c_long> {
     // len includes the NULL terminator but not for b"\0" for which the kernel
     // returns len=0. So we do a saturating sub and for b"\0" we return the
     // empty slice, for all other cases we omit the terminator.
-    Ok(&dest[..(len as usize).saturating_sub(1)])
+    let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
+    let len = len.saturating_sub(1);
+    dest.get(..len).ok_or(-1)
 }
 
 /// Read a null-terminated string from _kernel space_ stored at `src` into `dest`.
