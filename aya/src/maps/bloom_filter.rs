@@ -30,6 +30,7 @@ use crate::{
 /// ```
 
 #[doc(alias = "BPF_MAP_TYPE_BLOOM_FILTER")]
+#[derive(Debug)]
 pub struct BloomFilter<T, V: Pod> {
     inner: T,
     _v: PhantomData<V>,
@@ -88,6 +89,7 @@ mod tests {
         sys::{override_syscall, SysResult, Syscall},
     };
     use libc::{EFAULT, ENOENT};
+    use matches::assert_matches;
     use std::io;
 
     fn new_obj_map() -> obj::Map {
@@ -118,13 +120,13 @@ mod tests {
             pinned: false,
             btf_fd: None,
         };
-        assert!(matches!(
+        assert_matches!(
             BloomFilter::<_, u16>::new(&map),
             Err(MapError::InvalidValueSize {
                 size: 2,
                 expected: 4
             })
-        ));
+        );
     }
 
     #[test]
@@ -150,10 +152,10 @@ mod tests {
 
         let map = Map::PerfEventArray(map_data);
 
-        assert!(matches!(
+        assert_matches!(
             BloomFilter::<_, u32>::try_from(&map),
             Err(MapError::InvalidMapType { .. })
-        ));
+        );
     }
 
     #[test]
@@ -165,10 +167,10 @@ mod tests {
             btf_fd: None,
         };
 
-        assert!(matches!(
+        assert_matches!(
             BloomFilter::<_, u32>::new(&mut map),
             Err(MapError::NotCreated { .. })
-        ));
+        );
     }
 
     #[test]
@@ -208,10 +210,10 @@ mod tests {
         };
         let bloom_filter = BloomFilter::<_, u32>::new(&mut map).unwrap();
 
-        assert!(matches!(
+        assert_matches!(
             bloom_filter.insert(1, 0),
             Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_push_elem" && io_error.raw_os_error() == Some(EFAULT)
-        ));
+        );
     }
 
     #[test]
@@ -246,10 +248,10 @@ mod tests {
         };
         let bloom_filter = BloomFilter::<_, u32>::new(&map).unwrap();
 
-        assert!(matches!(
+        assert_matches!(
             bloom_filter.contains(&1, 0),
             Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
-        ));
+        );
     }
 
     #[test]
@@ -269,9 +271,6 @@ mod tests {
         };
         let bloom_filter = BloomFilter::<_, u32>::new(&map).unwrap();
 
-        assert!(matches!(
-            bloom_filter.contains(&1, 0),
-            Err(MapError::ElementNotFound)
-        ));
+        assert_matches!(bloom_filter.contains(&1, 0), Err(MapError::ElementNotFound));
     }
 }

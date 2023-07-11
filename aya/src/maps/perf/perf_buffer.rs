@@ -83,6 +83,7 @@ pub struct Events {
     pub lost: usize,
 }
 
+#[derive(Debug)]
 pub(crate) struct PerfBuffer {
     buf: AtomicPtr<perf_event_mmap_page>,
     size: usize,
@@ -318,6 +319,7 @@ mod tests {
         generated::perf_event_mmap_page,
         sys::{override_syscall, Syscall, TEST_MMAP_RET},
     };
+    use matches::assert_matches;
     use std::{fmt::Debug, mem};
 
     const PAGE_SIZE: usize = 4096;
@@ -336,18 +338,18 @@ mod tests {
 
     #[test]
     fn test_invalid_page_count() {
-        assert!(matches!(
+        assert_matches!(
             PerfBuffer::open(1, PAGE_SIZE, 0),
             Err(PerfBufferError::InvalidPageCount { .. })
-        ));
-        assert!(matches!(
+        );
+        assert_matches!(
             PerfBuffer::open(1, PAGE_SIZE, 3),
             Err(PerfBufferError::InvalidPageCount { .. })
-        ));
-        assert!(matches!(
+        );
+        assert_matches!(
             PerfBuffer::open(1, PAGE_SIZE, 5),
             Err(PerfBufferError::InvalidPageCount { .. })
-        ));
+        );
     }
 
     #[test]
@@ -359,10 +361,7 @@ mod tests {
         fake_mmap(&mut mmapped_buf);
 
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
-        assert!(matches!(
-            buf.read_events(&mut []),
-            Err(PerfBufferError::NoBuffers)
-        ))
+        assert_matches!(buf.read_events(&mut []), Err(PerfBufferError::NoBuffers))
     }
 
     #[test]

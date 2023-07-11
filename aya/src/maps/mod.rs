@@ -833,6 +833,7 @@ impl<T: Pod> Deref for PerCpuValues<T> {
 #[cfg(test)]
 mod tests {
     use libc::EFAULT;
+    use matches::assert_matches;
 
     use crate::{
         bpf_map_def,
@@ -880,12 +881,9 @@ mod tests {
         });
 
         let mut map = new_map();
-        assert!(matches!(map.create("foo"), Ok(42)));
+        assert_matches!(map.create("foo"), Ok(42));
         assert_eq!(map.fd, Some(42));
-        assert!(matches!(
-            map.create("foo"),
-            Err(MapError::AlreadyCreated { .. })
-        ));
+        assert_matches!(map.create("foo"), Err(MapError::AlreadyCreated { .. }));
     }
 
     #[test]
@@ -894,7 +892,7 @@ mod tests {
 
         let mut map = new_map();
         let ret = map.create("foo");
-        assert!(matches!(ret, Err(MapError::CreateError { .. })));
+        assert_matches!(ret, Err(MapError::CreateError { .. }));
         if let Err(MapError::CreateError {
             name,
             code,

@@ -1,5 +1,4 @@
 mod build_ebpf;
-mod build_test;
 mod codegen;
 mod docs;
 mod run;
@@ -18,8 +17,6 @@ pub struct XtaskOptions {
 enum Command {
     Codegen(codegen::Options),
     Docs,
-    BuildIntegrationTest(build_test::Options),
-    BuildIntegrationTestEbpf(build_ebpf::BuildEbpfOptions),
     IntegrationTest(run::Options),
 }
 
@@ -29,8 +26,6 @@ fn main() {
     let ret = match command {
         Command::Codegen(opts) => codegen::codegen(opts),
         Command::Docs => docs::docs(),
-        Command::BuildIntegrationTest(opts) => build_test::build_test(opts),
-        Command::BuildIntegrationTestEbpf(opts) => build_ebpf::build_ebpf(opts),
         Command::IntegrationTest(opts) => run::run(opts),
     };
 

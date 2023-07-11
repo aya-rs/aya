@@ -329,6 +329,7 @@ pub enum LinkError {
 
 #[cfg(test)]
 mod tests {
+    use matches::assert_matches;
     use std::{cell::RefCell, env, fs::File, mem, os::unix::io::AsRawFd, rc::Rc};
 
     use crate::{programs::ProgramError, sys::override_syscall};
@@ -394,10 +395,10 @@ mod tests {
         let mut links = LinkMap::new();
 
         links.insert(TestLink::new(1, 2)).unwrap();
-        assert!(matches!(
+        assert_matches!(
             links.insert(TestLink::new(1, 2)),
             Err(ProgramError::AlreadyAttached)
-        ));
+        );
     }
 
     #[test]
@@ -409,10 +410,7 @@ mod tests {
         let l1_id2 = l1.id();
         links.insert(TestLink::new(1, 2)).unwrap();
         links.remove(l1_id1).unwrap();
-        assert!(matches!(
-            links.remove(l1_id2),
-            Err(ProgramError::NotAttached)
-        ));
+        assert_matches!(links.remove(l1_id2), Err(ProgramError::NotAttached));
     }
 
     #[test]
