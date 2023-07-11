@@ -69,6 +69,7 @@ fn main() {
         ("main.bpf.c", false),
         ("multimap-btf.bpf.c", false),
         ("reloc.bpf.c", true),
+        ("ring_buf_sched_tracepoint.bpf.c", false),
         ("text_64_64_reloc.c", false),
     ];
 
