@@ -12,6 +12,7 @@ aya-obj = { path = "../../aya-obj" }
 libc = { version = "0.2.105" }
 log = "0.4"
 object = { version = "0.31", default-features = false, features = ["std", "read_core", "elf"] }
+rand = { version = "0.8.5" }
 rbpf = "0.2.0"
 regex = "1"
 tempfile = "3.3.0"
