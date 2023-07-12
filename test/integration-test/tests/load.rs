@@ -1,4 +1,3 @@
-use procfs::KernelVersion;
 use std::{convert::TryInto as _, thread, time};
 
 use aya::{
@@ -8,6 +7,7 @@ use aya::{
         links::{FdLink, PinnedLink},
         loaded_programs, KProbe, TracePoint, Xdp, XdpFlags,
     },
+    util::KernelVersion,
     Bpf,
 };
 

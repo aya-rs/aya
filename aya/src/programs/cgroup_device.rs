@@ -1,6 +1,6 @@
 //! Cgroup device programs.
 
-use procfs::KernelVersion;
+use crate::util::KernelVersion;
 use std::os::fd::{AsRawFd, RawFd};
 
 use crate::{

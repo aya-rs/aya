@@ -64,10 +64,9 @@ pub mod uprobe;
 mod utils;
 pub mod xdp;
 
+use crate::util::KernelVersion;
 use libc::ENOSPC;
-use procfs::KernelVersion;
 use std::{
-    borrow::Cow,
     ffi::CString,
     io,
     os::unix::io::{AsRawFd, RawFd},
@@ -143,7 +142,7 @@ pub enum ProgramError {
         #[source]
         io_error: io::Error,
         /// The error log produced by the kernel verifier.
-        verifier_log: Cow<'static, str>,
+        verifier_log: String,
     },
 
     /// A syscall failed.

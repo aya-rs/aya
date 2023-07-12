@@ -1,8 +1,7 @@
-use procfs::KernelVersion;
-
 use aya::{
     include_bytes_aligned,
     programs::{Extension, Xdp, XdpFlags},
+    util::KernelVersion,
     Bpf, BpfLoader,
 };
 

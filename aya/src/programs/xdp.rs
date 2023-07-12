@@ -1,8 +1,8 @@
 //! eXpress Data Path (XDP) programs.
 
+use crate::util::KernelVersion;
 use bitflags;
 use libc::if_nametoindex;
-use procfs::KernelVersion;
 use std::{convert::TryFrom, ffi::CString, hash::Hash, io, mem, os::unix::io::RawFd};
 use thiserror::Error;
 
