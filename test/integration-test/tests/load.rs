@@ -68,6 +68,7 @@ macro_rules! assert_loaded_and_linked {
     ($name:literal, $loaded:expr) => {
         for i in 0..(MAX_RETRIES + 1) {
             let id = loaded_programs()
+                .filter(|prog| prog.is_ok())
                 .find(|prog| prog.as_ref().unwrap().name() == $name.as_bytes())
                 .map(|prog| Some(prog.unwrap().id()));
             let mut linked = false;
@@ -94,7 +95,10 @@ macro_rules! assert_loaded_and_linked {
 macro_rules! assert_loaded {
     ($name:literal, $loaded:expr) => {
         for i in 0..(MAX_RETRIES + 1) {
-            let state = loaded_programs().any(|prog| prog.unwrap().name() == $name.as_bytes());
+            let state = loaded_programs()
+                .filter(|prog| prog.is_ok())
+                .any(|prog| prog.unwrap().name() == $name.as_bytes());
+
             if state == $loaded {
                 break;
             }
