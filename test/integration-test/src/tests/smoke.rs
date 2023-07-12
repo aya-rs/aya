@@ -12,7 +12,7 @@ fn xdp() {
         return;
     }
 
-    let mut bpf = Bpf::load(integration_test::PASS).unwrap();
+    let mut bpf = Bpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
     dispatcher.attach("lo", XdpFlags::default()).unwrap();
@@ -25,15 +25,12 @@ fn extension() {
         eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
         return;
     }
-    let mut bpf = Bpf::load(integration_test::MAIN).unwrap();
+    let mut bpf = Bpf::load(crate::MAIN).unwrap();
     let pass: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
     pass.attach("lo", XdpFlags::default()).unwrap();
 
-    let mut bpf = BpfLoader::new()
-        .extension("drop")
-        .load(integration_test::EXT)
-        .unwrap();
+    let mut bpf = BpfLoader::new().extension("drop").load(crate::EXT).unwrap();
     let drop_: &mut Extension = bpf.program_mut("drop").unwrap().try_into().unwrap();
     drop_.load(pass.fd().unwrap(), "xdp_pass").unwrap();
 }

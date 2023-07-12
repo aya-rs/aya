@@ -4,7 +4,7 @@ use aya::{programs::UProbe, Bpf};
 
 #[test]
 fn relocations() {
-    let bpf = load_and_attach("test_64_32_call_relocs", integration_test::RELOCATIONS);
+    let bpf = load_and_attach("test_64_32_call_relocs", crate::RELOCATIONS);
 
     trigger_relocations_program();
     std::thread::sleep(Duration::from_millis(100));
@@ -17,7 +17,7 @@ fn relocations() {
 
 #[test]
 fn text_64_64_reloc() {
-    let mut bpf = load_and_attach("test_text_64_64_reloc", integration_test::TEXT_64_64_RELOC);
+    let mut bpf = load_and_attach("test_text_64_64_reloc", crate::TEXT_64_64_RELOC);
 
     let mut m = aya::maps::Array::<_, u64>::try_from(bpf.map_mut("RESULTS").unwrap()).unwrap();
     m.set(0, 1, 0).unwrap();

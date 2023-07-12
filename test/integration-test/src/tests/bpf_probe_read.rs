@@ -68,7 +68,7 @@ fn set_user_buffer(bytes: &[u8], dest_len: usize) -> Bpf {
     let bpf = load_and_attach_uprobe(
         "test_bpf_probe_read_user_str_bytes",
         "trigger_bpf_probe_read_user",
-        integration_test::BPF_PROBE_READ,
+        crate::BPF_PROBE_READ,
     );
     trigger_bpf_probe_read_user(bytes.as_ptr(), dest_len);
     bpf
@@ -78,7 +78,7 @@ fn set_kernel_buffer(bytes: &[u8], dest_len: usize) -> Bpf {
     let mut bpf = load_and_attach_uprobe(
         "test_bpf_probe_read_kernel_str_bytes",
         "trigger_bpf_probe_read_kernel",
-        integration_test::BPF_PROBE_READ,
+        crate::BPF_PROBE_READ,
     );
     set_kernel_buffer_element(&mut bpf, bytes);
     trigger_bpf_probe_read_kernel(dest_len);

@@ -89,7 +89,7 @@ impl Log for TestingLogger {
 
 #[tokio::test]
 async fn log() {
-    let mut bpf = Bpf::load(integration_test::LOG).unwrap();
+    let mut bpf = Bpf::load(crate::LOG).unwrap();
 
     let (logger, captured_logs) = TestingLogger::with_capacity(5);
     BpfLogger::init_with_logger(&mut bpf, logger).unwrap();

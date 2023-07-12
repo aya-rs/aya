@@ -2,7 +2,7 @@ use object::{Object, ObjectSymbol};
 
 #[test]
 fn test_maps() {
-    let obj_file = object::File::parse(integration_test::MAP_TEST).unwrap();
+    let obj_file = object::File::parse(crate::MAP_TEST).unwrap();
     if obj_file.section_by_name("maps").is_none() {
         panic!("No 'maps' ELF section");
     }

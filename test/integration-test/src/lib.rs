@@ -15,3 +15,6 @@ pub const TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/test")
 pub const RELOCATIONS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/relocations"));
 pub const BPF_PROBE_READ: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/bpf_probe_read"));
+
+#[cfg(test)]
+mod tests;
