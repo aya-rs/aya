@@ -64,9 +64,12 @@ fn is_linked(prog_id: &u32) -> bool {
 macro_rules! assert_loaded_and_linked {
     ($name:literal, $loaded:expr) => {
         for i in 0..(MAX_RETRIES + 1) {
+            // Ignore race failures which can happen when the tests delete a
+            // program in the middle of a `loaded_programs()` call.
             let id = loaded_programs()
-                .find(|prog| prog.as_ref().unwrap().name() == $name.as_bytes())
-                .map(|prog| Some(prog.unwrap().id()));
+                .filter_map(|prog| prog.ok())
+                .find(|prog| prog.name() == $name.as_bytes())
+                .map(|prog| Some(prog.id()));
             let mut linked = false;
             if let Some(prog_id) = id {
                 linked = is_linked(&prog_id.unwrap());
@@ -91,7 +94,12 @@ macro_rules! assert_loaded_and_linked {
 macro_rules! assert_loaded {
     ($name:literal, $loaded:expr) => {
         for i in 0..(MAX_RETRIES + 1) {
-            let state = loaded_programs().any(|prog| prog.unwrap().name() == $name.as_bytes());
+            // Ignore race failures which can happen when the tests delete a
+            // program in the middle of a `loaded_programs()` call.
+            let state = loaded_programs()
+                .filter_map(|prog| prog.ok())
+                .any(|prog| prog.name() == $name.as_bytes());
+
             if state == $loaded {
                 break;
             }
