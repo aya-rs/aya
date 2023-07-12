@@ -1,4 +1,6 @@
 #![no_std]
+#![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
+
 use aya_bpf::{
     macros::map,
     maps::{PerCpuArray, PerfEventByteArray},

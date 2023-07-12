@@ -1,5 +1,4 @@
 use core::{
-    cmp,
     ffi::c_void,
     mem::{self, MaybeUninit},
 };
@@ -88,28 +87,20 @@ impl SkBuff {
     /// Read into a `PerCpuArray`.
     #[inline(always)]
     pub fn load_bytes(&self, offset: usize, dst: &mut [u8]) -> Result<usize, c_long> {
-        if offset >= self.len() as usize {
-            return Err(-1);
-        }
-        let len = cmp::min(self.len() as isize - offset as isize, dst.len() as isize);
-        // The verifier rejects the program if it can't see that `len > 0`.
-        if len <= 0 {
-            return Err(-1);
-        }
-        // This is only needed to ensure the verifier can see the upper bound.
-        if len > dst.len() as isize {
-            return Err(-1);
-        }
+        let len = usize::try_from(self.len()).map_err(|core::num::TryFromIntError { .. }| -1)?;
+        let len = len.checked_sub(offset).ok_or(-1)?;
+        let len = len.min(dst.len());
+        let len_u32 = u32::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
         let ret = unsafe {
             bpf_skb_load_bytes(
                 self.skb as *const _,
                 offset as u32,
                 dst.as_mut_ptr() as *mut _,
-                len as u32,
+                len_u32,
             )
         };
         if ret == 0 {
-            Ok(len as usize)
+            Ok(len)
         } else {
             Err(ret)
         }

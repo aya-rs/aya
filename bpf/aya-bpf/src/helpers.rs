@@ -272,17 +272,9 @@ pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usiz
         dest.len() as u32,
         src as *const c_void,
     );
-    if len < 0 {
-        return Err(-1);
-    }
-
-    let mut len = len as usize;
-    if len > dest.len() {
-        // this can never happen, it's needed to tell the verifier that len is
-        // bounded
-        len = dest.len();
-    }
-    Ok(len)
+    let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
+    // this can never happen, it's needed to tell the verifier that len is bounded.
+    Ok(len.min(dest.len()))
 }
 
 /// Read a null-terminated string from _user space_ stored at `src` into `dest`.
@@ -316,17 +308,9 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
         dest.len() as u32,
         src as *const c_void,
     );
-    if len < 0 {
-        return Err(-1);
-    }
-
-    let mut len = len as usize;
-    if len > dest.len() {
-        // this can never happen, it's needed to tell the verifier that len is
-        // bounded
-        len = dest.len();
-    }
-    Ok(len)
+    let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
+    // this can never happen, it's needed to tell the verifier that len is bounded.
+    Ok(len.min(dest.len()))
 }
 
 /// Returns a byte slice read from _user space_ address `src`.
@@ -474,17 +458,9 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
         dest.len() as u32,
         src as *const c_void,
     );
-    if len < 0 {
-        return Err(-1);
-    }
-
-    let mut len = len as usize;
-    if len > dest.len() {
-        // this can never happen, it's needed to tell the verifier that len is
-        // bounded
-        len = dest.len();
-    }
-    Ok(len)
+    let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
+    // this can never happen, it's needed to tell the verifier that len is bounded.
+    Ok(len.min(dest.len()))
 }
 
 /// Returns a byte slice read from _kernel space_ address `src`.
