@@ -1,4 +1,4 @@
 {
-  "rust-analyzer.checkOnSave.allTargets": false,
-  "rust-analyzer.checkOnSave.command": "clippy"
+    "rust-analyzer.check.allTargets": true,
+    "rust-analyzer.check.command": "clippy"
 }
