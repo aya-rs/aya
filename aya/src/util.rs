@@ -1,11 +1,12 @@
 //! Utility functions.
 use std::{
     collections::BTreeMap,
+    error::Error,
     ffi::{CStr, CString},
     fs::{self, File},
     io::{self, BufRead, BufReader},
     mem, slice,
-    str::FromStr,
+    str::{FromStr, Utf8Error},
 };
 
 use crate::{
@@ -24,6 +25,20 @@ pub struct KernelVersion {
     pub(crate) patch: u16,
 }
 
+/// An error encountered while fetching the current kernel version.
+#[derive(thiserror::Error, Debug)]
+pub enum CurrentKernelVersionError {
+    /// The kernel version string could not be read.
+    #[error("failed to read kernel version")]
+    IOError(#[from] io::Error),
+    /// The kernel version string could not be parsed.
+    #[error("failed to parse kernel version")]
+    ParseError(#[from] text_io::Error),
+    /// The kernel version string was not valid UTF-8.
+    #[error("kernel version string is not valid UTF-8")]
+    Utf8Error(#[from] Utf8Error),
+}
+
 impl KernelVersion {
     /// Constructor.
     pub fn new(major: u8, minor: u8, patch: u16) -> Self {
@@ -35,7 +50,7 @@ impl KernelVersion {
     }
 
     /// Returns the kernel version of the currently running kernel.
-    pub fn current() -> Result<Self, String> {
+    pub fn current() -> Result<Self, impl Error> {
         let kernel_version = Self::get_kernel_version();
 
         // The kernel version is clamped to 4.19.255 on kernels 4.19.222 and above.
@@ -57,7 +72,7 @@ impl KernelVersion {
 
     // This is ported from https://github.com/torvalds/linux/blob/3f01e9f/tools/lib/bpf/libbpf_probes.c#L21-L101.
 
-    fn get_ubuntu_kernel_version() -> Result<Option<Self>, String> {
+    fn get_ubuntu_kernel_version() -> Result<Option<Self>, CurrentKernelVersionError> {
         const UBUNTU_KVER_FILE: &str = "/proc/version_signature";
         let s = match fs::read(UBUNTU_KVER_FILE) {
             Ok(s) => s,
@@ -65,54 +80,46 @@ impl KernelVersion {
                 if e.kind() == io::ErrorKind::NotFound {
                     return Ok(None);
                 }
-                return Err(format!("failed to read {}: {}", UBUNTU_KVER_FILE, e));
+                return Err(e.into());
             }
         };
-        (|| {
-            let ubuntu: String;
-            let ubuntu_version: String;
-            let major: u8;
-            let minor: u8;
-            let patch: u16;
-            text_io::try_scan!(s.iter().copied() => "{} {} {}.{}.{}\n", ubuntu, ubuntu_version, major, minor, patch);
-            Ok(Some(Self::new(major, minor, patch)))
-        })().map_err(|e: text_io::Error| format!("failed to parse {:?}: {}", s, e))
+        let ubuntu: String;
+        let ubuntu_version: String;
+        let major: u8;
+        let minor: u8;
+        let patch: u16;
+        text_io::try_scan!(s.iter().copied() => "{} {} {}.{}.{}\n", ubuntu, ubuntu_version, major, minor, patch);
+        Ok(Some(Self::new(major, minor, patch)))
     }
 
-    fn get_debian_kernel_version(info: &utsname) -> Result<Option<Self>, String> {
+    fn get_debian_kernel_version(
+        info: &utsname,
+    ) -> Result<Option<Self>, CurrentKernelVersionError> {
         // Safety: man 2 uname:
         //
         // The length of the arrays in a struct utsname is unspecified (see NOTES); the fields are
         // terminated by a null byte ('\0').
         let p = unsafe { CStr::from_ptr(info.version.as_ptr()) };
-        let p = p
-            .to_str()
-            .map_err(|e| format!("failed to parse version: {}", e))?;
+        let p = p.to_str()?;
         let p = match p.split_once("Debian ") {
             Some((_prefix, suffix)) => suffix,
             None => return Ok(None),
         };
-        (|| {
-            let major: u8;
-            let minor: u8;
-            let patch: u16;
-            text_io::try_scan!(p.bytes() => "{}.{}.{}", major, minor, patch);
-            Ok(Some(Self::new(major, minor, patch)))
-        })()
-        .map_err(|e: text_io::Error| format!("failed to parse {}: {}", p, e))
+        let major: u8;
+        let minor: u8;
+        let patch: u16;
+        text_io::try_scan!(p.bytes() => "{}.{}.{}", major, minor, patch);
+        Ok(Some(Self::new(major, minor, patch)))
     }
 
-    fn get_kernel_version() -> Result<Self, String> {
+    fn get_kernel_version() -> Result<Self, CurrentKernelVersionError> {
         if let Some(v) = Self::get_ubuntu_kernel_version()? {
             return Ok(v);
         }
 
         let mut info = unsafe { mem::zeroed::<utsname>() };
         if unsafe { uname(&mut info) } != 0 {
-            return Err(format!(
-                "failed to get kernel version: {}",
-                io::Error::last_os_error()
-            ));
+            return Err(io::Error::last_os_error().into());
         }
 
         if let Some(v) = Self::get_debian_kernel_version(&info)? {
@@ -124,22 +131,17 @@ impl KernelVersion {
         // The length of the arrays in a struct utsname is unspecified (see NOTES); the fields are
         // terminated by a null byte ('\0').
         let p = unsafe { CStr::from_ptr(info.release.as_ptr()) };
-        let p = p
-            .to_str()
-            .map_err(|e| format!("failed to parse release: {}", e))?;
+        let p = p.to_str()?;
         // Unlike sscanf, text_io::try_scan! does not stop at the first non-matching character.
         let p = match p.split_once(|c: char| c != '.' && !c.is_ascii_digit()) {
             Some((prefix, _suffix)) => prefix,
             None => p,
         };
-        (|| {
-            let major: u8;
-            let minor: u8;
-            let patch: u16;
-            text_io::try_scan!(p.bytes() => "{}.{}.{}", major, minor, patch);
-            Ok(Self::new(major, minor, patch))
-        })()
-        .map_err(|e: text_io::Error| format!("failed to parse {}: {}", p, e))
+        let major: u8;
+        let minor: u8;
+        let patch: u16;
+        text_io::try_scan!(p.bytes() => "{}.{}.{}", major, minor, patch);
+        Ok(Self::new(major, minor, patch))
     }
 }
 
