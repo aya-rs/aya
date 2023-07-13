@@ -108,6 +108,7 @@ mod tests {
     use std::io;
 
     use libc::{EFAULT, ENOENT};
+    use matches::assert_matches;
 
     use crate::{
         bpf_map_def,
@@ -150,13 +151,13 @@ mod tests {
             pinned: false,
             btf_fd: None,
         };
-        assert!(matches!(
+        assert_matches!(
             HashMap::<_, u8, u32>::new(&map),
             Err(MapError::InvalidKeySize {
                 size: 1,
                 expected: 4
             })
-        ));
+        );
     }
 
     #[test]
@@ -167,13 +168,13 @@ mod tests {
             pinned: false,
             btf_fd: None,
         };
-        assert!(matches!(
+        assert_matches!(
             HashMap::<_, u32, u16>::new(&map),
             Err(MapError::InvalidValueSize {
                 size: 2,
                 expected: 4
             })
-        ));
+        );
     }
 
     #[test]
@@ -186,10 +187,10 @@ mod tests {
         };
 
         let map = Map::Array(map_data);
-        assert!(matches!(
+        assert_matches!(
             HashMap::<_, u8, u32>::try_from(&map),
             Err(MapError::InvalidMapType { .. })
-        ));
+        );
     }
 
     #[test]
@@ -202,13 +203,13 @@ mod tests {
         };
 
         let map = Map::HashMap(map_data);
-        assert!(matches!(
+        assert_matches!(
             HashMap::<_, u32, u16>::try_from(&map),
             Err(MapError::InvalidValueSize {
                 size: 2,
                 expected: 4
             })
-        ));
+        );
     }
 
     #[test]
@@ -220,10 +221,10 @@ mod tests {
             btf_fd: None,
         };
 
-        assert!(matches!(
+        assert_matches!(
             HashMap::<_, u32, u32>::new(&mut map),
             Err(MapError::NotCreated { .. })
-        ));
+        );
     }
 
     #[test]
@@ -289,10 +290,10 @@ mod tests {
         };
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
-        assert!(matches!(
+        assert_matches!(
             hm.insert(1, 42, 0),
             Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_update_elem" && io_error.raw_os_error() == Some(EFAULT)
-        ));
+        );
     }
 
     #[test]
@@ -349,10 +350,10 @@ mod tests {
         };
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
-        assert!(matches!(
+        assert_matches!(
             hm.remove(&1),
             Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_delete_elem" && io_error.raw_os_error() == Some(EFAULT)
-        ));
+        );
     }
 
     #[test]
@@ -387,10 +388,10 @@ mod tests {
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
-        assert!(matches!(
+        assert_matches!(
             hm.get(&1, 0),
             Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
-        ));
+        );
     }
 
     #[test]
@@ -410,7 +411,7 @@ mod tests {
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
-        assert!(matches!(hm.get(&1, 0), Err(MapError::KeyNotFound)));
+        assert_matches!(hm.get(&1, 0), Err(MapError::KeyNotFound));
     }
 
     fn bpf_key<T: Copy>(attr: &bpf_attr) -> Option<T> {
@@ -447,7 +448,7 @@ mod tests {
         };
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
         let keys = hm.keys().collect::<Result<Vec<_>, _>>();
-        assert!(matches!(keys, Ok(ks) if ks.is_empty()))
+        assert_matches!(keys, Ok(ks) if ks.is_empty())
     }
 
     fn get_next_key(attr: &bpf_attr) -> SysResult {
@@ -530,13 +531,13 @@ mod tests {
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
         let mut keys = hm.keys();
-        assert!(matches!(keys.next(), Some(Ok(10))));
-        assert!(matches!(keys.next(), Some(Ok(20))));
-        assert!(matches!(
+        assert_matches!(keys.next(), Some(Ok(10)));
+        assert_matches!(keys.next(), Some(Ok(20)));
+        assert_matches!(
             keys.next(),
             Some(Err(MapError::SyscallError { call, .. })) if call == "bpf_map_get_next_key"
-        ));
-        assert!(matches!(keys.next(), None));
+        );
+        assert_matches!(keys.next(), None);
     }
 
     #[test]
@@ -642,13 +643,13 @@ mod tests {
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
         let mut iter = hm.iter();
-        assert!(matches!(iter.next(), Some(Ok((10, 100)))));
-        assert!(matches!(iter.next(), Some(Ok((20, 200)))));
-        assert!(matches!(
+        assert_matches!(iter.next(), Some(Ok((10, 100))));
+        assert_matches!(iter.next(), Some(Ok((20, 200))));
+        assert_matches!(
             iter.next(),
             Some(Err(MapError::SyscallError { call, .. })) if call == "bpf_map_get_next_key"
-        ));
-        assert!(matches!(iter.next(), None));
+        );
+        assert_matches!(iter.next(), None);
     }
 
     #[test]
@@ -687,12 +688,12 @@ mod tests {
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
         let mut iter = hm.iter();
-        assert!(matches!(iter.next(), Some(Ok((10, 100)))));
-        assert!(matches!(
+        assert_matches!(iter.next(), Some(Ok((10, 100))));
+        assert_matches!(
             iter.next(),
             Some(Err(MapError::SyscallError { call, .. })) if call == "bpf_map_lookup_elem"
-        ));
-        assert!(matches!(iter.next(), Some(Ok((30, 300)))));
-        assert!(matches!(iter.next(), None));
+        );
+        assert_matches!(iter.next(), Some(Ok((30, 300))));
+        assert_matches!(iter.next(), None);
     }
 }

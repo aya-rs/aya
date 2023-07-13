@@ -1,11 +1,4 @@
-use std::process::exit;
-
-use aya::{
-    include_bytes_aligned,
-    maps::Array,
-    programs::{ProgramError, UProbe},
-    Bpf,
-};
+use aya::{include_bytes_aligned, maps::Array, programs::UProbe, Bpf};
 
 const RESULT_BUF_LEN: usize = 1024;
 
@@ -113,16 +106,7 @@ fn load_and_attach_uprobe(prog_name: &str, func_name: &str, bytes: &[u8]) -> Bpf
     let mut bpf = Bpf::load(bytes).unwrap();
 
     let prog: &mut UProbe = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
-    if let Err(ProgramError::LoadError {
-        io_error,
-        verifier_log,
-    }) = prog.load()
-    {
-        println!(
-            "Failed to load program `{prog_name}`: {io_error}. Verifier log:\n{verifier_log:#}"
-        );
-        exit(1);
-    };
+    prog.load().unwrap();
 
     prog.attach(Some(func_name), 0, "/proc/self/exe", None)
         .unwrap();

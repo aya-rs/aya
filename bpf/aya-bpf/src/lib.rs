@@ -11,6 +11,7 @@
 #![cfg_attr(unstable, feature(never_type))]
 #![cfg_attr(target_arch = "bpf", feature(asm_experimental_arch))]
 #![allow(clippy::missing_safety_doc)]
+#![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 #![no_std]
 
 pub use aya_bpf_bindings::bindings;
@@ -58,18 +59,17 @@ pub trait BpfContext {
 
 #[no_mangle]
 pub unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
-    let base = s as usize;
+    #[allow(clippy::cast_sign_loss)]
+    let b = c as u8;
     for i in 0..n {
-        *((base + i) as *mut u8) = c as u8;
+        *s.add(i) = b;
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *mut u8, n: usize) {
-    let dest_base = dest as usize;
-    let src_base = src as usize;
     for i in 0..n {
-        *((dest_base + i) as *mut u8) = *((src_base + i) as *mut u8);
+        *dest.add(i) = *src.add(i);
     }
 }
 

@@ -272,17 +272,9 @@ pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usiz
         dest.len() as u32,
         src as *const c_void,
     );
-    if len < 0 {
-        return Err(-1);
-    }
-
-    let mut len = len as usize;
-    if len > dest.len() {
-        // this can never happen, it's needed to tell the verifier that len is
-        // bounded
-        len = dest.len();
-    }
-    Ok(len)
+    let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
+    // this can never happen, it's needed to tell the verifier that len is bounded.
+    Ok(len.min(dest.len()))
 }
 
 /// Read a null-terminated string from _user space_ stored at `src` into `dest`.
@@ -316,17 +308,9 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
         dest.len() as u32,
         src as *const c_void,
     );
-    if len < 0 {
-        return Err(-1);
-    }
-
-    let mut len = len as usize;
-    if len > dest.len() {
-        // this can never happen, it's needed to tell the verifier that len is
-        // bounded
-        len = dest.len();
-    }
-    Ok(len)
+    let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
+    // this can never happen, it's needed to tell the verifier that len is bounded.
+    Ok(len.min(dest.len()))
 }
 
 /// Returns a byte slice read from _user space_ address `src`.
@@ -438,7 +422,9 @@ fn read_str_bytes(len: i64, dest: &mut [u8]) -> Result<&[u8], c_long> {
     // len includes the NULL terminator but not for b"\0" for which the kernel
     // returns len=0. So we do a saturating sub and for b"\0" we return the
     // empty slice, for all other cases we omit the terminator.
-    Ok(&dest[..(len as usize).saturating_sub(1)])
+    let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
+    let len = len.saturating_sub(1);
+    dest.get(..len).ok_or(-1)
 }
 
 /// Read a null-terminated string from _kernel space_ stored at `src` into `dest`.
@@ -472,17 +458,9 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
         dest.len() as u32,
         src as *const c_void,
     );
-    if len < 0 {
-        return Err(-1);
-    }
-
-    let mut len = len as usize;
-    if len > dest.len() {
-        // this can never happen, it's needed to tell the verifier that len is
-        // bounded
-        len = dest.len();
-    }
-    Ok(len)
+    let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
+    // this can never happen, it's needed to tell the verifier that len is bounded.
+    Ok(len.min(dest.len()))
 }
 
 /// Returns a byte slice read from _kernel space_ address `src`.

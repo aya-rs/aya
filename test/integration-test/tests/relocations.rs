@@ -1,10 +1,6 @@
-use std::{process::exit, time::Duration};
+use std::time::Duration;
 
-use aya::{
-    include_bytes_aligned,
-    programs::{ProgramError, UProbe},
-    Bpf,
-};
+use aya::{include_bytes_aligned, programs::UProbe, Bpf};
 
 #[test]
 fn relocations() {
@@ -44,14 +40,7 @@ fn load_and_attach(name: &str, bytes: &[u8]) -> Bpf {
     let mut bpf = Bpf::load(bytes).unwrap();
 
     let prog: &mut UProbe = bpf.program_mut(name).unwrap().try_into().unwrap();
-    if let Err(ProgramError::LoadError {
-        io_error,
-        verifier_log,
-    }) = prog.load()
-    {
-        println!("Failed to load program `{name}`: {io_error}. Verifier log:\n{verifier_log:#}");
-        exit(1);
-    };
+    prog.load().unwrap();
 
     prog.attach(
         Some("trigger_relocations_program"),
