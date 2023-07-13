@@ -1,12 +1,7 @@
 use anyhow::{anyhow, Context as _, Result};
-use std::{
-    path::{Path, PathBuf},
-    process::Command,
-};
-
-use std::{fs, io, io::Write};
-
-use indoc::indoc;
+use cargo_metadata::{Metadata, MetadataCommand};
+use indoc::{indoc, writedoc};
+use std::{ffi::OsString, fs, io::Write as _, process::Command};
 
 pub fn exec(cmd: &mut Command) -> Result<()> {
     let status = cmd
@@ -22,95 +17,92 @@ pub fn exec(cmd: &mut Command) -> Result<()> {
 }
 
 pub fn docs() -> Result<()> {
-    let current_dir = PathBuf::from(".");
-    let header_path = current_dir.join("header.html");
-    let mut header = fs::File::create(&header_path).expect("can't create header.html");
-    header
-        .write_all(r#"<meta name="robots" content="noindex">"#.as_bytes())
-        .expect("can't write header.html contents");
-    header.flush().expect("couldn't flush contents");
-    let abs_header_path = fs::canonicalize(&header_path).unwrap();
+    const PACKAGE_TO_DESCRIPTION: &[(&str, &str)] =
+        &[("aya", "User-space"), ("aya-bpf", "Kernel-space")];
 
-    build_docs(&current_dir.join("aya"), &abs_header_path)?;
-    build_docs(&current_dir.join("bpf/aya-bpf"), &abs_header_path)?;
-    copy_dir_all("./target/doc".as_ref(), "./site/user".as_ref())?;
-    copy_dir_all(
-        "./target/bpfel-unknown-none/doc".as_ref(),
-        "./site/bpf".as_ref(),
+    let Metadata {
+        workspace_root,
+        target_directory,
+        ..
+    } = MetadataCommand::new().exec().context("cargo metadata")?;
+
+    exec(
+        Command::new("cargo")
+            .current_dir(&workspace_root)
+            .args(["clean", "--doc"]),
     )?;
 
-    let mut robots = fs::File::create("site/robots.txt").expect("can't create robots.txt");
-    robots
-        .write_all(
-            indoc! {r#"
+    let tmp = tempfile::tempdir().context("create tempdir")?;
+    let header = tmp.path().join("header.html");
+    fs::write(&header, r#"<meta name="robots" content="noindex">"#).context("write header.html")?;
+
+    let mut rustdocflags = OsString::new();
+    rustdocflags.push("--cfg docsrs --html-in-header ");
+    rustdocflags.push(header);
+    rustdocflags.push(" -D warnings");
+
+    exec(
+        Command::new("cargo")
+            .current_dir(&workspace_root)
+            .env("RUSTDOCFLAGS", rustdocflags)
+            .args(["+nightly", "doc", "--no-deps", "--all-features"])
+            .args(
+                PACKAGE_TO_DESCRIPTION
+                    .iter()
+                    .flat_map(|(package, _)| ["--package", package]),
+            ),
+    )?;
+
+    let site = workspace_root.join("site");
+    match fs::remove_dir_all(&site) {
+        Ok(()) => {}
+        Err(err) => {
+            if err.kind() != std::io::ErrorKind::NotFound {
+                return Err(err).context(format!("remove {site:?}"));
+            }
+        }
+    }
+    let doc = target_directory.join("doc");
+    fs::rename(&doc, &site).with_context(|| format!("rename {doc:?} to {site:?}"))?;
+
+    exec(Command::new("sh").current_dir(&site).args([
+        "-c",
+        "grep -FRl crabby.svg | xargs sed -i s/crabby.svg/crabby_dev.svg/g",
+    ]))?;
+
+    fs::write(
+        site.join("robots.txt"),
+        indoc! {r#"
     User-Agent:*
     Disallow: /
-    "#}
-            .as_bytes(),
-        )
-        .expect("can't write robots.txt");
+    "#},
+    )
+    .context("can't write robots.txt")?;
 
-    let mut index = fs::File::create("site/index.html").expect("can't create index.html");
-    index
-        .write_all(
-            indoc! {r#"
+    let mut index = fs::File::create(site.join("index.html"))
+        .with_context(|| format!("create {site:?}/index.html"))?;
+    writedoc! {&mut index, r#"
         <html>
             <meta name="robots" content="noindex">
             <body>
               <ul>
-                <li><a href="user/aya/index.html">Aya User-space Development Documentation</a></li>
-                <li><a href="bpf/aya_bpf/index.html">Aya Kernel-space Development Documentation</a></li>
+    "#}
+    .context("write to index.html")?;
+
+    for (package, description) in PACKAGE_TO_DESCRIPTION {
+        let package = package.replace('-', "_");
+        writedoc! {&mut index, r#"
+            <li><a href="{package}/index.html">Aya {description} Development Documentation</a></li>
+        "#}
+        .context("write to string")?;
+    }
+
+    writedoc! {&mut index, r#"
               </ul>
             </body>
         </html>
     "#}
-            .as_bytes(),
-        )
-        .expect("can't write index.html");
-    Ok(())
-}
+    .context("write to index.html")?;
 
-fn build_docs(working_dir: &Path, abs_header_path: &Path) -> Result<()> {
-    exec(Command::new("sed").current_dir(working_dir).args([
-        "-i.bak",
-        "s/crabby.svg/crabby_dev.svg/",
-        "src/lib.rs",
-    ]))?;
-
-    exec(
-        Command::new("cargo")
-            .current_dir(working_dir)
-            .env(
-                "RUSTDOCFLAGS",
-                format!(
-                    "--cfg docsrs --html-in-header {} -D warnings",
-                    abs_header_path.to_str().unwrap()
-                ),
-            )
-            .args(["+nightly", "doc", "--no-deps", "--all-features"]),
-    )?;
-
-    fs::rename(
-        working_dir.join("src/lib.rs.bak"),
-        working_dir.join("src/lib.rs"),
-    )
-    .context("Failed to rename lib.rs.bak to lib.rs")
-}
-
-fn copy_dir_all(src: &Path, dst: &Path) -> io::Result<()> {
-    fs::create_dir_all(dst)?;
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let ty = entry.file_type()?;
-        let src = entry.path();
-        let src = src.as_path();
-        let dst = dst.join(entry.file_name());
-        let dst = dst.as_path();
-        if ty.is_dir() {
-            copy_dir_all(src, dst)?;
-        } else if !dst.exists() {
-            fs::copy(src, dst)?;
-        }
-    }
     Ok(())
 }
