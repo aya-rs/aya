@@ -34,11 +34,29 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - uses: taiki-e/install-action@cross
+      - uses: taiki-e/install-action@cargo-hack
+
+      - uses: taiki-e/setup-cross-toolchain-action@v1
+        with:
+          target: ${{ matrix.arch }}
+
       - name: Build
-        run: cross build --verbose --target ${{ matrix.arch }}
+        run: |
+          cargo hack build --all-targets --feature-powerset \
+            --exclude aya-bpf \
+            --exclude aya-bpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --workspace
 
       - name: Test
         env:
           RUST_BACKTRACE: full
-        run: cross test --verbose --target ${{ matrix.arch }}
+        run: |
+          cargo hack test --all-targets --feature-powerset \
+            --exclude aya-bpf \
+            --exclude aya-bpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --exclude integration-test \
+            --workspace
