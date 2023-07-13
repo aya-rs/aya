@@ -16,6 +16,7 @@ env:
 jobs:
   build-test:
     strategy:
+      fail-fast: false
       matrix:
         arch:
           - x86_64-unknown-linux-gnu
@@ -39,10 +40,9 @@ jobs:
         run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Build
-        run: cross build --verbose --target ${{matrix.arch}}
+        run: cross build --verbose --target ${{ matrix.arch }}
 
       - name: Run test
         env:
           RUST_BACKTRACE: full
-        run: |
-          cross test --verbose --target ${{matrix.arch}}
+        run: cross test --verbose --target ${{ matrix.arch }}
