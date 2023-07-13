@@ -31,6 +31,7 @@ tokio = { version = "1.24.0", features = ["rt"], optional = true }
 [dev-dependencies]
 futures = { version = "0.3.12", default-features = false, features = ["std"] }
 matches = "0.1.8"
+tempfile = "3"
 
 [features]
 default = []
