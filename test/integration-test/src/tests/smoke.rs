@@ -34,3 +34,16 @@ fn extension() {
     let drop_: &mut Extension = bpf.program_mut("drop").unwrap().try_into().unwrap();
     drop_.load(pass.fd().unwrap(), "xdp_pass").unwrap();
 }
+
+#[test]
+fn kconfig() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 9, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
+        return;
+    }
+    let mut bpf = Bpf::load(crate::KCONFIG).unwrap();
+    let pass: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    pass.load().unwrap();
+    pass.attach("lo", XdpFlags::default()).unwrap();
+}

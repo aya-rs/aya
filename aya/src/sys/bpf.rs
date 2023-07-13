@@ -7,7 +7,7 @@ use std::{
     slice,
 };
 
-use crate::util::KernelVersion;
+use crate::{programs::probe::create_as_probe, util::KernelVersion};
 use libc::{c_char, c_long, close, ENOENT, ENOSPC};
 use obj::{
     maps::{bpf_map_def, LegacyMap},
@@ -750,6 +750,51 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
         }
         Err(_) => false,
     }
+}
+
+fn arch_specific_syscall_prefix() -> Option<&'static str> {
+    if cfg!(target_arch = "aarch64") {
+        Some("arm64")
+    } else if cfg!(target_arch = "arm") {
+        Some("arm")
+    } else if cfg!(target_arch = "powerpc") {
+        Some("powerpc")
+    } else if cfg!(target_arch = "powerpc64") {
+        Some("powerpc64")
+    } else if cfg!(target_arch = "riscv32") || cfg!(target_arch = "riscv64") {
+        Some("riscv")
+    } else if cfg!(target_arch = "x86") {
+        Some("ia32")
+    } else if cfg!(target_arch = "x86_64") {
+        Some("x64")
+    } else if cfg!(target_arch = "s390x") {
+        Some("s390x")
+    } else if cfg!(target_arch = "s390") {
+        Some("s390")
+    } else if cfg!(target_arch = "mips") || cfg!(target_arch = "mips64") {
+        Some("mips")
+    } else {
+        None
+    }
+}
+
+pub(crate) fn is_bpf_syscall_wrapper_supported() -> bool {
+    let syscall_prefix_opt = arch_specific_syscall_prefix();
+
+    if let Some(syscall_prefix) = syscall_prefix_opt {
+        let syscall_name = format!("__{}_sys_bpf", syscall_prefix);
+
+        if let Ok(fd) = create_as_probe(crate::programs::ProbeKind::KProbe, &syscall_name, 0, None)
+        {
+            unsafe {
+                libc::close(fd);
+            }
+
+            return true;
+        }
+    }
+
+    false
 }
 
 pub(crate) fn is_btf_supported() -> bool {

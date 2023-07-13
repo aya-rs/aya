@@ -44,6 +44,7 @@ fn main() {
         ("main.bpf.c", "main.bpf.o"),
         ("multimap-btf.bpf.c", "multimap-btf.bpf.o"),
         ("text_64_64_reloc.c", "text_64_64_reloc.o"),
+        ("kconfig.bpf.c", "kconfig.bpf.o"),
     ];
 
     let c_bpf_probes = C_BPF_PROBES

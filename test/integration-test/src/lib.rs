@@ -6,6 +6,7 @@ pub const MULTIMAP_BTF: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/multimap-btf.bpf.o"));
 pub const TEXT_64_64_RELOC: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/text_64_64_reloc.o"));
+pub const KCONFIG: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/kconfig.bpf.o"));
 
 pub const LOG: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/log"));
 pub const MAP_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/map_test"));

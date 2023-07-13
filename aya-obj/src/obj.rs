@@ -47,6 +47,7 @@ pub struct Features {
     bpf_perf_link: bool,
     bpf_global_data: bool,
     bpf_cookie: bool,
+    bpf_syscall_wrapper: bool,
     btf: Option<BtfFeatures>,
 }
 
@@ -58,6 +59,7 @@ impl Features {
         bpf_perf_link: bool,
         bpf_global_data: bool,
         bpf_cookie: bool,
+        bpf_syscall_wrapper: bool,
         btf: Option<BtfFeatures>,
     ) -> Self {
         Self {
@@ -66,6 +68,7 @@ impl Features {
             bpf_perf_link,
             bpf_global_data,
             bpf_cookie,
+            bpf_syscall_wrapper,
             btf,
         }
     }
@@ -93,6 +96,11 @@ impl Features {
     /// Returns whether BPF program cookie is supported.
     pub fn bpf_cookie(&self) -> bool {
         self.bpf_cookie
+    }
+
+    /// Returns whether BPF syscall wrapper hooking is supported.
+    pub fn bpf_syscall_wrapper(&self) -> bool {
+        self.bpf_syscall_wrapper
     }
 
     /// If BTF is supported, returns which BTF features are supported.
@@ -598,6 +606,8 @@ impl Object {
                     address: symbol.address(),
                     size: symbol.size(),
                     is_definition: symbol.is_definition(),
+                    is_external: symbol.is_undefined() && (symbol.is_global() || symbol.is_weak()),
+                    is_weak: symbol.is_weak(),
                     kind: symbol.kind(),
                 };
                 bpf_obj.symbol_table.insert(symbol.index().0, sym);
@@ -1525,6 +1535,8 @@ mod tests {
                 address,
                 size,
                 is_definition: false,
+                is_external: false,
+                is_weak: false,
                 kind: SymbolKind::Data,
             },
         );
@@ -2371,6 +2383,8 @@ mod tests {
                 address: 0,
                 size: 3,
                 is_definition: true,
+                is_external: false,
+                is_weak: false,
                 kind: SymbolKind::Data,
             },
         );

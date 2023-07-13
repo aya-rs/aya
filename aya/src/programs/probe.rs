@@ -81,7 +81,7 @@ pub(crate) fn detach_debug_fs(kind: ProbeKind, event_alias: &str) -> Result<(), 
     Ok(())
 }
 
-fn create_as_probe(
+pub(crate) fn create_as_probe(
     kind: ProbeKind,
     fn_name: &str,
     offset: u64,
