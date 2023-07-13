@@ -382,6 +382,7 @@ impl<'a> BpfLoader<'a> {
             max_entries,
             extensions,
             verifier_log_level,
+            allow_unsupported_maps,
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
@@ -647,7 +648,7 @@ impl<'a> BpfLoader<'a> {
             .map(parse_map)
             .collect::<Result<HashMap<String, Map>, BpfError>>()?;
 
-        if !self.allow_unsupported_maps {
+        if !*allow_unsupported_maps {
             maps.iter().try_for_each(|(_, x)| match x {
                 Map::Unsupported(map) => Err(BpfError::MapError(MapError::Unsupported {
                     map_type: map.obj.map_type(),
