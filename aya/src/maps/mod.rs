@@ -183,6 +183,13 @@ pub enum MapError {
         #[source]
         error: PinError,
     },
+
+    /// Unsupported Map type
+    #[error("Unsupported map type found {map_type}")]
+    Unsupported {
+        /// The map type
+        map_type: u32,
+    },
 }
 
 /// A map file descriptor.
@@ -262,6 +269,8 @@ pub enum Map {
     StackTraceMap(MapData),
     /// A [`Queue`] map
     Queue(MapData),
+    /// An unsupported map type
+    Unsupported(MapData),
 }
 
 impl Map {
@@ -283,6 +292,7 @@ impl Map {
             Map::Stack(map) => map.obj.map_type(),
             Map::StackTraceMap(map) => map.obj.map_type(),
             Map::Queue(map) => map.obj.map_type(),
+            Map::Unsupported(map) => map.obj.map_type(),
         }
     }
 }
