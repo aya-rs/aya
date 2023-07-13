@@ -404,8 +404,13 @@ impl SkBuffContext {
     /// # Examples
     ///
     /// ```no_run
-    /// mod bindings;
-    /// use bindings::{ethhdr, iphdr, udphdr};
+    /// use aya_bpf::programs::SkBuffContext;
+    /// # #[allow(non_camel_case_types)]
+    /// # struct ethhdr {};
+    /// # #[allow(non_camel_case_types)]
+    /// # struct iphdr {};
+    /// # #[allow(non_camel_case_types)]
+    /// # struct udphdr {};
     ///
     /// const ETH_HLEN: usize = core::mem::size_of::<ethhdr>();
     /// const IP_HLEN: usize = core::mem::size_of::<iphdr>();

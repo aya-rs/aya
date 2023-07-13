@@ -1,11 +1,11 @@
 [workspace]
 members = [
     "aya",
-    "aya-obj",
-    "aya-tool",
     "aya-log",
     "aya-log-common",
     "aya-log-parser",
+    "aya-obj",
+    "aya-tool",
     "test/integration-test",
     "xtask",
 
@@ -19,15 +19,26 @@ members = [
     "bpf/aya-log-ebpf",
     "test/integration-ebpf",
 ]
+
 resolver = "2"
 
 default-members = [
     "aya",
+    "aya-bpf-macros",
+    "aya-log",
+    "aya-log-common",
+    "aya-log-parser",
     "aya-obj",
     "aya-tool",
-    "aya-log",
+    # test/integration-test is omitted; it must be built with xtask.
+    "xtask",
+
     "aya-bpf-macros",
     "aya-log-ebpf-macros",
+
+    # ebpf crates are omitted; they must be built with:
+    # --target bpfe{b,l}-unknown-none
+    # CARGO_CFG_BPF_TARGET_ARCH={x86_64,aarch64,arm,riscv64}
 ]
 
 [profile.dev]

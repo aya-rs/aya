@@ -23,6 +23,9 @@ jobs:
           - aarch64
           - arm
           - riscv64
+        target:
+          - bpfel-unknown-none
+          - bpfeb-unknown-none
     runs-on: ubuntu-20.04
 
     steps:
@@ -38,11 +41,12 @@ jobs:
       - name: Prereqs
         run: cargo install bpf-linker
 
+      - uses: taiki-e/install-action@cargo-hack
       - name: Build
         env:
           CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.arch }}
         run: |
-          cargo build-bpfel -p aya-bpf --verbose
-          cargo build-bpfeb -p aya-bpf --verbose
-          cargo build-bpfel -p aya-log-ebpf --verbose
-          cargo build-bpfeb -p aya-log-ebpf --verbose
+          cargo hack build --package aya-bpf --package aya-log-ebpf \
+            --feature-powerset \
+            --target ${{ matrix.target }} \
+            -Z build-std=core
