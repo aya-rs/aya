@@ -119,6 +119,7 @@ fn main() {
 
         let ebpf_dir = manifest_dir.parent().unwrap().join("integration-ebpf");
         println!("cargo:rerun-if-changed={}", ebpf_dir.to_str().unwrap());
+
         let target = format!("{target}-unknown-none");
 
         let mut cmd = Command::new("cargo");
@@ -131,6 +132,9 @@ fn main() {
             "--target",
             &target,
         ]);
+        // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
+        let ebpf_target_dir = out_dir.join("integration-ebpf");
+        cmd.arg("--target-dir").arg(&ebpf_target_dir);
         let mut child = cmd
             .stdout(Stdio::piped())
             .spawn()
