@@ -2,7 +2,7 @@
 name = "aya"
 version = "0.11.0"
 description = "An eBPF library with a focus on developer experience and operability."
-keywords = ["ebpf", "bpf", "linux", "kernel"]
+keywords = ["bpf", "ebpf", "kernel", "linux"]
 license = "MIT OR Apache-2.0"
 authors = ["The Aya Contributors"]
 repository = "https://github.com/aya-rs/aya"
@@ -19,19 +19,14 @@ lazy_static = "1"
 libc = { version = "0.2.105" }
 log = "0.4"
 object = { version = "0.31", default-features = false, features = [
-    "std",
-    "read_core",
     "elf",
+    "read_core",
+    "std",
 ] }
 parking_lot = { version = "0.12.0", features = ["send_guard"] }
 text_io = "0.1.12"
 thiserror = "1"
-tokio = { version = "1.24.0", features = [
-    "macros",
-    "rt",
-    "rt-multi-thread",
-    "net",
-], optional = true }
+tokio = { version = "1.24.0", features = ["rt"], optional = true }
 
 [dev-dependencies]
 futures = { version = "0.3.12", default-features = false, features = ["std"] }
@@ -39,10 +34,9 @@ matches = "0.1.8"
 
 [features]
 default = []
-async = []
-async_tokio = ["tokio", "async"]
-async_std = ["async-io", "async"]
+async_tokio = ["tokio/net"]
+async_std = ["async-io"]
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "docsrs", "-D", "warnings"]
+rustdoc-args = ["--cfg", "-D", "docsrs", "warnings"]
