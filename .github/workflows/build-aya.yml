@@ -37,11 +37,14 @@ jobs:
       - name: Check
         run: cargo hack check --all-targets --workspace --feature-powerset --target ${{matrix.arch}}
 
+      - name: Add cross-as-cargo to PATH
+        run: echo "${{ github.workspace }}/.github/bin" >> $GITHUB_PATH
+
       - uses: taiki-e/install-action@cross
       - name: Build
-        run: cross build --verbose --target ${{matrix.arch}}
+        run: cargo hack build --all-targets --workspace --feature-powerset --target ${{matrix.arch}}
 
       - name: Test
         env:
           RUST_BACKTRACE: full
-        run: cross test --verbose --target ${{matrix.arch}}
+        run: cargo hack test --all-targets --workspace --feature-powerset --target ${{matrix.arch}}
