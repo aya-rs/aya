@@ -52,13 +52,10 @@ impl std::fmt::Display for Architecture {
     }
 }
 
+// sysroot options. Default to ubuntu headers installed by the
+// libc6-dev-{arm64,armel}-cross packages.
 #[derive(Parser)]
-pub struct Options {
-    #[arg(long, action)]
-    libbpf_dir: PathBuf,
-
-    // sysroot options. Default to ubuntu headers installed by the
-    // libc6-dev-{arm64,armel}-cross packages.
+pub struct SysrootOptions {
     #[arg(long, default_value = "/usr/include/x86_64-linux-gnu", action)]
     x86_64_sysroot: PathBuf,
 
@@ -70,6 +67,12 @@ pub struct Options {
 
     #[arg(long, default_value = "/usr/riscv64-linux-gnu/include", action)]
     riscv64_sysroot: PathBuf,
+}
+
+#[derive(Parser)]
+pub struct Options {
+    #[command(flatten)]
+    sysroot_options: SysrootOptions,
 
     #[command(subcommand)]
     command: Option<Command>,
@@ -84,13 +87,18 @@ enum Command {
 }
 
 pub fn codegen(opts: Options) -> Result<(), anyhow::Error> {
-    use Command::*;
-    match opts.command {
-        Some(Aya) => aya::codegen(&opts),
-        Some(AyaBpfBindings) => aya_bpf_bindings::codegen(&opts),
+    let Options {
+        sysroot_options,
+        command,
+    } = opts;
+    match command {
+        Some(command) => match command {
+            Command::Aya => aya::codegen(&sysroot_options),
+            Command::AyaBpfBindings => aya_bpf_bindings::codegen(&sysroot_options),
+        },
         None => {
-            aya::codegen(&opts)?;
-            aya_bpf_bindings::codegen(&opts)
+            aya::codegen(&sysroot_options)?;
+            aya_bpf_bindings::codegen(&sysroot_options)
         }
     }
 }

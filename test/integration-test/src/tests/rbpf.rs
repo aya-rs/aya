@@ -1,13 +1,11 @@
 use core::{mem::size_of, ptr::null_mut, slice::from_raw_parts};
 use std::collections::HashMap;
 
-use aya::include_bytes_aligned;
 use aya_obj::{generated::bpf_insn, Object, ProgramSection};
 
 #[test]
 fn run_with_rbpf() {
-    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/pass");
-    let object = Object::parse(bytes).unwrap();
+    let object = Object::parse(crate::PASS).unwrap();
 
     assert_eq!(object.programs.len(), 1);
     matches::assert_matches!(object.programs["pass"].section, ProgramSection::Xdp { .. });
@@ -34,9 +32,7 @@ static mut MULTIMAP_MAPS: [*mut Vec<u64>; 2] = [null_mut(), null_mut()];
 
 #[test]
 fn use_map_with_rbpf() {
-    let bytes =
-        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/multimap-btf.bpf.o");
-    let mut object = Object::parse(bytes).unwrap();
+    let mut object = Object::parse(crate::MULTIMAP_BTF).unwrap();
 
     assert_eq!(object.programs.len(), 1);
     matches::assert_matches!(

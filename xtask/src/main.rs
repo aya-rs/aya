@@ -1,12 +1,9 @@
-mod build_ebpf;
 mod codegen;
 mod docs;
 mod run;
-pub(crate) mod utils;
-
-use std::process::exit;
 
 use clap::Parser;
+
 #[derive(Parser)]
 pub struct XtaskOptions {
     #[clap(subcommand)]
@@ -17,20 +14,27 @@ pub struct XtaskOptions {
 enum Command {
     Codegen(codegen::Options),
     Docs,
+    BuildIntegrationTest(run::BuildOptions),
     IntegrationTest(run::Options),
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let XtaskOptions { command } = Parser::parse();
 
-    let ret = match command {
+    match command {
         Command::Codegen(opts) => codegen::codegen(opts),
         Command::Docs => docs::docs(),
-        Command::IntegrationTest(opts) => run::run(opts),
-    };
+        Command::BuildIntegrationTest(opts) => {
+            let binaries = run::build(opts)?;
+            let mut stdout = std::io::stdout();
+            for (_name, binary) in binaries {
+                use std::{io::Write as _, os::unix::ffi::OsStrExt as _};
 
-    if let Err(e) = ret {
-        eprintln!("{e:#}");
-        exit(1);
+                stdout.write_all(binary.as_os_str().as_bytes())?;
+                stdout.write_all("\n".as_bytes())?;
+            }
+            Ok(())
+        }
+        Command::IntegrationTest(opts) => run::run(opts),
     }
 }

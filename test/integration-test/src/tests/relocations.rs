@@ -1,13 +1,10 @@
 use std::time::Duration;
 
-use aya::{include_bytes_aligned, programs::UProbe, Bpf};
+use aya::{programs::UProbe, Bpf};
 
 #[test]
 fn relocations() {
-    let bpf = load_and_attach(
-        "test_64_32_call_relocs",
-        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/relocations"),
-    );
+    let bpf = load_and_attach("test_64_32_call_relocs", crate::RELOCATIONS);
 
     trigger_relocations_program();
     std::thread::sleep(Duration::from_millis(100));
@@ -20,10 +17,7 @@ fn relocations() {
 
 #[test]
 fn text_64_64_reloc() {
-    let mut bpf = load_and_attach(
-        "test_text_64_64_reloc",
-        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/text_64_64_reloc.o"),
-    );
+    let mut bpf = load_and_attach("test_text_64_64_reloc", crate::TEXT_64_64_RELOC);
 
     let mut m = aya::maps::Array::<_, u64>::try_from(bpf.map_mut("RESULTS").unwrap()).unwrap();
     m.set(0, 1, 0).unwrap();

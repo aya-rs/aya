@@ -8,11 +8,19 @@ use syn::{parse_str, Item};
 
 use crate::codegen::{
     helpers::{expand_helpers, extract_helpers},
-    Architecture, Options,
+    Architecture, SysrootOptions,
 };
 
-pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
+pub fn codegen(opts: &SysrootOptions) -> Result<(), anyhow::Error> {
+    let SysrootOptions {
+        x86_64_sysroot,
+        aarch64_sysroot,
+        armv7_sysroot,
+        riscv64_sysroot,
+    } = opts;
+
     let dir = PathBuf::from("bpf/aya-bpf-bindings");
+    let libbpf_dir = PathBuf::from("libbpf");
 
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
@@ -20,12 +28,9 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
             // aya-tool uses aya_bpf::cty. We can't use that here since aya-bpf
             // depends on aya-bpf-bindings so it would create a circular dep.
             .ctypes_prefix("::aya_bpf_cty")
-            .clang_args(&[
-                "-I",
-                &*opts.libbpf_dir.join("include/uapi").to_string_lossy(),
-            ])
-            .clang_args(&["-I", &*opts.libbpf_dir.join("include").to_string_lossy()])
-            .clang_args(&["-I", &*opts.libbpf_dir.join("src").to_string_lossy()])
+            .clang_args(&["-I", &*libbpf_dir.join("include/uapi").to_string_lossy()])
+            .clang_args(&["-I", &*libbpf_dir.join("include").to_string_lossy()])
+            .clang_args(&["-I", &*libbpf_dir.join("src").to_string_lossy()])
             // open aya-bpf-bindings/.../bindings.rs and look for mod
             // _bindgen, those are anonymous enums
             .constified_enum("BPF_F_.*")
@@ -82,10 +87,10 @@ pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
         // Set the sysroot. This is needed to ensure that the correct arch
         // specific headers are imported.
         let sysroot = match arch {
-            Architecture::X86_64 => &opts.x86_64_sysroot,
-            Architecture::ARMv7 => &opts.armv7_sysroot,
-            Architecture::AArch64 => &opts.aarch64_sysroot,
-            Architecture::RISCV64 => &opts.riscv64_sysroot,
+            Architecture::X86_64 => x86_64_sysroot,
+            Architecture::ARMv7 => armv7_sysroot,
+            Architecture::AArch64 => aarch64_sysroot,
+            Architecture::RISCV64 => riscv64_sysroot,
         };
         bindgen = bindgen.clang_args(&["-I", &*sysroot.to_string_lossy()]);
 

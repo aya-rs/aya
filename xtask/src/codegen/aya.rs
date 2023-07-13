@@ -3,20 +3,22 @@ use std::path::PathBuf;
 
 use aya_tool::{bindgen, write_to_file};
 
-use crate::codegen::{Architecture, Options};
+use crate::codegen::{Architecture, SysrootOptions};
 
-pub fn codegen(opts: &Options) -> Result<(), anyhow::Error> {
-    codegen_internal_btf_bindings(opts)?;
+pub fn codegen(opts: &SysrootOptions) -> Result<(), anyhow::Error> {
+    codegen_internal_btf_bindings()?;
     codegen_bindings(opts)
 }
 
-fn codegen_internal_btf_bindings(opts: &Options) -> Result<(), anyhow::Error> {
+fn codegen_internal_btf_bindings() -> Result<(), anyhow::Error> {
     let dir = PathBuf::from("aya-obj");
     let generated = dir.join("src/generated");
+    let libbpf_dir = PathBuf::from("libbpf");
+
     let mut bindgen = bindgen::user_builder()
         .clang_arg(format!(
             "-I{}",
-            opts.libbpf_dir
+            libbpf_dir
                 .join("include/uapi")
                 .canonicalize()
                 .unwrap()
@@ -24,17 +26,13 @@ fn codegen_internal_btf_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         ))
         .clang_arg(format!(
             "-I{}",
-            opts.libbpf_dir
+            libbpf_dir
                 .join("include")
                 .canonicalize()
                 .unwrap()
                 .to_string_lossy()
         ))
-        .header(
-            opts.libbpf_dir
-                .join("src/libbpf_internal.h")
-                .to_string_lossy(),
-        )
+        .header(libbpf_dir.join("src/libbpf_internal.h").to_string_lossy())
         .constified_enum_module("bpf_core_relo_kind");
 
     let types = ["bpf_core_relo", "btf_ext_header"];
@@ -54,7 +52,13 @@ fn codegen_internal_btf_bindings(opts: &Options) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
+fn codegen_bindings(opts: &SysrootOptions) -> Result<(), anyhow::Error> {
+    let SysrootOptions {
+        x86_64_sysroot,
+        aarch64_sysroot,
+        armv7_sysroot,
+        riscv64_sysroot,
+    } = opts;
     let types = [
         // BPF
         "BPF_TYPES",
@@ -158,15 +162,13 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
 
     let dir = PathBuf::from("aya-obj");
     let generated = dir.join("src/generated");
+    let libbpf_dir = PathBuf::from("libbpf");
 
     let builder = || {
         bindgen::user_builder()
             .header(dir.join("include/linux_wrapper.h").to_string_lossy())
-            .clang_args(&[
-                "-I",
-                &*opts.libbpf_dir.join("include/uapi").to_string_lossy(),
-            ])
-            .clang_args(&["-I", &*opts.libbpf_dir.join("include").to_string_lossy()])
+            .clang_args(&["-I", &*libbpf_dir.join("include/uapi").to_string_lossy()])
+            .clang_args(&["-I", &*libbpf_dir.join("include").to_string_lossy()])
     };
 
     for arch in Architecture::supported() {
@@ -185,10 +187,10 @@ fn codegen_bindings(opts: &Options) -> Result<(), anyhow::Error> {
         // Set the sysroot. This is needed to ensure that the correct arch
         // specific headers are imported.
         let sysroot = match arch {
-            Architecture::X86_64 => &opts.x86_64_sysroot,
-            Architecture::ARMv7 => &opts.armv7_sysroot,
-            Architecture::AArch64 => &opts.aarch64_sysroot,
-            Architecture::RISCV64 => &opts.riscv64_sysroot,
+            Architecture::X86_64 => x86_64_sysroot,
+            Architecture::ARMv7 => armv7_sysroot,
+            Architecture::AArch64 => aarch64_sysroot,
+            Architecture::RISCV64 => riscv64_sysroot,
         };
         bindgen = bindgen.clang_args(&["-I", &*sysroot.to_string_lossy()]);
 

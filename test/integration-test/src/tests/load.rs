@@ -1,7 +1,6 @@
 use std::{convert::TryInto as _, thread, time};
 
 use aya::{
-    include_bytes_aligned,
     maps::Array,
     programs::{
         links::{FdLink, PinnedLink},
@@ -16,8 +15,7 @@ const RETRY_DURATION_MS: u64 = 10;
 
 #[test]
 fn long_name() {
-    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/name_test");
-    let mut bpf = Bpf::load(bytes).unwrap();
+    let mut bpf = Bpf::load(crate::NAME_TEST).unwrap();
     let name_prog: &mut Xdp = bpf
         .program_mut("ihaveaverylongname")
         .unwrap()
@@ -33,9 +31,7 @@ fn long_name() {
 
 #[test]
 fn multiple_btf_maps() {
-    let bytes =
-        include_bytes_aligned!("../../../target/bpfel-unknown-none/release/multimap-btf.bpf.o");
-    let mut bpf = Bpf::load(bytes).unwrap();
+    let mut bpf = Bpf::load(crate::MULTIMAP_BTF).unwrap();
 
     let map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
     let map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into().unwrap();
@@ -71,8 +67,7 @@ macro_rules! assert_loaded {
 
 #[test]
 fn unload_xdp() {
-    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/test");
-    let mut bpf = Bpf::load(bytes).unwrap();
+    let mut bpf = Bpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf
         .program_mut("test_unload_xdp")
         .unwrap()
@@ -101,8 +96,7 @@ fn unload_xdp() {
 
 #[test]
 fn unload_kprobe() {
-    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/test");
-    let mut bpf = Bpf::load(bytes).unwrap();
+    let mut bpf = Bpf::load(crate::TEST).unwrap();
     let prog: &mut KProbe = bpf
         .program_mut("test_unload_kpr")
         .unwrap()
@@ -137,8 +131,7 @@ fn pin_link() {
         return;
     }
 
-    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/test");
-    let mut bpf = Bpf::load(bytes).unwrap();
+    let mut bpf = Bpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf
         .program_mut("test_unload_xdp")
         .unwrap()
@@ -173,11 +166,9 @@ fn pin_lifecycle() {
         return;
     }
 
-    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/pass");
-
     // 1. Load Program and Pin
     {
-        let mut bpf = Bpf::load(bytes).unwrap();
+        let mut bpf = Bpf::load(crate::PASS).unwrap();
         let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
         prog.load().unwrap();
         prog.pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
@@ -211,7 +202,7 @@ fn pin_lifecycle() {
 
     // 4. Load a new version of the program, unpin link, and atomically replace old program
     {
-        let mut bpf = Bpf::load(bytes).unwrap();
+        let mut bpf = Bpf::load(crate::PASS).unwrap();
         let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
         prog.load().unwrap();
 

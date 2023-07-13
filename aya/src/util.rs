@@ -299,7 +299,7 @@ macro_rules! include_bytes_aligned {
             pub bytes: Bytes,
         }
 
-        static ALIGNED: &Aligned<[u8]> = &Aligned {
+        const ALIGNED: &Aligned<[u8]> = &Aligned {
             _align: [],
             bytes: *include_bytes!($path),
         };

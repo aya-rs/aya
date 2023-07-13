@@ -1,10 +1,8 @@
-use aya::include_bytes_aligned;
 use object::{Object, ObjectSymbol};
 
 #[test]
 fn test_maps() {
-    let bytes = include_bytes_aligned!("../../../target/bpfel-unknown-none/release/map_test");
-    let obj_file = object::File::parse(bytes).unwrap();
+    let obj_file = object::File::parse(crate::MAP_TEST).unwrap();
     if obj_file.section_by_name("maps").is_none() {
         panic!("No 'maps' ELF section");
     }

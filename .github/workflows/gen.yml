@@ -9,11 +9,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/checkout@v3
-        with:
-          repository: libbpf/libbpf
-          path: libbpf
-
       - name: libbpf-version
         working-directory: libbpf
         run: echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
@@ -32,7 +27,7 @@ jobs:
 
       - name: Run codegen
         run: |
-          cargo xtask codegen --libbpf-dir ./libbpf
+          cargo xtask codegen
 
       - name: Check for changes
         run: |

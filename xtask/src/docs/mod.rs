@@ -1,5 +1,4 @@
-use crate::utils::exec;
-use anyhow::{Context as _, Result};
+use anyhow::{anyhow, Context as _, Result};
 use std::{
     path::{Path, PathBuf},
     process::Command,
@@ -8,6 +7,19 @@ use std::{
 use std::{fs, io, io::Write};
 
 use indoc::indoc;
+
+pub fn exec(cmd: &mut Command) -> Result<()> {
+    let status = cmd
+        .status()
+        .with_context(|| format!("failed to run {cmd:?}"))?;
+    match status.code() {
+        Some(code) => match code {
+            0 => Ok(()),
+            code => Err(anyhow!("{cmd:?} exited with code {code}")),
+        },
+        None => Err(anyhow!("{cmd:?} terminated by signal")),
+    }
+}
 
 pub fn docs() -> Result<()> {
     let current_dir = PathBuf::from(".");
