@@ -68,7 +68,7 @@ use thiserror::Error;
 
 use aya::{
     maps::{
-        perf::{AsyncPerfEventArray, PerfBufferError},
+        perf::{AsyncPerfEventArray, Events, PerfBufferError},
         MapError,
     },
     util::online_cpus,
@@ -121,12 +121,10 @@ impl BpfLogger {
                 let mut buffers = vec![BytesMut::with_capacity(LOG_BUF_CAPACITY); 10];
 
                 loop {
-                    let events = buf.read_events(&mut buffers).await.unwrap();
+                    let Events { read, lost: _ } = buf.read_events(&mut buffers).await.unwrap();
 
-                    #[allow(clippy::needless_range_loop)]
-                    for i in 0..events.read {
-                        let buf = &mut buffers[i];
-                        log_buf(buf, &*log).unwrap();
+                    for buf in buffers.iter().take(read) {
+                        log_buf(buf.as_ref(), &*log).unwrap();
                     }
                 }
             });

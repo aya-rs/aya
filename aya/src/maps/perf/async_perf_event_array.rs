@@ -4,7 +4,7 @@ use std::{
     os::fd::{AsRawFd, RawFd},
 };
 
-#[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
+#[cfg(feature = "async_std")]
 use async_io::Async;
 
 #[cfg(feature = "async_tokio")]
@@ -98,16 +98,17 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArray<T> {
         index: u32,
         page_count: Option<usize>,
     ) -> Result<AsyncPerfEventArrayBuffer<T>, PerfBufferError> {
-        let buf = self.perf_map.open(index, page_count)?;
+        let Self { perf_map } = self;
+        let buf = perf_map.open(index, page_count)?;
         let fd = buf.as_raw_fd();
         Ok(AsyncPerfEventArrayBuffer {
             buf,
 
             #[cfg(feature = "async_tokio")]
-            async_fd: AsyncFd::new(fd)?,
+            async_tokio_fd: AsyncFd::new(fd)?,
 
-            #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
-            async_fd: Async::new(fd)?,
+            #[cfg(feature = "async_std")]
+            async_std_fd: Async::new(fd)?,
         })
     }
 }
@@ -131,13 +132,12 @@ pub struct AsyncPerfEventArrayBuffer<T> {
     buf: PerfEventArrayBuffer<T>,
 
     #[cfg(feature = "async_tokio")]
-    async_fd: AsyncFd<RawFd>,
+    async_tokio_fd: AsyncFd<RawFd>,
 
-    #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
-    async_fd: Async<RawFd>,
+    #[cfg(feature = "async_std")]
+    async_std_fd: Async<RawFd>,
 }
 
-#[cfg(feature = "async_tokio")]
 impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArrayBuffer<T> {
     /// Reads events from the buffer.
     ///
@@ -152,44 +152,31 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArrayBuffer<T> {
         &mut self,
         buffers: &mut [BytesMut],
     ) -> Result<Events, PerfBufferError> {
+        let Self {
+            buf,
+            #[cfg(feature = "async_tokio")]
+            async_tokio_fd,
+            #[cfg(feature = "async_std")]
+            async_std_fd,
+        } = self;
         loop {
-            let mut guard = self.async_fd.readable_mut().await?;
+            #[cfg(feature = "async_tokio")]
+            let mut guard = async_tokio_fd.readable_mut().await?;
 
-            match self.buf.read_events(buffers) {
-                Ok(events) if events.read > 0 || events.lost > 0 => return Ok(events),
-                Ok(_) => {
+            #[cfg(feature = "async_std")]
+            if !buf.readable() {
+                async_std_fd.readable().await?;
+            }
+
+            match buf.read_events(buffers) {
+                Ok(events @ Events { read, lost }) => {
+                    if read > 0 || lost > 0 {
+                        return Ok(events);
+                    }
+                    #[cfg(feature = "async_tokio")]
                     guard.clear_ready();
                     continue;
                 }
-                Err(e) => return Err(e),
-            }
-        }
-    }
-}
-
-#[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
-impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArrayBuffer<T> {
-    /// Reads events from the buffer.
-    ///
-    /// This method reads events into the provided slice of buffers, filling
-    /// each buffer in order stopping when there are no more events to read or
-    /// all the buffers have been filled.
-    ///
-    /// Returns the number of events read and the number of events lost. Events
-    /// are lost when user space doesn't read events fast enough and the ring
-    /// buffer fills up.
-    pub async fn read_events(
-        &mut self,
-        buffers: &mut [BytesMut],
-    ) -> Result<Events, PerfBufferError> {
-        loop {
-            if !self.buf.readable() {
-                let _ = self.async_fd.readable().await?;
-            }
-
-            match self.buf.read_events(buffers) {
-                Ok(events) if events.read > 0 || events.lost > 0 => return Ok(events),
-                Ok(_) => continue,
                 Err(e) => return Err(e),
             }
         }

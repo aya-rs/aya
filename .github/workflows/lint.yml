@@ -25,11 +25,14 @@ jobs:
           toolchain: nightly
           components: rustfmt, clippy, miri, rust-src
 
+      - uses: Swatinem/rust-cache@v2
+
       - name: Check formatting
         run: cargo fmt --all -- --check
 
+      - uses: taiki-e/install-action@cargo-hack
       - name: Run clippy
-        run: cargo clippy --all-targets --workspace -- --deny warnings
+        run: cargo hack clippy --all-targets --workspace --feature-powerset -- --deny warnings
 
       - name: Run miri
         run: cargo miri test --all-targets

@@ -39,9 +39,8 @@ matches = "0.1.8"
 
 [features]
 default = []
-async = []
-async_tokio = ["tokio", "async"]
-async_std = ["async-io", "async"]
+async_tokio = ["tokio"]
+async_std = ["async-io"]
 
 [package.metadata.docs.rs]
 all-features = true

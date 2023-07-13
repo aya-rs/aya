@@ -29,20 +29,19 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
+          targets: ${{matrix.arch}}
+
+      - uses: Swatinem/rust-cache@v2
 
       - uses: taiki-e/install-action@cargo-hack
       - name: Check
-        run: cargo hack check --all-targets --feature-powerset --ignore-private
+        run: cargo hack check --all-targets --workspace --feature-powerset --target ${{matrix.arch}}
 
-      - uses: Swatinem/rust-cache@v2
-      - name: Prereqs
-        run: cargo install cross --git https://github.com/cross-rs/cross
-
+      - uses: taiki-e/install-action@cross
       - name: Build
         run: cross build --verbose --target ${{matrix.arch}}
 
-      - name: Run test
+      - name: Test
         env:
           RUST_BACKTRACE: full
-        run: |
-          cross test --verbose --target ${{matrix.arch}}
+        run: cross test --verbose --target ${{matrix.arch}}

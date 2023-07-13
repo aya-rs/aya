@@ -17,10 +17,6 @@ use crate::{
     sys::{bpf_get_object, bpf_pin_object, bpf_prog_detach},
 };
 
-// for docs link
-#[allow(unused)]
-use crate::programs::cgroup_skb::CgroupSkb;
-
 /// A Link.
 pub trait Link: std::fmt::Debug + 'static {
     /// Unique Id
@@ -88,7 +84,7 @@ pub struct FdLinkId(pub(crate) RawFd);
 /// A file descriptor link.
 ///
 /// Fd links are returned directly when attaching some program types (for
-/// instance [`CgroupSkb`]), or can be obtained by converting other link
+/// instance [`crate::programs::cgroup_skb::CgroupSkb`]), or can be obtained by converting other link
 /// types (see the `TryFrom` implementations).
 ///
 /// An important property of fd links is that they can be pinned. Pinning
