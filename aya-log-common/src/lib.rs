@@ -298,8 +298,8 @@ mod test {
     #[test]
     fn log_value_length_sufficient() {
         assert!(
-            LOG_BUF_CAPACITY >= LogValueLength::MAX.into(),
-            "{} < {}",
+            LOG_BUF_CAPACITY <= LogValueLength::MAX.into(),
+            "{} > {}",
             LOG_BUF_CAPACITY,
             LogValueLength::MAX
         );

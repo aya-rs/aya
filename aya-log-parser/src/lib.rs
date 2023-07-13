@@ -163,8 +163,7 @@ mod test {
                 Fragment::Parameter(Parameter {
                     hint: DisplayHint::Ip
                 }),
-                Fragment::Literal(" lmao ".into()),
-                Fragment::Literal(" {{}} {{something}}".into()),
+                Fragment::Literal(" lmao {} {something}".into()),
             ])
         );
         assert!(parse("foo {:}").is_err());

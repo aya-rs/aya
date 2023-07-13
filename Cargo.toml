@@ -19,6 +19,7 @@ members = [
     "bpf/aya-log-ebpf",
     "test/integration-ebpf",
 ]
+
 resolver = "2"
 
 default-members = [
@@ -26,8 +27,13 @@ default-members = [
     "aya-obj",
     "aya-tool",
     "aya-log",
+    "aya-log-common",
+    "aya-log-parser",
+    "xtask",
     "aya-bpf-macros",
     "aya-log-ebpf-macros",
+    "bpf/aya-bpf",
+    "bpf/aya-bpf-bindings",
 ]
 
 [profile.dev]
