@@ -64,3 +64,26 @@ fn syscall(call: Syscall) -> SysResult {
         ret => Err((ret, io::Error::last_os_error())),
     }
 }
+
+#[cfg(test)]
+pub(crate) fn kernel_release() -> Result<String, ()> {
+    Ok("unknown".to_string())
+}
+
+#[cfg(not(test))]
+pub(crate) fn kernel_release() -> Result<String, ()> {
+    use std::ffi::CStr;
+
+    use libc::utsname;
+
+    unsafe {
+        let mut v = mem::zeroed::<utsname>();
+        if libc::uname(&mut v as *mut _) != 0 {
+            return Err(());
+        }
+
+        let release = CStr::from_ptr(v.release.as_ptr());
+
+        Ok(release.to_string_lossy().into_owned())
+    }
+}

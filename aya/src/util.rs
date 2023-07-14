@@ -20,9 +20,12 @@ use libc::{if_nametoindex, sysconf, uname, utsname, _SC_PAGESIZE};
 // Adapted from https://docs.rs/procfs/latest/procfs/sys/kernel/struct.Version.html.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub struct KernelVersion {
-    pub(crate) major: u8,
-    pub(crate) minor: u8,
-    pub(crate) patch: u16,
+    /// Major version.
+    pub major: u8,
+    /// Minor version.
+    pub minor: u8,
+    /// Patch version.
+    pub patch: u16,
 }
 
 /// An error encountered while fetching the current kernel version.

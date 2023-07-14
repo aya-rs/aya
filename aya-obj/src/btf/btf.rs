@@ -19,13 +19,16 @@ use crate::{
         Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
         IntEncoding, LineInfo, Struct, Typedef, VarLinkage,
     },
-    generated::{btf_ext_header, btf_header},
+    generated::{bpf_map_type, btf_ext_header, btf_header, BPF_F_RDONLY_PROG},
+    maps::{bpf_map_def, LegacyMap},
     util::{bytes_of, HashMap},
-    Object,
+    BpfSectionKind, Map, Object,
 };
 
 #[cfg(not(feature = "std"))]
 use crate::std;
+
+use super::{Union, Var};
 
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
 pub(crate) const MAX_SPEC_LEN: usize = 64;
@@ -159,6 +162,20 @@ pub enum BtfError {
     /// unable to get symbol name
     #[error("Unable to get symbol name")]
     InvalidSymbolName,
+
+    /// external symbol is invalid
+    #[error("Invalid extern symbol `{symbol_name}`")]
+    InvalidExternalSymbol {
+        /// name of the symbol
+        symbol_name: String,
+    },
+
+    /// external symbol not found
+    #[error("Extern symbol not found `{symbol_name}`")]
+    ExternalSymbolNotFound {
+        /// name of the symbol
+        symbol_name: String,
+    },
 }
 
 /// Available BTF features
@@ -457,6 +474,57 @@ impl Btf {
         })
     }
 
+    pub(crate) fn type_align(&self, root_type_id: u32) -> Result<usize, BtfError> {
+        let mut type_id = root_type_id;
+        for _ in 0..MAX_RESOLVE_DEPTH {
+            let ty = self.types.type_by_id(type_id)?;
+            let size = match ty {
+                BtfType::Array(Array { array, .. }) => {
+                    type_id = array.element_type;
+                    continue;
+                }
+                BtfType::Struct(Struct { size, members, .. })
+                | BtfType::Union(Union { size, members, .. }) => {
+                    let mut max_align = 1;
+
+                    for m in members {
+                        let align = self.type_align(m.btf_type)?;
+                        max_align = usize::max(align, max_align);
+
+                        if ty.member_bit_field_size(m).unwrap() == 0
+                            || m.offset % (8 * align as u32) != 0
+                        {
+                            return Ok(1);
+                        }
+                    }
+
+                    if size % max_align as u32 != 0 {
+                        return Ok(1);
+                    }
+
+                    return Ok(max_align);
+                }
+
+                other => {
+                    if let Some(size) = other.size() {
+                        u32::min(BtfType::ptr_size(), size)
+                    } else if let Some(next) = other.btf_type() {
+                        type_id = next;
+                        continue;
+                    } else {
+                        return Err(BtfError::UnexpectedBtfType { type_id });
+                    }
+                }
+            };
+
+            return Ok(size as usize);
+        }
+
+        Err(BtfError::MaximumTypeDepthReached {
+            type_id: root_type_id,
+        })
+    }
+
     /// Encodes the metadata as BTF format
     pub fn to_bytes(&self) -> Vec<u8> {
         // Safety: btf_header is POD
@@ -465,6 +533,37 @@ impl Btf {
         buf.extend(self.types.to_bytes());
         buf.put(self.strings.as_slice());
         buf
+    }
+
+    pub(crate) fn get_extern_data_sec_entry_info(
+        &self,
+        target_var_name: &str,
+    ) -> Result<(String, Var), BtfError> {
+        for t in &self.types.types {
+            if let BtfType::DataSec(d) = t {
+                let sec_name = self.string_at(d.name_offset)?;
+
+                for d in &d.entries {
+                    if let BtfType::Var(var) = self.types.type_by_id(d.btf_type)? {
+                        let var_name = self.string_at(var.name_offset)?;
+
+                        if target_var_name == var_name {
+                            if var.linkage != VarLinkage::Extern {
+                                return Err(BtfError::InvalidExternalSymbol {
+                                    symbol_name: var_name.into(),
+                                });
+                            }
+
+                            return Ok((sec_name.into(), var.clone()));
+                        }
+                    }
+                }
+            }
+        }
+
+        Err(BtfError::ExternalSymbolNotFound {
+            symbol_name: target_var_name.into(),
+        })
     }
 
     pub(crate) fn fixup_and_sanitize(
@@ -544,14 +643,13 @@ impl Btf {
                         // We need to get the size of the section from the ELF file
                         // Fortunately, we cached these when parsing it initially
                         // and we can this up by name in section_infos
-                        let size = match section_infos.get(&name) {
-                            Some((_, size)) => size,
-                            None => {
-                                return Err(BtfError::UnknownSectionSize { section_name: name });
-                            }
+
+                        if let Some((_, size)) = section_infos.get(&name) {
+                            debug!("{} {}: fixup size to {}", kind, name, size);
+                            fixed_ty.size = *size as u32;
+                        } else if name != ".kconfig" && name != ".ksyms" {
+                            return Err(BtfError::UnknownSectionSize { section_name: name });
                         };
-                        debug!("{} {}: fixup size to {}", kind, name, size);
-                        fixed_ty.size = *size as u32;
 
                         // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
                         // that need to have their offsets adjusted. To do this,
@@ -580,6 +678,14 @@ impl Btf {
                                     }
                                 };
                                 d.offset = *offset as u32;
+
+                                if var.linkage == VarLinkage::Extern {
+                                    let mut var = var.clone();
+                                    var.linkage = VarLinkage::Global;
+
+                                    types.types[d.btf_type as usize] = BtfType::Var(var);
+                                }
+
                                 debug!(
                                     "{} {}: {} {}: fixup offset {}",
                                     kind, name, var_kind, var_name, offset
@@ -684,6 +790,108 @@ impl Default for Btf {
 }
 
 impl Object {
+    fn patch_extern_data_internal(
+        &mut self,
+        externs: &HashMap<String, Vec<u8>>,
+    ) -> Result<Option<(SectionIndex, Vec<u8>)>, BtfError> {
+        if let Some(ref mut obj_btf) = &mut self.btf {
+            if obj_btf.is_empty() {
+                return Ok(None);
+            }
+
+            let mut kconfig_map_index = 0;
+
+            for map in self.maps.values() {
+                if map.section_index() >= kconfig_map_index {
+                    kconfig_map_index = map.section_index() + 1;
+                }
+            }
+
+            let kconfig_map_index = self.maps.len();
+
+            let symbols = self
+                .symbol_table
+                .iter_mut()
+                .filter(|(_, s)| s.name.is_some() && s.section_index.is_none() && s.is_external)
+                .map(|(_, s)| (s.name.as_ref().unwrap().clone(), s));
+
+            let mut section_data = Vec::<u8>::new();
+            let mut offset = 0u64;
+            let mut has_extern_data = false;
+
+            for (name, symbol) in symbols {
+                let (datasec_name, var) = obj_btf.get_extern_data_sec_entry_info(&name)?;
+
+                if datasec_name == ".kconfig" {
+                    has_extern_data = true;
+
+                    let type_size = obj_btf.type_size(var.btf_type)?;
+                    let type_align = obj_btf.type_align(var.btf_type)? as u64;
+
+                    let mut external_value_opt = externs.get(&name);
+                    let mut empty_data = Vec::new();
+                    empty_data.resize(type_size, 0u8);
+
+                    if external_value_opt.is_none() && symbol.is_weak {
+                        external_value_opt = Some(&empty_data);
+                    }
+
+                    if let Some(data) = external_value_opt {
+                        symbol.address = (offset + (type_align - 1)) & !(type_align - 1);
+                        symbol.size = type_size as u64;
+                        symbol.section_index = Some(kconfig_map_index);
+
+                        section_data.resize((symbol.address - offset) as usize, 0);
+
+                        self.symbol_offset_by_name.insert(name, symbol.address);
+                        section_data.extend(data);
+                        offset = symbol.address + data.len() as u64;
+                    } else {
+                        return Err(BtfError::ExternalSymbolNotFound { symbol_name: name });
+                    }
+                }
+            }
+
+            if has_extern_data {
+                self.section_infos.insert(
+                    ".kconfig".into(),
+                    (SectionIndex(kconfig_map_index), section_data.len() as u64),
+                );
+
+                return Ok(Some((SectionIndex(kconfig_map_index), section_data)));
+            }
+        }
+        Ok(None)
+    }
+
+    /// Patches extern data
+    pub fn patch_extern_data(
+        &mut self,
+        externs: &HashMap<String, Vec<u8>>,
+    ) -> Result<(), BtfError> {
+        if let Some((section_index, data)) = self.patch_extern_data_internal(externs)? {
+            self.maps.insert(
+                ".kconfig".into(),
+                Map::Legacy(LegacyMap {
+                    def: bpf_map_def {
+                        map_type: bpf_map_type::BPF_MAP_TYPE_ARRAY as u32,
+                        key_size: mem::size_of::<u32>() as u32,
+                        value_size: data.len() as u32,
+                        max_entries: 1,
+                        map_flags: BPF_F_RDONLY_PROG,
+                        ..Default::default()
+                    },
+                    section_index: section_index.0,
+                    section_kind: BpfSectionKind::Rodata,
+                    symbol_index: None,
+                    data,
+                }),
+            );
+        }
+
+        Ok(())
+    }
+
     /// Fixes up and sanitizes BTF data.
     ///
     /// Mostly, it removes unsupported types and works around LLVM behaviours.

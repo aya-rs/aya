@@ -50,7 +50,7 @@ pub mod lirc_mode2;
 pub mod lsm;
 pub mod perf_attach;
 pub mod perf_event;
-mod probe;
+pub(crate) mod probe;
 mod raw_trace_point;
 mod sk_lookup;
 mod sk_msg;
