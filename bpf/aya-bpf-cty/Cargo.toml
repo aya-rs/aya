@@ -1,7 +1,7 @@
 [package]
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
 edition = "2021"
-categories = ["embedded", "external-ffi-bindings" ,"no-std"]
+categories = ["embedded", "external-ffi-bindings", "no-std"]
 description = "Type aliases to C types like c_int for use with bindgen"
 documentation = "https://docs.rs/cty"
 license = "MIT OR Apache-2.0"
