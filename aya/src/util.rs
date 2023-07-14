@@ -132,8 +132,21 @@ impl KernelVersion {
         // terminated by a null byte ('\0').
         let p = unsafe { CStr::from_ptr(info.release.as_ptr()) };
         let p = p.to_str()?;
+        Self::parse_kernel_version_string(p)
+    }
+
+    fn parse_kernel_version_string(p: &str) -> Result<Self, CurrentKernelVersionError> {
         // Unlike sscanf, text_io::try_scan! does not stop at the first non-matching character.
-        let p = match p.split_once(|c: char| c != '.' && !c.is_ascii_digit()) {
+        let mut dots = 0;
+        let p = match p.split_once(|c: char| {
+            if c.is_ascii_digit() {
+                return false;
+            }
+            if c == '.' {
+                dots += 1;
+            }
+            dots > 2
+        }) {
             Some((prefix, _suffix)) => prefix,
             None => p,
         };
@@ -331,6 +344,14 @@ pub(crate) fn bytes_of_slice<T: Pod>(val: &[T]) -> &[u8] {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use assert_matches::assert_matches;
+
+    #[test]
+    fn test_parse_kernel_version_string() {
+        assert_matches!(KernelVersion::parse_kernel_version_string("5.15.90.1-microsoft-standard-WSL2"), Ok(kernel_version) => {
+            assert_eq!(kernel_version, KernelVersion::new(5, 15, 90))
+        });
+    }
 
     #[test]
     fn test_parse_online_cpus() {
