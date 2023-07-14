@@ -6,4 +6,3 @@ edition = "2021"
 
 [dependencies]
 aya-bpf-cty = { path = "../aya-bpf-cty" }
-
