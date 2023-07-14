@@ -3,5 +3,4 @@ target/
 .vscode/
 !.vscode/settings.json
 site/
-header.html
 .idea/
