@@ -12,6 +12,7 @@ use std::{
 use cargo_metadata::{
     Artifact, CompilerMessage, Dependency, Message, Metadata, MetadataCommand, Package, Target,
 };
+use which::which;
 
 fn main() {
     const AYA_BUILD_INTEGRATION_BPF: &str = "AYA_BUILD_INTEGRATION_BPF";
@@ -146,6 +147,9 @@ fn main() {
                 }
             }
         }
+
+        let bpf_linker = which("bpf-linker").unwrap();
+        println!("cargo:rerun-if-changed={}", bpf_linker.to_str().unwrap());
 
         let mut cmd = Command::new("cargo");
         cmd.args([
