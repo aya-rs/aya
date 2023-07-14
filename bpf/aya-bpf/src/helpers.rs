@@ -585,7 +585,6 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
 /// # Errors
 ///
 /// On failure, this function returns a negative value wrapped in an `Err`.
-#[allow(clippy::fn_to_numeric_cast_with_truncation)]
 #[inline]
 pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), c_long> {
     let ret = gen::bpf_probe_write_user(

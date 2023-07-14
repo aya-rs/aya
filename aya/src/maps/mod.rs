@@ -77,8 +77,8 @@ pub use array::{Array, PerCpuArray, ProgramArray};
 pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use lpm_trie::LpmTrie;
-#[cfg(feature = "async")]
-#[cfg_attr(docsrs, doc(cfg(feature = "async")))]
+#[cfg(any(feature = "async_tokio", feature = "async_std"))]
+#[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std"))))]
 pub use perf::AsyncPerfEventArray;
 pub use perf::PerfEventArray;
 pub use queue::Queue;
@@ -349,8 +349,8 @@ impl_try_from_map!(
     StackTraceMap from Map::StackTraceMap,
 );
 
-#[cfg(feature = "async")]
-#[cfg_attr(docsrs, doc(cfg(feature = "async")))]
+#[cfg(any(feature = "async_tokio", feature = "async_std"))]
+#[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std"))))]
 impl_try_from_map!(
     AsyncPerfEventArray from Map::PerfEventArray,
 );

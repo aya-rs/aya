@@ -17,10 +17,6 @@ use crate::{
     sys::{bpf_get_object, bpf_pin_object, bpf_prog_detach},
 };
 
-// for docs link
-#[allow(unused)]
-use crate::programs::cgroup_skb::CgroupSkb;
-
 /// A Link.
 pub trait Link: std::fmt::Debug + 'static {
     /// Unique Id
@@ -88,8 +84,8 @@ pub struct FdLinkId(pub(crate) RawFd);
 /// A file descriptor link.
 ///
 /// Fd links are returned directly when attaching some program types (for
-/// instance [`CgroupSkb`]), or can be obtained by converting other link
-/// types (see the `TryFrom` implementations).
+/// instance [`crate::programs::cgroup_skb::CgroupSkb`]), or can be obtained by
+/// converting other link types (see the `TryFrom` implementations).
 ///
 /// An important property of fd links is that they can be pinned. Pinning
 /// can be used keep a link attached "in background" even after the program
@@ -358,7 +354,8 @@ pub enum LinkError {
 #[cfg(test)]
 mod tests {
     use matches::assert_matches;
-    use std::{cell::RefCell, env, fs::File, mem, os::unix::io::AsRawFd, rc::Rc};
+    use std::{cell::RefCell, fs::File, mem, os::unix::io::AsRawFd, rc::Rc};
+    use tempfile::tempdir;
 
     use crate::{programs::ProgramError, sys::override_syscall};
 
@@ -493,8 +490,8 @@ mod tests {
     #[test]
     #[cfg_attr(miri, ignore)]
     fn test_pin() {
-        let dir = env::temp_dir();
-        let f1 = File::create(dir.join("f1")).expect("unable to create file in tmpdir");
+        let dir = tempdir().unwrap();
+        let f1 = File::create(dir.path().join("f1")).expect("unable to create file in tmpdir");
         let fd_link = FdLink::new(f1.as_raw_fd());
 
         // leak the fd, it will get closed when our pinned link is dropped
@@ -503,11 +500,12 @@ mod tests {
         // override syscall to allow for pin to happen in our tmpdir
         override_syscall(|_| Ok(0));
         // create the file that would have happened as a side-effect of a real pin operation
-        File::create(dir.join("f1-pin")).expect("unable to create file in tmpdir");
-        assert!(dir.join("f1-pin").exists());
+        let pin = dir.path().join("f1-pin");
+        File::create(&pin).expect("unable to create file in tmpdir");
+        assert!(pin.exists());
 
-        let pinned_link = fd_link.pin(dir.join("f1-pin")).expect("pin failed");
+        let pinned_link = fd_link.pin(&pin).expect("pin failed");
         pinned_link.unpin().expect("unpin failed");
-        assert!(!dir.join("f1-pin").exists());
+        assert!(!pin.exists());
     }
 }

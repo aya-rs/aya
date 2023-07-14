@@ -37,7 +37,10 @@
 //! let bytes = std::fs::read("program.o").unwrap();
 //! let mut object = Object::parse(&bytes).unwrap();
 //! // Relocate the programs
+//! #[cfg(feature = "std")]
 //! let text_sections = std::collections::HashSet::new();
+//! #[cfg(not(feature = "std"))]
+//! let text_sections = hashbrown::HashSet::new();
 //! object.relocate_calls(&text_sections).unwrap();
 //! object.relocate_maps(std::iter::empty(), &text_sections).unwrap();
 //!

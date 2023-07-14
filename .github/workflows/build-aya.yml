@@ -16,6 +16,7 @@ env:
 jobs:
   build-test:
     strategy:
+      fail-fast: false
       matrix:
         arch:
           - x86_64-unknown-linux-gnu
@@ -29,20 +30,33 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-
-      - uses: taiki-e/install-action@cargo-hack
-      - name: Check
-        run: cargo hack check --all-targets --feature-powerset --ignore-private
+          targets: ${{ matrix.arch }}
 
       - uses: Swatinem/rust-cache@v2
-      - name: Prereqs
-        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - uses: taiki-e/install-action@cargo-hack
+
+      - uses: taiki-e/setup-cross-toolchain-action@v1
+        with:
+          target: ${{ matrix.arch }}
 
       - name: Build
-        run: cross build --verbose --target ${{matrix.arch}}
+        run: |
+          cargo hack build --all-targets --feature-powerset \
+            --exclude aya-bpf \
+            --exclude aya-bpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --workspace
 
-      - name: Run test
+      - name: Test
         env:
           RUST_BACKTRACE: full
         run: |
-          cross test --verbose --target ${{matrix.arch}}
+          cargo hack test --all-targets --feature-powerset \
+            --exclude aya-bpf \
+            --exclude aya-bpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --exclude integration-test \
+            --workspace
