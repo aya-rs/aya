@@ -389,9 +389,51 @@ impl<'a> BpfLoader<'a> {
 
         let btf_fd = if let Some(features) = &FEATURES.btf() {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
-                // load btf to the kernel
-                let btf = load_btf(btf.to_bytes(), *verifier_log_level)?;
-                Some(btf)
+                match load_btf(btf.to_bytes(), *verifier_log_level) {
+                    Ok(btf_fd) => Some(btf_fd),
+                    // Only report an error here if the BTF is truely needed, otherwise proceed without.
+                    Err(err) => {
+                        for program in obj.programs.values() {
+                            match program.section {
+                                ProgramSection::Extension { .. }
+                                | ProgramSection::FEntry { .. }
+                                | ProgramSection::FExit { .. }
+                                | ProgramSection::Lsm { .. }
+                                | ProgramSection::BtfTracePoint { .. } => {
+                                    return Err(BpfError::BtfError(err))
+                                }
+                                ProgramSection::KRetProbe { .. }
+                                | ProgramSection::KProbe { .. }
+                                | ProgramSection::UProbe { .. }
+                                | ProgramSection::URetProbe { .. }
+                                | ProgramSection::TracePoint { .. }
+                                | ProgramSection::SocketFilter { .. }
+                                | ProgramSection::Xdp { .. }
+                                | ProgramSection::SkMsg { .. }
+                                | ProgramSection::SkSkbStreamParser { .. }
+                                | ProgramSection::SkSkbStreamVerdict { .. }
+                                | ProgramSection::SockOps { .. }
+                                | ProgramSection::SchedClassifier { .. }
+                                | ProgramSection::CgroupSkb { .. }
+                                | ProgramSection::CgroupSkbIngress { .. }
+                                | ProgramSection::CgroupSkbEgress { .. }
+                                | ProgramSection::CgroupSockAddr { .. }
+                                | ProgramSection::CgroupSysctl { .. }
+                                | ProgramSection::CgroupSockopt { .. }
+                                | ProgramSection::LircMode2 { .. }
+                                | ProgramSection::PerfEvent { .. }
+                                | ProgramSection::RawTracePoint { .. }
+                                | ProgramSection::SkLookup { .. }
+                                | ProgramSection::CgroupSock { .. }
+                                | ProgramSection::CgroupDevice { .. } => {}
+                            }
+                        }
+
+                        warn!("Object BTF couldn't be loaded in the kernel: {err}");
+
+                        None
+                    }
+                }
             } else {
                 None
             }
