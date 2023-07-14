@@ -2,7 +2,7 @@
 name = "aya-obj"
 version = "0.1.0"
 description = "An eBPF object file parsing library with BTF and relocation support."
-keywords = ["ebpf", "bpf", "btf", "elf", "object"]
+keywords = ["bpf", "btf", "ebpf", "elf", "object"]
 license = "MIT OR Apache-2.0"
 authors = ["The Aya Contributors"]
 repository = "https://github.com/aya-rs/aya"
@@ -13,13 +13,16 @@ edition = "2021"
 [dependencies]
 bytes = "1"
 log = "0.4"
-object = { version = "0.31", default-features = false, features = ["read_core", "elf"] }
+object = { version = "0.31", default-features = false, features = [
+    "elf",
+    "read_core",
+] }
 hashbrown = { version = "0.14" }
 thiserror = { version = "1", default-features = false }
 core-error = { version = "0.0.0" }
 
 [dev-dependencies]
-matches = "0.1.8"
+assert_matches = "1.5.0"
 rbpf = "0.2.0"
 
 [features]

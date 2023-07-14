@@ -107,8 +107,8 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> 
 mod tests {
     use std::io;
 
+    use assert_matches::assert_matches;
     use libc::{EFAULT, ENOENT};
-    use matches::assert_matches;
 
     use crate::{
         bpf_map_def,

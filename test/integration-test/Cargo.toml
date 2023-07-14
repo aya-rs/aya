@@ -6,16 +6,16 @@ publish = false
 
 [dependencies]
 anyhow = "1"
+assert_matches = "1.5.0"
 aya = { path = "../../aya" }
 aya-log = { path = "../../aya-log" }
 aya-obj = { path = "../../aya-obj" }
 libc = { version = "0.2.105" }
 log = "0.4"
-matches = "0.1.8"
 object = { version = "0.31", default-features = false, features = [
-    "std",
-    "read_core",
     "elf",
+    "read_core",
+    "std",
 ] }
 rbpf = "0.2.0"
 tokio = { version = "1.24", default-features = false, features = ["time"] }

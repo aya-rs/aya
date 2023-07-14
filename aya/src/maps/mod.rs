@@ -842,8 +842,8 @@ impl<T: Pod> Deref for PerCpuValues<T> {
 
 #[cfg(test)]
 mod tests {
+    use assert_matches::assert_matches;
     use libc::EFAULT;
-    use matches::assert_matches;
 
     use crate::{
         bpf_map_def,
