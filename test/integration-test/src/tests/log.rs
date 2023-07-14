@@ -1,73 +1,19 @@
-use std::sync::{Arc, LockResult, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex};
 
+use assert_matches::assert_matches;
 use aya::{programs::UProbe, Bpf};
 use aya_log::BpfLogger;
 use log::{Level, Log, Record};
-use tokio::time::{sleep, Duration};
-
-const MAX_ATTEMPTS: usize = 10;
-const TIMEOUT_MS: u64 = 10;
 
 #[no_mangle]
 #[inline(never)]
 pub extern "C" fn trigger_ebpf_program() {}
 
-struct CapturedLogs(Arc<Mutex<Vec<CapturedLog>>>);
-
-impl CapturedLogs {
-    fn with_capacity(capacity: usize) -> Self {
-        Self(Arc::new(Mutex::new(Vec::with_capacity(capacity))))
-    }
-
-    fn clone(&self) -> Self {
-        Self(self.0.clone())
-    }
-
-    fn lock(&self) -> LockResult<MutexGuard<'_, Vec<CapturedLog>>> {
-        self.0.lock()
-    }
-
-    async fn wait_expected_len(&self, expected_len: usize) {
-        for _ in 0..MAX_ATTEMPTS {
-            {
-                let captured_logs = self.0.lock().expect("Failed to lock captured logs");
-                if captured_logs.len() == expected_len {
-                    return;
-                }
-            }
-            sleep(Duration::from_millis(TIMEOUT_MS)).await;
-        }
-        panic!(
-            "Expected {} captured logs, but got {}",
-            expected_len,
-            self.0.lock().unwrap().len()
-        );
-    }
+struct TestingLogger<F> {
+    log: F,
 }
 
-struct CapturedLog {
-    pub body: String,
-    pub level: Level,
-    pub target: String,
-}
-
-struct TestingLogger {
-    captured_logs: CapturedLogs,
-}
-
-impl TestingLogger {
-    pub fn with_capacity(capacity: usize) -> (Self, CapturedLogs) {
-        let captured_logs = CapturedLogs::with_capacity(capacity);
-        (
-            Self {
-                captured_logs: captured_logs.clone(),
-            },
-            captured_logs,
-        )
-    }
-}
-
-impl Log for TestingLogger {
+impl<F: Send + Sync + Fn(&Record)> Log for TestingLogger<F> {
     fn enabled(&self, _metadata: &log::Metadata) -> bool {
         true
     }
@@ -75,24 +21,40 @@ impl Log for TestingLogger {
     fn flush(&self) {}
 
     fn log(&self, record: &Record) {
-        let captured_record = CapturedLog {
-            body: format!("{}", record.args()),
-            level: record.level(),
-            target: record.target().to_string(),
-        };
-        self.captured_logs
-            .lock()
-            .expect("Failed to acquire a lock for storing a log")
-            .push(captured_record);
+        let Self { log } = self;
+        log(record);
     }
+}
+
+#[derive(Debug, PartialEq)]
+struct CapturedLog {
+    pub body: String,
+    pub level: Level,
+    pub target: String,
 }
 
 #[tokio::test]
 async fn log() {
     let mut bpf = Bpf::load(crate::LOG).unwrap();
 
-    let (logger, captured_logs) = TestingLogger::with_capacity(5);
-    BpfLogger::init_with_logger(&mut bpf, logger).unwrap();
+    let captured_logs = Arc::new(Mutex::new(Vec::new()));
+    {
+        let captured_logs = captured_logs.clone();
+        BpfLogger::init_with_logger(
+            &mut bpf,
+            TestingLogger {
+                log: move |record: &Record| {
+                    let mut logs = captured_logs.lock().unwrap();
+                    logs.push(CapturedLog {
+                        body: format!("{}", record.args()),
+                        level: record.level(),
+                        target: record.target().to_string(),
+                    });
+                },
+            },
+        )
+        .unwrap();
+    }
 
     let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
@@ -101,37 +63,72 @@ async fn log() {
 
     // Call the function that the uprobe is attached to, so it starts logging.
     trigger_ebpf_program();
-    captured_logs.wait_expected_len(6).await;
 
-    let records = captured_logs
-        .lock()
-        .expect("Failed to acquire a lock for reading logs");
-    assert_eq!(records.len(), 6);
+    let mut logs = 0;
+    let records = loop {
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        let records = captured_logs.lock().unwrap();
+        if records.len() == logs {
+            break records;
+        }
+        logs = records.len();
+    };
 
-    assert_eq!(records[0].body, "Hello from eBPF!");
-    assert_eq!(records[0].level, Level::Debug);
-    assert_eq!(records[0].target, "log");
+    let mut records = records.iter();
 
-    assert_eq!(records[1].body, "69, 420, wao");
-    assert_eq!(records[1].level, Level::Error);
-    assert_eq!(records[1].target, "log");
-
-    assert_eq!(records[2].body, "ipv4: 10.0.0.1, ipv6: 2001:db8::1");
-    assert_eq!(records[2].level, Level::Info);
-    assert_eq!(records[2].target, "log");
-
-    assert_eq!(
-        records[3].body,
-        "mac lc: 04:20:06:09:00:40, mac uc: 04:20:06:09:00:40"
+    assert_matches!(
+        records.next(),
+        Some(CapturedLog {
+            body,
+            level: Level::Debug,
+            target,
+         }) if body == "Hello from eBPF!" && target == "log"
     );
-    assert_eq!(records[3].level, Level::Trace);
-    assert_eq!(records[3].target, "log");
 
-    assert_eq!(records[4].body, "hex lc: 2f, hex uc: 2F");
-    assert_eq!(records[4].level, Level::Warn);
-    assert_eq!(records[4].target, "log");
+    assert_matches!(
+        records.next(),
+        Some(CapturedLog {
+            body,
+            level: Level::Error,
+            target,
+        }) if body == "69, 420, wao" && target == "log"
+    );
 
-    assert_eq!(records[5].body, "hex lc: deadbeef, hex uc: DEADBEEF");
-    assert_eq!(records[5].level, Level::Debug);
-    assert_eq!(records[5].target, "log");
+    assert_matches!(
+        records.next(),
+        Some(CapturedLog {
+            body,
+            level: Level::Info,
+            target,
+        }) if body == "ipv4: 10.0.0.1, ipv6: 2001:db8::1" && target == "log"
+    );
+
+    assert_matches!(
+        records.next(),
+        Some(CapturedLog {
+            body,
+            level: Level::Trace,
+            target,
+        }) if body == "mac lc: 04:20:06:09:00:40, mac uc: 04:20:06:09:00:40" && target == "log"
+    );
+
+    assert_matches!(
+        records.next(),
+        Some(CapturedLog {
+            body,
+            level: Level::Warn,
+            target,
+        }) if body == "hex lc: 2f, hex uc: 2F" && target == "log"
+    );
+
+    assert_matches!(
+        records.next(),
+        Some(CapturedLog {
+            body,
+            level: Level::Debug,
+            target,
+        }) if body == "hex lc: deadbeef, hex uc: DEADBEEF" && target == "log"
+    );
+
+    assert_eq!(records.next(), None);
 }
