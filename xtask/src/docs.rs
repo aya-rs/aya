@@ -17,8 +17,15 @@ pub fn exec(cmd: &mut Command) -> Result<()> {
 }
 
 pub fn docs() -> Result<()> {
-    const PACKAGE_TO_DESCRIPTION: &[(&str, &str)] =
-        &[("aya", "User-space"), ("aya-bpf", "Kernel-space")];
+    const PACKAGE_TO_DESCRIPTION: &[(&str, &str)] = &[
+        ("aya", "User-space BPF program loading and manipulation"),
+        ("aya-bpf", "Kernel-space BPF program implementation toolkit"),
+        ("aya-log-ebpf", "Kernel-space logging from BPF programs"),
+        (
+            "aya-log",
+            "User-space consumption of logs from BPF programs",
+        ),
+    ];
 
     let Metadata {
         workspace_root,
@@ -92,7 +99,7 @@ pub fn docs() -> Result<()> {
     for (package, description) in PACKAGE_TO_DESCRIPTION {
         let package = package.replace('-', "_");
         writedoc! {&mut index, r#"
-            <li><a href="{package}/index.html">Aya {description} Development Documentation</a></li>
+            <li><a href="{package}/index.html">Aya {description}</a></li>
         "#}
         .context("write to string")?;
     }
