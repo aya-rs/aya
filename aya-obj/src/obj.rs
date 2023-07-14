@@ -1486,7 +1486,7 @@ pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
 #[cfg(test)]
 mod tests {
     use alloc::vec;
-    use matches::assert_matches;
+    use assert_matches::assert_matches;
     use object::Endianness;
 
     use super::*;

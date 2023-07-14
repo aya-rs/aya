@@ -207,8 +207,8 @@ mod tests {
         obj::{self, maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
+    use assert_matches::assert_matches;
     use libc::{EFAULT, ENOENT};
-    use matches::assert_matches;
     use std::{io, mem, net::Ipv4Addr};
 
     fn new_obj_map() -> obj::Map {

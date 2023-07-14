@@ -319,7 +319,7 @@ mod tests {
         generated::perf_event_mmap_page,
         sys::{override_syscall, Syscall, TEST_MMAP_RET},
     };
-    use matches::assert_matches;
+    use assert_matches::assert_matches;
     use std::{fmt::Debug, mem};
 
     const PAGE_SIZE: usize = 4096;
