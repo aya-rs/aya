@@ -24,7 +24,6 @@ resolver = "2"
 
 default-members = [
     "aya",
-    "aya-bpf-macros",
     "aya-log",
     "aya-log-common",
     "aya-log-parser",

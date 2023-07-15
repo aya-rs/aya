@@ -8,7 +8,7 @@ fn run_with_rbpf() {
     let object = Object::parse(crate::PASS).unwrap();
 
     assert_eq!(object.programs.len(), 1);
-    matches::assert_matches!(object.programs["pass"].section, ProgramSection::Xdp { .. });
+    assert_matches::assert_matches!(object.programs["pass"].section, ProgramSection::Xdp { .. });
     assert_eq!(object.programs["pass"].section.name(), "pass");
 
     let instructions = &object
@@ -35,7 +35,7 @@ fn use_map_with_rbpf() {
     let mut object = Object::parse(crate::MULTIMAP_BTF).unwrap();
 
     assert_eq!(object.programs.len(), 1);
-    matches::assert_matches!(
+    assert_matches::assert_matches!(
         object.programs["tracepoint"].section,
         ProgramSection::TracePoint { .. }
     );

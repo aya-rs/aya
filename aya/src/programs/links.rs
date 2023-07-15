@@ -353,7 +353,7 @@ pub enum LinkError {
 
 #[cfg(test)]
 mod tests {
-    use matches::assert_matches;
+    use assert_matches::assert_matches;
     use std::{cell::RefCell, fs::File, mem, os::unix::io::AsRawFd, rc::Rc};
     use tempfile::tempdir;
 
