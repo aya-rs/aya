@@ -147,8 +147,8 @@ impl<T> FromPtRegs for *const T {
     }
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
-        let addr: __u64 = &ctx.uregs[13] + 8 * (n + 1) as __u64;
         unsafe {
+            let addr: __u64 = &ctx.uregs[13] + 8 * (n + 1) as __u64;
             bpf_probe_read(addr as *const T)
                 .map(|v| &v as *const _)
                 .ok()
