@@ -1,4 +1,5 @@
 use std::{
+    collections::{HashMap, HashSet},
     env,
     ffi::OsString,
     fmt::Write as _,
@@ -9,8 +10,9 @@ use std::{
 };
 
 use cargo_metadata::{
-    Artifact, CompilerMessage, Message, Metadata, MetadataCommand, Package, Target,
+    Artifact, CompilerMessage, Dependency, Message, Metadata, MetadataCommand, Package, Target,
 };
+use which::which;
 
 fn main() {
     const AYA_BUILD_INTEGRATION_BPF: &str = "AYA_BUILD_INTEGRATION_BPF";
@@ -24,6 +26,17 @@ fn main() {
             s.parse::<bool>().unwrap()
         }
     };
+
+    const INTEGRATION_EBPF_PACKAGE: &str = "integration-ebpf";
+
+    let Metadata { packages, .. } = MetadataCommand::new().no_deps().exec().unwrap();
+    let packages: HashMap<String, _> = packages
+        .into_iter()
+        .map(|package| {
+            let Package { name, .. } = &package;
+            (name.clone(), package)
+        })
+        .collect();
 
     let manifest_dir = env::var_os("CARGO_MANIFEST_DIR").unwrap();
     let manifest_dir = PathBuf::from(manifest_dir);
@@ -117,14 +130,32 @@ fn main() {
             }
         }
 
-        let ebpf_dir = manifest_dir.parent().unwrap().join("integration-ebpf");
-        println!("cargo:rerun-if-changed={}", ebpf_dir.to_str().unwrap());
-
         let target = format!("{target}-unknown-none");
 
+        // Teach cargo about our dependencies.
+        let mut visited = HashSet::new();
+        let mut frontier = vec![INTEGRATION_EBPF_PACKAGE];
+        while let Some(package) = frontier.pop() {
+            if !visited.insert(package) {
+                continue;
+            }
+            let Package { dependencies, .. } = packages.get(package).unwrap();
+            for Dependency { name, path, .. } in dependencies {
+                if let Some(path) = path {
+                    println!("cargo:rerun-if-changed={}", path.as_str());
+                    frontier.push(name);
+                }
+            }
+        }
+
+        let bpf_linker = which("bpf-linker").unwrap();
+        println!("cargo:rerun-if-changed={}", bpf_linker.to_str().unwrap());
+
         let mut cmd = Command::new("cargo");
-        cmd.current_dir(&ebpf_dir).args([
+        cmd.args([
             "build",
+            "-p",
+            "integration-ebpf",
             "-Z",
             "build-std=core",
             "--release",
@@ -185,18 +216,13 @@ fn main() {
             fs::write(&dst, []).unwrap_or_else(|err| panic!("failed to create {dst:?}: {err}"));
         }
 
-        let Metadata { packages, .. } = MetadataCommand::new().no_deps().exec().unwrap();
-        for Package { name, targets, .. } in packages {
-            if name != "integration-ebpf" {
+        let Package { targets, .. } = packages.get(INTEGRATION_EBPF_PACKAGE).unwrap();
+        for Target { name, kind, .. } in targets {
+            if *kind != ["bin"] {
                 continue;
             }
-            for Target { name, kind, .. } in targets {
-                if kind != ["bin"] {
-                    continue;
-                }
-                let dst = out_dir.join(name);
-                fs::write(&dst, []).unwrap_or_else(|err| panic!("failed to create {dst:?}: {err}"));
-            }
+            let dst = out_dir.join(name);
+            fs::write(&dst, []).unwrap_or_else(|err| panic!("failed to create {dst:?}: {err}"));
         }
     }
 }
