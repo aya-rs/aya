@@ -126,7 +126,7 @@ impl<T> FromPtRegs for *const T {
         unsafe {
             let addr: __u64 = ctx.rsp + 8 * (n + 1) as __u64;
             bpf_probe_read(addr as *const T)
-                .map(|v| &v as *const _)
+                .map(|v| v as *const _)
                 .ok()
         }
     }
@@ -150,7 +150,7 @@ impl<T> FromPtRegs for *const T {
         unsafe {
             let addr: __u64 = &ctx.uregs[13] + 8 * (n + 1) as __u64;
             bpf_probe_read(addr as *const T)
-                .map(|v| &v as *const _)
+                .map(|v| v as *const _)
                 .ok()
         }
     }
@@ -250,7 +250,7 @@ impl<T> FromPtRegs for *mut T {
         unsafe {
             let addr: __u64 = ctx.sp + 8 * (n + 1) as __u64;
             bpf_probe_read(addr as *mut T)
-                .map(|mut v| &mut v as *mut _)
+                .map(|mut v| &mut v as *mut T)
                 .ok()
         }
     }
