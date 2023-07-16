@@ -242,7 +242,7 @@ trap cleanup_vm EXIT
 exec_vm "rm -rf aya/*"
 rsync_vm "--exclude=target --exclude=.tmp $AYA_SOURCE_DIR"
 
-exec_vm "cd aya; cargo xtask integration-test"
+exec_vm "cd aya; cargo xtask integration-test $*"
 
 # we rm and sync but it doesn't seem to work reliably - I guess we could sleep a
 # few seconds after but ain't nobody got time for that. Instead we also rm

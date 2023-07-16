@@ -116,8 +116,12 @@ fn load_and_attach_uprobe(prog_name: &str, func_name: &str, bytes: &[u8]) -> Bpf
 
 #[no_mangle]
 #[inline(never)]
-pub extern "C" fn trigger_bpf_probe_read_user(_string: *const u8, _len: usize) {}
+pub extern "C" fn trigger_bpf_probe_read_user(string: *const u8, len: usize) {
+    core::hint::black_box((string, len));
+}
 
 #[no_mangle]
 #[inline(never)]
-pub extern "C" fn trigger_bpf_probe_read_kernel(_len: usize) {}
+pub extern "C" fn trigger_bpf_probe_read_kernel(len: usize) {
+    core::hint::black_box(len);
+}
