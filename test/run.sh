@@ -244,6 +244,9 @@ rsync_vm "--exclude=target --exclude=.tmp $AYA_SOURCE_DIR"
 
 exec_vm "cd aya; cargo xtask integration-test"
 
+# run the integration tests again in release, they should still work.
+exec_vm "cd aya; cargo xtask integration-test --cargo-arg=--release"
+
 # we rm and sync but it doesn't seem to work reliably - I guess we could sleep a
 # few seconds after but ain't nobody got time for that. Instead we also rm
 # before rsyncing.
