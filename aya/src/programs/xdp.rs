@@ -3,7 +3,7 @@
 use crate::util::KernelVersion;
 use bitflags;
 use libc::if_nametoindex;
-use std::{convert::TryFrom, ffi::CString, hash::Hash, io, mem, os::unix::io::RawFd};
+use std::{convert::TryFrom, ffi::CString, hash::Hash, io, mem, os::fd::RawFd};
 use thiserror::Error;
 
 use crate::{

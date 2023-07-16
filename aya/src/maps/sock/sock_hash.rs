@@ -1,7 +1,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
-    os::unix::io::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
 };
 
 use crate::{
@@ -42,7 +42,7 @@ use crate::{
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::io::Write;
 /// use std::net::TcpStream;
-/// use std::os::unix::io::AsRawFd;
+/// use std::os::fd::AsRawFd;
 /// use aya::maps::SockHash;
 /// use aya::programs::SkMsg;
 ///

@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
     ffi::CString,
     fs, io,
-    os::{raw::c_int, unix::io::RawFd},
+    os::{fd::RawFd, raw::c_int},
     path::{Path, PathBuf},
 };
 
