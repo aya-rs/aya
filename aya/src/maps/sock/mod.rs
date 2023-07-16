@@ -5,7 +5,7 @@ mod sock_map;
 pub use sock_hash::SockHash;
 pub use sock_map::SockMap;
 
-use std::os::unix::io::{AsRawFd, RawFd};
+use std::os::fd::{AsRawFd, RawFd};
 
 /// A socket map file descriptor.
 #[derive(Copy, Clone)]

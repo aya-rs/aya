@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ffi::CStr, io, mem, os::unix::io::RawFd, ptr, slice};
+use std::{collections::HashMap, ffi::CStr, io, mem, os::fd::RawFd, ptr, slice};
 use thiserror::Error;
 
 use libc::{

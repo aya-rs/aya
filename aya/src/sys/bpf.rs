@@ -3,7 +3,7 @@ use std::{
     ffi::{CStr, CString},
     io,
     mem::{self, MaybeUninit},
-    os::unix::io::RawFd,
+    os::fd::RawFd,
     slice,
 };
 

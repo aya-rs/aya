@@ -1,6 +1,6 @@
 //! Skmsg programs.
 
-use std::os::unix::io::AsRawFd;
+use std::os::fd::AsRawFd;
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
@@ -39,7 +39,7 @@ use crate::{
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::io::Write;
 /// use std::net::TcpStream;
-/// use std::os::unix::io::AsRawFd;
+/// use std::os::fd::AsRawFd;
 /// use aya::maps::SockHash;
 /// use aya::programs::SkMsg;
 ///
