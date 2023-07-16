@@ -1,5 +1,5 @@
 //! Common functions shared between multiple eBPF program types.
-use std::{ffi::CStr, io, os::unix::io::RawFd, path::Path};
+use std::{ffi::CStr, io, os::fd::RawFd, path::Path};
 
 use crate::{
     programs::{FdLink, Link, ProgramData, ProgramError},

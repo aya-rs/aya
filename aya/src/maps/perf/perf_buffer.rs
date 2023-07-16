@@ -1,7 +1,7 @@
 use std::{
     ffi::c_void,
     io, mem,
-    os::unix::io::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
     ptr, slice,
     sync::atomic::{self, AtomicPtr, Ordering},
 };

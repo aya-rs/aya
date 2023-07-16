@@ -1,6 +1,6 @@
 //! Skskb programs.
 
-use std::{os::unix::io::AsRawFd, path::Path};
+use std::{os::fd::AsRawFd, path::Path};
 
 use crate::{
     generated::{

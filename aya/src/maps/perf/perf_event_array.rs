@@ -4,7 +4,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     ops::Deref,
-    os::unix::io::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
     sync::Arc,
 };
 
@@ -64,7 +64,7 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> AsRawFd for PerfEventArrayBuffer<T
 /// A map that can be used to receive events from eBPF programs using the linux [`perf`] API.
 ///
 /// Each element of a [`PerfEventArray`] is a separate [`PerfEventArrayBuffer`] which can be used
-/// to receive events sent by eBPF programs that use `bpf_perf_event_output()`.    
+/// to receive events sent by eBPF programs that use `bpf_perf_event_output()`.
 ///
 /// To receive events you need to:
 /// * call [`PerfEventArray::open`]
@@ -138,7 +138,7 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> AsRawFd for PerfEventArrayBuffer<T
 ///
 /// In the example above the implementation of `poll_buffers()` and `poll.poll_readable()` is not
 /// given. [`PerfEventArrayBuffer`] implements the [`AsRawFd`] trait, so you can implement polling
-/// using any crate that can poll file descriptors, like [epoll], [mio] etc.  
+/// using any crate that can poll file descriptors, like [epoll], [mio] etc.
 ///
 /// Perf buffers are internally implemented as ring buffers. If your eBPF programs produce large
 /// amounts of data, in order not to lose events you might want to process each
