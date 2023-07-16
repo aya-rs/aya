@@ -98,7 +98,7 @@ impl BpfLogger {
     /// Starts reading log records created with `aya-log-ebpf` and logs them
     /// with the default logger. See [log::logger].
     pub fn init(bpf: &mut Bpf) -> Result<BpfLogger, Error> {
-        BpfLogger::init_with_logger(bpf, DefaultLogger {})
+        BpfLogger::init_with_logger(bpf, log::logger())
     }
 
     /// Starts reading log records created with `aya-log-ebpf` and logs them
@@ -355,23 +355,6 @@ macro_rules! impl_format_float {
 
 impl_format_float!(f32);
 impl_format_float!(f64);
-
-#[derive(Copy, Clone, Debug)]
-struct DefaultLogger;
-
-impl Log for DefaultLogger {
-    fn enabled(&self, metadata: &log::Metadata) -> bool {
-        log::logger().enabled(metadata)
-    }
-
-    fn log(&self, record: &Record) {
-        log::logger().log(record)
-    }
-
-    fn flush(&self) {
-        log::logger().flush()
-    }
-}
 
 #[derive(Error, Debug)]
 pub enum Error {
