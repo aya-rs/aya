@@ -69,7 +69,7 @@ use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
-    os::unix::io::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
     path::{Path, PathBuf},
 };
 use thiserror::Error;

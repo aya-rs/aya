@@ -354,7 +354,7 @@ pub enum LinkError {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use std::{cell::RefCell, fs::File, mem, os::unix::io::AsRawFd, rc::Rc};
+    use std::{cell::RefCell, fs::File, mem, os::fd::AsRawFd, rc::Rc};
     use tempfile::tempdir;
 
     use crate::{programs::ProgramError, sys::override_syscall};

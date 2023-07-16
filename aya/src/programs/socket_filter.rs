@@ -48,7 +48,7 @@ pub enum SocketFilterError {
 /// # }
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::net::TcpStream;
-/// use std::os::unix::io::AsRawFd;
+/// use std::os::fd::AsRawFd;
 /// use aya::programs::SocketFilter;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;

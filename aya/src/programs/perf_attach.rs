@@ -1,6 +1,6 @@
 //! Perf attach links.
 use libc::close;
-use std::os::unix::io::RawFd;
+use std::os::fd::RawFd;
 
 use crate::{
     generated::bpf_attach_type::BPF_PERF_EVENT,
