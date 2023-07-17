@@ -5,8 +5,8 @@ authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-bindgen = "0.66"
-clap = { version = "4", features = ["derive"] }
-anyhow = "1"
-thiserror = "1"
-tempfile = "3"
+bindgen = { workspace = true, default-features = true }
+clap = { workspace = true, default-features = true, features = ["derive"] }
+anyhow = { workspace = true, default-features = true }
+thiserror = { workspace = true }
+tempfile = { workspace = true }

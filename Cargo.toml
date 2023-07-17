@@ -40,6 +40,47 @@ default-members = [
     # CARGO_CFG_BPF_TARGET_ARCH={x86_64,aarch64,arm,riscv64}
 ]
 
+# NOTE(vadorovsky): Neither cargo-udeps nor cargo-machete are able to detect
+# unused crates defined in this section. It would be nice to teach either of
+# them to do that, but in the meantime we need to be careful.
+[workspace.dependencies]
+anyhow = { version = "1", default-features = false }
+assert_matches = { version = "1.5.0", default-features = false }
+async-io = { version = "1.3", default-features = false }
+aya = { path = "aya", version = "0.11.0", default-features = false }
+aya-bpf = { path = "bpf/aya-bpf", default-features = false }
+aya-log = { path = "aya-log", default-features = false }
+aya-log-common = { path = "aya-log-common", version = "0.1.13", default-features = false }
+aya-log-parser = { path = "aya-log-parser", default-features = false }
+aya-obj = { path = "aya-obj", version = "0.1.0", default-features = false }
+aya-tool = { path = "aya-tool", default-features = false }
+bindgen = { version = "0.66", default-features = false }
+bitflags = { version = "2.2.1", default-features = false }
+bytes = { version = "1", default-features = false }
+cargo_metadata = { version = "0.15.4", default-features = false }
+clap = { version = "4", default-features = false }
+core-error = { version = "0.0.0", default-features = false }
+env_logger = { version = "0.10", default-features = false }
+futures = { version = "0.3.12", default-features = false }
+hashbrown = { version = "0.14", default-features = false }
+indoc = { version = "2.0", default-features = false }
+lazy_static = { version = "1", default-features = false }
+libc = { version = "0.2.105", default-features = false }
+log = { version = "0.4", default-features = false }
+num_enum = { version = "0.6", default-features = false }
+object = { version = "0.31", default-features = false }
+parking_lot = { version = "0.12.0", default-features = false }
+proc-macro2 = { version = "1", default-features = false }
+quote = { version = "1", default-features = false }
+rbpf = { version = "0.2.0", default-features = false }
+syn = { version = "2", default-features = false }
+tempfile = { version = "3", default-features = false }
+testing_logger = { version = "0.1.1", default-features = false }
+thiserror = { version = "1", default-features = false }
+tokio = { version = "1.24.0", default-features = false }
+which = { version = "4.4.0", default-features = false }
+xtask = { path = "xtask", default-features = false }
+
 [profile.dev]
 panic = "abort"
 

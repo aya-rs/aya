@@ -4,7 +4,7 @@ version = "0.1.11-dev.0"
 edition = "2021"
 
 [dependencies]
-aya-log-common = { path = "../aya-log-common" }
+aya-log-common = { workspace = true }
 
 [lib]
 path = "src/lib.rs"
