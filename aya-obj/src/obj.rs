@@ -378,12 +378,11 @@ impl FromStr for ProgramSection {
 
         // parse the common case, eg "xdp/program_name" or
         // "sk_skb/stream_verdict/program_name"
-        let mut parts = section.rsplitn(2, '/').collect::<Vec<_>>();
-        if parts.len() == 1 {
-            parts.push(parts[0]);
-        }
-        let kind = parts[1];
-        let name = parts[0].to_owned();
+        let (kind, name) = match section.rsplit_once('/') {
+            None => (section, section),
+            Some((kind, name)) => (kind, name),
+        };
+        let name = name.to_owned();
 
         Ok(match kind {
             "kprobe" => KProbe { name },
