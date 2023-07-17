@@ -40,6 +40,43 @@ default-members = [
     # CARGO_CFG_BPF_TARGET_ARCH={x86_64,aarch64,arm,riscv64}
 ]
 
+[workspace.dependencies]
+anyhow = "1"
+assert_matches = "1.5.0"
+async-io = { version = "1.3" }
+aya = { path = "aya", version = "0.11.0", features=["async_tokio"] }
+aya-bpf = { path = "bpf/aya-bpf" }
+aya-log = { path = "aya-log" }
+aya-log-common = { path = "aya-log-common", version = "0.1.13" }
+aya-log-parser = { path = "aya-log-parser" }
+aya-obj = { path = "aya-obj", version = "0.1.0" }
+aya-tool = { path = "aya-tool" }
+bindgen = "0.66"
+bitflags = "2.2.1"
+bytes = "1"
+cargo_metadata = { version = "0.15.4", default-features = true }
+clap = { version = "4", features = ["derive"] }
+core-error = "0.0.0"
+env_logger = "0.10"
+futures = { version = "0.3.12", default-features = false, features = ["std"] }
+hashbrown = "0.14"
+indoc = "2.0"
+lazy_static = "1"
+libc = { version = "0.2.105" }
+log = "0.4"
+num_enum = { version = "0.6", default-features = false }
+object = { version = "0.31", default-features = false }
+parking_lot = { version = "0.12.0", features = ["send_guard"] }
+proc-macro2 = "1"
+quote = "1"
+rbpf = "0.2.0"
+syn = "2"
+tempfile = "3"
+testing_logger = "0.1.1"
+thiserror = "1"
+tokio = { version = "1.24.0" }
+which = { version = "4.4.0", default-features = false }
+
 [profile.dev]
 panic = "abort"
 
