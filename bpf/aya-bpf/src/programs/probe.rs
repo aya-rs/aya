@@ -49,7 +49,36 @@ impl ProbeContext {
     /// # Examples
     ///
     /// ```no_run
+    /// # # for c-function in x86_64 platform like:
+    /// # # void function_with_many_args(int64 a0, int64 a1, int64 a2,
+    /// # #      int64 a3, int64 a4, int64 a5, int64 a6)
+    /// # #![allow(non_camel_case_types)]
+    /// # #![allow(dead_code)]
+    /// ```
+    /// unsafe fn try_print_args(ctx: ProbeContext) -> Result<u32, u32> {
+    ///     let a_0: i64 = ctx.arg(0).ok_or(1u32)?;
+    ///     let a_1: i64 = ctx.arg(1).ok_or(1u32)?;
+    ///     let a_2: i64 = ctx.arg(2).ok_or(1u32)?;
+    ///     let a_3: i64 = ctx.arg(3).ok_or(1u32)?;
+    ///     let a_4: i64 = ctx.arg(4).ok_or(1u32)?;
+    ///     let a_5: i64 = ctx.arg(5).ok_or(1u32)?;
+    ///     let a_6: i64 = ctx.stack_arg(0).ok_or(1u32)?;
+    ///     info!(
+    ///         &ctx,
+    ///         "arg 0-6: {}, {}, {}, {}, {}, {}, {}",
+    ///         a_0,
+    ///         a_1,
+    ///         a_2,
+    ///         a_3,
+    ///         a_4,
+    ///         a_5,
+    ///         a_6
+    ///     );
     ///
+    ///     // Do something with args
+    ///
+    ///     Ok(0)
+    /// }
     /// ```
     pub fn stack_arg<T: FromPtRegs>(&self, n: usize) -> Option<T> {
         T::from_stack_argument(unsafe { &*self.regs }, n)
