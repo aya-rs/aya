@@ -11,19 +11,19 @@ documentation = "https://docs.rs/aya-obj"
 edition = "2021"
 
 [dependencies]
-bytes = "1"
-log = "0.4"
-object = { version = "0.31", default-features = false, features = [
+bytes = { workspace = true }
+core-error = { workspace = true }
+hashbrown = { workspace = true }
+log = { workspace = true }
+object = { workspace = true, default-features = false, features = [
     "elf",
     "read_core",
 ] }
-hashbrown = { version = "0.14" }
-thiserror = { version = "1", default-features = false }
-core-error = { version = "0.0.0" }
+thiserror = { workspace = true, default-features = false }
 
 [dev-dependencies]
-assert_matches = "1.5.0"
-rbpf = "0.2.0"
+assert_matches = { workspace = true }
+rbpf = { workspace = true }
 
 [features]
 std = []
