@@ -278,8 +278,12 @@ macro_rules! impl_from_pt_regs {
             }
 
             fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
-                let addr = ctx.rsp + 8 * (n + 1) as __u64;
-                Some(addr as *const $type as _)
+                unsafe {
+                    let addr: __u64 = ctx.rsp + 8 * (n + 1) as __u64;
+                    bpf_probe_read(addr as *const $type)
+                        .map(|v| v as $type)
+                        .ok()
+                }
             }
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
@@ -298,8 +302,12 @@ macro_rules! impl_from_pt_regs {
             }
 
             fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
-                let addr = ctx.uregs[13] + 8 * (n + 1) as __u64;
-                Some(addr as *const $type as _)
+                unsafe {
+                    let addr: __u64 = ctx.uregs[13] + 8 * (n + 1) as __u64;
+                    bpf_probe_read(addr as *const $type)
+                        .map(|v| v as $type)
+                        .ok()
+                }
             }
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
@@ -318,8 +326,12 @@ macro_rules! impl_from_pt_regs {
             }
 
             fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
-                let addr = ctx.sp + 8 * (n + 1) as __u64;
-                Some(addr as *const $type as _)
+                unsafe {
+                    let addr: __u64 = ctx.sp + 8 * (n + 1) as __u64;
+                    bpf_probe_read(addr as *const $type)
+                        .map(|v| v as $type)
+                        .ok()
+                }
             }
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
