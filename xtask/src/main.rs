@@ -1,5 +1,6 @@
 mod codegen;
 mod docs;
+mod libbpf;
 mod run;
 
 use clap::Parser;

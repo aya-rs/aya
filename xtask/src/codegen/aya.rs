@@ -3,7 +3,10 @@ use std::path::PathBuf;
 
 use aya_tool::{bindgen, write_to_file};
 
-use crate::codegen::{Architecture, SysrootOptions};
+use crate::{
+    codegen::{Architecture, SysrootOptions},
+    libbpf,
+};
 
 pub fn codegen(opts: &SysrootOptions) -> Result<(), anyhow::Error> {
     codegen_internal_btf_bindings()?;
@@ -13,7 +16,7 @@ pub fn codegen(opts: &SysrootOptions) -> Result<(), anyhow::Error> {
 fn codegen_internal_btf_bindings() -> Result<(), anyhow::Error> {
     let dir = PathBuf::from("aya-obj");
     let generated = dir.join("src/generated");
-    let libbpf_dir = PathBuf::from("libbpf");
+    let libbpf_dir = libbpf::ensure_initialized()?;
 
     let mut bindgen = bindgen::user_builder()
         .clang_arg(format!(
@@ -162,7 +165,7 @@ fn codegen_bindings(opts: &SysrootOptions) -> Result<(), anyhow::Error> {
 
     let dir = PathBuf::from("aya-obj");
     let generated = dir.join("src/generated");
-    let libbpf_dir = PathBuf::from("libbpf");
+    let libbpf_dir = libbpf::ensure_initialized()?;
 
     let builder = || {
         bindgen::user_builder()

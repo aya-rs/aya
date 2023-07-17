@@ -5,6 +5,7 @@ use std::{
     process::{Command, Stdio},
 };
 
+use crate::libbpf;
 use anyhow::{Context as _, Result};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
@@ -33,6 +34,7 @@ pub struct Options {
 
 /// Build the project
 pub fn build(opts: BuildOptions) -> Result<Vec<(String, PathBuf)>> {
+    let _libbpf_dir = libbpf::ensure_initialized()?;
     let BuildOptions { release, target } = opts;
     let mut cmd = Command::new("cargo");
     cmd.env("AYA_BUILD_INTEGRATION_BPF", "true").args([

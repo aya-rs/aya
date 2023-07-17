@@ -6,9 +6,12 @@ use std::path::PathBuf;
 use aya_tool::{bindgen, write_to_file_fmt};
 use syn::{parse_str, Item};
 
-use crate::codegen::{
-    helpers::{expand_helpers, extract_helpers},
-    Architecture, SysrootOptions,
+use crate::{
+    codegen::{
+        helpers::{expand_helpers, extract_helpers},
+        Architecture, SysrootOptions,
+    },
+    libbpf,
 };
 
 pub fn codegen(opts: &SysrootOptions) -> Result<(), anyhow::Error> {
@@ -20,7 +23,7 @@ pub fn codegen(opts: &SysrootOptions) -> Result<(), anyhow::Error> {
     } = opts;
 
     let dir = PathBuf::from("bpf/aya-bpf-bindings");
-    let libbpf_dir = PathBuf::from("libbpf");
+    let libbpf_dir = libbpf::ensure_initialized()?;
 
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
