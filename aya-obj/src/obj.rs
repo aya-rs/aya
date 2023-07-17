@@ -889,17 +889,6 @@ impl Object {
     }
 
     fn parse_section(&mut self, section: Section) -> Result<(), ParseError> {
-        let mut parts = section.name.rsplitn(2, '/').collect::<Vec<_>>();
-        parts.reverse();
-
-        if parts.len() == 1
-            && (parts[0] == "xdp"
-                || parts[0] == "sk_msg"
-                || parts[0] == "sockops"
-                || parts[0] == "classifier")
-        {
-            parts.push(parts[0]);
-        }
         self.section_infos
             .insert(section.name.to_owned(), (section.index, section.size));
         match section.kind {
