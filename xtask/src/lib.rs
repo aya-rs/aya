@@ -14,4 +14,4 @@ pub fn exec(cmd: &mut Command) -> Result<()> {
     }
 }
 
-pub const LIBBPF_DIR: &str = "libbpf";
+pub const LIBBPF_DIR: &str = "xtask/libbpf";

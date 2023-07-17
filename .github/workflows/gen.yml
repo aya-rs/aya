@@ -12,7 +12,7 @@ jobs:
           submodules: recursive
 
       - name: update libbpf
-        working-directory: libbpf
+        working-directory: xtask/libbpf
         run: |
           set -e
           git fetch origin
