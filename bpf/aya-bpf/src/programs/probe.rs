@@ -54,7 +54,6 @@ impl ProbeContext {
     /// # #      int64 a3, int64 a4, int64 a5, int64 a6)
     /// # #![allow(non_camel_case_types)]
     /// # #![allow(dead_code)]
-    /// ```
     /// unsafe fn try_print_args(ctx: ProbeContext) -> Result<u32, u32> {
     ///     let a_0: i64 = ctx.arg(0).ok_or(1u32)?;
     ///     let a_1: i64 = ctx.arg(1).ok_or(1u32)?;
