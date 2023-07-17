@@ -4,3 +4,5 @@ target/
 !.vscode/settings.json
 site/
 .idea/
+# Checkout of libbpf, used for codegen + compiling C test code
+libbpf/

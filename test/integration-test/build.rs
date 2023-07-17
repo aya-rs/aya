@@ -71,6 +71,15 @@ fn main() {
             .unwrap()
             .join("libbpf");
 
+        if !libbpf_dir.exists() {
+            panic!(
+                "Directory does not exist at {:?}\n\
+                Please perform a shallow clone of libbpf:\n\
+                git clone https://github.com/libbpf/libbpf --depth 1\n",
+                libbpf_dir
+            );
+        }
+
         let libbpf_headers_dir = out_dir.join("libbpf_headers");
 
         let mut includedir = OsString::new();
