@@ -9,6 +9,7 @@
 
 use core::mem::{self, MaybeUninit};
 
+use aya_bpf_bindings::bindings::path;
 pub use aya_bpf_bindings::helpers as gen;
 #[doc(hidden)]
 pub use gen::*;
@@ -836,4 +837,101 @@ pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
         3 => printk(fmt_ptr, fmt_size, args[0], args[1], args[2]),
         _ => gen::bpf_trace_vprintk(fmt_ptr, fmt_size, args.as_ptr() as _, (NUM_ARGS * 8) as _),
     }
+}
+
+/// Returns a byte slice with a path read from the given `path` kernel object.
+///
+/// Reads at most `dest.len()` bytes, truncating if the length of the path is
+/// larger than `dest`. On success, the destination buffer is always null
+/// terminated, and the returned slice includes the bytes up to and not including
+/// NULL.
+///
+/// # Safety
+///
+/// This function is inherently unsafe, since it operates on mutable raw
+/// pointers.
+///
+/// # Examples
+///
+/// With an array allocated on the stack (not recommended for bigger paths,
+/// eBPF stack limit is 512 bytes).
+///
+/// ```no_run
+/// # use aya_bpf::{cty::c_long, helpers::bpf_d_path, programs::LsmContext};
+/// pub const PATH_LEN: usize = 32;
+///
+/// #[derive(Copy, Clone)]
+/// #[repr(C)]
+/// pub struct Path {
+///    pub path: [u8; PATH_LEN],
+/// }
+///
+/// # fn try_lsm(ctx: LsmContext) -> Result<i32, i32> {
+/// let path: *mut path = unsafe { ctx.arg(0) };
+/// let mut buf = [0u8; PATH_LEN];
+/// let path = unsafe { bpf_d_path(path, buf.as_mut_ptr())? };
+///
+/// // Do something with path
+/// # Ok(0)
+/// # }
+/// ```
+///
+/// With a `PerCpuArray`:
+///
+/// ```no_run
+/// use aya_bpf::{bindings::path, macros::map, maps::PerCpuArray};
+/// # use aya_bpf::{helpers::bpf_d_path, programs::LsmContext};
+///
+/// pub const PATH_LEN: usize = 512;
+///
+/// #[repr(C)]
+/// pub struct Path {
+///     pub path: [u8; PATH_LEN],
+/// }
+///
+/// #[map]
+/// pub static PATH_BUF: PerCpuArray<Path> = PerCpuArray::with_max_entries(1, 0);
+///
+/// # fn try_lsm(ctx: LsmContext) -> Result<i32, i32> {
+/// let path: *mut path = unsafe { ctx.arg(0) };
+/// let buf = unsafe {
+///     let ptr = PATH_BUF.get_mut(0).ok_or(0)?
+///     &mut *ptr
+/// };
+/// let path = unsafe { bpf_d_path(path, &mut buf.path)? };
+/// # Ok(0)
+/// # }
+/// ```
+///
+/// You can also convert the resulted bytes slice into `&str` using
+/// [core::str::from_utf8_unchecked]:
+///
+/// ```no_run
+/// # use aya_bpf::{cty::c_long, helpers::bpf_d_path, programs::LsmContext};
+/// # use core::str::from_utf8_unchecked;
+/// # pub const PATH_LEN: usize = 512;
+/// # #[repr(C)]
+/// # pub struct Path {
+/// #    pub path: [u8; PATH_LEN],
+/// # }
+/// # #[map]
+/// # pub static PATH_BUF: PerCpuArray<Path> = PerCpuArray::with_max_entries(1, 0);
+/// # fn try_lsm(ctx: LsmContext) -> Result<i32, i32> {
+/// # let path: *mut path = unsafe { ctx.arg(0) };
+/// # let mut buf = [0u8; PATH_LEN];
+/// let path_str = unsafe { core::str::from_utf8_unchecked(bpf_d_path(path, &mut buf)?) };
+///
+/// // Do something with path_str
+/// # Ok(0)
+/// # }
+/// ```
+///
+/// # Errors
+///
+/// On failure, this function returns Err(-1).
+#[inline(always)]
+pub unsafe fn bpf_d_path(path: *mut path, dest: &mut [u8]) -> Result<&[u8], c_long> {
+    let len = gen::bpf_d_path(path, dest.as_mut_ptr() as *mut c_char, dest.len() as u32);
+
+    read_str_bytes(len, dest)
 }
