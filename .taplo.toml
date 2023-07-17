@@ -1,0 +1,5 @@
+[[rule]]
+
+[rule.formatting]
+indent_string = "    "
+reorder_arrays = true

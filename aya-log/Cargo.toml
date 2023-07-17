@@ -2,7 +2,7 @@
 name = "aya-log"
 version = "0.1.13"
 description = "A logging library for eBPF programs."
-keywords = ["ebpf", "bpf", "log", "logging"]
+keywords = ["bpf", "ebpf", "log", "logging"]
 license = "MIT OR Apache-2.0"
 authors = ["The Aya Contributors"]
 repository = "https://github.com/aya-rs/aya-log"
@@ -11,7 +11,7 @@ documentation = "https://docs.rs/aya-log"
 edition = "2021"
 
 [dependencies]
-aya = { path = "../aya", version = "0.11.0", features=["async_tokio"] }
+aya = { path = "../aya", version = "0.11.0", features = ["async_tokio"] }
 aya-log-common = { path = "../aya-log-common", version = "0.1.13" }
 thiserror = "1"
 log = "0.4"

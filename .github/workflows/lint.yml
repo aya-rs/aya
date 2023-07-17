@@ -27,6 +27,9 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - run: cargo install taplo-cli
+      - run: taplo fmt --check
+
       - name: Check formatting
         run: cargo fmt --all -- --check
 
