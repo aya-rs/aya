@@ -2,7 +2,7 @@ mod aya;
 mod aya_bpf_bindings;
 mod helpers;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::Parser;
 
@@ -86,19 +86,19 @@ enum Command {
     AyaBpfBindings,
 }
 
-pub fn codegen(opts: Options) -> Result<(), anyhow::Error> {
+pub fn codegen(opts: Options, libbpf_dir: &Path) -> Result<(), anyhow::Error> {
     let Options {
         sysroot_options,
         command,
     } = opts;
     match command {
         Some(command) => match command {
-            Command::Aya => aya::codegen(&sysroot_options),
-            Command::AyaBpfBindings => aya_bpf_bindings::codegen(&sysroot_options),
+            Command::Aya => aya::codegen(&sysroot_options, libbpf_dir),
+            Command::AyaBpfBindings => aya_bpf_bindings::codegen(&sysroot_options, libbpf_dir),
         },
         None => {
-            aya::codegen(&sysroot_options)?;
-            aya_bpf_bindings::codegen(&sysroot_options)
+            aya::codegen(&sysroot_options, libbpf_dir)?;
+            aya_bpf_bindings::codegen(&sysroot_options, libbpf_dir)
         }
     }
 }
