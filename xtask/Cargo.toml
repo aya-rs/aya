@@ -5,12 +5,12 @@ authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-anyhow = "1"
-aya-tool = { path = "../aya-tool" }
-cargo_metadata = "0.15.4"
-clap = { version = "4", features = ["derive"] }
-indoc = "2.0"
-proc-macro2 = "1"
-quote = "1"
-syn = "2"
-tempfile = "3"
+anyhow = { workspace = true, default-features = true }
+aya-tool = { workspace = true }
+cargo_metadata = { workspace = true }
+clap = { workspace = true, default-features = true, features = ["derive"] }
+indoc = { workspace = true }
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+syn = { workspace = true }
+tempfile = { workspace = true }
