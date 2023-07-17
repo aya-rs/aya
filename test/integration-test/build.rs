@@ -148,8 +148,28 @@ fn main() {
             }
         }
 
-        let bpf_linker = which("bpf-linker").unwrap();
-        println!("cargo:rerun-if-changed={}", bpf_linker.to_str().unwrap());
+        // Create a symlink in the out directory to work around the fact that cargo ignores anything
+        // in `$CARGO_HOME`, which is also where `cargo install` likes to place binaries. Cargo will
+        // stat through the symlink and discover that bpf-linker has changed.
+        //
+        // This was introduced in https://github.com/rust-lang/cargo/commit/99f841c.
+        {
+            let bpf_linker = which("bpf-linker").unwrap();
+            let bpf_linker_symlink = out_dir.join("bpf-linker");
+            match fs::remove_file(&bpf_linker_symlink) {
+                Ok(()) => {}
+                Err(err) => {
+                    if err.kind() != std::io::ErrorKind::NotFound {
+                        panic!("failed to remove symlink: {err}")
+                    }
+                }
+            }
+            std::os::unix::fs::symlink(&bpf_linker, &bpf_linker_symlink).unwrap();
+            println!(
+                "cargo:rerun-if-changed={}",
+                bpf_linker_symlink.to_str().unwrap()
+            );
+        }
 
         let mut cmd = Command::new("cargo");
         cmd.args([
@@ -163,9 +183,11 @@ fn main() {
             "--target",
             &target,
         ]);
+
         // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
         let ebpf_target_dir = out_dir.join("integration-ebpf");
         cmd.arg("--target-dir").arg(&ebpf_target_dir);
+
         let mut child = cmd
             .stdout(Stdio::piped())
             .spawn()
