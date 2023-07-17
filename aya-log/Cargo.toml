@@ -11,16 +11,16 @@ documentation = "https://docs.rs/aya-log"
 edition = "2021"
 
 [dependencies]
-aya = { path = "../aya", version = "0.11.0", features = ["async_tokio"] }
-aya-log-common = { path = "../aya-log-common", version = "0.1.13" }
-thiserror = "1"
-log = "0.4"
-bytes = "1.1"
-tokio = { version = "1.24" }
+aya = { workspace = true }
+aya-log-common = { workspace = true }
+bytes = { workspace = true }
+log = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["rt"] }
 
 [dev-dependencies]
-env_logger = "0.10"
-testing_logger = "0.1.1"
+env_logger = { workspace = true }
+testing_logger = { workspace = true }
 
 [lib]
 path = "src/lib.rs"
