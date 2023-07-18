@@ -29,7 +29,7 @@ default-members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
-    # test/integration-test is omitted; it must be built with xtask.
+    "test/integration-test",
     "xtask",
 
     "aya-bpf-macros",
