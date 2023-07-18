@@ -172,17 +172,16 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
     // we need to read the btf bytes into a buffer but we don't know the size ahead of time.
     // assume 4kb. if this is too small we can resize based on the size obtained in the response.
     let mut buf = vec![0u8; 4096];
-    let btf_info = match sys::btf_obj_get_info_by_fd(btf_fd, &mut buf) {
+    let btf_info = match sys::btf_obj_get_info_by_fd(btf_fd, &buf) {
         Ok(info) => {
             if info.btf_size > buf.len() as u32 {
                 buf.resize(info.btf_size as usize, 0u8);
-                let btf_info =
-                    sys::btf_obj_get_info_by_fd(btf_fd, &mut buf).map_err(|io_error| {
-                        ProgramError::SyscallError {
-                            call: "bpf_prog_get_info_by_fd",
-                            io_error,
-                        }
-                    })?;
+                let btf_info = sys::btf_obj_get_info_by_fd(btf_fd, &buf).map_err(|io_error| {
+                    ProgramError::SyscallError {
+                        call: "bpf_prog_get_info_by_fd",
+                        io_error,
+                    }
+                })?;
                 Ok(btf_info)
             } else {
                 Ok(info)

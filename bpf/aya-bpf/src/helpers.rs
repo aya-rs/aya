@@ -410,7 +410,7 @@ pub unsafe fn bpf_probe_read_user_str_bytes(
     read_str_bytes(len, dest)
 }
 
-fn read_str_bytes(len: i64, dest: &mut [u8]) -> Result<&[u8], c_long> {
+fn read_str_bytes(len: i64, dest: &[u8]) -> Result<&[u8], c_long> {
     // The lower bound is 0, since it's what is returned for b"\0". See the
     // bpf_probe_read_user_[user|kernel]_bytes_empty integration tests.  The upper bound
     // check is not needed since the helper truncates, but the verifier doesn't

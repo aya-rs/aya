@@ -518,7 +518,7 @@ pub(crate) fn bpf_link_get_info_by_fd(link_fd: RawFd) -> Result<bpf_link_info, i
 
 pub(crate) fn btf_obj_get_info_by_fd(
     prog_fd: RawFd,
-    buf: &mut [u8],
+    buf: &[u8],
 ) -> Result<bpf_btf_info, io::Error> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let mut info = unsafe { mem::zeroed::<bpf_btf_info>() };
