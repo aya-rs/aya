@@ -10,15 +10,12 @@ common usage behaviours work on real Linux distros
 To run locally all you need is:
 
 1. Rust nightly
-2. `libelf`
-3. A checkout of [libbpf](https://github.com/libbpf/libbpf)
-4. `cargo install bpf-linker`
-5. `bpftool`
+1. `cargo install bpf-linker`
+1. `bpftool` [^1]
 
 ### Other OSs
 
 1. A POSIX shell
-1. A checkout of [libbpf](https://github.com/libbpf/libbpf)
 1. `rustup target add x86_64-unknown-linux-musl`
 1. `cargo install bpf-linker`
 1. Install `qemu` and `cloud-init-utils` package - or any package that provides `cloud-localds`
@@ -53,3 +50,5 @@ Tests should follow these guidelines:
 - You may add a new module, or use an existing one.
 - Test functions should not return `anyhow::Result<()>` since this produces errors without stack
   traces. Prefer to `panic!` instead.
+
+[^1]: TODO(https://github.com/aya-rs/aya/issues/645): Remove this dependency.
