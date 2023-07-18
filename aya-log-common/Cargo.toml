@@ -10,7 +10,7 @@ documentation = "https://docs.rs/aya-log"
 edition = "2021"
 
 [dependencies]
-num_enum = { version = "0.6", default-features = false }
+num_enum = { workspace = true }
 
 [lib]
 path = "src/lib.rs"
