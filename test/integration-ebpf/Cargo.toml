@@ -8,6 +8,9 @@ publish = false
 aya-bpf = { path = "../../bpf/aya-bpf" }
 aya-log-ebpf = { path = "../../bpf/aya-log-ebpf" }
 
+[build-dependencies]
+xtask = { path = "../../xtask" }
+
 [[bin]]
 name = "log"
 path = "src/log.rs"

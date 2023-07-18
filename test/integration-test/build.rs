@@ -12,8 +12,7 @@ use std::{
 use cargo_metadata::{
     Artifact, CompilerMessage, Dependency, Message, Metadata, MetadataCommand, Package, Target,
 };
-use which::which;
-use xtask::{exec, LIBBPF_DIR};
+use xtask::{create_symlink_to_binary, exec, LIBBPF_DIR};
 
 fn main() {
     const AYA_BUILD_INTEGRATION_BPF: &str = "AYA_BUILD_INTEGRATION_BPF";
@@ -137,28 +136,11 @@ fn main() {
             }
         }
 
-        // Create a symlink in the out directory to work around the fact that cargo ignores anything
-        // in `$CARGO_HOME`, which is also where `cargo install` likes to place binaries. Cargo will
-        // stat through the symlink and discover that bpf-linker has changed.
-        //
-        // This was introduced in https://github.com/rust-lang/cargo/commit/99f841c.
-        {
-            let bpf_linker = which("bpf-linker").unwrap();
-            let bpf_linker_symlink = out_dir.join("bpf-linker");
-            match fs::remove_file(&bpf_linker_symlink) {
-                Ok(()) => {}
-                Err(err) => {
-                    if err.kind() != std::io::ErrorKind::NotFound {
-                        panic!("failed to remove symlink: {err}")
-                    }
-                }
-            }
-            std::os::unix::fs::symlink(&bpf_linker, &bpf_linker_symlink).unwrap();
-            println!(
-                "cargo:rerun-if-changed={}",
-                bpf_linker_symlink.to_str().unwrap()
-            );
-        }
+        let bpf_linker_symlink = create_symlink_to_binary(&out_dir, "bpf-linker").unwrap();
+        println!(
+            "cargo:rerun-if-changed={}",
+            bpf_linker_symlink.to_str().unwrap()
+        );
 
         let mut cmd = Command::new("cargo");
         cmd.args([

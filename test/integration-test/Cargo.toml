@@ -25,5 +25,4 @@ tokio = { version = "1.24", default-features = false, features = [
 
 [build-dependencies]
 cargo_metadata = { version = "0.15.4", default-features = false }
-which = { version = "4.4.0", default-features = false }
 xtask = { path = "../../xtask" }
