@@ -14,3 +14,4 @@ proc-macro2 = "1"
 quote = "1"
 syn = "2"
 tempfile = "3"
+which = { version = "4.4.0", default-features = false }
