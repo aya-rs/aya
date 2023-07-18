@@ -25,5 +25,13 @@ tokio = { version = "1.24", default-features = false, features = [
 
 [build-dependencies]
 cargo_metadata = { version = "0.15.4", default-features = false }
-which = { version = "4.4.0", default-features = false }
+# TODO(https://github.com/rust-lang/cargo/issues/12375): this should be an artifact dependency, but
+# it's not possible to tell cargo to use `-Z build-std` to build it. We cargo-in-cargo in the build
+# script to build this, but we want to teach cargo about the dependecy so that cache invalidation
+# works properly.
+#
+# Note also that https://github.com/rust-lang/cargo/issues/10593 occurs when `target = ...` is added
+# to an artifact dependency; it seems possible to work around that by setting `resolver = "1"` in
+# Cargo.toml in the workspace root.
+integration-ebpf = { path = "../integration-ebpf" }
 xtask = { path = "../../xtask" }

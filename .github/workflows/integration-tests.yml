@@ -32,9 +32,6 @@ jobs:
             .tmp/*.qcow2
             .tmp/test_rsa
             .tmp/test_rsa.pub
-          # FIXME: we should invalidate the cache on new bpf-linker releases.
-          # For now we must manually delete the cache when we release a new
-          # bpf-linker version.
           key: tmp-files-${{ hashFiles('test/run.sh') }}
 
       - name: Run integration tests

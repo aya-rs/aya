@@ -9,3 +9,9 @@ linker = "arm-linux-gnueabihf-gcc"
 
 [target.aarch64-unknown-linux-musl]
 linker = "aarch64-linux-musl-gcc"
+
+# See https://github.com/rust-lang/rust-analyzer/issues/14510.
+#
+# Turns out this affects all cargo invocations in the project, not just rust-analyzer.
+[unstable]
+bindeps = true

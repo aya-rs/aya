@@ -10,14 +10,12 @@ common usage behaviours work on real Linux distros
 To run locally all you need is:
 
 1. Rust nightly
-1. `cargo install bpf-linker`
 1. `bpftool` [^1]
 
 ### Other OSs
 
 1. A POSIX shell
 1. `rustup target add x86_64-unknown-linux-musl`
-1. `cargo install bpf-linker`
 1. Install `qemu` and `cloud-init-utils` package - or any package that provides `cloud-localds`
 
 ## Usage

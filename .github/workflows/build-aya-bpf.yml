@@ -38,9 +38,6 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Prereqs
-        run: cargo install bpf-linker
-
       - uses: taiki-e/install-action@cargo-hack
       - name: Build
         env:
