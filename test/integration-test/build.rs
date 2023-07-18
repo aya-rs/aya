@@ -4,7 +4,7 @@ use std::{
     ffi::OsString,
     fmt::Write as _,
     fs,
-    io::BufReader,
+    io::{BufRead as _, BufReader},
     path::PathBuf,
     process::{Child, Command, Stdio},
 };
@@ -153,6 +153,8 @@ fn main() {
         // stat through the symlink and discover that bpf-linker has changed.
         //
         // This was introduced in https://github.com/rust-lang/cargo/commit/99f841c.
+        //
+        // TODO(https://github.com/rust-lang/cargo/pull/12369): Remove this when the fix hits nightly.
         {
             let bpf_linker = which("bpf-linker").unwrap();
             let bpf_linker_symlink = out_dir.join("bpf-linker");
@@ -172,32 +174,47 @@ fn main() {
         }
 
         let mut cmd = Command::new("cargo");
-        cmd.args([
-            "build",
-            "-p",
-            "integration-ebpf",
-            "-Z",
-            "build-std=core",
-            "--release",
-            "--message-format=json",
-            "--target",
-            &target,
-        ]);
+        cmd.env("RUSTC_LOG", "rustc_codegen_ssa::back::link=warn")
+            .args([
+                "build",
+                "-p",
+                "integration-ebpf",
+                "-Z",
+                "build-std=core",
+                "--release",
+                "--message-format=json",
+                "--target",
+                &target,
+            ]);
 
         // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
         let ebpf_target_dir = out_dir.join("integration-ebpf");
         cmd.arg("--target-dir").arg(&ebpf_target_dir);
 
+        let mut executables = Vec::new();
         let mut child = cmd
             .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
             .spawn()
             .unwrap_or_else(|err| panic!("failed to spawn {cmd:?}: {err}"));
-        let Child { stdout, .. } = &mut child;
+        let Child { stdout, stderr, .. } = &mut child;
+
+        // Trampoline stdout to cargo warnings.
+        let stderr = stderr.take().unwrap();
+        let stderr = BufReader::new(stderr);
+        let stderr = std::thread::spawn(move || {
+            for line in stderr.lines() {
+                let line = line.unwrap();
+                println!("cargo:warning={line}");
+            }
+        });
+
         let stdout = stdout.take().unwrap();
-        let reader = BufReader::new(stdout);
-        let mut executables = Vec::new();
+        let stdout = BufReader::new(stdout);
+        let executables = &mut executables;
         let mut compiler_messages = String::new();
-        for message in Message::parse_stream(reader) {
+        let mut text_lines = Vec::new();
+        for message in Message::parse_stream(stdout) {
             #[allow(clippy::collapsible_match)]
             match message.expect("valid JSON") {
                 Message::CompilerArtifact(Artifact {
@@ -210,23 +227,36 @@ fn main() {
                     }
                 }
                 Message::CompilerMessage(CompilerMessage { message, .. }) => {
-                    writeln!(&mut compiler_messages, "{message}").unwrap()
+                    // Infallible because writing to a string.
+                    writeln!(&mut compiler_messages, "{message}").unwrap();
+                }
+                Message::TextLine(line) => {
+                    text_lines.push(line);
                 }
                 _ => {}
             }
         }
 
+        if !compiler_messages.is_empty() {
+            println!("carg:warning=compiler messages:\n{compiler_messages}");
+        }
+        if !text_lines.is_empty() {
+            let text_lines = text_lines.join("\n");
+            println!("cargo:warning=text lines:\n{text_lines}");
+        }
+
         let status = child
             .wait()
             .unwrap_or_else(|err| panic!("failed to wait for {cmd:?}: {err}"));
-
         match status.code() {
             Some(code) => match code {
                 0 => {}
-                code => panic!("{cmd:?} exited with status code {code}:\n{compiler_messages}"),
+                code => panic!("{cmd:?} exited with status code {code}"),
             },
             None => panic!("{cmd:?} terminated by signal"),
         }
+
+        stderr.join().map_err(std::panic::resume_unwind).unwrap();
 
         for (name, binary) in executables {
             let dst = out_dir.join(name);
