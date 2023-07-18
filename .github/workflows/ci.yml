@@ -120,7 +120,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Prereqs
-        run: cargo install bpf-linker
+        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git
 
       - uses: taiki-e/install-action@cargo-hack
       - name: Build

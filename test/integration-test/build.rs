@@ -1,9 +1,8 @@
 use std::{
     env,
     ffi::OsString,
-    fmt::Write as _,
     fs,
-    io::BufReader,
+    io::{BufRead as _, BufReader},
     path::PathBuf,
     process::{Child, Command, Stdio},
 };
@@ -134,14 +133,25 @@ fn main() {
 
         let mut child = cmd
             .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
             .spawn()
             .unwrap_or_else(|err| panic!("failed to spawn {cmd:?}: {err}"));
-        let Child { stdout, .. } = &mut child;
+        let Child { stdout, stderr, .. } = &mut child;
+
+        // Trampoline stdout to cargo warnings.
+        let stderr = stderr.take().unwrap();
+        let stderr = BufReader::new(stderr);
+        let stderr = std::thread::spawn(move || {
+            for line in stderr.lines() {
+                let line = line.unwrap();
+                println!("cargo:warning={line}");
+            }
+        });
+
         let stdout = stdout.take().unwrap();
-        let reader = BufReader::new(stdout);
+        let stdout = BufReader::new(stdout);
         let mut executables = Vec::new();
-        let mut compiler_messages = String::new();
-        for message in Message::parse_stream(reader) {
+        for message in Message::parse_stream(stdout) {
             #[allow(clippy::collapsible_match)]
             match message.expect("valid JSON") {
                 Message::CompilerArtifact(Artifact {
@@ -154,7 +164,10 @@ fn main() {
                     }
                 }
                 Message::CompilerMessage(CompilerMessage { message, .. }) => {
-                    writeln!(&mut compiler_messages, "{message}").unwrap()
+                    println!("cargo:warning={message}");
+                }
+                Message::TextLine(line) => {
+                    println!("cargo:warning={line}");
                 }
                 _ => {}
             }
@@ -163,14 +176,15 @@ fn main() {
         let status = child
             .wait()
             .unwrap_or_else(|err| panic!("failed to wait for {cmd:?}: {err}"));
-
         match status.code() {
             Some(code) => match code {
                 0 => {}
-                code => panic!("{cmd:?} exited with status code {code}:\n{compiler_messages}"),
+                code => panic!("{cmd:?} exited with status code {code}"),
             },
             None => panic!("{cmd:?} terminated by signal"),
         }
+
+        stderr.join().map_err(std::panic::resume_unwind).unwrap();
 
         for (name, binary) in executables {
             let dst = out_dir.join(name);
