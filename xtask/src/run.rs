@@ -8,6 +8,7 @@ use std::{
 use anyhow::{Context as _, Result};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
+use xtask::AYA_BUILD_INTEGRATION_BPF;
 
 #[derive(Debug, Parser)]
 pub struct BuildOptions {
@@ -35,7 +36,7 @@ pub struct Options {
 pub fn build(opts: BuildOptions) -> Result<Vec<(String, PathBuf)>> {
     let BuildOptions { release, target } = opts;
     let mut cmd = Command::new("cargo");
-    cmd.env("AYA_BUILD_INTEGRATION_BPF", "true").args([
+    cmd.env(AYA_BUILD_INTEGRATION_BPF, "true").args([
         "build",
         "--tests",
         "--message-format=json",

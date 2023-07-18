@@ -38,4 +38,11 @@ jobs:
         run: cargo hack clippy --all-targets --feature-powerset --workspace -- --deny warnings
 
       - name: Run miri
-        run: cargo miri test --all-targets
+        run: |
+          cargo hack miri test --all-targets --feature-powerset \
+            --exclude aya-bpf \
+            --exclude aya-bpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --exclude integration-test \
+            --workspace
