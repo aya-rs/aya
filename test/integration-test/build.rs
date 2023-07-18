@@ -1,5 +1,4 @@
 use std::{
-    collections::{HashMap, HashSet},
     env,
     ffi::OsString,
     fmt::Write as _,
@@ -10,7 +9,7 @@ use std::{
 };
 
 use cargo_metadata::{
-    Artifact, CompilerMessage, Dependency, Message, Metadata, MetadataCommand, Package, Target,
+    Artifact, CompilerMessage, Message, Metadata, MetadataCommand, Package, Target,
 };
 use xtask::{create_symlink_to_binary, exec, LIBBPF_DIR};
 
@@ -27,16 +26,11 @@ fn main() {
         }
     };
 
-    const INTEGRATION_EBPF_PACKAGE: &str = "integration-ebpf";
-
     let Metadata { packages, .. } = MetadataCommand::new().no_deps().exec().unwrap();
-    let packages: HashMap<String, _> = packages
+    let integration_ebpf_package = packages
         .into_iter()
-        .map(|package| {
-            let Package { name, .. } = &package;
-            (name.clone(), package)
-        })
-        .collect();
+        .find(|Package { name, .. }| name == "integration-ebpf")
+        .unwrap();
 
     let manifest_dir = env::var_os("CARGO_MANIFEST_DIR").unwrap();
     let manifest_dir = PathBuf::from(manifest_dir);
@@ -120,21 +114,8 @@ fn main() {
 
         let target = format!("{target}-unknown-none");
 
-        // Teach cargo about our dependencies.
-        let mut visited = HashSet::new();
-        let mut frontier = vec![INTEGRATION_EBPF_PACKAGE];
-        while let Some(package) = frontier.pop() {
-            if !visited.insert(package) {
-                continue;
-            }
-            let Package { dependencies, .. } = packages.get(package).unwrap();
-            for Dependency { name, path, .. } in dependencies {
-                if let Some(path) = path {
-                    println!("cargo:rerun-if-changed={}", path.as_str());
-                    frontier.push(name);
-                }
-            }
-        }
+        let Package { manifest_path, .. } = integration_ebpf_package;
+        let integration_ebpf_dir = manifest_path.parent().unwrap();
 
         let bpf_linker_symlink = create_symlink_to_binary(&out_dir, "bpf-linker").unwrap();
         println!(
@@ -154,8 +135,6 @@ fn main() {
         ]);
 
         // Workaround to make sure that the rust-toolchain.toml is respected.
-        let Package { manifest_path, .. } = packages.get(INTEGRATION_EBPF_PACKAGE).unwrap();
-        let integration_ebpf_dir = manifest_path.parent().unwrap();
         cmd.env_remove("RUSTUP_TOOLCHAIN")
             .current_dir(integration_ebpf_dir);
 
@@ -213,7 +192,7 @@ fn main() {
             fs::write(&dst, []).unwrap_or_else(|err| panic!("failed to create {dst:?}: {err}"));
         }
 
-        let Package { targets, .. } = packages.get(INTEGRATION_EBPF_PACKAGE).unwrap();
+        let Package { targets, .. } = integration_ebpf_package;
         for Target { name, kind, .. } in targets {
             if *kind != ["bin"] {
                 continue;
