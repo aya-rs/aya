@@ -1,19 +1,18 @@
 use anyhow::anyhow;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use aya_tool::{bindgen, write_to_file};
 
 use crate::codegen::{Architecture, SysrootOptions};
 
-pub fn codegen(opts: &SysrootOptions) -> Result<(), anyhow::Error> {
-    codegen_internal_btf_bindings()?;
-    codegen_bindings(opts)
+pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::Error> {
+    codegen_internal_btf_bindings(libbpf_dir)?;
+    codegen_bindings(opts, libbpf_dir)
 }
 
-fn codegen_internal_btf_bindings() -> Result<(), anyhow::Error> {
+fn codegen_internal_btf_bindings(libbpf_dir: &Path) -> Result<(), anyhow::Error> {
     let dir = PathBuf::from("aya-obj");
     let generated = dir.join("src/generated");
-    let libbpf_dir = PathBuf::from("libbpf");
 
     let mut bindgen = bindgen::user_builder()
         .clang_arg(format!(
@@ -52,7 +51,7 @@ fn codegen_internal_btf_bindings() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-fn codegen_bindings(opts: &SysrootOptions) -> Result<(), anyhow::Error> {
+fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::Error> {
     let SysrootOptions {
         x86_64_sysroot,
         aarch64_sysroot,
@@ -162,7 +161,6 @@ fn codegen_bindings(opts: &SysrootOptions) -> Result<(), anyhow::Error> {
 
     let dir = PathBuf::from("aya-obj");
     let generated = dir.join("src/generated");
-    let libbpf_dir = PathBuf::from("libbpf");
 
     let builder = || {
         bindgen::user_builder()

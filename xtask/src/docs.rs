@@ -1,22 +1,10 @@
-use anyhow::{anyhow, Context as _, Result};
-use cargo_metadata::{Metadata, MetadataCommand};
+use anyhow::{Context as _, Result};
+use cargo_metadata::Metadata;
 use indoc::{indoc, writedoc};
 use std::{ffi::OsString, fs, io::Write as _, process::Command};
+use xtask::exec;
 
-pub fn exec(cmd: &mut Command) -> Result<()> {
-    let status = cmd
-        .status()
-        .with_context(|| format!("failed to run {cmd:?}"))?;
-    match status.code() {
-        Some(code) => match code {
-            0 => Ok(()),
-            code => Err(anyhow!("{cmd:?} exited with code {code}")),
-        },
-        None => Err(anyhow!("{cmd:?} terminated by signal")),
-    }
-}
-
-pub fn docs() -> Result<()> {
+pub fn docs(metadata: Metadata) -> Result<()> {
     const PACKAGE_TO_DESCRIPTION: &[(&str, &str)] = &[
         ("aya", "User-space BPF program loading and manipulation"),
         ("aya-bpf", "Kernel-space BPF program implementation toolkit"),
@@ -31,7 +19,7 @@ pub fn docs() -> Result<()> {
         workspace_root,
         target_directory,
         ..
-    } = MetadataCommand::new().exec().context("cargo metadata")?;
+    } = metadata;
 
     exec(
         Command::new("cargo")

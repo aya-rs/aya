@@ -1,3 +1,3 @@
 [submodule "libbpf"]
-	path = libbpf
+	path = xtask/libbpf
 	url = https://github.com/libbpf/libbpf

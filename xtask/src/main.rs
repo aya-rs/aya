@@ -2,29 +2,48 @@ mod codegen;
 mod docs;
 mod run;
 
+use anyhow::{Context as _, Result};
+use cargo_metadata::{Metadata, MetadataCommand};
 use clap::Parser;
+use std::process::Command;
+use xtask::{exec, LIBBPF_DIR};
 
 #[derive(Parser)]
 pub struct XtaskOptions {
     #[clap(subcommand)]
-    command: Command,
+    command: Subcommand,
 }
 
 #[derive(Parser)]
-enum Command {
+enum Subcommand {
     Codegen(codegen::Options),
     Docs,
     BuildIntegrationTest(run::BuildOptions),
     IntegrationTest(run::Options),
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<()> {
     let XtaskOptions { command } = Parser::parse();
 
+    let metadata = MetadataCommand::new()
+        .no_deps()
+        .exec()
+        .context("failed to run cargo metadata")?;
+    let Metadata { workspace_root, .. } = &metadata;
+
+    // Initialize the submodules.
+    exec(Command::new("git").arg("-C").arg(workspace_root).args([
+        "submodule",
+        "update",
+        "--init",
+    ]))?;
+    let libbpf_dir = workspace_root.join(LIBBPF_DIR);
+    let libbpf_dir = libbpf_dir.as_std_path();
+
     match command {
-        Command::Codegen(opts) => codegen::codegen(opts),
-        Command::Docs => docs::docs(),
-        Command::BuildIntegrationTest(opts) => {
+        Subcommand::Codegen(opts) => codegen::codegen(opts, libbpf_dir),
+        Subcommand::Docs => docs::docs(metadata),
+        Subcommand::BuildIntegrationTest(opts) => {
             let binaries = run::build(opts)?;
             let mut stdout = std::io::stdout();
             for (_name, binary) in binaries {
@@ -35,6 +54,6 @@ fn main() -> anyhow::Result<()> {
             }
             Ok(())
         }
-        Command::IntegrationTest(opts) => run::run(opts),
+        Subcommand::IntegrationTest(opts) => run::run(opts),
     }
 }

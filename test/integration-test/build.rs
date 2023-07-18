@@ -13,6 +13,7 @@ use cargo_metadata::{
     Artifact, CompilerMessage, Dependency, Message, Metadata, MetadataCommand, Package, Target,
 };
 use which::which;
+use xtask::{exec, LIBBPF_DIR};
 
 fn main() {
     const AYA_BUILD_INTEGRATION_BPF: &str = "AYA_BUILD_INTEGRATION_BPF";
@@ -69,7 +70,8 @@ fn main() {
             .unwrap()
             .parent()
             .unwrap()
-            .join("libbpf");
+            .join(LIBBPF_DIR);
+        println!("cargo:rerun-if-changed={}", libbpf_dir.to_str().unwrap());
 
         let libbpf_headers_dir = out_dir.join("libbpf_headers");
 
@@ -77,21 +79,14 @@ fn main() {
         includedir.push("INCLUDEDIR=");
         includedir.push(&libbpf_headers_dir);
 
-        let mut cmd = Command::new("make");
-        cmd.arg("-C")
-            .arg(libbpf_dir.join("src"))
-            .arg(includedir)
-            .arg("install_headers");
-        let status = cmd
-            .status()
-            .unwrap_or_else(|err| panic!("failed to run {cmd:?}: {err}"));
-        match status.code() {
-            Some(code) => match code {
-                0 => {}
-                code => panic!("{cmd:?} exited with code {code}"),
-            },
-            None => panic!("{cmd:?} terminated by signal"),
-        }
+        exec(
+            Command::new("make")
+                .arg("-C")
+                .arg(libbpf_dir.join("src"))
+                .arg(includedir)
+                .arg("install_headers"),
+        )
+        .unwrap();
 
         let bpf_dir = manifest_dir.join("bpf");
 
@@ -110,24 +105,18 @@ fn main() {
         for (src, dst) in c_bpf_probes {
             let src = bpf_dir.join(src);
             println!("cargo:rerun-if-changed={}", src.to_str().unwrap());
-            let mut cmd = Command::new("clang");
-            cmd.arg("-I")
-                .arg(&libbpf_headers_dir)
-                .args(["-g", "-O2", "-target", target, "-c"])
-                .arg(&target_arch)
-                .arg(src)
-                .arg("-o")
-                .arg(dst);
-            let status = cmd
-                .status()
-                .unwrap_or_else(|err| panic!("failed to run {cmd:?}: {err}"));
-            match status.code() {
-                Some(code) => match code {
-                    0 => {}
-                    code => panic!("{cmd:?} exited with code {code}"),
-                },
-                None => panic!("{cmd:?} terminated by signal"),
-            }
+
+            exec(
+                Command::new("clang")
+                    .arg("-I")
+                    .arg(&libbpf_headers_dir)
+                    .args(["-g", "-O2", "-target", target, "-c"])
+                    .arg(&target_arch)
+                    .arg(src)
+                    .arg("-o")
+                    .arg(dst),
+            )
+            .unwrap();
         }
 
         let target = format!("{target}-unknown-none");

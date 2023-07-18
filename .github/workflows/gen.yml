@@ -8,10 +8,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
-      - name: libbpf-version
-        working-directory: libbpf
-        run: echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+      - name: update libbpf
+        working-directory: xtask/libbpf
+        run: |
+          set -e
+          git fetch origin
+          git checkout origin/HEAD
+          echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
       - uses: dtolnay/rust-toolchain@master
         with:
