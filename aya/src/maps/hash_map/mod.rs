@@ -15,7 +15,7 @@ pub use per_cpu_hash_map::*;
 use super::MapData;
 
 pub(crate) fn insert<K: Pod, V: Pod>(
-    map: &mut MapData,
+    map: &MapData,
     key: &K,
     value: &V,
     flags: u64,
@@ -31,7 +31,7 @@ pub(crate) fn insert<K: Pod, V: Pod>(
     Ok(())
 }
 
-pub(crate) fn remove<K: Pod>(map: &mut MapData, key: &K) -> Result<(), MapError> {
+pub(crate) fn remove<K: Pod>(map: &MapData, key: &K) -> Result<(), MapError> {
     let fd = map.fd_or_err()?;
     bpf_map_delete_elem(fd, key)
         .map(|_| ())

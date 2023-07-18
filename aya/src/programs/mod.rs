@@ -523,10 +523,7 @@ fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError
     Ok(())
 }
 
-fn pin_program<T: Link, P: AsRef<Path>>(
-    data: &mut ProgramData<T>,
-    path: P,
-) -> Result<(), PinError> {
+fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Result<(), PinError> {
     let fd = data.fd.ok_or(PinError::NoFd {
         name: data
             .name
@@ -783,7 +780,7 @@ macro_rules! impl_program_pin{
                 /// Any directories in the the path provided should have been created by the caller.
                 pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
                     self.data.path = Some(path.as_ref().to_path_buf());
-                    pin_program(&mut self.data, path)
+                    pin_program(&self.data, path)
                 }
 
                 /// Removes the pinned link from the filesystem.

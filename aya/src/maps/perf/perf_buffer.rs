@@ -328,7 +328,7 @@ mod tests {
         data: [u8; PAGE_SIZE * 2],
     }
 
-    fn fake_mmap(buf: &mut MMappedBuf) {
+    fn fake_mmap(buf: &MMappedBuf) {
         override_syscall(|call| match call {
             Syscall::PerfEventOpen { .. } | Syscall::PerfEventIoctl { .. } => Ok(42),
             _ => panic!(),
@@ -355,10 +355,10 @@ mod tests {
     #[test]
     #[cfg_attr(miri, ignore)]
     fn test_no_out_bufs() {
-        let mut mmapped_buf = MMappedBuf {
+        let mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mut mmapped_buf);
+        fake_mmap(&mmapped_buf);
 
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
         assert_matches!(buf.read_events(&mut []), Err(PerfBufferError::NoBuffers))
@@ -367,10 +367,10 @@ mod tests {
     #[test]
     #[cfg_attr(miri, ignore)]
     fn test_no_events() {
-        let mut mmapped_buf = MMappedBuf {
+        let mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mut mmapped_buf);
+        fake_mmap(&mmapped_buf);
 
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
         let out_buf = BytesMut::with_capacity(4);
@@ -386,7 +386,7 @@ mod tests {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mut mmapped_buf);
+        fake_mmap(&mmapped_buf);
 
         let evt = LostSamples {
             header: perf_event_header {
@@ -451,7 +451,7 @@ mod tests {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mut mmapped_buf);
+        fake_mmap(&mmapped_buf);
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         write_sample(&mut mmapped_buf, 0, 0xCAFEBABEu32);
@@ -469,7 +469,7 @@ mod tests {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mut mmapped_buf);
+        fake_mmap(&mmapped_buf);
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let next = write_sample(&mut mmapped_buf, 0, 0xCAFEBABEu32);
@@ -492,7 +492,7 @@ mod tests {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mut mmapped_buf);
+        fake_mmap(&mmapped_buf);
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let next = write_sample(&mut mmapped_buf, 0, 0xCAFEBABEu32);
@@ -514,7 +514,7 @@ mod tests {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mut mmapped_buf);
+        fake_mmap(&mmapped_buf);
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let offset = PAGE_SIZE - mem::size_of::<PerfSample<u32>>();
@@ -534,7 +534,7 @@ mod tests {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mut mmapped_buf);
+        fake_mmap(&mmapped_buf);
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let header = perf_event_header {
@@ -563,7 +563,7 @@ mod tests {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mut mmapped_buf);
+        fake_mmap(&mmapped_buf);
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let sample = PerfSample {
