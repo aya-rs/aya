@@ -163,8 +163,6 @@ fn main() {
         let mut cmd = Command::new("cargo");
         cmd.args([
             "build",
-            "-p",
-            "integration-ebpf",
             "-Z",
             "build-std=core",
             "--release",
@@ -172,6 +170,12 @@ fn main() {
             "--target",
             &target,
         ]);
+
+        // Workaround to make sure that the rust-toolchain.toml is respected.
+        let Package { manifest_path, .. } = packages.get(INTEGRATION_EBPF_PACKAGE).unwrap();
+        let integration_ebpf_dir = manifest_path.parent().unwrap();
+        cmd.env_remove("RUSTUP_TOOLCHAIN")
+            .current_dir(integration_ebpf_dir);
 
         // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
         let ebpf_target_dir = out_dir.join("integration-ebpf");
