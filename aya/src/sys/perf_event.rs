@@ -1,4 +1,7 @@
-use std::{ffi::CString, mem};
+use std::{
+    ffi::{c_long, CString},
+    mem,
+};
 
 use libc::{c_int, pid_t};
 
@@ -22,7 +25,7 @@ pub(crate) fn perf_event_open(
     sample_frequency: Option<u64>,
     wakeup: bool,
     flags: u32,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     attr.config = config;
@@ -48,7 +51,7 @@ pub(crate) fn perf_event_open(
     })
 }
 
-pub(crate) fn perf_event_open_bpf(cpu: c_int) -> SysResult {
+pub(crate) fn perf_event_open_bpf(cpu: c_int) -> SysResult<c_long> {
     perf_event_open(
         PERF_TYPE_SOFTWARE as u32,
         PERF_COUNT_SW_BPF_OUTPUT as u64,
@@ -67,7 +70,7 @@ pub(crate) fn perf_event_open_probe(
     name: &str,
     offset: u64,
     pid: Option<pid_t>,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     if let Some(ret_bit) = ret_bit {
@@ -93,7 +96,7 @@ pub(crate) fn perf_event_open_probe(
     })
 }
 
-pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> SysResult {
+pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     attr.size = mem::size_of::<perf_event_attr>() as u32;
@@ -112,7 +115,7 @@ pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> SysRes
     })
 }
 
-pub(crate) fn perf_event_ioctl(fd: c_int, request: c_int, arg: c_int) -> SysResult {
+pub(crate) fn perf_event_ioctl(fd: c_int, request: c_int, arg: c_int) -> SysResult<c_long> {
     let call = Syscall::PerfEventIoctl { fd, request, arg };
     #[cfg(not(test))]
     return syscall(call);

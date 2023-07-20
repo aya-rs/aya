@@ -17,7 +17,7 @@ pub(crate) use perf_event::*;
 
 use crate::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 
-pub(crate) type SysResult = Result<c_long, (c_long, io::Error)>;
+pub(crate) type SysResult<T> = Result<T, (c_long, io::Error)>;
 
 pub(crate) enum Syscall<'a> {
     Bpf {
@@ -38,7 +38,7 @@ pub(crate) enum Syscall<'a> {
     },
 }
 
-fn syscall(call: Syscall) -> SysResult {
+fn syscall(call: Syscall) -> SysResult<c_long> {
     #[cfg(test)]
     return TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
 
