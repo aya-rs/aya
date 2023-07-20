@@ -1,5 +1,5 @@
 //! Kernel space probes.
-use std::{io, path::Path};
+use std::{io, os::fd::AsFd, path::Path};
 use thiserror::Error;
 
 use crate::{
@@ -32,8 +32,8 @@ use crate::{
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 /// use aya::{Bpf, programs::KProbe};
 ///
-/// let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
-/// program.load()?;
+/// let program: &mut KProbe = bpf.programs.get_mut("intercept_wakeups").unwrap().try_into()?;
+/// program.load(bpf.btf_fd.as_ref())?;
 /// program.attach("try_to_wake_up", 0)?;
 /// # Ok::<(), aya::BpfError>(())
 /// ```
@@ -46,8 +46,8 @@ pub struct KProbe {
 
 impl KProbe {
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
+    pub fn load(&mut self, btf_fd: Option<&impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_KPROBE, &mut self.data, btf_fd)
     }
 
     /// Returns `KProbe` if the program is a `kprobe`, or `KRetProbe` if the

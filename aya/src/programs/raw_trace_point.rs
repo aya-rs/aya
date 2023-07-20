@@ -1,5 +1,5 @@
 //! Raw tracepoints.
-use std::ffi::CString;
+use std::{ffi::CString, os::fd::AsFd};
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT,
@@ -27,8 +27,8 @@ use crate::{
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 /// use aya::{Bpf, programs::RawTracePoint};
 ///
-/// let program: &mut RawTracePoint = bpf.program_mut("sys_enter").unwrap().try_into()?;
-/// program.load()?;
+/// let program: &mut RawTracePoint = bpf.programs.get_mut("sys_enter").unwrap().try_into()?;
+/// program.load(bpf.btf_fd.as_ref())?;
 /// program.attach("sys_enter")?;
 /// # Ok::<(), aya::BpfError>(())
 /// ```
@@ -40,8 +40,8 @@ pub struct RawTracePoint {
 
 impl RawTracePoint {
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_RAW_TRACEPOINT, &mut self.data)
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_RAW_TRACEPOINT, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given tracepoint.

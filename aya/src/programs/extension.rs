@@ -1,5 +1,5 @@
 //! Extension programs.
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::{AsFd, AsRawFd, RawFd};
 use thiserror::Error;
 
 use object::Endianness;
@@ -37,13 +37,13 @@ pub enum ExtensionError {
 /// use aya::{BpfLoader, programs::{Xdp, XdpFlags, Extension}};
 ///
 /// let mut bpf = BpfLoader::new().extension("extension").load_file("app.o")?;
-/// let prog: &mut Xdp = bpf.program_mut("main").unwrap().try_into()?;
-/// prog.load()?;
+/// let prog: &mut Xdp = bpf.programs.get_mut("main").unwrap().try_into()?;
+/// prog.load(bpf.btf_fd.as_ref())?;
 /// prog.attach("eth0", XdpFlags::default())?;
 ///
 /// let prog_fd = prog.fd().unwrap();
-/// let ext: &mut Extension = bpf.program_mut("extension").unwrap().try_into()?;
-/// ext.load(prog_fd, "function_to_replace")?;
+/// let ext: &mut Extension = bpf.programs.get_mut("extension").unwrap().try_into()?;
+/// ext.load(prog_fd, "function_to_replace", bpf.btf_fd.as_ref())?;
 /// ext.attach()?;
 /// Ok::<(), aya::BpfError>(())
 /// ```
@@ -68,14 +68,19 @@ impl Extension {
     /// The extension code will be loaded but inactive until it's attached.
     /// There are no restrictions on what functions may be replaced, so you could replace
     /// the main entry point of your program with an extension.
-    pub fn load(&mut self, program: ProgramFd, func_name: &str) -> Result<(), ProgramError> {
+    pub fn load(
+        &mut self,
+        program: ProgramFd,
+        func_name: &str,
+        btf_fd: Option<impl AsFd>,
+    ) -> Result<(), ProgramError> {
         let target_prog_fd = program.as_raw_fd();
-        let (btf_fd, btf_id) = get_btf_info(target_prog_fd, func_name)?;
+        let (prog_btf_fd, prog_btf_id) = get_btf_info(target_prog_fd, func_name)?;
 
-        self.data.attach_btf_obj_fd = Some(btf_fd as u32);
+        self.data.attach_btf_obj_fd = Some(prog_btf_fd as u32);
         self.data.attach_prog_fd = Some(target_prog_fd);
-        self.data.attach_btf_id = Some(btf_id);
-        load_program(BPF_PROG_TYPE_EXT, &mut self.data)
+        self.data.attach_btf_id = Some(prog_btf_id);
+        load_program(BPF_PROG_TYPE_EXT, &mut self.data, btf_fd)
     }
 
     /// Attaches the extension.

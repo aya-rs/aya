@@ -3,7 +3,7 @@
 use crate::util::KernelVersion;
 use std::{
     hash::Hash,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, RawFd},
 };
 
 use crate::{
@@ -42,8 +42,8 @@ use crate::{
 /// use aya::programs::CgroupSysctl;
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
-/// let program: &mut CgroupSysctl = bpf.program_mut("cgroup_sysctl").unwrap().try_into()?;
-/// program.load()?;
+/// let program: &mut CgroupSysctl = bpf.programs.get_mut("cgroup_sysctl").unwrap().try_into()?;
+/// program.load(bpf.btf_fd.as_ref())?;
 /// program.attach(file)?;
 /// # Ok::<(), Error>(())
 /// ```
@@ -55,8 +55,8 @@ pub struct CgroupSysctl {
 
 impl CgroupSysctl {
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_CGROUP_SYSCTL, &mut self.data)
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_CGROUP_SYSCTL, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given cgroup.

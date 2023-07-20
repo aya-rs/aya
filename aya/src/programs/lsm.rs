@@ -1,5 +1,7 @@
 //! LSM probes.
 
+use std::os::fd::AsFd;
+
 use crate::{
     generated::{bpf_attach_type::BPF_LSM_MAC, bpf_prog_type::BPF_PROG_TYPE_LSM},
     obj::btf::{Btf, BtfKind},
@@ -39,8 +41,8 @@ use crate::{
 /// use aya::{Bpf, programs::Lsm, BtfError, Btf};
 ///
 /// let btf = Btf::from_sys_fs()?;
-/// let program: &mut Lsm = bpf.program_mut("lsm_prog").unwrap().try_into()?;
-/// program.load("security_bprm_exec", &btf)?;
+/// let program: &mut Lsm = bpf.programs.get_mut("lsm_prog").unwrap().try_into()?;
+/// program.load("security_bprm_exec", &btf, bpf.btf_fd.as_ref())?;
 /// program.attach()?;
 /// # Ok::<(), LsmError>(())
 /// ```
@@ -59,12 +61,17 @@ impl Lsm {
     ///
     /// * `lsm_hook_name` - full name of the LSM hook that the program should
     ///   be attached to
-    pub fn load(&mut self, lsm_hook_name: &str, btf: &Btf) -> Result<(), ProgramError> {
+    pub fn load(
+        &mut self,
+        lsm_hook_name: &str,
+        btf: &Btf,
+        btf_fd: Option<impl AsFd>,
+    ) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_LSM_MAC);
         let type_name = format!("bpf_lsm_{lsm_hook_name}");
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
-        load_program(BPF_PROG_TYPE_LSM, &mut self.data)
+        load_program(BPF_PROG_TYPE_LSM, &mut self.data, btf_fd)
     }
 
     /// Attaches the program.

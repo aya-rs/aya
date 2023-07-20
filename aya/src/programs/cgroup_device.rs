@@ -1,7 +1,7 @@
 //! Cgroup device programs.
 
 use crate::util::KernelVersion;
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::{AsFd, AsRawFd, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE},
@@ -40,8 +40,8 @@ use crate::{
 /// use aya::programs::CgroupDevice;
 ///
 /// let cgroup = std::fs::File::open("/sys/fs/cgroup/unified")?;
-/// let program: &mut CgroupDevice = bpf.program_mut("cgroup_dev").unwrap().try_into()?;
-/// program.load()?;
+/// let program: &mut CgroupDevice = bpf.programs.get_mut("cgroup_dev").unwrap().try_into()?;
+/// program.load(bpf.btf_fd.as_ref())?;
 /// program.attach(cgroup)?;
 /// # Ok::<(), Error>(())
 /// ```
@@ -53,8 +53,8 @@ pub struct CgroupDevice {
 
 impl CgroupDevice {
     /// Loads the program inside the kernel
-    pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_CGROUP_DEVICE, &mut self.data)
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_CGROUP_DEVICE, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given cgroup.

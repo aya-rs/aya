@@ -385,11 +385,14 @@ impl RelocationTestRunner {
         }
         let mut bpf = loader.load(&self.ebpf).context("Loading eBPF failed")?;
         let program: &mut TracePoint = bpf
-            .program_mut("bpf_prog")
+            .programs
+            .get_mut("bpf_prog")
             .context("bpf_prog not found")?
             .try_into()
             .context("program not a tracepoint")?;
-        program.load().context("Loading tracepoint failed")?;
+        program
+            .load(bpf.btf_fd.as_ref())
+            .context("Loading tracepoint failed")?;
         // Attach to sched_switch and wait some time to make sure it executed at least once
         program
             .attach("sched", "sched_switch")

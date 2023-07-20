@@ -7,7 +7,7 @@ use std::{
     fs,
     io::{self, BufRead, Cursor, Read},
     mem,
-    os::raw::c_char,
+    os::{fd::AsFd, raw::c_char},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -50,8 +50,8 @@ pub struct UProbe {
 
 impl UProbe {
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_KPROBE, &mut self.data, btf_fd)
     }
 
     /// Returns `UProbe` if the program is a `uprobe`, or `URetProbe` if the

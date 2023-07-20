@@ -49,8 +49,8 @@ use crate::{
 /// let mut intercept_egress = SockHash::<_, u32>::try_from(bpf.map("INTERCEPT_EGRESS").unwrap())?;
 /// let map_fd = intercept_egress.fd()?;
 ///
-/// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
-/// prog.load()?;
+/// let prog: &mut SkMsg = bpf.programs.get_mut("intercept_egress_packet").unwrap().try_into()?;
+/// prog.load(bpf.btf_fd.as_ref())?;
 /// prog.attach(map_fd)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;

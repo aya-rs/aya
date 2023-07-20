@@ -33,8 +33,8 @@ fn text_64_64_reloc() {
 fn load_and_attach(name: &str, bytes: &[u8]) -> Bpf {
     let mut bpf = Bpf::load(bytes).unwrap();
 
-    let prog: &mut UProbe = bpf.program_mut(name).unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    let prog: &mut UProbe = bpf.programs.get_mut(name).unwrap().try_into().unwrap();
+    prog.load(bpf.btf_fd.as_ref()).unwrap();
 
     prog.attach(
         Some("trigger_relocations_program"),

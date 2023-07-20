@@ -3,7 +3,13 @@
 use crate::util::KernelVersion;
 use bitflags;
 use libc::if_nametoindex;
-use std::{convert::TryFrom, ffi::CString, hash::Hash, io, mem, os::fd::RawFd};
+use std::{
+    convert::TryFrom,
+    ffi::CString,
+    hash::Hash,
+    io, mem,
+    os::fd::{AsFd, RawFd},
+};
 use thiserror::Error;
 
 use crate::{
@@ -78,9 +84,9 @@ pub struct Xdp {
 
 impl Xdp {
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(bpf_attach_type::BPF_XDP);
-        load_program(BPF_PROG_TYPE_XDP, &mut self.data)
+        load_program(BPF_PROG_TYPE_XDP, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given `interface`.

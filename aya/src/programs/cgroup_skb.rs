@@ -3,7 +3,7 @@
 use crate::util::KernelVersion;
 use std::{
     hash::Hash,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, RawFd},
     path::Path,
 };
 
@@ -50,8 +50,8 @@ use crate::{
 /// use aya::programs::{CgroupSkb, CgroupSkbAttachType};
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
-/// let egress: &mut CgroupSkb = bpf.program_mut("egress_filter").unwrap().try_into()?;
-/// egress.load()?;
+/// let egress: &mut CgroupSkb = bpf.programs.get_mut("egress_filter").unwrap().try_into()?;
+/// egress.load(bpf.btf_fd.as_ref())?;
 /// egress.attach(file, CgroupSkbAttachType::Egress)?;
 /// # Ok::<(), Error>(())
 /// ```
@@ -64,14 +64,14 @@ pub struct CgroupSkb {
 
 impl CgroupSkb {
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
         self.data.expected_attach_type =
             self.expected_attach_type
                 .map(|attach_type| match attach_type {
                     CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
                     CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
                 });
-        load_program(BPF_PROG_TYPE_CGROUP_SKB, &mut self.data)
+        load_program(BPF_PROG_TYPE_CGROUP_SKB, &mut self.data, btf_fd)
     }
 
     /// Returns the expected attach type of the program.

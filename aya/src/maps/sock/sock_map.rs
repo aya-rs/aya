@@ -17,7 +17,7 @@ use crate::{
 /// sockets.
 ///
 /// A `SockMap` can also be used to redirect packets to sockets contained by the
-/// map using `bpf_redirect_map()`, `bpf_sk_redirect_map()` etc.    
+/// map using `bpf_redirect_map()`, `bpf_sk_redirect_map()` etc.
 ///
 /// # Minimum kernel version
 ///
@@ -33,8 +33,8 @@ use crate::{
 /// let intercept_ingress = SockMap::try_from(bpf.map("INTERCEPT_INGRESS").unwrap())?;
 /// let map_fd = intercept_ingress.fd()?;
 ///
-/// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
-/// prog.load()?;
+/// let prog: &mut SkSkb = bpf.programs.get_mut("intercept_ingress_packet").unwrap().try_into()?;
+/// prog.load(bpf.btf_fd.as_ref())?;
 /// prog.attach(map_fd)?;
 ///
 /// # Ok::<(), aya::BpfError>(())
