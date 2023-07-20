@@ -1,5 +1,6 @@
 mod codegen;
 mod docs;
+mod public_api;
 mod run;
 
 use anyhow::{Context as _, Result};
@@ -20,6 +21,7 @@ enum Subcommand {
     Docs,
     BuildIntegrationTest(run::BuildOptions),
     IntegrationTest(run::Options),
+    PublicApi(public_api::Options),
 }
 
 fn main() -> Result<()> {
@@ -55,5 +57,6 @@ fn main() -> Result<()> {
             Ok(())
         }
         Subcommand::IntegrationTest(opts) => run::run(opts),
+        Subcommand::PublicApi(opts) => public_api::public_api(opts, metadata),
     }
 }

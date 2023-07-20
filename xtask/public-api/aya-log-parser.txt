@@ -1,0 +1,75 @@
+pub mod aya_log_parser
+pub enum aya_log_parser::Fragment
+pub aya_log_parser::Fragment::Literal(alloc::string::String)
+pub aya_log_parser::Fragment::Parameter(aya_log_parser::Parameter)
+impl core::clone::Clone for aya_log_parser::Fragment
+pub fn aya_log_parser::Fragment::clone(&self) -> aya_log_parser::Fragment
+impl core::cmp::Eq for aya_log_parser::Fragment
+impl core::cmp::PartialEq<aya_log_parser::Fragment> for aya_log_parser::Fragment
+pub fn aya_log_parser::Fragment::eq(&self, other: &aya_log_parser::Fragment) -> bool
+impl core::fmt::Debug for aya_log_parser::Fragment
+pub fn aya_log_parser::Fragment::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralEq for aya_log_parser::Fragment
+impl core::marker::StructuralPartialEq for aya_log_parser::Fragment
+impl core::marker::Send for aya_log_parser::Fragment
+impl core::marker::Sync for aya_log_parser::Fragment
+impl core::marker::Unpin for aya_log_parser::Fragment
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log_parser::Fragment
+impl core::panic::unwind_safe::UnwindSafe for aya_log_parser::Fragment
+impl<T, U> core::convert::Into<U> for aya_log_parser::Fragment where U: core::convert::From<T>
+pub fn aya_log_parser::Fragment::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log_parser::Fragment where U: core::convert::Into<T>
+pub type aya_log_parser::Fragment::Error = core::convert::Infallible
+pub fn aya_log_parser::Fragment::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log_parser::Fragment where U: core::convert::TryFrom<T>
+pub type aya_log_parser::Fragment::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log_parser::Fragment::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_log_parser::Fragment where T: core::clone::Clone
+pub type aya_log_parser::Fragment::Owned = T
+pub fn aya_log_parser::Fragment::clone_into(&self, target: &mut T)
+pub fn aya_log_parser::Fragment::to_owned(&self) -> T
+impl<T> core::any::Any for aya_log_parser::Fragment where T: 'static + core::marker::Sized
+pub fn aya_log_parser::Fragment::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log_parser::Fragment where T: core::marker::Sized
+pub fn aya_log_parser::Fragment::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log_parser::Fragment where T: core::marker::Sized
+pub fn aya_log_parser::Fragment::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log_parser::Fragment
+pub fn aya_log_parser::Fragment::from(t: T) -> T
+pub struct aya_log_parser::Parameter
+pub aya_log_parser::Parameter::hint: aya_log_common::DisplayHint
+impl core::clone::Clone for aya_log_parser::Parameter
+pub fn aya_log_parser::Parameter::clone(&self) -> aya_log_parser::Parameter
+impl core::cmp::Eq for aya_log_parser::Parameter
+impl core::cmp::PartialEq<aya_log_parser::Parameter> for aya_log_parser::Parameter
+pub fn aya_log_parser::Parameter::eq(&self, other: &aya_log_parser::Parameter) -> bool
+impl core::fmt::Debug for aya_log_parser::Parameter
+pub fn aya_log_parser::Parameter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralEq for aya_log_parser::Parameter
+impl core::marker::StructuralPartialEq for aya_log_parser::Parameter
+impl core::marker::Send for aya_log_parser::Parameter
+impl core::marker::Sync for aya_log_parser::Parameter
+impl core::marker::Unpin for aya_log_parser::Parameter
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log_parser::Parameter
+impl core::panic::unwind_safe::UnwindSafe for aya_log_parser::Parameter
+impl<T, U> core::convert::Into<U> for aya_log_parser::Parameter where U: core::convert::From<T>
+pub fn aya_log_parser::Parameter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log_parser::Parameter where U: core::convert::Into<T>
+pub type aya_log_parser::Parameter::Error = core::convert::Infallible
+pub fn aya_log_parser::Parameter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log_parser::Parameter where U: core::convert::TryFrom<T>
+pub type aya_log_parser::Parameter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log_parser::Parameter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_log_parser::Parameter where T: core::clone::Clone
+pub type aya_log_parser::Parameter::Owned = T
+pub fn aya_log_parser::Parameter::clone_into(&self, target: &mut T)
+pub fn aya_log_parser::Parameter::to_owned(&self) -> T
+impl<T> core::any::Any for aya_log_parser::Parameter where T: 'static + core::marker::Sized
+pub fn aya_log_parser::Parameter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log_parser::Parameter where T: core::marker::Sized
+pub fn aya_log_parser::Parameter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log_parser::Parameter where T: core::marker::Sized
+pub fn aya_log_parser::Parameter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log_parser::Parameter
+pub fn aya_log_parser::Parameter::from(t: T) -> T
+pub fn aya_log_parser::parse(format_string: &str) -> core::result::Result<alloc::vec::Vec<aya_log_parser::Fragment>, alloc::string::String>

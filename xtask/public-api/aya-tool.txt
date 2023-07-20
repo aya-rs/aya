@@ -1,0 +1,101 @@
+pub mod aya_tool
+pub mod aya_tool::bindgen
+pub fn aya_tool::bindgen::bpf_builder() -> bindgen::Builder
+pub fn aya_tool::bindgen::user_builder() -> bindgen::Builder
+pub mod aya_tool::generate
+pub enum aya_tool::generate::Error
+pub aya_tool::generate::Error::Bindgen(std::io::error::Error)
+pub aya_tool::generate::Error::BindgenExit
+pub aya_tool::generate::Error::BindgenExit::code: i32
+pub aya_tool::generate::Error::BindgenExit::stderr: alloc::string::String
+pub aya_tool::generate::Error::BpfTool(std::io::error::Error)
+pub aya_tool::generate::Error::BpfToolExit
+pub aya_tool::generate::Error::BpfToolExit::code: i32
+pub aya_tool::generate::Error::BpfToolExit::stderr: alloc::string::String
+pub aya_tool::generate::Error::ReadHeaderFile(std::io::error::Error)
+pub aya_tool::generate::Error::Rustfmt(std::io::error::Error)
+impl core::error::Error for aya_tool::generate::Error
+pub fn aya_tool::generate::Error::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Display for aya_tool::generate::Error
+pub fn aya_tool::generate::Error::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Debug for aya_tool::generate::Error
+pub fn aya_tool::generate::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya_tool::generate::Error
+impl core::marker::Sync for aya_tool::generate::Error
+impl core::marker::Unpin for aya_tool::generate::Error
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_tool::generate::Error
+impl !core::panic::unwind_safe::UnwindSafe for aya_tool::generate::Error
+impl<E> core::any::Provider for aya_tool::generate::Error where E: core::error::Error + core::marker::Sized
+pub fn aya_tool::generate::Error::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
+impl<T, U> core::convert::Into<U> for aya_tool::generate::Error where U: core::convert::From<T>
+pub fn aya_tool::generate::Error::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_tool::generate::Error where U: core::convert::Into<T>
+pub type aya_tool::generate::Error::Error = core::convert::Infallible
+pub fn aya_tool::generate::Error::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_tool::generate::Error where U: core::convert::TryFrom<T>
+pub type aya_tool::generate::Error::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_tool::generate::Error::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya_tool::generate::Error where T: core::fmt::Display + core::marker::Sized
+pub fn aya_tool::generate::Error::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya_tool::generate::Error where T: 'static + core::marker::Sized
+pub fn aya_tool::generate::Error::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_tool::generate::Error where T: core::marker::Sized
+pub fn aya_tool::generate::Error::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_tool::generate::Error where T: core::marker::Sized
+pub fn aya_tool::generate::Error::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_tool::generate::Error
+pub fn aya_tool::generate::Error::from(t: T) -> T
+pub enum aya_tool::generate::InputFile
+pub aya_tool::generate::InputFile::Btf(std::path::PathBuf)
+pub aya_tool::generate::InputFile::Header(std::path::PathBuf)
+impl core::marker::Send for aya_tool::generate::InputFile
+impl core::marker::Sync for aya_tool::generate::InputFile
+impl core::marker::Unpin for aya_tool::generate::InputFile
+impl core::panic::unwind_safe::RefUnwindSafe for aya_tool::generate::InputFile
+impl core::panic::unwind_safe::UnwindSafe for aya_tool::generate::InputFile
+impl<T, U> core::convert::Into<U> for aya_tool::generate::InputFile where U: core::convert::From<T>
+pub fn aya_tool::generate::InputFile::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_tool::generate::InputFile where U: core::convert::Into<T>
+pub type aya_tool::generate::InputFile::Error = core::convert::Infallible
+pub fn aya_tool::generate::InputFile::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_tool::generate::InputFile where U: core::convert::TryFrom<T>
+pub type aya_tool::generate::InputFile::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_tool::generate::InputFile::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_tool::generate::InputFile where T: 'static + core::marker::Sized
+pub fn aya_tool::generate::InputFile::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_tool::generate::InputFile where T: core::marker::Sized
+pub fn aya_tool::generate::InputFile::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_tool::generate::InputFile where T: core::marker::Sized
+pub fn aya_tool::generate::InputFile::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_tool::generate::InputFile
+pub fn aya_tool::generate::InputFile::from(t: T) -> T
+pub fn aya_tool::generate::generate<T: core::convert::AsRef<str>>(input_file: aya_tool::generate::InputFile, types: &[T], additional_flags: &[T]) -> core::result::Result<alloc::string::String, aya_tool::generate::Error>
+pub mod aya_tool::rustfmt
+pub fn aya_tool::rustfmt::format(code: &str) -> core::result::Result<alloc::string::String, std::io::error::Error>
+pub enum aya_tool::InputFile
+pub aya_tool::InputFile::Btf(std::path::PathBuf)
+pub aya_tool::InputFile::Header(std::path::PathBuf)
+impl core::marker::Send for aya_tool::generate::InputFile
+impl core::marker::Sync for aya_tool::generate::InputFile
+impl core::marker::Unpin for aya_tool::generate::InputFile
+impl core::panic::unwind_safe::RefUnwindSafe for aya_tool::generate::InputFile
+impl core::panic::unwind_safe::UnwindSafe for aya_tool::generate::InputFile
+impl<T, U> core::convert::Into<U> for aya_tool::generate::InputFile where U: core::convert::From<T>
+pub fn aya_tool::generate::InputFile::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_tool::generate::InputFile where U: core::convert::Into<T>
+pub type aya_tool::generate::InputFile::Error = core::convert::Infallible
+pub fn aya_tool::generate::InputFile::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_tool::generate::InputFile where U: core::convert::TryFrom<T>
+pub type aya_tool::generate::InputFile::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_tool::generate::InputFile::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_tool::generate::InputFile where T: 'static + core::marker::Sized
+pub fn aya_tool::generate::InputFile::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_tool::generate::InputFile where T: core::marker::Sized
+pub fn aya_tool::generate::InputFile::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_tool::generate::InputFile where T: core::marker::Sized
+pub fn aya_tool::generate::InputFile::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_tool::generate::InputFile
+pub fn aya_tool::generate::InputFile::from(t: T) -> T
+pub fn aya_tool::generate<T: core::convert::AsRef<str>>(input_file: aya_tool::generate::InputFile, types: &[T], additional_flags: &[T]) -> core::result::Result<alloc::string::String, aya_tool::generate::Error>
+pub fn aya_tool::write_to_file<T: core::convert::AsRef<std::path::Path>>(path: T, code: &str) -> core::result::Result<(), std::io::error::Error>
+pub fn aya_tool::write_to_file_fmt<T: core::convert::AsRef<std::path::Path>>(path: T, code: &str) -> core::result::Result<(), std::io::error::Error>
