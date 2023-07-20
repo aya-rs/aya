@@ -209,7 +209,7 @@ mod tests {
     };
     use assert_matches::assert_matches;
     use libc::{EFAULT, ENOENT};
-    use std::{io, mem, net::Ipv4Addr};
+    use std::{ffi::c_long, io, mem, net::Ipv4Addr};
 
     fn new_obj_map() -> obj::Map {
         obj::Map::Legacy(LegacyMap {
@@ -227,7 +227,7 @@ mod tests {
         })
     }
 
-    fn sys_error(value: i32) -> SysResult {
+    fn sys_error(value: i32) -> SysResult<c_long> {
         Err((-1, io::Error::from_raw_os_error(value)))
     }
 
