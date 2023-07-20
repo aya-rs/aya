@@ -1,0 +1,171 @@
+name: aya-ci
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: rustfmt, clippy, miri, rust-src
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo install taplo-cli
+      - run: taplo fmt --check
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - uses: taiki-e/install-action@cargo-hack
+      - name: Run clippy
+        run: cargo hack clippy --all-targets --feature-powerset --workspace -- --deny warnings
+
+      - name: Run miri
+        run: |
+          cargo hack miri test --all-targets --feature-powerset \
+            --exclude aya-bpf \
+            --exclude aya-bpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --exclude integration-test \
+            --workspace
+
+  build-test-aya:
+    needs: ["lint"]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - armv7-unknown-linux-gnueabi
+          - riscv64gc-unknown-linux-gnu
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          targets: ${{ matrix.arch }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: taiki-e/install-action@cargo-hack
+
+      - uses: taiki-e/setup-cross-toolchain-action@v1
+        with:
+          target: ${{ matrix.arch }}
+
+      - name: Build
+        run: |
+          cargo hack build --all-targets --feature-powerset \
+            --exclude aya-bpf \
+            --exclude aya-bpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --workspace
+
+      - name: Test
+        env:
+          RUST_BACKTRACE: full
+        run: |
+          cargo hack test --all-targets --feature-powerset \
+            --exclude aya-bpf \
+            --exclude aya-bpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --exclude integration-test \
+            --workspace
+
+  build-test-aya-bpf:
+    needs: ["lint"]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - x86_64
+          - aarch64
+          - arm
+          - riscv64
+        target:
+          - bpfel-unknown-none
+          - bpfeb-unknown-none
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: rust-src
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Prereqs
+        run: cargo install bpf-linker
+
+      - uses: taiki-e/install-action@cargo-hack
+      - name: Build
+        env:
+          CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          cargo hack build --package aya-bpf --package aya-log-ebpf \
+            --feature-powerset \
+            --target ${{ matrix.target }} \
+            -Z build-std=core
+
+  integration-test:
+    runs-on: macos-latest
+    needs: ["lint", "build-test-aya", "build-test-aya-bpf"]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Pre-requisites
+        run: |
+          brew install qemu gnu-getopt coreutils cdrtools
+
+      - name: Cache tmp files
+        uses: actions/cache@v3
+        with:
+          path: |
+            .tmp/*.qcow2
+            .tmp/test_rsa
+            .tmp/test_rsa.pub
+          # FIXME: we should invalidate the cache on new bpf-linker releases.
+          # For now we must manually delete the cache when we release a new
+          # bpf-linker version.
+          key: tmp-files-${{ hashFiles('test/run.sh') }}
+
+      - name: Run integration tests
+        run: test/run.sh
+
+  # Provides a single status check for the entire build workflow.
+  # This is used for merge automation, like Mergify, since GH actions
+  # has no concept of "when all status checks pass".
+  # https://docs.mergify.com/conditions/#validating-all-status-checks
+  build-workflow-complete:
+    needs: ["lint", "build-test-aya", "build-test-aya-bpf", "integration-test"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Complete
+        run: echo "Build Complete"
