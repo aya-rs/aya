@@ -1,9 +1,9 @@
 //! Cgroup sysctl programs.
 
-use crate::util::KernelVersion;
+use crate::{util::KernelVersion, WithBtfFd};
 use std::{
     hash::Hash,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, RawFd},
 };
 
 use crate::{
@@ -42,7 +42,7 @@ use crate::{
 /// use aya::programs::CgroupSysctl;
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
-/// let program: &mut CgroupSysctl = bpf.program_mut("cgroup_sysctl").unwrap().try_into()?;
+/// let mut program: aya::WithBtfFd<CgroupSysctl> = bpf.program_mut("cgroup_sysctl").unwrap().try_into()?;
 /// program.load()?;
 /// program.attach(file)?;
 /// # Ok::<(), Error>(())
@@ -53,10 +53,17 @@ pub struct CgroupSysctl {
     pub(crate) data: ProgramData<CgroupSysctlLink>,
 }
 
-impl CgroupSysctl {
+impl<'p> WithBtfFd<'p, CgroupSysctl> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_CGROUP_SYSCTL, &mut self.data)
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl CgroupSysctl {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_CGROUP_SYSCTL, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given cgroup.

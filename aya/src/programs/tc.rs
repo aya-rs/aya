@@ -4,6 +4,7 @@ use thiserror::Error;
 use std::{
     ffi::{CStr, CString},
     io,
+    os::fd::AsFd,
     path::Path,
 };
 
@@ -17,7 +18,7 @@ use crate::{
         netlink_qdisc_detach,
     },
     util::{ifindex_from_ifname, tc_handler_make},
-    VerifierLogLevel,
+    VerifierLogLevel, WithBtfFd,
 };
 
 /// Traffic control attach type.
@@ -63,7 +64,7 @@ pub enum TcAttachType {
 /// // attached
 /// tc::qdisc_add_clsact("eth0")?;
 ///
-/// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
+/// let mut prog: aya::WithBtfFd<SchedClassifier> = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach("eth0", TcAttachType::Ingress)?;
 ///
@@ -112,10 +113,17 @@ pub struct TcOptions {
     pub handle: u32,
 }
 
-impl SchedClassifier {
+impl<'p> WithBtfFd<'p, SchedClassifier> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SCHED_CLS, &mut self.data)
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl SchedClassifier {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_SCHED_CLS, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given `interface` using the default options.

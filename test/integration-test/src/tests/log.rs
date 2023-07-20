@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use aya::{programs::UProbe, Bpf};
+use aya::{programs::UProbe, Bpf, WithBtfFd};
 use aya_log::BpfLogger;
 use log::{Level, Log, Record};
 
@@ -60,7 +60,7 @@ async fn log() {
         .unwrap();
     }
 
-    let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
+    let mut prog: WithBtfFd<UProbe> = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach(Some("trigger_ebpf_program"), 0, "/proc/self/exe", None)
         .unwrap();

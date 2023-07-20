@@ -24,7 +24,7 @@
 //!
 //! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS").unwrap())?;
 //! let map_fd = intercept_egress.fd()?;
-//! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
+//! let mut prog: aya::WithBtfFd<SkMsg> = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 //! prog.load()?;
 //! prog.attach(map_fd)?;
 //!
@@ -42,7 +42,7 @@ use std::{
     marker::PhantomData,
     mem,
     ops::Deref,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, RawFd},
     path::Path,
     ptr,
 };
@@ -486,14 +486,13 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 pub struct MapData {
     pub(crate) obj: obj::Map,
     pub(crate) fd: Option<RawFd>,
-    pub(crate) btf_fd: Option<RawFd>,
     /// Indicates if this map has been pinned to bpffs
     pub pinned: bool,
 }
 
 impl MapData {
     /// Creates a new map with the provided `name`
-    pub fn create(&mut self, name: &str) -> Result<RawFd, MapError> {
+    pub fn create(&mut self, name: &str, btf_fd: Option<impl AsFd>) -> Result<RawFd, MapError> {
         if self.fd.is_some() {
             return Err(MapError::AlreadyCreated { name: name.into() });
         }
@@ -504,7 +503,7 @@ impl MapData {
         let kernel_version = KernelVersion::current().unwrap();
         #[cfg(test)]
         let kernel_version = KernelVersion::new(0xff, 0xff, 0xff);
-        let fd = bpf_create_map(&c_name, &self.obj, self.btf_fd, kernel_version).map_err(
+        let fd = bpf_create_map(&c_name, &self.obj, btf_fd, kernel_version).map_err(
             |(code, io_error)| {
                 if kernel_version < KernelVersion::new(5, 11, 0) {
                     maybe_warn_rlimit();
@@ -568,7 +567,6 @@ impl MapData {
         Ok(MapData {
             obj: parse_map_info(info, PinningType::ByName),
             fd: Some(fd),
-            btf_fd: None,
             pinned: true,
         })
     }
@@ -587,7 +585,6 @@ impl MapData {
         Ok(MapData {
             obj: parse_map_info(info, PinningType::None),
             fd: Some(fd),
-            btf_fd: None,
             pinned: false,
         })
     }
@@ -639,7 +636,6 @@ impl Clone for MapData {
         MapData {
             obj: self.obj.clone(),
             fd: self.fd.map(|fd| unsafe { libc::dup(fd) }),
-            btf_fd: self.btf_fd,
             pinned: self.pinned,
         }
     }
@@ -842,6 +838,8 @@ impl<T: Pod> Deref for PerCpuValues<T> {
 
 #[cfg(test)]
 mod tests {
+    use std::os::fd::BorrowedFd;
+
     use assert_matches::assert_matches;
     use libc::EFAULT;
 
@@ -876,7 +874,6 @@ mod tests {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
-            btf_fd: None,
         }
     }
 
@@ -891,9 +888,12 @@ mod tests {
         });
 
         let mut map = new_map();
-        assert_matches!(map.create("foo"), Ok(42));
+        assert_matches!(map.create("foo", Option::<BorrowedFd>::None), Ok(42));
         assert_eq!(map.fd, Some(42));
-        assert_matches!(map.create("foo"), Err(MapError::AlreadyCreated { .. }));
+        assert_matches!(
+            map.create("foo", Option::<BorrowedFd>::None),
+            Err(MapError::AlreadyCreated { .. })
+        );
     }
 
     #[test]
@@ -901,7 +901,7 @@ mod tests {
         override_syscall(|_| Err((-42, io::Error::from_raw_os_error(EFAULT))));
 
         let mut map = new_map();
-        let ret = map.create("foo");
+        let ret = map.create("foo", Option::<BorrowedFd>::None);
         assert_matches!(ret, Err(MapError::CreateError { .. }));
         if let Err(MapError::CreateError {
             name,

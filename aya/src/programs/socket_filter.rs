@@ -2,13 +2,14 @@
 use libc::{setsockopt, SOL_SOCKET};
 use std::{
     io, mem,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, RawFd},
 };
 use thiserror::Error;
 
 use crate::{
     generated::{bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF},
     programs::{load_program, Link, ProgramData, ProgramError},
+    WithBtfFd,
 };
 
 /// The type returned when attaching a [`SocketFilter`] fails.
@@ -52,7 +53,7 @@ pub enum SocketFilterError {
 /// use aya::programs::SocketFilter;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
-/// let prog: &mut SocketFilter = bpf.program_mut("filter_packets").unwrap().try_into()?;
+/// let mut prog: aya::WithBtfFd<SocketFilter> = bpf.program_mut("filter_packets").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach(client.as_raw_fd())?;
 /// # Ok::<(), Error>(())
@@ -63,10 +64,17 @@ pub struct SocketFilter {
     pub(crate) data: ProgramData<SocketFilterLink>,
 }
 
-impl SocketFilter {
+impl<'p> WithBtfFd<'p, SocketFilter> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SOCKET_FILTER, &mut self.data)
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl SocketFilter {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_SOCKET_FILTER, &mut self.data, btf_fd)
     }
 
     /// Attaches the filter on the given socket.

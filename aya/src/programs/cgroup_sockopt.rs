@@ -2,10 +2,10 @@
 
 pub use aya_obj::programs::CgroupSockoptAttachType;
 
-use crate::util::KernelVersion;
+use crate::{util::KernelVersion, WithBtfFd};
 use std::{
     hash::Hash,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, RawFd},
     path::Path,
 };
 
@@ -46,7 +46,7 @@ use crate::{
 /// use aya::programs::CgroupSockopt;
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
-/// let program: &mut CgroupSockopt = bpf.program_mut("cgroup_sockopt").unwrap().try_into()?;
+/// let mut program: aya::WithBtfFd<CgroupSockopt> = bpf.program_mut("cgroup_sockopt").unwrap().try_into()?;
 /// program.load()?;
 /// program.attach(file)?;
 /// # Ok::<(), Error>(())
@@ -58,11 +58,18 @@ pub struct CgroupSockopt {
     pub(crate) attach_type: CgroupSockoptAttachType,
 }
 
-impl CgroupSockopt {
+impl<'p> WithBtfFd<'p, CgroupSockopt> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl CgroupSockopt {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(self.attach_type.into());
-        load_program(BPF_PROG_TYPE_CGROUP_SOCKOPT, &mut self.data)
+        load_program(BPF_PROG_TYPE_CGROUP_SOCKOPT, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given cgroup.

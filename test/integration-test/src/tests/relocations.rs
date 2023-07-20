@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use aya::{programs::UProbe, Bpf};
+use aya::{programs::UProbe, Bpf, WithBtfFd};
 
 #[test]
 fn relocations() {
@@ -32,8 +32,7 @@ fn text_64_64_reloc() {
 
 fn load_and_attach(name: &str, bytes: &[u8]) -> Bpf {
     let mut bpf = Bpf::load(bytes).unwrap();
-
-    let prog: &mut UProbe = bpf.program_mut(name).unwrap().try_into().unwrap();
+    let mut prog: WithBtfFd<UProbe> = bpf.program_mut(name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
     prog.attach(

@@ -1,5 +1,7 @@
 //! Fexit programs.
 
+use std::os::fd::AsFd;
+
 use crate::{
     generated::{bpf_attach_type::BPF_TRACE_FEXIT, bpf_prog_type::BPF_PROG_TYPE_TRACING},
     obj::btf::{Btf, BtfKind},
@@ -7,6 +9,7 @@ use crate::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
         ProgramData, ProgramError,
     },
+    WithBtfFd,
 };
 
 /// A program that can be attached to the exit point of (almost) anny kernel
@@ -37,7 +40,7 @@ use crate::{
 /// use aya::{Bpf, programs::FExit, BtfError, Btf};
 ///
 /// let btf = Btf::from_sys_fs()?;
-/// let program: &mut FExit = bpf.program_mut("filename_lookup").unwrap().try_into()?;
+/// let mut program: aya::WithBtfFd<FExit> = bpf.program_mut("filename_lookup").unwrap().try_into()?;
 /// program.load("filename_lookup", &btf)?;
 /// program.attach()?;
 /// # Ok::<(), Error>(())
@@ -49,16 +52,28 @@ pub struct FExit {
     pub(crate) data: ProgramData<FExitLink>,
 }
 
+impl<'p> WithBtfFd<'p, FExit> {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, fn_name: &str, btf: &Btf) -> Result<(), ProgramError> {
+        self.program.load(fn_name, btf, self.btf_fd)
+    }
+}
+
 impl FExit {
     /// Loads the program inside the kernel.
     ///
     /// Loads the program so it's executed when the kernel function `fn_name`
     /// is exited. The `btf` argument must contain the BTF info for the running
     /// kernel.
-    pub fn load(&mut self, fn_name: &str, btf: &Btf) -> Result<(), ProgramError> {
+    pub fn load(
+        &mut self,
+        fn_name: &str,
+        btf: &Btf,
+        btf_fd: Option<impl AsFd>,
+    ) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_TRACE_FEXIT);
         self.data.attach_btf_id = Some(btf.id_by_type_name_kind(fn_name, BtfKind::Func)?);
-        load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
+        load_program(BPF_PROG_TYPE_TRACING, &mut self.data, btf_fd)
     }
 
     /// Attaches the program.

@@ -97,7 +97,7 @@ pub struct FdLinkId(pub(crate) RawFd);
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 /// use aya::{Bpf, programs::{links::FdLink, KProbe}};
 ///
-/// let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
+/// let mut program: aya::WithBtfFd<KProbe> = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 /// program.load()?;
 /// let link_id = program.attach("try_to_wake_up", 0)?;
 /// let link = program.take_link(link_id).unwrap();
@@ -138,7 +138,7 @@ impl FdLink {
     /// #     Program(#[from] aya::programs::ProgramError)
     /// # }
     /// # let mut bpf = aya::Bpf::load(&[])?;
-    /// # let prog: &mut Extension = bpf.program_mut("example").unwrap().try_into()?;
+    /// # let mut prog: aya::WithBtfFd<Extension> = bpf.program_mut("example").unwrap().try_into()?;
     /// let link_id = prog.attach()?;
     /// let owned_link = prog.take_link(link_id)?;
     /// let fd_link: FdLink = owned_link.into();

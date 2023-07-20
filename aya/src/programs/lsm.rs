@@ -1,5 +1,7 @@
 //! LSM probes.
 
+use std::os::fd::AsFd;
+
 use crate::{
     generated::{bpf_attach_type::BPF_LSM_MAC, bpf_prog_type::BPF_PROG_TYPE_LSM},
     obj::btf::{Btf, BtfKind},
@@ -7,6 +9,7 @@ use crate::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
         ProgramData, ProgramError,
     },
+    WithBtfFd,
 };
 
 /// A program that attaches to Linux LSM hooks. Used to implement security policy and
@@ -39,7 +42,7 @@ use crate::{
 /// use aya::{Bpf, programs::Lsm, BtfError, Btf};
 ///
 /// let btf = Btf::from_sys_fs()?;
-/// let program: &mut Lsm = bpf.program_mut("lsm_prog").unwrap().try_into()?;
+/// let mut program: aya::WithBtfFd<Lsm> = bpf.program_mut("lsm_prog").unwrap().try_into()?;
 /// program.load("security_bprm_exec", &btf)?;
 /// program.attach()?;
 /// # Ok::<(), LsmError>(())
@@ -52,6 +55,13 @@ pub struct Lsm {
     pub(crate) data: ProgramData<LsmLink>,
 }
 
+impl<'p> WithBtfFd<'p, Lsm> {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, lsm_hook_name: &str, btf: &Btf) -> Result<(), ProgramError> {
+        self.program.load(lsm_hook_name, btf, self.btf_fd)
+    }
+}
+
 impl Lsm {
     /// Loads the program inside the kernel.
     ///
@@ -59,12 +69,17 @@ impl Lsm {
     ///
     /// * `lsm_hook_name` - full name of the LSM hook that the program should
     ///   be attached to
-    pub fn load(&mut self, lsm_hook_name: &str, btf: &Btf) -> Result<(), ProgramError> {
+    pub fn load(
+        &mut self,
+        lsm_hook_name: &str,
+        btf: &Btf,
+        btf_fd: Option<impl AsFd>,
+    ) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_LSM_MAC);
         let type_name = format!("bpf_lsm_{lsm_hook_name}");
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
-        load_program(BPF_PROG_TYPE_LSM, &mut self.data)
+        load_program(BPF_PROG_TYPE_LSM, &mut self.data, btf_fd)
     }
 
     /// Attaches the program.

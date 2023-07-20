@@ -7,7 +7,7 @@ use std::{
     fs,
     io::{self, BufRead, Cursor, Read},
     mem,
-    os::raw::c_char,
+    os::{fd::AsFd, raw::c_char},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -22,7 +22,7 @@ use crate::{
         FdLink, LinkError, ProgramData, ProgramError,
     },
     sys::bpf_link_get_info_by_fd,
-    VerifierLogLevel,
+    VerifierLogLevel, WithBtfFd,
 };
 
 const LD_SO_CACHE_FILE: &str = "/etc/ld.so.cache";
@@ -48,10 +48,17 @@ pub struct UProbe {
     pub(crate) kind: ProbeKind,
 }
 
-impl UProbe {
+impl<'p> WithBtfFd<'p, UProbe> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl UProbe {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_KPROBE, &mut self.data, btf_fd)
     }
 
     /// Returns `UProbe` if the program is a `uprobe`, or `URetProbe` if the

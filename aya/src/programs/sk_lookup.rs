@@ -1,9 +1,10 @@
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::{AsFd, AsRawFd, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP},
     programs::{define_link_wrapper, load_program, FdLinkId, ProgramData, ProgramError},
     sys::bpf_link_create,
+    WithBtfFd,
 };
 
 use super::links::FdLink;
@@ -39,7 +40,7 @@ use super::links::FdLink;
 /// use aya::programs::SkLookup;
 ///
 /// let file = File::open("/var/run/netns/test")?;
-/// let program: &mut SkLookup = bpf.program_mut("sk_lookup").unwrap().try_into()?;
+/// let mut program: aya::WithBtfFd<SkLookup> = bpf.program_mut("sk_lookup").unwrap().try_into()?;
 /// program.load()?;
 /// program.attach(file)?;
 /// # Ok::<(), Error>(())
@@ -50,11 +51,18 @@ pub struct SkLookup {
     pub(crate) data: ProgramData<SkLookupLink>,
 }
 
-impl SkLookup {
+impl<'p> WithBtfFd<'p, SkLookup> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl SkLookup {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_SK_LOOKUP);
-        load_program(BPF_PROG_TYPE_SK_LOOKUP, &mut self.data)
+        load_program(BPF_PROG_TYPE_SK_LOOKUP, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given network namespace.

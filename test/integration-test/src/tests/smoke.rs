@@ -1,7 +1,7 @@
 use aya::{
     programs::{Extension, Xdp, XdpFlags},
     util::KernelVersion,
-    Bpf, BpfLoader,
+    Bpf, BpfLoader, WithBtfFd,
 };
 
 #[test]
@@ -13,7 +13,7 @@ fn xdp() {
     }
 
     let mut bpf = Bpf::load(crate::PASS).unwrap();
-    let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    let mut dispatcher: WithBtfFd<Xdp> = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
     dispatcher.attach("lo", XdpFlags::default()).unwrap();
 }
@@ -26,11 +26,11 @@ fn extension() {
         return;
     }
     let mut bpf = Bpf::load(crate::MAIN).unwrap();
-    let pass: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    let mut pass: WithBtfFd<Xdp> = bpf.program_mut("pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
     pass.attach("lo", XdpFlags::default()).unwrap();
 
     let mut bpf = BpfLoader::new().extension("drop").load(crate::EXT).unwrap();
-    let drop_: &mut Extension = bpf.program_mut("drop").unwrap().try_into().unwrap();
+    let mut drop_: WithBtfFd<Extension> = bpf.program_mut("drop").unwrap().try_into().unwrap();
     drop_.load(pass.fd().unwrap(), "xdp_pass").unwrap();
 }

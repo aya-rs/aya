@@ -2,10 +2,10 @@
 
 pub use aya_obj::programs::CgroupSockAddrAttachType;
 
-use crate::util::KernelVersion;
+use crate::{util::KernelVersion, WithBtfFd};
 use std::{
     hash::Hash,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, RawFd},
     path::Path,
 };
 
@@ -49,7 +49,7 @@ use crate::{
 /// use aya::programs::{CgroupSockAddr, CgroupSockAddrAttachType};
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
-/// let egress: &mut CgroupSockAddr = bpf.program_mut("connect4").unwrap().try_into()?;
+/// let mut egress: aya::WithBtfFd<CgroupSockAddr> = bpf.program_mut("connect4").unwrap().try_into()?;
 /// egress.load()?;
 /// egress.attach(file)?;
 /// # Ok::<(), Error>(())
@@ -61,11 +61,18 @@ pub struct CgroupSockAddr {
     pub(crate) attach_type: CgroupSockAddrAttachType,
 }
 
-impl CgroupSockAddr {
+impl<'p> WithBtfFd<'p, CgroupSockAddr> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl CgroupSockAddr {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(self.attach_type.into());
-        load_program(BPF_PROG_TYPE_CGROUP_SOCK_ADDR, &mut self.data)
+        load_program(BPF_PROG_TYPE_CGROUP_SOCK_ADDR, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given cgroup.

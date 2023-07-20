@@ -1,5 +1,5 @@
 //! Tracepoint programs.
-use std::{fs, io, path::Path};
+use std::{fs, io, os::fd::AsFd, path::Path};
 use thiserror::Error;
 
 use crate::{
@@ -11,6 +11,7 @@ use crate::{
         FdLink, LinkError, ProgramData, ProgramError,
     },
     sys::{bpf_link_get_info_by_fd, perf_event_open_trace_point},
+    WithBtfFd,
 };
 
 /// The type returned when attaching a [`TracePoint`] fails.
@@ -54,7 +55,7 @@ pub enum TracePointError {
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::programs::TracePoint;
 ///
-/// let prog: &mut TracePoint = bpf.program_mut("trace_context_switch").unwrap().try_into()?;
+/// let mut prog: aya::WithBtfFd<TracePoint> = bpf.program_mut("trace_context_switch").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach("sched", "sched_switch")?;
 /// # Ok::<(), Error>(())
@@ -65,10 +66,17 @@ pub struct TracePoint {
     pub(crate) data: ProgramData<TracePointLink>,
 }
 
-impl TracePoint {
+impl<'p> WithBtfFd<'p, TracePoint> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_TRACEPOINT, &mut self.data)
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl TracePoint {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_TRACEPOINT, &mut self.data, btf_fd)
     }
 
     /// Attaches to a given trace point.

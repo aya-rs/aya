@@ -1,5 +1,7 @@
 //! Perf event programs.
 
+use std::os::fd::AsFd;
+
 pub use crate::generated::{
     perf_hw_cache_id, perf_hw_cache_op_id, perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids,
 };
@@ -20,6 +22,7 @@ use crate::{
         FdLink, LinkError, ProgramData, ProgramError,
     },
     sys::{bpf_link_get_info_by_fd, perf_event_open},
+    WithBtfFd,
 };
 
 /// The type of perf event
@@ -105,7 +108,7 @@ pub enum PerfEventScope {
 ///     perf_sw_ids::PERF_COUNT_SW_CPU_CLOCK, PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy,
 /// };
 ///
-/// let prog: &mut PerfEvent = bpf.program_mut("observe_cpu_clock").unwrap().try_into()?;
+/// let mut prog: aya::WithBtfFd<PerfEvent> = bpf.program_mut("observe_cpu_clock").unwrap().try_into()?;
 /// prog.load()?;
 ///
 /// for cpu in online_cpus()? {
@@ -124,10 +127,17 @@ pub struct PerfEvent {
     pub(crate) data: ProgramData<PerfEventLink>,
 }
 
-impl PerfEvent {
+impl<'p> WithBtfFd<'p, PerfEvent> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_PERF_EVENT, &mut self.data)
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl PerfEvent {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_PERF_EVENT, &mut self.data, btf_fd)
     }
 
     /// Attaches to the given perf event.

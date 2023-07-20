@@ -1,5 +1,5 @@
 //! Socket option programs.
-use std::os::fd::AsRawFd;
+use std::os::fd::{AsFd, AsRawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS},
@@ -8,6 +8,7 @@ use crate::{
         ProgramError,
     },
     sys::bpf_prog_attach,
+    WithBtfFd,
 };
 
 /// A program used to work with sockets.
@@ -39,7 +40,7 @@ use crate::{
 /// use aya::programs::SockOps;
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
-/// let prog: &mut SockOps = bpf.program_mut("intercept_active_sockets").unwrap().try_into()?;
+/// let mut prog: aya::WithBtfFd<SockOps> = bpf.program_mut("intercept_active_sockets").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach(file)?;
 /// # Ok::<(), Error>(())
@@ -49,10 +50,17 @@ pub struct SockOps {
     pub(crate) data: ProgramData<SockOpsLink>,
 }
 
-impl SockOps {
+impl<'p> WithBtfFd<'p, SockOps> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SOCK_OPS, &mut self.data)
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl SockOps {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_SOCK_OPS, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given cgroup.

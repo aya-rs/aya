@@ -5,7 +5,9 @@ use std::{
     time::Duration,
 };
 
-use aya::{maps::Array, programs::TracePoint, util::KernelVersion, BpfLoader, Btf, Endianness};
+use aya::{
+    maps::Array, programs::TracePoint, util::KernelVersion, BpfLoader, Btf, Endianness, WithBtfFd,
+};
 
 // In the tests below we often use values like 0xAAAAAAAA or -0x7AAAAAAA. Those values have no
 // special meaning, they just have "nice" bit patterns that can be helpful while debugging.
@@ -384,7 +386,7 @@ impl RelocationTestRunner {
             loader.btf(None);
         }
         let mut bpf = loader.load(&self.ebpf).context("Loading eBPF failed")?;
-        let program: &mut TracePoint = bpf
+        let mut program: WithBtfFd<TracePoint> = bpf
             .program_mut("bpf_prog")
             .context("bpf_prog not found")?
             .try_into()

@@ -82,7 +82,7 @@ use aya::programs::{CgroupSkb, CgroupSkbAttachType};
 let mut bpf = Bpf::load_file("bpf.o")?;
 
 // get the `ingress_filter` program compiled into `bpf.o`.
-let ingress: &mut CgroupSkb = bpf.program_mut("ingress_filter")?.try_into()?;
+let mut ingress: aya::WithBtfFd<CgroupSkb> = bpf.program_mut("ingress_filter")?.try_into()?;
 
 // load the program into the kernel
 ingress.load()?;

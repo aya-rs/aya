@@ -1,9 +1,15 @@
 //! eXpress Data Path (XDP) programs.
 
-use crate::util::KernelVersion;
+use crate::{util::KernelVersion, WithBtfFd};
 use bitflags;
 use libc::if_nametoindex;
-use std::{convert::TryFrom, ffi::CString, hash::Hash, io, mem, os::fd::RawFd};
+use std::{
+    convert::TryFrom,
+    ffi::CString,
+    hash::Hash,
+    io, mem,
+    os::fd::{AsFd, RawFd},
+};
 use thiserror::Error;
 
 use crate::{
@@ -66,7 +72,7 @@ bitflags! {
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 /// use aya::{Bpf, programs::{Xdp, XdpFlags}};
 ///
-/// let program: &mut Xdp = bpf.program_mut("intercept_packets").unwrap().try_into()?;
+/// let mut program: aya::WithBtfFd<Xdp> = bpf.program_mut("intercept_packets").unwrap().try_into()?;
 /// program.attach("eth0", XdpFlags::default())?;
 /// # Ok::<(), aya::BpfError>(())
 /// ```
@@ -76,11 +82,18 @@ pub struct Xdp {
     pub(crate) data: ProgramData<XdpLink>,
 }
 
-impl Xdp {
+impl<'f> WithBtfFd<'f, Xdp> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl Xdp {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(bpf_attach_type::BPF_XDP);
-        load_program(BPF_PROG_TYPE_XDP, &mut self.data)
+        load_program(BPF_PROG_TYPE_XDP, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given `interface`.

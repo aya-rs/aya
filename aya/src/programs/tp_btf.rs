@@ -1,5 +1,7 @@
 //! BTF-enabled raw tracepoints.
 
+use std::os::fd::AsFd;
+
 use crate::{
     generated::{bpf_attach_type::BPF_TRACE_RAW_TP, bpf_prog_type::BPF_PROG_TYPE_TRACING},
     obj::btf::{Btf, BtfKind},
@@ -7,6 +9,7 @@ use crate::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
         ProgramData, ProgramError,
     },
+    WithBtfFd,
 };
 
 /// Marks a function as a [BTF-enabled raw tracepoint][1] eBPF program that can be attached at
@@ -36,7 +39,7 @@ use crate::{
 /// use aya::{Bpf, programs::BtfTracePoint, BtfError, Btf};
 ///
 /// let btf = Btf::from_sys_fs()?;
-/// let program: &mut BtfTracePoint = bpf.program_mut("sched_process_fork").unwrap().try_into()?;
+/// let mut program: aya::WithBtfFd<BtfTracePoint> = bpf.program_mut("sched_process_fork").unwrap().try_into()?;
 /// program.load("sched_process_fork", &btf)?;
 /// program.attach()?;
 /// # Ok::<(), Error>(())
@@ -50,6 +53,13 @@ pub struct BtfTracePoint {
     pub(crate) data: ProgramData<BtfTracePointLink>,
 }
 
+impl<'p> WithBtfFd<'p, BtfTracePoint> {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, tracepoint: &str, btf: &Btf) -> Result<(), ProgramError> {
+        self.program.load(tracepoint, btf, self.btf_fd)
+    }
+}
+
 impl BtfTracePoint {
     /// Loads the program inside the kernel.
     ///
@@ -57,12 +67,17 @@ impl BtfTracePoint {
     ///
     /// * `tracepoint` - full name of the tracepoint that we should attach to
     /// * `btf` - btf information for the target system
-    pub fn load(&mut self, tracepoint: &str, btf: &Btf) -> Result<(), ProgramError> {
+    pub fn load(
+        &mut self,
+        tracepoint: &str,
+        btf: &Btf,
+        btf_fd: Option<impl AsFd>,
+    ) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_TRACE_RAW_TP);
         let type_name = format!("btf_trace_{tracepoint}");
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Typedef)?);
-        load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
+        load_program(BPF_PROG_TYPE_TRACING, &mut self.data, btf_fd)
     }
 
     /// Attaches the program.

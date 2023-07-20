@@ -1,6 +1,6 @@
 //! Skmsg programs.
 
-use std::os::fd::AsRawFd;
+use std::os::fd::{AsFd, AsRawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
@@ -10,6 +10,7 @@ use crate::{
         ProgramError,
     },
     sys::bpf_prog_attach,
+    WithBtfFd,
 };
 
 /// A program used to intercept messages sent with `sendmsg()`/`sendfile()`.
@@ -46,7 +47,7 @@ use crate::{
 /// let intercept_egress: SockHash<_, u32> = bpf.map("INTERCEPT_EGRESS").unwrap().try_into()?;
 /// let map_fd = intercept_egress.fd()?;
 ///
-/// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
+/// let mut prog: aya::WithBtfFd<SkMsg> = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach(map_fd)?;
 ///
@@ -69,10 +70,17 @@ pub struct SkMsg {
     pub(crate) data: ProgramData<SkMsgLink>,
 }
 
-impl SkMsg {
+impl<'p> WithBtfFd<'p, SkMsg> {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SK_MSG, &mut self.data)
+        self.program.load(self.btf_fd)
+    }
+}
+
+impl SkMsg {
+    /// Loads the program inside the kernel.
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_SK_MSG, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given sockmap.

@@ -18,7 +18,7 @@
 //!
 //! let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 //! // intercept_wakeups is the name of the program we want to load
-//! let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
+//! let mut program: aya::WithBtfFd<KProbe> = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 //! program.load()?;
 //! // intercept_wakeups will be called every time try_to_wake_up() is called
 //! // inside the kernel
@@ -69,7 +69,7 @@ use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
-    os::fd::{AsRawFd, IntoRawFd as _, RawFd},
+    os::fd::{AsFd, AsRawFd, IntoRawFd as _, RawFd},
     path::{Path, PathBuf},
 };
 use thiserror::Error;
@@ -413,7 +413,6 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) attach_btf_obj_fd: Option<u32>,
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<RawFd>,
-    pub(crate) btf_fd: Option<RawFd>,
     pub(crate) verifier_log_level: VerifierLogLevel,
     pub(crate) path: Option<PathBuf>,
     pub(crate) flags: u32,
@@ -423,7 +422,6 @@ impl<T: Link> ProgramData<T> {
     pub(crate) fn new(
         name: Option<String>,
         obj: (obj::Program, obj::Function),
-        btf_fd: Option<RawFd>,
         verifier_log_level: VerifierLogLevel,
     ) -> ProgramData<T> {
         ProgramData {
@@ -435,7 +433,6 @@ impl<T: Link> ProgramData<T> {
             attach_btf_obj_fd: None,
             attach_btf_id: None,
             attach_prog_fd: None,
-            btf_fd,
             verifier_log_level,
             path: None,
             flags: 0,
@@ -475,7 +472,6 @@ impl<T: Link> ProgramData<T> {
             attach_btf_obj_fd,
             attach_btf_id,
             attach_prog_fd: None,
-            btf_fd: None,
             verifier_log_level,
             path: Some(path.to_path_buf()),
             flags: 0,
@@ -546,6 +542,7 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
 fn load_program<T: Link>(
     prog_type: bpf_prog_type,
     data: &mut ProgramData<T>,
+    btf_fd: Option<impl AsFd>,
 ) -> Result<(), ProgramError> {
     let ProgramData {
         name,
@@ -556,7 +553,6 @@ fn load_program<T: Link>(
         attach_btf_obj_fd,
         attach_btf_id,
         attach_prog_fd,
-        btf_fd,
         verifier_log_level,
         path: _,
         flags,
@@ -613,7 +609,7 @@ fn load_program<T: Link>(
         license,
         kernel_version: target_kernel_version,
         expected_attach_type: *expected_attach_type,
-        prog_btf_fd: *btf_fd,
+        prog_btf_fd: btf_fd.as_ref().map(|f| f.as_fd()),
         attach_btf_obj_fd: *attach_btf_obj_fd,
         attach_btf_id: *attach_btf_id,
         attach_prog_fd: *attach_prog_fd,
@@ -883,6 +879,17 @@ macro_rules! impl_try_from_program {
                         Program::$ty(p) => Ok(p),
                         _ => Err(ProgramError::UnexpectedProgramType),
                     }
+                }
+            }
+
+            impl<'a> TryFrom<$crate::WithBtfFd<'a, Program>> for $crate::bpf::WithBtfFd<'a, $ty> {
+                type Error = ProgramError;
+
+                fn try_from(program: $crate::WithBtfFd<'a, Program>) -> Result<$crate::WithBtfFd<'a, $ty>, ProgramError> {
+                    Ok($crate::bpf::WithBtfFd {
+                        program: program.program.try_into()?,
+                        btf_fd: program.btf_fd
+                    })
                 }
             }
         )+
