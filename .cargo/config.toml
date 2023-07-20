@@ -9,3 +9,6 @@ linker = "arm-linux-gnueabihf-gcc"
 
 [target.aarch64-unknown-linux-musl]
 linker = "aarch64-linux-musl-gcc"
+
+[env]
+CARGO_WORKSPACE_DIR = { value = "", relative = true }

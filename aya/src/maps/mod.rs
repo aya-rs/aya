@@ -224,7 +224,7 @@ fn maybe_warn_rlimit() {
         let limit = unsafe { limit.assume_init() };
 
         let limit: RlimitSize = RlimitSize(limit.rlim_cur.try_into().unwrap());
-        if limit.0 == RLIM_INFINITY.try_into().unwrap() {
+        if limit.0 == TryInto::<usize>::try_into(RLIM_INFINITY).unwrap() {
             return;
         }
         warn!(

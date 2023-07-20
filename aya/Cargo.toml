@@ -29,7 +29,11 @@ tokio = { workspace = true, features = ["rt"], optional = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
+expect-test = "1.4.1"
 futures = { workspace = true }
+public-api = "0.31.2"
+rustdoc-json = "0.8.6"
+rustup-toolchain = "0.1.5"
 tempfile = { workspace = true }
 
 [features]
