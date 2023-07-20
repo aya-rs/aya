@@ -37,7 +37,7 @@ pub(crate) fn bpf_create_map(
     def: &obj::Map,
     btf_fd: Option<RawFd>,
     kernel_version: KernelVersion,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_1 };
@@ -93,7 +93,7 @@ pub(crate) fn bpf_create_map(
     sys_bpf(bpf_cmd::BPF_MAP_CREATE, &attr)
 }
 
-pub(crate) fn bpf_pin_object(fd: RawFd, path: &CStr) -> SysResult {
+pub(crate) fn bpf_pin_object(fd: RawFd, path: &CStr) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_4 };
     u.bpf_fd = fd as u32;
@@ -101,7 +101,7 @@ pub(crate) fn bpf_pin_object(fd: RawFd, path: &CStr) -> SysResult {
     sys_bpf(bpf_cmd::BPF_OBJ_PIN, &attr)
 }
 
-pub(crate) fn bpf_get_object(path: &CStr) -> SysResult {
+pub(crate) fn bpf_get_object(path: &CStr) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_4 };
     u.pathname = path.as_ptr() as u64;
@@ -130,7 +130,7 @@ pub(crate) fn bpf_load_program(
     aya_attr: &BpfLoadProgramAttrs,
     log_buf: &mut [u8],
     verifier_log_level: VerifierLogLevel,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_3 };
@@ -272,7 +272,7 @@ pub(crate) fn bpf_map_update_elem<K: Pod, V: Pod>(
     key: Option<&K>,
     value: &V,
     flags: u64,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -286,7 +286,7 @@ pub(crate) fn bpf_map_update_elem<K: Pod, V: Pod>(
     sys_bpf(bpf_cmd::BPF_MAP_UPDATE_ELEM, &attr)
 }
 
-pub(crate) fn bpf_map_push_elem<V: Pod>(fd: RawFd, value: &V, flags: u64) -> SysResult {
+pub(crate) fn bpf_map_push_elem<V: Pod>(fd: RawFd, value: &V, flags: u64) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -302,7 +302,7 @@ pub(crate) fn bpf_map_update_elem_ptr<K, V>(
     key: *const K,
     value: *mut V,
     flags: u64,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -319,12 +319,12 @@ pub(crate) fn bpf_map_update_elem_per_cpu<K: Pod, V: Pod>(
     key: &K,
     values: &PerCpuValues<V>,
     flags: u64,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut mem = values.build_kernel_mem().map_err(|e| (-1, e))?;
     bpf_map_update_elem_ptr(fd, key, mem.as_mut_ptr(), flags)
 }
 
-pub(crate) fn bpf_map_delete_elem<K: Pod>(fd: RawFd, key: &K) -> SysResult {
+pub(crate) fn bpf_map_delete_elem<K: Pod>(fd: RawFd, key: &K) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -356,7 +356,7 @@ pub(crate) fn bpf_map_get_next_key<K: Pod>(
 }
 
 // since kernel 5.2
-pub(crate) fn bpf_map_freeze(fd: RawFd) -> SysResult {
+pub(crate) fn bpf_map_freeze(fd: RawFd) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd as u32;
@@ -370,7 +370,7 @@ pub(crate) fn bpf_link_create(
     attach_type: bpf_attach_type,
     btf_id: Option<u32>,
     flags: u32,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.link_create.__bindgen_anon_1.prog_fd = prog_fd as u32;
@@ -390,7 +390,7 @@ pub(crate) fn bpf_link_update(
     new_prog_fd: RawFd,
     old_prog_fd: Option<RawFd>,
     flags: u32,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.link_update.link_fd = link_fd as u32;
@@ -409,7 +409,7 @@ pub(crate) fn bpf_prog_attach(
     prog_fd: RawFd,
     target_fd: RawFd,
     attach_type: bpf_attach_type,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_5.attach_bpf_fd = prog_fd as u32;
@@ -423,7 +423,7 @@ pub(crate) fn bpf_prog_detach(
     prog_fd: RawFd,
     map_fd: RawFd,
     attach_type: bpf_attach_type,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_5.attach_bpf_fd = prog_fd as u32;
@@ -440,7 +440,7 @@ pub(crate) fn bpf_prog_query(
     attach_flags: Option<&mut u32>,
     prog_ids: &mut [u32],
     prog_cnt: &mut u32,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.query.target_fd = target_fd as u32;
@@ -535,7 +535,7 @@ pub(crate) fn btf_obj_get_info_by_fd(
     }
 }
 
-pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> SysResult {
+pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.raw_tracepoint.name = match name {
@@ -551,7 +551,7 @@ pub(crate) fn bpf_load_btf(
     raw_btf: &[u8],
     log_buf: &mut [u8],
     verifier_log_level: VerifierLogLevel,
-) -> SysResult {
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_7 };
     u.btf = raw_btf.as_ptr() as *const _ as u64;
@@ -977,7 +977,7 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
     }
 }
 
-pub fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult {
+pub fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult<c_long> {
     syscall(Syscall::Bpf { cmd, attr })
 }
 
@@ -992,10 +992,10 @@ pub(crate) fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>, (c_long, io::
     }
 }
 
-pub(crate) fn retry_with_verifier_logs(
+pub(crate) fn retry_with_verifier_logs<T>(
     max_retries: usize,
-    f: impl Fn(&mut [u8]) -> SysResult,
-) -> (SysResult, String) {
+    f: impl Fn(&mut [u8]) -> SysResult<T>,
+) -> (SysResult<T>, String) {
     const MIN_LOG_BUF_SIZE: usize = 1024 * 10;
     const MAX_LOG_BUF_SIZE: usize = (std::u32::MAX >> 8) as usize;
 
