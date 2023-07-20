@@ -1,10 +1,10 @@
-use std::{cell::RefCell, io, ptr};
+use std::{cell::RefCell, ffi::c_long, io, ptr};
 
 use libc::c_void;
 
 use super::{SysResult, Syscall};
 
-type SyscallFn = unsafe fn(Syscall) -> SysResult;
+type SyscallFn = unsafe fn(Syscall) -> SysResult<c_long>;
 
 #[cfg(test)]
 thread_local! {
@@ -13,11 +13,11 @@ thread_local! {
 }
 
 #[cfg(test)]
-unsafe fn test_syscall(_call: Syscall) -> SysResult {
+unsafe fn test_syscall(_call: Syscall) -> SysResult<c_long> {
     Err((-1, io::Error::from_raw_os_error(libc::EINVAL)))
 }
 
 #[cfg(test)]
-pub(crate) fn override_syscall(call: unsafe fn(Syscall) -> SysResult) {
+pub(crate) fn override_syscall(call: unsafe fn(Syscall) -> SysResult<c_long>) {
     TEST_SYSCALL.with(|test_impl| *test_impl.borrow_mut() = call);
 }
