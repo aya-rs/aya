@@ -29,7 +29,8 @@ default-members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
-    "test/integration-test",
+    # test/integration-test is omitted; including it in this list causes `cargo test` to run its
+    # tests, and that doesn't work unless they've been built with `cargo xtask`.
     "xtask",
 
     "aya-bpf-macros",
