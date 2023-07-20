@@ -58,3 +58,47 @@ pub mod util;
 pub use bpf::*;
 pub use obj::btf::{Btf, BtfError};
 pub use object::Endianness;
+
+#[cfg(test)]
+mod tests {
+    use cargo_metadata::{Metadata, MetadataCommand};
+    use std::{
+        env,
+        fs::{read_to_string, File},
+        io::Write,
+    };
+
+    #[test]
+    #[cfg_attr(miri, ignore = "uses open() which is not supported by miri")]
+    fn public_api() {
+        let rustdoc_json = rustdoc_json::Builder::default()
+            .toolchain("nightly")
+            .package("aya")
+            .all_features(true)
+            .build()
+            .unwrap();
+
+        let public_api = public_api::Builder::from_rustdoc_json(rustdoc_json)
+            .build()
+            .unwrap();
+
+        let metadata = MetadataCommand::new()
+            .no_deps()
+            .exec()
+            .expect("failed to run cargo metadata");
+        let Metadata { workspace_root, .. } = &metadata;
+
+        let path = workspace_root.join("aya/src/public-api.txt");
+
+        if env::var("UPDATE_EXPECT").is_ok() {
+            let mut f = File::create(&path).expect("failed to create aya/src/public-api.txt");
+            f.write_all(public_api.to_string().as_bytes())
+                .expect("failed to write aya/src/public-api.txt");
+        }
+        let current_api = read_to_string(path).expect("failed to read aya/src/public-api.txt");
+
+        if current_api != public_api.to_string() {
+            panic!("public api has changed. please bless by re-running tests with UPDATE_EXPECT=1");
+        }
+    }
+}

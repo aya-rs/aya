@@ -29,7 +29,10 @@ tokio = { workspace = true, features = ["rt"], optional = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
+cargo_metadata = { workspace = true }
 futures = { workspace = true }
+public-api = { workspace = true }
+rustdoc-json = { workspace = true }
 tempfile = { workspace = true }
 
 [features]
