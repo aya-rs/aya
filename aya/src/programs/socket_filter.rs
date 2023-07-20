@@ -2,7 +2,7 @@
 use libc::{setsockopt, SOL_SOCKET};
 use std::{
     io, mem,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, RawFd},
 };
 use thiserror::Error;
 
@@ -52,8 +52,9 @@ pub enum SocketFilterError {
 /// use aya::programs::SocketFilter;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
-/// let prog: &mut SocketFilter = bpf.program_mut("filter_packets").unwrap().try_into()?;
-/// prog.load()?;
+/// let aya::Bpf { programs, btf_fd, .. } = &mut bpf;
+/// let prog: &mut SocketFilter = programs.get_mut("filter_packets").unwrap().try_into()?;
+/// prog.load(btf_fd.as_ref())?;
 /// prog.attach(client.as_raw_fd())?;
 /// # Ok::<(), Error>(())
 /// ```
@@ -65,8 +66,8 @@ pub struct SocketFilter {
 
 impl SocketFilter {
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SOCKET_FILTER, &mut self.data)
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_SOCKET_FILTER, &mut self.data, btf_fd)
     }
 
     /// Attaches the filter on the given socket.

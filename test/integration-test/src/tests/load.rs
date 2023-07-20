@@ -16,12 +16,15 @@ const RETRY_DURATION_MS: u64 = 10;
 #[test]
 fn long_name() {
     let mut bpf = Bpf::load(crate::NAME_TEST).unwrap();
-    let name_prog: &mut Xdp = bpf
-        .program_mut("ihaveaverylongname")
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
+    let name_prog: &mut Xdp = programs
+        .get_mut("ihaveaverylongname")
         .unwrap()
         .try_into()
         .unwrap();
-    name_prog.load().unwrap();
+    name_prog.load(btf_fd.as_ref()).unwrap();
     name_prog.attach("lo", XdpFlags::default()).unwrap();
 
     // We used to be able to assert with bpftool that the program name was short.
@@ -36,8 +39,11 @@ fn multiple_btf_maps() {
     let map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
     let map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into().unwrap();
 
-    let prog: &mut TracePoint = bpf.program_mut("tracepoint").unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
+    let prog: &mut TracePoint = programs.get_mut("tracepoint").unwrap().try_into().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
     prog.attach("sched", "sched_switch").unwrap();
 
     thread::sleep(time::Duration::from_secs(3));
@@ -110,8 +116,11 @@ macro_rules! assert_loaded {
 #[test]
 fn unload_xdp() {
     let mut bpf = Bpf::load(crate::TEST).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("test_xdp").unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
+    let prog: &mut Xdp = programs.get_mut("test_xdp").unwrap().try_into().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
     assert_loaded!("test_xdp", true);
     let link = prog.attach("lo", XdpFlags::default()).unwrap();
     {
@@ -121,7 +130,7 @@ fn unload_xdp() {
     };
 
     assert_loaded!("test_xdp", false);
-    prog.load().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
 
     assert_loaded!("test_xdp", true);
     prog.attach("lo", XdpFlags::default()).unwrap();
@@ -135,8 +144,11 @@ fn unload_xdp() {
 #[test]
 fn unload_kprobe() {
     let mut bpf = Bpf::load(crate::TEST).unwrap();
-    let prog: &mut KProbe = bpf.program_mut("test_kprobe").unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
+    let prog: &mut KProbe = programs.get_mut("test_kprobe").unwrap().try_into().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
     assert_loaded!("test_kprobe", true);
     let link = prog.attach("try_to_wake_up", 0).unwrap();
     {
@@ -146,7 +158,7 @@ fn unload_kprobe() {
     };
 
     assert_loaded!("test_kprobe", false);
-    prog.load().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
 
     assert_loaded!("test_kprobe", true);
     prog.attach("try_to_wake_up", 0).unwrap();
@@ -160,13 +172,16 @@ fn unload_kprobe() {
 #[test]
 fn basic_tracepoint() {
     let mut bpf = Bpf::load(crate::TEST).unwrap();
-    let prog: &mut TracePoint = bpf
-        .program_mut("test_tracepoint")
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
+    let prog: &mut TracePoint = programs
+        .get_mut("test_tracepoint")
         .unwrap()
         .try_into()
         .unwrap();
 
-    prog.load().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
     assert_loaded!("test_tracepoint", true);
     let link = prog.attach("syscalls", "sys_enter_kill").unwrap();
 
@@ -177,7 +192,7 @@ fn basic_tracepoint() {
     };
 
     assert_loaded!("test_tracepoint", false);
-    prog.load().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
 
     assert_loaded!("test_tracepoint", true);
     prog.attach("syscalls", "sys_enter_kill").unwrap();
@@ -191,9 +206,12 @@ fn basic_tracepoint() {
 #[test]
 fn basic_uprobe() {
     let mut bpf = Bpf::load(crate::TEST).unwrap();
-    let prog: &mut UProbe = bpf.program_mut("test_uprobe").unwrap().try_into().unwrap();
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
+    let prog: &mut UProbe = programs.get_mut("test_uprobe").unwrap().try_into().unwrap();
 
-    prog.load().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
     assert_loaded!("test_uprobe", true);
     let link = prog.attach(Some("sleep"), 0, "libc", None).unwrap();
 
@@ -204,7 +222,7 @@ fn basic_uprobe() {
     };
 
     assert_loaded!("test_uprobe", false);
-    prog.load().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
 
     assert_loaded!("test_uprobe", true);
     prog.attach(Some("sleep"), 0, "libc", None).unwrap();
@@ -224,8 +242,11 @@ fn pin_link() {
     }
 
     let mut bpf = Bpf::load(crate::TEST).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("test_xdp").unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
+    let prog: &mut Xdp = programs.get_mut("test_xdp").unwrap().try_into().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
     let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
     let link = prog.take_link(link_id).unwrap();
     assert_loaded!("test_xdp", true);
@@ -257,8 +278,11 @@ fn pin_lifecycle() {
     // 1. Load Program and Pin
     {
         let mut bpf = Bpf::load(crate::PASS).unwrap();
-        let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-        prog.load().unwrap();
+        let Bpf {
+            programs, btf_fd, ..
+        } = &mut bpf;
+        let prog: &mut Xdp = programs.get_mut("pass").unwrap().try_into().unwrap();
+        prog.load(btf_fd.as_ref()).unwrap();
         prog.pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
     }
 
@@ -291,8 +315,11 @@ fn pin_lifecycle() {
     // 4. Load a new version of the program, unpin link, and atomically replace old program
     {
         let mut bpf = Bpf::load(crate::PASS).unwrap();
-        let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-        prog.load().unwrap();
+        let Bpf {
+            programs, btf_fd, ..
+        } = &mut bpf;
+        let prog: &mut Xdp = programs.get_mut("pass").unwrap().try_into().unwrap();
+        prog.load(btf_fd.as_ref()).unwrap();
 
         let link = PinnedLink::from_pin("/sys/fs/bpf/aya-xdp-test-lo")
             .unwrap()
@@ -311,12 +338,15 @@ fn pin_lifecycle_tracepoint() {
     // 1. Load Program and Pin
     {
         let mut bpf = Bpf::load(crate::TEST).unwrap();
-        let prog: &mut TracePoint = bpf
-            .program_mut("test_tracepoint")
+        let Bpf {
+            programs, btf_fd, ..
+        } = &mut bpf;
+        let prog: &mut TracePoint = programs
+            .get_mut("test_tracepoint")
             .unwrap()
             .try_into()
             .unwrap();
-        prog.load().unwrap();
+        prog.load(btf_fd.as_ref()).unwrap();
         prog.pin("/sys/fs/bpf/aya-tracepoint-test-prog").unwrap();
     }
 
@@ -365,8 +395,11 @@ fn pin_lifecycle_kprobe() {
     // 1. Load Program and Pin
     {
         let mut bpf = Bpf::load(crate::TEST).unwrap();
-        let prog: &mut KProbe = bpf.program_mut("test_kprobe").unwrap().try_into().unwrap();
-        prog.load().unwrap();
+        let Bpf {
+            programs, btf_fd, ..
+        } = &mut bpf;
+        let prog: &mut KProbe = programs.get_mut("test_kprobe").unwrap().try_into().unwrap();
+        prog.load(btf_fd.as_ref()).unwrap();
         prog.pin("/sys/fs/bpf/aya-kprobe-test-prog").unwrap();
     }
 
@@ -423,8 +456,11 @@ fn pin_lifecycle_uprobe() {
     // 1. Load Program and Pin
     {
         let mut bpf = Bpf::load(crate::TEST).unwrap();
-        let prog: &mut UProbe = bpf.program_mut("test_uprobe").unwrap().try_into().unwrap();
-        prog.load().unwrap();
+        let Bpf {
+            programs, btf_fd, ..
+        } = &mut bpf;
+        let prog: &mut UProbe = programs.get_mut("test_uprobe").unwrap().try_into().unwrap();
+        prog.load(btf_fd.as_ref()).unwrap();
         prog.pin("/sys/fs/bpf/aya-uprobe-test-prog").unwrap();
     }
 

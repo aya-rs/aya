@@ -13,8 +13,11 @@ fn xdp() {
     }
 
     let mut bpf = Bpf::load(crate::PASS).unwrap();
-    let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-    dispatcher.load().unwrap();
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
+    let dispatcher: &mut Xdp = programs.get_mut("pass").unwrap().try_into().unwrap();
+    dispatcher.load(btf_fd.as_ref()).unwrap();
     dispatcher.attach("lo", XdpFlags::default()).unwrap();
 }
 
@@ -26,11 +29,20 @@ fn extension() {
         return;
     }
     let mut bpf = Bpf::load(crate::MAIN).unwrap();
-    let pass: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-    pass.load().unwrap();
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
+    let pass: &mut Xdp = programs.get_mut("pass").unwrap().try_into().unwrap();
+    pass.load(btf_fd.as_ref()).unwrap();
     pass.attach("lo", XdpFlags::default()).unwrap();
 
     let mut bpf = BpfLoader::new().extension("drop").load(crate::EXT).unwrap();
-    let drop_: &mut Extension = bpf.program_mut("drop").unwrap().try_into().unwrap();
-    drop_.load(pass.fd().unwrap(), "xdp_pass").unwrap();
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
+
+    let drop_: &mut Extension = programs.get_mut("drop").unwrap().try_into().unwrap();
+    drop_
+        .load(pass.fd().unwrap(), "xdp_pass", btf_fd.as_ref())
+        .unwrap();
 }

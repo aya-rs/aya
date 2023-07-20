@@ -5,7 +5,7 @@ pub use aya_obj::programs::CgroupSockAttachType;
 use crate::util::KernelVersion;
 use std::{
     hash::Hash,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, RawFd},
     path::Path,
 };
 
@@ -48,8 +48,9 @@ use crate::{
 /// use aya::programs::{CgroupSock, CgroupSockAttachType};
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
-/// let bind: &mut CgroupSock = bpf.program_mut("bind").unwrap().try_into()?;
-/// bind.load()?;
+/// let aya::Bpf { programs, btf_fd, .. } = &mut bpf;
+/// let bind: &mut CgroupSock = programs.get_mut("bind").unwrap().try_into()?;
+/// bind.load(btf_fd.as_ref())?;
 /// bind.attach(file)?;
 /// # Ok::<(), Error>(())
 /// ```
@@ -62,9 +63,9 @@ pub struct CgroupSock {
 
 impl CgroupSock {
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(self.attach_type.into());
-        load_program(BPF_PROG_TYPE_CGROUP_SOCK, &mut self.data)
+        load_program(BPF_PROG_TYPE_CGROUP_SOCK, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given cgroup.

@@ -58,8 +58,11 @@ async fn log() {
         .unwrap();
     }
 
-    let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
+    let prog: &mut UProbe = programs.get_mut("test_log").unwrap().try_into().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
     prog.attach(Some("trigger_ebpf_program"), 0, "/proc/self/exe", None)
         .unwrap();
 

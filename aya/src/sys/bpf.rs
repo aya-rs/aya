@@ -3,7 +3,7 @@ use std::{
     ffi::{CStr, CString},
     io,
     mem::{self, MaybeUninit},
-    os::fd::RawFd,
+    os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd},
     slice,
 };
 
@@ -35,7 +35,7 @@ use crate::{
 pub(crate) fn bpf_create_map(
     name: &CStr,
     def: &obj::Map,
-    btf_fd: Option<RawFd>,
+    btf_fd: Option<impl AsFd>,
     kernel_version: KernelVersion,
 ) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
@@ -75,7 +75,7 @@ pub(crate) fn bpf_create_map(
             _ => {
                 u.btf_key_type_id = m.def.btf_key_type_id;
                 u.btf_value_type_id = m.def.btf_value_type_id;
-                u.btf_fd = btf_fd.unwrap_or_default() as u32;
+                u.btf_fd = btf_fd.map(|fd| fd.as_fd().as_raw_fd()).unwrap_or_default() as u32;
             }
         }
     }
@@ -115,7 +115,7 @@ pub(crate) struct BpfLoadProgramAttrs<'a> {
     pub(crate) license: &'a CStr,
     pub(crate) kernel_version: u32,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
-    pub(crate) prog_btf_fd: Option<RawFd>,
+    pub(crate) prog_btf_fd: Option<BorrowedFd<'a>>,
     pub(crate) attach_btf_obj_fd: Option<u32>,
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<RawFd>,
@@ -161,7 +161,7 @@ pub(crate) fn bpf_load_program(
     let func_info_buf = aya_attr.func_info.func_info_bytes();
 
     if let Some(btf_fd) = aya_attr.prog_btf_fd {
-        u.prog_btf_fd = btf_fd as u32;
+        u.prog_btf_fd = btf_fd.as_raw_fd() as u32;
         if aya_attr.line_info_rec_size > 0 {
             u.line_info = line_info_buf.as_ptr() as *const _ as u64;
             u.line_info_cnt = aya_attr.line_info.len() as u32;
@@ -551,7 +551,7 @@ pub(crate) fn bpf_load_btf(
     raw_btf: &[u8],
     log_buf: &mut [u8],
     verifier_log_level: VerifierLogLevel,
-) -> SysResult<c_long> {
+) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_7 };
     u.btf = raw_btf.as_ptr() as *const _ as u64;
@@ -561,7 +561,9 @@ pub(crate) fn bpf_load_btf(
         u.btf_log_buf = log_buf.as_mut_ptr() as u64;
         u.btf_log_size = log_buf.len() as u32;
     }
-    sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr)
+    let raw_fd = sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr)? as RawFd;
+    // SAFETY: BPF_BTF_LOAD returns a newly created file descriptor
+    Ok(unsafe { OwnedFd::from_raw_fd(raw_fd) })
 }
 
 pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<RawFd, io::Error> {
@@ -701,10 +703,9 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
         }),
         fd: None,
         pinned: false,
-        btf_fd: None,
     };
 
-    if let Ok(map_fd) = map_data.create("aya_global") {
+    if let Ok(map_fd) = map_data.create("aya_global", Option::<BorrowedFd>::None) {
         insns[0].imm = map_fd;
 
         let gpl = b"GPL\0";

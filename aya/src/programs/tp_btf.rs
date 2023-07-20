@@ -1,5 +1,7 @@
 //! BTF-enabled raw tracepoints.
 
+use std::os::fd::AsFd;
+
 use crate::{
     generated::{bpf_attach_type::BPF_TRACE_RAW_TP, bpf_prog_type::BPF_PROG_TYPE_TRACING},
     obj::btf::{Btf, BtfKind},
@@ -36,8 +38,9 @@ use crate::{
 /// use aya::{Bpf, programs::BtfTracePoint, BtfError, Btf};
 ///
 /// let btf = Btf::from_sys_fs()?;
-/// let program: &mut BtfTracePoint = bpf.program_mut("sched_process_fork").unwrap().try_into()?;
-/// program.load("sched_process_fork", &btf)?;
+/// let Bpf { programs, btf_fd, .. } = &mut bpf;
+/// let program: &mut BtfTracePoint = programs.get_mut("sched_process_fork").unwrap().try_into()?;
+/// program.load("sched_process_fork", &btf, btf_fd.as_ref())?;
 /// program.attach()?;
 /// # Ok::<(), Error>(())
 /// ```
@@ -57,12 +60,17 @@ impl BtfTracePoint {
     ///
     /// * `tracepoint` - full name of the tracepoint that we should attach to
     /// * `btf` - btf information for the target system
-    pub fn load(&mut self, tracepoint: &str, btf: &Btf) -> Result<(), ProgramError> {
+    pub fn load(
+        &mut self,
+        tracepoint: &str,
+        btf: &Btf,
+        btf_fd: Option<impl AsFd>,
+    ) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_TRACE_RAW_TP);
         let type_name = format!("btf_trace_{tracepoint}");
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Typedef)?);
-        load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
+        load_program(BPF_PROG_TYPE_TRACING, &mut self.data, btf_fd)
     }
 
     /// Attaches the program.

@@ -1,6 +1,9 @@
 //! Skskb programs.
 
-use std::{os::fd::AsRawFd, path::Path};
+use std::{
+    os::fd::{AsFd, AsRawFd},
+    path::Path,
+};
 
 use crate::{
     generated::{
@@ -45,8 +48,9 @@ pub enum SkSkbKind {
 /// let intercept_ingress: SockMap<_> = bpf.map("INTERCEPT_INGRESS").unwrap().try_into()?;
 /// let map_fd = intercept_ingress.fd()?;
 ///
-/// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
-/// prog.load()?;
+/// let aya::Bpf { programs, btf_fd, .. } = &mut bpf;
+/// let prog: &mut SkSkb = programs.get_mut("intercept_ingress_packet").unwrap().try_into()?;
+/// prog.load(btf_fd.as_ref())?;
 /// prog.attach(map_fd)?;
 ///
 /// # Ok::<(), aya::BpfError>(())
@@ -64,8 +68,8 @@ pub struct SkSkb {
 
 impl SkSkb {
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SK_SKB, &mut self.data)
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_SK_SKB, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given socket map.

@@ -1,5 +1,7 @@
 //! Fentry programs.
 
+use std::os::fd::AsFd;
+
 use crate::{
     generated::{bpf_attach_type::BPF_TRACE_FENTRY, bpf_prog_type::BPF_PROG_TYPE_TRACING},
     obj::btf::{Btf, BtfKind},
@@ -37,8 +39,9 @@ use crate::{
 /// use aya::{Bpf, programs::FEntry, BtfError, Btf};
 ///
 /// let btf = Btf::from_sys_fs()?;
-/// let program: &mut FEntry = bpf.program_mut("filename_lookup").unwrap().try_into()?;
-/// program.load("filename_lookup", &btf)?;
+/// let Bpf { programs, btf_fd, .. } = &mut bpf;
+/// let program: &mut FEntry = programs.get_mut("filename_lookup").unwrap().try_into()?;
+/// program.load("filename_lookup", &btf, btf_fd.as_ref())?;
 /// program.attach()?;
 /// # Ok::<(), Error>(())
 /// ```
@@ -55,10 +58,15 @@ impl FEntry {
     /// Loads the program so it's executed when the kernel function `fn_name`
     /// is entered. The `btf` argument must contain the BTF info for the
     /// running kernel.
-    pub fn load(&mut self, fn_name: &str, btf: &Btf) -> Result<(), ProgramError> {
+    pub fn load(
+        &mut self,
+        fn_name: &str,
+        btf: &Btf,
+        btf_fd: Option<impl AsFd>,
+    ) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_TRACE_FENTRY);
         self.data.attach_btf_id = Some(btf.id_by_type_name_kind(fn_name, BtfKind::Func)?);
-        load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
+        load_program(BPF_PROG_TYPE_TRACING, &mut self.data, btf_fd)
     }
 
     /// Attaches the program.

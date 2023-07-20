@@ -97,8 +97,9 @@ pub struct FdLinkId(pub(crate) RawFd);
 /// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
 /// use aya::{Bpf, programs::{links::FdLink, KProbe}};
 ///
-/// let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
-/// program.load()?;
+/// let aya::Bpf { programs, btf_fd, .. } = &mut bpf;
+/// let program: &mut KProbe = programs.get_mut("intercept_wakeups").unwrap().try_into()?;
+/// program.load(btf_fd.as_ref())?;
 /// let link_id = program.attach("try_to_wake_up", 0)?;
 /// let link = program.take_link(link_id).unwrap();
 /// let fd_link: FdLink = link.try_into().unwrap();

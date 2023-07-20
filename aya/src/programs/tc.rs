@@ -4,6 +4,7 @@ use thiserror::Error;
 use std::{
     ffi::{CStr, CString},
     io,
+    os::fd::AsFd,
     path::Path,
 };
 
@@ -63,8 +64,9 @@ pub enum TcAttachType {
 /// // attached
 /// tc::qdisc_add_clsact("eth0")?;
 ///
-/// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
-/// prog.load()?;
+/// let aya::Bpf { programs, btf_fd, .. } = &mut bpf;
+/// let prog: &mut SchedClassifier = programs.get_mut("redirect_ingress").unwrap().try_into()?;
+/// prog.load(btf_fd.as_ref())?;
 /// prog.attach("eth0", TcAttachType::Ingress)?;
 ///
 /// # Ok::<(), Error>(())
@@ -114,8 +116,8 @@ pub struct TcOptions {
 
 impl SchedClassifier {
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SCHED_CLS, &mut self.data)
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_SCHED_CLS, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given `interface` using the default options.

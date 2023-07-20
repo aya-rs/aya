@@ -1,5 +1,5 @@
 //! Lirc programs.
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::{AsFd, AsRawFd, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
@@ -40,8 +40,9 @@ use libc::{close, dup};
 ///
 /// let file = File::open("/dev/lirc0")?;
 /// let mut bpf = aya::Bpf::load_file("imon_rsc.o")?;
-/// let decoder: &mut LircMode2 = bpf.program_mut("imon_rsc").unwrap().try_into().unwrap();
-/// decoder.load()?;
+/// let aya::Bpf { programs, btf_fd, .. } = &mut bpf;
+/// let decoder: &mut LircMode2 = programs.get_mut("imon_rsc").unwrap().try_into().unwrap();
+/// decoder.load(btf_fd.as_ref())?;
 /// decoder.attach(file)?;
 /// # Ok::<(), Error>(())
 /// ```
@@ -53,8 +54,8 @@ pub struct LircMode2 {
 
 impl LircMode2 {
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_LIRC_MODE2, &mut self.data)
+    pub fn load(&mut self, btf_fd: Option<impl AsFd>) -> Result<(), ProgramError> {
+        load_program(BPF_PROG_TYPE_LIRC_MODE2, &mut self.data, btf_fd)
     }
 
     /// Attaches the program to the given lirc device.

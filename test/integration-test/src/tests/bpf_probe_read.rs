@@ -104,9 +104,12 @@ fn result_bytes(bpf: &Bpf) -> Vec<u8> {
 
 fn load_and_attach_uprobe(prog_name: &str, func_name: &str, bytes: &[u8]) -> Bpf {
     let mut bpf = Bpf::load(bytes).unwrap();
+    let Bpf {
+        programs, btf_fd, ..
+    } = &mut bpf;
 
-    let prog: &mut UProbe = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    let prog: &mut UProbe = programs.get_mut(prog_name).unwrap().try_into().unwrap();
+    prog.load(btf_fd.as_ref()).unwrap();
 
     prog.attach(Some(func_name), 0, "/proc/self/exe", None)
         .unwrap();
