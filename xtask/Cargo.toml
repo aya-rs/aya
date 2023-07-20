@@ -3,15 +3,22 @@ name = "xtask"
 version = "0.1.0"
 authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
 edition = "2021"
+publish = false
 
 [dependencies]
 anyhow = { workspace = true, default-features = true }
 aya-tool = { workspace = true }
 cargo_metadata = { workspace = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
+dialoguer = { workspace = true }
+diff = { workspace = true }
 indoc = { workspace = true }
 proc-macro2 = { workspace = true }
+public-api = { workspace = true }
 quote = { workspace = true }
+rustdoc-json = { workspace = true }
+rustup-toolchain = { workspace = true }
 syn = { workspace = true }
+thiserror = { workspace = true }
 tempfile = { workspace = true }
 which = { workspace = true }

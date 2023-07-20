@@ -26,15 +26,20 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - run: cargo install taplo-cli
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-hack,taplo-cli
+
       - run: taplo fmt --check
 
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-      - uses: taiki-e/install-action@cargo-hack
       - name: Run clippy
         run: cargo hack clippy --all-targets --feature-powerset --workspace -- --deny warnings
+
+      - name: Check public API
+        run: cargo xtask public-api
 
       - name: Run miri
         run: |

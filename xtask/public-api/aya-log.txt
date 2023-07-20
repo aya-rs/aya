@@ -1,0 +1,302 @@
+pub mod aya_log
+pub enum aya_log::Error
+pub aya_log::Error::InvalidOnlineCpu(std::io::error::Error)
+pub aya_log::Error::MapError(aya::maps::MapError)
+pub aya_log::Error::MapNotFound
+pub aya_log::Error::PerfBufferError(aya::maps::perf::perf_buffer::PerfBufferError)
+impl core::convert::From<aya::maps::MapError> for aya_log::Error
+pub fn aya_log::Error::from(source: aya::maps::MapError) -> Self
+impl core::convert::From<aya::maps::perf::perf_buffer::PerfBufferError> for aya_log::Error
+pub fn aya_log::Error::from(source: aya::maps::perf::perf_buffer::PerfBufferError) -> Self
+impl core::error::Error for aya_log::Error
+pub fn aya_log::Error::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Display for aya_log::Error
+pub fn aya_log::Error::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Debug for aya_log::Error
+pub fn aya_log::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya_log::Error
+impl core::marker::Sync for aya_log::Error
+impl core::marker::Unpin for aya_log::Error
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_log::Error
+impl !core::panic::unwind_safe::UnwindSafe for aya_log::Error
+impl<E> core::any::Provider for aya_log::Error where E: core::error::Error + core::marker::Sized
+pub fn aya_log::Error::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
+impl<T, U> core::convert::Into<U> for aya_log::Error where U: core::convert::From<T>
+pub fn aya_log::Error::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::Error where U: core::convert::Into<T>
+pub type aya_log::Error::Error = core::convert::Infallible
+pub fn aya_log::Error::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::Error where U: core::convert::TryFrom<T>
+pub type aya_log::Error::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::Error::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya_log::Error where T: core::fmt::Display + core::marker::Sized
+pub fn aya_log::Error::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya_log::Error where T: 'static + core::marker::Sized
+pub fn aya_log::Error::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::Error where T: core::marker::Sized
+pub fn aya_log::Error::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::Error where T: core::marker::Sized
+pub fn aya_log::Error::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::Error
+pub fn aya_log::Error::from(t: T) -> T
+pub struct aya_log::BpfLogger
+impl aya_log::BpfLogger
+pub fn aya_log::BpfLogger::init(bpf: &mut aya::bpf::Bpf) -> core::result::Result<aya_log::BpfLogger, aya_log::Error>
+pub fn aya_log::BpfLogger::init_with_logger<T: log::Log + 'static>(bpf: &mut aya::bpf::Bpf, logger: T) -> core::result::Result<aya_log::BpfLogger, aya_log::Error>
+impl core::marker::Send for aya_log::BpfLogger
+impl core::marker::Sync for aya_log::BpfLogger
+impl core::marker::Unpin for aya_log::BpfLogger
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log::BpfLogger
+impl core::panic::unwind_safe::UnwindSafe for aya_log::BpfLogger
+impl<T, U> core::convert::Into<U> for aya_log::BpfLogger where U: core::convert::From<T>
+pub fn aya_log::BpfLogger::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::BpfLogger where U: core::convert::Into<T>
+pub type aya_log::BpfLogger::Error = core::convert::Infallible
+pub fn aya_log::BpfLogger::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::BpfLogger where U: core::convert::TryFrom<T>
+pub type aya_log::BpfLogger::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::BpfLogger::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::BpfLogger where T: 'static + core::marker::Sized
+pub fn aya_log::BpfLogger::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::BpfLogger where T: core::marker::Sized
+pub fn aya_log::BpfLogger::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::BpfLogger where T: core::marker::Sized
+pub fn aya_log::BpfLogger::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::BpfLogger
+pub fn aya_log::BpfLogger::from(t: T) -> T
+pub struct aya_log::DefaultFormatter
+impl<T> aya_log::Formatter<T> for aya_log::DefaultFormatter where T: alloc::string::ToString
+pub fn aya_log::DefaultFormatter::format(v: T) -> alloc::string::String
+impl core::marker::Send for aya_log::DefaultFormatter
+impl core::marker::Sync for aya_log::DefaultFormatter
+impl core::marker::Unpin for aya_log::DefaultFormatter
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log::DefaultFormatter
+impl core::panic::unwind_safe::UnwindSafe for aya_log::DefaultFormatter
+impl<T, U> core::convert::Into<U> for aya_log::DefaultFormatter where U: core::convert::From<T>
+pub fn aya_log::DefaultFormatter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::DefaultFormatter where U: core::convert::Into<T>
+pub type aya_log::DefaultFormatter::Error = core::convert::Infallible
+pub fn aya_log::DefaultFormatter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::DefaultFormatter where U: core::convert::TryFrom<T>
+pub type aya_log::DefaultFormatter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::DefaultFormatter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::DefaultFormatter where T: 'static + core::marker::Sized
+pub fn aya_log::DefaultFormatter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::DefaultFormatter where T: core::marker::Sized
+pub fn aya_log::DefaultFormatter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::DefaultFormatter where T: core::marker::Sized
+pub fn aya_log::DefaultFormatter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::DefaultFormatter
+pub fn aya_log::DefaultFormatter::from(t: T) -> T
+pub struct aya_log::Ipv4Formatter
+impl<T> aya_log::Formatter<T> for aya_log::Ipv4Formatter where T: core::convert::Into<core::net::ip_addr::Ipv4Addr>
+pub fn aya_log::Ipv4Formatter::format(v: T) -> alloc::string::String
+impl core::marker::Send for aya_log::Ipv4Formatter
+impl core::marker::Sync for aya_log::Ipv4Formatter
+impl core::marker::Unpin for aya_log::Ipv4Formatter
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log::Ipv4Formatter
+impl core::panic::unwind_safe::UnwindSafe for aya_log::Ipv4Formatter
+impl<T, U> core::convert::Into<U> for aya_log::Ipv4Formatter where U: core::convert::From<T>
+pub fn aya_log::Ipv4Formatter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::Ipv4Formatter where U: core::convert::Into<T>
+pub type aya_log::Ipv4Formatter::Error = core::convert::Infallible
+pub fn aya_log::Ipv4Formatter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::Ipv4Formatter where U: core::convert::TryFrom<T>
+pub type aya_log::Ipv4Formatter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::Ipv4Formatter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::Ipv4Formatter where T: 'static + core::marker::Sized
+pub fn aya_log::Ipv4Formatter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::Ipv4Formatter where T: core::marker::Sized
+pub fn aya_log::Ipv4Formatter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::Ipv4Formatter where T: core::marker::Sized
+pub fn aya_log::Ipv4Formatter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::Ipv4Formatter
+pub fn aya_log::Ipv4Formatter::from(t: T) -> T
+pub struct aya_log::Ipv6Formatter
+impl<T> aya_log::Formatter<T> for aya_log::Ipv6Formatter where T: core::convert::Into<core::net::ip_addr::Ipv6Addr>
+pub fn aya_log::Ipv6Formatter::format(v: T) -> alloc::string::String
+impl core::marker::Send for aya_log::Ipv6Formatter
+impl core::marker::Sync for aya_log::Ipv6Formatter
+impl core::marker::Unpin for aya_log::Ipv6Formatter
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log::Ipv6Formatter
+impl core::panic::unwind_safe::UnwindSafe for aya_log::Ipv6Formatter
+impl<T, U> core::convert::Into<U> for aya_log::Ipv6Formatter where U: core::convert::From<T>
+pub fn aya_log::Ipv6Formatter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::Ipv6Formatter where U: core::convert::Into<T>
+pub type aya_log::Ipv6Formatter::Error = core::convert::Infallible
+pub fn aya_log::Ipv6Formatter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::Ipv6Formatter where U: core::convert::TryFrom<T>
+pub type aya_log::Ipv6Formatter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::Ipv6Formatter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::Ipv6Formatter where T: 'static + core::marker::Sized
+pub fn aya_log::Ipv6Formatter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::Ipv6Formatter where T: core::marker::Sized
+pub fn aya_log::Ipv6Formatter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::Ipv6Formatter where T: core::marker::Sized
+pub fn aya_log::Ipv6Formatter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::Ipv6Formatter
+pub fn aya_log::Ipv6Formatter::from(t: T) -> T
+pub struct aya_log::LowerHexDebugFormatter
+impl<T> aya_log::Formatter<&[T]> for aya_log::LowerHexDebugFormatter where T: core::fmt::LowerHex
+pub fn aya_log::LowerHexDebugFormatter::format(v: &[T]) -> alloc::string::String
+impl core::marker::Send for aya_log::LowerHexDebugFormatter
+impl core::marker::Sync for aya_log::LowerHexDebugFormatter
+impl core::marker::Unpin for aya_log::LowerHexDebugFormatter
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log::LowerHexDebugFormatter
+impl core::panic::unwind_safe::UnwindSafe for aya_log::LowerHexDebugFormatter
+impl<T, U> core::convert::Into<U> for aya_log::LowerHexDebugFormatter where U: core::convert::From<T>
+pub fn aya_log::LowerHexDebugFormatter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::LowerHexDebugFormatter where U: core::convert::Into<T>
+pub type aya_log::LowerHexDebugFormatter::Error = core::convert::Infallible
+pub fn aya_log::LowerHexDebugFormatter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::LowerHexDebugFormatter where U: core::convert::TryFrom<T>
+pub type aya_log::LowerHexDebugFormatter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::LowerHexDebugFormatter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::LowerHexDebugFormatter where T: 'static + core::marker::Sized
+pub fn aya_log::LowerHexDebugFormatter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::LowerHexDebugFormatter where T: core::marker::Sized
+pub fn aya_log::LowerHexDebugFormatter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::LowerHexDebugFormatter where T: core::marker::Sized
+pub fn aya_log::LowerHexDebugFormatter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::LowerHexDebugFormatter
+pub fn aya_log::LowerHexDebugFormatter::from(t: T) -> T
+pub struct aya_log::LowerHexFormatter
+impl<T> aya_log::Formatter<T> for aya_log::LowerHexFormatter where T: core::fmt::LowerHex
+pub fn aya_log::LowerHexFormatter::format(v: T) -> alloc::string::String
+impl core::marker::Send for aya_log::LowerHexFormatter
+impl core::marker::Sync for aya_log::LowerHexFormatter
+impl core::marker::Unpin for aya_log::LowerHexFormatter
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log::LowerHexFormatter
+impl core::panic::unwind_safe::UnwindSafe for aya_log::LowerHexFormatter
+impl<T, U> core::convert::Into<U> for aya_log::LowerHexFormatter where U: core::convert::From<T>
+pub fn aya_log::LowerHexFormatter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::LowerHexFormatter where U: core::convert::Into<T>
+pub type aya_log::LowerHexFormatter::Error = core::convert::Infallible
+pub fn aya_log::LowerHexFormatter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::LowerHexFormatter where U: core::convert::TryFrom<T>
+pub type aya_log::LowerHexFormatter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::LowerHexFormatter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::LowerHexFormatter where T: 'static + core::marker::Sized
+pub fn aya_log::LowerHexFormatter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::LowerHexFormatter where T: core::marker::Sized
+pub fn aya_log::LowerHexFormatter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::LowerHexFormatter where T: core::marker::Sized
+pub fn aya_log::LowerHexFormatter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::LowerHexFormatter
+pub fn aya_log::LowerHexFormatter::from(t: T) -> T
+pub struct aya_log::LowerMacFormatter
+impl aya_log::Formatter<[u8; 6]> for aya_log::LowerMacFormatter
+pub fn aya_log::LowerMacFormatter::format(v: [u8; 6]) -> alloc::string::String
+impl core::marker::Send for aya_log::LowerMacFormatter
+impl core::marker::Sync for aya_log::LowerMacFormatter
+impl core::marker::Unpin for aya_log::LowerMacFormatter
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log::LowerMacFormatter
+impl core::panic::unwind_safe::UnwindSafe for aya_log::LowerMacFormatter
+impl<T, U> core::convert::Into<U> for aya_log::LowerMacFormatter where U: core::convert::From<T>
+pub fn aya_log::LowerMacFormatter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::LowerMacFormatter where U: core::convert::Into<T>
+pub type aya_log::LowerMacFormatter::Error = core::convert::Infallible
+pub fn aya_log::LowerMacFormatter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::LowerMacFormatter where U: core::convert::TryFrom<T>
+pub type aya_log::LowerMacFormatter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::LowerMacFormatter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::LowerMacFormatter where T: 'static + core::marker::Sized
+pub fn aya_log::LowerMacFormatter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::LowerMacFormatter where T: core::marker::Sized
+pub fn aya_log::LowerMacFormatter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::LowerMacFormatter where T: core::marker::Sized
+pub fn aya_log::LowerMacFormatter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::LowerMacFormatter
+pub fn aya_log::LowerMacFormatter::from(t: T) -> T
+pub struct aya_log::UpperHexDebugFormatter
+impl<T> aya_log::Formatter<&[T]> for aya_log::UpperHexDebugFormatter where T: core::fmt::UpperHex
+pub fn aya_log::UpperHexDebugFormatter::format(v: &[T]) -> alloc::string::String
+impl core::marker::Send for aya_log::UpperHexDebugFormatter
+impl core::marker::Sync for aya_log::UpperHexDebugFormatter
+impl core::marker::Unpin for aya_log::UpperHexDebugFormatter
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log::UpperHexDebugFormatter
+impl core::panic::unwind_safe::UnwindSafe for aya_log::UpperHexDebugFormatter
+impl<T, U> core::convert::Into<U> for aya_log::UpperHexDebugFormatter where U: core::convert::From<T>
+pub fn aya_log::UpperHexDebugFormatter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::UpperHexDebugFormatter where U: core::convert::Into<T>
+pub type aya_log::UpperHexDebugFormatter::Error = core::convert::Infallible
+pub fn aya_log::UpperHexDebugFormatter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::UpperHexDebugFormatter where U: core::convert::TryFrom<T>
+pub type aya_log::UpperHexDebugFormatter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::UpperHexDebugFormatter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::UpperHexDebugFormatter where T: 'static + core::marker::Sized
+pub fn aya_log::UpperHexDebugFormatter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::UpperHexDebugFormatter where T: core::marker::Sized
+pub fn aya_log::UpperHexDebugFormatter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::UpperHexDebugFormatter where T: core::marker::Sized
+pub fn aya_log::UpperHexDebugFormatter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::UpperHexDebugFormatter
+pub fn aya_log::UpperHexDebugFormatter::from(t: T) -> T
+pub struct aya_log::UpperHexFormatter
+impl<T> aya_log::Formatter<T> for aya_log::UpperHexFormatter where T: core::fmt::UpperHex
+pub fn aya_log::UpperHexFormatter::format(v: T) -> alloc::string::String
+impl core::marker::Send for aya_log::UpperHexFormatter
+impl core::marker::Sync for aya_log::UpperHexFormatter
+impl core::marker::Unpin for aya_log::UpperHexFormatter
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log::UpperHexFormatter
+impl core::panic::unwind_safe::UnwindSafe for aya_log::UpperHexFormatter
+impl<T, U> core::convert::Into<U> for aya_log::UpperHexFormatter where U: core::convert::From<T>
+pub fn aya_log::UpperHexFormatter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::UpperHexFormatter where U: core::convert::Into<T>
+pub type aya_log::UpperHexFormatter::Error = core::convert::Infallible
+pub fn aya_log::UpperHexFormatter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::UpperHexFormatter where U: core::convert::TryFrom<T>
+pub type aya_log::UpperHexFormatter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::UpperHexFormatter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::UpperHexFormatter where T: 'static + core::marker::Sized
+pub fn aya_log::UpperHexFormatter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::UpperHexFormatter where T: core::marker::Sized
+pub fn aya_log::UpperHexFormatter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::UpperHexFormatter where T: core::marker::Sized
+pub fn aya_log::UpperHexFormatter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::UpperHexFormatter
+pub fn aya_log::UpperHexFormatter::from(t: T) -> T
+pub struct aya_log::UpperMacFormatter
+impl aya_log::Formatter<[u8; 6]> for aya_log::UpperMacFormatter
+pub fn aya_log::UpperMacFormatter::format(v: [u8; 6]) -> alloc::string::String
+impl core::marker::Send for aya_log::UpperMacFormatter
+impl core::marker::Sync for aya_log::UpperMacFormatter
+impl core::marker::Unpin for aya_log::UpperMacFormatter
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log::UpperMacFormatter
+impl core::panic::unwind_safe::UnwindSafe for aya_log::UpperMacFormatter
+impl<T, U> core::convert::Into<U> for aya_log::UpperMacFormatter where U: core::convert::From<T>
+pub fn aya_log::UpperMacFormatter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::UpperMacFormatter where U: core::convert::Into<T>
+pub type aya_log::UpperMacFormatter::Error = core::convert::Infallible
+pub fn aya_log::UpperMacFormatter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::UpperMacFormatter where U: core::convert::TryFrom<T>
+pub type aya_log::UpperMacFormatter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::UpperMacFormatter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::UpperMacFormatter where T: 'static + core::marker::Sized
+pub fn aya_log::UpperMacFormatter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::UpperMacFormatter where T: core::marker::Sized
+pub fn aya_log::UpperMacFormatter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::UpperMacFormatter where T: core::marker::Sized
+pub fn aya_log::UpperMacFormatter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::UpperMacFormatter
+pub fn aya_log::UpperMacFormatter::from(t: T) -> T
+pub trait aya_log::Formatter<T>
+pub fn aya_log::Formatter::format(v: T) -> alloc::string::String
+impl aya_log::Formatter<[u8; 6]> for aya_log::LowerMacFormatter
+pub fn aya_log::LowerMacFormatter::format(v: [u8; 6]) -> alloc::string::String
+impl aya_log::Formatter<[u8; 6]> for aya_log::UpperMacFormatter
+pub fn aya_log::UpperMacFormatter::format(v: [u8; 6]) -> alloc::string::String
+impl<T> aya_log::Formatter<&[T]> for aya_log::LowerHexDebugFormatter where T: core::fmt::LowerHex
+pub fn aya_log::LowerHexDebugFormatter::format(v: &[T]) -> alloc::string::String
+impl<T> aya_log::Formatter<&[T]> for aya_log::UpperHexDebugFormatter where T: core::fmt::UpperHex
+pub fn aya_log::UpperHexDebugFormatter::format(v: &[T]) -> alloc::string::String
+impl<T> aya_log::Formatter<T> for aya_log::DefaultFormatter where T: alloc::string::ToString
+pub fn aya_log::DefaultFormatter::format(v: T) -> alloc::string::String
+impl<T> aya_log::Formatter<T> for aya_log::Ipv4Formatter where T: core::convert::Into<core::net::ip_addr::Ipv4Addr>
+pub fn aya_log::Ipv4Formatter::format(v: T) -> alloc::string::String
+impl<T> aya_log::Formatter<T> for aya_log::Ipv6Formatter where T: core::convert::Into<core::net::ip_addr::Ipv6Addr>
+pub fn aya_log::Ipv6Formatter::format(v: T) -> alloc::string::String
+impl<T> aya_log::Formatter<T> for aya_log::LowerHexFormatter where T: core::fmt::LowerHex
+pub fn aya_log::LowerHexFormatter::format(v: T) -> alloc::string::String
+impl<T> aya_log::Formatter<T> for aya_log::UpperHexFormatter where T: core::fmt::UpperHex
+pub fn aya_log::UpperHexFormatter::format(v: T) -> alloc::string::String
