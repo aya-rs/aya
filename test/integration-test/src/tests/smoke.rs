@@ -1,5 +1,5 @@
 use aya::{
-    programs::{Extension, Xdp, XdpFlags},
+    programs::{Extension, TracePoint, Xdp, XdpFlags},
     util::KernelVersion,
     Bpf, BpfLoader,
 };
@@ -16,6 +16,28 @@ fn xdp() {
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
     dispatcher.attach("lo", XdpFlags::default()).unwrap();
+}
+
+#[test]
+fn two_progs() {
+    let mut bpf = Bpf::load(crate::TWO_PROGS).unwrap();
+
+    let prog_one: &mut TracePoint = bpf
+        .program_mut("test_tracepoint_one")
+        .unwrap()
+        .try_into()
+        .unwrap();
+
+    prog_one.load().unwrap();
+    prog_one.attach("sched", "sched_switch").unwrap();
+
+    let prog_two: &mut TracePoint = bpf
+        .program_mut("test_tracepoint_two")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog_two.load().unwrap();
+    prog_two.attach("sched", "sched_switch").unwrap();
 }
 
 #[test]
