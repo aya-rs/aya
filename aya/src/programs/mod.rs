@@ -71,6 +71,7 @@ use std::{
     io,
     os::unix::io::{AsRawFd, RawFd},
     path::{Path, PathBuf},
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use thiserror::Error;
 
@@ -108,6 +109,7 @@ use crate::{
     maps::MapError,
     obj::{self, btf::BtfError, Function},
     pin::PinError,
+    programs::utils::{get_fdinfo, realtime, time_since_boot},
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_load_program, bpf_pin_object,
         bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, bpf_prog_get_next_id, bpf_prog_query,
@@ -937,7 +939,7 @@ impl ProgramInfo {
         unsafe { std::slice::from_raw_parts(self.0.name.as_ptr() as *const _, length) }
     }
 
-    /// The name of the program as a &str. If the name was not valid unicode, None is returned
+    /// The name of the program as a &str. If the name was not valid unicode, None is returned.
     pub fn name_as_str(&self) -> Option<&str> {
         std::str::from_utf8(self.name()).ok()
     }
@@ -945,6 +947,80 @@ impl ProgramInfo {
     /// The program id for this program. Each program has a unique id.
     pub fn id(&self) -> u32 {
         self.0.id
+    }
+
+    /// The program tag is a SHA sum of the program's instructions which can be
+    /// used as another program identifier.
+    pub fn tag(&self) -> u64 {
+        u64::from_be_bytes(self.0.tag)
+    }
+
+    /// The program type as defined by the linux kernel enum [`bpf_prog_type`](https://elixir.bootlin.com/linux/v6.4.4/source/include/uapi/linux/bpf.h#L948).
+    pub fn program_type(&self) -> u32 {
+        self.0.type_
+    }
+
+    /// Returns true if the program is defined with a GPL-compatible license.
+    pub fn gpl_compatible(&self) -> bool {
+        self.0.gpl_compatible() != 0
+    }
+
+    /// Returns the ids of the maps maps used by the program.
+    pub fn map_ids(&self) -> Result<Vec<u32>, ProgramError> {
+        let fd = self.fd()?;
+
+        let len = self.0.nr_map_ids;
+        let mut map_ids = vec![0u32; len as usize];
+
+        bpf_prog_get_info_by_fd(fd, Some(&mut map_ids)).map_err(|io_error| {
+            ProgramError::SyscallError {
+                call: "bpf_prog_get_info_by_fd",
+                io_error,
+            }
+        })?;
+
+        unsafe { libc::close(fd) };
+
+        Ok(map_ids)
+    }
+
+    /// The btf id for the program.
+    pub fn btf_id(&self) -> u32 {
+        self.0.btf_id
+    }
+
+    /// The size in bytes of the program's translated eBPF bytecode.
+    pub fn bytes_xlated(&self) -> u32 {
+        self.0.xlated_prog_len
+    }
+
+    /// The size in bytes of the program's JIT-compiled machine code.
+    pub fn bytes_jited(&self) -> u32 {
+        self.0.jited_prog_len
+    }
+
+    /// How much memory in bytes has been allocated and locked for the program.
+    pub fn bytes_memlock(&self) -> Result<u32, ProgramError> {
+        let fd = self.fd()?;
+
+        let mem = get_fdinfo(fd, "memlock");
+        unsafe { libc::close(fd) };
+
+        mem
+    }
+
+    /// The number of verified instructions in the program.
+    pub fn verified_insns(&self) -> u32 {
+        self.0.verified_insns
+    }
+
+    /// The time the program was loaded.
+    ///
+    /// The load time is specified by the kernel as nanoseconds since system boot,
+    /// this function converts that u64 value to a Duration in [`std::time::SystemTime`]
+    /// for easy consumption.
+    pub fn loaded_at(&self) -> SystemTime {
+        UNIX_EPOCH + ((realtime() - time_since_boot()) + Duration::from_nanos(self.0.load_time))
     }
 
     /// Returns the fd associated with the program.
