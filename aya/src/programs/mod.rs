@@ -69,9 +69,11 @@ use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
-    os::fd::{AsFd, AsRawFd, IntoRawFd as _, OwnedFd, RawFd},
+    num::NonZeroU32,
+    os::fd::{AsFd, AsRawFd, OwnedFd, RawFd},
     path::{Path, PathBuf},
     sync::Arc,
+    time::{Duration, SystemTime},
 };
 use thiserror::Error;
 
@@ -109,6 +111,7 @@ use crate::{
     maps::MapError,
     obj::{self, btf::BtfError, Function, VerifierLog},
     pin::PinError,
+    programs::utils::{boot_time, get_fdinfo},
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_load_program, bpf_pin_object,
         bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, bpf_prog_get_next_id, bpf_prog_query,
@@ -938,26 +941,88 @@ impl ProgramInfo {
         unsafe { std::slice::from_raw_parts(self.0.name.as_ptr() as *const _, length) }
     }
 
-    /// The name of the program as a &str. If the name was not valid unicode, None is returned
+    /// The name of the program as a &str. If the name was not valid unicode, None is returned.
     pub fn name_as_str(&self) -> Option<&str> {
         std::str::from_utf8(self.name()).ok()
     }
 
-    /// The program id for this program. Each program has a unique id.
+    /// The id for this program. Each program has a unique id.
     pub fn id(&self) -> u32 {
         self.0.id
     }
 
-    /// Returns the fd associated with the program.
-    ///
-    /// The returned fd must be closed when no longer needed.
-    pub fn fd(&self) -> Result<RawFd, ProgramError> {
-        let fd =
-            bpf_prog_get_fd_by_id(self.0.id).map_err(|io_error| ProgramError::SyscallError {
-                call: "bpf_prog_get_fd_by_id",
+    /// The program tag is a SHA sum of the program's instructions which be used as an alternative to
+    /// [`Self::id()`]". A program's id can vary every time it's loaded or unloaded, but the tag
+    /// will remain the same.
+    pub fn tag(&self) -> u64 {
+        u64::from_be_bytes(self.0.tag)
+    }
+
+    /// The program type as defined by the linux kernel enum
+    /// [`bpf_prog_type`](https://elixir.bootlin.com/linux/v6.4.4/source/include/uapi/linux/bpf.h#L948).
+    pub fn program_type(&self) -> u32 {
+        self.0.type_
+    }
+
+    /// Returns true if the program is defined with a GPL-compatible license.
+    pub fn gpl_compatible(&self) -> bool {
+        self.0.gpl_compatible() != 0
+    }
+
+    /// Returns the ids of the maps maps used by the program.
+    pub fn map_ids(&self) -> Result<Vec<u32>, ProgramError> {
+        let fd = self.fd()?;
+        let map_ids = vec![0u32; self.0.nr_map_ids as usize];
+
+        bpf_prog_get_info_by_fd(fd.as_raw_fd(), &map_ids).map_err(|io_error| {
+            ProgramError::SyscallError {
+                call: "bpf_prog_get_info_by_fd",
                 io_error,
-            })?;
-        Ok(fd.into_raw_fd())
+            }
+        })?;
+
+        Ok(map_ids)
+    }
+
+    /// The btf id for the program.
+    pub fn btf_id(&self) -> Option<NonZeroU32> {
+        NonZeroU32::new(self.0.btf_id)
+    }
+
+    /// The size in bytes of the program's translated eBPF bytecode.
+    pub fn size_translated(&self) -> u32 {
+        self.0.xlated_prog_len
+    }
+
+    /// The size in bytes of the program's JIT-compiled machine code.
+    pub fn size_jited(&self) -> u32 {
+        self.0.jited_prog_len
+    }
+
+    /// How much memory in bytes has been allocated and locked for the program.
+    pub fn memory_locked(&self) -> Result<u32, ProgramError> {
+        get_fdinfo(self.fd()?.as_fd(), "memlock")
+    }
+
+    /// The number of verified instructions in the program.
+    ///
+    /// This may be less than the total number of instructions in the compiled
+    /// program due to dead code elimination in the verifier.
+    pub fn verified_instruction_count(&self) -> u32 {
+        self.0.verified_insns
+    }
+
+    /// The time the program was loaded.
+    pub fn loaded_at(&self) -> SystemTime {
+        boot_time() + Duration::from_nanos(self.0.load_time)
+    }
+
+    /// Returns the fd associated with the program.
+    pub fn fd(&self) -> Result<OwnedFd, ProgramError> {
+        bpf_prog_get_fd_by_id(self.0.id).map_err(|io_error| ProgramError::SyscallError {
+            call: "bpf_prog_get_fd_by_id",
+            io_error,
+        })
     }
 
     /// Loads a program from a pinned path in bpffs.
