@@ -38,3 +38,7 @@ path = "src/relocations.rs"
 [[bin]]
 name = "bpf_probe_read"
 path = "src/bpf_probe_read.rs"
+
+[[bin]]
+name = "two_progs"
+path = "src/two_progs.rs"
