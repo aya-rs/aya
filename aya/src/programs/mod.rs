@@ -69,7 +69,10 @@ use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
-    os::unix::io::{AsRawFd, RawFd},
+    os::{
+        fd::{FromRawFd, OwnedFd},
+        unix::io::{AsRawFd, RawFd},
+    },
     path::{Path, PathBuf},
     time::{Duration, SystemTime},
 };
@@ -1024,12 +1027,12 @@ impl ProgramInfo {
         let fd = self.fd()?;
         let map_ids = vec![0u32; self.0.nr_map_ids as usize];
 
-        bpf_prog_get_info_by_fd(fd, &map_ids).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_prog_get_info_by_fd",
-            io_error,
+        bpf_prog_get_info_by_fd(fd.as_raw_fd(), &map_ids).map_err(|io_error| {
+            ProgramError::SyscallError {
+                call: "bpf_prog_get_info_by_fd",
+                io_error,
+            }
         })?;
-
-        unsafe { libc::close(fd) };
 
         Ok(map_ids)
     }
@@ -1051,12 +1054,7 @@ impl ProgramInfo {
 
     /// How much memory in bytes has been allocated and locked for the program.
     pub fn bytes_memlock(&self) -> Result<u32, ProgramError> {
-        let fd = self.fd()?;
-
-        let mem = get_fdinfo(fd, "memlock");
-        unsafe { libc::close(fd) };
-
-        mem
+        get_fdinfo(self.fd()?, "memlock")
     }
 
     /// The number of verified instructions in the program.
@@ -1075,14 +1073,14 @@ impl ProgramInfo {
 
     /// Returns the fd associated with the program.
     ///
-    /// The returned fd must be closed when no longer needed.
-    pub fn fd(&self) -> Result<RawFd, ProgramError> {
+    /// The returned fd will be closed on drop.
+    pub fn fd(&self) -> Result<OwnedFd, ProgramError> {
         let fd =
             bpf_prog_get_fd_by_id(self.0.id).map_err(|io_error| ProgramError::SyscallError {
                 call: "bpf_prog_get_fd_by_id",
                 io_error,
             })?;
-        Ok(fd as RawFd)
+        Ok(unsafe { OwnedFd::from_raw_fd(fd) })
     }
 
     /// Loads a program from a pinned path in bpffs.
