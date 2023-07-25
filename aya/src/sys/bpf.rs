@@ -473,15 +473,12 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<RawFd, io::Error> {
 
 pub(crate) fn bpf_prog_get_info_by_fd(
     prog_fd: RawFd,
-    map_ids: Option<&mut [u32]>,
+    map_ids: &[u32],
 ) -> Result<bpf_prog_info, io::Error> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let mut info = unsafe { mem::zeroed::<bpf_prog_info>() };
-
-    if let Some(i) = map_ids {
-        info.map_ids = i.as_mut_ptr() as u64;
-        info.nr_map_ids = i.len() as u32;
-    };
+    info.map_ids = map_ids.as_ptr() as u64;
+    info.nr_map_ids = map_ids.len() as u32;
 
     attr.info.bpf_fd = prog_fd as u32;
     attr.info.info = &info as *const _ as u64;

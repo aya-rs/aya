@@ -497,7 +497,7 @@ impl<T: Link> ProgramData<T> {
             })? as RawFd;
 
         let info =
-            bpf_prog_get_info_by_fd(fd, None).map_err(|io_error| ProgramError::SyscallError {
+            bpf_prog_get_info_by_fd(fd, &[]).map_err(|io_error| ProgramError::SyscallError {
                 call: "bpf_prog_get_info_by_fd",
                 io_error,
             })?;
@@ -932,7 +932,7 @@ macro_rules! impl_program_info {
                 pub fn program_info(&self) -> Result<ProgramInfo, ProgramError> {
                     let fd = self.fd().ok_or(ProgramError::NotLoaded)?;
 
-                    bpf_prog_get_info_by_fd(fd.as_raw_fd(), None)
+                    bpf_prog_get_info_by_fd(fd.as_raw_fd(), &[])
                         .map_err(|io_error| ProgramError::SyscallError {
                             call: "bpf_prog_get_info_by_fd",
                             io_error,
@@ -1022,15 +1022,11 @@ impl ProgramInfo {
     /// Returns the ids of the maps maps used by the program.
     pub fn map_ids(&self) -> Result<Vec<u32>, ProgramError> {
         let fd = self.fd()?;
+        let map_ids = vec![0u32; self.0.nr_map_ids as usize];
 
-        let len = self.0.nr_map_ids;
-        let mut map_ids = vec![0u32; len as usize];
-
-        bpf_prog_get_info_by_fd(fd, Some(&mut map_ids)).map_err(|io_error| {
-            ProgramError::SyscallError {
-                call: "bpf_prog_get_info_by_fd",
-                io_error,
-            }
+        bpf_prog_get_info_by_fd(fd, &map_ids).map_err(|io_error| ProgramError::SyscallError {
+            call: "bpf_prog_get_info_by_fd",
+            io_error,
         })?;
 
         unsafe { libc::close(fd) };
@@ -1099,7 +1095,7 @@ impl ProgramInfo {
             })? as RawFd;
 
         let info =
-            bpf_prog_get_info_by_fd(fd, None).map_err(|io_error| ProgramError::SyscallError {
+            bpf_prog_get_info_by_fd(fd, &[]).map_err(|io_error| ProgramError::SyscallError {
                 call: "bpf_prog_get_info_by_fd",
                 io_error,
             })?;
@@ -1135,7 +1131,7 @@ impl Iterator for ProgramsIter {
                             io_error,
                         })
                         .and_then(|fd| {
-                            let info = bpf_prog_get_info_by_fd(fd, None)
+                            let info = bpf_prog_get_info_by_fd(fd, &[])
                                 .map_err(|io_error| ProgramError::SyscallError {
                                     call: "bpf_prog_get_info_by_fd",
                                     io_error,

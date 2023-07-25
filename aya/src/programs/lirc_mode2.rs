@@ -132,7 +132,7 @@ impl LircLink {
 
     /// Get ProgramInfo from this link
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-        match bpf_prog_get_info_by_fd(self.prog_fd, None) {
+        match bpf_prog_get_info_by_fd(self.prog_fd, &[]) {
             Ok(info) => Ok(ProgramInfo(info)),
             Err(io_error) => Err(ProgramError::SyscallError {
                 call: "bpf_prog_get_info_by_fd",
