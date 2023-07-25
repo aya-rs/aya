@@ -955,7 +955,7 @@ impl ProgramInfo {
                 call: "bpf_prog_get_fd_by_id",
                 io_error,
             })?;
-        Ok(fd as RawFd)
+        Ok(fd.as_raw_fd())
     }
 
     /// Loads a program from a pinned path in bpffs.
@@ -1003,14 +1003,12 @@ impl Iterator for ProgramsIter {
                             io_error,
                         })
                         .and_then(|fd| {
-                            let info = bpf_prog_get_info_by_fd(fd)
+                            bpf_prog_get_info_by_fd(fd.as_raw_fd())
                                 .map_err(|io_error| ProgramError::SyscallError {
                                     call: "bpf_prog_get_info_by_fd",
                                     io_error,
                                 })
-                                .map(ProgramInfo);
-                            unsafe { libc::close(fd) };
-                            info
+                                .map(ProgramInfo)
                         }),
                 )
             }

@@ -101,12 +101,12 @@ impl LircMode2 {
                 io_error,
             })?;
 
-            prog_fds.push(fd as RawFd);
+            prog_fds.push(fd);
         }
 
         Ok(prog_fds
             .into_iter()
-            .map(|prog_fd| LircLink::new(prog_fd, target_fd.as_raw_fd()))
+            .map(|prog_fd| LircLink::new(prog_fd.as_raw_fd(), target_fd.as_raw_fd()))
             .collect())
     }
 }
