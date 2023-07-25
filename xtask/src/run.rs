@@ -1,4 +1,5 @@
 use std::{
+    ffi::OsString,
     fmt::Write as _,
     io::BufReader,
     path::PathBuf,
@@ -12,12 +13,9 @@ use xtask::AYA_BUILD_INTEGRATION_BPF;
 
 #[derive(Debug, Parser)]
 pub struct BuildOptions {
-    /// Pass --release to `cargo build`.
+    /// Arguments to pass to `cargo build`.
     #[clap(long)]
-    pub release: bool,
-    /// Pass --target to `cargo build`.
-    #[clap(long)]
-    pub target: Option<String>,
+    pub cargo_arg: Vec<OsString>,
 }
 
 #[derive(Debug, Parser)]
@@ -28,26 +26,22 @@ pub struct Options {
     #[clap(short, long, default_value = "sudo -E")]
     pub runner: String,
     /// Arguments to pass to your application.
-    #[clap(name = "args", last = true)]
-    pub run_args: Vec<String>,
+    #[clap(last = true)]
+    pub run_args: Vec<OsString>,
 }
 
 /// Build the project
 pub fn build(opts: BuildOptions) -> Result<Vec<(String, PathBuf)>> {
-    let BuildOptions { release, target } = opts;
+    let BuildOptions { cargo_arg } = opts;
     let mut cmd = Command::new("cargo");
-    cmd.env(AYA_BUILD_INTEGRATION_BPF, "true").args([
-        "build",
-        "--tests",
-        "--message-format=json",
-        "--package=integration-test",
-    ]);
-    if release {
-        cmd.arg("--release");
-    }
-    if let Some(target) = target {
-        cmd.args(["--target", &target]);
-    }
+    cmd.env(AYA_BUILD_INTEGRATION_BPF, "true")
+        .args([
+            "build",
+            "--tests",
+            "--message-format=json",
+            "--package=integration-test",
+        ])
+        .args(cargo_arg);
 
     let mut child = cmd
         .stdout(Stdio::piped())
