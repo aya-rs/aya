@@ -6,12 +6,8 @@ use std::{
     io::{BufRead, BufReader},
     os::unix::io::RawFd,
     path::Path,
-    time::Duration,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
-
-// for docs link
-#[allow(unused)]
-use std::time::UNIX_EPOCH;
 
 use crate::{
     programs::{FdLink, Link, ProgramData, ProgramError},
@@ -64,28 +60,19 @@ pub(crate) fn find_tracefs_path() -> Result<&'static Path, ProgramError> {
         .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "tracefs not found").into())
 }
 
-/// Get time since boot. The returned duration represents the combined
-/// seconds and nanoseconds since the machine was booted.
-pub(crate) fn time_since_boot() -> Duration {
+/// Get the real (wall-clock) time of a duration since boot.
+pub(crate) fn time_since_boot(dur_since_load: Duration) -> SystemTime {
     let mut time = unsafe { std::mem::zeroed::<libc::timespec>() };
 
     let ret = unsafe { libc::clock_gettime(libc::CLOCK_BOOTTIME, &mut time) };
     assert_eq!(ret, 0, "failed to get system bootime");
-    let tv_sec = time.tv_sec as u64;
-    let tv_nsec = time.tv_nsec as u32;
-    Duration::new(tv_sec, tv_nsec)
-}
-
-/// Get the system-wide real (wall-clock) time. The returned Duration represents
-/// the combined seconds and nanoseconds since [`std::time::UNIX_EPOCH`].
-pub(crate) fn time_since_epoch() -> Duration {
-    let mut time = unsafe { std::mem::zeroed::<libc::timespec>() };
+    let dur_since_boot = Duration::new(time.tv_sec as u64, time.tv_nsec as u32);
 
     let ret = unsafe { libc::clock_gettime(libc::CLOCK_REALTIME, &mut time) };
     assert_eq!(ret, 0, "failed to get system realtime");
-    let tv_sec = time.tv_sec as u64;
-    let tv_nsec = time.tv_nsec as u32;
-    Duration::new(tv_sec, tv_nsec)
+    let dur_since_epoch = Duration::new(time.tv_sec as u64, time.tv_nsec as u32);
+
+    UNIX_EPOCH + ((dur_since_epoch - dur_since_boot) + dur_since_load)
 }
 
 /// Get the specified information from a file descriptor's fdinfo.
@@ -99,7 +86,7 @@ pub(crate) fn get_fdinfo(fd: RawFd, key: &str) -> Result<u32, ProgramError> {
                     continue;
                 }
 
-                let val = l.rsplit_once('\t').unwrap().1;
+                let (_key, val) = l.rsplit_once('\t').unwrap();
 
                 return Ok(val.parse().unwrap());
             }

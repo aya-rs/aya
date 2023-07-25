@@ -71,7 +71,7 @@ use std::{
     io,
     os::unix::io::{AsRawFd, RawFd},
     path::{Path, PathBuf},
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{Duration, SystemTime},
 };
 use thiserror::Error;
 
@@ -109,7 +109,7 @@ use crate::{
     maps::MapError,
     obj::{self, btf::BtfError, Function},
     pin::PinError,
-    programs::utils::{get_fdinfo, time_since_boot, time_since_epoch},
+    programs::utils::{get_fdinfo, time_since_boot},
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_load_program, bpf_pin_object,
         bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, bpf_prog_get_next_id, bpf_prog_query,
@@ -1001,15 +1001,14 @@ impl ProgramInfo {
         self.0.id
     }
 
-    /// The program tag is a SHA sum of the program's instructions which can be
-    /// used as an additional program identifier. A program's id can vary every time
-    /// it's loaded or unloaded, but the tag will remain the same.
+    /// The program tag is a SHA sum of the program's instructions which be used as an alternative to
+    /// [`Self::id()`]". A program's id can vary every time it's loaded or unloaded, but the tag
+    /// will remain the same.
     pub fn tag(&self) -> u64 {
         u64::from_be_bytes(self.0.tag)
     }
 
-    /// The type of a bpf program expressed as an integer.  To understand the
-    /// integer to type mappings please see the linux kernel enum
+    /// The program type as defined by the linux kernel enum
     /// [`bpf_prog_type`](https://elixir.bootlin.com/linux/v6.4.4/source/include/uapi/linux/bpf.h#L948).
     pub fn program_type(&self) -> u32 {
         self.0.type_
@@ -1073,13 +1072,9 @@ impl ProgramInfo {
     ///
     /// The load time is specified by the kernel as nanoseconds since system boot,
     /// this function converts that u64 value to a [`std::time::SystemTime`]
-    /// for easy consumption.  It is calculated by first finding the realtime of system
-    /// boot (i.e the [`Duration`] since [`std::time::UNIX_EPOCH`] minus the [`Duration`]
-    /// since boot), adding the load_time [`Duration`], and finally converting the
-    /// [`Duration`] to a readable [`SystemTime`] by adding to [`std::time::UNIX_EPOCH`].
+    /// for easy consumption.
     pub fn loaded_at(&self) -> SystemTime {
-        UNIX_EPOCH
-            + ((time_since_epoch() - time_since_boot()) + Duration::from_nanos(self.0.load_time))
+        time_since_boot(Duration::from_nanos(self.0.load_time))
     }
 
     /// Returns the fd associated with the program.
