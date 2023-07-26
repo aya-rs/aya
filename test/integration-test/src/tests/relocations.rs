@@ -49,4 +49,6 @@ fn load_and_attach(name: &str, bytes: &[u8]) -> Bpf {
 
 #[no_mangle]
 #[inline(never)]
-pub extern "C" fn trigger_relocations_program() {}
+pub extern "C" fn trigger_relocations_program() {
+    core::hint::black_box(trigger_relocations_program);
+}

@@ -137,6 +137,14 @@ jobs:
 
   integration-test:
     runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # See https://doc.rust-lang.org/cargo/reference/profiles.html for the names
+        # of the builtin profiles. Note that dev builds "debug" targets.
+        profile:
+          - release
+          - dev
     steps:
       - uses: actions/checkout@v3
         with:
@@ -159,7 +167,7 @@ jobs:
           key: tmp-files-${{ hashFiles('test/run.sh') }}
 
       - name: Run integration tests
-        run: test/run.sh
+        run: test/run.sh --cargo-arg=--profile=${{ matrix.profile }}
 
   # Provides a single status check for the entire build workflow.
   # This is used for merge automation, like Mergify, since GH actions

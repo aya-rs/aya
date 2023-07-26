@@ -9,7 +9,9 @@ use log::{Level, Log, Record};
 
 #[no_mangle]
 #[inline(never)]
-pub extern "C" fn trigger_ebpf_program() {}
+pub extern "C" fn trigger_ebpf_program() {
+    core::hint::black_box(trigger_ebpf_program);
+}
 
 struct TestingLogger<F> {
     log: F,
