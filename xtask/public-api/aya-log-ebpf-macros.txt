@@ -1,0 +1,7 @@
+pub mod aya_log_ebpf_macros
+pub proc macro aya_log_ebpf_macros::debug!()
+pub proc macro aya_log_ebpf_macros::error!()
+pub proc macro aya_log_ebpf_macros::info!()
+pub proc macro aya_log_ebpf_macros::log!()
+pub proc macro aya_log_ebpf_macros::trace!()
+pub proc macro aya_log_ebpf_macros::warn!()
