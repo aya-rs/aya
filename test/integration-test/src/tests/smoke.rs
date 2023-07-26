@@ -1,5 +1,5 @@
 use aya::{
-    programs::{Extension, Xdp, XdpFlags},
+    programs::{loaded_programs, Extension, Xdp, XdpFlags},
     util::KernelVersion,
     Bpf, BpfLoader,
 };
@@ -33,4 +33,32 @@ fn extension() {
     let mut bpf = BpfLoader::new().extension("drop").load(crate::EXT).unwrap();
     let drop_: &mut Extension = bpf.program_mut("drop").unwrap().try_into().unwrap();
     drop_.load(pass.fd().unwrap(), "xdp_pass").unwrap();
+}
+
+#[test]
+fn list_loaded_programs() {
+    if loaded_programs().count() == 0 {
+        eprintln!("No programs to list");
+        return;
+    }
+    // Ensure the loaded_programs() api doesn't panic.
+    loaded_programs().for_each(|p| {
+        let prog = p.unwrap();
+
+        // Ensure all relevant helper functions don't panic
+        prog.name();
+        prog.name_as_str();
+        prog.id();
+        prog.tag();
+        prog.program_type();
+        prog.gpl_compatible();
+        prog.map_ids().unwrap();
+        prog.btf_id();
+        prog.size_translated();
+        prog.size_translated();
+        prog.memory_locked().unwrap();
+        prog.verified_instruction_count();
+        prog.loaded_at();
+        prog.fd().unwrap();
+    })
 }
