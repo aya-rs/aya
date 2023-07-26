@@ -3,7 +3,7 @@ use std::{
     ffi::{CStr, CString},
     io,
     mem::{self, MaybeUninit},
-    os::unix::io::RawFd,
+    os::fd::{FromRawFd as _, OwnedFd, RawFd},
     slice,
 };
 
@@ -460,13 +460,23 @@ pub(crate) fn bpf_prog_query(
     ret
 }
 
-pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<RawFd, io::Error> {
+pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<OwnedFd, io::Error> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_6.__bindgen_anon_1.prog_id = prog_id;
 
     match sys_bpf(bpf_cmd::BPF_PROG_GET_FD_BY_ID, &attr) {
-        Ok(v) => Ok(v as RawFd),
+        Ok(v) => {
+            let v = v.try_into().map_err(|_err| {
+                // _err is std::num::TryFromIntError or std::convert::Infallible depending on
+                // target, so we can't ascribe.
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("bpf_prog_get_fd_by_id: invalid fd returned: {}", v),
+                )
+            })?;
+            Ok(unsafe { OwnedFd::from_raw_fd(v) })
+        }
         Err((_, err)) => Err(err),
     }
 }

@@ -1,5 +1,5 @@
 //! Lirc programs.
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::{AsRawFd, IntoRawFd as _, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
@@ -101,12 +101,12 @@ impl LircMode2 {
                 io_error,
             })?;
 
-            prog_fds.push(fd as RawFd);
+            prog_fds.push(fd);
         }
 
         Ok(prog_fds
             .into_iter()
-            .map(|prog_fd| LircLink::new(prog_fd, target_fd.as_raw_fd()))
+            .map(|prog_fd| LircLink::new(prog_fd.into_raw_fd(), target_fd.as_raw_fd()))
             .collect())
     }
 }
