@@ -1,10 +1,10 @@
 //! Lirc programs.
-use std::os::fd::{AsRawFd, IntoRawFd as _, RawFd};
+use std::os::fd::{AsRawFd, FromRawFd as _, IntoRawFd as _, OwnedFd, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
     programs::{load_program, query, Link, ProgramData, ProgramError, ProgramInfo},
-    sys::{bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd},
+    sys::{bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
 };
 
 use libc::{close, dup};
@@ -132,13 +132,7 @@ impl LircLink {
 
     /// Get ProgramInfo from this link
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-        match bpf_prog_get_info_by_fd(self.prog_fd, &[]) {
-            Ok(info) => Ok(ProgramInfo(info)),
-            Err(io_error) => Err(ProgramError::SyscallError {
-                call: "bpf_prog_get_info_by_fd",
-                io_error,
-            }),
-        }
+        ProgramInfo::new_from_fd(unsafe { OwnedFd::from_raw_fd(self.prog_fd) })
     }
 }
 

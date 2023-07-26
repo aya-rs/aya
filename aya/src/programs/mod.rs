@@ -69,7 +69,7 @@ use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
-    os::fd::{AsFd, AsRawFd, OwnedFd, RawFd},
+    os::fd::{AsFd, AsRawFd, FromRawFd as _, OwnedFd, RawFd},
     path::{Path, PathBuf},
     time::{Duration, SystemTime},
 };
@@ -214,16 +214,6 @@ pub enum ProgramError {
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
-}
-
-/// A [`Program`] file descriptor.
-#[derive(Copy, Clone)]
-pub struct ProgramFd(RawFd);
-
-impl AsRawFd for ProgramFd {
-    fn as_raw_fd(&self) -> RawFd {
-        self.0
-    }
 }
 
 /// eBPF program type.
@@ -375,7 +365,7 @@ impl Program {
     ///
     /// Can be used to add a program to a [`crate::maps::ProgramArray`] or attach an [`Extension`] program.
     /// Can be converted to [`RawFd`] using [`AsRawFd`].
-    pub fn fd(&self) -> Option<ProgramFd> {
+    pub fn fd(&self) -> Option<OwnedFd> {
         match self {
             Program::KProbe(p) => p.fd(),
             Program::UProbe(p) => p.fd(),
@@ -496,14 +486,11 @@ impl<T: Link> ProgramData<T> {
                 io_error,
             })? as RawFd;
 
-        let info =
-            bpf_prog_get_info_by_fd(fd, &[]).map_err(|io_error| ProgramError::SyscallError {
-                call: "bpf_prog_get_info_by_fd",
-                io_error,
-            })?;
+        let info = ProgramInfo::new_from_fd(unsafe { OwnedFd::from_raw_fd(fd) })?;
+        let name = info.name_as_str().map(|s| s.to_string());
 
-        let name = ProgramInfo(info).name_as_str().map(|s| s.to_string());
-        ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), info, verifier_log_level)
+        let ProgramInfo(bpf_prog_info) = info;
+        ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), bpf_prog_info, verifier_log_level)
     }
 }
 
@@ -736,8 +723,8 @@ macro_rules! impl_fd {
         $(
             impl $struct_name {
                 /// Returns the file descriptor of this Program.
-                pub fn fd(&self) -> Option<ProgramFd> {
-                    self.data.fd.map(|fd| ProgramFd(fd))
+                pub fn fd(&self) -> Option<OwnedFd> {
+                    self.data.fd.map(|fd| unsafe{ OwnedFd::from_raw_fd(fd) })
                 }
             }
         )+
@@ -931,13 +918,7 @@ macro_rules! impl_program_info {
                 /// Returns the file descriptor of this Program.
                 pub fn program_info(&self) -> Result<ProgramInfo, ProgramError> {
                     let fd = self.fd().ok_or(ProgramError::NotLoaded)?;
-
-                    bpf_prog_get_info_by_fd(fd.as_raw_fd(), &[])
-                        .map_err(|io_error| ProgramError::SyscallError {
-                            call: "bpf_prog_get_info_by_fd",
-                            io_error,
-                        })
-                        .map(ProgramInfo)
+                    ProgramInfo::new_from_fd(fd)
                 }
             }
         )+
@@ -976,6 +957,15 @@ impl_program_info!(
 pub struct ProgramInfo(bpf_prog_info);
 
 impl ProgramInfo {
+    fn new_from_fd(fd: OwnedFd) -> Result<Self, ProgramError> {
+        bpf_prog_get_info_by_fd(fd.as_raw_fd(), &[])
+            .map_err(|io_error| ProgramError::SyscallError {
+                call: "bpf_prog_get_info_by_fd",
+                io_error,
+            })
+            .map(ProgramInfo)
+    }
+
     /// The name of the program as was provided when it was load. This is limited to 16 bytes
     pub fn name(&self) -> &[u8] {
         let length = self
@@ -1088,15 +1078,7 @@ impl ProgramInfo {
                 io_error,
             })? as RawFd;
 
-        let info =
-            bpf_prog_get_info_by_fd(fd, &[]).map_err(|io_error| ProgramError::SyscallError {
-                call: "bpf_prog_get_info_by_fd",
-                io_error,
-            })?;
-        unsafe {
-            libc::close(fd);
-        }
-        Ok(ProgramInfo(info))
+        ProgramInfo::new_from_fd(unsafe { OwnedFd::from_raw_fd(fd) })
     }
 }
 
@@ -1124,14 +1106,7 @@ impl Iterator for ProgramsIter {
                             call: "bpf_prog_get_fd_by_id",
                             io_error,
                         })
-                        .and_then(|fd| {
-                            bpf_prog_get_info_by_fd(fd.as_raw_fd(), &[])
-                                .map_err(|io_error| ProgramError::SyscallError {
-                                    call: "bpf_prog_get_info_by_fd",
-                                    io_error,
-                                })
-                                .map(ProgramInfo)
-                        }),
+                        .and_then(ProgramInfo::new_from_fd),
                 )
             }
             Ok(None) => None,

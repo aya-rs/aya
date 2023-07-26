@@ -2,12 +2,11 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, OwnedFd, RawFd},
 };
 
 use crate::{
     maps::{check_bounds, check_kv_size, MapData, MapError, MapKeys},
-    programs::ProgramFd,
     sys::{bpf_map_delete_elem, bpf_map_update_elem},
 };
 
@@ -73,7 +72,7 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     ///
     /// When an eBPF program calls `bpf_tail_call(ctx, prog_array, index)`, control
     /// flow will jump to `program`.
-    pub fn set(&mut self, index: u32, program: ProgramFd, flags: u64) -> Result<(), MapError> {
+    pub fn set(&mut self, index: u32, program: OwnedFd, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd_or_err()?;
