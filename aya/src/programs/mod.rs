@@ -123,7 +123,8 @@ use crate::{
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
         bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids,
-        retry_with_verifier_logs, EbpfLoadProgramAttrs, ProgQueryTarget, SyscallError,
+        retry_with_verifier_logs, EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget,
+        SyscallError,
     },
     util::KernelVersion,
     VerifierLogLevel,
@@ -223,6 +224,10 @@ pub enum ProgramError {
     /// Providing an attach cookie is not supported.
     #[error("providing an attach cookie is not supported")]
     AttachCookieNotSupported,
+
+    /// An error occurred while working with Netlink.
+    #[error(transparent)]
+    NetlinkError(#[from] NetlinkError),
 }
 
 /// A [`Program`] file descriptor.

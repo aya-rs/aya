@@ -6060,10 +6060,15 @@ pub enum aya::programs::tc::TcError
 pub aya::programs::tc::TcError::AlreadyAttached
 pub aya::programs::tc::TcError::InvalidLinkOperation
 pub aya::programs::tc::TcError::InvalidTcxAttach(u32)
-pub aya::programs::tc::TcError::NetlinkError
-pub aya::programs::tc::TcError::NetlinkError::io_error: std::io::error::Error
+pub aya::programs::tc::TcError::IoError(std::io::error::Error)
+pub aya::programs::tc::TcError::NetlinkError(aya::sys::netlink::NetlinkError)
+pub aya::programs::tc::TcError::NulError(alloc::ffi::c_str::NulError)
+impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
+pub fn aya::programs::tc::TcError::from(source: alloc::ffi::c_str::NulError) -> Self
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::tc::TcError) -> Self
+impl core::convert::From<std::io::error::Error> for aya::programs::tc::TcError
+pub fn aya::programs::tc::TcError::from(source: std::io::error::Error) -> Self
 impl core::error::Error for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya::programs::tc::TcError
@@ -6276,8 +6281,8 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::tc::SchedClassifierLinkId 
 pub fn aya::programs::tc::SchedClassifierLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLinkId::from(t: T) -> T
-pub fn aya::programs::tc::qdisc_add_clsact(if_name: &str) -> core::result::Result<(), std::io::error::Error>
-pub fn aya::programs::tc::qdisc_detach_program(if_name: &str, attach_type: aya::programs::tc::TcAttachType, name: &str) -> core::result::Result<(), std::io::error::Error>
+pub fn aya::programs::tc::qdisc_add_clsact(if_name: &str) -> core::result::Result<(), aya::programs::tc::TcError>
+pub fn aya::programs::tc::qdisc_detach_program(if_name: &str, attach_type: aya::programs::tc::TcAttachType, name: &str) -> core::result::Result<(), aya::programs::tc::TcError>
 pub mod aya::programs::tp_btf
 pub struct aya::programs::tp_btf::BtfTracePoint
 impl aya::programs::tp_btf::BtfTracePoint
@@ -6783,8 +6788,7 @@ impl<T> core::convert::From<T> for aya::programs::uprobe::UProbeLinkId
 pub fn aya::programs::uprobe::UProbeLinkId::from(t: T) -> T
 pub mod aya::programs::xdp
 pub enum aya::programs::xdp::XdpError
-pub aya::programs::xdp::XdpError::NetlinkError
-pub aya::programs::xdp::XdpError::NetlinkError::io_error: std::io::error::Error
+pub aya::programs::xdp::XdpError::NetlinkError(aya::sys::netlink::NetlinkError)
 impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::xdp::XdpError) -> Self
 impl core::error::Error for aya::programs::xdp::XdpError
@@ -7548,6 +7552,7 @@ pub aya::programs::ProgramError::LoadError
 pub aya::programs::ProgramError::LoadError::io_error: std::io::error::Error
 pub aya::programs::ProgramError::LoadError::verifier_log: aya_obj::VerifierLog
 pub aya::programs::ProgramError::MapError(aya::maps::MapError)
+pub aya::programs::ProgramError::NetlinkError(aya::sys::netlink::NetlinkError)
 pub aya::programs::ProgramError::NotAttached
 pub aya::programs::ProgramError::NotLoaded
 pub aya::programs::ProgramError::SocketFilterError(aya::programs::socket_filter::SocketFilterError)
@@ -7841,10 +7846,15 @@ pub enum aya::programs::TcError
 pub aya::programs::TcError::AlreadyAttached
 pub aya::programs::TcError::InvalidLinkOperation
 pub aya::programs::TcError::InvalidTcxAttach(u32)
-pub aya::programs::TcError::NetlinkError
-pub aya::programs::TcError::NetlinkError::io_error: std::io::error::Error
+pub aya::programs::TcError::IoError(std::io::error::Error)
+pub aya::programs::TcError::NetlinkError(aya::sys::netlink::NetlinkError)
+pub aya::programs::TcError::NulError(alloc::ffi::c_str::NulError)
+impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
+pub fn aya::programs::tc::TcError::from(source: alloc::ffi::c_str::NulError) -> Self
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::tc::TcError) -> Self
+impl core::convert::From<std::io::error::Error> for aya::programs::tc::TcError
+pub fn aya::programs::tc::TcError::from(source: std::io::error::Error) -> Self
 impl core::error::Error for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya::programs::tc::TcError
@@ -7955,8 +7965,7 @@ pub fn aya::programs::uprobe::UProbeError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::uprobe::UProbeError
 pub fn aya::programs::uprobe::UProbeError::from(t: T) -> T
 pub enum aya::programs::XdpError
-pub aya::programs::XdpError::NetlinkError
-pub aya::programs::XdpError::NetlinkError::io_error: std::io::error::Error
+pub aya::programs::XdpError::NetlinkError(aya::sys::netlink::NetlinkError)
 impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::xdp::XdpError) -> Self
 impl core::error::Error for aya::programs::xdp::XdpError
