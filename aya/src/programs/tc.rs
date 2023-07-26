@@ -23,7 +23,8 @@ use crate::{
     sys::{
         bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, bpf_prog_get_fd_by_id,
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
-        netlink_qdisc_detach, BpfLinkCreateArgs, LinkTarget, ProgQueryTarget, SyscallError,
+        netlink_qdisc_detach, BpfLinkCreateArgs, LinkTarget, NetlinkError, ProgQueryTarget,
+        SyscallError,
     },
     util::{ifindex_from_ifname, tc_handler_make, KernelVersion},
     VerifierLogLevel,
@@ -70,7 +71,7 @@ pub enum TcAttachType {
 ///
 /// // the clsact qdisc needs to be added before SchedClassifier programs can be
 /// // attached
-/// tc::qdisc_add_clsact("eth0")?;
+/// tc::qdisc_add_clsact("eth0").unwrap();
 ///
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
@@ -87,20 +88,22 @@ pub struct SchedClassifier {
 /// Errors from TC programs
 #[derive(Debug, Error)]
 pub enum TcError {
-    /// netlink error while attaching ebpf program
-    #[error("netlink error while attaching ebpf program to tc")]
-    NetlinkError {
-        /// the [`io::Error`] from the netlink call
-        #[source]
-        io_error: io::Error,
-    },
-    /// the clsact qdisc is already attached
+    /// a netlink error occurred.
+    #[error(transparent)]
+    NetlinkError(#[from] NetlinkError),
+    /// the provided string contains a nul byte.
+    #[error(transparent)]
+    NulError(#[from] std::ffi::NulError),
+    /// an IO error occurred.
+    #[error(transparent)]
+    IoError(#[from] io::Error),
+    /// the clsact qdisc is already attached.
     #[error("the clsact qdisc is already attached")]
     AlreadyAttached,
-    /// tcx links can only be attached to ingress or egress, custom attachment is not supported
+    /// tcx links can only be attached to ingress or egress, custom attachment is not supported.
     #[error("tcx links can only be attached to ingress or egress, custom attachment: {0} is not supported")]
     InvalidTcxAttach(u32),
-    /// operation not supported for programs loaded via tcx
+    /// operation not supported for programs loaded via tcx.
     #[error("operation not supported for programs loaded via tcx")]
     InvalidLinkOperation,
 }
@@ -209,8 +212,7 @@ impl SchedClassifier {
         attach_type: TcAttachType,
         options: TcAttachOptions,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
-        let if_index = ifindex_from_ifname(interface)
-            .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        let if_index = ifindex_from_ifname(interface).map_err(TcError::IoError)?;
         self.do_attach(if_index, attach_type, options, true)
     }
 
@@ -281,7 +283,7 @@ impl SchedClassifier {
                         create,
                     )
                 }
-                .map_err(|io_error| TcError::NetlinkError { io_error })?;
+                .map_err(TcError::NetlinkError)?;
 
                 self.data
                     .links
@@ -343,8 +345,7 @@ impl SchedClassifier {
         interface: &str,
         attach_type: TcAttachType,
     ) -> Result<(u64, Vec<ProgramInfo>), ProgramError> {
-        let if_index = ifindex_from_ifname(interface)
-            .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        let if_index = ifindex_from_ifname(interface).map_err(TcError::IoError)?;
 
         let (revision, prog_ids) = query(
             ProgQueryTarget::IfIndex(if_index),
@@ -393,7 +394,7 @@ impl Link for NlLink {
                 self.handle,
             )
         }
-        .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        .map_err(ProgramError::NetlinkError)?;
         Ok(())
     }
 }
@@ -557,9 +558,9 @@ impl SchedClassifierLink {
 ///
 /// The `clsact` qdisc must be added to an interface before [`SchedClassifier`]
 /// programs can be attached.
-pub fn qdisc_add_clsact(if_name: &str) -> Result<(), io::Error> {
+pub fn qdisc_add_clsact(if_name: &str) -> Result<(), TcError> {
     let if_index = ifindex_from_ifname(if_name)?;
-    unsafe { netlink_qdisc_add_clsact(if_index as i32) }
+    unsafe { netlink_qdisc_add_clsact(if_index as i32).map_err(TcError::NetlinkError) }
 }
 
 /// Detaches the programs with the given name.
@@ -573,8 +574,8 @@ pub fn qdisc_detach_program(
     if_name: &str,
     attach_type: TcAttachType,
     name: &str,
-) -> Result<(), io::Error> {
-    let cstr = CString::new(name)?;
+) -> Result<(), TcError> {
+    let cstr = CString::new(name).map_err(TcError::NulError)?;
     qdisc_detach_program_fast(if_name, attach_type, &cstr)
 }
 
@@ -591,15 +592,15 @@ fn qdisc_detach_program_fast(
     if_name: &str,
     attach_type: TcAttachType,
     name: &CStr,
-) -> Result<(), io::Error> {
+) -> Result<(), TcError> {
     let if_index = ifindex_from_ifname(if_name)? as i32;
 
     let filter_info = unsafe { netlink_find_filter_with_name(if_index, attach_type, name)? };
     if filter_info.is_empty() {
-        return Err(io::Error::new(
+        return Err(TcError::IoError(io::Error::new(
             io::ErrorKind::NotFound,
             name.to_string_lossy(),
-        ));
+        )));
     }
 
     for (prio, handle) in filter_info {
