@@ -1,15 +1,15 @@
 use std::{
     fmt::Write as _,
-    fs::{read_to_string, write},
+    fs::{read_to_string, File},
+    io::Write as _,
     path::Path,
 };
 
-use anyhow::{bail, Context as _};
+use anyhow::{bail, Context as _, Result};
 use cargo_metadata::{Metadata, Package};
 use clap::Parser;
 use dialoguer::{theme::ColorfulTheme, Confirm};
 use diff::{lines, Result as Diff};
-use thiserror::Error;
 
 #[derive(Debug, Parser)]
 pub struct Options {
@@ -18,18 +18,7 @@ pub struct Options {
     pub bless: bool,
 }
 
-#[derive(Error, Debug)]
-enum PublicApiError {
-    #[error("error checking public api for {package}\n{source}\n")]
-    Error {
-        package: String,
-        source: anyhow::Error,
-    },
-    #[error("public api for {package} changed:\n{diff}\n")]
-    Changed { package: String, diff: String },
-}
-
-pub fn public_api(options: Options, metadata: Metadata) -> anyhow::Result<()> {
+pub fn public_api(options: Options, metadata: Metadata) -> Result<()> {
     let toolchain = "nightly";
     let Options { bless } = options;
 
@@ -50,18 +39,30 @@ pub fn public_api(options: Options, metadata: Metadata) -> anyhow::Result<()> {
         ..
     } = &metadata;
 
-    let mut buf = String::new();
-    packages.iter().for_each(|Package { name, publish, .. }| {
-        if matches!(publish, Some(publish) if publish.is_empty()) {
-            return;
-        }
-        if let Err(e) = check_package_api(name, toolchain, bless, workspace_root.as_std_path()) {
-            write!(&mut buf, "{}", e).unwrap();
-        }
-    });
+    let errors = packages
+        .iter()
+        .fold(String::new(), |mut buf, Package { name, publish, .. }| {
+            if !matches!(publish, Some(publish) if publish.is_empty()) {
+                match check_package_api(name, toolchain, bless, workspace_root.as_std_path()) {
+                    Ok(diff) => {
+                        if !diff.is_empty() {
+                            writeln!(
+                                &mut buf,
+                                "{name} public API changed; re-run with --bless. diff:\n{diff}"
+                            )
+                            .unwrap();
+                        }
+                    }
+                    Err(err) => {
+                        writeln!(&mut buf, "{name} failed to check public API: {err}").unwrap();
+                    }
+                }
+            }
+            buf
+        });
 
-    if !buf.is_empty() {
-        bail!("public api may have changed in one or more packages.\nplease bless by re-running this command with --bless\nErrors:\n{buf}");
+    if !errors.is_empty() {
+        bail!("public API errors:\n{errors}");
     }
     Ok(())
 }
@@ -71,7 +72,7 @@ fn check_package_api(
     toolchain: &str,
     bless: bool,
     workspace_root: &Path,
-) -> Result<(), PublicApiError> {
+) -> Result<String> {
     let path = workspace_root
         .join("xtask")
         .join("public-api")
@@ -83,47 +84,29 @@ fn check_package_api(
         .package(package)
         .all_features(true)
         .build()
-        .map_err(|source| PublicApiError::Error {
-            package: package.to_string(),
-            source: source.into(),
-        })?;
+        .context("rustdoc_json::Builder::build")?;
 
     let public_api = public_api::Builder::from_rustdoc_json(rustdoc_json)
         .build()
-        .map_err(|source| PublicApiError::Error {
-            package: package.to_string(),
-            source: source.into(),
-        })?;
+        .context("public_api::Builder::build")?;
 
     if bless {
-        write(&path, public_api.to_string().as_bytes()).map_err(|source| {
-            PublicApiError::Error {
-                package: package.to_string(),
-                source: source.into(),
-            }
-        })?;
+        let mut output =
+            File::create(&path).with_context(|| format!("error creating {}", path.display()))?;
+        write!(&mut output, "{}", public_api)
+            .with_context(|| format!("error writing {}", path.display()))?;
     }
-    let current_api = read_to_string(&path)
-        .with_context(|| format!("error reading {}", &path.display()))
-        .map_err(|source| PublicApiError::Error {
-            package: package.to_string(),
-            source,
-        })?;
+    let current_api =
+        read_to_string(&path).with_context(|| format!("error reading {}", path.display()))?;
 
-    let mut buf = String::new();
-    lines(&current_api, &public_api.to_string())
+    Ok(lines(&current_api, &public_api.to_string())
         .into_iter()
-        .for_each(|diff| match diff {
-            Diff::Both(..) => (),
-            Diff::Right(line) => writeln!(&mut buf, "-{}", line).unwrap(),
-            Diff::Left(line) => writeln!(&mut buf, "+{}", line).unwrap(),
-        });
-
-    if !buf.is_empty() {
-        return Err(PublicApiError::Changed {
-            package: package.to_string(),
-            diff: buf,
-        });
-    };
-    Ok(())
+        .fold(String::new(), |mut buf, diff| {
+            match diff {
+                Diff::Both(..) => (),
+                Diff::Right(line) => writeln!(&mut buf, "-{}", line).unwrap(),
+                Diff::Left(line) => writeln!(&mut buf, "+{}", line).unwrap(),
+            };
+            buf
+        }))
 }
