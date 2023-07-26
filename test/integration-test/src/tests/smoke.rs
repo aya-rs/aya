@@ -1,5 +1,5 @@
 use aya::{
-    programs::{Extension, TracePoint, Xdp, XdpFlags},
+    programs::{loaded_programs, Extension, TracePoint, Xdp, XdpFlags},
     util::KernelVersion,
     Bpf, BpfLoader,
 };
@@ -64,4 +64,35 @@ fn extension() {
         .unwrap();
     let drop_: &mut Extension = bpf.program_mut("xdp_drop").unwrap().try_into().unwrap();
     drop_.load(pass.fd().unwrap(), "xdp_pass").unwrap();
+}
+
+#[test]
+fn list_loaded_programs() {
+    // Load a program.
+    let mut bpf = Bpf::load(crate::PASS).unwrap();
+    let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    dispatcher.load().unwrap();
+    dispatcher.attach("lo", XdpFlags::default()).unwrap();
+
+    // Ensure the loaded_programs() api doesn't panic.
+    let prog = loaded_programs()
+        .map(|p| p.unwrap())
+        .find(|p| p.name_as_str().unwrap() == "pass")
+        .unwrap();
+
+    // Ensure all relevant helper functions don't panic.
+    prog.name();
+    prog.name_as_str();
+    prog.id();
+    prog.tag();
+    prog.program_type();
+    prog.gpl_compatible();
+    prog.map_ids().unwrap();
+    prog.btf_id();
+    prog.size_translated();
+    prog.size_translated();
+    prog.memory_locked().unwrap();
+    prog.verified_instruction_count();
+    prog.loaded_at();
+    prog.fd().unwrap();
 }
