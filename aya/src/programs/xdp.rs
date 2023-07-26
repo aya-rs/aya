@@ -3,7 +3,6 @@
 use std::{
     ffi::CString,
     hash::Hash,
-    io,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
     path::Path,
 };
@@ -23,7 +22,7 @@ use crate::{
     },
     sys::{
         bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, netlink_set_xdp_fd, LinkTarget,
-        SyscallError,
+        NetlinkError, SyscallError,
     },
     util::KernelVersion,
     VerifierLogLevel,
@@ -37,7 +36,7 @@ pub enum XdpError {
     NetlinkError {
         /// the [`io::Error`] from the netlink call
         #[source]
-        io_error: io::Error,
+        nl_err: NetlinkError,
     },
 }
 
@@ -162,7 +161,7 @@ impl Xdp {
         } else {
             let if_index = if_index as i32;
             unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, flags.bits()) }
-                .map_err(|io_error| XdpError::NetlinkError { io_error })?;
+                .map_err(|nl_err| XdpError::NetlinkError { nl_err })?;
 
             let prog_fd = prog_fd.as_raw_fd();
             self.data
@@ -224,7 +223,7 @@ impl Xdp {
                         Some(old_prog_fd),
                         replace_flags.bits(),
                     )
-                    .map_err(|io_error| XdpError::NetlinkError { io_error })?;
+                    .map_err(|nl_err| XdpError::NetlinkError { nl_err })?;
                 }
 
                 let prog_fd = prog_fd.as_raw_fd();
