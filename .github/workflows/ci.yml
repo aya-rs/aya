@@ -47,7 +47,6 @@ jobs:
             --workspace
 
   build-test-aya:
-    needs: ["lint"]
     strategy:
       fail-fast: false
       matrix:
@@ -95,7 +94,6 @@ jobs:
             --workspace
 
   build-test-aya-bpf:
-    needs: ["lint"]
     strategy:
       fail-fast: false
       matrix:
@@ -134,7 +132,6 @@ jobs:
 
   integration-test:
     runs-on: macos-latest
-    needs: ["lint", "build-test-aya", "build-test-aya-bpf"]
     steps:
       - uses: actions/checkout@v3
         with:
