@@ -498,14 +498,9 @@ impl<T: Link> ProgramData<T> {
                 io_error,
             })? as RawFd;
 
-        let info =
-            bpf_prog_get_info_by_fd(fd, &[]).map_err(|io_error| ProgramError::SyscallError {
-                call: "bpf_prog_get_info_by_fd",
-                io_error,
-            })?;
-
-        let name = ProgramInfo(info).name_as_str().map(|s| s.to_string());
-        ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), info, verifier_log_level)
+        let info = ProgramInfo::new_from_fd(fd)?;
+        let name = info.name_as_str().map(|s| s.to_string());
+        ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), info.0, verifier_log_level)
     }
 }
 
@@ -934,12 +929,7 @@ macro_rules! impl_program_info {
                 pub fn program_info(&self) -> Result<ProgramInfo, ProgramError> {
                     let fd = self.fd().ok_or(ProgramError::NotLoaded)?;
 
-                    bpf_prog_get_info_by_fd(fd.as_raw_fd(), &[])
-                        .map_err(|io_error| ProgramError::SyscallError {
-                            call: "bpf_prog_get_info_by_fd",
-                            io_error,
-                        })
-                        .map(ProgramInfo)
+                    ProgramInfo::new_from_fd(fd.as_raw_fd())
                 }
             }
         )+
@@ -978,6 +968,14 @@ impl_program_info!(
 pub struct ProgramInfo(bpf_prog_info);
 
 impl ProgramInfo {
+    fn new_from_fd(fd: RawFd) -> Result<Self, ProgramError> {
+        bpf_prog_get_info_by_fd(fd.as_raw_fd(), &[])
+            .map_err(|io_error| ProgramError::SyscallError {
+                call: "bpf_prog_get_info_by_fd",
+                io_error,
+            })
+            .map(ProgramInfo)
+    }
     /// The name of the program as was provided when it was load. This is limited to 16 bytes
     pub fn name(&self) -> &[u8] {
         let length = self
@@ -1122,14 +1120,7 @@ impl Iterator for ProgramsIter {
                             call: "bpf_prog_get_fd_by_id",
                             io_error,
                         })
-                        .and_then(|fd| {
-                            bpf_prog_get_info_by_fd(fd.as_raw_fd(), &[])
-                                .map_err(|io_error| ProgramError::SyscallError {
-                                    call: "bpf_prog_get_info_by_fd",
-                                    io_error,
-                                })
-                                .map(ProgramInfo)
-                        }),
+                        .and_then(|fd| ProgramInfo::new_from_fd(fd.as_raw_fd())),
                 )
             }
             Ok(None) => None,
