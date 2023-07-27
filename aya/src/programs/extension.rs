@@ -1,5 +1,5 @@
 //! Extension programs.
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::{AsRawFd, BorrowedFd, RawFd};
 use thiserror::Error;
 
 use object::Endianness;
@@ -7,9 +7,7 @@ use object::Endianness;
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_INET_INGRESS, bpf_prog_type::BPF_PROG_TYPE_EXT},
     obj::btf::BtfKind,
-    programs::{
-        define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd,
-    },
+    programs::{define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError},
     sys::{self, bpf_link_create},
     Btf,
 };
@@ -68,7 +66,7 @@ impl Extension {
     /// The extension code will be loaded but inactive until it's attached.
     /// There are no restrictions on what functions may be replaced, so you could replace
     /// the main entry point of your program with an extension.
-    pub fn load(&mut self, program: ProgramFd, func_name: &str) -> Result<(), ProgramError> {
+    pub fn load(&mut self, program: BorrowedFd, func_name: &str) -> Result<(), ProgramError> {
         let target_prog_fd = program.as_raw_fd();
         let (btf_fd, btf_id) = get_btf_info(target_prog_fd, func_name)?;
 
@@ -113,7 +111,7 @@ impl Extension {
     /// original function, see [Extension::detach].
     pub fn attach_to_program(
         &mut self,
-        program: ProgramFd,
+        program: BorrowedFd,
         func_name: &str,
     ) -> Result<ExtensionLinkId, ProgramError> {
         let target_fd = program.as_raw_fd();

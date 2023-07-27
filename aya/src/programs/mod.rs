@@ -69,7 +69,7 @@ use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
-    os::fd::{AsRawFd, IntoRawFd as _, RawFd},
+    os::fd::{AsRawFd, BorrowedFd, IntoRawFd as _, RawFd},
     path::{Path, PathBuf},
 };
 use thiserror::Error;
@@ -212,16 +212,6 @@ pub enum ProgramError {
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
-}
-
-/// A [`Program`] file descriptor.
-#[derive(Copy, Clone)]
-pub struct ProgramFd(RawFd);
-
-impl AsRawFd for ProgramFd {
-    fn as_raw_fd(&self) -> RawFd {
-        self.0
-    }
 }
 
 /// eBPF program type.
@@ -373,7 +363,7 @@ impl Program {
     ///
     /// Can be used to add a program to a [`crate::maps::ProgramArray`] or attach an [`Extension`] program.
     /// Can be converted to [`RawFd`] using [`AsRawFd`].
-    pub fn fd(&self) -> Option<ProgramFd> {
+    pub fn fd(&self) -> Option<BorrowedFd> {
         match self {
             Program::KProbe(p) => p.fd(),
             Program::UProbe(p) => p.fd(),
@@ -733,8 +723,8 @@ macro_rules! impl_fd {
         $(
             impl $struct_name {
                 /// Returns the file descriptor of this Program.
-                pub fn fd(&self) -> Option<ProgramFd> {
-                    self.data.fd.map(|fd| ProgramFd(fd))
+                pub fn fd(&self) -> Option<BorrowedFd> {
+                    self.data.fd.map(|fd| unsafe { BorrowedFd::borrow_raw(fd) })
                 }
             }
         )+
