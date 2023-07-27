@@ -147,8 +147,10 @@ fn main() {
         ]);
 
         // Workaround to make sure that the rust-toolchain.toml is respected.
-        cmd.env_remove("RUSTUP_TOOLCHAIN")
-            .current_dir(integration_ebpf_dir);
+        for key in ["RUSTUP_TOOLCHAIN", "RUSTC"] {
+            cmd.env_remove(key);
+        }
+        cmd.current_dir(integration_ebpf_dir);
 
         // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
         let ebpf_target_dir = out_dir.join("integration-ebpf");
