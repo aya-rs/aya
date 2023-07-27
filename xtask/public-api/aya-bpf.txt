@@ -2587,5 +2587,3 @@ pub fn aya_bpf::programs::tracepoint::TracePointContext::as_ptr(&self) -> *mut c
 impl aya_bpf::BpfContext for aya_bpf::programs::xdp::XdpContext
 pub fn aya_bpf::programs::xdp::XdpContext::as_ptr(&self) -> *mut core::ffi::c_void
 pub fn aya_bpf::check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool
-#[no_mangle] pub unsafe c fn aya_bpf::memcpy(dest: *mut u8, src: *mut u8, n: usize)
-#[no_mangle] pub unsafe c fn aya_bpf::memset(s: *mut u8, c: aya_bpf_cty::ad::c_int, n: usize)

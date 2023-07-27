@@ -1,5 +1,6 @@
-#![no_std]
+#![no_builtins]
 #![no_main]
+#![no_std]
 
 use core::hint;
 
