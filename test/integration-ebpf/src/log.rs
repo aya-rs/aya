@@ -1,5 +1,6 @@
-#![no_std]
+#![no_builtins]
 #![no_main]
+#![no_std]
 
 use aya_bpf::{macros::uprobe, programs::ProbeContext};
 use aya_log_ebpf::{debug, error, info, trace, warn};

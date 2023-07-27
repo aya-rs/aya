@@ -25,7 +25,7 @@ pub mod programs;
 pub use aya_bpf_cty as cty;
 
 use core::ffi::c_void;
-use cty::{c_int, c_long};
+use cty::c_long;
 use helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid};
 
 pub use aya_bpf_macros as macros;
@@ -54,22 +54,6 @@ pub trait BpfContext {
 
     fn gid(&self) -> u32 {
         (bpf_get_current_uid_gid() >> 32) as u32
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
-    #[allow(clippy::cast_sign_loss)]
-    let b = c as u8;
-    for i in 0..n {
-        *s.add(i) = b;
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *mut u8, n: usize) {
-    for i in 0..n {
-        *dest.add(i) = *src.add(i);
     }
 }
 

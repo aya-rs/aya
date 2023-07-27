@@ -1,5 +1,6 @@
-#![no_std]
+#![no_builtins]
 #![no_main]
+#![no_std]
 
 use aya_bpf::{
     helpers::{bpf_probe_read_kernel_str_bytes, bpf_probe_read_user_str_bytes},
