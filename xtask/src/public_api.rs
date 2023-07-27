@@ -99,7 +99,7 @@ fn check_package_api(
     let current_api =
         read_to_string(&path).with_context(|| format!("error reading {}", path.display()))?;
 
-    Ok(lines(&current_api, &public_api.to_string())
+    Ok(lines(&public_api.to_string(), &current_api)
         .into_iter()
         .fold(String::new(), |mut buf, diff| {
             match diff {
