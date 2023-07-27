@@ -64,7 +64,7 @@ pub mod uprobe;
 mod utils;
 pub mod xdp;
 
-use crate::util::KernelVersion;
+use crate::{sys::NetlinkError, util::KernelVersion};
 use libc::ENOSPC;
 use std::{
     ffi::CString,
@@ -212,6 +212,10 @@ pub enum ProgramError {
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
+
+    /// An error occurred while working with Netlink.
+    #[error(transparent)]
+    NetlinkError(#[from] NetlinkError),
 }
 
 /// A [`Program`] file descriptor.

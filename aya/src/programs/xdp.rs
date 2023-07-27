@@ -1,9 +1,9 @@
 //! eXpress Data Path (XDP) programs.
 
-use crate::util::KernelVersion;
+use crate::{sys::NetlinkError, util::KernelVersion};
 use bitflags;
 use libc::if_nametoindex;
-use std::{convert::TryFrom, ffi::CString, hash::Hash, io, mem, os::unix::io::RawFd};
+use std::{convert::TryFrom, ffi::CString, hash::Hash, mem, os::unix::io::RawFd};
 use thiserror::Error;
 
 use crate::{
@@ -28,7 +28,7 @@ pub enum XdpError {
     NetlinkError {
         /// the [`io::Error`] from the netlink call
         #[source]
-        io_error: io::Error,
+        io_error: NetlinkError,
     },
 }
 

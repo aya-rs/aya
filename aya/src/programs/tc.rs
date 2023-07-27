@@ -14,7 +14,7 @@ use crate::{
     programs::{define_link_wrapper, load_program, Link, ProgramData, ProgramError},
     sys::{
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
-        netlink_qdisc_detach,
+        netlink_qdisc_detach, NetlinkError,
     },
     util::{ifindex_from_ifname, tc_handler_make},
     VerifierLogLevel,
@@ -80,12 +80,16 @@ pub struct SchedClassifier {
 #[derive(Debug, Error)]
 pub enum TcError {
     /// netlink error while attaching ebpf program
-    #[error("netlink error while attaching ebpf program to tc")]
-    NetlinkError {
-        /// the [`io::Error`] from the netlink call
-        #[source]
-        io_error: io::Error,
-    },
+    #[error(transparent)]
+    NetlinkError(#[from] NetlinkError),
+
+    /// the provided string contains a nul byte
+    #[error(transparent)]
+    NulError(#[from] std::ffi::NulError),
+
+    #[error(transparent)]
+    /// an IO error occurred
+    IoError(#[from] io::Error),
     /// the clsact qdisc is already attached
     #[error("the clsact qdisc is already attached")]
     AlreadyAttached,
@@ -153,8 +157,7 @@ impl SchedClassifier {
         options: TcOptions,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let if_index = ifindex_from_ifname(interface)
-            .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        let if_index = ifindex_from_ifname(interface).map_err(TcError::IoError)?;
         let (priority, handle) = unsafe {
             netlink_qdisc_attach(
                 if_index as i32,
@@ -165,7 +168,7 @@ impl SchedClassifier {
                 options.handle,
             )
         }
-        .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        .map_err(ProgramError::NetlinkError)?;
 
         self.data.links.insert(SchedClassifierLink::new(TcLink {
             if_index: if_index as i32,
@@ -230,7 +233,7 @@ impl Link for TcLink {
         unsafe {
             netlink_qdisc_detach(self.if_index, &self.attach_type, self.priority, self.handle)
         }
-        .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        .map_err(ProgramError::NetlinkError)?;
         Ok(())
     }
 }
@@ -306,9 +309,9 @@ impl SchedClassifierLink {
 ///
 /// The `clsact` qdisc must be added to an interface before [`SchedClassifier`]
 /// programs can be attached.
-pub fn qdisc_add_clsact(if_name: &str) -> Result<(), io::Error> {
+pub fn qdisc_add_clsact(if_name: &str) -> Result<(), TcError> {
     let if_index = ifindex_from_ifname(if_name)?;
-    unsafe { netlink_qdisc_add_clsact(if_index as i32) }
+    unsafe { netlink_qdisc_add_clsact(if_index as i32).map_err(TcError::NetlinkError) }
 }
 
 /// Detaches the programs with the given name.
@@ -322,8 +325,8 @@ pub fn qdisc_detach_program(
     if_name: &str,
     attach_type: TcAttachType,
     name: &str,
-) -> Result<(), io::Error> {
-    let cstr = CString::new(name)?;
+) -> Result<(), TcError> {
+    let cstr = CString::new(name).map_err(TcError::NulError)?;
     qdisc_detach_program_fast(if_name, attach_type, &cstr)
 }
 
@@ -340,15 +343,15 @@ fn qdisc_detach_program_fast(
     if_name: &str,
     attach_type: TcAttachType,
     name: &CStr,
-) -> Result<(), io::Error> {
+) -> Result<(), TcError> {
     let if_index = ifindex_from_ifname(if_name)? as i32;
 
     let filter_info = unsafe { netlink_find_filter_with_name(if_index, attach_type, name)? };
     if filter_info.is_empty() {
-        return Err(io::Error::new(
+        return Err(TcError::IoError(io::Error::new(
             io::ErrorKind::NotFound,
             name.to_string_lossy(),
-        ));
+        )));
     }
 
     for (prio, handle) in filter_info {
