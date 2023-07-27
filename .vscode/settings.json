@@ -1,4 +1,7 @@
 {
     "rust-analyzer.check.allTargets": true,
-    "rust-analyzer.check.command": "clippy"
+    "rust-analyzer.check.command": "clippy",
+    "search.exclude": {
+        "/xtask/public-api/*.txt": true,
+    },
 }
