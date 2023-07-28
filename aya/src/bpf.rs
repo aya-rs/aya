@@ -3,8 +3,12 @@ use std::{
     collections::{HashMap, HashSet},
     ffi::CString,
     fs, io,
-    os::{raw::c_int, unix::io::RawFd},
+    os::{
+        fd::{OwnedFd, RawFd},
+        raw::c_int,
+    },
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use aya_obj::{
@@ -390,7 +394,7 @@ impl<'a> BpfLoader<'a> {
         let btf_fd = if let Some(features) = &FEATURES.btf() {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
                 match load_btf(btf.to_bytes(), *verifier_log_level) {
-                    Ok(btf_fd) => Some(btf_fd),
+                    Ok(btf_fd) => Some(Arc::new(btf_fd)),
                     // Only report an error here if the BTF is truely needed, otherwise proceed without.
                     Err(err) => {
                         for program in obj.programs.values() {
@@ -473,7 +477,7 @@ impl<'a> BpfLoader<'a> {
                 obj,
                 fd: None,
                 pinned: false,
-                btf_fd,
+                btf_fd: btf_fd.as_ref().map(Arc::clone),
             };
             let fd = match map.obj.pinning() {
                 PinningType::ByName => {
@@ -543,6 +547,7 @@ impl<'a> BpfLoader<'a> {
                 let section = prog_obj.section.clone();
                 let obj = (prog_obj, function_obj);
 
+                let btf_fd = btf_fd.as_ref().map(Arc::clone);
                 let program = if extensions.contains(name.as_str()) {
                     Program::Extension(Extension {
                         data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
@@ -993,17 +998,14 @@ pub enum BpfError {
     ProgramError(#[from] ProgramError),
 }
 
-fn load_btf(raw_btf: Vec<u8>, verifier_log_level: VerifierLogLevel) -> Result<RawFd, BtfError> {
+fn load_btf(raw_btf: Vec<u8>, verifier_log_level: VerifierLogLevel) -> Result<OwnedFd, BtfError> {
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
         bpf_load_btf(raw_btf.as_slice(), logger, verifier_log_level)
     });
-    match ret {
-        Ok(fd) => Ok(fd as RawFd),
-        Err((_, io_error)) => Err(BtfError::LoadError {
-            io_error,
-            verifier_log,
-        }),
-    }
+    ret.map_err(|(_, io_error)| BtfError::LoadError {
+        io_error,
+        verifier_log,
+    })
 }
 
 /// Global data that can be exported to eBPF programs before they are loaded.
