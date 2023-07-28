@@ -42,9 +42,10 @@ use std::{
     marker::PhantomData,
     mem,
     ops::Deref,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, OwnedFd, RawFd},
     path::Path,
     ptr,
+    sync::Arc,
 };
 
 use crate::util::KernelVersion;
@@ -486,7 +487,7 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 pub struct MapData {
     pub(crate) obj: obj::Map,
     pub(crate) fd: Option<RawFd>,
-    pub(crate) btf_fd: Option<RawFd>,
+    pub(crate) btf_fd: Option<Arc<OwnedFd>>,
     /// Indicates if this map has been pinned to bpffs
     pub pinned: bool,
 }
@@ -504,19 +505,23 @@ impl MapData {
         let kernel_version = KernelVersion::current().unwrap();
         #[cfg(test)]
         let kernel_version = KernelVersion::new(0xff, 0xff, 0xff);
-        let fd = bpf_create_map(&c_name, &self.obj, self.btf_fd, kernel_version).map_err(
-            |(code, io_error)| {
-                if kernel_version < KernelVersion::new(5, 11, 0) {
-                    maybe_warn_rlimit();
-                }
+        let fd = bpf_create_map(
+            &c_name,
+            &self.obj,
+            self.btf_fd.as_ref().map(|f| f.as_fd()),
+            kernel_version,
+        )
+        .map_err(|(code, io_error)| {
+            if kernel_version < KernelVersion::new(5, 11, 0) {
+                maybe_warn_rlimit();
+            }
 
-                MapError::CreateError {
-                    name: name.into(),
-                    code,
-                    io_error,
-                }
-            },
-        )? as RawFd;
+            MapError::CreateError {
+                name: name.into(),
+                code,
+                io_error,
+            }
+        })? as RawFd;
 
         self.fd = Some(fd);
 
@@ -639,7 +644,7 @@ impl Clone for MapData {
         MapData {
             obj: self.obj.clone(),
             fd: self.fd.map(|fd| unsafe { libc::dup(fd) }),
-            btf_fd: self.btf_fd,
+            btf_fd: self.btf_fd.clone(),
             pinned: self.pinned,
         }
     }
