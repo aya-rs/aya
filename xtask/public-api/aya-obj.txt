@@ -25,7 +25,7 @@ pub aya_obj::btf::BtfError::InvalidTypeKind
 pub aya_obj::btf::BtfError::InvalidTypeKind::kind: u32
 pub aya_obj::btf::BtfError::LoadError
 pub aya_obj::btf::BtfError::LoadError::io_error: std::io::error::Error
-pub aya_obj::btf::BtfError::LoadError::verifier_log: alloc::string::String
+pub aya_obj::btf::BtfError::LoadError::verifier_log: aya_obj::VerifierLog
 pub aya_obj::btf::BtfError::MaximumTypeDepthReached
 pub aya_obj::btf::BtfError::MaximumTypeDepthReached::type_id: u32
 pub aya_obj::btf::BtfError::SymbolOffsetNotFound
@@ -6813,5 +6813,35 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::Program where T: core::marker::S
 pub fn aya_obj::Program::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::Program
 pub fn aya_obj::Program::from(t: T) -> T
+pub struct aya_obj::VerifierLog(_)
+impl aya_obj::VerifierLog
+pub fn aya_obj::VerifierLog::new(log: alloc::string::String) -> Self
+impl core::fmt::Debug for aya_obj::VerifierLog
+pub fn aya_obj::VerifierLog::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya_obj::VerifierLog
+pub fn aya_obj::VerifierLog::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya_obj::VerifierLog
+impl core::marker::Sync for aya_obj::VerifierLog
+impl core::marker::Unpin for aya_obj::VerifierLog
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::VerifierLog
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::VerifierLog
+impl<T, U> core::convert::Into<U> for aya_obj::VerifierLog where U: core::convert::From<T>
+pub fn aya_obj::VerifierLog::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::VerifierLog where U: core::convert::Into<T>
+pub type aya_obj::VerifierLog::Error = core::convert::Infallible
+pub fn aya_obj::VerifierLog::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::VerifierLog where U: core::convert::TryFrom<T>
+pub type aya_obj::VerifierLog::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::VerifierLog::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya_obj::VerifierLog where T: core::fmt::Display + core::marker::Sized
+pub fn aya_obj::VerifierLog::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya_obj::VerifierLog where T: 'static + core::marker::Sized
+pub fn aya_obj::VerifierLog::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::VerifierLog where T: core::marker::Sized
+pub fn aya_obj::VerifierLog::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::VerifierLog where T: core::marker::Sized
+pub fn aya_obj::VerifierLog::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::VerifierLog
+pub fn aya_obj::VerifierLog::from(t: T) -> T
 pub fn aya_obj::copy_instructions(data: &[u8]) -> core::result::Result<alloc::vec::Vec<aya_obj::generated::bpf_insn>, aya_obj::ParseError>
 pub fn aya_obj::parse_map_info(info: aya_obj::generated::bpf_map_info, pinned: aya_obj::maps::PinningType) -> aya_obj::maps::Map

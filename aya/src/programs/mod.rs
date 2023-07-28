@@ -107,7 +107,7 @@ pub use xdp::{Xdp, XdpError, XdpFlags};
 use crate::{
     generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
     maps::MapError,
-    obj::{self, btf::BtfError, Function},
+    obj::{self, btf::BtfError, Function, VerifierLog},
     pin::PinError,
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_load_program, bpf_pin_object,
@@ -143,7 +143,7 @@ pub enum ProgramError {
         #[source]
         io_error: io::Error,
         /// The error log produced by the kernel verifier.
-        verifier_log: String,
+        verifier_log: VerifierLog,
     },
 
     /// A syscall failed.
