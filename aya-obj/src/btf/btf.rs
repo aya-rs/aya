@@ -13,6 +13,7 @@ use log::debug;
 use object::{Endianness, SectionIndex};
 
 use crate::{
+    VerifierLog,
     btf::{
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
@@ -135,7 +136,7 @@ pub enum BtfError {
         #[source]
         io_error: std::io::Error,
         /// The error log produced by the kernel verifier.
-        verifier_log: String,
+        verifier_log: VerifierLog,
     },
 
     /// offset not found for symbol

@@ -10,6 +10,7 @@ use std::{
 use crate::util::KernelVersion;
 use libc::{c_char, c_long, close, ENOENT, ENOSPC};
 use obj::{
+    VerifierLog,
     maps::{bpf_map_def, LegacyMap},
     BpfSectionKind,
 };
@@ -1005,7 +1006,7 @@ pub(crate) fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>, (c_long, io::
 pub(crate) fn retry_with_verifier_logs(
     max_retries: usize,
     f: impl Fn(&mut [u8]) -> SysResult,
-) -> (SysResult, String) {
+) -> (SysResult, VerifierLog) {
     const MIN_LOG_BUF_SIZE: usize = 1024 * 10;
     const MAX_LOG_BUF_SIZE: usize = (std::u32::MAX >> 8) as usize;
 
@@ -1031,7 +1032,7 @@ pub(crate) fn retry_with_verifier_logs(
         }
         let log_buf = String::from_utf8(log_buf).unwrap();
 
-        break (ret, log_buf);
+        break (ret, VerifierLog::new(log_buf));
     }
 }
 
