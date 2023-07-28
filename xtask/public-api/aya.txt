@@ -5169,7 +5169,7 @@ pub aya::programs::ProgramError::InvalidName::name: alloc::string::String
 pub aya::programs::ProgramError::KProbeError(aya::programs::kprobe::KProbeError)
 pub aya::programs::ProgramError::LoadError
 pub aya::programs::ProgramError::LoadError::io_error: std::io::error::Error
-pub aya::programs::ProgramError::LoadError::verifier_log: alloc::string::String
+pub aya::programs::ProgramError::LoadError::verifier_log: aya_obj::VerifierLog
 pub aya::programs::ProgramError::MapError(aya::maps::MapError)
 pub aya::programs::ProgramError::NotAttached
 pub aya::programs::ProgramError::NotLoaded
