@@ -69,8 +69,9 @@ use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
-    os::fd::{AsRawFd, IntoRawFd as _, RawFd},
+    os::fd::{AsFd, AsRawFd, IntoRawFd as _, OwnedFd, RawFd},
     path::{Path, PathBuf},
+    sync::Arc,
 };
 use thiserror::Error;
 
@@ -413,7 +414,7 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) attach_btf_obj_fd: Option<u32>,
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<RawFd>,
-    pub(crate) btf_fd: Option<RawFd>,
+    pub(crate) btf_fd: Option<Arc<OwnedFd>>,
     pub(crate) verifier_log_level: VerifierLogLevel,
     pub(crate) path: Option<PathBuf>,
     pub(crate) flags: u32,
@@ -423,7 +424,7 @@ impl<T: Link> ProgramData<T> {
     pub(crate) fn new(
         name: Option<String>,
         obj: (obj::Program, obj::Function),
-        btf_fd: Option<RawFd>,
+        btf_fd: Option<Arc<OwnedFd>>,
         verifier_log_level: VerifierLogLevel,
     ) -> ProgramData<T> {
         ProgramData {
@@ -613,7 +614,7 @@ fn load_program<T: Link>(
         license,
         kernel_version: target_kernel_version,
         expected_attach_type: *expected_attach_type,
-        prog_btf_fd: *btf_fd,
+        prog_btf_fd: btf_fd.as_ref().map(|f| f.as_fd()),
         attach_btf_obj_fd: *attach_btf_obj_fd,
         attach_btf_id: *attach_btf_id,
         attach_prog_fd: *attach_prog_fd,
