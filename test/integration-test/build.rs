@@ -135,13 +135,21 @@ fn main() {
         let Package { manifest_path, .. } = integration_ebpf_package;
         let integration_ebpf_dir = manifest_path.parent().unwrap();
 
+        // We have a build-dependency on `integration-ebpf`, so cargo will automatically rebuild us
+        // if `integration-ebpf`'s *library* target or any of its dependencies change. Since we
+        // depend on `integration-ebpf`'s *binary* targets, that only gets us half of the way. This
+        // stanza ensures cargo will rebuild us on changes to the binaries too, which gets us the
+        // rest of the way.
+        println!("cargo:rerun-if-changed={}", integration_ebpf_dir.as_str());
+
         let mut cmd = Command::new("cargo");
         cmd.args([
             "build",
             "-Z",
             "build-std=core",
-            "--release",
+            "--bins",
             "--message-format=json",
+            "--release",
             "--target",
             &target,
         ]);
