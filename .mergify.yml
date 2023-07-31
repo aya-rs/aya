@@ -1,0 +1,99 @@
+pull_request_rules:
+  - name: automatic merge for Dependabot pull request that pass CI
+    conditions:
+      - author=dependabot[bot]
+    actions:
+      comment:
+        message: "@dependabot merge"
+
+  # REVIEW MANAGEMENT
+
+  - name: ask alessandrod to review public API changes
+    conditions:
+      - files=xtask/public-api/aya.txt
+      - -closed
+    actions:
+      comment:
+        message: "Hey @alessandrod, this pull request changes the Aya Public API and requires your review."
+      request_reviews:
+        users:
+          - alessandrod
+      label:
+        add:
+          - api/needs-review
+
+  # LABEL MANAGEMENT
+
+  - name: warn on conflicts
+    conditions:
+      - conflict
+    actions:
+      comment:
+        message: "@{{author}}, this pull request is now in conflict and requires a rebase."
+      label:
+        add:
+          - needs-rebase
+
+  - name: remove conflict label if not needed
+    conditions:
+      - -conflict
+    actions:
+      label:
+        remove:
+          - needs-rebase
+
+  - name: add labels for aya PRs
+    conditions:
+      - files~=^aya/
+    actions:
+      label:
+        add:
+          - aya
+
+  - name: add labels for aya-bpf PRs
+    conditions:
+      - files~=^(aya-bpf-macros|bpf/aya-bpf(-(cty|bindings))?)/
+    actions:
+      label:
+        add:
+          - aya-bpf
+
+  - name: add labels for aya-log PRs
+    conditions:
+      - files~=^aya-log(-common)?/
+    actions:
+      label:
+        add:
+          - aya-log
+
+  - name: add labels for aya-log-ebpf PRs
+    conditions:
+      - files~=^(aya-log-common|bpf/aya-log-ebpf)/
+    actions:
+      label:
+        add:
+          - aya-log
+
+  - name: add labels for aya-obj PRs
+    conditions:
+      - files~=^aya-obj/
+    actions:
+      label:
+        add:
+          - aya-obj
+
+  - name: add labels for aya-tool PRs
+    conditions:
+      - files~=^aya-tool/
+    actions:
+      label:
+        add:
+          - aya-tool
+
+  - name: add labels for CI/Test and Automation PRs
+    conditions:
+      - files~=^(.github|test|xtask)/
+    actions:
+      label:
+        add:
+          - test
