@@ -42,6 +42,12 @@ impl ProbeKind {
     }
 }
 
+#[derive(Debug)]
+pub(crate) struct ProbeEvent {
+    kind: ProbeKind,
+    event_alias: String,
+}
+
 pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     program_data: &mut ProgramData<T>,
     kind: ProbeKind,
@@ -56,8 +62,7 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
         let link = T::from(perf_attach_debugfs(
             program_data.fd_or_err()?,
             fd,
-            kind,
-            event_alias,
+            ProbeEvent { kind, event_alias },
         )?);
         return program_data.links.insert(link);
     };
@@ -67,19 +72,22 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     program_data.links.insert(link)
 }
 
-pub(crate) fn detach_debug_fs(kind: ProbeKind, event_alias: &str) -> Result<(), ProgramError> {
+pub(crate) fn detach_debug_fs(event: ProbeEvent) -> Result<(), ProgramError> {
     use ProbeKind::*;
 
     let tracefs = find_tracefs_path()?;
 
-    match kind {
-        KProbe | KRetProbe => delete_probe_event(tracefs, kind, event_alias)
-            .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
-        UProbe | URetProbe => delete_probe_event(tracefs, kind, event_alias)
-            .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
-    };
+    let ProbeEvent {
+        kind,
+        event_alias: _,
+    } = &event;
+    let kind = *kind;
+    let result = delete_probe_event(tracefs, event);
 
-    Ok(())
+    result.map_err(|(filename, io_error)| match kind {
+        KProbe | KRetProbe => KProbeError::FileError { filename, io_error }.into(),
+        UProbe | URetProbe => UProbeError::FileError { filename, io_error }.into(),
+    })
 }
 
 fn create_as_probe(
@@ -196,17 +204,14 @@ fn create_probe_event(
     Ok(event_alias)
 }
 
-fn delete_probe_event(
-    tracefs: &Path,
-    kind: ProbeKind,
-    event_alias: &str,
-) -> Result<(), (String, io::Error)> {
+fn delete_probe_event(tracefs: &Path, event: ProbeEvent) -> Result<(), (String, io::Error)> {
+    let ProbeEvent { kind, event_alias } = event;
     let events_file_name = tracefs.join(format!("{}_events", kind.pmu()));
 
     let events = fs::read_to_string(&events_file_name)
         .map_err(|e| (events_file_name.display().to_string(), e))?;
 
-    let found = events.lines().any(|line| line.contains(event_alias));
+    let found = events.lines().any(|line| line.contains(&event_alias));
 
     if found {
         let mut events_file = OpenOptions::new()
