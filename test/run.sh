@@ -191,11 +191,7 @@ EOF
     exec_vm sudo dnf config-manager --set-enabled updates-testing
     exec_vm sudo dnf config-manager --set-enabled updates-testing-modular
     echo "Installing dependencies"
-    exec_vm sudo dnf install -qy bpftool llvm llvm-devel clang clang-devel zlib-devel git
-    exec_vm 'curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- \
-        -y --profile minimal --default-toolchain nightly --component rust-src --component clippy'
-    exec_vm 'echo source ~/.cargo/env >> ~/.bashrc'
-    exec_vm cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git
+    exec_vm sudo dnf install -qy bpftool
 }
 
 scp_vm() {
@@ -237,12 +233,11 @@ start_vm
 trap cleanup_vm EXIT
 
 # make sure we always use fresh sources (also see comment at the end)
-exec_vm "rm -rf aya/*"
-rsync_vm "--exclude=target --exclude=.tmp $AYA_SOURCE_DIR"
+rsync_vm "$*"
 
-exec_vm "cd aya; cargo xtask integration-test $*"
+exec_vm "find $* -type f -executable -print0 | xargs -0 -I {} sudo {} --test-threads=1"
 
 # we rm and sync but it doesn't seem to work reliably - I guess we could sleep a
 # few seconds after but ain't nobody got time for that. Instead we also rm
 # before rsyncing.
-exec_vm "rm -rf aya/*; sync"
+exec_vm "rm -rf $*; sync"
