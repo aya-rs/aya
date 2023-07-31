@@ -1054,11 +1054,11 @@ pub(crate) struct SecInfo<'a> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::btf::{
         BtfParam, DataSec, DataSecEntry, DeclTag, Float, Func, FuncProto, Ptr, TypeTag, Var,
     };
-
-    use super::*;
+    use assert_matches::assert_matches;
 
     #[test]
     fn test_parse_header() {
@@ -1121,12 +1121,7 @@ mod tests {
             0x65, 0x6e, 0x73, 0x65, 0x00, 0x6c, 0x69, 0x63, 0x65, 0x6e, 0x73, 0x65, 0x00,
         ];
         assert_eq!(data.len(), 517);
-        let got = Btf::parse(data, Endianness::default());
-        match got {
-            Ok(_) => {}
-            Err(e) => panic!("{}", e),
-        }
-        let btf = got.unwrap();
+        let btf = Btf::parse(data, Endianness::default()).unwrap_or_else(|e| panic!("{}", e));
         let data2 = btf.to_bytes();
         assert_eq!(data2.len(), 517);
         assert_eq!(data, data2);
@@ -1141,10 +1136,8 @@ mod tests {
         ];
 
         assert_eq!(ext_data.len(), 80);
-        let got = BtfExt::parse(ext_data, Endianness::default(), &btf);
-        if let Err(e) = got {
-            panic!("{}", e)
-        }
+        let _: BtfExt = BtfExt::parse(ext_data, Endianness::default(), &btf)
+            .unwrap_or_else(|e| panic!("{}", e));
     }
 
     #[test]
@@ -1176,16 +1169,9 @@ mod tests {
         let btf_bytes = btf.to_bytes();
         let raw_btf = btf_bytes.as_slice();
 
-        let parsed = Btf::parse(raw_btf, Endianness::default());
-        match parsed {
-            Ok(btf) => {
-                assert_eq!(btf.string_at(1).unwrap(), "int");
-                assert_eq!(btf.string_at(5).unwrap(), "widget");
-            }
-            Err(e) => {
-                panic!("{}", e)
-            }
-        }
+        let btf = Btf::parse(raw_btf, Endianness::default()).unwrap_or_else(|e| panic!("{}", e));
+        assert_eq!(btf.string_at(1).unwrap(), "int");
+        assert_eq!(btf.string_at(5).unwrap(), "widget");
     }
 
     #[test]
@@ -1206,15 +1192,9 @@ mod tests {
 
         btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
             .unwrap();
-        if let BtfType::Ptr(fixed) = btf.type_by_id(ptr_type_id).unwrap() {
-            assert!(
-                fixed.name_offset == 0,
-                "expected offset 0, got {}",
-                fixed.name_offset
-            )
-        } else {
-            panic!("not a ptr")
-        }
+        assert_matches!(btf.type_by_id(ptr_type_id).unwrap(), BtfType::Ptr(fixed) => {
+            assert_eq!(fixed.name_offset, 0);
+        });
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
@@ -1245,11 +1225,9 @@ mod tests {
 
         btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
             .unwrap();
-        if let BtfType::Int(fixed) = btf.type_by_id(var_type_id).unwrap() {
-            assert!(fixed.name_offset == name_offset)
-        } else {
-            panic!("not an int")
-        }
+        assert_matches!(btf.type_by_id(var_type_id).unwrap(), BtfType::Int(fixed) => {
+            assert_eq!(fixed.name_offset, name_offset);
+        });
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
@@ -1289,14 +1267,16 @@ mod tests {
 
         btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
             .unwrap();
-        if let BtfType::Struct(fixed) = btf.type_by_id(datasec_type_id).unwrap() {
-            assert!(fixed.name_offset == name_offset);
-            assert!(fixed.members.len() == 1);
-            assert!(fixed.members[0].btf_type == var_type_id);
-            assert!(fixed.members[0].offset == 0)
-        } else {
-            panic!("not a struct")
-        }
+        assert_matches!(btf.type_by_id(datasec_type_id).unwrap(), BtfType::Struct(fixed) => {
+            assert_eq!(fixed.name_offset , name_offset);
+            assert_matches!(*fixed.members, [
+                BtfMember {
+                    name_offset: _,
+                    btf_type,
+                    offset: 0,
+                },
+            ] => assert_eq!(btf_type, var_type_id));
+        });
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
@@ -1341,20 +1321,23 @@ mod tests {
         )
         .unwrap();
 
-        if let BtfType::DataSec(fixed) = btf.type_by_id(datasec_type_id).unwrap() {
-            assert!(fixed.name_offset != name_offset);
-            assert!(fixed.size == 32);
-            assert!(fixed.entries.len() == 1);
-            assert!(fixed.entries[0].btf_type == var_type_id);
-            assert!(
-                fixed.entries[0].offset == 64,
-                "expected 64, got {}",
-                fixed.entries[0].offset
+        assert_matches!(btf.type_by_id(datasec_type_id).unwrap(), BtfType::DataSec(fixed) => {
+            assert_ne!(fixed.name_offset, name_offset);
+            assert_eq!(fixed.size, 32);
+            assert_matches!(*fixed.entries, [
+                    DataSecEntry {
+                        btf_type,
+                        offset,
+                        size,
+                    },
+                ] => {
+                    assert_eq!(btf_type, var_type_id);
+                    assert_eq!(offset, 64);
+                    assert_eq!(size, 4);
+                }
             );
-            assert!(btf.string_at(fixed.name_offset).unwrap() == ".data.foo")
-        } else {
-            panic!("not a datasec")
-        }
+            assert_eq!(btf.string_at(fixed.name_offset).unwrap(), ".data.foo");
+        });
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
@@ -1397,23 +1380,31 @@ mod tests {
 
         btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
             .unwrap();
-        if let BtfType::Enum(fixed) = btf.type_by_id(func_proto_type_id).unwrap() {
-            assert!(fixed.name_offset == 0);
-            assert!(fixed.variants.len() == 2);
-            assert!(btf.string_at(fixed.variants[0].name_offset).unwrap() == "a");
-            assert!(fixed.variants[0].value == int_type_id);
-            assert!(btf.string_at(fixed.variants[1].name_offset).unwrap() == "b");
-            assert!(fixed.variants[1].value == int_type_id);
-        } else {
-            panic!("not an emum")
-        }
+        assert_matches!(btf.type_by_id(func_proto_type_id).unwrap(), BtfType::Enum(fixed) => {
+            assert_eq!(fixed.name_offset, 0);
+            assert_matches!(*fixed.variants, [
+                    BtfEnum {
+                        name_offset: name_offset1,
+                        value: value1,
+                    },
+                    BtfEnum {
+                        name_offset: name_offset2,
+                        value: value2,
+                    },
+                ] => {
+                    assert_eq!(btf.string_at(name_offset1).unwrap(), "a");
+                    assert_eq!(value1, int_type_id);
+                    assert_eq!(btf.string_at(name_offset2).unwrap(), "b");
+                    assert_eq!(value2, int_type_id);
+                }
+            );
+        });
 
-        if let BtfType::Typedef(fixed) = btf.type_by_id(func_type_id).unwrap() {
-            assert!(fixed.name_offset == inc);
-            assert!(fixed.btf_type == func_proto_type_id);
-        } else {
-            panic!("not a typedef")
-        }
+        assert_matches!(btf.type_by_id(func_type_id).unwrap(), BtfType::Typedef(fixed) => {
+            assert_eq!(fixed.name_offset, inc);
+            assert_eq!(fixed.btf_type, func_proto_type_id);
+        });
+
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
@@ -1447,12 +1438,25 @@ mod tests {
         btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
             .unwrap();
 
-        if let BtfType::FuncProto(fixed) = btf.type_by_id(func_proto_type_id).unwrap() {
-            assert!(btf.string_at(fixed.params[0].name_offset).unwrap() == "param0");
-            assert!(btf.string_at(fixed.params[1].name_offset).unwrap() == "param1");
-        } else {
-            panic!("not a func_proto")
-        }
+        assert_matches!(btf.type_by_id(func_proto_type_id).unwrap(), BtfType::FuncProto(fixed) => {
+            assert_matches!(*fixed.params, [
+                    BtfParam {
+                        name_offset: name_offset1,
+                        btf_type: btf_type1,
+                    },
+                    BtfParam {
+                        name_offset: name_offset2,
+                        btf_type: btf_type2,
+                    },
+                ] => {
+                    assert_eq!(btf.string_at(name_offset1).unwrap(), "param0");
+                    assert_eq!(btf_type1, int_type_id);
+                    assert_eq!(btf.string_at(name_offset2).unwrap(), "param1");
+                    assert_eq!(btf_type2, int_type_id);
+                }
+            );
+        });
+
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
@@ -1497,11 +1501,10 @@ mod tests {
         btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
             .unwrap();
 
-        if let BtfType::Func(fixed) = btf.type_by_id(func_type_id).unwrap() {
-            assert!(fixed.linkage() == FuncLinkage::Static);
-        } else {
-            panic!("not a func")
-        }
+        assert_matches!(btf.type_by_id(func_type_id).unwrap(), BtfType::Func(fixed) => {
+            assert_eq!(fixed.linkage(), FuncLinkage::Static);
+        });
+
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
@@ -1549,11 +1552,9 @@ mod tests {
             btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
                 .unwrap();
 
-            if let BtfType::Func(fixed) = btf.type_by_id(func_type_id).unwrap() {
-                assert!(fixed.linkage() == FuncLinkage::Static);
-            } else {
-                panic!("not a func")
-            }
+            assert_matches!(btf.type_by_id(func_type_id).unwrap(), BtfType::Func(fixed) => {
+                assert_eq!(fixed.linkage(), FuncLinkage::Static);
+            });
 
             // Ensure we can convert to bytes and back again
             let raw = btf.to_bytes();
@@ -1574,12 +1575,11 @@ mod tests {
 
         btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
             .unwrap();
-        if let BtfType::Struct(fixed) = btf.type_by_id(float_type_id).unwrap() {
-            assert!(fixed.name_offset == 0);
-            assert!(fixed.size == 16);
-        } else {
-            panic!("not a struct")
-        }
+        assert_matches!(btf.type_by_id(float_type_id).unwrap(), BtfType::Struct(fixed) => {
+            assert_eq!(fixed.name_offset, 0);
+            assert_eq!(fixed.size, 16);
+        });
+
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
@@ -1614,12 +1614,11 @@ mod tests {
 
         btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
             .unwrap();
-        if let BtfType::Int(fixed) = btf.type_by_id(decl_tag_type_id).unwrap() {
-            assert!(fixed.name_offset == name_offset);
-            assert!(fixed.size == 1);
-        } else {
-            panic!("not an int")
-        }
+        assert_matches!(btf.type_by_id(decl_tag_type_id).unwrap(), BtfType::Int(fixed) => {
+            assert_eq!(fixed.name_offset, name_offset);
+            assert_eq!(fixed.size, 1);
+        });
+
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
@@ -1642,11 +1641,10 @@ mod tests {
 
         btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
             .unwrap();
-        if let BtfType::Const(fixed) = btf.type_by_id(type_tag_type).unwrap() {
-            assert!(fixed.btf_type == int_type_id);
-        } else {
-            panic!("not a const")
-        }
+        assert_matches!(btf.type_by_id(type_tag_type).unwrap(), BtfType::Const(fixed) => {
+            assert_eq!(fixed.btf_type, int_type_id);
+        });
+
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();

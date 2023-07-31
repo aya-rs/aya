@@ -38,6 +38,38 @@ pub(crate) enum Syscall<'a> {
     },
 }
 
+impl std::fmt::Debug for Syscall<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Bpf { cmd, attr: _ } => f
+                .debug_struct("Syscall::Bpf")
+                .field("cmd", cmd)
+                .field("attr", &format_args!("_"))
+                .finish(),
+            Self::PerfEventOpen {
+                attr: _,
+                pid,
+                cpu,
+                group,
+                flags,
+            } => f
+                .debug_struct("Syscall::PerfEventOpen")
+                .field("attr", &format_args!("_"))
+                .field("pid", pid)
+                .field("cpu", cpu)
+                .field("group", group)
+                .field("flags", flags)
+                .finish(),
+            Self::PerfEventIoctl { fd, request, arg } => f
+                .debug_struct("Syscall::PerfEventIoctl")
+                .field("fd", fd)
+                .field("request", request)
+                .field("arg", arg)
+                .finish(),
+        }
+    }
+}
+
 fn syscall(call: Syscall) -> SysResult<c_long> {
     #[cfg(test)]
     return TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });

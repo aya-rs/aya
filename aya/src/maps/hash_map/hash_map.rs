@@ -623,7 +623,7 @@ mod tests {
                     Some(10) => set_next_key(attr, 20),
                     Some(20) => return sys_error(EFAULT),
                     Some(30) => return sys_error(ENOENT),
-                    Some(_) => panic!(),
+                    Some(i) => panic!("invalid key {}", i),
                 };
 
                 Ok(1)

@@ -1771,11 +1771,9 @@ mod tests {
         assert!(obj.maps.get("bar").is_some());
         assert!(obj.maps.get("baz").is_some());
         for map in obj.maps.values() {
-            if let Map::Legacy(m) = map {
+            assert_matches!(map, Map::Legacy(m) => {
                 assert_eq!(&m.def, def);
-            } else {
-                panic!("expected a BTF map")
-            }
+            })
         }
     }
 
@@ -2462,12 +2460,10 @@ mod tests {
         obj.parse_section(map_section).unwrap();
 
         let map = obj.maps.get("map_1").unwrap();
-        if let Map::Btf(m) = map {
+        assert_matches!(map, Map::Btf(m) => {
             assert_eq!(m.def.key_size, 4);
             assert_eq!(m.def.value_size, 8);
             assert_eq!(m.def.max_entries, 1);
-        } else {
-            panic!("expected a BTF map")
-        }
+        });
     }
 }
