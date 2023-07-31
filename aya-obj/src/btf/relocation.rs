@@ -580,7 +580,7 @@ fn match_member<'target>(
         // this won't panic, bounds are checked when local_spec is built in AccessSpec::new
         BtfType::Struct(s) => s.members.get(local_accessor.index).unwrap(),
         BtfType::Union(u) => u.members.get(local_accessor.index).unwrap(),
-        _ => panic!("bug! this should only be called for structs and unions"),
+        local_ty => panic!("unexpected type {:?}", local_ty),
     };
 
     let local_name = &*local_btf.string_at(local_member.name_offset)?;
@@ -1210,8 +1210,10 @@ impl ComputedRelocation {
             FieldRShift64 => {
                 value.value = 64 - bit_size as u64;
             }
-            FieldExists // this is handled at the start of the function
-            | _ => panic!("bug! this should not be reached"),
+            kind @ (FieldExists | TypeIdLocal | TypeIdTarget | TypeExists | TypeSize
+            | EnumVariantExists | EnumVariantValue) => {
+                panic!("unexpected relocation kind {:?}", kind)
+            }
         }
 
         Ok(value)

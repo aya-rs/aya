@@ -331,7 +331,7 @@ mod tests {
     fn fake_mmap(buf: &MMappedBuf) {
         override_syscall(|call| match call {
             Syscall::PerfEventOpen { .. } | Syscall::PerfEventIoctl { .. } => Ok(42),
-            _ => panic!(),
+            call => panic!("unexpected syscall: {:?}", call),
         });
         TEST_MMAP_RET.with(|ret| *ret.borrow_mut() = buf as *const _ as *mut _);
     }

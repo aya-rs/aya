@@ -1327,7 +1327,7 @@ pub(crate) fn types_are_compatible(
                     continue;
                 }
             }
-            _ => panic!("this shouldn't be reached"),
+            local_ty => panic!("unexpected type {:?}", local_ty),
         }
     }
 
@@ -1378,7 +1378,7 @@ pub(crate) fn fields_are_compatible(
                     continue;
                 }
             }
-            _ => panic!("this shouldn't be reached"),
+            local_ty => panic!("unexpected type {:?}", local_ty),
         }
     }
 
@@ -1392,6 +1392,7 @@ fn bytes_of<T>(val: &T) -> &[u8] {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use assert_matches::assert_matches;
 
     #[test]
     fn test_read_btf_type_int() {
@@ -1400,18 +1401,17 @@ mod tests {
             0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x08, 0x00, 0x00, 0x00, 0x40, 0x00,
             0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Int(new)) => {
-                assert_eq!(new.name_offset, 1);
-                assert_eq!(new.size, 8);
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Int(new @ Int {
+            name_offset,
+            info: _,
+            size,
+            data: _,
+        }) => {
+                assert_eq!(name_offset, 1);
+                assert_eq!(size, 8);
                 assert_eq!(new.bits(), 64);
-                let data2 = new.to_bytes();
-                assert_eq!(data, data2);
-            }
-            Ok(t) => panic!("expected int type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
+                assert_eq!(new.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1450,14 +1450,9 @@ mod tests {
         let data: &[u8] = &[
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x06, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Ptr(_)) => {}
-            Ok(t) => panic!("expected ptr type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Ptr(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1467,14 +1462,9 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
             0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Array(_)) => {}
-            Ok(t) => panic!("expected array type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Array(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1484,14 +1474,9 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x00, 0x47, 0x02,
             0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Struct(_)) => {}
-            Ok(t) => panic!("expected struct type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Struct(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1501,14 +1486,9 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x05, 0x04, 0x00, 0x00, 0x00, 0x0d, 0x04,
             0x00, 0x00, 0x68, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Union(_)) => {}
-            Ok(t) => panic!("expected union type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Union(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1518,14 +1498,9 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x06, 0x04, 0x00, 0x00, 0x00, 0xc9, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xcf, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Enum(_)) => {}
-            Ok(t) => panic!("expected enum type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Enum(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1534,14 +1509,9 @@ mod tests {
         let data: &[u8] = &[
             0x0b, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Fwd(_)) => {}
-            Ok(t) => panic!("expected fwd type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Fwd(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1550,14 +1520,9 @@ mod tests {
         let data: &[u8] = &[
             0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x0b, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Typedef(_)) => {}
-            Ok(t) => panic!("expected typedef type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Typedef(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1566,14 +1531,9 @@ mod tests {
         let data: &[u8] = &[
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x24, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Volatile(_)) => {}
-            Ok(t) => panic!("expected volatile type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Volatile(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1582,14 +1542,9 @@ mod tests {
         let data: &[u8] = &[
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x01, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Const(_)) => {}
-            Ok(t) => panic!("expected const type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Const(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1598,14 +1553,9 @@ mod tests {
         let data: &[u8] = &[
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x04, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Restrict(_)) => {}
-            Ok(t) => panic!("expected restrict type gpt {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Restrict(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1614,14 +1564,9 @@ mod tests {
         let data: &[u8] = &[
             0x17, 0x8b, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x0c, 0xf0, 0xe4, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Func(_)) => {}
-            Ok(t) => panic!("expected func type gpt {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Func(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1631,14 +1576,9 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x12, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::FuncProto(_)) => {}
-            Ok(t) => panic!("expected func_proto type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::FuncProto(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1649,14 +1589,9 @@ mod tests {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Var(_)) => {}
-            Ok(t) => panic!("expected var type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        };
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Var(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1666,19 +1601,22 @@ mod tests {
             0xd9, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match &got {
-            Ok(BtfType::DataSec(ty)) => {
-                assert_eq!(0, ty.size);
-                assert_eq!(11, ty.entries[0].btf_type);
-                assert_eq!(0, ty.entries[0].offset);
-                assert_eq!(4, ty.entries[0].size);
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::DataSec(DataSec {
+            name_offset: _,
+            info: _,
+            size,
+            entries,
+         }) => {
+                assert_eq!(size, 0);
+                assert_matches!(*entries, [
+                    DataSecEntry {
+                        btf_type: 11,
+                        offset: 0,
+                        size: 4,
+                    }
+                ]);
             }
-            Ok(t) => panic!("expected datasec type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        );
     }
 
     #[test]
@@ -1687,14 +1625,9 @@ mod tests {
         let data: &[u8] = &[
             0x78, 0xfd, 0x02, 0x00, 0x00, 0x00, 0x00, 0x10, 0x08, 0x00, 0x00, 0x00,
         ];
-        let got = unsafe { BtfType::read(data, endianness) };
-        match got {
-            Ok(BtfType::Float(_)) => {}
-            Ok(t) => panic!("expected float type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
-        let data2 = got.unwrap().to_bytes();
-        assert_eq!(data, data2)
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Float(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 
     #[test]
@@ -1711,14 +1644,17 @@ mod tests {
         ];
         let func_proto = FuncProto::new(params, 2);
         let data = func_proto.to_bytes();
-        let got = unsafe { BtfType::read(&data, Endianness::default()) };
-        match got {
-            Ok(BtfType::FuncProto(fp)) => {
-                assert_eq!(fp.params.len(), 2);
-            }
-            Ok(t) => panic!("expected func proto type, got {t:#?}"),
-            Err(_) => panic!("unexpected error"),
-        }
+        assert_matches!(unsafe { BtfType::read(&data, Endianness::default()) }.unwrap(), BtfType::FuncProto(FuncProto {
+            name_offset: _,
+            info: _,
+            return_type: _,
+            params,
+        }) => {
+            assert_matches!(*params, [
+                _,
+                _,
+            ])
+        });
     }
 
     #[test]
