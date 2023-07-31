@@ -5,7 +5,10 @@ mod perf_event;
 #[cfg(test)]
 mod fake;
 
-use std::{io, mem};
+use std::{
+    io, mem,
+    os::fd::{AsRawFd as _, BorrowedFd},
+};
 
 use libc::{c_int, c_long, pid_t, SYS_bpf, SYS_perf_event_open};
 
@@ -34,7 +37,7 @@ pub(crate) enum Syscall<'a> {
         flags: u32,
     },
     PerfEventIoctl {
-        fd: c_int,
+        fd: BorrowedFd<'a>,
         request: c_int,
         arg: c_int,
     },
@@ -90,7 +93,7 @@ fn syscall(call: Syscall) -> SysResult<c_long> {
                 flags,
             } => libc::syscall(SYS_perf_event_open, &attr, pid, cpu, group, flags),
             Syscall::PerfEventIoctl { fd, request, arg } => {
-                libc::ioctl(fd, request.try_into().unwrap(), arg) as libc::c_long
+                libc::ioctl(fd.as_raw_fd(), request.try_into().unwrap(), arg) as libc::c_long
             }
         }
     } {
