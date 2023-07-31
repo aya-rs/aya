@@ -42,10 +42,9 @@ use std::{
     marker::PhantomData,
     mem,
     ops::Deref,
-    os::fd::{AsFd as _, AsRawFd, IntoRawFd as _, OwnedFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd, BorrowedFd, IntoRawFd as _, OwnedFd, RawFd},
     path::Path,
     ptr,
-    sync::Arc,
 };
 
 use crate::util::KernelVersion;
@@ -482,14 +481,17 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 pub struct MapData {
     pub(crate) obj: obj::Map,
     pub(crate) fd: Option<RawFd>,
-    pub(crate) btf_fd: Option<Arc<OwnedFd>>,
     /// Indicates if this map has been pinned to bpffs
     pub pinned: bool,
 }
 
 impl MapData {
     /// Creates a new map with the provided `name`
-    pub fn create(&mut self, name: &str) -> Result<RawFd, MapError> {
+    pub fn create(
+        &mut self,
+        name: &str,
+        btf_fd: Option<BorrowedFd<'_>>,
+    ) -> Result<RawFd, MapError> {
         if self.fd.is_some() {
             return Err(MapError::AlreadyCreated { name: name.into() });
         }
@@ -500,23 +502,19 @@ impl MapData {
         let kernel_version = KernelVersion::current().unwrap();
         #[cfg(test)]
         let kernel_version = KernelVersion::new(0xff, 0xff, 0xff);
-        let fd = bpf_create_map(
-            &c_name,
-            &self.obj,
-            self.btf_fd.as_ref().map(|f| f.as_fd()),
-            kernel_version,
-        )
-        .map_err(|(code, io_error)| {
-            if kernel_version < KernelVersion::new(5, 11, 0) {
-                maybe_warn_rlimit();
-            }
+        let fd = bpf_create_map(&c_name, &self.obj, btf_fd, kernel_version).map_err(
+            |(code, io_error)| {
+                if kernel_version < KernelVersion::new(5, 11, 0) {
+                    maybe_warn_rlimit();
+                }
 
-            MapError::CreateError {
-                name: name.into(),
-                code,
-                io_error,
-            }
-        })?;
+                MapError::CreateError {
+                    name: name.into(),
+                    code,
+                    io_error,
+                }
+            },
+        )?;
 
         Ok(*self.fd.insert(fd as RawFd))
     }
@@ -561,7 +559,6 @@ impl MapData {
         Ok(MapData {
             obj: parse_map_info(info, PinningType::ByName),
             fd: Some(fd.into_raw_fd()),
-            btf_fd: None,
             pinned: true,
         })
     }
@@ -577,7 +574,6 @@ impl MapData {
         Ok(MapData {
             obj: parse_map_info(info, PinningType::None),
             fd: Some(fd.into_raw_fd()),
-            btf_fd: None,
             pinned: false,
         })
     }
@@ -629,7 +625,6 @@ impl Clone for MapData {
         MapData {
             obj: self.obj.clone(),
             fd: self.fd.map(|fd| unsafe { libc::dup(fd) }),
-            btf_fd: self.btf_fd.as_ref().map(Arc::clone),
             pinned: self.pinned,
         }
     }
@@ -864,7 +859,6 @@ mod tests {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
-            btf_fd: None,
         }
     }
 
@@ -879,9 +873,12 @@ mod tests {
         });
 
         let mut map = new_map();
-        assert_matches!(map.create("foo"), Ok(42));
+        assert_matches!(map.create("foo", None), Ok(42));
         assert_eq!(map.fd, Some(42));
-        assert_matches!(map.create("foo"), Err(MapError::AlreadyCreated { .. }));
+        assert_matches!(
+            map.create("foo", None),
+            Err(MapError::AlreadyCreated { .. })
+        );
     }
 
     #[test]
@@ -889,7 +886,7 @@ mod tests {
         override_syscall(|_| Err((-42, io::Error::from_raw_os_error(EFAULT))));
 
         let mut map = new_map();
-        let ret = map.create("foo");
+        let ret = map.create("foo", None);
         assert_matches!(ret, Err(MapError::CreateError { .. }));
         if let Err(MapError::CreateError {
             name,

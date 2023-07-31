@@ -116,7 +116,6 @@ mod tests {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
-            btf_fd: None,
         };
         assert_matches!(
             BloomFilter::<_, u16>::new(&map),
@@ -145,7 +144,6 @@ mod tests {
             }),
             fd: None,
             pinned: false,
-            btf_fd: None,
         };
 
         let map = Map::PerfEventArray(map_data);
@@ -162,7 +160,6 @@ mod tests {
             obj: new_obj_map(),
             fd: None,
             pinned: false,
-            btf_fd: None,
         };
 
         assert_matches!(
@@ -177,7 +174,6 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
-            btf_fd: None,
         };
 
         assert!(BloomFilter::<_, u32>::new(&mut map).is_ok());
@@ -189,7 +185,6 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
-            btf_fd: None,
         };
 
         let map = Map::BloomFilter(map_data);
@@ -204,7 +199,6 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
-            btf_fd: None,
         };
         let bloom_filter = BloomFilter::<_, u32>::new(&mut map).unwrap();
 
@@ -228,7 +222,6 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
-            btf_fd: None,
         };
 
         let bloom_filter = BloomFilter::<_, u32>::new(&mut map).unwrap();
@@ -242,7 +235,6 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
-            btf_fd: None,
         };
         let bloom_filter = BloomFilter::<_, u32>::new(&map).unwrap();
 
@@ -265,7 +257,6 @@ mod tests {
             obj: new_obj_map(),
             fd: Some(42),
             pinned: false,
-            btf_fd: None,
         };
         let bloom_filter = BloomFilter::<_, u32>::new(&map).unwrap();
 

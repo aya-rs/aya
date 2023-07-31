@@ -4,7 +4,7 @@ use std::{
     ffi::CString,
     fs, io,
     os::{
-        fd::{OwnedFd, RawFd},
+        fd::{AsFd as _, OwnedFd, RawFd},
         raw::c_int,
     },
     path::{Path, PathBuf},
@@ -479,7 +479,6 @@ impl<'a> BpfLoader<'a> {
                 obj,
                 fd: None,
                 pinned: false,
-                btf_fd: btf_fd.as_ref().map(Arc::clone),
             };
             let fd = match map.obj.pinning() {
                 PinningType::ByName => {
@@ -494,7 +493,7 @@ impl<'a> BpfLoader<'a> {
                             fd as RawFd
                         }
                         Err(_) => {
-                            let fd = map.create(&name)?;
+                            let fd = map.create(&name, btf_fd.as_deref().map(|f| f.as_fd()))?;
                             map.pin(&name, path).map_err(|error| MapError::PinError {
                                 name: Some(name.to_string()),
                                 error,
@@ -503,7 +502,7 @@ impl<'a> BpfLoader<'a> {
                         }
                     }
                 }
-                PinningType::None => map.create(&name)?,
+                PinningType::None => map.create(&name, btf_fd.as_deref().map(|f| f.as_fd()))?,
             };
             if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
