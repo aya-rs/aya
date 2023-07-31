@@ -3,9 +3,9 @@ use thiserror::Error;
 
 use libc::{
     close, getsockname, nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl, socket,
-    AF_NETLINK, AF_UNSPEC, ETH_P_ALL, IFLA_XDP, NETLINK_EXT_ACK, NETLINK_ROUTE, NLA_ALIGNTO,
-    NLA_F_NESTED, NLA_TYPE_MASK, NLMSG_DONE, NLMSG_ERROR, NLM_F_ACK, NLM_F_CREATE, NLM_F_DUMP,
-    NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI, NLM_F_REQUEST, RTM_DELTFILTER, RTM_GETTFILTER,
+    AF_NETLINK, AF_UNSPEC, ETH_P_ALL, IFF_UP, IFLA_XDP, NETLINK_EXT_ACK, NETLINK_ROUTE,
+    NLA_ALIGNTO, NLA_F_NESTED, NLA_TYPE_MASK, NLMSG_DONE, NLMSG_ERROR, NLM_F_ACK, NLM_F_CREATE,
+    NLM_F_DUMP, NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI, NLM_F_REQUEST, RTM_DELTFILTER, RTM_GETTFILTER,
     RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK, SOCK_RAW, SOL_NETLINK,
 };
 
@@ -238,6 +238,32 @@ pub(crate) unsafe fn netlink_find_filter_with_name(
     }
 
     Ok(filter_info)
+}
+
+#[doc(hidden)]
+pub unsafe fn netlink_set_link_up(if_index: i32) -> Result<(), io::Error> {
+    let sock = NetlinkSocket::open()?;
+
+    // Safety: Request is POD so this is safe
+    let mut req = mem::zeroed::<Request>();
+
+    let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<ifinfomsg>();
+    req.header = nlmsghdr {
+        nlmsg_len: nlmsg_len as u32,
+        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
+        nlmsg_type: RTM_SETLINK,
+        nlmsg_pid: 0,
+        nlmsg_seq: 1,
+    };
+    req.if_info.ifi_family = AF_UNSPEC as u8;
+    req.if_info.ifi_index = if_index;
+    req.if_info.ifi_flags = IFF_UP as u32;
+    req.if_info.ifi_change = IFF_UP as u32;
+
+    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    sock.recv()?;
+
+    Ok(())
 }
 
 #[repr(C)]

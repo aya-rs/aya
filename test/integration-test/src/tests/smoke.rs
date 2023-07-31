@@ -4,8 +4,12 @@ use aya::{
     Bpf, BpfLoader,
 };
 
+use crate::utils::NetNsGuard;
+
 #[test]
 fn xdp() {
+    let _netns = NetNsGuard::new();
+
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 18, 0) {
         eprintln!("skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb");
@@ -20,6 +24,8 @@ fn xdp() {
 
 #[test]
 fn extension() {
+    let _netns = NetNsGuard::new();
+
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 9, 0) {
         eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
