@@ -123,6 +123,7 @@ pub struct Object {
     pub functions: BTreeMap<(usize, u64), Function>,
     pub(crate) relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
     pub(crate) symbol_table: HashMap<usize, Symbol>,
+    pub(crate) symbols_by_section: HashMap<SectionIndex, Vec<usize>>,
     pub(crate) section_infos: HashMap<String, (SectionIndex, u64)>,
     // symbol_offset_by_name caches symbols that could be referenced from a
     // BTF VAR type so the offsets can be fixed up
@@ -600,7 +601,13 @@ impl Object {
                     kind: symbol.kind(),
                 };
                 bpf_obj.symbol_table.insert(symbol.index().0, sym);
-
+                if let Some(section_idx) = symbol.section().index() {
+                    bpf_obj
+                        .symbols_by_section
+                        .entry(section_idx)
+                        .or_default()
+                        .push(symbol.index().0);
+                }
                 if symbol.is_global() || symbol.kind() == SymbolKind::Data {
                     bpf_obj.symbol_offset_by_name.insert(name, symbol.address());
                 }
@@ -642,6 +649,7 @@ impl Object {
             functions: BTreeMap::new(),
             relocations: HashMap::new(),
             symbol_table: HashMap::new(),
+            symbols_by_section: HashMap::new(),
             section_infos: HashMap::new(),
             symbol_offset_by_name: HashMap::new(),
         }
@@ -711,10 +719,42 @@ impl Object {
         Ok(())
     }
 
-    fn parse_program(&self, section: &Section) -> Result<(Program, Function), ParseError> {
-        let prog_sec = ProgramSection::from_str(section.name)?;
-        let name = prog_sec.name().to_owned();
+    fn parse_programs(&mut self, section: &Section) -> Result<(), ParseError> {
+        let program_section = ProgramSection::from_str(section.name)?;
+        let syms =
+            self.symbols_by_section
+                .get(&section.index)
+                .ok_or(ParseError::NoSymbolsForSection {
+                    section_name: section.name.to_string(),
+                })?;
+        for symbol_index in syms {
+            let symbol = self
+                .symbol_table
+                .get(symbol_index)
+                .expect("all symbols in symbols_by_section are also in symbol_table");
 
+            let Some(name) = symbol.name.as_ref() else {
+                continue;
+            };
+            if name.is_empty() {
+                continue;
+            }
+            let (p, f) =
+                self.parse_program(section, program_section.clone(), name.to_string(), symbol)?;
+            let key = p.function_key();
+            self.programs.insert(f.name.clone(), p);
+            self.functions.insert(key, f);
+        }
+        Ok(())
+    }
+
+    fn parse_program(
+        &self,
+        section: &Section,
+        program_section: ProgramSection,
+        name: String,
+        symbol: &Symbol,
+    ) -> Result<(Program, Function), ParseError> {
         let (func_info, line_info, func_info_rec_size, line_info_rec_size) =
             if let Some(btf_ext) = &self.btf_ext {
                 let func_info = btf_ext.func_info.get(section.name);
@@ -729,12 +769,15 @@ impl Object {
                 (FuncSecInfo::default(), LineSecInfo::default(), 0, 0)
             };
 
+        let start = symbol.address as usize;
+        let end = (symbol.address + symbol.size) as usize;
+
         let function = Function {
-            name,
-            address: section.address,
+            name: name.to_owned(),
+            address: symbol.address,
             section_index: section.index,
-            section_offset: 0,
-            instructions: copy_instructions(section.data)?,
+            section_offset: start,
+            instructions: copy_instructions(&section.data[start..end])?,
             func_info,
             line_info,
             func_info_rec_size,
@@ -745,9 +788,9 @@ impl Object {
             Program {
                 license: self.license.clone(),
                 kernel_version: self.kernel_version,
-                section: prog_sec,
-                section_index: function.section_index.0,
-                address: function.address,
+                section: program_section.clone(),
+                section_index: section.index.0,
+                address: symbol.address,
             },
             function,
         ))
@@ -845,15 +888,23 @@ impl Object {
         Ok(())
     }
 
-    fn parse_btf_maps(
-        &mut self,
-        section: &Section,
-        symbols: HashMap<String, Symbol>,
-    ) -> Result<(), ParseError> {
+    fn parse_btf_maps(&mut self, section: &Section) -> Result<(), ParseError> {
         if self.btf.is_none() {
             return Err(ParseError::NoBTF);
         }
         let btf = self.btf.as_ref().unwrap();
+        let maps: HashMap<&String, usize> = self
+            .symbols_by_section
+            .get(&section.index)
+            .ok_or(ParseError::NoSymbolsForSection {
+                section_name: section.name.to_owned(),
+            })?
+            .iter()
+            .filter_map(|s| {
+                let symbol = self.symbol_table.get(s).unwrap();
+                symbol.name.as_ref().map(|name| (name, symbol.index))
+            })
+            .collect();
 
         for t in btf.types() {
             if let BtfType::DataSec(datasec) = &t {
@@ -865,18 +916,17 @@ impl Object {
                     // each btf_var_secinfo contains a map
                     for info in &datasec.entries {
                         let (map_name, def) = parse_btf_map_def(btf, info)?;
-                        let symbol_index = symbols
-                            .get(&map_name)
-                            .ok_or_else(|| ParseError::SymbolNotFound {
-                                name: map_name.to_string(),
-                            })?
-                            .index;
+                        let symbol_index =
+                            maps.get(&map_name)
+                                .ok_or_else(|| ParseError::SymbolNotFound {
+                                    name: map_name.to_string(),
+                                })?;
                         self.maps.insert(
                             map_name,
                             Map::Btf(BtfMap {
                                 def,
                                 section_index: section.index.0,
-                                symbol_index,
+                                symbol_index: *symbol_index,
                                 data: Vec::new(),
                             }),
                         );
@@ -884,6 +934,50 @@ impl Object {
                 }
             }
         }
+        Ok(())
+    }
+
+    // Parses multiple map definition contained in a single `maps` section (which is
+    // different from `.maps` which is used for BTF). We can tell where each map is
+    // based on the symbol table.
+    fn parse_maps_section<'a, I: Iterator<Item = &'a usize>>(
+        &self,
+        maps: &mut HashMap<String, Map>,
+        section: &Section,
+        symbols: I,
+    ) -> Result<(), ParseError> {
+        let mut have_symbols = false;
+        // each symbol in the section is a separate map
+        for i in symbols {
+            let sym = self.symbol_table.get(i).ok_or(ParseError::SymbolNotFound {
+                name: i.to_string(),
+            })?;
+            let start = sym.address as usize;
+            let end = start + sym.size as usize;
+            let data = &section.data[start..end];
+            let name = sym
+                .name
+                .as_ref()
+                .ok_or(ParseError::MapSymbolNameNotFound { i: *i })?;
+            let def = parse_map_def(name, data)?;
+            maps.insert(
+                name.to_string(),
+                Map::Legacy(LegacyMap {
+                    section_index: section.index.0,
+                    section_kind: section.kind,
+                    symbol_index: Some(sym.index),
+                    def,
+                    data: Vec::new(),
+                }),
+            );
+            have_symbols = true;
+        }
+        if !have_symbols {
+            return Err(ParseError::NoSymbolsForSection {
+                section_name: section.name.to_owned(),
+            });
+        }
+
         Ok(())
     }
 
@@ -898,22 +992,7 @@ impl Object {
             BpfSectionKind::Text => self.parse_text_section(section)?,
             BpfSectionKind::Btf => self.parse_btf(&section)?,
             BpfSectionKind::BtfExt => self.parse_btf_ext(&section)?,
-            BpfSectionKind::BtfMaps => {
-                let symbols: HashMap<String, Symbol> = self
-                    .symbol_table
-                    .values()
-                    .filter(|s| {
-                        if let Some(idx) = s.section_index {
-                            idx == section.index.0 && s.name.is_some()
-                        } else {
-                            false
-                        }
-                    })
-                    .cloned()
-                    .map(|s| (s.name.as_ref().unwrap().to_string(), s))
-                    .collect();
-                self.parse_btf_maps(&section, symbols)?
-            }
+            BpfSectionKind::BtfMaps => self.parse_btf_maps(&section)?,
             BpfSectionKind::Maps => {
                 // take out self.maps so we can borrow the iterator below
                 // without cloning or collecting
@@ -921,13 +1000,15 @@ impl Object {
 
                 // extract the symbols for the .maps section, we'll need them
                 // during parsing
-                let symbols = self.symbol_table.values().filter(|s| {
-                    s.section_index
-                        .map(|idx| idx == section.index.0)
-                        .unwrap_or(false)
-                });
+                let symbols = self
+                    .symbols_by_section
+                    .get(&section.index)
+                    .ok_or(ParseError::NoSymbolsForSection {
+                        section_name: section.name.to_owned(),
+                    })?
+                    .iter();
 
-                let res = parse_maps_section(&mut maps, &section, symbols);
+                let res = self.parse_maps_section(&mut maps, &section, symbols);
 
                 // put the maps back
                 self.maps = maps;
@@ -935,10 +1016,7 @@ impl Object {
                 res?
             }
             BpfSectionKind::Program => {
-                let (program, function) = self.parse_program(&section)?;
-                self.functions.insert(program.function_key(), function);
-                self.programs
-                    .insert(program.section.name().to_owned(), program);
+                self.parse_programs(&section)?;
                 if !section.relocations.is_empty() {
                     self.relocations.insert(
                         section.index,
@@ -1001,45 +1079,6 @@ impl Function {
             }
         }
     }
-}
-
-// Parses multiple map definition contained in a single `maps` section (which is
-// different from `.maps` which is used for BTF). We can tell where each map is
-// based on the symbol table.
-fn parse_maps_section<'a, I: Iterator<Item = &'a Symbol>>(
-    maps: &mut HashMap<String, Map>,
-    section: &Section,
-    symbols: I,
-) -> Result<(), ParseError> {
-    let mut have_symbols = false;
-
-    // each symbol in the section is a  separate map
-    for (i, sym) in symbols.enumerate() {
-        let start = sym.address as usize;
-        let end = start + sym.size as usize;
-        let data = &section.data[start..end];
-        let name = sym
-            .name
-            .as_ref()
-            .ok_or(ParseError::MapSymbolNameNotFound { i })?;
-        let def = parse_map_def(name, data)?;
-        maps.insert(
-            name.to_string(),
-            Map::Legacy(LegacyMap {
-                section_index: section.index.0,
-                section_kind: section.kind,
-                symbol_index: Some(sym.index),
-                def,
-                data: Vec::new(),
-            }),
-        );
-        have_symbols = true;
-    }
-    if !have_symbols {
-        return Err(ParseError::NoSymbolsForMapsSection);
-    }
-
-    Ok(())
 }
 
 /// Errors caught during parsing the object file
@@ -1105,8 +1144,8 @@ pub enum ParseError {
     #[error("the map number {i} in the `maps` section doesn't have a symbol name")]
     MapSymbolNameNotFound { i: usize },
 
-    #[error("no symbols for `maps` section, can't parse maps")]
-    NoSymbolsForMapsSection,
+    #[error("no symbols found in the {section_name} section")]
+    NoSymbolsForSection { section_name: String },
 
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
@@ -1480,9 +1519,17 @@ mod tests {
     use super::*;
     use crate::maps::PinningType;
 
-    fn fake_section<'a>(kind: BpfSectionKind, name: &'a str, data: &'a [u8]) -> Section<'a> {
+    const FAKE_INS_LEN: u64 = 8;
+
+    fn fake_section<'a>(
+        kind: BpfSectionKind,
+        name: &'a str,
+        data: &'a [u8],
+        index: Option<usize>,
+    ) -> Section<'a> {
+        let idx = index.unwrap_or(0);
         Section {
-            index: SectionIndex(0),
+            index: SectionIndex(idx),
             kind,
             address: 0,
             name,
@@ -1513,9 +1560,13 @@ mod tests {
                 address,
                 size,
                 is_definition: false,
-                kind: SymbolKind::Data,
+                kind: SymbolKind::Text,
             },
         );
+        obj.symbols_by_section
+            .entry(SectionIndex(section_index))
+            .or_default()
+            .push(idx + 1);
     }
 
     fn bytes_of<T>(val: &T) -> &[u8] {
@@ -1637,6 +1688,7 @@ mod tests {
                     BpfSectionKind::Data,
                     ".bss",
                     map_data,
+                    None,
                 ),
             ),
             Ok(Map::Legacy(LegacyMap {
@@ -1670,6 +1722,7 @@ mod tests {
             &[
                 159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
             ],
+            None,
         ))
         .unwrap();
         obj.parse_section(fake_section(
@@ -1679,6 +1732,7 @@ mod tests {
                 159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 8, 0,
                 0, 0, 16, 0, 0, 0,
             ],
+            None,
         ))
         .unwrap();
 
@@ -1688,36 +1742,54 @@ mod tests {
 
     #[test]
     fn test_parse_program_error() {
-        let obj = fake_obj();
-
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", 1);
         assert_matches!(
-            obj.parse_program(&fake_section(
+            obj.parse_programs(&fake_section(
                 BpfSectionKind::Program,
                 "kprobe/foo",
                 &42u32.to_ne_bytes(),
-            )),
+                None,
+            ),),
             Err(ParseError::InvalidProgramCode)
         );
     }
 
     #[test]
     fn test_parse_program() {
-        let obj = fake_obj();
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        obj.parse_programs(&fake_section(
+            BpfSectionKind::Program,
+            "kprobe/foo",
+            bytes_of(&fake_ins()),
+            None,
+        ))
+        .unwrap();
+
+        let prog_foo = obj.programs.get("foo").unwrap();
 
         assert_matches!(
-            obj.parse_program(&fake_section(BpfSectionKind::Program,"kprobe/foo", bytes_of(&fake_ins()))),
-            Ok((Program {
+            prog_foo,
+            Program {
                 license,
                 kernel_version: None,
                 section: ProgramSection::KProbe { .. },
-                .. }, Function {
-                    name,
-                    address: 0,
-                    section_index: SectionIndex(0),
-                    section_offset: 0,
-                    instructions,
-                    ..})) if license.to_string_lossy() == "GPL" && name == "foo" && instructions.len() == 1
+                ..
+            } if license.to_str().unwrap() == "GPL"
         );
+
+        assert_matches!(
+            obj.functions.get(&prog_foo.function_key()),
+            Some(Function {
+                name,
+                address: 0,
+                section_index: SectionIndex(0),
+                section_offset: 0,
+                instructions,
+            ..}) if name == "foo" && instructions.len() == 1
+        )
     }
 
     #[test]
@@ -1735,11 +1807,70 @@ mod tests {
                     max_entries: 4,
                     map_flags: 5,
                     ..Default::default()
-                })
+                }),
+                None,
             )),
             Ok(())
         );
         assert!(obj.maps.get("foo").is_some());
+    }
+
+    #[test]
+    fn test_parse_multiple_program_in_same_section() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+        fake_sym(&mut obj, 0, FAKE_INS_LEN, "bar", FAKE_INS_LEN);
+
+        let insns = [fake_ins(), fake_ins()];
+        let data = bytes_of(&insns);
+
+        obj.parse_programs(&fake_section(BpfSectionKind::Program, "kprobe", data, None))
+            .unwrap();
+
+        let prog_foo = obj.programs.get("foo").unwrap();
+        let function_foo = obj.functions.get(&prog_foo.function_key()).unwrap();
+        let prog_bar = obj.programs.get("bar").unwrap();
+        let function_bar = obj.functions.get(&prog_bar.function_key()).unwrap();
+
+        assert_matches!(prog_foo,
+            Program {
+                license,
+                kernel_version: None,
+                section: ProgramSection::KProbe { .. },
+                ..
+            } if license.to_string_lossy() == "GPL"
+        );
+        assert_matches!(
+            function_foo,
+            Function {
+                name,
+                address: 0,
+                section_index: SectionIndex(0),
+                section_offset: 0,
+                instructions,
+                ..
+            }  if name == "foo" && instructions.len() == 1
+        );
+
+        assert_matches!(prog_bar,
+            Program {
+                license,
+                kernel_version: None,
+                section: ProgramSection::KProbe { .. },
+                ..
+            } if license.to_string_lossy() == "GPL"
+        );
+        assert_matches!(
+            function_bar,
+            Function {
+                name,
+                address: 8,
+                section_index: SectionIndex(0),
+                section_offset: 8,
+                instructions,
+                ..
+            }  if name == "bar" && instructions.len() == 1
+        );
     }
 
     #[test]
@@ -1764,7 +1895,12 @@ mod tests {
         buf.extend([0, 0, 0, 0]);
         buf.extend(&map_data);
         assert_matches!(
-            obj.parse_section(fake_section(BpfSectionKind::Maps, "maps", buf.as_slice(),)),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Maps,
+                "maps",
+                buf.as_slice(),
+                None
+            )),
             Ok(())
         );
         assert!(obj.maps.get("foo").is_some());
@@ -1781,13 +1917,23 @@ mod tests {
     fn test_parse_section_data() {
         let mut obj = fake_obj();
         assert_matches!(
-            obj.parse_section(fake_section(BpfSectionKind::Data, ".bss", b"map data")),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Data,
+                ".bss",
+                b"map data",
+                None
+            )),
             Ok(())
         );
         assert!(obj.maps.get(".bss").is_some());
 
         assert_matches!(
-            obj.parse_section(fake_section(BpfSectionKind::Data, ".rodata", b"map data")),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Data,
+                ".rodata",
+                b"map data",
+                None
+            )),
             Ok(())
         );
         assert!(obj.maps.get(".rodata").is_some());
@@ -1796,20 +1942,31 @@ mod tests {
             obj.parse_section(fake_section(
                 BpfSectionKind::Data,
                 ".rodata.boo",
-                b"map data"
+                b"map data",
+                None
             )),
             Ok(())
         );
         assert!(obj.maps.get(".rodata.boo").is_some());
 
         assert_matches!(
-            obj.parse_section(fake_section(BpfSectionKind::Data, ".data", b"map data")),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Data,
+                ".data",
+                b"map data",
+                None
+            )),
             Ok(())
         );
         assert!(obj.maps.get(".data").is_some());
 
         assert_matches!(
-            obj.parse_section(fake_section(BpfSectionKind::Data, ".data.boo", b"map data")),
+            obj.parse_section(fake_section(
+                BpfSectionKind::Data,
+                ".data.boo",
+                b"map data",
+                None
+            )),
             Ok(())
         );
         assert!(obj.maps.get(".data.boo").is_some());
@@ -1818,12 +1975,14 @@ mod tests {
     #[test]
     fn test_parse_section_kprobe() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "kprobe/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -1839,12 +1998,14 @@ mod tests {
     #[test]
     fn test_parse_section_uprobe() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "uprobe/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -1860,12 +2021,15 @@ mod tests {
     #[test]
     fn test_parse_section_trace_point() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+        fake_sym(&mut obj, 1, 0, "bar", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "tracepoint/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -1881,12 +2045,13 @@ mod tests {
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "tp/foo/bar",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                Some(1),
             )),
             Ok(())
         );
         assert_matches!(
-            obj.programs.get("foo/bar"),
+            obj.programs.get("bar"),
             Some(Program {
                 section: ProgramSection::TracePoint { .. },
                 ..
@@ -1897,12 +2062,14 @@ mod tests {
     #[test]
     fn test_parse_section_socket_filter() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "socket/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -1918,12 +2085,14 @@ mod tests {
     #[test]
     fn test_parse_section_xdp() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "xdp/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -1939,12 +2108,14 @@ mod tests {
     #[test]
     fn test_parse_section_xdp_frags() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "xdp.frags/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -1960,12 +2131,15 @@ mod tests {
     #[test]
     fn test_parse_section_raw_tp() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+        fake_sym(&mut obj, 1, 0, "bar", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "raw_tp/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -1981,7 +2155,8 @@ mod tests {
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "raw_tracepoint/bar",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                Some(1)
             )),
             Ok(())
         );
@@ -1997,12 +2172,14 @@ mod tests {
     #[test]
     fn test_parse_section_lsm() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "lsm/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2021,12 +2198,14 @@ mod tests {
     #[test]
     fn test_parse_section_lsm_sleepable() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "lsm.s/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2045,12 +2224,14 @@ mod tests {
     #[test]
     fn test_parse_section_btf_tracepoint() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "tp_btf/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2066,12 +2247,14 @@ mod tests {
     #[test]
     fn test_parse_section_skskb_unnamed() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "stream_parser", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "sk_skb/stream_parser",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2087,12 +2270,14 @@ mod tests {
     #[test]
     fn test_parse_section_skskb_named() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "my_parser", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "sk_skb/stream_parser/my_parser",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2108,12 +2293,14 @@ mod tests {
     #[test]
     fn test_parse_section_fentry() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "fentry/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2129,12 +2316,14 @@ mod tests {
     #[test]
     fn test_parse_section_fexit() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "fexit/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2150,12 +2339,14 @@ mod tests {
     #[test]
     fn test_parse_section_cgroup_skb_ingress_unnamed() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "ingress", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "cgroup_skb/ingress",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2171,12 +2362,14 @@ mod tests {
     #[test]
     fn test_parse_section_cgroup_skb_ingress_named() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "cgroup_skb/ingress/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2192,12 +2385,14 @@ mod tests {
     #[test]
     fn test_parse_section_cgroup_skb_no_direction_unamed() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "skb", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "cgroup/skb",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2213,12 +2408,14 @@ mod tests {
     #[test]
     fn test_parse_section_cgroup_skb_no_direction_named() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "cgroup/skb/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2234,12 +2431,14 @@ mod tests {
     #[test]
     fn test_parse_section_sock_addr_named() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "cgroup/connect4/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2258,12 +2457,14 @@ mod tests {
     #[test]
     fn test_parse_section_sock_addr_unnamed() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "connect4", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "cgroup/connect4",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2282,12 +2483,14 @@ mod tests {
     #[test]
     fn test_parse_section_sockopt_named() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "cgroup/getsockopt/foo",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2306,12 +2509,14 @@ mod tests {
     #[test]
     fn test_parse_section_sockopt_unnamed() {
         let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "getsockopt", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
                 "cgroup/getsockopt",
-                bytes_of(&fake_ins())
+                bytes_of(&fake_ins()),
+                None
             )),
             Ok(())
         );
@@ -2453,10 +2658,10 @@ mod tests {
             0x2E, 0x6D, 0x61, 0x70, 0x73, 0x00, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x00,
         ];
 
-        let btf_section = fake_section(BpfSectionKind::Btf, ".BTF", data);
+        let btf_section = fake_section(BpfSectionKind::Btf, ".BTF", data, None);
         obj.parse_section(btf_section).unwrap();
 
-        let map_section = fake_section(BpfSectionKind::BtfMaps, ".maps", &[]);
+        let map_section = fake_section(BpfSectionKind::BtfMaps, ".maps", &[], None);
         obj.parse_section(map_section).unwrap();
 
         let map = obj.maps.get("map_1").unwrap();

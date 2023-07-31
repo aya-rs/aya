@@ -76,6 +76,7 @@ num_enum = { version = "0.6", default-features = false }
 object = { version = "0.31", default-features = false }
 parking_lot = { version = "0.12.0", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
+proc-macro-error = { version = "1.0", default-features = false }
 public-api = { version = "0.31.2", default-features = false }
 quote = { version = "1", default-features = false }
 rbpf = { version = "0.2.0", default-features = false }

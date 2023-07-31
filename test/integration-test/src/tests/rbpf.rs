@@ -1,6 +1,7 @@
 use core::{mem::size_of, ptr::null_mut, slice::from_raw_parts};
 use std::collections::HashMap;
 
+use assert_matches::assert_matches;
 use aya_obj::{generated::bpf_insn, Object, ProgramSection};
 
 #[test]
@@ -8,8 +9,8 @@ fn run_with_rbpf() {
     let object = Object::parse(crate::PASS).unwrap();
 
     assert_eq!(object.programs.len(), 1);
-    assert_matches::assert_matches!(object.programs["pass"].section, ProgramSection::Xdp { .. });
-    assert_eq!(object.programs["pass"].section.name(), "pass");
+    assert_matches!(object.programs["pass"].section, ProgramSection::Xdp { .. });
+    assert_eq!(object.programs["pass"].section.name(), "xdp.frags");
 
     let instructions = &object
         .functions
@@ -35,11 +36,11 @@ fn use_map_with_rbpf() {
     let mut object = Object::parse(crate::MULTIMAP_BTF).unwrap();
 
     assert_eq!(object.programs.len(), 1);
-    assert_matches::assert_matches!(
-        object.programs["tracepoint"].section,
+    assert_matches!(
+        object.programs["bpf_prog"].section,
         ProgramSection::TracePoint { .. }
     );
-    assert_eq!(object.programs["tracepoint"].section.name(), "tracepoint");
+    assert_eq!(object.programs["bpf_prog"].section.name(), "tracepoint");
 
     // Initialize maps:
     // - fd: 0xCAFE00 or 0xCAFE01 (the 0xCAFE00 part is used to distinguish fds from indices),
@@ -83,7 +84,7 @@ fn use_map_with_rbpf() {
     assert_eq!(object.programs.len(), 1);
     let instructions = &object
         .functions
-        .get(&object.programs["tracepoint"].function_key())
+        .get(&object.programs["bpf_prog"].function_key())
         .unwrap()
         .instructions;
     let data = unsafe {

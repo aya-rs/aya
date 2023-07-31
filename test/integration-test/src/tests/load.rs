@@ -36,7 +36,7 @@ fn multiple_btf_maps() {
     let map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
     let map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into().unwrap();
 
-    let prog: &mut TracePoint = bpf.program_mut("tracepoint").unwrap().try_into().unwrap();
+    let prog: &mut TracePoint = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach("sched", "sched_switch").unwrap();
 
@@ -110,26 +110,26 @@ macro_rules! assert_loaded {
 #[test]
 fn unload_xdp() {
     let mut bpf = Bpf::load(crate::TEST).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("test_xdp").unwrap().try_into().unwrap();
+    let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    assert_loaded!("test_xdp", true);
+    assert_loaded!("pass", true);
     let link = prog.attach("lo", XdpFlags::default()).unwrap();
     {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
-        assert_loaded_and_linked!("test_xdp", true);
+        assert_loaded_and_linked!("pass", true);
     };
 
-    assert_loaded!("test_xdp", false);
+    assert_loaded!("pass", false);
     prog.load().unwrap();
 
-    assert_loaded!("test_xdp", true);
+    assert_loaded!("pass", true);
     prog.attach("lo", XdpFlags::default()).unwrap();
 
-    assert_loaded!("test_xdp", true);
+    assert_loaded!("pass", true);
     prog.unload().unwrap();
 
-    assert_loaded!("test_xdp", false);
+    assert_loaded!("pass", false);
 }
 
 #[test]
@@ -224,26 +224,26 @@ fn pin_link() {
     }
 
     let mut bpf = Bpf::load(crate::TEST).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("test_xdp").unwrap().try_into().unwrap();
+    let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     prog.load().unwrap();
     let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
     let link = prog.take_link(link_id).unwrap();
-    assert_loaded!("test_xdp", true);
+    assert_loaded!("pass", true);
 
     let fd_link: FdLink = link.try_into().unwrap();
     let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
 
     // because of the pin, the program is still attached
     prog.unload().unwrap();
-    assert_loaded!("test_xdp", true);
+    assert_loaded!("pass", true);
 
     // delete the pin, but the program is still attached
     let new_link = pinned.unpin().unwrap();
-    assert_loaded!("test_xdp", true);
+    assert_loaded!("pass", true);
 
     // finally when new_link is dropped we're detached
     drop(new_link);
-    assert_loaded!("test_xdp", false);
+    assert_loaded!("pass", false);
 }
 
 #[test]

@@ -1,5 +1,5 @@
 use aya::{
-    programs::{Extension, Xdp, XdpFlags},
+    programs::{Extension, TracePoint, Xdp, XdpFlags},
     util::KernelVersion,
     Bpf, BpfLoader,
 };
@@ -23,6 +23,28 @@ fn xdp() {
 }
 
 #[test]
+fn two_progs() {
+    let mut bpf = Bpf::load(crate::TWO_PROGS).unwrap();
+
+    let prog_one: &mut TracePoint = bpf
+        .program_mut("test_tracepoint_one")
+        .unwrap()
+        .try_into()
+        .unwrap();
+
+    prog_one.load().unwrap();
+    prog_one.attach("sched", "sched_switch").unwrap();
+
+    let prog_two: &mut TracePoint = bpf
+        .program_mut("test_tracepoint_two")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog_two.load().unwrap();
+    prog_two.attach("sched", "sched_switch").unwrap();
+}
+
+#[test]
 fn extension() {
     let _netns = NetNsGuard::new();
 
@@ -32,11 +54,14 @@ fn extension() {
         return;
     }
     let mut bpf = Bpf::load(crate::MAIN).unwrap();
-    let pass: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    let pass: &mut Xdp = bpf.program_mut("xdp_pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
     pass.attach("lo", XdpFlags::default()).unwrap();
 
-    let mut bpf = BpfLoader::new().extension("drop").load(crate::EXT).unwrap();
-    let drop_: &mut Extension = bpf.program_mut("drop").unwrap().try_into().unwrap();
+    let mut bpf = BpfLoader::new()
+        .extension("xdp_drop")
+        .load(crate::EXT)
+        .unwrap();
+    let drop_: &mut Extension = bpf.program_mut("xdp_drop").unwrap().try_into().unwrap();
     drop_.load(pass.fd().unwrap(), "xdp_pass").unwrap();
 }
