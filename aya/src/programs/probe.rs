@@ -3,6 +3,7 @@ use libc::pid_t;
 use std::{
     fs::{self, OpenOptions},
     io::{self, Write},
+    os::fd::OwnedFd,
     path::Path,
     process,
     sync::atomic::{AtomicUsize, Ordering},
@@ -86,7 +87,7 @@ fn create_as_probe(
     fn_name: &str,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<i32, ProgramError> {
+) -> Result<OwnedFd, ProgramError> {
     use ProbeKind::*;
 
     let perf_ty = match kind {
@@ -108,14 +109,12 @@ fn create_as_probe(
         _ => None,
     };
 
-    let fd = perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid).map_err(
-        |(_code, io_error)| ProgramError::SyscallError {
+    perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid).map_err(|(_code, io_error)| {
+        ProgramError::SyscallError {
             call: "perf_event_open",
             io_error,
-        },
-    )? as i32;
-
-    Ok(fd)
+        }
+    })
 }
 
 fn create_as_trace_point(
@@ -123,7 +122,7 @@ fn create_as_trace_point(
     name: &str,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<(i32, String), ProgramError> {
+) -> Result<(OwnedFd, String), ProgramError> {
     use ProbeKind::*;
 
     let tracefs = find_tracefs_path()?;
@@ -142,7 +141,7 @@ fn create_as_trace_point(
             call: "perf_event_open",
             io_error,
         }
-    })? as i32;
+    })?;
 
     Ok((fd, event_alias))
 }

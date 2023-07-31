@@ -168,7 +168,7 @@ impl PerfEvent {
         .map_err(|(_code, io_error)| ProgramError::SyscallError {
             call: "perf_event_open",
             io_error,
-        })? as i32;
+        })?;
 
         let link = perf_attach(self.data.fd_or_err()?, fd)?;
         self.data.links.insert(PerfEventLink::new(link))

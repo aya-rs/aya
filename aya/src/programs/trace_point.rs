@@ -82,10 +82,10 @@ impl TracePoint {
         let id = read_sys_fs_trace_point_id(tracefs, category, name)?;
         let fd = perf_event_open_trace_point(id, None).map_err(|(_code, io_error)| {
             ProgramError::SyscallError {
-                call: "perf_event_open",
+                call: "perf_event_open_trace_point",
                 io_error,
             }
-        })? as i32;
+        })?;
 
         let link = perf_attach(self.data.fd_or_err()?, fd)?;
         self.data.links.insert(TracePointLink::new(link))

@@ -1,13 +1,13 @@
 use std::{
     ffi::c_void,
     io, mem,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd},
     ptr, slice,
     sync::atomic::{self, AtomicPtr, Ordering},
 };
 
 use bytes::BytesMut;
-use libc::{c_int, close, munmap, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
+use libc::{c_int, munmap, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
 use crate::{
@@ -15,7 +15,7 @@ use crate::{
         perf_event_header, perf_event_mmap_page,
         perf_event_type::{PERF_RECORD_LOST, PERF_RECORD_SAMPLE},
     },
-    sys::{perf_event_ioctl, perf_event_open_bpf},
+    sys::{perf_event_ioctl, perf_event_open_bpf, SysResult},
     PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
 
@@ -88,7 +88,7 @@ pub(crate) struct PerfBuffer {
     buf: AtomicPtr<perf_event_mmap_page>,
     size: usize,
     page_size: usize,
-    fd: RawFd,
+    fd: OwnedFd,
 }
 
 impl PerfBuffer {
@@ -102,8 +102,7 @@ impl PerfBuffer {
         }
 
         let fd = perf_event_open_bpf(cpu_id as i32)
-            .map_err(|(_, io_error)| PerfBufferError::OpenError { io_error })?
-            as RawFd;
+            .map_err(|(_, io_error)| PerfBufferError::OpenError { io_error })?;
         let size = page_size * page_count;
         let buf = unsafe {
             mmap(
@@ -111,7 +110,7 @@ impl PerfBuffer {
                 size + page_size,
                 PROT_READ | PROT_WRITE,
                 MAP_SHARED,
-                fd,
+                fd.as_fd(),
                 0,
             )
         };
@@ -128,7 +127,7 @@ impl PerfBuffer {
             page_size,
         };
 
-        perf_event_ioctl(fd, PERF_EVENT_IOC_ENABLE, 0)
+        perf_event_ioctl(perf_buf.fd.as_fd(), PERF_EVENT_IOC_ENABLE, 0)
             .map_err(|(_, io_error)| PerfBufferError::PerfEventEnableError { io_error })?;
 
         Ok(perf_buf)
@@ -261,19 +260,24 @@ impl PerfBuffer {
 
 impl AsRawFd for PerfBuffer {
     fn as_raw_fd(&self) -> RawFd {
-        self.fd
+        self.fd.as_raw_fd()
+    }
+}
+
+impl AsFd for PerfBuffer {
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        self.fd.as_fd()
     }
 }
 
 impl Drop for PerfBuffer {
     fn drop(&mut self) {
         unsafe {
-            let _ = perf_event_ioctl(self.fd, PERF_EVENT_IOC_DISABLE, 0);
+            let _: SysResult<_> = perf_event_ioctl(self.fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
             munmap(
                 self.buf.load(Ordering::SeqCst) as *mut c_void,
                 self.size + self.page_size,
             );
-            close(self.fd);
         }
     }
 }
@@ -284,11 +288,11 @@ unsafe fn mmap(
     len: usize,
     prot: c_int,
     flags: c_int,
-    fd: i32,
+    fd: BorrowedFd<'_>,
     offset: libc::off_t,
 ) -> *mut c_void {
     #[cfg(not(test))]
-    return libc::mmap(addr, len, prot, flags, fd, offset);
+    return libc::mmap(addr, len, prot, flags, fd.as_raw_fd(), offset);
 
     #[cfg(test)]
     use crate::sys::TEST_MMAP_RET;
