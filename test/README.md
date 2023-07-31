@@ -33,7 +33,9 @@ cargo xtask integration-test
 ### Virtualized
 
 ```
-./test/run.sh
+mkdir -p integration-test-binaries
+cargo xtask build-integration-test | xargs -I % cp % integration-test-binaries
+./test/run.sh integration-test-binaries
 ```
 
 ### Writing an integration test

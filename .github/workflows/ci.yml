@@ -43,6 +43,7 @@ jobs:
 
       - name: Run miri
         run: |
+          set -euxo pipefail
           cargo hack miri test --all-targets --feature-powerset \
             --exclude aya-bpf \
             --exclude aya-bpf-bindings \
@@ -79,6 +80,7 @@ jobs:
 
       - name: Build
         run: |
+          set -euxo pipefail
           cargo hack build --all-targets --feature-powerset \
             --exclude aya-bpf \
             --exclude aya-bpf-bindings \
@@ -90,6 +92,7 @@ jobs:
         env:
           RUST_BACKTRACE: full
         run: |
+          set -euxo pipefail
           cargo hack test --all-targets --feature-powerset \
             --exclude aya-bpf \
             --exclude aya-bpf-bindings \
@@ -122,7 +125,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Prereqs
+      - name: bpf-linker
         run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git
 
       - uses: taiki-e/install-action@cargo-hack
@@ -130,21 +133,44 @@ jobs:
         env:
           CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.arch }}
         run: |
+          set -euxo pipefail
           cargo hack build --package aya-bpf --package aya-log-ebpf \
             --feature-powerset \
             --target ${{ matrix.target }} \
             -Z build-std=core
 
+  build-integration-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: rust-src
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: bpf-linker
+        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git
+
+      - name: Build
+        run: |
+          set -euxo pipefail
+          mkdir -p integration-test-binaries
+          # See https://doc.rust-lang.org/cargo/reference/profiles.html for the
+          # names of the builtin profiles. Note that dev builds "debug" targets.
+          cargo xtask build-integration-test --cargo-args=--profile=dev | xargs -I % cp % integration-test-binaries/dev
+          cargo xtask build-integration-test --cargo-args=--profile=release | xargs -I % cp % integration-test-binaries/release
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: integration-test-binaries
+          path: integration-test-binaries
+
   integration-test:
     runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        # See https://doc.rust-lang.org/cargo/reference/profiles.html for the names
-        # of the builtin profiles. Note that dev builds "debug" targets.
-        profile:
-          - release
-          - dev
+    needs: build-integration-test
     steps:
       - uses: actions/checkout@v3
         with:
@@ -166,8 +192,13 @@ jobs:
           # bpf-linker version.
           key: tmp-files-${{ hashFiles('test/run.sh') }}
 
+      - uses: actions/download-artifact@v3
+        with:
+          name: integration-test-binaries
+          path: integration-test-binaries
+
       - name: Run integration tests
-        run: test/run.sh --cargo-arg=--profile=${{ matrix.profile }}
+        run: test/run.sh integration-test-binaries
 
   # Provides a single status check for the entire build workflow.
   # This is used for merge automation, like Mergify, since GH actions
