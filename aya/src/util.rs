@@ -14,8 +14,8 @@ use crate::{
     Pod,
 };
 
-use libc::{if_nametoindex, sysconf, uname, utsname, _SC_PAGESIZE};
 use crate::maps::stack_trace::SimpleSymbolResolver;
+use libc::{if_nametoindex, sysconf, uname, utsname, _SC_PAGESIZE};
 
 /// Represents a kernel version, in major.minor.release version.
 // Adapted from https://docs.rs/procfs/latest/procfs/sys/kernel/struct.Version.html.

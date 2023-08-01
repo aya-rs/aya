@@ -170,10 +170,7 @@ pub type SimpleSymbolResolver = BTreeMap<u64, String>;
 
 impl SymbolResolver for SimpleSymbolResolver {
     fn resolve_sym(&self, addr: u64) -> Option<String> {
-        self
-            .range(..=addr)
-            .next_back()
-            .map(|(_, s)| s.clone())
+        self.range(..=addr).next_back().map(|(_, s)| s.clone())
     }
 }
 
