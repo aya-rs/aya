@@ -15,8 +15,8 @@ pub(crate) struct TracePoint {
 
 impl TracePoint {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<TracePoint> {
-        let mut args = syn::parse2(attrs)?;
         let item = syn::parse2(item)?;
+        let mut args = syn::parse2(attrs)?;
         let name = pop_string_arg(&mut args, "name");
         let category = pop_string_arg(&mut args, "category");
         err_on_unknown_args(&args)?;

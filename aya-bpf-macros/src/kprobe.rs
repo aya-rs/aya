@@ -33,12 +33,12 @@ pub(crate) struct KProbe {
 
 impl KProbe {
     pub(crate) fn parse(kind: KProbeKind, attrs: TokenStream, item: TokenStream) -> Result<KProbe> {
+        let item = syn::parse2(item)?;
         let mut args = syn::parse2(attrs)?;
         let function = pop_string_arg(&mut args, "function");
         let offset = pop_string_arg(&mut args, "offset").map(|v| v.parse::<u64>().unwrap());
         err_on_unknown_args(&args)?;
 
-        let item = syn::parse2(item)?;
         Ok(KProbe {
             kind,
             item,

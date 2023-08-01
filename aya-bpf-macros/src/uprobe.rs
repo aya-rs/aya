@@ -35,14 +35,13 @@ pub(crate) struct UProbe {
 
 impl UProbe {
     pub(crate) fn parse(kind: UProbeKind, attrs: TokenStream, item: TokenStream) -> Result<UProbe> {
+        let item = syn::parse2(item)?;
         let mut args = syn::parse2(attrs)?;
         let path = pop_string_arg(&mut args, "path");
         let function = pop_string_arg(&mut args, "function");
         let offset = pop_string_arg(&mut args, "offset").map(|v| v.parse::<u64>().unwrap());
         let sleepable = pop_bool_arg(&mut args, "sleepable");
         err_on_unknown_args(&args)?;
-
-        let item = syn::parse2(item)?;
         Ok(UProbe {
             kind,
             item,
