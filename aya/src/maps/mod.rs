@@ -42,7 +42,7 @@ use std::{
     marker::PhantomData,
     mem,
     ops::Deref,
-    os::fd::{AsFd, AsRawFd, OwnedFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd, IntoRawFd as _, OwnedFd, RawFd},
     path::Path,
     ptr,
     sync::Arc,
@@ -538,10 +538,12 @@ impl MapData {
         }
         let map_path = path.as_ref().join(name);
         let path_string = CString::new(map_path.to_str().unwrap()).unwrap();
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| MapError::SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        })? as RawFd;
+        let fd = bpf_get_object(&path_string)
+            .map_err(|(_, io_error)| MapError::SyscallError {
+                call: "BPF_OBJ_GET",
+                io_error,
+            })?
+            .into_raw_fd();
 
         self.fd = Some(fd);
 
@@ -563,35 +565,37 @@ impl MapData {
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| MapError::SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
-        })? as RawFd;
-
-        let info = bpf_map_get_info_by_fd(fd).map_err(|io_error| MapError::SyscallError {
-            call: "BPF_MAP_GET_INFO_BY_FD",
-            io_error,
         })?;
+
+        let info =
+            bpf_map_get_info_by_fd(fd.as_fd()).map_err(|io_error| MapError::SyscallError {
+                call: "BPF_MAP_GET_INFO_BY_FD",
+                io_error,
+            })?;
 
         Ok(MapData {
             obj: parse_map_info(info, PinningType::ByName),
-            fd: Some(fd),
+            fd: Some(fd.into_raw_fd()),
             btf_fd: None,
             pinned: true,
         })
     }
 
-    /// Loads a map from a [`RawFd`].
+    /// Loads a map from a file descriptor.
     ///
     /// If loading from a BPF Filesystem (bpffs) you should use [`Map::from_pin`](crate::maps::MapData::from_pin).
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
-    pub fn from_fd(fd: RawFd) -> Result<MapData, MapError> {
-        let info = bpf_map_get_info_by_fd(fd).map_err(|io_error| MapError::SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        })?;
+    pub fn from_fd(fd: OwnedFd) -> Result<MapData, MapError> {
+        let info =
+            bpf_map_get_info_by_fd(fd.as_fd()).map_err(|io_error| MapError::SyscallError {
+                call: "BPF_OBJ_GET",
+                io_error,
+            })?;
 
         Ok(MapData {
             obj: parse_map_info(info, PinningType::None),
-            fd: Some(fd),
+            fd: Some(fd.into_raw_fd()),
             btf_fd: None,
             pinned: false,
         })

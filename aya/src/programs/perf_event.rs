@@ -1,5 +1,7 @@
 //! Perf event programs.
 
+use std::os::fd::AsFd as _;
+
 pub use crate::generated::{
     perf_hw_cache_id, perf_hw_cache_op_id, perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids,
 };
@@ -206,12 +208,13 @@ impl TryFrom<FdLink> for PerfEventLink {
     type Error = LinkError;
 
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info =
-            bpf_link_get_info_by_fd(fd_link.fd).map_err(|io_error| LinkError::SyscallError {
+        let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd()).map_err(|io_error| {
+            LinkError::SyscallError {
                 call: "BPF_OBJ_GET_INFO_BY_FD",
                 code: 0,
                 io_error,
-            })?;
+            }
+        })?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as u32) {
             return Ok(PerfEventLink::new(PerfLinkInner::FdLink(fd_link)));
         }

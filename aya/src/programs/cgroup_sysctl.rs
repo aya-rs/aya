@@ -1,10 +1,7 @@
 //! Cgroup sysctl programs.
 
 use crate::util::KernelVersion;
-use std::{
-    hash::Hash,
-    os::fd::{AsRawFd, RawFd},
-};
+use std::{hash::Hash, os::fd::AsRawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SYSCTL, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL},
@@ -72,7 +69,7 @@ impl CgroupSysctl {
                     call: "bpf_link_create",
                     io_error,
                 },
-            )? as RawFd;
+            )?;
             self.data
                 .links
                 .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::Fd(

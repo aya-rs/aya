@@ -1,11 +1,7 @@
 //! Cgroup skb programs.
 
 use crate::util::KernelVersion;
-use std::{
-    hash::Hash,
-    os::fd::{AsRawFd, RawFd},
-    path::Path,
-};
+use std::{hash::Hash, os::fd::AsRawFd, path::Path};
 
 use crate::{
     generated::{
@@ -105,7 +101,7 @@ impl CgroupSkb {
                     call: "bpf_link_create",
                     io_error,
                 },
-            )? as RawFd;
+            )?;
             self.data
                 .links
                 .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(

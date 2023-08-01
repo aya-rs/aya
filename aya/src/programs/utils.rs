@@ -1,5 +1,5 @@
 //! Common functions shared between multiple eBPF program types.
-use std::{ffi::CStr, io, os::fd::RawFd, path::Path};
+use std::{ffi::CStr, io, path::Path};
 
 use crate::{
     programs::{FdLink, Link, ProgramData, ProgramError},
@@ -18,7 +18,7 @@ pub(crate) fn attach_raw_tracepoint<T: Link + From<FdLink>>(
             call: "bpf_raw_tracepoint_open",
             io_error,
         }
-    })? as RawFd;
+    })?;
 
     program_data.links.insert(FdLink::new(pfd).into())
 }

@@ -1,5 +1,5 @@
 //! Tracepoint programs.
-use std::{fs, io, path::Path};
+use std::{fs, io, os::fd::AsFd as _, path::Path};
 use thiserror::Error;
 
 use crate::{
@@ -132,12 +132,13 @@ impl TryFrom<FdLink> for TracePointLink {
     type Error = LinkError;
 
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info =
-            bpf_link_get_info_by_fd(fd_link.fd).map_err(|io_error| LinkError::SyscallError {
+        let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd()).map_err(|io_error| {
+            LinkError::SyscallError {
                 call: "BPF_OBJ_GET_INFO_BY_FD",
                 code: 0,
                 io_error,
-            })?;
+            }
+        })?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_TRACING as u32) {
             return Ok(TracePointLink::new(PerfLinkInner::FdLink(fd_link)));
         }
