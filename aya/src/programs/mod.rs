@@ -954,10 +954,11 @@ impl ProgramInfo {
             io_error,
         })? as RawFd;
 
-        let info = bpf_prog_get_info_by_fd(fd)?;
+        let info = bpf_prog_get_info_by_fd(fd);
         unsafe {
             libc::close(fd);
         }
+        let info = info?;
         Ok(ProgramInfo(info))
     }
 }
