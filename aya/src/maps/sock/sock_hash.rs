@@ -8,7 +8,7 @@ use crate::{
     maps::{
         check_kv_size, hash_map, sock::SockMapFd, IterableMap, MapData, MapError, MapIter, MapKeys,
     },
-    sys::bpf_map_lookup_elem,
+    sys::{bpf_map_lookup_elem, SyscallError},
     Pod,
 };
 
@@ -83,11 +83,9 @@ impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
     /// Returns the fd of the socket stored at the given key.
     pub fn get(&self, key: &K, flags: u64) -> Result<RawFd, MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
-            MapError::SyscallError {
-                call: "bpf_map_lookup_elem",
-                io_error,
-            }
+        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| SyscallError {
+            call: "bpf_map_lookup_elem",
+            io_error,
         })?;
         value.ok_or(MapError::KeyNotFound)
     }

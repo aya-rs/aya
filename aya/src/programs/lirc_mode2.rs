@@ -4,7 +4,10 @@ use std::os::fd::{AsRawFd, IntoRawFd as _, RawFd};
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
     programs::{load_program, query, Link, ProgramData, ProgramError, ProgramInfo},
-    sys::{bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd},
+    sys::{
+        bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
+        SyscallError,
+    },
 };
 
 use libc::{close, dup};
@@ -65,7 +68,7 @@ impl LircMode2 {
         let lircdev_fd = lircdev.as_raw_fd();
 
         bpf_prog_attach(prog_fd, lircdev_fd, BPF_LIRC_MODE2).map_err(|(_, io_error)| {
-            ProgramError::SyscallError {
+            SyscallError {
                 call: "bpf_prog_attach",
                 io_error,
             }
@@ -96,7 +99,7 @@ impl LircMode2 {
         let mut prog_fds = Vec::with_capacity(prog_ids.len());
 
         for id in prog_ids {
-            let fd = bpf_prog_get_fd_by_id(id).map_err(|io_error| ProgramError::SyscallError {
+            let fd = bpf_prog_get_fd_by_id(id).map_err(|io_error| SyscallError {
                 call: "bpf_prog_get_fd_by_id",
                 io_error,
             })?;
@@ -132,13 +135,15 @@ impl LircLink {
 
     /// Get ProgramInfo from this link
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-        match bpf_prog_get_info_by_fd(self.prog_fd) {
-            Ok(info) => Ok(ProgramInfo(info)),
-            Err(io_error) => Err(ProgramError::SyscallError {
-                call: "bpf_prog_get_info_by_fd",
-                io_error,
-            }),
-        }
+        bpf_prog_get_info_by_fd(self.prog_fd)
+            .map(ProgramInfo)
+            .map_err(|io_error| {
+                SyscallError {
+                    call: "bpf_prog_get_info_by_fd",
+                    io_error,
+                }
+                .into()
+            })
     }
 }
 

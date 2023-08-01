@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     maps::{check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
-    sys::bpf_map_lookup_elem,
+    sys::{bpf_map_lookup_elem, SyscallError},
     Pod,
 };
 
@@ -54,11 +54,9 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Returns a copy of the value associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| {
-            MapError::SyscallError {
-                call: "bpf_map_lookup_elem",
-                io_error,
-            }
+        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| SyscallError {
+            call: "bpf_map_lookup_elem",
+            io_error,
         })?;
         value.ok_or(MapError::KeyNotFound)
     }
@@ -292,7 +290,7 @@ mod tests {
 
         assert_matches!(
             hm.insert(1, 42, 0),
-            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_update_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_update_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
 
@@ -352,7 +350,7 @@ mod tests {
 
         assert_matches!(
             hm.remove(&1),
-            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_delete_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_delete_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
 
@@ -390,7 +388,7 @@ mod tests {
 
         assert_matches!(
             hm.get(&1, 0),
-            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
 
@@ -535,7 +533,10 @@ mod tests {
         assert_matches!(keys.next(), Some(Ok(20)));
         assert_matches!(
             keys.next(),
-            Some(Err(MapError::SyscallError { call, .. })) if call == "bpf_map_get_next_key"
+            Some(Err(MapError::SyscallError(SyscallError {
+                call: "bpf_map_get_next_key",
+                io_error: _
+            })))
         );
         assert_matches!(keys.next(), None);
     }
@@ -647,7 +648,10 @@ mod tests {
         assert_matches!(iter.next(), Some(Ok((20, 200))));
         assert_matches!(
             iter.next(),
-            Some(Err(MapError::SyscallError { call, .. })) if call == "bpf_map_get_next_key"
+            Some(Err(MapError::SyscallError(SyscallError {
+                call: "bpf_map_get_next_key",
+                io_error: _
+            })))
         );
         assert_matches!(iter.next(), None);
     }
@@ -691,7 +695,10 @@ mod tests {
         assert_matches!(iter.next(), Some(Ok((10, 100))));
         assert_matches!(
             iter.next(),
-            Some(Err(MapError::SyscallError { call, .. })) if call == "bpf_map_lookup_elem"
+            Some(Err(MapError::SyscallError(SyscallError {
+                call: "bpf_map_lookup_elem",
+                io_error: _
+            })))
         );
         assert_matches!(iter.next(), Some(Ok((30, 300))));
         assert_matches!(iter.next(), None);

@@ -15,7 +15,7 @@ use crate::{
         trace_point::read_sys_fs_trace_point_id, uprobe::UProbeError, utils::find_tracefs_path,
         Link, ProgramData, ProgramError,
     },
-    sys::{perf_event_open_probe, perf_event_open_trace_point},
+    sys::{perf_event_open_probe, perf_event_open_trace_point, SyscallError},
 };
 
 static PROBE_NAME_INDEX: AtomicUsize = AtomicUsize::new(0);
@@ -118,10 +118,11 @@ fn create_as_probe(
     };
 
     perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid).map_err(|(_code, io_error)| {
-        ProgramError::SyscallError {
+        SyscallError {
             call: "perf_event_open",
             io_error,
         }
+        .into()
     })
 }
 
@@ -144,11 +145,9 @@ fn create_as_trace_point(
 
     let category = format!("{}s", kind.pmu());
     let tpid = read_sys_fs_trace_point_id(tracefs, &category, &event_alias)?;
-    let fd = perf_event_open_trace_point(tpid, pid).map_err(|(_code, io_error)| {
-        ProgramError::SyscallError {
-            call: "perf_event_open",
-            io_error,
-        }
+    let fd = perf_event_open_trace_point(tpid, pid).map_err(|(_code, io_error)| SyscallError {
+        call: "perf_event_open",
+        io_error,
     })?;
 
     Ok((fd, event_alias))

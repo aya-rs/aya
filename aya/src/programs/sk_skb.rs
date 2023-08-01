@@ -12,7 +12,7 @@ use crate::{
         define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
         ProgramError,
     },
-    sys::bpf_prog_attach,
+    sys::{bpf_prog_attach, SyscallError},
     VerifierLogLevel,
 };
 
@@ -79,11 +79,9 @@ impl SkSkb {
             SkSkbKind::StreamParser => BPF_SK_SKB_STREAM_PARSER,
             SkSkbKind::StreamVerdict => BPF_SK_SKB_STREAM_VERDICT,
         };
-        bpf_prog_attach(prog_fd, map_fd, attach_type).map_err(|(_, io_error)| {
-            ProgramError::SyscallError {
-                call: "bpf_prog_attach",
-                io_error,
-            }
+        bpf_prog_attach(prog_fd, map_fd, attach_type).map_err(|(_, io_error)| SyscallError {
+            call: "bpf_prog_attach",
+            io_error,
         })?;
         self.data.links.insert(SkSkbLink::new(ProgAttachLink::new(
             prog_fd,
