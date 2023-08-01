@@ -15,6 +15,7 @@ impl CgroupSockAddr {
         if attrs.is_empty() {
             abort!(attrs, "missing attach type")
         }
+        let item = syn::parse2(item)?;
         let attach_type: Ident = syn::parse2(attrs)?;
         match attach_type.to_string().as_str() {
             "connect4" | "connect6" | "bind4" | "bind6" | "getpeername4" | "getpeername6"
@@ -22,7 +23,6 @@ impl CgroupSockAddr {
             | "recvmsg6" => (),
             _ => abort!(attach_type, "invalid attach type"),
         }
-        let item = syn::parse2(item)?;
         Ok(CgroupSockAddr {
             item,
             attach_type: attach_type.to_string(),

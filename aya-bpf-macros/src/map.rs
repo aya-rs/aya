@@ -14,9 +14,9 @@ pub(crate) struct Map {
 
 impl Map {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Map> {
-        let mut args = syn::parse2(attrs)?;
         let item: ItemStatic = syn::parse2(item)?;
-        let name = name_arg(&mut args)?.unwrap_or_else(|| item.ident.to_string());
+        let mut args = syn::parse2(attrs)?;
+        let name = name_arg(&mut args).unwrap_or_else(|| item.ident.to_string());
         Ok(Map { item, name })
     }
 

@@ -5,7 +5,7 @@ use proc_macro_error::abort;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_arg};
+use crate::args::{err_on_unknown_args, pop_string_arg};
 
 pub(crate) struct TracePoint {
     item: ItemFn,
@@ -15,10 +15,10 @@ pub(crate) struct TracePoint {
 
 impl TracePoint {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<TracePoint> {
-        let mut args = syn::parse2(attrs)?;
         let item = syn::parse2(item)?;
-        let name = pop_arg(&mut args, "name");
-        let category = pop_arg(&mut args, "category");
+        let mut args = syn::parse2(attrs)?;
+        let name = pop_string_arg(&mut args, "name");
+        let category = pop_string_arg(&mut args, "category");
         err_on_unknown_args(&args)?;
         Ok(TracePoint {
             item,
