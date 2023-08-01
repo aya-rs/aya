@@ -70,30 +70,6 @@ pub(crate) fn pop_bool_arg(args: &mut Args, name: &str) -> bool {
     value.is_some()
 }
 
-pub(crate) fn pop_required_string_arg(args: &mut Args, name: &str) -> Result<String> {
-    let value = match args.args.iter().position(|arg| match arg {
-        Arg::String(name_val) => name_val.name == name,
-        Arg::Bool(_) => false,
-    }) {
-        Some(index) => Some(args.args.remove(index)),
-        None => None,
-    };
-    match value {
-        Some(Arg::String(value)) => Ok(value.value.value()),
-        Some(Arg::Bool(_)) => unreachable!("arg bool were filtered out"),
-        None => {
-            let tokens = match args.args.first().unwrap() {
-                Arg::String(name_val) => &name_val.name,
-                Arg::Bool(ident) => ident,
-            };
-            Err(Error::new_spanned(
-                tokens,
-                format!("missing required argument `{}`", name),
-            ))
-        }
-    }
-}
-
 pub(crate) fn err_on_unknown_args(args: &Args) -> Result<()> {
     if let Some(arg) = args.args.get(0) {
         let tokens = match arg {

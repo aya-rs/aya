@@ -1,28 +1,30 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_bool_arg, pop_required_string_arg};
+use crate::args::{err_on_unknown_args, pop_bool_arg, pop_string_arg};
 
 pub(crate) struct Lsm {
     item: ItemFn,
-    hook: String,
+    hook: Option<String>,
     sleepable: bool,
 }
 
 impl Lsm {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Lsm> {
-        if attrs.is_empty() {
-            abort!(attrs, "missing hook name");
-        }
-        let mut args = syn::parse2(attrs)?;
         let item = syn::parse2(item)?;
-        let hook = pop_required_string_arg(&mut args, "hook")?;
-        let sleepable = pop_bool_arg(&mut args, "sleepable");
-        err_on_unknown_args(&args)?;
+        let mut hook = None;
+        let mut sleepable = false;
+        if !attrs.is_empty() {
+            let mut args = syn::parse2(attrs)?;
+            if let Some(h) = pop_string_arg(&mut args, "hook") {
+                hook = Some(h);
+            };
+            sleepable = pop_bool_arg(&mut args, "sleepable");
+            err_on_unknown_args(&args)?;
+        }
         Ok(Lsm {
             item,
             hook,
@@ -32,7 +34,11 @@ impl Lsm {
 
     pub(crate) fn expand(&self) -> Result<TokenStream> {
         let section_prefix = if self.sleepable { "lsm.s" } else { "lsm" };
-        let section_name: Cow<'_, _> = format!("{}/{}", section_prefix, self.hook).into();
+        let section_name: Cow<'_, _> = if self.hook.is_none() {
+            section_prefix.into()
+        } else {
+            format!("{}/{}", section_prefix, self.hook.as_ref().unwrap()).into()
+        };
         let fn_vis = &self.item.vis;
         let fn_name = self.item.sig.ident.clone();
         let item = &self.item;

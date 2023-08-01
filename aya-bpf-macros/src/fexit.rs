@@ -1,28 +1,30 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_bool_arg, pop_required_string_arg};
+use crate::args::{err_on_unknown_args, pop_bool_arg, pop_string_arg};
 
 pub(crate) struct FExit {
     item: ItemFn,
-    function: String,
+    function: Option<String>,
     sleepable: bool,
 }
 
 impl FExit {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<FExit> {
-        if attrs.is_empty() {
-            abort!(attrs, "missing function name");
-        }
-        let mut args = syn::parse2(attrs)?;
         let item = syn::parse2(item)?;
-        let function = pop_required_string_arg(&mut args, "function")?;
-        let sleepable = pop_bool_arg(&mut args, "sleepable");
-        err_on_unknown_args(&args)?;
+        let mut function = None;
+        let mut sleepable = false;
+        if !attrs.is_empty() {
+            let mut args = syn::parse2(attrs)?;
+            if let Some(f) = pop_string_arg(&mut args, "function") {
+                function = Some(f);
+            };
+            sleepable = pop_bool_arg(&mut args, "sleepable");
+            err_on_unknown_args(&args)?;
+        }
         Ok(FExit {
             item,
             function,
@@ -32,7 +34,11 @@ impl FExit {
 
     pub(crate) fn expand(&self) -> Result<TokenStream> {
         let section_prefix = if self.sleepable { "fexit.s" } else { "fexit" };
-        let section_name: Cow<'_, _> = format!("{}/{}", section_prefix, self.function).into();
+        let section_name: Cow<'_, _> = if self.function.is_none() {
+            section_prefix.into()
+        } else {
+            format!("{}/{}", section_prefix, self.function.as_ref().unwrap()).into()
+        };
         let fn_vis = &self.item.vis;
         let fn_name = self.item.sig.ident.clone();
         let item = &self.item;
@@ -56,6 +62,33 @@ mod tests {
 
     #[test]
     fn test_fexit() {
+        let prog = FExit::parse(
+            parse_quote! {},
+            parse_quote! {
+                fn sys_clone(ctx: &mut FExitContext) -> i32 {
+                    0
+                }
+            },
+        )
+        .unwrap();
+        let expanded = prog.expand().unwrap();
+        let expected = quote! {
+            #[no_mangle]
+            #[link_section = "fexit"]
+            fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
+                let _ = sys_clone(::aya_bpf::programs::FExitContext::new(ctx));
+                return 0;
+
+                fn sys_clone(ctx: &mut FExitContext) -> i32 {
+                    0
+                }
+            }
+        };
+        assert_eq!(expected.to_string(), expanded.to_string());
+    }
+
+    #[test]
+    fn test_fexit_with_function() {
         let prog = FExit::parse(
             parse_quote! {
                 function = "sys_clone"
