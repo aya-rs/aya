@@ -10,4 +10,4 @@ aya-bpf-macros = { path = "../../aya-bpf-macros" }
 aya-bpf-bindings = { path = "../aya-bpf-bindings" }
 
 [build-dependencies]
-rustversion = "1.0"
+rustversion = { workspace = true }
