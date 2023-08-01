@@ -27,7 +27,7 @@ pub(crate) type SysResult<T> = Result<T, (c_long, io::Error)>;
 pub(crate) enum Syscall<'a> {
     Bpf {
         cmd: bpf_cmd,
-        attr: &'a bpf_attr,
+        attr: &'a mut bpf_attr,
     },
     PerfEventOpen {
         attr: perf_event_attr,
