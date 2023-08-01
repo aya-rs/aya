@@ -5,7 +5,7 @@ use proc_macro_error::abort;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::err_on_unknown_args;
+use crate::args::{err_on_unknown_args, pop_bool_arg, pop_required_string_arg};
 
 pub(crate) struct Lsm {
     item: ItemFn,
@@ -20,12 +20,13 @@ impl Lsm {
         }
         let mut args = syn::parse2(attrs)?;
         let item = syn::parse2(item)?;
-        let hook = crate::args::pop_required_arg(&mut args, "hook")?;
+        let hook = pop_required_string_arg(&mut args, "hook")?;
+        let sleepable = pop_bool_arg(&mut args, "sleepable");
         err_on_unknown_args(&args)?;
         Ok(Lsm {
             item,
             hook,
-            sleepable: false,
+            sleepable,
         })
     }
 
@@ -54,6 +55,35 @@ impl Lsm {
 mod tests {
     use super::*;
     use syn::parse_quote;
+
+    #[test]
+    fn test_lsm_sleepable() {
+        let prog = Lsm::parse(
+            parse_quote! {
+                sleepable,
+                hook = "bprm_committed_creds"
+            },
+            parse_quote! {
+                fn bprm_committed_creds(ctx: &mut ::aya_bpf::programs::LsmContext) -> i32 {
+                    0
+                }
+            },
+        )
+        .unwrap();
+        let expanded = prog.expand().unwrap();
+        let expected = quote! {
+            #[no_mangle]
+            #[link_section = "lsm.s/bprm_committed_creds"]
+            fn bprm_committed_creds(ctx: *mut ::core::ffi::c_void) -> i32 {
+                return bprm_committed_creds(::aya_bpf::programs::LsmContext::new(ctx));
+
+                fn bprm_committed_creds(ctx: &mut ::aya_bpf::programs::LsmContext) -> i32 {
+                    0
+                }
+            }
+        };
+        assert_eq!(expected.to_string(), expanded.to_string());
+    }
 
     #[test]
     fn test_lsm() {
