@@ -1,12 +1,13 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-set -e
+set -ex
 
 if [ "$(uname -s)" = "Darwin" ]; then
-    export PATH="$(dirname $(brew list gnu-getopt | grep "bin/getopt$")):$PATH"
+    PATH="$(dirname "$(brew list gnu-getopt | grep "bin/getopt$")"):$PATH"
+    export PATH
 fi
 
-AYA_SOURCE_DIR="$(realpath $(dirname $0)/..)"
+AYA_SOURCE_DIR="$(realpath "$(dirname "$0")"/..)"
 
 # Temporary directory for tests to use.
 AYA_TMPDIR="${AYA_SOURCE_DIR}/.tmp"
@@ -108,7 +109,7 @@ ssh_authorized_keys:
   - ${pub_key}
 EOF
 
-    $AYA_SOURCE_DIR/test/cloud-localds "${AYA_TMPDIR}/seed.img" "${AYA_TMPDIR}/user-data.yaml" "${AYA_TMPDIR}/metadata.yaml"
+    "$AYA_SOURCE_DIR"/test/cloud-localds "${AYA_TMPDIR}/seed.img" "${AYA_TMPDIR}/user-data.yaml" "${AYA_TMPDIR}/metadata.yaml"
     case "${AYA_GUEST_ARCH}" in
         x86_64)
             QEMU=qemu-system-x86_64
@@ -129,7 +130,7 @@ EOF
             QEMU=qemu-system-aarch64
             machine="virt"
             cpu="cortex-a57"
-            uefi="-drive file=${AARCH64_UEFI},if=pflash,format=raw,readonly=on"
+            uefi=("-drive" "file=${AARCH64_UEFI},if=pflash,format=raw,readonly=on")
             if [ "${AYA_HOST_ARCH}" = "${AYA_GUEST_ARCH}" ]; then
                 if [ -c /dev/kvm ]; then
                     machine="${machine},accel=kvm"
@@ -153,10 +154,8 @@ EOF
     if [ ! -f "${AYA_IMGDIR}/vm.qcow2" ]; then
         echo "Creating VM image"
         qemu-img create -F qcow2 -f qcow2 -o backing_file="${AYA_IMGDIR}/${AYA_TEST_IMAGE}.${AYA_GUEST_ARCH}.qcow2" "${AYA_IMGDIR}/vm.qcow2" || return 1
-        CACHED_VM=0
     else
         echo "Reusing existing VM image"
-        CACHED_VM=1
     fi
     $QEMU \
         -machine "${machine}" \
@@ -169,7 +168,7 @@ EOF
         -pidfile "${AYA_TMPDIR}/vm.pid" \
         -device virtio-net-pci,netdev=net0 \
         -netdev user,id=net0,hostfwd=tcp::2222-:22 \
-        $uefi \
+        "${uefi[@]}" \
         -drive if=virtio,format=qcow2,file="${AYA_IMGDIR}/vm.qcow2" \
         -drive if=virtio,format=raw,file="${AYA_TMPDIR}/seed.img" || return 1
 
@@ -177,7 +176,7 @@ EOF
     echo "Waiting for SSH on port 2222..."
     retry=0
     max_retries=300
-    while ! ssh -q -F "${AYA_TMPDIR}/ssh_config" -o ConnectTimeout=1 -i "${AYA_TMPDIR}/test_rsa" ${AYA_SSH_USER}@localhost -p 2222 echo "Hello VM"; do
+    while ! ssh -q -F "${AYA_TMPDIR}/ssh_config" -o ConnectTimeout=1 -i "${AYA_TMPDIR}/test_rsa" "${AYA_SSH_USER}"@localhost -p 2222 echo "Hello VM"; do
         retry=$((retry+1))
         if [ ${retry} -gt ${max_retries} ]; then
             echo "Unable to connect to VM"
@@ -209,14 +208,14 @@ scp_vm() {
 }
 
 rsync_vm() {
-    rsync -a -e "ssh -p 2222 -F ${AYA_TMPDIR}/ssh_config -i ${AYA_TMPDIR}/test_rsa" $1 $AYA_SSH_USER@localhost:
+    rsync -a -e "ssh -p 2222 -F ${AYA_TMPDIR}/ssh_config -i ${AYA_TMPDIR}/test_rsa" "$1" "$AYA_SSH_USER"@localhost:
 }
 
 exec_vm() {
     ssh -q -F "${AYA_TMPDIR}/ssh_config" \
         -i "${AYA_TMPDIR}/test_rsa" \
         -p 2222 \
-        ${AYA_SSH_USER}@localhost \
+        "${AYA_SSH_USER}"@localhost \
         "$@"
 }
 
@@ -229,8 +228,7 @@ stop_vm() {
 }
 
 cleanup_vm() {
-    stop_vm
-    if [ "$?" != "0" ]; then
+    if ! stop_vm; then
         rm -f "${AYA_IMGDIR}/vm.qcow2"
     fi
 }
