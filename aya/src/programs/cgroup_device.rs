@@ -1,7 +1,7 @@
 //! Cgroup device programs.
 
 use crate::util::KernelVersion;
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::AsRawFd;
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE},
@@ -70,7 +70,7 @@ impl CgroupDevice {
                     call: "bpf_link_create",
                     io_error,
                 },
-            )? as RawFd;
+            )?;
             self.data
                 .links
                 .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::Fd(

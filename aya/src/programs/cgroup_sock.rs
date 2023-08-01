@@ -3,11 +3,7 @@
 pub use aya_obj::programs::CgroupSockAttachType;
 
 use crate::util::KernelVersion;
-use std::{
-    hash::Hash,
-    os::fd::{AsRawFd, RawFd},
-    path::Path,
-};
+use std::{hash::Hash, os::fd::AsRawFd, path::Path};
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK,
@@ -80,7 +76,7 @@ impl CgroupSock {
                     call: "bpf_link_create",
                     io_error,
                 },
-            )? as RawFd;
+            )?;
             self.data
                 .links
                 .insert(CgroupSockLink::new(CgroupSockLinkInner::Fd(FdLink::new(

@@ -42,7 +42,7 @@ use std::{
     marker::PhantomData,
     mem,
     ops::Deref,
-    os::fd::{AsFd, AsRawFd, OwnedFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd, IntoRawFd as _, OwnedFd, RawFd},
     path::Path,
     ptr,
     sync::Arc,
@@ -516,11 +516,9 @@ impl MapData {
                 code,
                 io_error,
             }
-        })? as RawFd;
+        })?;
 
-        self.fd = Some(fd);
-
-        Ok(fd)
+        Ok(*self.fd.insert(fd as RawFd))
     }
 
     pub(crate) fn open_pinned<P: AsRef<Path>>(
@@ -536,11 +534,9 @@ impl MapData {
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
-        })? as RawFd;
+        })?;
 
-        self.fd = Some(fd);
-
-        Ok(fd)
+        Ok(*self.fd.insert(fd.into_raw_fd()))
     }
 
     /// Loads a map from a pinned path in bpffs.
@@ -558,29 +554,29 @@ impl MapData {
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
-        })? as RawFd;
+        })?;
 
-        let info = bpf_map_get_info_by_fd(fd)?;
+        let info = bpf_map_get_info_by_fd(fd.as_fd())?;
 
         Ok(MapData {
             obj: parse_map_info(info, PinningType::ByName),
-            fd: Some(fd),
+            fd: Some(fd.into_raw_fd()),
             btf_fd: None,
             pinned: true,
         })
     }
 
-    /// Loads a map from a [`RawFd`].
+    /// Loads a map from a file descriptor.
     ///
     /// If loading from a BPF Filesystem (bpffs) you should use [`Map::from_pin`](crate::maps::MapData::from_pin).
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
-    pub fn from_fd(fd: RawFd) -> Result<MapData, MapError> {
-        let info = bpf_map_get_info_by_fd(fd)?;
+    pub fn from_fd(fd: OwnedFd) -> Result<MapData, MapError> {
+        let info = bpf_map_get_info_by_fd(fd.as_fd())?;
 
         Ok(MapData {
             obj: parse_map_info(info, PinningType::None),
-            fd: Some(fd),
+            fd: Some(fd.into_raw_fd()),
             btf_fd: None,
             pinned: false,
         })
