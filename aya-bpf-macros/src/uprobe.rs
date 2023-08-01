@@ -5,7 +5,7 @@ use proc_macro_error::abort;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_arg};
+use crate::args::{err_on_unknown_args, pop_bool_arg, pop_string_arg};
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug, Copy, Clone)]
@@ -30,6 +30,7 @@ pub(crate) struct UProbe {
     function: Option<String>,
     offset: Option<u64>,
     item: ItemFn,
+    sleepable: bool,
 }
 
 impl UProbe {
@@ -37,11 +38,13 @@ impl UProbe {
         let mut path = None;
         let mut function = None;
         let mut offset = None;
+        let mut sleepable = false;
         if !attrs.is_empty() {
             let mut args = syn::parse2(attrs)?;
-            path = pop_arg(&mut args, "path");
-            function = pop_arg(&mut args, "function");
-            offset = pop_arg(&mut args, "offset").map(|v| v.parse::<u64>().unwrap());
+            path = pop_string_arg(&mut args, "path");
+            function = pop_string_arg(&mut args, "function");
+            offset = pop_string_arg(&mut args, "offset").map(|v| v.parse::<u64>().unwrap());
+            sleepable = pop_bool_arg(&mut args, "sleepable");
             err_on_unknown_args(&args)?;
         }
 
@@ -52,10 +55,16 @@ impl UProbe {
             path,
             function,
             offset,
+            sleepable,
         })
     }
 
     pub(crate) fn expand(&self) -> Result<TokenStream> {
+        let prefix = if self.sleepable {
+            format!("{}.s", self.kind)
+        } else {
+            format!("{}", self.kind)
+        };
         let section_name: Cow<'_, _> = if self.path.is_some() && self.offset.is_some() {
             if self.function.is_none() {
                 abort!(self.item.sig.ident, "expected `function` attribute");
@@ -66,7 +75,7 @@ impl UProbe {
             }
             format!(
                 "{}/{}:{}+{}",
-                self.kind,
+                prefix,
                 path,
                 self.function.as_ref().unwrap(),
                 self.offset.unwrap()
@@ -80,9 +89,9 @@ impl UProbe {
             if path.starts_with('/') {
                 path.remove(0);
             }
-            format!("{}/{}:{}", self.kind, path, self.function.as_ref().unwrap()).into()
+            format!("{}/{}:{}", prefix, path, self.function.as_ref().unwrap()).into()
         } else {
-            format!("{}", self.kind).into()
+            prefix.to_string().into()
         };
         let fn_vis = &self.item.vis;
         let fn_name = self.item.sig.ident.clone();
@@ -122,6 +131,36 @@ mod tests {
             quote! {
                 #[no_mangle]
                 #[link_section = "uprobe"]
+                fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
+                    let _ = foo(::aya_bpf::programs::ProbeContext::new(ctx));
+                    return 0;
+
+                    fn foo(ctx: ProbeContext) -> u32 {
+                        0
+                    }
+                }
+            }
+            .to_string()
+        );
+    }
+
+    #[test]
+    fn uprobe_sleepable() {
+        let uprobe = UProbe::parse(
+            UProbeKind::UProbe,
+            parse_quote! {sleepable},
+            parse_quote! {
+                fn foo(ctx: ProbeContext) -> u32 {
+                    0
+                }
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            uprobe.expand().unwrap().to_string(),
+            quote! {
+                #[no_mangle]
+                #[link_section = "uprobe.s"]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                     let _ = foo(::aya_bpf::programs::ProbeContext::new(ctx));
                     return 0;
