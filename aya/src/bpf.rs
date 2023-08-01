@@ -42,6 +42,7 @@ use crate::{
         is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
         is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
         is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
+        SyscallError,
     },
     util::{bytes_of, bytes_of_slice, possible_cpus, POSSIBLE_CPUS},
 };
@@ -505,16 +506,19 @@ impl<'a> BpfLoader<'a> {
             };
             if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
-                    .map_err(|(_, io_error)| MapError::SyscallError {
+                    .map_err(|(_, io_error)| SyscallError {
                         call: "bpf_map_update_elem",
                         io_error,
-                    })?;
+                    })
+                    .map_err(MapError::from)?;
             }
             if map.obj.section_kind() == BpfSectionKind::Rodata {
-                bpf_map_freeze(fd).map_err(|(_, io_error)| MapError::SyscallError {
-                    call: "bpf_map_freeze",
-                    io_error,
-                })?;
+                bpf_map_freeze(fd)
+                    .map_err(|(_, io_error)| SyscallError {
+                        call: "bpf_map_freeze",
+                        io_error,
+                    })
+                    .map_err(MapError::from)?;
             }
             maps.insert(name, map);
         }

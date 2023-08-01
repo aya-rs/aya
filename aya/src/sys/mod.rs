@@ -5,12 +5,12 @@ mod perf_event;
 #[cfg(test)]
 mod fake;
 
+use libc::{c_int, c_long, pid_t, SYS_bpf, SYS_perf_event_open};
 use std::{
     io, mem,
     os::fd::{AsRawFd as _, BorrowedFd},
 };
-
-use libc::{c_int, c_long, pid_t, SYS_bpf, SYS_perf_event_open};
+use thiserror::Error;
 
 pub(crate) use bpf::*;
 #[cfg(test)]
@@ -41,6 +41,16 @@ pub(crate) enum Syscall<'a> {
         request: c_int,
         arg: c_int,
     },
+}
+
+#[derive(Debug, Error)]
+#[error("`{call}` failed")]
+pub struct SyscallError {
+    /// The name of the syscall which failed.
+    pub(crate) call: &'static str,
+    /// The [`io::Error`] returned by the syscall.
+    #[source]
+    pub(crate) io_error: io::Error,
 }
 
 impl std::fmt::Debug for Syscall<'_> {

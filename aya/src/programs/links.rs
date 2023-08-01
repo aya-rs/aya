@@ -14,7 +14,7 @@ use crate::{
     generated::bpf_attach_type,
     pin::PinError,
     programs::ProgramError,
-    sys::{bpf_get_object, bpf_pin_object, bpf_prog_detach},
+    sys::{bpf_get_object, bpf_pin_object, bpf_prog_detach, SyscallError},
 };
 
 /// A Link.
@@ -152,8 +152,8 @@ impl FdLink {
                     error: e.to_string(),
                 }
             })?;
-        bpf_pin_object(self.fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
-            name: "BPF_OBJ_PIN",
+        bpf_pin_object(self.fd, &path_string).map_err(|(_, io_error)| SyscallError {
+            call: "BPF_OBJ_PIN",
             io_error,
         })?;
         Ok(PinnedLink::new(PathBuf::from(path.as_ref()), self))
@@ -208,12 +208,12 @@ impl PinnedLink {
     /// Creates a [`crate::programs::links::PinnedLink`] from a valid path on bpffs.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, LinkError> {
         let path_string = CString::new(path.as_ref().to_string_lossy().to_string()).unwrap();
-        let fd =
-            bpf_get_object(&path_string).map_err(|(code, io_error)| LinkError::SyscallError {
+        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| {
+            LinkError::SyscallError(SyscallError {
                 call: "BPF_OBJ_GET",
-                code,
                 io_error,
-            })? as RawFd;
+            })
+        })? as RawFd;
         Ok(PinnedLink::new(
             path.as_ref().to_path_buf(),
             FdLink::new(fd),
@@ -339,16 +339,8 @@ pub enum LinkError {
     #[error("Invalid link")]
     InvalidLink,
     /// Syscall failed.
-    #[error("the `{call}` syscall failed with code {code}")]
-    SyscallError {
-        /// Syscall Name.
-        call: &'static str,
-        /// Error code.
-        code: libc::c_long,
-        #[source]
-        /// Original io::Error.
-        io_error: io::Error,
-    },
+    #[error(transparent)]
+    SyscallError(#[from] SyscallError),
 }
 
 #[cfg(test)]

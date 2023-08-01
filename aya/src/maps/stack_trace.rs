@@ -5,7 +5,7 @@ use std::{borrow::Borrow, collections::BTreeMap, fs, io, mem, path::Path, str::F
 
 use crate::{
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys},
-    sys::bpf_map_lookup_elem_ptr,
+    sys::{bpf_map_lookup_elem_ptr, SyscallError},
 };
 
 /// A hash map of kernel or user space stack traces.
@@ -77,11 +77,9 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
         }
 
         let max_stack_depth =
-            sysctl::<usize>("kernel/perf_event_max_stack").map_err(|io_error| {
-                MapError::SyscallError {
-                    call: "sysctl",
-                    io_error,
-                }
+            sysctl::<usize>("kernel/perf_event_max_stack").map_err(|io_error| SyscallError {
+                call: "sysctl",
+                io_error,
             })?;
         let size = data.obj.value_size() as usize;
         if size > max_stack_depth * mem::size_of::<u64>() {
@@ -106,7 +104,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
 
         let mut frames = vec![0; self.max_stack_depth];
         bpf_map_lookup_elem_ptr(fd, Some(stack_id), frames.as_mut_ptr(), flags)
-            .map_err(|(_, io_error)| MapError::SyscallError {
+            .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?
