@@ -10,7 +10,7 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd,
     },
-    sys::{self, bpf_link_create},
+    sys::{self, bpf_link_create, SyscallError},
     Btf,
 };
 
@@ -91,7 +91,7 @@ impl Extension {
         let btf_id = self.data.attach_btf_id.ok_or(ProgramError::NotLoaded)?;
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
         let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
-            .map_err(|(_, io_error)| ProgramError::SyscallError {
+            .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
                 io_error,
             })? as RawFd;
@@ -121,7 +121,7 @@ impl Extension {
         let prog_fd = self.data.fd_or_err()?;
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
         let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
-            .map_err(|(_, io_error)| ProgramError::SyscallError {
+            .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
                 io_error,
             })? as RawFd;
@@ -151,11 +151,10 @@ impl Extension {
 /// with the name `func_name` within that BTF object.
 fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramError> {
     // retrieve program information
-    let info =
-        sys::bpf_prog_get_info_by_fd(prog_fd).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_prog_get_info_by_fd",
-            io_error,
-        })?;
+    let info = sys::bpf_prog_get_info_by_fd(prog_fd).map_err(|io_error| SyscallError {
+        call: "bpf_prog_get_info_by_fd",
+        io_error,
+    })?;
 
     // btf_id refers to the ID of the program btf that was loaded with bpf(BPF_BTF_LOAD)
     if info.btf_id == 0 {
@@ -163,11 +162,10 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
     }
 
     // the bpf fd of the BTF object
-    let btf_fd =
-        sys::bpf_btf_get_fd_by_id(info.btf_id).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_btf_get_fd_by_id",
-            io_error,
-        })?;
+    let btf_fd = sys::bpf_btf_get_fd_by_id(info.btf_id).map_err(|io_error| SyscallError {
+        call: "bpf_btf_get_fd_by_id",
+        io_error,
+    })?;
 
     // we need to read the btf bytes into a buffer but we don't know the size ahead of time.
     // assume 4kb. if this is too small we can resize based on the size obtained in the response.
@@ -176,18 +174,17 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
         Ok(info) => {
             if info.btf_size > buf.len() as u32 {
                 buf.resize(info.btf_size as usize, 0u8);
-                let btf_info = sys::btf_obj_get_info_by_fd(btf_fd, &buf).map_err(|io_error| {
-                    ProgramError::SyscallError {
+                let btf_info =
+                    sys::btf_obj_get_info_by_fd(btf_fd, &buf).map_err(|io_error| SyscallError {
                         call: "bpf_prog_get_info_by_fd",
                         io_error,
-                    }
-                })?;
+                    })?;
                 Ok(btf_info)
             } else {
                 Ok(info)
             }
         }
-        Err(io_error) => Err(ProgramError::SyscallError {
+        Err(io_error) => Err(SyscallError {
             call: "bpf_prog_get_info_by_fd",
             io_error,
         }),

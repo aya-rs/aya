@@ -990,7 +990,7 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
     }
 }
 
-pub fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<c_long> {
+fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<c_long> {
     syscall(Syscall::Bpf { cmd, attr })
 }
 

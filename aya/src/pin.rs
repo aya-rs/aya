@@ -1,5 +1,6 @@
 //! Pinning BPF objects to the BPF filesystem.
-use std::io;
+
+use crate::sys::SyscallError;
 use thiserror::Error;
 
 /// An error ocurred working with a pinned BPF object.
@@ -24,12 +25,6 @@ pub enum PinError {
         error: String,
     },
     /// An error ocurred making a syscall.
-    #[error("{name} failed")]
-    SyscallError {
-        /// The syscall name.
-        name: &'static str,
-        /// The [`io::Error`] returned by the syscall.
-        #[source]
-        io_error: io::Error,
-    },
+    #[error(transparent)]
+    SyscallError(#[from] SyscallError),
 }

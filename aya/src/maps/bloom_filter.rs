@@ -3,7 +3,7 @@ use std::{borrow::Borrow, marker::PhantomData};
 
 use crate::{
     maps::{check_v_size, MapData, MapError},
-    sys::{bpf_map_lookup_elem_ptr, bpf_map_push_elem},
+    sys::{bpf_map_lookup_elem_ptr, bpf_map_push_elem, SyscallError},
     Pod,
 };
 
@@ -54,7 +54,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
         let fd = self.inner.borrow().fd_or_err()?;
 
         bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
-            .map_err(|(_, io_error)| MapError::SyscallError {
+            .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?
@@ -65,11 +65,9 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     /// Inserts a value into the map.
     pub fn insert(&self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd_or_err()?;
-        bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| {
-            MapError::SyscallError {
-                call: "bpf_map_push_elem",
-                io_error,
-            }
+        bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| SyscallError {
+            call: "bpf_map_push_elem",
+            io_error,
         })?;
         Ok(())
     }
@@ -212,7 +210,7 @@ mod tests {
 
         assert_matches!(
             bloom_filter.insert(1, 0),
-            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_push_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_push_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
 
@@ -250,7 +248,7 @@ mod tests {
 
         assert_matches!(
             bloom_filter.contains(&1, 0),
-            Err(MapError::SyscallError { call, io_error }) if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
 

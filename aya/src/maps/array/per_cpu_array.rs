@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError, PerCpuValues},
-    sys::{bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu},
+    sys::{bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu, SyscallError},
     Pod,
 };
 
@@ -85,7 +85,7 @@ impl<T: Borrow<MapData>, V: Pod> PerCpuArray<T, V> {
         let fd = data.fd_or_err()?;
 
         let value = bpf_map_lookup_elem_per_cpu(fd, index, flags).map_err(|(_, io_error)| {
-            MapError::SyscallError {
+            SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
             }
@@ -113,7 +113,7 @@ impl<T: BorrowMut<MapData>, V: Pod> PerCpuArray<T, V> {
         let fd = data.fd_or_err()?;
 
         bpf_map_update_elem_per_cpu(fd, &index, &values, flags).map_err(|(_, io_error)| {
-            MapError::SyscallError {
+            SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
             }
