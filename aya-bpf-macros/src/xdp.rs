@@ -1,9 +1,10 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
 use quote::quote;
-use syn::{Ident, ItemFn, Result};
+use syn::{ItemFn, Result};
+
+use crate::args::{err_on_unknown_args, pop_bool_arg, Args};
 
 pub(crate) struct Xdp {
     item: ItemFn,
@@ -12,15 +13,10 @@ pub(crate) struct Xdp {
 
 impl Xdp {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Xdp> {
-        let mut frags = false;
         let item = syn::parse2(item)?;
-        if !attrs.is_empty() {
-            let ident: Ident = syn::parse2(attrs)?;
-            if ident != "frags" {
-                abort!(ident, "unexpected attribute");
-            }
-            frags = true;
-        }
+        let mut args: Args = syn::parse2(attrs)?;
+        let frags = pop_bool_arg(&mut args, "frags");
+        err_on_unknown_args(&args)?;
         Ok(Xdp { item, frags })
     }
 
