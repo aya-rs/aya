@@ -337,33 +337,34 @@ impl LdSoCache {
             0
         };
 
-        let mut entries = Vec::new();
-        for _ in 0..num_entries {
-            let flags = read_i32(&mut cursor)?;
-            let k_pos = read_u32(&mut cursor)? as usize;
-            let v_pos = read_u32(&mut cursor)? as usize;
+        let entries = (0..num_entries)
+            .map(|_: u32| {
+                let flags = read_i32(&mut cursor)?;
+                let k_pos = read_u32(&mut cursor)? as usize;
+                let v_pos = read_u32(&mut cursor)? as usize;
 
-            if new_format {
-                cursor.consume(12);
-            }
+                if new_format {
+                    cursor.consume(12);
+                }
 
-            let key = unsafe {
-                CStr::from_ptr(cursor.get_ref()[offset + k_pos..].as_ptr() as *const c_char)
-            }
-            .to_string_lossy()
-            .into_owned();
-            let value = unsafe {
-                CStr::from_ptr(cursor.get_ref()[offset + v_pos..].as_ptr() as *const c_char)
-            }
-            .to_string_lossy()
-            .into_owned();
+                let read_str = |pos| {
+                    unsafe {
+                        CStr::from_ptr(cursor.get_ref()[offset + pos..].as_ptr() as *const c_char)
+                    }
+                    .to_string_lossy()
+                    .into_owned()
+                };
 
-            entries.push(CacheEntry {
-                key,
-                value,
-                _flags: flags,
-            });
-        }
+                let key = read_str(k_pos);
+                let value = read_str(v_pos);
+
+                Ok::<_, io::Error>(CacheEntry {
+                    key,
+                    value,
+                    _flags: flags,
+                })
+            })
+            .collect::<Result<_, _>>()?;
 
         Ok(LdSoCache { entries })
     }
