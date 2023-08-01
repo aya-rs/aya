@@ -10,7 +10,7 @@ use crate::{
         probe::{attach, ProbeKind},
         FdLink, LinkError, ProgramData, ProgramError,
     },
-    sys::{bpf_link_get_info_by_fd, SyscallError},
+    sys::bpf_link_get_info_by_fd,
     VerifierLogLevel,
 };
 
@@ -137,10 +137,7 @@ impl TryFrom<FdLink> for KProbeLink {
     type Error = LinkError;
 
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info = bpf_link_get_info_by_fd(fd_link.fd).map_err(|io_error| SyscallError {
-            call: "BPF_OBJ_GET_INFO_BY_FD",
-            io_error,
-        })?;
+        let info = bpf_link_get_info_by_fd(fd_link.fd)?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI as u32) {
             return Ok(KProbeLink::new(PerfLinkInner::FdLink(fd_link)));
         }

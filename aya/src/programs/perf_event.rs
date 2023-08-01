@@ -206,10 +206,7 @@ impl TryFrom<FdLink> for PerfEventLink {
     type Error = LinkError;
 
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info = bpf_link_get_info_by_fd(fd_link.fd).map_err(|io_error| SyscallError {
-            call: "BPF_OBJ_GET_INFO_BY_FD",
-            io_error,
-        })?;
+        let info = bpf_link_get_info_by_fd(fd_link.fd)?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as u32) {
             return Ok(PerfEventLink::new(PerfLinkInner::FdLink(fd_link)));
         }

@@ -460,57 +460,57 @@ pub(crate) fn bpf_prog_query(
     ret
 }
 
-pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<OwnedFd, io::Error> {
+pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<OwnedFd, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_6.__bindgen_anon_1.prog_id = prog_id;
     // SAFETY: BPF_PROG_GET_FD_BY_ID returns a new file descriptor.
-    unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_GET_FD_BY_ID, &mut attr).map_err(|(_, e)| e) }
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_GET_FD_BY_ID, &mut attr) }.map_err(|(code, io_error)| {
+        assert_eq!(code, -1);
+        SyscallError {
+            call: "bpf_prog_get_fd_by_id",
+            io_error,
+        }
+    })
 }
 
-pub(crate) fn bpf_prog_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_prog_info, io::Error> {
+fn bpf_obj_get_info_by_fd<T>(fd: BorrowedFd<'_>) -> Result<T, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     // info gets entirely populated by the kernel
     let info = MaybeUninit::zeroed();
 
-    attr.info.bpf_fd = prog_fd as u32;
+    attr.info.bpf_fd = fd.as_raw_fd() as u32;
     attr.info.info = &info as *const _ as u64;
-    attr.info.info_len = mem::size_of::<bpf_prog_info>() as u32;
+    attr.info.info_len = mem::size_of_val(&info) as u32;
 
     match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
-        Ok(_) => Ok(unsafe { info.assume_init() }),
-        Err((_, err)) => Err(err),
+        Ok(code) => {
+            assert_eq!(code, 0);
+            Ok(unsafe { info.assume_init() })
+        }
+        Err((code, io_error)) => {
+            assert_eq!(code, -1);
+            Err(SyscallError {
+                call: "bpf_obj_get_info_by_fd",
+                io_error,
+            })
+        }
     }
 }
 
-pub(crate) fn bpf_map_get_info_by_fd(prog_fd: RawFd) -> Result<bpf_map_info, io::Error> {
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    // info gets entirely populated by the kernel
-    let info = MaybeUninit::zeroed();
-
-    attr.info.bpf_fd = prog_fd as u32;
-    attr.info.info = info.as_ptr() as *const _ as u64;
-    attr.info.info_len = mem::size_of::<bpf_map_info>() as u32;
-
-    match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
-        Ok(_) => Ok(unsafe { info.assume_init() }),
-        Err((_, err)) => Err(err),
-    }
+pub(crate) fn bpf_prog_get_info_by_fd(fd: RawFd) -> Result<bpf_prog_info, SyscallError> {
+    let fd = unsafe { BorrowedFd::borrow_raw(fd) };
+    bpf_obj_get_info_by_fd::<bpf_prog_info>(fd)
 }
 
-pub(crate) fn bpf_link_get_info_by_fd(link_fd: RawFd) -> Result<bpf_link_info, io::Error> {
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    // info gets entirely populated by the kernel
-    let info = unsafe { MaybeUninit::zeroed().assume_init() };
+pub(crate) fn bpf_map_get_info_by_fd(fd: RawFd) -> Result<bpf_map_info, SyscallError> {
+    let fd = unsafe { BorrowedFd::borrow_raw(fd) };
+    bpf_obj_get_info_by_fd::<bpf_map_info>(fd)
+}
 
-    attr.info.bpf_fd = link_fd as u32;
-    attr.info.info = &info as *const _ as u64;
-    attr.info.info_len = mem::size_of::<bpf_link_info>() as u32;
-
-    match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
-        Ok(_) => Ok(info),
-        Err((_, err)) => Err(err),
-    }
+pub(crate) fn bpf_link_get_info_by_fd(fd: RawFd) -> Result<bpf_link_info, SyscallError> {
+    let fd = unsafe { BorrowedFd::borrow_raw(fd) };
+    bpf_obj_get_info_by_fd::<bpf_link_info>(fd)
 }
 
 pub(crate) fn btf_obj_get_info_by_fd(
