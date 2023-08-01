@@ -96,7 +96,7 @@ fn set_kernel_buffer_element(bpf: &mut Bpf, bytes: &[u8]) {
 fn result_bytes(bpf: &Bpf) -> Vec<u8> {
     let m = Array::<_, TestResult>::try_from(bpf.map("RESULT").unwrap()).unwrap();
     let result = m.get(&0, 0).unwrap();
-    assert!(result.did_error == 0);
+    assert_eq!(result.did_error, 0);
     // assert that the buffer is always null terminated
     assert_eq!(result.buf[result.len], 0);
     result.buf[..result.len].to_vec()
