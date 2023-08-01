@@ -487,11 +487,7 @@ impl<T: Link> ProgramData<T> {
             io_error,
         })? as RawFd;
 
-        let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| SyscallError {
-            call: "bpf_prog_get_info_by_fd",
-            io_error,
-        })?;
-
+        let info = bpf_prog_get_info_by_fd(fd)?;
         let name = ProgramInfo(info).name_as_str().map(|s| s.to_string());
         ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), info, verifier_log_level)
     }
@@ -945,10 +941,8 @@ impl ProgramInfo {
     ///
     /// The returned fd must be closed when no longer needed.
     pub fn fd(&self) -> Result<RawFd, ProgramError> {
-        let fd = bpf_prog_get_fd_by_id(self.0.id).map_err(|io_error| SyscallError {
-            call: "bpf_prog_get_fd_by_id",
-            io_error,
-        })?;
+        let Self(info) = self;
+        let fd = bpf_prog_get_fd_by_id(info.id)?;
         Ok(fd.into_raw_fd())
     }
 
@@ -960,10 +954,7 @@ impl ProgramInfo {
             io_error,
         })? as RawFd;
 
-        let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| SyscallError {
-            call: "bpf_prog_get_info_by_fd",
-            io_error,
-        })?;
+        let info = bpf_prog_get_info_by_fd(fd)?;
         unsafe {
             libc::close(fd);
         }
@@ -998,17 +989,11 @@ pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramErro
     iter_prog_ids()
         .map(|id| {
             let id = id?;
-            bpf_prog_get_fd_by_id(id).map_err(|io_error| SyscallError {
-                call: "bpf_prog_get_fd_by_id",
-                io_error,
-            })
+            bpf_prog_get_fd_by_id(id)
         })
         .map(|fd| {
             let fd = fd?;
-            bpf_prog_get_info_by_fd(fd.as_raw_fd()).map_err(|io_error| SyscallError {
-                call: "bpf_prog_get_info_by_fd",
-                io_error,
-            })
+            bpf_prog_get_info_by_fd(fd.as_raw_fd())
         })
         .map(|result| result.map(ProgramInfo).map_err(Into::into))
 }

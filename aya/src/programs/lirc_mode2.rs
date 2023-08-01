@@ -99,11 +99,7 @@ impl LircMode2 {
         let mut prog_fds = Vec::with_capacity(prog_ids.len());
 
         for id in prog_ids {
-            let fd = bpf_prog_get_fd_by_id(id).map_err(|io_error| SyscallError {
-                call: "bpf_prog_get_fd_by_id",
-                io_error,
-            })?;
-
+            let fd = bpf_prog_get_fd_by_id(id)?;
             prog_fds.push(fd);
         }
 
@@ -137,13 +133,7 @@ impl LircLink {
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
         bpf_prog_get_info_by_fd(self.prog_fd)
             .map(ProgramInfo)
-            .map_err(|io_error| {
-                SyscallError {
-                    call: "bpf_prog_get_info_by_fd",
-                    io_error,
-                }
-                .into()
-            })
+            .map_err(Into::into)
     }
 }
 
