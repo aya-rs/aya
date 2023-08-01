@@ -562,14 +562,28 @@ impl<'a> BpfLoader<'a> {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::KRetProbe,
                         }),
-                        ProgramSection::UProbe { .. } => Program::UProbe(UProbe {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            kind: ProbeKind::UProbe,
-                        }),
-                        ProgramSection::URetProbe { .. } => Program::UProbe(UProbe {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            kind: ProbeKind::URetProbe,
-                        }),
+                        ProgramSection::UProbe { sleepable, name: _ } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
+                            if *sleepable {
+                                data.flags = BPF_F_SLEEPABLE;
+                            }
+                            Program::UProbe(UProbe {
+                                data,
+                                kind: ProbeKind::UProbe,
+                            })
+                        }
+                        ProgramSection::URetProbe { sleepable, name: _ } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
+                            if *sleepable {
+                                data.flags = BPF_F_SLEEPABLE;
+                            }
+                            Program::UProbe(UProbe {
+                                data,
+                                kind: ProbeKind::URetProbe,
+                            })
+                        }
                         ProgramSection::TracePoint { .. } => Program::TracePoint(TracePoint {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
@@ -649,7 +663,7 @@ impl<'a> BpfLoader<'a> {
                                 data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             })
                         }
-                        ProgramSection::Lsm { sleepable, .. } => {
+                        ProgramSection::Lsm { sleepable, name: _ } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
@@ -662,12 +676,22 @@ impl<'a> BpfLoader<'a> {
                                 data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             })
                         }
-                        ProgramSection::FEntry { .. } => Program::FEntry(FEntry {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                        }),
-                        ProgramSection::FExit { .. } => Program::FExit(FExit {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                        }),
+                        ProgramSection::FEntry { sleepable, name: _ } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
+                            if *sleepable {
+                                data.flags = BPF_F_SLEEPABLE;
+                            }
+                            Program::FEntry(FEntry { data })
+                        }
+                        ProgramSection::FExit { sleepable, name: _ } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
+                            if *sleepable {
+                                data.flags = BPF_F_SLEEPABLE;
+                            }
+                            Program::FExit(FExit { data })
+                        }
                         ProgramSection::Extension { .. } => Program::Extension(Extension {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
