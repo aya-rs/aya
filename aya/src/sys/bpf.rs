@@ -1,7 +1,7 @@
 use std::{
     cmp::{self, min},
     ffi::{CStr, CString},
-    io,
+    io, iter,
     mem::{self, MaybeUninit},
     os::fd::{AsRawFd, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
     slice,
@@ -28,7 +28,7 @@ use crate::{
         },
         copy_instructions,
     },
-    sys::{syscall, SysResult, Syscall},
+    sys::{syscall, SysResult, Syscall, SyscallError},
     Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN,
 };
 
@@ -909,15 +909,42 @@ fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<c_long> {
     syscall(Syscall::Bpf { cmd, attr })
 }
 
-pub(crate) fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>, (c_long, io::Error)> {
+fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_6 };
     u.__bindgen_anon_1.start_id = id;
     match sys_bpf(bpf_cmd::BPF_PROG_GET_NEXT_ID, &mut attr) {
-        Ok(_) => Ok(Some(unsafe { attr.__bindgen_anon_6.next_id })),
-        Err((_, io_error)) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
-        Err(e) => Err(e),
+        Ok(code) => {
+            assert_eq!(code, 0);
+            Ok(Some(unsafe { attr.__bindgen_anon_6.next_id }))
+        }
+        Err((code, io_error)) => {
+            assert_eq!(code, -1);
+            if io_error.raw_os_error() == Some(ENOENT) {
+                Ok(None)
+            } else {
+                Err(SyscallError {
+                    call: "bpf_prog_get_next_id",
+                    io_error,
+                })
+            }
+        }
     }
+}
+
+pub(crate) fn iter_prog_ids() -> impl Iterator<Item = Result<u32, SyscallError>> {
+    let mut current_id = Some(0);
+    iter::from_fn(move || {
+        let next_id = {
+            let current_id = current_id?;
+            bpf_prog_get_next_id(current_id).transpose()
+        };
+        current_id = next_id.as_ref().and_then(|next_id| match next_id {
+            Ok(next_id) => Some(*next_id),
+            Err(SyscallError { .. }) => None,
+        });
+        next_id
+    })
 }
 
 pub(crate) fn retry_with_verifier_logs<T>(
