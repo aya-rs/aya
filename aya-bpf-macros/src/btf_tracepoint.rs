@@ -2,43 +2,26 @@ use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Error, ItemFn, Result};
+use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_arg, pop_required_arg, Args};
+use crate::args::{err_on_unknown_args, pop_required_string_arg, Args};
 
 pub(crate) struct BtfTracePoint {
     item: ItemFn,
     function: String,
-    sleepable: bool,
 }
 
 impl BtfTracePoint {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
         let mut args: Args = syn::parse2(attrs)?;
         let item = syn::parse2(item)?;
-        let function = pop_required_arg(&mut args, "function")?;
-        let mut sleepable = false;
-        if let Some(s) = pop_arg(&mut args, "sleepable") {
-            if let Ok(m) = s.parse() {
-                sleepable = m
-            } else {
-                return Err(Error::new_spanned(
-                    s,
-                    "invalid value. should be 'true' or 'false'",
-                ));
-            }
-        }
+        let function = pop_required_string_arg(&mut args, "function")?;
         err_on_unknown_args(&args)?;
-        Ok(BtfTracePoint {
-            item,
-            function,
-            sleepable,
-        })
+        Ok(BtfTracePoint { item, function })
     }
 
     pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_prefix = if self.sleepable { "tp_btf.s" } else { "tp_btf" };
-        let section_name: Cow<'_, _> = format!("{}/{}", section_prefix, self.function).into();
+        let section_name: Cow<'_, _> = format!("tp_btf/{}", self.function).into();
         let fn_vis = &self.item.vis;
         let fn_name = self.item.sig.ident.clone();
         let item = &self.item;

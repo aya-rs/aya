@@ -309,7 +309,7 @@ pub fn raw_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// Used to implement security policy and audit logging.
 ///
 /// The hook name is the first argument to the macro.
-/// You may also provide `sleepable = true` to mark the program as sleepable.
+/// You may also provide `sleepable` to mark the program as sleepable.
 /// Arguments should be comma separated.
 ///
 /// LSM probes can be attached to the kernel's security hooks to implement mandatory
