@@ -18,11 +18,10 @@ impl CgroupSkb {
             let ident: Ident = syn::parse2(attrs)?;
             match ident.to_string().as_str() {
                 "ingress" | "egress" => (),
-                _ => abort!(attach_type, "invalid attach type"),
+                _ => abort!(ident, "invalid attach type"),
             }
             attach_type = Some(ident.to_string());
         }
-
         Ok(CgroupSkb { item, attach_type })
     }
 
