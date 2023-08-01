@@ -110,7 +110,7 @@ use crate::{
     pin::PinError,
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_load_program, bpf_pin_object,
-        bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, bpf_prog_get_next_id, bpf_prog_query,
+        bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, bpf_prog_query, iter_prog_ids,
         retry_with_verifier_logs, BpfLoadProgramAttrs, SyscallError,
     },
     util::KernelVersion,
@@ -971,56 +971,6 @@ impl ProgramInfo {
     }
 }
 
-/// ProgramsIter is an Iterator over loaded eBPF programs.
-pub struct ProgramsIter {
-    current: u32,
-    error: bool,
-}
-
-impl Iterator for ProgramsIter {
-    type Item = Result<ProgramInfo, ProgramError>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.error {
-            return None;
-        }
-        let current = self.current;
-
-        match bpf_prog_get_next_id(current) {
-            Ok(Some(next)) => {
-                self.current = next;
-                Some(
-                    bpf_prog_get_fd_by_id(next)
-                        .map_err(|io_error| SyscallError {
-                            call: "bpf_prog_get_fd_by_id",
-                            io_error,
-                        })
-                        .and_then(|fd| {
-                            bpf_prog_get_info_by_fd(fd.as_raw_fd())
-                                .map_err(|io_error| SyscallError {
-                                    call: "bpf_prog_get_info_by_fd",
-                                    io_error,
-                                })
-                                .map(ProgramInfo)
-                        })
-                        .map_err(Into::into),
-                )
-            }
-            Ok(None) => None,
-            Err((_, io_error)) => {
-                // If getting the next program failed, we have to yield None in our next
-                // iteration to avoid an infinite loop.
-                self.error = true;
-                Some(Err(SyscallError {
-                    call: "bpf_prog_get_fd_by_id",
-                    io_error,
-                }
-                .into()))
-            }
-        }
-    }
-}
-
 /// Returns an iterator over all loaded bpf programs.
 ///
 /// This differs from [`crate::Bpf::programs`] since it will return all programs
@@ -1044,9 +994,21 @@ impl Iterator for ProgramsIter {
 /// next program id, get the program fd, or the [`ProgramInfo`] fail. In cases where
 /// iteration can't be performed, for example the caller does not have the necessary privileges,
 /// a single item will be yielded containing the error that occurred.
-pub fn loaded_programs() -> ProgramsIter {
-    ProgramsIter {
-        current: 0,
-        error: false,
-    }
+pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramError>> {
+    iter_prog_ids()
+        .map(|id| {
+            let id = id?;
+            bpf_prog_get_fd_by_id(id).map_err(|io_error| SyscallError {
+                call: "bpf_prog_get_fd_by_id",
+                io_error,
+            })
+        })
+        .map(|fd| {
+            let fd = fd?;
+            bpf_prog_get_info_by_fd(fd.as_raw_fd()).map_err(|io_error| SyscallError {
+                call: "bpf_prog_get_info_by_fd",
+                io_error,
+            })
+        })
+        .map(|result| result.map(ProgramInfo).map_err(Into::into))
 }
