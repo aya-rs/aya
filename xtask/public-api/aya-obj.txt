@@ -5837,8 +5837,10 @@ pub aya_obj::obj::ProgramSection::Extension
 pub aya_obj::obj::ProgramSection::Extension::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::FEntry
 pub aya_obj::obj::ProgramSection::FEntry::name: alloc::string::String
+pub aya_obj::obj::ProgramSection::FEntry::sleepable: bool
 pub aya_obj::obj::ProgramSection::FExit
 pub aya_obj::obj::ProgramSection::FExit::name: alloc::string::String
+pub aya_obj::obj::ProgramSection::FExit::sleepable: bool
 pub aya_obj::obj::ProgramSection::KProbe
 pub aya_obj::obj::ProgramSection::KProbe::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::KRetProbe
@@ -5870,8 +5872,10 @@ pub aya_obj::obj::ProgramSection::TracePoint
 pub aya_obj::obj::ProgramSection::TracePoint::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::UProbe
 pub aya_obj::obj::ProgramSection::UProbe::name: alloc::string::String
+pub aya_obj::obj::ProgramSection::UProbe::sleepable: bool
 pub aya_obj::obj::ProgramSection::URetProbe
 pub aya_obj::obj::ProgramSection::URetProbe::name: alloc::string::String
+pub aya_obj::obj::ProgramSection::URetProbe::sleepable: bool
 pub aya_obj::obj::ProgramSection::Xdp
 pub aya_obj::obj::ProgramSection::Xdp::frags: bool
 pub aya_obj::obj::ProgramSection::Xdp::name: alloc::string::String
@@ -6585,8 +6589,10 @@ pub aya_obj::ProgramSection::Extension
 pub aya_obj::ProgramSection::Extension::name: alloc::string::String
 pub aya_obj::ProgramSection::FEntry
 pub aya_obj::ProgramSection::FEntry::name: alloc::string::String
+pub aya_obj::ProgramSection::FEntry::sleepable: bool
 pub aya_obj::ProgramSection::FExit
 pub aya_obj::ProgramSection::FExit::name: alloc::string::String
+pub aya_obj::ProgramSection::FExit::sleepable: bool
 pub aya_obj::ProgramSection::KProbe
 pub aya_obj::ProgramSection::KProbe::name: alloc::string::String
 pub aya_obj::ProgramSection::KRetProbe
@@ -6618,8 +6624,10 @@ pub aya_obj::ProgramSection::TracePoint
 pub aya_obj::ProgramSection::TracePoint::name: alloc::string::String
 pub aya_obj::ProgramSection::UProbe
 pub aya_obj::ProgramSection::UProbe::name: alloc::string::String
+pub aya_obj::ProgramSection::UProbe::sleepable: bool
 pub aya_obj::ProgramSection::URetProbe
 pub aya_obj::ProgramSection::URetProbe::name: alloc::string::String
+pub aya_obj::ProgramSection::URetProbe::sleepable: bool
 pub aya_obj::ProgramSection::Xdp
 pub aya_obj::ProgramSection::Xdp::frags: bool
 pub aya_obj::ProgramSection::Xdp::name: alloc::string::String
