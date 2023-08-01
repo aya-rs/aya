@@ -222,7 +222,6 @@ pub struct Function {
 /// Currently, the following section names are not supported yet:
 /// - `flow_dissector`: `BPF_PROG_TYPE_FLOW_DISSECTOR`
 /// - `ksyscall+` or `kretsyscall+`
-/// - `uprobe.s+` or `uretprobe.s+`
 /// - `usdt+`
 /// - `kprobe.multi+` or `kretprobe.multi+`: `BPF_TRACE_KPROBE_MULTI`
 /// - `lsm_cgroup+`
@@ -233,7 +232,6 @@ pub struct Function {
 /// - `syscall`
 /// - `struct_ops+`
 /// - `fmod_ret+`, `fmod_ret.s+`
-/// - `fentry.s+`, `fexit.s+`
 /// - `iter+`, `iter.s+`
 /// - `xdp.frags/cpumap`, `xdp/cpumap`
 /// - `xdp.frags/devmap`, `xdp/devmap`
@@ -248,9 +246,11 @@ pub enum ProgramSection {
     },
     UProbe {
         name: String,
+        sleepable: bool,
     },
     URetProbe {
         name: String,
+        sleepable: bool,
     },
     TracePoint {
         name: String,
@@ -315,9 +315,11 @@ pub enum ProgramSection {
     },
     FEntry {
         name: String,
+        sleepable: bool,
     },
     FExit {
         name: String,
+        sleepable: bool,
     },
     Extension {
         name: String,
@@ -340,8 +342,8 @@ impl ProgramSection {
         match self {
             ProgramSection::KRetProbe { name } => name,
             ProgramSection::KProbe { name } => name,
-            ProgramSection::UProbe { name } => name,
-            ProgramSection::URetProbe { name } => name,
+            ProgramSection::UProbe { name, .. } => name,
+            ProgramSection::URetProbe { name, .. } => name,
             ProgramSection::TracePoint { name } => name,
             ProgramSection::SocketFilter { name } => name,
             ProgramSection::Xdp { name, .. } => name,
@@ -360,9 +362,9 @@ impl ProgramSection {
             ProgramSection::PerfEvent { name } => name,
             ProgramSection::RawTracePoint { name } => name,
             ProgramSection::Lsm { name, .. } => name,
-            ProgramSection::BtfTracePoint { name } => name,
-            ProgramSection::FEntry { name } => name,
-            ProgramSection::FExit { name } => name,
+            ProgramSection::BtfTracePoint { name, .. } => name,
+            ProgramSection::FEntry { name, .. } => name,
+            ProgramSection::FExit { name, .. } => name,
             ProgramSection::Extension { name } => name,
             ProgramSection::SkLookup { name } => name,
             ProgramSection::CgroupSock { name, .. } => name,
@@ -388,8 +390,22 @@ impl FromStr for ProgramSection {
         Ok(match kind {
             "kprobe" => KProbe { name },
             "kretprobe" => KRetProbe { name },
-            "uprobe" => UProbe { name },
-            "uretprobe" => URetProbe { name },
+            "uprobe" => UProbe {
+                name,
+                sleepable: false,
+            },
+            "uprobe.s" => UProbe {
+                name,
+                sleepable: true,
+            },
+            "uretprobe" => URetProbe {
+                name,
+                sleepable: false,
+            },
+            "uretprobe.s" => URetProbe {
+                name,
+                sleepable: true,
+            },
             "xdp" => Xdp { name, frags: false },
             "xdp.frags" => Xdp { name, frags: true },
             "tp_btf" => BtfTracePoint { name },
@@ -551,8 +567,22 @@ impl FromStr for ProgramSection {
                 name,
                 sleepable: true,
             },
-            "fentry" => FEntry { name },
-            "fexit" => FExit { name },
+            "fentry" => FEntry {
+                name,
+                sleepable: false,
+            },
+            "fentry.s" => FEntry {
+                name,
+                sleepable: true,
+            },
+            "fexit" => FExit {
+                name,
+                sleepable: false,
+            },
+            "fexit.s" => FExit {
+                name,
+                sleepable: true,
+            },
             "freplace" => Extension { name },
             "sk_lookup" => SkLookup { name },
             _ => {
@@ -2019,6 +2049,81 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_section_uprobe_sleepable() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "uprobe.s/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::UProbe {
+                    sleepable: true,
+                    ..
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_uretprobe() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "uretprobe/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::URetProbe { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_uretprobe_sleepable() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "uretprobe.s/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::URetProbe {
+                    sleepable: true,
+                    ..
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
     fn test_parse_section_trace_point() {
         let mut obj = fake_obj();
         fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
@@ -2314,6 +2419,32 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_section_fentry_sleepable() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "fentry.s/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::FEntry {
+                    sleepable: true,
+                    ..
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
     fn test_parse_section_fexit() {
         let mut obj = fake_obj();
         fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
@@ -2331,6 +2462,32 @@ mod tests {
             obj.programs.get("foo"),
             Some(Program {
                 section: ProgramSection::FExit { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_fexit_sleepable() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                BpfSectionKind::Program,
+                "fexit.s/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::FExit {
+                    sleepable: true,
+                    ..
+                },
                 ..
             })
         );
