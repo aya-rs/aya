@@ -68,23 +68,6 @@ pub(crate) fn pop_bool_arg(args: &mut Args, name: &str) -> bool {
         .is_some()
 }
 
-pub(crate) fn pop_required_string_arg(args: &mut Args, name: &str) -> Result<String> {
-    args.args
-        .iter()
-        .position(|arg| matches!(arg, Arg::String(name_val) if name_val.name == name))
-        .map(|index| match args.args.remove(index) {
-            Arg::String(v) => v.value.value(),
-            _ => panic!("impossible variant"),
-        })
-        .ok_or_else(|| {
-            let tokens = match args.args.first().unwrap() {
-                Arg::String(name_val) => &name_val.name,
-                Arg::Bool(ident) => ident,
-            };
-            Error::new_spanned(tokens, "missing required argument")
-        })
-}
-
 pub(crate) fn err_on_unknown_args(args: &Args) -> Result<()> {
     if let Some(arg) = args.args.get(0) {
         let tokens = match arg {

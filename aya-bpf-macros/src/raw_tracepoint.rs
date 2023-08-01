@@ -1,31 +1,32 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
+
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_required_string_arg};
+use crate::args::{err_on_unknown_args, pop_string_arg};
 
 pub(crate) struct RawTracePoint {
     item: ItemFn,
-    tracepoint: String,
+    tracepoint: Option<String>,
 }
 
 impl RawTracePoint {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<RawTracePoint> {
-        if attrs.is_empty() {
-            abort!(attrs, "expected `tracepoint` attribute")
-        }
-        let mut args = syn::parse2(attrs)?;
         let item = syn::parse2(item)?;
-        let tracepoint = pop_required_string_arg(&mut args, "tracepoint")?;
+        let mut args = syn::parse2(attrs)?;
+        let tracepoint = pop_string_arg(&mut args, "tracepoint");
         err_on_unknown_args(&args)?;
         Ok(RawTracePoint { item, tracepoint })
     }
 
     pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_name: Cow<'_, _> = format!("raw_tp/{}", self.tracepoint).into();
+        let section_name: Cow<'_, _> = if self.tracepoint.is_none() {
+            "raw_tp".into()
+        } else {
+            format!("raw_tp/{}", self.tracepoint.as_ref().unwrap()).into()
+        };
         let fn_vis = &self.item.vis;
         let fn_name = self.item.sig.ident.clone();
         let item = &self.item;
