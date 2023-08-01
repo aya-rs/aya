@@ -3,7 +3,10 @@ use std::os::fd::{AsFd as _, AsRawFd as _, OwnedFd, RawFd};
 
 use crate::{
     generated::bpf_attach_type::BPF_PERF_EVENT,
-    programs::{probe::detach_debug_fs, FdLink, Link, ProbeKind, ProgramError},
+    programs::{
+        probe::{detach_debug_fs, ProbeEvent},
+        FdLink, Link, ProgramError,
+    },
     sys::{bpf_link_create, perf_event_ioctl, SysResult},
     FEATURES, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE, PERF_EVENT_IOC_SET_BPF,
 };
@@ -46,8 +49,7 @@ pub struct PerfLinkId(RawFd);
 #[derive(Debug)]
 pub struct PerfLink {
     perf_fd: OwnedFd,
-    probe_kind: Option<ProbeKind>,
-    event_alias: Option<String>,
+    event: Option<ProbeEvent>,
 }
 
 impl Link for PerfLink {
@@ -57,13 +59,11 @@ impl Link for PerfLink {
         PerfLinkId(self.perf_fd.as_raw_fd())
     }
 
-    fn detach(mut self) -> Result<(), ProgramError> {
-        let _: SysResult<_> = perf_event_ioctl(self.perf_fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
-
-        if let Some(probe_kind) = self.probe_kind.take() {
-            if let Some(event_alias) = self.event_alias.take() {
-                let _: Result<_, _> = detach_debug_fs(probe_kind, &event_alias);
-            }
+    fn detach(self) -> Result<(), ProgramError> {
+        let Self { perf_fd, event } = self;
+        let _: SysResult<_> = perf_event_ioctl(perf_fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
+        if let Some(event) = event {
+            let _: Result<_, _> = detach_debug_fs(event);
         }
 
         Ok(())
@@ -80,24 +80,22 @@ pub(crate) fn perf_attach(prog_fd: RawFd, fd: OwnedFd) -> Result<PerfLinkInner, 
         )? as RawFd;
         Ok(PerfLinkInner::FdLink(FdLink::new(link_fd)))
     } else {
-        perf_attach_either(prog_fd, fd, None, None)
+        perf_attach_either(prog_fd, fd, None)
     }
 }
 
 pub(crate) fn perf_attach_debugfs(
     prog_fd: RawFd,
     fd: OwnedFd,
-    probe_kind: ProbeKind,
-    event_alias: String,
+    event: ProbeEvent,
 ) -> Result<PerfLinkInner, ProgramError> {
-    perf_attach_either(prog_fd, fd, Some(probe_kind), Some(event_alias))
+    perf_attach_either(prog_fd, fd, Some(event))
 }
 
 fn perf_attach_either(
     prog_fd: RawFd,
     fd: OwnedFd,
-    probe_kind: Option<ProbeKind>,
-    event_alias: Option<String>,
+    event: Option<ProbeEvent>,
 ) -> Result<PerfLinkInner, ProgramError> {
     perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_SET_BPF, prog_fd).map_err(|(_, io_error)| {
         ProgramError::SyscallError {
@@ -112,9 +110,5 @@ fn perf_attach_either(
         }
     })?;
 
-    Ok(PerfLinkInner::PerfLink(PerfLink {
-        perf_fd: fd,
-        probe_kind,
-        event_alias,
-    }))
+    Ok(PerfLinkInner::PerfLink(PerfLink { perf_fd: fd, event }))
 }
