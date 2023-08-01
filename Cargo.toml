@@ -75,8 +75,8 @@ netns-rs = { version = "0.1", default-features = false }
 num_enum = { version = "0.6", default-features = false }
 object = { version = "0.31", default-features = false }
 parking_lot = { version = "0.12.0", default-features = false }
-proc-macro2 = { version = "1", default-features = false }
 proc-macro-error = { version = "1.0", default-features = false }
+proc-macro2 = { version = "1", default-features = false }
 public-api = { version = "0.31.2", default-features = false }
 quote = { version = "1", default-features = false }
 rbpf = { version = "0.2.0", default-features = false }
@@ -85,6 +85,7 @@ rustup-toolchain = { version = "0.1.5", default-features = false }
 rustversion = { version = "1.0.0", default-features = false }
 syn = { version = "2", default-features = false }
 tempfile = { version = "3", default-features = false }
+test-case = { version = "3.1.0", default-features = false }
 testing_logger = { version = "0.1.1", default-features = false }
 thiserror = { version = "1", default-features = false }
 tokio = { version = "1.24.0", default-features = false }

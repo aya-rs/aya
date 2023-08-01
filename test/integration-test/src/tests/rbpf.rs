@@ -107,8 +107,9 @@ fn use_map_with_rbpf() {
     }
 }
 
+#[track_caller]
 fn bpf_map_update_elem_multimap(map: u64, key: u64, value: u64, _: u64, _: u64) -> u64 {
-    assert!(map == 0xCAFE00 || map == 0xCAFE01);
+    assert_matches!(map, 0xCAFE00 | 0xCAFE01);
     let key = *unsafe { (key as usize as *const u32).as_ref().unwrap() };
     let value = *unsafe { (value as usize as *const u64).as_ref().unwrap() };
     assert_eq!(key, 0);

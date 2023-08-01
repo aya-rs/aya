@@ -403,16 +403,16 @@ mod tests {
         let id1 = links.insert(l1).unwrap();
         let id2 = links.insert(l2).unwrap();
 
-        assert!(*l1_detached.borrow() == 0);
-        assert!(*l2_detached.borrow() == 0);
+        assert_eq!(*l1_detached.borrow(), 0);
+        assert_eq!(*l2_detached.borrow(), 0);
 
         assert!(links.remove(id1).is_ok());
-        assert!(*l1_detached.borrow() == 1);
-        assert!(*l2_detached.borrow() == 0);
+        assert_eq!(*l1_detached.borrow(), 1);
+        assert_eq!(*l2_detached.borrow(), 0);
 
         assert!(links.remove(id2).is_ok());
-        assert!(*l1_detached.borrow() == 1);
-        assert!(*l2_detached.borrow() == 1);
+        assert_eq!(*l1_detached.borrow(), 1);
+        assert_eq!(*l2_detached.borrow(), 1);
     }
 
     #[test]
@@ -451,12 +451,12 @@ mod tests {
             links.insert(l2).unwrap();
             // manually remove one link
             assert!(links.remove(id1).is_ok());
-            assert!(*l1_detached.borrow() == 1);
-            assert!(*l2_detached.borrow() == 0);
+            assert_eq!(*l1_detached.borrow(), 1);
+            assert_eq!(*l2_detached.borrow(), 0);
         }
         // remove the other on drop
-        assert!(*l1_detached.borrow() == 1);
-        assert!(*l2_detached.borrow() == 1);
+        assert_eq!(*l1_detached.borrow(), 1);
+        assert_eq!(*l2_detached.borrow(), 1);
     }
 
     #[test]
@@ -472,19 +472,19 @@ mod tests {
             links.insert(l2).unwrap();
             // manually forget one link
             let owned_l1 = links.forget(id1);
-            assert!(*l1_detached.borrow() == 0);
-            assert!(*l2_detached.borrow() == 0);
+            assert_eq!(*l1_detached.borrow(), 0);
+            assert_eq!(*l2_detached.borrow(), 0);
             owned_l1.unwrap()
         };
 
         // l2 is detached on `Drop`, but l1 is still alive
-        assert!(*l1_detached.borrow() == 0);
-        assert!(*l2_detached.borrow() == 1);
+        assert_eq!(*l1_detached.borrow(), 0);
+        assert_eq!(*l2_detached.borrow(), 1);
 
         // manually detach l1
         assert!(owned_l1.detach().is_ok());
-        assert!(*l1_detached.borrow() == 1);
-        assert!(*l2_detached.borrow() == 1);
+        assert_eq!(*l1_detached.borrow(), 1);
+        assert_eq!(*l2_detached.borrow(), 1);
     }
 
     #[test]
