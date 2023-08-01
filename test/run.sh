@@ -190,8 +190,6 @@ EOF
     echo "Enabling testing repositories"
     exec_vm sudo dnf config-manager --set-enabled updates-testing
     exec_vm sudo dnf config-manager --set-enabled updates-testing-modular
-    echo "Installing dependencies"
-    exec_vm sudo dnf install -qy bpftool
 }
 
 scp_vm() {

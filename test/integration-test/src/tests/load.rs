@@ -1,17 +1,17 @@
-use std::{convert::TryInto as _, process::Command, thread, time};
+use std::{convert::TryInto as _, thread, time};
 
 use aya::{
     maps::Array,
     programs::{
         links::{FdLink, PinnedLink},
-        loaded_programs, KProbe, TracePoint, UProbe, Xdp, XdpFlags,
+        loaded_links, loaded_programs, KProbe, TracePoint, UProbe, Xdp, XdpFlags,
     },
     util::KernelVersion,
     Bpf,
 };
 
-const MAX_RETRIES: u32 = 100;
-const RETRY_DURATION_MS: u64 = 10;
+const MAX_RETRIES: usize = 100;
+const RETRY_DURATION: time::Duration = time::Duration::from_millis(10);
 
 #[test]
 fn long_name() {
@@ -50,61 +50,42 @@ fn multiple_btf_maps() {
     assert_eq!(val_2, 42);
 }
 
-fn is_linked(prog_id: &u32) -> bool {
-    let output = Command::new("bpftool").args(["link"]).output();
-    let output = output.expect("Failed to run 'bpftool link'");
-    let stdout = String::from_utf8(output.stdout).unwrap();
-    stdout.contains(&prog_id.to_string())
+#[track_caller]
+fn assert_loaded_and_linked(name: &str, loaded_and_linked: bool) {
+    for () in std::iter::repeat(()).take(MAX_RETRIES) {
+        // Ignore race failures which can happen when the tests delete a
+        // program in the middle of a `loaded_programs()` call.
+        let prog_id = loaded_programs()
+            .filter_map(|prog| prog.ok())
+            .find_map(|prog| (prog.name() == name.as_bytes()).then(|| prog.id()));
+        let state = prog_id.map_or(false, |prog_id| {
+            loaded_links()
+                .filter_map(|link| link.ok())
+                .any(|link| link.prog_id == prog_id)
+        });
+        if state == loaded_and_linked {
+            return;
+        }
+        thread::sleep(RETRY_DURATION);
+    }
+
+    panic!("exhausted {MAX_RETRIES} attempts, wanted loaded_and_linked={loaded_and_linked}");
 }
 
-macro_rules! assert_loaded_and_linked {
-    ($name:literal, $loaded:expr) => {
-        for i in 0..(MAX_RETRIES + 1) {
-            // Ignore race failures which can happen when the tests delete a
-            // program in the middle of a `loaded_programs()` call.
-            let id = loaded_programs()
-                .filter_map(|prog| prog.ok())
-                .find(|prog| prog.name() == $name.as_bytes())
-                .map(|prog| Some(prog.id()));
-            let mut linked = false;
-            if let Some(prog_id) = id {
-                linked = is_linked(&prog_id.unwrap());
-                if linked == $loaded {
-                    break;
-                }
-            }
-
-            if i == MAX_RETRIES {
-                panic!(
-                    "Expected (loaded/linked: {}) but found (id: {}, linked: {}",
-                    $loaded,
-                    id.is_some(),
-                    linked
-                );
-            }
-            thread::sleep(time::Duration::from_millis(RETRY_DURATION_MS));
+#[track_caller]
+fn assert_loaded(name: &str, loaded: bool) {
+    for () in std::iter::repeat(()).take(MAX_RETRIES) {
+        // Ignore race failures which can happen when the tests delete a
+        // program in the middle of a `loaded_programs()` call.
+        let state = loaded_programs()
+            .filter_map(|prog| prog.ok())
+            .any(|prog| prog.name() == name.as_bytes());
+        if state == loaded {
+            return;
         }
-    };
-}
-
-macro_rules! assert_loaded {
-    ($name:literal, $loaded:expr) => {
-        for i in 0..(MAX_RETRIES + 1) {
-            // Ignore race failures which can happen when the tests delete a
-            // program in the middle of a `loaded_programs()` call.
-            let state = loaded_programs()
-                .filter_map(|prog| prog.ok())
-                .any(|prog| prog.name() == $name.as_bytes());
-
-            if state == $loaded {
-                break;
-            }
-            if i == MAX_RETRIES {
-                panic!("Expected loaded: {} but was loaded: {}", $loaded, state);
-            }
-            thread::sleep(time::Duration::from_millis(RETRY_DURATION_MS));
-        }
-    };
+        thread::sleep(RETRY_DURATION);
+    }
+    panic!("exhausted {MAX_RETRIES} attempts, wanted loaded={loaded}");
 }
 
 #[test]
@@ -112,24 +93,24 @@ fn unload_xdp() {
     let mut bpf = Bpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    assert_loaded!("pass", true);
+    assert_loaded("pass", true);
     let link = prog.attach("lo", XdpFlags::default()).unwrap();
     {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
-        assert_loaded_and_linked!("pass", true);
+        assert_loaded_and_linked("pass", true);
     };
 
-    assert_loaded!("pass", false);
+    assert_loaded("pass", false);
     prog.load().unwrap();
 
-    assert_loaded!("pass", true);
+    assert_loaded("pass", true);
     prog.attach("lo", XdpFlags::default()).unwrap();
 
-    assert_loaded!("pass", true);
+    assert_loaded("pass", true);
     prog.unload().unwrap();
 
-    assert_loaded!("pass", false);
+    assert_loaded("pass", false);
 }
 
 #[test]
@@ -137,24 +118,24 @@ fn unload_kprobe() {
     let mut bpf = Bpf::load(crate::TEST).unwrap();
     let prog: &mut KProbe = bpf.program_mut("test_kprobe").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    assert_loaded!("test_kprobe", true);
+    assert_loaded("test_kprobe", true);
     let link = prog.attach("try_to_wake_up", 0).unwrap();
     {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
-        assert_loaded_and_linked!("test_kprobe", true);
+        assert_loaded_and_linked("test_kprobe", true);
     };
 
-    assert_loaded!("test_kprobe", false);
+    assert_loaded("test_kprobe", false);
     prog.load().unwrap();
 
-    assert_loaded!("test_kprobe", true);
+    assert_loaded("test_kprobe", true);
     prog.attach("try_to_wake_up", 0).unwrap();
 
-    assert_loaded!("test_kprobe", true);
+    assert_loaded("test_kprobe", true);
     prog.unload().unwrap();
 
-    assert_loaded!("test_kprobe", false);
+    assert_loaded("test_kprobe", false);
 }
 
 #[test]
@@ -167,25 +148,25 @@ fn basic_tracepoint() {
         .unwrap();
 
     prog.load().unwrap();
-    assert_loaded!("test_tracepoint", true);
+    assert_loaded("test_tracepoint", true);
     let link = prog.attach("syscalls", "sys_enter_kill").unwrap();
 
     {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
-        assert_loaded_and_linked!("test_tracepoint", true);
+        assert_loaded_and_linked("test_tracepoint", true);
     };
 
-    assert_loaded!("test_tracepoint", false);
+    assert_loaded("test_tracepoint", false);
     prog.load().unwrap();
 
-    assert_loaded!("test_tracepoint", true);
+    assert_loaded("test_tracepoint", true);
     prog.attach("syscalls", "sys_enter_kill").unwrap();
 
-    assert_loaded!("test_tracepoint", true);
+    assert_loaded("test_tracepoint", true);
     prog.unload().unwrap();
 
-    assert_loaded!("test_tracepoint", false);
+    assert_loaded("test_tracepoint", false);
 }
 
 #[test]
@@ -194,25 +175,25 @@ fn basic_uprobe() {
     let prog: &mut UProbe = bpf.program_mut("test_uprobe").unwrap().try_into().unwrap();
 
     prog.load().unwrap();
-    assert_loaded!("test_uprobe", true);
+    assert_loaded("test_uprobe", true);
     let link = prog.attach(Some("sleep"), 0, "libc", None).unwrap();
 
     {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
-        assert_loaded_and_linked!("test_uprobe", true);
+        assert_loaded_and_linked("test_uprobe", true);
     };
 
-    assert_loaded!("test_uprobe", false);
+    assert_loaded("test_uprobe", false);
     prog.load().unwrap();
 
-    assert_loaded!("test_uprobe", true);
+    assert_loaded("test_uprobe", true);
     prog.attach(Some("sleep"), 0, "libc", None).unwrap();
 
-    assert_loaded!("test_uprobe", true);
+    assert_loaded("test_uprobe", true);
     prog.unload().unwrap();
 
-    assert_loaded!("test_uprobe", false);
+    assert_loaded("test_uprobe", false);
 }
 
 #[test]
@@ -228,22 +209,22 @@ fn pin_link() {
     prog.load().unwrap();
     let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
     let link = prog.take_link(link_id).unwrap();
-    assert_loaded!("pass", true);
+    assert_loaded("pass", true);
 
     let fd_link: FdLink = link.try_into().unwrap();
     let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
 
     // because of the pin, the program is still attached
     prog.unload().unwrap();
-    assert_loaded!("pass", true);
+    assert_loaded("pass", true);
 
     // delete the pin, but the program is still attached
     let new_link = pinned.unpin().unwrap();
-    assert_loaded!("pass", true);
+    assert_loaded("pass", true);
 
     // finally when new_link is dropped we're detached
     drop(new_link);
-    assert_loaded!("pass", false);
+    assert_loaded("pass", false);
 }
 
 #[test]
@@ -263,7 +244,7 @@ fn pin_lifecycle() {
     }
 
     // should still be loaded since prog was pinned
-    assert_loaded!("pass", true);
+    assert_loaded("pass", true);
 
     // 2. Load program from bpffs but don't attach it
     {
@@ -271,7 +252,7 @@ fn pin_lifecycle() {
     }
 
     // should still be loaded since prog was pinned
-    assert_loaded!("pass", true);
+    assert_loaded("pass", true);
 
     // 3. Load program from bpffs and attach
     {
@@ -286,7 +267,7 @@ fn pin_lifecycle() {
     }
 
     // should still be loaded since link was pinned
-    assert_loaded_and_linked!("pass", true);
+    assert_loaded_and_linked("pass", true);
 
     // 4. Load a new version of the program, unpin link, and atomically replace old program
     {
@@ -299,11 +280,11 @@ fn pin_lifecycle() {
             .unpin()
             .unwrap();
         prog.attach_to_link(link.try_into().unwrap()).unwrap();
-        assert_loaded!("pass", true);
+        assert_loaded("pass", true);
     }
 
     // program should be unloaded
-    assert_loaded!("pass", false);
+    assert_loaded("pass", false);
 }
 
 #[test]
@@ -321,7 +302,7 @@ fn pin_lifecycle_tracepoint() {
     }
 
     // should still be loaded since prog was pinned
-    assert_loaded!("test_tracepoint", true);
+    assert_loaded("test_tracepoint", true);
 
     // 2. Load program from bpffs but don't attach it
     {
@@ -329,7 +310,7 @@ fn pin_lifecycle_tracepoint() {
     }
 
     // should still be loaded since prog was pinned
-    assert_loaded!("test_tracepoint", true);
+    assert_loaded("test_tracepoint", true);
 
     // 3. Load program from bpffs and attach
     {
@@ -346,7 +327,7 @@ fn pin_lifecycle_tracepoint() {
     }
 
     // should still be loaded since link was pinned
-    assert_loaded_and_linked!("test_tracepoint", true);
+    assert_loaded_and_linked("test_tracepoint", true);
 
     // 4. unpin link, and make sure everything is unloaded
     {
@@ -357,7 +338,7 @@ fn pin_lifecycle_tracepoint() {
     }
 
     // program should be unloaded
-    assert_loaded!("test_tracepoint", false);
+    assert_loaded("test_tracepoint", false);
 }
 
 #[test]
@@ -371,7 +352,7 @@ fn pin_lifecycle_kprobe() {
     }
 
     // should still be loaded since prog was pinned
-    assert_loaded!("test_kprobe", true);
+    assert_loaded("test_kprobe", true);
 
     // 2. Load program from bpffs but don't attach it
     {
@@ -383,7 +364,7 @@ fn pin_lifecycle_kprobe() {
     }
 
     // should still be loaded since prog was pinned
-    assert_loaded!("test_kprobe", true);
+    assert_loaded("test_kprobe", true);
 
     // 3. Load program from bpffs and attach
     {
@@ -404,7 +385,7 @@ fn pin_lifecycle_kprobe() {
     }
 
     // should still be loaded since link was pinned
-    assert_loaded_and_linked!("test_kprobe", true);
+    assert_loaded_and_linked("test_kprobe", true);
 
     // 4. unpin link, and make sure everything is unloaded
     {
@@ -415,7 +396,7 @@ fn pin_lifecycle_kprobe() {
     }
 
     // program should be unloaded
-    assert_loaded!("test_kprobe", false);
+    assert_loaded("test_kprobe", false);
 }
 
 #[test]
@@ -429,7 +410,7 @@ fn pin_lifecycle_uprobe() {
     }
 
     // should still be loaded since prog was pinned
-    assert_loaded!("test_uprobe", true);
+    assert_loaded("test_uprobe", true);
 
     // 2. Load program from bpffs but don't attach it
     {
@@ -441,7 +422,7 @@ fn pin_lifecycle_uprobe() {
     }
 
     // should still be loaded since prog was pinned
-    assert_loaded!("test_uprobe", true);
+    assert_loaded("test_uprobe", true);
 
     // 3. Load program from bpffs and attach
     {
@@ -462,7 +443,7 @@ fn pin_lifecycle_uprobe() {
     }
 
     // should still be loaded since link was pinned
-    assert_loaded_and_linked!("test_uprobe", true);
+    assert_loaded_and_linked("test_uprobe", true);
 
     // 4. unpin link, and make sure everything is unloaded
     {
@@ -473,5 +454,5 @@ fn pin_lifecycle_uprobe() {
     }
 
     // program should be unloaded
-    assert_loaded!("test_uprobe", false);
+    assert_loaded("test_uprobe", false);
 }
