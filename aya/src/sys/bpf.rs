@@ -508,6 +508,20 @@ pub(crate) fn bpf_map_get_info_by_fd(fd: RawFd) -> Result<bpf_map_info, SyscallE
     bpf_obj_get_info_by_fd::<bpf_map_info>(fd)
 }
 
+pub(crate) fn bpf_link_get_fd_by_id(link_id: u32) -> Result<OwnedFd, SyscallError> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    attr.__bindgen_anon_6.__bindgen_anon_1.link_id = link_id;
+    // SAFETY: BPF_LINK_GET_FD_BY_ID returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_GET_FD_BY_ID, &mut attr) }.map_err(|(code, io_error)| {
+        assert_eq!(code, -1);
+        SyscallError {
+            call: "bpf_link_get_fd_by_id",
+            io_error,
+        }
+    })
+}
+
 pub(crate) fn bpf_link_get_info_by_fd(fd: RawFd) -> Result<bpf_link_info, SyscallError> {
     let fd = unsafe { BorrowedFd::borrow_raw(fd) };
     bpf_obj_get_info_by_fd::<bpf_link_info>(fd)
@@ -909,11 +923,15 @@ fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<c_long> {
     syscall(Syscall::Bpf { cmd, attr })
 }
 
-fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>, SyscallError> {
+fn bpf_obj_get_next_id(
+    id: u32,
+    cmd: bpf_cmd,
+    name: &'static str,
+) -> Result<Option<u32>, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_6 };
     u.__bindgen_anon_1.start_id = id;
-    match sys_bpf(bpf_cmd::BPF_PROG_GET_NEXT_ID, &mut attr) {
+    match sys_bpf(cmd, &mut attr) {
         Ok(code) => {
             assert_eq!(code, 0);
             Ok(Some(unsafe { attr.__bindgen_anon_6.next_id }))
@@ -924,7 +942,7 @@ fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>, SyscallError> {
                 Ok(None)
             } else {
                 Err(SyscallError {
-                    call: "bpf_prog_get_next_id",
+                    call: name,
                     io_error,
                 })
             }
@@ -932,12 +950,15 @@ fn bpf_prog_get_next_id(id: u32) -> Result<Option<u32>, SyscallError> {
     }
 }
 
-pub(crate) fn iter_prog_ids() -> impl Iterator<Item = Result<u32, SyscallError>> {
+fn iter_obj_ids(
+    cmd: bpf_cmd,
+    name: &'static str,
+) -> impl Iterator<Item = Result<u32, SyscallError>> {
     let mut current_id = Some(0);
     iter::from_fn(move || {
         let next_id = {
             let current_id = current_id?;
-            bpf_prog_get_next_id(current_id).transpose()
+            bpf_obj_get_next_id(current_id, cmd, name).transpose()
         };
         current_id = next_id.as_ref().and_then(|next_id| match next_id {
             Ok(next_id) => Some(*next_id),
@@ -945,6 +966,14 @@ pub(crate) fn iter_prog_ids() -> impl Iterator<Item = Result<u32, SyscallError>>
         });
         next_id
     })
+}
+
+pub(crate) fn iter_prog_ids() -> impl Iterator<Item = Result<u32, SyscallError>> {
+    iter_obj_ids(bpf_cmd::BPF_PROG_GET_NEXT_ID, "bpf_prog_get_next_id")
+}
+
+pub(crate) fn iter_link_ids() -> impl Iterator<Item = Result<u32, SyscallError>> {
+    iter_obj_ids(bpf_cmd::BPF_LINK_GET_NEXT_ID, "bpf_link_get_next_id")
 }
 
 pub(crate) fn retry_with_verifier_logs<T>(

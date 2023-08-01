@@ -104,14 +104,15 @@ pub use uprobe::{UProbe, UProbeError};
 pub use xdp::{Xdp, XdpError, XdpFlags};
 
 use crate::{
-    generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
+    generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
     maps::MapError,
     obj::{self, btf::BtfError, Function, VerifierLog},
     pin::PinError,
     sys::{
-        bpf_btf_get_fd_by_id, bpf_get_object, bpf_load_program, bpf_pin_object,
-        bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, bpf_prog_query, iter_prog_ids,
-        retry_with_verifier_logs, BpfLoadProgramAttrs, SyscallError,
+        bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
+        bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
+        bpf_prog_query, iter_link_ids, iter_prog_ids, retry_with_verifier_logs,
+        BpfLoadProgramAttrs, SyscallError,
     },
     util::KernelVersion,
     VerifierLogLevel,
@@ -997,4 +998,20 @@ pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramErro
             bpf_prog_get_info_by_fd(fd.as_raw_fd())
         })
         .map(|result| result.map(ProgramInfo).map_err(Into::into))
+}
+
+// TODO(https://github.com/aya-rs/aya/issues/645): this API is currently used in tests. Stabilize
+// and remove doc(hidden).
+#[doc(hidden)]
+pub fn loaded_links() -> impl Iterator<Item = Result<bpf_link_info, ProgramError>> {
+    iter_link_ids()
+        .map(|id| {
+            let id = id?;
+            bpf_link_get_fd_by_id(id)
+        })
+        .map(|fd| {
+            let fd = fd?;
+            bpf_link_get_info_by_fd(fd.as_raw_fd())
+        })
+        .map(|result| result.map_err(Into::into))
 }
