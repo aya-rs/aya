@@ -560,10 +560,7 @@ impl MapData {
             io_error,
         })? as RawFd;
 
-        let info = bpf_map_get_info_by_fd(fd).map_err(|io_error| SyscallError {
-            call: "BPF_MAP_GET_INFO_BY_FD",
-            io_error,
-        })?;
+        let info = bpf_map_get_info_by_fd(fd)?;
 
         Ok(MapData {
             obj: parse_map_info(info, PinningType::ByName),
@@ -579,10 +576,7 @@ impl MapData {
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
     pub fn from_fd(fd: RawFd) -> Result<MapData, MapError> {
-        let info = bpf_map_get_info_by_fd(fd).map_err(|io_error| SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        })?;
+        let info = bpf_map_get_info_by_fd(fd)?;
 
         Ok(MapData {
             obj: parse_map_info(info, PinningType::None),
