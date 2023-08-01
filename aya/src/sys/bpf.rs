@@ -771,20 +771,7 @@ pub(crate) fn is_btf_supported() -> bool {
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
     btf.add_type(int_type);
     let btf_bytes = btf.to_bytes();
-
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_7 };
-    u.btf = btf_bytes.as_ptr() as u64;
-    u.btf_size = btf_bytes.len() as u32;
-
-    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
-        Ok(v) => {
-            let fd = v as RawFd;
-            unsafe { close(fd) };
-            true
-        }
-        Err(_) => false,
-    }
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
 pub(crate) fn is_btf_func_supported() -> bool {
@@ -814,19 +801,7 @@ pub(crate) fn is_btf_func_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_7 };
-    u.btf = btf_bytes.as_ptr() as u64;
-    u.btf_size = btf_bytes.len() as u32;
-
-    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
-        Ok(v) => {
-            let fd = v as RawFd;
-            unsafe { close(fd) };
-            true
-        }
-        Err(_) => false,
-    }
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
 pub(crate) fn is_btf_func_global_supported() -> bool {
@@ -856,19 +831,7 @@ pub(crate) fn is_btf_func_global_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_7 };
-    u.btf = btf_bytes.as_ptr() as u64;
-    u.btf_size = btf_bytes.len() as u32;
-
-    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
-        Ok(v) => {
-            let fd = v as RawFd;
-            unsafe { close(fd) };
-            true
-        }
-        Err(_) => false,
-    }
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
 pub(crate) fn is_btf_datasec_supported() -> bool {
@@ -892,19 +855,7 @@ pub(crate) fn is_btf_datasec_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_7 };
-    u.btf = btf_bytes.as_ptr() as u64;
-    u.btf_size = btf_bytes.len() as u32;
-
-    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
-        Ok(v) => {
-            let fd = v as RawFd;
-            unsafe { close(fd) };
-            true
-        }
-        Err(_) => false,
-    }
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
 pub(crate) fn is_btf_float_supported() -> bool {
@@ -915,19 +866,7 @@ pub(crate) fn is_btf_float_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_7 };
-    u.btf = btf_bytes.as_ptr() as u64;
-    u.btf_size = btf_bytes.len() as u32;
-
-    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
-        Ok(v) => {
-            let fd = v as RawFd;
-            unsafe { close(fd) };
-            true
-        }
-        Err(_) => false,
-    }
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
 pub(crate) fn is_btf_decl_tag_supported() -> bool {
@@ -946,19 +885,7 @@ pub(crate) fn is_btf_decl_tag_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_7 };
-    u.btf = btf_bytes.as_ptr() as u64;
-    u.btf_size = btf_bytes.len() as u32;
-
-    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
-        Ok(v) => {
-            let fd = v as RawFd;
-            unsafe { close(fd) };
-            true
-        }
-        Err(_) => false,
-    }
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
 pub(crate) fn is_btf_type_tag_supported() -> bool {
@@ -975,19 +902,7 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_7 };
-    u.btf = btf_bytes.as_ptr() as u64;
-    u.btf_size = btf_bytes.len() as u32;
-
-    match sys_bpf(bpf_cmd::BPF_BTF_LOAD, &attr) {
-        Ok(v) => {
-            let fd = v as RawFd;
-            unsafe { close(fd) };
-            true
-        }
-        Err(_) => false,
-    }
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
 pub fn sys_bpf(cmd: bpf_cmd, attr: &bpf_attr) -> SysResult<c_long> {
