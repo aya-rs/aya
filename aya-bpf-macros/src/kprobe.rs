@@ -5,7 +5,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_arg};
+use crate::args::{err_on_unknown_args, pop_string_arg};
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug, Copy, Clone)]
@@ -38,8 +38,8 @@ impl KProbe {
 
         if !attrs.is_empty() {
             let mut args = syn::parse2(attrs)?;
-            function = pop_arg(&mut args, "function");
-            offset = pop_arg(&mut args, "offset").map(|v| v.parse::<u64>().unwrap());
+            function = pop_string_arg(&mut args, "function");
+            offset = pop_string_arg(&mut args, "offset").map(|v| v.parse::<u64>().unwrap());
             err_on_unknown_args(&args)?;
         }
         let item = syn::parse2(item)?;

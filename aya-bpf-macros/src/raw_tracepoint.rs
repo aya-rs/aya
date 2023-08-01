@@ -5,7 +5,7 @@ use proc_macro_error::abort;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_required_arg};
+use crate::args::{err_on_unknown_args, pop_required_string_arg};
 
 pub(crate) struct RawTracePoint {
     item: ItemFn,
@@ -19,7 +19,7 @@ impl RawTracePoint {
         }
         let mut args = syn::parse2(attrs)?;
         let item = syn::parse2(item)?;
-        let tracepoint = pop_required_arg(&mut args, "tracepoint")?;
+        let tracepoint = pop_required_string_arg(&mut args, "tracepoint")?;
         err_on_unknown_args(&args)?;
         Ok(RawTracePoint { item, tracepoint })
     }
