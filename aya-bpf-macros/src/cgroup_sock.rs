@@ -12,6 +12,9 @@ pub(crate) struct CgroupSock {
 
 impl CgroupSock {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<CgroupSock> {
+        if attrs.is_empty() {
+            abort!(attrs, "missing attach type")
+        }
         let item: ItemFn = syn::parse2(item)?;
         let attach_type: Ident = syn::parse2(attrs)?;
         match attach_type.to_string().as_str() {

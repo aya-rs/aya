@@ -15,12 +15,12 @@ impl CgroupSockopt {
         if attrs.is_empty() {
             abort!(attrs, "expected attach type");
         }
+        let item = syn::parse2(item)?;
         let attach_type: Ident = syn::parse2(attrs)?;
         match attach_type.to_string().as_str() {
             "getsockopt" | "setsockopt" => (),
             _ => abort!(attach_type, "invalid attach type"),
         }
-        let item = syn::parse2(item)?;
         Ok(CgroupSockopt {
             item,
             attach_type: attach_type.to_string(),
