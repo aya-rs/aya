@@ -14,7 +14,7 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
-    sys::{bpf_link_create, bpf_prog_attach},
+    sys::{bpf_link_create, bpf_prog_attach, SyscallError},
     VerifierLogLevel,
 };
 
@@ -74,7 +74,7 @@ impl CgroupSockopt {
         let attach_type = self.data.expected_attach_type.unwrap();
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
             let link_fd = bpf_link_create(prog_fd, cgroup_fd, attach_type, None, 0).map_err(
-                |(_, io_error)| ProgramError::SyscallError {
+                |(_, io_error)| SyscallError {
                     call: "bpf_link_create",
                     io_error,
                 },
@@ -86,7 +86,7 @@ impl CgroupSockopt {
                 )))
         } else {
             bpf_prog_attach(prog_fd, cgroup_fd, attach_type).map_err(|(_, io_error)| {
-                ProgramError::SyscallError {
+                SyscallError {
                     call: "bpf_prog_attach",
                     io_error,
                 }

@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     maps::{check_bounds, check_kv_size, sock::SockMapFd, MapData, MapError, MapKeys},
-    sys::{bpf_map_delete_elem, bpf_map_update_elem},
+    sys::{bpf_map_delete_elem, bpf_map_update_elem, SyscallError},
 };
 
 /// An array of TCP or UDP sockets.
@@ -76,7 +76,7 @@ impl<T: BorrowMut<MapData>> SockMap<T> {
         let fd = data.fd_or_err()?;
         check_bounds(data, index)?;
         bpf_map_update_elem(fd, Some(&index), &socket.as_raw_fd(), flags).map_err(
-            |(_, io_error)| MapError::SyscallError {
+            |(_, io_error)| SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
             },
@@ -91,9 +91,12 @@ impl<T: BorrowMut<MapData>> SockMap<T> {
         check_bounds(data, *index)?;
         bpf_map_delete_elem(fd, index)
             .map(|_| ())
-            .map_err(|(_, io_error)| MapError::SyscallError {
-                call: "bpf_map_delete_elem",
-                io_error,
+            .map_err(|(_, io_error)| {
+                SyscallError {
+                    call: "bpf_map_delete_elem",
+                    io_error,
+                }
+                .into()
             })
     }
 }

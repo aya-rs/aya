@@ -21,7 +21,7 @@ use crate::{
         probe::{attach, ProbeKind},
         FdLink, LinkError, ProgramData, ProgramError,
     },
-    sys::bpf_link_get_info_by_fd,
+    sys::{bpf_link_get_info_by_fd, SyscallError},
     VerifierLogLevel,
 };
 
@@ -177,12 +177,10 @@ impl TryFrom<FdLink> for UProbeLink {
     type Error = LinkError;
 
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info =
-            bpf_link_get_info_by_fd(fd_link.fd).map_err(|io_error| LinkError::SyscallError {
-                call: "BPF_OBJ_GET_INFO_BY_FD",
-                code: 0,
-                io_error,
-            })?;
+        let info = bpf_link_get_info_by_fd(fd_link.fd).map_err(|io_error| SyscallError {
+            call: "BPF_OBJ_GET_INFO_BY_FD",
+            io_error,
+        })?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_TRACING as u32) {
             return Ok(UProbeLink::new(PerfLinkInner::FdLink(fd_link)));
         }
