@@ -614,19 +614,9 @@ impl Object {
         name: String,
         symbol: &Symbol,
     ) -> Result<(Program, Function), ParseError> {
+        let offset = symbol.address as usize - section.address as usize;
         let (func_info, line_info, func_info_rec_size, line_info_rec_size) =
-            if let Some(btf_ext) = &self.btf_ext {
-                let func_info = btf_ext.func_info.get(section.name);
-                let line_info = btf_ext.line_info.get(section.name);
-                (
-                    func_info,
-                    line_info,
-                    btf_ext.func_info_rec_size(),
-                    btf_ext.line_info_rec_size(),
-                )
-            } else {
-                (FuncSecInfo::default(), LineSecInfo::default(), 0, 0)
-            };
+            get_func_and_line_info(self.btf_ext.as_ref(), symbol, section, offset, true);
 
         let start = symbol.address as usize;
         let end = (symbol.address + symbol.size) as usize;
@@ -690,28 +680,7 @@ impl Object {
             }
 
             let (func_info, line_info, func_info_rec_size, line_info_rec_size) =
-                if let Some(btf_ext) = &self.btf_ext {
-                    let bytes_offset = offset as u32 / INS_SIZE as u32;
-                    let section_size_bytes = sym.size as u32 / INS_SIZE as u32;
-
-                    let mut func_info = btf_ext.func_info.get(section.name);
-                    func_info.func_info.retain(|f| f.insn_off == bytes_offset);
-
-                    let mut line_info = btf_ext.line_info.get(section.name);
-                    line_info.line_info.retain(|l| {
-                        l.insn_off >= bytes_offset
-                            && l.insn_off < (bytes_offset + section_size_bytes)
-                    });
-
-                    (
-                        func_info,
-                        line_info,
-                        btf_ext.func_info_rec_size(),
-                        btf_ext.line_info_rec_size(),
-                    )
-                } else {
-                    (FuncSecInfo::default(), LineSecInfo::default(), 0, 0)
-                };
+                get_func_and_line_info(self.btf_ext.as_ref(), sym, &section, offset, false);
 
             self.functions.insert(
                 (section.index.0, sym.address),
@@ -1367,6 +1336,50 @@ pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
         .map(|d| unsafe { ptr::read_unaligned(d.as_ptr() as *const bpf_insn) })
         .collect::<Vec<_>>();
     Ok(instructions)
+}
+
+fn get_func_and_line_info(
+    btf_ext: Option<&BtfExt>,
+    symbol: &Symbol,
+    section: &Section,
+    offset: usize,
+    rewrite_insn_off: bool,
+) -> (FuncSecInfo, LineSecInfo, usize, usize) {
+    btf_ext
+        .map(|btf_ext| {
+            let instruction_offset = offset as u32 / INS_SIZE as u32;
+            let section_size_instruction = symbol.size as u32 / INS_SIZE as u32;
+
+            let mut func_info = btf_ext.func_info.get(section.name);
+            func_info.func_info.retain_mut(|f| {
+                let retain = f.insn_off == instruction_offset;
+                if retain && rewrite_insn_off {
+                    f.insn_off = 0;
+                }
+                retain
+            });
+
+            let mut line_info = btf_ext.line_info.get(section.name);
+            line_info
+                .line_info
+                .retain_mut(|l| match l.insn_off.checked_sub(instruction_offset) {
+                    None => false,
+                    Some(insn_off) => {
+                        let retain = insn_off < section_size_instruction;
+                        if retain && rewrite_insn_off {
+                            l.insn_off = insn_off
+                        }
+                        retain
+                    }
+                });
+            (
+                func_info,
+                line_info,
+                btf_ext.func_info_rec_size(),
+                btf_ext.line_info_rec_size(),
+            )
+        })
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
