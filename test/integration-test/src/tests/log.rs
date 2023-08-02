@@ -68,11 +68,14 @@ async fn log() {
     // Call the function that the uprobe is attached to, so it starts logging.
     trigger_ebpf_program();
 
+    // Wait for there to be some logs, and for the number of logs to stop changing.
     let mut logs = 0;
     let records = loop {
-        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        // Note that 100ms was chosen after observing that 10ms can be too short
+        // in CI.
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
         let records = captured_logs.lock().unwrap();
-        if records.len() == logs {
+        if records.len() == logs && logs > 0 {
             break records;
         }
         logs = records.len();
