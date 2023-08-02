@@ -201,7 +201,9 @@ fn basic_uprobe() {
 
     prog.load().unwrap();
     assert_loaded("test_uprobe");
-    let link = prog.attach(Some("sleep"), 0, "libc", None).unwrap();
+    let link = prog
+        .attach(Some("uprobe_function"), 0, "/proc/self/exe", None)
+        .unwrap();
 
     {
         let _link_owned = prog.take_link(link).unwrap();
@@ -213,7 +215,8 @@ fn basic_uprobe() {
     prog.load().unwrap();
 
     assert_loaded("test_uprobe");
-    prog.attach(Some("sleep"), 0, "libc", None).unwrap();
+    prog.attach(Some("uprobe_function"), 0, "/proc/self/exe", None)
+        .unwrap();
 
     assert_loaded("test_uprobe");
     prog.unload().unwrap();
@@ -424,14 +427,23 @@ fn pin_lifecycle_kprobe() {
     assert_unloaded("test_kprobe");
 }
 
+#[no_mangle]
+#[inline(never)]
+extern "C" fn uprobe_function() {
+    core::hint::black_box(uprobe_function);
+}
+
 #[test]
 fn pin_lifecycle_uprobe() {
+    const FIRST_PIN_PATH: &str = "/sys/fs/bpf/aya-uprobe-test-prog-1";
+    const SECOND_PIN_PATH: &str = "/sys/fs/bpf/aya-uprobe-test-prog-2";
+
     // 1. Load Program and Pin
     {
         let mut bpf = Bpf::load(crate::TEST).unwrap();
         let prog: &mut UProbe = bpf.program_mut("test_uprobe").unwrap().try_into().unwrap();
         prog.load().unwrap();
-        prog.pin("/sys/fs/bpf/aya-uprobe-test-prog").unwrap();
+        prog.pin(FIRST_PIN_PATH).unwrap();
     }
 
     // should still be loaded since prog was pinned
@@ -439,11 +451,7 @@ fn pin_lifecycle_uprobe() {
 
     // 2. Load program from bpffs but don't attach it
     {
-        let _ = UProbe::from_pin(
-            "/sys/fs/bpf/aya-uprobe-test-prog",
-            aya::programs::ProbeKind::UProbe,
-        )
-        .unwrap();
+        let _ = UProbe::from_pin(FIRST_PIN_PATH, aya::programs::ProbeKind::UProbe).unwrap();
     }
 
     // should still be loaded since prog was pinned
@@ -451,17 +459,13 @@ fn pin_lifecycle_uprobe() {
 
     // 3. Load program from bpffs and attach
     {
-        let mut prog = UProbe::from_pin(
-            "/sys/fs/bpf/aya-uprobe-test-prog",
-            aya::programs::ProbeKind::UProbe,
-        )
-        .unwrap();
-        let link_id = prog.attach(Some("sleep"), 0, "libc", None).unwrap();
+        let mut prog = UProbe::from_pin(FIRST_PIN_PATH, aya::programs::ProbeKind::UProbe).unwrap();
+        let link_id = prog
+            .attach(Some("uprobe_function"), 0, "/proc/self/exe", None)
+            .unwrap();
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
-        fd_link
-            .pin("/sys/fs/bpf/aya-uprobe-test-bash-sleep")
-            .unwrap();
+        fd_link.pin(SECOND_PIN_PATH).unwrap();
 
         // Unpin the program. It will stay attached since its links were pinned.
         prog.unpin().unwrap();
@@ -472,7 +476,7 @@ fn pin_lifecycle_uprobe() {
 
     // 4. unpin link, and make sure everything is unloaded
     {
-        PinnedLink::from_pin("/sys/fs/bpf/aya-uprobe-test-bash-sleep")
+        PinnedLink::from_pin(SECOND_PIN_PATH)
             .unwrap()
             .unpin()
             .unwrap();
@@ -480,4 +484,7 @@ fn pin_lifecycle_uprobe() {
 
     // program should be unloaded
     assert_unloaded("test_uprobe");
+
+    // Make sure the function isn't optimized out.
+    uprobe_function();
 }
