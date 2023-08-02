@@ -2,6 +2,7 @@
 use libc::pid_t;
 use object::{Object, ObjectSection, ObjectSymbol};
 use std::{
+    borrow::Cow,
     error::Error,
     ffi::CStr,
     fs,
@@ -82,7 +83,7 @@ impl UProbe {
         target: T,
         pid: Option<pid_t>,
     ) -> Result<UProbeLinkId, ProgramError> {
-        let path = resolve_attach_path(target, pid)?;
+        let path = resolve_attach_path(&target, pid)?;
 
         let sym_offset = if let Some(fn_name) = fn_name {
             resolve_symbol(&path, fn_name).map_err(|error| UProbeError::SymbolError {
@@ -124,41 +125,36 @@ impl UProbe {
 }
 
 fn resolve_attach_path<T: AsRef<Path>>(
-    target: T,
+    target: &T,
     pid: Option<pid_t>,
-) -> Result<String, UProbeError> {
-    // Look up the path for the target. If it there is a pid, and the target is a library name that
-    // is in the process's memory map, use the path of that library. Otherwise, use the target
-    // as-is.
+) -> Result<Cow<'_, str>, UProbeError> {
+    // Look up the path for the target. If it there is a pid, and the target is a library name
+    // that is in the process's memory map, use the path of that library. Otherwise, use the target as-is.
     let target = target.as_ref();
-    let target_str = &*target.as_os_str().to_string_lossy();
-
-    let mut path = if let Some(pid) = pid {
-        find_lib_in_proc_maps(pid, target_str).map_err(|io_error| UProbeError::FileError {
-            filename: format!("/proc/{pid}/maps"),
-            io_error,
-        })?
-    } else {
-        None
-    };
-
-    if path.is_none() {
-        path = if target.is_absolute() {
-            Some(target_str)
-        } else {
-            let cache = LD_SO_CACHE
-                .as_ref()
-                .map_err(|error| UProbeError::InvalidLdSoCache {
-                    io_error: error.clone(),
-                })?;
-            cache.resolve(target_str)
-        }
-        .map(String::from)
-    };
-
-    path.ok_or(UProbeError::InvalidTarget {
+    let invalid_target = || UProbeError::InvalidTarget {
         path: target.to_owned(),
+    };
+    let target_str = target.to_str().ok_or_else(invalid_target)?;
+    pid.and_then(|pid| {
+        find_lib_in_proc_maps(pid, target_str)
+            .map_err(|io_error| UProbeError::FileError {
+                filename: format!("/proc/{pid}/maps"),
+                io_error,
+            })
+            .map(|v| v.map(Cow::Owned))
+            .transpose()
     })
+    .or_else(|| target.is_absolute().then(|| Ok(Cow::Borrowed(target_str))))
+    .or_else(|| {
+        LD_SO_CACHE
+            .as_ref()
+            .map_err(|error| UProbeError::InvalidLdSoCache {
+                io_error: error.clone(),
+            })
+            .map(|cache| cache.resolve(target_str).map(Cow::Borrowed))
+            .transpose()
+    })
+    .unwrap_or_else(|| Err(invalid_target()))
 }
 
 // Only run this test on linux with glibc because only in that configuration do we know that we'll
@@ -175,7 +171,7 @@ fn test_resolve_attach_path() {
 
     // Now let's resolve the path to libc. It should exist in the current process's memory map and
     // then in the ld.so.cache.
-    let libc_path = resolve_attach_path("libc", Some(pid)).unwrap();
+    let libc_path = resolve_attach_path(&"libc", Some(pid)).unwrap();
 
     // Make sure we got a path that contains libc.
     assert!(libc_path.contains("libc"), "libc_path: {}", libc_path);
@@ -276,16 +272,16 @@ fn find_lib_in_proc_maps(pid: pid_t, lib: &str) -> Result<Option<String>, io::Er
     let libs = proc_maps_libs(pid)?;
 
     let ret = if lib.contains(".so") {
-        libs.iter().find(|(k, _)| k.as_str().starts_with(lib))
+        libs.into_iter().find(|(k, _)| k.as_str().starts_with(lib))
     } else {
-        let lib = lib.to_string();
-        let lib1 = lib.clone() + ".so";
-        let lib2 = lib + "-";
-        libs.iter()
-            .find(|(k, _)| k.starts_with(&lib1) || k.starts_with(&lib2))
+        libs.into_iter().find(|(k, _)| {
+            k.strip_prefix(lib)
+                .map(|k| k.starts_with(".so") || k.starts_with('-'))
+                .unwrap_or_default()
+        })
     };
 
-    Ok(ret.map(|(_, v)| v.clone()))
+    Ok(ret.map(|(_, v)| v))
 }
 
 #[derive(Debug)]
