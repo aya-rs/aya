@@ -208,7 +208,7 @@ pub type SimpleSymbolResolver = BTreeMap<u64, String>;
 
 impl SymbolResolver for SimpleSymbolResolver {
     fn resolve_symbol(&self, addr: u64) -> Option<Cow<'_, str>> {
-        self.range(..=addr).next_back().map(|(_, s)| Cow::from(s))
+        self.range(..=addr).next_back().map(|(_, s)| s.into())
     }
 }
 
