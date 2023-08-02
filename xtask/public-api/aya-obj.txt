@@ -5813,70 +5813,39 @@ impl<T> core::convert::From<T> for aya_obj::ParseError
 pub fn aya_obj::ParseError::from(t: T) -> T
 pub enum aya_obj::obj::ProgramSection
 pub aya_obj::obj::ProgramSection::BtfTracePoint
-pub aya_obj::obj::ProgramSection::BtfTracePoint::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::CgroupDevice
-pub aya_obj::obj::ProgramSection::CgroupDevice::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::CgroupSkb
-pub aya_obj::obj::ProgramSection::CgroupSkb::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::CgroupSkbEgress
-pub aya_obj::obj::ProgramSection::CgroupSkbEgress::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::CgroupSkbIngress
-pub aya_obj::obj::ProgramSection::CgroupSkbIngress::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::CgroupSock
 pub aya_obj::obj::ProgramSection::CgroupSock::attach_type: aya_obj::programs::cgroup_sock::CgroupSockAttachType
-pub aya_obj::obj::ProgramSection::CgroupSock::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::CgroupSockAddr
 pub aya_obj::obj::ProgramSection::CgroupSockAddr::attach_type: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
-pub aya_obj::obj::ProgramSection::CgroupSockAddr::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::CgroupSockopt
 pub aya_obj::obj::ProgramSection::CgroupSockopt::attach_type: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
-pub aya_obj::obj::ProgramSection::CgroupSockopt::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::CgroupSysctl
-pub aya_obj::obj::ProgramSection::CgroupSysctl::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::Extension
-pub aya_obj::obj::ProgramSection::Extension::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::FEntry
-pub aya_obj::obj::ProgramSection::FEntry::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::FExit
-pub aya_obj::obj::ProgramSection::FExit::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::KProbe
-pub aya_obj::obj::ProgramSection::KProbe::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::KRetProbe
-pub aya_obj::obj::ProgramSection::KRetProbe::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::LircMode2
-pub aya_obj::obj::ProgramSection::LircMode2::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::Lsm
-pub aya_obj::obj::ProgramSection::Lsm::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::Lsm::sleepable: bool
 pub aya_obj::obj::ProgramSection::PerfEvent
-pub aya_obj::obj::ProgramSection::PerfEvent::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::RawTracePoint
-pub aya_obj::obj::ProgramSection::RawTracePoint::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::SchedClassifier
-pub aya_obj::obj::ProgramSection::SchedClassifier::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::SkLookup
-pub aya_obj::obj::ProgramSection::SkLookup::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::SkMsg
-pub aya_obj::obj::ProgramSection::SkMsg::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::SkSkbStreamParser
-pub aya_obj::obj::ProgramSection::SkSkbStreamParser::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::SkSkbStreamVerdict
-pub aya_obj::obj::ProgramSection::SkSkbStreamVerdict::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::SockOps
-pub aya_obj::obj::ProgramSection::SockOps::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::SocketFilter
-pub aya_obj::obj::ProgramSection::SocketFilter::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::TracePoint
-pub aya_obj::obj::ProgramSection::TracePoint::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::UProbe
-pub aya_obj::obj::ProgramSection::UProbe::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::URetProbe
-pub aya_obj::obj::ProgramSection::URetProbe::name: alloc::string::String
 pub aya_obj::obj::ProgramSection::Xdp
 pub aya_obj::obj::ProgramSection::Xdp::frags: bool
-pub aya_obj::obj::ProgramSection::Xdp::name: alloc::string::String
-impl aya_obj::ProgramSection
-pub fn aya_obj::ProgramSection::name(&self) -> &str
 impl core::str::traits::FromStr for aya_obj::ProgramSection
 pub type aya_obj::ProgramSection::Err = aya_obj::ParseError
 pub fn aya_obj::ProgramSection::from_str(section: &str) -> core::result::Result<aya_obj::ProgramSection, aya_obj::ParseError>
@@ -6561,70 +6530,39 @@ impl<T> core::convert::From<T> for aya_obj::ParseError
 pub fn aya_obj::ParseError::from(t: T) -> T
 pub enum aya_obj::ProgramSection
 pub aya_obj::ProgramSection::BtfTracePoint
-pub aya_obj::ProgramSection::BtfTracePoint::name: alloc::string::String
 pub aya_obj::ProgramSection::CgroupDevice
-pub aya_obj::ProgramSection::CgroupDevice::name: alloc::string::String
 pub aya_obj::ProgramSection::CgroupSkb
-pub aya_obj::ProgramSection::CgroupSkb::name: alloc::string::String
 pub aya_obj::ProgramSection::CgroupSkbEgress
-pub aya_obj::ProgramSection::CgroupSkbEgress::name: alloc::string::String
 pub aya_obj::ProgramSection::CgroupSkbIngress
-pub aya_obj::ProgramSection::CgroupSkbIngress::name: alloc::string::String
 pub aya_obj::ProgramSection::CgroupSock
 pub aya_obj::ProgramSection::CgroupSock::attach_type: aya_obj::programs::cgroup_sock::CgroupSockAttachType
-pub aya_obj::ProgramSection::CgroupSock::name: alloc::string::String
 pub aya_obj::ProgramSection::CgroupSockAddr
 pub aya_obj::ProgramSection::CgroupSockAddr::attach_type: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
-pub aya_obj::ProgramSection::CgroupSockAddr::name: alloc::string::String
 pub aya_obj::ProgramSection::CgroupSockopt
 pub aya_obj::ProgramSection::CgroupSockopt::attach_type: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
-pub aya_obj::ProgramSection::CgroupSockopt::name: alloc::string::String
 pub aya_obj::ProgramSection::CgroupSysctl
-pub aya_obj::ProgramSection::CgroupSysctl::name: alloc::string::String
 pub aya_obj::ProgramSection::Extension
-pub aya_obj::ProgramSection::Extension::name: alloc::string::String
 pub aya_obj::ProgramSection::FEntry
-pub aya_obj::ProgramSection::FEntry::name: alloc::string::String
 pub aya_obj::ProgramSection::FExit
-pub aya_obj::ProgramSection::FExit::name: alloc::string::String
 pub aya_obj::ProgramSection::KProbe
-pub aya_obj::ProgramSection::KProbe::name: alloc::string::String
 pub aya_obj::ProgramSection::KRetProbe
-pub aya_obj::ProgramSection::KRetProbe::name: alloc::string::String
 pub aya_obj::ProgramSection::LircMode2
-pub aya_obj::ProgramSection::LircMode2::name: alloc::string::String
 pub aya_obj::ProgramSection::Lsm
-pub aya_obj::ProgramSection::Lsm::name: alloc::string::String
 pub aya_obj::ProgramSection::Lsm::sleepable: bool
 pub aya_obj::ProgramSection::PerfEvent
-pub aya_obj::ProgramSection::PerfEvent::name: alloc::string::String
 pub aya_obj::ProgramSection::RawTracePoint
-pub aya_obj::ProgramSection::RawTracePoint::name: alloc::string::String
 pub aya_obj::ProgramSection::SchedClassifier
-pub aya_obj::ProgramSection::SchedClassifier::name: alloc::string::String
 pub aya_obj::ProgramSection::SkLookup
-pub aya_obj::ProgramSection::SkLookup::name: alloc::string::String
 pub aya_obj::ProgramSection::SkMsg
-pub aya_obj::ProgramSection::SkMsg::name: alloc::string::String
 pub aya_obj::ProgramSection::SkSkbStreamParser
-pub aya_obj::ProgramSection::SkSkbStreamParser::name: alloc::string::String
 pub aya_obj::ProgramSection::SkSkbStreamVerdict
-pub aya_obj::ProgramSection::SkSkbStreamVerdict::name: alloc::string::String
 pub aya_obj::ProgramSection::SockOps
-pub aya_obj::ProgramSection::SockOps::name: alloc::string::String
 pub aya_obj::ProgramSection::SocketFilter
-pub aya_obj::ProgramSection::SocketFilter::name: alloc::string::String
 pub aya_obj::ProgramSection::TracePoint
-pub aya_obj::ProgramSection::TracePoint::name: alloc::string::String
 pub aya_obj::ProgramSection::UProbe
-pub aya_obj::ProgramSection::UProbe::name: alloc::string::String
 pub aya_obj::ProgramSection::URetProbe
-pub aya_obj::ProgramSection::URetProbe::name: alloc::string::String
 pub aya_obj::ProgramSection::Xdp
 pub aya_obj::ProgramSection::Xdp::frags: bool
-pub aya_obj::ProgramSection::Xdp::name: alloc::string::String
-impl aya_obj::ProgramSection
-pub fn aya_obj::ProgramSection::name(&self) -> &str
 impl core::str::traits::FromStr for aya_obj::ProgramSection
 pub type aya_obj::ProgramSection::Err = aya_obj::ParseError
 pub fn aya_obj::ProgramSection::from_str(section: &str) -> core::result::Result<aya_obj::ProgramSection, aya_obj::ParseError>

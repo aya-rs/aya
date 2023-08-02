@@ -996,7 +996,7 @@ pub aya::maps::MapError::PinError
 pub aya::maps::MapError::PinError::error: aya::pin::PinError
 pub aya::maps::MapError::PinError::name: core::option::Option<alloc::string::String>
 pub aya::maps::MapError::ProgramNotLoaded
-pub aya::maps::MapError::SyscallError(crate::sys::SyscallError)
+pub aya::maps::MapError::SyscallError(SyscallError)
 pub aya::maps::MapError::Unsupported
 pub aya::maps::MapError::Unsupported::map_type: u32
 impl core::convert::From<aya::maps::MapError> for aya::BpfError
@@ -1762,7 +1762,7 @@ pub aya::pin::PinError::InvalidPinPath
 pub aya::pin::PinError::InvalidPinPath::error: alloc::string::String
 pub aya::pin::PinError::NoFd
 pub aya::pin::PinError::NoFd::name: alloc::string::String
-pub aya::pin::PinError::SyscallError(crate::sys::SyscallError)
+pub aya::pin::PinError::SyscallError(SyscallError)
 impl core::error::Error for aya::pin::PinError
 pub fn aya::pin::PinError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Display for aya::pin::PinError
@@ -3004,7 +3004,7 @@ pub fn aya::programs::kprobe::KProbeLinkId::from(t: T) -> T
 pub mod aya::programs::links
 pub enum aya::programs::links::LinkError
 pub aya::programs::links::LinkError::InvalidLink
-pub aya::programs::links::LinkError::SyscallError(crate::sys::SyscallError)
+pub aya::programs::links::LinkError::SyscallError(SyscallError)
 impl core::error::Error for aya::programs::links::LinkError
 pub fn aya::programs::links::LinkError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Display for aya::programs::links::LinkError
@@ -5167,7 +5167,7 @@ pub aya::programs::ProgramError::MapError(aya::maps::MapError)
 pub aya::programs::ProgramError::NotAttached
 pub aya::programs::ProgramError::NotLoaded
 pub aya::programs::ProgramError::SocketFilterError(aya::programs::SocketFilterError)
-pub aya::programs::ProgramError::SyscallError(crate::sys::SyscallError)
+pub aya::programs::ProgramError::SyscallError(SyscallError)
 pub aya::programs::ProgramError::TcError(aya::programs::tc::TcError)
 pub aya::programs::ProgramError::TracePointError(aya::programs::trace_point::TracePointError)
 pub aya::programs::ProgramError::UProbeError(aya::programs::uprobe::UProbeError)
