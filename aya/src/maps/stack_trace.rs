@@ -162,7 +162,7 @@ impl<'a, T: Borrow<MapData>> IntoIterator for &'a StackTraceMap<T> {
 /// A resolver for symbols based on an address obtained from a stack trace.
 pub trait SymbolResolver {
     /// Resolve a symbol for a given address, if possible.
-    fn resolve_sym(&self, addr: u64) -> Option<&str>;
+    fn resolve_symbol(&self, addr: u64) -> Option<&str>;
 }
 
 /// A kernel or user space stack trace.
@@ -182,7 +182,7 @@ impl StackTrace {
     /// them from debug info.
     pub fn resolve<R: SymbolResolver>(&mut self, symbols: &R) -> &StackTrace {
         for frame in self.frames.iter_mut() {
-            frame.symbol_name = symbols.resolve_sym(frame.ip).map(|s| s.to_string())
+            frame.symbol_name = symbols.resolve_symbol(frame.ip).map(|s| s.to_string())
         }
 
         self

@@ -11,10 +11,10 @@ use std::{
 
 use crate::{
     generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK},
+    maps::stack_trace::SymbolResolver,
     Pod,
 };
 
-use crate::maps::stack_trace::SymbolResolver;
 use libc::{if_nametoindex, sysconf, uname, utsname, _SC_PAGESIZE};
 
 /// Represents a kernel version, in major.minor.release version.
@@ -206,7 +206,7 @@ fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, ()> {
 pub type SimpleSymbolResolver = BTreeMap<u64, String>;
 
 impl SymbolResolver for SimpleSymbolResolver {
-    fn resolve_sym(&self, addr: u64) -> Option<&str> {
+    fn resolve_symbol(&self, addr: u64) -> Option<&str> {
         self.range(..=addr).next_back().map(|(_, s)| s.as_str())
     }
 }
