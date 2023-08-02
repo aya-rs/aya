@@ -804,9 +804,9 @@ pub fn aya::maps::stack_trace::StackTraceMap<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::stack_trace::StackTraceMap<T>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::from(t: T) -> T
 pub trait aya::maps::stack_trace::SymbolResolver
-pub fn aya::maps::stack_trace::SymbolResolver::resolve_symbol(&self, addr: u64) -> core::option::Option<&str>
+pub fn aya::maps::stack_trace::SymbolResolver::resolve_symbol(&self, addr: u64) -> core::option::Option<alloc::borrow::Cow<'_, str>>
 impl aya::maps::stack_trace::SymbolResolver for aya::util::SimpleSymbolResolver
-pub fn aya::util::SimpleSymbolResolver::resolve_symbol(&self, addr: u64) -> core::option::Option<&str>
+pub fn aya::util::SimpleSymbolResolver::resolve_symbol(&self, addr: u64) -> core::option::Option<alloc::borrow::Cow<'_, str>>
 pub enum aya::maps::Map
 pub aya::maps::Map::Array(aya::maps::MapData)
 pub aya::maps::Map::BloomFilter(aya::maps::MapData)

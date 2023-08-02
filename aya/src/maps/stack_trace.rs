@@ -1,7 +1,12 @@
 //! A hash map of kernel or user space stack traces.
 //!
 //! See [`StackTraceMap`] for documentation and examples.
-use std::{borrow::Borrow, fs, io, mem, path::Path, str::FromStr};
+use std::{
+    borrow::{Borrow, Cow},
+    fs, io, mem,
+    path::Path,
+    str::FromStr,
+};
 
 use crate::{
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys},
@@ -162,7 +167,7 @@ impl<'a, T: Borrow<MapData>> IntoIterator for &'a StackTraceMap<T> {
 /// A resolver for symbols based on an address obtained from a stack trace.
 pub trait SymbolResolver {
     /// Resolve a symbol for a given address, if possible.
-    fn resolve_symbol(&self, addr: u64) -> Option<&str>;
+    fn resolve_symbol(&self, addr: u64) -> Option<Cow<'_, str>>;
 }
 
 /// A kernel or user space stack trace.

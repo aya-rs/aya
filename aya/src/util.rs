@@ -1,5 +1,6 @@
 //! Utility functions.
 use std::{
+    borrow::Cow,
     collections::BTreeMap,
     error::Error,
     ffi::{CStr, CString},
@@ -206,8 +207,8 @@ fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, ()> {
 pub type SimpleSymbolResolver = BTreeMap<u64, String>;
 
 impl SymbolResolver for SimpleSymbolResolver {
-    fn resolve_symbol(&self, addr: u64) -> Option<&str> {
-        self.range(..=addr).next_back().map(|(_, s)| s.as_str())
+    fn resolve_symbol(&self, addr: u64) -> Option<Cow<'_, str>> {
+        self.range(..=addr).next_back().map(|(_, s)| Cow::from(s))
     }
 }
 
