@@ -9,8 +9,10 @@ fn run_with_rbpf() {
     let object = Object::parse(crate::PASS).unwrap();
 
     assert_eq!(object.programs.len(), 1);
-    assert_matches!(object.programs["pass"].section, ProgramSection::Xdp { .. });
-    assert_eq!(object.programs["pass"].section.name(), "xdp.frags");
+    assert_matches!(
+        object.programs["pass"].section,
+        ProgramSection::Xdp { frags: true }
+    );
 
     let instructions = &object
         .functions
@@ -40,7 +42,6 @@ fn use_map_with_rbpf() {
         object.programs["bpf_prog"].section,
         ProgramSection::TracePoint { .. }
     );
-    assert_eq!(object.programs["bpf_prog"].section.name(), "tracepoint");
 
     // Initialize maps:
     // - fd: 0xCAFE00 or 0xCAFE01 (the 0xCAFE00 part is used to distinguish fds from indices),
