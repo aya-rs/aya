@@ -614,10 +614,26 @@ impl Object {
         name: String,
         symbol: &Symbol,
     ) -> Result<(Program, Function), ParseError> {
+        let offset = symbol.address as usize - section.address as usize;
         let (func_info, line_info, func_info_rec_size, line_info_rec_size) =
             if let Some(btf_ext) = &self.btf_ext {
-                let func_info = btf_ext.func_info.get(section.name);
-                let line_info = btf_ext.line_info.get(section.name);
+                let bytes_offset = offset as u32 / INS_SIZE as u32;
+                let section_size_bytes = symbol.size as u32 / INS_SIZE as u32;
+
+                let mut func_info = btf_ext.func_info.get(section.name);
+                func_info.func_info.retain(|f| f.insn_off == bytes_offset);
+                func_info.func_info.iter_mut().for_each(|f| {
+                    f.insn_off -= bytes_offset;
+                });
+
+                let mut line_info = btf_ext.line_info.get(section.name);
+                line_info.line_info.retain(|l| {
+                    l.insn_off >= bytes_offset && l.insn_off < (bytes_offset + section_size_bytes)
+                });
+                line_info.line_info.iter_mut().for_each(|f| {
+                    f.insn_off -= bytes_offset;
+                });
+
                 (
                     func_info,
                     line_info,
