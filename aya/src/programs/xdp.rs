@@ -1,6 +1,6 @@
 //! eXpress Data Path (XDP) programs.
 
-use crate::util::KernelVersion;
+use crate::{sys::SyscallError, util::KernelVersion};
 use bitflags;
 use libc::if_nametoindex;
 use std::{convert::TryFrom, ffi::CString, hash::Hash, io, mem, os::fd::RawFd};
@@ -127,7 +127,7 @@ impl Xdp {
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 9, 0) {
             let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, None, flags.bits()).map_err(
-                |(_, io_error)| ProgramError::SyscallError {
+                |(_, io_error)| SyscallError {
                     call: "bpf_link_create",
                     io_error,
                 },
@@ -173,7 +173,7 @@ impl Xdp {
             XdpLinkInner::FdLink(fd_link) => {
                 let link_fd = fd_link.fd;
                 bpf_link_update(link_fd, prog_fd, None, 0).map_err(|(_, io_error)| {
-                    ProgramError::SyscallError {
+                    SyscallError {
                         call: "bpf_link_update",
                         io_error,
                     }
@@ -279,12 +279,7 @@ impl TryFrom<FdLink> for XdpLink {
 
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
         // unwrap of fd_link.fd will not panic since it's only None when being dropped.
-        let info =
-            bpf_link_get_info_by_fd(fd_link.fd).map_err(|io_error| LinkError::SyscallError {
-                call: "BPF_OBJ_GET_INFO_BY_FD",
-                code: 0,
-                io_error,
-            })?;
+        let info = bpf_link_get_info_by_fd(fd_link.fd)?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_XDP as u32) {
             return Ok(XdpLink::new(XdpLinkInner::FdLink(fd_link)));
         }

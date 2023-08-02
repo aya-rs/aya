@@ -64,7 +64,6 @@ pub mod uprobe;
 mod utils;
 pub mod xdp;
 
-use crate::util::KernelVersion;
 use libc::ENOSPC;
 use std::{
     ffi::CString,
@@ -105,15 +104,17 @@ pub use uprobe::{UProbe, UProbeError};
 pub use xdp::{Xdp, XdpError, XdpFlags};
 
 use crate::{
-    generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
+    generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
     maps::MapError,
     obj::{self, btf::BtfError, Function, VerifierLog},
     pin::PinError,
     sys::{
-        bpf_btf_get_fd_by_id, bpf_get_object, bpf_load_program, bpf_pin_object,
-        bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, bpf_prog_get_next_id, bpf_prog_query,
-        retry_with_verifier_logs, BpfLoadProgramAttrs,
+        bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
+        bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
+        bpf_prog_query, iter_link_ids, iter_prog_ids, retry_with_verifier_logs,
+        BpfLoadProgramAttrs, SyscallError,
     },
+    util::KernelVersion,
     VerifierLogLevel,
 };
 
@@ -147,14 +148,8 @@ pub enum ProgramError {
     },
 
     /// A syscall failed.
-    #[error("`{call}` failed")]
-    SyscallError {
-        /// The name of the syscall which failed.
-        call: &'static str,
-        /// The [`io::Error`] returned by the syscall.
-        #[source]
-        io_error: io::Error,
-    },
+    #[error(transparent)]
+    SyscallError(#[from] SyscallError),
 
     /// The network interface does not exist.
     #[error("unknown network interface {name}")]
@@ -456,12 +451,11 @@ impl<T: Link> ProgramData<T> {
             None
         };
         let attach_btf_obj_fd = if info.attach_btf_obj_id > 0 {
-            let fd = bpf_btf_get_fd_by_id(info.attach_btf_obj_id).map_err(|io_error| {
-                ProgramError::SyscallError {
+            let fd =
+                bpf_btf_get_fd_by_id(info.attach_btf_obj_id).map_err(|io_error| SyscallError {
                     call: "bpf_btf_get_fd_by_id",
                     io_error,
-                }
-            })?;
+                })?;
             Some(fd as u32)
         } else {
             None
@@ -489,17 +483,12 @@ impl<T: Link> ProgramData<T> {
     ) -> Result<ProgramData<T>, ProgramError> {
         let path_string =
             CString::new(path.as_ref().as_os_str().to_string_lossy().as_bytes()).unwrap();
-        let fd =
-            bpf_get_object(&path_string).map_err(|(_, io_error)| ProgramError::SyscallError {
-                call: "bpf_obj_get",
-                io_error,
-            })? as RawFd;
-
-        let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_prog_get_info_by_fd",
+        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
+            call: "bpf_obj_get",
             io_error,
-        })?;
+        })? as RawFd;
 
+        let info = bpf_prog_get_info_by_fd(fd)?;
         let name = ProgramInfo(info).name_as_str().map(|s| s.to_string());
         ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), info, verifier_log_level)
     }
@@ -537,8 +526,8 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
             error: e.to_string(),
         }
     })?;
-    bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
-        name: "BPF_OBJ_PIN",
+    bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| SyscallError {
+        call: "BPF_OBJ_PIN",
         io_error,
     })?;
     Ok(())
@@ -665,15 +654,17 @@ pub(crate) fn query<T: AsRawFd>(
                 prog_ids.resize(prog_cnt as usize, 0);
                 return Ok(prog_ids);
             }
-            Err((_, io_error)) if retries == 0 && io_error.raw_os_error() == Some(ENOSPC) => {
-                prog_ids.resize(prog_cnt as usize, 0);
-                retries += 1;
-            }
             Err((_, io_error)) => {
-                return Err(ProgramError::SyscallError {
-                    call: "bpf_prog_query",
-                    io_error,
-                });
+                if retries == 0 && io_error.raw_os_error() == Some(ENOSPC) {
+                    prog_ids.resize(prog_cnt as usize, 0);
+                    retries += 1;
+                } else {
+                    return Err(SyscallError {
+                        call: "bpf_prog_query",
+                        io_error,
+                    }
+                    .into());
+                }
             }
         }
     }
@@ -951,79 +942,25 @@ impl ProgramInfo {
     ///
     /// The returned fd must be closed when no longer needed.
     pub fn fd(&self) -> Result<RawFd, ProgramError> {
-        let fd =
-            bpf_prog_get_fd_by_id(self.0.id).map_err(|io_error| ProgramError::SyscallError {
-                call: "bpf_prog_get_fd_by_id",
-                io_error,
-            })?;
+        let Self(info) = self;
+        let fd = bpf_prog_get_fd_by_id(info.id)?;
         Ok(fd.into_raw_fd())
     }
 
     /// Loads a program from a pinned path in bpffs.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<ProgramInfo, ProgramError> {
         let path_string = CString::new(path.as_ref().to_str().unwrap()).unwrap();
-        let fd =
-            bpf_get_object(&path_string).map_err(|(_, io_error)| ProgramError::SyscallError {
-                call: "BPF_OBJ_GET",
-                io_error,
-            })? as RawFd;
-
-        let info = bpf_prog_get_info_by_fd(fd).map_err(|io_error| ProgramError::SyscallError {
-            call: "bpf_prog_get_info_by_fd",
+        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
+            call: "BPF_OBJ_GET",
             io_error,
-        })?;
+        })? as RawFd;
+
+        let info = bpf_prog_get_info_by_fd(fd);
         unsafe {
             libc::close(fd);
         }
+        let info = info?;
         Ok(ProgramInfo(info))
-    }
-}
-
-/// ProgramsIter is an Iterator over loaded eBPF programs.
-pub struct ProgramsIter {
-    current: u32,
-    error: bool,
-}
-
-impl Iterator for ProgramsIter {
-    type Item = Result<ProgramInfo, ProgramError>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.error {
-            return None;
-        }
-        let current = self.current;
-
-        match bpf_prog_get_next_id(current) {
-            Ok(Some(next)) => {
-                self.current = next;
-                Some(
-                    bpf_prog_get_fd_by_id(next)
-                        .map_err(|io_error| ProgramError::SyscallError {
-                            call: "bpf_prog_get_fd_by_id",
-                            io_error,
-                        })
-                        .and_then(|fd| {
-                            bpf_prog_get_info_by_fd(fd.as_raw_fd())
-                                .map_err(|io_error| ProgramError::SyscallError {
-                                    call: "bpf_prog_get_info_by_fd",
-                                    io_error,
-                                })
-                                .map(ProgramInfo)
-                        }),
-                )
-            }
-            Ok(None) => None,
-            Err((_, io_error)) => {
-                // If getting the next program failed, we have to yield None in our next
-                // iteration to avoid an infinite loop.
-                self.error = true;
-                Some(Err(ProgramError::SyscallError {
-                    call: "bpf_prog_get_fd_by_id",
-                    io_error,
-                }))
-            }
-        }
     }
 }
 
@@ -1050,9 +987,31 @@ impl Iterator for ProgramsIter {
 /// next program id, get the program fd, or the [`ProgramInfo`] fail. In cases where
 /// iteration can't be performed, for example the caller does not have the necessary privileges,
 /// a single item will be yielded containing the error that occurred.
-pub fn loaded_programs() -> ProgramsIter {
-    ProgramsIter {
-        current: 0,
-        error: false,
-    }
+pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramError>> {
+    iter_prog_ids()
+        .map(|id| {
+            let id = id?;
+            bpf_prog_get_fd_by_id(id)
+        })
+        .map(|fd| {
+            let fd = fd?;
+            bpf_prog_get_info_by_fd(fd.as_raw_fd())
+        })
+        .map(|result| result.map(ProgramInfo).map_err(Into::into))
+}
+
+// TODO(https://github.com/aya-rs/aya/issues/645): this API is currently used in tests. Stabilize
+// and remove doc(hidden).
+#[doc(hidden)]
+pub fn loaded_links() -> impl Iterator<Item = Result<bpf_link_info, ProgramError>> {
+    iter_link_ids()
+        .map(|id| {
+            let id = id?;
+            bpf_link_get_fd_by_id(id)
+        })
+        .map(|fd| {
+            let fd = fd?;
+            bpf_link_get_info_by_fd(fd.as_raw_fd())
+        })
+        .map(|result| result.map_err(Into::into))
 }

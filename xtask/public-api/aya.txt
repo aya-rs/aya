@@ -996,9 +996,7 @@ pub aya::maps::MapError::PinError
 pub aya::maps::MapError::PinError::error: aya::pin::PinError
 pub aya::maps::MapError::PinError::name: core::option::Option<alloc::string::String>
 pub aya::maps::MapError::ProgramNotLoaded
-pub aya::maps::MapError::SyscallError
-pub aya::maps::MapError::SyscallError::call: &'static str
-pub aya::maps::MapError::SyscallError::io_error: std::io::error::Error
+pub aya::maps::MapError::SyscallError(crate::sys::SyscallError)
 pub aya::maps::MapError::Unsupported
 pub aya::maps::MapError::Unsupported::map_type: u32
 impl core::convert::From<aya::maps::MapError> for aya::BpfError
@@ -1764,9 +1762,7 @@ pub aya::pin::PinError::InvalidPinPath
 pub aya::pin::PinError::InvalidPinPath::error: alloc::string::String
 pub aya::pin::PinError::NoFd
 pub aya::pin::PinError::NoFd::name: alloc::string::String
-pub aya::pin::PinError::SyscallError
-pub aya::pin::PinError::SyscallError::io_error: std::io::error::Error
-pub aya::pin::PinError::SyscallError::name: &'static str
+pub aya::pin::PinError::SyscallError(crate::sys::SyscallError)
 impl core::error::Error for aya::pin::PinError
 pub fn aya::pin::PinError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Display for aya::pin::PinError
@@ -3008,10 +3004,7 @@ pub fn aya::programs::kprobe::KProbeLinkId::from(t: T) -> T
 pub mod aya::programs::links
 pub enum aya::programs::links::LinkError
 pub aya::programs::links::LinkError::InvalidLink
-pub aya::programs::links::LinkError::SyscallError
-pub aya::programs::links::LinkError::SyscallError::call: &'static str
-pub aya::programs::links::LinkError::SyscallError::code: libc::unix::linux_like::linux::gnu::b64::x86_64::not_x32::c_long
-pub aya::programs::links::LinkError::SyscallError::io_error: std::io::error::Error
+pub aya::programs::links::LinkError::SyscallError(crate::sys::SyscallError)
 impl core::error::Error for aya::programs::links::LinkError
 pub fn aya::programs::links::LinkError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Display for aya::programs::links::LinkError
@@ -5174,9 +5167,7 @@ pub aya::programs::ProgramError::MapError(aya::maps::MapError)
 pub aya::programs::ProgramError::NotAttached
 pub aya::programs::ProgramError::NotLoaded
 pub aya::programs::ProgramError::SocketFilterError(aya::programs::SocketFilterError)
-pub aya::programs::ProgramError::SyscallError
-pub aya::programs::ProgramError::SyscallError::call: &'static str
-pub aya::programs::ProgramError::SyscallError::io_error: std::io::error::Error
+pub aya::programs::ProgramError::SyscallError(crate::sys::SyscallError)
 pub aya::programs::ProgramError::TcError(aya::programs::tc::TcError)
 pub aya::programs::ProgramError::TracePointError(aya::programs::trace_point::TracePointError)
 pub aya::programs::ProgramError::UProbeError(aya::programs::uprobe::UProbeError)
@@ -6237,35 +6228,6 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::ProgramInfo where T: core:
 pub fn aya::programs::ProgramInfo::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::ProgramInfo
 pub fn aya::programs::ProgramInfo::from(t: T) -> T
-pub struct aya::programs::ProgramsIter
-impl core::iter::traits::iterator::Iterator for aya::programs::ProgramsIter
-pub type aya::programs::ProgramsIter::Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-pub fn aya::programs::ProgramsIter::next(&mut self) -> core::option::Option<Self::Item>
-impl core::marker::Send for aya::programs::ProgramsIter
-impl core::marker::Sync for aya::programs::ProgramsIter
-impl core::marker::Unpin for aya::programs::ProgramsIter
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProgramsIter
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::ProgramsIter
-impl<I> core::iter::traits::collect::IntoIterator for aya::programs::ProgramsIter where I: core::iter::traits::iterator::Iterator
-pub type aya::programs::ProgramsIter::IntoIter = I
-pub type aya::programs::ProgramsIter::Item = <I as core::iter::traits::iterator::Iterator>::Item
-pub fn aya::programs::ProgramsIter::into_iter(self) -> I
-impl<T, U> core::convert::Into<U> for aya::programs::ProgramsIter where U: core::convert::From<T>
-pub fn aya::programs::ProgramsIter::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::ProgramsIter where U: core::convert::Into<T>
-pub type aya::programs::ProgramsIter::Error = core::convert::Infallible
-pub fn aya::programs::ProgramsIter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::ProgramsIter where U: core::convert::TryFrom<T>
-pub type aya::programs::ProgramsIter::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::ProgramsIter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::programs::ProgramsIter where T: 'static + core::marker::Sized
-pub fn aya::programs::ProgramsIter::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::ProgramsIter where T: core::marker::Sized
-pub fn aya::programs::ProgramsIter::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::ProgramsIter where T: core::marker::Sized
-pub fn aya::programs::ProgramsIter::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::ProgramsIter
-pub fn aya::programs::ProgramsIter::from(t: T) -> T
 pub struct aya::programs::RawTracePoint
 impl aya::programs::RawTracePoint
 pub fn aya::programs::RawTracePoint::attach(&mut self, tp_name: &str) -> core::result::Result<RawTracePointLinkId, aya::programs::ProgramError>
@@ -6928,7 +6890,7 @@ impl aya::programs::links::Link for aya::programs::xdp::XdpLink
 pub type aya::programs::xdp::XdpLink::Id = aya::programs::xdp::XdpLinkId
 pub fn aya::programs::xdp::XdpLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::xdp::XdpLink::id(&self) -> Self::Id
-pub fn aya::programs::loaded_programs() -> aya::programs::ProgramsIter
+pub fn aya::programs::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
 pub mod aya::util
 pub struct aya::util::KernelVersion
 impl aya::util::KernelVersion
@@ -7259,4 +7221,4 @@ impl aya::Pod for u8
 impl<K: aya::Pod> aya::Pod for aya::maps::lpm_trie::Key<K>
 impl<T: aya::Pod, const N: usize> aya::Pod for [T; N]
 pub fn aya::features() -> &'static aya_obj::obj::Features
-pub fn aya::loaded_programs() -> aya::programs::ProgramsIter
+pub fn aya::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>

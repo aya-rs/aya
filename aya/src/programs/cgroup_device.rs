@@ -8,7 +8,7 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
-    sys::{bpf_link_create, bpf_prog_attach},
+    sys::{bpf_link_create, bpf_prog_attach, SyscallError},
 };
 
 /// A program used to watch or prevent device interaction from a cgroup.
@@ -66,7 +66,7 @@ impl CgroupDevice {
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
             let link_fd = bpf_link_create(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE, None, 0).map_err(
-                |(_, io_error)| ProgramError::SyscallError {
+                |(_, io_error)| SyscallError {
                     call: "bpf_link_create",
                     io_error,
                 },
@@ -78,7 +78,7 @@ impl CgroupDevice {
                 )))
         } else {
             bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE).map_err(|(_, io_error)| {
-                ProgramError::SyscallError {
+                SyscallError {
                     call: "bpf_prog_attach",
                     io_error,
                 }

@@ -58,7 +58,7 @@ use crate::{
     pin::PinError,
     sys::{
         bpf_create_map, bpf_get_object, bpf_map_get_info_by_fd, bpf_map_get_next_key,
-        bpf_pin_object,
+        bpf_pin_object, SyscallError,
     },
     util::nr_cpus,
     PinningType, Pod,
@@ -167,13 +167,8 @@ pub enum MapError {
     ProgramNotLoaded,
 
     /// Syscall failed
-    #[error("the `{call}` syscall failed")]
-    SyscallError {
-        /// Syscall Name
-        call: &'static str,
-        /// Original io::Error
-        io_error: io::Error,
-    },
+    #[error(transparent)]
+    SyscallError(#[from] SyscallError),
 
     /// Could not pin map by name
     #[error("map `{name:?}` requested pinning by name. pinning failed")]
@@ -538,7 +533,7 @@ impl MapData {
         }
         let map_path = path.as_ref().join(name);
         let path_string = CString::new(map_path.to_str().unwrap()).unwrap();
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| MapError::SyscallError {
+        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
         })? as RawFd;
@@ -560,15 +555,12 @@ impl MapData {
                 }
             })?;
 
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| MapError::SyscallError {
+        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
         })? as RawFd;
 
-        let info = bpf_map_get_info_by_fd(fd).map_err(|io_error| MapError::SyscallError {
-            call: "BPF_MAP_GET_INFO_BY_FD",
-            io_error,
-        })?;
+        let info = bpf_map_get_info_by_fd(fd)?;
 
         Ok(MapData {
             obj: parse_map_info(info, PinningType::ByName),
@@ -584,10 +576,7 @@ impl MapData {
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
     pub fn from_fd(fd: RawFd) -> Result<MapData, MapError> {
-        let info = bpf_map_get_info_by_fd(fd).map_err(|io_error| MapError::SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        })?;
+        let info = bpf_map_get_info_by_fd(fd)?;
 
         Ok(MapData {
             obj: parse_map_info(info, PinningType::None),
@@ -614,8 +603,8 @@ impl MapData {
                 error: e.to_string(),
             }
         })?;
-        bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| PinError::SyscallError {
-            name: "BPF_OBJ_PIN",
+        bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| SyscallError {
+            call: "BPF_OBJ_PIN",
             io_error,
         })?;
         self.pinned = true;
@@ -692,21 +681,19 @@ impl<K: Pod> Iterator for MapKeys<'_, K> {
             }
         };
 
-        match bpf_map_get_next_key(fd, self.key.as_ref()) {
-            Ok(Some(key)) => {
-                self.key = Some(key);
-                Some(Ok(key))
-            }
-            Ok(None) => {
-                self.key = None;
-                None
-            }
-            Err((_, io_error)) => {
+        let key =
+            bpf_map_get_next_key(fd, self.key.as_ref()).map_err(|(_, io_error)| SyscallError {
+                call: "bpf_map_get_next_key",
+                io_error,
+            });
+        match key {
+            Err(err) => {
                 self.err = true;
-                Some(Err(MapError::SyscallError {
-                    call: "bpf_map_get_next_key",
-                    io_error,
-                }))
+                Some(Err(err.into()))
+            }
+            Ok(key) => {
+                self.key = key;
+                key.map(Ok)
             }
         }
     }

@@ -3,7 +3,7 @@ use std::{ffi::CStr, io, os::fd::RawFd, path::Path};
 
 use crate::{
     programs::{FdLink, Link, ProgramData, ProgramError},
-    sys::bpf_raw_tracepoint_open,
+    sys::{bpf_raw_tracepoint_open, SyscallError},
 };
 
 /// Attaches the program to a raw tracepoint.
@@ -13,12 +13,11 @@ pub(crate) fn attach_raw_tracepoint<T: Link + From<FdLink>>(
 ) -> Result<T::Id, ProgramError> {
     let prog_fd = program_data.fd_or_err()?;
 
-    let pfd = bpf_raw_tracepoint_open(tp_name, prog_fd).map_err(|(_code, io_error)| {
-        ProgramError::SyscallError {
+    let pfd =
+        bpf_raw_tracepoint_open(tp_name, prog_fd).map_err(|(_code, io_error)| SyscallError {
             call: "bpf_raw_tracepoint_open",
             io_error,
-        }
-    })? as RawFd;
+        })? as RawFd;
 
     program_data.links.insert(FdLink::new(pfd).into())
 }

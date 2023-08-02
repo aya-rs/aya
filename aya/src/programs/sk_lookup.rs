@@ -3,7 +3,7 @@ use std::os::fd::{AsRawFd, RawFd};
 use crate::{
     generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP},
     programs::{define_link_wrapper, load_program, FdLinkId, ProgramData, ProgramError},
-    sys::bpf_link_create,
+    sys::{bpf_link_create, SyscallError},
 };
 
 use super::links::FdLink;
@@ -65,7 +65,7 @@ impl SkLookup {
         let netns_fd = netns.as_raw_fd();
 
         let link_fd = bpf_link_create(prog_fd, netns_fd, BPF_SK_LOOKUP, None, 0).map_err(
-            |(_, io_error)| ProgramError::SyscallError {
+            |(_, io_error)| SyscallError {
                 call: "bpf_link_create",
                 io_error,
             },
