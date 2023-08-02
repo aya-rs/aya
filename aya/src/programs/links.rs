@@ -6,7 +6,7 @@ use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::CString,
     io,
-    os::fd::RawFd,
+    os::fd::{AsRawFd as _, OwnedFd, RawFd},
     path::{Path, PathBuf},
 };
 
@@ -108,11 +108,11 @@ pub struct FdLinkId(pub(crate) RawFd);
 /// ```
 #[derive(Debug)]
 pub struct FdLink {
-    pub(crate) fd: RawFd,
+    pub(crate) fd: OwnedFd,
 }
 
 impl FdLink {
-    pub(crate) fn new(fd: RawFd) -> FdLink {
+    pub(crate) fn new(fd: OwnedFd) -> FdLink {
         FdLink { fd }
     }
 
@@ -152,9 +152,11 @@ impl FdLink {
                     error: e.to_string(),
                 }
             })?;
-        bpf_pin_object(self.fd, &path_string).map_err(|(_, io_error)| SyscallError {
-            call: "BPF_OBJ_PIN",
-            io_error,
+        bpf_pin_object(self.fd.as_raw_fd(), &path_string).map_err(|(_, io_error)| {
+            SyscallError {
+                call: "BPF_OBJ_PIN",
+                io_error,
+            }
         })?;
         Ok(PinnedLink::new(PathBuf::from(path.as_ref()), self))
     }
@@ -164,7 +166,7 @@ impl Link for FdLink {
     type Id = FdLinkId;
 
     fn id(&self) -> Self::Id {
-        FdLinkId(self.fd)
+        FdLinkId(self.fd.as_raw_fd())
     }
 
     fn detach(self) -> Result<(), ProgramError> {
@@ -180,12 +182,6 @@ impl Link for FdLink {
 impl From<PinnedLink> for FdLink {
     fn from(p: PinnedLink) -> Self {
         p.inner
-    }
-}
-
-impl Drop for FdLink {
-    fn drop(&mut self) {
-        unsafe { close(self.fd) };
     }
 }
 
@@ -213,7 +209,7 @@ impl PinnedLink {
                 call: "BPF_OBJ_GET",
                 io_error,
             })
-        })? as RawFd;
+        })?;
         Ok(PinnedLink::new(
             path.as_ref().to_path_buf(),
             FdLink::new(fd),
@@ -346,7 +342,7 @@ pub enum LinkError {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use std::{cell::RefCell, fs::File, mem, os::fd::AsRawFd, rc::Rc};
+    use std::{cell::RefCell, fs::File, rc::Rc};
     use tempfile::tempdir;
 
     use crate::{programs::ProgramError, sys::override_syscall};
@@ -484,10 +480,7 @@ mod tests {
     fn test_pin() {
         let dir = tempdir().unwrap();
         let f1 = File::create(dir.path().join("f1")).expect("unable to create file in tmpdir");
-        let fd_link = FdLink::new(f1.as_raw_fd());
-
-        // leak the fd, it will get closed when our pinned link is dropped
-        mem::forget(f1);
+        let fd_link = FdLink::new(f1.into());
 
         // override syscall to allow for pin to happen in our tmpdir
         override_syscall(|_| Ok(0));

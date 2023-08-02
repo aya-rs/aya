@@ -101,11 +101,12 @@ pub(crate) fn bpf_pin_object(fd: RawFd, path: &CStr) -> SysResult<c_long> {
     sys_bpf(bpf_cmd::BPF_OBJ_PIN, &mut attr)
 }
 
-pub(crate) fn bpf_get_object(path: &CStr) -> SysResult<c_long> {
+pub(crate) fn bpf_get_object(path: &CStr) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_4 };
     u.pathname = path.as_ptr() as u64;
-    sys_bpf(bpf_cmd::BPF_OBJ_GET, &mut attr)
+    // SAFETY: BPF_OBJ_GET returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_OBJ_GET, &mut attr) }
 }
 
 pub(crate) struct BpfLoadProgramAttrs<'a> {
@@ -370,7 +371,7 @@ pub(crate) fn bpf_link_create(
     attach_type: bpf_attach_type,
     btf_id: Option<u32>,
     flags: u32,
-) -> SysResult<c_long> {
+) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.link_create.__bindgen_anon_1.prog_fd = prog_fd as u32;
@@ -381,19 +382,20 @@ pub(crate) fn bpf_link_create(
         attr.link_create.__bindgen_anon_3.target_btf_id = btf_id;
     }
 
-    sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr)
+    // SAFETY: BPF_LINK_CREATE returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }
 }
 
 // since kernel 5.7
 pub(crate) fn bpf_link_update(
-    link_fd: RawFd,
+    link_fd: BorrowedFd<'_>,
     new_prog_fd: RawFd,
     old_prog_fd: Option<RawFd>,
     flags: u32,
 ) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
-    attr.link_update.link_fd = link_fd as u32;
+    attr.link_update.link_fd = link_fd.as_raw_fd() as u32;
     attr.link_update.__bindgen_anon_1.new_prog_fd = new_prog_fd as u32;
     if let Some(fd) = old_prog_fd {
         attr.link_update.__bindgen_anon_2.old_prog_fd = fd as u32;
@@ -503,8 +505,7 @@ pub(crate) fn bpf_prog_get_info_by_fd(fd: RawFd) -> Result<bpf_prog_info, Syscal
     bpf_obj_get_info_by_fd::<bpf_prog_info>(fd)
 }
 
-pub(crate) fn bpf_map_get_info_by_fd(fd: RawFd) -> Result<bpf_map_info, SyscallError> {
-    let fd = unsafe { BorrowedFd::borrow_raw(fd) };
+pub(crate) fn bpf_map_get_info_by_fd(fd: BorrowedFd<'_>) -> Result<bpf_map_info, SyscallError> {
     bpf_obj_get_info_by_fd::<bpf_map_info>(fd)
 }
 
@@ -522,8 +523,7 @@ pub(crate) fn bpf_link_get_fd_by_id(link_id: u32) -> Result<OwnedFd, SyscallErro
     })
 }
 
-pub(crate) fn bpf_link_get_info_by_fd(fd: RawFd) -> Result<bpf_link_info, SyscallError> {
-    let fd = unsafe { BorrowedFd::borrow_raw(fd) };
+pub(crate) fn bpf_link_get_info_by_fd(fd: BorrowedFd<'_>) -> Result<bpf_link_info, SyscallError> {
     bpf_obj_get_info_by_fd::<bpf_link_info>(fd)
 }
 
@@ -546,7 +546,7 @@ pub(crate) fn btf_obj_get_info_by_fd(
     }
 }
 
-pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> SysResult<c_long> {
+pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.raw_tracepoint.name = match name {
@@ -555,7 +555,8 @@ pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> Sy
     };
     attr.raw_tracepoint.prog_fd = prog_fd as u32;
 
-    sys_bpf(bpf_cmd::BPF_RAW_TRACEPOINT_OPEN, &mut attr)
+    // SAFETY: BPF_RAW_TRACEPOINT_OPEN returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_RAW_TRACEPOINT_OPEN, &mut attr) }
 }
 
 pub(crate) fn bpf_load_btf(

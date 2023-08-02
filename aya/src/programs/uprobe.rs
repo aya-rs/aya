@@ -8,7 +8,7 @@ use std::{
     fs,
     io::{self, BufRead, Cursor, Read},
     mem,
-    os::raw::c_char,
+    os::{fd::AsFd as _, raw::c_char},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -202,7 +202,7 @@ impl TryFrom<FdLink> for UProbeLink {
     type Error = LinkError;
 
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info = bpf_link_get_info_by_fd(fd_link.fd)?;
+        let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_TRACING as u32) {
             return Ok(UProbeLink::new(PerfLinkInner::FdLink(fd_link)));
         }

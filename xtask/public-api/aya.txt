@@ -1238,7 +1238,7 @@ pub aya::maps::MapData::pinned: bool
 impl aya::maps::MapData
 pub fn aya::maps::MapData::create(&mut self, name: &str) -> core::result::Result<std::os::fd::raw::RawFd, aya::maps::MapError>
 pub fn aya::maps::MapData::fd(&self) -> core::option::Option<aya::maps::MapFd>
-pub fn aya::maps::MapData::from_fd(fd: std::os::fd::raw::RawFd) -> core::result::Result<aya::maps::MapData, aya::maps::MapError>
+pub fn aya::maps::MapData::from_fd(fd: std::os::fd::owned::OwnedFd) -> core::result::Result<aya::maps::MapData, aya::maps::MapError>
 pub fn aya::maps::MapData::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<aya::maps::MapData, aya::maps::MapError>
 impl core::clone::Clone for aya::maps::MapData
 pub fn aya::maps::MapData::clone(&self) -> aya::maps::MapData
@@ -3099,8 +3099,6 @@ pub fn aya::programs::links::FdLink::try_from(value: aya::programs::uprobe::UPro
 impl core::convert::TryFrom<aya::programs::xdp::XdpLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::xdp::XdpLink) -> core::result::Result<Self, Self::Error>
-impl core::ops::drop::Drop for aya::programs::links::FdLink
-pub fn aya::programs::links::FdLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::links::FdLink

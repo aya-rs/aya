@@ -1,4 +1,4 @@
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::AsRawFd;
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP},
@@ -69,7 +69,7 @@ impl SkLookup {
                 call: "bpf_link_create",
                 io_error,
             },
-        )? as RawFd;
+        )?;
         self.data
             .links
             .insert(SkLookupLink::new(FdLink::new(link_fd)))

@@ -440,7 +440,7 @@ impl<T: Link> ProgramData<T> {
 
     pub(crate) fn from_bpf_prog_info(
         name: Option<String>,
-        fd: RawFd,
+        fd: OwnedFd,
         path: &Path,
         info: bpf_prog_info,
         verifier_log_level: VerifierLogLevel,
@@ -464,7 +464,7 @@ impl<T: Link> ProgramData<T> {
         Ok(ProgramData {
             name,
             obj: None,
-            fd: Some(fd),
+            fd: Some(fd.into_raw_fd()),
             links: LinkMap::new(),
             expected_attach_type: None,
             attach_btf_obj_fd,
@@ -486,9 +486,9 @@ impl<T: Link> ProgramData<T> {
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
             call: "bpf_obj_get",
             io_error,
-        })? as RawFd;
+        })?;
 
-        let info = bpf_prog_get_info_by_fd(fd)?;
+        let info = bpf_prog_get_info_by_fd(fd.as_raw_fd())?;
         let name = ProgramInfo(info).name_as_str().map(|s| s.to_string());
         ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), info, verifier_log_level)
     }
@@ -953,13 +953,9 @@ impl ProgramInfo {
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
-        })? as RawFd;
+        })?;
 
-        let info = bpf_prog_get_info_by_fd(fd);
-        unsafe {
-            libc::close(fd);
-        }
-        let info = info?;
+        let info = bpf_prog_get_info_by_fd(fd.as_raw_fd())?;
         Ok(ProgramInfo(info))
     }
 }
@@ -1011,7 +1007,7 @@ pub fn loaded_links() -> impl Iterator<Item = Result<bpf_link_info, ProgramError
         })
         .map(|fd| {
             let fd = fd?;
-            bpf_link_get_info_by_fd(fd.as_raw_fd())
+            bpf_link_get_info_by_fd(fd.as_fd())
         })
         .map(|result| result.map_err(Into::into))
 }
