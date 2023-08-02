@@ -1,7 +1,12 @@
 //! A hash map of kernel or user space stack traces.
 //!
 //! See [`StackTraceMap`] for documentation and examples.
-use std::{borrow::Borrow, collections::BTreeMap, fs, io, mem, path::Path, str::FromStr};
+use std::{
+    borrow::{Borrow, Cow},
+    fs, io, mem,
+    path::Path,
+    str::FromStr,
+};
 
 use crate::{
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys},
@@ -157,6 +162,12 @@ impl<'a, T: Borrow<MapData>> IntoIterator for &'a StackTraceMap<T> {
     }
 }
 
+/// A resolver for symbols based on an address obtained from a stack trace.
+pub trait SymbolResolver {
+    /// Resolve a symbol for a given address, if possible.
+    fn resolve_symbol(&self, addr: u64) -> Option<Cow<'_, str>>;
+}
+
 /// A kernel or user space stack trace.
 ///
 /// See the [`StackTraceMap`] documentation for examples.
@@ -172,12 +183,9 @@ impl StackTrace {
     /// You can use [`util::kernel_symbols()`](crate::util::kernel_symbols) to load kernel symbols. For
     /// user-space traces you need to provide the symbols, for example loading
     /// them from debug info.
-    pub fn resolve(&mut self, symbols: &BTreeMap<u64, String>) -> &StackTrace {
+    pub fn resolve<R: SymbolResolver>(&mut self, symbols: &R) -> &StackTrace {
         for frame in self.frames.iter_mut() {
-            frame.symbol_name = symbols
-                .range(..=frame.ip)
-                .next_back()
-                .map(|(_, s)| s.clone())
+            frame.symbol_name = symbols.resolve_symbol(frame.ip).map(|s| s.into_owned())
         }
 
         self
