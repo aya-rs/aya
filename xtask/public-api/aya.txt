@@ -804,10 +804,9 @@ pub fn aya::maps::stack_trace::StackTraceMap<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::stack_trace::StackTraceMap<T>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::from(t: T) -> T
 pub trait aya::maps::stack_trace::SymbolResolver
-pub fn aya::maps::stack_trace::SymbolResolver::resolve_sym(&self, addr: u64) -> core::option::Option<alloc::string::String>
-impl aya::maps::stack_trace::SymbolResolver for aya::maps::stack_trace::SimpleSymbolResolver
-pub fn aya::maps::stack_trace::SimpleSymbolResolver::resolve_sym(&self, addr: u64) -> core::option::Option<alloc::string::String>
-pub type aya::maps::stack_trace::SimpleSymbolResolver = alloc::collections::btree::map::BTreeMap<u64, alloc::string::String>
+pub fn aya::maps::stack_trace::SymbolResolver::resolve_sym(&self, addr: u64) -> core::option::Option<&str>
+impl aya::maps::stack_trace::SymbolResolver for aya::util::SimpleSymbolResolver
+pub fn aya::util::SimpleSymbolResolver::resolve_sym(&self, addr: u64) -> core::option::Option<&str>
 pub enum aya::maps::Map
 pub aya::maps::Map::Array(aya::maps::MapData)
 pub aya::maps::Map::BloomFilter(aya::maps::MapData)
@@ -6976,10 +6975,11 @@ impl<T> core::borrow::BorrowMut<T> for aya::util::KernelVersion where T: core::m
 pub fn aya::util::KernelVersion::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::from(t: T) -> T
-pub fn aya::util::kernel_symbols() -> core::result::Result<aya::maps::stack_trace::SimpleSymbolResolver, std::io::error::Error>
+pub fn aya::util::kernel_symbols() -> core::result::Result<aya::util::SimpleSymbolResolver, std::io::error::Error>
 pub fn aya::util::nr_cpus() -> core::result::Result<usize, std::io::error::Error>
 pub fn aya::util::online_cpus() -> core::result::Result<alloc::vec::Vec<u32>, std::io::error::Error>
 pub fn aya::util::syscall_prefix() -> core::result::Result<&'static str, std::io::error::Error>
+pub type aya::util::SimpleSymbolResolver = alloc::collections::btree::map::BTreeMap<u64, alloc::string::String>
 pub macro aya::include_bytes_aligned!
 pub enum aya::BpfError
 pub aya::BpfError::BtfError(aya_obj::btf::btf::BtfError)

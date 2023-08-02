@@ -14,8 +14,8 @@ use crate::{
     Pod,
 };
 
-use crate::maps::stack_trace::SimpleSymbolResolver;
 use libc::{if_nametoindex, sysconf, uname, utsname, _SC_PAGESIZE};
+use crate::maps::stack_trace::SymbolResolver;
 
 /// Represents a kernel version, in major.minor.release version.
 // Adapted from https://docs.rs/procfs/latest/procfs/sys/kernel/struct.Version.html.
@@ -202,6 +202,15 @@ fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, ()> {
     Ok(cpus)
 }
 
+/// The simplest resolver: a direct map from addresses to strings.
+pub type SimpleSymbolResolver = BTreeMap<u64, String>;
+
+impl SymbolResolver for SimpleSymbolResolver {
+    fn resolve_sym(&self, addr: u64) -> Option<&str> {
+        self.range(..=addr).next_back().map(|(_, s)| s.as_str())
+    }
+}
+
 /// Loads kernel symbols from `/proc/kallsyms`.
 ///
 /// The symbols can be passed to [`StackTrace::resolve`](crate::maps::stack_trace::StackTrace::resolve).
@@ -210,8 +219,8 @@ pub fn kernel_symbols() -> Result<SimpleSymbolResolver, io::Error> {
     parse_kernel_symbols(&mut reader)
 }
 
-fn parse_kernel_symbols(reader: impl BufRead) -> Result<BTreeMap<u64, String>, io::Error> {
-    let mut syms = BTreeMap::new();
+fn parse_kernel_symbols(reader: impl BufRead) -> Result<SimpleSymbolResolver, io::Error> {
+    let mut syms = SimpleSymbolResolver::new();
 
     for line in reader.lines() {
         let line = line?;

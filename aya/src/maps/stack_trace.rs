@@ -1,7 +1,7 @@
 //! A hash map of kernel or user space stack traces.
 //!
 //! See [`StackTraceMap`] for documentation and examples.
-use std::{borrow::Borrow, collections::BTreeMap, fs, io, mem, path::Path, str::FromStr};
+use std::{borrow::Borrow, fs, io, mem, path::Path, str::FromStr};
 
 use crate::{
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys},
@@ -159,19 +159,10 @@ impl<'a, T: Borrow<MapData>> IntoIterator for &'a StackTraceMap<T> {
     }
 }
 
-/// A resolver for symbols based on an address obtained from a stacktrace.
+/// A resolver for symbols based on an address obtained from a stack trace.
 pub trait SymbolResolver {
     /// Resolve a symbol for a given address, if possible.
-    fn resolve_sym(&self, addr: u64) -> Option<String>;
-}
-
-/// The simplest resolver: a direct map from addresses to strings.
-pub type SimpleSymbolResolver = BTreeMap<u64, String>;
-
-impl SymbolResolver for SimpleSymbolResolver {
-    fn resolve_sym(&self, addr: u64) -> Option<String> {
-        self.range(..=addr).next_back().map(|(_, s)| s.clone())
-    }
+    fn resolve_sym(&self, addr: u64) -> Option<&str>;
 }
 
 /// A kernel or user space stack trace.
@@ -191,7 +182,7 @@ impl StackTrace {
     /// them from debug info.
     pub fn resolve<R: SymbolResolver>(&mut self, symbols: &R) -> &StackTrace {
         for frame in self.frames.iter_mut() {
-            frame.symbol_name = symbols.resolve_sym(frame.ip)
+            frame.symbol_name = symbols.resolve_sym(frame.ip).map(|s| s.to_string())
         }
 
         self
