@@ -5,7 +5,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_arg};
+use crate::args::{err_on_unknown_args, pop_string_arg};
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug, Copy, Clone)]
@@ -33,16 +33,12 @@ pub(crate) struct KProbe {
 
 impl KProbe {
     pub(crate) fn parse(kind: KProbeKind, attrs: TokenStream, item: TokenStream) -> Result<KProbe> {
-        let mut function = None;
-        let mut offset = None;
-
-        if !attrs.is_empty() {
-            let mut args = syn::parse2(attrs)?;
-            function = pop_arg(&mut args, "function");
-            offset = pop_arg(&mut args, "offset").map(|v| v.parse::<u64>().unwrap());
-            err_on_unknown_args(&args)?;
-        }
         let item = syn::parse2(item)?;
+        let mut args = syn::parse2(attrs)?;
+        let function = pop_string_arg(&mut args, "function");
+        let offset = pop_string_arg(&mut args, "offset").map(|v| v.parse::<u64>().unwrap());
+        err_on_unknown_args(&args)?;
+
         Ok(KProbe {
             kind,
             item,
