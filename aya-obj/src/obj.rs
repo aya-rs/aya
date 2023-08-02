@@ -188,35 +188,6 @@ pub struct Function {
 ///
 /// [Program Types and ELF Sections]: https://docs.kernel.org/bpf/libbpf/program_types.html
 ///
-/// ## Program Name
-///
-/// Each section name is parsed into a section type and a program name.
-///
-/// Generally speaking,
-/// - if the section name does not contain any slashes,
-///   then the program name is just that section name;
-/// - if there are some slashes, the name is `section_name.rsplitn(2, '/')[0]`,
-/// - except for tracepoint programs, for which the name is
-///   `section_name.splitn(2, '/')[1]`.
-///
-/// ```rust
-/// use aya_obj::ProgramSection;
-/// use std::str::FromStr;
-///
-/// assert_eq!(
-///     ProgramSection::from_str("kprobe/do_unlinkat")
-///             .unwrap().name(),
-///     "do_unlinkat",
-/// );
-/// assert_eq!(
-///     ProgramSection::from_str("tracepoint/syscalls/sys_enter_openat")
-///             .unwrap().name(),
-///     "syscalls/sys_enter_openat",
-/// );
-/// ```
-///
-/// The program name will be used in [Object] as references to each program.
-///
 /// # Unsupported Sections
 ///
 /// Currently, the following section names are not supported yet:
@@ -238,139 +209,53 @@ pub struct Function {
 #[derive(Debug, Clone)]
 #[allow(missing_docs)]
 pub enum ProgramSection {
-    KRetProbe {
-        name: String,
-    },
-    KProbe {
-        name: String,
-    },
+    KRetProbe,
+    KProbe,
     UProbe {
-        name: String,
         sleepable: bool,
     },
     URetProbe {
-        name: String,
         sleepable: bool,
     },
-    TracePoint {
-        name: String,
-    },
-    SocketFilter {
-        name: String,
-    },
+    TracePoint,
+    SocketFilter,
     Xdp {
-        name: String,
         frags: bool,
     },
-    SkMsg {
-        name: String,
-    },
-    SkSkbStreamParser {
-        name: String,
-    },
-    SkSkbStreamVerdict {
-        name: String,
-    },
-    SockOps {
-        name: String,
-    },
-    SchedClassifier {
-        name: String,
-    },
-    CgroupSkb {
-        name: String,
-    },
-    CgroupSkbIngress {
-        name: String,
-    },
-    CgroupSkbEgress {
-        name: String,
-    },
+    SkMsg,
+    SkSkbStreamParser,
+    SkSkbStreamVerdict,
+    SockOps,
+    SchedClassifier,
+    CgroupSkb,
+    CgroupSkbIngress,
+    CgroupSkbEgress,
     CgroupSockAddr {
-        name: String,
         attach_type: CgroupSockAddrAttachType,
     },
-    CgroupSysctl {
-        name: String,
-    },
+    CgroupSysctl,
     CgroupSockopt {
-        name: String,
         attach_type: CgroupSockoptAttachType,
     },
-    LircMode2 {
-        name: String,
-    },
-    PerfEvent {
-        name: String,
-    },
-    RawTracePoint {
-        name: String,
-    },
+    LircMode2,
+    PerfEvent,
+    RawTracePoint,
     Lsm {
-        name: String,
         sleepable: bool,
     },
-    BtfTracePoint {
-        name: String,
-    },
+    BtfTracePoint,
     FEntry {
-        name: String,
         sleepable: bool,
     },
     FExit {
-        name: String,
         sleepable: bool,
     },
-    Extension {
-        name: String,
-    },
-    SkLookup {
-        name: String,
-    },
+    Extension,
+    SkLookup,
     CgroupSock {
-        name: String,
         attach_type: CgroupSockAttachType,
     },
-    CgroupDevice {
-        name: String,
-    },
-}
-
-impl ProgramSection {
-    /// Returns the program name
-    pub fn name(&self) -> &str {
-        match self {
-            ProgramSection::KRetProbe { name } => name,
-            ProgramSection::KProbe { name } => name,
-            ProgramSection::UProbe { name, .. } => name,
-            ProgramSection::URetProbe { name, .. } => name,
-            ProgramSection::TracePoint { name } => name,
-            ProgramSection::SocketFilter { name } => name,
-            ProgramSection::Xdp { name, .. } => name,
-            ProgramSection::SkMsg { name } => name,
-            ProgramSection::SkSkbStreamParser { name } => name,
-            ProgramSection::SkSkbStreamVerdict { name } => name,
-            ProgramSection::SockOps { name } => name,
-            ProgramSection::SchedClassifier { name } => name,
-            ProgramSection::CgroupSkb { name, .. } => name,
-            ProgramSection::CgroupSkbIngress { name, .. } => name,
-            ProgramSection::CgroupSkbEgress { name, .. } => name,
-            ProgramSection::CgroupSockAddr { name, .. } => name,
-            ProgramSection::CgroupSysctl { name } => name,
-            ProgramSection::CgroupSockopt { name, .. } => name,
-            ProgramSection::LircMode2 { name } => name,
-            ProgramSection::PerfEvent { name } => name,
-            ProgramSection::RawTracePoint { name } => name,
-            ProgramSection::Lsm { name, .. } => name,
-            ProgramSection::BtfTracePoint { name, .. } => name,
-            ProgramSection::FEntry { name, .. } => name,
-            ProgramSection::FExit { name, .. } => name,
-            ProgramSection::Extension { name } => name,
-            ProgramSection::SkLookup { name } => name,
-            ProgramSection::CgroupSock { name, .. } => name,
-            ProgramSection::CgroupDevice { name } => name,
-        }
-    }
+    CgroupDevice,
 }
 
 impl FromStr for ProgramSection {
@@ -385,84 +270,63 @@ impl FromStr for ProgramSection {
             None => (section, section),
             Some((kind, name)) => (kind, name),
         };
-        let name = name.to_owned();
 
         Ok(match kind {
-            "kprobe" => KProbe { name },
-            "kretprobe" => KRetProbe { name },
-            "uprobe" => UProbe {
-                name,
-                sleepable: false,
-            },
-            "uprobe.s" => UProbe {
-                name,
-                sleepable: true,
-            },
-            "uretprobe" => URetProbe {
-                name,
-                sleepable: false,
-            },
-            "uretprobe.s" => URetProbe {
-                name,
-                sleepable: true,
-            },
-            "xdp" => Xdp { name, frags: false },
-            "xdp.frags" => Xdp { name, frags: true },
-            "tp_btf" => BtfTracePoint { name },
-            _ if kind.starts_with("tracepoint") || kind.starts_with("tp") => {
-                // tracepoint sections are named `tracepoint/category/event_name`,
-                // and we want to parse the name as "category/event_name"
-                let name = section.splitn(2, '/').last().unwrap().to_owned();
-                TracePoint { name }
-            }
-            "socket" => SocketFilter { name },
-            "sk_msg" => SkMsg { name },
-            "sk_skb" => match &*name {
-                "stream_parser" => SkSkbStreamParser { name },
-                "stream_verdict" => SkSkbStreamVerdict { name },
+            "kprobe" => KProbe,
+            "kretprobe" => KRetProbe,
+            "uprobe" => UProbe { sleepable: false },
+            "uprobe.s" => UProbe { sleepable: true },
+            "uretprobe" => URetProbe { sleepable: false },
+            "uretprobe.s" => URetProbe { sleepable: true },
+            "xdp" => Xdp { frags: false },
+            "xdp.frags" => Xdp { frags: true },
+            "tp_btf" => BtfTracePoint,
+            kind if kind.starts_with("tracepoint") || kind.starts_with("tp") => TracePoint,
+            "socket" => SocketFilter,
+            "sk_msg" => SkMsg,
+            "sk_skb" => match name {
+                "stream_parser" => SkSkbStreamParser,
+                "stream_verdict" => SkSkbStreamVerdict,
                 _ => {
                     return Err(ParseError::InvalidProgramSection {
                         section: section.to_owned(),
                     })
                 }
             },
-            "sk_skb/stream_parser" => SkSkbStreamParser { name },
-            "sk_skb/stream_verdict" => SkSkbStreamVerdict { name },
-            "sockops" => SockOps { name },
-            "classifier" => SchedClassifier { name },
-            "cgroup_skb" => match &*name {
-                "ingress" => CgroupSkbIngress { name },
-                "egress" => CgroupSkbEgress { name },
+            "sk_skb/stream_parser" => SkSkbStreamParser,
+            "sk_skb/stream_verdict" => SkSkbStreamVerdict,
+            "sockops" => SockOps,
+            "classifier" => SchedClassifier,
+            "cgroup_skb" => match name {
+                "ingress" => CgroupSkbIngress,
+                "egress" => CgroupSkbEgress,
                 _ => {
                     return Err(ParseError::InvalidProgramSection {
                         section: section.to_owned(),
                     })
                 }
             },
-            "cgroup_skb/ingress" => CgroupSkbIngress { name },
-            "cgroup_skb/egress" => CgroupSkbEgress { name },
-            "cgroup/skb" => CgroupSkb { name },
+            "cgroup_skb/ingress" => CgroupSkbIngress,
+            "cgroup_skb/egress" => CgroupSkbEgress,
+            "cgroup/skb" => CgroupSkb,
             "cgroup/sock" => CgroupSock {
-                name,
                 attach_type: CgroupSockAttachType::default(),
             },
-            "cgroup/sysctl" => CgroupSysctl { name },
-            "cgroup/dev" => CgroupDevice { name },
+            "cgroup/sysctl" => CgroupSysctl,
+            "cgroup/dev" => CgroupDevice,
             "cgroup/getsockopt" => CgroupSockopt {
-                name,
                 attach_type: CgroupSockoptAttachType::Get,
             },
             "cgroup/setsockopt" => CgroupSockopt {
-                name,
                 attach_type: CgroupSockoptAttachType::Set,
             },
-            "cgroup" => match &*name {
-                "skb" => CgroupSkb { name },
-                "sysctl" => CgroupSysctl { name },
-                "dev" => CgroupDevice { name },
+            "cgroup" => match name {
+                "skb" => CgroupSkb,
+                "sysctl" => CgroupSysctl,
+                "dev" => CgroupDevice,
                 "getsockopt" | "setsockopt" => {
-                    if let Ok(attach_type) = CgroupSockoptAttachType::try_from(name.as_str()) {
-                        CgroupSockopt { name, attach_type }
+                    if let Ok(attach_type) = CgroupSockoptAttachType::try_from(name) {
+                        CgroupSockopt { attach_type }
                     } else {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
@@ -470,21 +334,20 @@ impl FromStr for ProgramSection {
                     }
                 }
                 "sock" => CgroupSock {
-                    name,
                     attach_type: CgroupSockAttachType::default(),
                 },
                 "post_bind4" | "post_bind6" | "sock_create" | "sock_release" => {
-                    if let Ok(attach_type) = CgroupSockAttachType::try_from(name.as_str()) {
-                        CgroupSock { name, attach_type }
+                    if let Ok(attach_type) = CgroupSockAttachType::try_from(name) {
+                        CgroupSock { attach_type }
                     } else {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
                         });
                     }
                 }
-                _ => {
-                    if let Ok(attach_type) = CgroupSockAddrAttachType::try_from(name.as_str()) {
-                        CgroupSockAddr { name, attach_type }
+                name => {
+                    if let Ok(attach_type) = CgroupSockAddrAttachType::try_from(name) {
+                        CgroupSockAddr { attach_type }
                     } else {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
@@ -493,98 +356,64 @@ impl FromStr for ProgramSection {
                 }
             },
             "cgroup/post_bind4" => CgroupSock {
-                name,
                 attach_type: CgroupSockAttachType::PostBind4,
             },
             "cgroup/post_bind6" => CgroupSock {
-                name,
                 attach_type: CgroupSockAttachType::PostBind6,
             },
             "cgroup/sock_create" => CgroupSock {
-                name,
                 attach_type: CgroupSockAttachType::SockCreate,
             },
             "cgroup/sock_release" => CgroupSock {
-                name,
                 attach_type: CgroupSockAttachType::SockRelease,
             },
             "cgroup/bind4" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::Bind4,
             },
             "cgroup/bind6" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::Bind6,
             },
             "cgroup/connect4" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::Connect4,
             },
             "cgroup/connect6" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::Connect6,
             },
             "cgroup/getpeername4" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::GetPeerName4,
             },
             "cgroup/getpeername6" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::GetPeerName6,
             },
             "cgroup/getsockname4" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::GetSockName4,
             },
             "cgroup/getsockname6" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::GetSockName6,
             },
             "cgroup/sendmsg4" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::UDPSendMsg4,
             },
             "cgroup/sendmsg6" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::UDPSendMsg6,
             },
             "cgroup/recvmsg4" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::UDPRecvMsg4,
             },
             "cgroup/recvmsg6" => CgroupSockAddr {
-                name,
                 attach_type: CgroupSockAddrAttachType::UDPRecvMsg6,
             },
-            "lirc_mode2" => LircMode2 { name },
-            "perf_event" => PerfEvent { name },
-            "raw_tp" | "raw_tracepoint" => RawTracePoint { name },
-            "lsm" => Lsm {
-                name,
-                sleepable: false,
-            },
-            "lsm.s" => Lsm {
-                name,
-                sleepable: true,
-            },
-            "fentry" => FEntry {
-                name,
-                sleepable: false,
-            },
-            "fentry.s" => FEntry {
-                name,
-                sleepable: true,
-            },
-            "fexit" => FExit {
-                name,
-                sleepable: false,
-            },
-            "fexit.s" => FExit {
-                name,
-                sleepable: true,
-            },
-            "freplace" => Extension { name },
-            "sk_lookup" => SkLookup { name },
+            "lirc_mode2" => LircMode2,
+            "perf_event" => PerfEvent,
+            "raw_tp" | "raw_tracepoint" => RawTracePoint,
+            "lsm" => Lsm { sleepable: false },
+            "lsm.s" => Lsm { sleepable: true },
+            "fentry" => FEntry { sleepable: false },
+            "fentry.s" => FEntry { sleepable: true },
+            "fexit" => FExit { sleepable: false },
+            "fexit.s" => FExit { sleepable: true },
+            "freplace" => Extension,
+            "sk_lookup" => SkLookup,
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),
