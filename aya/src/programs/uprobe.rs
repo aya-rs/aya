@@ -82,36 +82,7 @@ impl UProbe {
         target: T,
         pid: Option<pid_t>,
     ) -> Result<UProbeLinkId, ProgramError> {
-        let target = target.as_ref();
-        let target_str = &*target.as_os_str().to_string_lossy();
-
-        let mut path = if let Some(pid) = pid {
-            find_lib_in_proc_maps(pid, target_str).map_err(|io_error| UProbeError::FileError {
-                filename: format!("/proc/{pid}/maps"),
-                io_error,
-            })?
-        } else {
-            None
-        };
-
-        if path.is_none() {
-            path = if target.is_absolute() {
-                Some(target_str)
-            } else {
-                let cache =
-                    LD_SO_CACHE
-                        .as_ref()
-                        .map_err(|error| UProbeError::InvalidLdSoCache {
-                            io_error: error.clone(),
-                        })?;
-                cache.resolve(target_str)
-            }
-            .map(String::from)
-        };
-
-        let path = path.ok_or(UProbeError::InvalidTarget {
-            path: target.to_owned(),
-        })?;
+        let path = resolve_attach_path(target, pid)?;
 
         let sym_offset = if let Some(fn_name) = fn_name {
             resolve_symbol(&path, fn_name).map_err(|error| UProbeError::SymbolError {
@@ -150,6 +121,64 @@ impl UProbe {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, kind })
     }
+}
+
+fn resolve_attach_path<T: AsRef<Path>>(
+    target: T,
+    pid: Option<pid_t>,
+) -> Result<String, UProbeError> {
+    // Look up the path for the target. If it there is a pid, and the target is a library name that
+    // is in the process's memory map, use the path of that library. Otherwise, use the target
+    // as-is.
+    let target = target.as_ref();
+    let target_str = &*target.as_os_str().to_string_lossy();
+
+    let mut path = if let Some(pid) = pid {
+        find_lib_in_proc_maps(pid, target_str).map_err(|io_error| UProbeError::FileError {
+            filename: format!("/proc/{pid}/maps"),
+            io_error,
+        })?
+    } else {
+        None
+    };
+
+    if path.is_none() {
+        path = if target.is_absolute() {
+            Some(target_str)
+        } else {
+            let cache = LD_SO_CACHE
+                .as_ref()
+                .map_err(|error| UProbeError::InvalidLdSoCache {
+                    io_error: error.clone(),
+                })?;
+            cache.resolve(target_str)
+        }
+        .map(String::from)
+    };
+
+    path.ok_or(UProbeError::InvalidTarget {
+        path: target.to_owned(),
+    })
+}
+
+// Only run this test on linux with glibc because only in that configuration do we know that we'll
+// be dynamically linked to libc and can exercise resolving the path to libc via the current
+// process's memory map.
+#[test]
+#[cfg_attr(
+    any(all(target_os = "linux", target_env = "gnu"), miri),
+    ignore = "requires glibc, doesn't work in miri"
+)]
+fn test_resolve_attach_path() {
+    // Look up the current process's pid.
+    let pid = std::process::id().try_into().unwrap();
+
+    // Now let's resolve the path to libc. It should exist in the current process's memory map and
+    // then in the ld.so.cache.
+    let libc_path = resolve_attach_path("libc", Some(pid)).unwrap();
+
+    // Make sure we got a path that contains libc.
+    assert!(libc_path.contains("libc"), "libc_path: {}", libc_path);
 }
 
 define_link_wrapper!(
