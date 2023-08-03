@@ -4,7 +4,7 @@ use std::{
     fs,
     io::{BufRead as _, BufReader},
     path::PathBuf,
-    process::{Child, Command, Stdio},
+    process::{Child, Command, Output, Stdio},
 };
 
 use cargo_metadata::{
@@ -166,16 +166,11 @@ fn main() {
             )
             .unwrap();
 
-            let status = child
-                .wait()
+            let output = child
+                .wait_with_output()
                 .unwrap_or_else(|err| panic!("failed to wait for {cmd:?}: {err}"));
-            match status.code() {
-                Some(code) => match code {
-                    0 => {}
-                    code => panic!("{cmd:?} exited with status code {code}"),
-                },
-                None => panic!("{cmd:?} terminated by signal"),
-            }
+            let Output { status, .. } = &output;
+            assert_eq!(status.code(), Some(0), "{cmd:?} failed: {output:?}");
         }
 
         let target = format!("{target}-unknown-none");
@@ -257,13 +252,7 @@ fn main() {
         let status = child
             .wait()
             .unwrap_or_else(|err| panic!("failed to wait for {cmd:?}: {err}"));
-        match status.code() {
-            Some(code) => match code {
-                0 => {}
-                code => panic!("{cmd:?} exited with status code {code}"),
-            },
-            None => panic!("{cmd:?} terminated by signal"),
-        }
+        assert_eq!(status.code(), Some(0), "{cmd:?} failed: {status:?}");
 
         stderr.join().map_err(std::panic::resume_unwind).unwrap();
 
