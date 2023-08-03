@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context as _, Result};
+use anyhow::{bail, Context as _, Result};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -13,13 +13,10 @@ pub fn exec(cmd: &mut Command) -> Result<()> {
     let status = cmd
         .status()
         .with_context(|| format!("failed to run {cmd:?}"))?;
-    match status.code() {
-        Some(code) => match code {
-            0 => Ok(()),
-            code => Err(anyhow!("{cmd:?} exited with code {code}")),
-        },
-        None => Err(anyhow!("{cmd:?} terminated by signal")),
+    if status.code() != Some(0) {
+        bail!("{cmd:?} failed: {status:?}")
     }
+    Ok(())
 }
 
 // Create a symlink in the out directory to work around the fact that cargo ignores anything

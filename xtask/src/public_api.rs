@@ -62,7 +62,7 @@ pub fn public_api(options: Options, metadata: Metadata) -> Result<()> {
         });
 
     if !errors.is_empty() {
-        bail!("public API errors:\n{errors}");
+        bail!("public API errors:\n{errors}")
     }
     Ok(())
 }
