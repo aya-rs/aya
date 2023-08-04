@@ -9,6 +9,27 @@ use crate::{
     maps::PinningType,
 };
 
+/// An array of network devices.
+///
+/// XDP programs can use this map to redirect packets to other network deviecs.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.14.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// use aya_bpf::{bindings::xdp_action, macros::{map, xdp}, maps::DevMap, programs::XdpContext};
+///
+/// #[map]
+/// static MAP: DevMap = DevMap::with_max_entries(1, 0);
+///
+/// #[xdp]
+/// fn xdp(_ctx: XdpContext) -> i32 {
+///     MAP.redirect(0, xdp_action::XDP_PASS as u64)
+/// }
+/// ```
 #[repr(transparent)]
 pub struct DevMap {
     def: UnsafeCell<bpf_map_def>,
@@ -17,6 +38,16 @@ pub struct DevMap {
 unsafe impl Sync for DevMap {}
 
 impl DevMap {
+    /// Creates a [`DevMap`] with a set maximum number of elements.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use aya_bpf::{macros::map, maps::DevMap};
+    ///
+    /// #[map]
+    /// static MAP: DevMap = DevMap::with_max_entries(8, 0);
+    /// ```
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> DevMap {
         DevMap {
             def: UnsafeCell::new(bpf_map_def {
@@ -31,6 +62,17 @@ impl DevMap {
         }
     }
 
+    /// Creates a [`DevMap`] with a set maximum number of elements that can be pinned to the BPF
+    /// File System (bpffs).
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use aya_bpf::{macros::map, maps::DevMap};
+    ///
+    /// #[map]
+    /// static MAP: DevMap = DevMap::pinned(8, 0);
+    /// ```
     pub const fn pinned(max_entries: u32, flags: u32) -> DevMap {
         DevMap {
             def: UnsafeCell::new(bpf_map_def {
@@ -45,6 +87,22 @@ impl DevMap {
         }
     }
 
+    /// Retrieves the interface index at `index` in the array.
+    ///
+    /// To actually redirect a packet, see [`DevMap::redirect`].
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use aya_bpf::{macros::map, maps::DevMap};
+    ///
+    /// #[map]
+    /// static MAP: DevMap = DevMap::with_max_entries(1, 0);
+    ///
+    /// let ifindex = MAP.get(0);
+    ///
+    /// // redirect to ifindex
+    /// ```
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<bpf_devmap_val> {
         unsafe {
@@ -56,6 +114,24 @@ impl DevMap {
         }
     }
 
+    /// Redirects the current packet on the interface at `index`.
+    ///
+    /// The lower two bits of `flags` are used for the return code if the map lookup fails, which
+    /// can be used as the XDP program's return code if a CPU cannot be found.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use aya_bpf::{bindings::xdp_action, macros::{map, xdp}, maps::DevMap, programs::XdpContext};
+    ///
+    /// #[map]
+    /// static MAP: DevMap = DevMap::with_max_entries(8, 0);
+    ///
+    /// #[xdp]
+    /// fn xdp(_ctx: XdpContext) -> i32 {
+    ///     MAP.redirect(7, xdp_action::XDP_PASS as u64)
+    /// }
+    /// ```
     #[inline(always)]
     pub fn redirect(&self, index: u32, flags: u64) -> u32 {
         // Return XDP_REDIRECT on success, or the value of the two lower bits of the flags

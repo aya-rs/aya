@@ -61,19 +61,19 @@ impl<T: Borrow<MapData>> CpuMap<T> {
         self.inner.borrow().obj.max_entries()
     }
 
-    /// Returns the value stored at the given index.
+    /// Returns the queue size and possible program for a given CPU index.
     ///
     /// # Errors
     ///
-    /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
-    /// if `bpf_map_lookup_elem` fails.
-    pub fn get(&self, index: u32, flags: u64) -> Result<CpuMapValue, MapError> {
+    /// Returns [`MapError::OutOfBounds`] if `cpu_index` is out of bounds,
+    /// [`MapError::SyscallError`] if `bpf_map_lookup_elem` fails.
+    pub fn get(&self, cpu_index: u32, flags: u64) -> Result<CpuMapValue, MapError> {
         let data = self.inner.borrow();
-        check_bounds(data, index)?;
+        check_bounds(data, cpu_index)?;
         let fd = data.fd;
 
         let value =
-            bpf_map_lookup_elem(fd, &index, flags).map_err(|(_, io_error)| SyscallError {
+            bpf_map_lookup_elem(fd, &cpu_index, flags).map_err(|(_, io_error)| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?;
@@ -94,7 +94,18 @@ impl<T: Borrow<MapData>> CpuMap<T> {
 }
 
 impl<T: BorrowMut<MapData>> CpuMap<T> {
-    /// Sets the value of the element at the given index.
+    /// Sets the queue size at the given CPU index, and optionally a chained program.
+    ///
+    /// When sending the packet to the CPU at the given index, the kernel will queue up to
+    /// `queue_size` packets before dropping them.
+    ///
+    /// Another XDP program can be passed in that will be run on the target CPU, instead of the CPU
+    /// that receives the packets. This allows to perform minimal computations on CPUs that
+    /// directly handle packets from a NIC's RX queues, and perform possibly heavier ones in other,
+    /// less busy CPUs.
+    ///
+    /// Note that only XDP programs with the `map = "cpumap"` argument can be passed. See the
+    /// kernel-space `aya_bpf::xdp` for more information.
     ///
     /// # Errors
     ///
@@ -102,24 +113,24 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
     /// if `bpf_map_update_elem` fails.
     pub fn set(
         &mut self,
-        index: u32,
-        value: u32,
+        cpu_index: u32,
+        queue_size: u32,
         program: Option<impl AsRawFd>,
         flags: u64,
     ) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
-        check_bounds(data, index)?;
+        check_bounds(data, cpu_index)?;
         let fd = data.fd;
 
         let value = bpf_cpumap_val {
-            qsize: value,
+            qsize: queue_size,
             bpf_prog: bpf_cpumap_val__bindgen_ty_1 {
                 // Default is valid as the kernel will only consider fd > 0:
                 // https://elixir.bootlin.com/linux/v6.4.12/source/kernel/bpf/cpumap.c#L466
                 fd: program.map(|prog| prog.as_raw_fd()).unwrap_or_default(),
             },
         };
-        bpf_map_update_elem(fd, Some(&index), &value, flags).map_err(|(_, io_error)| {
+        bpf_map_update_elem(fd, Some(&cpu_index), &value, flags).map_err(|(_, io_error)| {
             SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
