@@ -128,6 +128,35 @@ pub fn sk_msg(attrs: TokenStream, item: TokenStream) -> TokenStream {
     }
 }
 
+/// Marks a function as an eBPF XDP program that can be attached to a network interface.
+///
+/// On some NIC drivers, XDP probes are compatible with jumbo frames through the use of
+/// multi-buffer packets. Programs can opt-in this support by passing the `frags = "true"` argument.
+///
+/// XDP programs can also be chained through the use of CPU maps and dev maps, but must opt-in
+/// with the `map = "cpumap"` or `map = "devmap"` arguments.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.8.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_bpf::{bindings::xdp_action::XDP_PASS, macros::xdp, programs::XdpContext};
+///
+/// #[xdp(frags = "true")]
+/// pub fn xdp(ctx: XdpContext) -> u32 {
+///     match unsafe { try_xdp(ctx) } {
+///         Ok(ret) => ret,
+///         Err(ret) => ret,
+///     }
+/// }
+///
+/// unsafe fn try_xdp(_ctx: XdpContext) -> Result<u32, u32> {
+///     Ok(XDP_PASS)
+/// }
+/// ```
 #[proc_macro_error]
 #[proc_macro_attribute]
 pub fn xdp(attrs: TokenStream, item: TokenStream) -> TokenStream {

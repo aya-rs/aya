@@ -41,8 +41,8 @@ impl CpuMap {
     /// Creates a [`CpuMap`] with a set maximum number of elements.
     ///
     /// In a CPU Map, an entry represents a CPU core. Thus there should be as many entries as there
-    /// are CPU cores on the system. To dynamically set the entry count at runtime, refer to the
-    /// userspace documentation.
+    /// are CPU cores on the system. It can be set to zero here, and updated by userspace at
+    /// runtime. Refer to the userspace documentation for more information.
     ///
     /// # Examples
     ///
