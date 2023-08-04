@@ -1,118 +1,101 @@
-//! An array of network devices.
+//! An hashmap of network devices.
 
-use std::{
-    convert::TryFrom,
-    mem,
-    ops::{Deref, DerefMut},
-};
+use std::borrow::{Borrow, BorrowMut};
 
 use crate::{
-    generated::bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH,
-    maps::{Map, MapError, MapRef, MapRefMut},
-    sys::bpf_map_update_elem,
+    maps::{check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
+    sys::{bpf_map_lookup_elem, SyscallError},
 };
 
-/// An array of network devices.
+/// An hashmap of network devices.
 ///
 /// XDP programs can use this map to redirect to other network
 /// devices.
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 4.2.
+/// The minimum kernel version required to use this feature is 5.4.
 ///
 /// # Examples
 /// ```no_run
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::xdp::DevMapHash;
-/// use std::convert::{TryFrom, TryInto};
 ///
-/// let mut devmap = DevMapHash::try_from(bpf.map_mut("IFACES")?)?;
+/// let mut devmap = DevMapHash::try_from(bpf.map_mut("IFACES").unwrap())?;
 /// let flags = 0;
 /// let ifindex = 32u32;
-/// devmap.set(ifindex, ifindex, flags);
+/// devmap.insert(ifindex, ifindex, flags);
 ///
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_DEVMAP_HASH")]
-pub struct DevMapHash<T: Deref<Target = Map>> {
+pub struct DevMapHash<T> {
     inner: T,
 }
 
-impl<T: Deref<Target = Map>> DevMapHash<T> {
-    fn new(map: T) -> Result<DevMapHash<T>, MapError> {
-        let map_type = map.obj.def.map_type;
-        if map_type != BPF_MAP_TYPE_DEVMAP_HASH as u32 {
-            return Err(MapError::InvalidMapType {
-                map_type: map_type as u32,
-            });
-        }
-        let expected = mem::size_of::<u32>();
-        let size = map.obj.def.key_size as usize;
-        if size != expected {
-            return Err(MapError::InvalidKeySize { size, expected });
-        }
+impl<T: Borrow<MapData>> DevMapHash<T> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
+        let data = map.borrow();
+        check_kv_size::<u32, u32>(data)?;
 
-        let expected = mem::size_of::<u32>();
-        let size = map.obj.def.value_size as usize;
-        if size != expected {
-            return Err(MapError::InvalidValueSize { size, expected });
-        }
-        let _fd = map.fd_or_err()?;
-
-        Ok(DevMapHash { inner: map })
+        Ok(Self { inner: map })
     }
 
-    /// Returns the number of elements in the array.
-    ///
-    /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
-    pub fn len(&self) -> u32 {
-        self.inner.obj.def.max_entries
-    }
-
-    fn check_bounds(&self, index: u32) -> Result<(), MapError> {
-        let max_entries = self.inner.obj.def.max_entries;
-        if index >= self.inner.obj.def.max_entries {
-            Err(MapError::OutOfBounds { index, max_entries })
-        } else {
-            Ok(())
-        }
-    }
-}
-
-impl<T: Deref<Target = Map> + DerefMut<Target = Map>> DevMapHash<T> {
-    /// Sets the value of the element at the given index.
+    /// Returns the value stored at the given index.
     ///
     /// # Errors
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
-    /// if `bpf_map_update_elem` fails.
-    pub fn set(&mut self, index: u32, value: u32, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.fd_or_err()?;
-        self.check_bounds(index)?;
-        bpf_map_update_elem(fd, &index, &value, flags).map_err(|(code, io_error)| {
-            MapError::SyscallError {
-                call: "bpf_map_update_elem".to_owned(),
-                code,
+    /// if `bpf_map_lookup_elem` fails.
+    pub fn get(&self, index: u32, flags: u64) -> Result<u32, MapError> {
+        let fd = self.inner.borrow().fd;
+        let value =
+            bpf_map_lookup_elem(fd, &index, flags).map_err(|(_, io_error)| SyscallError {
+                call: "bpf_map_lookup_elem",
                 io_error,
-            }
-        })?;
-        Ok(())
+            })?;
+        value.ok_or(MapError::KeyNotFound)
+    }
+
+    /// An iterator over the elements of the devmap in arbitrary order. The iterator item type is
+    /// `Result<(u32, u32), MapError>`.
+    pub fn iter(&self) -> MapIter<'_, u32, u32, Self> {
+        MapIter::new(self)
+    }
+
+    /// An iterator visiting all keys in arbitrary order. The iterator item type is
+    /// `Result<u32, MapError>`.
+    pub fn keys(&self) -> MapKeys<'_, u32> {
+        MapKeys::new(self.inner.borrow())
     }
 }
 
-impl TryFrom<MapRef> for DevMapHash<MapRef> {
-    type Error = MapError;
+impl<T: BorrowMut<MapData>> DevMapHash<T> {
+    /// Inserts a value in the map.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
+    pub fn insert(&mut self, index: u32, value: u32, flags: u64) -> Result<(), MapError> {
+        hash_map::insert(self.inner.borrow_mut(), &index, &value, flags)
+    }
 
-    fn try_from(a: MapRef) -> Result<DevMapHash<MapRef>, MapError> {
-        DevMapHash::new(a)
+    /// Remove a value from the map.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapError::SyscallError`] if `bpf_map_delete_elem` fails.
+    pub fn remove(&mut self, key: u32) -> Result<(), MapError> {
+        hash_map::remove(self.inner.borrow_mut(), &key)
     }
 }
 
-impl TryFrom<MapRefMut> for DevMapHash<MapRefMut> {
-    type Error = MapError;
+impl<T: Borrow<MapData>> IterableMap<u32, u32> for DevMapHash<T> {
+    fn map(&self) -> &MapData {
+        self.inner.borrow()
+    }
 
-    fn try_from(a: MapRefMut) -> Result<DevMapHash<MapRefMut>, MapError> {
-        DevMapHash::new(a)
+    fn get(&self, key: &u32) -> Result<u32, MapError> {
+        self.get(*key, 0)
     }
 }
