@@ -181,6 +181,10 @@ pub enum MapError {
         error: PinError,
     },
 
+    /// Program IDs are not supported
+    #[error("program ids are not supported by the current kernel")]
+    ProgIdNotSupported,
+
     /// Unsupported Map type
     #[error("Unsupported map type found {map_type}")]
     Unsupported {
