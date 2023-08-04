@@ -131,6 +131,7 @@ pub struct BpfLoader<'a> {
     btf: Option<Cow<'a, Btf>>,
     map_pin_path: Option<PathBuf>,
     globals: HashMap<&'a str, (&'a [u8], bool)>,
+    maps: HashMap<&'a str, &'a Map>,
     max_entries: HashMap<&'a str, u32>,
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
@@ -165,6 +166,7 @@ impl<'a> BpfLoader<'a> {
             btf: Btf::from_sys_fs().ok().map(Cow::Owned),
             map_pin_path: None,
             globals: HashMap::new(),
+            maps: HashMap::new(),
             max_entries: HashMap::new(),
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
@@ -288,6 +290,29 @@ impl<'a> BpfLoader<'a> {
         self
     }
 
+    /// Allows to share a map between multiple eBPF without pinning.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::BpfLoader;
+    /// use aya::maps::Map;
+    ///
+    /// let mut shared_bpf = BpfLoader::new()
+    ///     .load_file("shared.o")?;
+    ///
+    /// let shared_map = shared_bpf.take_map("shared_map").unwrap();
+    ///
+    /// let bpf = BpfLoader::new()
+    ///     .map("shared_map", &shared_map)
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
+    pub fn map(&mut self, name: &'a str, map: &'a Map) -> &mut BpfLoader<'a> {
+        self.maps.insert(name, map);
+        self
+    }
+
     /// Set the max_entries for specified map.
     ///
     /// Overwrite the value of max_entries of the map that matches
@@ -388,6 +413,7 @@ impl<'a> BpfLoader<'a> {
             extensions,
             verifier_log_level,
             allow_unsupported_maps,
+            ..
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
@@ -476,7 +502,14 @@ impl<'a> BpfLoader<'a> {
             }
             let mut map = MapData {
                 obj,
-                fd: None,
+                fd: self.maps.get(name.as_str()).and_then(|x| {
+                    let map_data = (*x).map_data().clone();
+                    let map_fd = map_data.fd;
+
+                    std::mem::forget(map_data);
+
+                    map_fd
+                }),
                 pinned: false,
                 btf_fd: btf_fd.as_ref().map(Arc::clone),
             };
@@ -502,7 +535,7 @@ impl<'a> BpfLoader<'a> {
                         }
                     }
                 }
-                PinningType::None => map.create(&name)?,
+                PinningType::None => map.fd_or_err().or_else(|_| map.create(&name))?,
             };
             if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
