@@ -92,7 +92,10 @@ impl SocketFilter {
             .into());
         }
 
-        self.data.links.insert(SocketFilterLink { socket, prog_fd })
+        self.data.links.insert(SocketFilterLink {
+            socket,
+            prog_fd: prog_fd.as_raw_fd(),
+        })
     }
 
     /// Detaches the program.
