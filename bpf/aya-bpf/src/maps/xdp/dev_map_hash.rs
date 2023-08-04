@@ -22,7 +22,7 @@ impl DevMapHash {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_DEVMAP_HASH,
                 key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<u32>() as u32,
+                value_size: mem::size_of::<bpf_devmap_val>() as u32,
                 max_entries,
                 map_flags: flags,
                 id: 0,
@@ -36,7 +36,7 @@ impl DevMapHash {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_DEVMAP_HASH,
                 key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<u32>() as u32,
+                value_size: mem::size_of::<bpf_devmap_val>() as u32,
                 max_entries,
                 map_flags: flags,
                 id: 0,
