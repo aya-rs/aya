@@ -77,7 +77,13 @@ impl<T: Borrow<MapData>> CpuMap<T> {
                 io_error,
             })?;
         let value: bpf_cpumap_val = value.ok_or(MapError::KeyNotFound)?;
-        Ok(value.into())
+
+        // SAFETY: map writes use fd, map reads use id.
+        // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6149
+        Ok(CpuMapValue {
+            qsize: value.qsize,
+            prog_id: unsafe { value.bpf_prog.id },
+        })
     }
 
     /// An iterator over the elements of the map. The iterator item type is `Result<u32,
@@ -148,15 +154,4 @@ unsafe impl Pod for bpf_cpumap_val {}
 pub struct CpuMapValue {
     pub qsize: u32,
     pub prog_id: u32,
-}
-
-impl From<bpf_cpumap_val> for CpuMapValue {
-    fn from(value: bpf_cpumap_val) -> Self {
-        // SAFETY: map writes use fd, map reads use id.
-        // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6149
-        CpuMapValue {
-            qsize: value.qsize,
-            prog_id: unsafe { value.bpf_prog.id },
-        }
-    }
 }
