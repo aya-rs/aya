@@ -46,13 +46,13 @@ impl DevMap {
     }
 
     #[inline(always)]
-    pub fn get(&self, index: u32) -> Option<u32> {
+    pub fn get(&self, index: u32) -> Option<bpf_devmap_val> {
         unsafe {
             let value = bpf_map_lookup_elem(
                 self.def.get() as *mut _,
                 &index as *const _ as *const c_void,
             );
-            NonNull::new(value as *mut u32).map(|p| *p.as_ref())
+            NonNull::new(value as *mut bpf_devmap_val).map(|p| *p.as_ref())
         }
     }
 
