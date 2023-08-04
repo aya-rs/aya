@@ -60,7 +60,13 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
             io_error,
         })?;
         let value: bpf_devmap_val = value.ok_or(MapError::KeyNotFound)?;
-        Ok(value.into())
+
+        // SAFETY: map writes use fd, map reads use id.
+        // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6136
+        Ok(DevMapValue {
+            ifindex: value.ifindex,
+            prog_id: unsafe { value.bpf_prog.id },
+        })
     }
 
     /// An iterator over the elements of the devmap in arbitrary order.

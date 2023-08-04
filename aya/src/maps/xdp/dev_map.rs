@@ -71,7 +71,13 @@ impl<T: Borrow<MapData>> DevMap<T> {
                 io_error,
             })?;
         let value: bpf_devmap_val = value.ok_or(MapError::KeyNotFound)?;
-        Ok(value.into())
+
+        // SAFETY: map writes use fd, map reads use id.
+        // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6136
+        Ok(DevMapValue {
+            ifindex: value.ifindex,
+            prog_id: unsafe { value.bpf_prog.id },
+        })
     }
 
     /// An iterator over the elements of the array.
@@ -140,15 +146,4 @@ unsafe impl Pod for bpf_devmap_val {}
 pub struct DevMapValue {
     pub ifindex: u32,
     pub prog_id: u32,
-}
-
-impl From<bpf_devmap_val> for DevMapValue {
-    fn from(value: bpf_devmap_val) -> Self {
-        // SAFETY: map writes use fd, map reads use id.
-        // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6136
-        DevMapValue {
-            ifindex: value.ifindex,
-            prog_id: unsafe { value.bpf_prog.id },
-        }
-    }
 }
