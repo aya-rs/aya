@@ -104,13 +104,18 @@ impl DevMap {
     /// // redirect to ifindex
     /// ```
     #[inline(always)]
-    pub fn get(&self, index: u32) -> Option<bpf_devmap_val> {
+    pub fn get(&self, index: u32) -> Option<DevMapValue> {
         unsafe {
             let value = bpf_map_lookup_elem(
                 self.def.get() as *mut _,
                 &index as *const _ as *const c_void,
             );
-            NonNull::new(value as *mut bpf_devmap_val).map(|p| *p.as_ref())
+            NonNull::new(value as *mut bpf_devmap_val).map(|p| DevMapValue {
+                ifindex: p.as_ref().ifindex,
+                // SAFETY: map writes use fd, map reads use id.
+                // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6136
+                prog_id: p.as_ref().bpf_prog.id,
+            })
         }
     }
 
@@ -141,4 +146,10 @@ impl DevMap {
             bpf_redirect_map(self.def.get() as *mut _, index.into(), flags).unsigned_abs() as u32
         }
     }
+}
+
+#[derive(Clone, Copy)]
+pub struct DevMapValue {
+    pub ifindex: u32,
+    pub prog_id: u32,
 }
