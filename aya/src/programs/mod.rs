@@ -879,7 +879,6 @@ macro_rules! impl_from_pin {
 impl_from_pin!(
     TracePoint,
     SocketFilter,
-    Xdp,
     SkMsg,
     CgroupSysctl,
     LircMode2,
