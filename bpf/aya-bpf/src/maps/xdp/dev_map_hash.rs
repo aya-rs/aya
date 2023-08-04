@@ -9,6 +9,8 @@ use crate::{
     maps::PinningType,
 };
 
+use super::dev_map::DevMapValue;
+
 /// A map of network devices.
 ///
 /// XDP programs can use this map to redirect packets to other network devices. It is similar to
@@ -106,11 +108,16 @@ impl DevMapHash {
     /// // redirect to ifindex
     /// ```
     #[inline(always)]
-    pub fn get(&self, key: u32) -> Option<bpf_devmap_val> {
+    pub fn get(&self, key: u32) -> Option<DevMapValue> {
         unsafe {
             let value =
                 bpf_map_lookup_elem(self.def.get() as *mut _, &key as *const _ as *const c_void);
-            NonNull::new(value as *mut bpf_devmap_val).map(|p| *p.as_ref())
+            NonNull::new(value as *mut bpf_devmap_val).map(|p| DevMapValue {
+                ifindex: p.as_ref().ifindex,
+                // SAFETY: map writes use fd, map reads use id.
+                // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6136
+                prog_id: p.as_ref().bpf_prog.id,
+            })
         }
     }
 
