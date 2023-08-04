@@ -19,6 +19,7 @@ use crate::{
     btf::BtfFeatures,
     generated::{BPF_CALL, BPF_JMP, BPF_K},
     maps::{BtfMap, LegacyMap, Map, MINIMUM_MAP_SIZE},
+    programs::XdpAttachType,
     relocation::*,
     util::HashMap,
 };
@@ -204,8 +205,6 @@ pub struct Function {
 /// - `struct_ops+`
 /// - `fmod_ret+`, `fmod_ret.s+`
 /// - `iter+`, `iter.s+`
-/// - `xdp.frags/cpumap`, `xdp/cpumap`
-/// - `xdp.frags/devmap`, `xdp/devmap`
 #[derive(Debug, Clone)]
 #[allow(missing_docs)]
 pub enum ProgramSection {
@@ -221,6 +220,7 @@ pub enum ProgramSection {
     SocketFilter,
     Xdp {
         frags: bool,
+        attach_type: XdpAttachType,
     },
     SkMsg,
     SkSkbStreamParser,
@@ -278,8 +278,14 @@ impl FromStr for ProgramSection {
             "uprobe.s" => UProbe { sleepable: true },
             "uretprobe" => URetProbe { sleepable: false },
             "uretprobe.s" => URetProbe { sleepable: true },
-            "xdp" => Xdp { frags: false },
-            "xdp.frags" => Xdp { frags: true },
+            "xdp" | "xdp.frags" => Xdp {
+                frags: kind == "xdp.frags",
+                attach_type: match name {
+                    "cpumap" => XdpAttachType::CpuMap,
+                    "devmap" => XdpAttachType::DevMap,
+                    _ => XdpAttachType::Interface,
+                },
+            },
             "tp_btf" => BtfTracePoint,
             kind if kind.starts_with("tracepoint") || kind.starts_with("tp") => TracePoint,
             "socket" => SocketFilter,

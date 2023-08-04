@@ -1,3 +1,4 @@
+use aya::Bpf;
 use object::{Object, ObjectSection, ObjectSymbol, SymbolSection};
 
 #[test]
@@ -26,4 +27,16 @@ fn has_symbol(obj_file: &object::File, sec_name: &str, sym_name: &str) -> bool {
     obj_file
         .symbols()
         .any(|sym| sym.section() == sec && sym.name() == Ok(sym_name))
+}
+
+#[test]
+fn map_load() {
+    let bpf = Bpf::load(crate::XDP_SEC).unwrap();
+
+    bpf.program("xdp_plain").unwrap();
+    bpf.program("xdp_frags").unwrap();
+    bpf.program("xdp_cpumap").unwrap();
+    bpf.program("xdp_devmap").unwrap();
+    bpf.program("xdp_frags_cpumap").unwrap();
+    bpf.program("xdp_frags_devmap").unwrap();
 }
