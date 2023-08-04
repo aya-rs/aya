@@ -97,7 +97,7 @@ pub use queue::Queue;
 pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
-pub use xdp::XskMap;
+pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 
 #[derive(Error, Debug)]
 /// Errors occuring from working with Maps
@@ -267,6 +267,14 @@ pub enum Map {
     StackTraceMap(MapData),
     /// A [`Queue`] map
     Queue(MapData),
+    /// A [`CpuMap`] map
+    CpuMap(MapData),
+    /// A [`DevMap`] map
+    DevMap(MapData),
+    /// A [`DevMapHash`] map
+    DevMapHash(MapData),
+    /// A [`XskMap`] map
+    XskMap(MapData),
     /// An unsupported map type
     Unsupported(MapData),
 }
@@ -290,6 +298,10 @@ impl Map {
             Self::Stack(map) => map.obj.map_type(),
             Self::StackTraceMap(map) => map.obj.map_type(),
             Self::Queue(map) => map.obj.map_type(),
+            Self::CpuMap(map) => map.obj.map_type(),
+            Self::DevMap(map) => map.obj.map_type(),
+            Self::DevMapHash(map) => map.obj.map_type(),
+            Self::XskMap(map) => map.obj.map_type(),
             Self::Unsupported(map) => map.obj.map_type(),
         }
     }
@@ -349,6 +361,10 @@ impl_try_from_map!(() {
     SockMap,
     PerfEventArray,
     StackTraceMap,
+    CpuMap,
+    DevMap,
+    DevMapHash,
+    XskMap,
 });
 
 #[cfg(any(feature = "async_tokio", feature = "async_std"))]
