@@ -64,19 +64,13 @@ fn main() {
         panic!("unsupported endian={:?}", endian)
     };
 
-    const C_BPF: &[(&str, &str)] = &[
-        ("ext.bpf.c", "ext.bpf.o"),
-        ("main.bpf.c", "main.bpf.o"),
-        ("multimap-btf.bpf.c", "multimap-btf.bpf.o"),
-        ("reloc.bpf.c", "reloc.bpf.o"),
-        ("text_64_64_reloc.c", "text_64_64_reloc.o"),
+    const C_BPF: &[(&str, bool)] = &[
+        ("ext.bpf.c", false),
+        ("main.bpf.c", false),
+        ("multimap-btf.bpf.c", false),
+        ("reloc.bpf.c", true),
+        ("text_64_64_reloc.c", false),
     ];
-
-    let c_bpf = C_BPF.iter().map(|(src, dst)| (src, out_dir.join(dst)));
-
-    const C_BTF: &[(&str, &str)] = &[("reloc.btf.c", "reloc.btf.o")];
-
-    let c_btf = C_BTF.iter().map(|(src, dst)| (src, out_dir.join(dst)));
 
     if build_integration_bpf {
         let libbpf_dir = manifest_dir
@@ -116,61 +110,56 @@ fn main() {
             target_arch.push(arch);
         };
 
-        for (src, dst) in c_bpf {
-            let src = bpf_dir.join(src);
-            println!("cargo:rerun-if-changed={}", src.to_str().unwrap());
-
-            exec(
-                Command::new("clang")
-                    .arg("-I")
-                    .arg(&libbpf_headers_dir)
-                    .args(["-g", "-O2", "-target", target, "-c"])
-                    .arg(&target_arch)
-                    .arg(src)
-                    .arg("-o")
-                    .arg(dst),
-            )
-            .unwrap();
-        }
-
-        for (src, dst) in c_btf {
-            let src = bpf_dir.join(src);
-            println!("cargo:rerun-if-changed={}", src.to_str().unwrap());
-
+        let clang = || {
             let mut cmd = Command::new("clang");
             cmd.arg("-I")
                 .arg(&libbpf_headers_dir)
-                .args(["-g", "-target", target, "-c"])
-                .arg(&target_arch)
-                .arg(src)
-                .args(["-o", "-"]);
+                .args(["-g", "-O2", "-target", target, "-c"])
+                .arg(&target_arch);
+            cmd
+        };
 
-            let mut child = cmd
-                .stdout(Stdio::piped())
-                .spawn()
-                .unwrap_or_else(|err| panic!("failed to spawn {cmd:?}: {err}"));
+        for (src, build_btf) in C_BPF {
+            let dst = out_dir.join(src).with_extension("o");
+            let src = bpf_dir.join(src);
+            println!("cargo:rerun-if-changed={}", src.to_str().unwrap());
 
-            let Child { stdout, .. } = &mut child;
-            let stdout = stdout.take().unwrap();
+            exec(clang().arg(&src).arg("-o").arg(&dst)).unwrap();
 
-            let mut output = OsString::new();
-            output.push(".BTF=");
-            output.push(dst);
-            exec(
-                // NB: objcopy doesn't support reading from stdin, so we have to use llvm-objcopy.
-                Command::new("llvm-objcopy")
-                    .arg("--dump-section")
-                    .arg(output)
-                    .arg("-")
-                    .stdin(stdout),
-            )
-            .unwrap();
+            if *build_btf {
+                let mut cmd = clang();
+                let mut child = cmd
+                    .arg("-DTARGET")
+                    .arg(&src)
+                    .args(["-o", "-"])
+                    .stdout(Stdio::piped())
+                    .spawn()
+                    .unwrap_or_else(|err| panic!("failed to spawn {cmd:?}: {err}"));
 
-            let output = child
-                .wait_with_output()
-                .unwrap_or_else(|err| panic!("failed to wait for {cmd:?}: {err}"));
-            let Output { status, .. } = &output;
-            assert_eq!(status.code(), Some(0), "{cmd:?} failed: {output:?}");
+                let Child { stdout, .. } = &mut child;
+                let stdout = stdout.take().unwrap();
+
+                let dst = dst.with_extension("target.o");
+
+                let mut output = OsString::new();
+                output.push(".BTF=");
+                output.push(dst);
+                exec(
+                    // NB: objcopy doesn't support reading from stdin, so we have to use llvm-objcopy.
+                    Command::new("llvm-objcopy")
+                        .arg("--dump-section")
+                        .arg(output)
+                        .arg("-")
+                        .stdin(stdout),
+                )
+                .unwrap();
+
+                let output = child
+                    .wait_with_output()
+                    .unwrap_or_else(|err| panic!("failed to wait for {cmd:?}: {err}"));
+                let Output { status, .. } = &output;
+                assert_eq!(status.code(), Some(0), "{cmd:?} failed: {output:?}");
+            }
         }
 
         let target = format!("{target}-unknown-none");
@@ -262,8 +251,13 @@ fn main() {
                 .unwrap_or_else(|err| panic!("failed to copy {binary:?} to {dst:?}: {err}"));
         }
     } else {
-        for (_src, dst) in c_bpf.chain(c_btf) {
+        for (src, build_btf) in C_BPF {
+            let dst = out_dir.join(src).with_extension("o");
             fs::write(&dst, []).unwrap_or_else(|err| panic!("failed to create {dst:?}: {err}"));
+            if *build_btf {
+                let dst = dst.with_extension("target.o");
+                fs::write(&dst, []).unwrap_or_else(|err| panic!("failed to create {dst:?}: {err}"));
+            }
         }
 
         let Package { targets, .. } = integration_ebpf_package;
