@@ -1,10 +1,17 @@
 //! An array of available CPUs.
 
-use std::borrow::{Borrow, BorrowMut};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    num::NonZeroU32,
+    os::fd::AsRawFd,
+};
+
+use aya_obj::generated::{bpf_cpumap_val, bpf_cpumap_val__bindgen_ty_1};
 
 use crate::{
     maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
     sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
+    Pod,
 };
 
 /// An array of available CPUs.
@@ -29,7 +36,7 @@ use crate::{
 /// let flags = 0;
 /// let queue_size = 2048;
 /// for i in 0u32..8u32 {
-///     cpumap.set(i, queue_size, flags);
+///     cpumap.set(i, queue_size, None::<i32>, flags);
 /// }
 ///
 /// # Ok::<(), aya::BpfError>(())
@@ -42,7 +49,7 @@ pub struct CpuMap<T> {
 impl<T: Borrow<MapData>> CpuMap<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
-        check_kv_size::<u32, u32>(data)?;
+        check_kv_size::<u32, bpf_cpumap_val>(data)?;
 
         Ok(Self { inner: map })
     }
@@ -60,7 +67,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_lookup_elem` fails.
-    pub fn get(&self, index: u32, flags: u64) -> Result<u32, MapError> {
+    pub fn get(&self, index: u32, flags: u64) -> Result<CpuMapValue, MapError> {
         let data = self.inner.borrow();
         check_bounds(data, index)?;
         let fd = data.fd;
@@ -70,11 +77,18 @@ impl<T: Borrow<MapData>> CpuMap<T> {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?;
-        value.ok_or(MapError::KeyNotFound)
+        let value: bpf_cpumap_val = value.ok_or(MapError::KeyNotFound)?;
+
+        // SAFETY: map writes use fd, map reads use id.
+        // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/include/uapi/linux/bpf.h#L6241
+        Ok(CpuMapValue {
+            qsize: value.qsize,
+            prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
+        })
     }
 
     /// An iterator over the elements of the map.
-    pub fn iter(&self) -> impl Iterator<Item = Result<u32, MapError>> + '_ {
+    pub fn iter(&self) -> impl Iterator<Item = Result<CpuMapValue, MapError>> + '_ {
         (0..self.len()).map(move |i| self.get(i, 0))
     }
 }
@@ -86,10 +100,25 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_update_elem` fails.
-    pub fn set(&mut self, index: u32, value: u32, flags: u64) -> Result<(), MapError> {
+    pub fn set(
+        &mut self,
+        index: u32,
+        value: u32,
+        program: Option<impl AsRawFd>,
+        flags: u64,
+    ) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd;
+
+        let value = bpf_cpumap_val {
+            qsize: value,
+            bpf_prog: bpf_cpumap_val__bindgen_ty_1 {
+                // Default is valid as the kernel will only consider fd > 0:
+                // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/cpumap.c#L466
+                fd: program.map(|prog| prog.as_raw_fd()).unwrap_or_default(),
+            },
+        };
         bpf_map_update_elem(fd, Some(&index), &value, flags).map_err(|(_, io_error)| {
             SyscallError {
                 call: "bpf_map_update_elem",
@@ -100,12 +129,20 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
     }
 }
 
-impl<T: Borrow<MapData>> IterableMap<u32, u32> for CpuMap<T> {
+impl<T: Borrow<MapData>> IterableMap<u32, CpuMapValue> for CpuMap<T> {
     fn map(&self) -> &MapData {
         self.inner.borrow()
     }
 
-    fn get(&self, key: &u32) -> Result<u32, MapError> {
+    fn get(&self, key: &u32) -> Result<CpuMapValue, MapError> {
         self.get(*key, 0)
     }
+}
+
+unsafe impl Pod for bpf_cpumap_val {}
+
+#[derive(Clone, Copy, Debug)]
+pub struct CpuMapValue {
+    pub qsize: u32,
+    pub prog_id: Option<NonZeroU32>,
 }
