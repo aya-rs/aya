@@ -63,7 +63,6 @@ impl SkLookup {
     pub fn attach<T: AsRawFd>(&mut self, netns: T) -> Result<SkLookupLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         let netns_fd = netns.as_raw_fd();
 
         let link_fd = bpf_link_create(prog_fd, netns_fd, BPF_SK_LOOKUP, None, 0).map_err(

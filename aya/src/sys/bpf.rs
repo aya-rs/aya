@@ -190,6 +190,7 @@ pub(crate) fn bpf_load_program(
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
     }
+
     bpf_prog_load(&mut attr)
 }
 
@@ -367,7 +368,7 @@ pub(crate) fn bpf_map_freeze(fd: RawFd) -> SysResult<c_long> {
 
 // since kernel 5.7
 pub(crate) fn bpf_link_create(
-    prog_fd: RawFd,
+    prog_fd: BorrowedFd<'_>,
     target_fd: RawFd,
     attach_type: bpf_attach_type,
     btf_id: Option<u32>,
@@ -375,7 +376,7 @@ pub(crate) fn bpf_link_create(
 ) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
-    attr.link_create.__bindgen_anon_1.prog_fd = prog_fd as u32;
+    attr.link_create.__bindgen_anon_1.prog_fd = prog_fd.as_raw_fd() as u32;
     attr.link_create.__bindgen_anon_2.target_fd = target_fd as u32;
     attr.link_create.attach_type = attach_type as u32;
     attr.link_create.flags = flags;
@@ -390,14 +391,14 @@ pub(crate) fn bpf_link_create(
 // since kernel 5.7
 pub(crate) fn bpf_link_update(
     link_fd: BorrowedFd<'_>,
-    new_prog_fd: RawFd,
+    new_prog_fd: BorrowedFd<'_>,
     old_prog_fd: Option<RawFd>,
     flags: u32,
 ) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.link_update.link_fd = link_fd.as_raw_fd() as u32;
-    attr.link_update.__bindgen_anon_1.new_prog_fd = new_prog_fd as u32;
+    attr.link_update.__bindgen_anon_1.new_prog_fd = new_prog_fd.as_raw_fd() as u32;
     if let Some(fd) = old_prog_fd {
         attr.link_update.__bindgen_anon_2.old_prog_fd = fd as u32;
         attr.link_update.flags = flags | BPF_F_REPLACE;
@@ -409,13 +410,13 @@ pub(crate) fn bpf_link_update(
 }
 
 pub(crate) fn bpf_prog_attach(
-    prog_fd: RawFd,
+    prog_fd: BorrowedFd<'_>,
     target_fd: RawFd,
     attach_type: bpf_attach_type,
 ) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
-    attr.__bindgen_anon_5.attach_bpf_fd = prog_fd as u32;
+    attr.__bindgen_anon_5.attach_bpf_fd = prog_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.target_fd = target_fd as u32;
     attr.__bindgen_anon_5.attach_type = attach_type as u32;
 
@@ -547,14 +548,17 @@ pub(crate) fn btf_obj_get_info_by_fd(
     })
 }
 
-pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> SysResult<OwnedFd> {
+pub(crate) fn bpf_raw_tracepoint_open(
+    name: Option<&CStr>,
+    prog_fd: BorrowedFd<'_>,
+) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.raw_tracepoint.name = match name {
         Some(n) => n.as_ptr() as u64,
         None => 0,
     };
-    attr.raw_tracepoint.prog_fd = prog_fd as u32;
+    attr.raw_tracepoint.prog_fd = prog_fd.as_raw_fd() as u32;
 
     // SAFETY: BPF_RAW_TRACEPOINT_OPEN returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_RAW_TRACEPOINT_OPEN, &mut attr) }
@@ -678,7 +682,6 @@ pub(crate) fn is_perf_link_supported() -> bool {
 
     if let Ok(fd) = bpf_prog_load(&mut attr) {
         let fd = fd.as_fd();
-        let fd = fd.as_raw_fd();
         matches!(
             // Uses an invalid target FD so we get EBADF if supported.
             bpf_link_create(fd, -1, bpf_attach_type::BPF_PERF_EVENT, None, 0),
@@ -722,19 +725,17 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
         pinned: false,
     };
 
-    if let Ok(map_fd) = map_data.create("aya_global", None) {
-        insns[0].imm = map_fd;
+    let Ok(map_fd) = map_data.create("aya_global", None) else { return false };
 
-        let gpl = b"GPL\0";
-        u.license = gpl.as_ptr() as u64;
-        u.insn_cnt = insns.len() as u32;
-        u.insns = insns.as_ptr() as u64;
-        u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
+    insns[0].imm = map_fd;
 
-        bpf_prog_load(&mut attr).is_ok()
-    } else {
-        false
-    }
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
+
+    bpf_prog_load(&mut attr).is_ok()
 }
 
 pub(crate) fn is_bpf_cookie_supported() -> bool {
