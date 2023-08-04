@@ -49,19 +49,17 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
         Ok(Self { inner: map })
     }
 
-    /// Returns the value stored at the given index.
+    /// Returns the target ifindex and possible program for a given key.
     ///
     /// # Errors
     ///
-    /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
-    /// if `bpf_map_lookup_elem` fails.
-    pub fn get(&self, index: u32, flags: u64) -> Result<DevMapValue, MapError> {
+    /// Returns [`MapError::SyscallError`] if `bpf_map_lookup_elem` fails.
+    pub fn get(&self, key: u32, flags: u64) -> Result<DevMapValue, MapError> {
         let fd = self.inner.borrow().fd().as_fd();
-        let value =
-            bpf_map_lookup_elem(fd, &index, flags).map_err(|(_, io_error)| SyscallError {
-                call: "bpf_map_lookup_elem",
-                io_error,
-            })?;
+        let value = bpf_map_lookup_elem(fd, &key, flags).map_err(|(_, io_error)| SyscallError {
+            call: "bpf_map_lookup_elem",
+            io_error,
+        })?;
         let value: bpf_devmap_val = value.ok_or(MapError::KeyNotFound)?;
 
         // SAFETY: map writes use fd, map reads use id.
@@ -84,20 +82,29 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
 }
 
 impl<T: BorrowMut<MapData>> DevMapHash<T> {
-    /// Inserts a value in the map.
+    /// Inserts an ifindex and optionally a chained program in the map.
+    ///
+    /// When redirecting using `key`, packets will be transmitted by the interface with `ifindex`.
+    ///
+    /// Another XDP program can be passed in that will be run before actual transmission. It can be
+    /// used to modify the packet before transmission with NIC specific data (MAC address update,
+    /// checksum computations, etc) or other purposes.
+    ///
+    /// Note that only XDP programs with the `map = "devmap"` argument can be passed. See the
+    /// kernel-space `aya_bpf::xdp` for more information.
     ///
     /// # Errors
     ///
     /// Returns [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
     pub fn insert(
         &mut self,
-        index: u32,
-        value: u32,
+        key: u32,
+        ifindex: u32,
         program: Option<impl AsRawFd>,
         flags: u64,
     ) -> Result<(), MapError> {
         let value = bpf_devmap_val {
-            ifindex: value,
+            ifindex,
             bpf_prog: bpf_devmap_val__bindgen_ty_1 {
                 // Default is valid as the kernel will only consider fd > 0:
                 // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/devmap.c#L866
@@ -105,10 +112,10 @@ impl<T: BorrowMut<MapData>> DevMapHash<T> {
                 fd: program.map(|prog| prog.as_raw_fd()).unwrap_or_default(),
             },
         };
-        hash_map::insert(self.inner.borrow_mut(), &index, &value, flags)
+        hash_map::insert(self.inner.borrow_mut(), &key, &value, flags)
     }
 
-    /// Remove a value from the map.
+    /// Removes a value from the map.
     ///
     /// # Errors
     ///
