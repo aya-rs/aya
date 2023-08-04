@@ -3,13 +3,14 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     num::NonZeroU32,
-    os::fd::AsRawFd,
+    os::fd::{AsFd, AsRawFd},
 };
 
 use aya_obj::generated::{bpf_devmap_val, bpf_devmap_val__bindgen_ty_1};
 
 use crate::{
     maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
+    programs::ProgramFd,
     sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
     Pod,
 };
@@ -31,7 +32,7 @@ use crate::{
 /// let mut devmap = DevMap::try_from(bpf.map_mut("IFACES").unwrap())?;
 /// let source = 32u32;
 /// let dest = 42u32;
-/// devmap.set(source, dest, None::<i32>, 0);
+/// devmap.set(source, dest, None, 0);
 ///
 /// # Ok::<(), aya::BpfError>(())
 /// ```
@@ -108,7 +109,7 @@ impl<T: BorrowMut<MapData>> DevMap<T> {
         &mut self,
         index: u32,
         ifindex: u32,
-        program: Option<impl AsRawFd>,
+        program: Option<&ProgramFd>,
         flags: u64,
     ) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
@@ -121,7 +122,9 @@ impl<T: BorrowMut<MapData>> DevMap<T> {
                 // Default is valid as the kernel will only consider fd > 0:
                 // https://elixir.bootlin.com/linux/v6.4.12/source/kernel/bpf/devmap.c#L866
                 // https://elixir.bootlin.com/linux/v6.4.12/source/kernel/bpf/devmap.c#L918
-                fd: program.map(|prog| prog.as_raw_fd()).unwrap_or_default(),
+                fd: program
+                    .map(|prog| prog.as_fd().as_raw_fd())
+                    .unwrap_or_default(),
             },
         };
         bpf_map_update_elem(fd, Some(&index), &value, flags).map_err(|(_, io_error)| {
