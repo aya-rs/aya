@@ -1,5 +1,6 @@
 use core::{cell::UnsafeCell, mem, ptr::NonNull};
 
+use aya_bpf_bindings::bindings::bpf_devmap_val;
 use aya_bpf_cty::c_void;
 
 use crate::{
@@ -21,7 +22,7 @@ impl DevMap {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_DEVMAP,
                 key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<u32>() as u32,
+                value_size: mem::size_of::<bpf_devmap_val>() as u32,
                 max_entries,
                 map_flags: flags,
                 id: 0,
@@ -35,7 +36,7 @@ impl DevMap {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_DEVMAP,
                 key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<u32>() as u32,
+                value_size: mem::size_of::<bpf_devmap_val>() as u32,
                 max_entries,
                 map_flags: flags,
                 id: 0,
