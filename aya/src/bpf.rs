@@ -724,6 +724,10 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
         BPF_MAP_TYPE_STACK => Map::Stack(map),
         BPF_MAP_TYPE_STACK_TRACE => Map::StackTraceMap(map),
         BPF_MAP_TYPE_QUEUE => Map::Queue(map),
+        BPF_MAP_TYPE_CPUMAP => Map::CpuMap(map),
+        BPF_MAP_TYPE_DEVMAP => Map::DevMap(map),
+        BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
+        BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         m => {
             warn!("The map {name} is of type {:#?} which is currently unsupported in Aya, use `allow_unsupported_maps()` to load it anyways", m);
             Map::Unsupported(map)
