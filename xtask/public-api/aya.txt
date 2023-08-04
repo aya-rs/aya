@@ -6202,7 +6202,7 @@ impl<T> core::convert::From<T> for aya::programs::ProgramFd
 pub fn aya::programs::ProgramFd::from(t: T) -> T
 pub struct aya::programs::ProgramInfo(_)
 impl aya::programs::ProgramInfo
-pub fn aya::programs::ProgramInfo::fd(&self) -> core::result::Result<std::os::fd::raw::RawFd, aya::programs::ProgramError>
+pub fn aya::programs::ProgramInfo::fd(&self) -> core::result::Result<std::os::fd::owned::OwnedFd, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::id(&self) -> u32
 pub fn aya::programs::ProgramInfo::name(&self) -> &[u8]

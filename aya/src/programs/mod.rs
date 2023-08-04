@@ -68,7 +68,7 @@ use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
-    os::fd::{AsFd, AsRawFd, IntoRawFd as _, OwnedFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd, BorrowedFd, OwnedFd, RawFd},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -403,7 +403,7 @@ impl Program {
 pub(crate) struct ProgramData<T: Link> {
     pub(crate) name: Option<String>,
     pub(crate) obj: Option<(obj::Program, obj::Function)>,
-    pub(crate) fd: Option<RawFd>,
+    pub(crate) fd: Option<OwnedFd>,
     pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
     pub(crate) attach_btf_obj_fd: Option<u32>,
@@ -464,7 +464,7 @@ impl<T: Link> ProgramData<T> {
         Ok(ProgramData {
             name,
             obj: None,
-            fd: Some(fd.into_raw_fd()),
+            fd: Some(fd),
             links: LinkMap::new(),
             expected_attach_type: None,
             attach_btf_obj_fd,
@@ -495,8 +495,11 @@ impl<T: Link> ProgramData<T> {
 }
 
 impl<T: Link> ProgramData<T> {
-    fn fd_or_err(&self) -> Result<RawFd, ProgramError> {
-        self.fd.ok_or(ProgramError::NotLoaded)
+    fn fd_or_err(&self) -> Result<BorrowedFd<'_>, ProgramError> {
+        self.fd
+            .as_ref()
+            .map(|f| f.as_fd())
+            .ok_or(ProgramError::NotLoaded)
     }
 
     pub(crate) fn take_link(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
@@ -506,15 +509,12 @@ impl<T: Link> ProgramData<T> {
 
 fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError> {
     data.links.remove_all()?;
-    let fd = data.fd.take().ok_or(ProgramError::NotLoaded)?;
-    unsafe {
-        libc::close(fd);
-    }
+    let _: OwnedFd = data.fd.take().ok_or(ProgramError::NotLoaded)?;
     Ok(())
 }
 
 fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Result<(), PinError> {
-    let fd = data.fd.ok_or(PinError::NoFd {
+    let fd = data.fd.as_ref().ok_or(PinError::NoFd {
         name: data
             .name
             .as_deref()
@@ -526,7 +526,7 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
             error: e.to_string(),
         }
     })?;
-    bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| SyscallError {
+    bpf_pin_object(fd.as_raw_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
         call: "BPF_OBJ_PIN",
         io_error,
     })?;
@@ -620,7 +620,7 @@ fn load_program<T: Link>(
 
     match ret {
         Ok(prog_fd) => {
-            *fd = Some(prog_fd as RawFd);
+            *fd = Some(prog_fd);
             Ok(())
         }
         Err((_, io_error)) => Err(ProgramError::LoadError {
@@ -726,7 +726,7 @@ macro_rules! impl_fd {
             impl $struct_name {
                 /// Returns the file descriptor of this Program.
                 pub fn fd(&self) -> Option<ProgramFd> {
-                    self.data.fd.map(|fd| ProgramFd(fd))
+                    self.data.fd.as_ref().map(|fd| ProgramFd(fd.as_raw_fd()))
                 }
             }
         )+
@@ -939,12 +939,9 @@ impl ProgramInfo {
     }
 
     /// Returns the fd associated with the program.
-    ///
-    /// The returned fd must be closed when no longer needed.
-    pub fn fd(&self) -> Result<RawFd, ProgramError> {
+    pub fn fd(&self) -> Result<OwnedFd, ProgramError> {
         let Self(info) = self;
-        let fd = bpf_prog_get_fd_by_id(info.id)?;
-        Ok(fd.into_raw_fd())
+        bpf_prog_get_fd_by_id(info.id).map_err(ProgramError::from)
     }
 
     /// Loads a program from a pinned path in bpffs.
