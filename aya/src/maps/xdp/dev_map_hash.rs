@@ -2,13 +2,14 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
-    os::fd::AsRawFd,
+    os::fd::{AsFd, AsRawFd},
 };
 
 use aya_obj::generated::{bpf_devmap_val, bpf_devmap_val__bindgen_ty_1};
 
 use crate::{
     maps::{check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
+    programs::ProgramFd,
     sys::{bpf_map_lookup_elem, SyscallError},
 };
 
@@ -31,7 +32,7 @@ use super::dev_map::DevMapValue;
 /// let mut devmap = DevMapHash::try_from(bpf.map_mut("IFACES").unwrap())?;
 /// let flags = 0;
 /// let ifindex = 32u32;
-/// devmap.insert(ifindex, ifindex, None::<i32>, flags);
+/// devmap.insert(ifindex, ifindex, None, flags);
 ///
 /// # Ok::<(), aya::BpfError>(())
 /// ```
@@ -99,13 +100,15 @@ impl<T: BorrowMut<MapData>> DevMapHash<T> {
         &mut self,
         key: u32,
         ifindex: u32,
-        program: Option<impl AsRawFd>,
+        program: Option<&ProgramFd>,
         flags: u64,
     ) -> Result<(), MapError> {
         let value = bpf_devmap_val {
             ifindex,
             bpf_prog: bpf_devmap_val__bindgen_ty_1 {
-                fd: program.map(|prog| prog.as_raw_fd()).unwrap_or_default(),
+                fd: program
+                    .map(|prog| prog.as_fd().as_raw_fd())
+                    .unwrap_or_default(),
             },
         };
         hash_map::insert(self.inner.borrow_mut(), &key, &value, flags)
