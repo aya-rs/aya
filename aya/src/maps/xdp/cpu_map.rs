@@ -3,13 +3,14 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     num::NonZeroU32,
-    os::fd::AsRawFd,
+    os::fd::{AsFd, AsRawFd},
 };
 
 use aya_obj::generated::{bpf_cpumap_val, bpf_cpumap_val__bindgen_ty_1};
 
 use crate::{
     maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
+    programs::ProgramFd,
     sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
     Pod,
 };
@@ -36,7 +37,7 @@ use crate::{
 /// let flags = 0;
 /// let queue_size = 2048;
 /// for i in 0u32..8u32 {
-///     cpumap.set(i, queue_size, None::<i32>, flags);
+///     cpumap.set(i, queue_size, None, flags);
 /// }
 ///
 /// # Ok::<(), aya::BpfError>(())
@@ -115,7 +116,7 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
         &mut self,
         cpu_index: u32,
         queue_size: u32,
-        program: Option<impl AsRawFd>,
+        program: Option<&ProgramFd>,
         flags: u64,
     ) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
@@ -127,7 +128,9 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
             bpf_prog: bpf_cpumap_val__bindgen_ty_1 {
                 // Default is valid as the kernel will only consider fd > 0:
                 // https://github.com/torvalds/linux/blob/v6.5/kernel/bpf/cpumap.c#L466
-                fd: program.map(|prog| prog.as_raw_fd()).unwrap_or_default(),
+                fd: program
+                    .map(|prog| prog.as_fd().as_raw_fd())
+                    .unwrap_or_default(),
             },
         };
         bpf_map_update_elem(fd, Some(&cpu_index), &value, flags).map_err(|(_, io_error)| {
