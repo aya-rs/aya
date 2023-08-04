@@ -12,7 +12,7 @@ use crate::{
     maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
     programs::ProgramFd,
     sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
-    Pod,
+    Pod, FEATURES,
 };
 
 /// An array of network devices.
@@ -44,7 +44,12 @@ pub struct DevMap<T> {
 impl<T: Borrow<MapData>> DevMap<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
-        check_kv_size::<u32, bpf_devmap_val>(data)?;
+
+        if FEATURES.devmap_prog_id() {
+            check_kv_size::<u32, bpf_devmap_val>(data)?;
+        } else {
+            check_kv_size::<u32, u32>(data)?;
+        }
 
         Ok(Self { inner: map })
     }
@@ -67,19 +72,29 @@ impl<T: Borrow<MapData>> DevMap<T> {
         check_bounds(data, index)?;
         let fd = data.fd;
 
-        let value =
-            bpf_map_lookup_elem(fd, &index, flags).map_err(|(_, io_error)| SyscallError {
+        let value = if FEATURES.devmap_prog_id() {
+            bpf_map_lookup_elem::<_, bpf_devmap_val>(fd, &index, flags).map(|value| {
+                value.map(|value| DevMapValue {
+                    ifindex: value.ifindex,
+                    // SAFETY: map writes use fd, map reads use id.
+                    // https://github.com/torvalds/linux/blob/v6.5/include/uapi/linux/bpf.h#L6228
+                    prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
+                })
+            })
+        } else {
+            bpf_map_lookup_elem::<_, u32>(fd, &index, flags).map(|value| {
+                value.map(|ifindex| DevMapValue {
+                    ifindex,
+                    prog_id: None,
+                })
+            })
+        };
+        value
+            .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
-            })?;
-        let value: bpf_devmap_val = value.ok_or(MapError::KeyNotFound)?;
-
-        // SAFETY: map writes use fd, map reads use id.
-        // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6136
-        Ok(DevMapValue {
-            ifindex: value.ifindex,
-            prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
-        })
+            })?
+            .ok_or(MapError::KeyNotFound)
     }
 
     /// An iterator over the elements of the array.
@@ -104,7 +119,8 @@ impl<T: BorrowMut<MapData>> DevMap<T> {
     /// # Errors
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
-    /// if `bpf_map_update_elem` fails.
+    /// if `bpf_map_update_elem` fails, [`MapError::ProgIdNotSupported`] if the kernel does not
+    /// support program ids and one is provided.
     pub fn set(
         &mut self,
         index: u32,
@@ -116,22 +132,29 @@ impl<T: BorrowMut<MapData>> DevMap<T> {
         check_bounds(data, index)?;
         let fd = data.fd;
 
-        let value = bpf_devmap_val {
-            ifindex,
-            bpf_prog: bpf_devmap_val__bindgen_ty_1 {
-                // Default is valid as the kernel will only consider fd > 0:
-                // https://github.com/torvalds/linux/blob/v6.5/kernel/bpf/devmap.c#L866
-                // https://github.com/torvalds/linux/blob/v6.5/kernel/bpf/devmap.c#L918
-                fd: program
-                    .map(|prog| prog.as_fd().as_raw_fd())
-                    .unwrap_or_default(),
-            },
-        };
-        bpf_map_update_elem(fd, Some(&index), &value, flags).map_err(|(_, io_error)| {
-            SyscallError {
-                call: "bpf_map_update_elem",
-                io_error,
+        let res = if FEATURES.devmap_prog_id() {
+            let value = bpf_devmap_val {
+                ifindex,
+                bpf_prog: bpf_devmap_val__bindgen_ty_1 {
+                    // Default is valid as the kernel will only consider fd > 0:
+                    // https://github.com/torvalds/linux/blob/v6.5/kernel/bpf/devmap.c#L866
+                    // https://github.com/torvalds/linux/blob/v6.5/kernel/bpf/devmap.c#L918
+                    fd: program
+                        .map(|prog| prog.as_fd().as_raw_fd())
+                        .unwrap_or_default(),
+                },
+            };
+            bpf_map_update_elem(fd, Some(&index), &value, flags)
+        } else {
+            if program.is_some() {
+                return Err(MapError::ProgIdNotSupported);
             }
+            bpf_map_update_elem(fd, Some(&index), &ifindex, flags)
+        };
+
+        res.map_err(|(_, io_error)| SyscallError {
+            call: "bpf_map_update_elem",
+            io_error,
         })?;
         Ok(())
     }
