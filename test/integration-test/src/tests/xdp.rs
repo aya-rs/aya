@@ -1,3 +1,4 @@
+use aya::Bpf;
 use object::{Object, ObjectSection, ObjectSymbol, SymbolSection};
 
 #[test]
@@ -32,4 +33,16 @@ fn ensure_symbol(obj_file: &object::File, sec_name: &str, sym_name: &str) {
         syms.contains(&sym_name),
         "symbol not found. available symbols in section: {syms:?}"
     );
+}
+
+#[test]
+fn map_load() {
+    let bpf = Bpf::load(crate::XDP_SEC).unwrap();
+
+    bpf.program("xdp_plain").unwrap();
+    bpf.program("xdp_frags").unwrap();
+    bpf.program("xdp_cpumap").unwrap();
+    bpf.program("xdp_devmap").unwrap();
+    bpf.program("xdp_frags_cpumap").unwrap();
+    bpf.program("xdp_frags_devmap").unwrap();
 }
