@@ -12,18 +12,21 @@ use std::{
     hash::Hash,
     io,
     os::fd::{AsFd as _, AsRawFd as _, RawFd},
+    path::Path,
 };
 use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_attach_type, bpf_link_type, bpf_prog_type, XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE,
-        XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE, XDP_FLAGS_UPDATE_IF_NOEXIST,
+        bpf_link_type, bpf_prog_type, XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE,
+        XDP_FLAGS_SKB_MODE, XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
+    obj::programs::XdpAttachType,
     programs::{
         define_link_wrapper, load_program, FdLink, Link, LinkError, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, netlink_set_xdp_fd},
+    VerifierLogLevel,
 };
 
 /// The type returned when attaching an [`Xdp`] program fails on kernels `< 5.9`.
@@ -80,12 +83,13 @@ bitflags::bitflags! {
 #[doc(alias = "BPF_PROG_TYPE_XDP")]
 pub struct Xdp {
     pub(crate) data: ProgramData<XdpLink>,
+    pub(crate) attach_type: XdpAttachType,
 }
 
 impl Xdp {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(bpf_attach_type::BPF_XDP);
+        self.data.expected_attach_type = Some(self.attach_type.into());
         load_program(bpf_prog_type::BPF_PROG_TYPE_XDP, &mut self.data)
     }
 
@@ -133,10 +137,18 @@ impl Xdp {
         let prog_fd = prog_fd.as_fd();
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 9, 0) {
+            // Unwrap safety: the function starts with `self.fd()?` that will succeed if and only
+            // if the program has been loaded, i.e. there is an fd. We get one by:
+            // - Using `Xdp::from_pin` that sets `expected_attach_type`
+            // - Calling `Xdp::attach` that sets `expected_attach_type`, as geting an `Xdp`
+            //   instance trhough `Xdp:try_from(Program)` does not set any fd.
+            // So, in all cases where we have an fd, we have an expected_attach_type. Thus, if we
+            // reach this point, expected_attach_type is guaranteed to be Some(_).
+            let attach_type = self.data.expected_attach_type.unwrap();
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::IfIndex(if_index),
-                bpf_attach_type::BPF_XDP,
+                attach_type,
                 None,
                 flags.bits(),
             )
@@ -161,6 +173,21 @@ impl Xdp {
                     flags,
                 })))
         }
+    }
+
+    /// Creates a program from a pinned entry on a bpffs.
+    ///
+    /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
+    ///
+    /// On drop, any managed links are detached and the program is unloaded. This will not result in
+    /// the program being unloaded from the kernel if it is still pinned.
+    pub fn from_pin<P: AsRef<Path>>(
+        path: P,
+        attach_type: XdpAttachType,
+    ) -> Result<Self, ProgramError> {
+        let mut data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        data.expected_attach_type = Some(attach_type.into());
+        Ok(Self { data, attach_type })
     }
 
     /// Detaches the program.
