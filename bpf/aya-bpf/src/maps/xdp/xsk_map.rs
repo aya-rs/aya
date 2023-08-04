@@ -46,13 +46,14 @@ impl XskMap {
     }
 
     #[inline(always)]
-    pub unsafe fn get(&self, index: u32) -> Option<&bpf_xdp_sock> {
-        let value = bpf_map_lookup_elem(
-            self.def.get() as *mut _,
-            &index as *const _ as *const c_void,
-        );
-        // FIXME: alignment
-        NonNull::new(value as *mut bpf_xdp_sock).map(|p| p.as_ref())
+    pub fn get(&self, index: u32) -> Option<u32> {
+        unsafe {
+            let value = bpf_map_lookup_elem(
+                self.def.get() as *mut _,
+                &index as *const _ as *const c_void,
+            );
+            NonNull::new(value as *mut bpf_xdp_sock).map(|p| p.as_ref().queue_id)
+        }
     }
 
     #[inline(always)]
