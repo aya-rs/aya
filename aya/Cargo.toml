@@ -12,6 +12,7 @@ edition = "2021"
 rust-version = "1.66"
 
 [dependencies]
+assert_matches = { workspace = true }
 async-io = { workspace = true, optional = true }
 aya-obj = { workspace = true, features = ["std"] }
 bitflags = { workspace = true }
@@ -28,7 +29,6 @@ thiserror = { workspace = true }
 tokio = { workspace = true, features = ["rt"], optional = true }
 
 [dev-dependencies]
-assert_matches = { workspace = true }
 tempfile = { workspace = true }
 
 [features]
