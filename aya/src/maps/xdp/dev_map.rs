@@ -55,7 +55,7 @@ impl<T: Borrow<MapData>> DevMap<T> {
         self.inner.borrow().obj.max_entries()
     }
 
-    /// Returns the value stored at the given index.
+    /// Returns the target ifindex and possible program at a given index.
     ///
     /// # Errors
     ///
@@ -88,7 +88,17 @@ impl<T: Borrow<MapData>> DevMap<T> {
 }
 
 impl<T: BorrowMut<MapData>> DevMap<T> {
-    /// Sets the value of the element at the given index.
+    /// Sets the target ifindex at index, and optionally a chained program.
+    ///
+    /// When redirecting using `index`, packets will be transmitted by the interface with
+    /// `ifindex`.
+    ///
+    /// Another XDP program can be passed in that will be run before actual transmission. It can be
+    /// used to modify the packet before transmission with NIC specific data (MAC address update,
+    /// checksum computations, etc) or other purposes.
+    ///
+    /// Note that only XDP programs with the `map = "devmap"` argument can be passed. See the
+    /// kernel-space `aya_bpf::xdp` for more information.
     ///
     /// # Errors
     ///
@@ -97,7 +107,7 @@ impl<T: BorrowMut<MapData>> DevMap<T> {
     pub fn set(
         &mut self,
         index: u32,
-        value: u32,
+        ifindex: u32,
         program: Option<impl AsRawFd>,
         flags: u64,
     ) -> Result<(), MapError> {
@@ -106,7 +116,7 @@ impl<T: BorrowMut<MapData>> DevMap<T> {
         let fd = data.fd;
 
         let value = bpf_devmap_val {
-            ifindex: value,
+            ifindex,
             bpf_prog: bpf_devmap_val__bindgen_ty_1 {
                 // Default is valid as the kernel will only consider fd > 0:
                 // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/devmap.c#L866
