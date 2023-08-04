@@ -1,5 +1,5 @@
 //! Perf attach links.
-use std::os::fd::{AsFd as _, AsRawFd as _, OwnedFd, RawFd};
+use std::os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, OwnedFd, RawFd};
 
 use crate::{
     generated::bpf_attach_type::BPF_PERF_EVENT,
@@ -70,7 +70,10 @@ impl Link for PerfLink {
     }
 }
 
-pub(crate) fn perf_attach(prog_fd: RawFd, fd: OwnedFd) -> Result<PerfLinkInner, ProgramError> {
+pub(crate) fn perf_attach(
+    prog_fd: std::os::fd::BorrowedFd<'_>,
+    fd: OwnedFd,
+) -> Result<PerfLinkInner, ProgramError> {
     if FEATURES.bpf_perf_link() {
         let link_fd = bpf_link_create(prog_fd, fd.as_raw_fd(), BPF_PERF_EVENT, None, 0).map_err(
             |(_, io_error)| SyscallError {
@@ -85,7 +88,7 @@ pub(crate) fn perf_attach(prog_fd: RawFd, fd: OwnedFd) -> Result<PerfLinkInner, 
 }
 
 pub(crate) fn perf_attach_debugfs(
-    prog_fd: RawFd,
+    prog_fd: BorrowedFd<'_>,
     fd: OwnedFd,
     event: ProbeEvent,
 ) -> Result<PerfLinkInner, ProgramError> {
@@ -93,16 +96,16 @@ pub(crate) fn perf_attach_debugfs(
 }
 
 fn perf_attach_either(
-    prog_fd: RawFd,
+    prog_fd: BorrowedFd<'_>,
     fd: OwnedFd,
     event: Option<ProbeEvent>,
 ) -> Result<PerfLinkInner, ProgramError> {
-    perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_SET_BPF, prog_fd).map_err(|(_, io_error)| {
-        SyscallError {
+    perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_SET_BPF, prog_fd.as_raw_fd()).map_err(
+        |(_, io_error)| SyscallError {
             call: "PERF_EVENT_IOC_SET_BPF",
             io_error,
-        }
-    })?;
+        },
+    )?;
     perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_ENABLE, 0).map_err(|(_, io_error)| {
         SyscallError {
             call: "PERF_EVENT_IOC_ENABLE",

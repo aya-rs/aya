@@ -61,7 +61,6 @@ impl SockOps {
     pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<SockOpsLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         let cgroup_fd = cgroup.as_raw_fd();
 
         bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_SOCK_OPS).map_err(|(_, io_error)| {
@@ -71,7 +70,7 @@ impl SockOps {
             }
         })?;
         self.data.links.insert(SockOpsLink::new(ProgAttachLink::new(
-            prog_fd,
+            prog_fd.as_fd(),
             cgroup_fd,
             BPF_CGROUP_SOCK_OPS,
         )))
