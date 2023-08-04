@@ -176,6 +176,14 @@ impl Map {
         }
     }
 
+    /// Set the value size in bytes
+    pub fn set_value_size(&mut self, size: u32) {
+        match self {
+            Map::Legacy(m) => m.def.value_size = size,
+            Map::Btf(m) => m.def.value_size = size,
+        }
+    }
+
     /// Returns the max entry number
     pub fn max_entries(&self) -> u32 {
         match self {
