@@ -1,4 +1,4 @@
-use std::{net::UdpSocket, os::fd::AsFd, time::Duration};
+use std::{net::UdpSocket, time::Duration};
 
 use aya::{
     maps::{Array, CpuMap},
@@ -75,7 +75,7 @@ fn cpumap_chain() {
         xdp.load().unwrap();
         xdp.fd().unwrap()
     };
-    cpus.set(0, 2048, Some(xdp_chain_fd.as_fd()), 0).unwrap();
+    cpus.set(0, 2048, Some(xdp_chain_fd), 0).unwrap();
 
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut("redirect_cpu").unwrap().try_into().unwrap();
