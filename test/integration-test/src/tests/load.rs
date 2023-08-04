@@ -9,6 +9,7 @@ use aya::{
     util::KernelVersion,
     Bpf,
 };
+use aya_obj::programs::XdpAttachType;
 
 const MAX_RETRIES: usize = 100;
 const RETRY_DURATION: time::Duration = time::Duration::from_millis(10);
@@ -276,7 +277,7 @@ fn pin_lifecycle() {
 
     // 2. Load program from bpffs but don't attach it
     {
-        let _ = Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
+        let _ = Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog", XdpAttachType::Interface).unwrap();
     }
 
     // should still be loaded since prog was pinned
@@ -284,7 +285,8 @@ fn pin_lifecycle() {
 
     // 3. Load program from bpffs and attach
     {
-        let mut prog = Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
+        let mut prog =
+            Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog", XdpAttachType::Interface).unwrap();
         let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
