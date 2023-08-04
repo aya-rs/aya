@@ -46,21 +46,21 @@ impl DevMapHash {
     }
 
     #[inline(always)]
-    pub unsafe fn get(&self, index: u32) -> Option<&bpf_devmap_val> {
-        let value = bpf_map_lookup_elem(
-            self.def.get() as *mut _,
-            &index as *const _ as *const c_void,
-        );
-        NonNull::new(value as *mut bpf_devmap_val).map(|p| p.as_ref())
+    pub fn get(&self, key: u32) -> Option<bpf_devmap_val> {
+        unsafe {
+            let value =
+                bpf_map_lookup_elem(self.def.get() as *mut _, &key as *const _ as *const c_void);
+            NonNull::new(value as *mut bpf_devmap_val).map(|p| *p.as_ref())
+        }
     }
 
     #[inline(always)]
-    pub fn redirect(&self, index: u32, flags: u64) -> u32 {
+    pub fn redirect(&self, key: u32, flags: u64) -> u32 {
         unsafe {
             // Return XDP_REDIRECT on success, or the value of the two lower bits of the flags
             // argument on error. Thus I have no idea why it returns a long (i64) instead of
             // something saner, hence the unsigned_abs.
-            bpf_redirect_map(self.def.get() as *mut _, index.into(), flags).unsigned_abs() as u32
+            bpf_redirect_map(self.def.get() as *mut _, key.into(), flags).unsigned_abs() as u32
         }
     }
 }
