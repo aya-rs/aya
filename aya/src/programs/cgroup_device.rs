@@ -1,7 +1,7 @@
 //! Cgroup device programs.
 
-use crate::util::KernelVersion;
-use std::os::fd::AsRawFd;
+use crate::{sys::LinkTarget, util::KernelVersion};
+use std::os::fd::AsFd;
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE},
@@ -60,17 +60,22 @@ impl CgroupDevice {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupDevice::detach]
-    pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<CgroupDeviceLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<CgroupDeviceLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let cgroup_fd = cgroup.as_raw_fd();
+        let cgroup_fd = cgroup.as_fd();
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE, None, 0).map_err(
-                |(_, io_error)| SyscallError {
-                    call: "bpf_link_create",
-                    io_error,
-                },
-            )?;
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(cgroup_fd),
+                BPF_CGROUP_DEVICE,
+                None,
+                0,
+            )
+            .map_err(|(_, io_error)| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
             self.data
                 .links
                 .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::Fd(
@@ -86,7 +91,11 @@ impl CgroupDevice {
             self.data
                 .links
                 .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::ProgAttach(
-                    ProgAttachLink::new(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE),
+                    ProgAttachLink::new(
+                        prog_fd,
+                        cgroup_fd.try_clone_to_owned()?,
+                        BPF_CGROUP_DEVICE,
+                    ),
                 )))
         }
     }

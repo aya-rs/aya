@@ -1,5 +1,5 @@
 //! Extension programs.
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::{AsFd as _, BorrowedFd, RawFd};
 use thiserror::Error;
 
 use object::Endianness;
@@ -10,7 +10,7 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd,
     },
-    sys::{self, bpf_link_create, SyscallError},
+    sys::{self, bpf_link_create, LinkTarget, SyscallError},
     Btf,
 };
 
@@ -69,11 +69,10 @@ impl Extension {
     /// There are no restrictions on what functions may be replaced, so you could replace
     /// the main entry point of your program with an extension.
     pub fn load(&mut self, program: ProgramFd, func_name: &str) -> Result<(), ProgramError> {
-        let target_prog_fd = program.as_raw_fd();
-        let (btf_fd, btf_id) = get_btf_info(target_prog_fd, func_name)?;
+        let (btf_fd, btf_id) = get_btf_info(program.as_fd(), func_name)?;
 
         self.data.attach_btf_obj_fd = Some(btf_fd as u32);
-        self.data.attach_prog_fd = Some(target_prog_fd);
+        self.data.attach_prog_fd = Some(program);
         self.data.attach_btf_id = Some(btf_id);
         load_program(BPF_PROG_TYPE_EXT, &mut self.data)
     }
@@ -90,11 +89,17 @@ impl Extension {
         let target_fd = self.data.attach_prog_fd.ok_or(ProgramError::NotLoaded)?;
         let btf_id = self.data.attach_btf_id.ok_or(ProgramError::NotLoaded)?;
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
-        let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+        let link_fd = bpf_link_create(
+            prog_fd,
+            LinkTarget::Fd(target_fd.as_fd()),
+            BPF_CGROUP_INET_INGRESS,
+            Some(btf_id),
+            0,
+        )
+        .map_err(|(_, io_error)| SyscallError {
+            call: "bpf_link_create",
+            io_error,
+        })?;
         self.data
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))
@@ -116,15 +121,21 @@ impl Extension {
         program: ProgramFd,
         func_name: &str,
     ) -> Result<ExtensionLinkId, ProgramError> {
-        let target_fd = program.as_raw_fd();
+        let target_fd = program.as_fd();
         let (_, btf_id) = get_btf_info(target_fd, func_name)?;
         let prog_fd = self.data.fd_or_err()?;
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
-        let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+        let link_fd = bpf_link_create(
+            prog_fd,
+            LinkTarget::Fd(target_fd),
+            BPF_CGROUP_INET_INGRESS,
+            Some(btf_id),
+            0,
+        )
+        .map_err(|(_, io_error)| SyscallError {
+            call: "bpf_link_create",
+            io_error,
+        })?;
         self.data
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))
@@ -149,7 +160,7 @@ impl Extension {
 
 /// Retrieves the FD of the BTF object for the provided `prog_fd` and the BTF ID of the function
 /// with the name `func_name` within that BTF object.
-fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramError> {
+fn get_btf_info(prog_fd: BorrowedFd<'_>, func_name: &str) -> Result<(RawFd, u32), ProgramError> {
     // retrieve program information
     let info = sys::bpf_prog_get_info_by_fd(prog_fd)?;
 

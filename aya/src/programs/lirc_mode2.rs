@@ -1,16 +1,14 @@
 //! Lirc programs.
-use std::os::fd::{AsRawFd, BorrowedFd, IntoRawFd as _, RawFd};
+use std::os::fd::{AsFd, AsRawFd, BorrowedFd, IntoRawFd as _, OwnedFd, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
     programs::{load_program, query, Link, ProgramData, ProgramError, ProgramInfo},
     sys::{
         bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
-        SyscallError,
+        SysResult, SyscallError,
     },
 };
-
-use libc::{close, dup};
 
 /// A program used to decode IR into key events for a lirc device.
 ///
@@ -63,9 +61,9 @@ impl LircMode2 {
     /// Attaches the program to the given lirc device.
     ///
     /// The returned value can be used to detach, see [LircMode2::detach].
-    pub fn attach<T: AsRawFd>(&mut self, lircdev: T) -> Result<LircLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, lircdev: T) -> Result<LircLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let lircdev_fd = lircdev.as_raw_fd();
+        let lircdev_fd = lircdev.as_fd();
 
         bpf_prog_attach(prog_fd, lircdev_fd, BPF_LIRC_MODE2).map_err(|(_, io_error)| {
             SyscallError {
@@ -74,7 +72,9 @@ impl LircMode2 {
             }
         })?;
 
-        self.data.links.insert(LircLink::new(prog_fd, lircdev_fd))
+        self.data
+            .links
+            .insert(LircLink::new(prog_fd, lircdev_fd.try_clone_to_owned()?))
     }
 
     /// Detaches the program.
@@ -93,8 +93,8 @@ impl LircMode2 {
     }
 
     /// Queries the lirc device for attached programs.
-    pub fn query<T: AsRawFd>(target_fd: T) -> Result<Vec<LircLink>, ProgramError> {
-        let prog_ids = query(target_fd.as_raw_fd(), BPF_LIRC_MODE2, 0, &mut None)?;
+    pub fn query<T: AsFd>(target_fd: T) -> Result<Vec<LircLink>, ProgramError> {
+        let prog_ids = query(target_fd.as_fd(), BPF_LIRC_MODE2, 0, &mut None)?;
 
         let mut prog_fds = Vec::with_capacity(prog_ids.len());
 
@@ -103,17 +103,17 @@ impl LircMode2 {
             prog_fds.push(fd);
         }
 
-        Ok(prog_fds
+        prog_fds
             .into_iter()
             .map(|prog_fd| {
-                LircLink::new(
+                Ok(LircLink::new(
                     // SAFETY: The file descriptor will stay valid because we are leaking it
                     // TODO: Do not leak it?
                     unsafe { BorrowedFd::borrow_raw(prog_fd.into_raw_fd()) },
-                    target_fd.as_raw_fd(),
-                )
+                    target_fd.as_fd().try_clone_to_owned()?,
+                ))
             })
-            .collect())
+            .collect()
     }
 }
 
@@ -125,20 +125,20 @@ pub struct LircLinkId(RawFd, RawFd);
 /// An LircMode2 Link
 pub struct LircLink {
     prog_fd: RawFd,
-    target_fd: RawFd,
+    target_fd: OwnedFd,
 }
 
 impl LircLink {
-    pub(crate) fn new(prog_fd: BorrowedFd<'_>, target_fd: RawFd) -> LircLink {
+    pub(crate) fn new(prog_fd: BorrowedFd<'_>, target_fd: OwnedFd) -> LircLink {
         LircLink {
             prog_fd: prog_fd.as_raw_fd(),
-            target_fd: unsafe { dup(target_fd) },
+            target_fd,
         }
     }
 
     /// Get ProgramInfo from this link
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-        bpf_prog_get_info_by_fd(self.prog_fd)
+        bpf_prog_get_info_by_fd(unsafe { BorrowedFd::borrow_raw(self.prog_fd) })
             .map(ProgramInfo)
             .map_err(Into::into)
     }
@@ -148,12 +148,11 @@ impl Link for LircLink {
     type Id = LircLinkId;
 
     fn id(&self) -> Self::Id {
-        LircLinkId(self.prog_fd, self.target_fd)
+        LircLinkId(self.prog_fd, self.target_fd.as_raw_fd())
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        let _ = bpf_prog_detach(self.prog_fd, self.target_fd, BPF_LIRC_MODE2);
-        unsafe { close(self.target_fd) };
+        let _: SysResult<_> = bpf_prog_detach(self.prog_fd, self.target_fd.as_fd(), BPF_LIRC_MODE2);
         Ok(())
     }
 }
