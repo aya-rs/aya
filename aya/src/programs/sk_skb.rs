@@ -1,6 +1,6 @@
 //! Skskb programs.
 
-use std::{os::fd::AsRawFd, path::Path};
+use std::{os::fd::AsFd as _, path::Path};
 
 use crate::{
     generated::{
@@ -73,16 +73,19 @@ impl SkSkb {
     /// The returned value can be used to detach, see [SkSkb::detach].
     pub fn attach(&mut self, map: SockMapFd) -> Result<SkSkbLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let map_fd = map.as_raw_fd();
+        let map_fd = map.as_fd().try_clone_to_owned()?;
 
         let attach_type = match self.kind {
             SkSkbKind::StreamParser => BPF_SK_SKB_STREAM_PARSER,
             SkSkbKind::StreamVerdict => BPF_SK_SKB_STREAM_VERDICT,
         };
-        bpf_prog_attach(prog_fd, map_fd, attach_type).map_err(|(_, io_error)| SyscallError {
-            call: "bpf_prog_attach",
-            io_error,
+        bpf_prog_attach(prog_fd, map_fd.as_fd(), attach_type).map_err(|(_, io_error)| {
+            SyscallError {
+                call: "bpf_prog_attach",
+                io_error,
+            }
         })?;
+
         self.data.links.insert(SkSkbLink::new(ProgAttachLink::new(
             prog_fd,
             map_fd,

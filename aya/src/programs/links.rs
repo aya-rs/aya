@@ -1,12 +1,11 @@
 //! Program links.
-use libc::{close, dup};
 use thiserror::Error;
 
 use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::CString,
     io,
-    os::fd::{AsRawFd as _, BorrowedFd, OwnedFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, OwnedFd, RawFd},
     path::{Path, PathBuf},
 };
 
@@ -14,7 +13,7 @@ use crate::{
     generated::bpf_attach_type,
     pin::PinError,
     programs::ProgramError,
-    sys::{bpf_get_object, bpf_pin_object, bpf_prog_detach, SyscallError},
+    sys::{bpf_get_object, bpf_pin_object, bpf_prog_detach, SysResult, SyscallError},
 };
 
 /// A Link.
@@ -231,19 +230,19 @@ pub struct ProgAttachLinkId(RawFd, RawFd, bpf_attach_type);
 #[derive(Debug)]
 pub struct ProgAttachLink {
     prog_fd: RawFd,
-    target_fd: RawFd,
+    target_fd: OwnedFd,
     attach_type: bpf_attach_type,
 }
 
 impl ProgAttachLink {
     pub(crate) fn new(
         prog_fd: BorrowedFd<'_>,
-        target_fd: RawFd,
+        target_fd: OwnedFd,
         attach_type: bpf_attach_type,
     ) -> ProgAttachLink {
         ProgAttachLink {
             prog_fd: prog_fd.as_raw_fd(),
-            target_fd: unsafe { dup(target_fd) },
+            target_fd,
             attach_type,
         }
     }
@@ -253,12 +252,12 @@ impl Link for ProgAttachLink {
     type Id = ProgAttachLinkId;
 
     fn id(&self) -> Self::Id {
-        ProgAttachLinkId(self.prog_fd, self.target_fd, self.attach_type)
+        ProgAttachLinkId(self.prog_fd, self.target_fd.as_raw_fd(), self.attach_type)
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        let _ = bpf_prog_detach(self.prog_fd, self.target_fd, self.attach_type);
-        unsafe { close(self.target_fd) };
+        let _: SysResult<_> =
+            bpf_prog_detach(self.prog_fd, self.target_fd.as_fd(), self.attach_type);
         Ok(())
     }
 }

@@ -1,6 +1,6 @@
 //! Skmsg programs.
 
-use std::os::fd::AsRawFd;
+use std::os::fd::AsFd as _;
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
@@ -80,14 +80,15 @@ impl SkMsg {
     /// The returned value can be used to detach, see [SkMsg::detach].
     pub fn attach(&mut self, map: SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let map_fd = map.as_raw_fd();
+        let map_fd = map.as_fd().try_clone_to_owned()?;
 
-        bpf_prog_attach(prog_fd, map_fd, BPF_SK_MSG_VERDICT).map_err(|(_, io_error)| {
+        bpf_prog_attach(prog_fd, map_fd.as_fd(), BPF_SK_MSG_VERDICT).map_err(|(_, io_error)| {
             SyscallError {
                 call: "bpf_prog_attach",
                 io_error,
             }
         })?;
+
         self.data.links.insert(SkMsgLink::new(ProgAttachLink::new(
             prog_fd,
             map_fd,

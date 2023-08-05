@@ -1,6 +1,9 @@
 //! eXpress Data Path (XDP) programs.
 
-use crate::{sys::SyscallError, util::KernelVersion};
+use crate::{
+    sys::{LinkTarget, SyscallError},
+    util::KernelVersion,
+};
 use bitflags;
 use libc::if_nametoindex;
 use std::{
@@ -129,19 +132,24 @@ impl Xdp {
         flags: XdpFlags,
     ) -> Result<XdpLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let if_index = if_index as RawFd;
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 9, 0) {
-            let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, None, flags.bits()).map_err(
-                |(_, io_error)| SyscallError {
-                    call: "bpf_link_create",
-                    io_error,
-                },
-            )?;
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::IfIndex(if_index),
+                BPF_XDP,
+                None,
+                flags.bits(),
+            )
+            .map_err(|(_, io_error)| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
             self.data
                 .links
                 .insert(XdpLink::new(XdpLinkInner::FdLink(FdLink::new(link_fd))))
         } else {
+            let if_index = if_index as i32;
             unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, flags.bits()) }
                 .map_err(|io_error| XdpError::NetlinkError { io_error })?;
 
