@@ -69,7 +69,7 @@ use std::{
     ffi::CString,
     io,
     num::NonZeroU32,
-    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
     path::{Path, PathBuf},
     sync::Arc,
     time::{Duration, SystemTime},
@@ -422,7 +422,7 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
     pub(crate) attach_btf_obj_fd: Option<OwnedFd>,
     pub(crate) attach_btf_id: Option<u32>,
-    pub(crate) attach_prog_fd: Option<RawFd>,
+    pub(crate) attach_prog_fd: Option<ProgramFd>,
     pub(crate) btf_fd: Option<Arc<OwnedFd>>,
     pub(crate) verifier_log_level: VerifierLogLevel,
     pub(crate) path: Option<PathBuf>,
@@ -613,7 +613,7 @@ fn load_program<T: Link>(
         prog_btf_fd: btf_fd.as_ref().map(|f| f.as_fd()),
         attach_btf_obj_fd: attach_btf_obj_fd.as_ref().map(|fd| fd.as_fd()),
         attach_btf_id: *attach_btf_id,
-        attach_prog_fd: *attach_prog_fd,
+        attach_prog_fd: attach_prog_fd.as_ref().map(|fd| fd.as_fd()),
         func_info_rec_size: *func_info_rec_size,
         func_info: func_info.clone(),
         line_info_rec_size: *line_info_rec_size,
@@ -637,8 +637,8 @@ fn load_program<T: Link>(
     }
 }
 
-pub(crate) fn query<T: AsRawFd>(
-    target_fd: T,
+pub(crate) fn query(
+    target_fd: BorrowedFd<'_>,
     attach_type: bpf_attach_type,
     query_flags: u32,
     attach_flags: &mut Option<u32>,
@@ -650,7 +650,7 @@ pub(crate) fn query<T: AsRawFd>(
 
     loop {
         match bpf_prog_query(
-            target_fd.as_raw_fd(),
+            target_fd.as_fd().as_raw_fd(),
             attach_type,
             query_flags,
             attach_flags.as_mut(),
