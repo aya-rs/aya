@@ -2,8 +2,8 @@
 
 pub use aya_obj::programs::CgroupSockoptAttachType;
 
-use crate::util::KernelVersion;
-use std::{hash::Hash, os::fd::AsRawFd, path::Path};
+use crate::{sys::LinkTarget, util::KernelVersion};
+use std::{hash::Hash, os::fd::AsFd, path::Path};
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCKOPT,
@@ -64,24 +64,24 @@ impl CgroupSockopt {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupSockopt::detach].
-    pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<CgroupSockoptLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<CgroupSockoptLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
-        let cgroup_fd = cgroup.as_raw_fd();
+        let cgroup_fd = cgroup.as_fd();
         let attach_type = self.data.expected_attach_type.unwrap();
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, cgroup_fd, attach_type, None, 0).map_err(
-                |(_, io_error)| SyscallError {
+            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), attach_type, None, 0)
+                .map_err(|(_, io_error)| SyscallError {
                     call: "bpf_link_create",
                     io_error,
-                },
-            )?;
+                })?;
             self.data
                 .links
                 .insert(CgroupSockoptLink::new(CgroupSockoptLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
-            bpf_prog_attach(prog_fd, cgroup_fd, attach_type).map_err(|(_, io_error)| {
+            let cgroup_fd = cgroup_fd.try_clone_to_owned()?;
+            bpf_prog_attach(prog_fd, cgroup_fd.as_fd(), attach_type).map_err(|(_, io_error)| {
                 SyscallError {
                     call: "bpf_prog_attach",
                     io_error,
