@@ -68,7 +68,7 @@ use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
-    os::fd::{AsFd as _, AsRawFd, BorrowedFd, OwnedFd, RawFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -211,12 +211,21 @@ pub enum ProgramError {
 }
 
 /// A [`Program`] file descriptor.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct ProgramFd(RawFd);
 
 impl AsRawFd for ProgramFd {
     fn as_raw_fd(&self) -> RawFd {
         self.0
+    }
+}
+
+impl AsFd for ProgramFd {
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        // SAFETY: This isn't necessarily safe, we need to find ways
+        // to enforce that the file descriptor is still
+        // valid. TODO(#612)
+        unsafe { BorrowedFd::borrow_raw(self.0) }
     }
 }
 
@@ -408,7 +417,7 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
     pub(crate) attach_btf_obj_fd: Option<u32>,
     pub(crate) attach_btf_id: Option<u32>,
-    pub(crate) attach_prog_fd: Option<RawFd>,
+    pub(crate) attach_prog_fd: Option<ProgramFd>,
     pub(crate) btf_fd: Option<Arc<OwnedFd>>,
     pub(crate) verifier_log_level: VerifierLogLevel,
     pub(crate) path: Option<PathBuf>,
@@ -488,7 +497,7 @@ impl<T: Link> ProgramData<T> {
             io_error,
         })?;
 
-        let info = bpf_prog_get_info_by_fd(fd.as_raw_fd())?;
+        let info = bpf_prog_get_info_by_fd(fd.as_fd())?;
         let name = ProgramInfo(info).name_as_str().map(|s| s.to_string());
         ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), info, verifier_log_level)
     }
@@ -606,7 +615,7 @@ fn load_program<T: Link>(
         prog_btf_fd: btf_fd.as_ref().map(|f| f.as_fd()),
         attach_btf_obj_fd: *attach_btf_obj_fd,
         attach_btf_id: *attach_btf_id,
-        attach_prog_fd: *attach_prog_fd,
+        attach_prog_fd: attach_prog_fd.as_ref().map(|fd| fd.as_fd()),
         func_info_rec_size: *func_info_rec_size,
         func_info: func_info.clone(),
         line_info_rec_size: *line_info_rec_size,
@@ -952,7 +961,7 @@ impl ProgramInfo {
             io_error,
         })?;
 
-        let info = bpf_prog_get_info_by_fd(fd.as_raw_fd())?;
+        let info = bpf_prog_get_info_by_fd(fd.as_fd())?;
         Ok(ProgramInfo(info))
     }
 }
@@ -988,7 +997,7 @@ pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramErro
         })
         .map(|fd| {
             let fd = fd?;
-            bpf_prog_get_info_by_fd(fd.as_raw_fd())
+            bpf_prog_get_info_by_fd(fd.as_fd())
         })
         .map(|result| result.map(ProgramInfo).map_err(Into::into))
 }
