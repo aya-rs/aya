@@ -10,6 +10,7 @@ use std::{
 use crate::util::KernelVersion;
 use libc::{c_char, c_long, ENOENT, ENOSPC};
 use obj::{
+    generated::bpf_attr__bindgen_ty_14__bindgen_ty_2,
     maps::{bpf_map_def, LegacyMap},
     BpfSectionKind, VerifierLog,
 };
@@ -119,7 +120,7 @@ pub(crate) struct BpfLoadProgramAttrs<'a> {
     pub(crate) prog_btf_fd: Option<BorrowedFd<'a>>,
     pub(crate) attach_btf_obj_fd: Option<u32>,
     pub(crate) attach_btf_id: Option<u32>,
-    pub(crate) attach_prog_fd: Option<RawFd>,
+    pub(crate) attach_prog_fd: Option<BorrowedFd<'a>>,
     pub(crate) func_info_rec_size: usize,
     pub(crate) func_info: FuncSecInfo,
     pub(crate) line_info_rec_size: usize,
@@ -183,7 +184,7 @@ pub(crate) fn bpf_load_program(
         u.__bindgen_anon_1.attach_btf_obj_fd = v;
     }
     if let Some(v) = aya_attr.attach_prog_fd {
-        u.__bindgen_anon_1.attach_prog_fd = v as u32;
+        u.__bindgen_anon_1.attach_prog_fd = v.as_raw_fd() as u32;
     }
 
     if let Some(v) = aya_attr.attach_btf_id {
@@ -365,10 +366,15 @@ pub(crate) fn bpf_map_freeze(fd: RawFd) -> SysResult<c_long> {
     sys_bpf(bpf_cmd::BPF_MAP_FREEZE, &mut attr)
 }
 
+pub(crate) enum LinkTarget<'f> {
+    Fd(BorrowedFd<'f>),
+    IfIndex(u32),
+}
+
 // since kernel 5.7
 pub(crate) fn bpf_link_create(
     prog_fd: BorrowedFd<'_>,
-    target_fd: RawFd,
+    target: LinkTarget<'_>,
     attach_type: bpf_attach_type,
     btf_id: Option<u32>,
     flags: u32,
@@ -376,7 +382,14 @@ pub(crate) fn bpf_link_create(
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.link_create.__bindgen_anon_1.prog_fd = prog_fd.as_raw_fd() as u32;
-    attr.link_create.__bindgen_anon_2.target_fd = target_fd as u32;
+    attr.link_create.__bindgen_anon_2 = match target {
+        LinkTarget::Fd(fd) => bpf_attr__bindgen_ty_14__bindgen_ty_2 {
+            target_fd: fd.as_raw_fd() as u32,
+        },
+        LinkTarget::IfIndex(ifindex) => bpf_attr__bindgen_ty_14__bindgen_ty_2 {
+            target_ifindex: ifindex,
+        },
+    };
     attr.link_create.attach_type = attach_type as u32;
     attr.link_create.flags = flags;
     if let Some(btf_id) = btf_id {
@@ -410,13 +423,13 @@ pub(crate) fn bpf_link_update(
 
 pub(crate) fn bpf_prog_attach(
     prog_fd: BorrowedFd<'_>,
-    target_fd: RawFd,
+    target_fd: BorrowedFd<'_>,
     attach_type: bpf_attach_type,
 ) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_5.attach_bpf_fd = prog_fd.as_raw_fd() as u32;
-    attr.__bindgen_anon_5.target_fd = target_fd as u32;
+    attr.__bindgen_anon_5.target_fd = target_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.attach_type = attach_type as u32;
 
     sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &mut attr)
@@ -424,13 +437,13 @@ pub(crate) fn bpf_prog_attach(
 
 pub(crate) fn bpf_prog_detach(
     prog_fd: RawFd,
-    map_fd: RawFd,
+    target_fd: BorrowedFd<'_>,
     attach_type: bpf_attach_type,
 ) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_5.attach_bpf_fd = prog_fd as u32;
-    attr.__bindgen_anon_5.target_fd = map_fd as u32;
+    attr.__bindgen_anon_5.target_fd = target_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.attach_type = attach_type as u32;
 
     sys_bpf(bpf_cmd::BPF_PROG_DETACH, &mut attr)
@@ -501,8 +514,7 @@ fn bpf_obj_get_info_by_fd<T>(fd: BorrowedFd<'_>) -> Result<T, SyscallError> {
     }
 }
 
-pub(crate) fn bpf_prog_get_info_by_fd(fd: RawFd) -> Result<bpf_prog_info, SyscallError> {
-    let fd = unsafe { BorrowedFd::borrow_raw(fd) };
+pub(crate) fn bpf_prog_get_info_by_fd(fd: BorrowedFd<'_>) -> Result<bpf_prog_info, SyscallError> {
     bpf_obj_get_info_by_fd::<bpf_prog_info>(fd)
 }
 
@@ -675,17 +687,23 @@ pub(crate) fn is_perf_link_supported() -> bool {
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
 
-    let Ok(fd) = bpf_prog_load(&mut attr) else { return false };
+    let Ok(fd) = bpf_prog_load(&mut attr) else {
+        return false;
+    };
 
-    if let Err((_, e)) =
-        // Uses an invalid target FD so we get EBADF if supported.
-        bpf_link_create(fd.as_fd(), -1, bpf_attach_type::BPF_PERF_EVENT, None, 0)
-    {
-        // Returns EINVAL if unsupported. EBADF if supported.
-        return e.raw_os_error() == Some(libc::EBADF);
-    }
+    let Err((_, e)) = bpf_link_create(
+        fd.as_fd(),
+        // Uses an invalid target so we get EBADF if supported.
+        LinkTarget::IfIndex(u32::MAX),
+        bpf_attach_type::BPF_PERF_EVENT,
+        None,
+        0,
+    ) else {
+        return false;
+    };
 
-    false
+    // Returns EINVAL if unsupported. EBADF if supported.
+    e.raw_os_error() == Some(libc::EBADF)
 }
 
 pub(crate) fn is_bpf_global_data_supported() -> bool {
@@ -721,7 +739,9 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
         btf_fd: None,
     };
 
-    let Ok(map_fd) = map_data.create("aya_global") else { return false };
+    let Ok(map_fd) = map_data.create("aya_global") else {
+        return false;
+    };
 
     insns[0].imm = map_fd;
 
