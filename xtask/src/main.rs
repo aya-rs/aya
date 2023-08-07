@@ -19,7 +19,6 @@ pub struct XtaskOptions {
 enum Subcommand {
     Codegen(codegen::Options),
     Docs,
-    BuildIntegrationTest(run::BuildOptions),
     IntegrationTest(run::Options),
     PublicApi(public_api::Options),
 }
@@ -45,17 +44,6 @@ fn main() -> Result<()> {
     match command {
         Subcommand::Codegen(opts) => codegen::codegen(opts, libbpf_dir),
         Subcommand::Docs => docs::docs(metadata),
-        Subcommand::BuildIntegrationTest(opts) => {
-            let binaries = run::build(opts)?;
-            let mut stdout = std::io::stdout();
-            for (_name, binary) in binaries {
-                use std::{io::Write as _, os::unix::ffi::OsStrExt as _};
-
-                stdout.write_all(binary.as_os_str().as_bytes())?;
-                stdout.write_all("\n".as_bytes())?;
-            }
-            Ok(())
-        }
         Subcommand::IntegrationTest(opts) => run::run(opts),
         Subcommand::PublicApi(opts) => public_api::public_api(opts, metadata),
     }

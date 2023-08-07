@@ -1,0 +1,10 @@
+[package]
+name = "init"
+version = "0.1.0"
+authors = ["Tamir Duberstein <tamird@gmail.com>"]
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = { workspace = true, features = ["std"] }
+nix = { workspace = true, features = ["fs", "mount", "reboot"] }
