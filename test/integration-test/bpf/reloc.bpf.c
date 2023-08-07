@@ -1,5 +1,5 @@
 // clang-format off
-#include <linux/bpf.h>
+#include <vmlinux.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_core_read.h>
 // clang-format on
@@ -57,38 +57,40 @@ __noinline int struct_flavors_global() {
 
 SEC("uprobe") int struct_flavors(void *ctx) { return struct_flavors_global(); }
 
-enum relocated_enum_unsigned_32 { U32 = 0xAAAAAAAA };
+enum relocated_enum_unsigned_32 { MyU32 = 0xAAAAAAAA };
 
 __noinline int enum_unsigned_32_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_unsigned_32, U32));
+  return set_output(
+      bpf_core_enum_value(enum relocated_enum_unsigned_32, MyU32));
 }
 
 SEC("uprobe") int enum_unsigned_32(void *ctx) {
   return enum_unsigned_32_global();
 }
 
-enum relocated_enum_signed_32 { S32 = -0x7AAAAAAA };
+enum relocated_enum_signed_32 { MyS32 = -0x7AAAAAAA };
 
 __noinline int enum_signed_32_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_signed_32, S32));
+  return set_output(bpf_core_enum_value(enum relocated_enum_signed_32, MyS32));
 }
 
 SEC("uprobe") int enum_signed_32(void *ctx) { return enum_signed_32_global(); }
 
-enum relocated_enum_unsigned_64 { U64 = 0xAAAAAAAABBBBBBBB };
+enum relocated_enum_unsigned_64 { MyU64 = 0xAAAAAAAABBBBBBBB };
 
 __noinline int enum_unsigned_64_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_unsigned_64, U64));
+  return set_output(
+      bpf_core_enum_value(enum relocated_enum_unsigned_64, MyU64));
 }
 
 SEC("uprobe") int enum_unsigned_64(void *ctx) {
   return enum_unsigned_64_global();
 }
 
-enum relocated_enum_signed_64 { u64 = -0xAAAAAAABBBBBBBB };
+enum relocated_enum_signed_64 { MyS64 = -0xAAAAAAABBBBBBBB };
 
 __noinline int enum_signed_64_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_signed_64, u64));
+  return set_output(bpf_core_enum_value(enum relocated_enum_signed_64, MyS64));
 }
 
 SEC("uprobe") int enum_signed_64(void *ctx) { return enum_signed_64_global(); }

@@ -6,10 +6,10 @@ edition = "2021"
 publish = false
 
 [dependencies]
-anyhow = { workspace = true, default-features = true }
+anyhow = { workspace = true, features = ["std"] }
 aya-tool = { workspace = true }
 cargo_metadata = { workspace = true }
-clap = { workspace = true, default-features = true, features = ["derive"] }
+clap = { workspace = true, features = ["derive"] }
 dialoguer = { workspace = true }
 diff = { workspace = true }
 indoc = { workspace = true }
