@@ -139,8 +139,14 @@ jobs:
             --target ${{ matrix.target }} \
             -Z build-std=core
 
-  build-integration-test:
-    runs-on: ubuntu-22.04
+  run-integration-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner:
+          - macos-12
+          - ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -150,13 +156,12 @@ jobs:
         with:
           toolchain: nightly
           components: rust-src
+          targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: bpf-linker
-        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git
-
-      - name: Install dependencies
+      - name: Install prerequisites
+        if: runner.os == 'Linux'
         # ubuntu-22.04 comes with clang 14[0] which doesn't include support for signed and 64bit
         # enum values which was added in clang 15[1].
         #
@@ -171,63 +176,78 @@ jobs:
           set -euxo pipefail
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
           echo deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy main | sudo tee /etc/apt/sources.list.d/llvm.list
-          sudo apt-get update
-          sudo apt-get -y install clang gcc-multilib llvm
+          sudo apt update
+          sudo apt -y install clang gcc-multilib llvm locate qemu-system-{arm,x86}
 
-      - name: Build
+      - name: bpf-linker
+        if: runner.os == 'Linux'
+        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git
+
+      - name: Install prerequisites
+        if: runner.os == 'macOS'
+        # The clang shipped on macOS doesn't support BPF, so we need LLVM from brew.
+        #
+        # We also need LLVM for bpf-linker, see comment below.
         run: |
           set -euxo pipefail
-          mkdir -p integration-test-binaries
-          # See https://doc.rust-lang.org/cargo/reference/profiles.html for the
-          # names of the builtin profiles. Note that dev builds "debug" targets.
-          cargo xtask build-integration-test --cargo-arg=--profile=dev | xargs -I % cp % integration-test-binaries/dev
-          cargo xtask build-integration-test --cargo-arg=--profile=release | xargs -I % cp % integration-test-binaries/release
+          brew install qemu dpkg pkg-config llvm
+          echo /usr/local/opt/llvm/bin >> $GITHUB_PATH
 
-      - uses: actions/upload-artifact@v3
-        with:
-          name: integration-test-binaries
-          path: integration-test-binaries
+      - name: bpf-linker
+        if: runner.os == 'macOS'
+        # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature).
+        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git --no-default-features
 
-  run-integration-test:
-    runs-on: macos-latest
-    needs: ["build-integration-test"]
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          sparse-checkout: |
-            test/run.sh
-            test/cloud-localds
-
-      - name: Install Pre-requisites
+      - name: Download debian kernels
+        if: runner.arch == 'ARM64'
         run: |
-          brew install qemu gnu-getopt coreutils cdrtools
+          set -euxo pipefail
+          mkdir -p test/.tmp/debian-kernels/arm64
+          # NB: a 4.19 kernel image for arm64 was not available.
+          # TODO: enable tests on kernels before 6.0.
+          # linux-image-5.10.0-23-cloud-arm64-unsigned_5.10.179-3_arm64.deb \
+          printf '%s\0' \
+            linux-image-6.1.0-10-cloud-arm64-unsigned_6.1.38-2_arm64.deb \
+            linux-image-6.4.0-1-cloud-arm64-unsigned_6.4.4-2_arm64.deb \
+          | xargs -0 -t -P0 -I {} wget -nd -q -P test/.tmp/debian-kernels/arm64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
 
-      - name: Cache tmp files
-        uses: actions/cache@v3
-        with:
-          path: |
-            .tmp/*.qcow2
-            .tmp/test_rsa
-            .tmp/test_rsa.pub
-          key: tmp-files-${{ hashFiles('test/run.sh') }}
+      - name: Download debian kernels
+        if: runner.arch == 'X64'
+        run: |
+          set -euxo pipefail
+          mkdir -p test/.tmp/debian-kernels/amd64
+          # TODO: enable tests on kernels before 6.0.
+          # linux-image-4.19.0-21-cloud-amd64-unsigned_4.19.249-2_amd64.deb \
+          # linux-image-5.10.0-23-cloud-amd64-unsigned_5.10.179-3_amd64.deb \
+          printf '%s\0' \
+            linux-image-6.1.0-10-cloud-amd64-unsigned_6.1.38-2_amd64.deb \
+            linux-image-6.4.0-1-cloud-amd64-unsigned_6.4.4-2_amd64.deb \
+          | xargs -0 -t -P0 -I {} wget -nd -q -P test/.tmp/debian-kernels/amd64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: integration-test-binaries
-          path: integration-test-binaries
+      - name: Alias gtar as tar
+        if: runner.os == 'macOS'
+        # macOS tar doesn't support --wildcards which we use below.
+        run: mkdir tar-is-gtar && ln -s "$(which gtar)" tar-is-gtar/tar && echo "$PWD"/tar-is-gtar >> $GITHUB_PATH
+
+      - name: Extract debian kernels
+        run: |
+          set -euxo pipefail
+          find test/.tmp -name '*.deb' -print0 | xargs -t -0 -I {} \
+            sh -c "dpkg --fsys-tarfile {} | tar -C test/.tmp --wildcards --extract '*vmlinuz*' --file -"
 
       - name: Run integration tests
-        run: |
-          set -euxo pipefail
-          find integration-test-binaries -type f -exec chmod +x {} \;
-          test/run.sh integration-test-binaries
+        run: find test/.tmp -name 'vmlinuz-*' | xargs -t cargo xtask integration-test vm
 
   # Provides a single status check for the entire build workflow.
   # This is used for merge automation, like Mergify, since GH actions
   # has no concept of "when all status checks pass".
   # https://docs.mergify.com/conditions/#validating-all-status-checks
   build-workflow-complete:
-    needs: ["lint", "build-test-aya", "build-test-aya-bpf", "run-integration-test"]
+    needs:
+      - lint
+      - build-test-aya
+      - build-test-aya-bpf
+      - run-integration-test
     runs-on: ubuntu-latest
     steps:
       - name: Build Complete
