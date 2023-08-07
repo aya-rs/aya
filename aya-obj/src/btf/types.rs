@@ -76,7 +76,7 @@ impl Const {
 
     pub(crate) fn new(btf_type: u32) -> Self {
         let info = (BtfKind::Const as u32) << 24;
-        Const {
+        Self {
             name_offset: 0,
             info,
             btf_type,
@@ -150,7 +150,7 @@ impl Ptr {
 
     pub fn new(name_offset: u32, btf_type: u32) -> Self {
         let info = (BtfKind::Ptr as u32) << 24;
-        Ptr {
+        Self {
             name_offset,
             info,
             btf_type,
@@ -181,7 +181,7 @@ impl Typedef {
 
     pub(crate) fn new(name_offset: u32, btf_type: u32) -> Self {
         let info = (BtfKind::Typedef as u32) << 24;
-        Typedef {
+        Self {
             name_offset,
             info,
             btf_type,
@@ -211,7 +211,7 @@ impl Float {
 
     pub fn new(name_offset: u32, size: u32) -> Self {
         let info = (BtfKind::Float as u32) << 24;
-        Float {
+        Self {
             name_offset,
             info,
             size,
@@ -262,7 +262,7 @@ impl Func {
     pub fn new(name_offset: u32, proto: u32, linkage: FuncLinkage) -> Self {
         let mut info = (BtfKind::Func as u32) << 24;
         info |= (linkage as u32) & 0xFFFF;
-        Func {
+        Self {
             name_offset,
             info,
             btf_type: proto,
@@ -301,7 +301,7 @@ impl TypeTag {
 
     pub fn new(name_offset: u32, btf_type: u32) -> Self {
         let info = (BtfKind::TypeTag as u32) << 24;
-        TypeTag {
+        Self {
             name_offset,
             info,
             btf_type,
@@ -370,7 +370,7 @@ impl Int {
         data |= (encoding as u32 & 0x0f) << 24;
         data |= (offset & 0xff) << 16;
         data |= (size * 8) & 0xff;
-        Int {
+        Self {
             name_offset,
             info,
             size,
@@ -442,7 +442,7 @@ impl Enum {
     pub fn new(name_offset: u32, variants: Vec<BtfEnum>) -> Self {
         let mut info = (BtfKind::Enum as u32) << 24;
         info |= (variants.len() as u32) & 0xFFFF;
-        Enum {
+        Self {
             name_offset,
             info,
             size: 4,
@@ -577,7 +577,7 @@ impl Struct {
     pub(crate) fn new(name_offset: u32, members: Vec<BtfMember>, size: u32) -> Self {
         let mut info = (BtfKind::Struct as u32) << 24;
         info |= (members.len() as u32) & 0xFFFF;
-        Struct {
+        Self {
             name_offset,
             info,
             size,
@@ -717,7 +717,7 @@ impl Array {
     #[cfg(test)]
     pub(crate) fn new(name_offset: u32, element_type: u32, index_type: u32, len: u32) -> Self {
         let info = (BtfKind::Array as u32) << 24;
-        Array {
+        Self {
             name_offset,
             info,
             _unused: 0,
@@ -782,7 +782,7 @@ impl FuncProto {
     pub fn new(params: Vec<BtfParam>, return_type: u32) -> Self {
         let mut info = (BtfKind::FuncProto as u32) << 24;
         info |= (params.len() as u32) & 0xFFFF;
-        FuncProto {
+        Self {
             name_offset: 0,
             info,
             return_type,
@@ -847,7 +847,7 @@ impl Var {
 
     pub fn new(name_offset: u32, btf_type: u32, linkage: VarLinkage) -> Self {
         let info = (BtfKind::Var as u32) << 24;
-        Var {
+        Self {
             name_offset,
             info,
             btf_type,
@@ -916,7 +916,7 @@ impl DataSec {
     pub fn new(name_offset: u32, entries: Vec<DataSecEntry>, size: u32) -> Self {
         let mut info = (BtfKind::DataSec as u32) << 24;
         info |= (entries.len() as u32) & 0xFFFF;
-        DataSec {
+        Self {
             name_offset,
             info,
             size,
@@ -961,7 +961,7 @@ impl DeclTag {
 
     pub fn new(name_offset: u32, btf_type: u32, component_index: i32) -> Self {
         let info = (BtfKind::DeclTag as u32) << 24;
-        DeclTag {
+        Self {
             name_offset,
             info,
             btf_type,
