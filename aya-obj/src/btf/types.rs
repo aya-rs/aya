@@ -389,8 +389,21 @@ impl Int {
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct BtfEnum {
-    pub name_offset: u32,
-    pub value: u32,
+    pub(crate) name_offset: u32,
+    pub(crate) value: u32,
+}
+
+impl BtfEnum {
+    pub fn new(name_offset: u32, value: u32) -> Self {
+        BtfEnum { name_offset, value }
+    }
+
+    pub(crate) fn to_bytes(&self) -> Vec<u8> {
+        let mut buf = vec![];
+        buf.extend(bytes_of::<u32>(&self.name_offset));
+        buf.extend(bytes_of::<u32>(&self.value));
+        buf
+    }
 }
 
 #[repr(C)]
@@ -409,8 +422,7 @@ impl Enum {
         buf.extend(bytes_of::<u32>(&self.info));
         buf.extend(bytes_of::<u32>(&self.size));
         for v in &self.variants {
-            buf.extend(bytes_of::<u32>(&v.name_offset));
-            buf.extend(bytes_of::<u32>(&v.value));
+            buf.extend(v.to_bytes());
         }
         buf
     }
@@ -423,9 +435,12 @@ impl Enum {
         mem::size_of::<Fwd>() + mem::size_of::<BtfEnum>() * self.variants.len()
     }
 
-    pub fn new(name_offset: u32, variants: Vec<BtfEnum>) -> Self {
+    pub fn new(name_offset: u32, signed: bool, variants: Vec<BtfEnum>) -> Self {
         let mut info = (BtfKind::Enum as u32) << 24;
         info |= (variants.len() as u32) & 0xFFFF;
+        if signed {
+            info |= 1 << 31;
+        }
         Enum {
             name_offset,
             info,
@@ -437,6 +452,14 @@ impl Enum {
     pub(crate) fn is_signed(&self) -> bool {
         self.info >> 31 == 1
     }
+
+    pub(crate) fn set_signed(&mut self, signed: bool) {
+        if signed {
+            self.info |= 1 << 31;
+        } else {
+            self.info &= !(1 << 31);
+        }
+    }
 }
 
 #[repr(C)]
@@ -445,6 +468,24 @@ pub struct BtfEnum64 {
     pub(crate) name_offset: u32,
     pub(crate) value_low: u32,
     pub(crate) value_high: u32,
+}
+
+impl BtfEnum64 {
+    pub fn new(name_offset: u32, value: u64) -> Self {
+        BtfEnum64 {
+            name_offset,
+            value_low: value as u32,
+            value_high: (value >> 32) as u32,
+        }
+    }
+
+    pub(crate) fn to_bytes(&self) -> Vec<u8> {
+        let mut buf = vec![];
+        buf.extend(bytes_of::<u32>(&self.name_offset));
+        buf.extend(bytes_of::<u32>(&self.value_low));
+        buf.extend(bytes_of::<u32>(&self.value_high));
+        buf
+    }
 }
 
 #[repr(C)]
@@ -463,9 +504,7 @@ impl Enum64 {
         buf.extend(bytes_of::<u32>(&self.info));
         buf.extend(bytes_of::<u32>(&self.size));
         for v in &self.variants {
-            buf.extend(bytes_of::<u32>(&v.name_offset));
-            buf.extend(bytes_of::<u32>(&v.value_high));
-            buf.extend(bytes_of::<u32>(&v.value_low));
+            buf.extend(v.to_bytes())
         }
         buf
     }
@@ -481,6 +520,20 @@ impl Enum64 {
     pub(crate) fn is_signed(&self) -> bool {
         self.info >> 31 == 1
     }
+
+    pub fn new(name_offset: u32, signed: bool, variants: Vec<BtfEnum64>) -> Self {
+        let mut info = (BtfKind::Enum64 as u32) << 24;
+        if signed {
+            info |= 1 << 31
+        };
+        info |= (variants.len() as u32) & 0xFFFF;
+        Enum64 {
+            name_offset,
+            info,
+            size: 8, // docs say size is 1/2/4/8 but we'll assume 8
+            variants,
+        }
+    }
 }
 
 #[repr(C)]
@@ -489,6 +542,16 @@ pub(crate) struct BtfMember {
     pub(crate) name_offset: u32,
     pub(crate) btf_type: u32,
     pub(crate) offset: u32,
+}
+
+impl BtfMember {
+    pub(crate) fn to_bytes(&self) -> Vec<u8> {
+        let mut buf = vec![];
+        buf.extend(bytes_of::<u32>(&self.name_offset));
+        buf.extend(bytes_of::<u32>(&self.btf_type));
+        buf.extend(bytes_of::<u32>(&self.offset));
+        buf
+    }
 }
 
 #[repr(C)]
@@ -507,9 +570,7 @@ impl Struct {
         buf.extend(bytes_of::<u32>(&self.info));
         buf.extend(bytes_of::<u32>(&self.size));
         for v in &self.members {
-            buf.extend(bytes_of::<u32>(&v.name_offset));
-            buf.extend(bytes_of::<u32>(&v.btf_type));
-            buf.extend(bytes_of::<u32>(&v.offset));
+            buf.extend(v.to_bytes());
         }
         buf
     }
@@ -562,15 +623,23 @@ pub struct Union {
 }
 
 impl Union {
+    pub(crate) fn new(name_offset: u32, size: u32, members: Vec<BtfMember>) -> Self {
+        let info = (BtfKind::Union as u32) << 24;
+        Union {
+            name_offset,
+            info,
+            size,
+            members,
+        }
+    }
+
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
         let mut buf = vec![];
         buf.extend(bytes_of::<u32>(&self.name_offset));
         buf.extend(bytes_of::<u32>(&self.info));
         buf.extend(bytes_of::<u32>(&self.size));
         for v in &self.members {
-            buf.extend(bytes_of::<u32>(&v.name_offset));
-            buf.extend(bytes_of::<u32>(&v.btf_type));
-            buf.extend(bytes_of::<u32>(&v.offset));
+            buf.extend(v.to_bytes());
         }
         buf
     }
@@ -1671,5 +1740,22 @@ mod tests {
         // int types are compatible if offsets match. size and encoding aren't compared
         assert!(types_are_compatible(&btf, u32t, &btf, u64t).unwrap());
         assert!(types_are_compatible(&btf, array_type, &btf, array_type).unwrap());
+    }
+
+    #[test]
+    pub fn test_read_btf_type_enum64() {
+        let endianness = Endianness::default();
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x00, // name offset
+            0x01, 0x00, 0x00, 0x13, // info: vlen, type_kind
+            0x08, 0x00, 0x00, 0x00, // size
+            0xd7, 0x06, 0x00, 0x00, // enum variant name offset
+            0xbb, 0xbb, 0xbb, 0xbb, // enum variant low
+            0xaa, 0xaa, 0xaa, 0xaa, // enum variant high
+        ];
+
+        assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Enum64(got) => {
+            assert_eq!(got.to_bytes(), data);
+        });
     }
 }
