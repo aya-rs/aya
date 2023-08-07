@@ -17,7 +17,7 @@ use crate::{
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
         Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
-        IntEncoding, LineInfo, Struct, Typedef, VarLinkage,
+        IntEncoding, LineInfo, Struct, Typedef, Union, VarLinkage,
     },
     generated::{btf_ext_header, btf_header},
     util::{bytes_of, HashMap},
@@ -171,6 +171,7 @@ pub struct BtfFeatures {
     btf_float: bool,
     btf_decl_tag: bool,
     btf_type_tag: bool,
+    btf_enum64: bool,
 }
 
 impl BtfFeatures {
@@ -182,6 +183,7 @@ impl BtfFeatures {
         btf_float: bool,
         btf_decl_tag: bool,
         btf_type_tag: bool,
+        btf_enum64: bool,
     ) -> Self {
         BtfFeatures {
             btf_func,
@@ -190,6 +192,7 @@ impl BtfFeatures {
             btf_float,
             btf_decl_tag,
             btf_type_tag,
+            btf_enum64,
         }
     }
 
@@ -226,6 +229,11 @@ impl BtfFeatures {
     /// Returns true if the BTF_KIND_FUNC_PROTO is supported.
     pub fn btf_kind_func_proto(&self) -> bool {
         self.btf_func && self.btf_decl_tag
+    }
+
+    /// Returns true if the BTF_KIND_ENUM64 is supported.
+    pub fn btf_enum64(&self) -> bool {
+        self.btf_enum64
     }
 }
 
@@ -473,6 +481,22 @@ impl Btf {
         symbol_offsets: &HashMap<String, u64>,
         features: &BtfFeatures,
     ) -> Result<(), BtfError> {
+        // ENUM64 placeholder type needs to be added before
+        // we take ownership of self.types to ensure that
+        // the offsets in the BtfHeader are correct
+        let mut enum64_placeholder_id = None;
+        if self
+            .types()
+            .any(|t| t.kind() == BtfKind::Enum64 && !features.btf_enum64)
+        {
+            let placeholder = BtfType::Int(Int::new(
+                self.add_string("enum64_placeholder"),
+                1,
+                IntEncoding::None,
+                0,
+            ));
+            enum64_placeholder_id = Some(self.add_type(placeholder));
+        }
         let mut types = mem::take(&mut self.types);
         for i in 0..types.types.len() {
             let t = &types.types[i];
@@ -612,7 +636,7 @@ impl Btf {
                             value: p.btf_type,
                         })
                         .collect();
-                    let enum_type = BtfType::Enum(Enum::new(ty.name_offset, members));
+                    let enum_type = BtfType::Enum(Enum::new(ty.name_offset, false, members));
                     types.types[i] = enum_type;
                 }
                 // Sanitize FUNC
@@ -662,11 +686,33 @@ impl Btf {
                     let int_type = BtfType::Int(Int::new(ty.name_offset, 1, IntEncoding::None, 0));
                     types.types[i] = int_type;
                 }
-                // Sanitize TYPE_TAG
                 BtfType::TypeTag(ty) if !features.btf_type_tag => {
                     debug!("{}: not supported. replacing with CONST", kind);
                     let const_type = BtfType::Const(Const::new(ty.btf_type));
                     types.types[i] = const_type;
+                }
+                BtfType::Enum(ty) if !features.btf_enum64 && ty.is_signed() => {
+                    debug!("{}: signed ENUMs not supported. Marking as unsigned", kind);
+                    let mut ty = ty.clone();
+                    ty.set_signed(false);
+                    types.types[i] = BtfType::Enum(ty);
+                }
+                BtfType::Enum64(ty) if !features.btf_enum64 => {
+                    debug!("{}: not supported. replacing with UNION", kind);
+                    let placeholder_id =
+                        enum64_placeholder_id.expect("enum64_placeholder_id must be set");
+                    let members: Vec<BtfMember> = ty
+                        .variants
+                        .iter()
+                        .map(|v| BtfMember {
+                            name_offset: v.name_offset,
+                            btf_type: placeholder_id,
+                            offset: 0,
+                        })
+                        .collect();
+                    let union_type =
+                        BtfType::Union(Union::new(ty.name_offset, members.len() as u32, members));
+                    types.types[i] = union_type;
                 }
                 // The type does not need fixing up or sanitization
                 _ => {}
@@ -1056,7 +1102,8 @@ pub(crate) struct SecInfo<'a> {
 mod tests {
     use super::*;
     use crate::btf::{
-        BtfParam, DataSec, DataSecEntry, DeclTag, Float, Func, FuncProto, Ptr, TypeTag, Var,
+        BtfEnum64, BtfParam, DataSec, DataSecEntry, DeclTag, Enum64, Float, Func, FuncProto, Ptr,
+        TypeTag, Var,
     };
     use assert_matches::assert_matches;
 
@@ -1674,5 +1721,73 @@ mod tests {
 
         let u32_ty = btf.type_by_id(u32_base).unwrap();
         assert_eq!(u32_ty.kind(), BtfKind::Int);
+    }
+
+    #[test]
+    fn test_sanitize_signed_enum() {
+        let mut btf = Btf::new();
+        let name_offset = btf.add_string("signed_enum");
+        let enum64_type = Enum::new(
+            name_offset,
+            true,
+            vec![
+                BtfEnum::new(btf.add_string("A"), -1i32 as u32),
+                BtfEnum::new(btf.add_string("B"), -2i32 as u32),
+                BtfEnum::new(btf.add_string("C"), -3i32 as u32),
+            ],
+        );
+        let enum_type_id = btf.add_type(BtfType::Enum(enum64_type));
+
+        let features = BtfFeatures {
+            btf_enum64: false,
+            ..Default::default()
+        };
+
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+            .unwrap();
+
+        assert_matches!(btf.type_by_id(enum_type_id).unwrap(), BtfType::Enum(fixed) => {
+           assert!(!fixed.is_signed());
+           assert_eq!(fixed.variants.len(), 3);
+           assert_eq!(fixed.variants[0].value, 0xFFFF_FFFF);
+           assert_eq!(fixed.variants[1].value, 0xFFFF_FFFE);
+           assert_eq!(fixed.variants[2].value, 0xFFFF_FFFD);
+        });
+
+        // Ensure we can convert to bytes and back again
+        let raw = btf.to_bytes();
+        Btf::parse(&raw, Endianness::default()).unwrap();
+    }
+
+    #[test]
+    fn test_sanitize_enum64() {
+        let mut btf = Btf::new();
+        let name_offset = btf.add_string("enum64");
+        let enum64_type = Enum64::new(
+            name_offset,
+            false,
+            vec![
+                BtfEnum64::new(btf.add_string("A"), 1),
+                BtfEnum64::new(btf.add_string("B"), 2),
+                BtfEnum64::new(btf.add_string("C"), 3),
+            ],
+        );
+        let enum_type_id = btf.add_type(BtfType::Enum64(enum64_type));
+
+        let features = BtfFeatures {
+            btf_enum64: false,
+            ..Default::default()
+        };
+
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+            .unwrap();
+
+        assert_matches!(btf.type_by_id(enum_type_id).unwrap(), BtfType::Union(fixed) => {
+            assert_eq!(fixed.members.len(), 3);
+        });
+
+        // Ensure we can convert to bytes and back again
+        let raw = btf.to_bytes();
+        Btf::parse(&raw, Endianness::default()).unwrap();
     }
 }
