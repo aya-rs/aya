@@ -342,12 +342,19 @@ pub struct Int {
 
 impl Int {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = vec![];
-        buf.extend(bytes_of::<u32>(&self.name_offset));
-        buf.extend(bytes_of::<u32>(&self.info));
-        buf.extend(bytes_of::<u32>(&self.size));
-        buf.extend(bytes_of::<u32>(&self.data));
-        buf
+        let Self {
+            name_offset,
+            info,
+            size,
+            data,
+        } = self;
+        [
+            bytes_of::<u32>(name_offset),
+            bytes_of::<u32>(info),
+            bytes_of::<u32>(size),
+            bytes_of::<u32>(data),
+        ]
+        .concat()
     }
 
     pub(crate) fn kind(&self) -> BtfKind {
@@ -404,15 +411,24 @@ pub struct Enum {
 
 impl Enum {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = vec![];
-        buf.extend(bytes_of::<u32>(&self.name_offset));
-        buf.extend(bytes_of::<u32>(&self.info));
-        buf.extend(bytes_of::<u32>(&self.size));
-        for v in &self.variants {
-            buf.extend(bytes_of::<u32>(&v.name_offset));
-            buf.extend(bytes_of::<u32>(&v.value));
-        }
-        buf
+        let Self {
+            name_offset,
+            info,
+            size,
+            variants,
+        } = self;
+        [
+            bytes_of::<u32>(name_offset),
+            bytes_of::<u32>(info),
+            bytes_of::<u32>(size),
+        ]
+        .into_iter()
+        .chain(variants.iter().flat_map(|BtfEnum { name_offset, value }| {
+            [bytes_of::<u32>(name_offset), bytes_of::<u32>(value)]
+        }))
+        .flatten()
+        .copied()
+        .collect()
     }
 
     pub(crate) fn kind(&self) -> BtfKind {
@@ -458,16 +474,34 @@ pub struct Enum64 {
 
 impl Enum64 {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = vec![];
-        buf.extend(bytes_of::<u32>(&self.name_offset));
-        buf.extend(bytes_of::<u32>(&self.info));
-        buf.extend(bytes_of::<u32>(&self.size));
-        for v in &self.variants {
-            buf.extend(bytes_of::<u32>(&v.name_offset));
-            buf.extend(bytes_of::<u32>(&v.value_high));
-            buf.extend(bytes_of::<u32>(&v.value_low));
-        }
-        buf
+        let Self {
+            name_offset,
+            info,
+            size,
+            variants,
+        } = self;
+        [
+            bytes_of::<u32>(name_offset),
+            bytes_of::<u32>(info),
+            bytes_of::<u32>(size),
+        ]
+        .into_iter()
+        .chain(variants.iter().flat_map(
+            |BtfEnum64 {
+                 name_offset,
+                 value_low,
+                 value_high,
+             }| {
+                [
+                    bytes_of::<u32>(name_offset),
+                    bytes_of::<u32>(value_low),
+                    bytes_of::<u32>(value_high),
+                ]
+            },
+        ))
+        .flatten()
+        .copied()
+        .collect()
     }
 
     pub(crate) fn kind(&self) -> BtfKind {
@@ -502,16 +536,34 @@ pub struct Struct {
 
 impl Struct {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = vec![];
-        buf.extend(bytes_of::<u32>(&self.name_offset));
-        buf.extend(bytes_of::<u32>(&self.info));
-        buf.extend(bytes_of::<u32>(&self.size));
-        for v in &self.members {
-            buf.extend(bytes_of::<u32>(&v.name_offset));
-            buf.extend(bytes_of::<u32>(&v.btf_type));
-            buf.extend(bytes_of::<u32>(&v.offset));
-        }
-        buf
+        let Self {
+            name_offset,
+            info,
+            size,
+            members,
+        } = self;
+        [
+            bytes_of::<u32>(name_offset),
+            bytes_of::<u32>(info),
+            bytes_of::<u32>(size),
+        ]
+        .into_iter()
+        .chain(members.iter().flat_map(
+            |BtfMember {
+                 name_offset,
+                 btf_type,
+                 offset,
+             }| {
+                [
+                    bytes_of::<u32>(name_offset),
+                    bytes_of::<u32>(btf_type),
+                    bytes_of::<u32>(offset),
+                ]
+            },
+        ))
+        .flatten()
+        .copied()
+        .collect()
     }
 
     pub(crate) fn kind(&self) -> BtfKind {
@@ -563,16 +615,34 @@ pub struct Union {
 
 impl Union {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = vec![];
-        buf.extend(bytes_of::<u32>(&self.name_offset));
-        buf.extend(bytes_of::<u32>(&self.info));
-        buf.extend(bytes_of::<u32>(&self.size));
-        for v in &self.members {
-            buf.extend(bytes_of::<u32>(&v.name_offset));
-            buf.extend(bytes_of::<u32>(&v.btf_type));
-            buf.extend(bytes_of::<u32>(&v.offset));
-        }
-        buf
+        let Self {
+            name_offset,
+            info,
+            size,
+            members,
+        } = self;
+        [
+            bytes_of::<u32>(name_offset),
+            bytes_of::<u32>(info),
+            bytes_of::<u32>(size),
+        ]
+        .into_iter()
+        .chain(members.iter().flat_map(
+            |BtfMember {
+                 name_offset,
+                 btf_type,
+                 offset,
+             }| {
+                [
+                    bytes_of::<u32>(name_offset),
+                    bytes_of::<u32>(btf_type),
+                    bytes_of::<u32>(offset),
+                ]
+            },
+        ))
+        .flatten()
+        .copied()
+        .collect()
     }
 
     pub(crate) fn kind(&self) -> BtfKind {
@@ -609,6 +679,7 @@ pub(crate) struct BtfArray {
     pub(crate) index_type: u32,
     pub(crate) len: u32,
 }
+
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct Array {
@@ -620,12 +691,19 @@ pub struct Array {
 
 impl Array {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = vec![];
-        buf.extend(bytes_of::<u32>(&self.name_offset));
-        buf.extend(bytes_of::<u32>(&self.info));
-        buf.extend(bytes_of::<u32>(&self._unused));
-        buf.extend(bytes_of::<BtfArray>(&self.array));
-        buf
+        let Self {
+            name_offset,
+            info,
+            _unused,
+            array,
+        } = self;
+        [
+            bytes_of::<u32>(name_offset),
+            bytes_of::<u32>(info),
+            bytes_of::<u32>(_unused),
+            bytes_of::<BtfArray>(array),
+        ]
+        .concat()
     }
 
     pub(crate) fn kind(&self) -> BtfKind {
@@ -670,15 +748,27 @@ pub struct FuncProto {
 
 impl FuncProto {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = vec![];
-        buf.extend(bytes_of::<u32>(&self.name_offset));
-        buf.extend(bytes_of::<u32>(&self.info));
-        buf.extend(bytes_of::<u32>(&self.return_type));
-        for p in &self.params {
-            buf.extend(bytes_of::<u32>(&p.name_offset));
-            buf.extend(bytes_of::<u32>(&p.btf_type));
-        }
-        buf
+        let Self {
+            name_offset,
+            info,
+            return_type,
+            params,
+        } = self;
+        [
+            bytes_of::<u32>(name_offset),
+            bytes_of::<u32>(info),
+            bytes_of::<u32>(return_type),
+        ]
+        .into_iter()
+        .chain(params.iter().flat_map(
+            |BtfParam {
+                 name_offset,
+                 btf_type,
+             }| { [bytes_of::<u32>(name_offset), bytes_of::<u32>(btf_type)] },
+        ))
+        .flatten()
+        .copied()
+        .collect()
     }
 
     pub(crate) fn kind(&self) -> BtfKind {
@@ -732,12 +822,19 @@ pub struct Var {
 
 impl Var {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = vec![];
-        buf.extend(bytes_of::<u32>(&self.name_offset));
-        buf.extend(bytes_of::<u32>(&self.info));
-        buf.extend(bytes_of::<u32>(&self.btf_type));
-        buf.extend(bytes_of::<VarLinkage>(&self.linkage));
-        buf
+        let Self {
+            name_offset,
+            info,
+            btf_type,
+            linkage,
+        } = self;
+        [
+            bytes_of::<u32>(name_offset),
+            bytes_of::<u32>(info),
+            bytes_of::<u32>(btf_type),
+            bytes_of::<VarLinkage>(linkage),
+        ]
+        .concat()
     }
 
     pub(crate) fn kind(&self) -> BtfKind {
@@ -778,16 +875,34 @@ pub struct DataSec {
 
 impl DataSec {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = vec![];
-        buf.extend(bytes_of::<u32>(&self.name_offset));
-        buf.extend(bytes_of::<u32>(&self.info));
-        buf.extend(bytes_of::<u32>(&self.size));
-        for e in &self.entries {
-            buf.extend(bytes_of::<u32>(&e.btf_type));
-            buf.extend(bytes_of::<u32>(&e.offset));
-            buf.extend(bytes_of::<u32>(&e.size));
-        }
-        buf
+        let Self {
+            name_offset,
+            info,
+            size,
+            entries,
+        } = self;
+        [
+            bytes_of::<u32>(name_offset),
+            bytes_of::<u32>(info),
+            bytes_of::<u32>(size),
+        ]
+        .into_iter()
+        .chain(entries.iter().flat_map(
+            |DataSecEntry {
+                 btf_type,
+                 offset,
+                 size,
+             }| {
+                [
+                    bytes_of::<u32>(btf_type),
+                    bytes_of::<u32>(offset),
+                    bytes_of::<u32>(size),
+                ]
+            },
+        ))
+        .flatten()
+        .copied()
+        .collect()
     }
 
     pub(crate) fn kind(&self) -> BtfKind {
@@ -821,12 +936,19 @@ pub struct DeclTag {
 
 impl DeclTag {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = vec![];
-        buf.extend(bytes_of::<u32>(&self.name_offset));
-        buf.extend(bytes_of::<u32>(&self.info));
-        buf.extend(bytes_of::<u32>(&self.btf_type));
-        buf.extend(bytes_of::<i32>(&self.component_index));
-        buf
+        let Self {
+            name_offset,
+            info,
+            btf_type,
+            component_index,
+        } = self;
+        [
+            bytes_of::<u32>(name_offset),
+            bytes_of::<u32>(info),
+            bytes_of::<u32>(btf_type),
+            bytes_of::<i32>(component_index),
+        ]
+        .concat()
     }
 
     pub(crate) fn kind(&self) -> BtfKind {
