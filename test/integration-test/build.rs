@@ -110,10 +110,15 @@ fn main() {
             target_arch.push(arch);
         };
 
+        let libbpf_vmlinux_dir = libbpf_dir.join(".github/actions/build-selftests");
+
         let clang = || {
             let mut cmd = Command::new("clang");
-            cmd.arg("-I")
+            cmd.arg("-nostdlibinc")
+                .arg("-I")
                 .arg(&libbpf_headers_dir)
+                .arg("-I")
+                .arg(&libbpf_vmlinux_dir)
                 .args(["-g", "-O2", "-target", target, "-c"])
                 .arg(&target_arch);
             cmd
