@@ -1,5 +1,5 @@
 // clang-format off
-#include <linux/bpf.h>
+#include <vmlinux.h>
 #include <bpf/bpf_helpers.h>
 // clang-format on
 
