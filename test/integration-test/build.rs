@@ -116,36 +116,30 @@ fn main() {
             target_arch.push(arch);
         };
 
+        let clang = || {
+            let mut cmd = Command::new("clang");
+            cmd.arg("-I")
+                .arg(&libbpf_headers_dir)
+                .args(["-g", "-O2", "-target", target, "-c"])
+                .arg(&target_arch);
+            cmd
+        };
+
         for (src, dst) in c_bpf {
             let src = bpf_dir.join(src);
             println!("cargo:rerun-if-changed={}", src.to_str().unwrap());
 
-            exec(
-                Command::new("clang")
-                    .arg("-I")
-                    .arg(&libbpf_headers_dir)
-                    .args(["-g", "-O2", "-target", target, "-c"])
-                    .arg(&target_arch)
-                    .arg(src)
-                    .arg("-o")
-                    .arg(dst),
-            )
-            .unwrap();
+            exec(clang().arg(src).arg("-o").arg(dst)).unwrap();
         }
 
         for (src, dst) in c_btf {
             let src = bpf_dir.join(src);
             println!("cargo:rerun-if-changed={}", src.to_str().unwrap());
 
-            let mut cmd = Command::new("clang");
-            cmd.arg("-I")
-                .arg(&libbpf_headers_dir)
-                .args(["-g", "-target", target, "-c"])
-                .arg(&target_arch)
-                .arg(src)
-                .args(["-o", "-"]);
-
+            let mut cmd = clang();
             let mut child = cmd
+                .arg(src)
+                .args(["-o", "-"])
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap_or_else(|err| panic!("failed to spawn {cmd:?}: {err}"));
