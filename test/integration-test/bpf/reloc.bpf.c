@@ -51,44 +51,48 @@ __attribute__((noinline)) int struct_flavors_global() {
   if (bpf_core_field_exists(s.a)) {
     return set_output(__builtin_preserve_access_index(s.a));
   } else {
-    return set_output(__builtin_preserve_access_index(s.b));
+    return set_output(__builtin_preserve_access_index(s.c));
   }
 }
 
 SEC("uprobe") int struct_flavors(void *ctx) { return struct_flavors_global(); }
 
-enum relocated_enum_unsigned_32 { U32 = 0xAAAAAAAA };
+enum relocated_enum_unsigned_32 { U32_VAL = 0xAAAAAAAA };
 
 __attribute__((noinline)) int enum_unsigned_32_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_unsigned_32, U32));
+  return set_output(
+      bpf_core_enum_value(enum relocated_enum_unsigned_32, U32_VAL));
 }
 
 SEC("uprobe") int enum_unsigned_32(void *ctx) {
   return enum_unsigned_32_global();
 }
 
-enum relocated_enum_signed_32 { S32 = -0x7AAAAAAA };
+enum relocated_enum_signed_32 { S32_VAL = -0x7AAAAAAA };
 
 __attribute__((noinline)) int enum_signed_32_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_signed_32, S32));
+  return set_output(
+      bpf_core_enum_value(enum relocated_enum_signed_32, S32_VAL));
 }
 
 SEC("uprobe") int enum_signed_32(void *ctx) { return enum_signed_32_global(); }
 
-enum relocated_enum_unsigned_64 { U64 = 0xAAAAAAAABBBBBBBB };
+enum relocated_enum_unsigned_64 { U64_VAL = 0xAAAAAAAABBBBBBBB };
 
 __attribute__((noinline)) int enum_unsigned_64_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_unsigned_64, U64));
+  return set_output(
+      bpf_core_enum_value(enum relocated_enum_unsigned_64, U64_VAL));
 }
 
 SEC("uprobe") int enum_unsigned_64(void *ctx) {
   return enum_unsigned_64_global();
 }
 
-enum relocated_enum_signed_64 { u64 = -0xAAAAAAABBBBBBBB };
+enum relocated_enum_signed_64 { S64_VAL = -0xAAAAAAABBBBBBBB };
 
 __attribute__((noinline)) int enum_signed_64_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_signed_64, u64));
+  return set_output(
+      bpf_core_enum_value(enum relocated_enum_signed_64, S64_VAL));
 }
 
 SEC("uprobe") int enum_signed_64(void *ctx) { return enum_signed_64_global(); }
