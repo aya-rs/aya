@@ -92,7 +92,7 @@ async fn log() {
     assert_eq!(
         records.next(),
         Some(&CapturedLog {
-            body: "69, 420, wao".into(),
+            body: "69, 420, wao, 77616f".into(),
             level: Level::Error,
             target: "log".into(),
         })

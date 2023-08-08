@@ -147,6 +147,10 @@ pub enum DisplayHint {
     UpperMac,
 }
 
+// Must be inlined, else the BPF backend emits:
+//
+// llvm: <unknown>:0:0: in function _ZN14aya_log_common5write17hc9ed05433e23a663E { i64, i64 } (i8, ptr, i64, ptr, i64): only integer returns supported
+#[inline(always)]
 pub(crate) fn write(tag: u8, value: &[u8], buf: &mut [u8]) -> Result<usize, ()> {
     let wire_len: LogValueLength = value
         .len()
@@ -175,6 +179,9 @@ pub trait WriteToBuf {
 macro_rules! impl_write_to_buf {
     ($type:ident, $arg_type:expr) => {
         impl WriteToBuf for $type {
+            // This need not be inlined because the return value is Result<N, ()> where N is
+            // mem::size_of<$type>, which is a compile-time constant.
+            #[inline(never)]
             fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
                 write($arg_type.into(), &self.to_ne_bytes(), buf)
             }
@@ -198,12 +205,18 @@ impl_write_to_buf!(f32, Argument::F32);
 impl_write_to_buf!(f64, Argument::F64);
 
 impl WriteToBuf for [u8; 16] {
+    // This need not be inlined because the return value is Result<N, ()> where N is 16, which is a
+    // compile-time constant.
+    #[inline(never)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
         write(Argument::ArrU8Len16.into(), &self, buf)
     }
 }
 
 impl WriteToBuf for [u16; 8] {
+    // This need not be inlined because the return value is Result<N, ()> where N is 16, which is a
+    // compile-time constant.
+    #[inline(never)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
         let bytes = unsafe { core::mem::transmute::<_, [u8; 16]>(self) };
         write(Argument::ArrU16Len8.into(), &bytes, buf)
@@ -211,24 +224,38 @@ impl WriteToBuf for [u16; 8] {
 }
 
 impl WriteToBuf for [u8; 6] {
+    // This need not be inlined because the return value is Result<N, ()> where N is 6, which is a
+    // compile-time constant.
+    #[inline(never)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
         write(Argument::ArrU8Len6.into(), &self, buf)
     }
 }
 
 impl WriteToBuf for &[u8] {
+    // Must be inlined, else the BPF backend emits:
+    //
+    // llvm: <unknown>:0:0: in function _ZN63_$LT$$RF$$u5b$u8$u5d$$u20$as$u20$aya_log_common..WriteToBuf$GT$5write17h08f30a45f7b9f09dE { i64, i64 } (ptr, i64, ptr, i64): only integer returns supported
+    #[inline(always)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
         write(Argument::Bytes.into(), self, buf)
     }
 }
 
 impl WriteToBuf for &str {
+    // Must be inlined, else the BPF backend emits:
+    //
+    // llvm: <unknown>:0:0: in function _ZN54_$LT$$RF$str$u20$as$u20$aya_log_common..WriteToBuf$GT$5write17h7e2d1ccaa758e2b5E { i64, i64 } (ptr, i64, ptr, i64): only integer returns supported
+    #[inline(always)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
         write(Argument::Str.into(), self.as_bytes(), buf)
     }
 }
 
 impl WriteToBuf for DisplayHint {
+    // This need not be inlined because the return value is Result<N, ()> where N is 1, which is a
+    // compile-time constant.
+    #[inline(never)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
         let v: u8 = self.into();
         write(Argument::DisplayHint.into(), &v.to_ne_bytes(), buf)
