@@ -70,12 +70,16 @@ async fn log() {
 
     let mut logs = 0;
     let records = loop {
-        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
         let records = captured_logs.lock().unwrap();
-        if records.len() == logs {
+        let len = records.len();
+        if len == 0 {
+            continue;
+        }
+        if len == logs {
             break records;
         }
-        logs = records.len();
+        logs = len;
     };
 
     let mut records = records.iter();
