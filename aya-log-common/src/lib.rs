@@ -1,6 +1,6 @@
 #![no_std]
 
-use core::{mem, num, ptr};
+use core::num;
 
 use num_enum::IntoPrimitive;
 
@@ -86,7 +86,7 @@ pub trait UpperMacFormatter {}
 impl UpperMacFormatter for [u8; 6] {}
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, IntoPrimitive)]
 pub enum RecordField {
     Target = 1,
     Level,
@@ -99,7 +99,7 @@ pub enum RecordField {
 /// Types which are supported by aya-log and can be safely sent from eBPF
 /// programs to userspace.
 #[repr(u8)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, IntoPrimitive)]
 pub enum Argument {
     DisplayHint,
 
@@ -147,53 +147,21 @@ pub enum DisplayHint {
     UpperMac,
 }
 
-struct TagLenValue<T, V> {
-    pub tag: T,
-    pub value: V,
-}
-
-impl<T, V> TagLenValue<T, V>
-where
-    V: IntoIterator<Item = u8>,
-    <V as IntoIterator>::IntoIter: ExactSizeIterator,
-{
-    pub(crate) fn write(self, mut buf: &mut [u8]) -> Result<usize, ()> {
-        // Break the abstraction to please the verifier.
-        if buf.len() > LOG_BUF_CAPACITY {
-            buf = &mut buf[..LOG_BUF_CAPACITY];
-        }
-        let Self { tag, value } = self;
-        let value = value.into_iter();
-        let len = value.len();
-        let wire_len: LogValueLength = value
-            .len()
-            .try_into()
-            .map_err(|num::TryFromIntError { .. }| ())?;
-        let size = mem::size_of_val(&tag) + mem::size_of_val(&wire_len) + len;
-        if size > buf.len() {
-            return Err(());
-        }
-
-        let tag_size = mem::size_of_val(&tag);
-        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, tag) };
-        buf = &mut buf[tag_size..];
-
-        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, wire_len) };
-        buf = &mut buf[mem::size_of_val(&wire_len)..];
-
-        buf.iter_mut().zip(value).for_each(|(dst, src)| {
-            *dst = src;
-        });
-
-        Ok(size)
+#[inline(always)]
+pub(crate) fn write(tag: u8, value: &[u8], buf: &mut [u8]) -> Result<usize, ()> {
+    let wire_len: LogValueLength = value
+        .len()
+        .try_into()
+        .map_err(|num::TryFromIntError { .. }| ())?;
+    let values: &[&[u8]] = &[&[tag], &wire_len.to_ne_bytes(), value];
+    let mut size = 0;
+    for src in values {
+        let buf = buf.get_mut(size..).ok_or(())?;
+        let buf = buf.get_mut(..src.len()).ok_or(())?;
+        buf.copy_from_slice(src);
+        size += src.len();
     }
-}
-
-impl<T, V> TagLenValue<T, V> {
-    #[inline(always)]
-    pub(crate) fn new(tag: T, value: V) -> TagLenValue<T, V> {
-        TagLenValue { tag, value }
-    }
+    Ok(size)
 }
 
 pub trait WriteToBuf {
@@ -205,7 +173,7 @@ macro_rules! impl_write_to_buf {
     ($type:ident, $arg_type:expr) => {
         impl WriteToBuf for $type {
             fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
-                TagLenValue::new($arg_type, self.to_ne_bytes()).write(buf)
+                write($arg_type.into(), &self.to_ne_bytes(), buf)
             }
         }
     };
@@ -227,40 +195,46 @@ impl_write_to_buf!(f32, Argument::F32);
 impl_write_to_buf!(f64, Argument::F64);
 
 impl WriteToBuf for [u8; 16] {
+    #[inline(always)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
-        TagLenValue::new(Argument::ArrU8Len16, self).write(buf)
+        write(Argument::ArrU8Len16.into(), &self, buf)
     }
 }
 
 impl WriteToBuf for [u16; 8] {
+    #[inline(always)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
         let bytes = unsafe { core::mem::transmute::<_, [u8; 16]>(self) };
-        TagLenValue::new(Argument::ArrU16Len8, bytes).write(buf)
+        write(Argument::ArrU16Len8.into(), &bytes, buf)
     }
 }
 
 impl WriteToBuf for [u8; 6] {
+    #[inline(always)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
-        TagLenValue::new(Argument::ArrU8Len6, self).write(buf)
+        write(Argument::ArrU8Len6.into(), &self, buf)
     }
 }
 
 impl WriteToBuf for &[u8] {
+    #[inline(always)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
-        TagLenValue::new(Argument::Bytes, self.iter().copied()).write(buf)
+        write(Argument::Bytes.into(), self, buf)
     }
 }
 
 impl WriteToBuf for &str {
+    #[inline(always)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
-        TagLenValue::new(Argument::Str, self.as_bytes().iter().copied()).write(buf)
+        write(Argument::Str.into(), self.as_bytes(), buf)
     }
 }
 
 impl WriteToBuf for DisplayHint {
+    #[inline(always)]
     fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
         let v: u8 = self.into();
-        TagLenValue::new(Argument::DisplayHint, v.to_ne_bytes()).write(buf)
+        write(Argument::DisplayHint.into(), &v.to_ne_bytes(), buf)
     }
 }
 
@@ -278,16 +252,17 @@ pub fn write_record_header(
 ) -> Result<usize, ()> {
     let level: u8 = level.into();
     let mut size = 0;
-    size += TagLenValue::new(RecordField::Target, target.as_bytes().iter().copied())
-        .write(&mut buf[size..])?;
-    size += TagLenValue::new(RecordField::Level, level.to_ne_bytes()).write(&mut buf[size..])?;
-    size += TagLenValue::new(RecordField::Module, module.as_bytes().iter().copied())
-        .write(&mut buf[size..])?;
-    size += TagLenValue::new(RecordField::File, file.as_bytes().iter().copied())
-        .write(&mut buf[size..])?;
-    size += TagLenValue::new(RecordField::Line, line.to_ne_bytes()).write(&mut buf[size..])?;
-    size +=
-        TagLenValue::new(RecordField::NumArgs, num_args.to_ne_bytes()).write(&mut buf[size..])?;
+    for (tag, value) in [
+        (RecordField::Target.into(), target.as_bytes()),
+        (RecordField::Level.into(), &level.to_ne_bytes()),
+        (RecordField::Module.into(), module.as_bytes()),
+        (RecordField::File.into(), file.as_bytes()),
+        (RecordField::Line.into(), &line.to_ne_bytes()),
+        (RecordField::NumArgs.into(), &num_args.to_ne_bytes()),
+    ] {
+        let buf = buf.get_mut(size..).ok_or(())?;
+        size += write(tag, value, buf)?;
+    }
     Ok(size)
 }
 
