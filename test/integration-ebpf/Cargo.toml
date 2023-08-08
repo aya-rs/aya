@@ -42,3 +42,7 @@ path = "src/bpf_probe_read.rs"
 [[bin]]
 name = "two_progs"
 path = "src/two_progs.rs"
+
+[[bin]]
+name = "tc_name_limit"
+path = "src/tc_name_limit.rs"

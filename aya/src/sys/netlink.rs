@@ -277,7 +277,10 @@ struct Request {
 struct TcRequest {
     header: nlmsghdr,
     tc_info: tcmsg,
-    attrs: [u8; 64],
+    // The buffer for attributes should be sized to hold at least 256 bytes,
+    // based on `CLS_BPF_NAME_LEN = 256` from the kernel:
+    // https://github.com/torvalds/linux/blob/02aee814/net/sched/cls_bpf.c#L28
+    attrs: [u8; 512],
 }
 
 struct NetlinkSocket {

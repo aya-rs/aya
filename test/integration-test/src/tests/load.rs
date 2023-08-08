@@ -4,7 +4,9 @@ use aya::{
     maps::Array,
     programs::{
         links::{FdLink, PinnedLink},
-        loaded_links, loaded_programs, KProbe, TracePoint, UProbe, Xdp, XdpFlags,
+        loaded_links, loaded_programs,
+        tc::qdisc_add_clsact,
+        KProbe, SchedClassifier, TcAttachType, TracePoint, UProbe, Xdp, XdpFlags,
     },
     util::KernelVersion,
     Bpf,
@@ -12,6 +14,27 @@ use aya::{
 
 const MAX_RETRIES: usize = 100;
 const RETRY_DURATION: time::Duration = time::Duration::from_millis(10);
+
+#[test]
+fn tc_name_limit() {
+    let _ = qdisc_add_clsact("lo");
+
+    let mut bpf = Bpf::load(crate::TC_NAME_LIMIT_TEST).unwrap();
+
+    // This magic number (256) is derived from the fact that the kernel
+    // permits names with a maximum length of 256 bytes:
+    // https://github.com/torvalds/linux/blob/02aee814/net/sched/cls_bpf.c#L28
+    // In this case, the name is 256 'a's
+    let long_name = "a".repeat(256);
+
+    let program: &mut SchedClassifier = bpf
+        .program_mut(long_name.as_str())
+        .unwrap()
+        .try_into()
+        .unwrap();
+    program.load().unwrap();
+    program.attach("lo", TcAttachType::Ingress).unwrap();
+}
 
 #[test]
 fn long_name() {
