@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-anyhow = { workspace = true, default-features = true }
+anyhow = { workspace = true, features = ["std"] }
 assert_matches = { workspace = true }
 aya = { workspace = true }
 aya-log = { workspace = true }
@@ -16,10 +16,7 @@ netns-rs = { workspace = true }
 object = { workspace = true }
 rbpf = { workspace = true }
 test-case = { workspace = true }
-tokio = { workspace = true, default-features = false, features = [
-    "macros",
-    "time",
-] }
+tokio = { workspace = true, features = ["macros", "time"] }
 
 [build-dependencies]
 cargo_metadata = { workspace = true }
