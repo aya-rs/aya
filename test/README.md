@@ -3,21 +3,15 @@ Aya Integration Tests
 
 The aya integration test suite is a set of tests to ensure that
 common usage behaviours work on real Linux distros
+
 ## Prerequisites
 
-### Linux
+You'll need:
 
-To run locally all you need is:
-
-1. Rust nightly
+1. `rustup toolchain install nightly`
+1. `rustup target add {aarch64,x86_64}-unknown-linux-musl`
 1. `cargo install bpf-linker`
-
-### Other OSs
-
-1. A POSIX shell
-1. `rustup target add x86_64-unknown-linux-musl`
-1. `cargo install bpf-linker`
-1. Install `qemu` and `cloud-init-utils` package - or any package that provides `cloud-localds`
+1. (virtualized only) `qemu`
 
 ## Usage
 
@@ -26,15 +20,13 @@ From the root of this repository:
 ### Native
 
 ```
-cargo xtask integration-test
+cargo xtask integration-test local
 ```
 
 ### Virtualized
 
 ```
-mkdir -p integration-test-binaries
-cargo xtask build-integration-test | xargs -I % cp % integration-test-binaries
-./test/run.sh integration-test-binaries
+cargo xtask integration-test vm
 ```
 
 ### Writing an integration test
