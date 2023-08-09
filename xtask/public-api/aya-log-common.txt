@@ -18,6 +18,8 @@ pub aya_log_common::Argument::U32
 pub aya_log_common::Argument::U64
 pub aya_log_common::Argument::U8
 pub aya_log_common::Argument::Usize
+impl core::convert::From<aya_log_common::Argument> for u8
+pub fn u8::from(enum_value: aya_log_common::Argument) -> Self
 impl core::clone::Clone for aya_log_common::Argument
 pub fn aya_log_common::Argument::clone(&self) -> aya_log_common::Argument
 impl core::fmt::Debug for aya_log_common::Argument
@@ -134,6 +136,8 @@ pub aya_log_common::RecordField::Line
 pub aya_log_common::RecordField::Module
 pub aya_log_common::RecordField::NumArgs
 pub aya_log_common::RecordField::Target = 1
+impl core::convert::From<aya_log_common::RecordField> for u8
+pub fn u8::from(enum_value: aya_log_common::RecordField) -> Self
 impl core::clone::Clone for aya_log_common::RecordField
 pub fn aya_log_common::RecordField::clone(&self) -> aya_log_common::RecordField
 impl core::fmt::Debug for aya_log_common::RecordField
