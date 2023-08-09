@@ -474,8 +474,31 @@ impl Btf {
         features: &BtfFeatures,
     ) -> Result<(), BtfError> {
         let mut types = mem::take(&mut self.types);
+        let var_types: HashMap<u32, (u32, VarLinkage)> = types
+            .types
+            .iter()
+            .enumerate()
+            .filter_map(|(i, t)| match t {
+                BtfType::Var(v) => Some((i as u32, (v.name_offset, v.linkage.clone()))),
+                _ => None,
+            })
+            .collect();
+        let datasec_member_name_offsets: HashMap<u32, u32> = types
+            .types
+            .iter()
+            .filter_map(|t| match t {
+                BtfType::DataSec(d) => Some(d.entries.iter().filter_map(|e| {
+                    types
+                        .type_by_id(e.btf_type)
+                        .ok()
+                        .map(|t| (e.btf_type, t.name_offset()))
+                })),
+                _ => None,
+            })
+            .flatten()
+            .collect();
         for i in 0..types.types.len() {
-            let t = &types.types[i];
+            let t = &mut types.types[i];
             let kind = t.kind();
             match t {
                 // Fixup PTR for Rust
@@ -483,9 +506,7 @@ impl Btf {
                 // While I figure out if this needs fixing in the Kernel or LLVM, we'll
                 // do a fixup here
                 BtfType::Ptr(ptr) => {
-                    let mut fixed_ty = ptr.clone();
-                    fixed_ty.name_offset = 0;
-                    types.types[i] = BtfType::Ptr(fixed_ty)
+                    ptr.name_offset = 0;
                 }
                 // Sanitize VAR if they are not supported
                 BtfType::Var(v) if !features.btf_datasec => {
@@ -496,7 +517,7 @@ impl Btf {
                     debug!("{}: not supported. replacing with STRUCT", kind);
 
                     // STRUCT aren't allowed to have "." in their name, fixup this if needed.
-                    let mut name_offset = t.name_offset();
+                    let mut name_offset = d.name_offset();
                     let name = self.string_at(name_offset)?;
 
                     // Handle any "." characters in struct names
@@ -508,9 +529,11 @@ impl Btf {
 
                     let mut members = vec![];
                     for member in d.entries.iter() {
-                        let mt = types.type_by_id(member.btf_type).unwrap();
+                        let name_offset = datasec_member_name_offsets
+                            .get(&member.btf_type)
+                            .expect("member name offset not found");
                         members.push(BtfMember {
-                            name_offset: mt.name_offset(),
+                            name_offset: *name_offset,
                             btf_type: member.btf_type,
                             offset: member.offset * 8,
                         })
@@ -527,18 +550,16 @@ impl Btf {
                     let name = self.string_at(d.name_offset)?;
                     let name = name.into_owned();
 
-                    let mut fixed_ty = d.clone();
-
                     // Handle any "/" characters in section names
                     // Example: "maps/hashmap"
                     let fixed_name = name.replace('/', ".");
                     if fixed_name != name {
-                        fixed_ty.name_offset = self.add_string(&fixed_name);
+                        d.name_offset = self.add_string(&fixed_name);
                     }
 
                     // There are some cases when the compiler does indeed populate the
                     // size
-                    if t.size().unwrap() > 0 {
+                    if d.size() > 0 {
                         debug!("{} {}: size fixup not required", kind, name);
                     } else {
                         // We need to get the size of the section from the ELF file
@@ -551,55 +572,45 @@ impl Btf {
                             }
                         };
                         debug!("{} {}: fixup size to {}", kind, name, size);
-                        fixed_ty.size = *size as u32;
+                        d.size = *size as u32;
 
                         // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
                         // that need to have their offsets adjusted. To do this,
                         // we need to get the offset from the ELF file.
                         // This was also cached during initial parsing and
                         // we can query by name in symbol_offsets
-                        for d in &mut fixed_ty.entries.iter_mut() {
-                            let var_type = types.type_by_id(d.btf_type)?;
-                            let var_kind = var_type.kind();
-                            if let BtfType::Var(var) = var_type {
-                                let var_name = self.string_at(var.name_offset)?;
-                                if var.linkage == VarLinkage::Static {
-                                    debug!(
-                                        "{} {}: {} {}: fixup not required",
-                                        kind, name, var_kind, var_name
-                                    );
-                                    continue;
-                                }
-
-                                let offset = match symbol_offsets.get(var_name.as_ref()) {
-                                    Some(offset) => offset,
-                                    None => {
-                                        return Err(BtfError::SymbolOffsetNotFound {
-                                            symbol_name: var_name.into_owned(),
-                                        });
-                                    }
-                                };
-                                d.offset = *offset as u32;
-                                debug!(
-                                    "{} {}: {} {}: fixup offset {}",
-                                    kind, name, var_kind, var_name, offset
-                                );
-                            } else {
-                                return Err(BtfError::InvalidDatasec);
+                        for e in &mut d.entries.iter_mut() {
+                            let (name_offset, linkage) =
+                                var_types.get(&e.btf_type).ok_or(BtfError::InvalidDatasec)?;
+                            let var_name = self.string_at(*name_offset)?;
+                            if *linkage == VarLinkage::Static {
+                                debug!("{} {}: VAR {}: fixup not required", kind, name, var_name);
+                                continue;
                             }
+
+                            let offset = match symbol_offsets.get(var_name.as_ref()) {
+                                Some(offset) => offset,
+                                None => {
+                                    return Err(BtfError::SymbolOffsetNotFound {
+                                        symbol_name: var_name.into_owned(),
+                                    });
+                                }
+                            };
+                            e.offset = *offset as u32;
+                            debug!(
+                                "{} {}: VAR {}: fixup offset {}",
+                                kind, name, var_name, offset
+                            );
                         }
                     }
-                    types.types[i] = BtfType::DataSec(fixed_ty);
                 }
                 // Fixup FUNC_PROTO
                 BtfType::FuncProto(ty) if features.btf_func => {
-                    let mut ty = ty.clone();
                     for (i, param) in ty.params.iter_mut().enumerate() {
                         if param.name_offset == 0 && param.btf_type != 0 {
                             param.name_offset = self.add_string(&format!("param{i}"));
                         }
                     }
-                    types.types[i] = BtfType::FuncProto(ty);
                 }
                 // Sanitize FUNC_PROTO
                 BtfType::FuncProto(ty) if !features.btf_func => {
@@ -635,7 +646,6 @@ impl Btf {
                         // and verified separately from their callers, while instead we
                         // want tracking info (eg bound checks) to be propagated to the
                         // memory builtins.
-                        let mut fixed_ty = ty.clone();
                         if ty.linkage() == FuncLinkage::Global {
                             if !features.btf_func_global {
                                 debug!(
@@ -645,9 +655,8 @@ impl Btf {
                             } else {
                                 debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
                             }
-                            fixed_ty.set_linkage(FuncLinkage::Static);
+                            ty.set_linkage(FuncLinkage::Static);
                         }
-                        types.types[i] = BtfType::Func(fixed_ty);
                     }
                 }
                 // Sanitize FLOAT
@@ -1271,11 +1280,14 @@ mod tests {
             assert_eq!(fixed.name_offset , name_offset);
             assert_matches!(*fixed.members, [
                 BtfMember {
-                    name_offset: _,
+                    name_offset: name_offset1,
                     btf_type,
                     offset: 0,
                 },
-            ] => assert_eq!(btf_type, var_type_id));
+            ] => {
+                assert_eq!(btf.string_at(name_offset1).unwrap(), "foo");
+                assert_eq!(btf_type, var_type_id);
+            })
         });
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();

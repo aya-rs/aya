@@ -874,6 +874,14 @@ pub struct DataSec {
 }
 
 impl DataSec {
+    pub fn name_offset(&self) -> u32 {
+        self.name_offset
+    }
+
+    pub fn size(&self) -> u32 {
+        self.size
+    }
+
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
         let Self {
             name_offset,

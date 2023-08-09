@@ -604,7 +604,9 @@ impl<T> core::convert::From<T> for aya_obj::btf::Const
 pub fn aya_obj::btf::Const::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::DataSec
 impl aya_obj::btf::DataSec
+pub fn aya_obj::btf::DataSec::name_offset(&self) -> u32
 pub fn aya_obj::btf::DataSec::new(name_offset: u32, entries: alloc::vec::Vec<aya_obj::btf::DataSecEntry>, size: u32) -> Self
+pub fn aya_obj::btf::DataSec::size(&self) -> u32
 impl core::clone::Clone for aya_obj::btf::DataSec
 pub fn aya_obj::btf::DataSec::clone(&self) -> aya_obj::btf::DataSec
 impl core::fmt::Debug for aya_obj::btf::DataSec
