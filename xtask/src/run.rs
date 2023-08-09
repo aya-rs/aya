@@ -6,7 +6,7 @@ use std::{
     process::{Child, Command, Stdio},
 };
 
-use anyhow::{bail, Context as _, Result};
+use anyhow::{anyhow, bail, Context as _, Result};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 use xtask::AYA_BUILD_INTEGRATION_BPF;
@@ -77,14 +77,9 @@ pub fn build(opts: BuildOptions) -> Result<Vec<(String, PathBuf)>> {
     let status = child
         .wait()
         .with_context(|| format!("failed to wait for {cmd:?}"))?;
-    match status.code() {
-        Some(code) => match code {
-            0 => {}
-            code => bail!("{cmd:?} exited with status code {code}"),
-        },
-        None => bail!("{cmd:?} terminated by signal"),
+    if status.code() != Some(0) {
+        bail!("{cmd:?} failed: {status:?}")
     }
-
     Ok(executables)
 }
 
@@ -98,7 +93,7 @@ pub fn run(opts: Options) -> Result<()> {
 
     let binaries = build(build_options).context("error while building userspace application")?;
     let mut args = runner.trim().split_terminator(' ');
-    let runner = args.next().ok_or(anyhow::anyhow!("no first argument"))?;
+    let runner = args.next().ok_or(anyhow!("no first argument"))?;
     let args = args.collect::<Vec<_>>();
 
     let mut failures = String::new();
@@ -110,24 +105,18 @@ pub fn run(opts: Options) -> Result<()> {
             .args(run_args.iter())
             .arg("--test-threads=1");
 
-        println!("{} running {cmd:?}", name);
+        println!("{name} running {cmd:?}");
 
         let status = cmd
             .status()
             .with_context(|| format!("failed to run {cmd:?}"))?;
-        match status.code() {
-            Some(code) => match code {
-                0 => {}
-                code => writeln!(&mut failures, "{} exited with status code {code}", name)
-                    .context("String write failed")?,
-            },
-            None => writeln!(&mut failures, "{} terminated by signal", name)
-                .context("String write failed")?,
+        if status.code() != Some(0) {
+            writeln!(&mut failures, "{name} failed: {status:?}").context("String write failed")?
         }
     }
     if failures.is_empty() {
         Ok(())
     } else {
-        Err(anyhow::anyhow!("failures:\n{}", failures))
+        Err(anyhow!("failures:\n{}", failures))
     }
 }
