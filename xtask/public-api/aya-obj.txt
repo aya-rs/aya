@@ -384,6 +384,8 @@ pub fn aya_obj::btf::Btf::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::BtfEnum
 pub aya_obj::btf::BtfEnum::name_offset: u32
 pub aya_obj::btf::BtfEnum::value: u32
+impl aya_obj::btf::BtfEnum
+pub fn aya_obj::btf::BtfEnum::new(name_offset: u32, value: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::BtfEnum
 pub fn aya_obj::btf::BtfEnum::clone(&self) -> aya_obj::btf::BtfEnum
 impl core::fmt::Debug for aya_obj::btf::BtfEnum
@@ -414,6 +416,8 @@ pub fn aya_obj::btf::BtfEnum::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::btf::BtfEnum
 pub fn aya_obj::btf::BtfEnum::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::BtfEnum64
+impl aya_obj::btf::BtfEnum64
+pub fn aya_obj::btf::BtfEnum64::new(name_offset: u32, value: u64) -> Self
 impl core::clone::Clone for aya_obj::btf::BtfEnum64
 pub fn aya_obj::btf::BtfEnum64::clone(&self) -> aya_obj::btf::BtfEnum64
 impl core::fmt::Debug for aya_obj::btf::BtfEnum64
@@ -477,6 +481,7 @@ pub struct aya_obj::btf::BtfFeatures
 impl aya_obj::btf::BtfFeatures
 pub fn aya_obj::btf::BtfFeatures::btf_datasec(&self) -> bool
 pub fn aya_obj::btf::BtfFeatures::btf_decl_tag(&self) -> bool
+pub fn aya_obj::btf::BtfFeatures::btf_enum64(&self) -> bool
 pub fn aya_obj::btf::BtfFeatures::btf_float(&self) -> bool
 pub fn aya_obj::btf::BtfFeatures::btf_func(&self) -> bool
 pub fn aya_obj::btf::BtfFeatures::btf_func_global(&self) -> bool
@@ -701,7 +706,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::DeclTag
 pub fn aya_obj::btf::DeclTag::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Enum
 impl aya_obj::btf::Enum
-pub fn aya_obj::btf::Enum::new(name_offset: u32, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum>) -> Self
+pub fn aya_obj::btf::Enum::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum>) -> Self
 impl core::clone::Clone for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::clone(&self) -> aya_obj::btf::Enum
 impl core::fmt::Debug for aya_obj::btf::Enum
@@ -732,6 +737,8 @@ pub fn aya_obj::btf::Enum::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Enum64
+impl aya_obj::btf::Enum64
+pub fn aya_obj::btf::Enum64::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum64>) -> Self
 impl core::clone::Clone for aya_obj::btf::Enum64
 pub fn aya_obj::btf::Enum64::clone(&self) -> aya_obj::btf::Enum64
 impl core::fmt::Debug for aya_obj::btf::Enum64

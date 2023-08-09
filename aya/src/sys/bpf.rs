@@ -10,6 +10,7 @@ use std::{
 use crate::util::KernelVersion;
 use libc::{c_char, c_long, close, ENOENT, ENOSPC};
 use obj::{
+    btf::{BtfEnum64, Enum64},
     maps::{bpf_map_def, LegacyMap},
     BpfSectionKind, VerifierLog,
 };
@@ -867,6 +868,22 @@ pub(crate) fn is_btf_datasec_supported() -> bool {
     }];
     let datasec_type = BtfType::DataSec(DataSec::new(name_offset, variables, 4));
     btf.add_type(datasec_type);
+
+    let btf_bytes = btf.to_bytes();
+
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+}
+
+pub(crate) fn is_btf_enum64_supported() -> bool {
+    let mut btf = Btf::new();
+    let name_offset = btf.add_string("enum64");
+
+    let enum_64_type = BtfType::Enum64(Enum64::new(
+        name_offset,
+        true,
+        vec![BtfEnum64::new(btf.add_string("a"), 1)],
+    ));
+    btf.add_type(enum_64_type);
 
     let btf_bytes = btf.to_bytes();
 

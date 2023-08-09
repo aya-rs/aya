@@ -39,8 +39,8 @@ use crate::{
     sys::{
         bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_cookie_supported,
         is_bpf_global_data_supported, is_btf_datasec_supported, is_btf_decl_tag_supported,
-        is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
-        is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
+        is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
+        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
         is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
         SyscallError,
     },
@@ -84,6 +84,7 @@ fn detect_features() -> Features {
             is_btf_float_supported(),
             is_btf_decl_tag_supported(),
             is_btf_type_tag_supported(),
+            is_btf_enum64_supported(),
         ))
     } else {
         None
