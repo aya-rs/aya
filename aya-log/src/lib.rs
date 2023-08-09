@@ -584,7 +584,7 @@ mod test {
     use aya_log_common::{write_record_header, WriteToBuf};
     use log::{logger, Level};
 
-    fn new_log(args: usize) -> Result<(usize, Vec<u8>), ()> {
+    fn new_log(args: usize) -> Option<(usize, Vec<u8>)> {
         let mut buf = vec![0; 8192];
         let len = write_record_header(
             &mut buf,
@@ -595,7 +595,7 @@ mod test {
             123,
             args,
         )?;
-        Ok((len, buf))
+        Some((len.get(), buf))
     }
 
     #[test]
@@ -603,7 +603,7 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(1).unwrap();
 
-        len += "test".write(&mut input[len..]).unwrap();
+        len += "test".write(&mut input[len..]).unwrap().get();
 
         _ = len;
 
@@ -621,8 +621,8 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(2).unwrap();
 
-        len += "hello ".write(&mut input[len..]).unwrap();
-        len += "test".write(&mut input[len..]).unwrap();
+        len += "hello ".write(&mut input[len..]).unwrap().get();
+        len += "test".write(&mut input[len..]).unwrap().get();
 
         _ = len;
 
@@ -640,8 +640,11 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(2).unwrap();
 
-        len += DisplayHint::LowerHex.write(&mut input[len..]).unwrap();
-        len += [0xde, 0xad].write(&mut input[len..]).unwrap();
+        len += DisplayHint::LowerHex
+            .write(&mut input[len..])
+            .unwrap()
+            .get();
+        len += [0xde, 0xad].write(&mut input[len..]).unwrap().get();
 
         _ = len;
 
@@ -659,13 +662,19 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(5).unwrap();
 
-        len += DisplayHint::LowerHex.write(&mut input[len..]).unwrap();
-        len += [0xde, 0xad].write(&mut input[len..]).unwrap();
+        len += DisplayHint::LowerHex
+            .write(&mut input[len..])
+            .unwrap()
+            .get();
+        len += [0xde, 0xad].write(&mut input[len..]).unwrap().get();
 
-        len += " ".write(&mut input[len..]).unwrap();
+        len += " ".write(&mut input[len..]).unwrap().get();
 
-        len += DisplayHint::UpperHex.write(&mut input[len..]).unwrap();
-        len += [0xbe, 0xef].write(&mut input[len..]).unwrap();
+        len += DisplayHint::UpperHex
+            .write(&mut input[len..])
+            .unwrap()
+            .get();
+        len += [0xbe, 0xef].write(&mut input[len..]).unwrap().get();
 
         _ = len;
 
@@ -683,9 +692,9 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(3).unwrap();
 
-        len += "default hint: ".write(&mut input[len..]).unwrap();
-        len += DisplayHint::Default.write(&mut input[len..]).unwrap();
-        len += 14.write(&mut input[len..]).unwrap();
+        len += "default hint: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Default.write(&mut input[len..]).unwrap().get();
+        len += 14.write(&mut input[len..]).unwrap().get();
 
         _ = len;
 
@@ -703,9 +712,12 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(3).unwrap();
 
-        len += "lower hex: ".write(&mut input[len..]).unwrap();
-        len += DisplayHint::LowerHex.write(&mut input[len..]).unwrap();
-        len += 200.write(&mut input[len..]).unwrap();
+        len += "lower hex: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::LowerHex
+            .write(&mut input[len..])
+            .unwrap()
+            .get();
+        len += 200.write(&mut input[len..]).unwrap().get();
 
         _ = len;
 
@@ -723,9 +735,12 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(3).unwrap();
 
-        len += "upper hex: ".write(&mut input[len..]).unwrap();
-        len += DisplayHint::UpperHex.write(&mut input[len..]).unwrap();
-        len += 200.write(&mut input[len..]).unwrap();
+        len += "upper hex: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::UpperHex
+            .write(&mut input[len..])
+            .unwrap()
+            .get();
+        len += 200.write(&mut input[len..]).unwrap().get();
 
         _ = len;
 
@@ -743,10 +758,10 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(3).unwrap();
 
-        len += "ipv4: ".write(&mut input[len..]).unwrap();
-        len += DisplayHint::Ip.write(&mut input[len..]).unwrap();
+        len += "ipv4: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
         // 10.0.0.1 as u32
-        len += 167772161u32.write(&mut input[len..]).unwrap();
+        len += 167772161u32.write(&mut input[len..]).unwrap().get();
 
         _ = len;
 
@@ -764,14 +779,14 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(3).unwrap();
 
-        len += "ipv6: ".write(&mut input[len..]).unwrap();
-        len += DisplayHint::Ip.write(&mut input[len..]).unwrap();
+        len += "ipv6: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
         // 2001:db8::1:1 as byte array
         let ipv6_arr: [u8; 16] = [
             0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
             0x00, 0x01,
         ];
-        len += ipv6_arr.write(&mut input[len..]).unwrap();
+        len += ipv6_arr.write(&mut input[len..]).unwrap().get();
 
         _ = len;
 
@@ -789,13 +804,13 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(3).unwrap();
 
-        len += "ipv6: ".write(&mut input[len..]).unwrap();
-        len += DisplayHint::Ip.write(&mut input[len..]).unwrap();
+        len += "ipv6: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
         // 2001:db8::1:1 as u16 array
         let ipv6_arr: [u16; 8] = [
             0x2001, 0x0db8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001, 0x0001,
         ];
-        len += ipv6_arr.write(&mut input[len..]).unwrap();
+        len += ipv6_arr.write(&mut input[len..]).unwrap().get();
 
         _ = len;
 
@@ -813,11 +828,14 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(3).unwrap();
 
-        len += "mac: ".write(&mut input[len..]).unwrap();
-        len += DisplayHint::LowerMac.write(&mut input[len..]).unwrap();
+        len += "mac: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::LowerMac
+            .write(&mut input[len..])
+            .unwrap()
+            .get();
         // 00:00:5e:00:53:af as byte array
         let mac_arr: [u8; 6] = [0x00, 0x00, 0x5e, 0x00, 0x53, 0xaf];
-        len += mac_arr.write(&mut input[len..]).unwrap();
+        len += mac_arr.write(&mut input[len..]).unwrap().get();
 
         _ = len;
 
@@ -835,11 +853,14 @@ mod test {
         testing_logger::setup();
         let (mut len, mut input) = new_log(3).unwrap();
 
-        len += "mac: ".write(&mut input[len..]).unwrap();
-        len += DisplayHint::UpperMac.write(&mut input[len..]).unwrap();
+        len += "mac: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::UpperMac
+            .write(&mut input[len..])
+            .unwrap()
+            .get();
         // 00:00:5E:00:53:AF as byte array
         let mac_arr: [u8; 6] = [0x00, 0x00, 0x5e, 0x00, 0x53, 0xaf];
-        len += mac_arr.write(&mut input[len..]).unwrap();
+        len += mac_arr.write(&mut input[len..]).unwrap().get();
 
         _ = len;
 

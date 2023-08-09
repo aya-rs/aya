@@ -1,6 +1,6 @@
 #![no_std]
 
-use core::num;
+use core::num::{NonZeroUsize, TryFromIntError};
 
 use num_enum::IntoPrimitive;
 
@@ -151,16 +151,16 @@ pub enum DisplayHint {
 //
 // llvm: <unknown>:0:0: in function _ZN14aya_log_common5write17hc9ed05433e23a663E { i64, i64 } (i8, ptr, i64, ptr, i64): only integer returns supported
 #[inline(always)]
-pub(crate) fn write(tag: u8, value: &[u8], buf: &mut [u8]) -> Result<usize, ()> {
-    let wire_len: LogValueLength = value
-        .len()
-        .try_into()
-        .map_err(|num::TryFromIntError { .. }| ())?;
+pub(crate) fn write(tag: u8, value: &[u8], buf: &mut [u8]) -> Option<NonZeroUsize> {
+    let wire_len: LogValueLength = match value.len().try_into() {
+        Ok(wire_len) => Some(wire_len),
+        Err(TryFromIntError { .. }) => None,
+    }?;
     let mut size = 0;
     macro_rules! copy_from_slice {
         ($value:expr) => {{
-            let buf = buf.get_mut(size..).ok_or(())?;
-            let buf = buf.get_mut(..$value.len()).ok_or(())?;
+            let buf = buf.get_mut(size..)?;
+            let buf = buf.get_mut(..$value.len())?;
             buf.copy_from_slice($value);
             size += $value.len();
         }};
@@ -168,12 +168,11 @@ pub(crate) fn write(tag: u8, value: &[u8], buf: &mut [u8]) -> Result<usize, ()> 
     copy_from_slice!(&[tag]);
     copy_from_slice!(&wire_len.to_ne_bytes());
     copy_from_slice!(value);
-    Ok(size)
+    NonZeroUsize::new(size)
 }
 
 pub trait WriteToBuf {
-    #[allow(clippy::result_unit_err)]
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()>;
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize>;
 }
 
 macro_rules! impl_write_to_buf {
@@ -182,7 +181,7 @@ macro_rules! impl_write_to_buf {
             // This need not be inlined because the return value is Result<N, ()> where N is
             // mem::size_of<$type>, which is a compile-time constant.
             #[inline(never)]
-            fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
+            fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
                 write($arg_type.into(), &self.to_ne_bytes(), buf)
             }
         }
@@ -208,7 +207,7 @@ impl WriteToBuf for [u8; 16] {
     // This need not be inlined because the return value is Result<N, ()> where N is 16, which is a
     // compile-time constant.
     #[inline(never)]
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
         write(Argument::ArrU8Len16.into(), &self, buf)
     }
 }
@@ -217,7 +216,7 @@ impl WriteToBuf for [u16; 8] {
     // This need not be inlined because the return value is Result<N, ()> where N is 16, which is a
     // compile-time constant.
     #[inline(never)]
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
         let bytes = unsafe { core::mem::transmute::<_, [u8; 16]>(self) };
         write(Argument::ArrU16Len8.into(), &bytes, buf)
     }
@@ -227,7 +226,7 @@ impl WriteToBuf for [u8; 6] {
     // This need not be inlined because the return value is Result<N, ()> where N is 6, which is a
     // compile-time constant.
     #[inline(never)]
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
         write(Argument::ArrU8Len6.into(), &self, buf)
     }
 }
@@ -237,7 +236,7 @@ impl WriteToBuf for &[u8] {
     //
     // llvm: <unknown>:0:0: in function _ZN63_$LT$$RF$$u5b$u8$u5d$$u20$as$u20$aya_log_common..WriteToBuf$GT$5write17h08f30a45f7b9f09dE { i64, i64 } (ptr, i64, ptr, i64): only integer returns supported
     #[inline(always)]
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
         write(Argument::Bytes.into(), self, buf)
     }
 }
@@ -247,7 +246,7 @@ impl WriteToBuf for &str {
     //
     // llvm: <unknown>:0:0: in function _ZN54_$LT$$RF$str$u20$as$u20$aya_log_common..WriteToBuf$GT$5write17h7e2d1ccaa758e2b5E { i64, i64 } (ptr, i64, ptr, i64): only integer returns supported
     #[inline(always)]
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
         write(Argument::Str.into(), self.as_bytes(), buf)
     }
 }
@@ -256,13 +255,12 @@ impl WriteToBuf for DisplayHint {
     // This need not be inlined because the return value is Result<N, ()> where N is 1, which is a
     // compile-time constant.
     #[inline(never)]
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
         let v: u8 = self.into();
         write(Argument::DisplayHint.into(), &v.to_ne_bytes(), buf)
     }
 }
 
-#[allow(clippy::result_unit_err)]
 #[doc(hidden)]
 #[inline(always)] // This function takes too many arguments to not be inlined.
 pub fn write_record_header(
@@ -273,13 +271,14 @@ pub fn write_record_header(
     file: &str,
     line: u32,
     num_args: usize,
-) -> Result<usize, ()> {
+) -> Option<NonZeroUsize> {
     let level: u8 = level.into();
     let mut size = 0;
     macro_rules! write {
         ($tag:expr, $value:expr) => {{
-            let buf = buf.get_mut(size..).ok_or(())?;
-            size += write($tag.into(), $value, buf)?;
+            let buf = buf.get_mut(size..)?;
+            let len = write($tag.into(), $value, buf)?;
+            size += len.get();
         }};
     }
     write!(RecordField::Target, target.as_bytes());
@@ -288,7 +287,7 @@ pub fn write_record_header(
     write!(RecordField::File, file.as_bytes());
     write!(RecordField::Line, &line.to_ne_bytes());
     write!(RecordField::NumArgs, &num_args.to_ne_bytes());
-    Ok(size)
+    NonZeroUsize::new(size)
 }
 
 #[cfg(test)]
