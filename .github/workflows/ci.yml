@@ -235,7 +235,11 @@ jobs:
           find test/.tmp -name '*.deb' -print0 | xargs -t -0 -I {} \
             sh -c "dpkg --fsys-tarfile {} | tar -C test/.tmp --wildcards --extract '*vmlinuz*' --file -"
 
-      - name: Run integration tests
+      - name: Run local integration tests
+        if: runner.os == 'Linux'
+        run: cargo xtask integration-test local
+
+      - name: Run virtualized integration tests
         run: find test/.tmp -name 'vmlinuz-*' | xargs -t cargo xtask integration-test vm
 
   # Provides a single status check for the entire build workflow.

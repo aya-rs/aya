@@ -8,13 +8,13 @@ use crate::utils::NetNsGuard;
 
 #[test]
 fn xdp() {
-    let _netns = NetNsGuard::new();
-
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 18, 0) {
         eprintln!("skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb");
         return;
     }
+
+    let _netns = NetNsGuard::new();
 
     let mut bpf = Bpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
@@ -46,13 +46,14 @@ fn two_progs() {
 
 #[test]
 fn extension() {
-    let _netns = NetNsGuard::new();
-
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 9, 0) {
         eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
         return;
     }
+
+    let _netns = NetNsGuard::new();
+
     let mut bpf = Bpf::load(crate::MAIN).unwrap();
     let pass: &mut Xdp = bpf.program_mut("xdp_pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
