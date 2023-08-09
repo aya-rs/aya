@@ -517,7 +517,7 @@ impl Btf {
                 }
                 // Sanitize VAR if they are not supported.
                 BtfType::Var(v) if !features.btf_datasec => {
-                    types.types[i] = BtfType::Int(Int::new(v.name_offset, 1, IntEncoding::None, 0));
+                    *t = BtfType::Int(Int::new(v.name_offset, 1, IntEncoding::None, 0));
                 }
                 // Sanitize DATASEC if they are not supported.
                 BtfType::DataSec(d) if !features.btf_datasec => {
@@ -548,8 +548,9 @@ impl Btf {
                         })
                         .collect();
 
-                    types.types[i] =
-                        BtfType::Struct(Struct::new(name_offset, members, entries.len() as u32));
+                    // Must reborrow here because we borrow `types` immutably above.
+                    let t = &mut types.types[i];
+                    *t = BtfType::Struct(Struct::new(name_offset, members, entries.len() as u32));
                 }
                 // Fixup DATASEC.
                 //
@@ -620,7 +621,10 @@ impl Btf {
                             }
                         }
                         fixed_section.entries = entries;
-                        types.types[i] = BtfType::DataSec(fixed_section);
+
+                        // Must reborrow here because we borrow `types` immutably above.
+                        let t = &mut types.types[i];
+                        *t = BtfType::DataSec(fixed_section);
                     }
                 }
                 // Fixup FUNC_PROTO.
@@ -643,7 +647,7 @@ impl Btf {
                         })
                         .collect();
                     let enum_type = BtfType::Enum(Enum::new(ty.name_offset, false, members));
-                    types.types[i] = enum_type;
+                    *t = enum_type;
                 }
                 // Sanitize FUNC.
                 BtfType::Func(ty) => {
@@ -651,9 +655,7 @@ impl Btf {
                     // Sanitize FUNC.
                     if !features.btf_func {
                         debug!("{}: not supported. replacing with TYPEDEF", kind);
-                        let typedef_type =
-                            BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
-                        types.types[i] = typedef_type;
+                        *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
                     } else if !features.btf_func_global
                         || name == "memset"
                         || name == "memcpy"
@@ -681,20 +683,17 @@ impl Btf {
                 // Sanitize FLOAT.
                 BtfType::Float(ty) if !features.btf_float => {
                     debug!("{}: not supported. replacing with STRUCT", kind);
-                    let struct_ty = BtfType::Struct(Struct::new(0, vec![], ty.size));
-                    types.types[i] = struct_ty;
+                    *t = BtfType::Struct(Struct::new(0, vec![], ty.size));
                 }
                 // Sanitize DECL_TAG.
                 BtfType::DeclTag(ty) if !features.btf_decl_tag => {
                     debug!("{}: not supported. replacing with INT", kind);
-                    let int_type = BtfType::Int(Int::new(ty.name_offset, 1, IntEncoding::None, 0));
-                    types.types[i] = int_type;
+                    *t = BtfType::Int(Int::new(ty.name_offset, 1, IntEncoding::None, 0));
                 }
                 // Sanitize TYPE_TAG.
                 BtfType::TypeTag(ty) if !features.btf_type_tag => {
                     debug!("{}: not supported. replacing with CONST", kind);
-                    let const_type = BtfType::Const(Const::new(ty.btf_type));
-                    types.types[i] = const_type;
+                    *t = BtfType::Const(Const::new(ty.btf_type));
                 }
                 // Sanitize Signed ENUMs.
                 BtfType::Enum(ty) if !features.btf_enum64 && ty.is_signed() => {
@@ -715,9 +714,7 @@ impl Btf {
                             offset: 0,
                         })
                         .collect();
-                    let union_type =
-                        BtfType::Union(Union::new(ty.name_offset, members.len() as u32, members));
-                    types.types[i] = union_type;
+                    *t = BtfType::Union(Union::new(ty.name_offset, members.len() as u32, members));
                 }
                 // The type does not need fixing up or sanitization.
                 _ => {}
