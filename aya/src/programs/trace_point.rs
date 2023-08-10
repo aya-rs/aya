@@ -86,7 +86,7 @@ impl TracePoint {
         let prog_fd = prog_fd.as_fd();
         let prog_fd = prog_fd.as_raw_fd();
         let tracefs = find_tracefs_path()?;
-        let id = read_sys_fs_trace_point_id(tracefs, category, name)?;
+        let id = read_sys_fs_trace_point_id(tracefs, category, name.as_ref())?;
         let fd =
             perf_event_open_trace_point(id, None).map_err(|(_code, io_error)| SyscallError {
                 call: "perf_event_open_trace_point",
@@ -149,7 +149,7 @@ impl TryFrom<FdLink> for TracePointLink {
 pub(crate) fn read_sys_fs_trace_point_id(
     tracefs: &Path,
     category: &str,
-    name: &str,
+    name: &Path,
 ) -> Result<u32, TracePointError> {
     let file = tracefs.join("events").join(category).join(name).join("id");
 

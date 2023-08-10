@@ -1,5 +1,9 @@
 //! Kernel space probes.
-use std::{io, os::fd::AsFd as _, path::Path};
+use std::{
+    io,
+    os::fd::AsFd as _,
+    path::{Path, PathBuf},
+};
 use thiserror::Error;
 
 use crate::{
@@ -68,7 +72,7 @@ impl KProbe {
     ///
     /// The returned value can be used to detach from the given function, see [KProbe::detach].
     pub fn attach(&mut self, fn_name: &str, offset: u64) -> Result<KProbeLinkId, ProgramError> {
-        attach(&mut self.data, self.kind, fn_name, offset, None)
+        attach(&mut self.data, self.kind, Path::new(fn_name), offset, None)
     }
 
     /// Detaches the program.
@@ -114,7 +118,7 @@ pub enum KProbeError {
     #[error("`{filename}`")]
     FileError {
         /// The file name
-        filename: String,
+        filename: PathBuf,
         /// The [`io::Error`] returned from the file operation
         #[source]
         io_error: io::Error,
