@@ -477,10 +477,14 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<OwnedFd, SyscallErro
     })
 }
 
-fn bpf_obj_get_info_by_fd<T>(fd: BorrowedFd<'_>) -> Result<T, SyscallError> {
+fn bpf_obj_get_info_by_fd<T, F: FnOnce(&mut T)>(
+    fd: BorrowedFd<'_>,
+    init: F,
+) -> Result<T, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    // info gets entirely populated by the kernel
-    let info = MaybeUninit::zeroed();
+    let mut info = unsafe { mem::zeroed() };
+
+    init(&mut info);
 
     attr.info.bpf_fd = fd.as_raw_fd() as u32;
     attr.info.info = &info as *const _ as u64;
@@ -489,7 +493,7 @@ fn bpf_obj_get_info_by_fd<T>(fd: BorrowedFd<'_>) -> Result<T, SyscallError> {
     match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
         Ok(code) => {
             assert_eq!(code, 0);
-            Ok(unsafe { info.assume_init() })
+            Ok(info)
         }
         Err((code, io_error)) => {
             assert_eq!(code, -1);
@@ -501,13 +505,19 @@ fn bpf_obj_get_info_by_fd<T>(fd: BorrowedFd<'_>) -> Result<T, SyscallError> {
     }
 }
 
-pub(crate) fn bpf_prog_get_info_by_fd(fd: RawFd) -> Result<bpf_prog_info, SyscallError> {
+pub(crate) fn bpf_prog_get_info_by_fd(
+    fd: RawFd,
+    map_ids: &mut [u32],
+) -> Result<bpf_prog_info, SyscallError> {
     let fd = unsafe { BorrowedFd::borrow_raw(fd) };
-    bpf_obj_get_info_by_fd::<bpf_prog_info>(fd)
+    bpf_obj_get_info_by_fd(fd, |info: &mut bpf_prog_info| {
+        info.nr_map_ids = map_ids.len() as _;
+        info.map_ids = map_ids.as_mut_ptr() as _;
+    })
 }
 
 pub(crate) fn bpf_map_get_info_by_fd(fd: BorrowedFd<'_>) -> Result<bpf_map_info, SyscallError> {
-    bpf_obj_get_info_by_fd::<bpf_map_info>(fd)
+    bpf_obj_get_info_by_fd(fd, |_| {})
 }
 
 pub(crate) fn bpf_link_get_fd_by_id(link_id: u32) -> Result<OwnedFd, SyscallError> {
@@ -525,7 +535,7 @@ pub(crate) fn bpf_link_get_fd_by_id(link_id: u32) -> Result<OwnedFd, SyscallErro
 }
 
 pub(crate) fn bpf_link_get_info_by_fd(fd: BorrowedFd<'_>) -> Result<bpf_link_info, SyscallError> {
-    bpf_obj_get_info_by_fd::<bpf_link_info>(fd)
+    bpf_obj_get_info_by_fd(fd, |_| {})
 }
 
 pub(crate) fn btf_obj_get_info_by_fd(
