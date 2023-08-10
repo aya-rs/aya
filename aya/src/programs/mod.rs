@@ -488,9 +488,9 @@ impl<T: Link> ProgramData<T> {
         path: P,
         verifier_log_level: VerifierLogLevel,
     ) -> Result<ProgramData<T>, ProgramError> {
-        let path_string =
-            CString::new(path.as_ref().as_os_str().to_string_lossy().as_bytes()).unwrap();
+        use std::os::unix::ffi::OsStrExt as _;
 
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
             call: "bpf_obj_get",
             io_error,
@@ -521,6 +521,8 @@ fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError
 }
 
 fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Result<(), PinError> {
+    use std::os::unix::ffi::OsStrExt as _;
+
     let fd = data.fd.as_ref().ok_or(PinError::NoFd {
         name: data
             .name
@@ -528,7 +530,7 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
             .unwrap_or("<unknown program>")
             .to_string(),
     })?;
-    let path_string = CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
+    let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|e| {
         PinError::InvalidPinPath {
             error: e.to_string(),
         }

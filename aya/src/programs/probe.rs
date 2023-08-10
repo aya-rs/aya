@@ -1,10 +1,12 @@
 use crate::util::KernelVersion;
 use libc::pid_t;
 use std::{
+    ffi::{OsStr, OsString},
+    fmt::Write as _,
     fs::{self, OpenOptions},
     io::{self, Write},
     os::fd::{AsFd as _, AsRawFd as _, OwnedFd},
-    path::Path,
+    path::{Path, PathBuf},
     process,
     sync::atomic::{AtomicUsize, Ordering},
 };
@@ -42,16 +44,64 @@ impl ProbeKind {
     }
 }
 
+pub(crate) fn lines(bytes: &[u8]) -> impl Iterator<Item = &OsStr> {
+    use std::os::unix::ffi::OsStrExt as _;
+
+    bytes.as_ref().split(|b| b == &b'\n').map(|mut line| {
+        while let [stripped @ .., c] = line {
+            if c.is_ascii_whitespace() {
+                line = stripped;
+                continue;
+            }
+            break;
+        }
+        OsStr::from_bytes(line)
+    })
+}
+
+pub(crate) trait OsStringExt {
+    fn starts_with(&self, needle: &OsStr) -> bool;
+    fn ends_with(&self, needle: &OsStr) -> bool;
+    fn strip_prefix(&self, prefix: &OsStr) -> Option<&OsStr>;
+    fn strip_suffix(&self, suffix: &OsStr) -> Option<&OsStr>;
+}
+
+impl OsStringExt for OsStr {
+    fn starts_with(&self, needle: &OsStr) -> bool {
+        use std::os::unix::ffi::OsStrExt as _;
+        self.as_bytes().starts_with(needle.as_bytes())
+    }
+
+    fn ends_with(&self, needle: &OsStr) -> bool {
+        use std::os::unix::ffi::OsStrExt as _;
+        self.as_bytes().ends_with(needle.as_bytes())
+    }
+
+    fn strip_prefix(&self, prefix: &OsStr) -> Option<&OsStr> {
+        use std::os::unix::ffi::OsStrExt as _;
+        self.as_bytes()
+            .strip_prefix(prefix.as_bytes())
+            .map(OsStr::from_bytes)
+    }
+
+    fn strip_suffix(&self, suffix: &OsStr) -> Option<&OsStr> {
+        use std::os::unix::ffi::OsStrExt as _;
+        self.as_bytes()
+            .strip_suffix(suffix.as_bytes())
+            .map(OsStr::from_bytes)
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct ProbeEvent {
     kind: ProbeKind,
-    event_alias: String,
+    event_alias: OsString,
 }
 
 pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     program_data: &mut ProgramData<T>,
     kind: ProbeKind,
-    fn_name: &str,
+    fn_name: &Path,
     offset: u64,
     pid: Option<pid_t>,
 ) -> Result<T::Id, ProgramError> {
@@ -90,7 +140,7 @@ pub(crate) fn detach_debug_fs(event: ProbeEvent) -> Result<(), ProgramError> {
 
 fn create_as_probe(
     kind: ProbeKind,
-    fn_name: &str,
+    fn_name: &Path,
     offset: u64,
     pid: Option<pid_t>,
 ) -> Result<OwnedFd, ProgramError> {
@@ -126,10 +176,10 @@ fn create_as_probe(
 
 fn create_as_trace_point(
     kind: ProbeKind,
-    name: &str,
+    name: &Path,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<(OwnedFd, String), ProgramError> {
+) -> Result<(OwnedFd, OsString), ProgramError> {
     use ProbeKind::*;
 
     let tracefs = find_tracefs_path()?;
@@ -142,7 +192,7 @@ fn create_as_trace_point(
     };
 
     let category = format!("{}s", kind.pmu());
-    let tpid = read_sys_fs_trace_point_id(tracefs, &category, &event_alias)?;
+    let tpid = read_sys_fs_trace_point_id(tracefs, &category, event_alias.as_ref())?;
     let fd = perf_event_open_trace_point(tpid, pid).map_err(|(_code, io_error)| SyscallError {
         call: "perf_event_open",
         io_error,
@@ -154,9 +204,10 @@ fn create_as_trace_point(
 fn create_probe_event(
     tracefs: &Path,
     kind: ProbeKind,
-    fn_name: &str,
+    fn_name: &Path,
     offset: u64,
-) -> Result<String, (String, io::Error)> {
+) -> Result<OsString, (PathBuf, io::Error)> {
+    use std::os::unix::ffi::OsStrExt as _;
     use ProbeKind::*;
 
     let events_file_name = tracefs.join(format!("{}_events", kind.pmu()));
@@ -165,93 +216,129 @@ fn create_probe_event(
         KRetProbe | URetProbe => 'r',
     };
 
-    let fixed_fn_name = fn_name.replace(['.', '/', '-'], "_");
+    let fn_name = fn_name.as_os_str();
 
-    let event_alias = format!(
-        "aya_{}_{}_{}_{:#x}_{}",
+    let mut event_alias = OsString::new();
+    write!(
+        &mut event_alias,
+        "aya_{}_{}_",
         process::id(),
         probe_type_prefix,
-        fixed_fn_name,
+    )
+    .unwrap();
+    for b in fn_name.as_bytes() {
+        let b = match *b {
+            b'.' | b'/' | b'-' => b'_',
+            b => b,
+        };
+        event_alias.push(OsStr::from_bytes(&[b]));
+    }
+    write!(
+        &mut event_alias,
+        "_{:#x}_{}",
         offset,
         PROBE_NAME_INDEX.fetch_add(1, Ordering::AcqRel)
-    );
-    let offset_suffix = match kind {
-        KProbe => format!("+{offset}"),
-        UProbe | URetProbe => format!(":{offset:#x}"),
-        _ => String::new(),
-    };
-    let probe = format!(
-        "{}:{}s/{} {}{}\n",
-        probe_type_prefix,
-        kind.pmu(),
-        event_alias,
-        fn_name,
-        offset_suffix
-    );
+    )
+    .unwrap();
 
-    let mut events_file = OpenOptions::new()
+    let mut probe = OsString::new();
+    write!(&mut probe, "{}:{}s/", probe_type_prefix, kind.pmu(),).unwrap();
+    probe.push(&event_alias);
+    probe.push(" ");
+    probe.push(fn_name);
+    match kind {
+        KProbe => write!(&mut probe, "+{offset}").unwrap(),
+        UProbe | URetProbe => write!(&mut probe, ":{offset:#x}").unwrap(),
+        _ => {}
+    };
+    probe.push("\n");
+
+    OpenOptions::new()
         .append(true)
         .open(&events_file_name)
-        .map_err(|e| (events_file_name.display().to_string(), e))?;
-
-    events_file
-        .write_all(probe.as_bytes())
-        .map_err(|e| (events_file_name.display().to_string(), e))?;
+        .and_then(|mut events_file| events_file.write_all(probe.as_bytes()))
+        .map_err(|e| (events_file_name, e))?;
 
     Ok(event_alias)
 }
 
-fn delete_probe_event(tracefs: &Path, event: ProbeEvent) -> Result<(), (String, io::Error)> {
+fn delete_probe_event(tracefs: &Path, event: ProbeEvent) -> Result<(), (PathBuf, io::Error)> {
+    use std::os::unix::ffi::OsStrExt as _;
+
     let ProbeEvent { kind, event_alias } = event;
     let events_file_name = tracefs.join(format!("{}_events", kind.pmu()));
 
-    let events = fs::read_to_string(&events_file_name)
-        .map_err(|e| (events_file_name.display().to_string(), e))?;
+    fs::read(&events_file_name)
+        .and_then(|events| {
+            let found = lines(&events).any(|line| {
+                let mut line = line.as_bytes();
+                // See [`create_probe_event`] and the documentation:
+                //
+                // https://docs.kernel.org/trace/kprobetrace.html
+                //
+                // https://docs.kernel.org/trace/uprobetracer.html
+                loop {
+                    match line.split_first() {
+                        None => break false,
+                        Some((b, rest)) => {
+                            line = rest;
+                            if *b == b'/' {
+                                break line.starts_with(event_alias.as_bytes());
+                            }
+                        }
+                    }
+                }
+            });
 
-    let found = events.lines().any(|line| line.contains(&event_alias));
+            if found {
+                OpenOptions::new()
+                    .append(true)
+                    .open(&events_file_name)
+                    .and_then(|mut events_file| {
+                        let mut rm = OsString::new();
+                        rm.push("-:");
+                        rm.push(event_alias);
+                        rm.push("\n");
 
-    if found {
-        let mut events_file = OpenOptions::new()
-            .append(true)
-            .open(&events_file_name)
-            .map_err(|e| (events_file_name.display().to_string(), e))?;
-
-        let rm = format!("-:{event_alias}\n");
-
-        events_file
-            .write_all(rm.as_bytes())
-            .map_err(|e| (events_file_name.display().to_string(), e))?;
-    }
-
-    Ok(())
+                        events_file.write_all(rm.as_bytes())
+                    })
+            } else {
+                Ok(())
+            }
+        })
+        .map_err(|e| (events_file_name, e))
 }
 
-fn read_sys_fs_perf_type(pmu: &str) -> Result<u32, (String, io::Error)> {
-    let file = format!("/sys/bus/event_source/devices/{pmu}/type");
+fn read_sys_fs_perf_type(pmu: &str) -> Result<u32, (PathBuf, io::Error)> {
+    let file = Path::new("/sys/bus/event_source/devices")
+        .join(pmu)
+        .join("type");
 
-    let perf_ty = fs::read_to_string(&file).map_err(|e| (file.clone(), e))?;
-    let perf_ty = perf_ty
-        .trim()
-        .parse::<u32>()
-        .map_err(|e| (file, io::Error::new(io::ErrorKind::Other, e)))?;
-
-    Ok(perf_ty)
+    fs::read_to_string(&file)
+        .and_then(|perf_ty| {
+            perf_ty
+                .trim()
+                .parse::<u32>()
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+        })
+        .map_err(|e| (file, e))
 }
 
-fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, (String, io::Error)> {
-    let file = format!("/sys/bus/event_source/devices/{pmu}/format/retprobe");
+fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, (PathBuf, io::Error)> {
+    let file = Path::new("/sys/bus/event_source/devices")
+        .join(pmu)
+        .join("format/retprobe");
 
-    let data = fs::read_to_string(&file).map_err(|e| (file.clone(), e))?;
+    fs::read_to_string(&file)
+        .and_then(|data| {
+            let mut parts = data.trim().splitn(2, ':').skip(1);
+            let config = parts
+                .next()
+                .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "invalid format"))?;
 
-    let mut parts = data.trim().splitn(2, ':').skip(1);
-    let config = parts.next().ok_or_else(|| {
-        (
-            file.clone(),
-            io::Error::new(io::ErrorKind::Other, "invalid format"),
-        )
-    })?;
-
-    config
-        .parse::<u32>()
-        .map_err(|e| (file, io::Error::new(io::ErrorKind::Other, e)))
+            config
+                .parse::<u32>()
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+        })
+        .map_err(|e| (file, e))
 }

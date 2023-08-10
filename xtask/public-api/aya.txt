@@ -2869,7 +2869,7 @@ pub fn aya::programs::fexit::FExitLinkId::from(t: T) -> T
 pub mod aya::programs::kprobe
 pub enum aya::programs::kprobe::KProbeError
 pub aya::programs::kprobe::KProbeError::FileError
-pub aya::programs::kprobe::KProbeError::FileError::filename: alloc::string::String
+pub aya::programs::kprobe::KProbeError::FileError::filename: std::path::PathBuf
 pub aya::programs::kprobe::KProbeError::FileError::io_error: std::io::error::Error
 impl core::convert::From<aya::programs::kprobe::KProbeError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::kprobe::KProbeError) -> Self
@@ -4347,7 +4347,7 @@ pub fn aya::programs::trace_point::TracePointLinkId::from(t: T) -> T
 pub mod aya::programs::uprobe
 pub enum aya::programs::uprobe::UProbeError
 pub aya::programs::uprobe::UProbeError::FileError
-pub aya::programs::uprobe::UProbeError::FileError::filename: alloc::string::String
+pub aya::programs::uprobe::UProbeError::FileError::filename: std::path::PathBuf
 pub aya::programs::uprobe::UProbeError::FileError::io_error: std::io::error::Error
 pub aya::programs::uprobe::UProbeError::InvalidLdSoCache
 pub aya::programs::uprobe::UProbeError::InvalidLdSoCache::io_error: alloc::sync::Arc<std::io::error::Error>
@@ -4837,7 +4837,7 @@ impl<T> core::convert::From<T> for aya::programs::extension::ExtensionError
 pub fn aya::programs::extension::ExtensionError::from(t: T) -> T
 pub enum aya::programs::KProbeError
 pub aya::programs::KProbeError::FileError
-pub aya::programs::KProbeError::FileError::filename: alloc::string::String
+pub aya::programs::KProbeError::FileError::filename: std::path::PathBuf
 pub aya::programs::KProbeError::FileError::io_error: std::io::error::Error
 impl core::convert::From<aya::programs::kprobe::KProbeError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::kprobe::KProbeError) -> Self
@@ -5475,7 +5475,7 @@ impl<T> core::convert::From<T> for aya::programs::trace_point::TracePointError
 pub fn aya::programs::trace_point::TracePointError::from(t: T) -> T
 pub enum aya::programs::UProbeError
 pub aya::programs::UProbeError::FileError
-pub aya::programs::UProbeError::FileError::filename: alloc::string::String
+pub aya::programs::UProbeError::FileError::filename: std::path::PathBuf
 pub aya::programs::UProbeError::FileError::io_error: std::io::error::Error
 pub aya::programs::UProbeError::InvalidLdSoCache
 pub aya::programs::UProbeError::InvalidLdSoCache::io_error: alloc::sync::Arc<std::io::error::Error>
