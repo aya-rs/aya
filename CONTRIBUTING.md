@@ -17,12 +17,16 @@ version of aya you're using and which version of the linux kernel.
 
 If you find an API that is not documented, unclear or missing examples, please
 file an issue. If you make changes to the documentation, please read
-https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html and make sure
-your changes conform to the format outlined here
-https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html#documenting-components.
+[How To Write Documentation] and make sure your changes conform to the
+format outlined in [Documenting Components].
 
-If you want to make changes to the Aya Book, see the readme in the book repo
-https://github.com/aya-rs/book.
+[How To Write Documentation]: https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html
+[Documenting Components]: https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html#documenting-components
+
+If you want to make changes to the Aya Book, see the readme in the
+[book repository].
+
+[book repository]: https://github.com/aya-rs/book
 
 ## Fixing bugs and implementing new features
 
@@ -31,7 +35,11 @@ helps us avoid duplicating work. If your work includes publicly visible changes,
 make sure those are properly documented as explained in the section above.
 
 ### Running tests
-Run the unit tests with `cargo test`. See [Aya Integration Tests](https://github.com/aya-rs/aya/blob/main/test/README.md) regarding running the integration tests.
+
+Run the unit tests with `cargo test`. See [Aya Integration Tests] regarding
+running the integration tests.
+
+[Aya Integration Tests]: https://github.com/aya-rs/aya/blob/main/test/README.md
 
 ### Commits
 
@@ -45,21 +53,19 @@ change, please squash those together before asking for a review.
 A good commit message should describe what changed and why.
 
 1. The first line should:
+    - Contain a short description of the change (preferably 50 characters or less,
+      and no more than 72 characters)
+    - Be entirely in lowercase with the exception of proper nouns, acronyms, and
+      the words that refer to code, like function/variable names
+    - Be prefixed with the name of the sub crate being changed
 
-  * contain a short description of the change (preferably 50 characters or less,
-    and no more than 72 characters)
-  * be entirely in lowercase with the exception of proper nouns, acronyms, and
-    the words that refer to code, like function/variable names
-  * be prefixed with the name of the sub crate being changed
+    Examples:
+    - `aya: handle reordered functions`
+    - `aya-bpf: SkSkbContext: add ::l3_csum_replace`
 
-  Examples:
-
-  * aya: handle reordered functions
-  * aya-bpf: SkSkbContext: add ::l3_csum_replace
-
-2. Keep the second line blank.
-3. Wrap all other lines at 72 columns (except for long URLs).
-4. If your patch fixes an open issue, you can add a reference to it at the end
+1. Keep the second line blank.
+1. Wrap all other lines at 72 columns (except for long URLs).
+1. If your patch fixes an open issue, you can add a reference to it at the end
    of the log. Use the `Fixes: #` prefix and the issue number. For other
    references use `Refs: #`. `Refs` may include multiple issues, separated by a
    comma.
