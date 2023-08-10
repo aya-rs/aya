@@ -1,12 +1,7 @@
 //! A hash map of kernel or user space stack traces.
 //!
 //! See [`StackTraceMap`] for documentation and examples.
-use std::{
-    borrow::{Borrow, Cow},
-    fs, io, mem,
-    path::Path,
-    str::FromStr,
-};
+use std::{borrow::Borrow, fs, io, mem, path::Path, str::FromStr};
 
 use crate::{
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys},
@@ -51,15 +46,19 @@ use crate::{
 /// // here we resolve symbol names using kernel symbols. If this was a user space stack (for
 /// // example captured from a uprobe), you'd have to load the symbols using some other mechanism
 /// // (eg loading the target binary debuginfo)
-/// for frame in stack_trace.resolve(&ksyms).frames() {
-///     println!(
-///         "{:#x} {}",
-///         frame.ip,
-///         frame
-///             .symbol_name
-///             .as_deref()
-///             .unwrap_or("[unknown symbol name]")
-///     );
+/// for frame in stack_trace.frames() {
+///     if let Some(sym) = ksyms.range(..=frame.ip).next_back().map(|(_, s)| s) {
+///         println!(
+///             "{:#x} {}",
+///             frame.ip,
+///             sym
+///         );
+///     } else {
+///         println!(
+///             "{:#x}",
+///             frame.ip
+///         );
+///     }
 /// }
 ///
 /// # Ok::<(), Error>(())
@@ -118,10 +117,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
         let frames = frames
             .into_iter()
             .take_while(|ip| *ip != 0)
-            .map(|ip| StackFrame {
-                ip,
-                symbol_name: None,
-            })
+            .map(|ip| StackFrame { ip })
             .collect::<Vec<_>>();
 
         Ok(StackTrace {
@@ -162,12 +158,6 @@ impl<'a, T: Borrow<MapData>> IntoIterator for &'a StackTraceMap<T> {
     }
 }
 
-/// A resolver for symbols based on an address obtained from a stack trace.
-pub trait SymbolResolver {
-    /// Resolve a symbol for a given address, if possible.
-    fn resolve_symbol(&self, addr: u64) -> Option<Cow<'_, str>>;
-}
-
 /// A kernel or user space stack trace.
 ///
 /// See the [`StackTraceMap`] documentation for examples.
@@ -178,19 +168,6 @@ pub struct StackTrace {
 }
 
 impl StackTrace {
-    /// Resolves symbol names using the given symbol map.
-    ///
-    /// You can use [`util::kernel_symbols()`](crate::util::kernel_symbols) to load kernel symbols. For
-    /// user-space traces you need to provide the symbols, for example loading
-    /// them from debug info.
-    pub fn resolve<R: SymbolResolver>(&mut self, symbols: &R) -> &StackTrace {
-        for frame in self.frames.iter_mut() {
-            frame.symbol_name = symbols.resolve_symbol(frame.ip).map(|s| s.into_owned())
-        }
-
-        self
-    }
-
     /// Returns the frames in this stack trace.
     pub fn frames(&self) -> &[StackFrame] {
         &self.frames
@@ -201,11 +178,6 @@ impl StackTrace {
 pub struct StackFrame {
     /// The instruction pointer of this frame.
     pub ip: u64,
-    /// The symbol name corresponding to the start of this frame.
-    ///
-    /// Set to `Some()` if the frame address can be found in the symbols passed
-    /// to [`StackTrace::resolve`].
-    pub symbol_name: Option<String>,
 }
 
 fn sysctl<T: FromStr>(key: &str) -> Result<T, io::Error> {

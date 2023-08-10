@@ -708,7 +708,6 @@ pub fn aya::maps::stack::Stack<T, V>::from(t: T) -> T
 pub mod aya::maps::stack_trace
 pub struct aya::maps::stack_trace::StackFrame
 pub aya::maps::stack_trace::StackFrame::ip: u64
-pub aya::maps::stack_trace::StackFrame::symbol_name: core::option::Option<alloc::string::String>
 impl core::marker::Send for aya::maps::stack_trace::StackFrame
 impl core::marker::Sync for aya::maps::stack_trace::StackFrame
 impl core::marker::Unpin for aya::maps::stack_trace::StackFrame
@@ -734,7 +733,6 @@ pub struct aya::maps::stack_trace::StackTrace
 pub aya::maps::stack_trace::StackTrace::id: u32
 impl aya::maps::stack_trace::StackTrace
 pub fn aya::maps::stack_trace::StackTrace::frames(&self) -> &[aya::maps::stack_trace::StackFrame]
-pub fn aya::maps::stack_trace::StackTrace::resolve<R: aya::maps::stack_trace::SymbolResolver>(&mut self, symbols: &R) -> &aya::maps::stack_trace::StackTrace
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::IterableMap<u32, aya::maps::stack_trace::StackTrace> for aya::maps::stack_trace::StackTraceMap<T>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::get(&self, index: &u32) -> core::result::Result<aya::maps::stack_trace::StackTrace, aya::maps::MapError>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::map(&self) -> &aya::maps::MapData
@@ -803,10 +801,6 @@ impl<T> core::borrow::BorrowMut<T> for aya::maps::stack_trace::StackTraceMap<T> 
 pub fn aya::maps::stack_trace::StackTraceMap<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::stack_trace::StackTraceMap<T>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::from(t: T) -> T
-pub trait aya::maps::stack_trace::SymbolResolver
-pub fn aya::maps::stack_trace::SymbolResolver::resolve_symbol(&self, addr: u64) -> core::option::Option<alloc::borrow::Cow<'_, str>>
-impl aya::maps::stack_trace::SymbolResolver for aya::util::SimpleSymbolResolver
-pub fn aya::util::SimpleSymbolResolver::resolve_symbol(&self, addr: u64) -> core::option::Option<alloc::borrow::Cow<'_, str>>
 pub enum aya::maps::Map
 pub aya::maps::Map::Array(aya::maps::MapData)
 pub aya::maps::Map::BloomFilter(aya::maps::MapData)
@@ -6935,11 +6929,10 @@ impl<T> core::borrow::BorrowMut<T> for aya::util::KernelVersion where T: core::m
 pub fn aya::util::KernelVersion::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::from(t: T) -> T
-pub fn aya::util::kernel_symbols() -> core::result::Result<aya::util::SimpleSymbolResolver, std::io::error::Error>
+pub fn aya::util::kernel_symbols() -> core::result::Result<alloc::collections::btree::map::BTreeMap<u64, alloc::string::String>, std::io::error::Error>
 pub fn aya::util::nr_cpus() -> core::result::Result<usize, std::io::error::Error>
 pub fn aya::util::online_cpus() -> core::result::Result<alloc::vec::Vec<u32>, std::io::error::Error>
 pub fn aya::util::syscall_prefix() -> core::result::Result<&'static str, std::io::error::Error>
-pub type aya::util::SimpleSymbolResolver = alloc::collections::btree::map::BTreeMap<u64, alloc::string::String>
 pub macro aya::include_bytes_aligned!
 pub enum aya::BpfError
 pub aya::BpfError::BtfError(aya_obj::btf::btf::BtfError)
