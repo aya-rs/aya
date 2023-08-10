@@ -488,7 +488,7 @@ impl<T: Link> ProgramData<T> {
             io_error,
         })?;
 
-        let info = bpf_prog_get_info_by_fd(fd.as_raw_fd())?;
+        let info = bpf_prog_get_info_by_fd(fd.as_raw_fd(), &mut [])?;
         let name = ProgramInfo(info).name_as_str().map(|s| s.to_string());
         ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), info, verifier_log_level)
     }
@@ -955,7 +955,7 @@ impl ProgramInfo {
             io_error,
         })?;
 
-        let info = bpf_prog_get_info_by_fd(fd.as_raw_fd())?;
+        let info = bpf_prog_get_info_by_fd(fd.as_raw_fd(), &mut [])?;
         Ok(ProgramInfo(info))
     }
 }
@@ -991,7 +991,7 @@ pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramErro
         })
         .map(|fd| {
             let fd = fd?;
-            bpf_prog_get_info_by_fd(fd.as_raw_fd())
+            bpf_prog_get_info_by_fd(fd.as_raw_fd(), &mut [])
         })
         .map(|result| result.map(ProgramInfo).map_err(Into::into))
 }
