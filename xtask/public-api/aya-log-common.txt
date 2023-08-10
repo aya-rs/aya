@@ -54,7 +54,7 @@ pub aya_log_common::DisplayHint::LowerMac
 pub aya_log_common::DisplayHint::UpperHex
 pub aya_log_common::DisplayHint::UpperMac
 impl aya_log_common::WriteToBuf for aya_log_common::DisplayHint
-pub fn aya_log_common::DisplayHint::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn aya_log_common::DisplayHint::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl core::convert::From<aya_log_common::DisplayHint> for u8
 pub fn u8::from(enum_value: aya_log_common::DisplayHint) -> Self
 impl core::clone::Clone for aya_log_common::DisplayHint
@@ -216,41 +216,41 @@ impl aya_log_common::UpperHexFormatter for usize
 pub trait aya_log_common::UpperMacFormatter
 impl aya_log_common::UpperMacFormatter for [u8; 6]
 pub trait aya_log_common::WriteToBuf
-pub fn aya_log_common::WriteToBuf::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn aya_log_common::WriteToBuf::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for &[u8]
-pub fn &[u8]::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn &[u8]::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for &str
-pub fn &str::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn &str::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for [u16; 8]
-pub fn [u16; 8]::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn [u16; 8]::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for [u8; 16]
-pub fn [u8; 16]::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn [u8; 16]::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for [u8; 6]
-pub fn [u8; 6]::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn [u8; 6]::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for aya_log_common::DisplayHint
-pub fn aya_log_common::DisplayHint::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn aya_log_common::DisplayHint::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for f32
-pub fn f32::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn f32::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for f64
-pub fn f64::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn f64::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for i16
-pub fn i16::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn i16::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for i32
-pub fn i32::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn i32::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for i64
-pub fn i64::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn i64::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for i8
-pub fn i8::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn i8::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for isize
-pub fn isize::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn isize::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for u16
-pub fn u16::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn u16::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for u32
-pub fn u32::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn u32::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for u64
-pub fn u64::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn u64::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for u8
-pub fn u8::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn u8::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for usize
-pub fn usize::write(self, buf: &mut [u8]) -> core::result::Result<usize, ()>
+pub fn usize::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 pub type aya_log_common::LogValueLength = u16

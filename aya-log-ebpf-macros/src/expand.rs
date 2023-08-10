@@ -147,8 +147,8 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
         match unsafe { &mut ::aya_log_ebpf::AYA_LOG_BUF }.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
             None => {},
             Some(::aya_log_ebpf::LogBuf { buf }) => {
-                let _: Result<(), ()> = (|| {
-                    let mut len = ::aya_log_ebpf::write_record_header(
+                let _: Option<()> = (|| {
+                    let size = ::aya_log_ebpf::write_record_header(
                         buf,
                         #target,
                         #lvl,
@@ -157,13 +157,15 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
                         line!(),
                         #num_args,
                     )?;
+                    let mut size = size.get();
                     #(
-                        let slice = buf.get_mut(len..).ok_or(())?;
-                        len += ::aya_log_ebpf::WriteToBuf::write(#values_iter, slice)?;
+                        let slice = buf.get_mut(size..)?;
+                        let len = ::aya_log_ebpf::WriteToBuf::write(#values_iter, slice)?;
+                        size += len.get();
                     )*
-                    let record = buf.get(..len).ok_or(())?;
+                    let record = buf.get(..size)?;
                     unsafe { &mut ::aya_log_ebpf::AYA_LOGS }.output(#ctx, record, 0);
-                    Ok(())
+                    Some(())
                 })();
             }
         }
