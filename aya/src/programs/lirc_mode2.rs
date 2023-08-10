@@ -131,7 +131,7 @@ impl LircLink {
 
     /// Get ProgramInfo from this link
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-        bpf_prog_get_info_by_fd(self.prog_fd)
+        bpf_prog_get_info_by_fd(self.prog_fd, &[])
             .map(ProgramInfo)
             .map_err(Into::into)
     }
