@@ -3,7 +3,11 @@
 pub use aya_obj::programs::CgroupSockAddrAttachType;
 
 use crate::util::KernelVersion;
-use std::{hash::Hash, os::fd::AsRawFd, path::Path};
+use std::{
+    hash::Hash,
+    os::fd::{AsFd as _, AsRawFd},
+    path::Path,
+};
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
@@ -68,7 +72,9 @@ impl CgroupSockAddr {
     ///
     /// The returned value can be used to detach, see [CgroupSockAddr::detach].
     pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<CgroupSockAddrLinkId, ProgramError> {
-        let prog_fd = self.data.fd_or_err()?;
+        let prog_fd = self.fd()?;
+        let prog_fd = prog_fd.as_fd();
+        let prog_fd = prog_fd.as_raw_fd();
         let cgroup_fd = cgroup.as_raw_fd();
         let attach_type = self.data.expected_attach_type.unwrap();
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {

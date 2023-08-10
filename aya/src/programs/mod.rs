@@ -69,7 +69,7 @@ use std::{
     ffi::CString,
     io,
     num::NonZeroU32,
-    os::fd::{AsFd, AsRawFd, IntoRawFd as _, OwnedFd, RawFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd},
     path::{Path, PathBuf},
     sync::Arc,
     time::{Duration, SystemTime},
@@ -214,12 +214,23 @@ pub enum ProgramError {
 }
 
 /// A [`Program`] file descriptor.
-#[derive(Copy, Clone)]
-pub struct ProgramFd(RawFd);
+#[derive(Debug)]
+pub struct ProgramFd(OwnedFd);
 
-impl AsRawFd for ProgramFd {
-    fn as_raw_fd(&self) -> RawFd {
-        self.0
+impl ProgramFd {
+    /// Creates a new `ProgramFd` instance that shares the same underlying file
+    /// description as the existing `ProgramFd` instance.
+    pub fn try_clone(&self) -> Result<Self, ProgramError> {
+        let Self(inner) = self;
+        let inner = inner.try_clone()?;
+        Ok(Self(inner))
+    }
+}
+
+impl AsFd for ProgramFd {
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        let Self(fd) = self;
+        fd.as_fd()
     }
 }
 
@@ -372,7 +383,7 @@ impl Program {
     ///
     /// Can be used to add a program to a [`crate::maps::ProgramArray`] or attach an [`Extension`] program.
     /// Can be converted to [`RawFd`] using [`AsRawFd`].
-    pub fn fd(&self) -> Option<ProgramFd> {
+    pub fn fd(&self) -> Result<&ProgramFd, ProgramError> {
         match self {
             Program::KProbe(p) => p.fd(),
             Program::UProbe(p) => p.fd(),
@@ -406,7 +417,7 @@ impl Program {
 pub(crate) struct ProgramData<T: Link> {
     pub(crate) name: Option<String>,
     pub(crate) obj: Option<(obj::Program, obj::Function)>,
-    pub(crate) fd: Option<RawFd>,
+    pub(crate) fd: Option<ProgramFd>,
     pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
     pub(crate) attach_btf_obj_fd: Option<OwnedFd>,
@@ -460,7 +471,7 @@ impl<T: Link> ProgramData<T> {
         Ok(ProgramData {
             name,
             obj: None,
-            fd: Some(fd.into_raw_fd()),
+            fd: Some(ProgramFd(fd)),
             links: LinkMap::new(),
             expected_attach_type: None,
             attach_btf_obj_fd,
@@ -485,15 +496,15 @@ impl<T: Link> ProgramData<T> {
             io_error,
         })?;
 
-        let info = ProgramInfo::new_from_fd(fd.as_raw_fd())?;
+        let info = ProgramInfo::new_from_fd(fd.as_fd())?;
         let name = info.name_as_str().map(|s| s.to_string());
         ProgramData::from_bpf_prog_info(name, fd, path.as_ref(), info.0, verifier_log_level)
     }
 }
 
 impl<T: Link> ProgramData<T> {
-    fn fd_or_err(&self) -> Result<RawFd, ProgramError> {
-        self.fd.ok_or(ProgramError::NotLoaded)
+    fn fd(&self) -> Result<&ProgramFd, ProgramError> {
+        self.fd.as_ref().ok_or(ProgramError::NotLoaded)
     }
 
     pub(crate) fn take_link(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
@@ -503,15 +514,14 @@ impl<T: Link> ProgramData<T> {
 
 fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError> {
     data.links.remove_all()?;
-    let fd = data.fd.take().ok_or(ProgramError::NotLoaded)?;
-    unsafe {
-        libc::close(fd);
-    }
-    Ok(())
+    data.fd
+        .take()
+        .ok_or(ProgramError::NotLoaded)
+        .map(|ProgramFd { .. }| ())
 }
 
 fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Result<(), PinError> {
-    let fd = data.fd.ok_or(PinError::NoFd {
+    let fd = data.fd.as_ref().ok_or(PinError::NoFd {
         name: data
             .name
             .as_deref()
@@ -523,7 +533,7 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
             error: e.to_string(),
         }
     })?;
-    bpf_pin_object(fd, &path_string).map_err(|(_, io_error)| SyscallError {
+    bpf_pin_object(fd.as_fd().as_raw_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
         call: "BPF_OBJ_PIN",
         io_error,
     })?;
@@ -617,7 +627,7 @@ fn load_program<T: Link>(
 
     match ret {
         Ok(prog_fd) => {
-            *fd = Some(prog_fd as RawFd);
+            *fd = Some(ProgramFd(prog_fd));
             Ok(())
         }
         Err((_, io_error)) => Err(ProgramError::LoadError {
@@ -722,8 +732,8 @@ macro_rules! impl_fd {
         $(
             impl $struct_name {
                 /// Returns the file descriptor of this Program.
-                pub fn fd(&self) -> Option<ProgramFd> {
-                    self.data.fd.map(|fd| ProgramFd(fd))
+                pub fn fd(&self) -> Result<&ProgramFd, ProgramError> {
+                    self.data.fd()
                 }
             }
         )+
@@ -916,9 +926,9 @@ macro_rules! impl_program_info {
             impl $struct_name {
                 /// Returns the file descriptor of this Program.
                 pub fn program_info(&self) -> Result<ProgramInfo, ProgramError> {
-                    let fd = self.data.fd_or_err()?;
+                    let ProgramFd(fd) = self.fd()?;
 
-                    ProgramInfo::new_from_fd(fd.as_raw_fd())
+                    ProgramInfo::new_from_fd(fd.as_fd())
                 }
             }
         )+
@@ -957,11 +967,9 @@ impl_program_info!(
 pub struct ProgramInfo(bpf_prog_info);
 
 impl ProgramInfo {
-    fn new_from_fd(fd: RawFd) -> Result<Self, ProgramError> {
-        Ok(ProgramInfo(bpf_prog_get_info_by_fd(
-            fd.as_raw_fd(),
-            &mut [],
-        )?))
+    fn new_from_fd(fd: BorrowedFd<'_>) -> Result<Self, ProgramError> {
+        let info = bpf_prog_get_info_by_fd(fd, &mut [])?;
+        Ok(Self(info))
     }
 
     /// The name of the program as was provided when it was load. This is limited to 16 bytes
@@ -1011,10 +1019,10 @@ impl ProgramInfo {
 
     /// The ids of the maps used by the program.
     pub fn map_ids(&self) -> Result<Vec<u32>, ProgramError> {
-        let fd = self.fd()?;
+        let ProgramFd(fd) = self.fd()?;
         let mut map_ids = vec![0u32; self.0.nr_map_ids as usize];
 
-        bpf_prog_get_info_by_fd(fd.as_raw_fd(), &mut map_ids)?;
+        bpf_prog_get_info_by_fd(fd.as_fd(), &mut map_ids)?;
 
         Ok(map_ids)
     }
@@ -1058,10 +1066,10 @@ impl ProgramInfo {
     ///
     /// The returned file descriptor can be closed at any time and doing so does
     /// not influence the life cycle of the program.
-    pub fn fd(&self) -> Result<OwnedFd, ProgramError> {
+    pub fn fd(&self) -> Result<ProgramFd, ProgramError> {
         let Self(info) = self;
         let fd = bpf_prog_get_fd_by_id(info.id)?;
-        Ok(fd)
+        Ok(ProgramFd(fd))
     }
 
     /// Loads a program from a pinned path in bpffs.
@@ -1072,7 +1080,7 @@ impl ProgramInfo {
             io_error,
         })?;
 
-        let info = bpf_prog_get_info_by_fd(fd.as_raw_fd(), &mut [])?;
+        let info = bpf_prog_get_info_by_fd(fd.as_fd(), &mut [])?;
         Ok(ProgramInfo(info))
     }
 }
@@ -1108,7 +1116,7 @@ pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramErro
         })
         .map(|fd| {
             let fd = fd?;
-            bpf_prog_get_info_by_fd(fd.as_raw_fd(), &mut [])
+            bpf_prog_get_info_by_fd(fd.as_fd(), &mut [])
         })
         .map(|result| result.map(ProgramInfo).map_err(Into::into))
 }

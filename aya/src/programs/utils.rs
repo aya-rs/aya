@@ -3,7 +3,7 @@ use std::{
     ffi::CStr,
     fs::File,
     io::{self, BufRead, BufReader},
-    os::fd::{AsRawFd as _, BorrowedFd},
+    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd},
     path::Path,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
@@ -18,8 +18,9 @@ pub(crate) fn attach_raw_tracepoint<T: Link + From<FdLink>>(
     program_data: &mut ProgramData<T>,
     tp_name: Option<&CStr>,
 ) -> Result<T::Id, ProgramError> {
-    let prog_fd = program_data.fd_or_err()?;
-
+    let prog_fd = program_data.fd()?;
+    let prog_fd = prog_fd.as_fd();
+    let prog_fd = prog_fd.as_raw_fd();
     let pfd =
         bpf_raw_tracepoint_open(tp_name, prog_fd).map_err(|(_code, io_error)| SyscallError {
             call: "bpf_raw_tracepoint_open",

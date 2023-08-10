@@ -1,7 +1,11 @@
 //! Cgroup skb programs.
 
 use crate::util::KernelVersion;
-use std::{hash::Hash, os::fd::AsRawFd, path::Path};
+use std::{
+    hash::Hash,
+    os::fd::{AsFd as _, AsRawFd},
+    path::Path,
+};
 
 use crate::{
     generated::{
@@ -88,7 +92,9 @@ impl CgroupSkb {
         cgroup: T,
         attach_type: CgroupSkbAttachType,
     ) -> Result<CgroupSkbLinkId, ProgramError> {
-        let prog_fd = self.data.fd_or_err()?;
+        let prog_fd = self.fd()?;
+        let prog_fd = prog_fd.as_fd();
+        let prog_fd = prog_fd.as_raw_fd();
         let cgroup_fd = cgroup.as_raw_fd();
 
         let attach_type = match attach_type {
