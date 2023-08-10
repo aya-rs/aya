@@ -5,7 +5,8 @@ use std::{
     fs::{copy, create_dir_all, metadata, File},
     io::{BufRead as _, BufReader, ErrorKind, Write as _},
     path::{Path, PathBuf},
-    process::{Child, Command, Output, Stdio},
+    process::{Child, ChildStdin, Command, Output, Stdio},
+    sync::{Arc, Mutex},
     thread,
 };
 
@@ -392,7 +393,7 @@ pub fn run(opts: Options) -> Result<()> {
                     qemu.args(["-cpu", cpu]);
                 }
                 let console = OsString::from("ttyS0");
-                let kernel_args = std::iter::once(("console", &console))
+                let mut kernel_args = std::iter::once(("console", &console))
                     .chain(run_args.clone().map(|run_arg| ("init.arg", run_arg)))
                     .enumerate()
                     .fold(OsString::new(), |mut acc, (i, (k, v))| {
@@ -404,6 +405,12 @@ pub fn run(opts: Options) -> Result<()> {
                         acc.push(v);
                         acc
                     });
+                // We sometimes see kernel panics containing:
+                //
+                // [    0.064000] Kernel panic - not syncing: IO-APIC + timer doesn't work!  Boot with apic=debug and send a report.  Then try booting with the 'noapic' option.
+                //
+                // Heed the advice and boot with noapic. We don't know why this happens.
+                kernel_args.push(" noapic");
                 qemu.args(["-no-reboot", "-nographic", "-m", "512M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
@@ -462,32 +469,49 @@ pub fn run(opts: Options) -> Result<()> {
                     stderr,
                     ..
                 } = &mut qemu_child;
-                let mut stdin = stdin.take().unwrap();
+                let stdin = stdin.take().unwrap();
+                let stdin = Arc::new(Mutex::new(stdin));
                 let stdout = stdout.take().unwrap();
                 let stdout = BufReader::new(stdout);
                 let stderr = stderr.take().unwrap();
                 let stderr = BufReader::new(stderr);
 
-                let stderr = thread::Builder::new()
-                    .spawn(move || {
-                        for line in stderr.lines() {
-                            let line = line.context("failed to read line from stderr")?;
-                            eprintln!("{}", line);
-                            // Try to get QEMU to exit on kernel panic; otherwise it might hang indefinitely.
-                            if line.contains("end Kernel panic") {
-                                stdin
-                                    .write_all(&[0x01, b'x'])
-                                    .context("failed to write to stdin")?;
+                fn terminate_if_contains_kernel_panic(
+                    line: &str,
+                    stdin: &Arc<Mutex<ChildStdin>>,
+                ) -> anyhow::Result<()> {
+                    if line.contains("end Kernel panic") {
+                        println!("kernel panic detected; terminating QEMU");
+                        let mut stdin = stdin.lock().unwrap();
+                        stdin
+                            .write_all(&[0x01, b'x'])
+                            .context("failed to write to stdin")?;
+                        println!("waiting for QEMU to terminate");
+                    }
+                    Ok(())
+                }
+
+                let stderr = {
+                    let stdin = stdin.clone();
+                    thread::Builder::new()
+                        .spawn(move || {
+                            for line in stderr.lines() {
+                                let line = line.context("failed to read line from stderr")?;
+                                eprintln!("{}", line);
+                                // Try to get QEMU to exit on kernel panic; otherwise it might hang indefinitely.
+                                terminate_if_contains_kernel_panic(&line, &stdin)?;
                             }
-                        }
-                        anyhow::Ok(())
-                    })
-                    .unwrap();
+                            anyhow::Ok(())
+                        })
+                        .unwrap()
+                };
 
                 let mut outcome = None;
                 for line in stdout.lines() {
                     let line = line.context("failed to read line from stdout")?;
                     println!("{}", line);
+                    // Try to get QEMU to exit on kernel panic; otherwise it might hang indefinitely.
+                    terminate_if_contains_kernel_panic(&line, &stdin)?;
                     // The init program will print "init: success" or "init: failure" to indicate
                     // the outcome of running the binaries it found in /bin.
                     if let Some(line) = line.strip_prefix("init: ") {
