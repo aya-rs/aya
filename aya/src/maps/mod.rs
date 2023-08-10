@@ -541,14 +541,14 @@ impl MapData {
 
     /// Loads a map from a pinned path in bpffs.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<MapData, MapError> {
+        use std::os::unix::ffi::OsStrExt as _;
+
         let path_string =
-            CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
-                MapError::PinError {
-                    name: None,
-                    error: PinError::InvalidPinPath {
-                        error: e.to_string(),
-                    },
-                }
+            CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|e| MapError::PinError {
+                name: None,
+                error: PinError::InvalidPinPath {
+                    error: e.to_string(),
+                },
             })?;
 
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
@@ -587,6 +587,8 @@ impl MapData {
     }
 
     pub(crate) fn pin<P: AsRef<Path>>(&mut self, name: &str, path: P) -> Result<(), PinError> {
+        use std::os::unix::ffi::OsStrExt as _;
+
         if self.pinned {
             return Err(PinError::AlreadyPinned { name: name.into() });
         }
@@ -594,7 +596,7 @@ impl MapData {
         let fd = self.fd.ok_or(PinError::NoFd {
             name: name.to_string(),
         })?;
-        let path_string = CString::new(map_path.to_string_lossy().into_owned()).map_err(|e| {
+        let path_string = CString::new(map_path.as_os_str().as_bytes()).map_err(|e| {
             PinError::InvalidPinPath {
                 error: e.to_string(),
             }
