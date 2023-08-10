@@ -62,6 +62,7 @@ impl CgroupDevice {
     /// The returned value can be used to detach, see [CgroupDevice::detach]
     pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<CgroupDeviceLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
+        let prog_fd = prog_fd.as_raw_fd();
         let cgroup_fd = cgroup.as_raw_fd();
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {

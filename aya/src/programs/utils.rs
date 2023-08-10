@@ -1,5 +1,5 @@
 //! Common functions shared between multiple eBPF program types.
-use std::{ffi::CStr, io, path::Path};
+use std::{ffi::CStr, io, os::fd::AsRawFd as _, path::Path};
 
 use crate::{
     programs::{FdLink, Link, ProgramData, ProgramError},
@@ -12,7 +12,7 @@ pub(crate) fn attach_raw_tracepoint<T: Link + From<FdLink>>(
     tp_name: Option<&CStr>,
 ) -> Result<T::Id, ProgramError> {
     let prog_fd = program_data.fd_or_err()?;
-
+    let prog_fd = prog_fd.as_raw_fd();
     let pfd =
         bpf_raw_tracepoint_open(tp_name, prog_fd).map_err(|(_code, io_error)| SyscallError {
             call: "bpf_raw_tracepoint_open",

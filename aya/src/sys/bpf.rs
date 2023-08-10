@@ -132,7 +132,7 @@ pub(crate) fn bpf_load_program(
     aya_attr: &BpfLoadProgramAttrs,
     log_buf: &mut [u8],
     verifier_log_level: VerifierLogLevel,
-) -> SysResult<c_long> {
+) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_3 };
@@ -190,7 +190,8 @@ pub(crate) fn bpf_load_program(
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
     }
-    sys_bpf(bpf_cmd::BPF_PROG_LOAD, &mut attr)
+    // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, &mut attr) }
 }
 
 fn lookup<K: Pod, V: Pod>(
@@ -501,8 +502,7 @@ fn bpf_obj_get_info_by_fd<T>(fd: BorrowedFd<'_>) -> Result<T, SyscallError> {
     }
 }
 
-pub(crate) fn bpf_prog_get_info_by_fd(fd: RawFd) -> Result<bpf_prog_info, SyscallError> {
-    let fd = unsafe { BorrowedFd::borrow_raw(fd) };
+pub(crate) fn bpf_prog_get_info_by_fd(fd: BorrowedFd<'_>) -> Result<bpf_prog_info, SyscallError> {
     bpf_obj_get_info_by_fd::<bpf_prog_info>(fd)
 }
 

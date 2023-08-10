@@ -80,6 +80,7 @@ impl SkMsg {
     /// The returned value can be used to detach, see [SkMsg::detach].
     pub fn attach(&mut self, map: SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
+        let prog_fd = prog_fd.as_raw_fd();
         let map_fd = map.as_raw_fd();
 
         bpf_prog_attach(prog_fd, map_fd, BPF_SK_MSG_VERDICT).map_err(|(_, io_error)| {

@@ -1,5 +1,9 @@
 //! Tracepoint programs.
-use std::{fs, io, os::fd::AsFd as _, path::Path};
+use std::{
+    fs, io,
+    os::fd::{AsFd as _, AsRawFd as _},
+    path::Path,
+};
 use thiserror::Error;
 
 use crate::{
@@ -78,6 +82,8 @@ impl TracePoint {
     ///
     /// The returned value can be used to detach, see [TracePoint::detach].
     pub fn attach(&mut self, category: &str, name: &str) -> Result<TracePointLinkId, ProgramError> {
+        let prog_fd = self.data.fd_or_err()?;
+        let prog_fd = prog_fd.as_raw_fd();
         let tracefs = find_tracefs_path()?;
         let id = read_sys_fs_trace_point_id(tracefs, category, name)?;
         let fd =
@@ -86,7 +92,7 @@ impl TracePoint {
                 io_error,
             })?;
 
-        let link = perf_attach(self.data.fd_or_err()?, fd)?;
+        let link = perf_attach(prog_fd, fd)?;
         self.data.links.insert(TracePointLink::new(link))
     }
 

@@ -1,5 +1,5 @@
 //! Lirc programs.
-use std::os::fd::{AsRawFd, IntoRawFd as _, RawFd};
+use std::os::fd::{AsRawFd, BorrowedFd, IntoRawFd as _, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
@@ -65,6 +65,7 @@ impl LircMode2 {
     /// The returned value can be used to detach, see [LircMode2::detach].
     pub fn attach<T: AsRawFd>(&mut self, lircdev: T) -> Result<LircLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
+        let prog_fd = prog_fd.as_raw_fd();
         let lircdev_fd = lircdev.as_raw_fd();
 
         bpf_prog_attach(prog_fd, lircdev_fd, BPF_LIRC_MODE2).map_err(|(_, io_error)| {
@@ -131,7 +132,9 @@ impl LircLink {
 
     /// Get ProgramInfo from this link
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-        bpf_prog_get_info_by_fd(self.prog_fd)
+        // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
+        let prog_fd = unsafe { BorrowedFd::borrow_raw(self.prog_fd) };
+        bpf_prog_get_info_by_fd(prog_fd)
             .map(ProgramInfo)
             .map_err(Into::into)
     }

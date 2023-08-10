@@ -2,7 +2,7 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd as _, RawFd},
 };
 
 use crate::{
@@ -77,14 +77,14 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd_or_err()?;
-        let prog_fd = program.as_raw_fd();
+        let prog_fd = program.as_fd();
 
-        bpf_map_update_elem(fd, Some(&index), &prog_fd, flags).map_err(|(_, io_error)| {
-            SyscallError {
+        bpf_map_update_elem(fd, Some(&index), &prog_fd.as_raw_fd(), flags).map_err(
+            |(_, io_error)| SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
-            }
-        })?;
+            },
+        )?;
         Ok(())
     }
 

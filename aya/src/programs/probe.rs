@@ -3,7 +3,7 @@ use libc::pid_t;
 use std::{
     fs::{self, OpenOptions},
     io::{self, Write},
-    os::fd::OwnedFd,
+    os::fd::{AsRawFd as _, OwnedFd},
     path::Path,
     process,
     sync::atomic::{AtomicUsize, Ordering},
@@ -57,19 +57,16 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
 ) -> Result<T::Id, ProgramError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
     // Use debugfs to create probe
-    if KernelVersion::current().unwrap() < KernelVersion::new(4, 17, 0) {
+    let prog_fd = program_data.fd_or_err()?;
+    let prog_fd = prog_fd.as_raw_fd();
+    let link = if KernelVersion::current().unwrap() < KernelVersion::new(4, 17, 0) {
         let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
-        let link = T::from(perf_attach_debugfs(
-            program_data.fd_or_err()?,
-            fd,
-            ProbeEvent { kind, event_alias },
-        )?);
-        return program_data.links.insert(link);
-    };
-
-    let fd = create_as_probe(kind, fn_name, offset, pid)?;
-    let link = T::from(perf_attach(program_data.fd_or_err()?, fd)?);
-    program_data.links.insert(link)
+        perf_attach_debugfs(prog_fd, fd, ProbeEvent { kind, event_alias })
+    } else {
+        let fd = create_as_probe(kind, fn_name, offset, pid)?;
+        perf_attach(prog_fd, fd)
+    }?;
+    program_data.links.insert(T::from(link))
 }
 
 pub(crate) fn detach_debug_fs(event: ProbeEvent) -> Result<(), ProgramError> {

@@ -74,6 +74,7 @@ impl SocketFilter {
     /// The returned value can be used to detach from the socket, see [SocketFilter::detach].
     pub fn attach<T: AsRawFd>(&mut self, socket: T) -> Result<SocketFilterLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
+        let prog_fd = prog_fd.as_raw_fd();
         let socket = socket.as_raw_fd();
 
         let ret = unsafe {

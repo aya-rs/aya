@@ -69,6 +69,7 @@ impl CgroupSockAddr {
     /// The returned value can be used to detach, see [CgroupSockAddr::detach].
     pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<CgroupSockAddrLinkId, ProgramError> {
         let prog_fd = self.data.fd_or_err()?;
+        let prog_fd = prog_fd.as_raw_fd();
         let cgroup_fd = cgroup.as_raw_fd();
         let attach_type = self.data.expected_attach_type.unwrap();
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
