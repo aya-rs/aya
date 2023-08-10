@@ -6,6 +6,7 @@ use std::{
     io::{BufRead as _, BufReader, ErrorKind, Write as _},
     path::{Path, PathBuf},
     process::{Child, Command, Output, Stdio},
+    thread,
 };
 
 use anyhow::{anyhow, bail, Context as _, Result};
@@ -450,17 +451,42 @@ pub fn run(opts: Options) -> Result<()> {
                     };
                 }
                 let mut qemu_child = qemu
+                    .stdin(Stdio::piped())
                     .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
                     .spawn()
                     .with_context(|| format!("failed to spawn {qemu:?}"))?;
-                let Child { stdout, .. } = &mut qemu_child;
+                let Child {
+                    stdin,
+                    stdout,
+                    stderr,
+                    ..
+                } = &mut qemu_child;
+                let mut stdin = stdin.take().unwrap();
                 let stdout = stdout.take().unwrap();
                 let stdout = BufReader::new(stdout);
+                let stderr = stderr.take().unwrap();
+                let stderr = BufReader::new(stderr);
+
+                let stderr = thread::Builder::new()
+                    .spawn(move || {
+                        for line in stderr.lines() {
+                            let line = line.context("failed to read line from stderr")?;
+                            eprintln!("{}", line);
+                            // Try to get QEMU to exit on kernel panic; otherwise it might hang indefinitely.
+                            if line.contains("end Kernel panic") {
+                                stdin
+                                    .write_all(&[0x01, b'x'])
+                                    .context("failed to write to stdin")?;
+                            }
+                        }
+                        anyhow::Ok(())
+                    })
+                    .unwrap();
 
                 let mut outcome = None;
                 for line in stdout.lines() {
-                    let line =
-                        line.with_context(|| format!("failed to read line from {qemu:?}"))?;
+                    let line = line.context("failed to read line from stdout")?;
                     println!("{}", line);
                     // The init program will print "init: success" or "init: failure" to indicate
                     // the outcome of running the binaries it found in /bin.
@@ -473,10 +499,6 @@ pub fn run(opts: Options) -> Result<()> {
                         if let Some(previous) = previous {
                             bail!("multiple exit status: previous={previous:?}, current={line}");
                         }
-                        // Try to get QEMU to exit on kernel panic; otherwise it might hang indefinitely.
-                        if line.contains("end Kernel panic") {
-                            qemu_child.kill().context("failed to kill {qemu:?}")?;
-                        }
                     }
                 }
 
@@ -487,6 +509,8 @@ pub fn run(opts: Options) -> Result<()> {
                 if status.code() != Some(0) {
                     bail!("{qemu:?} failed: {output:?}")
                 }
+
+                stderr.join().unwrap()?;
 
                 let outcome = outcome.ok_or(anyhow!("init did not exit"))?;
                 match outcome {
