@@ -178,7 +178,7 @@ pub trait WriteToBuf {
 macro_rules! impl_write_to_buf {
     ($type:ident, $arg_type:expr) => {
         impl WriteToBuf for $type {
-            // This need not be inlined because the return value is Result<N, ()> where N is
+            // This need not be inlined because the return value is Option<N> where N is
             // mem::size_of<$type>, which is a compile-time constant.
             #[inline(never)]
             fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
@@ -204,7 +204,7 @@ impl_write_to_buf!(f32, Argument::F32);
 impl_write_to_buf!(f64, Argument::F64);
 
 impl WriteToBuf for [u8; 16] {
-    // This need not be inlined because the return value is Result<N, ()> where N is 16, which is a
+    // This need not be inlined because the return value is Option<N> where N is 16, which is a
     // compile-time constant.
     #[inline(never)]
     fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
@@ -213,7 +213,7 @@ impl WriteToBuf for [u8; 16] {
 }
 
 impl WriteToBuf for [u16; 8] {
-    // This need not be inlined because the return value is Result<N, ()> where N is 16, which is a
+    // This need not be inlined because the return value is Option<N> where N is 16, which is a
     // compile-time constant.
     #[inline(never)]
     fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
@@ -223,7 +223,7 @@ impl WriteToBuf for [u16; 8] {
 }
 
 impl WriteToBuf for [u8; 6] {
-    // This need not be inlined because the return value is Result<N, ()> where N is 6, which is a
+    // This need not be inlined because the return value is Option<N> where N is 6, which is a
     // compile-time constant.
     #[inline(never)]
     fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
@@ -252,7 +252,7 @@ impl WriteToBuf for &str {
 }
 
 impl WriteToBuf for DisplayHint {
-    // This need not be inlined because the return value is Result<N, ()> where N is 1, which is a
+    // This need not be inlined because the return value is Option<N> where N is 1, which is a
     // compile-time constant.
     #[inline(never)]
     fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
