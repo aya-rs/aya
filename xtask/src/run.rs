@@ -25,17 +25,6 @@ enum Environment {
     /// Runs the integration tests in a VM.
     VM {
         /// The kernel images to use.
-        ///
-        /// You can download some images with:
-        ///
-        /// wget --accept-regex '.*/linux-image-[0-9\.-]+-cloud-.*-unsigned*' \
-        ///   --recursive ftp://ftp.us.debian.org/debian/pool/main/l/linux/
-        ///
-        /// You can then extract them with:
-        ///
-        /// find . -name '*.deb' -print0 \
-        /// | xargs -0 -I {} sh -c "dpkg --fsys-tarfile {} \
-        ///   | tar --wildcards --extract '*vmlinuz*' --file -"
         #[clap(required = true)]
         kernel_image: Vec<PathBuf>,
     },
