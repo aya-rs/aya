@@ -159,36 +159,23 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
     }
 
     // the bpf fd of the BTF object
-    let btf_fd = sys::bpf_btf_get_fd_by_id(info.btf_id).map_err(|io_error| SyscallError {
-        call: "bpf_btf_get_fd_by_id",
-        io_error,
-    })?;
+    let btf_fd = sys::bpf_btf_get_fd_by_id(info.btf_id)?;
 
     // we need to read the btf bytes into a buffer but we don't know the size ahead of time.
     // assume 4kb. if this is too small we can resize based on the size obtained in the response.
     let mut buf = vec![0u8; 4096];
-    let btf_info = match sys::btf_obj_get_info_by_fd(btf_fd, &buf) {
-        Ok(info) => {
-            if info.btf_size > buf.len() as u32 {
-                buf.resize(info.btf_size as usize, 0u8);
-                let btf_info =
-                    sys::btf_obj_get_info_by_fd(btf_fd, &buf).map_err(|io_error| SyscallError {
-                        call: "bpf_prog_get_info_by_fd",
-                        io_error,
-                    })?;
-                Ok(btf_info)
-            } else {
-                Ok(info)
-            }
+    loop {
+        let info = sys::btf_obj_get_info_by_fd(btf_fd, &mut buf)?;
+        let btf_size = info.btf_size as usize;
+        if btf_size > buf.len() {
+            buf.resize(btf_size, 0u8);
+            continue;
         }
-        Err(io_error) => Err(SyscallError {
-            call: "bpf_prog_get_info_by_fd",
-            io_error,
-        }),
-    }?;
+        buf.truncate(btf_size);
+        break;
+    }
 
-    let btf = Btf::parse(&buf[0..btf_info.btf_size as usize], Endianness::default())
-        .map_err(ProgramError::Btf)?;
+    let btf = Btf::parse(&buf, Endianness::default()).map_err(ProgramError::Btf)?;
 
     let btf_id = btf
         .id_by_type_name_kind(func_name, BtfKind::Func)

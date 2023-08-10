@@ -539,22 +539,14 @@ pub(crate) fn bpf_link_get_info_by_fd(fd: BorrowedFd<'_>) -> Result<bpf_link_inf
 }
 
 pub(crate) fn btf_obj_get_info_by_fd(
-    prog_fd: RawFd,
-    buf: &[u8],
-) -> Result<bpf_btf_info, io::Error> {
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let mut info = unsafe { mem::zeroed::<bpf_btf_info>() };
-    let buf_size = buf.len() as u32;
-    info.btf = buf.as_ptr() as u64;
-    info.btf_size = buf_size;
-    attr.info.bpf_fd = prog_fd as u32;
-    attr.info.info = &info as *const bpf_btf_info as u64;
-    attr.info.info_len = mem::size_of::<bpf_btf_info>() as u32;
-
-    match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
-        Ok(_) => Ok(info),
-        Err((_, err)) => Err(err),
-    }
+    fd: RawFd,
+    buf: &mut [u8],
+) -> Result<bpf_btf_info, SyscallError> {
+    let fd = unsafe { BorrowedFd::borrow_raw(fd) };
+    bpf_obj_get_info_by_fd(fd, |info: &mut bpf_btf_info| {
+        info.btf = buf.as_mut_ptr() as _;
+        info.btf_size = buf.len() as _;
+    })
 }
 
 pub(crate) fn bpf_raw_tracepoint_open(name: Option<&CStr>, prog_fd: RawFd) -> SysResult<OwnedFd> {
