@@ -393,7 +393,7 @@ pub fn run(opts: Options) -> Result<()> {
                     qemu.args(["-cpu", cpu]);
                 }
                 let console = OsString::from("ttyS0");
-                let kernel_args = std::iter::once(("console", &console))
+                let mut kernel_args = std::iter::once(("console", &console))
                     .chain(run_args.clone().map(|run_arg| ("init.arg", run_arg)))
                     .enumerate()
                     .fold(OsString::new(), |mut acc, (i, (k, v))| {
@@ -405,6 +405,12 @@ pub fn run(opts: Options) -> Result<()> {
                         acc.push(v);
                         acc
                     });
+                // We sometimes see kernel panics containing:
+                //
+                // [    0.064000] Kernel panic - not syncing: IO-APIC + timer doesn't work!  Boot with apic=debug and send a report.  Then try booting with the 'noapic' option.
+                //
+                // Heed the advice and boot with noapic. We don't know why this happens.
+                kernel_args.push(" noapic");
                 qemu.args(["-no-reboot", "-nographic", "-m", "512M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
