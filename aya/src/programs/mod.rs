@@ -406,7 +406,7 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) fd: Option<RawFd>,
     pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
-    pub(crate) attach_btf_obj_fd: Option<u32>,
+    pub(crate) attach_btf_obj_fd: Option<OwnedFd>,
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<RawFd>,
     pub(crate) btf_fd: Option<Arc<OwnedFd>>,
@@ -450,16 +450,9 @@ impl<T: Link> ProgramData<T> {
         } else {
             None
         };
-        let attach_btf_obj_fd = if info.attach_btf_obj_id > 0 {
-            let fd =
-                bpf_btf_get_fd_by_id(info.attach_btf_obj_id).map_err(|io_error| SyscallError {
-                    call: "bpf_btf_get_fd_by_id",
-                    io_error,
-                })?;
-            Some(fd as u32)
-        } else {
-            None
-        };
+        let attach_btf_obj_fd = (info.attach_btf_obj_id != 0)
+            .then(|| bpf_btf_get_fd_by_id(info.attach_btf_obj_id))
+            .transpose()?;
 
         Ok(ProgramData {
             name,
@@ -604,7 +597,7 @@ fn load_program<T: Link>(
         kernel_version: target_kernel_version,
         expected_attach_type: *expected_attach_type,
         prog_btf_fd: btf_fd.as_ref().map(|f| f.as_fd()),
-        attach_btf_obj_fd: *attach_btf_obj_fd,
+        attach_btf_obj_fd: attach_btf_obj_fd.as_ref().map(|fd| fd.as_fd()),
         attach_btf_id: *attach_btf_id,
         attach_prog_fd: *attach_prog_fd,
         func_info_rec_size: *func_info_rec_size,

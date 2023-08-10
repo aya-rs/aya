@@ -1,5 +1,5 @@
 //! Extension programs.
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::{AsFd as _, AsRawFd as _, OwnedFd};
 use thiserror::Error;
 
 use object::Endianness;
@@ -72,7 +72,7 @@ impl Extension {
         let target_prog_fd = program.as_raw_fd();
         let (btf_fd, btf_id) = get_btf_info(target_prog_fd, func_name)?;
 
-        self.data.attach_btf_obj_fd = Some(btf_fd as u32);
+        self.data.attach_btf_obj_fd = Some(btf_fd);
         self.data.attach_prog_fd = Some(target_prog_fd);
         self.data.attach_btf_id = Some(btf_id);
         load_program(BPF_PROG_TYPE_EXT, &mut self.data)
@@ -149,7 +149,7 @@ impl Extension {
 
 /// Retrieves the FD of the BTF object for the provided `prog_fd` and the BTF ID of the function
 /// with the name `func_name` within that BTF object.
-fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramError> {
+fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(OwnedFd, u32), ProgramError> {
     // retrieve program information
     let info = sys::bpf_prog_get_info_by_fd(prog_fd, &mut [])?;
 
@@ -165,7 +165,7 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
     // assume 4kb. if this is too small we can resize based on the size obtained in the response.
     let mut buf = vec![0u8; 4096];
     loop {
-        let info = sys::btf_obj_get_info_by_fd(btf_fd, &mut buf)?;
+        let info = sys::btf_obj_get_info_by_fd(btf_fd.as_fd(), &mut buf)?;
         let btf_size = info.btf_size as usize;
         if btf_size > buf.len() {
             buf.resize(btf_size, 0u8);
