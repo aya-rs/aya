@@ -74,7 +74,6 @@ pub enum TcAttachType {
 #[doc(alias = "BPF_PROG_TYPE_SCHED_CLS")]
 pub struct SchedClassifier {
     pub(crate) data: ProgramData<SchedClassifierLink>,
-    pub(crate) name: Box<CStr>,
 }
 
 /// Errors from TC programs
@@ -158,12 +157,15 @@ impl SchedClassifier {
         let prog_fd = prog_fd.as_raw_fd();
         let if_index = ifindex_from_ifname(interface)
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        let name = self.data.name.as_deref().unwrap_or_default();
+        // TODO: avoid this unwrap by adding a new error variant.
+        let name = CString::new(name).unwrap();
         let (priority, handle) = unsafe {
             netlink_qdisc_attach(
                 if_index as i32,
                 &attach_type,
                 prog_fd,
-                &self.name,
+                &name,
                 options.priority,
                 options.handle,
             )
@@ -204,10 +206,7 @@ impl SchedClassifier {
     /// the program being unloaded from the kernel if it is still pinned.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
-        let cname = CString::new(data.name.clone().unwrap_or_default())
-            .unwrap()
-            .into_boxed_c_str();
-        Ok(Self { data, name: cname })
+        Ok(Self { data })
     }
 }
 

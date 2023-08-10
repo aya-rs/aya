@@ -1,7 +1,6 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    ffi::CString,
     fs, io,
     os::{
         fd::{AsFd as _, OwnedFd},
@@ -608,10 +607,6 @@ impl<'a> BpfLoader<'a> {
                         ProgramSection::SchedClassifier => {
                             Program::SchedClassifier(SchedClassifier {
                                 data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                                name: unsafe {
-                                    CString::from_vec_unchecked(Vec::from(name.clone()))
-                                        .into_boxed_c_str()
-                                },
                             })
                         }
                         ProgramSection::CgroupSkb => Program::CgroupSkb(CgroupSkb {
@@ -958,13 +953,6 @@ pub enum BpfError {
     UnexpectedPinningType {
         /// The value encountered
         name: u32,
-    },
-
-    /// Invalid path
-    #[error("invalid path `{error}`")]
-    InvalidPath {
-        /// The error message
-        error: String,
     },
 
     /// Error parsing BPF object

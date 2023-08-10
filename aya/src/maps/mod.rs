@@ -515,9 +515,19 @@ impl MapData {
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
+        use std::os::unix::ffi::OsStrExt as _;
+
         // try to open map in case it's already pinned
-        let map_path = path.as_ref().join(name);
-        let path_string = CString::new(map_path.to_str().unwrap()).unwrap();
+        let path = path.as_ref().join(name);
+        let path_string = match CString::new(path.as_os_str().as_bytes()) {
+            Ok(path) => path,
+            Err(error) => {
+                return Err(MapError::PinError {
+                    name: Some(name.into()),
+                    error: PinError::InvalidPinPath { path, error },
+                });
+            }
+        };
         match bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
@@ -540,14 +550,16 @@ impl MapData {
 
     /// Loads a map from a pinned path in bpffs.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, MapError> {
+        use std::os::unix::ffi::OsStrExt as _;
+
+        let path = path.as_ref();
         let path_string =
-            CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
-                MapError::PinError {
-                    name: None,
-                    error: PinError::InvalidPinPath {
-                        error: e.to_string(),
-                    },
-                }
+            CString::new(path.as_os_str().as_bytes()).map_err(|error| MapError::PinError {
+                name: None,
+                error: PinError::InvalidPinPath {
+                    path: path.into(),
+                    error,
+                },
             })?;
 
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
@@ -580,16 +592,15 @@ impl MapData {
     }
 
     pub(crate) fn pin<P: AsRef<Path>>(&mut self, name: &str, path: P) -> Result<(), PinError> {
+        use std::os::unix::ffi::OsStrExt as _;
+
         let Self { fd, pinned, obj: _ } = self;
         if *pinned {
             return Err(PinError::AlreadyPinned { name: name.into() });
         }
-        let map_path = path.as_ref().join(name);
-        let path_string = CString::new(map_path.to_string_lossy().into_owned()).map_err(|e| {
-            PinError::InvalidPinPath {
-                error: e.to_string(),
-            }
-        })?;
+        let path = path.as_ref().join(name);
+        let path_string = CString::new(path.as_os_str().as_bytes())
+            .map_err(|error| PinError::InvalidPinPath { path, error })?;
         bpf_pin_object(*fd, &path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_PIN",
             io_error,
