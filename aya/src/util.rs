@@ -5,7 +5,9 @@ use std::{
     ffi::{CStr, CString},
     fs::{self, File},
     io::{self, BufRead, BufReader},
-    mem, slice,
+    mem,
+    num::ParseIntError,
+    slice,
     str::{FromStr, Utf8Error},
 };
 
@@ -210,18 +212,24 @@ pub fn kernel_symbols() -> Result<BTreeMap<u64, String>, io::Error> {
 }
 
 fn parse_kernel_symbols(reader: impl BufRead) -> Result<BTreeMap<u64, String>, io::Error> {
-    let mut syms = BTreeMap::new();
-
-    for line in reader.lines() {
-        let line = line?;
-        let parts = line.splitn(4, ' ').collect::<Vec<_>>();
-        let addr = u64::from_str_radix(parts[0], 16)
-            .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, line.clone()))?;
-        let name = parts[2].to_owned();
-        syms.insert(addr, name);
-    }
-
-    Ok(syms)
+    reader
+        .lines()
+        .map(|line| {
+            let line = line?;
+            (|| {
+                let mut parts = line.splitn(4, ' ');
+                let addr = parts.next()?;
+                let _kind = parts.next()?;
+                let name = parts.next()?;
+                let addr = match u64::from_str_radix(addr, 16) {
+                    Ok(addr) => Some(addr),
+                    Err(ParseIntError { .. }) => None,
+                }?;
+                Some((addr, name.to_owned()))
+            })()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, line.clone()))
+        })
+        .collect()
 }
 
 /// Returns the prefix used by syscalls.
