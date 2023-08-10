@@ -51,14 +51,15 @@ pub(crate) struct ProbeEvent {
 pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     program_data: &mut ProgramData<T>,
     kind: ProbeKind,
-    fn_name: &str,
+    name: &Path,
     offset: u64,
     pid: Option<pid_t>,
 ) -> Result<T::Id, ProgramError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
     // Use debugfs to create probe
     if KernelVersion::current().unwrap() < KernelVersion::new(4, 17, 0) {
-        let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
+        let (fd, event_alias) =
+            create_as_trace_point(kind, name.to_string_lossy().as_ref(), offset, pid)?;
         let link = T::from(perf_attach_debugfs(
             program_data.fd_or_err()?,
             fd,
@@ -67,7 +68,7 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
         return program_data.links.insert(link);
     };
 
-    let fd = create_as_probe(kind, fn_name, offset, pid)?;
+    let fd = create_as_probe(kind, name, offset, pid)?;
     let link = T::from(perf_attach(program_data.fd_or_err()?, fd)?);
     program_data.links.insert(link)
 }
@@ -92,7 +93,7 @@ pub(crate) fn detach_debug_fs(event: ProbeEvent) -> Result<(), ProgramError> {
 
 fn create_as_probe(
     kind: ProbeKind,
-    fn_name: &str,
+    name: &Path,
     offset: u64,
     pid: Option<pid_t>,
 ) -> Result<OwnedFd, ProgramError> {
@@ -117,7 +118,7 @@ fn create_as_probe(
         _ => None,
     };
 
-    perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid).map_err(|(_code, io_error)| {
+    perf_event_open_probe(perf_ty, ret_bit, name, offset, pid).map_err(|(_code, io_error)| {
         SyscallError {
             call: "perf_event_open",
             io_error,
