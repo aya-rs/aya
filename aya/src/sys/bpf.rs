@@ -539,10 +539,9 @@ pub(crate) fn bpf_link_get_info_by_fd(fd: BorrowedFd<'_>) -> Result<bpf_link_inf
 }
 
 pub(crate) fn btf_obj_get_info_by_fd(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     buf: &mut [u8],
 ) -> Result<bpf_btf_info, SyscallError> {
-    let fd = unsafe { BorrowedFd::borrow_raw(fd) };
     bpf_obj_get_info_by_fd(fd, |info: &mut bpf_btf_info| {
         info.btf = buf.as_mut_ptr() as _;
         info.btf_size = buf.len() as _;
@@ -595,14 +594,18 @@ unsafe fn fd_sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<OwnedFd> {
     Ok(OwnedFd::from_raw_fd(fd))
 }
 
-pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<RawFd, io::Error> {
+pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<OwnedFd, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     attr.__bindgen_anon_6.__bindgen_anon_1.btf_id = id;
 
-    match sys_bpf(bpf_cmd::BPF_BTF_GET_FD_BY_ID, &mut attr) {
-        Ok(v) => Ok(v as RawFd),
-        Err((_, err)) => Err(err),
-    }
+    // SAFETY: BPF_BTF_GET_FD_BY_ID returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_BTF_GET_FD_BY_ID, &mut attr) }.map_err(|(code, io_error)| {
+        assert_eq!(code, -1);
+        SyscallError {
+            call: "bpf_btf_get_fd_by_id",
+            io_error,
+        }
+    })
 }
 
 pub(crate) fn is_prog_name_supported() -> bool {
