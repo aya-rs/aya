@@ -79,7 +79,7 @@ pub(crate) fn boot_time() -> SystemTime {
 }
 
 /// Get the specified information from a file descriptor's fdinfo.
-pub(crate) fn get_fdinfo(fd: BorrowedFd, key: &str) -> Result<u32, ProgramError> {
+pub(crate) fn get_fdinfo(fd: BorrowedFd<'_>, key: &str) -> Result<u32, ProgramError> {
     let info = File::open(format!("/proc/self/fdinfo/{}", fd.as_raw_fd()))?;
     let reader = BufReader::new(info);
     for line in reader.lines() {

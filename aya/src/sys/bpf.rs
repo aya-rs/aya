@@ -1,5 +1,5 @@
 use std::{
-    cmp::{self, min},
+    cmp,
     ffi::{CStr, CString},
     io, iter,
     mem::{self, MaybeUninit},
@@ -129,7 +129,7 @@ pub(crate) struct BpfLoadProgramAttrs<'a> {
 }
 
 pub(crate) fn bpf_load_program(
-    aya_attr: &BpfLoadProgramAttrs,
+    aya_attr: &BpfLoadProgramAttrs<'_>,
     log_buf: &mut [u8],
     verifier_log_level: VerifierLogLevel,
 ) -> SysResult<OwnedFd> {
@@ -140,7 +140,7 @@ pub(crate) fn bpf_load_program(
     if let Some(prog_name) = &aya_attr.name {
         let mut name: [c_char; 16] = [0; 16];
         let name_bytes = prog_name.to_bytes();
-        let len = min(name.len(), name_bytes.len());
+        let len = cmp::min(name.len(), name_bytes.len());
         name[..len].copy_from_slice(unsafe {
             slice::from_raw_parts(name_bytes.as_ptr() as *const c_char, len)
         });
@@ -613,7 +613,7 @@ pub(crate) fn is_prog_name_supported() -> bool {
     let mut name: [c_char; 16] = [0; 16];
     let cstring = CString::new("aya_name_check").unwrap();
     let name_bytes = cstring.to_bytes();
-    let len = min(name.len(), name_bytes.len());
+    let len = cmp::min(name.len(), name_bytes.len());
     name[..len].copy_from_slice(unsafe {
         slice::from_raw_parts(name_bytes.as_ptr() as *const c_char, len)
     });
@@ -980,7 +980,7 @@ pub(crate) fn retry_with_verifier_logs<T>(
     f: impl Fn(&mut [u8]) -> SysResult<T>,
 ) -> (SysResult<T>, VerifierLog) {
     const MIN_LOG_BUF_SIZE: usize = 1024 * 10;
-    const MAX_LOG_BUF_SIZE: usize = (std::u32::MAX >> 8) as usize;
+    const MAX_LOG_BUF_SIZE: usize = (u32::MAX >> 8) as usize;
 
     let mut log_buf = Vec::new();
     let mut retries = 0;

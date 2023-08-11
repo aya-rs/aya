@@ -35,11 +35,11 @@ pub struct Array<T, V: Pod> {
 }
 
 impl<T: Borrow<MapData>, V: Pod> Array<T, V> {
-    pub(crate) fn new(map: T) -> Result<Array<T, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<u32, V>(data)?;
 
-        Ok(Array {
+        Ok(Self {
             inner: map,
             _v: PhantomData,
         })

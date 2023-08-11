@@ -39,11 +39,11 @@ pub struct HashMap<T, K, V> {
 }
 
 impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
-    pub(crate) fn new(map: T) -> Result<HashMap<T, K, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<K, V>(data)?;
 
-        Ok(HashMap {
+        Ok(Self {
             inner: map,
             _k: PhantomData,
             _v: PhantomData,
@@ -96,7 +96,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> 
     }
 
     fn get(&self, key: &K) -> Result<V, MapError> {
-        HashMap::get(self, key, 0)
+        Self::get(self, key, 0)
     }
 }
 

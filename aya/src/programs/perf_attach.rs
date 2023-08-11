@@ -28,15 +28,15 @@ impl Link for PerfLinkInner {
 
     fn id(&self) -> Self::Id {
         match self {
-            PerfLinkInner::FdLink(link) => PerfLinkIdInner::FdLinkId(link.id()),
-            PerfLinkInner::PerfLink(link) => PerfLinkIdInner::PerfLinkId(link.id()),
+            Self::FdLink(link) => PerfLinkIdInner::FdLinkId(link.id()),
+            Self::PerfLink(link) => PerfLinkIdInner::PerfLinkId(link.id()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         match self {
-            PerfLinkInner::FdLink(link) => link.detach(),
-            PerfLinkInner::PerfLink(link) => link.detach(),
+            Self::FdLink(link) => link.detach(),
+            Self::PerfLink(link) => link.detach(),
         }
     }
 }

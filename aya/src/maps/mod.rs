@@ -261,22 +261,22 @@ impl Map {
     /// Returns the low level map type.
     fn map_type(&self) -> u32 {
         match self {
-            Map::Array(map) => map.obj.map_type(),
-            Map::PerCpuArray(map) => map.obj.map_type(),
-            Map::ProgramArray(map) => map.obj.map_type(),
-            Map::HashMap(map) => map.obj.map_type(),
-            Map::LruHashMap(map) => map.obj.map_type(),
-            Map::PerCpuHashMap(map) => map.obj.map_type(),
-            Map::PerCpuLruHashMap(map) => map.obj.map_type(),
-            Map::PerfEventArray(map) => map.obj.map_type(),
-            Map::SockHash(map) => map.obj.map_type(),
-            Map::SockMap(map) => map.obj.map_type(),
-            Map::BloomFilter(map) => map.obj.map_type(),
-            Map::LpmTrie(map) => map.obj.map_type(),
-            Map::Stack(map) => map.obj.map_type(),
-            Map::StackTraceMap(map) => map.obj.map_type(),
-            Map::Queue(map) => map.obj.map_type(),
-            Map::Unsupported(map) => map.obj.map_type(),
+            Self::Array(map) => map.obj.map_type(),
+            Self::PerCpuArray(map) => map.obj.map_type(),
+            Self::ProgramArray(map) => map.obj.map_type(),
+            Self::HashMap(map) => map.obj.map_type(),
+            Self::LruHashMap(map) => map.obj.map_type(),
+            Self::PerCpuHashMap(map) => map.obj.map_type(),
+            Self::PerCpuLruHashMap(map) => map.obj.map_type(),
+            Self::PerfEventArray(map) => map.obj.map_type(),
+            Self::SockHash(map) => map.obj.map_type(),
+            Self::SockMap(map) => map.obj.map_type(),
+            Self::BloomFilter(map) => map.obj.map_type(),
+            Self::LpmTrie(map) => map.obj.map_type(),
+            Self::Stack(map) => map.obj.map_type(),
+            Self::StackTraceMap(map) => map.obj.map_type(),
+            Self::Queue(map) => map.obj.map_type(),
+            Self::Unsupported(map) => map.obj.map_type(),
         }
     }
 }
@@ -537,7 +537,7 @@ impl MapData {
     }
 
     /// Loads a map from a pinned path in bpffs.
-    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<MapData, MapError> {
+    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, MapError> {
         let path_string =
             CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
                 MapError::PinError {
@@ -555,7 +555,7 @@ impl MapData {
 
         let info = bpf_map_get_info_by_fd(fd.as_fd())?;
 
-        Ok(MapData {
+        Ok(Self {
             obj: parse_map_info(info, PinningType::ByName),
             fd: fd.into_raw_fd(),
             pinned: true,
@@ -567,10 +567,10 @@ impl MapData {
     /// If loading from a BPF Filesystem (bpffs) you should use [`Map::from_pin`](crate::maps::MapData::from_pin).
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
-    pub fn from_fd(fd: OwnedFd) -> Result<MapData, MapError> {
+    pub fn from_fd(fd: OwnedFd) -> Result<Self, MapError> {
         let info = bpf_map_get_info_by_fd(fd.as_fd())?;
 
-        Ok(MapData {
+        Ok(Self {
             obj: parse_map_info(info, PinningType::None),
             fd: fd.into_raw_fd(),
             pinned: false,
@@ -641,8 +641,8 @@ pub struct MapKeys<'coll, K: Pod> {
 }
 
 impl<'coll, K: Pod> MapKeys<'coll, K> {
-    fn new(map: &'coll MapData) -> MapKeys<'coll, K> {
-        MapKeys {
+    fn new(map: &'coll MapData) -> Self {
+        Self {
             map,
             err: false,
             key: None,
@@ -685,8 +685,8 @@ pub struct MapIter<'coll, K: Pod, V, I: IterableMap<K, V>> {
 }
 
 impl<'coll, K: Pod, V, I: IterableMap<K, V>> MapIter<'coll, K, V, I> {
-    fn new(map: &'coll I) -> MapIter<'coll, K, V, I> {
-        MapIter {
+    fn new(map: &'coll I) -> Self {
+        Self {
             keys: MapKeys::new(map.map()),
             map,
             _v: PhantomData,
@@ -761,7 +761,7 @@ impl<T: Pod> TryFrom<Vec<T>> for PerCpuValues<T> {
                 format!("not enough values ({}), nr_cpus: {}", values.len(), nr_cpus),
             ));
         }
-        Ok(PerCpuValues {
+        Ok(Self {
             values: values.into_boxed_slice(),
         })
     }
@@ -775,7 +775,7 @@ impl<T: Pod> PerCpuValues<T> {
         })
     }
 
-    pub(crate) unsafe fn from_kernel_mem(mem: PerCpuKernelMem) -> PerCpuValues<T> {
+    pub(crate) unsafe fn from_kernel_mem(mem: PerCpuKernelMem) -> Self {
         let mem_ptr = mem.bytes.as_ptr() as usize;
         let value_size = (mem::size_of::<T>() + 7) & !7;
         let mut values = Vec::new();
@@ -785,13 +785,13 @@ impl<T: Pod> PerCpuValues<T> {
             offset += value_size;
         }
 
-        PerCpuValues {
+        Self {
             values: values.into_boxed_slice(),
         }
     }
 
     pub(crate) fn build_kernel_mem(&self) -> Result<PerCpuKernelMem, io::Error> {
-        let mut mem = PerCpuValues::<T>::alloc_kernel_mem()?;
+        let mut mem = Self::alloc_kernel_mem()?;
         let mem_ptr = mem.as_mut_ptr() as usize;
         let value_size = (mem::size_of::<T>() + 7) & !7;
         for i in 0..self.values.len() {

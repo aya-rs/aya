@@ -139,7 +139,7 @@ impl TryFrom<FdLink> for KProbeLink {
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
         let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI as u32) {
-            return Ok(KProbeLink::new(PerfLinkInner::FdLink(fd_link)));
+            return Ok(Self::new(PerfLinkInner::FdLink(fd_link)));
         }
         Err(LinkError::InvalidLink)
     }

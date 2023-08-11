@@ -34,11 +34,11 @@ pub struct Stack<T, V: Pod> {
 }
 
 impl<T: Borrow<MapData>, V: Pod> Stack<T, V> {
-    pub(crate) fn new(map: T) -> Result<Stack<T, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<(), V>(data)?;
 
-        Ok(Stack {
+        Ok(Self {
             inner: map,
             _v: PhantomData,
         })

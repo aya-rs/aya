@@ -113,11 +113,11 @@ impl<K: Pod> Clone for Key<K> {
 unsafe impl<K: Pod> Pod for Key<K> {}
 
 impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
-    pub(crate) fn new(map: T) -> Result<LpmTrie<T, K, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<Key<K>, V>(data)?;
 
-        Ok(LpmTrie {
+        Ok(Self {
             inner: map,
             _k: PhantomData,
             _v: PhantomData,

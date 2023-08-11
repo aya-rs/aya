@@ -95,9 +95,9 @@ pub enum TcError {
 impl TcAttachType {
     pub(crate) fn parent(&self) -> u32 {
         match self {
-            TcAttachType::Custom(parent) => *parent,
-            TcAttachType::Ingress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_INGRESS),
-            TcAttachType::Egress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_EGRESS),
+            Self::Custom(parent) => *parent,
+            Self::Ingress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_INGRESS),
+            Self::Egress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_EGRESS),
         }
     }
 }
@@ -284,9 +284,9 @@ impl SchedClassifierLink {
         attach_type: TcAttachType,
         priority: u16,
         handle: u32,
-    ) -> Result<SchedClassifierLink, io::Error> {
+    ) -> Result<Self, io::Error> {
         let if_index = ifindex_from_ifname(if_name)?;
-        Ok(SchedClassifierLink(Some(TcLink {
+        Ok(Self(Some(TcLink {
             if_index: if_index as i32,
             attach_type,
             priority,

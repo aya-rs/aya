@@ -129,15 +129,15 @@ impl Link for CgroupDeviceLinkInner {
 
     fn id(&self) -> Self::Id {
         match self {
-            CgroupDeviceLinkInner::Fd(fd) => CgroupDeviceLinkIdInner::Fd(fd.id()),
-            CgroupDeviceLinkInner::ProgAttach(p) => CgroupDeviceLinkIdInner::ProgAttach(p.id()),
+            Self::Fd(fd) => CgroupDeviceLinkIdInner::Fd(fd.id()),
+            Self::ProgAttach(p) => CgroupDeviceLinkIdInner::ProgAttach(p.id()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         match self {
-            CgroupDeviceLinkInner::Fd(fd) => fd.detach(),
-            CgroupDeviceLinkInner::ProgAttach(p) => p.detach(),
+            Self::Fd(fd) => fd.detach(),
+            Self::ProgAttach(p) => p.detach(),
         }
     }
 }
