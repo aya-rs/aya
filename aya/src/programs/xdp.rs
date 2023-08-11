@@ -14,11 +14,8 @@ use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_attach_type::{self, BPF_XDP},
-        bpf_link_type,
-        bpf_prog_type::BPF_PROG_TYPE_XDP,
-        XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE,
-        XDP_FLAGS_UPDATE_IF_NOEXIST,
+        bpf_attach_type, bpf_link_type, bpf_prog_type, XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE,
+        XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE, XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
     programs::{
         define_link_wrapper, load_program, FdLink, Link, LinkError, ProgramData, ProgramError,
@@ -38,7 +35,7 @@ pub enum XdpError {
     },
 }
 
-bitflags! {
+bitflags::bitflags! {
     /// Flags passed to [`Xdp::attach()`].
     #[derive(Clone, Copy, Debug, Default)]
     pub struct XdpFlags: u32 {
@@ -86,7 +83,7 @@ impl Xdp {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(bpf_attach_type::BPF_XDP);
-        load_program(BPF_PROG_TYPE_XDP, &mut self.data)
+        load_program(bpf_prog_type::BPF_PROG_TYPE_XDP, &mut self.data)
     }
 
     /// Attaches the program to the given `interface`.
@@ -134,12 +131,17 @@ impl Xdp {
         let if_index = if_index as RawFd;
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 9, 0) {
-            let link_fd = bpf_link_create(prog_fd, if_index, BPF_XDP, None, flags.bits()).map_err(
-                |(_, io_error)| SyscallError {
-                    call: "bpf_link_create",
-                    io_error,
-                },
-            )?;
+            let link_fd = bpf_link_create(
+                prog_fd,
+                if_index,
+                bpf_attach_type::BPF_XDP,
+                None,
+                flags.bits(),
+            )
+            .map_err(|(_, io_error)| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
             self.data
                 .links
                 .insert(XdpLink::new(XdpLinkInner::FdLink(FdLink::new(link_fd))))
@@ -257,15 +259,15 @@ impl Link for XdpLinkInner {
 
     fn id(&self) -> Self::Id {
         match self {
-            XdpLinkInner::FdLink(link) => XdpLinkIdInner::FdLinkId(link.id()),
-            XdpLinkInner::NlLink(link) => XdpLinkIdInner::NlLinkId(link.id()),
+            Self::FdLink(link) => XdpLinkIdInner::FdLinkId(link.id()),
+            Self::NlLink(link) => XdpLinkIdInner::NlLinkId(link.id()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         match self {
-            XdpLinkInner::FdLink(link) => link.detach(),
-            XdpLinkInner::NlLink(link) => link.detach(),
+            Self::FdLink(link) => link.detach(),
+            Self::NlLink(link) => link.detach(),
         }
     }
 }
@@ -289,7 +291,7 @@ impl TryFrom<FdLink> for XdpLink {
         // unwrap of fd_link.fd will not panic since it's only None when being dropped.
         let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_XDP as u32) {
-            return Ok(XdpLink::new(XdpLinkInner::FdLink(fd_link)));
+            return Ok(Self::new(XdpLinkInner::FdLink(fd_link)));
         }
         Err(LinkError::InvalidLink)
     }

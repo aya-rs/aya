@@ -52,7 +52,6 @@ use crate::maps::{
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::perf::{AsyncPerfEventArray, PerfBufferError};
 /// use aya::util::online_cpus;
-/// use futures::future;
 /// use bytes::BytesMut;
 /// use tokio::task; // or async_std::task
 ///
@@ -118,8 +117,8 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArray<T> {
 }
 
 impl<T: Borrow<MapData>> AsyncPerfEventArray<T> {
-    pub(crate) fn new(map: T) -> Result<AsyncPerfEventArray<T>, MapError> {
-        Ok(AsyncPerfEventArray {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
+        Ok(Self {
             perf_map: PerfEventArray::new(map)?,
         })
     }

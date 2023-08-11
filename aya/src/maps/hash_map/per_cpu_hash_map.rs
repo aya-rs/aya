@@ -48,11 +48,11 @@ pub struct PerCpuHashMap<T, K: Pod, V: Pod> {
 }
 
 impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
-    pub(crate) fn new(map: T) -> Result<PerCpuHashMap<T, K, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<K, V>(data)?;
 
-        Ok(PerCpuHashMap {
+        Ok(Self {
             inner: map,
             _k: PhantomData,
             _v: PhantomData,
@@ -143,6 +143,6 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, PerCpuValues<V>>
     }
 
     fn get(&self, key: &K) -> Result<PerCpuValues<V>, MapError> {
-        PerCpuHashMap::get(self, key, 0)
+        Self::get(self, key, 0)
     }
 }

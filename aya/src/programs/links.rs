@@ -35,8 +35,8 @@ pub(crate) struct LinkMap<T: Link> {
 }
 
 impl<T: Link> LinkMap<T> {
-    pub(crate) fn new() -> LinkMap<T> {
-        LinkMap {
+    pub(crate) fn new() -> Self {
+        Self {
             links: HashMap::new(),
         }
     }
@@ -112,8 +112,8 @@ pub struct FdLink {
 }
 
 impl FdLink {
-    pub(crate) fn new(fd: OwnedFd) -> FdLink {
-        FdLink { fd }
+    pub(crate) fn new(fd: OwnedFd) -> Self {
+        Self { fd }
     }
 
     /// Pins the link to a BPF file system.
@@ -198,7 +198,7 @@ pub struct PinnedLink {
 
 impl PinnedLink {
     fn new(path: PathBuf, link: FdLink) -> Self {
-        PinnedLink { inner: link, path }
+        Self { inner: link, path }
     }
 
     /// Creates a [`crate::programs::links::PinnedLink`] from a valid path on bpffs.
@@ -210,10 +210,7 @@ impl PinnedLink {
                 io_error,
             })
         })?;
-        Ok(PinnedLink::new(
-            path.as_ref().to_path_buf(),
-            FdLink::new(fd),
-        ))
+        Ok(Self::new(path.as_ref().to_path_buf(), FdLink::new(fd)))
     }
 
     /// Removes the pinned link from the filesystem and returns an [`FdLink`].
@@ -236,12 +233,8 @@ pub struct ProgAttachLink {
 }
 
 impl ProgAttachLink {
-    pub(crate) fn new(
-        prog_fd: RawFd,
-        target_fd: RawFd,
-        attach_type: bpf_attach_type,
-    ) -> ProgAttachLink {
-        ProgAttachLink {
+    pub(crate) fn new(prog_fd: RawFd, target_fd: RawFd, attach_type: bpf_attach_type) -> Self {
+        Self {
             prog_fd,
             target_fd: unsafe { dup(target_fd) },
             attach_type,
@@ -300,7 +293,7 @@ macro_rules! define_link_wrapper {
             }
         }
 
-        impl crate::programs::Link for $wrapper {
+        impl $crate::programs::Link for $wrapper {
             type Id = $wrapper_id;
 
             fn id(&self) -> Self::Id {
@@ -359,8 +352,8 @@ mod tests {
     }
 
     impl TestLink {
-        fn new(a: u8, b: u8) -> TestLink {
-            TestLink {
+        fn new(a: u8, b: u8) -> Self {
+            Self {
                 id: (a, b),
                 detached: Rc::new(RefCell::new(0)),
             }

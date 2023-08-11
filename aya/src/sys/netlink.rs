@@ -286,7 +286,7 @@ struct NetlinkSocket {
 }
 
 impl NetlinkSocket {
-    fn open() -> Result<NetlinkSocket, io::Error> {
+    fn open() -> Result<Self, io::Error> {
         // Safety: libc wrapper
         let sock = unsafe { socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE) };
         if sock < 0 {
@@ -315,7 +315,7 @@ impl NetlinkSocket {
             return Err(io::Error::last_os_error());
         }
 
-        Ok(NetlinkSocket {
+        Ok(Self {
             sock,
             _nl_pid: addr.nl_pid,
         })
@@ -375,7 +375,7 @@ struct NetlinkMessage {
 }
 
 impl NetlinkMessage {
-    fn read(buf: &[u8]) -> Result<NetlinkMessage, io::Error> {
+    fn read(buf: &[u8]) -> Result<Self, io::Error> {
         if mem::size_of::<nlmsghdr>() > buf.len() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -413,7 +413,7 @@ impl NetlinkMessage {
             (buf[data_offset..msg_len].to_vec(), None)
         };
 
-        Ok(NetlinkMessage {
+        Ok(Self {
             header,
             data,
             error,
@@ -443,8 +443,8 @@ struct NestedAttrs<'a> {
 }
 
 impl<'a> NestedAttrs<'a> {
-    fn new(buf: &mut [u8], top_attr_type: u16) -> NestedAttrs<'_> {
-        NestedAttrs {
+    fn new(buf: &'a mut [u8], top_attr_type: u16) -> Self {
+        Self {
             buf,
             top_attr_type,
             offset: NLA_HDR_LEN,
@@ -528,8 +528,8 @@ struct NlAttrsIterator<'a> {
 }
 
 impl<'a> NlAttrsIterator<'a> {
-    fn new(attrs: &[u8]) -> NlAttrsIterator {
-        NlAttrsIterator { attrs, offset: 0 }
+    fn new(attrs: &'a [u8]) -> Self {
+        Self { attrs, offset: 0 }
     }
 }
 
@@ -570,7 +570,7 @@ impl<'a> Iterator for NlAttrsIterator<'a> {
     }
 }
 
-fn parse_attrs(buf: &[u8]) -> Result<HashMap<u16, NlAttr>, NlAttrError> {
+fn parse_attrs(buf: &[u8]) -> Result<HashMap<u16, NlAttr<'_>>, NlAttrError> {
     let mut attrs = HashMap::new();
     for attr in NlAttrsIterator::new(buf) {
         let attr = attr?;
@@ -595,8 +595,8 @@ enum NlAttrError {
 }
 
 impl From<NlAttrError> for io::Error {
-    fn from(e: NlAttrError) -> io::Error {
-        io::Error::new(io::ErrorKind::Other, e)
+    fn from(e: NlAttrError) -> Self {
+        Self::new(io::ErrorKind::Other, e)
     }
 }
 

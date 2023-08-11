@@ -71,7 +71,7 @@ unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 
 pub use aya_obj::maps::{bpf_map_def, PinningType};
 
-lazy_static! {
+lazy_static::lazy_static! {
     pub(crate) static ref FEATURES: Features = detect_features();
 }
 
@@ -138,7 +138,7 @@ pub struct BpfLoader<'a> {
     allow_unsupported_maps: bool,
 }
 
-bitflags! {
+bitflags::bitflags! {
     /// Used to set the verifier log level flags in [BpfLoader](BpfLoader::verifier_log_level()).
     #[derive(Clone, Copy, Debug)]
     pub struct VerifierLogLevel: u32 {
@@ -161,8 +161,8 @@ impl Default for VerifierLogLevel {
 
 impl<'a> BpfLoader<'a> {
     /// Creates a new loader instance.
-    pub fn new() -> BpfLoader<'a> {
-        BpfLoader {
+    pub fn new() -> Self {
+        Self {
             btf: Btf::from_sys_fs().ok().map(Cow::Owned),
             map_pin_path: None,
             globals: HashMap::new(),
@@ -738,7 +738,7 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
     Ok((name, map))
 }
 
-impl<'a> Default for BpfLoader<'a> {
+impl Default for BpfLoader<'_> {
     fn default() -> Self {
         BpfLoader::new()
     }
@@ -768,7 +768,7 @@ impl Bpf {
     /// let bpf = Bpf::load_file("file.o")?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Bpf, BpfError> {
+    pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Self, BpfError> {
         BpfLoader::new()
             .btf(Btf::from_sys_fs().ok().as_ref())
             .load_file(path)
@@ -793,7 +793,7 @@ impl Bpf {
     /// let bpf = Bpf::load(&data)?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn load(data: &[u8]) -> Result<Bpf, BpfError> {
+    pub fn load(data: &[u8]) -> Result<Self, BpfError> {
         BpfLoader::new()
             .btf(Btf::from_sys_fs().ok().as_ref())
             .load(data)
