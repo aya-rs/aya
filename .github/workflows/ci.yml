@@ -30,6 +30,9 @@ jobs:
         with:
           tool: cargo-hack,taplo-cli
 
+      - name: Check C formatting
+        run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
+
       - run: taplo fmt --check
 
       - name: Check formatting
