@@ -1642,15 +1642,12 @@ mod tests {
 
         let prog_foo = obj.programs.get("foo").unwrap();
 
-        assert_matches!(
-            prog_foo,
-            Program {
-                license,
-                kernel_version: None,
-                section: ProgramSection::KProbe { .. },
-                ..
-            } if license.to_str().unwrap() == "GPL"
-        );
+        assert_matches!(prog_foo, Program {
+            license,
+            kernel_version: None,
+            section: ProgramSection::KProbe { .. },
+            ..
+        } => assert_eq!(license.to_str().unwrap(), "GPL"));
 
         assert_matches!(
             obj.functions.get(&prog_foo.function_key()),
@@ -1704,14 +1701,12 @@ mod tests {
         let prog_bar = obj.programs.get("bar").unwrap();
         let function_bar = obj.functions.get(&prog_bar.function_key()).unwrap();
 
-        assert_matches!(prog_foo,
-            Program {
-                license,
-                kernel_version: None,
-                section: ProgramSection::KProbe { .. },
-                ..
-            } if license.to_string_lossy() == "GPL"
-        );
+        assert_matches!(prog_foo, Program {
+            license,
+            kernel_version: None,
+            section: ProgramSection::KProbe { .. },
+            ..
+        } => assert_eq!(license.to_str().unwrap(), "GPL"));
         assert_matches!(
             function_foo,
             Function {
@@ -1724,14 +1719,12 @@ mod tests {
             }  if name == "foo" && instructions.len() == 1
         );
 
-        assert_matches!(prog_bar,
-            Program {
-                license,
-                kernel_version: None,
-                section: ProgramSection::KProbe { .. },
-                ..
-            } if license.to_string_lossy() == "GPL"
-        );
+        assert_matches!(prog_bar, Program {
+            license,
+            kernel_version: None,
+            section: ProgramSection::KProbe { .. },
+            ..
+        } => assert_eq!(license.to_str().unwrap(), "GPL"));
         assert_matches!(
             function_bar,
             Function {

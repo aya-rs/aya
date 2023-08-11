@@ -742,6 +742,6 @@ mod tests {
             TCA_BPF_NAME as u16
         );
         let name = CStr::from_bytes_with_nul(inner.data).unwrap();
-        assert_eq!(name.to_string_lossy(), "foo");
+        assert_eq!(name.to_str().unwrap(), "foo");
     }
 }
