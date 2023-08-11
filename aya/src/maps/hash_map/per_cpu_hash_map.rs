@@ -42,7 +42,7 @@ use crate::{
 #[doc(alias = "BPF_MAP_TYPE_LRU_PERCPU_HASH")]
 #[doc(alias = "BPF_MAP_TYPE_PERCPU_HASH")]
 pub struct PerCpuHashMap<T, K: Pod, V: Pod> {
-    inner: T,
+    pub(crate) inner: T,
     _k: PhantomData<K>,
     _v: PhantomData<V>,
 }

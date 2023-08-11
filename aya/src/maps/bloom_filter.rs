@@ -35,7 +35,7 @@ use crate::{
 #[doc(alias = "BPF_MAP_TYPE_BLOOM_FILTER")]
 #[derive(Debug)]
 pub struct BloomFilter<T, V: Pod> {
-    inner: T,
+    pub(crate) inner: T,
     _v: PhantomData<V>,
 }
 

@@ -49,7 +49,7 @@ use crate::{
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_PERCPU_ARRAY")]
 pub struct PerCpuArray<T, V: Pod> {
-    inner: T,
+    pub(crate) inner: T,
     _v: PhantomData<V>,
 }
 

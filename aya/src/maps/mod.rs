@@ -37,19 +37,20 @@
 //! versa. Because of that, all map values must be plain old data and therefore
 //! implement the [Pod] trait.
 use std::{
+    borrow::BorrowMut,
     ffi::CString,
     fmt, io,
     marker::PhantomData,
     mem,
     ops::Deref,
     os::fd::{AsFd as _, AsRawFd, BorrowedFd, IntoRawFd as _, OwnedFd, RawFd},
-    path::Path,
+    path::{Path, PathBuf},
     ptr,
 };
 
 use crate::util::KernelVersion;
 use libc::{getrlimit, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
-use log::warn;
+use log::{debug, warn};
 use thiserror::Error;
 
 use crate::{
@@ -158,8 +159,8 @@ pub enum MapError {
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
 
-    /// Could not pin map by name
-    #[error("map `{name:?}` requested pinning by name. pinning failed")]
+    /// Could not pin map
+    #[error("map `{name:?}` requested pinning. pinning failed")]
     PinError {
         /// The map name
         name: Option<String>,
@@ -279,7 +280,112 @@ impl Map {
             Self::Unsupported(map) => map.obj.map_type(),
         }
     }
+
+    /// Pins the map to a BPF filesystem.
+    ///
+    /// When a BPF map is pinned to a BPF filesystem it will remain loaded after
+    /// Aya has unloaded the program.
+    /// To remove the map, the file on the BPF filesystem must be removed.
+    /// Any directories in the the path provided should have been created by the caller.
+    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+        match self {
+            Self::Array(map) => map.pin(path),
+            Self::PerCpuArray(map) => map.pin(path),
+            Self::ProgramArray(map) => map.pin(path),
+            Self::HashMap(map) => map.pin(path),
+            Self::LruHashMap(map) => map.pin(path),
+            Self::PerCpuHashMap(map) => map.pin(path),
+            Self::PerCpuLruHashMap(map) => map.pin(path),
+            Self::PerfEventArray(map) => map.pin(path),
+            Self::SockHash(map) => map.pin(path),
+            Self::SockMap(map) => map.pin(path),
+            Self::BloomFilter(map) => map.pin(path),
+            Self::LpmTrie(map) => map.pin(path),
+            Self::Stack(map) => map.pin(path),
+            Self::StackTraceMap(map) => map.pin(path),
+            Self::Queue(map) => map.pin(path),
+            Self::Unsupported(map) => map.pin(path),
+        }
+    }
+
+    /// Removes the pinned map from a BPF filesystem.
+    pub fn unpin(&mut self) -> Result<(), io::Error> {
+        match self {
+            Self::Array(map) => map.unpin(),
+            Self::PerCpuArray(map) => map.unpin(),
+            Self::ProgramArray(map) => map.unpin(),
+            Self::HashMap(map) => map.unpin(),
+            Self::LruHashMap(map) => map.unpin(),
+            Self::PerCpuHashMap(map) => map.unpin(),
+            Self::PerCpuLruHashMap(map) => map.unpin(),
+            Self::PerfEventArray(map) => map.unpin(),
+            Self::SockHash(map) => map.unpin(),
+            Self::SockMap(map) => map.unpin(),
+            Self::BloomFilter(map) => map.unpin(),
+            Self::LpmTrie(map) => map.unpin(),
+            Self::Stack(map) => map.unpin(),
+            Self::StackTraceMap(map) => map.unpin(),
+            Self::Queue(map) => map.unpin(),
+            Self::Unsupported(map) => map.unpin(),
+        }
+    }
 }
+
+// Implements map pinning for different map implementations
+// TODO add support for PerfEventArrays and AsyncPerfEventArrays
+macro_rules! impl_map_pin {
+    ($ty_param:tt {
+        $($ty:ident),+ $(,)?
+    }) => {
+        $(impl_map_pin!(<$ty_param> $ty);)+
+    };
+    (
+      <($($ty_param:ident),*)>
+      $ty:ident
+    ) => {
+            impl<T: BorrowMut<MapData>, $($ty_param: Pod),*> $ty<T, $($ty_param),*>
+            {
+                    /// Pins the map to a BPF filesystem.
+                    ///
+                    /// When a BPF map is pinned to a BPF filesystem it will remain loaded after
+                    /// Aya has unloaded the program.
+                    /// To remove the map, the file on the BPF filesystem must be removed.
+                    /// Any directories in the the path provided should have been created by the caller.
+                    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+                        let data = self.inner.borrow_mut();
+                        data.pin(path)
+                    }
+
+                    /// Removes the pinned map from a BPF filesystem.
+                    pub fn unpin(mut self) -> Result<(), io::Error> {
+                        let data = self.inner.borrow_mut();
+                        data.unpin()
+                    }
+            }
+
+    };
+}
+
+impl_map_pin!(() {
+    ProgramArray,
+    SockMap,
+    StackTraceMap,
+});
+
+impl_map_pin!((V) {
+    Array,
+    PerCpuArray,
+    SockHash,
+    BloomFilter,
+    Queue,
+    Stack,
+});
+
+impl_map_pin!((K, V) {
+    HashMap,
+    PerCpuHashMap,
+    LpmTrie,
+});
 
 // Implements TryFrom<Map> for different map implementations. Different map implementations can be
 // constructed from different variants of the map enum. Also, the implementation may have type
@@ -397,9 +503,8 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 pub struct MapData {
     pub(crate) obj: obj::Map,
     pub(crate) fd: RawFd,
-    /// Indicates if this map has been pinned to bpffs
-    pub pinned: bool,
     pub(crate) name: String,
+    pub(crate) paths: Vec<PathBuf>,
 }
 
 impl MapData {
@@ -422,7 +527,7 @@ impl MapData {
                 }
 
                 MapError::CreateError {
-                    name: name.into(),
+                    name: name.to_owned(),
                     code,
                     io_error,
                 }
@@ -433,12 +538,12 @@ impl MapData {
         Ok(Self {
             obj,
             fd,
-            pinned: false,
             name: name.to_string(),
+            paths: Vec::new(),
         })
     }
 
-    pub(crate) fn create_pinned<P: AsRef<Path>>(
+    pub(crate) fn create_pinned_by_name<P: AsRef<Path>>(
         path: P,
         obj: obj::Map,
         name: &str,
@@ -464,8 +569,8 @@ impl MapData {
             Ok(fd) => Ok(Self {
                 obj,
                 fd: fd.into_raw_fd(),
-                pinned: false,
                 name: name.to_string(),
+                paths: vec![path],
             }),
             Err(_) => {
                 let mut map = Self::create(obj, name, btf_fd)?;
@@ -504,10 +609,10 @@ impl MapData {
         Ok(Self {
             obj: parse_map_info(info, PinningType::ByName),
             fd: fd.into_raw_fd(),
-            pinned: true,
             name: std::str::from_utf8(name_bytes)
                 .expect("unable to parse map name from bpf_map_info")
                 .to_string(),
+            paths: vec![path.to_path_buf()],
         })
     }
 
@@ -523,10 +628,10 @@ impl MapData {
         Ok(Self {
             obj: parse_map_info(info, PinningType::None),
             fd: fd.into_raw_fd(),
-            pinned: false,
             name: std::str::from_utf8(name_bytes)
                 .expect("unable to parse map name from bpf_map_info")
                 .to_string(),
+            paths: Vec::new(),
         })
     }
 
@@ -535,23 +640,40 @@ impl MapData {
 
         let Self {
             fd,
-            pinned,
+            paths,
             obj: _,
             name,
         } = self;
-        if *pinned {
+        if paths.contains(&path.as_ref().to_path_buf()) {
             return Err(PinError::AlreadyPinned {
                 name: name.to_string(),
             });
         }
-        let path = path.as_ref().join(name);
-        let path_string = CString::new(path.as_os_str().as_bytes())
-            .map_err(|error| PinError::InvalidPinPath { path, error })?;
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|error| {
+            PinError::InvalidPinPath {
+                path: path.as_ref().to_path_buf(),
+                error,
+            }
+        })?;
+        debug!("Attempting to pin map {name} at {path_string:?}");
         bpf_pin_object(*fd, &path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_PIN",
             io_error,
         })?;
-        *pinned = true;
+        paths.push(path.as_ref().to_path_buf());
+        Ok(())
+    }
+
+    pub(crate) fn unpin(&mut self) -> Result<(), io::Error> {
+        let Self {
+            fd: _,
+            paths,
+            obj: _,
+            name: _,
+        } = self;
+        for path in paths.drain(..) {
+            std::fs::remove_file(path)?;
+        }
         Ok(())
     }
 
@@ -577,14 +699,14 @@ impl Clone for MapData {
         let Self {
             obj,
             fd,
-            pinned,
+            paths,
             name,
         } = self;
         Self {
             obj: obj.clone(),
             fd: unsafe { libc::dup(*fd) },
-            pinned: *pinned,
             name: name.clone(),
+            paths: paths.clone(),
         }
     }
 }
@@ -821,8 +943,8 @@ mod tests {
             Ok(MapData {
                 obj: _,
                 fd: 42,
-                pinned: false
-                name: "foo".to_string(),
+                name: _,
+                paths: _,
             })
         );
     }

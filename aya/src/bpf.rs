@@ -396,7 +396,7 @@ impl<'a> BpfLoader<'a> {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
                 match load_btf(btf.to_bytes(), *verifier_log_level) {
                     Ok(btf_fd) => Some(Arc::new(btf_fd)),
-                    // Only report an error here if the BTF is truely needed, otherwise proceed without.
+                    // Only report an error here if the BTF is truly needed, otherwise proceed without.
                     Err(err) => {
                         for program in obj.programs.values() {
                             match program.section {
@@ -478,8 +478,13 @@ impl<'a> BpfLoader<'a> {
             let mut map = match obj.pinning() {
                 PinningType::None => MapData::create(obj, &name, btf_fd)?,
                 PinningType::ByName => {
-                    let path = map_pin_path.as_ref().ok_or(BpfError::NoPinPath)?;
-                    MapData::create_pinned(path, obj, &name, btf_fd)?
+                    let path = match &map_pin_path {
+                        Some(p) => p.to_owned(),
+                        // pin maps in /sys/fs/bpf by default to align with libbpf
+                        // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
+                        None => PathBuf::from("/sys/fs/bpf"),
+                    };
+                    MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
                 }
             };
             let fd = map.fd;
@@ -847,6 +852,29 @@ impl Bpf {
     /// ```
     pub fn maps(&self) -> impl Iterator<Item = (&str, &Map)> {
         self.maps.iter().map(|(name, map)| (name.as_str(), map))
+    }
+
+    /// An iterator mutably referencing all the maps.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use std::path::Path;
+    /// # #[derive(thiserror::Error, Debug)]
+    /// # enum Error {
+    /// #     #[error(transparent)]
+    /// #     Bpf(#[from] aya::BpfError),
+    /// #     #[error(transparent)]
+    /// #     Pin(#[from] aya::pin::PinError)
+    /// # }
+    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let pin_path = Path::new("/tmp/pin_path");
+    /// for (_, map) in bpf.maps_mut() {
+    ///     map.pin(pin_path)?;
+    /// }
+    /// # Ok::<(), Error>(())
+    /// ```
+    pub fn maps_mut(&mut self) -> impl Iterator<Item = (&str, &mut Map)> {
+        self.maps.iter_mut().map(|(name, map)| (name.as_str(), map))
     }
 
     /// Returns a reference to the program with the given name.

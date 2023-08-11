@@ -47,7 +47,7 @@ use crate::{
 #[doc(alias = "BPF_MAP_TYPE_LPM_TRIE")]
 #[derive(Debug)]
 pub struct LpmTrie<T, K, V> {
-    inner: T,
+    pub(crate) inner: T,
     _k: PhantomData<K>,
     _v: PhantomData<V>,
 }
