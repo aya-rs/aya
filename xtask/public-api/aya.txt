@@ -4645,9 +4645,6 @@ impl core::marker::Sync for aya::programs::xdp::XdpFlags
 impl core::marker::Unpin for aya::programs::xdp::XdpFlags
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpFlags
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpFlags
-impl<B> bitflags::traits::BitFlags for aya::programs::xdp::XdpFlags where B: bitflags::traits::Flags
-pub type aya::programs::xdp::XdpFlags::Iter = bitflags::iter::Iter<B>
-pub type aya::programs::xdp::XdpFlags::IterNames = bitflags::iter::IterNames<B>
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::XdpFlags where U: core::convert::From<T>
 pub fn aya::programs::xdp::XdpFlags::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::xdp::XdpFlags where U: core::convert::Into<T>
@@ -6775,9 +6772,6 @@ impl core::marker::Sync for aya::programs::xdp::XdpFlags
 impl core::marker::Unpin for aya::programs::xdp::XdpFlags
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpFlags
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpFlags
-impl<B> bitflags::traits::BitFlags for aya::programs::xdp::XdpFlags where B: bitflags::traits::Flags
-pub type aya::programs::xdp::XdpFlags::Iter = bitflags::iter::Iter<B>
-pub type aya::programs::xdp::XdpFlags::IterNames = bitflags::iter::IterNames<B>
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::XdpFlags where U: core::convert::From<T>
 pub fn aya::programs::xdp::XdpFlags::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::xdp::XdpFlags where U: core::convert::Into<T>
@@ -7180,9 +7174,6 @@ impl core::marker::Sync for aya::VerifierLogLevel
 impl core::marker::Unpin for aya::VerifierLogLevel
 impl core::panic::unwind_safe::RefUnwindSafe for aya::VerifierLogLevel
 impl core::panic::unwind_safe::UnwindSafe for aya::VerifierLogLevel
-impl<B> bitflags::traits::BitFlags for aya::VerifierLogLevel where B: bitflags::traits::Flags
-pub type aya::VerifierLogLevel::Iter = bitflags::iter::Iter<B>
-pub type aya::VerifierLogLevel::IterNames = bitflags::iter::IterNames<B>
 impl<T, U> core::convert::Into<U> for aya::VerifierLogLevel where U: core::convert::From<T>
 pub fn aya::VerifierLogLevel::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::VerifierLogLevel where U: core::convert::Into<T>
