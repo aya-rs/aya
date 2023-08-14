@@ -3,7 +3,7 @@ use std::{
     ffi::{CStr, CString},
     io, iter,
     mem::{self, MaybeUninit},
-    os::fd::{AsRawFd, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
+    os::fd::{AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
     slice,
 };
 
@@ -132,7 +132,7 @@ pub(crate) fn bpf_load_program(
     aya_attr: &BpfLoadProgramAttrs,
     log_buf: &mut [u8],
     verifier_log_level: VerifierLogLevel,
-) -> SysResult<c_long> {
+) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_3 };
@@ -190,7 +190,8 @@ pub(crate) fn bpf_load_program(
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
     }
-    sys_bpf(bpf_cmd::BPF_PROG_LOAD, &mut attr)
+    // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, &mut attr) }
 }
 
 fn lookup<K: Pod, V: Pod>(
@@ -506,10 +507,9 @@ fn bpf_obj_get_info_by_fd<T, F: FnOnce(&mut T)>(
 }
 
 pub(crate) fn bpf_prog_get_info_by_fd(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     map_ids: &mut [u32],
 ) -> Result<bpf_prog_info, SyscallError> {
-    let fd = unsafe { BorrowedFd::borrow_raw(fd) };
     bpf_obj_get_info_by_fd(fd, |info: &mut bpf_prog_info| {
         info.nr_map_ids = map_ids.len() as _;
         info.map_ids = map_ids.as_mut_ptr() as _;

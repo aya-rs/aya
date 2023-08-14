@@ -1,7 +1,7 @@
 use bytes::BytesMut;
 use std::{
     borrow::{Borrow, BorrowMut},
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsRawFd as _, RawFd},
 };
 
 // See https://doc.rust-lang.org/cargo/reference/features.html#mutually-exclusive-features.

@@ -2,7 +2,7 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd as _, RawFd},
 };
 
 use crate::{
@@ -37,13 +37,13 @@ use crate::{
 /// let flags = 0;
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 0) will jump to prog_0
-/// prog_array.set(0, prog_0_fd, flags);
+/// prog_array.set(0, &prog_0_fd, flags);
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 1) will jump to prog_1
-/// prog_array.set(1, prog_1_fd, flags);
+/// prog_array.set(1, &prog_1_fd, flags);
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 2) will jump to prog_2
-/// prog_array.set(2, prog_2_fd, flags);
+/// prog_array.set(2, &prog_2_fd, flags);
 /// # Ok::<(), aya::BpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_PROG_ARRAY")]
@@ -73,11 +73,12 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     ///
     /// When an eBPF program calls `bpf_tail_call(ctx, prog_array, index)`, control
     /// flow will jump to `program`.
-    pub fn set(&mut self, index: u32, program: ProgramFd, flags: u64) -> Result<(), MapError> {
+    pub fn set(&mut self, index: u32, program: &ProgramFd, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd_or_err()?;
-        let prog_fd = program.as_raw_fd();
+        let prog_fd = program.as_fd();
+        let prog_fd = prog_fd.as_raw_fd();
 
         bpf_map_update_elem(fd, Some(&index), &prog_fd, flags).map_err(|(_, io_error)| {
             SyscallError {
