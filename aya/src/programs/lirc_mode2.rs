@@ -4,10 +4,7 @@ use std::os::fd::{AsRawFd, IntoRawFd as _, RawFd};
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
     programs::{load_program, query, Link, ProgramData, ProgramError, ProgramInfo},
-    sys::{
-        bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
-        SyscallError,
-    },
+    sys::{bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id, SyscallError},
 };
 
 use libc::{close, dup};
@@ -131,9 +128,7 @@ impl LircLink {
 
     /// Get ProgramInfo from this link
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-        bpf_prog_get_info_by_fd(self.prog_fd, &mut [])
-            .map(ProgramInfo)
-            .map_err(Into::into)
+        ProgramInfo::new_from_fd(self.prog_fd)
     }
 }
 
