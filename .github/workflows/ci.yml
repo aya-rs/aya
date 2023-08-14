@@ -193,13 +193,18 @@ jobs:
         # We also need LLVM for bpf-linker, see comment below.
         run: |
           set -euxo pipefail
-          brew install qemu dpkg pkg-config llvm
+          brew install findutils qemu dpkg pkg-config llvm
           echo /usr/local/opt/llvm/bin >> $GITHUB_PATH
 
       - name: bpf-linker
         if: runner.os == 'macOS'
         # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature).
         run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git --no-default-features
+
+      - name: Alias gxargs as xargs
+        if: runner.os == 'macOS'
+        # macOS xargs always exits 0 with -P0.
+        run: mkdir xargs-is-gxargs && ln -s "$(which gxargs)" xargs-is-gxargs/xargs && echo "$PWD"/xargs-is-gxargs >> $GITHUB_PATH
 
       - name: Download debian kernels
         if: runner.arch == 'ARM64'
