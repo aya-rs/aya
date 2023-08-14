@@ -212,7 +212,7 @@ jobs:
           printf '%s\0' \
             linux-image-6.1.0-10-cloud-arm64-unsigned_6.1.38-2_arm64.deb \
             linux-image-6.4.0-1-cloud-arm64-unsigned_6.4.4-2_arm64.deb \
-          | xargs -0 -t -P0 -I {} wget -nd -q -P test/.tmp/debian-kernels/arm64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
+          | xargs -0 -t -P0 -I {} wget -nd -nv -P test/.tmp/debian-kernels/arm64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
 
       - name: Download debian kernels
         if: runner.arch == 'X64'
@@ -225,7 +225,7 @@ jobs:
           printf '%s\0' \
             linux-image-6.1.0-10-cloud-amd64-unsigned_6.1.38-2_amd64.deb \
             linux-image-6.4.0-1-cloud-amd64-unsigned_6.4.4-2_amd64.deb \
-          | xargs -0 -t -P0 -I {} wget -nd -q -P test/.tmp/debian-kernels/amd64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
+          | xargs -0 -t -P0 -I {} wget -nd -nv -P test/.tmp/debian-kernels/amd64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
 
       - name: Alias gtar as tar
         if: runner.os == 'macOS'
