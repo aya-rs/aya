@@ -352,8 +352,6 @@ impl core::marker::Sync for aya::maps::perf::PerfBufferError
 impl core::marker::Unpin for aya::maps::perf::PerfBufferError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfBufferError
 impl !core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfBufferError
-impl<E> core::any::Provider for aya::maps::perf::PerfBufferError where E: core::error::Error + core::marker::Sized
-pub fn aya::maps::perf::PerfBufferError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::maps::perf::PerfBufferError where U: core::convert::From<T>
 pub fn aya::maps::perf::PerfBufferError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::perf::PerfBufferError where U: core::convert::Into<T>
@@ -1012,8 +1010,6 @@ impl core::marker::Sync for aya::maps::MapError
 impl core::marker::Unpin for aya::maps::MapError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapError
 impl !core::panic::unwind_safe::UnwindSafe for aya::maps::MapError
-impl<E> core::any::Provider for aya::maps::MapError where E: core::error::Error + core::marker::Sized
-pub fn aya::maps::MapError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::maps::MapError where U: core::convert::From<T>
 pub fn aya::maps::MapError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::MapError where U: core::convert::Into<T>
@@ -1772,8 +1768,6 @@ impl core::marker::Sync for aya::pin::PinError
 impl core::marker::Unpin for aya::pin::PinError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::pin::PinError
 impl !core::panic::unwind_safe::UnwindSafe for aya::pin::PinError
-impl<E> core::any::Provider for aya::pin::PinError where E: core::error::Error + core::marker::Sized
-pub fn aya::pin::PinError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::pin::PinError where U: core::convert::From<T>
 pub fn aya::pin::PinError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::pin::PinError where U: core::convert::Into<T>
@@ -2504,8 +2498,6 @@ impl core::marker::Sync for aya::programs::extension::ExtensionError
 impl core::marker::Unpin for aya::programs::extension::ExtensionError
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::extension::ExtensionError
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::extension::ExtensionError
-impl<E> core::any::Provider for aya::programs::extension::ExtensionError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::extension::ExtensionError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::extension::ExtensionError where U: core::convert::From<T>
 pub fn aya::programs::extension::ExtensionError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::extension::ExtensionError where U: core::convert::Into<T>
@@ -2884,8 +2876,6 @@ impl core::marker::Sync for aya::programs::kprobe::KProbeError
 impl core::marker::Unpin for aya::programs::kprobe::KProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeError
-impl<E> core::any::Provider for aya::programs::kprobe::KProbeError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::kprobe::KProbeError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::kprobe::KProbeError where U: core::convert::From<T>
 pub fn aya::programs::kprobe::KProbeError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::kprobe::KProbeError where U: core::convert::Into<T>
@@ -3034,8 +3024,6 @@ impl core::marker::Sync for aya::programs::links::LinkError
 impl core::marker::Unpin for aya::programs::links::LinkError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::LinkError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::links::LinkError
-impl<E> core::any::Provider for aya::programs::links::LinkError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::links::LinkError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::links::LinkError where U: core::convert::From<T>
 pub fn aya::programs::links::LinkError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::links::LinkError where U: core::convert::Into<T>
@@ -3916,8 +3904,6 @@ impl core::marker::Sync for aya::programs::tc::TcError
 impl core::marker::Unpin for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcError
-impl<E> core::any::Provider for aya::programs::tc::TcError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::tc::TcError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::tc::TcError where U: core::convert::From<T>
 pub fn aya::programs::tc::TcError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::tc::TcError where U: core::convert::Into<T>
@@ -4209,8 +4195,6 @@ impl core::marker::Sync for aya::programs::trace_point::TracePointError
 impl core::marker::Unpin for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePointError
-impl<E> core::any::Provider for aya::programs::trace_point::TracePointError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::trace_point::TracePointError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::trace_point::TracePointError where U: core::convert::From<T>
 pub fn aya::programs::trace_point::TracePointError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::trace_point::TracePointError where U: core::convert::Into<T>
@@ -4369,8 +4353,6 @@ impl core::marker::Sync for aya::programs::uprobe::UProbeError
 impl core::marker::Unpin for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeError
-impl<E> core::any::Provider for aya::programs::uprobe::UProbeError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::uprobe::UProbeError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::uprobe::UProbeError where U: core::convert::From<T>
 pub fn aya::programs::uprobe::UProbeError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::uprobe::UProbeError where U: core::convert::Into<T>
@@ -4521,8 +4503,6 @@ impl core::marker::Sync for aya::programs::xdp::XdpError
 impl core::marker::Unpin for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpError
-impl<E> core::any::Provider for aya::programs::xdp::XdpError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::xdp::XdpError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::XdpError where U: core::convert::From<T>
 pub fn aya::programs::xdp::XdpError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::xdp::XdpError where U: core::convert::Into<T>
@@ -4815,8 +4795,6 @@ impl core::marker::Sync for aya::programs::extension::ExtensionError
 impl core::marker::Unpin for aya::programs::extension::ExtensionError
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::extension::ExtensionError
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::extension::ExtensionError
-impl<E> core::any::Provider for aya::programs::extension::ExtensionError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::extension::ExtensionError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::extension::ExtensionError where U: core::convert::From<T>
 pub fn aya::programs::extension::ExtensionError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::extension::ExtensionError where U: core::convert::Into<T>
@@ -4852,8 +4830,6 @@ impl core::marker::Sync for aya::programs::kprobe::KProbeError
 impl core::marker::Unpin for aya::programs::kprobe::KProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeError
-impl<E> core::any::Provider for aya::programs::kprobe::KProbeError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::kprobe::KProbeError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::kprobe::KProbeError where U: core::convert::From<T>
 pub fn aya::programs::kprobe::KProbeError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::kprobe::KProbeError where U: core::convert::Into<T>
@@ -5237,8 +5213,6 @@ impl core::marker::Sync for aya::programs::ProgramError
 impl core::marker::Unpin for aya::programs::ProgramError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProgramError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::ProgramError
-impl<E> core::any::Provider for aya::programs::ProgramError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::ProgramError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::ProgramError where U: core::convert::From<T>
 pub fn aya::programs::ProgramError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::ProgramError where U: core::convert::Into<T>
@@ -5338,8 +5312,6 @@ impl core::marker::Sync for aya::programs::SocketFilterError
 impl core::marker::Unpin for aya::programs::SocketFilterError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::SocketFilterError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::SocketFilterError
-impl<E> core::any::Provider for aya::programs::SocketFilterError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::SocketFilterError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::SocketFilterError where U: core::convert::From<T>
 pub fn aya::programs::SocketFilterError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::SocketFilterError where U: core::convert::Into<T>
@@ -5416,8 +5388,6 @@ impl core::marker::Sync for aya::programs::tc::TcError
 impl core::marker::Unpin for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcError
-impl<E> core::any::Provider for aya::programs::tc::TcError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::tc::TcError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::tc::TcError where U: core::convert::From<T>
 pub fn aya::programs::tc::TcError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::tc::TcError where U: core::convert::Into<T>
@@ -5453,8 +5423,6 @@ impl core::marker::Sync for aya::programs::trace_point::TracePointError
 impl core::marker::Unpin for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePointError
-impl<E> core::any::Provider for aya::programs::trace_point::TracePointError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::trace_point::TracePointError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::trace_point::TracePointError where U: core::convert::From<T>
 pub fn aya::programs::trace_point::TracePointError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::trace_point::TracePointError where U: core::convert::Into<T>
@@ -5497,8 +5465,6 @@ impl core::marker::Sync for aya::programs::uprobe::UProbeError
 impl core::marker::Unpin for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeError
-impl<E> core::any::Provider for aya::programs::uprobe::UProbeError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::uprobe::UProbeError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::uprobe::UProbeError where U: core::convert::From<T>
 pub fn aya::programs::uprobe::UProbeError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::uprobe::UProbeError where U: core::convert::Into<T>
@@ -5533,8 +5499,6 @@ impl core::marker::Sync for aya::programs::xdp::XdpError
 impl core::marker::Unpin for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpError
-impl<E> core::any::Provider for aya::programs::xdp::XdpError where E: core::error::Error + core::marker::Sized
-pub fn aya::programs::xdp::XdpError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::XdpError where U: core::convert::From<T>
 pub fn aya::programs::xdp::XdpError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::xdp::XdpError where U: core::convert::Into<T>
@@ -7058,8 +7022,6 @@ impl core::marker::Sync for aya::BpfError
 impl core::marker::Unpin for aya::BpfError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::BpfError
 impl !core::panic::unwind_safe::UnwindSafe for aya::BpfError
-impl<E> core::any::Provider for aya::BpfError where E: core::error::Error + core::marker::Sized
-pub fn aya::BpfError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya::BpfError where U: core::convert::From<T>
 pub fn aya::BpfError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::BpfError where U: core::convert::Into<T>

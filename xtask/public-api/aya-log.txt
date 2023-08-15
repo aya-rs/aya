@@ -19,8 +19,6 @@ impl core::marker::Sync for aya_log::Error
 impl core::marker::Unpin for aya_log::Error
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_log::Error
 impl !core::panic::unwind_safe::UnwindSafe for aya_log::Error
-impl<E> core::any::Provider for aya_log::Error where E: core::error::Error + core::marker::Sized
-pub fn aya_log::Error::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_log::Error where U: core::convert::From<T>
 pub fn aya_log::Error::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_log::Error where U: core::convert::Into<T>
