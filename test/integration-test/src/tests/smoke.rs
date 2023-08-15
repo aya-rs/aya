@@ -63,7 +63,9 @@ fn extension() {
         .load(crate::EXT)
         .unwrap();
     let drop_: &mut Extension = bpf.program_mut("xdp_drop").unwrap().try_into().unwrap();
-    drop_.load(pass.fd().unwrap(), "xdp_pass").unwrap();
+    drop_
+        .load(pass.fd().unwrap().try_clone().unwrap(), "xdp_pass")
+        .unwrap();
 }
 
 #[test]

@@ -2521,7 +2521,7 @@ impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::attach(&mut self) -> core::result::Result<aya::programs::extension::ExtensionLinkId, aya::programs::ProgramError>
 pub fn aya::programs::extension::Extension::attach_to_program(&mut self, program: &aya::programs::ProgramFd, func_name: &str) -> core::result::Result<aya::programs::extension::ExtensionLinkId, aya::programs::ProgramError>
 pub fn aya::programs::extension::Extension::detach(&mut self, link_id: aya::programs::extension::ExtensionLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::extension::Extension::load(&mut self, program: &aya::programs::ProgramFd, func_name: &str) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::extension::Extension::load(&mut self, program: aya::programs::ProgramFd, func_name: &str) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::extension::Extension::take_link(&mut self, link_id: aya::programs::extension::ExtensionLinkId) -> core::result::Result<aya::programs::extension::ExtensionLink, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
@@ -5855,7 +5855,7 @@ impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::attach(&mut self) -> core::result::Result<aya::programs::extension::ExtensionLinkId, aya::programs::ProgramError>
 pub fn aya::programs::extension::Extension::attach_to_program(&mut self, program: &aya::programs::ProgramFd, func_name: &str) -> core::result::Result<aya::programs::extension::ExtensionLinkId, aya::programs::ProgramError>
 pub fn aya::programs::extension::Extension::detach(&mut self, link_id: aya::programs::extension::ExtensionLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::extension::Extension::load(&mut self, program: &aya::programs::ProgramFd, func_name: &str) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::extension::Extension::load(&mut self, program: aya::programs::ProgramFd, func_name: &str) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::extension::Extension::take_link(&mut self, link_id: aya::programs::extension::ExtensionLinkId) -> core::result::Result<aya::programs::extension::ExtensionLink, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>

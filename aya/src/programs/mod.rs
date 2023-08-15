@@ -69,7 +69,7 @@ use std::{
     ffi::CString,
     io,
     num::NonZeroU32,
-    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
     path::{Path, PathBuf},
     sync::Arc,
     time::{Duration, SystemTime},
@@ -382,7 +382,6 @@ impl Program {
     /// Returns the file descriptor of a program.
     ///
     /// Can be used to add a program to a [`crate::maps::ProgramArray`] or attach an [`Extension`] program.
-    /// Can be converted to [`RawFd`] using [`AsRawFd`].
     pub fn fd(&self) -> Result<&ProgramFd, ProgramError> {
         match self {
             Program::KProbe(p) => p.fd(),
@@ -422,7 +421,7 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
     pub(crate) attach_btf_obj_fd: Option<OwnedFd>,
     pub(crate) attach_btf_id: Option<u32>,
-    pub(crate) attach_prog_fd: Option<RawFd>,
+    pub(crate) attach_prog_fd: Option<ProgramFd>,
     pub(crate) btf_fd: Option<Arc<OwnedFd>>,
     pub(crate) verifier_log_level: VerifierLogLevel,
     pub(crate) path: Option<PathBuf>,
@@ -613,7 +612,7 @@ fn load_program<T: Link>(
         prog_btf_fd: btf_fd.as_ref().map(|f| f.as_fd()),
         attach_btf_obj_fd: attach_btf_obj_fd.as_ref().map(|fd| fd.as_fd()),
         attach_btf_id: *attach_btf_id,
-        attach_prog_fd: *attach_prog_fd,
+        attach_prog_fd: attach_prog_fd.as_ref().map(|fd| fd.as_fd()),
         func_info_rec_size: *func_info_rec_size,
         func_info: func_info.clone(),
         line_info_rec_size: *line_info_rec_size,

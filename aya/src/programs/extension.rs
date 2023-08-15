@@ -44,7 +44,7 @@ pub enum ExtensionError {
 /// let prog_fd = prog.fd().unwrap();
 /// let prog_fd = prog_fd.try_clone().unwrap();
 /// let ext: &mut Extension = bpf.program_mut("extension").unwrap().try_into()?;
-/// ext.load(&prog_fd, "function_to_replace")?;
+/// ext.load(prog_fd, "function_to_replace")?;
 /// ext.attach()?;
 /// Ok::<(), aya::BpfError>(())
 /// ```
@@ -69,12 +69,11 @@ impl Extension {
     /// The extension code will be loaded but inactive until it's attached.
     /// There are no restrictions on what functions may be replaced, so you could replace
     /// the main entry point of your program with an extension.
-    pub fn load(&mut self, program: &ProgramFd, func_name: &str) -> Result<(), ProgramError> {
-        let target_prog_fd = program.as_fd();
-        let (btf_fd, btf_id) = get_btf_info(target_prog_fd, func_name)?;
+    pub fn load(&mut self, program: ProgramFd, func_name: &str) -> Result<(), ProgramError> {
+        let (btf_fd, btf_id) = get_btf_info(program.as_fd(), func_name)?;
 
         self.data.attach_btf_obj_fd = Some(btf_fd);
-        self.data.attach_prog_fd = Some(target_prog_fd.as_raw_fd());
+        self.data.attach_prog_fd = Some(program);
         self.data.attach_btf_id = Some(btf_id);
         load_program(BPF_PROG_TYPE_EXT, &mut self.data)
     }
@@ -90,7 +89,13 @@ impl Extension {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let prog_fd = prog_fd.as_raw_fd();
-        let target_fd = self.data.attach_prog_fd.ok_or(ProgramError::NotLoaded)?;
+        let target_fd = self
+            .data
+            .attach_prog_fd
+            .as_ref()
+            .ok_or(ProgramError::NotLoaded)?;
+        let target_fd = target_fd.as_fd();
+        let target_fd = target_fd.as_raw_fd();
         let btf_id = self.data.attach_btf_id.ok_or(ProgramError::NotLoaded)?;
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
         let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
