@@ -51,8 +51,6 @@ impl core::marker::Sync for aya_obj::btf::BtfError
 impl core::marker::Unpin for aya_obj::btf::BtfError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfError
-impl<E> core::any::Provider for aya_obj::btf::BtfError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::btf::BtfError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfError where U: core::convert::From<T>
 pub fn aya_obj::btf::BtfError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::btf::BtfError where U: core::convert::Into<T>
@@ -557,8 +555,6 @@ impl core::marker::Sync for aya_obj::btf::BtfRelocationError
 impl core::marker::Unpin for aya_obj::btf::BtfRelocationError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfRelocationError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfRelocationError
-impl<E> core::any::Provider for aya_obj::btf::BtfRelocationError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::btf::BtfRelocationError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfRelocationError where U: core::convert::From<T>
 pub fn aya_obj::btf::BtfRelocationError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::btf::BtfRelocationError where U: core::convert::Into<T>
@@ -5459,8 +5455,6 @@ impl core::marker::Sync for aya_obj::maps::PinningError
 impl core::marker::Unpin for aya_obj::maps::PinningError
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::PinningError
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::PinningError
-impl<E> core::any::Provider for aya_obj::maps::PinningError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::maps::PinningError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::maps::PinningError where U: core::convert::From<T>
 pub fn aya_obj::maps::PinningError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::maps::PinningError where U: core::convert::Into<T>
@@ -5798,8 +5792,6 @@ impl core::marker::Sync for aya_obj::ParseError
 impl core::marker::Unpin for aya_obj::ParseError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::ParseError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::ParseError
-impl<E> core::any::Provider for aya_obj::ParseError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::ParseError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::ParseError where U: core::convert::From<T>
 pub fn aya_obj::ParseError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::ParseError where U: core::convert::Into<T>
@@ -6321,8 +6313,6 @@ impl core::marker::Sync for aya_obj::relocation::RelocationError
 impl core::marker::Unpin for aya_obj::relocation::RelocationError
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::relocation::RelocationError
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::RelocationError
-impl<E> core::any::Provider for aya_obj::relocation::RelocationError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::relocation::RelocationError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::relocation::RelocationError where U: core::convert::From<T>
 pub fn aya_obj::relocation::RelocationError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::relocation::RelocationError where U: core::convert::Into<T>
@@ -6353,8 +6343,6 @@ impl core::marker::Sync for aya_obj::relocation::BpfRelocationError
 impl core::marker::Unpin for aya_obj::relocation::BpfRelocationError
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::relocation::BpfRelocationError
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::BpfRelocationError
-impl<E> core::any::Provider for aya_obj::relocation::BpfRelocationError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::relocation::BpfRelocationError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::relocation::BpfRelocationError where U: core::convert::From<T>
 pub fn aya_obj::relocation::BpfRelocationError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::relocation::BpfRelocationError where U: core::convert::Into<T>
@@ -6519,8 +6507,6 @@ impl core::marker::Sync for aya_obj::ParseError
 impl core::marker::Unpin for aya_obj::ParseError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::ParseError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::ParseError
-impl<E> core::any::Provider for aya_obj::ParseError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::ParseError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::ParseError where U: core::convert::From<T>
 pub fn aya_obj::ParseError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::ParseError where U: core::convert::Into<T>
