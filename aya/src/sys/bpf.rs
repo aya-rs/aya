@@ -3,12 +3,12 @@ use std::{
     ffi::{CStr, CString},
     io, iter,
     mem::{self, MaybeUninit},
-    os::fd::{AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
     slice,
 };
 
 use crate::util::KernelVersion;
-use libc::{c_char, c_long, close, ENOENT, ENOSPC};
+use libc::{c_char, c_long, ENOENT, ENOSPC};
 use obj::{
     btf::{BtfEnum64, Enum64},
     maps::{bpf_map_def, LegacyMap},
@@ -190,8 +190,7 @@ pub(crate) fn bpf_load_program(
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
     }
-    // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
-    unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, &mut attr) }
+    bpf_prog_load(&mut attr)
 }
 
 fn lookup<K: Pod, V: Pod>(
@@ -633,14 +632,7 @@ pub(crate) fn is_prog_name_supported() -> bool {
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
 
-    match sys_bpf(bpf_cmd::BPF_PROG_LOAD, &mut attr) {
-        Ok(v) => {
-            let fd = v as RawFd;
-            unsafe { close(fd) };
-            true
-        }
-        Err(_) => false,
-    }
+    bpf_prog_load(&mut attr).is_ok()
 }
 
 pub(crate) fn is_probe_read_kernel_supported() -> bool {
@@ -664,14 +656,7 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
 
-    match sys_bpf(bpf_cmd::BPF_PROG_LOAD, &mut attr) {
-        Ok(v) => {
-            let fd = v as RawFd;
-            unsafe { close(fd) };
-            true
-        }
-        Err(_) => false,
-    }
+    bpf_prog_load(&mut attr).is_ok()
 }
 
 pub(crate) fn is_perf_link_supported() -> bool {
@@ -691,18 +676,18 @@ pub(crate) fn is_perf_link_supported() -> bool {
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
 
-    if let Ok(fd) = sys_bpf(bpf_cmd::BPF_PROG_LOAD, &mut attr) {
-        if let Err((_, e)) =
+    if let Ok(fd) = bpf_prog_load(&mut attr) {
+        let fd = fd.as_fd();
+        let fd = fd.as_raw_fd();
+        matches!(
             // Uses an invalid target FD so we get EBADF if supported.
-            bpf_link_create(fd as i32, -1, bpf_attach_type::BPF_PERF_EVENT, None, 0)
-        {
+            bpf_link_create(fd, -1, bpf_attach_type::BPF_PERF_EVENT, None, 0),
             // Returns EINVAL if unsupported. EBADF if supported.
-            let res = e.raw_os_error() == Some(libc::EBADF);
-            unsafe { libc::close(fd as i32) };
-            return res;
-        }
+            Err((_, e)) if e.raw_os_error() == Some(libc::EBADF),
+        )
+    } else {
+        false
     }
-    false
 }
 
 pub(crate) fn is_bpf_global_data_supported() -> bool {
@@ -746,16 +731,10 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
         u.insns = insns.as_ptr() as u64;
         u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
 
-        if let Ok(v) = sys_bpf(bpf_cmd::BPF_PROG_LOAD, &mut attr) {
-            let fd = v as RawFd;
-
-            unsafe { close(fd) };
-
-            return true;
-        }
+        bpf_prog_load(&mut attr).is_ok()
+    } else {
+        false
     }
-
-    false
 }
 
 pub(crate) fn is_bpf_cookie_supported() -> bool {
@@ -775,14 +754,7 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_KPROBE as u32;
 
-    match sys_bpf(bpf_cmd::BPF_PROG_LOAD, &mut attr) {
-        Ok(v) => {
-            let fd = v as RawFd;
-            unsafe { close(fd) };
-            true
-        }
-        Err(_) => false,
-    }
+    bpf_prog_load(&mut attr).is_ok()
 }
 
 pub(crate) fn is_btf_supported() -> bool {
@@ -939,6 +911,11 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
     let btf_bytes = btf.to_bytes();
 
     bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+}
+
+fn bpf_prog_load(attr: &mut bpf_attr) -> SysResult<OwnedFd> {
+    // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) }
 }
 
 fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<c_long> {
