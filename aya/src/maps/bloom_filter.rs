@@ -1,5 +1,8 @@
 //! A Bloom Filter.
-use std::{borrow::Borrow, marker::PhantomData};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    marker::PhantomData,
+};
 
 use crate::{
     maps::{check_v_size, MapData, MapError},
@@ -59,10 +62,12 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
             .ok_or(MapError::ElementNotFound)?;
         Ok(())
     }
+}
 
+impl<T: BorrowMut<MapData>, V: Pod> BloomFilter<T, V> {
     /// Inserts a value into the map.
-    pub fn insert(&self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.borrow().fd;
+    pub fn insert(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
+        let fd = self.inner.borrow_mut().fd;
         bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| SyscallError {
             call: "bpf_map_push_elem",
             io_error,
@@ -173,7 +178,7 @@ mod tests {
     #[test]
     fn test_insert_syscall_error() {
         let mut map = new_map(new_obj_map());
-        let bloom_filter = BloomFilter::<_, u32>::new(&mut map).unwrap();
+        let mut bloom_filter = BloomFilter::<_, u32>::new(&mut map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
@@ -186,7 +191,7 @@ mod tests {
     #[test]
     fn test_insert_ok() {
         let mut map = new_map(new_obj_map());
-        let bloom_filter = BloomFilter::<_, u32>::new(&mut map).unwrap();
+        let mut bloom_filter = BloomFilter::<_, u32>::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Bpf {
