@@ -38,8 +38,6 @@ impl<T: Borrow<MapData>, V: Pod> Stack<T, V> {
         let data = map.borrow();
         check_kv_size::<(), V>(data)?;
 
-        let _fd = data.fd_or_err()?;
-
         Ok(Stack {
             inner: map,
             _v: PhantomData,
@@ -62,7 +60,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Stack<T, V> {
     /// Returns [`MapError::ElementNotFound`] if the stack is empty, [`MapError::SyscallError`]
     /// if `bpf_map_lookup_and_delete_elem` fails.
     pub fn pop(&mut self, flags: u64) -> Result<V, MapError> {
-        let fd = self.inner.borrow().fd_or_err()?;
+        let fd = self.inner.borrow().fd;
 
         let value = bpf_map_lookup_and_delete_elem::<u32, _>(fd, None, flags).map_err(
             |(_, io_error)| SyscallError {
@@ -79,7 +77,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Stack<T, V> {
     ///
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
     pub fn push(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.borrow().fd_or_err()?;
+        let fd = self.inner.borrow().fd;
         bpf_map_update_elem(fd, None::<&u32>, value.borrow(), flags).map_err(|(_, io_error)| {
             SyscallError {
                 call: "bpf_map_update_elem",

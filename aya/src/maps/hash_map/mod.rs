@@ -20,7 +20,7 @@ pub(crate) fn insert<K: Pod, V: Pod>(
     value: &V,
     flags: u64,
 ) -> Result<(), MapError> {
-    let fd = map.fd_or_err()?;
+    let fd = map.fd;
     bpf_map_update_elem(fd, Some(key), value, flags).map_err(|(_, io_error)| SyscallError {
         call: "bpf_map_update_elem",
         io_error,
@@ -30,7 +30,7 @@ pub(crate) fn insert<K: Pod, V: Pod>(
 }
 
 pub(crate) fn remove<K: Pod>(map: &MapData, key: &K) -> Result<(), MapError> {
-    let fd = map.fd_or_err()?;
+    let fd = map.fd;
     bpf_map_delete_elem(fd, key)
         .map(|_| ())
         .map_err(|(_, io_error)| {

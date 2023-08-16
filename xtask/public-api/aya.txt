@@ -966,8 +966,6 @@ pub fn aya::maps::Map::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::Map
 pub fn aya::maps::Map::from(t: T) -> T
 pub enum aya::maps::MapError
-pub aya::maps::MapError::AlreadyCreated
-pub aya::maps::MapError::AlreadyCreated::name: alloc::string::String
 pub aya::maps::MapError::CreateError
 pub aya::maps::MapError::CreateError::code: libc::unix::linux_like::linux::gnu::b64::x86_64::not_x32::c_long
 pub aya::maps::MapError::CreateError::io_error: std::io::error::Error
@@ -984,7 +982,6 @@ pub aya::maps::MapError::InvalidValueSize
 pub aya::maps::MapError::InvalidValueSize::expected: usize
 pub aya::maps::MapError::InvalidValueSize::size: usize
 pub aya::maps::MapError::KeyNotFound
-pub aya::maps::MapError::NotCreated
 pub aya::maps::MapError::OutOfBounds
 pub aya::maps::MapError::OutOfBounds::index: u32
 pub aya::maps::MapError::OutOfBounds::max_entries: u32
@@ -1226,12 +1223,12 @@ pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::from(t: T) -> T
 pub struct aya::maps::MapData
 pub aya::maps::MapData::pinned: bool
 impl aya::maps::MapData
-pub fn aya::maps::MapData::create(&mut self, name: &str, btf_fd: core::option::Option<std::os::fd::owned::BorrowedFd<'_>>) -> core::result::Result<std::os::fd::raw::RawFd, aya::maps::MapError>
-pub fn aya::maps::MapData::fd(&self) -> core::option::Option<aya::maps::MapFd>
+pub fn aya::maps::MapData::create(obj: aya_obj::maps::Map, name: &str, btf_fd: core::option::Option<std::os::fd::owned::BorrowedFd<'_>>) -> core::result::Result<Self, aya::maps::MapError>
+pub fn aya::maps::MapData::fd(&self) -> aya::maps::MapFd
 pub fn aya::maps::MapData::from_fd(fd: std::os::fd::owned::OwnedFd) -> core::result::Result<aya::maps::MapData, aya::maps::MapError>
 pub fn aya::maps::MapData::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<aya::maps::MapData, aya::maps::MapError>
 impl core::clone::Clone for aya::maps::MapData
-pub fn aya::maps::MapData::clone(&self) -> aya::maps::MapData
+pub fn aya::maps::MapData::clone(&self) -> Self
 impl core::ops::drop::Drop for aya::maps::MapData
 pub fn aya::maps::MapData::drop(&mut self)
 impl core::fmt::Debug for aya::maps::MapData

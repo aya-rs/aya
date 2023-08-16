@@ -4,7 +4,7 @@ use std::{
     ffi::CString,
     fs, io,
     os::{
-        fd::{AsFd as _, OwnedFd, RawFd},
+        fd::{AsFd as _, OwnedFd},
         raw::c_int,
     },
     path::{Path, PathBuf},
@@ -475,35 +475,15 @@ impl<'a> BpfLoader<'a> {
                     }
                 }
             }
-            let mut map = MapData {
-                obj,
-                fd: None,
-                pinned: false,
-            };
-            let fd = match map.obj.pinning() {
+            let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
+            let mut map = match obj.pinning() {
+                PinningType::None => MapData::create(obj, &name, btf_fd)?,
                 PinningType::ByName => {
-                    let path = match &map_pin_path {
-                        Some(p) => p,
-                        None => return Err(BpfError::NoPinPath),
-                    };
-                    // try to open map in case it's already pinned
-                    match map.open_pinned(&name, path) {
-                        Ok(fd) => {
-                            map.pinned = true;
-                            fd as RawFd
-                        }
-                        Err(_) => {
-                            let fd = map.create(&name, btf_fd.as_deref().map(|f| f.as_fd()))?;
-                            map.pin(&name, path).map_err(|error| MapError::PinError {
-                                name: Some(name.to_string()),
-                                error,
-                            })?;
-                            fd
-                        }
-                    }
+                    let path = map_pin_path.as_ref().ok_or(BpfError::NoPinPath)?;
+                    MapData::create_pinned(path, obj, &name, btf_fd)?
                 }
-                PinningType::None => map.create(&name, btf_fd.as_deref().map(|f| f.as_fd()))?,
             };
+            let fd = map.fd;
             if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
                     .map_err(|(_, io_error)| SyscallError {
