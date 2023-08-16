@@ -5972,7 +5972,7 @@ impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
-pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, core::option::Option<i32>, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
+pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, i32, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object
@@ -6288,9 +6288,6 @@ pub enum aya_obj::relocation::RelocationError
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::offset: u64
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::relocation_number: usize
-pub aya_obj::relocation::RelocationError::MapNotCreated
-pub aya_obj::relocation::RelocationError::MapNotCreated::name: alloc::string::String
-pub aya_obj::relocation::RelocationError::MapNotCreated::section_index: usize
 pub aya_obj::relocation::RelocationError::SectionNotFound
 pub aya_obj::relocation::RelocationError::SectionNotFound::section_index: usize
 pub aya_obj::relocation::RelocationError::SectionNotFound::symbol_index: usize
@@ -6687,7 +6684,7 @@ impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
-pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, core::option::Option<i32>, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
+pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, i32, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object

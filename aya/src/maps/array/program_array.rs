@@ -56,7 +56,7 @@ impl<T: Borrow<MapData>> ProgramArray<T> {
         let data = map.borrow();
         check_kv_size::<u32, RawFd>(data)?;
 
-        let _fd = data.fd_or_err()?;
+        let _fd = data.fd;
 
         Ok(ProgramArray { inner: map })
     }
@@ -76,7 +76,7 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     pub fn set(&mut self, index: u32, program: &ProgramFd, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
-        let fd = data.fd_or_err()?;
+        let fd = data.fd;
         let prog_fd = program.as_fd();
         let prog_fd = prog_fd.as_raw_fd();
 
@@ -96,7 +96,7 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, *index)?;
-        let fd = self.inner.borrow_mut().fd_or_err()?;
+        let fd = self.inner.borrow_mut().fd;
 
         bpf_map_delete_elem(fd, index)
             .map(|_| ())
