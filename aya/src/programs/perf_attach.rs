@@ -7,7 +7,7 @@ use crate::{
         probe::{detach_debug_fs, ProbeEvent},
         FdLink, Link, ProgramError,
     },
-    sys::{bpf_link_create, perf_event_ioctl, SysResult, SyscallError},
+    sys::{bpf_link_create, perf_event_ioctl, LinkTarget, SysResult, SyscallError},
     FEATURES, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE, PERF_EVENT_IOC_SET_BPF,
 };
 
@@ -71,16 +71,15 @@ impl Link for PerfLink {
 }
 
 pub(crate) fn perf_attach(
-    prog_fd: std::os::fd::BorrowedFd<'_>,
+    prog_fd: BorrowedFd<'_>,
     fd: OwnedFd,
 ) -> Result<PerfLinkInner, ProgramError> {
     if FEATURES.bpf_perf_link() {
-        let link_fd = bpf_link_create(prog_fd, fd.as_raw_fd(), BPF_PERF_EVENT, None, 0).map_err(
-            |(_, io_error)| SyscallError {
+        let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(fd.as_fd()), BPF_PERF_EVENT, None, 0)
+            .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
                 io_error,
-            },
-        )?;
+            })?;
         Ok(PerfLinkInner::FdLink(FdLink::new(link_fd)))
     } else {
         perf_attach_either(prog_fd, fd, None)

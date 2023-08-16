@@ -1,11 +1,6 @@
 //! Cgroup skb programs.
 
-use crate::util::KernelVersion;
-use std::{
-    hash::Hash,
-    os::fd::{AsFd as _, AsRawFd},
-    path::Path,
-};
+use std::{hash::Hash, os::fd::AsFd, path::Path};
 
 use crate::{
     generated::{
@@ -15,7 +10,8 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
-    sys::{bpf_link_create, bpf_prog_attach, SyscallError},
+    sys::{bpf_link_create, LinkTarget, SyscallError},
+    util::KernelVersion,
     VerifierLogLevel,
 };
 
@@ -87,44 +83,36 @@ impl CgroupSkb {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupSkb::detach].
-    pub fn attach<T: AsRawFd>(
+    pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,
         attach_type: CgroupSkbAttachType,
     ) -> Result<CgroupSkbLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let cgroup_fd = cgroup.as_raw_fd();
+        let cgroup_fd = cgroup.as_fd();
 
         let attach_type = match attach_type {
             CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
             CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
         };
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, cgroup_fd, attach_type, None, 0).map_err(
-                |(_, io_error)| SyscallError {
+            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), attach_type, None, 0)
+                .map_err(|(_, io_error)| SyscallError {
                     call: "bpf_link_create",
                     io_error,
-                },
-            )?;
+                })?;
             self.data
                 .links
                 .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
                     link_fd,
                 ))))
         } else {
-            bpf_prog_attach(prog_fd, cgroup_fd, attach_type).map_err(|(_, io_error)| {
-                SyscallError {
-                    call: "bpf_prog_attach",
-                    io_error,
-                }
-            })?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type)?;
 
             self.data
                 .links
-                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(
-                    ProgAttachLink::new(prog_fd, cgroup_fd, attach_type),
-                )))
+                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(link)))
         }
     }
 
