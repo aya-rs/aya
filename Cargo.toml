@@ -96,6 +96,7 @@ testing_logger = { version = "0.1.1", default-features = false }
 thiserror = { version = "1", default-features = false }
 tokio = { version = "1.24.0", default-features = false }
 which = { version = "5.0.0", default-features = false }
+xdpilone = { version = "1.0", default-features = false }
 xtask = { path = "xtask", default-features = false }
 
 [profile.dev]
