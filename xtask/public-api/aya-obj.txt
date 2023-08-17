@@ -1342,6 +1342,8 @@ impl core::convert::From<aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAtta
 pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> aya_obj::generated::bpf_attach_type
 impl core::convert::From<aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> aya_obj::generated::bpf_attach_type
+impl core::convert::From<aya_obj::programs::xdp::XdpAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::xdp::XdpAttachType) -> Self
 impl core::clone::Clone for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::clone(&self) -> aya_obj::generated::bpf_attach_type
 impl core::cmp::Eq for aya_obj::generated::bpf_attach_type
@@ -5411,6 +5413,7 @@ pub fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
 pub fn aya_obj::maps::Map::section_index(&self) -> usize
 pub fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::BpfSectionKind
 pub fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
+pub fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
 pub fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
 pub fn aya_obj::maps::Map::value_size(&self) -> u32
 impl core::clone::Clone for aya_obj::maps::Map
@@ -5848,6 +5851,7 @@ pub aya_obj::obj::ProgramSection::UProbe::sleepable: bool
 pub aya_obj::obj::ProgramSection::URetProbe
 pub aya_obj::obj::ProgramSection::URetProbe::sleepable: bool
 pub aya_obj::obj::ProgramSection::Xdp
+pub aya_obj::obj::ProgramSection::Xdp::attach_type: aya_obj::programs::xdp::XdpAttachType
 pub aya_obj::obj::ProgramSection::Xdp::frags: bool
 impl core::str::traits::FromStr for aya_obj::ProgramSection
 pub type aya_obj::ProgramSection::Err = aya_obj::ParseError
@@ -5889,6 +5893,8 @@ pub fn aya_obj::Features::bpf_name(&self) -> bool
 pub fn aya_obj::Features::bpf_perf_link(&self) -> bool
 pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
 pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
+pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
+pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features
@@ -6164,6 +6170,43 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::programs::cgroup_sockopt::Cgroup
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::from(t: T) -> T
+pub mod aya_obj::programs::xdp
+pub enum aya_obj::programs::xdp::XdpAttachType
+pub aya_obj::programs::xdp::XdpAttachType::CpuMap
+pub aya_obj::programs::xdp::XdpAttachType::DevMap
+pub aya_obj::programs::xdp::XdpAttachType::Interface
+impl core::convert::From<aya_obj::programs::xdp::XdpAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::xdp::XdpAttachType) -> Self
+impl core::clone::Clone for aya_obj::programs::xdp::XdpAttachType
+pub fn aya_obj::programs::xdp::XdpAttachType::clone(&self) -> aya_obj::programs::xdp::XdpAttachType
+impl core::fmt::Debug for aya_obj::programs::xdp::XdpAttachType
+pub fn aya_obj::programs::xdp::XdpAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::programs::xdp::XdpAttachType
+impl core::marker::Send for aya_obj::programs::xdp::XdpAttachType
+impl core::marker::Sync for aya_obj::programs::xdp::XdpAttachType
+impl core::marker::Unpin for aya_obj::programs::xdp::XdpAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::xdp::XdpAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::xdp::XdpAttachType
+impl<T, U> core::convert::Into<U> for aya_obj::programs::xdp::XdpAttachType where U: core::convert::From<T>
+pub fn aya_obj::programs::xdp::XdpAttachType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::programs::xdp::XdpAttachType where U: core::convert::Into<T>
+pub type aya_obj::programs::xdp::XdpAttachType::Error = core::convert::Infallible
+pub fn aya_obj::programs::xdp::XdpAttachType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::programs::xdp::XdpAttachType where U: core::convert::TryFrom<T>
+pub type aya_obj::programs::xdp::XdpAttachType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::programs::xdp::XdpAttachType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::programs::xdp::XdpAttachType where T: core::clone::Clone
+pub type aya_obj::programs::xdp::XdpAttachType::Owned = T
+pub fn aya_obj::programs::xdp::XdpAttachType::clone_into(&self, target: &mut T)
+pub fn aya_obj::programs::xdp::XdpAttachType::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::programs::xdp::XdpAttachType where T: 'static + core::marker::Sized
+pub fn aya_obj::programs::xdp::XdpAttachType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::programs::xdp::XdpAttachType where T: core::marker::Sized
+pub fn aya_obj::programs::xdp::XdpAttachType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::programs::xdp::XdpAttachType where T: core::marker::Sized
+pub fn aya_obj::programs::xdp::XdpAttachType::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::programs::xdp::XdpAttachType
+pub fn aya_obj::programs::xdp::XdpAttachType::from(t: T) -> T
 pub enum aya_obj::programs::CgroupSockAddrAttachType
 pub aya_obj::programs::CgroupSockAddrAttachType::Bind4
 pub aya_obj::programs::CgroupSockAddrAttachType::Bind6
@@ -6283,6 +6326,42 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::programs::cgroup_sockopt::Cgroup
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::from(t: T) -> T
+pub enum aya_obj::programs::XdpAttachType
+pub aya_obj::programs::XdpAttachType::CpuMap
+pub aya_obj::programs::XdpAttachType::DevMap
+pub aya_obj::programs::XdpAttachType::Interface
+impl core::convert::From<aya_obj::programs::xdp::XdpAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::xdp::XdpAttachType) -> Self
+impl core::clone::Clone for aya_obj::programs::xdp::XdpAttachType
+pub fn aya_obj::programs::xdp::XdpAttachType::clone(&self) -> aya_obj::programs::xdp::XdpAttachType
+impl core::fmt::Debug for aya_obj::programs::xdp::XdpAttachType
+pub fn aya_obj::programs::xdp::XdpAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::programs::xdp::XdpAttachType
+impl core::marker::Send for aya_obj::programs::xdp::XdpAttachType
+impl core::marker::Sync for aya_obj::programs::xdp::XdpAttachType
+impl core::marker::Unpin for aya_obj::programs::xdp::XdpAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::xdp::XdpAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::xdp::XdpAttachType
+impl<T, U> core::convert::Into<U> for aya_obj::programs::xdp::XdpAttachType where U: core::convert::From<T>
+pub fn aya_obj::programs::xdp::XdpAttachType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::programs::xdp::XdpAttachType where U: core::convert::Into<T>
+pub type aya_obj::programs::xdp::XdpAttachType::Error = core::convert::Infallible
+pub fn aya_obj::programs::xdp::XdpAttachType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::programs::xdp::XdpAttachType where U: core::convert::TryFrom<T>
+pub type aya_obj::programs::xdp::XdpAttachType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::programs::xdp::XdpAttachType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::programs::xdp::XdpAttachType where T: core::clone::Clone
+pub type aya_obj::programs::xdp::XdpAttachType::Owned = T
+pub fn aya_obj::programs::xdp::XdpAttachType::clone_into(&self, target: &mut T)
+pub fn aya_obj::programs::xdp::XdpAttachType::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::programs::xdp::XdpAttachType where T: 'static + core::marker::Sized
+pub fn aya_obj::programs::xdp::XdpAttachType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::programs::xdp::XdpAttachType where T: core::marker::Sized
+pub fn aya_obj::programs::xdp::XdpAttachType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::programs::xdp::XdpAttachType where T: core::marker::Sized
+pub fn aya_obj::programs::xdp::XdpAttachType::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::programs::xdp::XdpAttachType
+pub fn aya_obj::programs::xdp::XdpAttachType::from(t: T) -> T
 pub mod aya_obj::relocation
 pub enum aya_obj::relocation::RelocationError
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset
@@ -6420,6 +6499,7 @@ pub fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
 pub fn aya_obj::maps::Map::section_index(&self) -> usize
 pub fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::BpfSectionKind
 pub fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
+pub fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
 pub fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
 pub fn aya_obj::maps::Map::value_size(&self) -> u32
 impl core::clone::Clone for aya_obj::maps::Map
@@ -6560,6 +6640,7 @@ pub aya_obj::ProgramSection::UProbe::sleepable: bool
 pub aya_obj::ProgramSection::URetProbe
 pub aya_obj::ProgramSection::URetProbe::sleepable: bool
 pub aya_obj::ProgramSection::Xdp
+pub aya_obj::ProgramSection::Xdp::attach_type: aya_obj::programs::xdp::XdpAttachType
 pub aya_obj::ProgramSection::Xdp::frags: bool
 impl core::str::traits::FromStr for aya_obj::ProgramSection
 pub type aya_obj::ProgramSection::Err = aya_obj::ParseError
@@ -6601,6 +6682,8 @@ pub fn aya_obj::Features::bpf_name(&self) -> bool
 pub fn aya_obj::Features::bpf_perf_link(&self) -> bool
 pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
 pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
+pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
+pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features
