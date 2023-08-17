@@ -63,7 +63,6 @@ impl LircMode2 {
     pub fn attach<T: AsRawFd>(&mut self, lircdev: T) -> Result<LircLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         let lircdev_fd = lircdev.as_raw_fd();
 
         bpf_prog_attach(prog_fd, lircdev_fd, BPF_LIRC_MODE2).map_err(|(_, io_error)| {
@@ -104,7 +103,18 @@ impl LircMode2 {
 
         Ok(prog_fds
             .into_iter()
-            .map(|prog_fd| LircLink::new(prog_fd.into_raw_fd(), target_fd.as_raw_fd()))
+            .map(|prog_fd| {
+                LircLink::new(
+                    // SAFETY: The file descriptor will stay valid because
+                    // we are leaking it. We cannot use `OwnedFd` in here
+                    // because LircMode2::attach also uses LircLink::new
+                    // but with a borrowed file descriptor (of the loaded
+                    // program) without duplicating. TODO(#612): Fix API
+                    // or internals so this file descriptor isn't leaked
+                    unsafe { BorrowedFd::borrow_raw(prog_fd.into_raw_fd()) },
+                    target_fd.as_raw_fd(),
+                )
+            })
             .collect())
     }
 }
@@ -121,7 +131,8 @@ pub struct LircLink {
 }
 
 impl LircLink {
-    pub(crate) fn new(prog_fd: RawFd, target_fd: RawFd) -> Self {
+    pub(crate) fn new(prog_fd: BorrowedFd<'_>, target_fd: RawFd) -> Self {
+        let prog_fd = prog_fd.as_raw_fd();
         Self {
             prog_fd,
             target_fd: unsafe { dup(target_fd) },

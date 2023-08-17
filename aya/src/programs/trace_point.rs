@@ -1,9 +1,5 @@
 //! Tracepoint programs.
-use std::{
-    fs, io,
-    os::fd::{AsFd as _, AsRawFd as _},
-    path::Path,
-};
+use std::{fs, io, os::fd::AsFd as _, path::Path};
 use thiserror::Error;
 
 use crate::{
@@ -84,7 +80,6 @@ impl TracePoint {
     pub fn attach(&mut self, category: &str, name: &str) -> Result<TracePointLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         let tracefs = find_tracefs_path()?;
         let id = read_sys_fs_trace_point_id(tracefs, category, name.as_ref())?;
         let fd =
