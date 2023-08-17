@@ -1,4 +1,10 @@
-use std::{collections::HashMap, ffi::CStr, io, mem, os::fd::RawFd, ptr, slice};
+use std::{
+    collections::HashMap,
+    ffi::CStr,
+    io, mem,
+    os::fd::{AsRawFd as _, BorrowedFd, RawFd},
+    ptr, slice,
+};
 use thiserror::Error;
 
 use libc::{
@@ -25,7 +31,7 @@ const NLA_HDR_LEN: usize = align_to(mem::size_of::<nlattr>(), NLA_ALIGNTO as usi
 // netlink alignments
 pub(crate) unsafe fn netlink_set_xdp_fd(
     if_index: i32,
-    fd: RawFd,
+    fd: Option<BorrowedFd<'_>>,
     old_fd: Option<RawFd>,
     flags: u32,
 ) -> Result<(), io::Error> {
@@ -48,7 +54,10 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     // write the attrs
     let attrs_buf = request_attributes(&mut req, nlmsg_len);
     let mut attrs = NestedAttrs::new(attrs_buf, IFLA_XDP);
-    attrs.write_attr(IFLA_XDP_FD as u16, fd)?;
+    attrs.write_attr(
+        IFLA_XDP_FD as u16,
+        fd.map(|fd| fd.as_raw_fd()).unwrap_or(-1),
+    )?;
 
     if flags > 0 {
         attrs.write_attr(IFLA_XDP_FLAGS as u16, flags)?;
@@ -101,7 +110,7 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), io::E
 pub(crate) unsafe fn netlink_qdisc_attach(
     if_index: i32,
     attach_type: &TcAttachType,
-    prog_fd: RawFd,
+    prog_fd: BorrowedFd<'_>,
     prog_name: &CStr,
     priority: u16,
     handle: u32,

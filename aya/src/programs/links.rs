@@ -6,7 +6,7 @@ use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::CString,
     io,
-    os::fd::{AsRawFd as _, OwnedFd, RawFd},
+    os::fd::{AsRawFd as _, BorrowedFd, OwnedFd, RawFd},
     path::{Path, PathBuf},
 };
 
@@ -239,7 +239,12 @@ pub struct ProgAttachLink {
 }
 
 impl ProgAttachLink {
-    pub(crate) fn new(prog_fd: RawFd, target_fd: RawFd, attach_type: bpf_attach_type) -> Self {
+    pub(crate) fn new(
+        prog_fd: BorrowedFd<'_>,
+        target_fd: RawFd,
+        attach_type: bpf_attach_type,
+    ) -> Self {
+        let prog_fd = prog_fd.as_raw_fd();
         Self {
             prog_fd,
             target_fd: unsafe { dup(target_fd) },

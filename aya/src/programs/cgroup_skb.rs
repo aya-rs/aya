@@ -94,7 +94,6 @@ impl CgroupSkb {
     ) -> Result<CgroupSkbLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         let cgroup_fd = cgroup.as_raw_fd();
 
         let attach_type = match attach_type {

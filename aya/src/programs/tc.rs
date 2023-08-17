@@ -4,7 +4,7 @@ use thiserror::Error;
 use std::{
     ffi::{CStr, CString},
     io,
-    os::fd::{AsFd as _, AsRawFd as _},
+    os::fd::AsFd as _,
     path::Path,
 };
 
@@ -154,7 +154,6 @@ impl SchedClassifier {
     ) -> Result<SchedClassifierLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         let if_index = ifindex_from_ifname(interface)
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
         let name = self.data.name.as_deref().unwrap_or_default();
