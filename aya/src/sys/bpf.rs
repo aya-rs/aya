@@ -704,8 +704,8 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
 
     let mut insns = copy_instructions(prog).unwrap();
 
-    let mut map_data = MapData {
-        obj: obj::Map::Legacy(LegacyMap {
+    let map = MapData::create(
+        obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: bpf_map_type::BPF_MAP_TYPE_ARRAY as u32,
                 key_size: 4,
@@ -718,12 +718,12 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
             symbol_index: None,
             data: Vec::new(),
         }),
-        fd: None,
-        pinned: false,
-    };
+        "aya_global",
+        None,
+    );
 
-    if let Ok(map_fd) = map_data.create("aya_global", None) {
-        insns[0].imm = map_fd;
+    if let Ok(map) = map {
+        insns[0].imm = map.fd;
 
         let gpl = b"GPL\0";
         u.license = gpl.as_ptr() as u64;

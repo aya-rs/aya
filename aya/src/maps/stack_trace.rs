@@ -89,7 +89,6 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
         if size > max_stack_depth * mem::size_of::<u64>() {
             return Err(MapError::InvalidValueSize { size, expected });
         }
-        let _fd = data.fd_or_err()?;
 
         Ok(StackTraceMap {
             inner: map,
@@ -104,7 +103,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
     /// Returns [`MapError::KeyNotFound`] if there is no stack trace with the
     /// given `stack_id`, or [`MapError::SyscallError`] if `bpf_map_lookup_elem` fails.
     pub fn get(&self, stack_id: &u32, flags: u64) -> Result<StackTrace, MapError> {
-        let fd = self.inner.borrow().fd_or_err()?;
+        let fd = self.inner.borrow().fd;
 
         let mut frames = vec![0; self.max_stack_depth];
         bpf_map_lookup_elem_ptr(fd, Some(stack_id), frames.as_mut_ptr(), flags)
