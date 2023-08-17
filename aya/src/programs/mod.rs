@@ -636,8 +636,8 @@ fn load_program<T: Link>(
     }
 }
 
-pub(crate) fn query<T: AsRawFd>(
-    target_fd: T,
+pub(crate) fn query(
+    target_fd: BorrowedFd<'_>,
     attach_type: bpf_attach_type,
     query_flags: u32,
     attach_flags: &mut Option<u32>,
@@ -649,7 +649,7 @@ pub(crate) fn query<T: AsRawFd>(
 
     loop {
         match bpf_prog_query(
-            target_fd.as_raw_fd(),
+            target_fd.as_fd().as_raw_fd(),
             attach_type,
             query_flags,
             attach_flags.as_mut(),
