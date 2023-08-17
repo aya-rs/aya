@@ -1,17 +1,14 @@
 //! Cgroup sysctl programs.
 
-use crate::util::KernelVersion;
-use std::{
-    hash::Hash,
-    os::fd::{AsFd as _, AsRawFd},
-};
+use std::{hash::Hash, os::fd::AsFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SYSCTL, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL},
     programs::{
         define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
-    sys::{bpf_link_create, bpf_prog_attach, SyscallError},
+    sys::{bpf_link_create, LinkTarget, SyscallError},
+    util::KernelVersion,
 };
 
 /// A program used to watch for sysctl changes.
@@ -62,35 +59,35 @@ impl CgroupSysctl {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupSysctl::detach].
-    pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<CgroupSysctlLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<CgroupSysctlLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let cgroup_fd = cgroup.as_raw_fd();
+        let cgroup_fd = cgroup.as_fd();
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL, None, 0).map_err(
-                |(_, io_error)| SyscallError {
-                    call: "bpf_link_create",
-                    io_error,
-                },
-            )?;
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(cgroup_fd),
+                BPF_CGROUP_SYSCTL,
+                None,
+                0,
+            )
+            .map_err(|(_, io_error)| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
             self.data
                 .links
                 .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
-            bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL).map_err(|(_, io_error)| {
-                SyscallError {
-                    call: "bpf_prog_attach",
-                    io_error,
-                }
-            })?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL)?;
 
             self.data
                 .links
                 .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::ProgAttach(
-                    ProgAttachLink::new(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL),
+                    link,
                 )))
         }
     }
