@@ -77,7 +77,6 @@ impl SkSkb {
     pub fn attach(&mut self, map: SockMapFd) -> Result<SkSkbLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         let map_fd = map.as_raw_fd();
 
         let attach_type = match self.kind {

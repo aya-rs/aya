@@ -63,7 +63,6 @@ impl CgroupDevice {
     pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<CgroupDeviceLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         let cgroup_fd = cgroup.as_raw_fd();
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
