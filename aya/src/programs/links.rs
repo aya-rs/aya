@@ -1,12 +1,11 @@
 //! Program links.
-use libc::{close, dup};
 use thiserror::Error;
 
 use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::CString,
     io,
-    os::fd::{AsRawFd as _, BorrowedFd, OwnedFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, OwnedFd, RawFd},
     path::{Path, PathBuf},
 };
 
@@ -14,7 +13,9 @@ use crate::{
     generated::bpf_attach_type,
     pin::PinError,
     programs::ProgramError,
-    sys::{bpf_get_object, bpf_pin_object, bpf_prog_detach, SyscallError},
+    sys::{
+        bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach, SysResult, SyscallError,
+    },
 };
 
 /// A Link.
@@ -234,22 +235,34 @@ pub struct ProgAttachLinkId(RawFd, RawFd, bpf_attach_type);
 #[derive(Debug)]
 pub struct ProgAttachLink {
     prog_fd: RawFd,
-    target_fd: RawFd,
+    target_fd: OwnedFd,
     attach_type: bpf_attach_type,
 }
 
 impl ProgAttachLink {
-    pub(crate) fn new(
+    pub(crate) fn attach(
         prog_fd: BorrowedFd<'_>,
-        target_fd: RawFd,
+        target_fd: BorrowedFd<'_>,
         attach_type: bpf_attach_type,
-    ) -> Self {
+    ) -> Result<Self, ProgramError> {
+        // The link is going to own this new file descriptor so we are
+        // going to need a duplicate whose lifetime we manage. Let's
+        // duplicate it prior to attaching it so the new file
+        // descriptor is closed at drop in case it fails to attach.
+        let target_fd = target_fd.try_clone_to_owned()?;
+        bpf_prog_attach(prog_fd, target_fd.as_fd(), attach_type).map_err(|(_, io_error)| {
+            SyscallError {
+                call: "bpf_prog_attach",
+                io_error,
+            }
+        })?;
+
         let prog_fd = prog_fd.as_raw_fd();
-        Self {
+        Ok(Self {
             prog_fd,
-            target_fd: unsafe { dup(target_fd) },
+            target_fd,
             attach_type,
-        }
+        })
     }
 }
 
@@ -257,12 +270,12 @@ impl Link for ProgAttachLink {
     type Id = ProgAttachLinkId;
 
     fn id(&self) -> Self::Id {
-        ProgAttachLinkId(self.prog_fd, self.target_fd, self.attach_type)
+        ProgAttachLinkId(self.prog_fd, self.target_fd.as_raw_fd(), self.attach_type)
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        let _ = bpf_prog_detach(self.prog_fd, self.target_fd, self.attach_type);
-        unsafe { close(self.target_fd) };
+        let _: SysResult<_> =
+            bpf_prog_detach(self.prog_fd, self.target_fd.as_fd(), self.attach_type);
         Ok(())
     }
 }
