@@ -188,23 +188,27 @@ jobs:
 
       - name: Install prerequisites
         if: runner.os == 'macOS'
+        # The xargs shipped on macOS always exits 0 with -P0, so we need GNU findutils.
+        #
+        # The tar shipped on macOS doesn't support --wildcards, so we need GNU tar.
+        #
         # The clang shipped on macOS doesn't support BPF, so we need LLVM from brew.
         #
         # We also need LLVM for bpf-linker, see comment below.
         run: |
           set -euxo pipefail
-          brew install findutils qemu dpkg pkg-config llvm
+          brew update
+          brew install dpkg findutils gnu-tar llvm pkg-config
+          # Workaround for https://github.com/Homebrew/homebrew-core/pull/139492.
+          brew reinstall qemu
+          echo /usr/local/opt/findutils/libexec/gnubin >> $GITHUB_PATH
+          echo /usr/local/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/llvm/bin >> $GITHUB_PATH
 
       - name: bpf-linker
         if: runner.os == 'macOS'
         # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature).
         run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git --no-default-features
-
-      - name: Alias gxargs as xargs
-        if: runner.os == 'macOS'
-        # macOS xargs always exits 0 with -P0.
-        run: mkdir xargs-is-gxargs && ln -s "$(which gxargs)" xargs-is-gxargs/xargs && echo "$PWD"/xargs-is-gxargs >> $GITHUB_PATH
 
       - name: Download debian kernels
         if: runner.arch == 'ARM64'
@@ -231,11 +235,6 @@ jobs:
             linux-image-6.1.0-10-cloud-amd64-unsigned_6.1.38-2_amd64.deb \
             linux-image-6.4.0-2-cloud-amd64-unsigned_6.4.4-3_amd64.deb \
           | xargs -0 -t -P0 -I {} wget -nd -nv -P test/.tmp/debian-kernels/amd64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
-
-      - name: Alias gtar as tar
-        if: runner.os == 'macOS'
-        # macOS tar doesn't support --wildcards which we use below.
-        run: mkdir tar-is-gtar && ln -s "$(which gtar)" tar-is-gtar/tar && echo "$PWD"/tar-is-gtar >> $GITHUB_PATH
 
       - name: Extract debian kernels
         run: |
