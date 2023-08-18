@@ -197,7 +197,10 @@ jobs:
         # We also need LLVM for bpf-linker, see comment below.
         run: |
           set -euxo pipefail
-          brew install dpkg findutils gnu-tar llvm pkg-config qemu
+          brew update
+          brew install dpkg findutils gnu-tar llvm pkg-config
+          # Workaround for https://github.com/Homebrew/homebrew-core/pull/139492.
+          brew reinstall qemu
           echo /usr/local/opt/findutils/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/llvm/bin >> $GITHUB_PATH
