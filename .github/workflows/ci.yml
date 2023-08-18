@@ -193,6 +193,7 @@ jobs:
         # We also need LLVM for bpf-linker, see comment below.
         run: |
           set -euxo pipefail
+          brew update
           brew install findutils qemu dpkg pkg-config llvm
           echo /usr/local/opt/llvm/bin >> $GITHUB_PATH
 
