@@ -1,6 +1,7 @@
-use std::{env, path::PathBuf};
+use std::env;
 
-use xtask::{create_symlink_to_binary, AYA_BUILD_INTEGRATION_BPF};
+use which::which;
+use xtask::AYA_BUILD_INTEGRATION_BPF;
 
 /// Building this crate has an undeclared dependency on the `bpf-linker` binary. This would be
 /// better expressed by [artifact-dependencies][bindeps] but issues such as
@@ -24,12 +25,7 @@ fn main() {
         .unwrap_or_default();
 
     if build_integration_bpf {
-        let out_dir = env::var_os("OUT_DIR").unwrap();
-        let out_dir = PathBuf::from(out_dir);
-        let bpf_linker_symlink = create_symlink_to_binary(&out_dir, "bpf-linker").unwrap();
-        println!(
-            "cargo:rerun-if-changed={}",
-            bpf_linker_symlink.to_str().unwrap()
-        );
+        let bpf_linker = which("bpf-linker").unwrap();
+        println!("cargo:rerun-if-changed={}", bpf_linker.to_str().unwrap());
     }
 }
