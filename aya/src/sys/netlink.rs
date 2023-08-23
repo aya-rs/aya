@@ -1,12 +1,19 @@
-use std::{collections::HashMap, ffi::CStr, io, mem, os::fd::RawFd, ptr, slice};
+use std::{
+    collections::HashMap,
+    ffi::CStr,
+    io,
+    mem::{self},
+    os::fd::RawFd,
+    ptr, slice,
+};
 use thiserror::Error;
 
 use libc::{
     close, getsockname, nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl, socket,
     AF_NETLINK, AF_UNSPEC, ETH_P_ALL, IFF_UP, IFLA_XDP, NETLINK_EXT_ACK, NETLINK_ROUTE,
     NLA_ALIGNTO, NLA_F_NESTED, NLA_TYPE_MASK, NLMSG_DONE, NLMSG_ERROR, NLM_F_ACK, NLM_F_CREATE,
-    NLM_F_DUMP, NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI, NLM_F_REQUEST, RTM_DELTFILTER, RTM_GETTFILTER,
-    RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK, SOCK_RAW, SOL_NETLINK,
+    NLM_F_DUMP, NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI, NLM_F_REQUEST, RTM_DELTFILTER, RTM_GETQDISC,
+    RTM_GETTFILTER, RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK, SOCK_RAW, SOL_NETLINK,
 };
 
 use crate::{
@@ -66,6 +73,46 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     sock.recv()?;
 
     Ok(())
+}
+
+pub(crate) unsafe fn netlink_clsact_qdisc_exists(if_index: i32) -> Result<bool, io::Error> {
+    let sock = NetlinkSocket::open()?;
+
+    let mut req = mem::zeroed::<TcRequest>();
+
+    let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>();
+
+    req.header = nlmsghdr {
+        nlmsg_len: nlmsg_len as u32,
+        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP) as u16,
+        nlmsg_type: RTM_GETQDISC,
+        nlmsg_pid: 0,
+        nlmsg_seq: 1,
+    };
+    req.tc_info.tcm_family = AF_UNSPEC as u8;
+
+    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+
+    for msg in sock.recv()? {
+        if msg.header.nlmsg_type != RTM_NEWQDISC {
+            continue;
+        }
+
+        let tc_msg = ptr::read_unaligned(msg.data.as_ptr() as *const tcmsg);
+        if tc_msg.tcm_ifindex != if_index {
+            continue;
+        }
+
+        let attrs = parse_attrs(&msg.data[mem::size_of::<tcmsg>()..])?;
+
+        if let Some(opts) = attrs.get(&(TCA_KIND as u16)) {
+            if opts.data == b"clsact\0" {
+                return Ok(true);
+            }
+        }
+    }
+
+    Ok(false)
 }
 
 pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), io::Error> {

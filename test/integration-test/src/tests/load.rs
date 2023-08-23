@@ -5,7 +5,7 @@ use aya::{
     programs::{
         links::{FdLink, PinnedLink},
         loaded_links, loaded_programs,
-        tc::qdisc_add_clsact,
+        tc::{clsact_qdisc_exists, qdisc_add_clsact},
         KProbe, SchedClassifier, TcAttachType, TracePoint, UProbe, Xdp, XdpFlags,
     },
     util::KernelVersion,
@@ -17,7 +17,10 @@ const RETRY_DURATION: time::Duration = time::Duration::from_millis(10);
 
 #[test]
 fn tc_name_limit() {
-    let _ = qdisc_add_clsact("lo");
+    let clsact_exists = clsact_qdisc_exists("lo").unwrap();
+    if !clsact_exists {
+        qdisc_add_clsact("lo").unwrap();
+    }
 
     let mut bpf = Bpf::load(crate::TC_NAME_LIMIT_TEST).unwrap();
 
