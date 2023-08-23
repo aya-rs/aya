@@ -5,17 +5,17 @@
 //! [`Bpf::load_file`](crate::Bpf::load_file) or
 //! [`Bpf::load`](crate::Bpf::load), all the maps defined in the eBPF code get
 //! initialized and can then be accessed using [`Bpf::map`](crate::Bpf::map),
-//! [`Bpf::map_mut`](crate::Bpf::map_mut), or [`Bpf::take_map`](crate::Bpf::take_map).
+//! [`Bpf::map_mut`](crate::Bpf::map_mut), or
+//! [`Bpf::take_map`](crate::Bpf::take_map).
 //!
 //! # Typed maps
 //!
 //! The eBPF API includes many map types each supporting different operations.
 //! [`Bpf::map`](crate::Bpf::map), [`Bpf::map_mut`](crate::Bpf::map_mut), and
-//! [`Bpf::take_map`](crate::Bpf::take_map) always return the
-//! opaque [`&Map`](crate::maps::Map), [`&mut Map`](crate::maps::Map), and [`Map`](crate::maps::Map)
+//! [`Bpf::take_map`](crate::Bpf::take_map) always return the opaque
+//! [`&Map`](crate::maps::Map), [`&mut Map`](crate::maps::Map), and [`Map`]
 //! types respectively. Those three types can be converted to *typed maps* using
-//! the [`TryFrom`](std::convert::TryFrom) or [`TryInto`](std::convert::TryInto)
-//! trait. For example:
+//! the [`TryFrom`] or [`TryInto`] trait. For example:
 //!
 //! ```no_run
 //! # let mut bpf = aya::Bpf::load(&[])?;
