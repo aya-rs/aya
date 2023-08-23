@@ -74,7 +74,7 @@ fn use_map_with_rbpf() {
     object
         .relocate_maps(
             maps.iter()
-                .map(|(s, (fd, map))| (s.as_ref() as &str, Some(*fd), map)),
+                .map(|(s, (fd, map))| (s.as_ref() as &str, *fd, map)),
             &text_sections,
         )
         .expect("Relocation failed");

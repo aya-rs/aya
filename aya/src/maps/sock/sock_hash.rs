@@ -72,7 +72,6 @@ impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
     pub(crate) fn new(map: T) -> Result<SockHash<T, K>, MapError> {
         let data = map.borrow();
         check_kv_size::<K, u32>(data)?;
-        let _ = data.fd_or_err()?;
 
         Ok(SockHash {
             inner: map,
@@ -82,7 +81,7 @@ impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
 
     /// Returns the fd of the socket stored at the given key.
     pub fn get(&self, key: &K, flags: u64) -> Result<RawFd, MapError> {
-        let fd = self.inner.borrow().fd_or_err()?;
+        let fd = self.inner.borrow().fd;
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| SyscallError {
             call: "bpf_map_lookup_elem",
             io_error,
@@ -107,7 +106,7 @@ impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
     /// The returned file descriptor can be used to attach programs that work with
     /// socket maps, like [`SkMsg`](crate::programs::SkMsg) and [`SkSkb`](crate::programs::SkSkb).
     pub fn fd(&self) -> Result<SockMapFd, MapError> {
-        Ok(SockMapFd(self.inner.borrow().fd_or_err()?))
+        Ok(SockMapFd(self.inner.borrow().fd))
     }
 }
 

@@ -25,8 +25,6 @@ impl core::marker::Sync for aya_tool::generate::Error
 impl core::marker::Unpin for aya_tool::generate::Error
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_tool::generate::Error
 impl !core::panic::unwind_safe::UnwindSafe for aya_tool::generate::Error
-impl<E> core::any::Provider for aya_tool::generate::Error where E: core::error::Error + core::marker::Sized
-pub fn aya_tool::generate::Error::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_tool::generate::Error where U: core::convert::From<T>
 pub fn aya_tool::generate::Error::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_tool::generate::Error where U: core::convert::Into<T>

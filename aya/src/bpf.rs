@@ -4,7 +4,7 @@ use std::{
     ffi::CString,
     fs, io,
     os::{
-        fd::{OwnedFd, RawFd},
+        fd::{AsFd as _, OwnedFd},
         raw::c_int,
     },
     path::{Path, PathBuf},
@@ -39,8 +39,8 @@ use crate::{
     sys::{
         bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_cookie_supported,
         is_bpf_global_data_supported, is_btf_datasec_supported, is_btf_decl_tag_supported,
-        is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
-        is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
+        is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
+        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
         is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
         SyscallError,
     },
@@ -84,6 +84,7 @@ fn detect_features() -> Features {
             is_btf_float_supported(),
             is_btf_decl_tag_supported(),
             is_btf_type_tag_supported(),
+            is_btf_enum64_supported(),
         ))
     } else {
         None
@@ -474,36 +475,15 @@ impl<'a> BpfLoader<'a> {
                     }
                 }
             }
-            let mut map = MapData {
-                obj,
-                fd: None,
-                pinned: false,
-                btf_fd: btf_fd.as_ref().map(Arc::clone),
-            };
-            let fd = match map.obj.pinning() {
+            let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
+            let mut map = match obj.pinning() {
+                PinningType::None => MapData::create(obj, &name, btf_fd)?,
                 PinningType::ByName => {
-                    let path = match &map_pin_path {
-                        Some(p) => p,
-                        None => return Err(BpfError::NoPinPath),
-                    };
-                    // try to open map in case it's already pinned
-                    match map.open_pinned(&name, path) {
-                        Ok(fd) => {
-                            map.pinned = true;
-                            fd as RawFd
-                        }
-                        Err(_) => {
-                            let fd = map.create(&name)?;
-                            map.pin(&name, path).map_err(|error| MapError::PinError {
-                                name: Some(name.to_string()),
-                                error,
-                            })?;
-                            fd
-                        }
-                    }
+                    let path = map_pin_path.as_ref().ok_or(BpfError::NoPinPath)?;
+                    MapData::create_pinned(path, obj, &name, btf_fd)?
                 }
-                PinningType::None => map.create(&name)?,
             };
+            let fd = map.fd;
             if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
                 bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
                     .map_err(|(_, io_error)| SyscallError {

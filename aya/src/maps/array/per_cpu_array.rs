@@ -58,8 +58,6 @@ impl<T: Borrow<MapData>, V: Pod> PerCpuArray<T, V> {
         let data = map.borrow();
         check_kv_size::<u32, V>(data)?;
 
-        let _fd = data.fd_or_err()?;
-
         Ok(PerCpuArray {
             inner: map,
             _v: PhantomData,
@@ -82,7 +80,7 @@ impl<T: Borrow<MapData>, V: Pod> PerCpuArray<T, V> {
     pub fn get(&self, index: &u32, flags: u64) -> Result<PerCpuValues<V>, MapError> {
         let data = self.inner.borrow();
         check_bounds(data, *index)?;
-        let fd = data.fd_or_err()?;
+        let fd = data.fd;
 
         let value = bpf_map_lookup_elem_per_cpu(fd, index, flags).map_err(|(_, io_error)| {
             SyscallError {
@@ -110,7 +108,7 @@ impl<T: BorrowMut<MapData>, V: Pod> PerCpuArray<T, V> {
     pub fn set(&mut self, index: u32, values: PerCpuValues<V>, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
-        let fd = data.fd_or_err()?;
+        let fd = data.fd;
 
         bpf_map_update_elem_per_cpu(fd, &index, &values, flags).map_err(|(_, io_error)| {
             SyscallError {

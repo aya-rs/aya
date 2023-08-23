@@ -1,10 +1,10 @@
 // clang-format off
-#include <linux/bpf.h>
+#include <vmlinux.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_core_read.h>
 // clang-format on
 
-char _license[] __attribute__((section("license"), used)) = "GPL";
+char _license[] SEC("license") = "GPL";
 
 struct {
   __uint(type, BPF_MAP_TYPE_ARRAY);
@@ -19,12 +19,17 @@ long set_output(__u64 value) {
 }
 
 struct relocated_struct_with_scalars {
+#ifndef TARGET
   __u8 a;
+#endif
   __u8 b;
   __u8 c;
+#ifdef TARGET
+  __u8 d;
+#endif
 };
 
-__attribute__((noinline)) int field_global() {
+__noinline int field_global() {
   struct relocated_struct_with_scalars s = {1, 2, 3};
   return set_output(__builtin_preserve_access_index(s.b));
 }
@@ -32,11 +37,16 @@ __attribute__((noinline)) int field_global() {
 SEC("uprobe") int field(void *ctx) { return field_global(); }
 
 struct relocated_struct_with_pointer {
+#ifndef TARGET
   struct relocated_struct_with_pointer *first;
+#endif
   struct relocated_struct_with_pointer *second;
+#ifdef TARGET
+  struct relocated_struct_with_pointer *first;
+#endif
 };
 
-__attribute__((noinline)) int pointer_global() {
+__noinline int pointer_global() {
   struct relocated_struct_with_pointer s = {
       (struct relocated_struct_with_pointer *)42,
       (struct relocated_struct_with_pointer *)21,
@@ -46,49 +56,86 @@ __attribute__((noinline)) int pointer_global() {
 
 SEC("uprobe") int pointer(void *ctx) { return pointer_global(); }
 
-__attribute__((noinline)) int struct_flavors_global() {
+__noinline int struct_flavors_global() {
   struct relocated_struct_with_scalars s = {1, 2, 3};
+#ifndef TARGET
   if (bpf_core_field_exists(s.a)) {
     return set_output(__builtin_preserve_access_index(s.a));
+#else
+  if (bpf_core_field_exists(s.d)) {
+    return set_output(__builtin_preserve_access_index(s.d));
+#endif
   } else {
-    return set_output(__builtin_preserve_access_index(s.b));
+    return set_output(__builtin_preserve_access_index(s.c));
   }
 }
 
 SEC("uprobe") int struct_flavors(void *ctx) { return struct_flavors_global(); }
 
-enum relocated_enum_unsigned_32 { U32 = 0xAAAAAAAA };
+enum relocated_enum_unsigned_32 {
+  U32_VAL =
+#ifndef TARGET
+      0xAAAAAAAA
+#else
+      0xBBBBBBBB
+#endif
+};
 
-__attribute__((noinline)) int enum_unsigned_32_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_unsigned_32, U32));
+__noinline int enum_unsigned_32_global() {
+  return set_output(
+      bpf_core_enum_value(enum relocated_enum_unsigned_32, U32_VAL));
 }
 
 SEC("uprobe") int enum_unsigned_32(void *ctx) {
   return enum_unsigned_32_global();
 }
 
-enum relocated_enum_signed_32 { S32 = -0x7AAAAAAA };
+enum relocated_enum_signed_32 {
+  S32_VAL =
+#ifndef TARGET
+      -0x7AAAAAAA
+#else
+      -0x7BBBBBBB
+#endif
+};
 
-__attribute__((noinline)) int enum_signed_32_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_signed_32, S32));
+__noinline int enum_signed_32_global() {
+  return set_output(
+      bpf_core_enum_value(enum relocated_enum_signed_32, S32_VAL));
 }
 
 SEC("uprobe") int enum_signed_32(void *ctx) { return enum_signed_32_global(); }
 
-enum relocated_enum_unsigned_64 { U64 = 0xAAAAAAAABBBBBBBB };
+enum relocated_enum_unsigned_64 {
+  U64_VAL =
+#ifndef TARGET
+      0xAAAAAAAABBBBBBBB
+#else
+      0xCCCCCCCCDDDDDDDD
+#endif
+};
 
-__attribute__((noinline)) int enum_unsigned_64_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_unsigned_64, U64));
+__noinline int enum_unsigned_64_global() {
+  return set_output(
+      bpf_core_enum_value(enum relocated_enum_unsigned_64, U64_VAL));
 }
 
 SEC("uprobe") int enum_unsigned_64(void *ctx) {
   return enum_unsigned_64_global();
 }
 
-enum relocated_enum_signed_64 { u64 = -0xAAAAAAABBBBBBBB };
+enum relocated_enum_signed_64 {
+  S64_VAL =
+#ifndef TARGET
+      -0xAAAAAAABBBBBBBB
+#else
+      -0xCCCCCCCDDDDDDDD
+#endif
+};
 
-__attribute__((noinline)) int enum_signed_64_global() {
-  return set_output(bpf_core_enum_value(enum relocated_enum_signed_64, u64));
+__noinline int enum_signed_64_global() {
+  return set_output(
+      bpf_core_enum_value(enum relocated_enum_signed_64, S64_VAL));
 }
 
 SEC("uprobe") int enum_signed_64(void *ctx) { return enum_signed_64_global(); }

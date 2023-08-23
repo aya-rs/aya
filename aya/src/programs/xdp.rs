@@ -8,7 +8,7 @@ use std::{
     ffi::CString,
     hash::Hash,
     io,
-    os::fd::{AsFd as _, RawFd},
+    os::fd::{AsFd as _, AsRawFd as _, RawFd},
 };
 use thiserror::Error;
 
@@ -128,7 +128,9 @@ impl Xdp {
         if_index: u32,
         flags: XdpFlags,
     ) -> Result<XdpLinkId, ProgramError> {
-        let prog_fd = self.data.fd_or_err()?;
+        let prog_fd = self.fd()?;
+        let prog_fd = prog_fd.as_fd();
+        let prog_fd = prog_fd.as_raw_fd();
         let if_index = if_index as RawFd;
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 9, 0) {
@@ -174,7 +176,9 @@ impl Xdp {
     ///
     /// Ownership of the link will transfer to this program.
     pub fn attach_to_link(&mut self, link: XdpLink) -> Result<XdpLinkId, ProgramError> {
-        let prog_fd = self.data.fd_or_err()?;
+        let prog_fd = self.fd()?;
+        let prog_fd = prog_fd.as_fd();
+        let prog_fd = prog_fd.as_raw_fd();
         match link.into_inner() {
             XdpLinkInner::FdLink(fd_link) => {
                 let link_fd = fd_link.fd;

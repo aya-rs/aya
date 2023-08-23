@@ -52,8 +52,6 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
         let data = map.borrow();
         check_kv_size::<K, V>(data)?;
 
-        let _ = data.fd_or_err()?;
-
         Ok(PerCpuHashMap {
             inner: map,
             _k: PhantomData,
@@ -63,7 +61,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
 
     /// Returns a slice of values - one for each CPU - associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<PerCpuValues<V>, MapError> {
-        let fd = self.inner.borrow().fd_or_err()?;
+        let fd = self.inner.borrow().fd;
         let values =
             bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|(_, io_error)| SyscallError {
                 call: "bpf_map_lookup_elem",
@@ -120,7 +118,7 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
         values: PerCpuValues<V>,
         flags: u64,
     ) -> Result<(), MapError> {
-        let fd = self.inner.borrow_mut().fd_or_err()?;
+        let fd = self.inner.borrow_mut().fd;
         bpf_map_update_elem_per_cpu(fd, key.borrow(), &values, flags).map_err(
             |(_, io_error)| SyscallError {
                 call: "bpf_map_update_elem",

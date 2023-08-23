@@ -6,6 +6,7 @@ members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
+    "init",
     "test/integration-test",
     "xtask",
 
@@ -29,6 +30,7 @@ default-members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
+    "init",
     # test/integration-test is omitted; including it in this list causes `cargo test` to run its
     # tests, and that doesn't work unless they've been built with `cargo xtask`.
     "xtask",
@@ -72,8 +74,9 @@ lazy_static = { version = "1", default-features = false }
 libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
 netns-rs = { version = "0.1", default-features = false }
-num_enum = { version = "0.6", default-features = false }
-object = { version = "0.31", default-features = false }
+nix = { version = "0.26.2", default-features = false }
+num_enum = { version = "0.7", default-features = false }
+object = { version = "0.32", default-features = false }
 parking_lot = { version = "0.12.0", default-features = false }
 proc-macro-error = { version = "1.0", default-features = false }
 proc-macro2 = { version = "1", default-features = false }

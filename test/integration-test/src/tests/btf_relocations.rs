@@ -2,20 +2,20 @@ use test_case::test_case;
 
 use aya::{maps::Array, programs::UProbe, util::KernelVersion, BpfLoader, Btf, Endianness};
 
-#[test_case("field", false, None, 2)]
-#[test_case("field", true, None, 1)]
+#[test_case("enum_signed_32", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7AAAAAAAi32 as u64)]
+#[test_case("enum_signed_32", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7BBBBBBBi32 as u64)]
+#[test_case("enum_signed_64", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xAAAAAAABBBBBBBBi64 as u64)]
+#[test_case("enum_signed_64", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xCCCCCCCDDDDDDDDi64 as u64)]
 #[test_case("enum_unsigned_32", false, None, 0xAAAAAAAA)]
 #[test_case("enum_unsigned_32", true, None, 0xBBBBBBBB)]
+#[test_case("enum_unsigned_64", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xAAAAAAAABBBBBBBB)]
+#[test_case("enum_unsigned_64", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xCCCCCCCCDDDDDDDD)]
+#[test_case("field", false, None, 2)]
+#[test_case("field", true, None, 1)]
 #[test_case("pointer", false, None, 42)]
 #[test_case("pointer", true, None, 21)]
 #[test_case("struct_flavors", false, None, 1)]
-#[test_case("struct_flavors", true, None, 1)]
-#[test_case("enum_signed_32", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7AAAAAAAi32 as u64)]
-#[test_case("enum_signed_32", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7BBBBBBBi32 as u64)]
-#[test_case("enum_unsigned_64", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xAAAAAAAABBBBBBBB)]
-#[test_case("enum_unsigned_64", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xCCCCCCCCDDDDDDDD)]
-#[test_case("enum_signed_64", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xAAAAAAABBBBBBBBi64 as u64)]
-#[test_case("enum_signed_64", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xCCCCCCCDDDDDDDDi64 as u64)]
+#[test_case("struct_flavors", true, None, 2)]
 fn relocation_tests(
     program: &str,
     with_relocations: bool,

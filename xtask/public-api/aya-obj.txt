@@ -51,8 +51,6 @@ impl core::marker::Sync for aya_obj::btf::BtfError
 impl core::marker::Unpin for aya_obj::btf::BtfError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfError
-impl<E> core::any::Provider for aya_obj::btf::BtfError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::btf::BtfError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfError where U: core::convert::From<T>
 pub fn aya_obj::btf::BtfError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::btf::BtfError where U: core::convert::Into<T>
@@ -384,6 +382,8 @@ pub fn aya_obj::btf::Btf::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::BtfEnum
 pub aya_obj::btf::BtfEnum::name_offset: u32
 pub aya_obj::btf::BtfEnum::value: u32
+impl aya_obj::btf::BtfEnum
+pub fn aya_obj::btf::BtfEnum::new(name_offset: u32, value: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::BtfEnum
 pub fn aya_obj::btf::BtfEnum::clone(&self) -> aya_obj::btf::BtfEnum
 impl core::fmt::Debug for aya_obj::btf::BtfEnum
@@ -414,6 +414,8 @@ pub fn aya_obj::btf::BtfEnum::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::btf::BtfEnum
 pub fn aya_obj::btf::BtfEnum::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::BtfEnum64
+impl aya_obj::btf::BtfEnum64
+pub fn aya_obj::btf::BtfEnum64::new(name_offset: u32, value: u64) -> Self
 impl core::clone::Clone for aya_obj::btf::BtfEnum64
 pub fn aya_obj::btf::BtfEnum64::clone(&self) -> aya_obj::btf::BtfEnum64
 impl core::fmt::Debug for aya_obj::btf::BtfEnum64
@@ -477,6 +479,7 @@ pub struct aya_obj::btf::BtfFeatures
 impl aya_obj::btf::BtfFeatures
 pub fn aya_obj::btf::BtfFeatures::btf_datasec(&self) -> bool
 pub fn aya_obj::btf::BtfFeatures::btf_decl_tag(&self) -> bool
+pub fn aya_obj::btf::BtfFeatures::btf_enum64(&self) -> bool
 pub fn aya_obj::btf::BtfFeatures::btf_float(&self) -> bool
 pub fn aya_obj::btf::BtfFeatures::btf_func(&self) -> bool
 pub fn aya_obj::btf::BtfFeatures::btf_func_global(&self) -> bool
@@ -552,8 +555,6 @@ impl core::marker::Sync for aya_obj::btf::BtfRelocationError
 impl core::marker::Unpin for aya_obj::btf::BtfRelocationError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfRelocationError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfRelocationError
-impl<E> core::any::Provider for aya_obj::btf::BtfRelocationError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::btf::BtfRelocationError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfRelocationError where U: core::convert::From<T>
 pub fn aya_obj::btf::BtfRelocationError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::btf::BtfRelocationError where U: core::convert::Into<T>
@@ -701,7 +702,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::DeclTag
 pub fn aya_obj::btf::DeclTag::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Enum
 impl aya_obj::btf::Enum
-pub fn aya_obj::btf::Enum::new(name_offset: u32, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum>) -> Self
+pub fn aya_obj::btf::Enum::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum>) -> Self
 impl core::clone::Clone for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::clone(&self) -> aya_obj::btf::Enum
 impl core::fmt::Debug for aya_obj::btf::Enum
@@ -732,6 +733,8 @@ pub fn aya_obj::btf::Enum::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Enum64
+impl aya_obj::btf::Enum64
+pub fn aya_obj::btf::Enum64::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum64>) -> Self
 impl core::clone::Clone for aya_obj::btf::Enum64
 pub fn aya_obj::btf::Enum64::clone(&self) -> aya_obj::btf::Enum64
 impl core::fmt::Debug for aya_obj::btf::Enum64
@@ -5452,8 +5455,6 @@ impl core::marker::Sync for aya_obj::maps::PinningError
 impl core::marker::Unpin for aya_obj::maps::PinningError
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::PinningError
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::PinningError
-impl<E> core::any::Provider for aya_obj::maps::PinningError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::maps::PinningError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::maps::PinningError where U: core::convert::From<T>
 pub fn aya_obj::maps::PinningError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::maps::PinningError where U: core::convert::Into<T>
@@ -5791,8 +5792,6 @@ impl core::marker::Sync for aya_obj::ParseError
 impl core::marker::Unpin for aya_obj::ParseError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::ParseError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::ParseError
-impl<E> core::any::Provider for aya_obj::ParseError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::ParseError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::ParseError where U: core::convert::From<T>
 pub fn aya_obj::ParseError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::ParseError where U: core::convert::Into<T>
@@ -5973,7 +5972,7 @@ impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
-pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, core::option::Option<i32>, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
+pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, i32, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object
@@ -6289,9 +6288,6 @@ pub enum aya_obj::relocation::RelocationError
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::offset: u64
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::relocation_number: usize
-pub aya_obj::relocation::RelocationError::MapNotCreated
-pub aya_obj::relocation::RelocationError::MapNotCreated::name: alloc::string::String
-pub aya_obj::relocation::RelocationError::MapNotCreated::section_index: usize
 pub aya_obj::relocation::RelocationError::SectionNotFound
 pub aya_obj::relocation::RelocationError::SectionNotFound::section_index: usize
 pub aya_obj::relocation::RelocationError::SectionNotFound::symbol_index: usize
@@ -6314,8 +6310,6 @@ impl core::marker::Sync for aya_obj::relocation::RelocationError
 impl core::marker::Unpin for aya_obj::relocation::RelocationError
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::relocation::RelocationError
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::RelocationError
-impl<E> core::any::Provider for aya_obj::relocation::RelocationError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::relocation::RelocationError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::relocation::RelocationError where U: core::convert::From<T>
 pub fn aya_obj::relocation::RelocationError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::relocation::RelocationError where U: core::convert::Into<T>
@@ -6346,8 +6340,6 @@ impl core::marker::Sync for aya_obj::relocation::BpfRelocationError
 impl core::marker::Unpin for aya_obj::relocation::BpfRelocationError
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::relocation::BpfRelocationError
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::BpfRelocationError
-impl<E> core::any::Provider for aya_obj::relocation::BpfRelocationError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::relocation::BpfRelocationError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::relocation::BpfRelocationError where U: core::convert::From<T>
 pub fn aya_obj::relocation::BpfRelocationError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::relocation::BpfRelocationError where U: core::convert::Into<T>
@@ -6512,8 +6504,6 @@ impl core::marker::Sync for aya_obj::ParseError
 impl core::marker::Unpin for aya_obj::ParseError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::ParseError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::ParseError
-impl<E> core::any::Provider for aya_obj::ParseError where E: core::error::Error + core::marker::Sized
-pub fn aya_obj::ParseError::provide<'a>(&'a self, demand: &mut core::any::Demand<'a>)
 impl<T, U> core::convert::Into<U> for aya_obj::ParseError where U: core::convert::From<T>
 pub fn aya_obj::ParseError::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_obj::ParseError where U: core::convert::Into<T>
@@ -6694,7 +6684,7 @@ impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
-pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, core::option::Option<i32>, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
+pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, i32, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object

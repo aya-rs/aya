@@ -1,5 +1,5 @@
 //! Extension programs.
-use std::os::fd::{AsRawFd, RawFd};
+use std::os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, OwnedFd};
 use thiserror::Error;
 
 use object::Endianness;
@@ -42,6 +42,7 @@ pub enum ExtensionError {
 /// prog.attach("eth0", XdpFlags::default())?;
 ///
 /// let prog_fd = prog.fd().unwrap();
+/// let prog_fd = prog_fd.try_clone().unwrap();
 /// let ext: &mut Extension = bpf.program_mut("extension").unwrap().try_into()?;
 /// ext.load(prog_fd, "function_to_replace")?;
 /// ext.attach()?;
@@ -69,11 +70,10 @@ impl Extension {
     /// There are no restrictions on what functions may be replaced, so you could replace
     /// the main entry point of your program with an extension.
     pub fn load(&mut self, program: ProgramFd, func_name: &str) -> Result<(), ProgramError> {
-        let target_prog_fd = program.as_raw_fd();
-        let (btf_fd, btf_id) = get_btf_info(target_prog_fd, func_name)?;
+        let (btf_fd, btf_id) = get_btf_info(program.as_fd(), func_name)?;
 
-        self.data.attach_btf_obj_fd = Some(btf_fd as u32);
-        self.data.attach_prog_fd = Some(target_prog_fd);
+        self.data.attach_btf_obj_fd = Some(btf_fd);
+        self.data.attach_prog_fd = Some(program);
         self.data.attach_btf_id = Some(btf_id);
         load_program(BPF_PROG_TYPE_EXT, &mut self.data)
     }
@@ -86,8 +86,16 @@ impl Extension {
     /// The returned value can be used to detach the extension and restore the
     /// original function, see [Extension::detach].
     pub fn attach(&mut self) -> Result<ExtensionLinkId, ProgramError> {
-        let prog_fd = self.data.fd_or_err()?;
-        let target_fd = self.data.attach_prog_fd.ok_or(ProgramError::NotLoaded)?;
+        let prog_fd = self.fd()?;
+        let prog_fd = prog_fd.as_fd();
+        let prog_fd = prog_fd.as_raw_fd();
+        let target_fd = self
+            .data
+            .attach_prog_fd
+            .as_ref()
+            .ok_or(ProgramError::NotLoaded)?;
+        let target_fd = target_fd.as_fd();
+        let target_fd = target_fd.as_raw_fd();
         let btf_id = self.data.attach_btf_id.ok_or(ProgramError::NotLoaded)?;
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
         let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
@@ -113,18 +121,26 @@ impl Extension {
     /// original function, see [Extension::detach].
     pub fn attach_to_program(
         &mut self,
-        program: ProgramFd,
+        program: &ProgramFd,
         func_name: &str,
     ) -> Result<ExtensionLinkId, ProgramError> {
-        let target_fd = program.as_raw_fd();
+        let target_fd = program.as_fd();
         let (_, btf_id) = get_btf_info(target_fd, func_name)?;
-        let prog_fd = self.data.fd_or_err()?;
+        let prog_fd = self.fd()?;
+        let prog_fd = prog_fd.as_fd();
+        let prog_fd = prog_fd.as_raw_fd();
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
-        let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+        let link_fd = bpf_link_create(
+            prog_fd,
+            target_fd.as_raw_fd(),
+            BPF_CGROUP_INET_INGRESS,
+            Some(btf_id),
+            0,
+        )
+        .map_err(|(_, io_error)| SyscallError {
+            call: "bpf_link_create",
+            io_error,
+        })?;
         self.data
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))
@@ -149,9 +165,9 @@ impl Extension {
 
 /// Retrieves the FD of the BTF object for the provided `prog_fd` and the BTF ID of the function
 /// with the name `func_name` within that BTF object.
-fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramError> {
+fn get_btf_info(prog_fd: BorrowedFd<'_>, func_name: &str) -> Result<(OwnedFd, u32), ProgramError> {
     // retrieve program information
-    let info = sys::bpf_prog_get_info_by_fd(prog_fd)?;
+    let info = sys::bpf_prog_get_info_by_fd(prog_fd, &mut [])?;
 
     // btf_id refers to the ID of the program btf that was loaded with bpf(BPF_BTF_LOAD)
     if info.btf_id == 0 {
@@ -159,36 +175,23 @@ fn get_btf_info(prog_fd: i32, func_name: &str) -> Result<(RawFd, u32), ProgramEr
     }
 
     // the bpf fd of the BTF object
-    let btf_fd = sys::bpf_btf_get_fd_by_id(info.btf_id).map_err(|io_error| SyscallError {
-        call: "bpf_btf_get_fd_by_id",
-        io_error,
-    })?;
+    let btf_fd = sys::bpf_btf_get_fd_by_id(info.btf_id)?;
 
     // we need to read the btf bytes into a buffer but we don't know the size ahead of time.
     // assume 4kb. if this is too small we can resize based on the size obtained in the response.
     let mut buf = vec![0u8; 4096];
-    let btf_info = match sys::btf_obj_get_info_by_fd(btf_fd, &buf) {
-        Ok(info) => {
-            if info.btf_size > buf.len() as u32 {
-                buf.resize(info.btf_size as usize, 0u8);
-                let btf_info =
-                    sys::btf_obj_get_info_by_fd(btf_fd, &buf).map_err(|io_error| SyscallError {
-                        call: "bpf_prog_get_info_by_fd",
-                        io_error,
-                    })?;
-                Ok(btf_info)
-            } else {
-                Ok(info)
-            }
+    loop {
+        let info = sys::btf_obj_get_info_by_fd(btf_fd.as_fd(), &mut buf)?;
+        let btf_size = info.btf_size as usize;
+        if btf_size > buf.len() {
+            buf.resize(btf_size, 0u8);
+            continue;
         }
-        Err(io_error) => Err(SyscallError {
-            call: "bpf_prog_get_info_by_fd",
-            io_error,
-        }),
-    }?;
+        buf.truncate(btf_size);
+        break;
+    }
 
-    let btf = Btf::parse(&buf[0..btf_info.btf_size as usize], Endianness::default())
-        .map_err(ProgramError::Btf)?;
+    let btf = Btf::parse(&buf, Endianness::default()).map_err(ProgramError::Btf)?;
 
     let btf_id = btf
         .id_by_type_name_kind(func_name, BtfKind::Func)

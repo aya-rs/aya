@@ -1,18 +1,18 @@
 //! Utility functions.
 use std::{
-    borrow::Cow,
     collections::BTreeMap,
     error::Error,
     ffi::{CStr, CString},
     fs::{self, File},
     io::{self, BufRead, BufReader},
-    mem, slice,
+    mem,
+    num::ParseIntError,
+    slice,
     str::{FromStr, Utf8Error},
 };
 
 use crate::{
     generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK},
-    maps::stack_trace::SymbolResolver,
     Pod,
 };
 
@@ -203,36 +203,33 @@ fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, ()> {
     Ok(cpus)
 }
 
-/// The simplest resolver: a direct map from addresses to strings.
-pub type SimpleSymbolResolver = BTreeMap<u64, String>;
-
-impl SymbolResolver for SimpleSymbolResolver {
-    fn resolve_symbol(&self, addr: u64) -> Option<Cow<'_, str>> {
-        self.range(..=addr).next_back().map(|(_, s)| s.into())
-    }
-}
-
 /// Loads kernel symbols from `/proc/kallsyms`.
 ///
-/// The symbols can be passed to [`StackTrace::resolve`](crate::maps::stack_trace::StackTrace::resolve).
-pub fn kernel_symbols() -> Result<SimpleSymbolResolver, io::Error> {
+/// See [`crate::maps::StackTraceMap`] for an example on how to use this to resolve kernel addresses to symbols.
+pub fn kernel_symbols() -> Result<BTreeMap<u64, String>, io::Error> {
     let mut reader = BufReader::new(File::open("/proc/kallsyms")?);
     parse_kernel_symbols(&mut reader)
 }
 
-fn parse_kernel_symbols(reader: impl BufRead) -> Result<SimpleSymbolResolver, io::Error> {
-    let mut syms = SimpleSymbolResolver::new();
-
-    for line in reader.lines() {
-        let line = line?;
-        let parts = line.splitn(4, ' ').collect::<Vec<_>>();
-        let addr = u64::from_str_radix(parts[0], 16)
-            .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, line.clone()))?;
-        let name = parts[2].to_owned();
-        syms.insert(addr, name);
-    }
-
-    Ok(syms)
+fn parse_kernel_symbols(reader: impl BufRead) -> Result<BTreeMap<u64, String>, io::Error> {
+    reader
+        .lines()
+        .map(|line| {
+            let line = line?;
+            (|| {
+                let mut parts = line.splitn(4, ' ');
+                let addr = parts.next()?;
+                let _kind = parts.next()?;
+                let name = parts.next()?;
+                let addr = match u64::from_str_radix(addr, 16) {
+                    Ok(addr) => Some(addr),
+                    Err(ParseIntError { .. }) => None,
+                }?;
+                Some((addr, name.to_owned()))
+            })()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, line.clone()))
+        })
+        .collect()
 }
 
 /// Returns the prefix used by syscalls.

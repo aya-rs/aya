@@ -7,7 +7,14 @@ use aya_log_ebpf::{debug, error, info, trace, warn};
 #[uprobe]
 pub fn test_log(ctx: ProbeContext) {
     debug!(&ctx, "Hello from eBPF!");
-    error!(&ctx, "{}, {}, {}", 69, 420i32, "wao");
+    error!(
+        &ctx,
+        "{}, {}, {}, {:x}",
+        69,
+        420i32,
+        "wao",
+        "wao".as_bytes()
+    );
     let ipv4 = 167772161u32; // 10.0.0.1
     let ipv6 = [
         32u8, 1u8, 13u8, 184u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8,

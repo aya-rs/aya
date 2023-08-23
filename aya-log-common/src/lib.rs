@@ -1,6 +1,6 @@
 #![no_std]
 
-use core::{mem, num, ptr};
+use core::num::{NonZeroUsize, TryFromIntError};
 
 use num_enum::IntoPrimitive;
 
@@ -86,7 +86,7 @@ pub trait UpperMacFormatter {}
 impl UpperMacFormatter for [u8; 6] {}
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, IntoPrimitive)]
 pub enum RecordField {
     Target = 1,
     Level,
@@ -99,7 +99,7 @@ pub enum RecordField {
 /// Types which are supported by aya-log and can be safely sent from eBPF
 /// programs to userspace.
 #[repr(u8)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, IntoPrimitive)]
 pub enum Argument {
     DisplayHint,
 
@@ -147,65 +147,42 @@ pub enum DisplayHint {
     UpperMac,
 }
 
-struct TagLenValue<T, V> {
-    pub tag: T,
-    pub value: V,
-}
-
-impl<T, V> TagLenValue<T, V>
-where
-    V: IntoIterator<Item = u8>,
-    <V as IntoIterator>::IntoIter: ExactSizeIterator,
-{
-    pub(crate) fn write(self, mut buf: &mut [u8]) -> Result<usize, ()> {
-        // Break the abstraction to please the verifier.
-        if buf.len() > LOG_BUF_CAPACITY {
-            buf = &mut buf[..LOG_BUF_CAPACITY];
-        }
-        let Self { tag, value } = self;
-        let value = value.into_iter();
-        let len = value.len();
-        let wire_len: LogValueLength = value
-            .len()
-            .try_into()
-            .map_err(|num::TryFromIntError { .. }| ())?;
-        let size = mem::size_of_val(&tag) + mem::size_of_val(&wire_len) + len;
-        if size > buf.len() {
-            return Err(());
-        }
-
-        let tag_size = mem::size_of_val(&tag);
-        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, tag) };
-        buf = &mut buf[tag_size..];
-
-        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, wire_len) };
-        buf = &mut buf[mem::size_of_val(&wire_len)..];
-
-        buf.iter_mut().zip(value).for_each(|(dst, src)| {
-            *dst = src;
-        });
-
-        Ok(size)
+// Must be inlined, else the BPF backend emits:
+//
+// llvm: <unknown>:0:0: in function _ZN14aya_log_common5write17hc9ed05433e23a663E { i64, i64 } (i8, ptr, i64, ptr, i64): only integer returns supported
+#[inline(always)]
+pub(crate) fn write(tag: u8, value: &[u8], buf: &mut [u8]) -> Option<NonZeroUsize> {
+    let wire_len: LogValueLength = match value.len().try_into() {
+        Ok(wire_len) => Some(wire_len),
+        Err(TryFromIntError { .. }) => None,
+    }?;
+    let mut size = 0;
+    macro_rules! copy_from_slice {
+        ($value:expr) => {{
+            let buf = buf.get_mut(size..)?;
+            let buf = buf.get_mut(..$value.len())?;
+            buf.copy_from_slice($value);
+            size += $value.len();
+        }};
     }
-}
-
-impl<T, V> TagLenValue<T, V> {
-    #[inline(always)]
-    pub(crate) fn new(tag: T, value: V) -> TagLenValue<T, V> {
-        TagLenValue { tag, value }
-    }
+    copy_from_slice!(&[tag]);
+    copy_from_slice!(&wire_len.to_ne_bytes());
+    copy_from_slice!(value);
+    NonZeroUsize::new(size)
 }
 
 pub trait WriteToBuf {
-    #[allow(clippy::result_unit_err)]
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()>;
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize>;
 }
 
 macro_rules! impl_write_to_buf {
     ($type:ident, $arg_type:expr) => {
         impl WriteToBuf for $type {
-            fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
-                TagLenValue::new($arg_type, self.to_ne_bytes()).write(buf)
+            // This need not be inlined because the return value is Option<N> where N is
+            // mem::size_of<$type>, which is a compile-time constant.
+            #[inline(never)]
+            fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
+                write($arg_type.into(), &self.to_ne_bytes(), buf)
             }
         }
     };
@@ -227,46 +204,65 @@ impl_write_to_buf!(f32, Argument::F32);
 impl_write_to_buf!(f64, Argument::F64);
 
 impl WriteToBuf for [u8; 16] {
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
-        TagLenValue::new(Argument::ArrU8Len16, self).write(buf)
+    // This need not be inlined because the return value is Option<N> where N is 16, which is a
+    // compile-time constant.
+    #[inline(never)]
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
+        write(Argument::ArrU8Len16.into(), &self, buf)
     }
 }
 
 impl WriteToBuf for [u16; 8] {
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
+    // This need not be inlined because the return value is Option<N> where N is 16, which is a
+    // compile-time constant.
+    #[inline(never)]
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
         let bytes = unsafe { core::mem::transmute::<_, [u8; 16]>(self) };
-        TagLenValue::new(Argument::ArrU16Len8, bytes).write(buf)
+        write(Argument::ArrU16Len8.into(), &bytes, buf)
     }
 }
 
 impl WriteToBuf for [u8; 6] {
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
-        TagLenValue::new(Argument::ArrU8Len6, self).write(buf)
+    // This need not be inlined because the return value is Option<N> where N is 6, which is a
+    // compile-time constant.
+    #[inline(never)]
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
+        write(Argument::ArrU8Len6.into(), &self, buf)
     }
 }
 
 impl WriteToBuf for &[u8] {
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
-        TagLenValue::new(Argument::Bytes, self.iter().copied()).write(buf)
+    // Must be inlined, else the BPF backend emits:
+    //
+    // llvm: <unknown>:0:0: in function _ZN63_$LT$$RF$$u5b$u8$u5d$$u20$as$u20$aya_log_common..WriteToBuf$GT$5write17h08f30a45f7b9f09dE { i64, i64 } (ptr, i64, ptr, i64): only integer returns supported
+    #[inline(always)]
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
+        write(Argument::Bytes.into(), self, buf)
     }
 }
 
 impl WriteToBuf for &str {
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
-        TagLenValue::new(Argument::Str, self.as_bytes().iter().copied()).write(buf)
+    // Must be inlined, else the BPF backend emits:
+    //
+    // llvm: <unknown>:0:0: in function _ZN54_$LT$$RF$str$u20$as$u20$aya_log_common..WriteToBuf$GT$5write17h7e2d1ccaa758e2b5E { i64, i64 } (ptr, i64, ptr, i64): only integer returns supported
+    #[inline(always)]
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
+        write(Argument::Str.into(), self.as_bytes(), buf)
     }
 }
 
 impl WriteToBuf for DisplayHint {
-    fn write(self, buf: &mut [u8]) -> Result<usize, ()> {
+    // This need not be inlined because the return value is Option<N> where N is 1, which is a
+    // compile-time constant.
+    #[inline(never)]
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
         let v: u8 = self.into();
-        TagLenValue::new(Argument::DisplayHint, v.to_ne_bytes()).write(buf)
+        write(Argument::DisplayHint.into(), &v.to_ne_bytes(), buf)
     }
 }
 
-#[allow(clippy::result_unit_err)]
 #[doc(hidden)]
-#[inline(always)]
+#[inline(always)] // This function takes too many arguments to not be inlined.
 pub fn write_record_header(
     buf: &mut [u8],
     target: &str,
@@ -275,20 +271,23 @@ pub fn write_record_header(
     file: &str,
     line: u32,
     num_args: usize,
-) -> Result<usize, ()> {
+) -> Option<NonZeroUsize> {
     let level: u8 = level.into();
     let mut size = 0;
-    size += TagLenValue::new(RecordField::Target, target.as_bytes().iter().copied())
-        .write(&mut buf[size..])?;
-    size += TagLenValue::new(RecordField::Level, level.to_ne_bytes()).write(&mut buf[size..])?;
-    size += TagLenValue::new(RecordField::Module, module.as_bytes().iter().copied())
-        .write(&mut buf[size..])?;
-    size += TagLenValue::new(RecordField::File, file.as_bytes().iter().copied())
-        .write(&mut buf[size..])?;
-    size += TagLenValue::new(RecordField::Line, line.to_ne_bytes()).write(&mut buf[size..])?;
-    size +=
-        TagLenValue::new(RecordField::NumArgs, num_args.to_ne_bytes()).write(&mut buf[size..])?;
-    Ok(size)
+    macro_rules! write {
+        ($tag:expr, $value:expr) => {{
+            let buf = buf.get_mut(size..)?;
+            let len = write($tag.into(), $value, buf)?;
+            size += len.get();
+        }};
+    }
+    write!(RecordField::Target, target.as_bytes());
+    write!(RecordField::Level, &level.to_ne_bytes());
+    write!(RecordField::Module, module.as_bytes());
+    write!(RecordField::File, file.as_bytes());
+    write!(RecordField::Line, &line.to_ne_bytes());
+    write!(RecordField::NumArgs, &num_args.to_ne_bytes());
+    NonZeroUsize::new(size)
 }
 
 #[cfg(test)]
