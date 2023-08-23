@@ -9,6 +9,7 @@ aya-bpf = { path = "../../bpf/aya-bpf" }
 aya-log-ebpf = { path = "../../bpf/aya-log-ebpf" }
 
 [build-dependencies]
+which = { workspace = true }
 xtask = { path = "../../xtask" }
 
 [[bin]]
