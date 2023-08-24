@@ -24,13 +24,11 @@ object = { workspace = true, default-features = false, features = [
     "read_core",
     "std",
 ] }
-parking_lot = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["rt"], optional = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
-futures = { workspace = true }
 tempfile = { workspace = true }
 
 [features]

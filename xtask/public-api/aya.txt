@@ -1227,8 +1227,8 @@ pub aya::maps::MapData::pinned: bool
 impl aya::maps::MapData
 pub fn aya::maps::MapData::create(obj: aya_obj::maps::Map, name: &str, btf_fd: core::option::Option<std::os::fd::owned::BorrowedFd<'_>>) -> core::result::Result<Self, aya::maps::MapError>
 pub fn aya::maps::MapData::fd(&self) -> aya::maps::MapFd
-pub fn aya::maps::MapData::from_fd(fd: std::os::fd::owned::OwnedFd) -> core::result::Result<aya::maps::MapData, aya::maps::MapError>
-pub fn aya::maps::MapData::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<aya::maps::MapData, aya::maps::MapError>
+pub fn aya::maps::MapData::from_fd(fd: std::os::fd::owned::OwnedFd) -> core::result::Result<Self, aya::maps::MapError>
+pub fn aya::maps::MapData::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::maps::MapError>
 impl core::clone::Clone for aya::maps::MapData
 pub fn aya::maps::MapData::clone(&self) -> Self
 impl core::ops::drop::Drop for aya::maps::MapData
@@ -3971,7 +3971,7 @@ impl<T> core::convert::From<T> for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::from(t: T) -> T
 pub struct aya::programs::tc::SchedClassifierLink(_)
 impl aya::programs::tc::SchedClassifierLink
-pub fn aya::programs::tc::SchedClassifierLink::attached(if_name: &str, attach_type: aya::programs::tc::TcAttachType, priority: u16, handle: u32) -> core::result::Result<aya::programs::tc::SchedClassifierLink, std::io::error::Error>
+pub fn aya::programs::tc::SchedClassifierLink::attached(if_name: &str, attach_type: aya::programs::tc::TcAttachType, priority: u16, handle: u32) -> core::result::Result<Self, std::io::error::Error>
 pub fn aya::programs::tc::SchedClassifierLink::handle(&self) -> u32
 pub fn aya::programs::tc::SchedClassifierLink::priority(&self) -> u16
 impl aya::programs::links::Link for aya::programs::tc::SchedClassifierLink
@@ -6219,7 +6219,7 @@ pub struct aya::programs::ProgramInfo(_)
 impl aya::programs::ProgramInfo
 pub fn aya::programs::ProgramInfo::btf_id(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
 pub fn aya::programs::ProgramInfo::fd(&self) -> core::result::Result<aya::programs::ProgramFd, aya::programs::ProgramError>
-pub fn aya::programs::ProgramInfo::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+pub fn aya::programs::ProgramInfo::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::gpl_compatible(&self) -> bool
 pub fn aya::programs::ProgramInfo::id(&self) -> u32
 pub fn aya::programs::ProgramInfo::loaded_at(&self) -> std::time::SystemTime
@@ -7041,8 +7041,8 @@ impl<T> core::convert::From<T> for aya::BpfError
 pub fn aya::BpfError::from(t: T) -> T
 pub struct aya::Bpf
 impl aya::Bpf
-pub fn aya::Bpf::load(data: &[u8]) -> core::result::Result<aya::Bpf, aya::BpfError>
-pub fn aya::Bpf::load_file<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<aya::Bpf, aya::BpfError>
+pub fn aya::Bpf::load(data: &[u8]) -> core::result::Result<Self, aya::BpfError>
+pub fn aya::Bpf::load_file<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::BpfError>
 pub fn aya::Bpf::map(&self, name: &str) -> core::option::Option<&aya::maps::Map>
 pub fn aya::Bpf::map_mut(&mut self, name: &str) -> core::option::Option<&mut aya::maps::Map>
 pub fn aya::Bpf::maps(&self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &aya::maps::Map)>
@@ -7082,12 +7082,12 @@ pub fn aya::BpfLoader<'a>::extension(&mut self, name: &'a str) -> &mut aya::BpfL
 pub fn aya::BpfLoader<'a>::load(&mut self, data: &[u8]) -> core::result::Result<aya::Bpf, aya::BpfError>
 pub fn aya::BpfLoader<'a>::load_file<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<aya::Bpf, aya::BpfError>
 pub fn aya::BpfLoader<'a>::map_pin_path<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> &mut aya::BpfLoader<'a>
-pub fn aya::BpfLoader<'a>::new() -> aya::BpfLoader<'a>
+pub fn aya::BpfLoader<'a>::new() -> Self
 pub fn aya::BpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut aya::BpfLoader<'a>
 pub fn aya::BpfLoader<'a>::set_max_entries(&mut self, name: &'a str, size: u32) -> &mut aya::BpfLoader<'a>
 pub fn aya::BpfLoader<'a>::verifier_log_level(&mut self, level: aya::VerifierLogLevel) -> &mut aya::BpfLoader<'a>
-impl<'a> core::default::Default for aya::BpfLoader<'a>
-pub fn aya::BpfLoader<'a>::default() -> Self
+impl core::default::Default for aya::BpfLoader<'_>
+pub fn aya::BpfLoader<'_>::default() -> Self
 impl<'a> core::fmt::Debug for aya::BpfLoader<'a>
 pub fn aya::BpfLoader<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<'a> core::marker::Send for aya::BpfLoader<'a>

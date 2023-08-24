@@ -121,8 +121,8 @@ pub struct LircLink {
 }
 
 impl LircLink {
-    pub(crate) fn new(prog_fd: RawFd, target_fd: RawFd) -> LircLink {
-        LircLink {
+    pub(crate) fn new(prog_fd: RawFd, target_fd: RawFd) -> Self {
+        Self {
             prog_fd,
             target_fd: unsafe { dup(target_fd) },
         }

@@ -72,7 +72,7 @@ pub struct StackTraceMap<T> {
 }
 
 impl<T: Borrow<MapData>> StackTraceMap<T> {
-    pub(crate) fn new(map: T) -> Result<StackTraceMap<T>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         let expected = mem::size_of::<u32>();
         let size = data.obj.key_size() as usize;
@@ -90,7 +90,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
             return Err(MapError::InvalidValueSize { size, expected });
         }
 
-        Ok(StackTraceMap {
+        Ok(Self {
             inner: map,
             max_stack_depth,
         })

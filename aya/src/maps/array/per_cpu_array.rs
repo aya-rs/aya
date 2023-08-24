@@ -54,11 +54,11 @@ pub struct PerCpuArray<T, V: Pod> {
 }
 
 impl<T: Borrow<MapData>, V: Pod> PerCpuArray<T, V> {
-    pub(crate) fn new(map: T) -> Result<PerCpuArray<T, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<u32, V>(data)?;
 
-        Ok(PerCpuArray {
+        Ok(Self {
             inner: map,
             _v: PhantomData,
         })

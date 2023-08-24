@@ -36,8 +36,8 @@ pub enum ProbeKind {
 impl ProbeKind {
     fn pmu(&self) -> &'static str {
         match *self {
-            ProbeKind::KProbe | ProbeKind::KRetProbe => "kprobe",
-            ProbeKind::UProbe | ProbeKind::URetProbe => "uprobe",
+            Self::KProbe | Self::KRetProbe => "kprobe",
+            Self::UProbe | Self::URetProbe => "uprobe",
         }
     }
 }

@@ -69,11 +69,11 @@ pub struct SockHash<T, K> {
 }
 
 impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
-    pub(crate) fn new(map: T) -> Result<SockHash<T, K>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<K, u32>(data)?;
 
-        Ok(SockHash {
+        Ok(Self {
             inner: map,
             _k: PhantomData,
         })
@@ -138,6 +138,6 @@ impl<T: Borrow<MapData>, K: Pod> IterableMap<K, RawFd> for SockHash<T, K> {
     }
 
     fn get(&self, key: &K) -> Result<RawFd, MapError> {
-        SockHash::get(self, key, 0)
+        Self::get(self, key, 0)
     }
 }

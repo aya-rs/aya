@@ -96,7 +96,7 @@ impl PerfBuffer {
         cpu_id: u32,
         page_size: usize,
         page_count: usize,
-    ) -> Result<PerfBuffer, PerfBufferError> {
+    ) -> Result<Self, PerfBufferError> {
         if !page_count.is_power_of_two() {
             return Err(PerfBufferError::InvalidPageCount { page_count });
         }
@@ -120,7 +120,7 @@ impl PerfBuffer {
             });
         }
 
-        let perf_buf = PerfBuffer {
+        let perf_buf = Self {
             buf: AtomicPtr::new(buf as *mut perf_event_mmap_page),
             fd,
             size,
@@ -305,15 +305,15 @@ unsafe fn mmap(
 #[repr(C)]
 struct Sample {
     header: perf_event_header,
-    pub size: u32,
+    size: u32,
 }
 
 #[repr(C)]
 #[derive(Debug)]
 struct LostSamples {
     header: perf_event_header,
-    pub id: u64,
-    pub count: u64,
+    id: u64,
+    count: u64,
 }
 
 #[cfg(test)]

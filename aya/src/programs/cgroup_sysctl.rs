@@ -132,15 +132,15 @@ impl Link for CgroupSysctlLinkInner {
 
     fn id(&self) -> Self::Id {
         match self {
-            CgroupSysctlLinkInner::Fd(fd) => CgroupSysctlLinkIdInner::Fd(fd.id()),
-            CgroupSysctlLinkInner::ProgAttach(p) => CgroupSysctlLinkIdInner::ProgAttach(p.id()),
+            Self::Fd(fd) => CgroupSysctlLinkIdInner::Fd(fd.id()),
+            Self::ProgAttach(p) => CgroupSysctlLinkIdInner::ProgAttach(p.id()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         match self {
-            CgroupSysctlLinkInner::Fd(fd) => fd.detach(),
-            CgroupSysctlLinkInner::ProgAttach(p) => p.detach(),
+            Self::Fd(fd) => fd.detach(),
+            Self::ProgAttach(p) => p.detach(),
         }
     }
 }

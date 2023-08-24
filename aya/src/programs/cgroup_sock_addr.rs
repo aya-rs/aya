@@ -157,15 +157,15 @@ impl Link for CgroupSockAddrLinkInner {
 
     fn id(&self) -> Self::Id {
         match self {
-            CgroupSockAddrLinkInner::Fd(fd) => CgroupSockAddrLinkIdInner::Fd(fd.id()),
-            CgroupSockAddrLinkInner::ProgAttach(p) => CgroupSockAddrLinkIdInner::ProgAttach(p.id()),
+            Self::Fd(fd) => CgroupSockAddrLinkIdInner::Fd(fd.id()),
+            Self::ProgAttach(p) => CgroupSockAddrLinkIdInner::ProgAttach(p.id()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         match self {
-            CgroupSockAddrLinkInner::Fd(fd) => fd.detach(),
-            CgroupSockAddrLinkInner::ProgAttach(p) => p.detach(),
+            Self::Fd(fd) => fd.detach(),
+            Self::ProgAttach(p) => p.detach(),
         }
     }
 }

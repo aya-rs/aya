@@ -45,11 +45,11 @@ pub struct SockMap<T> {
 }
 
 impl<T: Borrow<MapData>> SockMap<T> {
-    pub(crate) fn new(map: T) -> Result<SockMap<T>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<u32, RawFd>(data)?;
 
-        Ok(SockMap { inner: map })
+        Ok(Self { inner: map })
     }
 
     /// An iterator over the indices of the array that point to a program. The iterator item type

@@ -28,7 +28,7 @@ use crate::{
 
 const LD_SO_CACHE_FILE: &str = "/etc/ld.so.cache";
 
-lazy_static! {
+lazy_static::lazy_static! {
     static ref LD_SO_CACHE: Result<LdSoCache, Arc<io::Error>> =
         LdSoCache::load(LD_SO_CACHE_FILE).map_err(Arc::new);
 }
@@ -204,7 +204,7 @@ impl TryFrom<FdLink> for UProbeLink {
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
         let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_TRACING as u32) {
-            return Ok(UProbeLink::new(PerfLinkInner::FdLink(fd_link)));
+            return Ok(Self::new(PerfLinkInner::FdLink(fd_link)));
         }
         Err(LinkError::InvalidLink)
     }
@@ -297,7 +297,7 @@ pub(crate) struct LdSoCache {
 }
 
 impl LdSoCache {
-    pub fn load<T: AsRef<Path>>(path: T) -> Result<Self, io::Error> {
+    fn load<T: AsRef<Path>>(path: T) -> Result<Self, io::Error> {
         let data = fs::read(path)?;
         Self::parse(&data)
     }
@@ -386,10 +386,10 @@ impl LdSoCache {
             })
             .collect::<Result<_, _>>()?;
 
-        Ok(LdSoCache { entries })
+        Ok(Self { entries })
     }
 
-    pub fn resolve(&self, lib: &str) -> Option<&str> {
+    fn resolve(&self, lib: &str) -> Option<&str> {
         let lib = if !lib.contains(".so") {
             lib.to_string() + ".so"
         } else {

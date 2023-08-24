@@ -179,15 +179,15 @@ impl Link for CgroupSkbLinkInner {
 
     fn id(&self) -> Self::Id {
         match self {
-            CgroupSkbLinkInner::Fd(fd) => CgroupSkbLinkIdInner::Fd(fd.id()),
-            CgroupSkbLinkInner::ProgAttach(p) => CgroupSkbLinkIdInner::ProgAttach(p.id()),
+            Self::Fd(fd) => CgroupSkbLinkIdInner::Fd(fd.id()),
+            Self::ProgAttach(p) => CgroupSkbLinkIdInner::ProgAttach(p.id()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         match self {
-            CgroupSkbLinkInner::Fd(fd) => fd.detach(),
-            CgroupSkbLinkInner::ProgAttach(p) => p.detach(),
+            Self::Fd(fd) => fd.detach(),
+            Self::ProgAttach(p) => p.detach(),
         }
     }
 }

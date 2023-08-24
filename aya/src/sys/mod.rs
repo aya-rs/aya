@@ -85,7 +85,7 @@ impl std::fmt::Debug for Syscall<'_> {
     }
 }
 
-fn syscall(call: Syscall) -> SysResult<c_long> {
+fn syscall(call: Syscall<'_>) -> SysResult<c_long> {
     #[cfg(test)]
     return TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
 
@@ -103,7 +103,10 @@ fn syscall(call: Syscall) -> SysResult<c_long> {
                 flags,
             } => libc::syscall(SYS_perf_event_open, &attr, pid, cpu, group, flags),
             Syscall::PerfEventIoctl { fd, request, arg } => {
-                libc::ioctl(fd.as_raw_fd(), request.try_into().unwrap(), arg) as libc::c_long
+                let int = libc::ioctl(fd.as_raw_fd(), request.try_into().unwrap(), arg);
+                #[allow(trivial_numeric_casts)]
+                let int = int as c_long;
+                int
             }
         }
     } {

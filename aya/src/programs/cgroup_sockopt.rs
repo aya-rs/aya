@@ -152,15 +152,15 @@ impl Link for CgroupSockoptLinkInner {
 
     fn id(&self) -> Self::Id {
         match self {
-            CgroupSockoptLinkInner::Fd(fd) => CgroupSockoptLinkIdInner::Fd(fd.id()),
-            CgroupSockoptLinkInner::ProgAttach(p) => CgroupSockoptLinkIdInner::ProgAttach(p.id()),
+            Self::Fd(fd) => CgroupSockoptLinkIdInner::Fd(fd.id()),
+            Self::ProgAttach(p) => CgroupSockoptLinkIdInner::ProgAttach(p.id()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         match self {
-            CgroupSockoptLinkInner::Fd(fd) => fd.detach(),
-            CgroupSockoptLinkInner::ProgAttach(p) => p.detach(),
+            Self::Fd(fd) => fd.detach(),
+            Self::ProgAttach(p) => p.detach(),
         }
     }
 }

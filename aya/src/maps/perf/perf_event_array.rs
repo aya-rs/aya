@@ -161,8 +161,8 @@ pub struct PerfEventArray<T> {
 }
 
 impl<T: Borrow<MapData>> PerfEventArray<T> {
-    pub(crate) fn new(map: T) -> Result<PerfEventArray<T>, MapError> {
-        Ok(PerfEventArray {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
+        Ok(Self {
             map: Arc::new(map),
             page_size: page_size(),
         })

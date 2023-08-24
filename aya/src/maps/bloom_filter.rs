@@ -40,11 +40,11 @@ pub struct BloomFilter<T, V: Pod> {
 }
 
 impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
-    pub(crate) fn new(map: T) -> Result<BloomFilter<T, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_v_size::<V>(data)?;
 
-        Ok(BloomFilter {
+        Ok(Self {
             inner: map,
             _v: PhantomData,
         })
