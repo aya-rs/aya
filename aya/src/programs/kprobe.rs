@@ -71,8 +71,12 @@ impl KProbe {
     /// target function.
     ///
     /// The returned value can be used to detach from the given function, see [KProbe::detach].
-    pub fn attach(&mut self, fn_name: &str, offset: u64) -> Result<KProbeLinkId, ProgramError> {
-        attach(&mut self.data, self.kind, Path::new(fn_name), offset, None)
+    pub fn attach<T: AsRef<Path>>(
+        &mut self,
+        fn_name: T,
+        offset: u64,
+    ) -> Result<KProbeLinkId, ProgramError> {
+        attach(&mut self.data, self.kind, fn_name.as_ref(), offset, None)
     }
 
     /// Detaches the program.
