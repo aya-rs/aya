@@ -101,7 +101,13 @@ pub(crate) struct ProbeEvent {
 pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     program_data: &mut ProgramData<T>,
     kind: ProbeKind,
-    fn_name: &Path,
+    // NB: the meaning of this argument is different for kprobe/kretprobe and uprobe/uretprobe; in
+    // the kprobe case it is the name of the function to attach to, in the uprobe case it is a path
+    // to the binary or library.
+    //
+    // TODO: consider encoding the type and the argument in the [`ProbeKind`] enum instead of a
+    // separate argument.
+    fn_name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
 ) -> Result<T::Id, ProgramError> {
@@ -140,7 +146,7 @@ pub(crate) fn detach_debug_fs(event: ProbeEvent) -> Result<(), ProgramError> {
 
 fn create_as_probe(
     kind: ProbeKind,
-    fn_name: &Path,
+    fn_name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
 ) -> Result<OwnedFd, ProgramError> {
@@ -176,7 +182,7 @@ fn create_as_probe(
 
 fn create_as_trace_point(
     kind: ProbeKind,
-    name: &Path,
+    name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
 ) -> Result<(OwnedFd, OsString), ProgramError> {
@@ -204,7 +210,7 @@ fn create_as_trace_point(
 fn create_probe_event(
     tracefs: &Path,
     kind: ProbeKind,
-    fn_name: &Path,
+    fn_name: &OsStr,
     offset: u64,
 ) -> Result<OsString, (PathBuf, io::Error)> {
     use std::os::unix::ffi::OsStrExt as _;
@@ -215,8 +221,6 @@ fn create_probe_event(
         KProbe | UProbe => 'p',
         KRetProbe | URetProbe => 'r',
     };
-
-    let fn_name = fn_name.as_os_str();
 
     let mut event_alias = OsString::new();
     write!(

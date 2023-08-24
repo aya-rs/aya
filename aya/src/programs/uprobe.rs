@@ -94,7 +94,8 @@ impl UProbe {
             0
         };
 
-        attach(&mut self.data, self.kind, &path, sym_offset + offset, pid)
+        let fn_name = path.as_os_str();
+        attach(&mut self.data, self.kind, fn_name, sym_offset + offset, pid)
     }
 
     /// Detaches the program.

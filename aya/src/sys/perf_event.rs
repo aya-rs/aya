@@ -1,8 +1,7 @@
 use std::{
-    ffi::{c_long, CString},
+    ffi::{c_long, CString, OsStr},
     io, mem,
     os::fd::{BorrowedFd, FromRawFd as _, OwnedFd},
-    path::Path,
 };
 
 use libc::{c_int, pid_t};
@@ -63,7 +62,7 @@ pub(crate) fn perf_event_open_bpf(cpu: c_int) -> SysResult<OwnedFd> {
 pub(crate) fn perf_event_open_probe(
     ty: u32,
     ret_bit: Option<u32>,
-    name: &Path,
+    name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
 ) -> SysResult<OwnedFd> {
@@ -75,7 +74,7 @@ pub(crate) fn perf_event_open_probe(
         attr.config = 1 << ret_bit;
     }
 
-    let c_name = CString::new(name.as_os_str().as_bytes()).unwrap();
+    let c_name = CString::new(name.as_bytes()).unwrap();
 
     attr.size = mem::size_of::<perf_event_attr>() as u32;
     attr.type_ = ty;
