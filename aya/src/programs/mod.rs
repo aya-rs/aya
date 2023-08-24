@@ -487,9 +487,10 @@ impl<T: Link> ProgramData<T> {
         path: P,
         verifier_log_level: VerifierLogLevel,
     ) -> Result<Self, ProgramError> {
-        let path_string =
-            CString::new(path.as_ref().as_os_str().to_string_lossy().as_bytes()).unwrap();
+        use std::os::unix::ffi::OsStrExt as _;
 
+        // TODO: avoid this unwrap by adding a new error variant.
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
             call: "bpf_obj_get",
             io_error,
@@ -520,6 +521,8 @@ fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError
 }
 
 fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Result<(), PinError> {
+    use std::os::unix::ffi::OsStrExt as _;
+
     let fd = data.fd.as_ref().ok_or(PinError::NoFd {
         name: data
             .name
@@ -527,11 +530,12 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
             .unwrap_or("<unknown program>")
             .to_string(),
     })?;
-    let path_string = CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
-        PinError::InvalidPinPath {
-            error: e.to_string(),
-        }
-    })?;
+    let path = path.as_ref();
+    let path_string =
+        CString::new(path.as_os_str().as_bytes()).map_err(|error| PinError::InvalidPinPath {
+            path: path.into(),
+            error,
+        })?;
     bpf_pin_object(fd.as_fd().as_raw_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
         call: "BPF_OBJ_PIN",
         io_error,
@@ -1073,7 +1077,10 @@ impl ProgramInfo {
 
     /// Loads a program from a pinned path in bpffs.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
-        let path_string = CString::new(path.as_ref().to_str().unwrap()).unwrap();
+        use std::os::unix::ffi::OsStrExt as _;
+
+        // TODO: avoid this unwrap by adding a new error variant.
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,

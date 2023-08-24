@@ -146,19 +146,22 @@ impl FdLink {
     /// # Ok::<(), Error>(())
     /// ```
     pub fn pin<P: AsRef<Path>>(self, path: P) -> Result<PinnedLink, PinError> {
-        let path_string =
-            CString::new(path.as_ref().to_string_lossy().into_owned()).map_err(|e| {
-                PinError::InvalidPinPath {
-                    error: e.to_string(),
-                }
-            })?;
+        use std::os::unix::ffi::OsStrExt as _;
+
+        let path = path.as_ref();
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
+            PinError::InvalidPinPath {
+                path: path.into(),
+                error,
+            }
+        })?;
         bpf_pin_object(self.fd.as_raw_fd(), &path_string).map_err(|(_, io_error)| {
             SyscallError {
                 call: "BPF_OBJ_PIN",
                 io_error,
             }
         })?;
-        Ok(PinnedLink::new(PathBuf::from(path.as_ref()), self))
+        Ok(PinnedLink::new(path.into(), self))
     }
 }
 
@@ -203,7 +206,10 @@ impl PinnedLink {
 
     /// Creates a [`crate::programs::links::PinnedLink`] from a valid path on bpffs.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, LinkError> {
-        let path_string = CString::new(path.as_ref().to_string_lossy().to_string()).unwrap();
+        use std::os::unix::ffi::OsStrExt as _;
+
+        // TODO: avoid this unwrap by adding a new error variant.
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
         let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| {
             LinkError::SyscallError(SyscallError {
                 call: "BPF_OBJ_GET",

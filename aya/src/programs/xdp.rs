@@ -100,6 +100,7 @@ impl Xdp {
     /// [`XdpError::NetlinkError`] is returned for older
     /// kernels.
     pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<XdpLinkId, ProgramError> {
+        // TODO: avoid this unwrap by adding a new error variant.
         let c_interface = CString::new(interface).unwrap();
         let if_index = unsafe { if_nametoindex(c_interface.as_ptr()) };
         if if_index == 0 {
