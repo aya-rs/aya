@@ -266,10 +266,15 @@ impl FromStr for ProgramSection {
 
         // parse the common case, eg "xdp/program_name" or
         // "sk_skb/stream_verdict/program_name"
-        let (kind, name) = match section.rsplit_once('/') {
-            None => (section, section),
-            Some((kind, name)) => (kind, name),
+        let mut pieces = section.split('/');
+        let mut next = || {
+            pieces
+                .next()
+                .ok_or_else(|| ParseError::InvalidProgramSection {
+                    section: section.to_owned(),
+                })
         };
+        let kind = next()?;
 
         Ok(match kind {
             "kprobe" => KProbe,
@@ -281,128 +286,105 @@ impl FromStr for ProgramSection {
             "xdp" => Xdp { frags: false },
             "xdp.frags" => Xdp { frags: true },
             "tp_btf" => BtfTracePoint,
-            kind if kind.starts_with("tracepoint") || kind.starts_with("tp") => TracePoint,
+            "tracepoint" | "tp" => TracePoint,
             "socket" => SocketFilter,
             "sk_msg" => SkMsg,
-            "sk_skb" => match name {
-                "stream_parser" => SkSkbStreamParser,
-                "stream_verdict" => SkSkbStreamVerdict,
-                _ => {
-                    return Err(ParseError::InvalidProgramSection {
-                        section: section.to_owned(),
-                    })
+            "sk_skb" => {
+                let name = next()?;
+                match name {
+                    "stream_parser" => SkSkbStreamParser,
+                    "stream_verdict" => SkSkbStreamVerdict,
+                    _ => {
+                        return Err(ParseError::InvalidProgramSection {
+                            section: section.to_owned(),
+                        })
+                    }
                 }
-            },
-            "sk_skb/stream_parser" => SkSkbStreamParser,
-            "sk_skb/stream_verdict" => SkSkbStreamVerdict,
+            }
             "sockops" => SockOps,
             "classifier" => SchedClassifier,
-            "cgroup_skb" => match name {
-                "ingress" => CgroupSkbIngress,
-                "egress" => CgroupSkbEgress,
-                _ => {
-                    return Err(ParseError::InvalidProgramSection {
-                        section: section.to_owned(),
-                    })
+            "cgroup_skb" => {
+                let name = next()?;
+                match name {
+                    "ingress" => CgroupSkbIngress,
+                    "egress" => CgroupSkbEgress,
+                    _ => {
+                        return Err(ParseError::InvalidProgramSection {
+                            section: section.to_owned(),
+                        })
+                    }
                 }
-            },
-            "cgroup_skb/ingress" => CgroupSkbIngress,
-            "cgroup_skb/egress" => CgroupSkbEgress,
-            "cgroup/skb" => CgroupSkb,
-            "cgroup/sock" => CgroupSock {
-                attach_type: CgroupSockAttachType::default(),
-            },
-            "cgroup/sysctl" => CgroupSysctl,
-            "cgroup/dev" => CgroupDevice,
-            "cgroup/getsockopt" => CgroupSockopt {
-                attach_type: CgroupSockoptAttachType::Get,
-            },
-            "cgroup/setsockopt" => CgroupSockopt {
-                attach_type: CgroupSockoptAttachType::Set,
-            },
-            "cgroup" => match name {
-                "skb" => CgroupSkb,
-                "sysctl" => CgroupSysctl,
-                "dev" => CgroupDevice,
-                "getsockopt" | "setsockopt" => {
-                    if let Ok(attach_type) = CgroupSockoptAttachType::try_from(name) {
-                        CgroupSockopt { attach_type }
-                    } else {
+            }
+            "cgroup" => {
+                let name = next()?;
+                match name {
+                    "skb" => CgroupSkb,
+                    "sysctl" => CgroupSysctl,
+                    "dev" => CgroupDevice,
+                    "getsockopt" => CgroupSockopt {
+                        attach_type: CgroupSockoptAttachType::Get,
+                    },
+                    "setsockopt" => CgroupSockopt {
+                        attach_type: CgroupSockoptAttachType::Set,
+                    },
+                    "sock" => CgroupSock {
+                        attach_type: CgroupSockAttachType::default(),
+                    },
+                    "post_bind4" => CgroupSock {
+                        attach_type: CgroupSockAttachType::PostBind4,
+                    },
+                    "post_bind6" => CgroupSock {
+                        attach_type: CgroupSockAttachType::PostBind6,
+                    },
+                    "sock_create" => CgroupSock {
+                        attach_type: CgroupSockAttachType::SockCreate,
+                    },
+                    "sock_release" => CgroupSock {
+                        attach_type: CgroupSockAttachType::SockRelease,
+                    },
+                    "bind4" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::Bind4,
+                    },
+                    "bind6" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::Bind6,
+                    },
+                    "connect4" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::Connect4,
+                    },
+                    "connect6" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::Connect6,
+                    },
+                    "getpeername4" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::GetPeerName4,
+                    },
+                    "getpeername6" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::GetPeerName6,
+                    },
+                    "getsockname4" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::GetSockName4,
+                    },
+                    "getsockname6" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::GetSockName6,
+                    },
+                    "sendmsg4" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::UDPSendMsg4,
+                    },
+                    "sendmsg6" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::UDPSendMsg6,
+                    },
+                    "recvmsg4" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::UDPRecvMsg4,
+                    },
+                    "recvmsg6" => CgroupSockAddr {
+                        attach_type: CgroupSockAddrAttachType::UDPRecvMsg6,
+                    },
+                    _ => {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
                         });
                     }
                 }
-                "sock" => CgroupSock {
-                    attach_type: CgroupSockAttachType::default(),
-                },
-                "post_bind4" | "post_bind6" | "sock_create" | "sock_release" => {
-                    if let Ok(attach_type) = CgroupSockAttachType::try_from(name) {
-                        CgroupSock { attach_type }
-                    } else {
-                        return Err(ParseError::InvalidProgramSection {
-                            section: section.to_owned(),
-                        });
-                    }
-                }
-                name => {
-                    if let Ok(attach_type) = CgroupSockAddrAttachType::try_from(name) {
-                        CgroupSockAddr { attach_type }
-                    } else {
-                        return Err(ParseError::InvalidProgramSection {
-                            section: section.to_owned(),
-                        });
-                    }
-                }
-            },
-            "cgroup/post_bind4" => CgroupSock {
-                attach_type: CgroupSockAttachType::PostBind4,
-            },
-            "cgroup/post_bind6" => CgroupSock {
-                attach_type: CgroupSockAttachType::PostBind6,
-            },
-            "cgroup/sock_create" => CgroupSock {
-                attach_type: CgroupSockAttachType::SockCreate,
-            },
-            "cgroup/sock_release" => CgroupSock {
-                attach_type: CgroupSockAttachType::SockRelease,
-            },
-            "cgroup/bind4" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::Bind4,
-            },
-            "cgroup/bind6" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::Bind6,
-            },
-            "cgroup/connect4" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::Connect4,
-            },
-            "cgroup/connect6" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::Connect6,
-            },
-            "cgroup/getpeername4" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::GetPeerName4,
-            },
-            "cgroup/getpeername6" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::GetPeerName6,
-            },
-            "cgroup/getsockname4" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::GetSockName4,
-            },
-            "cgroup/getsockname6" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::GetSockName6,
-            },
-            "cgroup/sendmsg4" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::UDPSendMsg4,
-            },
-            "cgroup/sendmsg6" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::UDPSendMsg6,
-            },
-            "cgroup/recvmsg4" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::UDPRecvMsg4,
-            },
-            "cgroup/recvmsg6" => CgroupSockAddr {
-                attach_type: CgroupSockAddrAttachType::UDPRecvMsg6,
-            },
+            }
             "lirc_mode2" => LircMode2,
             "perf_event" => PerfEvent,
             "raw_tp" | "raw_tracepoint" => RawTracePoint,
