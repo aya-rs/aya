@@ -267,8 +267,8 @@ impl FromStr for ProgramSection {
         // parse the common case, eg "xdp/program_name" or
         // "sk_skb/stream_verdict/program_name"
         let (kind, name) = match section.rsplit_once('/') {
-            None => (section, section),
-            Some((kind, name)) => (kind, name),
+            None => (section, None),
+            Some((kind, name)) => (kind, Some(name)),
         };
 
         Ok(match kind {
@@ -285,8 +285,8 @@ impl FromStr for ProgramSection {
             "socket" => SocketFilter,
             "sk_msg" => SkMsg,
             "sk_skb" => match name {
-                "stream_parser" => SkSkbStreamParser,
-                "stream_verdict" => SkSkbStreamVerdict,
+                Some("stream_parser") => SkSkbStreamParser,
+                Some("stream_verdict") => SkSkbStreamVerdict,
                 _ => {
                     return Err(ParseError::InvalidProgramSection {
                         section: section.to_owned(),
@@ -298,8 +298,8 @@ impl FromStr for ProgramSection {
             "sockops" => SockOps,
             "classifier" => SchedClassifier,
             "cgroup_skb" => match name {
-                "ingress" => CgroupSkbIngress,
-                "egress" => CgroupSkbEgress,
+                Some("ingress") => CgroupSkbIngress,
+                Some("egress") => CgroupSkbEgress,
                 _ => {
                     return Err(ParseError::InvalidProgramSection {
                         section: section.to_owned(),
@@ -321,38 +321,70 @@ impl FromStr for ProgramSection {
                 attach_type: CgroupSockoptAttachType::Set,
             },
             "cgroup" => match name {
-                "skb" => CgroupSkb,
-                "sysctl" => CgroupSysctl,
-                "dev" => CgroupDevice,
-                "getsockopt" | "setsockopt" => {
-                    if let Ok(attach_type) = CgroupSockoptAttachType::try_from(name) {
-                        CgroupSockopt { attach_type }
-                    } else {
-                        return Err(ParseError::InvalidProgramSection {
-                            section: section.to_owned(),
-                        });
-                    }
-                }
-                "sock" => CgroupSock {
+                Some("skb") => CgroupSkb,
+                Some("sysctl") => CgroupSysctl,
+                Some("dev") => CgroupDevice,
+                Some("getsockopt") => CgroupSockopt {
+                    attach_type: CgroupSockoptAttachType::Get,
+                },
+                Some("setsockopt") => CgroupSockopt {
+                    attach_type: CgroupSockoptAttachType::Set,
+                },
+                Some("sock") => CgroupSock {
                     attach_type: CgroupSockAttachType::default(),
                 },
-                "post_bind4" | "post_bind6" | "sock_create" | "sock_release" => {
-                    if let Ok(attach_type) = CgroupSockAttachType::try_from(name) {
-                        CgroupSock { attach_type }
-                    } else {
-                        return Err(ParseError::InvalidProgramSection {
-                            section: section.to_owned(),
-                        });
-                    }
-                }
-                name => {
-                    if let Ok(attach_type) = CgroupSockAddrAttachType::try_from(name) {
-                        CgroupSockAddr { attach_type }
-                    } else {
-                        return Err(ParseError::InvalidProgramSection {
-                            section: section.to_owned(),
-                        });
-                    }
+                Some("post_bind4") => CgroupSock {
+                    attach_type: CgroupSockAttachType::PostBind4,
+                },
+                Some("post_bind6") => CgroupSock {
+                    attach_type: CgroupSockAttachType::PostBind6,
+                },
+                Some("sock_create") => CgroupSock {
+                    attach_type: CgroupSockAttachType::SockCreate,
+                },
+                Some("sock_release") => CgroupSock {
+                    attach_type: CgroupSockAttachType::SockRelease,
+                },
+                Some("bind4") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::Bind4,
+                },
+                Some("bind6") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::Bind6,
+                },
+                Some("connect4") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::Connect4,
+                },
+                Some("connect6") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::Connect6,
+                },
+                Some("getpeername4") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::GetPeerName4,
+                },
+                Some("getpeername6") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::GetPeerName6,
+                },
+                Some("getsockname4") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::GetSockName4,
+                },
+                Some("getsockname6") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::GetSockName6,
+                },
+                Some("sendmsg4") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::UDPSendMsg4,
+                },
+                Some("sendmsg6") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::UDPSendMsg6,
+                },
+                Some("recvmsg4") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::UDPRecvMsg4,
+                },
+                Some("recvmsg6") => CgroupSockAddr {
+                    attach_type: CgroupSockAddrAttachType::UDPRecvMsg6,
+                },
+                _ => {
+                    return Err(ParseError::InvalidProgramSection {
+                        section: section.to_owned(),
+                    });
                 }
             },
             "cgroup/post_bind4" => CgroupSock {
