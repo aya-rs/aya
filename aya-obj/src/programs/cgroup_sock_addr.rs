@@ -1,10 +1,5 @@
 //! Cgroup socket address programs.
-use alloc::{borrow::ToOwned, string::String};
-
 use crate::generated::bpf_attach_type;
-
-#[cfg(not(feature = "std"))]
-use crate::std;
 
 /// Defines where to attach a `CgroupSockAddr` program.
 #[derive(Copy, Clone, Debug)]
@@ -50,30 +45,6 @@ impl From<CgroupSockAddrAttachType> for bpf_attach_type {
             CgroupSockAddrAttachType::UDPSendMsg6 => bpf_attach_type::BPF_CGROUP_UDP6_SENDMSG,
             CgroupSockAddrAttachType::UDPRecvMsg4 => bpf_attach_type::BPF_CGROUP_UDP4_RECVMSG,
             CgroupSockAddrAttachType::UDPRecvMsg6 => bpf_attach_type::BPF_CGROUP_UDP6_RECVMSG,
-        }
-    }
-}
-
-#[derive(Debug, thiserror::Error)]
-#[error("{0} is not a valid attach type for a CGROUP_SOCK_ADDR program")]
-pub(crate) struct InvalidAttachType(String);
-
-impl CgroupSockAddrAttachType {
-    pub(crate) fn try_from(value: &str) -> Result<CgroupSockAddrAttachType, InvalidAttachType> {
-        match value {
-            "bind4" => Ok(CgroupSockAddrAttachType::Bind4),
-            "bind6" => Ok(CgroupSockAddrAttachType::Bind6),
-            "connect4" => Ok(CgroupSockAddrAttachType::Connect4),
-            "connect6" => Ok(CgroupSockAddrAttachType::Connect6),
-            "getpeername4" => Ok(CgroupSockAddrAttachType::GetPeerName4),
-            "getpeername6" => Ok(CgroupSockAddrAttachType::GetPeerName6),
-            "getsockname4" => Ok(CgroupSockAddrAttachType::GetSockName4),
-            "getsockname6" => Ok(CgroupSockAddrAttachType::GetSockName6),
-            "sendmsg4" => Ok(CgroupSockAddrAttachType::UDPSendMsg4),
-            "sendmsg6" => Ok(CgroupSockAddrAttachType::UDPSendMsg6),
-            "recvmsg4" => Ok(CgroupSockAddrAttachType::UDPRecvMsg4),
-            "recvmsg6" => Ok(CgroupSockAddrAttachType::UDPRecvMsg6),
-            _ => Err(InvalidAttachType(value.to_owned())),
         }
     }
 }
