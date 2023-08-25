@@ -198,9 +198,10 @@ jobs:
         run: |
           set -euxo pipefail
           brew update
-          brew install dpkg findutils gnu-tar llvm pkg-config
-          # Workaround for https://github.com/Homebrew/homebrew-core/pull/139492.
-          brew reinstall qemu
+          # https://github.com/actions/setup-python/issues/577
+          find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
+          | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
+          brew install dpkg findutils gnu-tar llvm pkg-config qemu
           echo /usr/local/opt/findutils/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/llvm/bin >> $GITHUB_PATH
@@ -222,7 +223,7 @@ jobs:
           # linux-image-5.10.0-23-cloud-arm64-unsigned_5.10.179-3_arm64.deb \
           printf '%s\0' \
             linux-image-6.1.0-10-cloud-arm64-unsigned_6.1.38-2_arm64.deb \
-            linux-image-6.4.0-2-cloud-arm64-unsigned_6.4.4-3_arm64.deb \
+            linux-image-6.4.0-3-cloud-arm64-unsigned_6.4.11-1_arm64.deb \
           | xargs -0 -t -P0 -I {} wget -nd -nv -P test/.tmp/debian-kernels/arm64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
 
       - name: Download debian kernels
@@ -235,7 +236,7 @@ jobs:
           # linux-image-5.10.0-23-cloud-amd64-unsigned_5.10.179-3_amd64.deb \
           printf '%s\0' \
             linux-image-6.1.0-10-cloud-amd64-unsigned_6.1.38-2_amd64.deb \
-            linux-image-6.4.0-2-cloud-amd64-unsigned_6.4.4-3_amd64.deb \
+            linux-image-6.4.0-3-cloud-amd64-unsigned_6.4.11-1_amd64.deb \
           | xargs -0 -t -P0 -I {} wget -nd -nv -P test/.tmp/debian-kernels/amd64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
 
       - name: Extract debian kernels
