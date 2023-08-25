@@ -10,6 +10,7 @@ use cargo_metadata::{Metadata, Package};
 use clap::Parser;
 use dialoguer::{theme::ColorfulTheme, Confirm};
 use diff::{lines, Result as Diff};
+use xtask::Errors;
 
 #[derive(Debug, Parser)]
 pub struct Options {
@@ -37,34 +38,36 @@ pub fn public_api(options: Options, metadata: Metadata) -> Result<()> {
         workspace_root,
         packages,
         ..
-    } = &metadata;
+    } = metadata;
 
-    let errors = packages
-        .iter()
-        .fold(String::new(), |mut buf, Package { name, publish, .. }| {
-            if !matches!(publish, Some(publish) if publish.is_empty()) {
-                match check_package_api(name, toolchain, bless, workspace_root.as_std_path()) {
-                    Ok(diff) => {
-                        if !diff.is_empty() {
-                            writeln!(
-                                &mut buf,
-                                "{name} public API changed; re-run with --bless. diff:\n{diff}"
-                            )
-                            .unwrap();
-                        }
-                    }
-                    Err(err) => {
-                        writeln!(&mut buf, "{name} failed to check public API: {err}").unwrap();
-                    }
+    let errors: Vec<_> = packages
+        .into_iter()
+        .map(|Package { name, publish, .. }| {
+            if matches!(publish, Some(publish) if publish.is_empty()) {
+                Ok(())
+            } else {
+                let diff = check_package_api(&name, toolchain, bless, workspace_root.as_std_path())
+                    .with_context(|| format!("{name} failed to check public API"))?;
+                if diff.is_empty() {
+                    Ok(())
+                } else {
+                    Err(anyhow::anyhow!(
+                        "{name} public API changed; re-run with --bless. diff:\n{diff}"
+                    ))
                 }
             }
-            buf
-        });
+        })
+        .filter_map(|result| match result {
+            Ok(()) => None,
+            Err(err) => Some(err),
+        })
+        .collect();
 
-    if !errors.is_empty() {
-        bail!("public API errors:\n{errors}")
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(Errors::new(errors).into())
     }
-    Ok(())
 }
 
 fn check_package_api(

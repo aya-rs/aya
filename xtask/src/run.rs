@@ -13,7 +13,7 @@ use std::{
 use anyhow::{anyhow, bail, Context as _, Result};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
-use xtask::{exec, AYA_BUILD_INTEGRATION_BPF};
+use xtask::{exec, Errors, AYA_BUILD_INTEGRATION_BPF};
 
 #[derive(Parser)]
 enum Environment {
@@ -103,24 +103,6 @@ where
     }
     Ok(executables)
 }
-
-#[derive(Debug)]
-struct Errors(Vec<anyhow::Error>);
-
-impl std::fmt::Display for Errors {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let Self(errors) = self;
-        for (i, error) in errors.iter().enumerate() {
-            if i != 0 {
-                writeln!(f)?;
-            }
-            write!(f, "{:?}", error)?;
-        }
-        Ok(())
-    }
-}
-
-impl std::error::Error for Errors {}
 
 /// Build and run the project.
 pub fn run(opts: Options) -> Result<()> {
@@ -547,7 +529,7 @@ pub fn run(opts: Options) -> Result<()> {
             if errors.is_empty() {
                 Ok(())
             } else {
-                Err(Errors(errors).into())
+                Err(Errors::new(errors).into())
             }
         }
     }
