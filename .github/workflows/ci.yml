@@ -198,9 +198,10 @@ jobs:
         run: |
           set -euxo pipefail
           brew update
-          brew install dpkg findutils gnu-tar llvm pkg-config
-          # Workaround for https://github.com/Homebrew/homebrew-core/pull/139492.
-          brew reinstall qemu
+          # https://github.com/actions/setup-python/issues/577
+          find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
+          | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
+          brew install dpkg findutils gnu-tar llvm pkg-config qemu
           echo /usr/local/opt/findutils/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/llvm/bin >> $GITHUB_PATH
