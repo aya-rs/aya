@@ -74,7 +74,7 @@ pub(crate) fn boot_time() -> SystemTime {
     };
     let since_boot = get_time(libc::CLOCK_BOOTTIME);
     let since_epoch = get_time(libc::CLOCK_REALTIME);
-    UNIX_EPOCH + since_boot - since_epoch
+    UNIX_EPOCH + since_epoch - since_boot
 }
 
 /// Get the specified information from a file descriptor's fdinfo.

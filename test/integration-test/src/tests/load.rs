@@ -1,4 +1,8 @@
-use std::{convert::TryInto as _, thread, time};
+use std::{
+    convert::TryInto as _,
+    thread,
+    time::{Duration, SystemTime},
+};
 
 use aya::{
     maps::Array,
@@ -11,7 +15,7 @@ use aya::{
 };
 
 const MAX_RETRIES: usize = 100;
-const RETRY_DURATION: time::Duration = time::Duration::from_millis(10);
+const RETRY_DURATION: Duration = Duration::from_millis(10);
 
 #[test]
 fn long_name() {
@@ -140,6 +144,28 @@ fn unload_xdp() {
     prog.attach("lo", XdpFlags::default()).unwrap();
 
     assert_loaded("pass");
+    prog.unload().unwrap();
+
+    assert_unloaded("pass");
+}
+
+#[test]
+fn test_loaded_at() {
+    let mut bpf = Bpf::load(crate::TEST).unwrap();
+    let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    let t1 = SystemTime::now();
+    prog.load().unwrap();
+    let t2 = SystemTime::now();
+    assert_loaded("pass");
+
+    let loaded_at = prog.info().unwrap().loaded_at();
+
+    let range = t1..t2;
+    assert!(
+        range.contains(&loaded_at),
+        "{range:?}.contains({loaded_at:?})"
+    );
+
     prog.unload().unwrap();
 
     assert_unloaded("pass");
