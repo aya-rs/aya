@@ -74,7 +74,7 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     pub fn set(&mut self, index: u32, program: &ProgramFd, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
-        let fd = data.fd;
+        let fd = data.fd().as_fd();
         let prog_fd = program.as_fd();
         let prog_fd = prog_fd.as_raw_fd();
 
@@ -94,7 +94,7 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, *index)?;
-        let fd = self.inner.borrow_mut().fd;
+        let fd = data.fd().as_fd();
 
         bpf_map_delete_elem(fd, index)
             .map(|_| ())

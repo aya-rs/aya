@@ -18,17 +18,28 @@
 //! the [`TryFrom`] or [`TryInto`] trait. For example:
 //!
 //! ```no_run
+//! # #[derive(Debug, thiserror::Error)]
+//! # enum Error {
+//! #     #[error(transparent)]
+//! #     IO(#[from] std::io::Error),
+//! #     #[error(transparent)]
+//! #     Map(#[from] aya::maps::MapError),
+//! #     #[error(transparent)]
+//! #     Program(#[from] aya::programs::ProgramError),
+//! #     #[error(transparent)]
+//! #     Bpf(#[from] aya::BpfError)
+//! # }
 //! # let mut bpf = aya::Bpf::load(&[])?;
 //! use aya::maps::SockMap;
 //! use aya::programs::SkMsg;
 //!
 //! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS").unwrap())?;
-//! let map_fd = intercept_egress.fd()?;
+//! let map_fd = intercept_egress.fd().try_clone()?;
 //! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 //! prog.load()?;
-//! prog.attach(map_fd)?;
+//! prog.attach(&map_fd)?;
 //!
-//! # Ok::<(), aya::BpfError>(())
+//! # Ok::<(), Error>(())
 //! ```
 //!
 //! # Maps and `Pod` values
@@ -42,7 +53,7 @@ use std::{
     marker::PhantomData,
     mem,
     ops::Deref,
-    os::fd::{AsFd as _, AsRawFd, BorrowedFd, IntoRawFd as _, OwnedFd, RawFd},
+    os::fd::{AsFd, BorrowedFd, OwnedFd},
     path::Path,
     ptr,
 };
@@ -177,11 +188,13 @@ pub enum MapError {
 }
 
 /// A map file descriptor.
-pub struct MapFd(RawFd);
+#[derive(Debug)]
+pub struct MapFd(OwnedFd);
 
-impl AsRawFd for MapFd {
-    fn as_raw_fd(&self) -> RawFd {
-        self.0
+impl AsFd for MapFd {
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        let Self(fd) = self;
+        fd.as_fd()
     }
 }
 
@@ -469,7 +482,7 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 #[derive(Debug)]
 pub struct MapData {
     pub(crate) obj: obj::Map,
-    pub(crate) fd: RawFd,
+    pub(crate) fd: MapFd,
     /// Indicates if this map has been pinned to bpffs
     pub pinned: bool,
 }
@@ -499,9 +512,7 @@ impl MapData {
                     io_error,
                 }
             })?;
-
-        #[allow(trivial_numeric_casts)]
-        let fd = fd as RawFd;
+        let fd = MapFd(fd);
         Ok(Self {
             obj,
             fd,
@@ -532,11 +543,14 @@ impl MapData {
             call: "BPF_OBJ_GET",
             io_error,
         }) {
-            Ok(fd) => Ok(Self {
-                obj,
-                fd: fd.into_raw_fd(),
-                pinned: false,
-            }),
+            Ok(fd) => {
+                let fd = MapFd(fd);
+                Ok(Self {
+                    obj,
+                    fd,
+                    pinned: false,
+                })
+            }
             Err(_) => {
                 let mut map = Self::create(obj, name, btf_fd)?;
                 map.pin(name, path).map_err(|error| MapError::PinError {
@@ -566,12 +580,13 @@ impl MapData {
             call: "BPF_OBJ_GET",
             io_error,
         })?;
+        let fd = MapFd(fd);
 
         let info = bpf_map_get_info_by_fd(fd.as_fd())?;
 
         Ok(Self {
             obj: parse_map_info(info, PinningType::ByName),
-            fd: fd.into_raw_fd(),
+            fd,
             pinned: true,
         })
     }
@@ -582,11 +597,13 @@ impl MapData {
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
     pub fn from_fd(fd: OwnedFd) -> Result<Self, MapError> {
+        // TODO(https://github.com/aya-rs/aya/issues/612): should this function take a MapFd?
+        let fd = MapFd(fd);
         let info = bpf_map_get_info_by_fd(fd.as_fd())?;
 
         Ok(Self {
             obj: parse_map_info(info, PinningType::None),
-            fd: fd.into_raw_fd(),
+            fd,
             pinned: false,
         })
     }
@@ -601,7 +618,7 @@ impl MapData {
         let path = path.as_ref().join(name);
         let path_string = CString::new(path.as_os_str().as_bytes())
             .map_err(|error| PinError::InvalidPinPath { path, error })?;
-        bpf_pin_object(*fd, &path_string).map_err(|(_, io_error)| SyscallError {
+        bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_PIN",
             io_error,
         })?;
@@ -610,30 +627,13 @@ impl MapData {
     }
 
     /// Returns the file descriptor of the map.
-    ///
-    /// Can be converted to [`RawFd`] using [`AsRawFd`].
-    pub fn fd(&self) -> MapFd {
-        MapFd(self.fd)
-    }
-}
-
-impl Drop for MapData {
-    fn drop(&mut self) {
-        // TODO: Replace this with an OwnedFd once that is stabilized.
-        //
-        // SAFETY: `drop` is only called once.
-        unsafe { libc::close(self.fd) };
-    }
-}
-
-impl Clone for MapData {
-    fn clone(&self) -> Self {
-        let Self { obj, fd, pinned } = self;
-        Self {
-            obj: obj.clone(),
-            fd: unsafe { libc::dup(*fd) },
-            pinned: *pinned,
-        }
+    pub fn fd(&self) -> &MapFd {
+        let Self {
+            obj: _,
+            fd,
+            pinned: _,
+        } = self;
+        fd
     }
 }
 
@@ -671,7 +671,7 @@ impl<K: Pod> Iterator for MapKeys<'_, K> {
             return None;
         }
 
-        let fd = self.map.fd;
+        let fd = self.map.fd().as_fd();
         let key =
             bpf_map_get_next_key(fd, self.key.as_ref()).map_err(|(_, io_error)| SyscallError {
                 call: "bpf_map_get_next_key",
@@ -827,6 +827,7 @@ impl<T: Pod> Deref for PerCpuValues<T> {
 mod tests {
     use assert_matches::assert_matches;
     use libc::EFAULT;
+    use std::os::fd::AsRawFd as _;
 
     use crate::{
         bpf_map_def,
@@ -868,9 +869,9 @@ mod tests {
             MapData::create(new_obj_map(), "foo", None),
             Ok(MapData {
                 obj: _,
-                fd: 42,
+                fd,
                 pinned: false
-            })
+            }) => assert_eq!(fd.as_fd().as_raw_fd(), 42)
         );
     }
 

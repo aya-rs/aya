@@ -82,7 +82,7 @@ pub(crate) fn get_fdinfo(fd: BorrowedFd<'_>, key: &str) -> Result<u32, ProgramEr
     let info = File::open(format!("/proc/self/fdinfo/{}", fd.as_raw_fd()))?;
     let reader = BufReader::new(info);
     for line in reader.lines() {
-        let line = line.map_err(ProgramError::IOError)?;
+        let line = line?;
         if !line.contains(key) {
             continue;
         }
