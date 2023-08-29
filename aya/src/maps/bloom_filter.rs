@@ -2,6 +2,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
+    os::fd::AsFd as _,
 };
 
 use crate::{
@@ -52,7 +53,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
 
     /// Query the existence of the element.
     pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.borrow().fd;
+        let fd = self.inner.borrow().fd().as_fd();
 
         bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
             .map_err(|(_, io_error)| SyscallError {
@@ -67,7 +68,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
 impl<T: BorrowMut<MapData>, V: Pod> BloomFilter<T, V> {
     /// Inserts a value into the map.
     pub fn insert(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.borrow_mut().fd;
+        let fd = self.inner.borrow_mut().fd().as_fd();
         bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| SyscallError {
             call: "bpf_map_push_elem",
             io_error,

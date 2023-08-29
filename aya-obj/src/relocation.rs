@@ -105,7 +105,7 @@ pub(crate) struct Symbol {
 
 impl Object {
     /// Relocates the map references
-    pub fn relocate_maps<'a, I: Iterator<Item = (&'a str, i32, &'a Map)>>(
+    pub fn relocate_maps<'a, I: Iterator<Item = (&'a str, std::os::fd::RawFd, &'a Map)>>(
         &mut self,
         maps: I,
         text_sections: &HashSet<usize>,
@@ -178,8 +178,8 @@ impl Object {
 fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     fun: &mut Function,
     relocations: I,
-    maps_by_section: &HashMap<usize, (&str, i32, &Map)>,
-    maps_by_symbol: &HashMap<usize, (&str, i32, &Map)>,
+    maps_by_section: &HashMap<usize, (&str, std::os::fd::RawFd, &Map)>,
+    maps_by_symbol: &HashMap<usize, (&str, std::os::fd::RawFd, &Map)>,
     symbol_table: &HashMap<usize, Symbol>,
     text_sections: &HashSet<usize>,
 ) -> Result<(), RelocationError> {

@@ -43,11 +43,11 @@ use crate::{
 /// use aya::programs::SkMsg;
 ///
 /// let intercept_egress: SockHash<_, u32> = bpf.map("INTERCEPT_EGRESS").unwrap().try_into()?;
-/// let map_fd = intercept_egress.fd()?;
+/// let map_fd = intercept_egress.fd().try_clone()?;
 ///
 /// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(map_fd)?;
+/// prog.attach(&map_fd)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
 /// let mut intercept_egress: SockHash<_, u32> = bpf.map_mut("INTERCEPT_EGRESS").unwrap().try_into()?;
@@ -77,7 +77,7 @@ impl SkMsg {
     /// Attaches the program to the given sockmap.
     ///
     /// The returned value can be used to detach, see [SkMsg::detach].
-    pub fn attach(&mut self, map: SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
+    pub fn attach(&mut self, map: &SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let link = ProgAttachLink::attach(prog_fd, map.as_fd(), BPF_SK_MSG_VERDICT)?;

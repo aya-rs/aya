@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
     fs, io,
     os::{
-        fd::{AsFd as _, OwnedFd},
+        fd::{AsFd as _, AsRawFd as _, OwnedFd},
         raw::c_int,
     },
     path::{Path, PathBuf},
@@ -482,17 +482,17 @@ impl<'a> BpfLoader<'a> {
                     MapData::create_pinned(path, obj, &name, btf_fd)?
                 }
             };
-            let fd = map.fd;
-            if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
-                bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
+            let MapData { obj, fd, pinned: _ } = &mut map;
+            if !obj.data().is_empty() && obj.section_kind() != BpfSectionKind::Bss {
+                bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
                     .map_err(|(_, io_error)| SyscallError {
                         call: "bpf_map_update_elem",
                         io_error,
                     })
                     .map_err(MapError::from)?;
             }
-            if map.obj.section_kind() == BpfSectionKind::Rodata {
-                bpf_map_freeze(fd)
+            if obj.section_kind() == BpfSectionKind::Rodata {
+                bpf_map_freeze(fd.as_fd())
                     .map_err(|(_, io_error)| SyscallError {
                         call: "bpf_map_freeze",
                         io_error,
@@ -510,7 +510,7 @@ impl<'a> BpfLoader<'a> {
 
         obj.relocate_maps(
             maps.iter()
-                .map(|(s, data)| (s.as_str(), data.fd, &data.obj)),
+                .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), &data.obj)),
             &text_sections,
         )?;
         obj.relocate_calls(&text_sections)?;

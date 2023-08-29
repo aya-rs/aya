@@ -1,7 +1,7 @@
 //! A hash map of kernel or user space stack traces.
 //!
 //! See [`StackTraceMap`] for documentation and examples.
-use std::{borrow::Borrow, fs, io, mem, path::Path, str::FromStr};
+use std::{borrow::Borrow, fs, io, mem, os::fd::AsFd as _, path::Path, str::FromStr};
 
 use crate::{
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys},
@@ -103,7 +103,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
     /// Returns [`MapError::KeyNotFound`] if there is no stack trace with the
     /// given `stack_id`, or [`MapError::SyscallError`] if `bpf_map_lookup_elem` fails.
     pub fn get(&self, stack_id: &u32, flags: u64) -> Result<StackTrace, MapError> {
-        let fd = self.inner.borrow().fd;
+        let fd = self.inner.borrow().fd().as_fd();
 
         let mut frames = vec![0; self.max_stack_depth];
         bpf_map_lookup_elem_ptr(fd, Some(stack_id), frames.as_mut_ptr(), flags)

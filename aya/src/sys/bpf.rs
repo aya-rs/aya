@@ -38,7 +38,7 @@ pub(crate) fn bpf_create_map(
     def: &obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
     kernel_version: KernelVersion,
-) -> SysResult<c_long> {
+) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_1 };
@@ -91,13 +91,14 @@ pub(crate) fn bpf_create_map(
             .copy_from_slice(unsafe { slice::from_raw_parts(name.as_ptr(), name_len) });
     }
 
-    sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr)
+    // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) }
 }
 
-pub(crate) fn bpf_pin_object(fd: RawFd, path: &CStr) -> SysResult<c_long> {
+pub(crate) fn bpf_pin_object(fd: BorrowedFd<'_>, path: &CStr) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_4 };
-    u.bpf_fd = fd as u32;
+    u.bpf_fd = fd.as_raw_fd() as u32;
     u.pathname = path.as_ptr() as u64;
     sys_bpf(bpf_cmd::BPF_OBJ_PIN, &mut attr)
 }
@@ -194,7 +195,7 @@ pub(crate) fn bpf_load_program(
 }
 
 fn lookup<K: Pod, V: Pod>(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     key: Option<&K>,
     flags: u64,
     cmd: bpf_cmd,
@@ -203,7 +204,7 @@ fn lookup<K: Pod, V: Pod>(
     let mut value = MaybeUninit::zeroed();
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
-    u.map_fd = fd as u32;
+    u.map_fd = fd.as_raw_fd() as u32;
     if let Some(key) = key {
         u.key = key as *const _ as u64;
     }
@@ -218,7 +219,7 @@ fn lookup<K: Pod, V: Pod>(
 }
 
 pub(crate) fn bpf_map_lookup_elem<K: Pod, V: Pod>(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     key: &K,
     flags: u64,
 ) -> Result<Option<V>, (c_long, io::Error)> {
@@ -226,7 +227,7 @@ pub(crate) fn bpf_map_lookup_elem<K: Pod, V: Pod>(
 }
 
 pub(crate) fn bpf_map_lookup_and_delete_elem<K: Pod, V: Pod>(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     key: Option<&K>,
     flags: u64,
 ) -> Result<Option<V>, (c_long, io::Error)> {
@@ -234,7 +235,7 @@ pub(crate) fn bpf_map_lookup_and_delete_elem<K: Pod, V: Pod>(
 }
 
 pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     key: &K,
     flags: u64,
 ) -> Result<Option<PerCpuValues<V>>, (c_long, io::Error)> {
@@ -247,7 +248,7 @@ pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
 }
 
 pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     key: Option<&K>,
     value: *mut V,
     flags: u64,
@@ -255,7 +256,7 @@ pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
-    u.map_fd = fd as u32;
+    u.map_fd = fd.as_raw_fd() as u32;
     if let Some(key) = key {
         u.key = key as *const _ as u64;
     }
@@ -270,7 +271,7 @@ pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
 }
 
 pub(crate) fn bpf_map_update_elem<K: Pod, V: Pod>(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     key: Option<&K>,
     value: &V,
     flags: u64,
@@ -278,7 +279,7 @@ pub(crate) fn bpf_map_update_elem<K: Pod, V: Pod>(
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
-    u.map_fd = fd as u32;
+    u.map_fd = fd.as_raw_fd() as u32;
     if let Some(key) = key {
         u.key = key as *const _ as u64;
     }
@@ -288,11 +289,15 @@ pub(crate) fn bpf_map_update_elem<K: Pod, V: Pod>(
     sys_bpf(bpf_cmd::BPF_MAP_UPDATE_ELEM, &mut attr)
 }
 
-pub(crate) fn bpf_map_push_elem<V: Pod>(fd: RawFd, value: &V, flags: u64) -> SysResult<c_long> {
+pub(crate) fn bpf_map_push_elem<V: Pod>(
+    fd: BorrowedFd<'_>,
+    value: &V,
+    flags: u64,
+) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
-    u.map_fd = fd as u32;
+    u.map_fd = fd.as_raw_fd() as u32;
     u.__bindgen_anon_1.value = value as *const _ as u64;
     u.flags = flags;
 
@@ -300,7 +305,7 @@ pub(crate) fn bpf_map_push_elem<V: Pod>(fd: RawFd, value: &V, flags: u64) -> Sys
 }
 
 pub(crate) fn bpf_map_update_elem_ptr<K, V>(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     key: *const K,
     value: *mut V,
     flags: u64,
@@ -308,7 +313,7 @@ pub(crate) fn bpf_map_update_elem_ptr<K, V>(
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
-    u.map_fd = fd as u32;
+    u.map_fd = fd.as_raw_fd() as u32;
     u.key = key as u64;
     u.__bindgen_anon_1.value = value as u64;
     u.flags = flags;
@@ -317,7 +322,7 @@ pub(crate) fn bpf_map_update_elem_ptr<K, V>(
 }
 
 pub(crate) fn bpf_map_update_elem_per_cpu<K: Pod, V: Pod>(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     key: &K,
     values: &PerCpuValues<V>,
     flags: u64,
@@ -326,25 +331,25 @@ pub(crate) fn bpf_map_update_elem_per_cpu<K: Pod, V: Pod>(
     bpf_map_update_elem_ptr(fd, key, mem.as_mut_ptr(), flags)
 }
 
-pub(crate) fn bpf_map_delete_elem<K: Pod>(fd: RawFd, key: &K) -> SysResult<c_long> {
+pub(crate) fn bpf_map_delete_elem<K: Pod>(fd: BorrowedFd<'_>, key: &K) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
-    u.map_fd = fd as u32;
+    u.map_fd = fd.as_raw_fd() as u32;
     u.key = key as *const _ as u64;
 
     sys_bpf(bpf_cmd::BPF_MAP_DELETE_ELEM, &mut attr)
 }
 
 pub(crate) fn bpf_map_get_next_key<K: Pod>(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     key: Option<&K>,
 ) -> Result<Option<K>, (c_long, io::Error)> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let mut next_key = MaybeUninit::uninit();
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
-    u.map_fd = fd as u32;
+    u.map_fd = fd.as_raw_fd() as u32;
     if let Some(key) = key {
         u.key = key as *const _ as u64;
     }
@@ -358,10 +363,10 @@ pub(crate) fn bpf_map_get_next_key<K: Pod>(
 }
 
 // since kernel 5.2
-pub(crate) fn bpf_map_freeze(fd: RawFd) -> SysResult<c_long> {
+pub(crate) fn bpf_map_freeze(fd: BorrowedFd<'_>) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_2 };
-    u.map_fd = fd as u32;
+    u.map_fd = fd.as_raw_fd() as u32;
     sys_bpf(bpf_cmd::BPF_MAP_FREEZE, &mut attr)
 }
 
@@ -754,7 +759,7 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
     );
 
     if let Ok(map) = map {
-        insns[0].imm = map.fd;
+        insns[0].imm = map.fd().as_fd().as_raw_fd();
 
         let gpl = b"GPL\0";
         u.license = gpl.as_ptr() as u64;
