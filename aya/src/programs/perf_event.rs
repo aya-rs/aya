@@ -1,6 +1,6 @@
 //! Perf event programs.
 
-use std::os::fd::{AsFd as _, AsRawFd as _};
+use std::os::fd::AsFd as _;
 
 pub use crate::generated::{
     perf_hw_cache_id, perf_hw_cache_op_id, perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids,
@@ -148,7 +148,6 @@ impl PerfEvent {
     ) -> Result<PerfEventLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         let (sample_period, sample_frequency) = match sample_policy {
             SamplePolicy::Period(period) => (period, None),
             SamplePolicy::Frequency(frequency) => (0, Some(frequency)),

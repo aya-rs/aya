@@ -1,5 +1,5 @@
 //! Perf attach links.
-use std::os::fd::{AsFd as _, AsRawFd as _, OwnedFd, RawFd};
+use std::os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, OwnedFd, RawFd};
 
 use crate::{
     generated::bpf_attach_type::BPF_PERF_EVENT,
@@ -7,7 +7,7 @@ use crate::{
         probe::{detach_debug_fs, ProbeEvent},
         FdLink, Link, ProgramError,
     },
-    sys::{bpf_link_create, perf_event_ioctl, SysResult, SyscallError},
+    sys::{bpf_link_create, perf_event_ioctl, LinkTarget, SysResult, SyscallError},
     FEATURES, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE, PERF_EVENT_IOC_SET_BPF,
 };
 
@@ -70,14 +70,16 @@ impl Link for PerfLink {
     }
 }
 
-pub(crate) fn perf_attach(prog_fd: RawFd, fd: OwnedFd) -> Result<PerfLinkInner, ProgramError> {
+pub(crate) fn perf_attach(
+    prog_fd: BorrowedFd<'_>,
+    fd: OwnedFd,
+) -> Result<PerfLinkInner, ProgramError> {
     if FEATURES.bpf_perf_link() {
-        let link_fd = bpf_link_create(prog_fd, fd.as_raw_fd(), BPF_PERF_EVENT, None, 0).map_err(
-            |(_, io_error)| SyscallError {
+        let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(fd.as_fd()), BPF_PERF_EVENT, None, 0)
+            .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
                 io_error,
-            },
-        )?;
+            })?;
         Ok(PerfLinkInner::FdLink(FdLink::new(link_fd)))
     } else {
         perf_attach_either(prog_fd, fd, None)
@@ -85,7 +87,7 @@ pub(crate) fn perf_attach(prog_fd: RawFd, fd: OwnedFd) -> Result<PerfLinkInner, 
 }
 
 pub(crate) fn perf_attach_debugfs(
-    prog_fd: RawFd,
+    prog_fd: BorrowedFd<'_>,
     fd: OwnedFd,
     event: ProbeEvent,
 ) -> Result<PerfLinkInner, ProgramError> {
@@ -93,16 +95,16 @@ pub(crate) fn perf_attach_debugfs(
 }
 
 fn perf_attach_either(
-    prog_fd: RawFd,
+    prog_fd: BorrowedFd<'_>,
     fd: OwnedFd,
     event: Option<ProbeEvent>,
 ) -> Result<PerfLinkInner, ProgramError> {
-    perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_SET_BPF, prog_fd).map_err(|(_, io_error)| {
-        SyscallError {
+    perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_SET_BPF, prog_fd.as_raw_fd()).map_err(
+        |(_, io_error)| SyscallError {
             call: "PERF_EVENT_IOC_SET_BPF",
             io_error,
-        }
-    })?;
+        },
+    )?;
     perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_ENABLE, 0).map_err(|(_, io_error)| {
         SyscallError {
             call: "PERF_EVENT_IOC_ENABLE",

@@ -1,6 +1,9 @@
 //! eXpress Data Path (XDP) programs.
 
-use crate::{sys::SyscallError, util::KernelVersion};
+use crate::{
+    sys::{LinkTarget, SyscallError},
+    util::KernelVersion,
+};
 use bitflags;
 use libc::if_nametoindex;
 use std::{
@@ -128,13 +131,11 @@ impl Xdp {
     ) -> Result<XdpLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
-        let if_index = if_index as RawFd;
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 9, 0) {
             let link_fd = bpf_link_create(
                 prog_fd,
-                if_index,
+                LinkTarget::IfIndex(if_index),
                 bpf_attach_type::BPF_XDP,
                 None,
                 flags.bits(),
@@ -147,9 +148,11 @@ impl Xdp {
                 .links
                 .insert(XdpLink::new(XdpLinkInner::FdLink(FdLink::new(link_fd))))
         } else {
-            unsafe { netlink_set_xdp_fd(if_index, prog_fd, None, flags.bits()) }
+            let if_index = if_index as i32;
+            unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, flags.bits()) }
                 .map_err(|io_error| XdpError::NetlinkError { io_error })?;
 
+            let prog_fd = prog_fd.as_raw_fd();
             self.data
                 .links
                 .insert(XdpLink::new(XdpLinkInner::NlLink(NlLink {
@@ -181,7 +184,6 @@ impl Xdp {
     pub fn attach_to_link(&mut self, link: XdpLink) -> Result<XdpLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         match link.into_inner() {
             XdpLinkInner::FdLink(fd_link) => {
                 let link_fd = fd_link.fd;
@@ -202,10 +204,16 @@ impl Xdp {
                 let flags = nl_link.flags;
                 let replace_flags = flags | XdpFlags::REPLACE;
                 unsafe {
-                    netlink_set_xdp_fd(if_index, prog_fd, Some(old_prog_fd), replace_flags.bits())
-                        .map_err(|io_error| XdpError::NetlinkError { io_error })?;
+                    netlink_set_xdp_fd(
+                        if_index,
+                        Some(prog_fd),
+                        Some(old_prog_fd),
+                        replace_flags.bits(),
+                    )
+                    .map_err(|io_error| XdpError::NetlinkError { io_error })?;
                 }
 
+                let prog_fd = prog_fd.as_raw_fd();
                 self.data
                     .links
                     .insert(XdpLink::new(XdpLinkInner::NlLink(NlLink {
@@ -238,7 +246,7 @@ impl Link for NlLink {
         } else {
             self.flags.bits()
         };
-        let _ = unsafe { netlink_set_xdp_fd(self.if_index, -1, Some(self.prog_fd), flags) };
+        let _ = unsafe { netlink_set_xdp_fd(self.if_index, None, Some(self.prog_fd), flags) };
         Ok(())
     }
 }

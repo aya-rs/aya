@@ -5,7 +5,7 @@ use std::{
     fmt::Write as _,
     fs::{self, OpenOptions},
     io::{self, Write},
-    os::fd::{AsFd as _, AsRawFd as _, OwnedFd},
+    os::fd::{AsFd as _, OwnedFd},
     path::{Path, PathBuf},
     process,
     sync::atomic::{AtomicUsize, Ordering},
@@ -115,7 +115,6 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let prog_fd = prog_fd.as_raw_fd();
     let link = if KernelVersion::current().unwrap() < KernelVersion::new(4, 17, 0) {
         let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
         perf_attach_debugfs(prog_fd, fd, ProbeEvent { kind, event_alias })

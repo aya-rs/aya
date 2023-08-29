@@ -1,6 +1,6 @@
 //! Skmsg programs.
 
-use std::os::fd::{AsFd as _, AsRawFd as _};
+use std::os::fd::AsFd as _;
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
@@ -9,7 +9,6 @@ use crate::{
         define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
         ProgramError,
     },
-    sys::{bpf_prog_attach, SyscallError},
 };
 
 /// A program used to intercept messages sent with `sendmsg()`/`sendfile()`.
@@ -81,20 +80,9 @@ impl SkMsg {
     pub fn attach(&mut self, map: SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
-        let map_fd = map.as_raw_fd();
+        let link = ProgAttachLink::attach(prog_fd, map.as_fd(), BPF_SK_MSG_VERDICT)?;
 
-        bpf_prog_attach(prog_fd, map_fd, BPF_SK_MSG_VERDICT).map_err(|(_, io_error)| {
-            SyscallError {
-                call: "bpf_prog_attach",
-                io_error,
-            }
-        })?;
-        self.data.links.insert(SkMsgLink::new(ProgAttachLink::new(
-            prog_fd,
-            map_fd,
-            BPF_SK_MSG_VERDICT,
-        )))
+        self.data.links.insert(SkMsgLink::new(link))
     }
 
     /// Detaches the program from a sockmap.

@@ -1,9 +1,9 @@
-use std::os::fd::{AsFd as _, AsRawFd};
+use std::os::fd::AsFd;
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP},
     programs::{define_link_wrapper, load_program, FdLinkId, ProgramData, ProgramError},
-    sys::{bpf_link_create, SyscallError},
+    sys::{bpf_link_create, LinkTarget, SyscallError},
 };
 
 use super::links::FdLink;
@@ -60,18 +60,16 @@ impl SkLookup {
     /// Attaches the program to the given network namespace.
     ///
     /// The returned value can be used to detach, see [SkLookup::detach].
-    pub fn attach<T: AsRawFd>(&mut self, netns: T) -> Result<SkLookupLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, netns: T) -> Result<SkLookupLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
-        let netns_fd = netns.as_raw_fd();
+        let netns_fd = netns.as_fd();
 
-        let link_fd = bpf_link_create(prog_fd, netns_fd, BPF_SK_LOOKUP, None, 0).map_err(
-            |(_, io_error)| SyscallError {
+        let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(netns_fd), BPF_SK_LOOKUP, None, 0)
+            .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
                 io_error,
-            },
-        )?;
+            })?;
         self.data
             .links
             .insert(SkLookupLink::new(FdLink::new(link_fd)))
