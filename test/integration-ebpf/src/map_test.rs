@@ -1,6 +1,8 @@
 #![no_std]
 #![no_main]
 
+pub mod stack_argument;
+
 use aya_bpf::{
     bindings::xdp_action,
     macros::{map, xdp},
