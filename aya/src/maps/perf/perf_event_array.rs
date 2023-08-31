@@ -180,7 +180,6 @@ impl<T: Borrow<MapData>> PerfEventArray<T> {
     ) -> Result<PerfEventArrayBuffer<T>, PerfBufferError> {
         // FIXME: keep track of open buffers
 
-        // this cannot fail as new() checks that the fd is open
         let map_data: &MapData = self.map.deref().borrow();
         let map_fd = map_data.fd;
         let buf = PerfBuffer::open(index, self.page_size, page_count.unwrap_or(2))?;

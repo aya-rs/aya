@@ -404,7 +404,7 @@ impl<T> core::borrow::BorrowMut<T> for aya::maps::perf::AsyncPerfEventArray<T> w
 pub fn aya::maps::perf::AsyncPerfEventArray<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::perf::AsyncPerfEventArray<T>
 pub fn aya::maps::perf::AsyncPerfEventArray<T>::from(t: T) -> T
-pub struct aya::maps::perf::AsyncPerfEventArrayBuffer<T>
+pub struct aya::maps::perf::AsyncPerfEventArrayBuffer<T: core::borrow::Borrow<aya::maps::MapData>>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::perf::AsyncPerfEventArrayBuffer<T>
 pub async fn aya::maps::perf::AsyncPerfEventArrayBuffer<T>::read_events(&mut self, buffers: &mut [bytes::bytes_mut::BytesMut]) -> core::result::Result<aya::maps::perf::Events, aya::maps::perf::PerfBufferError>
 impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::marker::Send + core::marker::Sync
