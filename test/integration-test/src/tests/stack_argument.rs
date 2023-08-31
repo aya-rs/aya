@@ -17,9 +17,9 @@ pub struct Args {
     a_7: i64,
 }
 
-impl Args{
-    fn new()->Self{
-        Self{
+impl Args {
+    fn new() -> Self {
+        Self {
             a_0: 0,
             a_1: 0,
             a_2: 0,
@@ -74,9 +74,9 @@ async fn stack_argument() {
 
             loop {
                 let events = buf.read_events(&mut buffer).await.unwrap();
-                for buf in buffers.iter_mut().task(events.read){
+                for buf in buffers.iter_mut().task(events.read) {
                     let ptr = buf.as_ptr() as *const Args;
-                    let data = unsafe{ptr.read_unaligned()};
+                    let data = unsafe { ptr.read_unaligned() };
                     assert_eq!(data.a_0, 0);
                     assert_eq!(data.a_1, 1);
                     assert_eq!(data.a_2, 2);
