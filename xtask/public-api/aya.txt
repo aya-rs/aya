@@ -372,7 +372,7 @@ pub fn aya::maps::perf::PerfBufferError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::perf::PerfBufferError
 pub fn aya::maps::perf::PerfBufferError::from(t: T) -> T
 pub struct aya::maps::perf::AsyncPerfEventArray<T>
-impl<T: core::borrow::BorrowMut<aya::maps::MapData> + core::borrow::Borrow<aya::maps::MapData>> aya::maps::perf::AsyncPerfEventArray<T>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::AsyncPerfEventArray<T>
 pub fn aya::maps::perf::AsyncPerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::AsyncPerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
@@ -404,8 +404,8 @@ impl<T> core::borrow::BorrowMut<T> for aya::maps::perf::AsyncPerfEventArray<T> w
 pub fn aya::maps::perf::AsyncPerfEventArray<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::perf::AsyncPerfEventArray<T>
 pub fn aya::maps::perf::AsyncPerfEventArray<T>::from(t: T) -> T
-pub struct aya::maps::perf::AsyncPerfEventArrayBuffer<T>
-impl<T: core::borrow::BorrowMut<aya::maps::MapData> + core::borrow::Borrow<aya::maps::MapData>> aya::maps::perf::AsyncPerfEventArrayBuffer<T>
+pub struct aya::maps::perf::AsyncPerfEventArrayBuffer<T: core::borrow::BorrowMut<aya::maps::MapData>>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::AsyncPerfEventArrayBuffer<T>
 pub async fn aya::maps::perf::AsyncPerfEventArrayBuffer<T>::read_events(&mut self, buffers: &mut [bytes::bytes_mut::BytesMut]) -> core::result::Result<aya::maps::perf::Events, aya::maps::perf::PerfBufferError>
 impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Sync for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::marker::Send + core::marker::Sync
@@ -460,7 +460,7 @@ pub fn aya::maps::perf::Events::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::perf::Events
 pub fn aya::maps::perf::Events::from(t: T) -> T
 pub struct aya::maps::perf::PerfEventArray<T>
-impl<T: core::borrow::BorrowMut<aya::maps::MapData> + core::borrow::Borrow<aya::maps::MapData>> aya::maps::perf::PerfEventArray<T>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::PerfEventArray<T>
 pub fn aya::maps::perf::PerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::PerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::PerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
@@ -493,10 +493,10 @@ pub fn aya::maps::perf::PerfEventArray<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::perf::PerfEventArray<T>
 pub fn aya::maps::perf::PerfEventArray<T>::from(t: T) -> T
 pub struct aya::maps::perf::PerfEventArrayBuffer<T>
-impl<T: core::borrow::BorrowMut<aya::maps::MapData> + core::borrow::Borrow<aya::maps::MapData>> aya::maps::perf::PerfEventArrayBuffer<T>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::PerfEventArrayBuffer<T>
 pub fn aya::maps::perf::PerfEventArrayBuffer<T>::read_events(&mut self, out_bufs: &mut [bytes::bytes_mut::BytesMut]) -> core::result::Result<aya::maps::perf::Events, aya::maps::perf::PerfBufferError>
 pub fn aya::maps::perf::PerfEventArrayBuffer<T>::readable(&self) -> bool
-impl<T: core::borrow::BorrowMut<aya::maps::MapData> + core::borrow::Borrow<aya::maps::MapData>> std::os::fd::raw::AsRawFd for aya::maps::perf::PerfEventArrayBuffer<T>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> std::os::fd::raw::AsRawFd for aya::maps::perf::PerfEventArrayBuffer<T>
 pub fn aya::maps::perf::PerfEventArrayBuffer<T>::as_raw_fd(&self) -> std::os::fd::raw::RawFd
 impl<T> core::marker::Send for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Sync for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::marker::Send + core::marker::Sync
@@ -1067,7 +1067,7 @@ pub fn aya::maps::array::Array<T, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::array::Array<T, V>
 pub fn aya::maps::array::Array<T, V>::from(t: T) -> T
 pub struct aya::maps::AsyncPerfEventArray<T>
-impl<T: core::borrow::BorrowMut<aya::maps::MapData> + core::borrow::Borrow<aya::maps::MapData>> aya::maps::perf::AsyncPerfEventArray<T>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::AsyncPerfEventArray<T>
 pub fn aya::maps::perf::AsyncPerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::AsyncPerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
@@ -1460,7 +1460,7 @@ pub fn aya::maps::PerCpuValues<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::PerCpuValues<T>
 pub fn aya::maps::PerCpuValues<T>::from(t: T) -> T
 pub struct aya::maps::PerfEventArray<T>
-impl<T: core::borrow::BorrowMut<aya::maps::MapData> + core::borrow::Borrow<aya::maps::MapData>> aya::maps::perf::PerfEventArray<T>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::PerfEventArray<T>
 pub fn aya::maps::perf::PerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::PerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::PerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
