@@ -11,7 +11,7 @@ use std::{
     ffi::CString,
     hash::Hash,
     io,
-    os::fd::{AsFd as _, AsRawFd as _, RawFd},
+    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
 };
 use thiserror::Error;
 
@@ -201,6 +201,8 @@ impl Xdp {
             XdpLinkInner::NlLink(nl_link) => {
                 let if_index = nl_link.if_index;
                 let old_prog_fd = nl_link.prog_fd;
+                // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
+                let old_prog_fd = unsafe { BorrowedFd::borrow_raw(old_prog_fd) };
                 let flags = nl_link.flags;
                 let replace_flags = flags | XdpFlags::REPLACE;
                 unsafe {
@@ -246,7 +248,9 @@ impl Link for NlLink {
         } else {
             self.flags.bits()
         };
-        let _ = unsafe { netlink_set_xdp_fd(self.if_index, None, Some(self.prog_fd), flags) };
+        // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
+        let prog_fd = unsafe { BorrowedFd::borrow_raw(self.prog_fd) };
+        let _ = unsafe { netlink_set_xdp_fd(self.if_index, None, Some(prog_fd), flags) };
         Ok(())
     }
 }
