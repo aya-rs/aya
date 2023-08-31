@@ -1,8 +1,5 @@
 //! A LPM Trie.
-use std::{
-    borrow::{Borrow, BorrowMut},
-    marker::PhantomData,
-};
+use std::{borrow::Borrow, marker::PhantomData};
 
 use crate::{
     maps::{check_kv_size, IterableMap, MapData, MapError, MapIter, MapKeys},
@@ -147,7 +144,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     }
 }
 
-impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
+impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Inserts a key value pair into the map.
     pub fn insert(
         &mut self,

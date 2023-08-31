@@ -2,7 +2,7 @@
 //!
 //! [`perf`]: https://perf.wiki.kernel.org/index.php/Main_Page.
 use std::{
-    borrow::{Borrow, BorrowMut},
+    borrow::Borrow,
     ops::Deref,
     os::fd::{AsRawFd, RawFd},
     sync::Arc,
@@ -31,7 +31,7 @@ pub struct PerfEventArrayBuffer<T> {
     buf: PerfBuffer,
 }
 
-impl<T: BorrowMut<MapData> + Borrow<MapData>> PerfEventArrayBuffer<T> {
+impl<T: Borrow<MapData>> PerfEventArrayBuffer<T> {
     /// Returns true if the buffer contains events that haven't been read.
     pub fn readable(&self) -> bool {
         self.buf.readable()
@@ -55,7 +55,7 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> PerfEventArrayBuffer<T> {
     }
 }
 
-impl<T: BorrowMut<MapData> + Borrow<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
+impl<T: Borrow<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
     fn as_raw_fd(&self) -> RawFd {
         self.buf.as_raw_fd()
     }
@@ -84,14 +84,14 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> AsRawFd for PerfEventArrayBuffer<T
 /// ```no_run
 /// # use aya::maps::perf::PerfEventArrayBuffer;
 /// # use aya::maps::MapData;
-/// # use std::borrow::BorrowMut;
+/// # use std::borrow::Borrow;
 /// # struct Poll<T> { _t: std::marker::PhantomData<T> };
-/// # impl<T: BorrowMut<MapData>> Poll<T> {
+/// # impl<T: Borrow<MapData>> Poll<T> {
 /// #    fn poll_readable(&self) -> &mut [PerfEventArrayBuffer<T>] {
 /// #        &mut []
 /// #    }
 /// # }
-/// # fn poll_buffers<T: BorrowMut<MapData>>(bufs: Vec<PerfEventArrayBuffer<T>>) -> Poll<T> {
+/// # fn poll_buffers<T: Borrow<MapData>>(bufs: Vec<PerfEventArrayBuffer<T>>) -> Poll<T> {
 /// #    Poll { _t: std::marker::PhantomData }
 /// # }
 /// # #[derive(thiserror::Error, Debug)]
@@ -169,7 +169,7 @@ impl<T: Borrow<MapData>> PerfEventArray<T> {
     }
 }
 
-impl<T: BorrowMut<MapData> + Borrow<MapData>> PerfEventArray<T> {
+impl<T: Borrow<MapData>> PerfEventArray<T> {
     /// Opens the perf buffer at the given index.
     ///
     /// The returned buffer will receive all the events eBPF programs send at the given index.

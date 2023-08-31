@@ -1,6 +1,6 @@
 use bytes::BytesMut;
 use std::{
-    borrow::{Borrow, BorrowMut},
+    borrow::Borrow,
     os::fd::{AsRawFd as _, RawFd},
 };
 
@@ -92,7 +92,7 @@ pub struct AsyncPerfEventArray<T> {
     perf_map: PerfEventArray<T>,
 }
 
-impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArray<T> {
+impl<T: Borrow<MapData>> AsyncPerfEventArray<T> {
     /// Opens the perf buffer at the given index.
     ///
     /// The returned buffer will receive all the events eBPF programs send at the given index.
@@ -141,7 +141,7 @@ pub struct AsyncPerfEventArrayBuffer<T> {
     async_std_fd: Async<RawFd>,
 }
 
-impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArrayBuffer<T> {
+impl<T: Borrow<MapData>> AsyncPerfEventArrayBuffer<T> {
     /// Reads events from the buffer.
     ///
     /// This method reads events into the provided slice of buffers, filling

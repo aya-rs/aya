@@ -1,7 +1,4 @@
-use std::{
-    borrow::{Borrow, BorrowMut},
-    marker::PhantomData,
-};
+use std::{borrow::Borrow, marker::PhantomData};
 
 use crate::{
     maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
@@ -78,7 +75,7 @@ impl<T: Borrow<MapData>, V: Pod> Array<T, V> {
     }
 }
 
-impl<T: BorrowMut<MapData>, V: Pod> Array<T, V> {
+impl<T: Borrow<MapData>, V: Pod> Array<T, V> {
     /// Sets the value of the element at the given index.
     ///
     /// # Errors
@@ -86,7 +83,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Array<T, V> {
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_update_elem` fails.
     pub fn set(&mut self, index: u32, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
-        let data = self.inner.borrow_mut();
+        let data = self.inner.borrow();
         check_bounds(data, index)?;
         let fd = data.fd;
         bpf_map_update_elem(fd, Some(&index), value.borrow(), flags).map_err(|(_, io_error)| {

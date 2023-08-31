@@ -1,8 +1,5 @@
 //! Per-CPU hash map.
-use std::{
-    borrow::{Borrow, BorrowMut},
-    marker::PhantomData,
-};
+use std::{borrow::Borrow, marker::PhantomData};
 
 use crate::{
     maps::{
@@ -83,7 +80,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     }
 }
 
-impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
+impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// Inserts a slice of values - one for each CPU - for the given key.
     ///
     /// # Examples
@@ -118,7 +115,7 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
         values: PerCpuValues<V>,
         flags: u64,
     ) -> Result<(), MapError> {
-        let fd = self.inner.borrow_mut().fd;
+        let fd = self.inner.borrow().fd;
         bpf_map_update_elem_per_cpu(fd, key.borrow(), &values, flags).map_err(
             |(_, io_error)| SyscallError {
                 call: "bpf_map_update_elem",
@@ -131,7 +128,7 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
 
     /// Removes a key from the map.
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
-        hash_map::remove(self.inner.borrow_mut(), key)
+        hash_map::remove(self.inner.borrow(), key)
     }
 }
 

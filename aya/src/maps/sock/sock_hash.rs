@@ -1,5 +1,5 @@
 use std::{
-    borrow::{Borrow, BorrowMut},
+    borrow::Borrow,
     marker::PhantomData,
     os::fd::{AsRawFd, RawFd},
 };
@@ -110,7 +110,7 @@ impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
     }
 }
 
-impl<T: BorrowMut<MapData>, K: Pod> SockHash<T, K> {
+impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
     /// Inserts a socket under the given key.
     pub fn insert<I: AsRawFd>(
         &mut self,
@@ -118,17 +118,12 @@ impl<T: BorrowMut<MapData>, K: Pod> SockHash<T, K> {
         value: I,
         flags: u64,
     ) -> Result<(), MapError> {
-        hash_map::insert(
-            self.inner.borrow_mut(),
-            key.borrow(),
-            &value.as_raw_fd(),
-            flags,
-        )
+        hash_map::insert(self.inner.borrow(), key.borrow(), &value.as_raw_fd(), flags)
     }
 
     /// Removes a socket from the map.
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
-        hash_map::remove(self.inner.borrow_mut(), key)
+        hash_map::remove(self.inner.borrow(), key)
     }
 }
 

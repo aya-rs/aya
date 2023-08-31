@@ -1,7 +1,4 @@
-use std::{
-    borrow::{Borrow, BorrowMut},
-    marker::PhantomData,
-};
+use std::{borrow::Borrow, marker::PhantomData};
 
 use crate::{
     maps::{check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
@@ -73,7 +70,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     }
 }
 
-impl<T: BorrowMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
+impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Inserts a key-value pair into the map.
     pub fn insert(
         &mut self,
@@ -81,12 +78,12 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
         value: impl Borrow<V>,
         flags: u64,
     ) -> Result<(), MapError> {
-        hash_map::insert(self.inner.borrow_mut(), key.borrow(), value.borrow(), flags)
+        hash_map::insert(self.inner.borrow(), key.borrow(), value.borrow(), flags)
     }
 
     /// Removes a key from the map.
     pub fn remove(&mut self, key: &K) -> Result<(), MapError> {
-        hash_map::remove(self.inner.borrow_mut(), key)
+        hash_map::remove(self.inner.borrow(), key)
     }
 }
 

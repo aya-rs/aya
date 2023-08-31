@@ -1,7 +1,7 @@
 //! An array of eBPF program file descriptors used as a jump table.
 
 use std::{
-    borrow::{Borrow, BorrowMut},
+    borrow::Borrow,
     os::fd::{AsRawFd, RawFd},
 };
 
@@ -67,10 +67,10 @@ impl<T: Borrow<MapData>> SockMap<T> {
     }
 }
 
-impl<T: BorrowMut<MapData>> SockMap<T> {
+impl<T: Borrow<MapData>> SockMap<T> {
     /// Stores a socket into the map.
     pub fn set<I: AsRawFd>(&mut self, index: u32, socket: &I, flags: u64) -> Result<(), MapError> {
-        let data = self.inner.borrow_mut();
+        let data = self.inner.borrow();
         let fd = data.fd;
         check_bounds(data, index)?;
         bpf_map_update_elem(fd, Some(&index), &socket.as_raw_fd(), flags).map_err(
@@ -84,7 +84,7 @@ impl<T: BorrowMut<MapData>> SockMap<T> {
 
     /// Removes the socket stored at `index` from the map.
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
-        let data = self.inner.borrow_mut();
+        let data = self.inner.borrow();
         let fd = data.fd;
         check_bounds(data, *index)?;
         bpf_map_delete_elem(fd, index)

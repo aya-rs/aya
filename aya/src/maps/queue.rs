@@ -1,8 +1,5 @@
 //! A FIFO queue.
-use std::{
-    borrow::{Borrow, BorrowMut},
-    marker::PhantomData,
-};
+use std::{borrow::Borrow, marker::PhantomData};
 
 use crate::{
     maps::{check_kv_size, MapData, MapError},
@@ -52,7 +49,7 @@ impl<T: Borrow<MapData>, V: Pod> Queue<T, V> {
     }
 }
 
-impl<T: BorrowMut<MapData>, V: Pod> Queue<T, V> {
+impl<T: Borrow<MapData>, V: Pod> Queue<T, V> {
     /// Removes the first element and returns it.
     ///
     /// # Errors
