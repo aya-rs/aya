@@ -59,7 +59,7 @@ use std::{
 };
 
 use crate::util::KernelVersion;
-use libc::{getrlimit, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
+use libc::{getrlimit, rlim_t, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
 use thiserror::Error;
 
@@ -198,20 +198,6 @@ impl AsFd for MapFd {
     }
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct RlimitSize(usize);
-impl fmt::Display for RlimitSize {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.0 < 1024 {
-            write!(f, "{} bytes", self.0)
-        } else if self.0 < 1024 * 1024 {
-            write!(f, "{} KiB", self.0 / 1024)
-        } else {
-            write!(f, "{} MiB", self.0 / 1024 / 1024)
-        }
-    }
-}
-
 /// Raises a warning about rlimit. Should be used only if creating a map was not
 /// successful.
 fn maybe_warn_rlimit() {
@@ -220,15 +206,28 @@ fn maybe_warn_rlimit() {
     if ret == 0 {
         let limit = unsafe { limit.assume_init() };
 
-        let limit: RlimitSize = RlimitSize(limit.rlim_cur.try_into().unwrap());
-        if limit.0 == RLIM_INFINITY.try_into().unwrap() {
+        if limit.rlim_cur == RLIM_INFINITY {
             return;
         }
+        struct HumanSize(rlim_t);
+
+        impl fmt::Display for HumanSize {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                let &Self(size) = self;
+                if size < 1024 {
+                    write!(f, "{} bytes", size)
+                } else if size < 1024 * 1024 {
+                    write!(f, "{} KiB", size / 1024)
+                } else {
+                    write!(f, "{} MiB", size / 1024 / 1024)
+                }
+            }
+        }
         warn!(
-            "RLIMIT_MEMLOCK value is {}, not RLIM_INFNITY; if experiencing problems with creating \
-            maps, try raising RMILIT_MEMLOCK either to RLIM_INFINITY or to a higher value sufficient \
-            for size of your maps",
-            limit
+            "RLIMIT_MEMLOCK value is {}, not RLIM_INFINITY; if experiencing problems with creating \
+            maps, try raising RLIMIT_MEMLOCK either to RLIM_INFINITY or to a higher value sufficient \
+            for the size of your maps",
+            HumanSize(limit.rlim_cur)
         );
     }
 }
