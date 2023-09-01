@@ -291,9 +291,9 @@ macro_rules! impl_try_from_map {
     // rather than the repeated idents used later because the macro language does not allow one
     // repetition to be pasted inside another.
     ($ty_param:tt {
-        $($ty:ident $(from $variant:ident)?),+ $(,)?
+        $($ty:ident $(from $($variant:ident)|+)?),+ $(,)?
     }) => {
-        $(impl_try_from_map!(<$ty_param> $ty $(from $variant)?);)+
+        $(impl_try_from_map!(<$ty_param> $ty $(from $($variant)|+)?);)+
     };
     // Add the "from $variant" using $ty as the default if it is missing.
     (<$ty_param:tt> $ty:ident) => {
@@ -301,17 +301,17 @@ macro_rules! impl_try_from_map {
     };
     // Dispatch for each of the lifetimes.
     (
-        <($($ty_param:ident),*)> $ty:ident from $variant:ident
+        <($($ty_param:ident),*)> $ty:ident from $($variant:ident)|+
     ) => {
-        impl_try_from_map!(<'a> ($($ty_param),*) $ty from $variant);
-        impl_try_from_map!(<'a mut> ($($ty_param),*) $ty from $variant);
-        impl_try_from_map!(<> ($($ty_param),*) $ty from $variant);
+        impl_try_from_map!(<'a> ($($ty_param),*) $ty from $($variant)|+);
+        impl_try_from_map!(<'a mut> ($($ty_param),*) $ty from $($variant)|+);
+        impl_try_from_map!(<> ($($ty_param),*) $ty from $($variant)|+);
     };
     // An individual impl.
     (
         <$($l:lifetime $($m:ident)?)?>
         ($($ty_param:ident),*)
-        $ty:ident from $variant:ident
+        $ty:ident from $($variant:ident)|+
     ) => {
         impl<$($l,)? $($ty_param: Pod),*> TryFrom<$(&$l $($m)?)? Map>
             for $ty<$(&$l $($m)?)? MapData, $($ty_param),*>
@@ -320,7 +320,7 @@ macro_rules! impl_try_from_map {
 
             fn try_from(map: $(&$l $($m)?)? Map) -> Result<Self, Self::Error> {
                 match map {
-                    Map::$variant(map_data) => Self::new(map_data),
+                    $(Map::$variant(map_data) => Self::new(map_data),)+
                     map => Err(MapError::InvalidMapType {
                         map_type: map.map_type()
                     }),
@@ -353,8 +353,8 @@ impl_try_from_map!((V) {
 });
 
 impl_try_from_map!((K, V) {
-    HashMap,
-    PerCpuHashMap,
+    HashMap from HashMap|LruHashMap,
+    PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
     LpmTrie,
 });
 
