@@ -15,16 +15,16 @@ impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::arr
 pub fn aya::maps::array::Array<T, V>::set(&mut self, index: u32, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::array::Array<&'a aya::maps::MapData, V>
 pub type aya::maps::array::Array<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::array::Array<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::array::Array<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::array::Array<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::array::Array<&'a mut aya::maps::MapData, V>
 pub type aya::maps::array::Array<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::array::Array<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::array::Array<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::array::Array<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::IterableMap<u32, V> for aya::maps::array::Array<T, V>
 pub fn aya::maps::array::Array<T, V>::get(&self, index: &u32) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::array::Array<T, V>::map(&self) -> &aya::maps::MapData
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::array::Array<aya::maps::MapData, V>
 pub type aya::maps::array::Array<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::array::Array<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::array::Array<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::array::Array<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T, V> core::marker::Send for aya::maps::array::Array<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::array::Array<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::array::Array<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
@@ -55,16 +55,16 @@ impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::Per
 pub fn aya::maps::PerCpuArray<T, V>::set(&mut self, index: u32, values: aya::maps::PerCpuValues<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::PerCpuArray<&'a aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::PerCpuArray<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::IterableMap<u32, aya::maps::PerCpuValues<V>> for aya::maps::PerCpuArray<T, V>
 pub fn aya::maps::PerCpuArray<T, V>::get(&self, index: &u32) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::PerCpuArray<T, V>::map(&self) -> &aya::maps::MapData
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::PerCpuArray<aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::PerCpuArray<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::PerCpuArray<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::PerCpuArray<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T, V> core::marker::Send for aya::maps::PerCpuArray<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::PerCpuArray<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::PerCpuArray<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
@@ -94,13 +94,13 @@ pub fn aya::maps::ProgramArray<T>::clear_index(&mut self, index: &u32) -> core::
 pub fn aya::maps::ProgramArray<T>::set(&mut self, index: u32, program: &aya::programs::ProgramFd, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ProgramArray<aya::maps::MapData>
 pub type aya::maps::ProgramArray<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::ProgramArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::ProgramArray<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::ProgramArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::ProgramArray<&'a aya::maps::MapData>
 pub type aya::maps::ProgramArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::ProgramArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::ProgramArray<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::ProgramArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ProgramArray<&'a mut aya::maps::MapData>
 pub type aya::maps::ProgramArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::ProgramArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::ProgramArray<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::ProgramArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T> core::marker::Send for aya::maps::ProgramArray<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::ProgramArray<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::ProgramArray<T> where T: core::marker::Unpin
@@ -130,13 +130,13 @@ impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::blo
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::insert(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::fmt::Debug, V: core::fmt::Debug + aya::Pod> core::fmt::Debug for aya::maps::bloom_filter::BloomFilter<T, V>
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T, V> core::marker::Send for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Send, V: core::marker::Send
@@ -169,18 +169,18 @@ pub fn aya::maps::hash_map::HashMap<T, K, V>::keys(&self) -> aya::maps::MapKeys<
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::HashMap<T, K, V>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::insert(&mut self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::remove(&mut self, key: &K) -> core::result::Result<(), aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>, aya::maps::MapError>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<K, V> for aya::maps::hash_map::HashMap<T, K, V>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::get(&self, key: &K) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::map(&self) -> &aya::maps::MapData
-impl<V: aya::Pod, K: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>, aya::maps::MapError>
 impl<T: core::fmt::Debug, K: core::fmt::Debug, V: core::fmt::Debug> core::fmt::Debug for aya::maps::hash_map::HashMap<T, K, V>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T, K, V> core::marker::Send for aya::maps::hash_map::HashMap<T, K, V> where K: core::marker::Send, T: core::marker::Send, V: core::marker::Send
@@ -212,18 +212,18 @@ pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::keys(&self) -> aya::maps::Ma
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::insert(&mut self, key: impl core::borrow::Borrow<K>, values: aya::maps::PerCpuValues<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::remove(&mut self, key: &K) -> core::result::Result<(), aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>, aya::maps::MapError>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<K, aya::maps::PerCpuValues<V>> for aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::get(&self, key: &K) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::map(&self) -> &aya::maps::MapData
-impl<V: aya::Pod, K: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>, aya::maps::MapError>
 impl<T, K, V> core::marker::Send for aya::maps::hash_map::PerCpuHashMap<T, K, V> where K: core::marker::Send, T: core::marker::Send, V: core::marker::Send
 impl<T, K, V> core::marker::Sync for aya::maps::hash_map::PerCpuHashMap<T, K, V> where K: core::marker::Sync, T: core::marker::Sync, V: core::marker::Sync
 impl<T, K, V> core::marker::Unpin for aya::maps::hash_map::PerCpuHashMap<T, K, V> where K: core::marker::Unpin, T: core::marker::Unpin, V: core::marker::Unpin
@@ -291,18 +291,18 @@ pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::keys(&self) -> aya::maps::MapKeys<
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::insert(&mut self, key: &aya::maps::lpm_trie::Key<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::remove(&mut self, key: &aya::maps::lpm_trie::Key<K>) -> core::result::Result<(), aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>
-pub type aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>
-pub type aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>, aya::maps::MapError>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, K, V>
+pub type aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>
+pub type aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<aya::maps::lpm_trie::Key<K>, V> for aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::get(&self, key: &aya::maps::lpm_trie::Key<K>) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::map(&self) -> &aya::maps::MapData
-impl<V: aya::Pod, K: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>
-pub type aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>, aya::maps::MapError>
 impl<T: core::fmt::Debug, K: core::fmt::Debug, V: core::fmt::Debug> core::fmt::Debug for aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T, K, V> core::marker::Send for aya::maps::lpm_trie::LpmTrie<T, K, V> where K: core::marker::Send, T: core::marker::Send, V: core::marker::Send
@@ -376,13 +376,13 @@ impl<T: core::borrow::BorrowMut<aya::maps::MapData> + core::borrow::Borrow<aya::
 pub fn aya::maps::perf::AsyncPerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::AsyncPerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Sync for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::perf::AsyncPerfEventArray<T>
@@ -464,13 +464,13 @@ impl<T: core::borrow::BorrowMut<aya::maps::MapData> + core::borrow::Borrow<aya::
 pub fn aya::maps::perf::PerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::PerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::PerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::PerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::perf::PerfEventArray<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::PerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T> core::marker::Send for aya::maps::perf::PerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Sync for aya::maps::perf::PerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::perf::PerfEventArray<T>
@@ -528,13 +528,13 @@ pub fn aya::maps::queue::Queue<T, V>::pop(&mut self, flags: u64) -> core::result
 pub fn aya::maps::queue::Queue<T, V>::push(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::queue::Queue<&'a aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::queue::Queue<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::queue::Queue<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::queue::Queue<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::queue::Queue<aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::queue::Queue<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T, V> core::marker::Send for aya::maps::queue::Queue<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::queue::Queue<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::queue::Queue<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
@@ -568,16 +568,16 @@ pub fn aya::maps::SockHash<T, K>::insert<I: std::os::fd::raw::AsRawFd>(&mut self
 pub fn aya::maps::SockHash<T, K>::remove(&mut self, key: &K) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::SockHash<&'a aya::maps::MapData, V>
 pub type aya::maps::SockHash<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::SockHash<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::SockHash<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::SockHash<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::SockHash<&'a mut aya::maps::MapData, V>
 pub type aya::maps::SockHash<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::SockHash<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::SockHash<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::SockHash<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod> aya::maps::IterableMap<K, i32> for aya::maps::SockHash<T, K>
 pub fn aya::maps::SockHash<T, K>::get(&self, key: &K) -> core::result::Result<std::os::fd::raw::RawFd, aya::maps::MapError>
 pub fn aya::maps::SockHash<T, K>::map(&self) -> &aya::maps::MapData
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::SockHash<aya::maps::MapData, V>
 pub type aya::maps::SockHash<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::SockHash<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::SockHash<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::SockHash<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T, K> core::marker::Send for aya::maps::SockHash<T, K> where K: core::marker::Send, T: core::marker::Send
 impl<T, K> core::marker::Sync for aya::maps::SockHash<T, K> where K: core::marker::Sync, T: core::marker::Sync
 impl<T, K> core::marker::Unpin for aya::maps::SockHash<T, K> where K: core::marker::Unpin, T: core::marker::Unpin
@@ -608,13 +608,13 @@ pub fn aya::maps::SockMap<T>::clear_index(&mut self, index: &u32) -> core::resul
 pub fn aya::maps::SockMap<T>::set<I: std::os::fd::raw::AsRawFd>(&mut self, index: u32, socket: &I, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::SockMap<aya::maps::MapData>
 pub type aya::maps::SockMap<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::SockMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::SockMap<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::SockMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::SockMap<&'a aya::maps::MapData>
 pub type aya::maps::SockMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::SockMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::SockMap<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::SockMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::SockMap<&'a mut aya::maps::MapData>
 pub type aya::maps::SockMap<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::SockMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::SockMap<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::SockMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T> core::marker::Send for aya::maps::SockMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::SockMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::SockMap<T> where T: core::marker::Unpin
@@ -676,13 +676,13 @@ pub fn aya::maps::stack::Stack<T, V>::pop(&mut self, flags: u64) -> core::result
 pub fn aya::maps::stack::Stack<T, V>::push(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::stack::Stack<&'a aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::stack::Stack<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::stack::Stack<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::stack::Stack<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::stack::Stack<aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::stack::Stack<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T, V> core::marker::Send for aya::maps::stack::Stack<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::stack::Stack<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::stack::Stack<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
@@ -763,17 +763,17 @@ pub fn aya::maps::stack_trace::StackTraceMap<T>::iter(&self) -> aya::maps::MapIt
 pub fn aya::maps::stack_trace::StackTraceMap<T>::stack_ids(&self) -> aya::maps::MapKeys<'_, u32>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, T: core::borrow::Borrow<aya::maps::MapData>> core::iter::traits::collect::IntoIterator for &'a aya::maps::stack_trace::StackTraceMap<T>
 pub type &'a aya::maps::stack_trace::StackTraceMap<T>::IntoIter = aya::maps::MapIter<'a, u32, aya::maps::stack_trace::StackTrace, aya::maps::stack_trace::StackTraceMap<T>>
 pub type &'a aya::maps::stack_trace::StackTraceMap<T>::Item = core::result::Result<(u32, aya::maps::stack_trace::StackTrace), aya::maps::MapError>
 pub fn &'a aya::maps::stack_trace::StackTraceMap<T>::into_iter(self) -> Self::IntoIter
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::IterableMap<u32, aya::maps::stack_trace::StackTrace> for aya::maps::stack_trace::StackTraceMap<T>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::get(&self, index: &u32) -> core::result::Result<aya::maps::stack_trace::StackTrace, aya::maps::MapError>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::map(&self) -> &aya::maps::MapData
@@ -819,130 +819,130 @@ pub aya::maps::Map::StackTraceMap(aya::maps::MapData)
 pub aya::maps::Map::Unsupported(aya::maps::MapData)
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ProgramArray<aya::maps::MapData>
 pub type aya::maps::ProgramArray<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::ProgramArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::ProgramArray<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::ProgramArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::SockMap<aya::maps::MapData>
 pub type aya::maps::SockMap<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::SockMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::SockMap<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::SockMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::PerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::PerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::perf::PerfEventArray<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::PerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>
-pub type aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>
-pub type aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>, aya::maps::MapError>
+pub fn aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, K, V>
+pub type aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::PerCpuArray<&'a aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::PerCpuArray<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::SockHash<&'a aya::maps::MapData, V>
 pub type aya::maps::SockHash<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::SockHash<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::SockHash<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::SockHash<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::array::Array<&'a aya::maps::MapData, V>
 pub type aya::maps::array::Array<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::array::Array<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::array::Array<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::array::Array<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::queue::Queue<&'a aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::queue::Queue<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::queue::Queue<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::queue::Queue<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::stack::Stack<&'a aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::stack::Stack<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::stack::Stack<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::stack::Stack<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::SockHash<&'a mut aya::maps::MapData, V>
 pub type aya::maps::SockHash<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::SockHash<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::SockHash<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::SockHash<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::array::Array<&'a mut aya::maps::MapData, V>
 pub type aya::maps::array::Array<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::array::Array<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::array::Array<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::array::Array<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::ProgramArray<&'a aya::maps::MapData>
 pub type aya::maps::ProgramArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::ProgramArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::ProgramArray<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::ProgramArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::SockMap<&'a aya::maps::MapData>
 pub type aya::maps::SockMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::SockMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::SockMap<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::SockMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ProgramArray<&'a mut aya::maps::MapData>
 pub type aya::maps::ProgramArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::ProgramArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::ProgramArray<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::ProgramArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::SockMap<&'a mut aya::maps::MapData>
 pub type aya::maps::SockMap<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::SockMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::SockMap<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::SockMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>, aya::maps::MapError>
-impl<V: aya::Pod, K: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<V: aya::Pod, K: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<V: aya::Pod, K: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>
-pub type aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>, aya::maps::MapError>
+pub fn aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>
+pub type aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::PerCpuArray<aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::PerCpuArray<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::PerCpuArray<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::PerCpuArray<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::SockHash<aya::maps::MapData, V>
 pub type aya::maps::SockHash<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::SockHash<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::SockHash<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::SockHash<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::array::Array<aya::maps::MapData, V>
 pub type aya::maps::array::Array<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::array::Array<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::array::Array<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::array::Array<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::queue::Queue<aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::queue::Queue<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::stack::Stack<aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::stack::Stack<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::maps::Map
 pub fn aya::maps::Map::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::maps::Map
@@ -1035,16 +1035,16 @@ impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::arr
 pub fn aya::maps::array::Array<T, V>::set(&mut self, index: u32, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::array::Array<&'a aya::maps::MapData, V>
 pub type aya::maps::array::Array<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::array::Array<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::array::Array<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::array::Array<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::array::Array<&'a mut aya::maps::MapData, V>
 pub type aya::maps::array::Array<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::array::Array<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::array::Array<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::array::Array<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::IterableMap<u32, V> for aya::maps::array::Array<T, V>
 pub fn aya::maps::array::Array<T, V>::get(&self, index: &u32) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::array::Array<T, V>::map(&self) -> &aya::maps::MapData
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::array::Array<aya::maps::MapData, V>
 pub type aya::maps::array::Array<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::array::Array<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::array::Array<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::array::Array<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T, V> core::marker::Send for aya::maps::array::Array<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::array::Array<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::array::Array<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
@@ -1071,13 +1071,13 @@ impl<T: core::borrow::BorrowMut<aya::maps::MapData> + core::borrow::Borrow<aya::
 pub fn aya::maps::perf::AsyncPerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::AsyncPerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::AsyncPerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Sync for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::perf::AsyncPerfEventArray<T>
@@ -1106,13 +1106,13 @@ impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::blo
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::insert(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::fmt::Debug, V: core::fmt::Debug + aya::Pod> core::fmt::Debug for aya::maps::bloom_filter::BloomFilter<T, V>
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T, V> core::marker::Send for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Send, V: core::marker::Send
@@ -1144,18 +1144,18 @@ pub fn aya::maps::hash_map::HashMap<T, K, V>::keys(&self) -> aya::maps::MapKeys<
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::HashMap<T, K, V>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::insert(&mut self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::remove(&mut self, key: &K) -> core::result::Result<(), aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::hash_map::HashMap<&'a aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, V, K>, aya::maps::MapError>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::HashMap<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<K, V> for aya::maps::hash_map::HashMap<T, K, V>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::get(&self, key: &K) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::map(&self) -> &aya::maps::MapData
-impl<V: aya::Pod, K: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::hash_map::HashMap<aya::maps::MapData, V, K>, aya::maps::MapError>
 impl<T: core::fmt::Debug, K: core::fmt::Debug, V: core::fmt::Debug> core::fmt::Debug for aya::maps::hash_map::HashMap<T, K, V>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T, K, V> core::marker::Send for aya::maps::hash_map::HashMap<T, K, V> where K: core::marker::Send, T: core::marker::Send, V: core::marker::Send
@@ -1187,18 +1187,18 @@ pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::keys(&self) -> aya::maps::MapKeys<
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::insert(&mut self, key: &aya::maps::lpm_trie::Key<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::remove(&mut self, key: &aya::maps::lpm_trie::Key<K>) -> core::result::Result<(), aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>
-pub type aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>
-pub type aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, V, K>, aya::maps::MapError>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, K, V>
+pub type aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::lpm_trie::LpmTrie<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>
+pub type aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<aya::maps::lpm_trie::Key<K>, V> for aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::get(&self, key: &aya::maps::lpm_trie::Key<K>) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::map(&self) -> &aya::maps::MapData
-impl<V: aya::Pod, K: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>
-pub type aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, V, K>, aya::maps::MapError>
 impl<T: core::fmt::Debug, K: core::fmt::Debug, V: core::fmt::Debug> core::fmt::Debug for aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T, K, V> core::marker::Send for aya::maps::lpm_trie::LpmTrie<T, K, V> where K: core::marker::Send, T: core::marker::Send, V: core::marker::Send
@@ -1351,16 +1351,16 @@ impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::Per
 pub fn aya::maps::PerCpuArray<T, V>::set(&mut self, index: u32, values: aya::maps::PerCpuValues<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::PerCpuArray<&'a aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::PerCpuArray<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::IterableMap<u32, aya::maps::PerCpuValues<V>> for aya::maps::PerCpuArray<T, V>
 pub fn aya::maps::PerCpuArray<T, V>::get(&self, index: &u32) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::PerCpuArray<T, V>::map(&self) -> &aya::maps::MapData
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::PerCpuArray<aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::PerCpuArray<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::PerCpuArray<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::PerCpuArray<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T, V> core::marker::Send for aya::maps::PerCpuArray<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::PerCpuArray<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::PerCpuArray<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
@@ -1390,18 +1390,18 @@ pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::keys(&self) -> aya::maps::Ma
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::insert(&mut self, key: impl core::borrow::Borrow<K>, values: aya::maps::PerCpuValues<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::remove(&mut self, key: &K) -> core::result::Result<(), aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, V, K>, aya::maps::MapError>
-impl<'a, V: aya::Pod, K: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, V, K>, aya::maps::MapError>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::PerCpuHashMap<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>
+pub type aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<K, aya::maps::PerCpuValues<V>> for aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::get(&self, key: &K) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::map(&self) -> &aya::maps::MapData
-impl<V: aya::Pod, K: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>
-pub type aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>::Error = aya::maps::MapError
-pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, V, K>, aya::maps::MapError>
 impl<T, K, V> core::marker::Send for aya::maps::hash_map::PerCpuHashMap<T, K, V> where K: core::marker::Send, T: core::marker::Send, V: core::marker::Send
 impl<T, K, V> core::marker::Sync for aya::maps::hash_map::PerCpuHashMap<T, K, V> where K: core::marker::Sync, T: core::marker::Sync, V: core::marker::Sync
 impl<T, K, V> core::marker::Unpin for aya::maps::hash_map::PerCpuHashMap<T, K, V> where K: core::marker::Unpin, T: core::marker::Unpin, V: core::marker::Unpin
@@ -1464,13 +1464,13 @@ impl<T: core::borrow::BorrowMut<aya::maps::MapData> + core::borrow::Borrow<aya::
 pub fn aya::maps::perf::PerfEventArray<T>::open(&mut self, index: u32, page_count: core::option::Option<usize>) -> core::result::Result<aya::maps::perf::PerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::PerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::PerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::perf::PerfEventArray<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::PerfEventArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T> core::marker::Send for aya::maps::perf::PerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Sync for aya::maps::perf::PerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::perf::PerfEventArray<T>
@@ -1500,13 +1500,13 @@ pub fn aya::maps::ProgramArray<T>::clear_index(&mut self, index: &u32) -> core::
 pub fn aya::maps::ProgramArray<T>::set(&mut self, index: u32, program: &aya::programs::ProgramFd, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ProgramArray<aya::maps::MapData>
 pub type aya::maps::ProgramArray<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::ProgramArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::ProgramArray<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::ProgramArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::ProgramArray<&'a aya::maps::MapData>
 pub type aya::maps::ProgramArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::ProgramArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::ProgramArray<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::ProgramArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ProgramArray<&'a mut aya::maps::MapData>
 pub type aya::maps::ProgramArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::ProgramArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::ProgramArray<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::ProgramArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T> core::marker::Send for aya::maps::ProgramArray<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::ProgramArray<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::ProgramArray<T> where T: core::marker::Unpin
@@ -1536,13 +1536,13 @@ pub fn aya::maps::queue::Queue<T, V>::pop(&mut self, flags: u64) -> core::result
 pub fn aya::maps::queue::Queue<T, V>::push(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::queue::Queue<&'a aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::queue::Queue<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::queue::Queue<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::queue::Queue<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::queue::Queue<aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::queue::Queue<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T, V> core::marker::Send for aya::maps::queue::Queue<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::queue::Queue<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::queue::Queue<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
@@ -1575,16 +1575,16 @@ pub fn aya::maps::SockHash<T, K>::insert<I: std::os::fd::raw::AsRawFd>(&mut self
 pub fn aya::maps::SockHash<T, K>::remove(&mut self, key: &K) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::SockHash<&'a aya::maps::MapData, V>
 pub type aya::maps::SockHash<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::SockHash<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::SockHash<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::SockHash<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::SockHash<&'a mut aya::maps::MapData, V>
 pub type aya::maps::SockHash<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::SockHash<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::SockHash<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::SockHash<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod> aya::maps::IterableMap<K, i32> for aya::maps::SockHash<T, K>
 pub fn aya::maps::SockHash<T, K>::get(&self, key: &K) -> core::result::Result<std::os::fd::raw::RawFd, aya::maps::MapError>
 pub fn aya::maps::SockHash<T, K>::map(&self) -> &aya::maps::MapData
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::SockHash<aya::maps::MapData, V>
 pub type aya::maps::SockHash<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::SockHash<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::SockHash<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::SockHash<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T, K> core::marker::Send for aya::maps::SockHash<T, K> where K: core::marker::Send, T: core::marker::Send
 impl<T, K> core::marker::Sync for aya::maps::SockHash<T, K> where K: core::marker::Sync, T: core::marker::Sync
 impl<T, K> core::marker::Unpin for aya::maps::SockHash<T, K> where K: core::marker::Unpin, T: core::marker::Unpin
@@ -1615,13 +1615,13 @@ pub fn aya::maps::SockMap<T>::clear_index(&mut self, index: &u32) -> core::resul
 pub fn aya::maps::SockMap<T>::set<I: std::os::fd::raw::AsRawFd>(&mut self, index: u32, socket: &I, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::SockMap<aya::maps::MapData>
 pub type aya::maps::SockMap<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::SockMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::SockMap<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::SockMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::SockMap<&'a aya::maps::MapData>
 pub type aya::maps::SockMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::SockMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::SockMap<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::SockMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::SockMap<&'a mut aya::maps::MapData>
 pub type aya::maps::SockMap<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::SockMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::SockMap<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::SockMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T> core::marker::Send for aya::maps::SockMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::SockMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::SockMap<T> where T: core::marker::Unpin
@@ -1651,13 +1651,13 @@ pub fn aya::maps::stack::Stack<T, V>::pop(&mut self, flags: u64) -> core::result
 pub fn aya::maps::stack::Stack<T, V>::push(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::stack::Stack<&'a aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::stack::Stack<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::stack::Stack<&'a aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::stack::Stack<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::stack::Stack<aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<aya::maps::MapData, V>::Error = aya::maps::MapError
-pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::stack::Stack<aya::maps::MapData, V>, aya::maps::MapError>
+pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T, V> core::marker::Send for aya::maps::stack::Stack<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::stack::Stack<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::stack::Stack<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
@@ -1686,17 +1686,17 @@ pub fn aya::maps::stack_trace::StackTraceMap<T>::iter(&self) -> aya::maps::MapIt
 pub fn aya::maps::stack_trace::StackTraceMap<T>::stack_ids(&self) -> aya::maps::MapKeys<'_, u32>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, T: core::borrow::Borrow<aya::maps::MapData>> core::iter::traits::collect::IntoIterator for &'a aya::maps::stack_trace::StackTraceMap<T>
 pub type &'a aya::maps::stack_trace::StackTraceMap<T>::IntoIter = aya::maps::MapIter<'a, u32, aya::maps::stack_trace::StackTrace, aya::maps::stack_trace::StackTraceMap<T>>
 pub type &'a aya::maps::stack_trace::StackTraceMap<T>::Item = core::result::Result<(u32, aya::maps::stack_trace::StackTrace), aya::maps::MapError>
 pub fn &'a aya::maps::stack_trace::StackTraceMap<T>::into_iter(self) -> Self::IntoIter
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
-pub fn aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>, aya::maps::MapError>
+pub fn aya::maps::stack_trace::StackTraceMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::IterableMap<u32, aya::maps::stack_trace::StackTrace> for aya::maps::stack_trace::StackTraceMap<T>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::get(&self, index: &u32) -> core::result::Result<aya::maps::stack_trace::StackTrace, aya::maps::MapError>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::map(&self) -> &aya::maps::MapData
