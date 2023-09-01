@@ -41,3 +41,41 @@ pub(crate) fn remove<K: Pod>(map: &MapData, key: &K) -> Result<(), MapError> {
             .into()
         })
 }
+
+#[cfg(test)]
+mod test_utils {
+    use crate::{
+        bpf_map_def,
+        generated::{bpf_cmd, bpf_map_type},
+        maps::MapData,
+        obj::{self, maps::LegacyMap, BpfSectionKind},
+        sys::{override_syscall, Syscall},
+    };
+
+    pub(super) fn new_map(obj: obj::Map) -> MapData {
+        override_syscall(|call| match call {
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                ..
+            } => Ok(1337),
+            call => panic!("unexpected syscall {:?}", call),
+        });
+        MapData::create(obj, "foo", None).unwrap()
+    }
+
+    pub(super) fn new_obj_map(map_type: bpf_map_type) -> obj::Map {
+        obj::Map::Legacy(LegacyMap {
+            def: bpf_map_def {
+                map_type: map_type as u32,
+                key_size: 4,
+                value_size: 4,
+                max_entries: 1024,
+                ..Default::default()
+            },
+            section_index: 0,
+            section_kind: BpfSectionKind::Maps,
+            data: Vec::new(),
+            symbol_index: None,
+        })
+    }
+}
