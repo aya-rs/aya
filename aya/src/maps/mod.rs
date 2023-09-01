@@ -64,11 +64,11 @@ use log::warn;
 use thiserror::Error;
 
 use crate::{
-    obj::{self, parse_map_info},
+    obj::{self, parse_map_info, BpfSectionKind},
     pin::PinError,
     sys::{
-        bpf_create_map, bpf_get_object, bpf_map_get_info_by_fd, bpf_map_get_next_key,
-        bpf_pin_object, SyscallError,
+        bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_info_by_fd,
+        bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object, SyscallError,
     },
     util::nr_cpus,
     PinningType, Pod,
@@ -408,8 +408,8 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 /// You should never need to use this unless you're implementing a new map type.
 #[derive(Debug)]
 pub struct MapData {
-    pub(crate) obj: obj::Map,
-    pub(crate) fd: MapFd,
+    obj: obj::Map,
+    fd: MapFd,
     /// Indicates if this map has been pinned to bpffs
     pub pinned: bool,
 }
@@ -489,6 +489,27 @@ impl MapData {
         }
     }
 
+    pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
+        let Self { obj, fd, pinned: _ } = self;
+        if !obj.data().is_empty() && obj.section_kind() != BpfSectionKind::Bss {
+            bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
+                .map_err(|(_, io_error)| SyscallError {
+                    call: "bpf_map_update_elem",
+                    io_error,
+                })
+                .map_err(MapError::from)?;
+        }
+        if obj.section_kind() == BpfSectionKind::Rodata {
+            bpf_map_freeze(fd.as_fd())
+                .map_err(|(_, io_error)| SyscallError {
+                    call: "bpf_map_freeze",
+                    io_error,
+                })
+                .map_err(MapError::from)?;
+        }
+        Ok(())
+    }
+
     /// Loads a map from a pinned path in bpffs.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
@@ -560,6 +581,15 @@ impl MapData {
             pinned: _,
         } = self;
         fd
+    }
+
+    pub(crate) fn obj(&self) -> &obj::Map {
+        let Self {
+            obj,
+            fd: _,
+            pinned: _,
+        } = self;
+        obj
     }
 }
 

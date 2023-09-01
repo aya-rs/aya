@@ -36,12 +36,11 @@ use crate::{
         SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
-        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_cookie_supported,
-        is_bpf_global_data_supported, is_btf_datasec_supported, is_btf_decl_tag_supported,
-        is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
+        bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
+        is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_enum64_supported,
+        is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
+        is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
         is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
-        SyscallError,
     },
     util::{bytes_of, bytes_of_slice, possible_cpus, POSSIBLE_CPUS},
 };
@@ -482,23 +481,7 @@ impl<'a> BpfLoader<'a> {
                     MapData::create_pinned(path, obj, &name, btf_fd)?
                 }
             };
-            let MapData { obj, fd, pinned: _ } = &mut map;
-            if !obj.data().is_empty() && obj.section_kind() != BpfSectionKind::Bss {
-                bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
-                    .map_err(|(_, io_error)| SyscallError {
-                        call: "bpf_map_update_elem",
-                        io_error,
-                    })
-                    .map_err(MapError::from)?;
-            }
-            if obj.section_kind() == BpfSectionKind::Rodata {
-                bpf_map_freeze(fd.as_fd())
-                    .map_err(|(_, io_error)| SyscallError {
-                        call: "bpf_map_freeze",
-                        io_error,
-                    })
-                    .map_err(MapError::from)?;
-            }
+            map.finalize()?;
             maps.insert(name, map);
         }
 
@@ -510,7 +493,7 @@ impl<'a> BpfLoader<'a> {
 
         obj.relocate_maps(
             maps.iter()
-                .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), &data.obj)),
+                .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
         )?;
         obj.relocate_calls(&text_sections)?;
@@ -691,7 +674,7 @@ impl<'a> BpfLoader<'a> {
         if !*allow_unsupported_maps {
             maps.iter().try_for_each(|(_, x)| match x {
                 Map::Unsupported(map) => Err(BpfError::MapError(MapError::Unsupported {
-                    map_type: map.obj.map_type(),
+                    map_type: map.obj().map_type(),
                 })),
                 _ => Ok(()),
             })?;
@@ -705,7 +688,7 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
     let name = data.0;
     let map = data.1;
     let map_type =
-        bpf_map_type::try_from(map.obj.map_type()).map_err(|e| MapError::InvalidMapType {
+        bpf_map_type::try_from(map.obj().map_type()).map_err(|e| MapError::InvalidMapType {
             map_type: e.map_type,
         })?;
     let map = match map_type {
