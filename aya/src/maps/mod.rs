@@ -68,8 +68,9 @@ use crate::{
     obj::{self, parse_map_info, BpfSectionKind},
     pin::PinError,
     sys::{
-        bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_info_by_fd,
-        bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object, SyscallError,
+        bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
+        bpf_map_get_info_by_fd, bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object,
+        SyscallError,
     },
     util::{nr_cpus, KernelVersion},
     PinningType, Pod,
@@ -648,6 +649,13 @@ impl MapData {
         })
     }
 
+    /// Loads a map from a map id.
+    pub fn from_id(id: u32) -> Result<Self, MapError> {
+        bpf_map_get_fd_by_id(id)
+            .map_err(MapError::from)
+            .and_then(Self::from_fd)
+    }
+
     /// Loads a map from a file descriptor.
     ///
     /// If loading from a BPF Filesystem (bpffs) you should use [`Map::from_pin`](crate::maps::MapData::from_pin).
@@ -933,6 +941,38 @@ mod tests {
             symbol_index: Some(0),
             data: Vec::new(),
         })
+    }
+
+    #[test]
+    fn test_from_map_id() {
+        override_syscall(|call| match call {
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_MAP_GET_FD_BY_ID,
+                attr,
+            } => {
+                assert_eq!(
+                    unsafe { attr.__bindgen_anon_6.__bindgen_anon_1.map_id },
+                    1234
+                );
+                Ok(42)
+            }
+            Syscall::Bpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                attr,
+            } => {
+                assert_eq!(unsafe { attr.info.bpf_fd }, 42);
+                Ok(0)
+            }
+            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+        });
+
+        assert_matches!(
+            MapData::from_id(1234),
+            Ok(MapData {
+                obj: _,
+                fd,
+            }) => assert_eq!(fd.as_fd().as_raw_fd(), 42)
+        );
     }
 
     #[test]
