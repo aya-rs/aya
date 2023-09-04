@@ -1,9 +1,9 @@
 use aya::{
     include_bytes_aligned, maps::AsyncPerfEventArray, programs::UProbe, util::online_cpus, Bpf,
 };
-use integration_test_macros::tokio_integration_test;
+use bytes::BytesMut;
 use log::warn;
-use tokio::{signal, task};
+use tokio::task;
 
 pub struct Args {
     a_0: u64,
@@ -46,7 +46,7 @@ pub extern "C" fn trigger_stack_argument(
 ) {
 }
 
-#[tokio_integration_test]
+#[tokio::test]
 async fn stack_argument() {
     let bytes =
         include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/stack_argument");
@@ -66,6 +66,7 @@ async fn stack_argument() {
     let mut perf_array = AsyncPerfEventArray::try_from(bpf.take_map("EVENTS").unwrap())?;
     for cpu_id in online_cpus()? {
         let mut buf = perf_array.open(cpu_id, None)?;
+        perf_buffers.push(perf_array.open(cpu_id, None)?);
 
         task::spawn(async move {
             let mut buffers = (0..10)
@@ -73,8 +74,8 @@ async fn stack_argument() {
                 .collect::<Vec<_>>();
 
             loop {
-                let events = buf.read_events(&mut buffer).await.unwrap();
-                for buf in buffers.iter_mut().task(events.read) {
+                let events = buf.read_events(&mut buffers).await.unwrap();
+                for buf in buffers.iter_mut().take(events.read) {
                     let ptr = buf.as_ptr() as *const Args;
                     let data = unsafe { ptr.read_unaligned() };
                     assert_eq!(data.a_0, 0);
