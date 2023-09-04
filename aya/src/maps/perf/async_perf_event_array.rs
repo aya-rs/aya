@@ -1,8 +1,5 @@
 use bytes::BytesMut;
-use std::{
-    borrow::{Borrow, BorrowMut},
-    os::fd::{AsRawFd as _, RawFd},
-};
+use std::borrow::{Borrow, BorrowMut};
 
 // See https://doc.rust-lang.org/cargo/reference/features.html#mutually-exclusive-features.
 //
@@ -92,7 +89,7 @@ pub struct AsyncPerfEventArray<T> {
     perf_map: PerfEventArray<T>,
 }
 
-impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArray<T> {
+impl<T: BorrowMut<MapData>> AsyncPerfEventArray<T> {
     /// Opens the perf buffer at the given index.
     ///
     /// The returned buffer will receive all the events eBPF programs send at the given index.
@@ -103,16 +100,11 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArray<T> {
     ) -> Result<AsyncPerfEventArrayBuffer<T>, PerfBufferError> {
         let Self { perf_map } = self;
         let buf = perf_map.open(index, page_count)?;
-        let fd = buf.as_raw_fd();
-        Ok(AsyncPerfEventArrayBuffer {
-            buf,
-
-            #[cfg(feature = "async_tokio")]
-            async_tokio_fd: AsyncFd::new(fd)?,
-
-            #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
-            async_std_fd: Async::new(fd)?,
-        })
+        #[cfg(feature = "async_tokio")]
+        let buf = AsyncFd::new(buf)?;
+        #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
+        let buf = Async::new(buf)?;
+        Ok(AsyncPerfEventArrayBuffer { buf })
     }
 }
 
@@ -131,17 +123,18 @@ impl<T: Borrow<MapData>> AsyncPerfEventArray<T> {
 ///
 /// See the [`AsyncPerfEventArray` documentation](AsyncPerfEventArray) for an overview of how to
 /// use perf buffers.
-pub struct AsyncPerfEventArrayBuffer<T> {
+pub struct AsyncPerfEventArrayBuffer<T: BorrowMut<MapData>> {
+    #[cfg(not(any(feature = "async_tokio", feature = "async_std")))]
     buf: PerfEventArrayBuffer<T>,
 
     #[cfg(feature = "async_tokio")]
-    async_tokio_fd: AsyncFd<RawFd>,
+    buf: AsyncFd<PerfEventArrayBuffer<T>>,
 
     #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
-    async_std_fd: Async<RawFd>,
+    buf: Async<PerfEventArrayBuffer<T>>,
 }
 
-impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArrayBuffer<T> {
+impl<T: BorrowMut<MapData>> AsyncPerfEventArrayBuffer<T> {
     /// Reads events from the buffer.
     ///
     /// This method reads events into the provided slice of buffers, filling
@@ -155,21 +148,20 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> AsyncPerfEventArrayBuffer<T> {
         &mut self,
         buffers: &mut [BytesMut],
     ) -> Result<Events, PerfBufferError> {
-        let Self {
-            buf,
-            #[cfg(feature = "async_tokio")]
-            async_tokio_fd,
-            #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
-            async_std_fd,
-        } = self;
+        let Self { buf } = self;
         loop {
             #[cfg(feature = "async_tokio")]
-            let mut guard = async_tokio_fd.readable_mut().await?;
+            let mut guard = buf.readable_mut().await?;
+            #[cfg(feature = "async_tokio")]
+            let buf = guard.get_inner_mut();
 
             #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
-            if !buf.readable() {
-                async_std_fd.readable().await?;
-            }
+            let buf = {
+                if !buf.get_ref().readable() {
+                    buf.readable().await?;
+                }
+                buf.get_mut()
+            };
 
             let events = buf.read_events(buffers)?;
             const EMPTY: Events = Events { read: 0, lost: 0 };

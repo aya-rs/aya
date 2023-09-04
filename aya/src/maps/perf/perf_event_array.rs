@@ -31,7 +31,7 @@ pub struct PerfEventArrayBuffer<T> {
     buf: PerfBuffer,
 }
 
-impl<T: BorrowMut<MapData> + Borrow<MapData>> PerfEventArrayBuffer<T> {
+impl<T: BorrowMut<MapData>> PerfEventArrayBuffer<T> {
     /// Returns true if the buffer contains events that haven't been read.
     pub fn readable(&self) -> bool {
         self.buf.readable()
@@ -55,7 +55,7 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> PerfEventArrayBuffer<T> {
     }
 }
 
-impl<T: BorrowMut<MapData> + Borrow<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
+impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
     fn as_raw_fd(&self) -> RawFd {
         self.buf.as_raw_fd()
     }
@@ -169,7 +169,7 @@ impl<T: Borrow<MapData>> PerfEventArray<T> {
     }
 }
 
-impl<T: BorrowMut<MapData> + Borrow<MapData>> PerfEventArray<T> {
+impl<T: BorrowMut<MapData>> PerfEventArray<T> {
     /// Opens the perf buffer at the given index.
     ///
     /// The returned buffer will receive all the events eBPF programs send at the given index.
@@ -180,7 +180,6 @@ impl<T: BorrowMut<MapData> + Borrow<MapData>> PerfEventArray<T> {
     ) -> Result<PerfEventArrayBuffer<T>, PerfBufferError> {
         // FIXME: keep track of open buffers
 
-        // this cannot fail as new() checks that the fd is open
         let map_data: &MapData = self.map.deref().borrow();
         let map_fd = map_data.fd;
         let buf = PerfBuffer::open(index, self.page_size, page_count.unwrap_or(2))?;
