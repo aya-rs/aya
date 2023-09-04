@@ -1,4 +1,4 @@
-use aya_bpf_bindings::bindings::__u64;
+use aya_bpf_cty::c_ulonglong;
 
 use crate::{cty::c_void, helpers::bpf_probe_read};
 
@@ -128,7 +128,7 @@ impl<T> FromPtRegs for *const T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         unsafe {
-            let addr: __u64 = ctx.rsp + 8 * (n + 1) as __u64;
+            let addr: c_ulonglong = ctx.rsp + 8 * (n + 1) as c_ulonglong;
             bpf_probe_read(addr as *const T)
                 .map(|v| &v as *const _)
                 .ok()
@@ -152,7 +152,7 @@ impl<T> FromPtRegs for *const T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         unsafe {
-            let addr: __u64 = &ctx.uregs[13] + 8 * (n + 1) as __u64;
+            let addr: c_ulonglong = &ctx.uregs[13] + 8 * (n + 1) as c_ulonglong;
             bpf_probe_read(addr as *const T)
                 .map(|v| &v as *const _)
                 .ok()
@@ -176,7 +176,7 @@ impl<T> FromPtRegs for *const T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         unsafe {
-            let addr: __u64 = ctx.sp + 8 * (n + 1) as __u64;
+            let addr: c_ulonglong = ctx.sp + 8 * (n + 1) as c_ulonglong;
             bpf_probe_read(addr as *const T)
                 .map(|v| &v as *const _)
                 .ok()
@@ -225,7 +225,7 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         unsafe {
-            let addr: __u64 = ctx.rsp + 8 * (n + 1) as __u64;
+            let addr: c_ulonglong = ctx.rsp + 8 * (n + 1) as c_ulonglong;
             bpf_probe_read(addr as *mut T)
                 .map(|mut v| &mut v as *mut _)
                 .ok()
@@ -249,7 +249,7 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         unsafe {
-            let addr: __u64 = ctx.uregs[13] + 8 * (n + 1) as __u64;
+            let addr: c_ulonglong = ctx.uregs[13] + 8 * (n + 1) as c_ulonglong;
             bpf_probe_read(addr as *mut T)
                 .map(|mut v| &mut v as *mut _)
                 .ok()
@@ -273,7 +273,7 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         unsafe {
-            let addr: __u64 = ctx.sp + 8 * (n + 1) as __u64;
+            let addr: c_ulonglong = ctx.sp + 8 * (n + 1) as c_ulonglong;
             bpf_probe_read(addr as *mut T)
                 .map(|mut v| &mut v as *mut _)
                 .ok()
@@ -325,7 +325,7 @@ macro_rules! impl_from_pt_regs {
 
             fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
                 unsafe {
-                    let addr: __u64 = ctx.rsp + 8 * (n + 1) as __u64;
+                    let addr: c_ulonglong = ctx.rsp + 8 * (n + 1) as c_ulonglong;
                     bpf_probe_read(addr as *const $type)
                         .map(|v| v as $type)
                         .ok()
@@ -349,7 +349,7 @@ macro_rules! impl_from_pt_regs {
 
             fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
                 unsafe {
-                    let addr: __u64 = ctx.uregs[13] + 8 * (n + 1) as __u64;
+                    let addr: c_ulonglong = ctx.uregs[13] + 8 * (n + 1) as c_ulonglong;
                     bpf_probe_read(addr as *const $type)
                         .map(|v| v as $type)
                         .ok()
@@ -373,7 +373,7 @@ macro_rules! impl_from_pt_regs {
 
             fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
                 unsafe {
-                    let addr: __u64 = ctx.sp + 8 * (n + 1) as __u64;
+                    let addr: c_ulonglong = ctx.sp + 8 * (n + 1) as c_ulonglong;
                     bpf_probe_read(addr as *const $type)
                         .map(|v| v as $type)
                         .ok()
