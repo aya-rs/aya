@@ -10,7 +10,7 @@ assert_matches = { workspace = true }
 aya = { workspace = true }
 aya-log = { workspace = true }
 aya-obj = { workspace = true }
-bytes.workspace = true
+bytes = {workspace = true }
 libc = { workspace = true }
 log = { workspace = true }
 netns-rs = { workspace = true }
