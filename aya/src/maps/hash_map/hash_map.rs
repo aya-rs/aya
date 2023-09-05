@@ -108,43 +108,22 @@ mod tests {
     use libc::{EFAULT, ENOENT};
 
     use crate::{
-        bpf_map_def,
         generated::{
             bpf_attr, bpf_cmd,
             bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_LRU_HASH},
         },
-        maps::{Map, MapData},
-        obj::{self, maps::LegacyMap, BpfSectionKind},
+        maps::Map,
+        obj,
         sys::{override_syscall, SysResult, Syscall},
     };
 
-    use super::*;
+    use super::{
+        super::test_utils::{self, new_map},
+        *,
+    };
 
     fn new_obj_map() -> obj::Map {
-        obj::Map::Legacy(LegacyMap {
-            def: bpf_map_def {
-                map_type: BPF_MAP_TYPE_HASH as u32,
-                key_size: 4,
-                value_size: 4,
-                max_entries: 1024,
-                ..Default::default()
-            },
-            section_index: 0,
-            section_kind: BpfSectionKind::Maps,
-            data: Vec::new(),
-            symbol_index: None,
-        })
-    }
-
-    fn new_map(obj: obj::Map) -> MapData {
-        override_syscall(|call| match call {
-            Syscall::Bpf {
-                cmd: bpf_cmd::BPF_MAP_CREATE,
-                ..
-            } => Ok(1337),
-            call => panic!("unexpected syscall {:?}", call),
-        });
-        MapData::create(obj, "foo", None).unwrap()
+        test_utils::new_obj_map(BPF_MAP_TYPE_HASH)
     }
 
     fn sys_error(value: i32) -> SysResult<c_long> {
@@ -213,21 +192,10 @@ mod tests {
 
     #[test]
     fn test_try_from_ok_lru() {
-        let map = new_map(obj::Map::Legacy(LegacyMap {
-            def: bpf_map_def {
-                map_type: BPF_MAP_TYPE_LRU_HASH as u32,
-                key_size: 4,
-                value_size: 4,
-                max_entries: 1024,
-                ..Default::default()
-            },
-            section_index: 0,
-            section_kind: BpfSectionKind::Maps,
-            symbol_index: None,
-            data: Vec::new(),
-        }));
-        let map = Map::HashMap(map);
-
+        let map_data = || new_map(test_utils::new_obj_map(BPF_MAP_TYPE_LRU_HASH));
+        let map = Map::HashMap(map_data());
+        assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok());
+        let map = Map::LruHashMap(map_data());
         assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
     }
 

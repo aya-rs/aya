@@ -425,28 +425,44 @@ pub(crate) fn bpf_prog_attach(
     prog_fd: BorrowedFd<'_>,
     target_fd: BorrowedFd<'_>,
     attach_type: bpf_attach_type,
-) -> SysResult<c_long> {
+) -> Result<(), SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_5.attach_bpf_fd = prog_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.target_fd = target_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.attach_type = attach_type as u32;
 
-    sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &mut attr)
+    let ret = sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &mut attr).map_err(|(code, io_error)| {
+        assert_eq!(code, -1);
+        SyscallError {
+            call: "bpf_prog_attach",
+            io_error,
+        }
+    })?;
+    assert_eq!(ret, 0);
+    Ok(())
 }
 
 pub(crate) fn bpf_prog_detach(
-    prog_fd: RawFd,
+    prog_fd: BorrowedFd<'_>,
     target_fd: BorrowedFd<'_>,
     attach_type: bpf_attach_type,
-) -> SysResult<c_long> {
+) -> Result<(), SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
-    attr.__bindgen_anon_5.attach_bpf_fd = prog_fd as u32;
+    attr.__bindgen_anon_5.attach_bpf_fd = prog_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.target_fd = target_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.attach_type = attach_type as u32;
 
-    sys_bpf(bpf_cmd::BPF_PROG_DETACH, &mut attr)
+    let ret = sys_bpf(bpf_cmd::BPF_PROG_DETACH, &mut attr).map_err(|(code, io_error)| {
+        assert_eq!(code, -1);
+        SyscallError {
+            call: "bpf_prog_detach",
+            io_error,
+        }
+    })?;
+    assert_eq!(ret, 0);
+    Ok(())
 }
 
 pub(crate) fn bpf_prog_query(

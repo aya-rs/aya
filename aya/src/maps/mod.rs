@@ -281,155 +281,82 @@ impl Map {
     }
 }
 
+// Implements TryFrom<Map> for different map implementations. Different map implementations can be
+// constructed from different variants of the map enum. Also, the implementation may have type
+// parameters (which we assume all have the bound `Pod` and nothing else).
 macro_rules! impl_try_from_map {
-    ($($tx:ident from Map::$ty:ident),+ $(,)?) => {
-        $(
-            impl<'a> TryFrom<&'a Map> for $tx<&'a MapData> {
-                type Error = MapError;
+    // At the root the type parameters are marked as a single token tree which will be pasted into
+    // the invocation for each type. Note that the later patterns require that the token tree be
+    // zero or more comma separated idents wrapped in parens. Note that the tt metavar is used here
+    // rather than the repeated idents used later because the macro language does not allow one
+    // repetition to be pasted inside another.
+    ($ty_param:tt {
+        $($ty:ident $(from $($variant:ident)|+)?),+ $(,)?
+    }) => {
+        $(impl_try_from_map!(<$ty_param> $ty $(from $($variant)|+)?);)+
+    };
+    // Add the "from $variant" using $ty as the default if it is missing.
+    (<$ty_param:tt> $ty:ident) => {
+        impl_try_from_map!(<$ty_param> $ty from $ty);
+    };
+    // Dispatch for each of the lifetimes.
+    (
+        <($($ty_param:ident),*)> $ty:ident from $($variant:ident)|+
+    ) => {
+        impl_try_from_map!(<'a> ($($ty_param),*) $ty from $($variant)|+);
+        impl_try_from_map!(<'a mut> ($($ty_param),*) $ty from $($variant)|+);
+        impl_try_from_map!(<> ($($ty_param),*) $ty from $($variant)|+);
+    };
+    // An individual impl.
+    (
+        <$($l:lifetime $($m:ident)?)?>
+        ($($ty_param:ident),*)
+        $ty:ident from $($variant:ident)|+
+    ) => {
+        impl<$($l,)? $($ty_param: Pod),*> TryFrom<$(&$l $($m)?)? Map>
+            for $ty<$(&$l $($m)?)? MapData, $($ty_param),*>
+        {
+            type Error = MapError;
 
-                fn try_from(map: &'a Map) -> Result<$tx<&'a MapData>, MapError> {
-                    match map {
-                        Map::$ty(m) => {
-                            $tx::new(m)
-                        },
-                        _ => Err(MapError::InvalidMapType{ map_type: map.map_type()}),
-                    }
+            fn try_from(map: $(&$l $($m)?)? Map) -> Result<Self, Self::Error> {
+                match map {
+                    $(Map::$variant(map_data) => Self::new(map_data),)+
+                    map => Err(MapError::InvalidMapType {
+                        map_type: map.map_type()
+                    }),
                 }
             }
-
-            impl<'a,> TryFrom<&'a mut Map> for $tx<&'a mut MapData> {
-                type Error = MapError;
-
-                fn try_from(map: &'a mut Map) -> Result<$tx<&'a mut MapData>, MapError> {
-                    match map {
-                        Map::$ty(m) => {
-                            $tx::new(m)
-                        },
-                        _ => Err(MapError::InvalidMapType{ map_type: map.map_type()}),
-                    }
-                }
-            }
-
-            impl TryFrom<Map> for $tx<MapData> {
-                type Error = MapError;
-
-                fn try_from(map: Map) -> Result<$tx<MapData>, MapError> {
-                    match map {
-                        Map::$ty(m) => {
-                            $tx::new(m)
-                        },
-                        _ => Err(MapError::InvalidMapType{ map_type: map.map_type()}),
-                    }
-                }
-            }
-       )+
-   }
+        }
+    };
 }
 
-impl_try_from_map!(
-    ProgramArray from Map::ProgramArray,
-    SockMap from Map::SockMap,
-    PerfEventArray from Map::PerfEventArray,
-    StackTraceMap from Map::StackTraceMap,
-);
+impl_try_from_map!(() {
+    ProgramArray,
+    SockMap,
+    PerfEventArray,
+    StackTraceMap,
+});
 
 #[cfg(any(feature = "async_tokio", feature = "async_std"))]
 #[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std"))))]
-impl_try_from_map!(
-    AsyncPerfEventArray from Map::PerfEventArray,
-);
+impl_try_from_map!(() {
+    AsyncPerfEventArray from PerfEventArray,
+});
 
-macro_rules! impl_try_from_map_generic_key_or_value {
-    ($($ty:ident),+ $(,)?) => {
-        $(
-            impl<'a, V:Pod> TryFrom<&'a Map> for $ty<&'a MapData, V> {
-                type Error = MapError;
+impl_try_from_map!((V) {
+    Array,
+    PerCpuArray,
+    SockHash,
+    BloomFilter,
+    Queue,
+    Stack,
+});
 
-                fn try_from(map: &'a Map) -> Result<$ty<&'a MapData , V>, MapError> {
-                    match map {
-                        Map::$ty(m) => {
-                            $ty::new(m)
-                        },
-                        _ => Err(MapError::InvalidMapType{ map_type: map.map_type()}),
-                    }
-                }
-            }
-
-            impl<'a,V: Pod> TryFrom<&'a mut Map> for $ty<&'a mut MapData, V> {
-                type Error = MapError;
-
-                fn try_from(map: &'a mut Map) -> Result<$ty<&'a mut MapData, V>, MapError> {
-                    match map {
-                        Map::$ty(m) => {
-                            $ty::new(m)
-                        },
-                        _ => Err(MapError::InvalidMapType{ map_type: map.map_type()}),
-                    }
-                }
-            }
-
-            impl<V: Pod> TryFrom<Map> for $ty<MapData, V> {
-                type Error = MapError;
-
-                fn try_from(map: Map) -> Result<$ty<MapData, V>, MapError> {
-                    match map {
-                        Map::$ty(m) => {
-                            $ty::new(m)
-                        },
-                        _ => Err(MapError::InvalidMapType{ map_type: map.map_type()}),
-                    }
-                }
-            }
-       )+
-   }
-}
-
-impl_try_from_map_generic_key_or_value!(Array, PerCpuArray, SockHash, BloomFilter, Queue, Stack,);
-
-macro_rules! impl_try_from_map_generic_key_and_value {
-    ($($ty:ident),+ $(,)?) => {
-        $(
-            impl<'a, V: Pod, K: Pod> TryFrom<&'a Map> for $ty<&'a MapData, V, K> {
-                type Error = MapError;
-
-                fn try_from(map: &'a Map) -> Result<$ty<&'a MapData,V,K>, MapError> {
-                    match map {
-                        Map::$ty(m) => {
-                            $ty::new(m)
-                        },
-                        _ => Err(MapError::InvalidMapType{ map_type: map.map_type()}),
-                    }
-                }
-            }
-
-            impl<'a,V: Pod,K: Pod> TryFrom<&'a mut Map> for $ty<&'a mut MapData, V, K> {
-                type Error = MapError;
-
-                fn try_from(map: &'a mut Map) -> Result<$ty<&'a mut MapData, V, K>, MapError> {
-                    match map {
-                        Map::$ty(m) => {
-                            $ty::new(m)
-                        },
-                        _ => Err(MapError::InvalidMapType{ map_type: map.map_type()}),
-                    }
-                }
-            }
-
-            impl<V: Pod, K: Pod> TryFrom<Map> for $ty<MapData, V, K> {
-                type Error = MapError;
-
-                fn try_from(map: Map) -> Result<$ty<MapData, V, K>, MapError> {
-                    match map {
-                        Map::$ty(m) => $ty::new(m),
-                        _ => Err(MapError::InvalidMapType { map_type: map.map_type() }),
-                    }
-                }
-            }
-       )+
-   }
-}
-
-impl_try_from_map_generic_key_and_value!(HashMap, PerCpuHashMap, LpmTrie);
+impl_try_from_map!((K, V) {
+    HashMap from HashMap|LruHashMap,
+    PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
+    LpmTrie,
+});
 
 pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
     let max_entries = map.obj.max_entries();
