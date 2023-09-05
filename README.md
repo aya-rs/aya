@@ -2,14 +2,15 @@
 
 [![Crates.io][crates-badge]][crates-url]
 ![License][license-badge]
-![Build status][build-badge]
+[![Build status][build-badge]][build-url]
 [![Book][book-badge]][book-url]
 
 
 [crates-badge]: https://img.shields.io/crates/v/aya.svg?style=for-the-badge&logo=rust
 [crates-url]: https://crates.io/crates/aya
 [license-badge]: https://img.shields.io/badge/license-MIT%2FApache--2.0-blue?style=for-the-badge
-[build-badge]: https://img.shields.io/github/actions/workflow/status/aya-rs/aya/build-aya.yml?branch=main&style=for-the-badge
+[build-badge]: https://img.shields.io/github/actions/workflow/status/aya-rs/aya/ci.yml?style=for-the-badge
+[build-url]: https://github.com/aya-rs/aya/actions/workflows/ci.yml
 [book-badge]: https://img.shields.io/badge/read%20the-book-9cf.svg?style=for-the-badge&logo=mdbook
 [book-url]: https://aya-rs.dev/book
 
