@@ -410,6 +410,39 @@ impl Program {
             Self::CgroupDevice(p) => p.fd(),
         }
     }
+
+    /// Returns information about a loaded program with the [`ProgramInfo`] structure.
+    ///
+    /// This information is populated at load time by the kernel and can be used
+    /// to get kernel details for a given [`Program`].
+    pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
+        match self {
+            Self::KProbe(p) => p.info(),
+            Self::UProbe(p) => p.info(),
+            Self::TracePoint(p) => p.info(),
+            Self::SocketFilter(p) => p.info(),
+            Self::Xdp(p) => p.info(),
+            Self::SkMsg(p) => p.info(),
+            Self::SkSkb(p) => p.info(),
+            Self::SockOps(p) => p.info(),
+            Self::SchedClassifier(p) => p.info(),
+            Self::CgroupSkb(p) => p.info(),
+            Self::CgroupSysctl(p) => p.info(),
+            Self::CgroupSockopt(p) => p.info(),
+            Self::LircMode2(p) => p.info(),
+            Self::PerfEvent(p) => p.info(),
+            Self::RawTracePoint(p) => p.info(),
+            Self::Lsm(p) => p.info(),
+            Self::BtfTracePoint(p) => p.info(),
+            Self::FEntry(p) => p.info(),
+            Self::FExit(p) => p.info(),
+            Self::Extension(p) => p.info(),
+            Self::CgroupSockAddr(p) => p.info(),
+            Self::SkLookup(p) => p.info(),
+            Self::CgroupSock(p) => p.info(),
+            Self::CgroupDevice(p) => p.info(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -923,12 +956,12 @@ impl_try_from_program!(
 /// This information is populated at load time by the kernel and can be used
 /// to correlate a given [`Program`] to it's corresponding [`ProgramInfo`]
 /// metadata.
-macro_rules! impl_program_info {
+macro_rules! impl_info {
     ($($struct_name:ident),+ $(,)?) => {
         $(
             impl $struct_name {
                 /// Returns the file descriptor of this Program.
-                pub fn program_info(&self) -> Result<ProgramInfo, ProgramError> {
+                pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
                     let ProgramFd(fd) = self.fd()?;
 
                     ProgramInfo::new_from_fd(fd.as_fd())
@@ -938,7 +971,7 @@ macro_rules! impl_program_info {
     }
 }
 
-impl_program_info!(
+impl_info!(
     KProbe,
     UProbe,
     TracePoint,
