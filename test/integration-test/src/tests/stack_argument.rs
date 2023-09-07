@@ -5,6 +5,8 @@ use bytes::BytesMut;
 use log::warn;
 use tokio::task;
 
+use crate::STACK_ARGUMENT;
+
 pub struct Args {
     a_0: u64,
     a_1: u64,
@@ -17,20 +19,6 @@ pub struct Args {
     a_7: i64,
 }
 
-impl Args {
-    fn new() -> Self {
-        Self {
-            a_0: 0,
-            a_1: 0,
-            a_2: 0,
-            a_3: 0,
-            a_4: 0,
-            a_5: 0,
-            a_6: 0,
-            a_7: 0,
-        }
-    }
-}
 #[no_mangle]
 #[inline(never)]
 pub extern "C" fn trigger_stack_argument(
@@ -48,9 +36,7 @@ pub extern "C" fn trigger_stack_argument(
 
 #[tokio::test]
 async fn stack_argument() {
-    let bytes =
-        include_bytes_aligned!("../../../../target/bpfel-unknown-none/release/stack_argument");
-    let mut bpf = Bpf::load(bytes).unwrap();
+    let mut bpf = Bpf::load(crate::STACK_ARGUMENT).unwrap();
 
     if let Err(e) = BpfLogger::init(&mut bpf) {
         warn!("failed to initialize eBPF logger: {}", e);
