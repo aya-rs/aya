@@ -59,7 +59,7 @@ use crate::{
         bpf_create_map, bpf_get_object, bpf_map_get_info_by_fd, bpf_map_get_next_key,
         bpf_pin_object, SyscallError,
     },
-    util::nr_cpus,
+    util::{bytes_of_c_char, nr_cpus},
     PinningType, Pod,
 };
 
@@ -399,6 +399,7 @@ pub struct MapData {
     pub(crate) fd: RawFd,
     /// Indicates if this map has been pinned to bpffs
     pub pinned: bool,
+    pub(crate) name: String,
 }
 
 impl MapData {
@@ -433,6 +434,7 @@ impl MapData {
             obj,
             fd,
             pinned: false,
+            name: name.to_string(),
         })
     }
 
@@ -463,10 +465,11 @@ impl MapData {
                 obj,
                 fd: fd.into_raw_fd(),
                 pinned: false,
+                name: name.to_string(),
             }),
             Err(_) => {
                 let mut map = Self::create(obj, name, btf_fd)?;
-                map.pin(name, path).map_err(|error| MapError::PinError {
+                map.pin(path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,
                 })?;
@@ -496,10 +499,15 @@ impl MapData {
 
         let info = bpf_map_get_info_by_fd(fd.as_fd())?;
 
+        let name_bytes = bytes_of_c_char(&info.name);
+
         Ok(Self {
             obj: parse_map_info(info, PinningType::ByName),
             fd: fd.into_raw_fd(),
             pinned: true,
+            name: std::str::from_utf8(name_bytes)
+                .expect("unable to parse map name from bpf_map_info")
+                .to_string(),
         })
     }
 
@@ -511,19 +519,30 @@ impl MapData {
     pub fn from_fd(fd: OwnedFd) -> Result<Self, MapError> {
         let info = bpf_map_get_info_by_fd(fd.as_fd())?;
 
+        let name_bytes = bytes_of_c_char(&info.name);
         Ok(Self {
             obj: parse_map_info(info, PinningType::None),
             fd: fd.into_raw_fd(),
             pinned: false,
+            name: std::str::from_utf8(name_bytes)
+                .expect("unable to parse map name from bpf_map_info")
+                .to_string(),
         })
     }
 
-    pub(crate) fn pin<P: AsRef<Path>>(&mut self, name: &str, path: P) -> Result<(), PinError> {
+    pub(crate) fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        let Self { fd, pinned, obj: _ } = self;
+        let Self {
+            fd,
+            pinned,
+            obj: _,
+            name,
+        } = self;
         if *pinned {
-            return Err(PinError::AlreadyPinned { name: name.into() });
+            return Err(PinError::AlreadyPinned {
+                name: name.to_string(),
+            });
         }
         let path = path.as_ref().join(name);
         let path_string = CString::new(path.as_os_str().as_bytes())
@@ -555,11 +574,17 @@ impl Drop for MapData {
 
 impl Clone for MapData {
     fn clone(&self) -> Self {
-        let Self { obj, fd, pinned } = self;
+        let Self {
+            obj,
+            fd,
+            pinned,
+            name,
+        } = self;
         Self {
             obj: obj.clone(),
             fd: unsafe { libc::dup(*fd) },
             pinned: *pinned,
+            name: name.clone(),
         }
     }
 }
@@ -797,6 +822,7 @@ mod tests {
                 obj: _,
                 fd: 42,
                 pinned: false
+                name: "foo".to_string(),
             })
         );
     }

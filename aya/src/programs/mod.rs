@@ -117,7 +117,7 @@ use crate::{
         bpf_prog_query, iter_link_ids, iter_prog_ids, retry_with_verifier_logs,
         BpfLoadProgramAttrs, SyscallError,
     },
-    util::KernelVersion,
+    util::{bytes_of_c_char, KernelVersion},
     VerifierLogLevel,
 };
 
@@ -977,17 +977,7 @@ impl ProgramInfo {
 
     /// The name of the program as was provided when it was load. This is limited to 16 bytes
     pub fn name(&self) -> &[u8] {
-        let length = self
-            .0
-            .name
-            .iter()
-            .rposition(|ch| *ch != 0)
-            .map(|pos| pos + 1)
-            .unwrap_or(0);
-
-        // The name field is defined as [std::os::raw::c_char; 16]. c_char may be signed or
-        // unsigned depending on the platform; that's why we're using from_raw_parts here
-        unsafe { std::slice::from_raw_parts(self.0.name.as_ptr() as *const _, length) }
+        bytes_of_c_char(&self.0.name)
     }
 
     /// The name of the program as a &str. If the name was not valid unicode, None is returned.

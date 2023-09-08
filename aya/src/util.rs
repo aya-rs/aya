@@ -337,6 +337,18 @@ pub(crate) fn bytes_of_slice<T: Pod>(val: &[T]) -> &[u8] {
     unsafe { slice::from_raw_parts(val.as_ptr().cast(), size) }
 }
 
+pub(crate) fn bytes_of_c_char(val: &[std::os::raw::c_char]) -> &[u8] {
+    let length = val
+        .iter()
+        .rposition(|ch| *ch != 0)
+        .map(|pos| pos + 1)
+        .unwrap_or(0);
+
+    // The name field is defined as [std::os::raw::c_char; 16]. c_char may be signed or
+    // unsigned depending on the platform; that's why we're using from_raw_parts here
+    unsafe { std::slice::from_raw_parts(val.as_ptr() as *const _, length) }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
