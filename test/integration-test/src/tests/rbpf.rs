@@ -40,7 +40,7 @@ fn use_map_with_rbpf() {
     assert_eq!(object.programs.len(), 1);
     assert_matches!(
         object.programs["bpf_prog"].section,
-        ProgramSection::TracePoint { .. }
+        ProgramSection::UProbe { .. }
     );
 
     // Initialize maps:

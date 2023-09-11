@@ -17,7 +17,7 @@ struct {
   __uint(max_entries, 1);
 } map_2 SEC(".maps");
 
-SEC("tracepoint")
+SEC("uprobe")
 int bpf_prog(void *ctx) {
   __u32 key = 0;
   __u64 twenty_four = 24;

@@ -36,11 +36,12 @@ fn multiple_btf_maps() {
     let map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
     let map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into().unwrap();
 
-    let prog: &mut TracePoint = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
+    let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("sched", "sched_switch").unwrap();
+    prog.attach(Some("trigger_bpf_program"), 0, "/proc/self/exe", None)
+        .unwrap();
 
-    thread::sleep(time::Duration::from_secs(3));
+    trigger_bpf_program();
 
     let key = 0;
     let val_1 = map_1.get(&key, 0).unwrap();
@@ -48,6 +49,12 @@ fn multiple_btf_maps() {
 
     assert_eq!(val_1, 24);
     assert_eq!(val_2, 42);
+}
+
+#[no_mangle]
+#[inline(never)]
+pub extern "C" fn trigger_bpf_program() {
+    core::hint::black_box(trigger_bpf_program);
 }
 
 fn poll_loaded_program_id(name: &str) -> impl Iterator<Item = Option<u32>> + '_ {
