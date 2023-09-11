@@ -236,7 +236,7 @@ jobs:
           # linux-image-5.10.0-23-cloud-amd64-unsigned_5.10.179-3_amd64.deb \
           printf '%s\0' \
             linux-image-6.1.0-10-cloud-amd64-unsigned_6.1.38-2_amd64.deb \
-            linux-image-6.4.0-3-cloud-amd64-unsigned_6.4.11-1_amd64.deb \
+            linux-image-6.4.0-4-cloud-amd64-unsigned_6.4.13-1_amd64.deb \
           | xargs -0 -t -P0 -I {} wget -nd -nv -P test/.tmp/debian-kernels/amd64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
 
       - name: Extract debian kernels
