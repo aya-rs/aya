@@ -1,6 +1,7 @@
 use aya::{
     include_bytes_aligned, maps::AsyncPerfEventArray, programs::UProbe, util::online_cpus, Bpf,
 };
+use aya_log::BpfLogger;
 use bytes::BytesMut;
 use log::warn;
 use tokio::task;
@@ -36,6 +37,7 @@ pub extern "C" fn trigger_stack_argument(
 
 #[tokio::test]
 async fn stack_argument() {
+    event_logger::init();
     let mut bpf = Bpf::load(crate::STACK_ARGUMENT).unwrap();
 
     if let Err(e) = BpfLogger::init(&mut bpf) {
