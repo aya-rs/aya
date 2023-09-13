@@ -31,4 +31,17 @@ pub enum PinError {
     /// An error ocurred making a syscall.
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
+
+    /// An error occured unpinning an object.
+    #[error("Failed to remove pins {paths:?} for object {name}")]
+    UnpinError {
+        /// Object name.
+        name: String,
+
+        /// The paths.
+        paths: Vec<std::path::PathBuf>,
+
+        /// The source error
+        errors: Vec<std::io::Error>,
+    },
 }

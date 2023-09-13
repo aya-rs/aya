@@ -91,11 +91,11 @@ fn pin_lifecycle_multiple_btf_maps() {
     let mut map_pin_by_name: Array<_, u64> =
         bpf.take_map("map_pin_by_name").unwrap().try_into().unwrap();
 
-    let prog: &mut TracePoint = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
+    let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("sched", "sched_switch").unwrap();
-
-    thread::sleep(time::Duration::from_secs(3));
+    prog.attach(Some("trigger_bpf_program"), 0, "/proc/self/exe", None)
+        .unwrap();
+    trigger_bpf_program();
 
     let key = 0;
     let val_1 = map_1.get(&key, 0).unwrap();

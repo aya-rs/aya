@@ -786,9 +786,13 @@ macro_rules! impl_program_pin{
                 }
 
                 /// Removes the pinned link from the filesystem.
-                pub fn unpin(mut self) -> Result<(), io::Error> {
+                pub fn unpin(mut self) -> Result<(), PinError> {
                     if let Some(path) = self.data.path.take() {
-                        std::fs::remove_file(path)?;
+                        std::fs::remove_file(&path).map_err(|e| PinError::UnpinError{
+                            name: self.data.name.clone().unwrap(),
+                            paths: vec![path],
+                            errors: vec![e]
+                        })?;
                     }
                     Ok(())
                 }

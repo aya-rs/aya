@@ -44,7 +44,7 @@ fn use_map_with_rbpf() {
     );
 
     // Initialize maps:
-    // - fd: 0xCAFE00 or 0xCAFE01 (the 0xCAFE00 part is used to distinguish fds from indices),
+    // - fd: Bitwise OR of the map_id with 0xCAFE00 (used to distinguish fds from indices),
     // - Note that rbpf does not convert fds into real pointers,
     //   so we keeps the pointers to our maps in MULTIMAP_MAPS, to be used in helpers.
     let mut maps = HashMap::new();
@@ -105,13 +105,10 @@ fn use_map_with_rbpf() {
         .expect("Helper failed");
     assert_eq!(vm.execute_program().unwrap(), 0);
 
-    assert_eq!(map_instances[0][0], 24);
-    assert_eq!(map_instances[1][0], 42);
-    assert_eq!(map_instances[2][0], 44);
+    assert_eq!(map_instances, vec![vec![24], vec![42], vec![44]]);
 
     unsafe {
-        MULTIMAP_MAPS[0] = null_mut();
-        MULTIMAP_MAPS[1] = null_mut();
+        MULTIMAP_MAPS.iter_mut().for_each(|v| *v = null_mut());
     }
 }
 

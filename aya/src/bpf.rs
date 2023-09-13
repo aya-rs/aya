@@ -854,7 +854,7 @@ impl Bpf {
         self.maps.iter().map(|(name, map)| (name.as_str(), map))
     }
 
-    /// An iterator mutably referencing all the maps.
+    /// An iterator over all the maps that allows modification.
     ///
     /// # Examples
     /// ```no_run

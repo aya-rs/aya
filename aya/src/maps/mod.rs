@@ -38,6 +38,7 @@
 //! implement the [Pod] trait.
 use std::{
     borrow::BorrowMut,
+    collections::HashSet,
     ffi::CString,
     fmt, io,
     marker::PhantomData,
@@ -175,6 +176,10 @@ pub enum MapError {
         /// The map type
         map_type: u32,
     },
+
+    /// Unable to parse map name from kernel info
+    #[error("Unable to parse map name")]
+    ParseNameError,
 }
 
 /// A map file descriptor.
@@ -309,7 +314,7 @@ impl Map {
     }
 
     /// Removes the pinned map from a BPF filesystem.
-    pub fn unpin(&mut self) -> Result<(), io::Error> {
+    pub fn unpin(&mut self) -> Result<(), PinError> {
         match self {
             Self::Array(map) => map.unpin(),
             Self::PerCpuArray(map) => map.unpin(),
@@ -357,7 +362,7 @@ macro_rules! impl_map_pin {
                     }
 
                     /// Removes the pinned map from a BPF filesystem.
-                    pub fn unpin(mut self) -> Result<(), io::Error> {
+                    pub fn unpin(mut self) -> Result<(), PinError> {
                         let data = self.inner.borrow_mut();
                         data.unpin()
                     }
@@ -504,7 +509,7 @@ pub struct MapData {
     pub(crate) obj: obj::Map,
     pub(crate) fd: RawFd,
     pub(crate) name: String,
-    pub(crate) paths: Vec<PathBuf>,
+    pub(crate) paths: HashSet<PathBuf>,
 }
 
 impl MapData {
@@ -539,7 +544,7 @@ impl MapData {
             obj,
             fd,
             name: name.to_string(),
-            paths: Vec::new(),
+            paths: HashSet::new(),
         })
     }
 
@@ -570,7 +575,7 @@ impl MapData {
                 obj,
                 fd: fd.into_raw_fd(),
                 name: name.to_string(),
-                paths: vec![path],
+                paths: HashSet::from([path]),
             }),
             Err(_) => {
                 let mut map = Self::create(obj, name, btf_fd)?;
@@ -610,9 +615,9 @@ impl MapData {
             obj: parse_map_info(info, PinningType::ByName),
             fd: fd.into_raw_fd(),
             name: std::str::from_utf8(name_bytes)
-                .expect("unable to parse map name from bpf_map_info")
+                .map_err(|_| MapError::ParseNameError)?
                 .to_string(),
-            paths: vec![path.to_path_buf()],
+            paths: HashSet::from([path.to_path_buf()]),
         })
     }
 
@@ -629,9 +634,9 @@ impl MapData {
             obj: parse_map_info(info, PinningType::None),
             fd: fd.into_raw_fd(),
             name: std::str::from_utf8(name_bytes)
-                .expect("unable to parse map name from bpf_map_info")
+                .map_err(|_| MapError::ParseNameError)?
                 .to_string(),
-            paths: Vec::new(),
+            paths: HashSet::new(),
         })
     }
 
@@ -655,25 +660,42 @@ impl MapData {
                 error,
             }
         })?;
-        debug!("Attempting to pin map {name} at {path_string:?}");
+        debug!(
+            "Attempting to pin map {name} at {}",
+            path.as_ref().display()
+        );
         bpf_pin_object(*fd, &path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_PIN",
             io_error,
         })?;
-        paths.push(path.as_ref().to_path_buf());
+        paths.insert(path.as_ref().to_path_buf());
         Ok(())
     }
 
-    pub(crate) fn unpin(&mut self) -> Result<(), io::Error> {
+    pub(crate) fn unpin(&mut self) -> Result<(), PinError> {
         let Self {
             fd: _,
             paths,
             obj: _,
-            name: _,
+            name,
         } = self;
-        for path in paths.drain(..) {
-            std::fs::remove_file(path)?;
+
+        let mut errors: Vec<(PathBuf, io::Error)> = Vec::new();
+        for path in paths.drain() {
+            std::fs::remove_file(&path).unwrap_or_else(|e| {
+                errors.push((path, e));
+            });
         }
+
+        if !errors.is_empty() {
+            let (paths, errors) = errors.into_iter().unzip();
+            return Err(PinError::UnpinError {
+                name: name.to_string(),
+                paths,
+                errors,
+            });
+        };
+
         Ok(())
     }
 
