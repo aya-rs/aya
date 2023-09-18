@@ -189,7 +189,7 @@ pub enum MapError {
 }
 
 // Note that this is not just derived using #[from] because InvalidMapTypeError cannot implement
-// Error due the the fact that aya-obj is nostd and error_in_core is not stabilized
+// Error due the the fact that aya-obj is no_std and error_in_core is not stabilized
 // (https://github.com/rust-lang/rust/issues/103765).
 impl From<InvalidMapTypeError> for MapError {
     fn from(e: InvalidMapTypeError) -> Self {
@@ -248,34 +248,34 @@ fn maybe_warn_rlimit() {
 pub enum Map {
     /// A [`Array`] map
     Array(MapData),
-    /// A [`PerCpuArray`] map
-    PerCpuArray(MapData),
-    /// A [`ProgramArray`] map
-    ProgramArray(MapData),
+    /// A [`BloomFilter`] map
+    BloomFilter(MapData),
     /// A [`HashMap`] map
     HashMap(MapData),
-    /// A [`PerCpuHashMap`] map
-    PerCpuHashMap(MapData),
+    /// A [`LpmTrie`] map
+    LpmTrie(MapData),
     /// A [`HashMap`] map that uses a LRU eviction policy.
     LruHashMap(MapData),
+    /// A [`PerCpuArray`] map
+    PerCpuArray(MapData),
+    /// A [`PerCpuHashMap`] map
+    PerCpuHashMap(MapData),
     /// A [`PerCpuHashMap`] map that uses a LRU eviction policy.
     PerCpuLruHashMap(MapData),
     /// A [`PerfEventArray`] map
     PerfEventArray(MapData),
-    /// A [`SockMap`] map
-    SockMap(MapData),
+    /// A [`ProgramArray`] map
+    ProgramArray(MapData),
+    /// A [`Queue`] map
+    Queue(MapData),
     /// A [`SockHash`] map
     SockHash(MapData),
-    /// A [`BloomFilter`] map
-    BloomFilter(MapData),
-    /// A [`LpmTrie`] map
-    LpmTrie(MapData),
+    /// A [`SockMap`] map
+    SockMap(MapData),
     /// A [`Stack`] map
     Stack(MapData),
     /// A [`StackTraceMap`] map
     StackTraceMap(MapData),
-    /// A [`Queue`] map
-    Queue(MapData),
     /// An unsupported map type
     Unsupported(MapData),
 }
@@ -285,20 +285,20 @@ impl Map {
     fn map_type(&self) -> u32 {
         match self {
             Self::Array(map) => map.obj.map_type(),
-            Self::PerCpuArray(map) => map.obj.map_type(),
-            Self::ProgramArray(map) => map.obj.map_type(),
+            Self::BloomFilter(map) => map.obj.map_type(),
             Self::HashMap(map) => map.obj.map_type(),
+            Self::LpmTrie(map) => map.obj.map_type(),
             Self::LruHashMap(map) => map.obj.map_type(),
+            Self::PerCpuArray(map) => map.obj.map_type(),
             Self::PerCpuHashMap(map) => map.obj.map_type(),
             Self::PerCpuLruHashMap(map) => map.obj.map_type(),
             Self::PerfEventArray(map) => map.obj.map_type(),
+            Self::ProgramArray(map) => map.obj.map_type(),
+            Self::Queue(map) => map.obj.map_type(),
             Self::SockHash(map) => map.obj.map_type(),
             Self::SockMap(map) => map.obj.map_type(),
-            Self::BloomFilter(map) => map.obj.map_type(),
-            Self::LpmTrie(map) => map.obj.map_type(),
             Self::Stack(map) => map.obj.map_type(),
             Self::StackTraceMap(map) => map.obj.map_type(),
-            Self::Queue(map) => map.obj.map_type(),
             Self::Unsupported(map) => map.obj.map_type(),
         }
     }
@@ -354,9 +354,9 @@ macro_rules! impl_try_from_map {
 }
 
 impl_try_from_map!(() {
+    PerfEventArray,
     ProgramArray,
     SockMap,
-    PerfEventArray,
     StackTraceMap,
 });
 
@@ -368,17 +368,17 @@ impl_try_from_map!(() {
 
 impl_try_from_map!((V) {
     Array,
-    PerCpuArray,
-    SockHash,
     BloomFilter,
+    PerCpuArray,
     Queue,
+    SockHash,
     Stack,
 });
 
 impl_try_from_map!((K, V) {
     HashMap from HashMap|LruHashMap,
-    PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
     LpmTrie,
+    PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
 });
 
 pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
