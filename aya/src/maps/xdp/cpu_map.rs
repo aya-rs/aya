@@ -6,7 +6,7 @@ use std::{
     os::fd::{AsFd, AsRawFd},
 };
 
-use aya_obj::generated::{bpf_cpumap_val, bpf_cpumap_val__bindgen_ty_1};
+use aya_obj::generated::bpf_cpumap_val;
 
 use crate::{
     maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
@@ -14,6 +14,8 @@ use crate::{
     sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
     Pod, FEATURES,
 };
+
+use super::XdpMapError;
 
 /// An array of available CPUs.
 ///
@@ -29,19 +31,24 @@ use crate::{
 /// # let elf_bytes = &[];
 /// use aya::maps::xdp::CpuMap;
 ///
+/// let ncpus = aya::util::nr_cpus().unwrap() as u32;
 /// let mut bpf = aya::BpfLoader::new()
-///     .set_max_entries("CPUS", aya::util::nr_cpus().unwrap() as u32)
+///     .set_max_entries("CPUS", ncpus)
 ///     .load(elf_bytes)
 ///     .unwrap();
 /// let mut cpumap = CpuMap::try_from(bpf.map_mut("CPUS").unwrap())?;
 /// let flags = 0;
 /// let queue_size = 2048;
-/// for i in 0u32..8u32 {
+/// for i in 0..ncpus {
 ///     cpumap.set(i, queue_size, None, flags);
 /// }
 ///
 /// # Ok::<(), aya::BpfError>(())
 /// ```
+///
+/// # See also
+///
+/// Kernel documentation: <https://docs.kernel.org/next/bpf/map_cpumap.html>
 #[doc(alias = "BPF_MAP_TYPE_CPUMAP")]
 pub struct CpuMap<T> {
     inner: T,
@@ -67,7 +74,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
         self.inner.borrow().obj.max_entries()
     }
 
-    /// Returns the queue size and possible program for a given CPU index.
+    /// Returns the queue size and optional program for a given CPU index.
     ///
     /// # Errors
     ///
@@ -81,7 +88,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
         let value = if FEATURES.cpumap_prog_id() {
             bpf_map_lookup_elem::<_, bpf_cpumap_val>(fd, &cpu_index, flags).map(|value| {
                 value.map(|value| CpuMapValue {
-                    qsize: value.qsize,
+                    queue_size: value.qsize,
                     // SAFETY: map writes use fd, map reads use id.
                     // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/include/uapi/linux/bpf.h#L6241
                     prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
@@ -90,7 +97,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
         } else {
             bpf_map_lookup_elem::<_, u32>(fd, &cpu_index, flags).map(|value| {
                 value.map(|qsize| CpuMapValue {
-                    qsize,
+                    queue_size: qsize,
                     prog_id: None,
                 })
             })
@@ -115,52 +122,52 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
     /// When sending the packet to the CPU at the given index, the kernel will queue up to
     /// `queue_size` packets before dropping them.
     ///
-    /// Another XDP program can be passed in that will be run on the target CPU, instead of the CPU
-    /// that receives the packets. This allows to perform minimal computations on CPUs that
-    /// directly handle packets from a NIC's RX queues, and perform possibly heavier ones in other,
-    /// less busy CPUs.
+    /// Starting from Linux kernel 5.9, another XDP program can be passed in that will be run on the
+    /// target CPU, instead of the CPU that receives the packets. This allows to perform minimal
+    /// computations on CPUs that directly handle packets from a NIC's RX queues, and perform
+    /// possibly heavier ones in other, less busy CPUs.
     ///
-    /// Note that only XDP programs with the `map = "cpumap"` argument can be passed. See the
-    /// kernel-space `aya_bpf::xdp` for more information.
+    /// The chained program must be loaded with the `BPF_XDP_CPUMAP` attach type. When using
+    /// `aya-ebpf`, that means XDP programs that specify the `map = "cpumap"` argument. See the
+    /// kernel-space `aya_ebpf::xdp` for more information.
     ///
     /// # Errors
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
-    /// if `bpf_map_update_elem` fails, [`MapError::ProgIdNotSupported`] if the kernel does not
-    /// support program ids and one is provided.
+    /// if `bpf_map_update_elem` fails, [`XdpMapError::ChainedProgramNotSupported`] if the kernel
+    /// does not support chained programs and one is provided.
     pub fn set(
         &mut self,
         cpu_index: u32,
         queue_size: u32,
         program: Option<&ProgramFd>,
         flags: u64,
-    ) -> Result<(), MapError> {
+    ) -> Result<(), XdpMapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, cpu_index)?;
         let fd = data.fd().as_fd();
 
         let res = if FEATURES.cpumap_prog_id() {
-            let value = bpf_cpumap_val {
-                qsize: queue_size,
-                bpf_prog: bpf_cpumap_val__bindgen_ty_1 {
-                    // Default is valid as the kernel will only consider fd > 0:
-                    // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/cpumap.c#L466
-                    fd: program
-                        .map(|prog| prog.as_fd().as_raw_fd())
-                        .unwrap_or_default(),
-                },
-            };
+            let mut value = unsafe { std::mem::zeroed::<bpf_cpumap_val>() };
+            value.qsize = queue_size;
+            // Default is valid as the kernel will only consider fd > 0:
+            // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/cpumap.c#L466
+            value.bpf_prog.fd = program
+                .map(|prog| prog.as_fd().as_raw_fd())
+                .unwrap_or_default();
             bpf_map_update_elem(fd, Some(&cpu_index), &value, flags)
         } else {
             if program.is_some() {
-                return Err(MapError::ProgIdNotSupported);
+                return Err(XdpMapError::ChainedProgramNotSupported);
             }
             bpf_map_update_elem(fd, Some(&cpu_index), &queue_size, flags)
         };
 
-        res.map_err(|(_, io_error)| SyscallError {
-            call: "bpf_map_update_elem",
-            io_error,
+        res.map_err(|(_, io_error)| {
+            MapError::from(SyscallError {
+                call: "bpf_map_update_elem",
+                io_error,
+            })
         })?;
         Ok(())
     }
@@ -179,7 +186,10 @@ impl<T: Borrow<MapData>> IterableMap<u32, CpuMapValue> for CpuMap<T> {
 unsafe impl Pod for bpf_cpumap_val {}
 
 #[derive(Clone, Copy, Debug)]
+/// The value of a CPU map.
 pub struct CpuMapValue {
-    pub qsize: u32,
+    /// Size of the for the CPU.
+    pub queue_size: u32,
+    /// Chained XDP program ID.
     pub prog_id: Option<NonZeroU32>,
 }

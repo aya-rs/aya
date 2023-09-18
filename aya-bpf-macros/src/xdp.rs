@@ -28,7 +28,7 @@ impl Xdp {
             Some(name) => {
                 return Err(Error::new_spanned(
                     "map",
-                    format!("invalid value. expected 'cpumap' or 'devmap', found '{name}'"),
+                    format!("Invalid value. Expected 'cpumap' or 'devmap', found '{name}'"),
                 ))
             }
             None => None,

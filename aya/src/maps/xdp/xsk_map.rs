@@ -30,6 +30,10 @@ use crate::{
 /// xskmap.set(0, socket_fd, 0);
 /// # Ok::<(), aya::BpfError>(())
 /// ```
+///
+/// # See also
+///
+/// Kernel documentation: <https://docs.kernel.org/next/bpf/map_xskmap.html>
 #[doc(alias = "BPF_MAP_TYPE_XSKMAP")]
 pub struct XskMap<T> {
     inner: T,

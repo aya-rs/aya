@@ -50,7 +50,6 @@ pub struct Features {
     bpf_cookie: bool,
     cpumap_prog_id: bool,
     devmap_prog_id: bool,
-    devmap_hash_prog_id: bool,
     btf: Option<BtfFeatures>,
 }
 
@@ -65,7 +64,6 @@ impl Features {
         bpf_cookie: bool,
         cpumap_prog_id: bool,
         devmap_prog_id: bool,
-        devmap_hash_prog_id: bool,
         btf: Option<BtfFeatures>,
     ) -> Self {
         Self {
@@ -76,7 +74,6 @@ impl Features {
             bpf_cookie,
             cpumap_prog_id,
             devmap_prog_id,
-            devmap_hash_prog_id,
             btf,
         }
     }
@@ -114,11 +111,6 @@ impl Features {
     /// Returns whether XDP Device Maps support chained program IDs.
     pub fn devmap_prog_id(&self) -> bool {
         self.devmap_prog_id
-    }
-
-    /// Returns whether XDP Hash Device Maps support chained program IDs.
-    pub fn devmap_hash_prog_id(&self) -> bool {
-        self.devmap_hash_prog_id
     }
 
     /// If BTF is supported, returns which BTF features are supported.

@@ -1,6 +1,6 @@
 use core::{cell::UnsafeCell, mem, ptr::NonNull};
 
-use aya_bpf_bindings::bindings::bpf_devmap_val;
+use aya_bpf_bindings::bindings::{bpf_devmap_val, xdp_action::XDP_REDIRECT};
 use aya_bpf_cty::c_void;
 
 use crate::{
@@ -99,9 +99,9 @@ impl DevMap {
     /// #[map]
     /// static MAP: DevMap = DevMap::with_max_entries(1, 0);
     ///
-    /// let ifindex = MAP.get(0);
+    /// let target_if_index = MAP.get(0).target_if_index;
     ///
-    /// // redirect to ifindex
+    /// // redirect to if_index
     /// ```
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<DevMapValue> {
@@ -111,7 +111,7 @@ impl DevMap {
                 &index as *const _ as *const c_void,
             );
             NonNull::new(value as *mut bpf_devmap_val).map(|p| DevMapValue {
-                ifindex: p.as_ref().ifindex,
+                if_index: p.as_ref().ifindex,
                 // SAFETY: map writes use fd, map reads use id.
                 // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6136
                 prog_id: p.as_ref().bpf_prog.id,
@@ -133,23 +133,27 @@ impl DevMap {
     /// static MAP: DevMap = DevMap::with_max_entries(8, 0);
     ///
     /// #[xdp]
-    /// fn xdp(_ctx: XdpContext) -> i32 {
-    ///     MAP.redirect(7, xdp_action::XDP_PASS as u64)
+    /// fn xdp(_ctx: XdpContext) -> u32 {
+    ///     MAP.redirect(7, 0).unwrap_or(xdp_action::XDP_DROP)
     /// }
     /// ```
     #[inline(always)]
-    pub fn redirect(&self, index: u32, flags: u64) -> u32 {
-        // Return XDP_REDIRECT on success, or the value of the two lower bits of the flags
-        // argument on error. Thus I have no idea why it returns a long (i64) instead of
-        // something saner, hence the unsigned_abs.
-        unsafe {
-            bpf_redirect_map(self.def.get() as *mut _, index.into(), flags).unsigned_abs() as u32
+    pub fn redirect(&self, index: u32, flags: u64) -> Result<u32, u32> {
+        let ret = unsafe { bpf_redirect_map(self.def.get() as *mut _, index.into(), flags) };
+        match ret.unsigned_abs() as u32 {
+            XDP_REDIRECT => Ok(XDP_REDIRECT),
+            // Return XDP_REDIRECT on success, or the value of the two lower bits of the flags
+            // argument on error. Thus I have no idea why it returns a long (i64) instead of
+            // something saner, hence the unsigned_abs.
+            ret => Err(ret),
         }
     }
 }
 
 #[derive(Clone, Copy)]
+/// The value of a device map.
 pub struct DevMapValue {
-    pub ifindex: u32,
+    /// Target interface index to redirect to.
+    pub if_index: u32,
     pub prog_id: u32,
 }

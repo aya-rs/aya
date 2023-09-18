@@ -1,6 +1,6 @@
 use core::{cell::UnsafeCell, mem, ptr::NonNull};
 
-use aya_bpf_bindings::bindings::bpf_xdp_sock;
+use aya_bpf_bindings::bindings::{bpf_xdp_sock, xdp_action::XDP_REDIRECT};
 use aya_bpf_cty::c_void;
 
 use crate::{
@@ -150,18 +150,20 @@ impl XskMap {
     /// static SOCKS: XskMap = XskMap::with_max_entries(8, 0);
     ///
     /// #[xdp]
-    /// fn xdp(ctx, XdpContext) -> i32 {
+    /// fn xdp(ctx, XdpContext) -> u32 {
     ///     let queue_id = unsafe { (*ctx.ctx).rx_queue_index };
-    ///     MAP.redirect(queue_id, xdp_action::XDP_DROP as u64)
+    ///     MAP.redirect(queue_id, 0).unwrap_or(xdp_action::XDP_DROP)
     /// }
     /// ```
     #[inline(always)]
-    pub fn redirect(&self, index: u32, flags: u64) -> u32 {
-        unsafe {
+    pub fn redirect(&self, index: u32, flags: u64) -> Result<u32, u32> {
+        let ret = unsafe { bpf_redirect_map(self.def.get() as *mut _, index.into(), flags) };
+        match ret.unsigned_abs() as u32 {
+            XDP_REDIRECT => Ok(XDP_REDIRECT),
             // Return XDP_REDIRECT on success, or the value of the two lower bits of the flags
             // argument on error. Thus I have no idea why it returns a long (i64) instead of
             // something saner, hence the unsigned_abs.
-            bpf_redirect_map(self.def.get() as *mut _, index.into(), flags).unsigned_abs() as u32
+            ret => Err(ret),
         }
     }
 }
