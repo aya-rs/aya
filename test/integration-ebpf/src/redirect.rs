@@ -26,25 +26,25 @@ static mut HITS: Array<u32> = Array::with_max_entries(2, 0);
 
 #[xdp]
 pub fn redirect_sock(_ctx: XdpContext) -> u32 {
-    SOCKS.redirect(0, xdp_action::XDP_ABORTED as u64)
+    SOCKS.redirect(0, 0).unwrap_or(xdp_action::XDP_ABORTED)
 }
 
 #[xdp]
 pub fn redirect_dev(_ctx: XdpContext) -> u32 {
     inc_hit(0);
-    DEVS.redirect(0, xdp_action::XDP_ABORTED as u64)
+    DEVS.redirect(0, 0).unwrap_or(xdp_action::XDP_ABORTED)
 }
 
 #[xdp]
 pub fn redirect_dev_hash(_ctx: XdpContext) -> u32 {
     inc_hit(0);
-    DEVS_HASH.redirect(10, xdp_action::XDP_ABORTED as u64)
+    DEVS_HASH.redirect(10, 0).unwrap_or(xdp_action::XDP_ABORTED)
 }
 
 #[xdp]
 pub fn redirect_cpu(_ctx: XdpContext) -> u32 {
     inc_hit(0);
-    CPUS.redirect(0, xdp_action::XDP_ABORTED as u64)
+    CPUS.redirect(0, 0).unwrap_or(xdp_action::XDP_ABORTED)
 }
 
 #[xdp(map = "cpumap")]

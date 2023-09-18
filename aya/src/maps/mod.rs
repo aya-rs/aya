@@ -279,7 +279,7 @@ pub enum Map {
     DevMapHash(MapData),
     /// A [`XskMap`] map.
     XskMap(MapData),
-    /// An unsupported map type
+    /// An unsupported map type.
     Unsupported(MapData),
 }
 

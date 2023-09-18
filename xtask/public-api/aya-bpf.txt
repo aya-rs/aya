@@ -567,7 +567,7 @@ pub mod aya_bpf::maps::xdp
 #[repr(transparent)] pub struct aya_bpf::maps::xdp::CpuMap
 impl aya_bpf::maps::CpuMap
 pub const fn aya_bpf::maps::CpuMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::CpuMap
-pub fn aya_bpf::maps::CpuMap::redirect(&self, index: u32, flags: u64) -> u32
+pub fn aya_bpf::maps::CpuMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_bpf::maps::CpuMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::CpuMap
 impl core::marker::Sync for aya_bpf::maps::CpuMap
 impl core::marker::Send for aya_bpf::maps::CpuMap
@@ -594,7 +594,7 @@ pub fn aya_bpf::maps::CpuMap::from(t: T) -> T
 impl aya_bpf::maps::DevMap
 pub fn aya_bpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<DevMapValue>
 pub const fn aya_bpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMap
-pub fn aya_bpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> u32
+pub fn aya_bpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_bpf::maps::DevMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMap
 impl core::marker::Sync for aya_bpf::maps::DevMap
 impl core::marker::Send for aya_bpf::maps::DevMap
@@ -621,7 +621,7 @@ pub fn aya_bpf::maps::DevMap::from(t: T) -> T
 impl aya_bpf::maps::DevMapHash
 pub fn aya_bpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<DevMapValue>
 pub const fn aya_bpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMapHash
-pub fn aya_bpf::maps::DevMapHash::redirect(&self, key: u32, flags: u64) -> u32
+pub fn aya_bpf::maps::DevMapHash::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_bpf::maps::DevMapHash::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMapHash
 impl core::marker::Sync for aya_bpf::maps::DevMapHash
 impl core::marker::Send for aya_bpf::maps::DevMapHash
@@ -648,7 +648,7 @@ pub fn aya_bpf::maps::DevMapHash::from(t: T) -> T
 impl aya_bpf::maps::XskMap
 pub fn aya_bpf::maps::XskMap::get(&self, index: u32) -> core::option::Option<u32>
 pub const fn aya_bpf::maps::XskMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::XskMap
-pub fn aya_bpf::maps::XskMap::redirect(&self, index: u32, flags: u64) -> u32
+pub fn aya_bpf::maps::XskMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_bpf::maps::XskMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::XskMap
 impl core::marker::Sync for aya_bpf::maps::XskMap
 impl core::marker::Send for aya_bpf::maps::XskMap
@@ -729,7 +729,7 @@ pub fn aya_bpf::maps::bloom_filter::BloomFilter<T>::from(t: T) -> T
 #[repr(transparent)] pub struct aya_bpf::maps::CpuMap
 impl aya_bpf::maps::CpuMap
 pub const fn aya_bpf::maps::CpuMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::CpuMap
-pub fn aya_bpf::maps::CpuMap::redirect(&self, index: u32, flags: u64) -> u32
+pub fn aya_bpf::maps::CpuMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_bpf::maps::CpuMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::CpuMap
 impl core::marker::Sync for aya_bpf::maps::CpuMap
 impl core::marker::Send for aya_bpf::maps::CpuMap
@@ -756,7 +756,7 @@ pub fn aya_bpf::maps::CpuMap::from(t: T) -> T
 impl aya_bpf::maps::DevMap
 pub fn aya_bpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<DevMapValue>
 pub const fn aya_bpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMap
-pub fn aya_bpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> u32
+pub fn aya_bpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_bpf::maps::DevMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMap
 impl core::marker::Sync for aya_bpf::maps::DevMap
 impl core::marker::Send for aya_bpf::maps::DevMap
@@ -783,7 +783,7 @@ pub fn aya_bpf::maps::DevMap::from(t: T) -> T
 impl aya_bpf::maps::DevMapHash
 pub fn aya_bpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<DevMapValue>
 pub const fn aya_bpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMapHash
-pub fn aya_bpf::maps::DevMapHash::redirect(&self, key: u32, flags: u64) -> u32
+pub fn aya_bpf::maps::DevMapHash::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_bpf::maps::DevMapHash::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMapHash
 impl core::marker::Sync for aya_bpf::maps::DevMapHash
 impl core::marker::Send for aya_bpf::maps::DevMapHash
@@ -1206,7 +1206,7 @@ pub fn aya_bpf::maps::stack_trace::StackTrace::from(t: T) -> T
 impl aya_bpf::maps::XskMap
 pub fn aya_bpf::maps::XskMap::get(&self, index: u32) -> core::option::Option<u32>
 pub const fn aya_bpf::maps::XskMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::XskMap
-pub fn aya_bpf::maps::XskMap::redirect(&self, index: u32, flags: u64) -> u32
+pub fn aya_bpf::maps::XskMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_bpf::maps::XskMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::XskMap
 impl core::marker::Sync for aya_bpf::maps::XskMap
 impl core::marker::Send for aya_bpf::maps::XskMap

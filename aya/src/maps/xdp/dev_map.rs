@@ -6,7 +6,7 @@ use std::{
     os::fd::{AsFd, AsRawFd},
 };
 
-use aya_obj::generated::{bpf_devmap_val, bpf_devmap_val__bindgen_ty_1};
+use aya_obj::generated::bpf_devmap_val;
 
 use crate::{
     maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
@@ -14,6 +14,8 @@ use crate::{
     sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
     Pod, FEATURES,
 };
+
+use super::XdpMapError;
 
 /// An array of network devices.
 ///
@@ -30,12 +32,15 @@ use crate::{
 /// use aya::maps::xdp::DevMap;
 ///
 /// let mut devmap = DevMap::try_from(bpf.map_mut("IFACES").unwrap())?;
-/// let source = 32u32;
-/// let dest = 42u32;
-/// devmap.set(source, dest, None, 0);
+/// // Lookups at index 2 will redirect packets to interface with index 3 (e.g. eth1)
+/// devmap.set(2, 3, None, 0);
 ///
 /// # Ok::<(), aya::BpfError>(())
 /// ```
+///
+/// # See also
+///
+/// Kernel documentation: <https://docs.kernel.org/next/bpf/map_devmap.html>
 #[doc(alias = "BPF_MAP_TYPE_DEVMAP")]
 pub struct DevMap<T> {
     inner: T,
@@ -61,7 +66,7 @@ impl<T: Borrow<MapData>> DevMap<T> {
         self.inner.borrow().obj.max_entries()
     }
 
-    /// Returns the target ifindex and possible program at a given index.
+    /// Returns the target interface index and optional program at a given index.
     ///
     /// # Errors
     ///
@@ -75,7 +80,7 @@ impl<T: Borrow<MapData>> DevMap<T> {
         let value = if FEATURES.devmap_prog_id() {
             bpf_map_lookup_elem::<_, bpf_devmap_val>(fd, &index, flags).map(|value| {
                 value.map(|value| DevMapValue {
-                    ifindex: value.ifindex,
+                    if_index: value.ifindex,
                     // SAFETY: map writes use fd, map reads use id.
                     // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/include/uapi/linux/bpf.h#L6228
                     prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
@@ -84,7 +89,7 @@ impl<T: Borrow<MapData>> DevMap<T> {
         } else {
             bpf_map_lookup_elem::<_, u32>(fd, &index, flags).map(|value| {
                 value.map(|ifindex| DevMapValue {
-                    ifindex,
+                    if_index: ifindex,
                     prog_id: None,
                 })
             })
@@ -104,57 +109,57 @@ impl<T: Borrow<MapData>> DevMap<T> {
 }
 
 impl<T: BorrowMut<MapData>> DevMap<T> {
-    /// Sets the target ifindex at index, and optionally a chained program.
+    /// Sets the target interface index at index, and optionally a chained program.
     ///
     /// When redirecting using `index`, packets will be transmitted by the interface with
-    /// `ifindex`.
+    /// `target_if_index`.
     ///
-    /// Another XDP program can be passed in that will be run before actual transmission. It can be
-    /// used to modify the packet before transmission with NIC specific data (MAC address update,
-    /// checksum computations, etc) or other purposes.
+    /// Starting from Linux kernel 5.8, another XDP program can be passed in that will be run before
+    /// actual transmission. It can be used to modify the packet before transmission with NIC
+    /// specific data (MAC address update, checksum computations, etc) or other purposes.
     ///
-    /// Note that only XDP programs with the `map = "devmap"` argument can be passed. See the
-    /// kernel-space `aya_bpf::xdp` for more information.
+    /// The chained program must be loaded with the `BPF_XDP_DEVMAP` attach type. When using
+    /// `aya-ebpf`, that means XDP programs that specify the `map = "devmap"` argument. See the
+    /// kernel-space `aya_ebpf::xdp` for more information.
     ///
     /// # Errors
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_update_elem` fails, [`MapError::ProgIdNotSupported`] if the kernel does not
-    /// support program ids and one is provided.
+    /// support chained programs and one is provided.
     pub fn set(
         &mut self,
         index: u32,
-        ifindex: u32,
+        target_if_index: u32,
         program: Option<&ProgramFd>,
         flags: u64,
-    ) -> Result<(), MapError> {
+    ) -> Result<(), XdpMapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd().as_fd();
 
         let res = if FEATURES.devmap_prog_id() {
-            let value = bpf_devmap_val {
-                ifindex,
-                bpf_prog: bpf_devmap_val__bindgen_ty_1 {
-                    // Default is valid as the kernel will only consider fd > 0:
-                    // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/devmap.c#L866
-                    // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/devmap.c#L918
-                    fd: program
-                        .map(|prog| prog.as_fd().as_raw_fd())
-                        .unwrap_or_default(),
-                },
-            };
+            let mut value = unsafe { std::mem::zeroed::<bpf_devmap_val>() };
+            value.ifindex = target_if_index;
+            // Default is valid as the kernel will only consider fd > 0:
+            // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/devmap.c#L866
+            // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/devmap.c#L918
+            value.bpf_prog.fd = program
+                .map(|prog| prog.as_fd().as_raw_fd())
+                .unwrap_or_default();
             bpf_map_update_elem(fd, Some(&index), &value, flags)
         } else {
             if program.is_some() {
-                return Err(MapError::ProgIdNotSupported);
+                return Err(XdpMapError::ChainedProgramNotSupported);
             }
-            bpf_map_update_elem(fd, Some(&index), &ifindex, flags)
+            bpf_map_update_elem(fd, Some(&index), &target_if_index, flags)
         };
 
-        res.map_err(|(_, io_error)| SyscallError {
-            call: "bpf_map_update_elem",
-            io_error,
+        res.map_err(|(_, io_error)| {
+            MapError::from(SyscallError {
+                call: "bpf_map_update_elem",
+                io_error,
+            })
         })?;
         Ok(())
     }
@@ -173,7 +178,10 @@ impl<T: Borrow<MapData>> IterableMap<u32, DevMapValue> for DevMap<T> {
 unsafe impl Pod for bpf_devmap_val {}
 
 #[derive(Clone, Copy, Debug)]
+/// The value of a device map.
 pub struct DevMapValue {
-    pub ifindex: u32,
+    /// Target interface index to redirect to.
+    pub if_index: u32,
+    /// Chained XDP program ID.
     pub prog_id: Option<NonZeroU32>,
 }
