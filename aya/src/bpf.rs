@@ -96,7 +96,6 @@ fn detect_features() -> Features {
         is_bpf_cookie_supported(),
         is_prog_id_supported(BPF_MAP_TYPE_CPUMAP),
         is_prog_id_supported(BPF_MAP_TYPE_DEVMAP),
-        is_prog_id_supported(BPF_MAP_TYPE_DEVMAP_HASH),
         btf,
     );
     debug!("BPF Feature Detection: {:#?}", f);
@@ -484,11 +483,8 @@ impl<'a> BpfLoader<'a> {
                 Ok(BPF_MAP_TYPE_CPUMAP) => {
                     obj.set_value_size(if FEATURES.cpumap_prog_id() { 8 } else { 4 })
                 }
-                Ok(BPF_MAP_TYPE_DEVMAP) => {
+                Ok(BPF_MAP_TYPE_DEVMAP | BPF_MAP_TYPE_DEVMAP_HASH) => {
                     obj.set_value_size(if FEATURES.devmap_prog_id() { 8 } else { 4 })
-                }
-                Ok(BPF_MAP_TYPE_DEVMAP_HASH) => {
-                    obj.set_value_size(if FEATURES.devmap_hash_prog_id() { 8 } else { 4 })
                 }
                 _ => (),
             }

@@ -1,6 +1,6 @@
 use core::{cell::UnsafeCell, mem};
 
-use aya_bpf_bindings::bindings::bpf_cpumap_val;
+use aya_bpf_bindings::bindings::{bpf_cpumap_val, xdp_action::XDP_REDIRECT};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_CPUMAP},
@@ -40,9 +40,9 @@ unsafe impl Sync for CpuMap {}
 impl CpuMap {
     /// Creates a [`CpuMap`] with a set maximum number of elements.
     ///
-    /// In a CPU Map, an entry represents a CPU core. Thus there should be as many entries as there
-    /// are CPU cores on the system. It can be set to zero here, and updated by userspace at
-    /// runtime. Refer to the userspace documentation for more information.
+    /// In a CPU map, an entry represents a CPU core. Thus there should be as many entries as there
+    /// are CPU cores on the system. `max_entries` can be set to zero here, and updated by userspace
+    /// at runtime. Refer to the userspace documentation for more information.
     ///
     /// # Examples
     ///
@@ -109,16 +109,18 @@ impl CpuMap {
     /// #[xdp]
     /// fn xdp(_ctx: XdpContext) -> u32 {
     ///     // Redirect to CPU 7 or drop packet if no entry found.
-    ///     MAP.redirect(7, xdp_action::XDP_DROP as u64)
+    ///     MAP.redirect(7, 0).unwrap_or(xdp_action::XDP_DROP)
     /// }
     /// ```
     #[inline(always)]
-    pub fn redirect(&self, index: u32, flags: u64) -> u32 {
-        unsafe {
+    pub fn redirect(&self, index: u32, flags: u64) -> Result<u32, u32> {
+        let ret = unsafe { bpf_redirect_map(self.def.get() as *mut _, index.into(), flags) };
+        match ret.unsigned_abs() as u32 {
+            XDP_REDIRECT => Ok(XDP_REDIRECT),
             // Return XDP_REDIRECT on success, or the value of the two lower bits of the flags
             // argument on error. Thus I have no idea why it returns a long (i64) instead of
             // something saner, hence the unsigned_abs.
-            bpf_redirect_map(self.def.get() as *mut _, index.into(), flags).unsigned_abs() as u32
+            ret => Err(ret),
         }
     }
 }
