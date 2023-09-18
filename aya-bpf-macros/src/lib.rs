@@ -147,14 +147,7 @@ pub fn sk_msg(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// #[xdp(frags)]
 /// pub fn xdp(ctx: XdpContext) -> u32 {
-///     match unsafe { try_xdp(ctx) } {
-///         Ok(ret) => ret,
-///         Err(ret) => ret,
-///     }
-/// }
-///
-/// unsafe fn try_xdp(_ctx: XdpContext) -> Result<u32, u32> {
-///     Ok(XDP_PASS)
+///     XDP_PASS
 /// }
 /// ```
 #[proc_macro_error]
