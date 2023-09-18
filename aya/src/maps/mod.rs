@@ -18,17 +18,28 @@
 //! the [`TryFrom`] or [`TryInto`] trait. For example:
 //!
 //! ```no_run
+//! # #[derive(Debug, thiserror::Error)]
+//! # enum Error {
+//! #     #[error(transparent)]
+//! #     IO(#[from] std::io::Error),
+//! #     #[error(transparent)]
+//! #     Map(#[from] aya::maps::MapError),
+//! #     #[error(transparent)]
+//! #     Program(#[from] aya::programs::ProgramError),
+//! #     #[error(transparent)]
+//! #     Bpf(#[from] aya::BpfError)
+//! # }
 //! # let mut bpf = aya::Bpf::load(&[])?;
 //! use aya::maps::SockMap;
 //! use aya::programs::SkMsg;
 //!
 //! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS").unwrap())?;
-//! let map_fd = intercept_egress.fd()?;
+//! let map_fd = intercept_egress.fd().try_clone()?;
 //! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 //! prog.load()?;
-//! prog.attach(map_fd)?;
+//! prog.attach(&map_fd)?;
 //!
-//! # Ok::<(), aya::BpfError>(())
+//! # Ok::<(), Error>(())
 //! ```
 //!
 //! # Maps and `Pod` values
@@ -42,22 +53,22 @@ use std::{
     marker::PhantomData,
     mem,
     ops::Deref,
-    os::fd::{AsFd as _, AsRawFd, BorrowedFd, IntoRawFd as _, OwnedFd, RawFd},
+    os::fd::{AsFd, BorrowedFd, OwnedFd},
     path::Path,
     ptr,
 };
 
 use crate::util::KernelVersion;
-use libc::{getrlimit, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
+use libc::{getrlimit, rlim_t, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
 use thiserror::Error;
 
 use crate::{
-    obj::{self, parse_map_info},
+    obj::{self, parse_map_info, BpfSectionKind},
     pin::PinError,
     sys::{
-        bpf_create_map, bpf_get_object, bpf_map_get_info_by_fd, bpf_map_get_next_key,
-        bpf_pin_object, SyscallError,
+        bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_info_by_fd,
+        bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object, SyscallError,
     },
     util::nr_cpus,
     PinningType, Pod,
@@ -177,25 +188,13 @@ pub enum MapError {
 }
 
 /// A map file descriptor.
-pub struct MapFd(RawFd);
+#[derive(Debug)]
+pub struct MapFd(OwnedFd);
 
-impl AsRawFd for MapFd {
-    fn as_raw_fd(&self) -> RawFd {
-        self.0
-    }
-}
-
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct RlimitSize(usize);
-impl fmt::Display for RlimitSize {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.0 < 1024 {
-            write!(f, "{} bytes", self.0)
-        } else if self.0 < 1024 * 1024 {
-            write!(f, "{} KiB", self.0 / 1024)
-        } else {
-            write!(f, "{} MiB", self.0 / 1024 / 1024)
-        }
+impl AsFd for MapFd {
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        let Self(fd) = self;
+        fd.as_fd()
     }
 }
 
@@ -207,15 +206,28 @@ fn maybe_warn_rlimit() {
     if ret == 0 {
         let limit = unsafe { limit.assume_init() };
 
-        let limit: RlimitSize = RlimitSize(limit.rlim_cur.try_into().unwrap());
-        if limit.0 == RLIM_INFINITY.try_into().unwrap() {
+        if limit.rlim_cur == RLIM_INFINITY {
             return;
         }
+        struct HumanSize(rlim_t);
+
+        impl fmt::Display for HumanSize {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                let &Self(size) = self;
+                if size < 1024 {
+                    write!(f, "{} bytes", size)
+                } else if size < 1024 * 1024 {
+                    write!(f, "{} KiB", size / 1024)
+                } else {
+                    write!(f, "{} MiB", size / 1024 / 1024)
+                }
+            }
+        }
         warn!(
-            "RLIMIT_MEMLOCK value is {}, not RLIM_INFNITY; if experiencing problems with creating \
-            maps, try raising RMILIT_MEMLOCK either to RLIM_INFINITY or to a higher value sufficient \
-            for size of your maps",
-            limit
+            "RLIMIT_MEMLOCK value is {}, not RLIM_INFINITY; if experiencing problems with creating \
+            maps, try raising RLIMIT_MEMLOCK either to RLIM_INFINITY or to a higher value sufficient \
+            for the size of your maps",
+            HumanSize(limit.rlim_cur)
         );
     }
 }
@@ -395,8 +407,8 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 /// You should never need to use this unless you're implementing a new map type.
 #[derive(Debug)]
 pub struct MapData {
-    pub(crate) obj: obj::Map,
-    pub(crate) fd: RawFd,
+    obj: obj::Map,
+    fd: MapFd,
     /// Indicates if this map has been pinned to bpffs
     pub pinned: bool,
 }
@@ -426,9 +438,7 @@ impl MapData {
                     io_error,
                 }
             })?;
-
-        #[allow(trivial_numeric_casts)]
-        let fd = fd as RawFd;
+        let fd = MapFd(fd);
         Ok(Self {
             obj,
             fd,
@@ -459,11 +469,14 @@ impl MapData {
             call: "BPF_OBJ_GET",
             io_error,
         }) {
-            Ok(fd) => Ok(Self {
-                obj,
-                fd: fd.into_raw_fd(),
-                pinned: false,
-            }),
+            Ok(fd) => {
+                let fd = MapFd(fd);
+                Ok(Self {
+                    obj,
+                    fd,
+                    pinned: false,
+                })
+            }
             Err(_) => {
                 let mut map = Self::create(obj, name, btf_fd)?;
                 map.pin(name, path).map_err(|error| MapError::PinError {
@@ -473,6 +486,27 @@ impl MapData {
                 Ok(map)
             }
         }
+    }
+
+    pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
+        let Self { obj, fd, pinned: _ } = self;
+        if !obj.data().is_empty() && obj.section_kind() != BpfSectionKind::Bss {
+            bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
+                .map_err(|(_, io_error)| SyscallError {
+                    call: "bpf_map_update_elem",
+                    io_error,
+                })
+                .map_err(MapError::from)?;
+        }
+        if obj.section_kind() == BpfSectionKind::Rodata {
+            bpf_map_freeze(fd.as_fd())
+                .map_err(|(_, io_error)| SyscallError {
+                    call: "bpf_map_freeze",
+                    io_error,
+                })
+                .map_err(MapError::from)?;
+        }
+        Ok(())
     }
 
     /// Loads a map from a pinned path in bpffs.
@@ -493,12 +527,13 @@ impl MapData {
             call: "BPF_OBJ_GET",
             io_error,
         })?;
+        let fd = MapFd(fd);
 
         let info = bpf_map_get_info_by_fd(fd.as_fd())?;
 
         Ok(Self {
             obj: parse_map_info(info, PinningType::ByName),
-            fd: fd.into_raw_fd(),
+            fd,
             pinned: true,
         })
     }
@@ -511,9 +546,10 @@ impl MapData {
     pub fn from_fd(fd: OwnedFd) -> Result<Self, MapError> {
         let info = bpf_map_get_info_by_fd(fd.as_fd())?;
 
+        let fd = MapFd(fd);
         Ok(Self {
             obj: parse_map_info(info, PinningType::None),
-            fd: fd.into_raw_fd(),
+            fd,
             pinned: false,
         })
     }
@@ -528,7 +564,7 @@ impl MapData {
         let path = path.as_ref().join(name);
         let path_string = CString::new(path.as_os_str().as_bytes())
             .map_err(|error| PinError::InvalidPinPath { path, error })?;
-        bpf_pin_object(*fd, &path_string).map_err(|(_, io_error)| SyscallError {
+        bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_PIN",
             io_error,
         })?;
@@ -537,30 +573,22 @@ impl MapData {
     }
 
     /// Returns the file descriptor of the map.
-    ///
-    /// Can be converted to [`RawFd`] using [`AsRawFd`].
-    pub fn fd(&self) -> MapFd {
-        MapFd(self.fd)
+    pub fn fd(&self) -> &MapFd {
+        let Self {
+            obj: _,
+            fd,
+            pinned: _,
+        } = self;
+        fd
     }
-}
 
-impl Drop for MapData {
-    fn drop(&mut self) {
-        // TODO: Replace this with an OwnedFd once that is stabilized.
-        //
-        // SAFETY: `drop` is only called once.
-        unsafe { libc::close(self.fd) };
-    }
-}
-
-impl Clone for MapData {
-    fn clone(&self) -> Self {
-        let Self { obj, fd, pinned } = self;
-        Self {
-            obj: obj.clone(),
-            fd: unsafe { libc::dup(*fd) },
-            pinned: *pinned,
-        }
+    pub(crate) fn obj(&self) -> &obj::Map {
+        let Self {
+            obj,
+            fd: _,
+            pinned: _,
+        } = self;
+        obj
     }
 }
 
@@ -598,7 +626,7 @@ impl<K: Pod> Iterator for MapKeys<'_, K> {
             return None;
         }
 
-        let fd = self.map.fd;
+        let fd = self.map.fd().as_fd();
         let key =
             bpf_map_get_next_key(fd, self.key.as_ref()).map_err(|(_, io_error)| SyscallError {
                 call: "bpf_map_get_next_key",
@@ -754,6 +782,7 @@ impl<T: Pod> Deref for PerCpuValues<T> {
 mod tests {
     use assert_matches::assert_matches;
     use libc::EFAULT;
+    use std::os::fd::AsRawFd as _;
 
     use crate::{
         bpf_map_def,
@@ -795,9 +824,9 @@ mod tests {
             MapData::create(new_obj_map(), "foo", None),
             Ok(MapData {
                 obj: _,
-                fd: 42,
+                fd,
                 pinned: false
-            })
+            }) => assert_eq!(fd.as_fd().as_raw_fd(), 42)
         );
     }
 

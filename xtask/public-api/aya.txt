@@ -559,7 +559,7 @@ pub fn aya::maps::queue::Queue<T, V>::from(t: T) -> T
 pub mod aya::maps::sock
 pub struct aya::maps::sock::SockHash<T, K>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod> aya::maps::SockHash<T, K>
-pub fn aya::maps::SockHash<T, K>::fd(&self) -> core::result::Result<aya::maps::sock::SockMapFd, aya::maps::MapError>
+pub fn aya::maps::SockHash<T, K>::fd(&self) -> &aya::maps::sock::SockMapFd
 pub fn aya::maps::SockHash<T, K>::get(&self, key: &K, flags: u64) -> core::result::Result<std::os::fd::raw::RawFd, aya::maps::MapError>
 pub fn aya::maps::SockHash<T, K>::iter(&self) -> aya::maps::MapIter<'_, K, std::os::fd::raw::RawFd, Self>
 pub fn aya::maps::SockHash<T, K>::keys(&self) -> aya::maps::MapKeys<'_, K>
@@ -601,7 +601,7 @@ impl<T> core::convert::From<T> for aya::maps::SockHash<T, K>
 pub fn aya::maps::SockHash<T, K>::from(t: T) -> T
 pub struct aya::maps::sock::SockMap<T>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::SockMap<T>
-pub fn aya::maps::SockMap<T>::fd(&self) -> core::result::Result<aya::maps::sock::SockMapFd, aya::maps::MapError>
+pub fn aya::maps::SockMap<T>::fd(&self) -> &aya::maps::sock::SockMapFd
 pub fn aya::maps::SockMap<T>::indices(&self) -> aya::maps::MapKeys<'_, u32>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::SockMap<T>
 pub fn aya::maps::SockMap<T>::clear_index(&mut self, index: &u32) -> core::result::Result<(), aya::maps::MapError>
@@ -636,12 +636,11 @@ impl<T> core::borrow::BorrowMut<T> for aya::maps::SockMap<T> where T: core::mark
 pub fn aya::maps::SockMap<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::SockMap<T>
 pub fn aya::maps::SockMap<T>::from(t: T) -> T
-pub struct aya::maps::sock::SockMapFd(_)
+#[repr(transparent)] pub struct aya::maps::sock::SockMapFd(_)
+impl aya::maps::sock::SockMapFd
+pub fn aya::maps::sock::SockMapFd::try_clone(&self) -> std::io::error::Result<Self>
 impl std::os::fd::owned::AsFd for aya::maps::sock::SockMapFd
 pub fn aya::maps::sock::SockMapFd::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
-impl core::clone::Clone for aya::maps::sock::SockMapFd
-pub fn aya::maps::sock::SockMapFd::clone(&self) -> aya::maps::sock::SockMapFd
-impl core::marker::Copy for aya::maps::sock::SockMapFd
 impl core::marker::Send for aya::maps::sock::SockMapFd
 impl core::marker::Sync for aya::maps::sock::SockMapFd
 impl core::marker::Unpin for aya::maps::sock::SockMapFd
@@ -655,10 +654,6 @@ pub fn aya::maps::sock::SockMapFd::try_from(value: U) -> core::result::Result<T,
 impl<T, U> core::convert::TryInto<U> for aya::maps::sock::SockMapFd where U: core::convert::TryFrom<T>
 pub type aya::maps::sock::SockMapFd::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya::maps::sock::SockMapFd::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for aya::maps::sock::SockMapFd where T: core::clone::Clone
-pub type aya::maps::sock::SockMapFd::Owned = T
-pub fn aya::maps::sock::SockMapFd::clone_into(&self, target: &mut T)
-pub fn aya::maps::sock::SockMapFd::to_owned(&self) -> T
 impl<T> core::any::Any for aya::maps::sock::SockMapFd where T: 'static + core::marker::Sized
 pub fn aya::maps::sock::SockMapFd::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya::maps::sock::SockMapFd where T: core::marker::Sized
@@ -1226,13 +1221,9 @@ pub struct aya::maps::MapData
 pub aya::maps::MapData::pinned: bool
 impl aya::maps::MapData
 pub fn aya::maps::MapData::create(obj: aya_obj::maps::Map, name: &str, btf_fd: core::option::Option<std::os::fd::owned::BorrowedFd<'_>>) -> core::result::Result<Self, aya::maps::MapError>
-pub fn aya::maps::MapData::fd(&self) -> aya::maps::MapFd
+pub fn aya::maps::MapData::fd(&self) -> &aya::maps::MapFd
 pub fn aya::maps::MapData::from_fd(fd: std::os::fd::owned::OwnedFd) -> core::result::Result<Self, aya::maps::MapError>
 pub fn aya::maps::MapData::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::maps::MapError>
-impl core::clone::Clone for aya::maps::MapData
-pub fn aya::maps::MapData::clone(&self) -> Self
-impl core::ops::drop::Drop for aya::maps::MapData
-pub fn aya::maps::MapData::drop(&mut self)
 impl core::fmt::Debug for aya::maps::MapData
 pub fn aya::maps::MapData::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::maps::MapData
@@ -1248,10 +1239,6 @@ pub fn aya::maps::MapData::try_from(value: U) -> core::result::Result<T, <T as c
 impl<T, U> core::convert::TryInto<U> for aya::maps::MapData where U: core::convert::TryFrom<T>
 pub type aya::maps::MapData::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya::maps::MapData::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for aya::maps::MapData where T: core::clone::Clone
-pub type aya::maps::MapData::Owned = T
-pub fn aya::maps::MapData::clone_into(&self, target: &mut T)
-pub fn aya::maps::MapData::to_owned(&self) -> T
 impl<T> core::any::Any for aya::maps::MapData where T: 'static + core::marker::Sized
 pub fn aya::maps::MapData::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya::maps::MapData where T: core::marker::Sized
@@ -1261,8 +1248,10 @@ pub fn aya::maps::MapData::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::MapData
 pub fn aya::maps::MapData::from(t: T) -> T
 pub struct aya::maps::MapFd(_)
-impl std::os::fd::raw::AsRawFd for aya::maps::MapFd
-pub fn aya::maps::MapFd::as_raw_fd(&self) -> std::os::fd::raw::RawFd
+impl std::os::fd::owned::AsFd for aya::maps::MapFd
+pub fn aya::maps::MapFd::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
+impl core::fmt::Debug for aya::maps::MapFd
+pub fn aya::maps::MapFd::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::maps::MapFd
 impl core::marker::Sync for aya::maps::MapFd
 impl core::marker::Unpin for aya::maps::MapFd
@@ -1566,7 +1555,7 @@ impl<T> core::convert::From<T> for aya::maps::queue::Queue<T, V>
 pub fn aya::maps::queue::Queue<T, V>::from(t: T) -> T
 pub struct aya::maps::SockHash<T, K>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod> aya::maps::SockHash<T, K>
-pub fn aya::maps::SockHash<T, K>::fd(&self) -> core::result::Result<aya::maps::sock::SockMapFd, aya::maps::MapError>
+pub fn aya::maps::SockHash<T, K>::fd(&self) -> &aya::maps::sock::SockMapFd
 pub fn aya::maps::SockHash<T, K>::get(&self, key: &K, flags: u64) -> core::result::Result<std::os::fd::raw::RawFd, aya::maps::MapError>
 pub fn aya::maps::SockHash<T, K>::iter(&self) -> aya::maps::MapIter<'_, K, std::os::fd::raw::RawFd, Self>
 pub fn aya::maps::SockHash<T, K>::keys(&self) -> aya::maps::MapKeys<'_, K>
@@ -1608,7 +1597,7 @@ impl<T> core::convert::From<T> for aya::maps::SockHash<T, K>
 pub fn aya::maps::SockHash<T, K>::from(t: T) -> T
 pub struct aya::maps::SockMap<T>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::SockMap<T>
-pub fn aya::maps::SockMap<T>::fd(&self) -> core::result::Result<aya::maps::sock::SockMapFd, aya::maps::MapError>
+pub fn aya::maps::SockMap<T>::fd(&self) -> &aya::maps::sock::SockMapFd
 pub fn aya::maps::SockMap<T>::indices(&self) -> aya::maps::MapKeys<'_, u32>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::SockMap<T>
 pub fn aya::maps::SockMap<T>::clear_index(&mut self, index: &u32) -> core::result::Result<(), aya::maps::MapError>
@@ -6190,7 +6179,7 @@ impl<T> core::convert::From<T> for aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::from(t: T) -> T
 pub struct aya::programs::ProgramFd(_)
 impl aya::programs::ProgramFd
-pub fn aya::programs::ProgramFd::try_clone(&self) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::ProgramFd::try_clone(&self) -> std::io::error::Result<Self>
 impl std::os::fd::owned::AsFd for aya::programs::ProgramFd
 pub fn aya::programs::ProgramFd::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
 impl core::fmt::Debug for aya::programs::ProgramFd
@@ -6402,7 +6391,7 @@ impl<T> core::convert::From<T> for aya::programs::SkLookup
 pub fn aya::programs::SkLookup::from(t: T) -> T
 pub struct aya::programs::SkMsg
 impl aya::programs::SkMsg
-pub fn aya::programs::SkMsg::attach(&mut self, map: aya::maps::sock::SockMapFd) -> core::result::Result<SkMsgLinkId, aya::programs::ProgramError>
+pub fn aya::programs::SkMsg::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<SkMsgLinkId, aya::programs::ProgramError>
 pub fn aya::programs::SkMsg::detach(&mut self, link_id: SkMsgLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::SkMsg::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::SkMsg::take_link(&mut self, link_id: SkMsgLinkId) -> core::result::Result<SkMsgLink, aya::programs::ProgramError>
@@ -6450,7 +6439,7 @@ impl<T> core::convert::From<T> for aya::programs::SkMsg
 pub fn aya::programs::SkMsg::from(t: T) -> T
 pub struct aya::programs::SkSkb
 impl aya::programs::SkSkb
-pub fn aya::programs::SkSkb::attach(&mut self, map: aya::maps::sock::SockMapFd) -> core::result::Result<SkSkbLinkId, aya::programs::ProgramError>
+pub fn aya::programs::SkSkb::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<SkSkbLinkId, aya::programs::ProgramError>
 pub fn aya::programs::SkSkb::detach(&mut self, link_id: SkSkbLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::SkSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::SkSkbKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::SkSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>

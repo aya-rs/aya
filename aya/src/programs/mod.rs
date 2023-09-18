@@ -218,9 +218,8 @@ pub enum ProgramError {
 pub struct ProgramFd(OwnedFd);
 
 impl ProgramFd {
-    /// Creates a new `ProgramFd` instance that shares the same underlying file
-    /// description as the existing `ProgramFd` instance.
-    pub fn try_clone(&self) -> Result<Self, ProgramError> {
+    /// Creates a new instance that shares the same underlying file description as [`self`].
+    pub fn try_clone(&self) -> io::Result<Self> {
         let Self(inner) = self;
         let inner = inner.try_clone()?;
         Ok(Self(inner))
@@ -536,7 +535,7 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
             path: path.into(),
             error,
         })?;
-    bpf_pin_object(fd.as_fd().as_raw_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
+    bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
         call: "BPF_OBJ_PIN",
         io_error,
     })?;

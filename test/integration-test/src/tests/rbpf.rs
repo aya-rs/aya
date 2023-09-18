@@ -58,7 +58,7 @@ fn use_map_with_rbpf() {
         );
 
         let map_id = if name == "map_1" { 0 } else { 1 };
-        let fd = map_id as i32 | 0xCAFE00;
+        let fd = map_id as std::os::fd::RawFd | 0xCAFE00;
         maps.insert(name.to_owned(), (fd, map.clone()));
 
         unsafe {

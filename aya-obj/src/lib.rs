@@ -77,6 +77,12 @@ mod std {
         pub use core_error::Error;
     }
     pub use core::*;
+
+    pub mod os {
+        pub mod fd {
+            pub type RawFd = core::ffi::c_int;
+        }
+    }
 }
 
 pub mod btf;

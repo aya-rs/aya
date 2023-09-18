@@ -154,11 +154,9 @@ impl FdLink {
                 error,
             }
         })?;
-        bpf_pin_object(self.fd.as_raw_fd(), &path_string).map_err(|(_, io_error)| {
-            SyscallError {
-                call: "BPF_OBJ_PIN",
-                io_error,
-            }
+        bpf_pin_object(self.fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
+            call: "BPF_OBJ_PIN",
+            io_error,
         })?;
         Ok(PinnedLink::new(path.into(), self))
     }
