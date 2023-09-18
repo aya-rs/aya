@@ -1218,7 +1218,6 @@ pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::from(t: T) -> T
 pub struct aya::maps::MapData
-pub aya::maps::MapData::pinned: bool
 impl aya::maps::MapData
 pub fn aya::maps::MapData::create(obj: aya_obj::maps::Map, name: &str, btf_fd: core::option::Option<std::os::fd::owned::BorrowedFd<'_>>) -> core::result::Result<Self, aya::maps::MapError>
 pub fn aya::maps::MapData::fd(&self) -> &aya::maps::MapFd
@@ -1738,8 +1737,6 @@ pub fn aya::maps::stack_trace::StackTraceMap<T>::get(&self, index: &u32) -> core
 pub fn aya::maps::stack_trace::StackTraceMap<T>::map(&self) -> &aya::maps::MapData
 pub mod aya::pin
 pub enum aya::pin::PinError
-pub aya::pin::PinError::AlreadyPinned
-pub aya::pin::PinError::AlreadyPinned::name: alloc::string::String
 pub aya::pin::PinError::InvalidPinPath
 pub aya::pin::PinError::InvalidPinPath::error: alloc::ffi::c_str::NulError
 pub aya::pin::PinError::InvalidPinPath::path: std::path::PathBuf
