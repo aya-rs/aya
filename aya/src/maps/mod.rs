@@ -409,8 +409,6 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 pub struct MapData {
     obj: obj::Map,
     fd: MapFd,
-    /// Indicates if this map has been pinned to bpffs
-    pub pinned: bool,
 }
 
 impl MapData {
@@ -439,11 +437,7 @@ impl MapData {
                 }
             })?;
         let fd = MapFd(fd);
-        Ok(Self {
-            obj,
-            fd,
-            pinned: false,
-        })
+        Ok(Self { obj, fd })
     }
 
     pub(crate) fn create_pinned<P: AsRef<Path>>(
@@ -471,15 +465,12 @@ impl MapData {
         }) {
             Ok(fd) => {
                 let fd = MapFd(fd);
-                Ok(Self {
-                    obj,
-                    fd,
-                    pinned: false,
-                })
+                Ok(Self { obj, fd })
             }
             Err(_) => {
                 let mut map = Self::create(obj, name, btf_fd)?;
-                map.pin(name, path).map_err(|error| MapError::PinError {
+                let path = path.join(name);
+                map.pin(&path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,
                 })?;
@@ -489,7 +480,7 @@ impl MapData {
     }
 
     pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
-        let Self { obj, fd, pinned: _ } = self;
+        let Self { obj, fd } = self;
         if !obj.data().is_empty() && obj.section_kind() != BpfSectionKind::Bss {
             bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
                 .map_err(|(_, io_error)| SyscallError {
@@ -534,7 +525,6 @@ impl MapData {
         Ok(Self {
             obj: parse_map_info(info, PinningType::ByName),
             fd,
-            pinned: true,
         })
     }
 
@@ -550,44 +540,59 @@ impl MapData {
         Ok(Self {
             obj: parse_map_info(info, PinningType::None),
             fd,
-            pinned: false,
         })
     }
 
-    pub(crate) fn pin<P: AsRef<Path>>(&mut self, name: &str, path: P) -> Result<(), PinError> {
+    /// Allows the map to be pinned to the provided path.
+    ///
+    /// Any directories in the the path provided should have been created by the caller.
+    /// The path must be on a BPF filesystem.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`PinError::SyscallError`] if the underlying syscall fails.
+    /// This may also happen if the path already exists, in which case the wrapped
+    /// [`std::io::Error`] kind will be [`std::io::ErrorKind::AlreadyExists`].
+    /// Returns a [`PinError::InvalidPinPath`] if the path provided cannot be
+    /// converted to a [`CString`].
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # use aya::maps::MapData;
+    ///
+    /// let mut map = MapData::from_pin("/sys/fs/bpf/my_map")?;
+    /// map.pin("/sys/fs/bpf/my_map2")?;
+    ///
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        let Self { fd, pinned, obj: _ } = self;
-        if *pinned {
-            return Err(PinError::AlreadyPinned { name: name.into() });
-        }
-        let path = path.as_ref().join(name);
-        let path_string = CString::new(path.as_os_str().as_bytes())
-            .map_err(|error| PinError::InvalidPinPath { path, error })?;
+        let Self { fd, obj: _ } = self;
+        let path = path.as_ref();
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
+            PinError::InvalidPinPath {
+                path: path.to_path_buf(),
+                error,
+            }
+        })?;
         bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
             call: "BPF_OBJ_PIN",
             io_error,
         })?;
-        *pinned = true;
         Ok(())
     }
 
     /// Returns the file descriptor of the map.
     pub fn fd(&self) -> &MapFd {
-        let Self {
-            obj: _,
-            fd,
-            pinned: _,
-        } = self;
+        let Self { obj: _, fd } = self;
         fd
     }
 
     pub(crate) fn obj(&self) -> &obj::Map {
-        let Self {
-            obj,
-            fd: _,
-            pinned: _,
-        } = self;
+        let Self { obj, fd: _ } = self;
         obj
     }
 }
@@ -825,7 +830,6 @@ mod tests {
             Ok(MapData {
                 obj: _,
                 fd,
-                pinned: false
             }) => assert_eq!(fd.as_fd().as_raw_fd(), 42)
         );
     }
