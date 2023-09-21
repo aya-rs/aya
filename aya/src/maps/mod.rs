@@ -440,7 +440,7 @@ impl MapData {
         Ok(Self { obj, fd })
     }
 
-    pub(crate) fn create_pinned<P: AsRef<Path>>(
+    pub(crate) fn create_pinned_by_name<P: AsRef<Path>>(
         path: P,
         obj: obj::Map,
         name: &str,
@@ -469,7 +469,6 @@ impl MapData {
             }
             Err(_) => {
                 let mut map = Self::create(obj, name, btf_fd)?;
-                let path = path.join(name);
                 map.pin(&path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,
