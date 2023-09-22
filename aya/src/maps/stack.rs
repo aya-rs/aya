@@ -30,7 +30,7 @@ use crate::{
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_STACK")]
 pub struct Stack<T, V: Pod> {
-    inner: T,
+    pub(crate) inner: T,
     _v: PhantomData<V>,
 }
 

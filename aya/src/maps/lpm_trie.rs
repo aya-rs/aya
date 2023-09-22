@@ -48,7 +48,7 @@ use crate::{
 #[doc(alias = "BPF_MAP_TYPE_LPM_TRIE")]
 #[derive(Debug)]
 pub struct LpmTrie<T, K, V> {
-    inner: T,
+    pub(crate) inner: T,
     _k: PhantomData<K>,
     _v: PhantomData<V>,
 }
@@ -235,7 +235,7 @@ mod tests {
             } => Ok(1337),
             call => panic!("unexpected syscall {:?}", call),
         });
-        MapData::create(obj, "foo", None).unwrap()
+        MapData::create(obj, "foo".into(), None).unwrap()
     }
 
     fn sys_error(value: i32) -> SysResult<c_long> {

@@ -61,7 +61,7 @@ mod test_utils {
             } => Ok(1337),
             call => panic!("unexpected syscall {:?}", call),
         });
-        MapData::create(obj, "foo", None).unwrap()
+        MapData::create(obj, "foo".into(), None).unwrap()
     }
 
     pub(super) fn new_obj_map(map_type: bpf_map_type) -> obj::Map {

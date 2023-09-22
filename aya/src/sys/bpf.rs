@@ -754,7 +754,7 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
             symbol_index: None,
             data: Vec::new(),
         }),
-        "aya_global",
+        "aya_global".into(),
         None,
     );
 
