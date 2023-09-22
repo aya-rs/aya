@@ -42,7 +42,7 @@ use crate::{
 /// Kernel documentation: <https://docs.kernel.org/next/bpf/map_devmap.html>
 #[doc(alias = "BPF_MAP_TYPE_DEVMAP_HASH")]
 pub struct DevMapHash<T> {
-    inner: T,
+    pub(crate) inner: T,
 }
 
 impl<T: Borrow<MapData>> DevMapHash<T> {

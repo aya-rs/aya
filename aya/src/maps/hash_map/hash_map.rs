@@ -34,7 +34,7 @@ use crate::{
 #[doc(alias = "BPF_MAP_TYPE_LRU_HASH")]
 #[derive(Debug)]
 pub struct HashMap<T, K, V> {
-    inner: T,
+    pub(crate) inner: T,
     _k: PhantomData<K>,
     _v: PhantomData<V>,
 }
