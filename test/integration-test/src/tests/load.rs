@@ -1,5 +1,6 @@
 use std::{
     convert::TryInto as _,
+    path::Path,
     thread,
     time::{Duration, SystemTime},
 };
@@ -39,6 +40,8 @@ fn multiple_btf_maps() {
 
     let map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
     let map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into().unwrap();
+    let mut map_pin_by_name: Array<_, u64> =
+        bpf.take_map("map_pin_by_name").unwrap().try_into().unwrap();
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
@@ -50,9 +53,81 @@ fn multiple_btf_maps() {
     let key = 0;
     let val_1 = map_1.get(&key, 0).unwrap();
     let val_2 = map_2.get(&key, 0).unwrap();
+    let val_3 = map_pin_by_name.get(&key, 0).unwrap();
 
     assert_eq!(val_1, 24);
     assert_eq!(val_2, 42);
+    assert_eq!(val_3, 44);
+    let map_pin = Path::new("/sys/fs/bpf/map_pin_by_name");
+    assert!(&map_pin.exists());
+    map_pin_by_name.unpin(map_pin).unwrap();
+    assert!(!map_pin.exists());
+}
+
+#[test]
+fn pin_lifecycle_multiple_btf_maps() {
+    let mut bpf = Bpf::load(crate::MULTIMAP_BTF).unwrap();
+
+    // "map_pin_by_name" should already be pinned, unpin and pin again later
+    let map_pin_by_name = bpf.map_mut("map_pin_by_name").unwrap();
+    let map_pin_by_name_path = Path::new("/sys/fs/bpf/map_pin_by_name");
+
+    assert!(map_pin_by_name_path.exists());
+    map_pin_by_name.unpin(map_pin_by_name_path).unwrap();
+    assert!(!map_pin_by_name_path.exists());
+
+    // pin and unpin all maps before casting to explicit types
+    for (i, (name, map)) in bpf.maps_mut().enumerate() {
+        // Don't pin system maps or the map that's already pinned by name.
+        if name.contains(".rodata") || name.contains(".bss") {
+            continue;
+        }
+        let map_pin_path = &Path::new("/sys/fs/bpf/").join(i.to_string());
+
+        map.pin(map_pin_path).unwrap();
+
+        assert!(map_pin_path.exists());
+        map.unpin(map_pin_path).unwrap();
+        assert!(!map_pin_path.exists());
+    }
+
+    let mut map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
+    let mut map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into().unwrap();
+    let mut map_pin_by_name: Array<_, u64> =
+        bpf.take_map("map_pin_by_name").unwrap().try_into().unwrap();
+
+    let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+    prog.attach(Some("trigger_bpf_program"), 0, "/proc/self/exe", None)
+        .unwrap();
+
+    trigger_bpf_program();
+
+    let key = 0;
+    let val_1 = map_1.get(&key, 0).unwrap();
+    let val_2 = map_2.get(&key, 0).unwrap();
+    let val_3 = map_pin_by_name.get(&key, 0).unwrap();
+
+    assert_eq!(val_1, 24);
+    assert_eq!(val_2, 42);
+    assert_eq!(val_3, 44);
+
+    let map_1_pin_path = Path::new("/sys/fs/bpf/map_1");
+    let map_2_pin_path = Path::new("/sys/fs/bpf/map_2");
+
+    map_1.pin(map_1_pin_path).unwrap();
+    map_2.pin(map_2_pin_path).unwrap();
+    map_pin_by_name.pin(map_pin_by_name_path).unwrap();
+    assert!(map_1_pin_path.exists());
+    assert!(map_2_pin_path.exists());
+    assert!(map_pin_by_name_path.exists());
+
+    map_1.unpin(map_1_pin_path).unwrap();
+    map_2.unpin(map_2_pin_path).unwrap();
+    map_pin_by_name.unpin(map_pin_by_name_path).unwrap();
+    assert!(!map_1_pin_path.exists());
+    assert!(!map_2_pin_path.exists());
+    assert!(!map_pin_by_name_path.exists());
 }
 
 #[no_mangle]
