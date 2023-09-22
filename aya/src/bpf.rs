@@ -398,7 +398,7 @@ impl<'a> BpfLoader<'a> {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
                 match load_btf(btf.to_bytes(), *verifier_log_level) {
                     Ok(btf_fd) => Some(Arc::new(btf_fd)),
-                    // Only report an error here if the BTF is truely needed, otherwise proceed without.
+                    // Only report an error here if the BTF is truly needed, otherwise proceed without.
                     Err(err) => {
                         for program in obj.programs.values() {
                             match program.section {
@@ -859,6 +859,29 @@ impl Bpf {
     /// ```
     pub fn maps(&self) -> impl Iterator<Item = (&str, &Map)> {
         self.maps.iter().map(|(name, map)| (name.as_str(), map))
+    }
+
+    /// An iterator over all the maps that allows modification.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use std::path::Path;
+    /// # #[derive(thiserror::Error, Debug)]
+    /// # enum Error {
+    /// #     #[error(transparent)]
+    /// #     Bpf(#[from] aya::BpfError),
+    /// #     #[error(transparent)]
+    /// #     Pin(#[from] aya::pin::PinError)
+    /// # }
+    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let pin_path = Path::new("/tmp/pin_path");
+    /// for (_, map) in bpf.maps_mut() {
+    ///     map.pin(pin_path)?;
+    /// }
+    /// # Ok::<(), Error>(())
+    /// ```
+    pub fn maps_mut(&mut self) -> impl Iterator<Item = (&str, &mut Map)> {
+        self.maps.iter_mut().map(|(name, map)| (name.as_str(), map))
     }
 
     /// Returns a reference to the program with the given name.

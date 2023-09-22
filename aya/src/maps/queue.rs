@@ -30,7 +30,7 @@ use crate::{
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_QUEUE")]
 pub struct Queue<T, V: Pod> {
-    inner: T,
+    pub(crate) inner: T,
     _v: PhantomData<V>,
 }
 
