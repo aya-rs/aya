@@ -677,6 +677,40 @@ pub fn bpf_get_current_uid_gid() -> u64 {
     unsafe { gen::bpf_get_current_uid_gid() }
 }
 
+/// Recursively reads nested fields from kernel memory
+///
+/// The macro can read from arbitrary pointers, so it must be used in an `unsafe`
+/// scope in order to compile.
+///
+/// # Example
+///
+/// ```no_run
+/// # use aya_bpf::helpers::read_kernel;
+/// unsafe {
+///   let uid = read_kernel!(task, cred, uid.val)?;
+/// }
+/// ```
+///
+#[macro_export]
+macro_rules! read_kernel {
+    ($e1:ident, $e2:ident) => {{
+        $crate::helpers::bpf_probe_read_kernel(&(*$e1).$e2)
+    }};
+    ($e1:ident, $($es:ident).+) => {{
+        $crate::helpers::bpf_probe_read_kernel(&(*$e1).$($es).+)
+    }};
+    ($e1:ident, $e2:ident, $($tail:tt)+) => {{
+        $crate::helpers::bpf_probe_read_kernel(&(*$e1).$e2).and_then(|intermediate| read_kernel!(intermediate, $($tail)+))
+    }};
+    ($e1:ident, $($e2:ident).+, $($tail:tt)+) => {{
+        $crate::helpers::bpf_probe_read_kernel(&(*$e1).$($es).+).and_then(|intermediate| read_kernel!(intermediate, $($tail)+))
+    }};
+}
+
+// Macros are always exported from the crate root. Also export it from `helpers`.
+#[doc(inline)]
+pub use read_kernel;
+
 /// Prints a debug message to the BPF debugging pipe.
 ///
 /// The [format string syntax][fmt] is the same as that of the `printk` kernel
