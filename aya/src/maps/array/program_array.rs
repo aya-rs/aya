@@ -48,7 +48,7 @@ use crate::{
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_PROG_ARRAY")]
 pub struct ProgramArray<T> {
-    inner: T,
+    pub(crate) inner: T,
 }
 
 impl<T: Borrow<MapData>> ProgramArray<T> {

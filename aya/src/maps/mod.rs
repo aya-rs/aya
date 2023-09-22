@@ -48,6 +48,7 @@
 //! versa. Because of that, all map values must be plain old data and therefore
 //! implement the [Pod] trait.
 use std::{
+    borrow::BorrowMut,
     ffi::CString,
     fmt, io,
     marker::PhantomData,
@@ -169,8 +170,8 @@ pub enum MapError {
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
 
-    /// Could not pin map by name
-    #[error("map `{name:?}` requested pinning by name. pinning failed")]
+    /// Could not pin map
+    #[error("map `{name:?}` requested pinning. pinning failed")]
     PinError {
         /// The map name
         name: Option<String>,
@@ -291,7 +292,112 @@ impl Map {
             Self::Unsupported(map) => map.obj.map_type(),
         }
     }
+
+    /// Pins the map to a BPF filesystem.
+    ///
+    /// When a BPF map is pinned to a BPF filesystem it will remain loaded after
+    /// Aya has unloaded the program.
+    /// To remove the map, the file on the BPF filesystem must be removed.
+    /// Any directories in the the path provided should have been created by the caller.
+    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+        match self {
+            Self::Array(map) => map.pin(path),
+            Self::PerCpuArray(map) => map.pin(path),
+            Self::ProgramArray(map) => map.pin(path),
+            Self::HashMap(map) => map.pin(path),
+            Self::LruHashMap(map) => map.pin(path),
+            Self::PerCpuHashMap(map) => map.pin(path),
+            Self::PerCpuLruHashMap(map) => map.pin(path),
+            Self::PerfEventArray(map) => map.pin(path),
+            Self::SockHash(map) => map.pin(path),
+            Self::SockMap(map) => map.pin(path),
+            Self::BloomFilter(map) => map.pin(path),
+            Self::LpmTrie(map) => map.pin(path),
+            Self::Stack(map) => map.pin(path),
+            Self::StackTraceMap(map) => map.pin(path),
+            Self::Queue(map) => map.pin(path),
+            Self::Unsupported(map) => map.pin(path),
+        }
+    }
+
+    /// Removes the pinned map from a BPF filesystem.
+    pub fn unpin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), io::Error> {
+        match self {
+            Self::Array(map) => map.unpin(path),
+            Self::PerCpuArray(map) => map.unpin(path),
+            Self::ProgramArray(map) => map.unpin(path),
+            Self::HashMap(map) => map.unpin(path),
+            Self::LruHashMap(map) => map.unpin(path),
+            Self::PerCpuHashMap(map) => map.unpin(path),
+            Self::PerCpuLruHashMap(map) => map.unpin(path),
+            Self::PerfEventArray(map) => map.unpin(path),
+            Self::SockHash(map) => map.unpin(path),
+            Self::SockMap(map) => map.unpin(path),
+            Self::BloomFilter(map) => map.unpin(path),
+            Self::LpmTrie(map) => map.unpin(path),
+            Self::Stack(map) => map.unpin(path),
+            Self::StackTraceMap(map) => map.unpin(path),
+            Self::Queue(map) => map.unpin(path),
+            Self::Unsupported(map) => map.unpin(path),
+        }
+    }
 }
+
+// Implements map pinning for different map implementations
+// TODO add support for PerfEventArrays and AsyncPerfEventArrays
+macro_rules! impl_map_pin {
+    ($ty_param:tt {
+        $($ty:ident),+ $(,)?
+    }) => {
+        $(impl_map_pin!(<$ty_param> $ty);)+
+    };
+    (
+      <($($ty_param:ident),*)>
+      $ty:ident
+    ) => {
+            impl<T: BorrowMut<MapData>, $($ty_param: Pod),*> $ty<T, $($ty_param),*>
+            {
+                    /// Pins the map to a BPF filesystem.
+                    ///
+                    /// When a BPF map is pinned to a BPF filesystem it will remain loaded after
+                    /// Aya has unloaded the program.
+                    /// To remove the map, the file on the BPF filesystem must be removed.
+                    /// Any directories in the the path provided should have been created by the caller.
+                    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+                        let data = self.inner.borrow_mut();
+                        data.pin(path)
+                    }
+
+                    /// Removes the pinned map from a BPF filesystem.
+                    pub fn unpin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), io::Error> {
+                        let data = self.inner.borrow_mut();
+                        data.unpin(path)
+                    }
+            }
+
+    };
+}
+
+impl_map_pin!(() {
+    ProgramArray,
+    SockMap,
+    StackTraceMap,
+});
+
+impl_map_pin!((V) {
+    Array,
+    PerCpuArray,
+    SockHash,
+    BloomFilter,
+    Queue,
+    Stack,
+});
+
+impl_map_pin!((K, V) {
+    HashMap,
+    PerCpuHashMap,
+    LpmTrie,
+});
 
 // Implements TryFrom<Map> for different map implementations. Different map implementations can be
 // constructed from different variants of the map enum. Also, the implementation may have type
@@ -582,6 +688,12 @@ impl MapData {
             io_error,
         })?;
         Ok(())
+    }
+
+    pub(crate) fn unpin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), io::Error> {
+        let Self { fd: _, obj: _ } = self;
+
+        std::fs::remove_file(path)
     }
 
     /// Returns the file descriptor of the map.

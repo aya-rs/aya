@@ -65,7 +65,7 @@ use crate::{
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_SOCKHASH")]
 pub struct SockHash<T, K> {
-    inner: T,
+    pub(crate) inner: T,
     _k: PhantomData<K>,
 }
 

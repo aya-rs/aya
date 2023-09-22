@@ -67,7 +67,7 @@ use crate::{
 #[derive(Debug)]
 #[doc(alias = "BPF_MAP_TYPE_STACK_TRACE")]
 pub struct StackTraceMap<T> {
-    inner: T,
+    pub(crate) inner: T,
     max_stack_depth: usize,
 }
 
