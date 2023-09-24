@@ -1,13 +1,15 @@
 use core::{cell::UnsafeCell, mem, ptr::NonNull};
 
-use aya_bpf_bindings::bindings::{bpf_xdp_sock, xdp_action::XDP_REDIRECT};
+use aya_bpf_bindings::bindings::bpf_xdp_sock;
 use aya_bpf_cty::c_void;
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_XSKMAP},
-    helpers::{bpf_map_lookup_elem, bpf_redirect_map},
+    helpers::bpf_map_lookup_elem,
     maps::PinningType,
 };
+
+use super::try_redirect_map;
 
 /// An array of AF_XDP sockets.
 ///
@@ -157,13 +159,6 @@ impl XskMap {
     /// ```
     #[inline(always)]
     pub fn redirect(&self, index: u32, flags: u64) -> Result<u32, u32> {
-        let ret = unsafe { bpf_redirect_map(self.def.get() as *mut _, index.into(), flags) };
-        match ret.unsigned_abs() as u32 {
-            XDP_REDIRECT => Ok(XDP_REDIRECT),
-            // Return XDP_REDIRECT on success, or the value of the two lower bits of the flags
-            // argument on error. Thus I have no idea why it returns a long (i64) instead of
-            // something saner, hence the unsigned_abs.
-            ret => Err(ret),
-        }
+        try_redirect_map(&self.def, index, flags)
     }
 }
