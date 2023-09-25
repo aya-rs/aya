@@ -83,6 +83,7 @@ pub mod queue;
 pub mod sock;
 pub mod stack;
 pub mod stack_trace;
+pub mod xdp;
 
 pub use array::{Array, PerCpuArray, ProgramArray};
 pub use bloom_filter::BloomFilter;
@@ -96,6 +97,7 @@ pub use queue::Queue;
 pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
+pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 
 #[derive(Error, Debug)]
 /// Errors occuring from working with Maps
@@ -179,6 +181,10 @@ pub enum MapError {
         error: PinError,
     },
 
+    /// Program IDs are not supported
+    #[error("program ids are not supported by the current kernel")]
+    ProgIdNotSupported,
+
     /// Unsupported Map type
     #[error("Unsupported map type found {map_type}")]
     Unsupported {
@@ -235,37 +241,45 @@ fn maybe_warn_rlimit() {
 /// eBPF map types.
 #[derive(Debug)]
 pub enum Map {
-    /// A [`Array`] map
+    /// An [`Array`] map.
     Array(MapData),
-    /// A [`PerCpuArray`] map
+    /// A [`PerCpuArray`] map.
     PerCpuArray(MapData),
-    /// A [`ProgramArray`] map
+    /// A [`ProgramArray`] map.
     ProgramArray(MapData),
-    /// A [`HashMap`] map
+    /// A [`HashMap`] map.
     HashMap(MapData),
-    /// A [`PerCpuHashMap`] map
+    /// A [`PerCpuHashMap`] map.
     PerCpuHashMap(MapData),
     /// A [`HashMap`] map that uses a LRU eviction policy.
     LruHashMap(MapData),
     /// A [`PerCpuHashMap`] map that uses a LRU eviction policy.
     PerCpuLruHashMap(MapData),
-    /// A [`PerfEventArray`] map
+    /// A [`PerfEventArray`] map.
     PerfEventArray(MapData),
-    /// A [`SockMap`] map
+    /// A [`SockMap`] map.
     SockMap(MapData),
-    /// A [`SockHash`] map
+    /// A [`SockHash`] map.
     SockHash(MapData),
-    /// A [`BloomFilter`] map
+    /// A [`BloomFilter`] map.
     BloomFilter(MapData),
-    /// A [`LpmTrie`] map
+    /// A [`LpmTrie`] map.
     LpmTrie(MapData),
-    /// A [`Stack`] map
+    /// A [`Stack`] map.
     Stack(MapData),
-    /// A [`StackTraceMap`] map
+    /// A [`StackTraceMap`] map.
     StackTraceMap(MapData),
-    /// A [`Queue`] map
+    /// A [`Queue`] map.
     Queue(MapData),
-    /// An unsupported map type
+    /// A [`CpuMap`] map.
+    CpuMap(MapData),
+    /// A [`DevMap`] map.
+    DevMap(MapData),
+    /// A [`DevMapHash`] map.
+    DevMapHash(MapData),
+    /// A [`XskMap`] map.
+    XskMap(MapData),
+    /// An unsupported map type.
     Unsupported(MapData),
 }
 
@@ -288,6 +302,10 @@ impl Map {
             Self::Stack(map) => map.obj.map_type(),
             Self::StackTraceMap(map) => map.obj.map_type(),
             Self::Queue(map) => map.obj.map_type(),
+            Self::CpuMap(map) => map.obj.map_type(),
+            Self::DevMap(map) => map.obj.map_type(),
+            Self::DevMapHash(map) => map.obj.map_type(),
+            Self::XskMap(map) => map.obj.map_type(),
             Self::Unsupported(map) => map.obj.map_type(),
         }
     }
@@ -347,6 +365,10 @@ impl_try_from_map!(() {
     SockMap,
     PerfEventArray,
     StackTraceMap,
+    CpuMap,
+    DevMap,
+    DevMapHash,
+    XskMap,
 });
 
 #[cfg(any(feature = "async_tokio", feature = "async_std"))]

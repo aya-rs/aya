@@ -19,6 +19,7 @@ use crate::{
     btf::BtfFeatures,
     generated::{BPF_CALL, BPF_JMP, BPF_K},
     maps::{BtfMap, LegacyMap, Map, MINIMUM_MAP_SIZE},
+    programs::XdpAttachType,
     relocation::*,
     util::HashMap,
 };
@@ -47,17 +48,22 @@ pub struct Features {
     bpf_perf_link: bool,
     bpf_global_data: bool,
     bpf_cookie: bool,
+    cpumap_prog_id: bool,
+    devmap_prog_id: bool,
     btf: Option<BtfFeatures>,
 }
 
 impl Features {
     #[doc(hidden)]
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         bpf_name: bool,
         bpf_probe_read_kernel: bool,
         bpf_perf_link: bool,
         bpf_global_data: bool,
         bpf_cookie: bool,
+        cpumap_prog_id: bool,
+        devmap_prog_id: bool,
         btf: Option<BtfFeatures>,
     ) -> Self {
         Self {
@@ -66,6 +72,8 @@ impl Features {
             bpf_perf_link,
             bpf_global_data,
             bpf_cookie,
+            cpumap_prog_id,
+            devmap_prog_id,
             btf,
         }
     }
@@ -93,6 +101,16 @@ impl Features {
     /// Returns whether BPF program cookie is supported.
     pub fn bpf_cookie(&self) -> bool {
         self.bpf_cookie
+    }
+
+    /// Returns whether XDP CPU Maps support chained program IDs.
+    pub fn cpumap_prog_id(&self) -> bool {
+        self.cpumap_prog_id
+    }
+
+    /// Returns whether XDP Device Maps support chained program IDs.
+    pub fn devmap_prog_id(&self) -> bool {
+        self.devmap_prog_id
     }
 
     /// If BTF is supported, returns which BTF features are supported.
@@ -204,8 +222,6 @@ pub struct Function {
 /// - `struct_ops+`
 /// - `fmod_ret+`, `fmod_ret.s+`
 /// - `iter+`, `iter.s+`
-/// - `xdp.frags/cpumap`, `xdp/cpumap`
-/// - `xdp.frags/devmap`, `xdp/devmap`
 #[derive(Debug, Clone)]
 #[allow(missing_docs)]
 pub enum ProgramSection {
@@ -221,6 +237,7 @@ pub enum ProgramSection {
     SocketFilter,
     Xdp {
         frags: bool,
+        attach_type: XdpAttachType,
     },
     SkMsg,
     SkSkbStreamParser,
@@ -283,8 +300,19 @@ impl FromStr for ProgramSection {
             "uprobe.s" => UProbe { sleepable: true },
             "uretprobe" => URetProbe { sleepable: false },
             "uretprobe.s" => URetProbe { sleepable: true },
-            "xdp" => Xdp { frags: false },
-            "xdp.frags" => Xdp { frags: true },
+            "xdp" | "xdp.frags" => Xdp {
+                frags: kind == "xdp.frags",
+                attach_type: match pieces.next() {
+                    None => XdpAttachType::Interface,
+                    Some("cpumap") => XdpAttachType::CpuMap,
+                    Some("devmap") => XdpAttachType::DevMap,
+                    Some(_) => {
+                        return Err(ParseError::InvalidProgramSection {
+                            section: section.to_owned(),
+                        })
+                    }
+                },
+            },
             "tp_btf" => BtfTracePoint,
             "tracepoint" | "tp" => TracePoint,
             "socket" => SocketFilter,
@@ -2012,7 +2040,7 @@ mod tests {
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
-                "xdp/foo",
+                "xdp",
                 bytes_of(&fake_ins()),
                 None
             )),
@@ -2035,7 +2063,7 @@ mod tests {
         assert_matches!(
             obj.parse_section(fake_section(
                 BpfSectionKind::Program,
-                "xdp.frags/foo",
+                "xdp.frags",
                 bytes_of(&fake_ins()),
                 None
             )),

@@ -563,6 +563,114 @@ impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::stack_trace::StackTrace wh
 pub fn aya_bpf::maps::stack_trace::StackTrace::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_bpf::maps::stack_trace::StackTrace
 pub fn aya_bpf::maps::stack_trace::StackTrace::from(t: T) -> T
+pub mod aya_bpf::maps::xdp
+#[repr(transparent)] pub struct aya_bpf::maps::xdp::CpuMap
+impl aya_bpf::maps::CpuMap
+pub const fn aya_bpf::maps::CpuMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::CpuMap
+pub fn aya_bpf::maps::CpuMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
+pub const fn aya_bpf::maps::CpuMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::CpuMap
+impl core::marker::Sync for aya_bpf::maps::CpuMap
+impl core::marker::Send for aya_bpf::maps::CpuMap
+impl core::marker::Unpin for aya_bpf::maps::CpuMap
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_bpf::maps::CpuMap
+impl core::panic::unwind_safe::UnwindSafe for aya_bpf::maps::CpuMap
+impl<T, U> core::convert::Into<U> for aya_bpf::maps::CpuMap where U: core::convert::From<T>
+pub fn aya_bpf::maps::CpuMap::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::maps::CpuMap where U: core::convert::Into<T>
+pub type aya_bpf::maps::CpuMap::Error = core::convert::Infallible
+pub fn aya_bpf::maps::CpuMap::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::maps::CpuMap where U: core::convert::TryFrom<T>
+pub type aya_bpf::maps::CpuMap::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::maps::CpuMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::maps::CpuMap where T: 'static + core::marker::Sized
+pub fn aya_bpf::maps::CpuMap::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::maps::CpuMap where T: core::marker::Sized
+pub fn aya_bpf::maps::CpuMap::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::CpuMap where T: core::marker::Sized
+pub fn aya_bpf::maps::CpuMap::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::maps::CpuMap
+pub fn aya_bpf::maps::CpuMap::from(t: T) -> T
+#[repr(transparent)] pub struct aya_bpf::maps::xdp::DevMap
+impl aya_bpf::maps::DevMap
+pub fn aya_bpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<DevMapValue>
+pub const fn aya_bpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMap
+pub fn aya_bpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
+pub const fn aya_bpf::maps::DevMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMap
+impl core::marker::Sync for aya_bpf::maps::DevMap
+impl core::marker::Send for aya_bpf::maps::DevMap
+impl core::marker::Unpin for aya_bpf::maps::DevMap
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_bpf::maps::DevMap
+impl core::panic::unwind_safe::UnwindSafe for aya_bpf::maps::DevMap
+impl<T, U> core::convert::Into<U> for aya_bpf::maps::DevMap where U: core::convert::From<T>
+pub fn aya_bpf::maps::DevMap::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::maps::DevMap where U: core::convert::Into<T>
+pub type aya_bpf::maps::DevMap::Error = core::convert::Infallible
+pub fn aya_bpf::maps::DevMap::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::maps::DevMap where U: core::convert::TryFrom<T>
+pub type aya_bpf::maps::DevMap::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::maps::DevMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::maps::DevMap where T: 'static + core::marker::Sized
+pub fn aya_bpf::maps::DevMap::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::maps::DevMap where T: core::marker::Sized
+pub fn aya_bpf::maps::DevMap::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::DevMap where T: core::marker::Sized
+pub fn aya_bpf::maps::DevMap::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::maps::DevMap
+pub fn aya_bpf::maps::DevMap::from(t: T) -> T
+#[repr(transparent)] pub struct aya_bpf::maps::xdp::DevMapHash
+impl aya_bpf::maps::DevMapHash
+pub fn aya_bpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<DevMapValue>
+pub const fn aya_bpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMapHash
+pub fn aya_bpf::maps::DevMapHash::redirect(&self, key: u32, flags: u64) -> core::result::Result<u32, u32>
+pub const fn aya_bpf::maps::DevMapHash::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMapHash
+impl core::marker::Sync for aya_bpf::maps::DevMapHash
+impl core::marker::Send for aya_bpf::maps::DevMapHash
+impl core::marker::Unpin for aya_bpf::maps::DevMapHash
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_bpf::maps::DevMapHash
+impl core::panic::unwind_safe::UnwindSafe for aya_bpf::maps::DevMapHash
+impl<T, U> core::convert::Into<U> for aya_bpf::maps::DevMapHash where U: core::convert::From<T>
+pub fn aya_bpf::maps::DevMapHash::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::maps::DevMapHash where U: core::convert::Into<T>
+pub type aya_bpf::maps::DevMapHash::Error = core::convert::Infallible
+pub fn aya_bpf::maps::DevMapHash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::maps::DevMapHash where U: core::convert::TryFrom<T>
+pub type aya_bpf::maps::DevMapHash::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::maps::DevMapHash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::maps::DevMapHash where T: 'static + core::marker::Sized
+pub fn aya_bpf::maps::DevMapHash::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::maps::DevMapHash where T: core::marker::Sized
+pub fn aya_bpf::maps::DevMapHash::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::DevMapHash where T: core::marker::Sized
+pub fn aya_bpf::maps::DevMapHash::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::maps::DevMapHash
+pub fn aya_bpf::maps::DevMapHash::from(t: T) -> T
+#[repr(transparent)] pub struct aya_bpf::maps::xdp::XskMap
+impl aya_bpf::maps::XskMap
+pub fn aya_bpf::maps::XskMap::get(&self, index: u32) -> core::option::Option<u32>
+pub const fn aya_bpf::maps::XskMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::XskMap
+pub fn aya_bpf::maps::XskMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
+pub const fn aya_bpf::maps::XskMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::XskMap
+impl core::marker::Sync for aya_bpf::maps::XskMap
+impl core::marker::Send for aya_bpf::maps::XskMap
+impl core::marker::Unpin for aya_bpf::maps::XskMap
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_bpf::maps::XskMap
+impl core::panic::unwind_safe::UnwindSafe for aya_bpf::maps::XskMap
+impl<T, U> core::convert::Into<U> for aya_bpf::maps::XskMap where U: core::convert::From<T>
+pub fn aya_bpf::maps::XskMap::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::maps::XskMap where U: core::convert::Into<T>
+pub type aya_bpf::maps::XskMap::Error = core::convert::Infallible
+pub fn aya_bpf::maps::XskMap::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::maps::XskMap where U: core::convert::TryFrom<T>
+pub type aya_bpf::maps::XskMap::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::maps::XskMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::maps::XskMap where T: 'static + core::marker::Sized
+pub fn aya_bpf::maps::XskMap::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::maps::XskMap where T: core::marker::Sized
+pub fn aya_bpf::maps::XskMap::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::XskMap where T: core::marker::Sized
+pub fn aya_bpf::maps::XskMap::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::maps::XskMap
+pub fn aya_bpf::maps::XskMap::from(t: T) -> T
 #[repr(transparent)] pub struct aya_bpf::maps::Array<T>
 impl<T> aya_bpf::maps::array::Array<T>
 pub fn aya_bpf::maps::array::Array<T>::get(&self, index: u32) -> core::option::Option<&T>
@@ -618,6 +726,86 @@ impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::bloom_filter::BloomFilter<
 pub fn aya_bpf::maps::bloom_filter::BloomFilter<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_bpf::maps::bloom_filter::BloomFilter<T>
 pub fn aya_bpf::maps::bloom_filter::BloomFilter<T>::from(t: T) -> T
+#[repr(transparent)] pub struct aya_bpf::maps::CpuMap
+impl aya_bpf::maps::CpuMap
+pub const fn aya_bpf::maps::CpuMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::CpuMap
+pub fn aya_bpf::maps::CpuMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
+pub const fn aya_bpf::maps::CpuMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::CpuMap
+impl core::marker::Sync for aya_bpf::maps::CpuMap
+impl core::marker::Send for aya_bpf::maps::CpuMap
+impl core::marker::Unpin for aya_bpf::maps::CpuMap
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_bpf::maps::CpuMap
+impl core::panic::unwind_safe::UnwindSafe for aya_bpf::maps::CpuMap
+impl<T, U> core::convert::Into<U> for aya_bpf::maps::CpuMap where U: core::convert::From<T>
+pub fn aya_bpf::maps::CpuMap::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::maps::CpuMap where U: core::convert::Into<T>
+pub type aya_bpf::maps::CpuMap::Error = core::convert::Infallible
+pub fn aya_bpf::maps::CpuMap::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::maps::CpuMap where U: core::convert::TryFrom<T>
+pub type aya_bpf::maps::CpuMap::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::maps::CpuMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::maps::CpuMap where T: 'static + core::marker::Sized
+pub fn aya_bpf::maps::CpuMap::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::maps::CpuMap where T: core::marker::Sized
+pub fn aya_bpf::maps::CpuMap::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::CpuMap where T: core::marker::Sized
+pub fn aya_bpf::maps::CpuMap::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::maps::CpuMap
+pub fn aya_bpf::maps::CpuMap::from(t: T) -> T
+#[repr(transparent)] pub struct aya_bpf::maps::DevMap
+impl aya_bpf::maps::DevMap
+pub fn aya_bpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<DevMapValue>
+pub const fn aya_bpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMap
+pub fn aya_bpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
+pub const fn aya_bpf::maps::DevMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMap
+impl core::marker::Sync for aya_bpf::maps::DevMap
+impl core::marker::Send for aya_bpf::maps::DevMap
+impl core::marker::Unpin for aya_bpf::maps::DevMap
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_bpf::maps::DevMap
+impl core::panic::unwind_safe::UnwindSafe for aya_bpf::maps::DevMap
+impl<T, U> core::convert::Into<U> for aya_bpf::maps::DevMap where U: core::convert::From<T>
+pub fn aya_bpf::maps::DevMap::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::maps::DevMap where U: core::convert::Into<T>
+pub type aya_bpf::maps::DevMap::Error = core::convert::Infallible
+pub fn aya_bpf::maps::DevMap::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::maps::DevMap where U: core::convert::TryFrom<T>
+pub type aya_bpf::maps::DevMap::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::maps::DevMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::maps::DevMap where T: 'static + core::marker::Sized
+pub fn aya_bpf::maps::DevMap::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::maps::DevMap where T: core::marker::Sized
+pub fn aya_bpf::maps::DevMap::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::DevMap where T: core::marker::Sized
+pub fn aya_bpf::maps::DevMap::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::maps::DevMap
+pub fn aya_bpf::maps::DevMap::from(t: T) -> T
+#[repr(transparent)] pub struct aya_bpf::maps::DevMapHash
+impl aya_bpf::maps::DevMapHash
+pub fn aya_bpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<DevMapValue>
+pub const fn aya_bpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMapHash
+pub fn aya_bpf::maps::DevMapHash::redirect(&self, key: u32, flags: u64) -> core::result::Result<u32, u32>
+pub const fn aya_bpf::maps::DevMapHash::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::DevMapHash
+impl core::marker::Sync for aya_bpf::maps::DevMapHash
+impl core::marker::Send for aya_bpf::maps::DevMapHash
+impl core::marker::Unpin for aya_bpf::maps::DevMapHash
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_bpf::maps::DevMapHash
+impl core::panic::unwind_safe::UnwindSafe for aya_bpf::maps::DevMapHash
+impl<T, U> core::convert::Into<U> for aya_bpf::maps::DevMapHash where U: core::convert::From<T>
+pub fn aya_bpf::maps::DevMapHash::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::maps::DevMapHash where U: core::convert::Into<T>
+pub type aya_bpf::maps::DevMapHash::Error = core::convert::Infallible
+pub fn aya_bpf::maps::DevMapHash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::maps::DevMapHash where U: core::convert::TryFrom<T>
+pub type aya_bpf::maps::DevMapHash::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::maps::DevMapHash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::maps::DevMapHash where T: 'static + core::marker::Sized
+pub fn aya_bpf::maps::DevMapHash::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::maps::DevMapHash where T: core::marker::Sized
+pub fn aya_bpf::maps::DevMapHash::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::DevMapHash where T: core::marker::Sized
+pub fn aya_bpf::maps::DevMapHash::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::maps::DevMapHash
+pub fn aya_bpf::maps::DevMapHash::from(t: T) -> T
 #[repr(transparent)] pub struct aya_bpf::maps::HashMap<K, V>
 impl<K, V> aya_bpf::maps::hash_map::HashMap<K, V>
 pub unsafe fn aya_bpf::maps::hash_map::HashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
@@ -1014,6 +1202,33 @@ impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::stack_trace::StackTrace wh
 pub fn aya_bpf::maps::stack_trace::StackTrace::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_bpf::maps::stack_trace::StackTrace
 pub fn aya_bpf::maps::stack_trace::StackTrace::from(t: T) -> T
+#[repr(transparent)] pub struct aya_bpf::maps::XskMap
+impl aya_bpf::maps::XskMap
+pub fn aya_bpf::maps::XskMap::get(&self, index: u32) -> core::option::Option<u32>
+pub const fn aya_bpf::maps::XskMap::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::XskMap
+pub fn aya_bpf::maps::XskMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
+pub const fn aya_bpf::maps::XskMap::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::XskMap
+impl core::marker::Sync for aya_bpf::maps::XskMap
+impl core::marker::Send for aya_bpf::maps::XskMap
+impl core::marker::Unpin for aya_bpf::maps::XskMap
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_bpf::maps::XskMap
+impl core::panic::unwind_safe::UnwindSafe for aya_bpf::maps::XskMap
+impl<T, U> core::convert::Into<U> for aya_bpf::maps::XskMap where U: core::convert::From<T>
+pub fn aya_bpf::maps::XskMap::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::maps::XskMap where U: core::convert::Into<T>
+pub type aya_bpf::maps::XskMap::Error = core::convert::Infallible
+pub fn aya_bpf::maps::XskMap::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::maps::XskMap where U: core::convert::TryFrom<T>
+pub type aya_bpf::maps::XskMap::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::maps::XskMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::maps::XskMap where T: 'static + core::marker::Sized
+pub fn aya_bpf::maps::XskMap::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::maps::XskMap where T: core::marker::Sized
+pub fn aya_bpf::maps::XskMap::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::maps::XskMap where T: core::marker::Sized
+pub fn aya_bpf::maps::XskMap::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::maps::XskMap
+pub fn aya_bpf::maps::XskMap::from(t: T) -> T
 pub mod aya_bpf::programs
 pub mod aya_bpf::programs::device
 pub struct aya_bpf::programs::device::DeviceContext

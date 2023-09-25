@@ -40,7 +40,8 @@ use crate::{
         is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_enum64_supported,
         is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
         is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
-        is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
+        is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
+        retry_with_verifier_logs,
     },
     util::{bytes_of, bytes_of_slice, possible_cpus, POSSIBLE_CPUS},
 };
@@ -93,6 +94,8 @@ fn detect_features() -> Features {
         is_perf_link_supported(),
         is_bpf_global_data_supported(),
         is_bpf_cookie_supported(),
+        is_prog_id_supported(BPF_MAP_TYPE_CPUMAP),
+        is_prog_id_supported(BPF_MAP_TYPE_DEVMAP),
         btf,
     );
     debug!("BPF Feature Detection: {:#?}", f);
@@ -412,7 +415,10 @@ impl<'a> BpfLoader<'a> {
                                 | ProgramSection::URetProbe { sleepable: _ }
                                 | ProgramSection::TracePoint
                                 | ProgramSection::SocketFilter
-                                | ProgramSection::Xdp { frags: _ }
+                                | ProgramSection::Xdp {
+                                    frags: _,
+                                    attach_type: _,
+                                }
                                 | ProgramSection::SkMsg
                                 | ProgramSection::SkSkbStreamParser
                                 | ProgramSection::SkSkbStreamVerdict
@@ -472,6 +478,15 @@ impl<'a> BpfLoader<'a> {
                         );
                     }
                 }
+            }
+            match obj.map_type().try_into() {
+                Ok(BPF_MAP_TYPE_CPUMAP) => {
+                    obj.set_value_size(if FEATURES.cpumap_prog_id() { 8 } else { 4 })
+                }
+                Ok(BPF_MAP_TYPE_DEVMAP | BPF_MAP_TYPE_DEVMAP_HASH) => {
+                    obj.set_value_size(if FEATURES.devmap_prog_id() { 8 } else { 4 })
+                }
+                _ => (),
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
             let mut map = match obj.pinning() {
@@ -556,13 +571,18 @@ impl<'a> BpfLoader<'a> {
                         ProgramSection::SocketFilter => Program::SocketFilter(SocketFilter {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
-                        ProgramSection::Xdp { frags, .. } => {
+                        ProgramSection::Xdp {
+                            frags, attach_type, ..
+                        } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *frags {
                                 data.flags = BPF_F_XDP_HAS_FRAGS;
                             }
-                            Program::Xdp(Xdp { data })
+                            Program::Xdp(Xdp {
+                                data,
+                                attach_type: *attach_type,
+                            })
                         }
                         ProgramSection::SkMsg => Program::SkMsg(SkMsg {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
@@ -707,6 +727,10 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
         BPF_MAP_TYPE_STACK => Map::Stack(map),
         BPF_MAP_TYPE_STACK_TRACE => Map::StackTraceMap(map),
         BPF_MAP_TYPE_QUEUE => Map::Queue(map),
+        BPF_MAP_TYPE_CPUMAP => Map::CpuMap(map),
+        BPF_MAP_TYPE_DEVMAP => Map::DevMap(map),
+        BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
+        BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         m => {
             warn!("The map {name} is of type {:#?} which is currently unsupported in Aya, use `allow_unsupported_maps()` to load it anyways", m);
             Map::Unsupported(map)

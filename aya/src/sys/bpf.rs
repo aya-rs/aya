@@ -8,6 +8,7 @@ use std::{
 };
 
 use crate::util::KernelVersion;
+use assert_matches::assert_matches;
 use libc::{c_char, c_long, ENOENT, ENOSPC};
 use obj::{
     btf::{BtfEnum64, Enum64},
@@ -793,6 +794,28 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
     bpf_prog_load(&mut attr).is_ok()
 }
 
+/// Tests whether CpuMap, DevMap and DevMapHash support program ids
+pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
+    assert_matches!(
+        map_type,
+        bpf_map_type::BPF_MAP_TYPE_CPUMAP
+            | bpf_map_type::BPF_MAP_TYPE_DEVMAP
+            | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH
+    );
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_1 };
+
+    u.map_type = map_type as u32;
+    u.key_size = 4;
+    u.value_size = 8; // 4 for CPU ID, 8 for CPU ID + prog ID
+    u.max_entries = 1;
+    u.map_flags = 0;
+
+    // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) }.is_ok()
+}
+
 pub(crate) fn is_btf_supported() -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
@@ -1071,5 +1094,29 @@ mod tests {
         });
         let supported = is_perf_link_supported();
         assert!(!supported);
+    }
+
+    #[test]
+    fn test_prog_id_supported() {
+        override_syscall(|_call| Ok(42));
+
+        // Ensure that the three map types we can check are accepted
+        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP);
+        assert!(supported);
+        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP);
+        assert!(supported);
+        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH);
+        assert!(supported);
+
+        override_syscall(|_call| Err((-1, io::Error::from_raw_os_error(EINVAL))));
+        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP);
+        assert!(!supported);
+    }
+
+    #[test]
+    #[should_panic = "assertion failed: `BPF_MAP_TYPE_HASH` does not match `bpf_map_type::BPF_MAP_TYPE_CPUMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP |
+bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
+    fn test_prog_id_supported_reject_types() {
+        is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_HASH);
     }
 }

@@ -6,3 +6,4 @@ mod log;
 mod rbpf;
 mod relocations;
 mod smoke;
+mod xdp;

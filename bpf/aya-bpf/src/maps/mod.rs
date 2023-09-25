@@ -17,6 +17,7 @@ pub mod sock_hash;
 pub mod sock_map;
 pub mod stack;
 pub mod stack_trace;
+pub mod xdp;
 
 pub use array::Array;
 pub use bloom_filter::BloomFilter;
@@ -30,3 +31,4 @@ pub use sock_hash::SockHash;
 pub use sock_map::SockMap;
 pub use stack::Stack;
 pub use stack_trace::StackTrace;
+pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
