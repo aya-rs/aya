@@ -77,7 +77,7 @@ impl PtRegs {
         T::from_argument(unsafe { &*self.regs }, n)
     }
 
-    /// Returns the value of the stack argument used to parss arg `n`.
+    /// Returns the value of the stack argument used to pass arg `n`.
     pub fn stack_arg<T: FromPtRegs>(&self, n: usize) -> Option<T> {
         T::from_stack_argument(unsafe { &*self.regs }, n)
     }
@@ -152,7 +152,7 @@ impl<T> FromPtRegs for *const T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         unsafe {
-            let addr: c_ulonglong = &ctx.uregs[13] + 8 * (n + 1) as c_ulonglong;
+            let addr: c_ulonglong = ctx.uregs[13] + 8 * (n + 1) as c_ulonglong;
             bpf_probe_read(addr as *const T)
                 .map(|v| &v as *const _)
                 .ok()
