@@ -2,7 +2,7 @@ use core::{mem::size_of, ptr::null_mut, slice::from_raw_parts};
 use std::collections::HashMap;
 
 use assert_matches::assert_matches;
-use aya_obj::{generated::bpf_insn, Object, ProgramSection};
+use aya_obj::{generated::bpf_insn, programs::XdpAttachType, Object, ProgramSection};
 
 #[test]
 fn run_with_rbpf() {
@@ -11,7 +11,10 @@ fn run_with_rbpf() {
     assert_eq!(object.programs.len(), 1);
     assert_matches!(
         object.programs["pass"].section,
-        ProgramSection::Xdp { frags: true }
+        ProgramSection::Xdp {
+            frags: true,
+            attach_type: XdpAttachType::Interface
+        }
     );
 
     let instructions = &object
@@ -40,7 +43,7 @@ fn use_map_with_rbpf() {
     assert_eq!(object.programs.len(), 1);
     assert_matches!(
         object.programs["bpf_prog"].section,
-        ProgramSection::TracePoint { .. }
+        ProgramSection::UProbe { .. }
     );
 
     // Initialize maps:
@@ -58,7 +61,7 @@ fn use_map_with_rbpf() {
         );
 
         let map_id = if name == "map_1" { 0 } else { 1 };
-        let fd = map_id as i32 | 0xCAFE00;
+        let fd = map_id as std::os::fd::RawFd | 0xCAFE00;
         maps.insert(name.to_owned(), (fd, map.clone()));
 
         unsafe {

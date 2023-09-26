@@ -1,4 +1,8 @@
-use std::{convert::TryInto as _, thread, time};
+use std::{
+    convert::TryInto as _,
+    thread,
+    time::{Duration, SystemTime},
+};
 
 use aya::{
     maps::Array,
@@ -9,9 +13,10 @@ use aya::{
     util::KernelVersion,
     Bpf,
 };
+use aya_obj::programs::XdpAttachType;
 
 const MAX_RETRIES: usize = 100;
-const RETRY_DURATION: time::Duration = time::Duration::from_millis(10);
+const RETRY_DURATION: Duration = Duration::from_millis(10);
 
 #[test]
 fn long_name() {
@@ -36,11 +41,12 @@ fn multiple_btf_maps() {
     let map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
     let map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into().unwrap();
 
-    let prog: &mut TracePoint = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
+    let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("sched", "sched_switch").unwrap();
+    prog.attach(Some("trigger_bpf_program"), 0, "/proc/self/exe", None)
+        .unwrap();
 
-    thread::sleep(time::Duration::from_secs(3));
+    trigger_bpf_program();
 
     let key = 0;
     let val_1 = map_1.get(&key, 0).unwrap();
@@ -48,6 +54,12 @@ fn multiple_btf_maps() {
 
     assert_eq!(val_1, 24);
     assert_eq!(val_2, 42);
+}
+
+#[no_mangle]
+#[inline(never)]
+pub extern "C" fn trigger_bpf_program() {
+    core::hint::black_box(trigger_bpf_program);
 }
 
 fn poll_loaded_program_id(name: &str) -> impl Iterator<Item = Option<u32>> + '_ {
@@ -133,6 +145,28 @@ fn unload_xdp() {
     prog.attach("lo", XdpFlags::default()).unwrap();
 
     assert_loaded("pass");
+    prog.unload().unwrap();
+
+    assert_unloaded("pass");
+}
+
+#[test]
+fn test_loaded_at() {
+    let mut bpf = Bpf::load(crate::TEST).unwrap();
+    let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    let t1 = SystemTime::now();
+    prog.load().unwrap();
+    let t2 = SystemTime::now();
+    assert_loaded("pass");
+
+    let loaded_at = prog.info().unwrap().loaded_at();
+
+    let range = t1..t2;
+    assert!(
+        range.contains(&loaded_at),
+        "{range:?}.contains({loaded_at:?})"
+    );
+
     prog.unload().unwrap();
 
     assert_unloaded("pass");
@@ -276,7 +310,7 @@ fn pin_lifecycle() {
 
     // 2. Load program from bpffs but don't attach it
     {
-        let _ = Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
+        let _ = Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog", XdpAttachType::Interface).unwrap();
     }
 
     // should still be loaded since prog was pinned
@@ -284,7 +318,8 @@ fn pin_lifecycle() {
 
     // 3. Load program from bpffs and attach
     {
-        let mut prog = Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
+        let mut prog =
+            Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog", XdpAttachType::Interface).unwrap();
         let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();

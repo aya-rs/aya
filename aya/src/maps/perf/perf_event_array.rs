@@ -4,7 +4,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     ops::Deref,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd, RawFd},
     sync::Arc,
 };
 
@@ -181,7 +181,7 @@ impl<T: BorrowMut<MapData>> PerfEventArray<T> {
         // FIXME: keep track of open buffers
 
         let map_data: &MapData = self.map.deref().borrow();
-        let map_fd = map_data.fd;
+        let map_fd = map_data.fd().as_fd();
         let buf = PerfBuffer::open(index, self.page_size, page_count.unwrap_or(2))?;
         bpf_map_update_elem(map_fd, Some(&index), &buf.as_raw_fd(), 0)
             .map_err(|(_, io_error)| io_error)?;

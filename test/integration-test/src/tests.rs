@@ -7,3 +7,4 @@ mod rbpf;
 mod relocations;
 mod smoke;
 mod stack_argument;
+mod xdp;

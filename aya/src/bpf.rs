@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
     fs, io,
     os::{
-        fd::{AsFd as _, OwnedFd},
+        fd::{AsFd as _, AsRawFd as _, OwnedFd},
         raw::c_int,
     },
     path::{Path, PathBuf},
@@ -36,12 +36,12 @@ use crate::{
         SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
-        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_cookie_supported,
-        is_bpf_global_data_supported, is_btf_datasec_supported, is_btf_decl_tag_supported,
-        is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
-        is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
-        SyscallError,
+        bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
+        is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_enum64_supported,
+        is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
+        is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
+        is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
+        retry_with_verifier_logs,
     },
     util::{bytes_of, bytes_of_slice, possible_cpus, POSSIBLE_CPUS},
 };
@@ -94,6 +94,8 @@ fn detect_features() -> Features {
         is_perf_link_supported(),
         is_bpf_global_data_supported(),
         is_bpf_cookie_supported(),
+        is_prog_id_supported(BPF_MAP_TYPE_CPUMAP),
+        is_prog_id_supported(BPF_MAP_TYPE_DEVMAP),
         btf,
     );
     debug!("BPF Feature Detection: {:#?}", f);
@@ -413,7 +415,10 @@ impl<'a> BpfLoader<'a> {
                                 | ProgramSection::URetProbe { sleepable: _ }
                                 | ProgramSection::TracePoint
                                 | ProgramSection::SocketFilter
-                                | ProgramSection::Xdp { frags: _ }
+                                | ProgramSection::Xdp {
+                                    frags: _,
+                                    attach_type: _,
+                                }
                                 | ProgramSection::SkMsg
                                 | ProgramSection::SkSkbStreamParser
                                 | ProgramSection::SkSkbStreamVerdict
@@ -474,6 +479,15 @@ impl<'a> BpfLoader<'a> {
                     }
                 }
             }
+            match obj.map_type().try_into() {
+                Ok(BPF_MAP_TYPE_CPUMAP) => {
+                    obj.set_value_size(if FEATURES.cpumap_prog_id() { 8 } else { 4 })
+                }
+                Ok(BPF_MAP_TYPE_DEVMAP | BPF_MAP_TYPE_DEVMAP_HASH) => {
+                    obj.set_value_size(if FEATURES.devmap_prog_id() { 8 } else { 4 })
+                }
+                _ => (),
+            }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
             let mut map = match obj.pinning() {
                 PinningType::None => MapData::create(obj, &name, btf_fd)?,
@@ -482,23 +496,7 @@ impl<'a> BpfLoader<'a> {
                     MapData::create_pinned(path, obj, &name, btf_fd)?
                 }
             };
-            let fd = map.fd;
-            if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
-                bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
-                    .map_err(|(_, io_error)| SyscallError {
-                        call: "bpf_map_update_elem",
-                        io_error,
-                    })
-                    .map_err(MapError::from)?;
-            }
-            if map.obj.section_kind() == BpfSectionKind::Rodata {
-                bpf_map_freeze(fd)
-                    .map_err(|(_, io_error)| SyscallError {
-                        call: "bpf_map_freeze",
-                        io_error,
-                    })
-                    .map_err(MapError::from)?;
-            }
+            map.finalize()?;
             maps.insert(name, map);
         }
 
@@ -510,7 +508,7 @@ impl<'a> BpfLoader<'a> {
 
         obj.relocate_maps(
             maps.iter()
-                .map(|(s, data)| (s.as_str(), data.fd, &data.obj)),
+                .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
         )?;
         obj.relocate_calls(&text_sections)?;
@@ -573,13 +571,18 @@ impl<'a> BpfLoader<'a> {
                         ProgramSection::SocketFilter => Program::SocketFilter(SocketFilter {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
-                        ProgramSection::Xdp { frags, .. } => {
+                        ProgramSection::Xdp {
+                            frags, attach_type, ..
+                        } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *frags {
                                 data.flags = BPF_F_XDP_HAS_FRAGS;
                             }
-                            Program::Xdp(Xdp { data })
+                            Program::Xdp(Xdp {
+                                data,
+                                attach_type: *attach_type,
+                            })
                         }
                         ProgramSection::SkMsg => Program::SkMsg(SkMsg {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
@@ -691,7 +694,7 @@ impl<'a> BpfLoader<'a> {
         if !*allow_unsupported_maps {
             maps.iter().try_for_each(|(_, x)| match x {
                 Map::Unsupported(map) => Err(BpfError::MapError(MapError::Unsupported {
-                    map_type: map.obj.map_type(),
+                    map_type: map.obj().map_type(),
                 })),
                 _ => Ok(()),
             })?;
@@ -705,7 +708,7 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
     let name = data.0;
     let map = data.1;
     let map_type =
-        bpf_map_type::try_from(map.obj.map_type()).map_err(|e| MapError::InvalidMapType {
+        bpf_map_type::try_from(map.obj().map_type()).map_err(|e| MapError::InvalidMapType {
             map_type: e.map_type,
         })?;
     let map = match map_type {
@@ -724,6 +727,10 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
         BPF_MAP_TYPE_STACK => Map::Stack(map),
         BPF_MAP_TYPE_STACK_TRACE => Map::StackTraceMap(map),
         BPF_MAP_TYPE_QUEUE => Map::Queue(map),
+        BPF_MAP_TYPE_CPUMAP => Map::CpuMap(map),
+        BPF_MAP_TYPE_DEVMAP => Map::DevMap(map),
+        BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
+        BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         m => {
             warn!("The map {name} is of type {:#?} which is currently unsupported in Aya, use `allow_unsupported_maps()` to load it anyways", m);
             Map::Unsupported(map)

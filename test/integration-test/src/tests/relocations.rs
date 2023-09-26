@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use aya::{programs::UProbe, Bpf};
 
 #[test]
@@ -7,7 +5,6 @@ fn relocations() {
     let bpf = load_and_attach("test_64_32_call_relocs", crate::RELOCATIONS);
 
     trigger_relocations_program();
-    std::thread::sleep(Duration::from_millis(100));
 
     let m = aya::maps::Array::<_, u64>::try_from(bpf.map("RESULTS").unwrap()).unwrap();
     assert_eq!(m.get(&0, 0).unwrap(), 1);
@@ -24,7 +21,6 @@ fn text_64_64_reloc() {
     m.set(1, 2, 0).unwrap();
 
     trigger_relocations_program();
-    std::thread::sleep(Duration::from_millis(100));
 
     assert_eq!(m.get(&0, 0).unwrap(), 2);
     assert_eq!(m.get(&1, 0).unwrap(), 3);
