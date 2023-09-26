@@ -1,5 +1,9 @@
 use aya::{
-    include_bytes_aligned, maps::{AsyncPerfEventArray, HashMap}, programs::UProbe, util::online_cpus, Bpf,
+    include_bytes_aligned,
+    maps::{AsyncPerfEventArray, HashMap},
+    programs::UProbe,
+    util::online_cpus,
+    Bpf,
 };
 use aya_log::BpfLogger;
 use bytes::BytesMut;
@@ -7,18 +11,6 @@ use log::warn;
 use tokio::task;
 
 use crate::STACK_ARGUMENT;
-
-pub struct Args {
-    a_0: u64,
-    a_1: u64,
-    a_2: u64,
-    a_3: u64,
-    a_4: u64,
-    a_5: u64,
-
-    a_6: u64,
-    a_7: i64,
-}
 
 #[no_mangle]
 #[inline(never)]
@@ -53,7 +45,7 @@ async fn stack_argument() {
 
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     assert_eq!(args_map.keys().count(), 8);
-    for iter in args_map.iter(){
+    for iter in args_map.iter() {
         let iter_v = iter.unwrap();
         assert_eq!(iter_v.0, iter_v.1);
     }
