@@ -1,7 +1,8 @@
 //! Pinning BPF objects to the BPF filesystem.
 
-use crate::sys::SyscallError;
 use thiserror::Error;
+
+use crate::sys::SyscallError;
 
 /// An error ocurred working with a pinned BPF object.
 #[derive(Error, Debug)]

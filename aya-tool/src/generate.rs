@@ -7,7 +7,6 @@ use std::{
 };
 
 use tempfile::tempdir;
-
 use thiserror::Error;
 
 use crate::bindgen;

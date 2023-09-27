@@ -2,11 +2,9 @@ use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::Result;
+use syn::{ItemStatic, Result};
 
 use crate::args::name_arg;
-
-use syn::ItemStatic;
 pub(crate) struct Map {
     item: ItemStatic,
     name: String,
@@ -34,8 +32,9 @@ impl Map {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn test_map_with_name() {

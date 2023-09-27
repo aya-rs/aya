@@ -1,10 +1,11 @@
 //! Hash map types.
+use std::os::fd::AsFd as _;
+
 use crate::{
     maps::MapError,
     sys::{bpf_map_delete_elem, bpf_map_update_elem, SyscallError},
     Pod,
 };
-use std::os::fd::AsFd as _;
 
 #[allow(clippy::module_inception)]
 mod hash_map;

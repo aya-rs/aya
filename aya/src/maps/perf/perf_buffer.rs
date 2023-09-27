@@ -318,13 +318,15 @@ struct LostSamples {
 
 #[cfg(test)]
 mod tests {
+    use std::{fmt::Debug, mem};
+
+    use assert_matches::assert_matches;
+
     use super::*;
     use crate::{
         generated::perf_event_mmap_page,
         sys::{override_syscall, Syscall, TEST_MMAP_RET},
     };
-    use assert_matches::assert_matches;
-    use std::{fmt::Debug, mem};
 
     const PAGE_SIZE: usize = 4096;
     union MMappedBuf {

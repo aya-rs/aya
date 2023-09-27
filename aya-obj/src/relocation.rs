@@ -1,11 +1,13 @@
 //! Program relocation handling.
 
+use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
 use core::mem;
 
-use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
 use log::debug;
 use object::{SectionIndex, SymbolKind};
 
+#[cfg(not(feature = "std"))]
+use crate::std;
 use crate::{
     generated::{
         bpf_insn, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
@@ -16,9 +18,6 @@ use crate::{
     util::{HashMap, HashSet},
     BpfSectionKind,
 };
-
-#[cfg(not(feature = "std"))]
-use crate::std;
 
 pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
 
@@ -498,12 +497,11 @@ fn insn_is_call(ins: &bpf_insn) -> bool {
 mod test {
     use alloc::{string::ToString, vec, vec::Vec};
 
+    use super::*;
     use crate::{
         maps::{BtfMap, LegacyMap, Map},
         BpfSectionKind,
     };
-
-    use super::*;
 
     fn fake_sym(index: usize, section_index: usize, address: u64, name: &str, size: u64) -> Symbol {
         Symbol {

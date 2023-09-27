@@ -196,6 +196,11 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<Key<K>, V> for LpmTrie<T, K
 
 #[cfg(test)]
 mod tests {
+    use std::{ffi::c_long, io, mem, net::Ipv4Addr};
+
+    use assert_matches::assert_matches;
+    use libc::{EFAULT, ENOENT};
+
     use super::*;
     use crate::{
         bpf_map_def,
@@ -207,9 +212,6 @@ mod tests {
         obj::{self, maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
-    use assert_matches::assert_matches;
-    use libc::{EFAULT, ENOENT};
-    use std::{ffi::c_long, io, mem, net::Ipv4Addr};
 
     fn new_obj_map() -> obj::Map {
         obj::Map::Legacy(LegacyMap {

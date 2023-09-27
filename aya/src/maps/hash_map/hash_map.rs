@@ -108,6 +108,10 @@ mod tests {
     use assert_matches::assert_matches;
     use libc::{EFAULT, ENOENT};
 
+    use super::{
+        super::test_utils::{self, new_map},
+        *,
+    };
     use crate::{
         generated::{
             bpf_attr, bpf_cmd,
@@ -116,11 +120,6 @@ mod tests {
         maps::Map,
         obj,
         sys::{override_syscall, SysResult, Syscall},
-    };
-
-    use super::{
-        super::test_utils::{self, new_map},
-        *,
     };
 
     fn new_obj_map() -> obj::Map {

@@ -1,6 +1,4 @@
 //! Program links.
-use thiserror::Error;
-
 use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::CString,
@@ -8,6 +6,8 @@ use std::{
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, OwnedFd, RawFd},
     path::{Path, PathBuf},
 };
+
+use thiserror::Error;
 
 use crate::{
     generated::bpf_attach_type,
@@ -357,13 +357,13 @@ pub enum LinkError {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
     use std::{cell::RefCell, fs::File, rc::Rc};
+
+    use assert_matches::assert_matches;
     use tempfile::tempdir;
 
-    use crate::{programs::ProgramError, sys::override_syscall};
-
     use super::{FdLink, Link, LinkMap};
+    use crate::{programs::ProgramError, sys::override_syscall};
 
     #[derive(Debug, Hash, Eq, PartialEq)]
     struct TestLinkId(u8, u8);

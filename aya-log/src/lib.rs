@@ -59,13 +59,6 @@ use std::{
 
 const MAP_NAME: &str = "AYA_LOGS";
 
-use aya_log_common::{
-    Argument, DisplayHint, Level, LogValueLength, RecordField, LOG_BUF_CAPACITY, LOG_FIELDS,
-};
-use bytes::BytesMut;
-use log::{error, Log, Record};
-use thiserror::Error;
-
 use aya::{
     maps::{
         perf::{AsyncPerfEventArray, Events, PerfBufferError},
@@ -74,6 +67,12 @@ use aya::{
     util::online_cpus,
     Bpf, Pod,
 };
+use aya_log_common::{
+    Argument, DisplayHint, Level, LogValueLength, RecordField, LOG_BUF_CAPACITY, LOG_FIELDS,
+};
+use bytes::BytesMut;
+use log::{error, Log, Record};
+use thiserror::Error;
 
 #[derive(Copy, Clone)]
 #[repr(transparent)]
@@ -563,9 +562,10 @@ fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use aya_log_common::{write_record_header, WriteToBuf};
     use log::{logger, Level};
+
+    use super::*;
 
     fn new_log(args: usize) -> Option<(usize, Vec<u8>)> {
         let mut buf = vec![0; 8192];

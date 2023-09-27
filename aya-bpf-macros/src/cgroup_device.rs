@@ -34,8 +34,9 @@ impl CgroupDevice {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn test_cgroup_device() {

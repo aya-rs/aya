@@ -3,13 +3,12 @@ use core::{cell::UnsafeCell, mem, num::NonZeroU32, ptr::NonNull};
 use aya_bpf_bindings::bindings::bpf_devmap_val;
 use aya_bpf_cty::c_void;
 
+use super::{dev_map::DevMapValue, try_redirect_map};
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH},
     helpers::bpf_map_lookup_elem,
     maps::PinningType,
 };
-
-use super::{dev_map::DevMapValue, try_redirect_map};
 
 /// A map of network devices.
 ///

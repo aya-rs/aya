@@ -1,8 +1,8 @@
 //! Cgroup socket option programs.
 
-pub use aya_obj::programs::CgroupSockoptAttachType;
-
 use std::{hash::Hash, os::fd::AsFd, path::Path};
+
+pub use aya_obj::programs::CgroupSockoptAttachType;
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCKOPT,
