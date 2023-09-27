@@ -67,10 +67,10 @@ pub fn docs(metadata: Metadata) -> Result<()> {
 
     fs::write(
         site.join("robots.txt"),
-        indoc! {r#"
+        indoc! {r"
     User-Agent:*
     Disallow: /
-    "#},
+    "},
     )
     .context("can't write robots.txt")?;
 
