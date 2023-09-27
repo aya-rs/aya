@@ -15,11 +15,11 @@ macro_rules! read_str_bytes {
         let Some(ptr) = RESULT.get_ptr_mut(0) else {
             return;
         };
-        let TestResult {
-            did_error,
-            len,
-            buf,
-        } = unsafe { &mut *ptr };
+        let dst = unsafe { ptr.as_mut() };
+        let Some(TestResult { buf, len }) = dst else {
+            return;
+        };
+        *len = None;
 
         // $len comes from ctx.arg(1) so it's dynamic and the verifier
         // doesn't see any bounds. We do $len.min(RESULT_BUF_LEN) here to
@@ -35,22 +35,14 @@ macro_rules! read_str_bytes {
             return;
         };
 
-        match unsafe { $fun($ptr, buf) } {
-            Ok(s) => {
-                *len = s.len();
-            }
-            Err(_) => {
-                *did_error = 1;
-            }
-        }
+        *len = Some(unsafe { $fun($ptr, buf) }.map(<[_]>::len));
     };
 }
 
 #[repr(C)]
 struct TestResult {
-    did_error: u64,
-    len: usize,
     buf: [u8; RESULT_BUF_LEN],
+    len: Option<Result<usize, i64>>,
 }
 
 #[map]
