@@ -44,10 +44,9 @@ use sk_msg::SkMsg;
 use sk_skb::{SkSkb, SkSkbKind};
 use sock_ops::SockOps;
 use socket_filter::SocketFilter;
-use uprobe::{UProbe, UProbeKind};
-
 use tc::SchedClassifier;
 use tracepoint::TracePoint;
+use uprobe::{UProbe, UProbeKind};
 use xdp::Xdp;
 #[proc_macro_error]
 #[proc_macro_attribute]

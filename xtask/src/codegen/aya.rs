@@ -1,6 +1,6 @@
-use anyhow::anyhow;
 use std::path::{Path, PathBuf};
 
+use anyhow::anyhow;
 use aya_tool::{bindgen, write_to_file};
 
 use crate::codegen::{Architecture, SysrootOptions};

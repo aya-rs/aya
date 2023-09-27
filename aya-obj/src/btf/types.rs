@@ -1,8 +1,8 @@
 #![allow(missing_docs)]
 
+use alloc::{string::ToString, vec, vec::Vec};
 use core::{fmt::Display, mem, ptr};
 
-use alloc::{string::ToString, vec, vec::Vec};
 use object::Endianness;
 
 use crate::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH};
@@ -1570,8 +1570,9 @@ fn bytes_of<T>(val: &T) -> &[u8] {
 }
 #[cfg(test)]
 mod tests {
-    use super::*;
     use assert_matches::assert_matches;
+
+    use super::*;
 
     #[test]
     fn test_read_btf_type_int() {

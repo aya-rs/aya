@@ -7,7 +7,6 @@ use std::{
     slice,
 };
 
-use crate::util::KernelVersion;
 use assert_matches::assert_matches;
 use libc::{c_char, c_long, ENOENT, ENOSPC};
 use obj::{
@@ -31,6 +30,7 @@ use crate::{
         copy_instructions,
     },
     sys::{syscall, SysResult, Syscall, SyscallError},
+    util::KernelVersion,
     Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN,
 };
 
@@ -1069,9 +1069,10 @@ pub(crate) fn retry_with_verifier_logs<T>(
 
 #[cfg(test)]
 mod tests {
+    use libc::{EBADF, EINVAL};
+
     use super::*;
     use crate::sys::override_syscall;
-    use libc::{EBADF, EINVAL};
 
     #[test]
     fn test_perf_link_supported() {

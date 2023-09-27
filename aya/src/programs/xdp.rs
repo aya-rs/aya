@@ -1,11 +1,5 @@
 //! eXpress Data Path (XDP) programs.
 
-use crate::{
-    sys::{LinkTarget, SyscallError},
-    util::KernelVersion,
-};
-use bitflags;
-use libc::if_nametoindex;
 use std::{
     convert::TryFrom,
     ffi::CString,
@@ -14,6 +8,9 @@ use std::{
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
     path::Path,
 };
+
+use bitflags;
+use libc::if_nametoindex;
 use thiserror::Error;
 
 use crate::{
@@ -25,7 +22,11 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, Link, LinkError, ProgramData, ProgramError,
     },
-    sys::{bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, netlink_set_xdp_fd},
+    sys::{
+        bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, netlink_set_xdp_fd, LinkTarget,
+        SyscallError,
+    },
+    util::KernelVersion,
     VerifierLogLevel,
 };
 

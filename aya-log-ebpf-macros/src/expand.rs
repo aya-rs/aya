@@ -1,3 +1,5 @@
+use aya_log_common::DisplayHint;
+use aya_log_parser::{parse, Fragment};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
@@ -5,9 +7,6 @@ use syn::{
     punctuated::Punctuated,
     Error, Expr, LitStr, Result, Token,
 };
-
-use aya_log_common::DisplayHint;
-use aya_log_parser::{parse, Fragment};
 
 pub(crate) struct LogArgs {
     pub(crate) ctx: Expr,

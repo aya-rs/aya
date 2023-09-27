@@ -1,12 +1,11 @@
 //! Map struct and type bindings.
 
-use core::mem;
-
-use crate::BpfSectionKind;
 use alloc::vec::Vec;
+use core::mem;
 
 #[cfg(not(feature = "std"))]
 use crate::std;
+use crate::BpfSectionKind;
 
 /// Invalid map type encontered
 pub struct InvalidMapTypeError {

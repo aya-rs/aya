@@ -1,9 +1,10 @@
 //! Socket filter programs.
-use libc::{setsockopt, SOL_SOCKET};
 use std::{
     io, mem,
     os::fd::{AsFd, AsRawFd, RawFd},
 };
+
+use libc::{setsockopt, SOL_SOCKET};
 use thiserror::Error;
 
 use crate::{

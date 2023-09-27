@@ -48,8 +48,9 @@ impl CgroupSockAddr {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn cgroup_sock_addr_connect4() {

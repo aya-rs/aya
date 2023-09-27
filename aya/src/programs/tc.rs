@@ -1,12 +1,12 @@
 //! Network traffic control programs.
-use thiserror::Error;
-
 use std::{
     ffi::{CStr, CString},
     io,
     os::fd::AsFd as _,
     path::Path,
 };
+
+use thiserror::Error;
 
 use crate::{
     generated::{

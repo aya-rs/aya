@@ -1,5 +1,6 @@
 //! Tracepoint programs.
 use std::{fs, io, os::fd::AsFd as _, path::Path};
+
 use thiserror::Error;
 
 use crate::{

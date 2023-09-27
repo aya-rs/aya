@@ -1,6 +1,4 @@
 //! User space probes.
-use libc::pid_t;
-use object::{Object, ObjectSection, ObjectSymbol};
 use std::{
     borrow::Cow,
     error::Error,
@@ -12,6 +10,9 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+
+use libc::pid_t;
+use object::{Object, ObjectSection, ObjectSymbol};
 use thiserror::Error;
 
 use crate::{

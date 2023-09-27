@@ -2,12 +2,11 @@ use core::{cell::UnsafeCell, mem};
 
 use aya_bpf_bindings::bindings::bpf_cpumap_val;
 
+use super::try_redirect_map;
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_CPUMAP},
     maps::PinningType,
 };
-
-use super::try_redirect_map;
 
 /// An array of available CPUs.
 ///

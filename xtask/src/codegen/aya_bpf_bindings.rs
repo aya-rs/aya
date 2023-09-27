@@ -1,9 +1,9 @@
-use anyhow::anyhow;
-use proc_macro2::TokenStream;
-use quote::ToTokens;
 use std::path::{Path, PathBuf};
 
+use anyhow::anyhow;
 use aya_tool::{bindgen, write_to_file_fmt};
+use proc_macro2::TokenStream;
+use quote::ToTokens;
 use syn::{parse_str, Item};
 
 use crate::codegen::{

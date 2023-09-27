@@ -7,7 +7,8 @@ use alloc::{
     string::{String, ToString},
     vec::Vec,
 };
-use core::{ffi::CStr, mem, ptr, str::FromStr};
+use core::{ffi::CStr, mem, ptr, slice::from_raw_parts_mut, str::FromStr};
+
 use log::debug;
 use object::{
     read::{Object as ElfObject, ObjectSection, Section as ObjSection},
@@ -15,27 +16,23 @@ use object::{
     SymbolKind,
 };
 
+#[cfg(not(feature = "std"))]
+use crate::std;
 use crate::{
-    btf::BtfFeatures,
-    generated::{BPF_CALL, BPF_JMP, BPF_K},
-    maps::{BtfMap, LegacyMap, Map, MINIMUM_MAP_SIZE},
-    programs::XdpAttachType,
+    btf::{
+        Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
+    },
+    generated::{
+        bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL, BPF_F_RDONLY_PROG,
+        BPF_JMP, BPF_K,
+    },
+    maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, PinningType, MINIMUM_MAP_SIZE},
+    programs::{
+        CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType, XdpAttachType,
+    },
     relocation::*,
     util::HashMap,
 };
-
-#[cfg(not(feature = "std"))]
-use crate::std;
-
-use crate::{
-    btf::{Btf, BtfError, BtfExt, BtfType},
-    generated::{bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_F_RDONLY_PROG},
-    maps::{bpf_map_def, BtfMapDef, PinningType},
-    programs::{CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType},
-};
-use core::slice::from_raw_parts_mut;
-
-use crate::btf::{Array, DataSecEntry, FuncSecInfo, LineSecInfo};
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
 
@@ -1395,6 +1392,7 @@ fn get_func_and_line_info(
 #[cfg(test)]
 mod tests {
     use alloc::vec;
+
     use assert_matches::assert_matches;
     use object::Endianness;
 

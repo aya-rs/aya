@@ -1,4 +1,3 @@
-use bytes::BytesMut;
 use std::borrow::{Borrow, BorrowMut};
 
 // See https://doc.rust-lang.org/cargo/reference/features.html#mutually-exclusive-features.
@@ -7,7 +6,7 @@ use std::borrow::{Borrow, BorrowMut};
 // "async-async-std". Presently we arbitrarily choose tokio over async-std when both are requested.
 #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
 use async_io::Async;
-
+use bytes::BytesMut;
 #[cfg(feature = "async_tokio")]
 use tokio::io::unix::AsyncFd;
 

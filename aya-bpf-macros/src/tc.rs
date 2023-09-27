@@ -34,8 +34,9 @@ impl SchedClassifier {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn test_sched_classifier() {

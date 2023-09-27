@@ -150,12 +150,11 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, PerCpuValues<V>>
 
 #[cfg(test)]
 mod tests {
+    use super::{super::test_utils, *};
     use crate::{
         generated::bpf_map_type::{BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH},
         maps::Map,
     };
-
-    use super::{super::test_utils, *};
 
     #[test]
     fn test_try_from_ok() {

@@ -3,10 +3,11 @@ mod docs;
 mod public_api;
 mod run;
 
+use std::process::Command;
+
 use anyhow::{Context as _, Result};
 use cargo_metadata::{Metadata, MetadataCommand};
 use clap::Parser;
-use std::process::Command;
 use xtask::{exec, LIBBPF_DIR};
 
 #[derive(Parser)]

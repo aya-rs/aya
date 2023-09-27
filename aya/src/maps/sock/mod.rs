@@ -2,13 +2,13 @@
 mod sock_hash;
 mod sock_map;
 
-pub use sock_hash::SockHash;
-pub use sock_map::SockMap;
-
 use std::{
     io,
     os::fd::{AsFd, BorrowedFd},
 };
+
+pub use sock_hash::SockHash;
+pub use sock_map::SockMap;
 
 /// A socket map file descriptor.
 #[repr(transparent)]
