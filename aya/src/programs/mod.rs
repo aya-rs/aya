@@ -617,14 +617,8 @@ fn load_program<T: Link>(
         },
     ) = obj;
 
-    let target_kernel_version = kernel_version.unwrap_or_else(|| {
-        let KernelVersion {
-            major,
-            minor,
-            patch,
-        } = KernelVersion::current().unwrap();
-        (u32::from(major) << 16) + (u32::from(minor) << 8) + u32::from(patch)
-    });
+    let target_kernel_version =
+        kernel_version.unwrap_or_else(|| KernelVersion::current().unwrap().code());
 
     let prog_name = if let Some(name) = name {
         let mut name = name.clone();
