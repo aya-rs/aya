@@ -18,7 +18,7 @@ pub fn test_stack_argument(ctx: ProbeContext) -> i32 {
     }
 }
 
-//read argument, and send event
+// read function arguments, and set to map.
 fn try_stack_argument(ctx: ProbeContext) -> Result<i32, i64> {
     let _ = ARGS.insert(&0, &ctx.arg(0).ok_or(255)?, 0);
     let _ = ARGS.insert(&1, &ctx.arg(1).ok_or(255)?, 0);

@@ -20,7 +20,12 @@ pub extern "C" fn trigger_stack_argument(
     a_3: u64,
     a_4: u64,
     a_5: u64,
-    //in x86_64, from arg6, stack_argument would be used
+    // in x86_64 arch, for C language, the first 6 integer or pointer argument
+    // would be passed in registers. The excess arguments would be passed on the stack.
+    // This conculusion and further reference could be found from:
+    // https://en.wikipedia.org/wiki/X86_calling_conventions#System_V_AMD64_ABI
+    // Notice that other languages, like Golang, or in other archs, like aarch64, may
+    // have different convention rules.
     a_6: u64,
     a_7: i64,
 ) {
@@ -43,7 +48,6 @@ async fn stack_argument() {
         HashMap::try_from(bpf.take_map("ARGS").unwrap()).unwrap();
     trigger_stack_argument(0, 1, 2, 3, 4, 5, 6, 7);
 
-    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     assert_eq!(args_map.keys().count(), 8);
     for iter in args_map.iter() {
         let iter_v = iter.unwrap();
