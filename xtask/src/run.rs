@@ -456,20 +456,30 @@ pub fn run(opts: Options) -> Result<()> {
                 let stderr = stderr.take().unwrap();
                 let stderr = BufReader::new(stderr);
 
-                fn terminate_if_contains_kernel_panic(
-                    line: &str,
-                    stdin: &Arc<Mutex<ChildStdin>>,
-                ) -> anyhow::Result<()> {
-                    if line.contains("end Kernel panic") {
-                        println!("kernel panic detected; terminating QEMU");
-                        let mut stdin = stdin.lock().unwrap();
-                        stdin
-                            .write_all(&[0x01, b'x'])
-                            .context("failed to write to stdin")?;
-                        println!("waiting for QEMU to terminate");
-                    }
-                    Ok(())
-                }
+                const TERMINATE_AFTER_COUNT: &[(&str, usize)] =
+                    &[("end Kernel panic", 0), ("watchdog: BUG: soft lockup", 1)];
+                let mut counts = [0; TERMINATE_AFTER_COUNT.len()];
+
+                let mut terminate_if_kernel_hang =
+                    move |line: &str, stdin: &Arc<Mutex<ChildStdin>>| -> anyhow::Result<()> {
+                        if let Some(i) = TERMINATE_AFTER_COUNT
+                            .iter()
+                            .position(|(marker, _)| line.contains(marker))
+                        {
+                            counts[i] += 1;
+
+                            let (marker, max) = TERMINATE_AFTER_COUNT[i];
+                            if counts[i] > max {
+                                println!("{marker} detected > {max} times; terminating QEMU");
+                                let mut stdin = stdin.lock().unwrap();
+                                stdin
+                                    .write_all(&[0x01, b'x'])
+                                    .context("failed to write to stdin")?;
+                                println!("waiting for QEMU to terminate");
+                            }
+                        }
+                        Ok(())
+                    };
 
                 let stderr = {
                     let stdin = stdin.clone();
@@ -478,8 +488,7 @@ pub fn run(opts: Options) -> Result<()> {
                             for line in stderr.lines() {
                                 let line = line.context("failed to read line from stderr")?;
                                 eprintln!("{}", line);
-                                // Try to get QEMU to exit on kernel panic; otherwise it might hang indefinitely.
-                                terminate_if_contains_kernel_panic(&line, &stdin)?;
+                                terminate_if_kernel_hang(&line, &stdin)?;
                             }
                             anyhow::Ok(())
                         })
@@ -490,8 +499,7 @@ pub fn run(opts: Options) -> Result<()> {
                 for line in stdout.lines() {
                     let line = line.context("failed to read line from stdout")?;
                     println!("{}", line);
-                    // Try to get QEMU to exit on kernel panic; otherwise it might hang indefinitely.
-                    terminate_if_contains_kernel_panic(&line, &stdin)?;
+                    terminate_if_kernel_hang(&line, &stdin)?;
                     // The init program will print "init: success" or "init: failure" to indicate
                     // the outcome of running the binaries it found in /bin.
                     if let Some(line) = line.strip_prefix("init: ") {
