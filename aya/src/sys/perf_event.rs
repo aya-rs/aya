@@ -6,6 +6,7 @@ use std::{
 
 use libc::{c_int, pid_t};
 
+use super::{syscall, SysResult, Syscall};
 use crate::generated::{
     perf_event_attr,
     perf_event_sample_format::PERF_SAMPLE_RAW,
@@ -13,8 +14,6 @@ use crate::generated::{
     perf_type_id::{PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT},
     PERF_FLAG_FD_CLOEXEC,
 };
-
-use super::{syscall, SysResult, Syscall};
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn perf_event_open(

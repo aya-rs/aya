@@ -1,5 +1,6 @@
-use anyhow::{bail, Context as _, Result};
 use std::process::Command;
+
+use anyhow::{bail, Context as _, Result};
 
 pub const AYA_BUILD_INTEGRATION_BPF: &str = "AYA_BUILD_INTEGRATION_BPF";
 pub const LIBBPF_DIR: &str = "xtask/libbpf";

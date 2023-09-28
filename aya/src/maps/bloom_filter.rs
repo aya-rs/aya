@@ -79,6 +79,11 @@ impl<T: BorrowMut<MapData>, V: Pod> BloomFilter<T, V> {
 
 #[cfg(test)]
 mod tests {
+    use std::{ffi::c_long, io};
+
+    use assert_matches::assert_matches;
+    use libc::{EFAULT, ENOENT};
+
     use super::*;
     use crate::{
         bpf_map_def,
@@ -90,9 +95,6 @@ mod tests {
         obj::{self, maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
-    use assert_matches::assert_matches;
-    use libc::{EFAULT, ENOENT};
-    use std::{ffi::c_long, io};
 
     fn new_obj_map() -> obj::Map {
         obj::Map::Legacy(LegacyMap {

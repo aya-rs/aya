@@ -5,7 +5,6 @@ use std::{
     os::fd::{AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd},
     ptr, slice,
 };
-use thiserror::Error;
 
 use libc::{
     getsockname, nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl, socket,
@@ -14,6 +13,7 @@ use libc::{
     NLM_F_DUMP, NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI, NLM_F_REQUEST, RTM_DELTFILTER, RTM_GETTFILTER,
     RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK, SOCK_RAW, SOL_NETLINK,
 };
+use thiserror::Error;
 
 use crate::{
     generated::{

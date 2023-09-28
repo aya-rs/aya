@@ -64,7 +64,6 @@ pub mod uprobe;
 mod utils;
 pub mod xdp;
 
-use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
@@ -74,7 +73,6 @@ use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
-use thiserror::Error;
 
 pub use cgroup_device::CgroupDevice;
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
@@ -86,6 +84,7 @@ pub use extension::{Extension, ExtensionError};
 pub use fentry::FEntry;
 pub use fexit::FExit;
 pub use kprobe::{KProbe, KProbeError};
+use libc::ENOSPC;
 pub use links::Link;
 use links::*;
 pub use lirc_mode2::LircMode2;
@@ -100,6 +99,7 @@ pub use sk_skb::{SkSkb, SkSkbKind};
 pub use sock_ops::SockOps;
 pub use socket_filter::{SocketFilter, SocketFilterError};
 pub use tc::{SchedClassifier, TcAttachType, TcError};
+use thiserror::Error;
 pub use tp_btf::BtfTracePoint;
 pub use trace_point::{TracePoint, TracePointError};
 pub use uprobe::{UProbe, UProbeError};
@@ -617,14 +617,8 @@ fn load_program<T: Link>(
         },
     ) = obj;
 
-    let target_kernel_version = kernel_version.unwrap_or_else(|| {
-        let KernelVersion {
-            major,
-            minor,
-            patch,
-        } = KernelVersion::current().unwrap();
-        (u32::from(major) << 16) + (u32::from(minor) << 8) + u32::from(patch)
-    });
+    let target_kernel_version =
+        kernel_version.unwrap_or_else(|| KernelVersion::current().unwrap().code());
 
     let prog_name = if let Some(name) = name {
         let mut name = name.clone();

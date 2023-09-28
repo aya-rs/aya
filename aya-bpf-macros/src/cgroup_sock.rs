@@ -46,8 +46,9 @@ impl CgroupSock {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn cgroup_sock_post_bind4() {

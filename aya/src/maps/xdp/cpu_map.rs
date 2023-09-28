@@ -8,14 +8,13 @@ use std::{
 
 use aya_obj::generated::bpf_cpumap_val;
 
+use super::XdpMapError;
 use crate::{
     maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
     programs::ProgramFd,
     sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
     Pod, FEATURES,
 };
-
-use super::XdpMapError;
 
 /// An array of available CPUs.
 ///

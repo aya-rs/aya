@@ -1,5 +1,3 @@
-use crate::util::KernelVersion;
-use libc::pid_t;
 use std::{
     ffi::{OsStr, OsString},
     fmt::Write as _,
@@ -11,6 +9,8 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
+use libc::pid_t;
+
 use crate::{
     programs::{
         kprobe::KProbeError, perf_attach, perf_attach::PerfLinkInner, perf_attach_debugfs,
@@ -18,6 +18,7 @@ use crate::{
         Link, ProgramData, ProgramError,
     },
     sys::{perf_event_open_probe, perf_event_open_trace_point, SyscallError},
+    util::KernelVersion,
 };
 
 static PROBE_NAME_INDEX: AtomicUsize = AtomicUsize::new(0);
@@ -213,6 +214,7 @@ fn create_probe_event(
     offset: u64,
 ) -> Result<OsString, (PathBuf, io::Error)> {
     use std::os::unix::ffi::OsStrExt as _;
+
     use ProbeKind::*;
 
     let events_file_name = tracefs.join(format!("{}_events", kind.pmu()));

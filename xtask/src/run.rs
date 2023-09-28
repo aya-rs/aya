@@ -345,8 +345,6 @@ pub fn run(opts: Options) -> Result<()> {
                     bail!("{gen_init_cpio:?} failed: {output:?}")
                 }
 
-                copy(&initrd_image, "/tmp/initrd.img").context("copy failed")?;
-
                 let mut qemu = Command::new(format!("qemu-system-{guest_arch}"));
                 if let Some(machine) = machine {
                     qemu.args(["-machine", machine]);

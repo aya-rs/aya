@@ -1,15 +1,12 @@
 use core::ffi::c_void;
 
-use crate::{args::FromPtRegs, BpfContext};
-
 #[cfg(not(any(bpf_target_arch = "aarch64", bpf_target_arch = "riscv64")))]
 use crate::bindings::pt_regs;
-
 #[cfg(bpf_target_arch = "aarch64")]
 use crate::bindings::user_pt_regs as pt_regs;
-
 #[cfg(bpf_target_arch = "riscv64")]
 use crate::bindings::user_regs_struct as pt_regs;
+use crate::{args::FromPtRegs, BpfContext};
 
 pub struct ProbeContext {
     pub regs: *mut pt_regs,

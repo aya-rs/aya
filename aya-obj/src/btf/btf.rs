@@ -1,5 +1,3 @@
-use core::{ffi::CStr, mem, ptr};
-
 use alloc::{
     borrow::{Cow, ToOwned as _},
     format,
@@ -7,11 +5,14 @@ use alloc::{
     vec,
     vec::Vec,
 };
-use bytes::BufMut;
+use core::{ffi::CStr, mem, ptr};
 
+use bytes::BufMut;
 use log::debug;
 use object::{Endianness, SectionIndex};
 
+#[cfg(not(feature = "std"))]
+use crate::std;
 use crate::{
     btf::{
         info::{FuncSecInfo, LineSecInfo},
@@ -23,9 +24,6 @@ use crate::{
     util::{bytes_of, HashMap},
     Object,
 };
-
-#[cfg(not(feature = "std"))]
-use crate::std;
 
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
 pub(crate) const MAX_SPEC_LEN: usize = 64;
@@ -1102,12 +1100,13 @@ pub(crate) struct SecInfo<'a> {
 
 #[cfg(test)]
 mod tests {
+    use assert_matches::assert_matches;
+
     use super::*;
     use crate::btf::{
         BtfEnum64, BtfParam, DataSec, DataSecEntry, DeclTag, Enum64, Float, Func, FuncProto, Ptr,
         TypeTag, Var,
     };
-    use assert_matches::assert_matches;
 
     #[test]
     fn test_parse_header() {

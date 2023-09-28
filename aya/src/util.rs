@@ -11,12 +11,12 @@ use std::{
     str::{FromStr, Utf8Error},
 };
 
+use libc::{if_nametoindex, sysconf, uname, utsname, _SC_PAGESIZE};
+
 use crate::{
     generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK},
     Pod,
 };
-
-use libc::{if_nametoindex, sysconf, uname, utsname, _SC_PAGESIZE};
 
 /// Represents a kernel version, in major.minor.release version.
 // Adapted from https://docs.rs/procfs/latest/procfs/sys/kernel/struct.Version.html.
@@ -49,23 +49,43 @@ impl KernelVersion {
 
     /// Returns the kernel version of the currently running kernel.
     pub fn current() -> Result<Self, impl Error> {
-        let kernel_version = Self::get_kernel_version();
+        Self::get_kernel_version()
+    }
 
-        // The kernel version is clamped to 4.19.255 on kernels 4.19.222 and above.
-        //
-        // See https://github.com/torvalds/linux/commit/a256aac.
-        const CLAMPED_KERNEL_MAJOR: u8 = 4;
-        const CLAMPED_KERNEL_MINOR: u8 = 19;
-        if let Ok(Self {
-            major: CLAMPED_KERNEL_MAJOR,
-            minor: CLAMPED_KERNEL_MINOR,
-            patch: 222..,
-        }) = kernel_version
-        {
-            return Ok(Self::new(CLAMPED_KERNEL_MAJOR, CLAMPED_KERNEL_MINOR, 255));
+    /// The equivalent of LINUX_VERSION_CODE.
+    pub(crate) fn code(self) -> u32 {
+        let Self {
+            major,
+            minor,
+            mut patch,
+        } = self;
+
+        // Certain LTS kernels went above the "max" 255 patch so
+        // backports were done to cap the patch version
+        let max_patch = match (major, minor) {
+            // On 4.4 + 4.9, any patch 257 or above was hardcoded to 255.
+            // See: https://github.com/torvalds/linux/commit/a15813a +
+            // https://github.com/torvalds/linux/commit/42efb098
+            (4, 4 | 9) => 257,
+            // On 4.14, any patch 252 or above was hardcoded to 255.
+            // See: https://github.com/torvalds/linux/commit/e131e0e
+            (4, 14) => 252,
+            // On 4.19, any patch 222 or above was hardcoded to 255.
+            // See: https://github.com/torvalds/linux/commit/a256aac
+            (4, 19) => 222,
+            // For other kernels (i.e., newer LTS kernels as other
+            // ones won't reach 255+ patches) clamp it to 255. See:
+            // https://github.com/torvalds/linux/commit/9b82f13e
+            _ => 255,
+        };
+
+        // anything greater or equal to `max_patch` is hardcoded to
+        // 255.
+        if patch >= max_patch {
+            patch = 255;
         }
 
-        kernel_version
+        (u32::from(major) << 16) + (u32::from(minor) << 8) + u32::from(patch)
     }
 
     // This is ported from https://github.com/torvalds/linux/blob/3f01e9f/tools/lib/bpf/libbpf_probes.c#L21-L101.
@@ -339,8 +359,9 @@ pub(crate) fn bytes_of_slice<T: Pod>(val: &[T]) -> &[u8] {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use assert_matches::assert_matches;
+
+    use super::*;
 
     #[test]
     fn test_parse_kernel_version_string() {

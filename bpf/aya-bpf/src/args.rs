@@ -1,16 +1,13 @@
 use aya_bpf_cty::c_ulonglong;
 
-use crate::{cty::c_void, helpers::bpf_probe_read};
-
 // aarch64 uses user_pt_regs instead of pt_regs
 #[cfg(not(any(bpf_target_arch = "aarch64", bpf_target_arch = "riscv64")))]
 use crate::bindings::pt_regs;
-
 #[cfg(bpf_target_arch = "aarch64")]
 use crate::bindings::user_pt_regs as pt_regs;
-
 #[cfg(bpf_target_arch = "riscv64")]
 use crate::bindings::user_regs_struct as pt_regs;
+use crate::{cty::c_void, helpers::bpf_probe_read};
 
 /// A trait that indicates a valid type for an argument which can be coerced from a BTF
 /// context.

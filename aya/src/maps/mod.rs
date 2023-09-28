@@ -58,7 +58,6 @@ use std::{
     ptr,
 };
 
-use crate::util::KernelVersion;
 use libc::{getrlimit, rlim_t, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
 use thiserror::Error;
@@ -70,7 +69,7 @@ use crate::{
         bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_info_by_fd,
         bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object, SyscallError,
     },
-    util::nr_cpus,
+    util::{nr_cpus, KernelVersion},
     PinningType, Pod,
 };
 
@@ -807,10 +806,12 @@ impl<T: Pod> Deref for PerCpuValues<T> {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
-    use libc::EFAULT;
     use std::os::fd::AsRawFd as _;
 
+    use assert_matches::assert_matches;
+    use libc::EFAULT;
+
+    use super::*;
     use crate::{
         bpf_map_def,
         generated::{bpf_cmd, bpf_map_type::BPF_MAP_TYPE_HASH},
@@ -818,8 +819,6 @@ mod tests {
         obj::{maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, Syscall},
     };
-
-    use super::*;
 
     fn new_obj_map() -> obj::Map {
         obj::Map::Legacy(LegacyMap {

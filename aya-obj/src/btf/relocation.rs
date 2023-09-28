@@ -1,5 +1,3 @@
-use core::{mem, ops::Bound::Included, ptr};
-
 use alloc::{
     borrow::{Cow, ToOwned as _},
     collections::BTreeMap,
@@ -8,8 +6,12 @@ use alloc::{
     vec,
     vec::Vec,
 };
+use core::{mem, ops::Bound::Included, ptr};
+
 use object::SectionIndex;
 
+#[cfg(not(feature = "std"))]
+use crate::std;
 use crate::{
     btf::{
         fields_are_compatible, types_are_compatible, Array, Btf, BtfError, BtfMember, BtfType,
@@ -22,9 +24,6 @@ use crate::{
     util::HashMap,
     Function, Object,
 };
-
-#[cfg(not(feature = "std"))]
-use crate::std;
 
 /// The error type returned by [`Object::relocate_btf`].
 #[derive(thiserror::Error, Debug)]
