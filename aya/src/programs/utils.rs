@@ -5,7 +5,6 @@ use std::{
     io::{self, BufRead, BufReader},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd},
     path::Path,
-    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 use crate::{
@@ -56,25 +55,6 @@ pub(crate) fn find_tracefs_path() -> Result<&'static Path, ProgramError> {
     TRACE_FS
         .as_deref()
         .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "tracefs not found").into())
-}
-
-/// The time at which the system is booted.
-pub(crate) fn boot_time() -> SystemTime {
-    let get_time = |clock_id| {
-        let mut time = unsafe { std::mem::zeroed::<libc::timespec>() };
-        assert_eq!(
-            unsafe { libc::clock_gettime(clock_id, &mut time) },
-            0,
-            "clock_gettime({}, _)",
-            clock_id
-        );
-        let libc::timespec { tv_sec, tv_nsec } = time;
-
-        Duration::new(tv_sec as u64, tv_nsec as u32)
-    };
-    let since_boot = get_time(libc::CLOCK_BOOTTIME);
-    let since_epoch = get_time(libc::CLOCK_REALTIME);
-    UNIX_EPOCH + since_epoch - since_boot
 }
 
 /// Get the specified information from a file descriptor's fdinfo.

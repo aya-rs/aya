@@ -71,7 +71,6 @@ use std::{
     os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
     path::{Path, PathBuf},
     sync::Arc,
-    time::{Duration, SystemTime},
 };
 
 pub use cgroup_device::CgroupDevice;
@@ -110,13 +109,14 @@ use crate::{
     maps::MapError,
     obj::{self, btf::BtfError, VerifierLog},
     pin::PinError,
-    programs::utils::{boot_time, get_fdinfo},
+    programs::utils::get_fdinfo,
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
         bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
         bpf_prog_query, iter_link_ids, iter_prog_ids, retry_with_verifier_logs,
         BpfLoadProgramAttrs, SyscallError,
     },
+    time::SinceBoot,
     util::KernelVersion,
     VerifierLogLevel,
 };
@@ -1086,8 +1086,9 @@ impl ProgramInfo {
     }
 
     /// The time the program was loaded.
-    pub fn loaded_at(&self) -> SystemTime {
-        boot_time() + Duration::from_nanos(self.0.load_time)
+    pub fn loaded_at(&self) -> SinceBoot {
+        // See https://github.com/torvalds/linux/blob/633b47cb/include/linux/bpf.h#L1418.
+        SinceBoot::from_nanos(self.0.load_time)
     }
 
     /// Returns a file descriptor referencing the program.

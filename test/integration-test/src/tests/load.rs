@@ -10,6 +10,7 @@ use aya::{
         links::{FdLink, PinnedLink},
         loaded_links, loaded_programs, KProbe, TracePoint, UProbe, Xdp, XdpFlags,
     },
+    time::SinceBoot,
     util::KernelVersion,
     Bpf,
 };
@@ -154,9 +155,10 @@ fn unload_xdp() {
 fn test_loaded_at() {
     let mut bpf = Bpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-    let t1 = SystemTime::now();
+
+    let t1 = SinceBoot::now();
     prog.load().unwrap();
-    let t2 = SystemTime::now();
+    let t2 = SinceBoot::now();
     assert_loaded("pass");
 
     let loaded_at = prog.info().unwrap().loaded_at();
