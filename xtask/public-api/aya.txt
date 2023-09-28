@@ -6582,7 +6582,7 @@ pub fn aya::programs::ProgramInfo::fd(&self) -> core::result::Result<aya::progra
 pub fn aya::programs::ProgramInfo::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::gpl_compatible(&self) -> bool
 pub fn aya::programs::ProgramInfo::id(&self) -> u32
-pub fn aya::programs::ProgramInfo::loaded_at(&self) -> std::time::SystemTime
+pub fn aya::programs::ProgramInfo::loaded_at(&self) -> aya::time::SinceBoot
 pub fn aya::programs::ProgramInfo::map_ids(&self) -> core::result::Result<alloc::vec::Vec<u32>, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::memory_locked(&self) -> core::result::Result<u32, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::name(&self) -> &[u8]
@@ -7294,6 +7294,50 @@ pub type aya::programs::xdp::XdpLink::Id = aya::programs::xdp::XdpLinkId
 pub fn aya::programs::xdp::XdpLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::xdp::XdpLink::id(&self) -> Self::Id
 pub fn aya::programs::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
+pub mod aya::time
+pub struct aya::time::SinceBoot(_)
+impl aya::time::SinceBoot
+pub fn aya::time::SinceBoot::into_system(self) -> std::time::SystemTime
+pub fn aya::time::SinceBoot::now() -> Self
+impl core::clone::Clone for aya::time::SinceBoot
+pub fn aya::time::SinceBoot::clone(&self) -> aya::time::SinceBoot
+impl core::cmp::Eq for aya::time::SinceBoot
+impl core::cmp::Ord for aya::time::SinceBoot
+pub fn aya::time::SinceBoot::cmp(&self, other: &aya::time::SinceBoot) -> core::cmp::Ordering
+impl core::cmp::PartialEq<aya::time::SinceBoot> for aya::time::SinceBoot
+pub fn aya::time::SinceBoot::eq(&self, other: &aya::time::SinceBoot) -> bool
+impl core::cmp::PartialOrd<aya::time::SinceBoot> for aya::time::SinceBoot
+pub fn aya::time::SinceBoot::partial_cmp(&self, other: &aya::time::SinceBoot) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for aya::time::SinceBoot
+pub fn aya::time::SinceBoot::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::time::SinceBoot
+impl core::marker::StructuralEq for aya::time::SinceBoot
+impl core::marker::StructuralPartialEq for aya::time::SinceBoot
+impl core::marker::Send for aya::time::SinceBoot
+impl core::marker::Sync for aya::time::SinceBoot
+impl core::marker::Unpin for aya::time::SinceBoot
+impl core::panic::unwind_safe::RefUnwindSafe for aya::time::SinceBoot
+impl core::panic::unwind_safe::UnwindSafe for aya::time::SinceBoot
+impl<T, U> core::convert::Into<U> for aya::time::SinceBoot where U: core::convert::From<T>
+pub fn aya::time::SinceBoot::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::time::SinceBoot where U: core::convert::Into<T>
+pub type aya::time::SinceBoot::Error = core::convert::Infallible
+pub fn aya::time::SinceBoot::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::time::SinceBoot where U: core::convert::TryFrom<T>
+pub type aya::time::SinceBoot::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::time::SinceBoot::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::time::SinceBoot where T: core::clone::Clone
+pub type aya::time::SinceBoot::Owned = T
+pub fn aya::time::SinceBoot::clone_into(&self, target: &mut T)
+pub fn aya::time::SinceBoot::to_owned(&self) -> T
+impl<T> core::any::Any for aya::time::SinceBoot where T: 'static + core::marker::Sized
+pub fn aya::time::SinceBoot::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::time::SinceBoot where T: core::marker::Sized
+pub fn aya::time::SinceBoot::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::time::SinceBoot where T: core::marker::Sized
+pub fn aya::time::SinceBoot::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::time::SinceBoot
+pub fn aya::time::SinceBoot::from(t: T) -> T
 pub mod aya::util
 pub struct aya::util::KernelVersion
 impl aya::util::KernelVersion
