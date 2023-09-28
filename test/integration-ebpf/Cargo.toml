@@ -29,6 +29,10 @@ name = "pass"
 path = "src/pass.rs"
 
 [[bin]]
+name = "stack_argument"
+path = "src/stack_argument.rs"
+
+[[bin]]
 name = "test"
 path = "src/test.rs"
 
@@ -51,7 +55,3 @@ path = "src/redirect.rs"
 [[bin]]
 name = "xdp_sec"
 path = "src/xdp_sec.rs"
-
-[[bin]]
-name = "stack_argument"
-path = "src/stack_argument.rs"

@@ -1,15 +1,4 @@
-use aya::{
-    include_bytes_aligned,
-    maps::{AsyncPerfEventArray, HashMap},
-    programs::UProbe,
-    util::online_cpus,
-    Bpf,
-};
-use aya_log::BpfLogger;
-use bytes::BytesMut;
-use log::warn;
-
-use crate::STACK_ARGUMENT;
+use aya::{maps::HashMap, programs::UProbe, Bpf};
 
 #[no_mangle]
 #[inline(never)]
@@ -33,7 +22,6 @@ pub extern "C" fn trigger_stack_argument(
 
 #[tokio::test]
 async fn stack_argument() {
-    event_logger::init();
     let mut bpf = Bpf::load(crate::STACK_ARGUMENT).unwrap();
 
     let prog: &mut UProbe = bpf
