@@ -1,3 +1,5 @@
+#[cfg(bpf_target_arch = "arm")]
+use aya_bpf_cty::c_long;
 use aya_bpf_cty::c_ulonglong;
 
 // aarch64 uses user_pt_regs instead of pt_regs
@@ -149,9 +151,7 @@ impl<T> FromPtRegs for *const T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         unsafe {
-            let addr: c_ulonglong = (ctx.uregs[13] + 8 * (n + 1) as c_ulonglong)
-                .try_into()
-                .unwrap();
+            let addr: c_ulonglong = (ctx.uregs[13] + 8 * (n + 1) as c_long).try_into().unwrap();
             bpf_probe_read(addr as *const T)
                 .map(|v| &v as *const _)
                 .ok()
@@ -257,9 +257,7 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
         unsafe {
-            let addr: c_ulonglong = (ctx.uregs[13] + 8 * (n + 1) as c_ulonglong)
-                .try_into()
-                .unwrap();
+            let addr: c_ulonglong = (ctx.uregs[13] + 8 * (n + 1) as c_long).try_into().unwrap();
             bpf_probe_read(addr as *mut T)
                 .map(|mut v| &mut v as *mut _)
                 .ok()
@@ -368,9 +366,8 @@ macro_rules! impl_from_pt_regs {
 
             fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
                 unsafe {
-                    let addr: c_ulonglong = (ctx.uregs[13] + 8 * (n + 1) as c_ulonglong)
-                        .try_into()
-                        .unwrap();
+                    let addr: c_ulonglong =
+                        (ctx.uregs[13] + 8 * (n + 1) as c_long).try_into().unwrap();
                     bpf_probe_read(addr as *const $type)
                         .map(|v| v as $type)
                         .ok()
@@ -419,6 +416,15 @@ macro_rules! impl_from_pt_regs {
                     6 => Some(ctx.a6 as *const $type as _),
                     7 => Some(ctx.a7 as *const $type as _),
                     _ => None,
+                }
+            }
+
+            fn from_stack_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+                unsafe {
+                    let addr: c_ulonglong = ctx.sp + 8 * (n + 1) as c_ulonglong;
+                    bpf_probe_read(addr as *const $type)
+                        .map(|v| v as $type)
+                        .ok()
                 }
             }
 
