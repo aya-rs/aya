@@ -4,7 +4,7 @@ use aya::{
     Ebpf,
     maps::Array,
     programs::{
-        KProbe, TracePoint, UProbe, Xdp, XdpFlags,
+        FlowDissector, KProbe, TracePoint, UProbe, Xdp, XdpFlags,
         links::{FdLink, PinnedLink},
         loaded_links, loaded_programs,
     },
@@ -309,6 +309,34 @@ fn basic_uprobe() {
     prog.unload().unwrap();
 
     assert_unloaded("test_uprobe");
+}
+
+#[test]
+fn basic_flow_dissector() {
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
+    let prog: &mut FlowDissector = bpf.program_mut("test_flow").unwrap().try_into().unwrap();
+
+    prog.load().unwrap();
+    assert_loaded("test_flow");
+
+    let net_ns = std::fs::File::open("/proc/self/ns/net").unwrap();
+    let link = prog.attach(net_ns.try_clone().unwrap()).unwrap();
+    {
+        let _link_owned = prog.take_link(link).unwrap();
+        prog.unload().unwrap();
+        assert_loaded_and_linked("test_flow");
+    };
+
+    assert_unloaded("test_flow");
+    prog.load().unwrap();
+
+    assert_loaded("test_flow");
+    prog.attach(net_ns).unwrap();
+
+    assert_loaded("test_flow");
+    prog.unload().unwrap();
+
+    assert_unloaded("test_flow");
 }
 
 #[test]
