@@ -281,6 +281,7 @@ pub enum ProgramSection {
     FExit {
         sleepable: bool,
     },
+    FlowDissector,
     Extension,
     SkLookup,
     CgroupSock {
@@ -439,6 +440,7 @@ impl FromStr for ProgramSection {
             "fentry.s" => FEntry { sleepable: true },
             "fexit" => FExit { sleepable: false },
             "fexit.s" => FExit { sleepable: true },
+            "flow_dissector" => FlowDissector,
             "freplace" => Extension,
             "sk_lookup" => SkLookup,
             "iter" => Iter { sleepable: false },
