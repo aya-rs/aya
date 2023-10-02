@@ -490,7 +490,6 @@ impl MapData {
             }
             Err(_) => {
                 let mut map = Self::create(obj, name, btf_fd)?;
-                let path = path.join(name);
                 map.pin(&path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,
