@@ -82,17 +82,19 @@ fn cpumap_chain() {
     xdp.load().unwrap();
     xdp.attach("lo", XdpFlags::default()).unwrap();
 
+    const PAYLOAD: &str = "hello cpumap";
+
     let sock = UdpSocket::bind("127.0.0.1:1777").unwrap();
     sock.set_read_timeout(Some(Duration::from_millis(1)))
         .unwrap();
-    sock.send_to(b"hello cpumap", "127.0.0.1:1777").unwrap();
+    sock.send_to(PAYLOAD.as_bytes(), "127.0.0.1:1777").unwrap();
 
-    // Read back the packet to ensure it wenth through the entire network stack, including our two
+    // Read back the packet to ensure it went through the entire network stack, including our two
     // probes.
-    let mut buf = vec![0u8; 1000];
+    let mut buf = [0u8; PAYLOAD.len() + 1];
     let n = sock.recv(&mut buf).unwrap();
 
-    assert_eq!(&buf[..n], b"hello cpumap");
+    assert_eq!(&buf[..n], PAYLOAD.as_bytes());
     assert_eq!(hits.get(&0, 0).unwrap(), 1);
     assert_eq!(hits.get(&1, 0).unwrap(), 1);
 }
