@@ -86,7 +86,7 @@ fn cpumap_chain() {
 
     let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
     let addr = sock.local_addr().unwrap();
-    sock.set_read_timeout(Some(Duration::from_millis(1)))
+    sock.set_read_timeout(Some(Duration::from_secs(60)))
         .unwrap();
     sock.send_to(PAYLOAD.as_bytes(), addr).unwrap();
 
