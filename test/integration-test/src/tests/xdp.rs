@@ -84,10 +84,11 @@ fn cpumap_chain() {
 
     const PAYLOAD: &str = "hello cpumap";
 
-    let sock = UdpSocket::bind("127.0.0.1:1777").unwrap();
+    let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
+    let addr = sock.local_addr().unwrap();
     sock.set_read_timeout(Some(Duration::from_millis(1)))
         .unwrap();
-    sock.send_to(PAYLOAD.as_bytes(), "127.0.0.1:1777").unwrap();
+    sock.send_to(PAYLOAD.as_bytes(), addr).unwrap();
 
     // Read back the packet to ensure it went through the entire network stack, including our two
     // probes.
