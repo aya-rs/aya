@@ -42,6 +42,10 @@ name = "pass"
 path = "src/pass.rs"
 
 [[bin]]
+name = "raw_tracepoint"
+path = "src/raw_tracepoint.rs"
+
+[[bin]]
 name = "redirect"
 path = "src/redirect.rs"
 

@@ -4,6 +4,7 @@ mod elf;
 mod info;
 mod load;
 mod log;
+mod raw_tracepoint;
 mod rbpf;
 mod relocations;
 mod ring_buf;
