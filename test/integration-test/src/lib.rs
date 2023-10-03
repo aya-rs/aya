@@ -20,6 +20,8 @@ pub const MAP_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ma
 pub const MEMMOVE_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/memmove_test"));
 pub const NAME_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/name_test"));
 pub const PASS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/pass"));
+pub const RAW_TRACEPOINT: &[u8] =
+    include_bytes_aligned!(concat!(env!("OUT_DIR"), "/raw_tracepoint"));
 pub const REDIRECT: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/redirect"));
 pub const RELOCATIONS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/relocations"));
 pub const RING_BUF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ring_buf"));
