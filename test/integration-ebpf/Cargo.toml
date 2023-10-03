@@ -51,3 +51,7 @@ path = "src/redirect.rs"
 [[bin]]
 name = "xdp_sec"
 path = "src/xdp_sec.rs"
+
+[[bin]]
+name = "raw_tracepoint"
+path = "src/raw_tracepoint.rs"

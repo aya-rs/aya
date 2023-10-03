@@ -1402,6 +1402,7 @@ pub fn aya_bpf::programs::probe::ProbeContext::from(t: T) -> T
 pub mod aya_bpf::programs::raw_tracepoint
 pub struct aya_bpf::programs::raw_tracepoint::RawTracePointContext
 impl aya_bpf::programs::raw_tracepoint::RawTracePointContext
+pub unsafe fn aya_bpf::programs::raw_tracepoint::RawTracePointContext::arg<T: FromRawTracepointArgs>(&self, n: usize) -> T
 pub fn aya_bpf::programs::raw_tracepoint::RawTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_bpf::programs::raw_tracepoint::RawTracePointContext
 impl aya_bpf::BpfContext for aya_bpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_bpf::programs::raw_tracepoint::RawTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2053,6 +2054,7 @@ impl<T> core::convert::From<T> for aya_bpf::programs::probe::ProbeContext
 pub fn aya_bpf::programs::probe::ProbeContext::from(t: T) -> T
 pub struct aya_bpf::programs::RawTracePointContext
 impl aya_bpf::programs::raw_tracepoint::RawTracePointContext
+pub unsafe fn aya_bpf::programs::raw_tracepoint::RawTracePointContext::arg<T: FromRawTracepointArgs>(&self, n: usize) -> T
 pub fn aya_bpf::programs::raw_tracepoint::RawTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_bpf::programs::raw_tracepoint::RawTracePointContext
 impl aya_bpf::BpfContext for aya_bpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_bpf::programs::raw_tracepoint::RawTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2453,6 +2455,31 @@ impl<T> core::borrow::BorrowMut<T> for aya_bpf::PtRegs where T: core::marker::Si
 pub fn aya_bpf::PtRegs::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_bpf::PtRegs
 pub fn aya_bpf::PtRegs::from(t: T) -> T
+pub struct aya_bpf::RawTracepointArgs
+impl aya_bpf::RawTracepointArgs
+pub unsafe fn aya_bpf::RawTracepointArgs::arg<T: FromRawTracepointArgs>(&self, n: usize) -> *const T
+pub fn aya_bpf::RawTracepointArgs::new(args: *mut aya_bpf_bindings::x86_64::bindings::bpf_raw_tracepoint_args) -> Self
+impl !core::marker::Send for aya_bpf::RawTracepointArgs
+impl !core::marker::Sync for aya_bpf::RawTracepointArgs
+impl core::marker::Unpin for aya_bpf::RawTracepointArgs
+impl core::panic::unwind_safe::RefUnwindSafe for aya_bpf::RawTracepointArgs
+impl core::panic::unwind_safe::UnwindSafe for aya_bpf::RawTracepointArgs
+impl<T, U> core::convert::Into<U> for aya_bpf::RawTracepointArgs where U: core::convert::From<T>
+pub fn aya_bpf::RawTracepointArgs::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_bpf::RawTracepointArgs where U: core::convert::Into<T>
+pub type aya_bpf::RawTracepointArgs::Error = core::convert::Infallible
+pub fn aya_bpf::RawTracepointArgs::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_bpf::RawTracepointArgs where U: core::convert::TryFrom<T>
+pub type aya_bpf::RawTracepointArgs::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_bpf::RawTracepointArgs::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_bpf::RawTracepointArgs where T: 'static + core::marker::Sized
+pub fn aya_bpf::RawTracepointArgs::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_bpf::RawTracepointArgs where T: core::marker::Sized
+pub fn aya_bpf::RawTracepointArgs::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_bpf::RawTracepointArgs where T: core::marker::Sized
+pub fn aya_bpf::RawTracepointArgs::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_bpf::RawTracepointArgs
+pub fn aya_bpf::RawTracepointArgs::from(t: T) -> T
 pub const aya_bpf::TASK_COMM_LEN: usize = 16usize
 pub trait aya_bpf::BpfContext
 pub fn aya_bpf::BpfContext::as_ptr(&self) -> *mut core::ffi::c_void

@@ -21,6 +21,8 @@ pub const BPF_PROBE_READ: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/bpf_probe_read"));
 pub const REDIRECT: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/redirect"));
 pub const XDP_SEC: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/xdp_sec"));
+pub const RAW_TRACEPOINT: &[u8] =
+    include_bytes_aligned!(concat!(env!("OUT_DIR"), "/raw_tracepoint"));
 
 #[cfg(test)]
 mod tests;
