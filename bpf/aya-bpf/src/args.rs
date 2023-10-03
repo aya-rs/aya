@@ -5,7 +5,7 @@ use crate::bindings::pt_regs;
 use crate::bindings::user_pt_regs as pt_regs;
 #[cfg(bpf_target_arch = "riscv64")]
 use crate::bindings::user_regs_struct as pt_regs;
-use crate::{cty::c_void, helpers::bpf_probe_read};
+use crate::{bindings::bpf_raw_tracepoint_args, cty::c_void, helpers::bpf_probe_read};
 
 /// A trait that indicates a valid type for an argument which can be coerced from a BTF
 /// context.
@@ -323,3 +323,70 @@ impl_from_pt_regs!(i32);
 impl_from_pt_regs!(i64);
 impl_from_pt_regs!(usize);
 impl_from_pt_regs!(isize);
+
+/// A Rust wrapper on `bpf_raw_tracepoint_args`.
+pub struct RawTracepointArgs {
+    args: *mut bpf_raw_tracepoint_args,
+}
+
+impl RawTracepointArgs {
+    pub fn new(args: *mut bpf_raw_tracepoint_args) -> Self {
+        RawTracepointArgs { args }
+    }
+
+    /// Returns the n-th argument of the raw tracepoint.
+    ///
+    /// ## Safety
+    ///
+    /// This method is unsafe because it performs raw pointer conversion and makes assumptions
+    /// about the structure of the `bpf_raw_tracepoint_args` type. The tracepoint arguments are
+    /// represented as an array of `__u64` values (i.e., `__u64 args[0]`), and this method
+    /// provides a way to access these arguments conveniently in Rust using `as_slice`.
+    ///
+    /// However, the method does not check the total number of available arguments for a given
+    /// tracepoint and assumes that the slice has at least `n` elements, leading to undefined
+    /// behavior if this condition is not met.
+    pub unsafe fn arg<T: FromRawTracepointArgs>(&self, n: usize) -> *const T {
+        &T::from_argument(&*self.args, n)
+    }
+}
+
+pub unsafe trait FromRawTracepointArgs: Sized {
+    unsafe fn from_argument(ctx: &bpf_raw_tracepoint_args, n: usize) -> Self;
+}
+
+unsafe impl<T> FromRawTracepointArgs for *const T {
+    unsafe fn from_argument(ctx: &bpf_raw_tracepoint_args, n: usize) -> *const T {
+        // Raw tracepoint arguments are exposed as `__u64 args[0]`.
+        // https://elixir.bootlin.com/linux/v6.5.5/source/include/uapi/linux/bpf.h#L6829
+        //
+        // The most convenient way of accessing such type in Rust is to use
+        // `as_slice`.
+        //
+        // We don't know how many arguments are there for the given tracepoint,
+        // so we just assume that the slice has at least n elements. The whole
+        // assumntion and implementation is unsafe.
+        ctx.args.as_slice(n + 1)[n] as *const _
+    }
+}
+
+macro_rules! unsafe_impl_from_raw_tracepoint_args {
+    ($type:ident) => {
+        unsafe impl FromRawTracepointArgs for $type {
+            unsafe fn from_argument(ctx: &bpf_raw_tracepoint_args, n: usize) -> Self {
+                ctx.args.as_slice(n + 1)[n] as _
+            }
+        }
+    };
+}
+
+unsafe_impl_from_raw_tracepoint_args!(u8);
+unsafe_impl_from_raw_tracepoint_args!(u16);
+unsafe_impl_from_raw_tracepoint_args!(u32);
+unsafe_impl_from_raw_tracepoint_args!(u64);
+unsafe_impl_from_raw_tracepoint_args!(i8);
+unsafe_impl_from_raw_tracepoint_args!(i16);
+unsafe_impl_from_raw_tracepoint_args!(i32);
+unsafe_impl_from_raw_tracepoint_args!(i64);
+unsafe_impl_from_raw_tracepoint_args!(usize);
+unsafe_impl_from_raw_tracepoint_args!(isize);
