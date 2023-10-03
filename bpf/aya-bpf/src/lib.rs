@@ -22,7 +22,7 @@
 pub use aya_bpf_bindings::bindings;
 
 mod args;
-pub use args::PtRegs;
+pub use args::{PtRegs, RawTracepointArgs};
 pub mod helpers;
 pub mod maps;
 pub mod programs;
