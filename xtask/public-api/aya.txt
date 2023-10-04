@@ -3989,6 +3989,8 @@ pub aya::programs::perf_event::PerfEventScope::CallingProcessOneCpu
 pub aya::programs::perf_event::PerfEventScope::CallingProcessOneCpu::cpu: u32
 pub aya::programs::perf_event::PerfEventScope::OneProcessAnyCpu
 pub aya::programs::perf_event::PerfEventScope::OneProcessAnyCpu::pid: u32
+pub aya::programs::perf_event::PerfEventScope::OneProcessIncludingChildren
+pub aya::programs::perf_event::PerfEventScope::OneProcessIncludingChildren::pid: u32
 pub aya::programs::perf_event::PerfEventScope::OneProcessOneCpu
 pub aya::programs::perf_event::PerfEventScope::OneProcessOneCpu::cpu: u32
 pub aya::programs::perf_event::PerfEventScope::OneProcessOneCpu::pid: u32
@@ -5214,6 +5216,8 @@ pub aya::programs::PerfEventScope::CallingProcessOneCpu
 pub aya::programs::PerfEventScope::CallingProcessOneCpu::cpu: u32
 pub aya::programs::PerfEventScope::OneProcessAnyCpu
 pub aya::programs::PerfEventScope::OneProcessAnyCpu::pid: u32
+pub aya::programs::PerfEventScope::OneProcessIncludingChildren
+pub aya::programs::PerfEventScope::OneProcessIncludingChildren::pid: u32
 pub aya::programs::PerfEventScope::OneProcessOneCpu
 pub aya::programs::PerfEventScope::OneProcessOneCpu::cpu: u32
 pub aya::programs::PerfEventScope::OneProcessOneCpu::pid: u32

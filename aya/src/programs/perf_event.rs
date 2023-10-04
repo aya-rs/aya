@@ -66,6 +66,11 @@ pub enum PerfEventScope {
         /// process id
         pid: u32,
     },
+    /// one process, any cpu, including child processes
+    OneProcessIncludingChildren {
+        /// process id
+        pid: u32,
+    },
     /// one process, one cpu
     OneProcessOneCpu {
         /// cpu id
@@ -157,6 +162,7 @@ impl PerfEvent {
             PerfEventScope::OneProcessAnyCpu { pid } => (pid as i32, -1),
             PerfEventScope::OneProcessOneCpu { cpu, pid } => (pid as i32, cpu as i32),
             PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
+            PerfEventScope::OneProcessIncludingChildren { pid } => (pid as i32, -1),
         };
         let fd = perf_event_open(
             perf_type as u32,
@@ -167,6 +173,7 @@ impl PerfEvent {
             sample_frequency,
             false,
             0,
+            matches!(scope, PerfEventScope::OneProcessIncludingChildren { .. }),
         )
         .map_err(|(_code, io_error)| SyscallError {
             call: "perf_event_open",
