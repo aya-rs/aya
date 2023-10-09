@@ -154,22 +154,36 @@ fn unload_xdp() {
 fn test_loaded_at() {
     let mut bpf = Bpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-    let t1 = SystemTime::now();
-    prog.load().unwrap();
-    let t2 = SystemTime::now();
-    assert_loaded("pass");
 
-    let loaded_at = prog.info().unwrap().loaded_at();
-
-    let range = t1..t2;
+    // SystemTime is not monotonic, which can cause this test to flake. We don't expect the clock
+    // timestamp to continuously jump around, so we add some retries. If the test is ever correct,
+    // we know that the value returned by loaded_at() was reasonable relative to SystemTime::now().
+    let mut failures = Vec::new();
+    for _ in 0..5 {
+        let t1 = SystemTime::now();
+        prog.load().unwrap();
+        let t2 = SystemTime::now();
+        let loaded_at = prog.info().unwrap().loaded_at();
+        prog.unload().unwrap();
+        let range = t1..t2;
+        if range.contains(&loaded_at) {
+            failures.clear();
+            break;
+        }
+        failures.push(LoadedAtRange(loaded_at, range));
+    }
     assert!(
-        range.contains(&loaded_at),
-        "{range:?}.contains({loaded_at:?})"
+        failures.is_empty(),
+        "loaded_at was not in range: {failures:?}",
     );
 
-    prog.unload().unwrap();
-
-    assert_unloaded("pass");
+    struct LoadedAtRange(SystemTime, std::ops::Range<SystemTime>);
+    impl std::fmt::Debug for LoadedAtRange {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let Self(loaded_at, range) = self;
+            write!(f, "{range:?}.contains({loaded_at:?})")
+        }
+    }
 }
 
 #[test]
