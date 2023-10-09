@@ -44,6 +44,7 @@ pub mod cgroup_sysctl;
 pub mod extension;
 pub mod fentry;
 pub mod fexit;
+pub mod flow_dissector;
 pub mod kprobe;
 pub mod links;
 pub mod lirc_mode2;
@@ -83,6 +84,7 @@ pub use cgroup_sysctl::CgroupSysctl;
 pub use extension::{Extension, ExtensionError};
 pub use fentry::FEntry;
 pub use fexit::FExit;
+pub use flow_dissector::FlowDissector;
 pub use kprobe::{KProbe, KProbeError};
 use libc::ENOSPC;
 pub use links::Link;
@@ -276,6 +278,8 @@ pub enum Program {
     FEntry(FEntry),
     /// A [`FExit`] program
     FExit(FExit),
+    /// A [`FlowDissector`] program
+    FlowDissector(FlowDissector),
     /// A [`Extension`] program
     Extension(Extension),
     /// A [`SkLookup`] program
@@ -310,6 +314,7 @@ impl Program {
             Self::BtfTracePoint(_) => BPF_PROG_TYPE_TRACING,
             Self::FEntry(_) => BPF_PROG_TYPE_TRACING,
             Self::FExit(_) => BPF_PROG_TYPE_TRACING,
+            Self::FlowDissector(_) => BPF_PROG_TYPE_FLOW_DISSECTOR,
             Self::Extension(_) => BPF_PROG_TYPE_EXT,
             Self::CgroupSockAddr(_) => BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
             Self::SkLookup(_) => BPF_PROG_TYPE_SK_LOOKUP,
@@ -340,6 +345,7 @@ impl Program {
             Self::BtfTracePoint(p) => p.pin(path),
             Self::FEntry(p) => p.pin(path),
             Self::FExit(p) => p.pin(path),
+            Self::FlowDissector(p) => p.pin(path),
             Self::Extension(p) => p.pin(path),
             Self::CgroupSockAddr(p) => p.pin(path),
             Self::SkLookup(p) => p.pin(path),
@@ -370,6 +376,7 @@ impl Program {
             Self::BtfTracePoint(mut p) => p.unload(),
             Self::FEntry(mut p) => p.unload(),
             Self::FExit(mut p) => p.unload(),
+            Self::FlowDissector(mut p) => p.unload(),
             Self::Extension(mut p) => p.unload(),
             Self::CgroupSockAddr(mut p) => p.unload(),
             Self::SkLookup(mut p) => p.unload(),
@@ -402,6 +409,7 @@ impl Program {
             Self::BtfTracePoint(p) => p.fd(),
             Self::FEntry(p) => p.fd(),
             Self::FExit(p) => p.fd(),
+            Self::FlowDissector(p) => p.fd(),
             Self::Extension(p) => p.fd(),
             Self::CgroupSockAddr(p) => p.fd(),
             Self::SkLookup(p) => p.fd(),
@@ -435,6 +443,7 @@ impl Program {
             Self::BtfTracePoint(p) => p.info(),
             Self::FEntry(p) => p.info(),
             Self::FExit(p) => p.info(),
+            Self::FlowDissector(p) => p.info(),
             Self::Extension(p) => p.info(),
             Self::CgroupSockAddr(p) => p.info(),
             Self::SkLookup(p) => p.info(),
@@ -748,6 +757,7 @@ impl_program_unload!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     CgroupSockAddr,
     SkLookup,
@@ -788,6 +798,7 @@ impl_fd!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     CgroupSockAddr,
     SkLookup,
@@ -842,6 +853,7 @@ impl_program_pin!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     CgroupSockAddr,
     SkLookup,
@@ -882,6 +894,7 @@ impl_from_pin!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     SkLookup,
     SockOps,
@@ -936,6 +949,7 @@ impl_try_from_program!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     CgroupSockAddr,
     SkLookup,
@@ -982,6 +996,7 @@ impl_info!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     CgroupSockAddr,
     SkLookup,

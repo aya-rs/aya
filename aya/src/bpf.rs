@@ -31,9 +31,10 @@ use crate::{
     },
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
-        CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent,
-        ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkLookup,
-        SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, KProbe, LircMode2,
+        Lsm, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
+        SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
+        UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -434,6 +435,7 @@ impl<'a> BpfLoader<'a> {
                                 | ProgramSection::PerfEvent
                                 | ProgramSection::RawTracePoint
                                 | ProgramSection::SkLookup
+                                | ProgramSection::FlowDissector
                                 | ProgramSection::CgroupSock { attach_type: _ }
                                 | ProgramSection::CgroupDevice => {}
                             }
@@ -666,6 +668,9 @@ impl<'a> BpfLoader<'a> {
                             }
                             Program::FExit(FExit { data })
                         }
+                        ProgramSection::FlowDissector => Program::FlowDissector(FlowDissector {
+                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                        }),
                         ProgramSection::Extension => Program::Extension(Extension {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),

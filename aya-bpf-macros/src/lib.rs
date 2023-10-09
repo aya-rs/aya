@@ -8,6 +8,7 @@ mod cgroup_sockopt;
 mod cgroup_sysctl;
 mod fentry;
 mod fexit;
+mod flow_dissector;
 mod kprobe;
 mod lsm;
 mod map;
@@ -32,6 +33,7 @@ use cgroup_sockopt::CgroupSockopt;
 use cgroup_sysctl::CgroupSysctl;
 use fentry::FEntry;
 use fexit::FExit;
+use flow_dissector::FlowDissector;
 use kprobe::{KProbe, KProbeKind};
 use lsm::Lsm;
 use map::Map;
@@ -597,6 +599,21 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match FExit::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog
+            .expand()
+            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
+            .into(),
+        Err(err) => abort!(err.span(), "{}", err),
+    }
+}
+
+/// Marks a function as an eBPF Flow Dissector program that can be attached to
+/// a network namespace.
+///
+#[proc_macro_error]
+#[proc_macro_attribute]
+pub fn flow_dissector(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match FlowDissector::parse(attrs.into(), item.into()) {
         Ok(prog) => prog
             .expand()
             .unwrap_or_else(|err| abort!(err.span(), "{}", err))

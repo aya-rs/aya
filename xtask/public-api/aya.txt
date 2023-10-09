@@ -3217,6 +3217,120 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::fexit::FExitLinkId where T
 pub fn aya::programs::fexit::FExitLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLinkId::from(t: T) -> T
+pub mod aya::programs::flow_dissector
+pub struct aya::programs::flow_dissector::FlowDissector
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::attach<T: std::os::fd::owned::AsFd>(&mut self, netns: T) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, aya::programs::ProgramError>
+pub fn aya::programs::flow_dissector::FlowDissector::detach(&mut self, link_id: aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::flow_dissector::FlowDissector::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::flow_dissector::FlowDissector::take_link(&mut self, link_id: aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLink, aya::programs::ProgramError>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::flow_dissector::FlowDissector::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::ops::drop::Drop for aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::flow_dissector::FlowDissector
+pub type &'a aya::programs::flow_dissector::FlowDissector::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::flow_dissector::FlowDissector::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::flow_dissector::FlowDissector, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::flow_dissector::FlowDissector
+pub type &'a mut aya::programs::flow_dissector::FlowDissector::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::flow_dissector::FlowDissector::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::flow_dissector::FlowDissector, aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya::programs::flow_dissector::FlowDissector
+impl core::marker::Sync for aya::programs::flow_dissector::FlowDissector
+impl core::marker::Unpin for aya::programs::flow_dissector::FlowDissector
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::flow_dissector::FlowDissector
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::flow_dissector::FlowDissector
+impl<T, U> core::convert::Into<U> for aya::programs::flow_dissector::FlowDissector where U: core::convert::From<T>
+pub fn aya::programs::flow_dissector::FlowDissector::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::flow_dissector::FlowDissector where U: core::convert::Into<T>
+pub type aya::programs::flow_dissector::FlowDissector::Error = core::convert::Infallible
+pub fn aya::programs::flow_dissector::FlowDissector::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::flow_dissector::FlowDissector where U: core::convert::TryFrom<T>
+pub type aya::programs::flow_dissector::FlowDissector::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::flow_dissector::FlowDissector::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::flow_dissector::FlowDissector where T: 'static + core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissector::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::flow_dissector::FlowDissector where T: core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissector::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::flow_dissector::FlowDissector where T: core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissector::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::from(t: T) -> T
+pub struct aya::programs::flow_dissector::FlowDissectorLink(_)
+impl aya::programs::links::Link for aya::programs::flow_dissector::FlowDissectorLink
+pub type aya::programs::flow_dissector::FlowDissectorLink::Id = aya::programs::flow_dissector::FlowDissectorLinkId
+pub fn aya::programs::flow_dissector::FlowDissectorLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::flow_dissector::FlowDissectorLink::id(&self) -> Self::Id
+impl core::convert::From<aya::programs::flow_dissector::FlowDissectorLink> for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(w: aya::programs::flow_dissector::FlowDissectorLink) -> aya::programs::links::FdLink
+impl core::convert::From<aya::programs::links::FdLink> for aya::programs::flow_dissector::FlowDissectorLink
+pub fn aya::programs::flow_dissector::FlowDissectorLink::from(b: aya::programs::links::FdLink) -> aya::programs::flow_dissector::FlowDissectorLink
+impl core::ops::drop::Drop for aya::programs::flow_dissector::FlowDissectorLink
+pub fn aya::programs::flow_dissector::FlowDissectorLink::drop(&mut self)
+impl core::fmt::Debug for aya::programs::flow_dissector::FlowDissectorLink
+pub fn aya::programs::flow_dissector::FlowDissectorLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya::programs::flow_dissector::FlowDissectorLink
+impl core::marker::Sync for aya::programs::flow_dissector::FlowDissectorLink
+impl core::marker::Unpin for aya::programs::flow_dissector::FlowDissectorLink
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::flow_dissector::FlowDissectorLink
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::flow_dissector::FlowDissectorLink
+impl<T, U> core::convert::Into<U> for aya::programs::flow_dissector::FlowDissectorLink where U: core::convert::From<T>
+pub fn aya::programs::flow_dissector::FlowDissectorLink::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::flow_dissector::FlowDissectorLink where U: core::convert::Into<T>
+pub type aya::programs::flow_dissector::FlowDissectorLink::Error = core::convert::Infallible
+pub fn aya::programs::flow_dissector::FlowDissectorLink::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::flow_dissector::FlowDissectorLink where U: core::convert::TryFrom<T>
+pub type aya::programs::flow_dissector::FlowDissectorLink::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::flow_dissector::FlowDissectorLink::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::flow_dissector::FlowDissectorLink where T: 'static + core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissectorLink::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::flow_dissector::FlowDissectorLink where T: core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissectorLink::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::flow_dissector::FlowDissectorLink where T: core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissectorLink::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::flow_dissector::FlowDissectorLink
+pub fn aya::programs::flow_dissector::FlowDissectorLink::from(t: T) -> T
+pub struct aya::programs::flow_dissector::FlowDissectorLinkId(_)
+impl core::cmp::Eq for aya::programs::flow_dissector::FlowDissectorLinkId
+impl core::cmp::PartialEq<aya::programs::flow_dissector::FlowDissectorLinkId> for aya::programs::flow_dissector::FlowDissectorLinkId
+pub fn aya::programs::flow_dissector::FlowDissectorLinkId::eq(&self, other: &aya::programs::flow_dissector::FlowDissectorLinkId) -> bool
+impl core::fmt::Debug for aya::programs::flow_dissector::FlowDissectorLinkId
+pub fn aya::programs::flow_dissector::FlowDissectorLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::flow_dissector::FlowDissectorLinkId
+pub fn aya::programs::flow_dissector::FlowDissectorLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralEq for aya::programs::flow_dissector::FlowDissectorLinkId
+impl core::marker::StructuralPartialEq for aya::programs::flow_dissector::FlowDissectorLinkId
+impl core::marker::Send for aya::programs::flow_dissector::FlowDissectorLinkId
+impl core::marker::Sync for aya::programs::flow_dissector::FlowDissectorLinkId
+impl core::marker::Unpin for aya::programs::flow_dissector::FlowDissectorLinkId
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::flow_dissector::FlowDissectorLinkId
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::flow_dissector::FlowDissectorLinkId
+impl<T, U> core::convert::Into<U> for aya::programs::flow_dissector::FlowDissectorLinkId where U: core::convert::From<T>
+pub fn aya::programs::flow_dissector::FlowDissectorLinkId::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::flow_dissector::FlowDissectorLinkId where U: core::convert::Into<T>
+pub type aya::programs::flow_dissector::FlowDissectorLinkId::Error = core::convert::Infallible
+pub fn aya::programs::flow_dissector::FlowDissectorLinkId::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::flow_dissector::FlowDissectorLinkId where U: core::convert::TryFrom<T>
+pub type aya::programs::flow_dissector::FlowDissectorLinkId::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::flow_dissector::FlowDissectorLinkId::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::flow_dissector::FlowDissectorLinkId where T: 'static + core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissectorLinkId::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::flow_dissector::FlowDissectorLinkId where T: core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissectorLinkId::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::flow_dissector::FlowDissectorLinkId where T: core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissectorLinkId::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::flow_dissector::FlowDissectorLinkId
+pub fn aya::programs::flow_dissector::FlowDissectorLinkId::from(t: T) -> T
 pub mod aya::programs::kprobe
 pub enum aya::programs::kprobe::KProbeError
 pub aya::programs::kprobe::KProbeError::FileError
@@ -3414,12 +3528,16 @@ impl core::convert::From<aya::programs::fentry::FEntryLink> for aya::programs::l
 pub fn aya::programs::links::FdLink::from(w: aya::programs::fentry::FEntryLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::fexit::FExitLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::fexit::FExitLink) -> aya::programs::links::FdLink
+impl core::convert::From<aya::programs::flow_dissector::FlowDissectorLink> for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(w: aya::programs::flow_dissector::FlowDissectorLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::extension::ExtensionLink
 pub fn aya::programs::extension::ExtensionLink::from(b: aya::programs::links::FdLink) -> aya::programs::extension::ExtensionLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fentry::FEntryLink
 pub fn aya::programs::fentry::FEntryLink::from(b: aya::programs::links::FdLink) -> aya::programs::fentry::FEntryLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fexit::FExitLink
 pub fn aya::programs::fexit::FExitLink::from(b: aya::programs::links::FdLink) -> aya::programs::fexit::FExitLink
+impl core::convert::From<aya::programs::links::FdLink> for aya::programs::flow_dissector::FlowDissectorLink
+pub fn aya::programs::flow_dissector::FlowDissectorLink::from(b: aya::programs::links::FdLink) -> aya::programs::flow_dissector::FlowDissectorLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::lsm::LsmLink
 pub fn aya::programs::lsm::LsmLink::from(b: aya::programs::links::FdLink) -> aya::programs::lsm::LsmLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::tp_btf::BtfTracePointLink
@@ -3642,6 +3760,10 @@ impl aya::programs::links::Link for aya::programs::fexit::FExitLink
 pub type aya::programs::fexit::FExitLink::Id = aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::fexit::FExitLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::flow_dissector::FlowDissectorLink
+pub type aya::programs::flow_dissector::FlowDissectorLink::Id = aya::programs::flow_dissector::FlowDissectorLinkId
+pub fn aya::programs::flow_dissector::FlowDissectorLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::flow_dissector::FlowDissectorLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::kprobe::KProbeLink
 pub type aya::programs::kprobe::KProbeLink::Id = aya::programs::kprobe::KProbeLinkId
 pub fn aya::programs::kprobe::KProbeLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -5328,6 +5450,7 @@ pub aya::programs::Program::CgroupSysctl(aya::programs::cgroup_sysctl::CgroupSys
 pub aya::programs::Program::Extension(aya::programs::extension::Extension)
 pub aya::programs::Program::FEntry(aya::programs::fentry::FEntry)
 pub aya::programs::Program::FExit(aya::programs::fexit::FExit)
+pub aya::programs::Program::FlowDissector(aya::programs::flow_dissector::FlowDissector)
 pub aya::programs::Program::KProbe(aya::programs::kprobe::KProbe)
 pub aya::programs::Program::LircMode2(aya::programs::lirc_mode2::LircMode2)
 pub aya::programs::Program::Lsm(aya::programs::lsm::Lsm)
@@ -5393,6 +5516,9 @@ pub fn &'a aya::programs::fentry::FEntry::try_from(program: &'a aya::programs::P
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::fexit::FExit
 pub type &'a aya::programs::fexit::FExit::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::fexit::FExit::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::fexit::FExit, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::flow_dissector::FlowDissector
+pub type &'a aya::programs::flow_dissector::FlowDissector::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::flow_dissector::FlowDissector::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::flow_dissector::FlowDissector, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::kprobe::KProbe
 pub type &'a aya::programs::kprobe::KProbe::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::kprobe::KProbe::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::kprobe::KProbe, aya::programs::ProgramError>
@@ -5465,6 +5591,9 @@ pub fn &'a mut aya::programs::fentry::FEntry::try_from(program: &'a mut aya::pro
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::fexit::FExit
 pub type &'a mut aya::programs::fexit::FExit::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::fexit::FExit::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::fexit::FExit, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::flow_dissector::FlowDissector
+pub type &'a mut aya::programs::flow_dissector::FlowDissector::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::flow_dissector::FlowDissector::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::flow_dissector::FlowDissector, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::kprobe::KProbe
 pub type &'a mut aya::programs::kprobe::KProbe::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::kprobe::KProbe::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::kprobe::KProbe, aya::programs::ProgramError>
@@ -6354,6 +6483,54 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::fexit::FExit where T: core
 pub fn aya::programs::fexit::FExit::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::from(t: T) -> T
+pub struct aya::programs::FlowDissector
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::attach<T: std::os::fd::owned::AsFd>(&mut self, netns: T) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, aya::programs::ProgramError>
+pub fn aya::programs::flow_dissector::FlowDissector::detach(&mut self, link_id: aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::flow_dissector::FlowDissector::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::flow_dissector::FlowDissector::take_link(&mut self, link_id: aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLink, aya::programs::ProgramError>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::flow_dissector::FlowDissector::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::ops::drop::Drop for aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::flow_dissector::FlowDissector
+pub type &'a aya::programs::flow_dissector::FlowDissector::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::flow_dissector::FlowDissector::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::flow_dissector::FlowDissector, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::flow_dissector::FlowDissector
+pub type &'a mut aya::programs::flow_dissector::FlowDissector::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::flow_dissector::FlowDissector::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::flow_dissector::FlowDissector, aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya::programs::flow_dissector::FlowDissector
+impl core::marker::Sync for aya::programs::flow_dissector::FlowDissector
+impl core::marker::Unpin for aya::programs::flow_dissector::FlowDissector
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::flow_dissector::FlowDissector
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::flow_dissector::FlowDissector
+impl<T, U> core::convert::Into<U> for aya::programs::flow_dissector::FlowDissector where U: core::convert::From<T>
+pub fn aya::programs::flow_dissector::FlowDissector::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::flow_dissector::FlowDissector where U: core::convert::Into<T>
+pub type aya::programs::flow_dissector::FlowDissector::Error = core::convert::Infallible
+pub fn aya::programs::flow_dissector::FlowDissector::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::flow_dissector::FlowDissector where U: core::convert::TryFrom<T>
+pub type aya::programs::flow_dissector::FlowDissector::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::flow_dissector::FlowDissector::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::flow_dissector::FlowDissector where T: 'static + core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissector::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::flow_dissector::FlowDissector where T: core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissector::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::flow_dissector::FlowDissector where T: core::marker::Sized
+pub fn aya::programs::flow_dissector::FlowDissector::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::from(t: T) -> T
 pub struct aya::programs::KProbe
 impl aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::attach<T: core::convert::AsRef<std::ffi::os_str::OsStr>>(&mut self, fn_name: T, offset: u64) -> core::result::Result<aya::programs::kprobe::KProbeLinkId, aya::programs::ProgramError>
@@ -7245,6 +7422,10 @@ impl aya::programs::links::Link for aya::programs::fexit::FExitLink
 pub type aya::programs::fexit::FExitLink::Id = aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::fexit::FExitLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::flow_dissector::FlowDissectorLink
+pub type aya::programs::flow_dissector::FlowDissectorLink::Id = aya::programs::flow_dissector::FlowDissectorLinkId
+pub fn aya::programs::flow_dissector::FlowDissectorLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::flow_dissector::FlowDissectorLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::kprobe::KProbeLink
 pub type aya::programs::kprobe::KProbeLink::Id = aya::programs::kprobe::KProbeLinkId
 pub fn aya::programs::kprobe::KProbeLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>

@@ -1,6 +1,7 @@
 pub mod device;
 pub mod fentry;
 pub mod fexit;
+pub mod flow_dissector;
 pub mod lsm;
 pub mod perf_event;
 pub mod probe;
@@ -21,6 +22,7 @@ pub mod xdp;
 pub use device::DeviceContext;
 pub use fentry::FEntryContext;
 pub use fexit::FExitContext;
+pub use flow_dissector::FlowDissectorContext;
 pub use lsm::LsmContext;
 pub use perf_event::PerfEventContext;
 pub use probe::ProbeContext;
