@@ -265,6 +265,13 @@ fn parse_kernel_symbols(reader: impl BufRead) -> Result<BTreeMap<u64, String>, i
 /// # Errors
 ///
 /// Returns [`std::io::ErrorKind::NotFound`] if the prefix can't be guessed. Returns other [`std::io::Error`] kinds if `/proc/kallsyms` can't be opened or is somehow invalid.
+#[deprecated(
+    since = "0.12.0",
+    note = "On some systems - commonly on 64 bit kernels that support running \
+    32 bit applications - the syscall prefix depends on what architecture an \
+    application is compiled for, therefore attaching to only one prefix is \
+    incorrect and can lead to security issues."
+)]
 pub fn syscall_prefix() -> Result<&'static str, io::Error> {
     const PREFIXES: [&str; 7] = [
         "sys_",
