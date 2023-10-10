@@ -32,7 +32,7 @@ fn try_stack_argument(ctx: ProbeContext) -> Result<i32, i64> {
                 stack = true;
                 continue;
             }
-            let _ = ARGS.insert(&arg, &arg_v.unwrap(), 0);
+            let _ = ARGS.insert(&arg, &arg_v.ok_or(255)?, 0);
         }
         arg += 1;
     }
