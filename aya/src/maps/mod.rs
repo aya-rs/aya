@@ -48,6 +48,7 @@
 //! versa. Because of that, all map values must be plain old data and therefore
 //! implement the [Pod] trait.
 use std::{
+    borrow::BorrowMut,
     ffi::CString,
     fmt, io,
     marker::PhantomData,
@@ -170,8 +171,8 @@ pub enum MapError {
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
 
-    /// Could not pin map by name
-    #[error("map `{name:?}` requested pinning by name. pinning failed")]
+    /// Could not pin map
+    #[error("map `{name:?}` requested pinning. pinning failed")]
     PinError {
         /// The map name
         name: Option<String>,
@@ -308,7 +309,88 @@ impl Map {
             Self::Unsupported(map) => map.obj.map_type(),
         }
     }
+
+    /// Pins the map to a BPF filesystem.
+    ///
+    /// When a map is pinned it will remain loaded until the corresponding file
+    /// is deleted. All parent directories in the given `path` must already exist.
+    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+        match self {
+            Self::Array(map) => map.pin(path),
+            Self::PerCpuArray(map) => map.pin(path),
+            Self::ProgramArray(map) => map.pin(path),
+            Self::HashMap(map) => map.pin(path),
+            Self::LruHashMap(map) => map.pin(path),
+            Self::PerCpuHashMap(map) => map.pin(path),
+            Self::PerCpuLruHashMap(map) => map.pin(path),
+            Self::PerfEventArray(map) => map.pin(path),
+            Self::SockHash(map) => map.pin(path),
+            Self::SockMap(map) => map.pin(path),
+            Self::BloomFilter(map) => map.pin(path),
+            Self::LpmTrie(map) => map.pin(path),
+            Self::Stack(map) => map.pin(path),
+            Self::StackTraceMap(map) => map.pin(path),
+            Self::Queue(map) => map.pin(path),
+            Self::CpuMap(map) => map.pin(path),
+            Self::DevMap(map) => map.pin(path),
+            Self::DevMapHash(map) => map.pin(path),
+            Self::XskMap(map) => map.pin(path),
+            Self::Unsupported(map) => map.pin(path),
+        }
+    }
 }
+
+// Implements map pinning for different map implementations
+// TODO add support for PerfEventArrays and AsyncPerfEventArrays
+macro_rules! impl_map_pin {
+    ($ty_param:tt {
+        $($ty:ident),+ $(,)?
+    }) => {
+        $(impl_map_pin!(<$ty_param> $ty);)+
+    };
+    (
+      <($($ty_param:ident),*)>
+      $ty:ident
+    ) => {
+            impl<T: BorrowMut<MapData>, $($ty_param: Pod),*> $ty<T, $($ty_param),*>
+            {
+                    /// Pins the map to a BPF filesystem.
+                    ///
+                    /// When a map is pinned it will remain loaded until the corresponding file
+                    /// is deleted. All parent directories in the given `path` must already exist.
+                    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+                        let data = self.inner.borrow_mut();
+                        data.pin(path)
+                    }
+            }
+
+    };
+}
+
+impl_map_pin!(() {
+    ProgramArray,
+    SockMap,
+    StackTraceMap,
+    CpuMap,
+    DevMap,
+    DevMapHash,
+    XskMap,
+});
+
+impl_map_pin!((V) {
+    Array,
+    PerCpuArray,
+    SockHash,
+    BloomFilter,
+    Queue,
+    Stack,
+});
+
+impl_map_pin!((K, V) {
+    HashMap,
+    PerCpuHashMap,
+    LpmTrie,
+});
 
 // Implements TryFrom<Map> for different map implementations. Different map implementations can be
 // constructed from different variants of the map enum. Also, the implementation may have type
@@ -461,7 +543,7 @@ impl MapData {
         Ok(Self { obj, fd })
     }
 
-    pub(crate) fn create_pinned<P: AsRef<Path>>(
+    pub(crate) fn create_pinned_by_name<P: AsRef<Path>>(
         path: P,
         obj: obj::Map,
         name: &str,
@@ -490,7 +572,6 @@ impl MapData {
             }
             Err(_) => {
                 let mut map = Self::create(obj, name, btf_fd)?;
-                let path = path.join(name);
                 map.pin(&path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,

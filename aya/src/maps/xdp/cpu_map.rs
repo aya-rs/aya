@@ -50,7 +50,7 @@ use crate::{
 /// Kernel documentation: <https://docs.kernel.org/next/bpf/map_cpumap.html>
 #[doc(alias = "BPF_MAP_TYPE_CPUMAP")]
 pub struct CpuMap<T> {
-    inner: T,
+    pub(crate) inner: T,
 }
 
 impl<T: Borrow<MapData>> CpuMap<T> {

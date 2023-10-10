@@ -36,7 +36,7 @@ use crate::{
 /// Kernel documentation: <https://docs.kernel.org/next/bpf/map_xskmap.html>
 #[doc(alias = "BPF_MAP_TYPE_XSKMAP")]
 pub struct XskMap<T> {
-    inner: T,
+    pub(crate) inner: T,
 }
 
 impl<T: Borrow<MapData>> XskMap<T> {
