@@ -607,3 +607,19 @@ fn pin_lifecycle_uprobe() {
     // Make sure the function isn't optimized out.
     uprobe_function();
 }
+
+#[test]
+fn log_str_random() {
+    // userland code to reproduce bug reported here: https://github.com/aya-rs/aya/issues/808
+    // To reproduce the bug, eBPF code needs to be built with a custom
+    // bpf-linker from the feature/fix-di branch. Additionally, eBPF program
+    // needs to be built with debug information.
+    let mut bpf = Bpf::load(crate::LOG_STR_RAND).unwrap();
+    let prog: &mut KProbe = bpf
+        .program_mut("log_str_random")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+    prog.attach("schedule", 0).unwrap();
+}

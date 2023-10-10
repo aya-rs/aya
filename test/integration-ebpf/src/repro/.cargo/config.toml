@@ -1,0 +1,6 @@
+# the bug needs debug info so that it triggers
+[profile.release]
+debug = true
+
+[profile.dev]
+debug = true

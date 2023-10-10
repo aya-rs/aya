@@ -22,6 +22,7 @@ pub const BPF_PROBE_READ: &[u8] =
 pub const REDIRECT: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/redirect"));
 pub const XDP_SEC: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/xdp_sec"));
 pub const RING_BUF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ring_buf"));
+pub const LOG_STR_RAND: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/log_str_random"));
 
 #[cfg(test)]
 mod tests;

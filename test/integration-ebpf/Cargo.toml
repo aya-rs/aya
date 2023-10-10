@@ -55,3 +55,7 @@ path = "src/xdp_sec.rs"
 [[bin]]
 name = "ring_buf"
 path = "src/ring_buf.rs"
+
+[[bin]]
+name = "log_str_random"
+path = "src/repro/log_str_random.rs"
