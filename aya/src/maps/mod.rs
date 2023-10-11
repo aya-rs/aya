@@ -243,44 +243,44 @@ fn maybe_warn_rlimit() {
 pub enum Map {
     /// An [`Array`] map.
     Array(MapData),
-    /// A [`PerCpuArray`] map.
-    PerCpuArray(MapData),
-    /// A [`ProgramArray`] map.
-    ProgramArray(MapData),
-    /// A [`HashMap`] map.
-    HashMap(MapData),
-    /// A [`PerCpuHashMap`] map.
-    PerCpuHashMap(MapData),
-    /// A [`HashMap`] map that uses a LRU eviction policy.
-    LruHashMap(MapData),
-    /// A [`PerCpuHashMap`] map that uses a LRU eviction policy.
-    PerCpuLruHashMap(MapData),
-    /// A [`PerfEventArray`] map.
-    PerfEventArray(MapData),
-    /// A [`SockMap`] map.
-    SockMap(MapData),
-    /// A [`SockHash`] map.
-    SockHash(MapData),
     /// A [`BloomFilter`] map.
     BloomFilter(MapData),
-    /// A [`LpmTrie`] map.
-    LpmTrie(MapData),
-    /// A [`Stack`] map.
-    Stack(MapData),
-    /// A [`StackTraceMap`] map.
-    StackTraceMap(MapData),
-    /// A [`Queue`] map.
-    Queue(MapData),
     /// A [`CpuMap`] map.
     CpuMap(MapData),
     /// A [`DevMap`] map.
     DevMap(MapData),
     /// A [`DevMapHash`] map.
     DevMapHash(MapData),
-    /// A [`XskMap`] map.
-    XskMap(MapData),
+    /// A [`HashMap`] map.
+    HashMap(MapData),
+    /// A [`LpmTrie`] map.
+    LpmTrie(MapData),
+    /// A [`HashMap`] map that uses a LRU eviction policy.
+    LruHashMap(MapData),
+    /// A [`PerCpuArray`] map.
+    PerCpuArray(MapData),
+    /// A [`PerCpuHashMap`] map.
+    PerCpuHashMap(MapData),
+    /// A [`PerCpuHashMap`] map that uses a LRU eviction policy.
+    PerCpuLruHashMap(MapData),
+    /// A [`PerfEventArray`] map.
+    PerfEventArray(MapData),
+    /// A [`ProgramArray`] map.
+    ProgramArray(MapData),
+    /// A [`Queue`] map.
+    Queue(MapData),
+    /// A [`SockHash`] map.
+    SockHash(MapData),
+    /// A [`SockMap`] map.
+    SockMap(MapData),
+    /// A [`Stack`] map.
+    Stack(MapData),
+    /// A [`StackTraceMap`] map.
+    StackTraceMap(MapData),
     /// An unsupported map type.
     Unsupported(MapData),
+    /// A [`XskMap`] map.
+    XskMap(MapData),
 }
 
 impl Map {
@@ -288,25 +288,25 @@ impl Map {
     fn map_type(&self) -> u32 {
         match self {
             Self::Array(map) => map.obj.map_type(),
-            Self::PerCpuArray(map) => map.obj.map_type(),
-            Self::ProgramArray(map) => map.obj.map_type(),
-            Self::HashMap(map) => map.obj.map_type(),
-            Self::LruHashMap(map) => map.obj.map_type(),
-            Self::PerCpuHashMap(map) => map.obj.map_type(),
-            Self::PerCpuLruHashMap(map) => map.obj.map_type(),
-            Self::PerfEventArray(map) => map.obj.map_type(),
-            Self::SockHash(map) => map.obj.map_type(),
-            Self::SockMap(map) => map.obj.map_type(),
             Self::BloomFilter(map) => map.obj.map_type(),
-            Self::LpmTrie(map) => map.obj.map_type(),
-            Self::Stack(map) => map.obj.map_type(),
-            Self::StackTraceMap(map) => map.obj.map_type(),
-            Self::Queue(map) => map.obj.map_type(),
             Self::CpuMap(map) => map.obj.map_type(),
             Self::DevMap(map) => map.obj.map_type(),
             Self::DevMapHash(map) => map.obj.map_type(),
-            Self::XskMap(map) => map.obj.map_type(),
+            Self::HashMap(map) => map.obj.map_type(),
+            Self::LpmTrie(map) => map.obj.map_type(),
+            Self::LruHashMap(map) => map.obj.map_type(),
+            Self::PerCpuArray(map) => map.obj.map_type(),
+            Self::PerCpuHashMap(map) => map.obj.map_type(),
+            Self::PerCpuLruHashMap(map) => map.obj.map_type(),
+            Self::PerfEventArray(map) => map.obj.map_type(),
+            Self::ProgramArray(map) => map.obj.map_type(),
+            Self::Queue(map) => map.obj.map_type(),
+            Self::SockHash(map) => map.obj.map_type(),
+            Self::SockMap(map) => map.obj.map_type(),
+            Self::Stack(map) => map.obj.map_type(),
+            Self::StackTraceMap(map) => map.obj.map_type(),
             Self::Unsupported(map) => map.obj.map_type(),
+            Self::XskMap(map) => map.obj.map_type(),
         }
     }
 
@@ -442,13 +442,13 @@ macro_rules! impl_try_from_map {
 }
 
 impl_try_from_map!(() {
-    ProgramArray,
-    SockMap,
-    PerfEventArray,
-    StackTraceMap,
     CpuMap,
     DevMap,
     DevMapHash,
+    PerfEventArray,
+    ProgramArray,
+    SockMap,
+    StackTraceMap,
     XskMap,
 });
 
@@ -460,17 +460,17 @@ impl_try_from_map!(() {
 
 impl_try_from_map!((V) {
     Array,
-    PerCpuArray,
-    SockHash,
     BloomFilter,
+    PerCpuArray,
     Queue,
+    SockHash,
     Stack,
 });
 
 impl_try_from_map!((K, V) {
     HashMap from HashMap|LruHashMap,
-    PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
     LpmTrie,
+    PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
 });
 
 pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
