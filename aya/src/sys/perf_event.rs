@@ -1,10 +1,10 @@
 use std::{
-    ffi::{c_long, CString, OsStr},
+    ffi::{c_int, c_long, CString, OsStr},
     io, mem,
     os::fd::{BorrowedFd, FromRawFd as _, OwnedFd},
 };
 
-use libc::{c_int, pid_t};
+use libc::pid_t;
 
 use super::{syscall, SysResult, Syscall};
 use crate::generated::{

@@ -1,5 +1,5 @@
 use std::{
-    ffi::c_void,
+    ffi::{c_int, c_void},
     io, mem,
     os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd},
     ptr, slice,
@@ -7,7 +7,7 @@ use std::{
 };
 
 use bytes::BytesMut;
-use libc::{c_int, munmap, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
+use libc::{munmap, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
 use crate::{

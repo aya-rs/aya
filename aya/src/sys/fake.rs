@@ -1,6 +1,8 @@
-use std::{cell::RefCell, ffi::c_long, io, ptr};
-
-use libc::c_void;
+use std::{
+    cell::RefCell,
+    ffi::{c_long, c_void},
+    io, ptr,
+};
 
 use super::{SysResult, Syscall};
 
