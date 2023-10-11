@@ -1,6 +1,6 @@
 use std::{
     cmp,
-    ffi::{CStr, CString},
+    ffi::{c_char, c_long, CStr, CString},
     io, iter,
     mem::{self, MaybeUninit},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
@@ -8,7 +8,7 @@ use std::{
 };
 
 use assert_matches::assert_matches;
-use libc::{c_char, c_long, ENOENT, ENOSPC};
+use libc::{ENOENT, ENOSPC};
 use obj::{
     btf::{BtfEnum64, Enum64},
     maps::{bpf_map_def, LegacyMap},

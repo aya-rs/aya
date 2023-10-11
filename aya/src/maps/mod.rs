@@ -49,7 +49,7 @@
 //! implement the [Pod] trait.
 use std::{
     borrow::BorrowMut,
-    ffi::CString,
+    ffi::{c_long, CString},
     fmt, io,
     marker::PhantomData,
     mem,
@@ -122,7 +122,7 @@ pub enum MapError {
         /// Map name
         name: String,
         /// Error code
-        code: libc::c_long,
+        code: c_long,
         #[source]
         /// Original io::Error
         io_error: io::Error,

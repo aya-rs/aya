@@ -1219,7 +1219,7 @@ impl<T> core::convert::From<T> for aya::maps::Map
 pub fn aya::maps::Map::from(t: T) -> T
 pub enum aya::maps::MapError
 pub aya::maps::MapError::CreateError
-pub aya::maps::MapError::CreateError::code: libc::unix::linux_like::linux::gnu::b64::x86_64::not_x32::c_long
+pub aya::maps::MapError::CreateError::code: core::ffi::c_long
 pub aya::maps::MapError::CreateError::io_error: std::io::error::Error
 pub aya::maps::MapError::CreateError::name: alloc::string::String
 pub aya::maps::MapError::ElementNotFound
