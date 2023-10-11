@@ -6,6 +6,7 @@ mod perf_event;
 mod fake;
 
 use std::{
+    ffi::{c_int, c_long},
     io, mem,
     os::fd::{AsRawFd as _, BorrowedFd},
 };
@@ -13,7 +14,7 @@ use std::{
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
-use libc::{c_int, c_long, pid_t, SYS_bpf, SYS_perf_event_open};
+use libc::{pid_t, SYS_bpf, SYS_perf_event_open};
 #[doc(hidden)]
 pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
