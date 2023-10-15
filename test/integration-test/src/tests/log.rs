@@ -138,5 +138,14 @@ async fn log() {
         })
     );
 
+    assert_eq!(
+        records.next(),
+        Some(&CapturedLog {
+            body: "42 43 44 45".into(),
+            level: Level::Debug,
+            target: "log".into(),
+        })
+    );
+
     assert_eq!(records.next(), None);
 }
