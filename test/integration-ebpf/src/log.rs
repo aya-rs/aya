@@ -26,6 +26,11 @@ pub fn test_log(ctx: ProbeContext) {
     warn!(&ctx, "hex lc: {:x}, hex uc: {:X}", hex, hex);
     let hex = [0xde, 0xad, 0xbe, 0xef].as_slice();
     debug!(&ctx, "hex lc: {:x}, hex uc: {:X}", hex, hex);
+    let len = 42;
+    let size = 43;
+    let slice = 44;
+    let record = 45;
+    debug!(&ctx, "{} {} {} {}", len, size, slice, record);
 
     // Testing compilation only.
     if false {
