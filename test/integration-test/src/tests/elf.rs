@@ -1,4 +1,5 @@
 use object::{Object, ObjectSymbol};
+use test_log::test;
 
 #[test]
 fn test_maps() {

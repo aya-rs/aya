@@ -3,6 +3,7 @@ use aya::{
     util::KernelVersion,
     Bpf, BpfLoader,
 };
+use test_log::test;
 
 use crate::utils::NetNsGuard;
 

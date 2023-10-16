@@ -6,6 +6,7 @@ use aya::{
     Bpf,
 };
 use object::{Object, ObjectSection, ObjectSymbol, SymbolSection};
+use test_log::test;
 
 use crate::utils::NetNsGuard;
 

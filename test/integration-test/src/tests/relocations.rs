@@ -1,4 +1,5 @@
 use aya::{programs::UProbe, Bpf};
+use test_log::test;
 
 #[test]
 fn relocations() {
