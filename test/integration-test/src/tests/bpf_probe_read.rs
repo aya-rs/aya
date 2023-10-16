@@ -1,4 +1,5 @@
 use aya::{maps::Array, programs::UProbe, Bpf};
+use test_log::test;
 
 const RESULT_BUF_LEN: usize = 1024;
 

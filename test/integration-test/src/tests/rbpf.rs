@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 use assert_matches::assert_matches;
 use aya_obj::{generated::bpf_insn, programs::XdpAttachType, Object, ProgramSection};
+use test_log::test;
 
 #[test]
 fn run_with_rbpf() {

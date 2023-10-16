@@ -17,6 +17,7 @@ use aya::{
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
 use rand::Rng as _;
+use test_log::test;
 use tokio::{
     io::unix::AsyncFd,
     time::{sleep, Duration},
@@ -175,7 +176,7 @@ pub extern "C" fn ring_buf_trigger_ebpf_program(arg: u64) {
 // to fill the ring_buf. We just ensure that the number of events we see is sane given
 // what the producer sees, and that the logic does not hang. This exercises interleaving
 // discards, successful commits, and drops due to the ring_buf being full.
-#[tokio::test(flavor = "multi_thread")]
+#[test(tokio::test(flavor = "multi_thread"))]
 async fn ring_buf_async_with_drops() {
     let WithData(
         RingBufTest {
@@ -282,7 +283,7 @@ async fn ring_buf_async_with_drops() {
     );
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[test(tokio::test(flavor = "multi_thread"))]
 async fn ring_buf_async_no_drop() {
     let WithData(
         RingBufTest {
@@ -380,7 +381,7 @@ fn ring_buf_epoll_wakeup() {
 }
 
 // This test is like the above test but uses tokio and AsyncFd instead of raw epoll.
-#[tokio::test]
+#[test(tokio::test)]
 async fn ring_buf_asyncfd_events() {
     let RingBufTest {
         ring_buf,
