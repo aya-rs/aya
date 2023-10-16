@@ -599,12 +599,12 @@ impl Object {
                 .get(symbol_index)
                 .expect("all symbols in symbols_by_section are also in symbol_table");
 
-            let Some(name) = symbol.name.as_ref() else {
-                continue;
+            // Here we get both ::Label (LBB*) and ::Text symbols, and we only want the latter.
+            let name = match (symbol.name.as_ref(), symbol.kind) {
+                (Some(name), SymbolKind::Text) if !name.is_empty() => name,
+                _ => continue,
             };
-            if name.is_empty() {
-                continue;
-            }
+
             let (p, f) =
                 self.parse_program(section, program_section.clone(), name.to_string(), symbol)?;
             let key = p.function_key();
