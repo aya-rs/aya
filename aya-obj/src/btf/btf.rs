@@ -20,7 +20,7 @@ use crate::{
     },
     generated::{btf_ext_header, btf_header},
     util::{bytes_of, HashMap},
-    Object,
+    Object, Program,
 };
 
 pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
@@ -481,6 +481,7 @@ impl Btf {
     // for Aya programs. These fixups are gradually moving into bpf-linker itself.
     pub(crate) fn fixup_and_sanitize(
         &mut self,
+        programs: &HashMap<String, Program>,
         section_infos: &HashMap<String, (SectionIndex, u64)>,
         symbol_offsets: &HashMap<String, u64>,
         features: &BtfFeatures,
@@ -674,6 +675,11 @@ impl Btf {
                             }
                             ty.set_linkage(FuncLinkage::Static);
                         }
+                    } else if !programs.contains_key(name.as_ref())
+                        && !name.as_ref().starts_with("prog")
+                    {
+                        debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
+                        ty.set_linkage(FuncLinkage::Static);
                     }
                 }
                 // Sanitize FLOAT.
@@ -741,6 +747,7 @@ impl Object {
             }
             // fixup btf
             obj_btf.fixup_and_sanitize(
+                &self.programs,
                 &self.section_infos,
                 &self.symbol_offset_by_name,
                 features,
@@ -1344,7 +1351,7 @@ mod tests {
 
         let features = Default::default();
 
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
             .unwrap();
         assert_matches!(btf.type_by_id(ptr_type_id).unwrap(), BtfType::Ptr(fixed) => {
             assert_eq!(fixed.name_offset, 0);
@@ -1377,7 +1384,7 @@ mod tests {
             ..Default::default()
         };
 
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
             .unwrap();
         assert_matches!(btf.type_by_id(var_type_id).unwrap(), BtfType::Int(fixed) => {
             assert_eq!(fixed.name_offset, name_offset);
@@ -1419,7 +1426,7 @@ mod tests {
             ..Default::default()
         };
 
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
             .unwrap();
         assert_matches!(btf.type_by_id(datasec_type_id).unwrap(), BtfType::Struct(fixed) => {
             assert_eq!(fixed.name_offset , name_offset);
@@ -1472,6 +1479,7 @@ mod tests {
         };
 
         btf.fixup_and_sanitize(
+            &HashMap::new(),
             &HashMap::from([(".data/foo".to_owned(), (SectionIndex(0), 32u64))]),
             &HashMap::from([("foo".to_owned(), 64u64)]),
             &features,
@@ -1535,7 +1543,7 @@ mod tests {
             ..Default::default()
         };
 
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
             .unwrap();
         assert_matches!(btf.type_by_id(func_proto_type_id).unwrap(), BtfType::Enum(fixed) => {
             assert_eq!(fixed.name_offset, 0);
@@ -1592,7 +1600,7 @@ mod tests {
             ..Default::default()
         };
 
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
             .unwrap();
 
         assert_matches!(btf.type_by_id(func_proto_type_id).unwrap(), BtfType::FuncProto(fixed) => {
@@ -1655,7 +1663,7 @@ mod tests {
             ..Default::default()
         };
 
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
             .unwrap();
 
         assert_matches!(btf.type_by_id(func_type_id).unwrap(), BtfType::Func(fixed) => {
@@ -1706,7 +1714,7 @@ mod tests {
                 ..Default::default()
             };
 
-            btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+            btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
                 .unwrap();
 
             assert_matches!(btf.type_by_id(func_type_id).unwrap(), BtfType::Func(fixed) => {
@@ -1730,7 +1738,7 @@ mod tests {
             ..Default::default()
         };
 
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
             .unwrap();
         assert_matches!(btf.type_by_id(float_type_id).unwrap(), BtfType::Struct(fixed) => {
             assert_eq!(fixed.name_offset, 0);
@@ -1769,7 +1777,7 @@ mod tests {
             ..Default::default()
         };
 
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
             .unwrap();
         assert_matches!(btf.type_by_id(decl_tag_type_id).unwrap(), BtfType::Int(fixed) => {
             assert_eq!(fixed.name_offset, name_offset);
@@ -1796,7 +1804,7 @@ mod tests {
             ..Default::default()
         };
 
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
             .unwrap();
         assert_matches!(btf.type_by_id(type_tag_type).unwrap(), BtfType::Const(fixed) => {
             assert_eq!(fixed.btf_type, int_type_id);
@@ -1858,7 +1866,7 @@ mod tests {
             ..Default::default()
         };
 
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
             .unwrap();
 
         assert_matches!(btf.type_by_id(enum_type_id).unwrap(), BtfType::Enum(fixed) => {
@@ -1902,7 +1910,7 @@ mod tests {
             ..Default::default()
         };
 
-        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &HashMap::new(), &features)
             .unwrap();
 
         assert_matches!(btf.type_by_id(enum_type_id).unwrap(), BtfType::Union(fixed) => {
