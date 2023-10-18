@@ -30,7 +30,7 @@ tempfile = { workspace = true }
 [features]
 default = []
 async_tokio = ["tokio/net"]
-async_std = ["async-io"]
+async_std = ["dep:async-io"]
 
 [package.metadata.docs.rs]
 all-features = true
