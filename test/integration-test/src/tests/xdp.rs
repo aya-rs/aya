@@ -1,6 +1,4 @@
-use std::{
-    ffi::CStr, mem::MaybeUninit, net::UdpSocket, num::NonZeroU32, ptr::NonNull, time::Duration,
-};
+use std::{ffi::CStr, mem::MaybeUninit, net::UdpSocket, num::NonZeroU32, time::Duration};
 
 use aya::{
     maps::{Array, CpuMap, XskMap},
@@ -33,9 +31,14 @@ fn af_xdp() {
     #[repr(align(16384))]
     struct PacketMap(MaybeUninit<[u8; 4096]>);
 
-    let mem = Box::new(PacketMap(MaybeUninit::uninit()));
-    let mem = NonNull::new(Box::leak(mem).0.as_mut_ptr()).unwrap();
-    let umem = unsafe { Umem::new(UmemConfig::default(), mem).unwrap() };
+    // Safety: don't access alloc down the line.
+    let mut alloc = Box::new(PacketMap(MaybeUninit::uninit()));
+    let umem = {
+        // Safety: this is a shared buffer between the kernel and us, uninitialized memory is valid.
+        let mem = unsafe { alloc.0.assume_init_mut() }.as_mut().into();
+        // Safety: we cannot access `mem` further down the line because it falls out of scope.
+        unsafe { Umem::new(UmemConfig::default(), mem).unwrap() }
+    };
 
     let mut iface = IfInfo::invalid();
     iface
