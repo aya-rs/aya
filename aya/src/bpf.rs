@@ -491,7 +491,19 @@ impl<'a> EbpfLoader<'a> {
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
             let mut map = match obj.pinning() {
-                PinningType::None => MapData::create(obj, &name, btf_fd)?,
+                PinningType::None => {
+                    // If map_pin_path is provided be sure to create the maps if they don't exist
+                    // and pin by name at the provided path.
+                    if let EbpfSectionKind::Bss | EbpfSectionKind::Rodata | EbpfSectionKind::Data =
+                        obj.section_kind()
+                    {
+                        MapData::create(obj, &name, btf_fd)?
+                    } else if let Some(path) = map_pin_path {
+                        MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                    } else {
+                        MapData::create(obj, &name, btf_fd)?
+                    }
+                }
                 PinningType::ByName => {
                     // pin maps in /sys/fs/bpf by default to align with libbpf
                     // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
