@@ -91,9 +91,9 @@ fn pin_lifecycle_multiple_btf_maps() {
         remove_file(map_pin_path).unwrap();
     }
 
-    let mut map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
-    let mut map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into().unwrap();
-    let mut map_pin_by_name: Array<_, u64> =
+    let map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
+    let map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into().unwrap();
+    let map_pin_by_name: Array<_, u64> =
         bpf.take_map("map_pin_by_name").unwrap().try_into().unwrap();
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();

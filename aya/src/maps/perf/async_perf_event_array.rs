@@ -1,4 +1,7 @@
-use std::borrow::{Borrow, BorrowMut};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    path::Path,
+};
 
 // See https://doc.rust-lang.org/cargo/reference/features.html#mutually-exclusive-features.
 //
@@ -12,7 +15,7 @@ use tokio::io::unix::AsyncFd;
 
 use crate::maps::{
     perf::{Events, PerfBufferError, PerfEventArray, PerfEventArrayBuffer},
-    MapData, MapError,
+    MapData, MapError, PinError,
 };
 
 /// A `Future` based map that can be used to receive events from eBPF programs using the linux
@@ -104,6 +107,14 @@ impl<T: BorrowMut<MapData>> AsyncPerfEventArray<T> {
         #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
         let buf = Async::new(buf)?;
         Ok(AsyncPerfEventArrayBuffer { buf })
+    }
+
+    /// Pins the map to a BPF filesystem.
+    ///
+    /// When a map is pinned it will remain loaded until the corresponding file
+    /// is deleted. All parent directories in the given `path` must already exist.
+    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
+        self.perf_map.pin(path)
     }
 }
 
