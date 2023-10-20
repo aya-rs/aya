@@ -48,7 +48,7 @@
 //! versa. Because of that, all map values must be plain old data and therefore
 //! implement the [Pod] trait.
 use std::{
-    borrow::BorrowMut,
+    borrow::Borrow,
     ffi::{c_long, CString},
     fmt, io,
     marker::PhantomData,
@@ -332,7 +332,7 @@ impl Map {
     ///
     /// When a map is pinned it will remain loaded until the corresponding file
     /// is deleted. All parent directories in the given `path` must already exist.
-    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         match self {
             Self::Array(map) => map.pin(path),
             Self::BloomFilter(map) => map.pin(path),
@@ -360,7 +360,6 @@ impl Map {
 }
 
 // Implements map pinning for different map implementations
-// TODO add support for PerfEventArrays and AsyncPerfEventArrays
 macro_rules! impl_map_pin {
     ($ty_param:tt {
         $($ty:ident),+ $(,)?
@@ -371,14 +370,14 @@ macro_rules! impl_map_pin {
       <($($ty_param:ident),*)>
       $ty:ident
     ) => {
-            impl<T: BorrowMut<MapData>, $($ty_param: Pod),*> $ty<T, $($ty_param),*>
+            impl<T: Borrow<MapData>, $($ty_param: Pod),*> $ty<T, $($ty_param),*>
             {
                     /// Pins the map to a BPF filesystem.
                     ///
                     /// When a map is pinned it will remain loaded until the corresponding file
                     /// is deleted. All parent directories in the given `path` must already exist.
-                    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
-                        let data = self.inner.borrow_mut();
+                    pub fn pin<P: AsRef<Path>>(self, path: P) -> Result<(), PinError> {
+                        let data = self.inner.borrow();
                         data.pin(path)
                     }
             }
@@ -591,7 +590,7 @@ impl MapData {
                 Ok(Self { obj, fd })
             }
             Err(_) => {
-                let mut map = Self::create(obj, name, btf_fd)?;
+                let map = Self::create(obj, name, btf_fd)?;
                 map.pin(&path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,
@@ -687,7 +686,7 @@ impl MapData {
     ///
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         use std::os::unix::ffi::OsStrExt as _;
 
         let Self { fd, obj: _ } = self;
