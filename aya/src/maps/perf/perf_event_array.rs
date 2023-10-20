@@ -5,6 +5,7 @@ use std::{
     borrow::{Borrow, BorrowMut},
     ops::Deref,
     os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
+    path::Path,
     sync::Arc,
 };
 
@@ -13,7 +14,7 @@ use bytes::BytesMut;
 use crate::{
     maps::{
         perf::{Events, PerfBuffer, PerfBufferError},
-        MapData, MapError,
+        MapData, MapError, PinError,
     },
     sys::bpf_map_update_elem,
     util::page_size,
@@ -175,7 +176,7 @@ impl<T: Borrow<MapData>> PerfEventArray<T> {
     }
 }
 
-impl<T: BorrowMut<MapData>> PerfEventArray<T> {
+impl<T: Borrow<MapData>> PerfEventArray<T> {
     /// Opens the perf buffer at the given index.
     ///
     /// The returned buffer will receive all the events eBPF programs send at the given index.
@@ -196,5 +197,14 @@ impl<T: BorrowMut<MapData>> PerfEventArray<T> {
             buf,
             _map: self.map.clone(),
         })
+    }
+
+    /// Pins the map to a BPF filesystem.
+    ///
+    /// When a map is pinned it will remain loaded until the corresponding file
+    /// is deleted. All parent directories in the given `path` must already exist.
+    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
+        let data: &MapData = self.map.deref().borrow();
+        data.pin(path)
     }
 }
