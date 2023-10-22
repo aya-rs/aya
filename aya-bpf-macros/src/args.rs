@@ -68,7 +68,7 @@ pub(crate) fn pop_bool_arg(args: &mut Args, name: &str) -> bool {
 }
 
 pub(crate) fn err_on_unknown_args(args: &Args) -> Result<()> {
-    if let Some(arg) = args.args.get(0) {
+    if let Some(arg) = args.args.first() {
         let tokens = match arg {
             Arg::String(name_val) => name_val.name.clone(),
             Arg::Bool(ident) => ident.clone(),
