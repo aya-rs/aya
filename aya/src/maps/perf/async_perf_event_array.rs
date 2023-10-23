@@ -159,7 +159,7 @@ impl<T: BorrowMut<MapData>> AsyncPerfEventArrayBuffer<T> {
                 if !buf.get_ref().readable() {
                     buf.readable().await?;
                 }
-                buf.get_mut()
+                unsafe { buf.get_mut() }
             };
 
             let events = buf.read_events(buffers)?;

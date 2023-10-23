@@ -49,7 +49,7 @@ default-members = [
 [workspace.dependencies]
 anyhow = { version = "1", default-features = false }
 assert_matches = { version = "1.5.0", default-features = false }
-async-io = { version = "1.3", default-features = false }
+async-io = { version = "2.0", default-features = false }
 aya = { path = "aya", version = "0.11.0", default-features = false }
 aya-bpf = { path = "bpf/aya-bpf", default-features = false }
 aya-log = { path = "aya-log", default-features = false }
