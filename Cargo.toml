@@ -95,7 +95,7 @@ test-log = { version = "0.2.13", default-features = false }
 testing_logger = { version = "0.1.1", default-features = false }
 thiserror = { version = "1", default-features = false }
 tokio = { version = "1.24.0", default-features = false }
-which = { version = "4.4.0", default-features = false }
+which = { version = "5.0.0", default-features = false }
 xtask = { path = "xtask", default-features = false }
 
 [profile.dev]
