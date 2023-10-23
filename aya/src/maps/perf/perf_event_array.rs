@@ -4,7 +4,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     ops::Deref,
-    os::fd::{AsFd as _, AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
     sync::Arc,
 };
 
@@ -52,6 +52,12 @@ impl<T: BorrowMut<MapData>> PerfEventArrayBuffer<T> {
     /// [`PerfBufferError::NoBuffers`] is returned when `out_bufs` is empty.
     pub fn read_events(&mut self, out_bufs: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
         self.buf.read_events(out_bufs)
+    }
+}
+
+impl<T: BorrowMut<MapData>> AsFd for PerfEventArrayBuffer<T> {
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        self.buf.as_fd()
     }
 }
 
