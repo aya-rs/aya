@@ -12,8 +12,6 @@
 pub use ad::*;
 // OD = OS dependent
 pub use od::*;
-// PWD = Pointer Width Dependent
-pub use pwd::*;
 
 #[cfg(target_arch = "bpf")]
 mod ad {
@@ -105,12 +103,6 @@ mod od {
     pub type c_long = i64;
     pub type c_ulong = u64;
 }
-
-#[cfg(target_pointer_width = "32")]
-mod pwd {}
-
-#[cfg(target_pointer_width = "64")]
-mod pwd {}
 
 pub type int8_t = i8;
 pub type int16_t = i16;
