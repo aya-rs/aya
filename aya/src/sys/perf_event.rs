@@ -15,8 +15,14 @@ use crate::generated::{
     PERF_FLAG_FD_CLOEXEC,
 };
 
+pub(crate) fn init_perf_event_attr() -> perf_event_attr {
+    let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
+    attr.size = mem::size_of::<perf_event_attr>() as u32;
+    attr
+}
+
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn perf_event_open(
+pub(crate) fn perf_event_open_sampled(
     perf_type: u32,
     config: u64,
     pid: pid_t,
@@ -26,10 +32,8 @@ pub(crate) fn perf_event_open(
     wakeup: bool,
     flags: u32,
 ) -> SysResult<OwnedFd> {
-    let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
-
+    let mut attr = init_perf_event_attr();
     attr.config = config;
-    attr.size = mem::size_of::<perf_event_attr>() as u32;
     attr.type_ = perf_type;
     attr.sample_type = PERF_SAMPLE_RAW as u64;
     // attr.inherits = if pid > 0 { 1 } else { 0 };
@@ -46,7 +50,7 @@ pub(crate) fn perf_event_open(
 }
 
 pub(crate) fn perf_event_open_bpf(cpu: c_int) -> SysResult<OwnedFd> {
-    perf_event_open(
+    perf_event_open_sampled(
         PERF_TYPE_SOFTWARE as u32,
         PERF_COUNT_SW_BPF_OUTPUT as u64,
         -1,
@@ -67,7 +71,7 @@ pub(crate) fn perf_event_open_probe(
 ) -> SysResult<OwnedFd> {
     use std::os::unix::ffi::OsStrExt as _;
 
-    let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
+    let mut attr = init_perf_event_attr();
 
     if let Some(ret_bit) = ret_bit {
         attr.config = 1 << ret_bit;
@@ -75,7 +79,6 @@ pub(crate) fn perf_event_open_probe(
 
     let c_name = CString::new(name.as_bytes()).unwrap();
 
-    attr.size = mem::size_of::<perf_event_attr>() as u32;
     attr.type_ = ty;
     attr.__bindgen_anon_3.config1 = c_name.as_ptr() as u64;
     attr.__bindgen_anon_4.config2 = offset;
@@ -87,9 +90,7 @@ pub(crate) fn perf_event_open_probe(
 }
 
 pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> SysResult<OwnedFd> {
-    let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
-
-    attr.size = mem::size_of::<perf_event_attr>() as u32;
+    let mut attr = init_perf_event_attr();
     attr.type_ = PERF_TYPE_TRACEPOINT as u32;
     attr.config = id as u64;
 
@@ -112,7 +113,7 @@ pub(crate) fn perf_event_ioctl(
     return crate::sys::TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
 }
 
-fn perf_event_sys(attr: perf_event_attr, pid: pid_t, cpu: i32, flags: u32) -> SysResult<OwnedFd> {
+pub(crate) fn perf_event_sys(attr: perf_event_attr, pid: pid_t, cpu: i32, flags: u32) -> SysResult<OwnedFd> {
     let fd = syscall(Syscall::PerfEventOpen {
         attr,
         pid,

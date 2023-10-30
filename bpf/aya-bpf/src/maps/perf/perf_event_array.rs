@@ -18,7 +18,7 @@ use crate::{
 /// # Minimum kernel version
 /// 
 /// The minimum kernel version required to read perf_event values using [PerfEventArray] is 4.15.
-/// This concerns the functions [`read_current_cpu()`], [`read_at_index()`] and [`read()`].
+/// This concerns the functions [`PerfEventArray::read_current_cpu()`] and [`PerfEventArray::read_at_index()`].
 ///  
 #[repr(transparent)]
 pub struct PerfEventArray<T> {
@@ -68,7 +68,7 @@ impl<T> PerfEventArray<T> {
     }
 
     pub fn output_at_index<C: BpfContext>(&self, ctx: &C, data: &T, index: u32) -> Result<(), i64> {
-        self.output(ctx, data, (index as u64) & BPF_F_INDEX_MASK)
+        self.output(ctx, data, u64::from(index) & BPF_F_INDEX_MASK)
     }
 
     fn output<C: BpfContext>(&self, ctx: &C, data: &T, flags: u64) -> Result<(), i64> {
