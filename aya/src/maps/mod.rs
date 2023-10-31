@@ -73,7 +73,7 @@ use crate::{
         bpf_map_get_info_by_fd, bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object,
         iter_map_ids, SyscallError,
     },
-    util::{nr_cpus, KernelVersion},
+    util::{bytes_of_bpf_name, nr_cpus, KernelVersion},
     PinningType, Pod,
 };
 
@@ -927,17 +927,7 @@ impl MapInfo {
 
     /// The name of the map, limited to 16 bytes.
     pub fn name(&self) -> &[u8] {
-        let length = self
-            .0
-            .name
-            .iter()
-            .rposition(|ch| *ch != 0)
-            .map(|pos| pos + 1)
-            .unwrap_or(0);
-
-        // The name field is defined as [std::os::raw::c_char; 16]. c_char may be signed or
-        // unsigned depending on the platform; that's why we're using from_raw_parts here.
-        unsafe { std::slice::from_raw_parts(self.0.name.as_ptr() as *const _, length) }
+        bytes_of_bpf_name(&self.0.name)
     }
 
     /// The name of the map as a &str. If the name is not valid unicode, None is returned.
