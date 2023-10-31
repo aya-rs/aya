@@ -1813,9 +1813,9 @@ pub fn aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::clone(&self) 
 impl<Storage: core::cmp::Eq> core::cmp::Eq for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 impl<Storage: core::cmp::Ord> core::cmp::Ord for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 pub fn aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::cmp(&self, other: &aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>) -> core::cmp::Ordering
-impl<Storage: core::cmp::PartialEq> core::cmp::PartialEq<aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>> for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
+impl<Storage: core::cmp::PartialEq> core::cmp::PartialEq for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 pub fn aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::eq(&self, other: &aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>) -> bool
-impl<Storage: core::cmp::PartialOrd> core::cmp::PartialOrd<aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>> for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
+impl<Storage: core::cmp::PartialOrd> core::cmp::PartialOrd for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 pub fn aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::partial_cmp(&self, other: &aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>) -> core::option::Option<core::cmp::Ordering>
 impl<Storage: core::default::Default> core::default::Default for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 pub fn aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::default() -> aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>

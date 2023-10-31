@@ -446,7 +446,7 @@ pub struct aya::maps::perf::Events
 pub aya::maps::perf::Events::lost: usize
 pub aya::maps::perf::Events::read: usize
 impl core::cmp::Eq for aya::maps::perf::Events
-impl core::cmp::PartialEq<aya::maps::perf::Events> for aya::maps::perf::Events
+impl core::cmp::PartialEq for aya::maps::perf::Events
 pub fn aya::maps::perf::Events::eq(&self, other: &aya::maps::perf::Events) -> bool
 impl core::fmt::Debug for aya::maps::perf::Events
 pub fn aya::maps::perf::Events::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1881,11 +1881,11 @@ pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::borrow_mut(&mut self) -> &mu
 impl<T> core::convert::From<T> for aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::from(t: T) -> T
 pub struct aya::maps::PerCpuValues<T: aya::Pod>
-impl<T: aya::Pod> core::convert::TryFrom<alloc::vec::Vec<T, alloc::alloc::Global>> for aya::maps::PerCpuValues<T>
+impl<T: aya::Pod> core::convert::TryFrom<alloc::vec::Vec<T>> for aya::maps::PerCpuValues<T>
 pub type aya::maps::PerCpuValues<T>::Error = std::io::error::Error
 pub fn aya::maps::PerCpuValues<T>::try_from(values: alloc::vec::Vec<T>) -> core::result::Result<Self, Self::Error>
 impl<T: aya::Pod> core::ops::deref::Deref for aya::maps::PerCpuValues<T>
-pub type aya::maps::PerCpuValues<T>::Target = alloc::boxed::Box<[T], alloc::alloc::Global>
+pub type aya::maps::PerCpuValues<T>::Target = alloc::boxed::Box<[T]>
 pub fn aya::maps::PerCpuValues<T>::deref(&self) -> &Self::Target
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<K, aya::maps::PerCpuValues<V>> for aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::get(&self, key: &K) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
@@ -2410,7 +2410,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_device::CgroupDeviceLin
 pub fn aya::programs::cgroup_device::CgroupDeviceLink::from(t: T) -> T
 pub struct aya::programs::cgroup_device::CgroupDeviceLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_device::CgroupDeviceLinkId
-impl core::cmp::PartialEq<aya::programs::cgroup_device::CgroupDeviceLinkId> for aya::programs::cgroup_device::CgroupDeviceLinkId
+impl core::cmp::PartialEq for aya::programs::cgroup_device::CgroupDeviceLinkId
 pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::eq(&self, other: &aya::programs::cgroup_device::CgroupDeviceLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_device::CgroupDeviceLinkId
 pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -2553,7 +2553,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_skb::CgroupSkbLink
 pub fn aya::programs::cgroup_skb::CgroupSkbLink::from(t: T) -> T
 pub struct aya::programs::cgroup_skb::CgroupSkbLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_skb::CgroupSkbLinkId
-impl core::cmp::PartialEq<aya::programs::cgroup_skb::CgroupSkbLinkId> for aya::programs::cgroup_skb::CgroupSkbLinkId
+impl core::cmp::PartialEq for aya::programs::cgroup_skb::CgroupSkbLinkId
 pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::eq(&self, other: &aya::programs::cgroup_skb::CgroupSkbLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkbLinkId
 pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -2663,7 +2663,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_sock::CgroupSockLink
 pub fn aya::programs::cgroup_sock::CgroupSockLink::from(t: T) -> T
 pub struct aya::programs::cgroup_sock::CgroupSockLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_sock::CgroupSockLinkId
-impl core::cmp::PartialEq<aya::programs::cgroup_sock::CgroupSockLinkId> for aya::programs::cgroup_sock::CgroupSockLinkId
+impl core::cmp::PartialEq for aya::programs::cgroup_sock::CgroupSockLinkId
 pub fn aya::programs::cgroup_sock::CgroupSockLinkId::eq(&self, other: &aya::programs::cgroup_sock::CgroupSockLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sock::CgroupSockLinkId
 pub fn aya::programs::cgroup_sock::CgroupSockLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -2773,7 +2773,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_sock_addr::CgroupSockAd
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::from(t: T) -> T
 pub struct aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
-impl core::cmp::PartialEq<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId> for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
+impl core::cmp::PartialEq for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::eq(&self, other: &aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -2883,7 +2883,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_sockopt::CgroupSockoptL
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::from(t: T) -> T
 pub struct aya::programs::cgroup_sockopt::CgroupSockoptLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
-impl core::cmp::PartialEq<aya::programs::cgroup_sockopt::CgroupSockoptLinkId> for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
+impl core::cmp::PartialEq for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::eq(&self, other: &aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -2993,7 +2993,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_sysctl::CgroupSysctlLin
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::from(t: T) -> T
 pub struct aya::programs::cgroup_sysctl::CgroupSysctlLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
-impl core::cmp::PartialEq<aya::programs::cgroup_sysctl::CgroupSysctlLinkId> for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
+impl core::cmp::PartialEq for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::eq(&self, other: &aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -3140,7 +3140,7 @@ impl<T> core::convert::From<T> for aya::programs::extension::ExtensionLink
 pub fn aya::programs::extension::ExtensionLink::from(t: T) -> T
 pub struct aya::programs::extension::ExtensionLinkId(_)
 impl core::cmp::Eq for aya::programs::extension::ExtensionLinkId
-impl core::cmp::PartialEq<aya::programs::extension::ExtensionLinkId> for aya::programs::extension::ExtensionLinkId
+impl core::cmp::PartialEq for aya::programs::extension::ExtensionLinkId
 pub fn aya::programs::extension::ExtensionLinkId::eq(&self, other: &aya::programs::extension::ExtensionLinkId) -> bool
 impl core::fmt::Debug for aya::programs::extension::ExtensionLinkId
 pub fn aya::programs::extension::ExtensionLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -3254,7 +3254,7 @@ impl<T> core::convert::From<T> for aya::programs::fentry::FEntryLink
 pub fn aya::programs::fentry::FEntryLink::from(t: T) -> T
 pub struct aya::programs::fentry::FEntryLinkId(_)
 impl core::cmp::Eq for aya::programs::fentry::FEntryLinkId
-impl core::cmp::PartialEq<aya::programs::fentry::FEntryLinkId> for aya::programs::fentry::FEntryLinkId
+impl core::cmp::PartialEq for aya::programs::fentry::FEntryLinkId
 pub fn aya::programs::fentry::FEntryLinkId::eq(&self, other: &aya::programs::fentry::FEntryLinkId) -> bool
 impl core::fmt::Debug for aya::programs::fentry::FEntryLinkId
 pub fn aya::programs::fentry::FEntryLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -3368,7 +3368,7 @@ impl<T> core::convert::From<T> for aya::programs::fexit::FExitLink
 pub fn aya::programs::fexit::FExitLink::from(t: T) -> T
 pub struct aya::programs::fexit::FExitLinkId(_)
 impl core::cmp::Eq for aya::programs::fexit::FExitLinkId
-impl core::cmp::PartialEq<aya::programs::fexit::FExitLinkId> for aya::programs::fexit::FExitLinkId
+impl core::cmp::PartialEq for aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLinkId::eq(&self, other: &aya::programs::fexit::FExitLinkId) -> bool
 impl core::fmt::Debug for aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -3519,7 +3519,7 @@ impl<T> core::convert::From<T> for aya::programs::kprobe::KProbeLink
 pub fn aya::programs::kprobe::KProbeLink::from(t: T) -> T
 pub struct aya::programs::kprobe::KProbeLinkId(_)
 impl core::cmp::Eq for aya::programs::kprobe::KProbeLinkId
-impl core::cmp::PartialEq<aya::programs::kprobe::KProbeLinkId> for aya::programs::kprobe::KProbeLinkId
+impl core::cmp::PartialEq for aya::programs::kprobe::KProbeLinkId
 pub fn aya::programs::kprobe::KProbeLinkId::eq(&self, other: &aya::programs::kprobe::KProbeLinkId) -> bool
 impl core::fmt::Debug for aya::programs::kprobe::KProbeLinkId
 pub fn aya::programs::kprobe::KProbeLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -3665,7 +3665,7 @@ impl<T> core::convert::From<T> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(t: T) -> T
 pub struct aya::programs::links::FdLinkId(_)
 impl core::cmp::Eq for aya::programs::links::FdLinkId
-impl core::cmp::PartialEq<aya::programs::links::FdLinkId> for aya::programs::links::FdLinkId
+impl core::cmp::PartialEq for aya::programs::links::FdLinkId
 pub fn aya::programs::links::FdLinkId::eq(&self, other: &aya::programs::links::FdLinkId) -> bool
 impl core::fmt::Debug for aya::programs::links::FdLinkId
 pub fn aya::programs::links::FdLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -3753,7 +3753,7 @@ impl<T> core::convert::From<T> for aya::programs::links::ProgAttachLink
 pub fn aya::programs::links::ProgAttachLink::from(t: T) -> T
 pub struct aya::programs::links::ProgAttachLinkId(_, _, _)
 impl core::cmp::Eq for aya::programs::links::ProgAttachLinkId
-impl core::cmp::PartialEq<aya::programs::links::ProgAttachLinkId> for aya::programs::links::ProgAttachLinkId
+impl core::cmp::PartialEq for aya::programs::links::ProgAttachLinkId
 pub fn aya::programs::links::ProgAttachLinkId::eq(&self, other: &aya::programs::links::ProgAttachLinkId) -> bool
 impl core::fmt::Debug for aya::programs::links::ProgAttachLinkId
 pub fn aya::programs::links::ProgAttachLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -3903,7 +3903,7 @@ impl<T> core::convert::From<T> for aya::programs::lirc_mode2::LircLink
 pub fn aya::programs::lirc_mode2::LircLink::from(t: T) -> T
 pub struct aya::programs::lirc_mode2::LircLinkId(_, _)
 impl core::cmp::Eq for aya::programs::lirc_mode2::LircLinkId
-impl core::cmp::PartialEq<aya::programs::lirc_mode2::LircLinkId> for aya::programs::lirc_mode2::LircLinkId
+impl core::cmp::PartialEq for aya::programs::lirc_mode2::LircLinkId
 pub fn aya::programs::lirc_mode2::LircLinkId::eq(&self, other: &aya::programs::lirc_mode2::LircLinkId) -> bool
 impl core::fmt::Debug for aya::programs::lirc_mode2::LircLinkId
 pub fn aya::programs::lirc_mode2::LircLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -4066,7 +4066,7 @@ impl<T> core::convert::From<T> for aya::programs::lsm::LsmLink
 pub fn aya::programs::lsm::LsmLink::from(t: T) -> T
 pub struct aya::programs::lsm::LsmLinkId(_)
 impl core::cmp::Eq for aya::programs::lsm::LsmLinkId
-impl core::cmp::PartialEq<aya::programs::lsm::LsmLinkId> for aya::programs::lsm::LsmLinkId
+impl core::cmp::PartialEq for aya::programs::lsm::LsmLinkId
 pub fn aya::programs::lsm::LsmLinkId::eq(&self, other: &aya::programs::lsm::LsmLinkId) -> bool
 impl core::fmt::Debug for aya::programs::lsm::LsmLinkId
 pub fn aya::programs::lsm::LsmLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -4126,7 +4126,7 @@ impl<T> core::convert::From<T> for aya::programs::perf_attach::PerfLink
 pub fn aya::programs::perf_attach::PerfLink::from(t: T) -> T
 pub struct aya::programs::perf_attach::PerfLinkId(_)
 impl core::cmp::Eq for aya::programs::perf_attach::PerfLinkId
-impl core::cmp::PartialEq<aya::programs::perf_attach::PerfLinkId> for aya::programs::perf_attach::PerfLinkId
+impl core::cmp::PartialEq for aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLinkId::eq(&self, other: &aya::programs::perf_attach::PerfLinkId) -> bool
 impl core::fmt::Debug for aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -4355,7 +4355,7 @@ impl<T> core::convert::From<T> for aya::programs::perf_event::PerfEventLink
 pub fn aya::programs::perf_event::PerfEventLink::from(t: T) -> T
 pub struct aya::programs::perf_event::PerfEventLinkId(_)
 impl core::cmp::Eq for aya::programs::perf_event::PerfEventLinkId
-impl core::cmp::PartialEq<aya::programs::perf_event::PerfEventLinkId> for aya::programs::perf_event::PerfEventLinkId
+impl core::cmp::PartialEq for aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLinkId::eq(&self, other: &aya::programs::perf_event::PerfEventLinkId) -> bool
 impl core::fmt::Debug for aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -4392,7 +4392,7 @@ pub aya::programs::tc::TcAttachType::Ingress
 impl core::clone::Clone for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::clone(&self) -> aya::programs::tc::TcAttachType
 impl core::cmp::Eq for aya::programs::tc::TcAttachType
-impl core::cmp::PartialEq<aya::programs::tc::TcAttachType> for aya::programs::tc::TcAttachType
+impl core::cmp::PartialEq for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::eq(&self, other: &aya::programs::tc::TcAttachType) -> bool
 impl core::fmt::Debug for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -4545,7 +4545,7 @@ impl<T> core::convert::From<T> for aya::programs::tc::SchedClassifierLink
 pub fn aya::programs::tc::SchedClassifierLink::from(t: T) -> T
 pub struct aya::programs::tc::SchedClassifierLinkId(_)
 impl core::cmp::Eq for aya::programs::tc::SchedClassifierLinkId
-impl core::cmp::PartialEq<aya::programs::tc::SchedClassifierLinkId> for aya::programs::tc::SchedClassifierLinkId
+impl core::cmp::PartialEq for aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLinkId::eq(&self, other: &aya::programs::tc::SchedClassifierLinkId) -> bool
 impl core::fmt::Debug for aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -4687,7 +4687,7 @@ impl<T> core::convert::From<T> for aya::programs::tp_btf::BtfTracePointLink
 pub fn aya::programs::tp_btf::BtfTracePointLink::from(t: T) -> T
 pub struct aya::programs::tp_btf::BtfTracePointLinkId(_)
 impl core::cmp::Eq for aya::programs::tp_btf::BtfTracePointLinkId
-impl core::cmp::PartialEq<aya::programs::tp_btf::BtfTracePointLinkId> for aya::programs::tp_btf::BtfTracePointLinkId
+impl core::cmp::PartialEq for aya::programs::tp_btf::BtfTracePointLinkId
 pub fn aya::programs::tp_btf::BtfTracePointLinkId::eq(&self, other: &aya::programs::tp_btf::BtfTracePointLinkId) -> bool
 impl core::fmt::Debug for aya::programs::tp_btf::BtfTracePointLinkId
 pub fn aya::programs::tp_btf::BtfTracePointLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -4838,7 +4838,7 @@ impl<T> core::convert::From<T> for aya::programs::trace_point::TracePointLink
 pub fn aya::programs::trace_point::TracePointLink::from(t: T) -> T
 pub struct aya::programs::trace_point::TracePointLinkId(_)
 impl core::cmp::Eq for aya::programs::trace_point::TracePointLinkId
-impl core::cmp::PartialEq<aya::programs::trace_point::TracePointLinkId> for aya::programs::trace_point::TracePointLinkId
+impl core::cmp::PartialEq for aya::programs::trace_point::TracePointLinkId
 pub fn aya::programs::trace_point::TracePointLinkId::eq(&self, other: &aya::programs::trace_point::TracePointLinkId) -> bool
 impl core::fmt::Debug for aya::programs::trace_point::TracePointLinkId
 pub fn aya::programs::trace_point::TracePointLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -4996,7 +4996,7 @@ impl<T> core::convert::From<T> for aya::programs::uprobe::UProbeLink
 pub fn aya::programs::uprobe::UProbeLink::from(t: T) -> T
 pub struct aya::programs::uprobe::UProbeLinkId(_)
 impl core::cmp::Eq for aya::programs::uprobe::UProbeLinkId
-impl core::cmp::PartialEq<aya::programs::uprobe::UProbeLinkId> for aya::programs::uprobe::UProbeLinkId
+impl core::cmp::PartialEq for aya::programs::uprobe::UProbeLinkId
 pub fn aya::programs::uprobe::UProbeLinkId::eq(&self, other: &aya::programs::uprobe::UProbeLinkId) -> bool
 impl core::fmt::Debug for aya::programs::uprobe::UProbeLinkId
 pub fn aya::programs::uprobe::UProbeLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -5164,25 +5164,25 @@ impl core::iter::traits::collect::IntoIterator for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::IntoIter = bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
 pub type aya::programs::xdp::XdpFlags::Item = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::into_iter(self) -> Self::IntoIter
-impl core::ops::arith::Sub<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::arith::Sub for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::sub(self, other: Self) -> Self
-impl core::ops::arith::SubAssign<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::arith::SubAssign for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::sub_assign(&mut self, other: Self)
-impl core::ops::bit::BitAnd<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitAnd for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitand(self, other: Self) -> Self
-impl core::ops::bit::BitAndAssign<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitAndAssign for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitand_assign(&mut self, other: Self)
-impl core::ops::bit::BitOr<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitOr for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitor(self, other: aya::programs::xdp::XdpFlags) -> Self
-impl core::ops::bit::BitOrAssign<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitOrAssign for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitor_assign(&mut self, other: Self)
-impl core::ops::bit::BitXor<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitXor for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitxor(self, other: Self) -> Self
-impl core::ops::bit::BitXorAssign<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitXorAssign for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitxor_assign(&mut self, other: Self)
 impl core::ops::bit::Not for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
@@ -5257,7 +5257,7 @@ impl<T> core::convert::From<T> for aya::programs::xdp::XdpLink
 pub fn aya::programs::xdp::XdpLink::from(t: T) -> T
 pub struct aya::programs::xdp::XdpLinkId(_)
 impl core::cmp::Eq for aya::programs::xdp::XdpLinkId
-impl core::cmp::PartialEq<aya::programs::xdp::XdpLinkId> for aya::programs::xdp::XdpLinkId
+impl core::cmp::PartialEq for aya::programs::xdp::XdpLinkId
 pub fn aya::programs::xdp::XdpLinkId::eq(&self, other: &aya::programs::xdp::XdpLinkId) -> bool
 impl core::fmt::Debug for aya::programs::xdp::XdpLinkId
 pub fn aya::programs::xdp::XdpLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -5876,7 +5876,7 @@ pub aya::programs::TcAttachType::Ingress
 impl core::clone::Clone for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::clone(&self) -> aya::programs::tc::TcAttachType
 impl core::cmp::Eq for aya::programs::tc::TcAttachType
-impl core::cmp::PartialEq<aya::programs::tc::TcAttachType> for aya::programs::tc::TcAttachType
+impl core::cmp::PartialEq for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::eq(&self, other: &aya::programs::tc::TcAttachType) -> bool
 impl core::fmt::Debug for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -7330,25 +7330,25 @@ impl core::iter::traits::collect::IntoIterator for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::IntoIter = bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
 pub type aya::programs::xdp::XdpFlags::Item = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::into_iter(self) -> Self::IntoIter
-impl core::ops::arith::Sub<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::arith::Sub for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::sub(self, other: Self) -> Self
-impl core::ops::arith::SubAssign<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::arith::SubAssign for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::sub_assign(&mut self, other: Self)
-impl core::ops::bit::BitAnd<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitAnd for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitand(self, other: Self) -> Self
-impl core::ops::bit::BitAndAssign<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitAndAssign for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitand_assign(&mut self, other: Self)
-impl core::ops::bit::BitOr<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitOr for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitor(self, other: aya::programs::xdp::XdpFlags) -> Self
-impl core::ops::bit::BitOrAssign<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitOrAssign for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitor_assign(&mut self, other: Self)
-impl core::ops::bit::BitXor<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitXor for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitxor(self, other: Self) -> Self
-impl core::ops::bit::BitXorAssign<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
+impl core::ops::bit::BitXorAssign for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::bitxor_assign(&mut self, other: Self)
 impl core::ops::bit::Not for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
@@ -7482,9 +7482,9 @@ pub fn aya::util::KernelVersion::new(major: u8, minor: u8, patch: u16) -> Self
 impl core::clone::Clone for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::clone(&self) -> aya::util::KernelVersion
 impl core::cmp::Eq for aya::util::KernelVersion
-impl core::cmp::PartialEq<aya::util::KernelVersion> for aya::util::KernelVersion
+impl core::cmp::PartialEq for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::eq(&self, other: &aya::util::KernelVersion) -> bool
-impl core::cmp::PartialOrd<aya::util::KernelVersion> for aya::util::KernelVersion
+impl core::cmp::PartialOrd for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::partial_cmp(&self, other: &aya::util::KernelVersion) -> core::option::Option<core::cmp::Ordering>
 impl core::fmt::Debug for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -7730,25 +7730,25 @@ impl core::iter::traits::collect::IntoIterator for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::IntoIter = bitflags::iter::Iter<aya::VerifierLogLevel>
 pub type aya::VerifierLogLevel::Item = aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::into_iter(self) -> Self::IntoIter
-impl core::ops::arith::Sub<aya::VerifierLogLevel> for aya::VerifierLogLevel
+impl core::ops::arith::Sub for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::Output = aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::sub(self, other: Self) -> Self
-impl core::ops::arith::SubAssign<aya::VerifierLogLevel> for aya::VerifierLogLevel
+impl core::ops::arith::SubAssign for aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::sub_assign(&mut self, other: Self)
-impl core::ops::bit::BitAnd<aya::VerifierLogLevel> for aya::VerifierLogLevel
+impl core::ops::bit::BitAnd for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::Output = aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::bitand(self, other: Self) -> Self
-impl core::ops::bit::BitAndAssign<aya::VerifierLogLevel> for aya::VerifierLogLevel
+impl core::ops::bit::BitAndAssign for aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::bitand_assign(&mut self, other: Self)
-impl core::ops::bit::BitOr<aya::VerifierLogLevel> for aya::VerifierLogLevel
+impl core::ops::bit::BitOr for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::Output = aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::bitor(self, other: aya::VerifierLogLevel) -> Self
-impl core::ops::bit::BitOrAssign<aya::VerifierLogLevel> for aya::VerifierLogLevel
+impl core::ops::bit::BitOrAssign for aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::bitor_assign(&mut self, other: Self)
-impl core::ops::bit::BitXor<aya::VerifierLogLevel> for aya::VerifierLogLevel
+impl core::ops::bit::BitXor for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::Output = aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::bitxor(self, other: Self) -> Self
-impl core::ops::bit::BitXorAssign<aya::VerifierLogLevel> for aya::VerifierLogLevel
+impl core::ops::bit::BitXorAssign for aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::bitxor_assign(&mut self, other: Self)
 impl core::ops::bit::Not for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::Output = aya::VerifierLogLevel
