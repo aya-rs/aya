@@ -364,6 +364,15 @@ pub(crate) fn bytes_of_slice<T: Pod>(val: &[T]) -> &[u8] {
     unsafe { slice::from_raw_parts(val.as_ptr().cast(), size) }
 }
 
+pub(crate) fn bytes_of_bpf_name(bpf_name: &[core::ffi::c_char; 16]) -> &[u8] {
+    let length = bpf_name
+        .iter()
+        .rposition(|ch| *ch != 0)
+        .map(|pos| pos + 1)
+        .unwrap_or(0);
+    unsafe { std::slice::from_raw_parts(bpf_name.as_ptr() as *const _, length) }
+}
+
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
