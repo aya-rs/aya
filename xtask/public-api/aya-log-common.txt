@@ -60,7 +60,7 @@ pub fn u8::from(enum_value: aya_log_common::DisplayHint) -> Self
 impl core::clone::Clone for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::clone(&self) -> aya_log_common::DisplayHint
 impl core::cmp::Eq for aya_log_common::DisplayHint
-impl core::cmp::PartialEq<aya_log_common::DisplayHint> for aya_log_common::DisplayHint
+impl core::cmp::PartialEq for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::eq(&self, other: &aya_log_common::DisplayHint) -> bool
 impl core::fmt::Debug for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -99,7 +99,7 @@ pub fn u8::from(enum_value: aya_log_common::Level) -> Self
 impl core::clone::Clone for aya_log_common::Level
 pub fn aya_log_common::Level::clone(&self) -> aya_log_common::Level
 impl core::cmp::Eq for aya_log_common::Level
-impl core::cmp::PartialEq<aya_log_common::Level> for aya_log_common::Level
+impl core::cmp::PartialEq for aya_log_common::Level
 pub fn aya_log_common::Level::eq(&self, other: &aya_log_common::Level) -> bool
 impl core::fmt::Debug for aya_log_common::Level
 pub fn aya_log_common::Level::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
