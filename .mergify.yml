@@ -1,10 +1,26 @@
 pull_request_rules:
+  # MERGE MANAGEMENT
+
   - name: automatic merge for Dependabot pull request that pass CI
     conditions:
       - author=dependabot[bot]
     actions:
       comment:
         message: "@dependabot merge"
+
+  - name: automatic merge conditions for main
+    conditions:
+      - "#approved-reviews-by>=2"
+      - "#review-requested=0"
+      - "#changes-requested-reviews-by=0"
+      - base=main
+      - label!=hold
+      - label!=work-in-progress
+      - check-success=DCO
+      - check-success=build-workflow-complete
+    actions:
+      merge:
+        method: merge
 
   # REVIEW MANAGEMENT
 
