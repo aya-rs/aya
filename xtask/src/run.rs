@@ -2,7 +2,7 @@ use std::{
     env::consts::{ARCH, OS},
     ffi::OsString,
     fmt::Write as _,
-    fs::{copy, create_dir_all, metadata, File},
+    fs::{copy, create_dir_all, OpenOptions},
     io::{BufRead as _, BufReader, ErrorKind, Write as _},
     path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
@@ -284,9 +284,13 @@ pub fn run(opts: Options) -> Result<()> {
                 let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
 
                 let initrd_image = tmp_dir.path().join("qemu-initramfs.img");
-                let initrd_image_file = File::create(&initrd_image).with_context(|| {
-                    format!("failed to create {} for writing", initrd_image.display())
-                })?;
+                let initrd_image_file = OpenOptions::new()
+                    .create_new(true)
+                    .write(true)
+                    .open(&initrd_image)
+                    .with_context(|| {
+                        format!("failed to create {} for writing", initrd_image.display())
+                    })?;
 
                 let mut gen_init_cpio = Command::new(&gen_init_cpio);
                 let mut gen_init_cpio_child = gen_init_cpio
@@ -351,19 +355,21 @@ pub fn run(opts: Options) -> Result<()> {
                 }
                 if guest_arch == ARCH {
                     match OS {
-                        "linux" => match metadata("/dev/kvm") {
-                            Ok(metadata) => {
-                                use std::os::unix::fs::FileTypeExt as _;
-                                if metadata.file_type().is_char_device() {
+                        "linux" => {
+                            const KVM: &str = "/dev/kvm";
+                            match OpenOptions::new().read(true).write(true).open(KVM) {
+                                Ok(_file) => {
                                     qemu.args(["-accel", "kvm"]);
                                 }
+                                Err(error) => match error.kind() {
+                                    ErrorKind::NotFound | ErrorKind::PermissionDenied => {}
+                                    _kind => {
+                                        return Err(error)
+                                            .with_context(|| format!("failed to open {KVM}"));
+                                    }
+                                },
                             }
-                            Err(error) => {
-                                if error.kind() != ErrorKind::NotFound {
-                                    Err(error).context("failed to check existence of /dev/kvm")?;
-                                }
-                            }
-                        },
+                        }
                         "macos" => {
                             qemu.args(["-accel", "hvf"]);
                         }
