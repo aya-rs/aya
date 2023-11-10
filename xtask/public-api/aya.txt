@@ -7477,6 +7477,7 @@ pub fn aya::programs::loaded_programs() -> impl core::iter::traits::iterator::It
 pub mod aya::util
 pub struct aya::util::KernelVersion
 impl aya::util::KernelVersion
+pub fn aya::util::KernelVersion::code(self) -> u32
 pub fn aya::util::KernelVersion::current() -> core::result::Result<Self, impl core::error::Error>
 pub fn aya::util::KernelVersion::new(major: u8, minor: u8, patch: u16) -> Self
 impl core::clone::Clone for aya::util::KernelVersion
