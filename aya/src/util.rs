@@ -53,7 +53,7 @@ impl KernelVersion {
     }
 
     /// The equivalent of LINUX_VERSION_CODE.
-    pub(crate) fn code(self) -> u32 {
+    pub fn code(self) -> u32 {
         let Self {
             major,
             minor,
