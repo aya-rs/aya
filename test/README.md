@@ -1,5 +1,4 @@
-Aya Integration Tests
-=====================
+# Aya Integration Tests
 
 The aya integration test suite is a set of tests to ensure that
 common usage behaviours work on real Linux distros
@@ -19,13 +18,13 @@ From the root of this repository:
 
 ### Native
 
-```
+```bash
 cargo xtask integration-test local
 ```
 
 ### Virtualized
 
-```
+```bash
 cargo xtask integration-test vm
 ```
 
@@ -41,5 +40,5 @@ Tests should follow these guidelines:
   constants in `integration-test/src/lib.rs` using `include_bytes_aligned!`.
 - Tests should be added to `integration-test/tests`.
 - You may add a new module, or use an existing one.
-- Test functions should not return `anyhow::Result<()>` since this produces errors without stack
-  traces. Prefer to `panic!` instead.
+- Test functions should not return `anyhow::Result<()>` since this produces
+  errors without stack traces. Prefer to `panic!` instead.

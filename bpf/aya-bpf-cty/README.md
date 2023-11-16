@@ -1,7 +1,7 @@
+# `cty`
+
 [![crates.io](https://img.shields.io/crates/v/cty.svg)](https://crates.io/crates/cty)
 [![crates.io](https://img.shields.io/crates/d/cty.svg)](https://crates.io/crates/cty)
-
-# `cty`
 
 > Type aliases to C types like c_int for use with bindgen
 
@@ -9,9 +9,8 @@
 
 Licensed under either of
 
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
-  http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+- Apache License, Version 2.0 [LICENSE-APACHE](./LICENSE-APACHE) or
+- MIT license [LICENSE-MIT](./LICENSE-MIT)
 
 at your option.
 
