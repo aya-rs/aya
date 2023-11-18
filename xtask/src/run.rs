@@ -11,7 +11,7 @@ use std::{
 };
 
 use anyhow::{anyhow, bail, Context as _, Result};
-use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
+use cargo_metadata::{Artifact, ArtifactProfile, CompilerMessage, Message, Target};
 use clap::Parser;
 use xtask::{exec, Errors, AYA_BUILD_INTEGRATION_BPF};
 
@@ -79,10 +79,13 @@ where
             Message::CompilerArtifact(Artifact {
                 executable,
                 target: Target { name, .. },
+                profile: ArtifactProfile { test, .. },
                 ..
             }) => {
-                if let Some(executable) = executable {
-                    executables.push((name, executable.into()));
+                if test {
+                    if let Some(executable) = executable {
+                        executables.push((name, executable.into()));
+                    }
                 }
             }
             Message::CompilerMessage(CompilerMessage { message, .. }) => {

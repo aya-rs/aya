@@ -9,7 +9,6 @@ You'll need:
 
 1. `rustup toolchain install nightly`
 1. `rustup target add {aarch64,x86_64}-unknown-linux-musl`
-1. `cargo install bpf-linker`
 1. (virtualized only) `qemu`
 
 ## Usage

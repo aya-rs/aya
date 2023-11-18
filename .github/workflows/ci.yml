@@ -135,9 +135,6 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: bpf-linker
-        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git
-
       - uses: taiki-e/install-action@cargo-hack
       - name: Build
         env:
@@ -189,10 +186,6 @@ jobs:
           sudo apt update
           sudo apt -y install clang gcc-multilib llvm locate qemu-system-{arm,x86}
 
-      - name: bpf-linker
-        if: runner.os == 'Linux'
-        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git
-
       - name: Install prerequisites
         if: runner.os == 'macOS'
         # The xargs shipped on macOS always exits 0 with -P0, so we need GNU findutils.
@@ -214,11 +207,6 @@ jobs:
           echo /usr/local/opt/llvm/bin >> $GITHUB_PATH
           # https://github.com/Homebrew/homebrew-core/issues/140244
           codesign --verify $(which qemu-system-x86_64) || brew reinstall qemu --build-from-source
-
-      - name: bpf-linker
-        if: runner.os == 'macOS'
-        # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature).
-        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git --no-default-features
 
       - name: Download debian kernels
         if: runner.arch == 'ARM64'

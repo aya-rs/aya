@@ -59,6 +59,7 @@ aya-obj = { path = "aya-obj", version = "0.1.0", default-features = false }
 aya-tool = { path = "aya-tool", default-features = false }
 bindgen = { version = "0.69", default-features = false }
 bitflags = { version = "2.2.1", default-features = false }
+bpf-linker = { version = "0.9.10", artifact = "bin" }
 bytes = { version = "1", default-features = false }
 cargo_metadata = { version = "0.18.0", default-features = false }
 clap = { version = "4", default-features = false }
@@ -95,7 +96,6 @@ test-log = { version = "0.2.13", default-features = false }
 testing_logger = { version = "0.1.1", default-features = false }
 thiserror = { version = "1", default-features = false }
 tokio = { version = "1.24.0", default-features = false }
-which = { version = "5.0.0", default-features = false }
 xtask = { path = "xtask", default-features = false }
 
 [profile.dev]
@@ -107,3 +107,6 @@ panic = "abort"
 [profile.release.package.integration-ebpf]
 debug = 2
 codegen-units = 1
+
+[patch.crates-io]
+bpf-linker = { git = "https://github.com/aya-rs/bpf-linker.git", artifact = "bin" }
