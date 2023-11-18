@@ -1,14 +1,90 @@
-use std::{net::UdpSocket, time::Duration};
+use std::{ffi::CStr, mem::MaybeUninit, net::UdpSocket, num::NonZeroU32, time::Duration};
 
 use aya::{
-    maps::{Array, CpuMap},
+    maps::{Array, CpuMap, XskMap},
     programs::{Xdp, XdpFlags},
     Bpf,
 };
 use object::{Object, ObjectSection, ObjectSymbol, SymbolSection};
 use test_log::test;
+use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
 use crate::utils::NetNsGuard;
+
+#[test]
+fn af_xdp() {
+    let _netns = NetNsGuard::new();
+
+    let mut bpf = Bpf::load(crate::REDIRECT).unwrap();
+    let mut socks: XskMap<_> = bpf.take_map("SOCKS").unwrap().try_into().unwrap();
+
+    let xdp: &mut Xdp = bpf
+        .program_mut("redirect_sock")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    xdp.load().unwrap();
+    xdp.attach("lo", XdpFlags::default()).unwrap();
+
+    // So this needs to be page aligned. Pages are 4k on all mainstream architectures except for
+    // Apple Silicon which uses 16k pages. So let's align on that for tests to run natively there.
+    #[repr(align(16384))]
+    struct PacketMap(MaybeUninit<[u8; 4096]>);
+
+    // Safety: don't access alloc down the line.
+    let mut alloc = Box::new(PacketMap(MaybeUninit::uninit()));
+    let umem = {
+        // Safety: this is a shared buffer between the kernel and us, uninitialized memory is valid.
+        let mem = unsafe { alloc.0.assume_init_mut() }.as_mut().into();
+        // Safety: we cannot access `mem` further down the line because it falls out of scope.
+        unsafe { Umem::new(UmemConfig::default(), mem).unwrap() }
+    };
+
+    let mut iface = IfInfo::invalid();
+    iface
+        .from_name(CStr::from_bytes_with_nul(b"lo\0").unwrap())
+        .unwrap();
+    let sock = Socket::with_shared(&iface, &umem).unwrap();
+
+    let mut fq_cq = umem.fq_cq(&sock).unwrap(); // Fill Queue / Completion Queue
+
+    let cfg = SocketConfig {
+        rx_size: NonZeroU32::new(32),
+        ..Default::default()
+    };
+    let rxtx = umem.rx_tx(&sock, &cfg).unwrap(); // RX + TX Queues
+    let mut rx = rxtx.map_rx().unwrap();
+
+    umem.bind(&rxtx).unwrap();
+
+    socks.set(0, rx.as_raw_fd(), 0).unwrap();
+
+    let frame = umem.frame(BufIdx(0)).unwrap();
+
+    // Produce a frame to be filled by the kernel
+    let mut writer = fq_cq.fill(1);
+    writer.insert_once(frame.offset);
+    writer.commit();
+
+    let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
+    let port = sock.local_addr().unwrap().port();
+    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+
+    assert_eq!(rx.available(), 1);
+    let desc = rx.receive(1).read().unwrap();
+    let buf = unsafe {
+        &frame.addr.as_ref()[desc.addr as usize..(desc.addr as usize + desc.len as usize)]
+    };
+
+    let (eth, buf) = buf.split_at(14);
+    assert_eq!(eth[12..14], [0x08, 0x00]); // IP
+    let (ip, buf) = buf.split_at(20);
+    assert_eq!(ip[9], 17); // UDP
+    let (udp, payload) = buf.split_at(8);
+    assert_eq!(&udp[0..2], port.to_be_bytes().as_slice()); // Source
+    assert_eq!(&udp[2..4], 1777u16.to_be_bytes().as_slice()); // Dest
+    assert_eq!(payload, b"hello AF_XDP");
+}
 
 #[test]
 fn prog_sections() {
