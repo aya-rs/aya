@@ -55,7 +55,7 @@ fn push_literal(frag: &mut Vec<Fragment>, unescaped_literal: &str) -> Result<(),
 /// Parses the display hint (e.g. the `ipv4` in `{:ipv4}`).
 fn parse_display_hint(s: &str) -> Result<DisplayHint, String> {
     Ok(match s {
-        "x" => DisplayHint::LowerHex,
+        "p" | "x" => DisplayHint::LowerHex,
         "X" => DisplayHint::UpperHex,
         "i" => DisplayHint::Ip,
         "mac" => DisplayHint::LowerMac,
@@ -145,7 +145,7 @@ mod test {
     #[test]
     fn test_parse() {
         assert_eq!(
-            parse("foo {} bar {:x} test {:X} ayy {:i} lmao {{}} {{something}}"),
+            parse("foo {} bar {:x} test {:X} ayy {:i} lmao {{}} {{something}} {:p}"),
             Ok(vec![
                 Fragment::Literal("foo ".into()),
                 Fragment::Parameter(Parameter {
@@ -163,7 +163,10 @@ mod test {
                 Fragment::Parameter(Parameter {
                     hint: DisplayHint::Ip
                 }),
-                Fragment::Literal(" lmao {} {something}".into()),
+                Fragment::Literal(" lmao {} {something} ".into()),
+                Fragment::Parameter(Parameter {
+                    hint: DisplayHint::LowerHex
+                }),
             ])
         );
         assert!(parse("foo {:}").is_err());
