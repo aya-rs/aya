@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-
 use quote::quote;
 use syn::{ItemFn, Result};
 
@@ -45,8 +44,9 @@ impl RawTracePoint {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn test_raw_tracepoint() {

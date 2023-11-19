@@ -1,9 +1,10 @@
 //! Socket filter programs.
-use libc::{setsockopt, SOL_SOCKET};
 use std::{
     io, mem,
-    os::fd::{AsFd as _, AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd, RawFd},
 };
+
+use libc::{setsockopt, SOL_SOCKET};
 use thiserror::Error;
 
 use crate::{
@@ -48,13 +49,12 @@ pub enum SocketFilterError {
 /// # }
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use std::net::TcpStream;
-/// use std::os::fd::AsRawFd;
 /// use aya::programs::SocketFilter;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
 /// let prog: &mut SocketFilter = bpf.program_mut("filter_packets").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(client.as_raw_fd())?;
+/// prog.attach(&client)?;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
@@ -72,10 +72,11 @@ impl SocketFilter {
     /// Attaches the filter on the given socket.
     ///
     /// The returned value can be used to detach from the socket, see [SocketFilter::detach].
-    pub fn attach<T: AsRawFd>(&mut self, socket: T) -> Result<SocketFilterLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, socket: T) -> Result<SocketFilterLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let prog_fd = prog_fd.as_raw_fd();
+        let socket = socket.as_fd();
         let socket = socket.as_raw_fd();
 
         let ret = unsafe {

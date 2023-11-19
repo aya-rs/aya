@@ -1,12 +1,13 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd, RawFd},
 };
 
 use crate::{
     maps::{
-        check_kv_size, hash_map, sock::SockMapFd, IterableMap, MapData, MapError, MapIter, MapKeys,
+        check_kv_size, hash_map, sock::SockMapFd, IterableMap, MapData, MapError, MapFd, MapIter,
+        MapKeys,
     },
     sys::{bpf_map_lookup_elem, SyscallError},
     Pod,
@@ -47,11 +48,11 @@ use crate::{
 /// use aya::programs::SkMsg;
 ///
 /// let mut intercept_egress = SockHash::<_, u32>::try_from(bpf.map("INTERCEPT_EGRESS").unwrap())?;
-/// let map_fd = intercept_egress.fd()?;
+/// let map_fd = intercept_egress.fd().try_clone()?;
 ///
 /// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(map_fd)?;
+/// prog.attach(&map_fd)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
 /// let mut intercept_egress = SockHash::try_from(bpf.map_mut("INTERCEPT_EGRESS").unwrap())?;
@@ -64,16 +65,16 @@ use crate::{
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_SOCKHASH")]
 pub struct SockHash<T, K> {
-    inner: T,
+    pub(crate) inner: T,
     _k: PhantomData<K>,
 }
 
 impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
-    pub(crate) fn new(map: T) -> Result<SockHash<T, K>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<K, u32>(data)?;
 
-        Ok(SockHash {
+        Ok(Self {
             inner: map,
             _k: PhantomData,
         })
@@ -81,7 +82,7 @@ impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
 
     /// Returns the fd of the socket stored at the given key.
     pub fn get(&self, key: &K, flags: u64) -> Result<RawFd, MapError> {
-        let fd = self.inner.borrow().fd;
+        let fd = self.inner.borrow().fd().as_fd();
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| SyscallError {
             call: "bpf_map_lookup_elem",
             io_error,
@@ -105,8 +106,11 @@ impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
     ///
     /// The returned file descriptor can be used to attach programs that work with
     /// socket maps, like [`SkMsg`](crate::programs::SkMsg) and [`SkSkb`](crate::programs::SkSkb).
-    pub fn fd(&self) -> Result<SockMapFd, MapError> {
-        Ok(SockMapFd(self.inner.borrow().fd))
+    pub fn fd(&self) -> &SockMapFd {
+        let fd: &MapFd = self.inner.borrow().fd();
+        // TODO(https://github.com/rust-lang/rfcs/issues/3066): avoid this unsafe.
+        // SAFETY: `SockMapFd` is #[repr(transparent)] over `MapFd`.
+        unsafe { std::mem::transmute(fd) }
     }
 }
 
@@ -138,6 +142,6 @@ impl<T: Borrow<MapData>, K: Pod> IterableMap<K, RawFd> for SockHash<T, K> {
     }
 
     fn get(&self, key: &K) -> Result<RawFd, MapError> {
-        SockHash::get(self, key, 0)
+        Self::get(self, key, 0)
     }
 }

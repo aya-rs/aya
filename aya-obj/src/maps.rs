@@ -1,12 +1,11 @@
 //! Map struct and type bindings.
 
-use core::mem;
-
-use crate::BpfSectionKind;
 use alloc::vec::Vec;
+use core::mem;
 
 #[cfg(not(feature = "std"))]
 use crate::std;
+use crate::BpfSectionKind;
 
 /// Invalid map type encontered
 pub struct InvalidMapTypeError {
@@ -173,6 +172,14 @@ impl Map {
         match self {
             Map::Legacy(m) => m.def.value_size,
             Map::Btf(m) => m.def.value_size,
+        }
+    }
+
+    /// Set the value size in bytes
+    pub fn set_value_size(&mut self, size: u32) {
+        match self {
+            Map::Legacy(m) => m.def.value_size = size,
+            Map::Btf(m) => m.def.value_size = size,
         }
     }
 

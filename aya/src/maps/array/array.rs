@@ -1,6 +1,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
+    os::fd::AsFd as _,
 };
 
 use crate::{
@@ -30,16 +31,16 @@ use crate::{
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_ARRAY")]
 pub struct Array<T, V: Pod> {
-    inner: T,
+    pub(crate) inner: T,
     _v: PhantomData<V>,
 }
 
 impl<T: Borrow<MapData>, V: Pod> Array<T, V> {
-    pub(crate) fn new(map: T) -> Result<Array<T, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<u32, V>(data)?;
 
-        Ok(Array {
+        Ok(Self {
             inner: map,
             _v: PhantomData,
         })
@@ -61,7 +62,7 @@ impl<T: Borrow<MapData>, V: Pod> Array<T, V> {
     pub fn get(&self, index: &u32, flags: u64) -> Result<V, MapError> {
         let data = self.inner.borrow();
         check_bounds(data, *index)?;
-        let fd = data.fd;
+        let fd = data.fd().as_fd();
 
         let value =
             bpf_map_lookup_elem(fd, index, flags).map_err(|(_, io_error)| SyscallError {
@@ -88,7 +89,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Array<T, V> {
     pub fn set(&mut self, index: u32, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
-        let fd = data.fd;
+        let fd = data.fd().as_fd();
         bpf_map_update_elem(fd, Some(&index), value.borrow(), flags).map_err(|(_, io_error)| {
             SyscallError {
                 call: "bpf_map_update_elem",

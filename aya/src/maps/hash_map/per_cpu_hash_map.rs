@@ -2,6 +2,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
+    os::fd::AsFd as _,
 };
 
 use crate::{
@@ -42,17 +43,17 @@ use crate::{
 #[doc(alias = "BPF_MAP_TYPE_LRU_PERCPU_HASH")]
 #[doc(alias = "BPF_MAP_TYPE_PERCPU_HASH")]
 pub struct PerCpuHashMap<T, K: Pod, V: Pod> {
-    inner: T,
+    pub(crate) inner: T,
     _k: PhantomData<K>,
     _v: PhantomData<V>,
 }
 
 impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
-    pub(crate) fn new(map: T) -> Result<PerCpuHashMap<T, K, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<K, V>(data)?;
 
-        Ok(PerCpuHashMap {
+        Ok(Self {
             inner: map,
             _k: PhantomData,
             _v: PhantomData,
@@ -61,7 +62,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
 
     /// Returns a slice of values - one for each CPU - associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<PerCpuValues<V>, MapError> {
-        let fd = self.inner.borrow().fd;
+        let fd = self.inner.borrow().fd().as_fd();
         let values =
             bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|(_, io_error)| SyscallError {
                 call: "bpf_map_lookup_elem",
@@ -118,7 +119,7 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
         values: PerCpuValues<V>,
         flags: u64,
     ) -> Result<(), MapError> {
-        let fd = self.inner.borrow_mut().fd;
+        let fd = self.inner.borrow_mut().fd().as_fd();
         bpf_map_update_elem_per_cpu(fd, key.borrow(), &values, flags).map_err(
             |(_, io_error)| SyscallError {
                 call: "bpf_map_update_elem",
@@ -143,6 +144,32 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, PerCpuValues<V>>
     }
 
     fn get(&self, key: &K) -> Result<PerCpuValues<V>, MapError> {
-        PerCpuHashMap::get(self, key, 0)
+        Self::get(self, key, 0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{super::test_utils, *};
+    use crate::{
+        generated::bpf_map_type::{BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH},
+        maps::Map,
+    };
+
+    #[test]
+    fn test_try_from_ok() {
+        let map = Map::PerCpuHashMap(test_utils::new_map(test_utils::new_obj_map(
+            BPF_MAP_TYPE_PERCPU_HASH,
+        )));
+        assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok())
+    }
+    #[test]
+    fn test_try_from_ok_lru() {
+        let map_data =
+            || test_utils::new_map(test_utils::new_obj_map(BPF_MAP_TYPE_LRU_PERCPU_HASH));
+        let map = Map::PerCpuHashMap(map_data());
+        assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok());
+        let map = Map::PerCpuLruHashMap(map_data());
+        assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok())
     }
 }

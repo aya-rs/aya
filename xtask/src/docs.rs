@@ -1,7 +1,8 @@
+use std::{ffi::OsString, fs, io::Write as _, process::Command};
+
 use anyhow::{Context as _, Result};
 use cargo_metadata::Metadata;
 use indoc::{indoc, writedoc};
-use std::{ffi::OsString, fs, io::Write as _, process::Command};
 use xtask::exec;
 
 pub fn docs(metadata: Metadata) -> Result<()> {
@@ -67,10 +68,10 @@ pub fn docs(metadata: Metadata) -> Result<()> {
 
     fs::write(
         site.join("robots.txt"),
-        indoc! {r#"
+        indoc! {r"
     User-Agent:*
     Disallow: /
-    "#},
+    "},
     )
     .context("can't write robots.txt")?;
 

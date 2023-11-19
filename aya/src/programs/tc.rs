@@ -1,12 +1,12 @@
 //! Network traffic control programs.
-use thiserror::Error;
-
 use std::{
     ffi::{CStr, CString},
     io,
-    os::fd::{AsFd as _, AsRawFd as _},
+    os::fd::AsFd as _,
     path::Path,
 };
+
+use thiserror::Error;
 
 use crate::{
     generated::{
@@ -74,7 +74,6 @@ pub enum TcAttachType {
 #[doc(alias = "BPF_PROG_TYPE_SCHED_CLS")]
 pub struct SchedClassifier {
     pub(crate) data: ProgramData<SchedClassifierLink>,
-    pub(crate) name: Box<CStr>,
 }
 
 /// Errors from TC programs
@@ -95,9 +94,9 @@ pub enum TcError {
 impl TcAttachType {
     pub(crate) fn parent(&self) -> u32 {
         match self {
-            TcAttachType::Custom(parent) => *parent,
-            TcAttachType::Ingress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_INGRESS),
-            TcAttachType::Egress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_EGRESS),
+            Self::Custom(parent) => *parent,
+            Self::Ingress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_INGRESS),
+            Self::Egress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_EGRESS),
         }
     }
 }
@@ -155,15 +154,17 @@ impl SchedClassifier {
     ) -> Result<SchedClassifierLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         let if_index = ifindex_from_ifname(interface)
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        let name = self.data.name.as_deref().unwrap_or_default();
+        // TODO: avoid this unwrap by adding a new error variant.
+        let name = CString::new(name).unwrap();
         let (priority, handle) = unsafe {
             netlink_qdisc_attach(
                 if_index as i32,
                 &attach_type,
                 prog_fd,
-                &self.name,
+                &name,
                 options.priority,
                 options.handle,
             )
@@ -204,10 +205,7 @@ impl SchedClassifier {
     /// the program being unloaded from the kernel if it is still pinned.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
-        let cname = CString::new(data.name.clone().unwrap_or_default())
-            .unwrap()
-            .into_boxed_c_str();
-        Ok(Self { data, name: cname })
+        Ok(Self { data })
     }
 }
 
@@ -284,9 +282,9 @@ impl SchedClassifierLink {
         attach_type: TcAttachType,
         priority: u16,
         handle: u32,
-    ) -> Result<SchedClassifierLink, io::Error> {
+    ) -> Result<Self, io::Error> {
         let if_index = ifindex_from_ifname(if_name)?;
-        Ok(SchedClassifierLink(Some(TcLink {
+        Ok(Self(Some(TcLink {
             if_index: if_index as i32,
             attach_type,
             priority,

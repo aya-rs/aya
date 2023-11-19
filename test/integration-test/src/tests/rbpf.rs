@@ -2,7 +2,8 @@ use core::{mem::size_of, ptr::null_mut, slice::from_raw_parts};
 use std::collections::HashMap;
 
 use assert_matches::assert_matches;
-use aya_obj::{generated::bpf_insn, Object, ProgramSection};
+use aya_obj::{generated::bpf_insn, programs::XdpAttachType, Object, ProgramSection};
+use test_log::test;
 
 #[test]
 fn run_with_rbpf() {
@@ -11,7 +12,10 @@ fn run_with_rbpf() {
     assert_eq!(object.programs.len(), 1);
     assert_matches!(
         object.programs["pass"].section,
-        ProgramSection::Xdp { frags: true }
+        ProgramSection::Xdp {
+            frags: true,
+            attach_type: XdpAttachType::Interface
+        }
     );
 
     let instructions = &object
@@ -31,7 +35,7 @@ fn run_with_rbpf() {
     assert_eq!(vm.execute_program().unwrap(), XDP_PASS);
 }
 
-static mut MULTIMAP_MAPS: [*mut Vec<u64>; 2] = [null_mut(), null_mut()];
+static mut MULTIMAP_MAPS: [*mut Vec<u64>; 3] = [null_mut(); 3];
 
 #[test]
 fn use_map_with_rbpf() {
@@ -40,15 +44,15 @@ fn use_map_with_rbpf() {
     assert_eq!(object.programs.len(), 1);
     assert_matches!(
         object.programs["bpf_prog"].section,
-        ProgramSection::TracePoint { .. }
+        ProgramSection::UProbe { .. }
     );
 
     // Initialize maps:
-    // - fd: 0xCAFE00 or 0xCAFE01 (the 0xCAFE00 part is used to distinguish fds from indices),
+    // - fd: Bitwise OR of the map_id with 0xCAFE00 (used to distinguish fds from indices),
     // - Note that rbpf does not convert fds into real pointers,
     //   so we keeps the pointers to our maps in MULTIMAP_MAPS, to be used in helpers.
     let mut maps = HashMap::new();
-    let mut map_instances = vec![vec![0u64], vec![0u64]];
+    let mut map_instances = vec![vec![0u64], vec![0u64], vec![0u64]];
     for (name, map) in object.maps.iter() {
         assert_eq!(map.key_size(), size_of::<u32>() as u32);
         assert_eq!(map.value_size(), size_of::<u64>() as u32);
@@ -57,7 +61,13 @@ fn use_map_with_rbpf() {
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY as u32
         );
 
-        let map_id = if name == "map_1" { 0 } else { 1 };
+        let map_id = match name.as_str() {
+            "map_1" => 0,
+            "map_2" => 1,
+            "map_pin_by_name" => 2,
+            n => panic!("Unexpected map: {n}"),
+        };
+
         let fd = map_id as i32 | 0xCAFE00;
         maps.insert(name.to_owned(), (fd, map.clone()));
 
@@ -99,18 +109,16 @@ fn use_map_with_rbpf() {
         .expect("Helper failed");
     assert_eq!(vm.execute_program().unwrap(), 0);
 
-    assert_eq!(map_instances[0][0], 24);
-    assert_eq!(map_instances[1][0], 42);
+    assert_eq!(map_instances, [[24], [42], [44]]);
 
     unsafe {
-        MULTIMAP_MAPS[0] = null_mut();
-        MULTIMAP_MAPS[1] = null_mut();
+        MULTIMAP_MAPS.iter_mut().for_each(|v| *v = null_mut());
     }
 }
 
 #[track_caller]
 fn bpf_map_update_elem_multimap(map: u64, key: u64, value: u64, _: u64, _: u64) -> u64 {
-    assert_matches!(map, 0xCAFE00 | 0xCAFE01);
+    assert_matches!(map, 0xCAFE00 | 0xCAFE01 | 0xCAFE02);
     let key = *unsafe { (key as usize as *const u32).as_ref().unwrap() };
     let value = *unsafe { (value as usize as *const u64).as_ref().unwrap() };
     assert_eq!(key, 0);

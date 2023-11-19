@@ -9,6 +9,9 @@ on:
     branches:
       - main
 
+  schedule:
+    - cron: 00 4 * * *
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -17,7 +20,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@master
         with:
@@ -32,8 +35,12 @@ jobs:
 
       - name: Check C formatting
         run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
+      
+      - name: Check Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v9
 
-      - run: taplo fmt --check
+      - name: Check TOML formatting
+        run: taplo fmt --check
 
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -66,7 +73,7 @@ jobs:
           - riscv64gc-unknown-linux-gnu
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@master
         with:
@@ -119,7 +126,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@master
         with:
@@ -151,7 +158,7 @@ jobs:
           - ubuntu-22.04
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -198,12 +205,15 @@ jobs:
         run: |
           set -euxo pipefail
           brew update
-          brew install dpkg findutils gnu-tar llvm pkg-config
-          # Workaround for https://github.com/Homebrew/homebrew-core/pull/139492.
-          brew reinstall qemu
+          # https://github.com/actions/setup-python/issues/577
+          find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
+          | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
+          brew install dpkg findutils gnu-tar llvm pkg-config qemu
           echo /usr/local/opt/findutils/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/llvm/bin >> $GITHUB_PATH
+          # https://github.com/Homebrew/homebrew-core/issues/140244
+          codesign --verify $(which qemu-system-x86_64) || brew reinstall qemu --build-from-source
 
       - name: bpf-linker
         if: runner.os == 'macOS'
@@ -220,7 +230,6 @@ jobs:
           # linux-image-5.10.0-23-cloud-arm64-unsigned_5.10.179-3_arm64.deb \
           printf '%s\0' \
             linux-image-6.1.0-10-cloud-arm64-unsigned_6.1.38-2_arm64.deb \
-            linux-image-6.4.0-2-cloud-arm64-unsigned_6.4.4-3_arm64.deb \
           | xargs -0 -t -P0 -I {} wget -nd -nv -P test/.tmp/debian-kernels/arm64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
 
       - name: Download debian kernels
@@ -233,7 +242,6 @@ jobs:
           # linux-image-5.10.0-23-cloud-amd64-unsigned_5.10.179-3_amd64.deb \
           printf '%s\0' \
             linux-image-6.1.0-10-cloud-amd64-unsigned_6.1.38-2_amd64.deb \
-            linux-image-6.4.0-2-cloud-amd64-unsigned_6.4.4-3_amd64.deb \
           | xargs -0 -t -P0 -I {} wget -nd -nv -P test/.tmp/debian-kernels/amd64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
 
       - name: Extract debian kernels
@@ -242,7 +250,11 @@ jobs:
           find test/.tmp -name '*.deb' -print0 | xargs -t -0 -I {} \
             sh -c "dpkg --fsys-tarfile {} | tar -C test/.tmp --wildcards --extract '*vmlinuz*' --file -"
 
-      - name: Run integration tests
+      - name: Run local integration tests
+        if: runner.os == 'Linux'
+        run: cargo xtask integration-test local
+
+      - name: Run virtualized integration tests
         run: find test/.tmp -name 'vmlinuz-*' | xargs -t cargo xtask integration-test vm
 
   # Provides a single status check for the entire build workflow.

@@ -2,6 +2,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
+    os::fd::AsFd as _,
 };
 
 use crate::{
@@ -29,16 +30,16 @@ use crate::{
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_STACK")]
 pub struct Stack<T, V: Pod> {
-    inner: T,
+    pub(crate) inner: T,
     _v: PhantomData<V>,
 }
 
 impl<T: Borrow<MapData>, V: Pod> Stack<T, V> {
-    pub(crate) fn new(map: T) -> Result<Stack<T, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<(), V>(data)?;
 
-        Ok(Stack {
+        Ok(Self {
             inner: map,
             _v: PhantomData,
         })
@@ -60,7 +61,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Stack<T, V> {
     /// Returns [`MapError::ElementNotFound`] if the stack is empty, [`MapError::SyscallError`]
     /// if `bpf_map_lookup_and_delete_elem` fails.
     pub fn pop(&mut self, flags: u64) -> Result<V, MapError> {
-        let fd = self.inner.borrow().fd;
+        let fd = self.inner.borrow().fd().as_fd();
 
         let value = bpf_map_lookup_and_delete_elem::<u32, _>(fd, None, flags).map_err(
             |(_, io_error)| SyscallError {
@@ -77,7 +78,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Stack<T, V> {
     ///
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
     pub fn push(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.borrow().fd;
+        let fd = self.inner.borrow().fd().as_fd();
         bpf_map_update_elem(fd, None::<&u32>, value.borrow(), flags).map_err(|(_, io_error)| {
             SyscallError {
                 call: "bpf_map_update_elem",

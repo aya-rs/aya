@@ -1,9 +1,6 @@
 //! Skskb programs.
 
-use std::{
-    os::fd::{AsFd as _, AsRawFd as _},
-    path::Path,
-};
+use std::{os::fd::AsFd as _, path::Path};
 
 use crate::{
     generated::{
@@ -15,7 +12,6 @@ use crate::{
         define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
         ProgramError,
     },
-    sys::{bpf_prog_attach, SyscallError},
     VerifierLogLevel,
 };
 
@@ -41,18 +37,29 @@ pub enum SkSkbKind {
 /// # Examples
 ///
 /// ```no_run
+/// # #[derive(Debug, thiserror::Error)]
+/// # enum Error {
+/// #     #[error(transparent)]
+/// #     IO(#[from] std::io::Error),
+/// #     #[error(transparent)]
+/// #     Map(#[from] aya::maps::MapError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Bpf(#[from] aya::BpfError)
+/// # }
 /// # let mut bpf = aya::Bpf::load(&[])?;
 /// use aya::maps::SockMap;
 /// use aya::programs::SkSkb;
 ///
 /// let intercept_ingress: SockMap<_> = bpf.map("INTERCEPT_INGRESS").unwrap().try_into()?;
-/// let map_fd = intercept_ingress.fd()?;
+/// let map_fd = intercept_ingress.fd().try_clone()?;
 ///
 /// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(map_fd)?;
+/// prog.attach(&map_fd)?;
 ///
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), Error>(())
 /// ```
 ///
 /// [socket maps]: crate::maps::sock
@@ -74,25 +81,18 @@ impl SkSkb {
     /// Attaches the program to the given socket map.
     ///
     /// The returned value can be used to detach, see [SkSkb::detach].
-    pub fn attach(&mut self, map: SockMapFd) -> Result<SkSkbLinkId, ProgramError> {
+    pub fn attach(&mut self, map: &SockMapFd) -> Result<SkSkbLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
-        let map_fd = map.as_raw_fd();
 
         let attach_type = match self.kind {
             SkSkbKind::StreamParser => BPF_SK_SKB_STREAM_PARSER,
             SkSkbKind::StreamVerdict => BPF_SK_SKB_STREAM_VERDICT,
         };
-        bpf_prog_attach(prog_fd, map_fd, attach_type).map_err(|(_, io_error)| SyscallError {
-            call: "bpf_prog_attach",
-            io_error,
-        })?;
-        self.data.links.insert(SkSkbLink::new(ProgAttachLink::new(
-            prog_fd,
-            map_fd,
-            attach_type,
-        )))
+
+        let link = ProgAttachLink::attach(prog_fd, map.as_fd(), attach_type)?;
+
+        self.data.links.insert(SkSkbLink::new(link))
     }
 
     /// Detaches the program.

@@ -9,6 +9,7 @@ aya-bpf = { path = "../../bpf/aya-bpf" }
 aya-log-ebpf = { path = "../../bpf/aya-log-ebpf" }
 
 [build-dependencies]
+which = { workspace = true }
 xtask = { path = "../../xtask" }
 
 [[bin]]
@@ -46,3 +47,15 @@ path = "src/two_progs.rs"
 [[bin]]
 name = "tc_name_limit"
 path = "src/tc_name_limit.rs"
+
+[[bin]]
+name = "redirect"
+path = "src/redirect.rs"
+
+[[bin]]
+name = "xdp_sec"
+path = "src/xdp_sec.rs"
+
+[[bin]]
+name = "ring_buf"
+path = "src/ring_buf.rs"

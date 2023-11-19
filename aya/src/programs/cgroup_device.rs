@@ -1,14 +1,14 @@
 //! Cgroup device programs.
 
-use crate::util::KernelVersion;
-use std::os::fd::{AsFd as _, AsRawFd};
+use std::os::fd::AsFd;
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE},
     programs::{
         define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
     },
-    sys::{bpf_link_create, bpf_prog_attach, SyscallError},
+    sys::{bpf_link_create, LinkTarget, SyscallError},
+    util::KernelVersion,
 };
 
 /// A program used to watch or prevent device interaction from a cgroup.
@@ -60,35 +60,35 @@ impl CgroupDevice {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupDevice::detach]
-    pub fn attach<T: AsRawFd>(&mut self, cgroup: T) -> Result<CgroupDeviceLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<CgroupDeviceLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
-        let cgroup_fd = cgroup.as_raw_fd();
+        let cgroup_fd = cgroup.as_fd();
 
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE, None, 0).map_err(
-                |(_, io_error)| SyscallError {
-                    call: "bpf_link_create",
-                    io_error,
-                },
-            )?;
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(cgroup_fd),
+                BPF_CGROUP_DEVICE,
+                None,
+                0,
+            )
+            .map_err(|(_, io_error)| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
             self.data
                 .links
                 .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
-            bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE).map_err(|(_, io_error)| {
-                SyscallError {
-                    call: "bpf_prog_attach",
-                    io_error,
-                }
-            })?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE)?;
+
             self.data
                 .links
                 .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::ProgAttach(
-                    ProgAttachLink::new(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE),
+                    link,
                 )))
         }
     }
@@ -129,15 +129,15 @@ impl Link for CgroupDeviceLinkInner {
 
     fn id(&self) -> Self::Id {
         match self {
-            CgroupDeviceLinkInner::Fd(fd) => CgroupDeviceLinkIdInner::Fd(fd.id()),
-            CgroupDeviceLinkInner::ProgAttach(p) => CgroupDeviceLinkIdInner::ProgAttach(p.id()),
+            Self::Fd(fd) => CgroupDeviceLinkIdInner::Fd(fd.id()),
+            Self::ProgAttach(p) => CgroupDeviceLinkIdInner::ProgAttach(p.id()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         match self {
-            CgroupDeviceLinkInner::Fd(fd) => fd.detach(),
-            CgroupDeviceLinkInner::ProgAttach(p) => p.detach(),
+            Self::Fd(fd) => fd.detach(),
+            Self::ProgAttach(p) => p.detach(),
         }
     }
 }

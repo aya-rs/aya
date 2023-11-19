@@ -6,6 +6,7 @@ use std::{
 use aya::{programs::UProbe, Bpf};
 use aya_log::BpfLogger;
 use log::{Level, Log, Record};
+use test_log::test;
 
 #[no_mangle]
 #[inline(never)]
@@ -37,7 +38,7 @@ struct CapturedLog<'a> {
     pub target: Cow<'a, str>,
 }
 
-#[tokio::test]
+#[test(tokio::test)]
 async fn log() {
     let mut bpf = Bpf::load(crate::LOG).unwrap();
 
@@ -133,6 +134,15 @@ async fn log() {
         records.next(),
         Some(&CapturedLog {
             body: "hex lc: deadbeef, hex uc: DEADBEEF".into(),
+            level: Level::Debug,
+            target: "log".into(),
+        })
+    );
+
+    assert_eq!(
+        records.next(),
+        Some(&CapturedLog {
+            body: "42 43 44 45".into(),
             level: Level::Debug,
             target: "log".into(),
         })

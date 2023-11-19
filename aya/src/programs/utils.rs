@@ -20,7 +20,6 @@ pub(crate) fn attach_raw_tracepoint<T: Link + From<FdLink>>(
 ) -> Result<T::Id, ProgramError> {
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let prog_fd = prog_fd.as_raw_fd();
     let pfd =
         bpf_raw_tracepoint_open(tp_name, prog_fd).map_err(|(_code, io_error)| SyscallError {
             call: "bpf_raw_tracepoint_open",
@@ -75,15 +74,15 @@ pub(crate) fn boot_time() -> SystemTime {
     };
     let since_boot = get_time(libc::CLOCK_BOOTTIME);
     let since_epoch = get_time(libc::CLOCK_REALTIME);
-    UNIX_EPOCH + since_boot - since_epoch
+    UNIX_EPOCH + since_epoch - since_boot
 }
 
 /// Get the specified information from a file descriptor's fdinfo.
-pub(crate) fn get_fdinfo(fd: BorrowedFd, key: &str) -> Result<u32, ProgramError> {
+pub(crate) fn get_fdinfo(fd: BorrowedFd<'_>, key: &str) -> Result<u32, ProgramError> {
     let info = File::open(format!("/proc/self/fdinfo/{}", fd.as_raw_fd()))?;
     let reader = BufReader::new(info);
     for line in reader.lines() {
-        let line = line.map_err(ProgramError::IOError)?;
+        let line = line?;
         if !line.contains(key) {
             continue;
         }

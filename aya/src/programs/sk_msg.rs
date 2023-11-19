@@ -1,6 +1,6 @@
 //! Skmsg programs.
 
-use std::os::fd::{AsFd as _, AsRawFd as _};
+use std::os::fd::AsFd as _;
 
 use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
@@ -9,7 +9,6 @@ use crate::{
         define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
         ProgramError,
     },
-    sys::{bpf_prog_attach, SyscallError},
 };
 
 /// A program used to intercept messages sent with `sendmsg()`/`sendfile()`.
@@ -44,11 +43,11 @@ use crate::{
 /// use aya::programs::SkMsg;
 ///
 /// let intercept_egress: SockHash<_, u32> = bpf.map("INTERCEPT_EGRESS").unwrap().try_into()?;
-/// let map_fd = intercept_egress.fd()?;
+/// let map_fd = intercept_egress.fd().try_clone()?;
 ///
 /// let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(map_fd)?;
+/// prog.attach(&map_fd)?;
 ///
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
 /// let mut intercept_egress: SockHash<_, u32> = bpf.map_mut("INTERCEPT_EGRESS").unwrap().try_into()?;
@@ -78,23 +77,12 @@ impl SkMsg {
     /// Attaches the program to the given sockmap.
     ///
     /// The returned value can be used to detach, see [SkMsg::detach].
-    pub fn attach(&mut self, map: SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
+    pub fn attach(&mut self, map: &SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
-        let map_fd = map.as_raw_fd();
+        let link = ProgAttachLink::attach(prog_fd, map.as_fd(), BPF_SK_MSG_VERDICT)?;
 
-        bpf_prog_attach(prog_fd, map_fd, BPF_SK_MSG_VERDICT).map_err(|(_, io_error)| {
-            SyscallError {
-                call: "bpf_prog_attach",
-                io_error,
-            }
-        })?;
-        self.data.links.insert(SkMsgLink::new(ProgAttachLink::new(
-            prog_fd,
-            map_fd,
-            BPF_SK_MSG_VERDICT,
-        )))
+        self.data.links.insert(SkMsgLink::new(link))
     }
 
     /// Detaches the program from a sockmap.

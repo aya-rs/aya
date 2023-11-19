@@ -2,6 +2,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
+    os::fd::AsFd as _,
 };
 
 use crate::{
@@ -35,16 +36,16 @@ use crate::{
 #[doc(alias = "BPF_MAP_TYPE_BLOOM_FILTER")]
 #[derive(Debug)]
 pub struct BloomFilter<T, V: Pod> {
-    inner: T,
+    pub(crate) inner: T,
     _v: PhantomData<V>,
 }
 
 impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
-    pub(crate) fn new(map: T) -> Result<BloomFilter<T, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_v_size::<V>(data)?;
 
-        Ok(BloomFilter {
+        Ok(Self {
             inner: map,
             _v: PhantomData,
         })
@@ -52,7 +53,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
 
     /// Query the existence of the element.
     pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.borrow().fd;
+        let fd = self.inner.borrow().fd().as_fd();
 
         bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
             .map_err(|(_, io_error)| SyscallError {
@@ -67,7 +68,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
 impl<T: BorrowMut<MapData>, V: Pod> BloomFilter<T, V> {
     /// Inserts a value into the map.
     pub fn insert(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
-        let fd = self.inner.borrow_mut().fd;
+        let fd = self.inner.borrow_mut().fd().as_fd();
         bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| SyscallError {
             call: "bpf_map_push_elem",
             io_error,
@@ -78,6 +79,11 @@ impl<T: BorrowMut<MapData>, V: Pod> BloomFilter<T, V> {
 
 #[cfg(test)]
 mod tests {
+    use std::{ffi::c_long, io};
+
+    use assert_matches::assert_matches;
+    use libc::{EFAULT, ENOENT};
+
     use super::*;
     use crate::{
         bpf_map_def,
@@ -89,9 +95,6 @@ mod tests {
         obj::{self, maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
-    use assert_matches::assert_matches;
-    use libc::{EFAULT, ENOENT};
-    use std::{ffi::c_long, io};
 
     fn new_obj_map() -> obj::Map {
         obj::Map::Legacy(LegacyMap {

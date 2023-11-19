@@ -15,11 +15,8 @@ bytes = { workspace = true }
 core-error = { workspace = true, default-features = true }
 hashbrown = { workspace = true, default-features = true }
 log = { workspace = true }
-object = { workspace = true, default-features = false, features = [
-    "elf",
-    "read_core",
-] }
-thiserror = { workspace = true, default-features = false }
+object = { workspace = true, features = ["elf", "read_core"] }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }

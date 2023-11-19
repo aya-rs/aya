@@ -48,15 +48,15 @@ use crate::{
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_PROG_ARRAY")]
 pub struct ProgramArray<T> {
-    inner: T,
+    pub(crate) inner: T,
 }
 
 impl<T: Borrow<MapData>> ProgramArray<T> {
-    pub(crate) fn new(map: T) -> Result<ProgramArray<T>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<u32, RawFd>(data)?;
 
-        Ok(ProgramArray { inner: map })
+        Ok(Self { inner: map })
     }
 
     /// An iterator over the indices of the array that point to a program. The iterator item type
@@ -74,7 +74,7 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     pub fn set(&mut self, index: u32, program: &ProgramFd, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
-        let fd = data.fd;
+        let fd = data.fd().as_fd();
         let prog_fd = program.as_fd();
         let prog_fd = prog_fd.as_raw_fd();
 
@@ -94,7 +94,7 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, *index)?;
-        let fd = self.inner.borrow_mut().fd;
+        let fd = data.fd().as_fd();
 
         bpf_map_delete_elem(fd, index)
             .map(|_| ())

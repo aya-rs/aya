@@ -1,13 +1,13 @@
 use aya::{maps::Array, programs::UProbe, Bpf};
+use test_log::test;
 
 const RESULT_BUF_LEN: usize = 1024;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
 struct TestResult {
-    did_error: u64,
-    len: usize,
     buf: [u8; RESULT_BUF_LEN],
+    len: Option<Result<usize, i64>>,
 }
 
 unsafe impl aya::Pod for TestResult {}
@@ -96,11 +96,12 @@ fn set_kernel_buffer_element(bpf: &mut Bpf, bytes: &[u8]) {
 #[track_caller]
 fn result_bytes(bpf: &Bpf) -> Vec<u8> {
     let m = Array::<_, TestResult>::try_from(bpf.map("RESULT").unwrap()).unwrap();
-    let result = m.get(&0, 0).unwrap();
-    assert_eq!(result.did_error, 0);
+    let TestResult { buf, len } = m.get(&0, 0).unwrap();
+    let len = len.unwrap();
+    let len = len.unwrap();
     // assert that the buffer is always null terminated
-    assert_eq!(result.buf[result.len], 0);
-    result.buf[..result.len].to_vec()
+    assert_eq!(buf[len], 0);
+    buf[..len].to_vec()
 }
 
 fn load_and_attach_uprobe(prog_name: &str, func_name: &str, bytes: &[u8]) -> Bpf {

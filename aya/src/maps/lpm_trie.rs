@@ -2,6 +2,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
+    os::fd::AsFd as _,
 };
 
 use crate::{
@@ -47,7 +48,7 @@ use crate::{
 #[doc(alias = "BPF_MAP_TYPE_LPM_TRIE")]
 #[derive(Debug)]
 pub struct LpmTrie<T, K, V> {
-    inner: T,
+    pub(crate) inner: T,
     _k: PhantomData<K>,
     _v: PhantomData<V>,
 }
@@ -113,11 +114,11 @@ impl<K: Pod> Clone for Key<K> {
 unsafe impl<K: Pod> Pod for Key<K> {}
 
 impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
-    pub(crate) fn new(map: T) -> Result<LpmTrie<T, K, V>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<Key<K>, V>(data)?;
 
-        Ok(LpmTrie {
+        Ok(Self {
             inner: map,
             _k: PhantomData,
             _v: PhantomData,
@@ -126,7 +127,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
 
     /// Returns a copy of the value associated with the longest prefix matching key in the LpmTrie.
     pub fn get(&self, key: &Key<K>, flags: u64) -> Result<V, MapError> {
-        let fd = self.inner.borrow().fd;
+        let fd = self.inner.borrow().fd().as_fd();
         let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| SyscallError {
             call: "bpf_map_lookup_elem",
             io_error,
@@ -155,7 +156,7 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         value: impl Borrow<V>,
         flags: u64,
     ) -> Result<(), MapError> {
-        let fd = self.inner.borrow().fd;
+        let fd = self.inner.borrow().fd().as_fd();
         bpf_map_update_elem(fd, Some(key), value.borrow(), flags).map_err(|(_, io_error)| {
             SyscallError {
                 call: "bpf_map_update_elem",
@@ -170,7 +171,7 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     ///
     /// Both the prefix and data must match exactly - this method does not do a longest prefix match.
     pub fn remove(&mut self, key: &Key<K>) -> Result<(), MapError> {
-        let fd = self.inner.borrow().fd;
+        let fd = self.inner.borrow().fd().as_fd();
         bpf_map_delete_elem(fd, key)
             .map(|_| ())
             .map_err(|(_, io_error)| {
@@ -195,6 +196,11 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<Key<K>, V> for LpmTrie<T, K
 
 #[cfg(test)]
 mod tests {
+    use std::{ffi::c_long, io, mem, net::Ipv4Addr};
+
+    use assert_matches::assert_matches;
+    use libc::{EFAULT, ENOENT};
+
     use super::*;
     use crate::{
         bpf_map_def,
@@ -206,9 +212,6 @@ mod tests {
         obj::{self, maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
-    use assert_matches::assert_matches;
-    use libc::{EFAULT, ENOENT};
-    use std::{ffi::c_long, io, mem, net::Ipv4Addr};
 
     fn new_obj_map() -> obj::Map {
         obj::Map::Legacy(LegacyMap {

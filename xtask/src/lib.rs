@@ -1,10 +1,6 @@
+use std::process::Command;
+
 use anyhow::{bail, Context as _, Result};
-use std::{
-    fs,
-    path::{Path, PathBuf},
-    process::Command,
-};
-use which::which;
 
 pub const AYA_BUILD_INTEGRATION_BPF: &str = "AYA_BUILD_INTEGRATION_BPF";
 pub const LIBBPF_DIR: &str = "xtask/libbpf";
@@ -19,25 +15,29 @@ pub fn exec(cmd: &mut Command) -> Result<()> {
     Ok(())
 }
 
-// Create a symlink in the out directory to work around the fact that cargo ignores anything
-// in `$CARGO_HOME`, which is also where `cargo install` likes to place binaries. Cargo will
-// stat through the symlink and discover that the binary has changed.
-//
-// This was introduced in https://github.com/rust-lang/cargo/commit/99f841c.
-//
-// TODO(https://github.com/rust-lang/cargo/pull/12369): Remove this when the fix is available.
-pub fn create_symlink_to_binary(out_dir: &Path, binary_name: &str) -> Result<PathBuf> {
-    let binary = which(binary_name).unwrap();
-    let symlink = out_dir.join(binary_name);
-    match fs::remove_file(&symlink) {
-        Ok(()) => {}
-        Err(err) => {
-            if err.kind() != std::io::ErrorKind::NotFound {
-                return Err(err).context(format!("failed to remove symlink {}", symlink.display()));
-            }
-        }
+#[derive(Debug)]
+pub struct Errors<E>(Vec<E>);
+
+impl<E> Errors<E> {
+    pub fn new(errors: Vec<E>) -> Self {
+        Self(errors)
     }
-    std::os::unix::fs::symlink(binary, &symlink)
-        .with_context(|| format!("failed to create symlink {}", symlink.display()))?;
-    Ok(symlink)
 }
+
+impl<E> std::fmt::Display for Errors<E>
+where
+    E: std::fmt::Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self(errors) = self;
+        for (i, error) in errors.iter().enumerate() {
+            if i != 0 {
+                writeln!(f)?;
+            }
+            write!(f, "{:?}", error)?;
+        }
+        Ok(())
+    }
+}
+
+impl<E> std::error::Error for Errors<E> where E: std::fmt::Debug {}

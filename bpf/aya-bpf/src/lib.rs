@@ -8,6 +8,11 @@
     html_logo_url = "https://aya-rs.dev/assets/images/crabby.svg",
     html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
+#![cfg_attr(
+    feature = "const_assert",
+    allow(incomplete_features),
+    feature(generic_const_exprs)
+)]
 #![cfg_attr(unstable, feature(never_type))]
 #![cfg_attr(target_arch = "bpf", feature(asm_experimental_arch))]
 #![allow(clippy::missing_safety_doc)]
@@ -22,13 +27,12 @@ pub mod helpers;
 pub mod maps;
 pub mod programs;
 
-pub use aya_bpf_cty as cty;
-
 use core::ffi::c_void;
+
+pub use aya_bpf_cty as cty;
+pub use aya_bpf_macros as macros;
 use cty::{c_int, c_long};
 use helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid};
-
-pub use aya_bpf_macros as macros;
 
 pub const TASK_COMM_LEN: usize = 16;
 

@@ -1,10 +1,9 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    ffi::CString,
     fs, io,
     os::{
-        fd::{AsFd as _, OwnedFd},
+        fd::{AsFd as _, AsRawFd as _, OwnedFd},
         raw::c_int,
     },
     path::{Path, PathBuf},
@@ -37,14 +36,14 @@ use crate::{
         SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
-        bpf_load_btf, bpf_map_freeze, bpf_map_update_elem_ptr, is_bpf_cookie_supported,
-        is_bpf_global_data_supported, is_btf_datasec_supported, is_btf_decl_tag_supported,
-        is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
-        is_probe_read_kernel_supported, is_prog_name_supported, retry_with_verifier_logs,
-        SyscallError,
+        bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
+        is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_enum64_supported,
+        is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
+        is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
+        is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
+        retry_with_verifier_logs,
     },
-    util::{bytes_of, bytes_of_slice, possible_cpus, POSSIBLE_CPUS},
+    util::{bytes_of, bytes_of_slice, page_size, possible_cpus, POSSIBLE_CPUS},
 };
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
@@ -71,7 +70,7 @@ unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 
 pub use aya_obj::maps::{bpf_map_def, PinningType};
 
-lazy_static! {
+lazy_static::lazy_static! {
     pub(crate) static ref FEATURES: Features = detect_features();
 }
 
@@ -95,6 +94,8 @@ fn detect_features() -> Features {
         is_perf_link_supported(),
         is_bpf_global_data_supported(),
         is_bpf_cookie_supported(),
+        is_prog_id_supported(BPF_MAP_TYPE_CPUMAP),
+        is_prog_id_supported(BPF_MAP_TYPE_DEVMAP),
         btf,
     );
     debug!("BPF Feature Detection: {:#?}", f);
@@ -138,7 +139,7 @@ pub struct BpfLoader<'a> {
     allow_unsupported_maps: bool,
 }
 
-bitflags! {
+bitflags::bitflags! {
     /// Used to set the verifier log level flags in [BpfLoader](BpfLoader::verifier_log_level()).
     #[derive(Clone, Copy, Debug)]
     pub struct VerifierLogLevel: u32 {
@@ -161,8 +162,8 @@ impl Default for VerifierLogLevel {
 
 impl<'a> BpfLoader<'a> {
     /// Creates a new loader instance.
-    pub fn new() -> BpfLoader<'a> {
-        BpfLoader {
+    pub fn new() -> Self {
+        Self {
             btf: Btf::from_sys_fs().ok().map(Cow::Owned),
             map_pin_path: None,
             globals: HashMap::new(),
@@ -397,7 +398,7 @@ impl<'a> BpfLoader<'a> {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
                 match load_btf(btf.to_bytes(), *verifier_log_level) {
                     Ok(btf_fd) => Some(Arc::new(btf_fd)),
-                    // Only report an error here if the BTF is truely needed, otherwise proceed without.
+                    // Only report an error here if the BTF is truly needed, otherwise proceed without.
                     Err(err) => {
                         for program in obj.programs.values() {
                             match program.section {
@@ -414,7 +415,10 @@ impl<'a> BpfLoader<'a> {
                                 | ProgramSection::URetProbe { sleepable: _ }
                                 | ProgramSection::TracePoint
                                 | ProgramSection::SocketFilter
-                                | ProgramSection::Xdp { frags: _ }
+                                | ProgramSection::Xdp {
+                                    frags: _,
+                                    attach_type: _,
+                                }
                                 | ProgramSection::SkMsg
                                 | ProgramSection::SkSkbStreamParser
                                 | ProgramSection::SkSkbStreamVerdict
@@ -457,49 +461,47 @@ impl<'a> BpfLoader<'a> {
             {
                 continue;
             }
-
-            match max_entries.get(name.as_str()) {
-                Some(size) => obj.set_max_entries(*size),
-                None => {
-                    if obj.map_type() == BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32
-                        && obj.max_entries() == 0
-                    {
-                        obj.set_max_entries(
-                            possible_cpus()
-                                .map_err(|error| BpfError::FileError {
-                                    path: PathBuf::from(POSSIBLE_CPUS),
-                                    error,
-                                })?
-                                .len() as u32,
-                        );
-                    }
+            let num_cpus = || -> Result<u32, BpfError> {
+                Ok(possible_cpus()
+                    .map_err(|error| BpfError::FileError {
+                        path: PathBuf::from(POSSIBLE_CPUS),
+                        error,
+                    })?
+                    .len() as u32)
+            };
+            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
+            if let Some(max_entries) = max_entries_override(
+                map_type,
+                max_entries.get(name.as_str()).copied(),
+                || obj.max_entries(),
+                num_cpus,
+                || page_size() as u32,
+            )? {
+                obj.set_max_entries(max_entries)
+            }
+            match obj.map_type().try_into() {
+                Ok(BPF_MAP_TYPE_CPUMAP) => {
+                    obj.set_value_size(if FEATURES.cpumap_prog_id() { 8 } else { 4 })
                 }
+                Ok(BPF_MAP_TYPE_DEVMAP | BPF_MAP_TYPE_DEVMAP_HASH) => {
+                    obj.set_value_size(if FEATURES.devmap_prog_id() { 8 } else { 4 })
+                }
+                _ => (),
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
             let mut map = match obj.pinning() {
                 PinningType::None => MapData::create(obj, &name, btf_fd)?,
                 PinningType::ByName => {
-                    let path = map_pin_path.as_ref().ok_or(BpfError::NoPinPath)?;
-                    MapData::create_pinned(path, obj, &name, btf_fd)?
+                    // pin maps in /sys/fs/bpf by default to align with libbpf
+                    // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
+                    let path = map_pin_path
+                        .as_deref()
+                        .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
+
+                    MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
                 }
             };
-            let fd = map.fd;
-            if !map.obj.data().is_empty() && map.obj.section_kind() != BpfSectionKind::Bss {
-                bpf_map_update_elem_ptr(fd, &0 as *const _, map.obj.data_mut().as_mut_ptr(), 0)
-                    .map_err(|(_, io_error)| SyscallError {
-                        call: "bpf_map_update_elem",
-                        io_error,
-                    })
-                    .map_err(MapError::from)?;
-            }
-            if map.obj.section_kind() == BpfSectionKind::Rodata {
-                bpf_map_freeze(fd)
-                    .map_err(|(_, io_error)| SyscallError {
-                        call: "bpf_map_freeze",
-                        io_error,
-                    })
-                    .map_err(MapError::from)?;
-            }
+            map.finalize()?;
             maps.insert(name, map);
         }
 
@@ -511,7 +513,7 @@ impl<'a> BpfLoader<'a> {
 
         obj.relocate_maps(
             maps.iter()
-                .map(|(s, data)| (s.as_str(), data.fd, &data.obj)),
+                .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
         )?;
         obj.relocate_calls(&text_sections)?;
@@ -574,13 +576,18 @@ impl<'a> BpfLoader<'a> {
                         ProgramSection::SocketFilter => Program::SocketFilter(SocketFilter {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
-                        ProgramSection::Xdp { frags, .. } => {
+                        ProgramSection::Xdp {
+                            frags, attach_type, ..
+                        } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *frags {
                                 data.flags = BPF_F_XDP_HAS_FRAGS;
                             }
-                            Program::Xdp(Xdp { data })
+                            Program::Xdp(Xdp {
+                                data,
+                                attach_type: *attach_type,
+                            })
                         }
                         ProgramSection::SkMsg => Program::SkMsg(SkMsg {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
@@ -608,10 +615,6 @@ impl<'a> BpfLoader<'a> {
                         ProgramSection::SchedClassifier => {
                             Program::SchedClassifier(SchedClassifier {
                                 data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                                name: unsafe {
-                                    CString::from_vec_unchecked(Vec::from(name.clone()))
-                                        .into_boxed_c_str()
-                                },
                             })
                         }
                         ProgramSection::CgroupSkb => Program::CgroupSkb(CgroupSkb {
@@ -696,7 +699,7 @@ impl<'a> BpfLoader<'a> {
         if !*allow_unsupported_maps {
             maps.iter().try_for_each(|(_, x)| match x {
                 Map::Unsupported(map) => Err(BpfError::MapError(MapError::Unsupported {
-                    map_type: map.obj.map_type(),
+                    map_type: map.obj().map_type(),
                 })),
                 _ => Ok(()),
             })?;
@@ -707,12 +710,8 @@ impl<'a> BpfLoader<'a> {
 }
 
 fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
-    let name = data.0;
-    let map = data.1;
-    let map_type =
-        bpf_map_type::try_from(map.obj.map_type()).map_err(|e| MapError::InvalidMapType {
-            map_type: e.map_type,
-        })?;
+    let (name, map) = data;
+    let map_type = bpf_map_type::try_from(map.obj().map_type()).map_err(MapError::from)?;
     let map = match map_type {
         BPF_MAP_TYPE_ARRAY => Map::Array(map),
         BPF_MAP_TYPE_PERCPU_ARRAY => Map::PerCpuArray(map),
@@ -722,6 +721,7 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
         BPF_MAP_TYPE_PERCPU_HASH => Map::PerCpuHashMap(map),
         BPF_MAP_TYPE_LRU_PERCPU_HASH => Map::PerCpuLruHashMap(map),
         BPF_MAP_TYPE_PERF_EVENT_ARRAY => Map::PerfEventArray(map),
+        BPF_MAP_TYPE_RINGBUF => Map::RingBuf(map),
         BPF_MAP_TYPE_SOCKHASH => Map::SockHash(map),
         BPF_MAP_TYPE_SOCKMAP => Map::SockMap(map),
         BPF_MAP_TYPE_BLOOM_FILTER => Map::BloomFilter(map),
@@ -729,6 +729,10 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
         BPF_MAP_TYPE_STACK => Map::Stack(map),
         BPF_MAP_TYPE_STACK_TRACE => Map::StackTraceMap(map),
         BPF_MAP_TYPE_QUEUE => Map::Queue(map),
+        BPF_MAP_TYPE_CPUMAP => Map::CpuMap(map),
+        BPF_MAP_TYPE_DEVMAP => Map::DevMap(map),
+        BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
+        BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         m => {
             warn!("The map {name} is of type {:#?} which is currently unsupported in Aya, use `allow_unsupported_maps()` to load it anyways", m);
             Map::Unsupported(map)
@@ -738,7 +742,106 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
     Ok((name, map))
 }
 
-impl<'a> Default for BpfLoader<'a> {
+/// Computes the value which should be used to override the max_entries value of the map
+/// based on the user-provided override and the rules for that map type.
+fn max_entries_override(
+    map_type: bpf_map_type,
+    user_override: Option<u32>,
+    current_value: impl Fn() -> u32,
+    num_cpus: impl Fn() -> Result<u32, BpfError>,
+    page_size: impl Fn() -> u32,
+) -> Result<Option<u32>, BpfError> {
+    let max_entries = || user_override.unwrap_or_else(&current_value);
+    Ok(match map_type {
+        BPF_MAP_TYPE_PERF_EVENT_ARRAY if max_entries() == 0 => Some(num_cpus()?),
+        BPF_MAP_TYPE_RINGBUF => Some(adjust_to_page_size(max_entries(), page_size()))
+            .filter(|adjusted| *adjusted != max_entries())
+            .or(user_override),
+        _ => user_override,
+    })
+}
+
+// Adjusts the byte size of a RingBuf map to match a power-of-two multiple of the page size.
+//
+// This mirrors the logic used by libbpf.
+// See https://github.com/libbpf/libbpf/blob/ec6f716eda43/src/libbpf.c#L2461-L2463
+fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
+    // If the byte_size is zero, return zero and let the verifier reject the map
+    // when it is loaded. This is the behavior of libbpf.
+    if byte_size == 0 {
+        return 0;
+    }
+    // TODO: Replace with primitive method when int_roundings (https://github.com/rust-lang/rust/issues/88581)
+    // is stabilized.
+    fn div_ceil(n: u32, rhs: u32) -> u32 {
+        let d = n / rhs;
+        let r = n % rhs;
+        if r > 0 && rhs > 0 {
+            d + 1
+        } else {
+            d
+        }
+    }
+    let pages_needed = div_ceil(byte_size, page_size);
+    page_size * pages_needed.next_power_of_two()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::generated::bpf_map_type::*;
+
+    const PAGE_SIZE: u32 = 4096;
+    const NUM_CPUS: u32 = 4;
+
+    #[test]
+    fn test_adjust_to_page_size() {
+        use super::adjust_to_page_size;
+        [
+            (0, 0),
+            (4096, 1),
+            (4096, 4095),
+            (4096, 4096),
+            (8192, 4097),
+            (8192, 8192),
+            (16384, 8193),
+        ]
+        .into_iter()
+        .for_each(|(exp, input)| assert_eq!(exp, adjust_to_page_size(input, PAGE_SIZE)))
+    }
+
+    #[test]
+    fn test_max_entries_override() {
+        use super::max_entries_override;
+        [
+            (BPF_MAP_TYPE_RINGBUF, Some(1), 1, Some(PAGE_SIZE)),
+            (BPF_MAP_TYPE_RINGBUF, None, 1, Some(PAGE_SIZE)),
+            (BPF_MAP_TYPE_RINGBUF, None, PAGE_SIZE, None),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 1, None),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, Some(42), 1, Some(42)),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, Some(0), 1, Some(NUM_CPUS)),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 0, Some(NUM_CPUS)),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 42, None),
+            (BPF_MAP_TYPE_ARRAY, None, 1, None),
+            (BPF_MAP_TYPE_ARRAY, Some(2), 1, Some(2)),
+        ]
+        .into_iter()
+        .for_each(|(map_type, user_override, current_value, exp)| {
+            assert_eq!(
+                exp,
+                max_entries_override(
+                    map_type,
+                    user_override,
+                    || { current_value },
+                    || Ok(NUM_CPUS),
+                    || PAGE_SIZE
+                )
+                .unwrap()
+            )
+        })
+    }
+}
+
+impl Default for BpfLoader<'_> {
     fn default() -> Self {
         BpfLoader::new()
     }
@@ -768,7 +871,7 @@ impl Bpf {
     /// let bpf = Bpf::load_file("file.o")?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Bpf, BpfError> {
+    pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Self, BpfError> {
         BpfLoader::new()
             .btf(Btf::from_sys_fs().ok().as_ref())
             .load_file(path)
@@ -793,7 +896,7 @@ impl Bpf {
     /// let bpf = Bpf::load(&data)?;
     /// # Ok::<(), aya::BpfError>(())
     /// ```
-    pub fn load(data: &[u8]) -> Result<Bpf, BpfError> {
+    pub fn load(data: &[u8]) -> Result<Self, BpfError> {
         BpfLoader::new()
             .btf(Btf::from_sys_fs().ok().as_ref())
             .load(data)
@@ -852,6 +955,29 @@ impl Bpf {
     /// ```
     pub fn maps(&self) -> impl Iterator<Item = (&str, &Map)> {
         self.maps.iter().map(|(name, map)| (name.as_str(), map))
+    }
+
+    /// A mutable iterator over all the maps.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use std::path::Path;
+    /// # #[derive(thiserror::Error, Debug)]
+    /// # enum Error {
+    /// #     #[error(transparent)]
+    /// #     Bpf(#[from] aya::BpfError),
+    /// #     #[error(transparent)]
+    /// #     Pin(#[from] aya::pin::PinError)
+    /// # }
+    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let pin_path = Path::new("/tmp/pin_path");
+    /// for (_, map) in bpf.maps_mut() {
+    ///     map.pin(pin_path)?;
+    /// }
+    /// # Ok::<(), Error>(())
+    /// ```
+    pub fn maps_mut(&mut self) -> impl Iterator<Item = (&str, &mut Map)> {
+        self.maps.iter_mut().map(|(name, map)| (name.as_str(), map))
     }
 
     /// Returns a reference to the program with the given name.
@@ -949,22 +1075,11 @@ pub enum BpfError {
         error: io::Error,
     },
 
-    /// Pinning requested but no path provided
-    #[error("pinning requested but no path provided")]
-    NoPinPath,
-
     /// Unexpected pinning type
     #[error("unexpected pinning type {name}")]
     UnexpectedPinningType {
         /// The value encountered
         name: u32,
-    },
-
-    /// Invalid path
-    #[error("invalid path `{error}`")]
-    InvalidPath {
-        /// The error message
-        error: String,
     },
 
     /// Error parsing BPF object

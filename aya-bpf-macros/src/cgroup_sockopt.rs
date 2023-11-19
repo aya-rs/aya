@@ -46,8 +46,9 @@ impl CgroupSockopt {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn cgroup_sockopt_getsockopt() {

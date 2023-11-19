@@ -2,7 +2,7 @@ use std::{
     env::consts::{ARCH, OS},
     ffi::OsString,
     fmt::Write as _,
-    fs::{copy, create_dir_all, metadata, File},
+    fs::{copy, create_dir_all, OpenOptions},
     io::{BufRead as _, BufReader, ErrorKind, Write as _},
     path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
@@ -13,7 +13,7 @@ use std::{
 use anyhow::{anyhow, bail, Context as _, Result};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
-use xtask::{exec, AYA_BUILD_INTEGRATION_BPF};
+use xtask::{exec, Errors, AYA_BUILD_INTEGRATION_BPF};
 
 #[derive(Parser)]
 enum Environment {
@@ -103,24 +103,6 @@ where
     }
     Ok(executables)
 }
-
-#[derive(Debug)]
-struct Errors(Vec<anyhow::Error>);
-
-impl std::fmt::Display for Errors {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let Self(errors) = self;
-        for (i, error) in errors.iter().enumerate() {
-            if i != 0 {
-                writeln!(f)?;
-            }
-            write!(f, "{:?}", error)?;
-        }
-        Ok(())
-    }
-}
-
-impl std::error::Error for Errors {}
 
 /// Build and run the project.
 pub fn run(opts: Options) -> Result<()> {
@@ -302,9 +284,13 @@ pub fn run(opts: Options) -> Result<()> {
                 let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
 
                 let initrd_image = tmp_dir.path().join("qemu-initramfs.img");
-                let initrd_image_file = File::create(&initrd_image).with_context(|| {
-                    format!("failed to create {} for writing", initrd_image.display())
-                })?;
+                let initrd_image_file = OpenOptions::new()
+                    .create_new(true)
+                    .write(true)
+                    .open(&initrd_image)
+                    .with_context(|| {
+                        format!("failed to create {} for writing", initrd_image.display())
+                    })?;
 
                 let mut gen_init_cpio = Command::new(&gen_init_cpio);
                 let mut gen_init_cpio_child = gen_init_cpio
@@ -363,27 +349,27 @@ pub fn run(opts: Options) -> Result<()> {
                     bail!("{gen_init_cpio:?} failed: {output:?}")
                 }
 
-                copy(&initrd_image, "/tmp/initrd.img").context("copy failed")?;
-
                 let mut qemu = Command::new(format!("qemu-system-{guest_arch}"));
                 if let Some(machine) = machine {
                     qemu.args(["-machine", machine]);
                 }
                 if guest_arch == ARCH {
                     match OS {
-                        "linux" => match metadata("/dev/kvm") {
-                            Ok(metadata) => {
-                                use std::os::unix::fs::FileTypeExt as _;
-                                if metadata.file_type().is_char_device() {
+                        "linux" => {
+                            const KVM: &str = "/dev/kvm";
+                            match OpenOptions::new().read(true).write(true).open(KVM) {
+                                Ok(_file) => {
                                     qemu.args(["-accel", "kvm"]);
                                 }
+                                Err(error) => match error.kind() {
+                                    ErrorKind::NotFound | ErrorKind::PermissionDenied => {}
+                                    _kind => {
+                                        return Err(error)
+                                            .with_context(|| format!("failed to open {KVM}"));
+                                    }
+                                },
                             }
-                            Err(error) => {
-                                if error.kind() != ErrorKind::NotFound {
-                                    Err(error).context("failed to check existence of /dev/kvm")?;
-                                }
-                            }
-                        },
+                        }
                         "macos" => {
                             qemu.args(["-accel", "hvf"]);
                         }
@@ -476,20 +462,30 @@ pub fn run(opts: Options) -> Result<()> {
                 let stderr = stderr.take().unwrap();
                 let stderr = BufReader::new(stderr);
 
-                fn terminate_if_contains_kernel_panic(
-                    line: &str,
-                    stdin: &Arc<Mutex<ChildStdin>>,
-                ) -> anyhow::Result<()> {
-                    if line.contains("end Kernel panic") {
-                        println!("kernel panic detected; terminating QEMU");
-                        let mut stdin = stdin.lock().unwrap();
-                        stdin
-                            .write_all(&[0x01, b'x'])
-                            .context("failed to write to stdin")?;
-                        println!("waiting for QEMU to terminate");
-                    }
-                    Ok(())
-                }
+                const TERMINATE_AFTER_COUNT: &[(&str, usize)] =
+                    &[("end Kernel panic", 0), ("watchdog: BUG: soft lockup", 1)];
+                let mut counts = [0; TERMINATE_AFTER_COUNT.len()];
+
+                let mut terminate_if_kernel_hang =
+                    move |line: &str, stdin: &Arc<Mutex<ChildStdin>>| -> anyhow::Result<()> {
+                        if let Some(i) = TERMINATE_AFTER_COUNT
+                            .iter()
+                            .position(|(marker, _)| line.contains(marker))
+                        {
+                            counts[i] += 1;
+
+                            let (marker, max) = TERMINATE_AFTER_COUNT[i];
+                            if counts[i] > max {
+                                println!("{marker} detected > {max} times; terminating QEMU");
+                                let mut stdin = stdin.lock().unwrap();
+                                stdin
+                                    .write_all(&[0x01, b'x'])
+                                    .context("failed to write to stdin")?;
+                                println!("waiting for QEMU to terminate");
+                            }
+                        }
+                        Ok(())
+                    };
 
                 let stderr = {
                     let stdin = stdin.clone();
@@ -498,8 +494,7 @@ pub fn run(opts: Options) -> Result<()> {
                             for line in stderr.lines() {
                                 let line = line.context("failed to read line from stderr")?;
                                 eprintln!("{}", line);
-                                // Try to get QEMU to exit on kernel panic; otherwise it might hang indefinitely.
-                                terminate_if_contains_kernel_panic(&line, &stdin)?;
+                                terminate_if_kernel_hang(&line, &stdin)?;
                             }
                             anyhow::Ok(())
                         })
@@ -510,8 +505,7 @@ pub fn run(opts: Options) -> Result<()> {
                 for line in stdout.lines() {
                     let line = line.context("failed to read line from stdout")?;
                     println!("{}", line);
-                    // Try to get QEMU to exit on kernel panic; otherwise it might hang indefinitely.
-                    terminate_if_contains_kernel_panic(&line, &stdin)?;
+                    terminate_if_kernel_hang(&line, &stdin)?;
                     // The init program will print "init: success" or "init: failure" to indicate
                     // the outcome of running the binaries it found in /bin.
                     if let Some(line) = line.strip_prefix("init: ") {
@@ -547,7 +541,7 @@ pub fn run(opts: Options) -> Result<()> {
             if errors.is_empty() {
                 Ok(())
             } else {
-                Err(Errors(errors).into())
+                Err(Errors::new(errors).into())
             }
         }
     }

@@ -12,6 +12,7 @@ edition = "2021"
 rust-version = "1.66"
 
 [dependencies]
+assert_matches = { workspace = true }
 async-io = { workspace = true, optional = true }
 aya-obj = { workspace = true, features = ["std"] }
 bitflags = { workspace = true }
@@ -19,24 +20,17 @@ bytes = { workspace = true }
 lazy_static = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }
-object = { workspace = true, default-features = false, features = [
-    "elf",
-    "read_core",
-    "std",
-] }
-parking_lot = { workspace = true }
+object = { workspace = true, features = ["elf", "read_core", "std"] }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["rt"], optional = true }
 
 [dev-dependencies]
-assert_matches = { workspace = true }
-futures = { workspace = true }
 tempfile = { workspace = true }
 
 [features]
 default = []
 async_tokio = ["tokio/net"]
-async_std = ["async-io"]
+async_std = ["dep:async-io"]
 
 [package.metadata.docs.rs]
 all-features = true

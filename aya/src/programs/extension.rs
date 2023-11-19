@@ -1,8 +1,9 @@
 //! Extension programs.
-use std::os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, OwnedFd};
-use thiserror::Error;
+
+use std::os::fd::{AsFd as _, BorrowedFd, OwnedFd};
 
 use object::Endianness;
+use thiserror::Error;
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_INET_INGRESS, bpf_prog_type::BPF_PROG_TYPE_EXT},
@@ -10,7 +11,7 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd,
     },
-    sys::{self, bpf_link_create, SyscallError},
+    sys::{self, bpf_link_create, LinkTarget, SyscallError},
     Btf,
 };
 
@@ -88,21 +89,25 @@ impl Extension {
     pub fn attach(&mut self) -> Result<ExtensionLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         let target_fd = self
             .data
             .attach_prog_fd
             .as_ref()
             .ok_or(ProgramError::NotLoaded)?;
         let target_fd = target_fd.as_fd();
-        let target_fd = target_fd.as_raw_fd();
         let btf_id = self.data.attach_btf_id.ok_or(ProgramError::NotLoaded)?;
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
-        let link_fd = bpf_link_create(prog_fd, target_fd, BPF_CGROUP_INET_INGRESS, Some(btf_id), 0)
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+        let link_fd = bpf_link_create(
+            prog_fd,
+            LinkTarget::Fd(target_fd),
+            BPF_CGROUP_INET_INGRESS,
+            Some(btf_id),
+            0,
+        )
+        .map_err(|(_, io_error)| SyscallError {
+            call: "bpf_link_create",
+            io_error,
+        })?;
         self.data
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))
@@ -128,11 +133,10 @@ impl Extension {
         let (_, btf_id) = get_btf_info(target_fd, func_name)?;
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
         let link_fd = bpf_link_create(
             prog_fd,
-            target_fd.as_raw_fd(),
+            LinkTarget::Fd(target_fd),
             BPF_CGROUP_INET_INGRESS,
             Some(btf_id),
             0,

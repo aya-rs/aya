@@ -1,7 +1,7 @@
 //! A hash map of kernel or user space stack traces.
 //!
 //! See [`StackTraceMap`] for documentation and examples.
-use std::{borrow::Borrow, fs, io, mem, path::Path, str::FromStr};
+use std::{borrow::Borrow, fs, io, mem, os::fd::AsFd as _, path::Path, str::FromStr};
 
 use crate::{
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys},
@@ -67,12 +67,12 @@ use crate::{
 #[derive(Debug)]
 #[doc(alias = "BPF_MAP_TYPE_STACK_TRACE")]
 pub struct StackTraceMap<T> {
-    inner: T,
+    pub(crate) inner: T,
     max_stack_depth: usize,
 }
 
 impl<T: Borrow<MapData>> StackTraceMap<T> {
-    pub(crate) fn new(map: T) -> Result<StackTraceMap<T>, MapError> {
+    pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         let expected = mem::size_of::<u32>();
         let size = data.obj.key_size() as usize;
@@ -90,7 +90,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
             return Err(MapError::InvalidValueSize { size, expected });
         }
 
-        Ok(StackTraceMap {
+        Ok(Self {
             inner: map,
             max_stack_depth,
         })
@@ -103,7 +103,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
     /// Returns [`MapError::KeyNotFound`] if there is no stack trace with the
     /// given `stack_id`, or [`MapError::SyscallError`] if `bpf_map_lookup_elem` fails.
     pub fn get(&self, stack_id: &u32, flags: u64) -> Result<StackTrace, MapError> {
-        let fd = self.inner.borrow().fd;
+        let fd = self.inner.borrow().fd().as_fd();
 
         let mut frames = vec![0; self.max_stack_depth];
         bpf_map_lookup_elem_ptr(fd, Some(stack_id), frames.as_mut_ptr(), flags)

@@ -1,5 +1,6 @@
-use crate::BpfContext;
 use core::ffi::c_void;
+
+use crate::BpfContext;
 
 pub struct PerfEventContext {
     ctx: *mut c_void,

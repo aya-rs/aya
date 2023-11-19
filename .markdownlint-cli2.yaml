@@ -1,0 +1,8 @@
+config:
+  no-duplicate-heading: false
+
+globs:
+  - "**/*.md"
+ignores:
+  - "target/**/*"
+  - "xtask/libbpf/**/*"

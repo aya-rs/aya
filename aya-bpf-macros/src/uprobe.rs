@@ -104,8 +104,9 @@ impl UProbe {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn uprobe() {

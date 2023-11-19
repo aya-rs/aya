@@ -5,4 +5,6 @@ mod load;
 mod log;
 mod rbpf;
 mod relocations;
+mod ring_buf;
 mod smoke;
+mod xdp;
