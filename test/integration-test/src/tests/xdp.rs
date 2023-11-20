@@ -28,7 +28,7 @@ fn af_xdp() {
 
     // So this needs to be page aligned. Pages are 4k on all mainstream architectures except for
     // Apple Silicon which uses 16k pages. So let's align on that for tests to run natively there.
-    #[repr(align(16384))]
+    #[repr(C, align(16384))]
     struct PacketMap(MaybeUninit<[u8; 4096]>);
 
     // Safety: don't access alloc down the line.
