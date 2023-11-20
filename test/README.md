@@ -10,6 +10,8 @@ You'll need:
 1. `rustup toolchain install nightly`
 1. `rustup target add {aarch64,x86_64}-unknown-linux-musl`
 1. `cargo install bpf-linker`
+1. `libelf-dev` (`libelf-devel` on rpm-based distros)
+1. `llvm` (for `llvm-objcopy`)
 1. (virtualized only) `qemu`
 
 ## Usage
@@ -25,7 +27,7 @@ cargo xtask integration-test local
 ### Virtualized
 
 ```bash
-cargo xtask integration-test vm
+cargo xtask integration-test vm <KERNEL IMAGE>
 ```
 
 ### Writing an integration test
