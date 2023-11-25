@@ -15,6 +15,8 @@ pub const MAP_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ma
 pub const NAME_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/name_test"));
 pub const TC_NAME_LIMIT_TEST: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/tc_name_limit"));
+pub const TC_NAME_LIMIT_EXCEEDED_TEST: &[u8] =
+    include_bytes_aligned!(concat!(env!("OUT_DIR"), "/tc_name_limit_exceeded"));
 pub const PASS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/pass"));
 pub const TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/test"));
 pub const RELOCATIONS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/relocations"));

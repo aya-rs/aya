@@ -49,6 +49,10 @@ name = "tc_name_limit"
 path = "src/tc_name_limit.rs"
 
 [[bin]]
+name = "tc_name_limit_exceeded"
+path = "src/tc_name_limit_exceeded.rs"
+
+[[bin]]
 name = "redirect"
 path = "src/redirect.rs"
 
