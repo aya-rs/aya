@@ -12,7 +12,8 @@ use aya::{
         links::{FdLink, PinnedLink},
         loaded_links, loaded_programs,
         tc::{clsact_qdisc_exists, qdisc_add_clsact},
-        KProbe, SchedClassifier, TcAttachType, TracePoint, UProbe, Xdp, XdpFlags,
+        KProbe, ProgramError, SchedClassifier, TcAttachType, TcError, TracePoint, UProbe, Xdp,
+        XdpFlags,
     },
     util::KernelVersion,
     Bpf,
@@ -32,10 +33,15 @@ fn tc_name_limit() {
 
     let mut bpf = Bpf::load(crate::TC_NAME_LIMIT_TEST).unwrap();
 
-    // This magic number (256) is derived from the fact that the kernel
-    // permits names with a maximum length of 256 bytes:
-    // https://github.com/torvalds/linux/blob/02aee814/net/sched/cls_bpf.c#L28
-    // In this case, the name is 256 'a's
+    /*
+    A 256-byte-long name (all 'a's) to be used as the name of the
+    ebpf program. This name must match the name passed to the kernel
+    side (i.e. test/integration-ebpf/src/tc_name_limit.rs).
+
+    256 is the maximum length allowed by the kernel, so this test
+    should pass.
+    https://github.com/torvalds/linux/blob/02aee814/net/sched/cls_bpf.c#L28
+    */
     let long_name = "a".repeat(256);
 
     let program: &mut SchedClassifier = bpf
@@ -45,6 +51,49 @@ fn tc_name_limit() {
         .unwrap();
     program.load().unwrap();
     program.attach("lo", TcAttachType::Ingress).unwrap();
+}
+
+#[test]
+fn tc_name_limit_exceeded() {
+    let clsact_exists = clsact_qdisc_exists("lo").unwrap();
+    if !clsact_exists {
+        qdisc_add_clsact("lo").unwrap();
+    }
+
+    let mut bpf = Bpf::load(crate::TC_NAME_LIMIT_EXCEEDED_TEST).unwrap();
+
+    /*
+    A 257-byte-long name (all 'a's) to be used as the name of the
+    ebpf program. This name must match the name passed to the kernel
+    side (i.e. test/integration-ebpf/src/tc_name_limit_exceeded.rs).
+
+    256 is the maximum length allowed by the kernel, so this test
+    should fail.
+    https://github.com/torvalds/linux/blob/02aee814/net/sched/cls_bpf.c#L28
+    */
+    let long_name = "a".repeat(257);
+
+    let program: &mut SchedClassifier = bpf
+        .program_mut(long_name.as_str())
+        .unwrap()
+        .try_into()
+        .unwrap();
+    program.load().unwrap();
+
+    // This code should fail while trying to attach the eBPF program
+    // with a name longer that the maximum length allowed by the kernel,
+    // as a result, all arms except the desired Err() should be unreachable!().
+    match program.attach("lo", TcAttachType::Ingress) {
+        Ok(_) => unreachable!(),
+        Err(ProgramError::TcError(TcError::NetlinkError { io_error })) => {
+            // This assertion is checking that the raw OS error code associated
+            // with the io_error is indeed 22, indicating that an invalid argument
+            // error (EINVAL) occurred. In this case, the invalid argument is
+            // the tc program name which is too long.
+            assert_eq!(io_error.raw_os_error(), Some(22));
+        }
+        _ => unreachable!(),
+    }
 }
 
 #[test]
