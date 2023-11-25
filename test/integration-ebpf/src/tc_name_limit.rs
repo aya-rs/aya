@@ -3,23 +3,20 @@
 
 use aya_bpf::{macros::classifier, programs::TcContext};
 
-// This macro generates a function with arbitrary name
-macro_rules! generate_ebpf_function {
-    ($fn_name:ident) => {
-        #[classifier]
-        pub fn $fn_name(_ctx: TcContext) -> i32 {
-            0
-        }
-    };
-}
-
 /*
-Generating a function with a 256-byte-long name (all 'a's) to be used as
-the ebpf program. This name must match the name passed to userspace side.
-256 is the maximum length allowed by the kernel:
+A function with a 256-byte-long name (all 'a's) to be used as the name of
+the ebpf program. This name must match the name passed to userspace side
+of the program (i.e. test/integration-test/src/tests/load.rs).
+
+256 is the maximum length allowed by the kernel, so this test should pass.
 https://github.com/torvalds/linux/blob/02aee814/net/sched/cls_bpf.c#L28
 */
-generate_ebpf_function!(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);
+#[classifier]
+pub fn aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(
+    _ctx: TcContext,
+) -> i32 {
+    0
+}
 
 #[cfg(not(test))]
 #[panic_handler]
