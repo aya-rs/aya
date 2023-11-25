@@ -332,6 +332,9 @@ struct TcRequest {
     // The buffer for attributes should be sized to hold at least 256 bytes,
     // based on `CLS_BPF_NAME_LEN = 256` from the kernel:
     // https://github.com/torvalds/linux/blob/02aee814/net/sched/cls_bpf.c#L28
+    // We currently use around ~30 bytes of attributes in addition to name.
+    // Rather than picking a "right sized buffer" for the payload (which is of
+    // varying length anyway) we use the next largest power of 2.
     attrs: [u8; 512],
 }
 
