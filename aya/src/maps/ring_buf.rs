@@ -412,6 +412,11 @@ struct MMap {
     len: usize,
 }
 
+// Needed because NonNull<T> is !Send and !Sync out of caution that the data
+// might be aliased unsafely.
+unsafe impl Send for MMap {}
+unsafe impl Sync for MMap {}
+
 impl MMap {
     fn new(
         fd: BorrowedFd<'_>,

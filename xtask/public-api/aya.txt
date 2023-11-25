@@ -589,8 +589,8 @@ pub type aya::maps::ring_buf::RingBuf<&'a mut aya::maps::MapData>::Error = aya::
 pub fn aya::maps::ring_buf::RingBuf<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> std::os::fd::raw::AsRawFd for aya::maps::ring_buf::RingBuf<T>
 pub fn aya::maps::ring_buf::RingBuf<T>::as_raw_fd(&self) -> std::os::fd::raw::RawFd
-impl<T> !core::marker::Send for aya::maps::ring_buf::RingBuf<T>
-impl<T> !core::marker::Sync for aya::maps::ring_buf::RingBuf<T>
+impl<T> core::marker::Send for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Unpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ring_buf::RingBuf<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::ring_buf::RingBuf<T> where T: core::panic::unwind_safe::UnwindSafe
@@ -618,8 +618,8 @@ pub type aya::maps::ring_buf::RingBufItem<'_>::Target = [u8]
 pub fn aya::maps::ring_buf::RingBufItem<'_>::deref(&self) -> &Self::Target
 impl core::ops::drop::Drop for aya::maps::ring_buf::RingBufItem<'_>
 pub fn aya::maps::ring_buf::RingBufItem<'_>::drop(&mut self)
-impl<'a> !core::marker::Send for aya::maps::ring_buf::RingBufItem<'a>
-impl<'a> !core::marker::Sync for aya::maps::ring_buf::RingBufItem<'a>
+impl<'a> core::marker::Send for aya::maps::ring_buf::RingBufItem<'a>
+impl<'a> core::marker::Sync for aya::maps::ring_buf::RingBufItem<'a>
 impl<'a> core::marker::Unpin for aya::maps::ring_buf::RingBufItem<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ring_buf::RingBufItem<'a>
 impl<'a> !core::panic::unwind_safe::UnwindSafe for aya::maps::ring_buf::RingBufItem<'a>
@@ -2077,8 +2077,8 @@ pub type aya::maps::ring_buf::RingBuf<&'a mut aya::maps::MapData>::Error = aya::
 pub fn aya::maps::ring_buf::RingBuf<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> std::os::fd::raw::AsRawFd for aya::maps::ring_buf::RingBuf<T>
 pub fn aya::maps::ring_buf::RingBuf<T>::as_raw_fd(&self) -> std::os::fd::raw::RawFd
-impl<T> !core::marker::Send for aya::maps::ring_buf::RingBuf<T>
-impl<T> !core::marker::Sync for aya::maps::ring_buf::RingBuf<T>
+impl<T> core::marker::Send for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Unpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ring_buf::RingBuf<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::ring_buf::RingBuf<T> where T: core::panic::unwind_safe::UnwindSafe
