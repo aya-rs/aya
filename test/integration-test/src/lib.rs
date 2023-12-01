@@ -22,6 +22,10 @@ pub const BPF_PROBE_READ: &[u8] =
 pub const REDIRECT: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/redirect"));
 pub const XDP_SEC: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/xdp_sec"));
 pub const RING_BUF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ring_buf"));
+pub const TC_NAME_LIMIT_TEST: &[u8] =
+    include_bytes_aligned!(concat!(env!("OUT_DIR"), "/tc_name_limit"));
+pub const TC_NAME_LIMIT_EXCEEDED_TEST: &[u8] =
+    include_bytes_aligned!(concat!(env!("OUT_DIR"), "/tc_name_limit_exceeded"));
 
 #[cfg(test)]
 mod tests;

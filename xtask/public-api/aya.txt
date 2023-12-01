@@ -4645,6 +4645,7 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::tc::TcOptions where T: cor
 pub fn aya::programs::tc::TcOptions::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::tc::TcOptions
 pub fn aya::programs::tc::TcOptions::from(t: T) -> T
+pub fn aya::programs::tc::clsact_qdisc_exists(if_name: &str) -> core::result::Result<bool, std::io::error::Error>
 pub fn aya::programs::tc::qdisc_add_clsact(if_name: &str) -> core::result::Result<(), std::io::error::Error>
 pub fn aya::programs::tc::qdisc_detach_program(if_name: &str, attach_type: aya::programs::tc::TcAttachType, name: &str) -> core::result::Result<(), std::io::error::Error>
 pub mod aya::programs::tp_btf

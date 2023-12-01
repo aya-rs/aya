@@ -55,3 +55,11 @@ path = "src/xdp_sec.rs"
 [[bin]]
 name = "ring_buf"
 path = "src/ring_buf.rs"
+
+[[bin]]
+name = "tc_name_limit"
+path = "src/tc_name_limit.rs"
+
+[[bin]]
+name = "tc_name_limit_exceeded"
+path = "src/tc_name_limit_exceeded.rs"

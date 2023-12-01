@@ -14,8 +14,8 @@ use crate::{
     },
     programs::{define_link_wrapper, load_program, Link, ProgramData, ProgramError},
     sys::{
-        netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
-        netlink_qdisc_detach,
+        netlink_clsact_qdisc_exists, netlink_find_filter_with_name, netlink_qdisc_add_clsact,
+        netlink_qdisc_attach, netlink_qdisc_detach,
     },
     util::{ifindex_from_ifname, tc_handler_make},
     VerifierLogLevel,
@@ -357,4 +357,10 @@ fn qdisc_detach_program_fast(
     }
 
     Ok(())
+}
+
+/// Check if the `clasct` qdisc exists on the given interface.
+pub fn clsact_qdisc_exists(if_name: &str) -> Result<bool, io::Error> {
+    let if_index = ifindex_from_ifname(if_name)?;
+    unsafe { netlink_clsact_qdisc_exists(if_index as i32) }
 }

@@ -6,11 +6,15 @@ use std::{
     time::{Duration, SystemTime},
 };
 
+use assert_matches::assert_matches;
 use aya::{
     maps::Array,
     programs::{
         links::{FdLink, PinnedLink},
-        loaded_links, loaded_programs, KProbe, TracePoint, UProbe, Xdp, XdpFlags,
+        loaded_links, loaded_programs,
+        tc::{clsact_qdisc_exists, qdisc_add_clsact},
+        KProbe, ProgramError, SchedClassifier, TcAttachType, TcError, TracePoint, UProbe, Xdp,
+        XdpFlags,
     },
     util::KernelVersion,
     Bpf,
@@ -607,4 +611,52 @@ fn pin_lifecycle_uprobe() {
 
     // Make sure the function isn't optimized out.
     uprobe_function();
+}
+
+#[test]
+fn tc_name_limit() {
+    let clsact_exists = clsact_qdisc_exists("lo").unwrap();
+    if !clsact_exists {
+        qdisc_add_clsact("lo").unwrap();
+    }
+
+    let mut bpf = Bpf::load(crate::TC_NAME_LIMIT_TEST).unwrap();
+
+    let long_name = "a".repeat(256);
+
+    let program: &mut SchedClassifier = bpf
+        .program_mut(long_name.as_str())
+        .unwrap()
+        .try_into()
+        .unwrap();
+    program.load().unwrap();
+    program.attach("lo", TcAttachType::Ingress).unwrap();
+}
+
+#[test]
+fn tc_name_limit_exceeded() {
+    let clsact_exists = clsact_qdisc_exists("lo").unwrap();
+    if !clsact_exists {
+        qdisc_add_clsact("lo").unwrap();
+    }
+
+    let mut bpf = Bpf::load(crate::TC_NAME_LIMIT_EXCEEDED_TEST).unwrap();
+
+    let long_name = "a".repeat(257);
+
+    let program: &mut SchedClassifier = bpf
+        .program_mut(long_name.as_str())
+        .unwrap()
+        .try_into()
+        .unwrap();
+    program.load().unwrap();
+
+    assert_matches!(
+      program.attach("lo", TcAttachType::Ingress),
+      Err(ProgramError::TcError(TcError::NetlinkError { io_error })) => {
+        // An invalid argument error (EINVAL) with code 22 should occur.
+        // The invalid argument is the tc program name which is too long.
+        assert_eq!(io_error.raw_os_error(), Some(22))
+      }
+    );
 }
