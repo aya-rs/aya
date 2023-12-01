@@ -25,8 +25,17 @@ static CPUS: CpuMap = CpuMap::with_max_entries(1, 0);
 static HITS: Array<u32> = Array::with_max_entries(2, 0);
 
 #[xdp]
-pub fn redirect_sock(_ctx: XdpContext) -> u32 {
-    SOCKS.redirect(0, 0).unwrap_or(xdp_action::XDP_ABORTED)
+pub fn redirect_sock(ctx: XdpContext) -> u32 {
+    // Retrieve queue ID of incoming packet.
+    let queue_id = unsafe { *ctx.ctx }.rx_queue_index;
+    // Check whether incoming packet's queue ID matches the queue ID of the socket in XSKMAP at index `queue_id`.
+    if SOCKS.get(queue_id) == Some(queue_id) {
+        // Queue ID matches, redirect to AF_XDP socket.
+        SOCKS.redirect(0, 0).unwrap_or(xdp_action::XDP_ABORTED)
+    } else {
+        // Queue ID did not match, pass packet to kernel network stack.
+        xdp_action::XDP_PASS
+    }
 }
 
 #[xdp]
