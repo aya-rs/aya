@@ -6577,6 +6577,7 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::tc::SchedClassifierLinkId 
 pub fn aya::programs::tc::SchedClassifierLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLinkId::from(t: T) -> T
+pub fn aya::programs::tc::clsact_qdisc_exists(if_name: &str) -> core::result::Result<bool, aya::programs::tc::TcError>
 pub fn aya::programs::tc::qdisc_add_clsact(if_name: &str) -> core::result::Result<(), aya::programs::tc::TcError>
 pub fn aya::programs::tc::qdisc_detach_program(if_name: &str, attach_type: aya::programs::tc::TcAttachType, name: &str) -> core::result::Result<(), aya::programs::tc::TcError>
 pub mod aya::programs::tp_btf

@@ -24,8 +24,8 @@ use crate::{
     sys::{
         BpfLinkCreateArgs, LinkTarget, NetlinkError, ProgQueryTarget, SyscallError,
         bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, bpf_prog_get_fd_by_id,
-        netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
-        netlink_qdisc_detach,
+        netlink_clsact_qdisc_exists, netlink_find_filter_with_name, netlink_qdisc_add_clsact,
+        netlink_qdisc_attach, netlink_qdisc_detach,
     },
     util::{KernelVersion, ifindex_from_ifname, tc_handler_make},
 };
@@ -601,4 +601,10 @@ fn qdisc_detach_program_fast(
     }
 
     Ok(())
+}
+
+/// Check if the `clasct` qdisc exists on the given interface.
+pub fn clsact_qdisc_exists(if_name: &str) -> Result<bool, TcError> {
+    let if_index = ifindex_from_ifname(if_name)?;
+    unsafe { netlink_clsact_qdisc_exists(if_index as i32).map_err(TcError::NetlinkError) }
 }

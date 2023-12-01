@@ -55,6 +55,8 @@ bpf_file!(
     TWO_PROGS => "two_progs",
     XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
+    TC_NAME_LIMIT_TEST => "tc_name_limit",
+    TC_NAME_LIMIT_EXCEEDED_TEST => "tc_name_limit_exceeded",
 );
 
 #[cfg(test)]
