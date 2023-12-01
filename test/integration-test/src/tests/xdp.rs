@@ -32,9 +32,9 @@ fn af_xdp() {
     struct PacketMap(MaybeUninit<[u8; 4096]>);
 
     // Safety: don't access alloc down the line.
-    let mut alloc = Box::new(PacketMap(MaybeUninit::uninit()));
+    let mut alloc = Box::new(PacketMap(MaybeUninit::zeroed()));
     let umem = {
-        // Safety: this is a shared buffer between the kernel and us, uninitialized memory is valid.
+        // Safety: Zeroed memory is valid for u8 arrays.
         let mem = unsafe { alloc.0.assume_init_mut() }.as_mut().into();
         // Safety: we cannot access `mem` further down the line because it falls out of scope.
         unsafe { Umem::new(UmemConfig::default(), mem).unwrap() }
