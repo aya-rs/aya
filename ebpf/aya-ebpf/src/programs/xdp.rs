@@ -21,12 +21,6 @@ impl XdpContext {
         unsafe { (*self.ctx).data_end as usize }
     }
 
-    /// Return the interface of the index as determined by the OS.
-    #[inline]
-    pub fn ingress_ifindex(&self) -> usize {
-        unsafe { (*self.ctx).ingress_ifindex as usize }
-    }
-
     /// Return the raw address of the XdpContext metadata.
     #[inline(always)]
     pub fn metadata(&self) -> usize {
@@ -37,6 +31,18 @@ impl XdpContext {
     #[inline(always)]
     pub fn metadata_end(&self) -> usize {
         self.data()
+    }
+
+    /// Return the index of the ingress interface.
+    #[inline]
+    pub fn ingress_ifindex(&self) -> usize {
+        unsafe { (*self.ctx).ingress_ifindex as usize }
+    }
+
+    /// Return the index of the receive queue.
+    #[inline]
+    pub fn rx_queue_index(&self) -> u32 {
+        unsafe { (*self.ctx).rx_queue_index }
     }
 }
 

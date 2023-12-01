@@ -2024,6 +2024,7 @@ pub fn aya_ebpf::programs::xdp::XdpContext::ingress_ifindex(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata_end(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::new(ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md) -> aya_ebpf::programs::xdp::XdpContext
+pub fn aya_ebpf::programs::xdp::XdpContext::rx_queue_index(&self) -> u32
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::xdp::XdpContext
@@ -2638,6 +2639,7 @@ pub fn aya_ebpf::programs::xdp::XdpContext::ingress_ifindex(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata_end(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::new(ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md) -> aya_ebpf::programs::xdp::XdpContext
+pub fn aya_ebpf::programs::xdp::XdpContext::rx_queue_index(&self) -> u32
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::xdp::XdpContext
