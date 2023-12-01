@@ -1,4 +1,4 @@
-use std::{mem::MaybeUninit, net::UdpSocket, num::NonZeroU32, time::Duration};
+use std::{net::UdpSocket, num::NonZeroU32, time::Duration};
 
 use aya::{
     maps::{Array, CpuMap, XskMap},
@@ -29,13 +29,12 @@ fn af_xdp() {
     // So this needs to be page aligned. Pages are 4k on all mainstream architectures except for
     // Apple Silicon which uses 16k pages. So let's align on that for tests to run natively there.
     #[repr(C, align(16384))]
-    struct PacketMap(MaybeUninit<[u8; 4096]>);
+    struct PageAligned([u8; 4096]);
 
-    // Safety: don't access alloc down the line.
-    let mut alloc = Box::new(PacketMap(MaybeUninit::uninit()));
+    let mut alloc = Box::new(PageAligned([0; 4096]));
     let umem = {
-        // Safety: this is a shared buffer between the kernel and us, uninitialized memory is valid.
-        let mem = unsafe { alloc.0.assume_init_mut() }.as_mut().into();
+        let PageAligned(mem) = alloc.as_mut();
+        let mem = mem.as_mut().into();
         // Safety: we cannot access `mem` further down the line because it falls out of scope.
         unsafe { Umem::new(UmemConfig::default(), mem).unwrap() }
     };
