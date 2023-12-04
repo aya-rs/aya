@@ -10,10 +10,10 @@ impl core::convert::From<aya::maps::perf::perf_buffer::PerfBufferError> for aya_
 pub fn aya_log::Error::from(source: aya::maps::perf::perf_buffer::PerfBufferError) -> Self
 impl core::error::Error for aya_log::Error
 pub fn aya_log::Error::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya_log::Error
-pub fn aya_log::Error::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya_log::Error
 pub fn aya_log::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya_log::Error
+pub fn aya_log::Error::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya_log::Error
 impl core::marker::Sync for aya_log::Error
 impl core::marker::Unpin for aya_log::Error

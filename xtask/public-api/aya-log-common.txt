@@ -18,10 +18,10 @@ pub aya_log_common::Argument::U32
 pub aya_log_common::Argument::U64
 pub aya_log_common::Argument::U8
 pub aya_log_common::Argument::Usize
-impl core::convert::From<aya_log_common::Argument> for u8
-pub fn u8::from(enum_value: aya_log_common::Argument) -> Self
 impl core::clone::Clone for aya_log_common::Argument
 pub fn aya_log_common::Argument::clone(&self) -> aya_log_common::Argument
+impl core::convert::From<aya_log_common::Argument> for u8
+pub fn u8::from(enum_value: aya_log_common::Argument) -> Self
 impl core::fmt::Debug for aya_log_common::Argument
 pub fn aya_log_common::Argument::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_log_common::Argument
@@ -55,13 +55,13 @@ pub aya_log_common::DisplayHint::UpperHex
 pub aya_log_common::DisplayHint::UpperMac
 impl aya_log_common::WriteToBuf for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl core::convert::From<aya_log_common::DisplayHint> for u8
-pub fn u8::from(enum_value: aya_log_common::DisplayHint) -> Self
 impl core::clone::Clone for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::clone(&self) -> aya_log_common::DisplayHint
 impl core::cmp::Eq for aya_log_common::DisplayHint
 impl core::cmp::PartialEq for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::eq(&self, other: &aya_log_common::DisplayHint) -> bool
+impl core::convert::From<aya_log_common::DisplayHint> for u8
+pub fn u8::from(enum_value: aya_log_common::DisplayHint) -> Self
 impl core::fmt::Debug for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_log_common::DisplayHint
@@ -94,13 +94,13 @@ pub aya_log_common::Level::Error = 1
 pub aya_log_common::Level::Info
 pub aya_log_common::Level::Trace
 pub aya_log_common::Level::Warn
-impl core::convert::From<aya_log_common::Level> for u8
-pub fn u8::from(enum_value: aya_log_common::Level) -> Self
 impl core::clone::Clone for aya_log_common::Level
 pub fn aya_log_common::Level::clone(&self) -> aya_log_common::Level
 impl core::cmp::Eq for aya_log_common::Level
 impl core::cmp::PartialEq for aya_log_common::Level
 pub fn aya_log_common::Level::eq(&self, other: &aya_log_common::Level) -> bool
+impl core::convert::From<aya_log_common::Level> for u8
+pub fn u8::from(enum_value: aya_log_common::Level) -> Self
 impl core::fmt::Debug for aya_log_common::Level
 pub fn aya_log_common::Level::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya_log_common::Level
@@ -136,10 +136,10 @@ pub aya_log_common::RecordField::Line
 pub aya_log_common::RecordField::Module
 pub aya_log_common::RecordField::NumArgs
 pub aya_log_common::RecordField::Target = 1
-impl core::convert::From<aya_log_common::RecordField> for u8
-pub fn u8::from(enum_value: aya_log_common::RecordField) -> Self
 impl core::clone::Clone for aya_log_common::RecordField
 pub fn aya_log_common::RecordField::clone(&self) -> aya_log_common::RecordField
+impl core::convert::From<aya_log_common::RecordField> for u8
+pub fn u8::from(enum_value: aya_log_common::RecordField) -> Self
 impl core::fmt::Debug for aya_log_common::RecordField
 pub fn aya_log_common::RecordField::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_log_common::RecordField

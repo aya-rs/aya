@@ -1854,10 +1854,10 @@ pub unsafe fn aya_bpf_bindings::bindings::__IncompleteArrayField<T>::as_mut_slic
 pub fn aya_bpf_bindings::bindings::__IncompleteArrayField<T>::as_ptr(&self) -> *const T
 pub unsafe fn aya_bpf_bindings::bindings::__IncompleteArrayField<T>::as_slice(&self, len: usize) -> &[T]
 pub const fn aya_bpf_bindings::bindings::__IncompleteArrayField<T>::new() -> Self
-impl<T> core::fmt::Debug for aya_bpf_bindings::bindings::__IncompleteArrayField<T>
-pub fn aya_bpf_bindings::bindings::__IncompleteArrayField<T>::fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: core::default::Default> core::default::Default for aya_bpf_bindings::bindings::__IncompleteArrayField<T>
 pub fn aya_bpf_bindings::bindings::__IncompleteArrayField<T>::default() -> aya_bpf_bindings::bindings::__IncompleteArrayField<T>
+impl<T> core::fmt::Debug for aya_bpf_bindings::bindings::__IncompleteArrayField<T>
+pub fn aya_bpf_bindings::bindings::__IncompleteArrayField<T>::fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T> core::marker::Send for aya_bpf_bindings::bindings::__IncompleteArrayField<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_bpf_bindings::bindings::__IncompleteArrayField<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_bpf_bindings::bindings::__IncompleteArrayField<T> where T: core::marker::Unpin

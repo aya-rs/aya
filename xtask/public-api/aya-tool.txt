@@ -16,10 +16,10 @@ pub aya_tool::generate::Error::ReadHeaderFile(std::io::error::Error)
 pub aya_tool::generate::Error::Rustfmt(std::io::error::Error)
 impl core::error::Error for aya_tool::generate::Error
 pub fn aya_tool::generate::Error::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya_tool::generate::Error
-pub fn aya_tool::generate::Error::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya_tool::generate::Error
 pub fn aya_tool::generate::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya_tool::generate::Error
+pub fn aya_tool::generate::Error::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya_tool::generate::Error
 impl core::marker::Sync for aya_tool::generate::Error
 impl core::marker::Unpin for aya_tool::generate::Error
