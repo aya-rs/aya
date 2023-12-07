@@ -1084,6 +1084,7 @@ impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::XskMap<T>
 pub fn aya::maps::XskMap<T>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::XskMap<T>
 pub fn aya::maps::XskMap<T>::set(&mut self, index: u32, socket_fd: impl std::os::fd::raw::AsRawFd, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::XskMap<T>::unset(&mut self, index: u32) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::XskMap<aya::maps::MapData>
 pub type aya::maps::XskMap<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::XskMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -2423,6 +2424,7 @@ impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::XskMap<T>
 pub fn aya::maps::XskMap<T>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::XskMap<T>
 pub fn aya::maps::XskMap<T>::set(&mut self, index: u32, socket_fd: impl std::os::fd::raw::AsRawFd, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::XskMap<T>::unset(&mut self, index: u32) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::XskMap<aya::maps::MapData>
 pub type aya::maps::XskMap<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::XskMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>

@@ -26,12 +26,14 @@ fn af_xdp() {
     xdp.load().unwrap();
     xdp.attach("lo", XdpFlags::default()).unwrap();
 
+    const SIZE: usize = 2 * 4096;
+
     // So this needs to be page aligned. Pages are 4k on all mainstream architectures except for
     // Apple Silicon which uses 16k pages. So let's align on that for tests to run natively there.
     #[repr(C, align(16384))]
-    struct PageAligned([u8; 4096]);
+    struct PageAligned([u8; SIZE]);
 
-    let mut alloc = Box::new(PageAligned([0; 4096]));
+    let mut alloc = Box::new(PageAligned([0; SIZE]));
     let umem = {
         let PageAligned(mem) = alloc.as_mut();
         let mem = mem.as_mut().into();
@@ -57,10 +59,12 @@ fn af_xdp() {
     socks.set(0, rx.as_raw_fd(), 0).unwrap();
 
     let frame = umem.frame(BufIdx(0)).unwrap();
+    let frame1 = umem.frame(BufIdx(1)).unwrap();
 
-    // Produce a frame to be filled by the kernel
-    let mut writer = fq_cq.fill(1);
+    // Produce two frames to be filled by the kernel
+    let mut writer = fq_cq.fill(2);
     writer.insert_once(frame.offset);
+    writer.insert_once(frame1.offset);
     writer.commit();
 
     let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
@@ -81,6 +85,17 @@ fn af_xdp() {
     assert_eq!(&udp[0..2], port.to_be_bytes().as_slice()); // Source
     assert_eq!(&udp[2..4], 1777u16.to_be_bytes().as_slice()); // Dest
     assert_eq!(payload, b"hello AF_XDP");
+
+    assert_eq!(rx.available(), 1);
+    // Removes socket from map, no more packets will be redirected.
+    socks.unset(0).unwrap();
+    assert_eq!(rx.available(), 1);
+    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    assert_eq!(rx.available(), 1);
+    // Adds socket to map again, packets will be redirected again.
+    socks.set(0, rx.as_raw_fd(), 0).unwrap();
+    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    assert_eq!(rx.available(), 2);
 }
 
 #[test]
