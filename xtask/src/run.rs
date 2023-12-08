@@ -462,8 +462,11 @@ pub fn run(opts: Options) -> Result<()> {
                 let stderr = stderr.take().unwrap();
                 let stderr = BufReader::new(stderr);
 
-                const TERMINATE_AFTER_COUNT: &[(&str, usize)] =
-                    &[("end Kernel panic", 0), ("watchdog: BUG: soft lockup", 1)];
+                const TERMINATE_AFTER_COUNT: &[(&str, usize)] = &[
+                    ("end Kernel panic", 0),
+                    ("rcu: RCU grace-period kthread stack dump:", 0),
+                    ("watchdog: BUG: soft lockup", 1),
+                ];
                 let mut counts = [0; TERMINATE_AFTER_COUNT.len()];
 
                 let mut terminate_if_kernel_hang =
