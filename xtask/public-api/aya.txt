@@ -142,11 +142,11 @@ pub fn aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::try_from
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, V: core::fmt::Debug + aya::Pod> core::fmt::Debug for aya::maps::bloom_filter::BloomFilter<T, V>
+pub fn aya::maps::bloom_filter::BloomFilter<T, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T: core::fmt::Debug, V: core::fmt::Debug + aya::Pod> core::fmt::Debug for aya::maps::bloom_filter::BloomFilter<T, V>
-pub fn aya::maps::bloom_filter::BloomFilter<T, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T, V> core::marker::Send for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
@@ -358,10 +358,10 @@ impl core::convert::From<std::io::error::Error> for aya::maps::perf::PerfBufferE
 pub fn aya::maps::perf::PerfBufferError::from(source: std::io::error::Error) -> Self
 impl core::error::Error for aya::maps::perf::PerfBufferError
 pub fn aya::maps::perf::PerfBufferError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::maps::perf::PerfBufferError
-pub fn aya::maps::perf::PerfBufferError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::maps::perf::PerfBufferError
 pub fn aya::maps::perf::PerfBufferError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::maps::perf::PerfBufferError
+pub fn aya::maps::perf::PerfBufferError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::maps::perf::PerfBufferError
 impl core::marker::Sync for aya::maps::perf::PerfBufferError
 impl core::marker::Unpin for aya::maps::perf::PerfBufferError
@@ -897,10 +897,10 @@ impl core::convert::From<aya::maps::MapError> for aya::maps::xdp::XdpMapError
 pub fn aya::maps::xdp::XdpMapError::from(source: aya::maps::MapError) -> Self
 impl core::error::Error for aya::maps::xdp::XdpMapError
 pub fn aya::maps::xdp::XdpMapError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::maps::xdp::XdpMapError
-pub fn aya::maps::xdp::XdpMapError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::maps::xdp::XdpMapError
 pub fn aya::maps::xdp::XdpMapError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::maps::xdp::XdpMapError
+pub fn aya::maps::xdp::XdpMapError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::maps::xdp::XdpMapError
 impl core::marker::Sync for aya::maps::xdp::XdpMapError
 impl core::marker::Unpin for aya::maps::xdp::XdpMapError
@@ -1133,6 +1133,8 @@ pub fn aya::maps::ring_buf::RingBuf<aya::maps::MapData>::try_from(map: aya::maps
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl core::fmt::Debug for aya::maps::Map
+pub fn aya::maps::Map::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>
 pub type aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
 pub fn aya::maps::hash_map::HashMap<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1274,8 +1276,6 @@ pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::try_from(map: aya::maps::
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::stack::Stack<aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl core::fmt::Debug for aya::maps::Map
-pub fn aya::maps::Map::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::maps::Map
 impl core::marker::Sync for aya::maps::Map
 impl core::marker::Unpin for aya::maps::Map
@@ -1335,10 +1335,10 @@ impl core::convert::From<aya_obj::maps::InvalidMapTypeError> for aya::maps::MapE
 pub fn aya::maps::MapError::from(e: aya_obj::maps::InvalidMapTypeError) -> Self
 impl core::error::Error for aya::maps::MapError
 pub fn aya::maps::MapError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::maps::MapError
-pub fn aya::maps::MapError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::maps::MapError
 pub fn aya::maps::MapError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::maps::MapError
+pub fn aya::maps::MapError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::maps::MapError
 impl core::marker::Sync for aya::maps::MapError
 impl core::marker::Unpin for aya::maps::MapError
@@ -1451,11 +1451,11 @@ pub fn aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::try_from
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, V: core::fmt::Debug + aya::Pod> core::fmt::Debug for aya::maps::bloom_filter::BloomFilter<T, V>
+pub fn aya::maps::bloom_filter::BloomFilter<T, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T: core::fmt::Debug, V: core::fmt::Debug + aya::Pod> core::fmt::Debug for aya::maps::bloom_filter::BloomFilter<T, V>
-pub fn aya::maps::bloom_filter::BloomFilter<T, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T, V> core::marker::Send for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
@@ -1718,10 +1718,10 @@ pub fn aya::maps::MapData::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::MapData
 pub fn aya::maps::MapData::from(t: T) -> T
 pub struct aya::maps::MapFd(_)
-impl std::os::fd::owned::AsFd for aya::maps::MapFd
-pub fn aya::maps::MapFd::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
 impl core::fmt::Debug for aya::maps::MapFd
 pub fn aya::maps::MapFd::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl std::os::fd::owned::AsFd for aya::maps::MapFd
+pub fn aya::maps::MapFd::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
 impl core::marker::Send for aya::maps::MapFd
 impl core::marker::Sync for aya::maps::MapFd
 impl core::marker::Unpin for aya::maps::MapFd
@@ -2343,10 +2343,10 @@ pub aya::pin::PinError::NoFd::name: alloc::string::String
 pub aya::pin::PinError::SyscallError(crate::sys::SyscallError)
 impl core::error::Error for aya::pin::PinError
 pub fn aya::pin::PinError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::pin::PinError
-pub fn aya::pin::PinError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::pin::PinError
 pub fn aya::pin::PinError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::pin::PinError
+pub fn aya::pin::PinError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::pin::PinError
 impl core::marker::Sync for aya::pin::PinError
 impl core::marker::Unpin for aya::pin::PinError
@@ -2392,6 +2392,8 @@ pub fn aya::programs::cgroup_device::CgroupDevice::pin<P: core::convert::AsRef<s
 pub fn aya::programs::cgroup_device::CgroupDevice::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_device::CgroupDevice
+pub fn aya::programs::cgroup_device::CgroupDevice::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_device::CgroupDevice
@@ -2400,8 +2402,6 @@ pub fn &'a aya::programs::cgroup_device::CgroupDevice::try_from(program: &'a aya
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_device::CgroupDevice
 pub type &'a mut aya::programs::cgroup_device::CgroupDevice::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_device::CgroupDevice::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_device::CgroupDevice
 impl core::marker::Sync for aya::programs::cgroup_device::CgroupDevice
 impl core::marker::Unpin for aya::programs::cgroup_device::CgroupDevice
@@ -2428,10 +2428,10 @@ impl aya::programs::links::Link for aya::programs::cgroup_device::CgroupDeviceLi
 pub type aya::programs::cgroup_device::CgroupDeviceLink::Id = aya::programs::cgroup_device::CgroupDeviceLinkId
 pub fn aya::programs::cgroup_device::CgroupDeviceLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_device::CgroupDeviceLink::id(&self) -> Self::Id
-impl core::ops::drop::Drop for aya::programs::cgroup_device::CgroupDeviceLink
-pub fn aya::programs::cgroup_device::CgroupDeviceLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::cgroup_device::CgroupDeviceLink
 pub fn aya::programs::cgroup_device::CgroupDeviceLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::cgroup_device::CgroupDeviceLink
+pub fn aya::programs::cgroup_device::CgroupDeviceLink::drop(&mut self)
 impl core::marker::Send for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::marker::Sync for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::marker::Unpin for aya::programs::cgroup_device::CgroupDeviceLink
@@ -2535,6 +2535,8 @@ pub fn aya::programs::cgroup_skb::CgroupSkb::pin<P: core::convert::AsRef<std::pa
 pub fn aya::programs::cgroup_skb::CgroupSkb::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkb
+pub fn aya::programs::cgroup_skb::CgroupSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_skb::CgroupSkb
@@ -2543,8 +2545,6 @@ pub fn &'a aya::programs::cgroup_skb::CgroupSkb::try_from(program: &'a aya::prog
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_skb::CgroupSkb
 pub type &'a mut aya::programs::cgroup_skb::CgroupSkb::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_skb::CgroupSkb::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_skb::CgroupSkb, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkb
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkb
 impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkb
@@ -2571,10 +2571,10 @@ impl aya::programs::links::Link for aya::programs::cgroup_skb::CgroupSkbLink
 pub type aya::programs::cgroup_skb::CgroupSkbLink::Id = aya::programs::cgroup_skb::CgroupSkbLinkId
 pub fn aya::programs::cgroup_skb::CgroupSkbLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_skb::CgroupSkbLink::id(&self) -> Self::Id
-impl core::ops::drop::Drop for aya::programs::cgroup_skb::CgroupSkbLink
-pub fn aya::programs::cgroup_skb::CgroupSkbLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkbLink
 pub fn aya::programs::cgroup_skb::CgroupSkbLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::cgroup_skb::CgroupSkbLink
+pub fn aya::programs::cgroup_skb::CgroupSkbLink::drop(&mut self)
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkbLink
@@ -2645,6 +2645,8 @@ pub fn aya::programs::cgroup_sock::CgroupSock::pin<P: core::convert::AsRef<std::
 pub fn aya::programs::cgroup_sock::CgroupSock::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_sock::CgroupSock
 pub fn aya::programs::cgroup_sock::CgroupSock::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_sock::CgroupSock
+pub fn aya::programs::cgroup_sock::CgroupSock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_sock::CgroupSock
 pub fn aya::programs::cgroup_sock::CgroupSock::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sock::CgroupSock
@@ -2653,8 +2655,6 @@ pub fn &'a aya::programs::cgroup_sock::CgroupSock::try_from(program: &'a aya::pr
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sock::CgroupSock
 pub type &'a mut aya::programs::cgroup_sock::CgroupSock::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_sock::CgroupSock::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sock::CgroupSock, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_sock::CgroupSock
 impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSock
 impl core::marker::Unpin for aya::programs::cgroup_sock::CgroupSock
@@ -2681,10 +2681,10 @@ impl aya::programs::links::Link for aya::programs::cgroup_sock::CgroupSockLink
 pub type aya::programs::cgroup_sock::CgroupSockLink::Id = aya::programs::cgroup_sock::CgroupSockLinkId
 pub fn aya::programs::cgroup_sock::CgroupSockLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock::CgroupSockLink::id(&self) -> Self::Id
-impl core::ops::drop::Drop for aya::programs::cgroup_sock::CgroupSockLink
-pub fn aya::programs::cgroup_sock::CgroupSockLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::cgroup_sock::CgroupSockLink
 pub fn aya::programs::cgroup_sock::CgroupSockLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::cgroup_sock::CgroupSockLink
+pub fn aya::programs::cgroup_sock::CgroupSockLink::drop(&mut self)
 impl core::marker::Send for aya::programs::cgroup_sock::CgroupSockLink
 impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSockLink
 impl core::marker::Unpin for aya::programs::cgroup_sock::CgroupSockLink
@@ -2755,6 +2755,8 @@ pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::pin<P: core::convert::As
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddr
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sock_addr::CgroupSockAddr
@@ -2763,8 +2765,6 @@ pub fn &'a aya::programs::cgroup_sock_addr::CgroupSockAddr::try_from(program: &'
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub type &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::marker::Unpin for aya::programs::cgroup_sock_addr::CgroupSockAddr
@@ -2791,10 +2791,10 @@ impl aya::programs::links::Link for aya::programs::cgroup_sock_addr::CgroupSockA
 pub type aya::programs::cgroup_sock_addr::CgroupSockAddrLink::Id = aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::id(&self) -> Self::Id
-impl core::ops::drop::Drop for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::drop(&mut self)
 impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl core::marker::Unpin for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
@@ -2865,6 +2865,8 @@ pub fn aya::programs::cgroup_sockopt::CgroupSockopt::pin<P: core::convert::AsRef
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_sockopt::CgroupSockopt
+pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sockopt::CgroupSockopt
@@ -2873,8 +2875,6 @@ pub fn &'a aya::programs::cgroup_sockopt::CgroupSockopt::try_from(program: &'a a
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sockopt::CgroupSockopt
 pub type &'a mut aya::programs::cgroup_sockopt::CgroupSockopt::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_sockopt::CgroupSockopt::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sockopt::CgroupSockopt, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::marker::Unpin for aya::programs::cgroup_sockopt::CgroupSockopt
@@ -2901,10 +2901,10 @@ impl aya::programs::links::Link for aya::programs::cgroup_sockopt::CgroupSockopt
 pub type aya::programs::cgroup_sockopt::CgroupSockoptLink::Id = aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::id(&self) -> Self::Id
-impl core::ops::drop::Drop for aya::programs::cgroup_sockopt::CgroupSockoptLink
-pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::cgroup_sockopt::CgroupSockoptLink
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::cgroup_sockopt::CgroupSockoptLink
+pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::drop(&mut self)
 impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::marker::Unpin for aya::programs::cgroup_sockopt::CgroupSockoptLink
@@ -2975,6 +2975,8 @@ pub fn aya::programs::cgroup_sysctl::CgroupSysctl::pin<P: core::convert::AsRef<s
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_sysctl::CgroupSysctl
+pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sysctl::CgroupSysctl
@@ -2983,8 +2985,6 @@ pub fn &'a aya::programs::cgroup_sysctl::CgroupSysctl::try_from(program: &'a aya
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sysctl::CgroupSysctl
 pub type &'a mut aya::programs::cgroup_sysctl::CgroupSysctl::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_sysctl::CgroupSysctl::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sysctl::CgroupSysctl, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::marker::Unpin for aya::programs::cgroup_sysctl::CgroupSysctl
@@ -3011,10 +3011,10 @@ impl aya::programs::links::Link for aya::programs::cgroup_sysctl::CgroupSysctlLi
 pub type aya::programs::cgroup_sysctl::CgroupSysctlLink::Id = aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::id(&self) -> Self::Id
-impl core::ops::drop::Drop for aya::programs::cgroup_sysctl::CgroupSysctlLink
-pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::cgroup_sysctl::CgroupSysctlLink
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::cgroup_sysctl::CgroupSysctlLink
+pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::drop(&mut self)
 impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::marker::Unpin for aya::programs::cgroup_sysctl::CgroupSysctlLink
@@ -3073,10 +3073,10 @@ pub aya::programs::extension::ExtensionError::NoBTF
 impl core::convert::From<aya::programs::extension::ExtensionError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::extension::ExtensionError) -> Self
 impl core::error::Error for aya::programs::extension::ExtensionError
-impl core::fmt::Display for aya::programs::extension::ExtensionError
-pub fn aya::programs::extension::ExtensionError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::extension::ExtensionError
 pub fn aya::programs::extension::ExtensionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::extension::ExtensionError
+pub fn aya::programs::extension::ExtensionError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::extension::ExtensionError
 impl core::marker::Sync for aya::programs::extension::ExtensionError
 impl core::marker::Unpin for aya::programs::extension::ExtensionError
@@ -3118,6 +3118,8 @@ pub fn aya::programs::extension::Extension::pin<P: core::convert::AsRef<std::pat
 pub fn aya::programs::extension::Extension::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::extension::Extension
+pub fn aya::programs::extension::Extension::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::extension::Extension
@@ -3126,8 +3128,6 @@ pub fn &'a aya::programs::extension::Extension::try_from(program: &'a aya::progr
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::extension::Extension
 pub type &'a mut aya::programs::extension::Extension::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::extension::Extension::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::extension::Extension, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::extension::Extension
-pub fn aya::programs::extension::Extension::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::extension::Extension
 impl core::marker::Sync for aya::programs::extension::Extension
 impl core::marker::Unpin for aya::programs::extension::Extension
@@ -3158,10 +3158,10 @@ impl core::convert::From<aya::programs::extension::ExtensionLink> for aya::progr
 pub fn aya::programs::links::FdLink::from(w: aya::programs::extension::ExtensionLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::extension::ExtensionLink
 pub fn aya::programs::extension::ExtensionLink::from(b: aya::programs::links::FdLink) -> aya::programs::extension::ExtensionLink
-impl core::ops::drop::Drop for aya::programs::extension::ExtensionLink
-pub fn aya::programs::extension::ExtensionLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::extension::ExtensionLink
 pub fn aya::programs::extension::ExtensionLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::extension::ExtensionLink
+pub fn aya::programs::extension::ExtensionLink::drop(&mut self)
 impl core::marker::Send for aya::programs::extension::ExtensionLink
 impl core::marker::Sync for aya::programs::extension::ExtensionLink
 impl core::marker::Unpin for aya::programs::extension::ExtensionLink
@@ -3232,6 +3232,8 @@ pub fn aya::programs::fentry::FEntry::pin<P: core::convert::AsRef<std::path::Pat
 pub fn aya::programs::fentry::FEntry::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::fentry::FEntry
+pub fn aya::programs::fentry::FEntry::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::fentry::FEntry
@@ -3240,8 +3242,6 @@ pub fn &'a aya::programs::fentry::FEntry::try_from(program: &'a aya::programs::P
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::fentry::FEntry
 pub type &'a mut aya::programs::fentry::FEntry::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::fentry::FEntry::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::fentry::FEntry, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::fentry::FEntry
-pub fn aya::programs::fentry::FEntry::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::fentry::FEntry
 impl core::marker::Sync for aya::programs::fentry::FEntry
 impl core::marker::Unpin for aya::programs::fentry::FEntry
@@ -3272,10 +3272,10 @@ impl core::convert::From<aya::programs::fentry::FEntryLink> for aya::programs::l
 pub fn aya::programs::links::FdLink::from(w: aya::programs::fentry::FEntryLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fentry::FEntryLink
 pub fn aya::programs::fentry::FEntryLink::from(b: aya::programs::links::FdLink) -> aya::programs::fentry::FEntryLink
-impl core::ops::drop::Drop for aya::programs::fentry::FEntryLink
-pub fn aya::programs::fentry::FEntryLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::fentry::FEntryLink
 pub fn aya::programs::fentry::FEntryLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::fentry::FEntryLink
+pub fn aya::programs::fentry::FEntryLink::drop(&mut self)
 impl core::marker::Send for aya::programs::fentry::FEntryLink
 impl core::marker::Sync for aya::programs::fentry::FEntryLink
 impl core::marker::Unpin for aya::programs::fentry::FEntryLink
@@ -3346,6 +3346,8 @@ pub fn aya::programs::fexit::FExit::pin<P: core::convert::AsRef<std::path::Path>
 pub fn aya::programs::fexit::FExit::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::fexit::FExit
+pub fn aya::programs::fexit::FExit::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::fexit::FExit
@@ -3354,8 +3356,6 @@ pub fn &'a aya::programs::fexit::FExit::try_from(program: &'a aya::programs::Pro
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::fexit::FExit
 pub type &'a mut aya::programs::fexit::FExit::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::fexit::FExit::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::fexit::FExit, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::fexit::FExit
-pub fn aya::programs::fexit::FExit::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::fexit::FExit
 impl core::marker::Sync for aya::programs::fexit::FExit
 impl core::marker::Unpin for aya::programs::fexit::FExit
@@ -3386,10 +3386,10 @@ impl core::convert::From<aya::programs::fexit::FExitLink> for aya::programs::lin
 pub fn aya::programs::links::FdLink::from(w: aya::programs::fexit::FExitLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fexit::FExitLink
 pub fn aya::programs::fexit::FExitLink::from(b: aya::programs::links::FdLink) -> aya::programs::fexit::FExitLink
-impl core::ops::drop::Drop for aya::programs::fexit::FExitLink
-pub fn aya::programs::fexit::FExitLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::fexit::FExitLink
 pub fn aya::programs::fexit::FExitLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::fexit::FExitLink
+pub fn aya::programs::fexit::FExitLink::drop(&mut self)
 impl core::marker::Send for aya::programs::fexit::FExitLink
 impl core::marker::Sync for aya::programs::fexit::FExitLink
 impl core::marker::Unpin for aya::programs::fexit::FExitLink
@@ -3451,10 +3451,10 @@ impl core::convert::From<aya::programs::kprobe::KProbeError> for aya::programs::
 pub fn aya::programs::ProgramError::from(source: aya::programs::kprobe::KProbeError) -> Self
 impl core::error::Error for aya::programs::kprobe::KProbeError
 pub fn aya::programs::kprobe::KProbeError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::kprobe::KProbeError
-pub fn aya::programs::kprobe::KProbeError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::kprobe::KProbeError
 pub fn aya::programs::kprobe::KProbeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::kprobe::KProbeError
+pub fn aya::programs::kprobe::KProbeError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::kprobe::KProbeError
 impl core::marker::Sync for aya::programs::kprobe::KProbeError
 impl core::marker::Unpin for aya::programs::kprobe::KProbeError
@@ -3495,6 +3495,8 @@ pub fn aya::programs::kprobe::KProbe::pin<P: core::convert::AsRef<std::path::Pat
 pub fn aya::programs::kprobe::KProbe::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::kprobe::KProbe
+pub fn aya::programs::kprobe::KProbe::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::kprobe::KProbe
@@ -3503,8 +3505,6 @@ pub fn &'a aya::programs::kprobe::KProbe::try_from(program: &'a aya::programs::P
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::kprobe::KProbe
 pub type &'a mut aya::programs::kprobe::KProbe::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::kprobe::KProbe::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::kprobe::KProbe, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::kprobe::KProbe
-pub fn aya::programs::kprobe::KProbe::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::kprobe::KProbe
 impl core::marker::Sync for aya::programs::kprobe::KProbe
 impl core::marker::Unpin for aya::programs::kprobe::KProbe
@@ -3537,10 +3537,10 @@ pub fn aya::programs::links::FdLink::try_from(value: aya::programs::kprobe::KPro
 impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::kprobe::KProbeLink
 pub type aya::programs::kprobe::KProbeLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::kprobe::KProbeLink::try_from(fd_link: aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
-impl core::ops::drop::Drop for aya::programs::kprobe::KProbeLink
-pub fn aya::programs::kprobe::KProbeLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::kprobe::KProbeLink
 pub fn aya::programs::kprobe::KProbeLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::kprobe::KProbeLink
+pub fn aya::programs::kprobe::KProbeLink::drop(&mut self)
 impl core::marker::Send for aya::programs::kprobe::KProbeLink
 impl core::marker::Sync for aya::programs::kprobe::KProbeLink
 impl core::marker::Unpin for aya::programs::kprobe::KProbeLink
@@ -3599,10 +3599,10 @@ pub aya::programs::links::LinkError::InvalidLink
 pub aya::programs::links::LinkError::SyscallError(crate::sys::SyscallError)
 impl core::error::Error for aya::programs::links::LinkError
 pub fn aya::programs::links::LinkError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::links::LinkError
-pub fn aya::programs::links::LinkError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::links::LinkError
 pub fn aya::programs::links::LinkError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::links::LinkError
+pub fn aya::programs::links::LinkError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::links::LinkError
 impl core::marker::Sync for aya::programs::links::LinkError
 impl core::marker::Unpin for aya::programs::links::LinkError
@@ -3995,6 +3995,8 @@ pub fn aya::programs::lirc_mode2::LircMode2::pin<P: core::convert::AsRef<std::pa
 pub fn aya::programs::lirc_mode2::LircMode2::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::lirc_mode2::LircMode2
+pub fn aya::programs::lirc_mode2::LircMode2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lirc_mode2::LircMode2
@@ -4003,8 +4005,6 @@ pub fn &'a aya::programs::lirc_mode2::LircMode2::try_from(program: &'a aya::prog
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lirc_mode2::LircMode2
 pub type &'a mut aya::programs::lirc_mode2::LircMode2::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::lirc_mode2::LircMode2::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lirc_mode2::LircMode2, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::lirc_mode2::LircMode2
-pub fn aya::programs::lirc_mode2::LircMode2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::lirc_mode2::LircMode2
 impl core::marker::Sync for aya::programs::lirc_mode2::LircMode2
 impl core::marker::Unpin for aya::programs::lirc_mode2::LircMode2
@@ -4044,6 +4044,8 @@ pub fn aya::programs::lsm::Lsm::pin<P: core::convert::AsRef<std::path::Path>>(&m
 pub fn aya::programs::lsm::Lsm::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::lsm::Lsm
+pub fn aya::programs::lsm::Lsm::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lsm::Lsm
@@ -4052,8 +4054,6 @@ pub fn &'a aya::programs::lsm::Lsm::try_from(program: &'a aya::programs::Program
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lsm::Lsm
 pub type &'a mut aya::programs::lsm::Lsm::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::lsm::Lsm::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lsm::Lsm, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::lsm::Lsm
-pub fn aya::programs::lsm::Lsm::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::lsm::Lsm
 impl core::marker::Sync for aya::programs::lsm::Lsm
 impl core::marker::Unpin for aya::programs::lsm::Lsm
@@ -4084,10 +4084,10 @@ impl core::convert::From<aya::programs::links::FdLink> for aya::programs::lsm::L
 pub fn aya::programs::lsm::LsmLink::from(b: aya::programs::links::FdLink) -> aya::programs::lsm::LsmLink
 impl core::convert::From<aya::programs::lsm::LsmLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::lsm::LsmLink) -> aya::programs::links::FdLink
-impl core::ops::drop::Drop for aya::programs::lsm::LsmLink
-pub fn aya::programs::lsm::LsmLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::lsm::LsmLink
 pub fn aya::programs::lsm::LsmLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::lsm::LsmLink
+pub fn aya::programs::lsm::LsmLink::drop(&mut self)
 impl core::marker::Send for aya::programs::lsm::LsmLink
 impl core::marker::Sync for aya::programs::lsm::LsmLink
 impl core::marker::Unpin for aya::programs::lsm::LsmLink
@@ -4331,6 +4331,8 @@ pub fn aya::programs::perf_event::PerfEvent::pin<P: core::convert::AsRef<std::pa
 pub fn aya::programs::perf_event::PerfEvent::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::perf_event::PerfEvent
+pub fn aya::programs::perf_event::PerfEvent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::perf_event::PerfEvent
@@ -4339,8 +4341,6 @@ pub fn &'a aya::programs::perf_event::PerfEvent::try_from(program: &'a aya::prog
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::perf_event::PerfEvent
 pub type &'a mut aya::programs::perf_event::PerfEvent::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::perf_event::PerfEvent::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::perf_event::PerfEvent, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::perf_event::PerfEvent
-pub fn aya::programs::perf_event::PerfEvent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::perf_event::PerfEvent
 impl core::marker::Sync for aya::programs::perf_event::PerfEvent
 impl core::marker::Unpin for aya::programs::perf_event::PerfEvent
@@ -4373,10 +4373,10 @@ pub fn aya::programs::perf_event::PerfEventLink::try_from(fd_link: aya::programs
 impl core::convert::TryFrom<aya::programs::perf_event::PerfEventLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::perf_event::PerfEventLink) -> core::result::Result<Self, Self::Error>
-impl core::ops::drop::Drop for aya::programs::perf_event::PerfEventLink
-pub fn aya::programs::perf_event::PerfEventLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::perf_event::PerfEventLink
 pub fn aya::programs::perf_event::PerfEventLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::perf_event::PerfEventLink
+pub fn aya::programs::perf_event::PerfEventLink::drop(&mut self)
 impl core::marker::Send for aya::programs::perf_event::PerfEventLink
 impl core::marker::Sync for aya::programs::perf_event::PerfEventLink
 impl core::marker::Unpin for aya::programs::perf_event::PerfEventLink
@@ -4479,10 +4479,10 @@ impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramE
 pub fn aya::programs::ProgramError::from(source: aya::programs::tc::TcError) -> Self
 impl core::error::Error for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::tc::TcError
-pub fn aya::programs::tc::TcError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::tc::TcError
+pub fn aya::programs::tc::TcError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::tc::TcError
 impl core::marker::Sync for aya::programs::tc::TcError
 impl core::marker::Unpin for aya::programs::tc::TcError
@@ -4523,6 +4523,8 @@ pub fn aya::programs::tc::SchedClassifier::pin<P: core::convert::AsRef<std::path
 pub fn aya::programs::tc::SchedClassifier::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::tc::SchedClassifier
+pub fn aya::programs::tc::SchedClassifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::tc::SchedClassifier
@@ -4531,8 +4533,6 @@ pub fn &'a aya::programs::tc::SchedClassifier::try_from(program: &'a aya::progra
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::tc::SchedClassifier
 pub type &'a mut aya::programs::tc::SchedClassifier::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::tc::SchedClassifier::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::tc::SchedClassifier, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::tc::SchedClassifier
-pub fn aya::programs::tc::SchedClassifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::tc::SchedClassifier
 impl core::marker::Sync for aya::programs::tc::SchedClassifier
 impl core::marker::Unpin for aya::programs::tc::SchedClassifier
@@ -4563,10 +4563,10 @@ impl aya::programs::links::Link for aya::programs::tc::SchedClassifierLink
 pub type aya::programs::tc::SchedClassifierLink::Id = aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::id(&self) -> Self::Id
-impl core::ops::drop::Drop for aya::programs::tc::SchedClassifierLink
-pub fn aya::programs::tc::SchedClassifierLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::tc::SchedClassifierLink
 pub fn aya::programs::tc::SchedClassifierLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::tc::SchedClassifierLink
+pub fn aya::programs::tc::SchedClassifierLink::drop(&mut self)
 impl core::marker::Send for aya::programs::tc::SchedClassifierLink
 impl core::marker::Sync for aya::programs::tc::SchedClassifierLink
 impl core::marker::Unpin for aya::programs::tc::SchedClassifierLink
@@ -4665,6 +4665,8 @@ pub fn aya::programs::tp_btf::BtfTracePoint::pin<P: core::convert::AsRef<std::pa
 pub fn aya::programs::tp_btf::BtfTracePoint::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::tp_btf::BtfTracePoint
+pub fn aya::programs::tp_btf::BtfTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::tp_btf::BtfTracePoint
@@ -4673,8 +4675,6 @@ pub fn &'a aya::programs::tp_btf::BtfTracePoint::try_from(program: &'a aya::prog
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::tp_btf::BtfTracePoint
 pub type &'a mut aya::programs::tp_btf::BtfTracePoint::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::tp_btf::BtfTracePoint::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::tp_btf::BtfTracePoint, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::tp_btf::BtfTracePoint
-pub fn aya::programs::tp_btf::BtfTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::tp_btf::BtfTracePoint
 impl core::marker::Sync for aya::programs::tp_btf::BtfTracePoint
 impl core::marker::Unpin for aya::programs::tp_btf::BtfTracePoint
@@ -4705,10 +4705,10 @@ impl core::convert::From<aya::programs::links::FdLink> for aya::programs::tp_btf
 pub fn aya::programs::tp_btf::BtfTracePointLink::from(b: aya::programs::links::FdLink) -> aya::programs::tp_btf::BtfTracePointLink
 impl core::convert::From<aya::programs::tp_btf::BtfTracePointLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::tp_btf::BtfTracePointLink) -> aya::programs::links::FdLink
-impl core::ops::drop::Drop for aya::programs::tp_btf::BtfTracePointLink
-pub fn aya::programs::tp_btf::BtfTracePointLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::tp_btf::BtfTracePointLink
 pub fn aya::programs::tp_btf::BtfTracePointLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::tp_btf::BtfTracePointLink
+pub fn aya::programs::tp_btf::BtfTracePointLink::drop(&mut self)
 impl core::marker::Send for aya::programs::tp_btf::BtfTracePointLink
 impl core::marker::Sync for aya::programs::tp_btf::BtfTracePointLink
 impl core::marker::Unpin for aya::programs::tp_btf::BtfTracePointLink
@@ -4770,10 +4770,10 @@ impl core::convert::From<aya::programs::trace_point::TracePointError> for aya::p
 pub fn aya::programs::ProgramError::from(source: aya::programs::trace_point::TracePointError) -> Self
 impl core::error::Error for aya::programs::trace_point::TracePointError
 pub fn aya::programs::trace_point::TracePointError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::trace_point::TracePointError
-pub fn aya::programs::trace_point::TracePointError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::trace_point::TracePointError
 pub fn aya::programs::trace_point::TracePointError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::trace_point::TracePointError
+pub fn aya::programs::trace_point::TracePointError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::trace_point::TracePointError
 impl core::marker::Sync for aya::programs::trace_point::TracePointError
 impl core::marker::Unpin for aya::programs::trace_point::TracePointError
@@ -4814,6 +4814,8 @@ pub fn aya::programs::trace_point::TracePoint::pin<P: core::convert::AsRef<std::
 pub fn aya::programs::trace_point::TracePoint::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::trace_point::TracePoint
+pub fn aya::programs::trace_point::TracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::trace_point::TracePoint
@@ -4822,8 +4824,6 @@ pub fn &'a aya::programs::trace_point::TracePoint::try_from(program: &'a aya::pr
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::trace_point::TracePoint
 pub type &'a mut aya::programs::trace_point::TracePoint::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::trace_point::TracePoint::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::trace_point::TracePoint, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::trace_point::TracePoint
-pub fn aya::programs::trace_point::TracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::trace_point::TracePoint
 impl core::marker::Sync for aya::programs::trace_point::TracePoint
 impl core::marker::Unpin for aya::programs::trace_point::TracePoint
@@ -4856,10 +4856,10 @@ pub fn aya::programs::trace_point::TracePointLink::try_from(fd_link: aya::progra
 impl core::convert::TryFrom<aya::programs::trace_point::TracePointLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::trace_point::TracePointLink) -> core::result::Result<Self, Self::Error>
-impl core::ops::drop::Drop for aya::programs::trace_point::TracePointLink
-pub fn aya::programs::trace_point::TracePointLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::trace_point::TracePointLink
 pub fn aya::programs::trace_point::TracePointLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::trace_point::TracePointLink
+pub fn aya::programs::trace_point::TracePointLink::drop(&mut self)
 impl core::marker::Send for aya::programs::trace_point::TracePointLink
 impl core::marker::Sync for aya::programs::trace_point::TracePointLink
 impl core::marker::Unpin for aya::programs::trace_point::TracePointLink
@@ -4928,10 +4928,10 @@ impl core::convert::From<aya::programs::uprobe::UProbeError> for aya::programs::
 pub fn aya::programs::ProgramError::from(source: aya::programs::uprobe::UProbeError) -> Self
 impl core::error::Error for aya::programs::uprobe::UProbeError
 pub fn aya::programs::uprobe::UProbeError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::uprobe::UProbeError
-pub fn aya::programs::uprobe::UProbeError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::uprobe::UProbeError
 pub fn aya::programs::uprobe::UProbeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::uprobe::UProbeError
+pub fn aya::programs::uprobe::UProbeError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::uprobe::UProbeError
 impl core::marker::Sync for aya::programs::uprobe::UProbeError
 impl core::marker::Unpin for aya::programs::uprobe::UProbeError
@@ -4972,6 +4972,8 @@ pub fn aya::programs::uprobe::UProbe::pin<P: core::convert::AsRef<std::path::Pat
 pub fn aya::programs::uprobe::UProbe::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::uprobe::UProbe
+pub fn aya::programs::uprobe::UProbe::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::uprobe::UProbe
@@ -4980,8 +4982,6 @@ pub fn &'a aya::programs::uprobe::UProbe::try_from(program: &'a aya::programs::P
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::uprobe::UProbe
 pub type &'a mut aya::programs::uprobe::UProbe::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::uprobe::UProbe::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::uprobe::UProbe, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::uprobe::UProbe
-pub fn aya::programs::uprobe::UProbe::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::uprobe::UProbe
 impl core::marker::Sync for aya::programs::uprobe::UProbe
 impl core::marker::Unpin for aya::programs::uprobe::UProbe
@@ -5014,10 +5014,10 @@ pub fn aya::programs::uprobe::UProbeLink::try_from(fd_link: aya::programs::links
 impl core::convert::TryFrom<aya::programs::uprobe::UProbeLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::uprobe::UProbeLink) -> core::result::Result<Self, Self::Error>
-impl core::ops::drop::Drop for aya::programs::uprobe::UProbeLink
-pub fn aya::programs::uprobe::UProbeLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::uprobe::UProbeLink
 pub fn aya::programs::uprobe::UProbeLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::uprobe::UProbeLink
+pub fn aya::programs::uprobe::UProbeLink::drop(&mut self)
 impl core::marker::Send for aya::programs::uprobe::UProbeLink
 impl core::marker::Sync for aya::programs::uprobe::UProbeLink
 impl core::marker::Unpin for aya::programs::uprobe::UProbeLink
@@ -5078,10 +5078,10 @@ impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::Progra
 pub fn aya::programs::ProgramError::from(source: aya::programs::xdp::XdpError) -> Self
 impl core::error::Error for aya::programs::xdp::XdpError
 pub fn aya::programs::xdp::XdpError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::xdp::XdpError
-pub fn aya::programs::xdp::XdpError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::xdp::XdpError
 pub fn aya::programs::xdp::XdpError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::xdp::XdpError
+pub fn aya::programs::xdp::XdpError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::xdp::XdpError
 impl core::marker::Sync for aya::programs::xdp::XdpError
 impl core::marker::Unpin for aya::programs::xdp::XdpError
@@ -5123,6 +5123,8 @@ pub fn aya::programs::xdp::Xdp::pin<P: core::convert::AsRef<std::path::Path>>(&m
 pub fn aya::programs::xdp::Xdp::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::xdp::Xdp
+pub fn aya::programs::xdp::Xdp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::xdp::Xdp
@@ -5131,8 +5133,6 @@ pub fn &'a aya::programs::xdp::Xdp::try_from(program: &'a aya::programs::Program
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::xdp::Xdp
 pub type &'a mut aya::programs::xdp::Xdp::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::xdp::Xdp::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::xdp::Xdp, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::xdp::Xdp
-pub fn aya::programs::xdp::Xdp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::xdp::Xdp
 impl core::marker::Sync for aya::programs::xdp::Xdp
 impl core::marker::Unpin for aya::programs::xdp::Xdp
@@ -5193,7 +5193,13 @@ pub fn aya::programs::xdp::XdpFlags::from_bits_retain(bits: u32) -> aya::program
 impl bitflags::traits::PublicFlags for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Internal = InternalBitFlags
 pub type aya::programs::xdp::XdpFlags::Primitive = u32
+impl core::clone::Clone for aya::programs::xdp::XdpFlags
+pub fn aya::programs::xdp::XdpFlags::clone(&self) -> aya::programs::xdp::XdpFlags
+impl core::default::Default for aya::programs::xdp::XdpFlags
+pub fn aya::programs::xdp::XdpFlags::default() -> aya::programs::xdp::XdpFlags
 impl core::fmt::Binary for aya::programs::xdp::XdpFlags
+pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Debug for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -5209,6 +5215,7 @@ impl core::iter::traits::collect::IntoIterator for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::IntoIter = bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
 pub type aya::programs::xdp::XdpFlags::Item = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::into_iter(self) -> Self::IntoIter
+impl core::marker::Copy for aya::programs::xdp::XdpFlags
 impl core::ops::arith::Sub for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::sub(self, other: Self) -> Self
@@ -5232,13 +5239,6 @@ pub fn aya::programs::xdp::XdpFlags::bitxor_assign(&mut self, other: Self)
 impl core::ops::bit::Not for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::not(self) -> Self
-impl core::clone::Clone for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::clone(&self) -> aya::programs::xdp::XdpFlags
-impl core::default::Default for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::default() -> aya::programs::xdp::XdpFlags
-impl core::fmt::Debug for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for aya::programs::xdp::XdpFlags
 impl core::marker::Send for aya::programs::xdp::XdpFlags
 impl core::marker::Sync for aya::programs::xdp::XdpFlags
 impl core::marker::Unpin for aya::programs::xdp::XdpFlags
@@ -5275,10 +5275,10 @@ pub fn aya::programs::xdp::XdpLink::try_from(fd_link: aya::programs::links::FdLi
 impl core::convert::TryFrom<aya::programs::xdp::XdpLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::xdp::XdpLink) -> core::result::Result<Self, Self::Error>
-impl core::ops::drop::Drop for aya::programs::xdp::XdpLink
-pub fn aya::programs::xdp::XdpLink::drop(&mut self)
 impl core::fmt::Debug for aya::programs::xdp::XdpLink
 pub fn aya::programs::xdp::XdpLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::xdp::XdpLink
+pub fn aya::programs::xdp::XdpLink::drop(&mut self)
 impl core::marker::Send for aya::programs::xdp::XdpLink
 impl core::marker::Sync for aya::programs::xdp::XdpLink
 impl core::marker::Unpin for aya::programs::xdp::XdpLink
@@ -5369,10 +5369,10 @@ pub aya::programs::ExtensionError::NoBTF
 impl core::convert::From<aya::programs::extension::ExtensionError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::extension::ExtensionError) -> Self
 impl core::error::Error for aya::programs::extension::ExtensionError
-impl core::fmt::Display for aya::programs::extension::ExtensionError
-pub fn aya::programs::extension::ExtensionError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::extension::ExtensionError
 pub fn aya::programs::extension::ExtensionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::extension::ExtensionError
+pub fn aya::programs::extension::ExtensionError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::extension::ExtensionError
 impl core::marker::Sync for aya::programs::extension::ExtensionError
 impl core::marker::Unpin for aya::programs::extension::ExtensionError
@@ -5404,10 +5404,10 @@ impl core::convert::From<aya::programs::kprobe::KProbeError> for aya::programs::
 pub fn aya::programs::ProgramError::from(source: aya::programs::kprobe::KProbeError) -> Self
 impl core::error::Error for aya::programs::kprobe::KProbeError
 pub fn aya::programs::kprobe::KProbeError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::kprobe::KProbeError
-pub fn aya::programs::kprobe::KProbeError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::kprobe::KProbeError
 pub fn aya::programs::kprobe::KProbeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::kprobe::KProbeError
+pub fn aya::programs::kprobe::KProbeError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::kprobe::KProbeError
 impl core::marker::Sync for aya::programs::kprobe::KProbeError
 impl core::marker::Unpin for aya::programs::kprobe::KProbeError
@@ -5573,6 +5573,8 @@ pub fn aya::programs::Program::info(&self) -> core::result::Result<aya::programs
 pub fn aya::programs::Program::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
 pub fn aya::programs::Program::prog_type(&self) -> aya_obj::generated::linux_bindings_x86_64::bpf_prog_type
 pub fn aya::programs::Program::unload(self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::Program
+pub fn aya::programs::Program::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::RawTracePoint
 pub type &'a aya::programs::RawTracePoint::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::RawTracePoint::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::RawTracePoint, aya::programs::ProgramError>
@@ -5717,8 +5719,6 @@ pub fn &'a mut aya::programs::uprobe::UProbe::try_from(program: &'a mut aya::pro
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::xdp::Xdp
 pub type &'a mut aya::programs::xdp::Xdp::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::xdp::Xdp::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::xdp::Xdp, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::Program
-pub fn aya::programs::Program::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::Program
 impl core::marker::Sync for aya::programs::Program
 impl core::marker::Unpin for aya::programs::Program
@@ -5788,10 +5788,10 @@ impl core::convert::From<std::io::error::Error> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: std::io::error::Error) -> Self
 impl core::error::Error for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::ProgramError
-pub fn aya::programs::ProgramError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::ProgramError
 impl core::marker::Sync for aya::programs::ProgramError
 impl core::marker::Unpin for aya::programs::ProgramError
@@ -5887,10 +5887,10 @@ impl core::convert::From<aya::programs::SocketFilterError> for aya::programs::Pr
 pub fn aya::programs::ProgramError::from(source: aya::programs::SocketFilterError) -> Self
 impl core::error::Error for aya::programs::SocketFilterError
 pub fn aya::programs::SocketFilterError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::SocketFilterError
-pub fn aya::programs::SocketFilterError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::SocketFilterError
 pub fn aya::programs::SocketFilterError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::SocketFilterError
+pub fn aya::programs::SocketFilterError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::SocketFilterError
 impl core::marker::Sync for aya::programs::SocketFilterError
 impl core::marker::Unpin for aya::programs::SocketFilterError
@@ -5963,10 +5963,10 @@ impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramE
 pub fn aya::programs::ProgramError::from(source: aya::programs::tc::TcError) -> Self
 impl core::error::Error for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::tc::TcError
-pub fn aya::programs::tc::TcError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::tc::TcError
+pub fn aya::programs::tc::TcError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::tc::TcError
 impl core::marker::Sync for aya::programs::tc::TcError
 impl core::marker::Unpin for aya::programs::tc::TcError
@@ -5998,10 +5998,10 @@ impl core::convert::From<aya::programs::trace_point::TracePointError> for aya::p
 pub fn aya::programs::ProgramError::from(source: aya::programs::trace_point::TracePointError) -> Self
 impl core::error::Error for aya::programs::trace_point::TracePointError
 pub fn aya::programs::trace_point::TracePointError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::trace_point::TracePointError
-pub fn aya::programs::trace_point::TracePointError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::trace_point::TracePointError
 pub fn aya::programs::trace_point::TracePointError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::trace_point::TracePointError
+pub fn aya::programs::trace_point::TracePointError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::trace_point::TracePointError
 impl core::marker::Sync for aya::programs::trace_point::TracePointError
 impl core::marker::Unpin for aya::programs::trace_point::TracePointError
@@ -6040,10 +6040,10 @@ impl core::convert::From<aya::programs::uprobe::UProbeError> for aya::programs::
 pub fn aya::programs::ProgramError::from(source: aya::programs::uprobe::UProbeError) -> Self
 impl core::error::Error for aya::programs::uprobe::UProbeError
 pub fn aya::programs::uprobe::UProbeError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::uprobe::UProbeError
-pub fn aya::programs::uprobe::UProbeError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::uprobe::UProbeError
 pub fn aya::programs::uprobe::UProbeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::uprobe::UProbeError
+pub fn aya::programs::uprobe::UProbeError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::uprobe::UProbeError
 impl core::marker::Sync for aya::programs::uprobe::UProbeError
 impl core::marker::Unpin for aya::programs::uprobe::UProbeError
@@ -6074,10 +6074,10 @@ impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::Progra
 pub fn aya::programs::ProgramError::from(source: aya::programs::xdp::XdpError) -> Self
 impl core::error::Error for aya::programs::xdp::XdpError
 pub fn aya::programs::xdp::XdpError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::programs::xdp::XdpError
-pub fn aya::programs::xdp::XdpError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::programs::xdp::XdpError
 pub fn aya::programs::xdp::XdpError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::xdp::XdpError
+pub fn aya::programs::xdp::XdpError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::xdp::XdpError
 impl core::marker::Sync for aya::programs::xdp::XdpError
 impl core::marker::Unpin for aya::programs::xdp::XdpError
@@ -6118,6 +6118,8 @@ pub fn aya::programs::tp_btf::BtfTracePoint::pin<P: core::convert::AsRef<std::pa
 pub fn aya::programs::tp_btf::BtfTracePoint::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::tp_btf::BtfTracePoint
+pub fn aya::programs::tp_btf::BtfTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::tp_btf::BtfTracePoint
@@ -6126,8 +6128,6 @@ pub fn &'a aya::programs::tp_btf::BtfTracePoint::try_from(program: &'a aya::prog
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::tp_btf::BtfTracePoint
 pub type &'a mut aya::programs::tp_btf::BtfTracePoint::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::tp_btf::BtfTracePoint::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::tp_btf::BtfTracePoint, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::tp_btf::BtfTracePoint
-pub fn aya::programs::tp_btf::BtfTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::tp_btf::BtfTracePoint
 impl core::marker::Sync for aya::programs::tp_btf::BtfTracePoint
 impl core::marker::Unpin for aya::programs::tp_btf::BtfTracePoint
@@ -6166,6 +6166,8 @@ pub fn aya::programs::cgroup_device::CgroupDevice::pin<P: core::convert::AsRef<s
 pub fn aya::programs::cgroup_device::CgroupDevice::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_device::CgroupDevice
+pub fn aya::programs::cgroup_device::CgroupDevice::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_device::CgroupDevice
@@ -6174,8 +6176,6 @@ pub fn &'a aya::programs::cgroup_device::CgroupDevice::try_from(program: &'a aya
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_device::CgroupDevice
 pub type &'a mut aya::programs::cgroup_device::CgroupDevice::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_device::CgroupDevice::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_device::CgroupDevice
 impl core::marker::Sync for aya::programs::cgroup_device::CgroupDevice
 impl core::marker::Unpin for aya::programs::cgroup_device::CgroupDevice
@@ -6214,6 +6214,8 @@ pub fn aya::programs::cgroup_skb::CgroupSkb::pin<P: core::convert::AsRef<std::pa
 pub fn aya::programs::cgroup_skb::CgroupSkb::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkb
+pub fn aya::programs::cgroup_skb::CgroupSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_skb::CgroupSkb
@@ -6222,8 +6224,6 @@ pub fn &'a aya::programs::cgroup_skb::CgroupSkb::try_from(program: &'a aya::prog
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_skb::CgroupSkb
 pub type &'a mut aya::programs::cgroup_skb::CgroupSkb::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_skb::CgroupSkb::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_skb::CgroupSkb, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkb
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkb
 impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkb
@@ -6261,6 +6261,8 @@ pub fn aya::programs::cgroup_sock::CgroupSock::pin<P: core::convert::AsRef<std::
 pub fn aya::programs::cgroup_sock::CgroupSock::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_sock::CgroupSock
 pub fn aya::programs::cgroup_sock::CgroupSock::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_sock::CgroupSock
+pub fn aya::programs::cgroup_sock::CgroupSock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_sock::CgroupSock
 pub fn aya::programs::cgroup_sock::CgroupSock::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sock::CgroupSock
@@ -6269,8 +6271,6 @@ pub fn &'a aya::programs::cgroup_sock::CgroupSock::try_from(program: &'a aya::pr
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sock::CgroupSock
 pub type &'a mut aya::programs::cgroup_sock::CgroupSock::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_sock::CgroupSock::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sock::CgroupSock, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_sock::CgroupSock
 impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSock
 impl core::marker::Unpin for aya::programs::cgroup_sock::CgroupSock
@@ -6308,6 +6308,8 @@ pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::pin<P: core::convert::As
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddr
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sock_addr::CgroupSockAddr
@@ -6316,8 +6318,6 @@ pub fn &'a aya::programs::cgroup_sock_addr::CgroupSockAddr::try_from(program: &'
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub type &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::marker::Unpin for aya::programs::cgroup_sock_addr::CgroupSockAddr
@@ -6355,6 +6355,8 @@ pub fn aya::programs::cgroup_sockopt::CgroupSockopt::pin<P: core::convert::AsRef
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_sockopt::CgroupSockopt
+pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sockopt::CgroupSockopt
@@ -6363,8 +6365,6 @@ pub fn &'a aya::programs::cgroup_sockopt::CgroupSockopt::try_from(program: &'a a
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sockopt::CgroupSockopt
 pub type &'a mut aya::programs::cgroup_sockopt::CgroupSockopt::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_sockopt::CgroupSockopt::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sockopt::CgroupSockopt, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::marker::Unpin for aya::programs::cgroup_sockopt::CgroupSockopt
@@ -6403,6 +6403,8 @@ pub fn aya::programs::cgroup_sysctl::CgroupSysctl::pin<P: core::convert::AsRef<s
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::cgroup_sysctl::CgroupSysctl
+pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sysctl::CgroupSysctl
@@ -6411,8 +6413,6 @@ pub fn &'a aya::programs::cgroup_sysctl::CgroupSysctl::try_from(program: &'a aya
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sysctl::CgroupSysctl
 pub type &'a mut aya::programs::cgroup_sysctl::CgroupSysctl::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_sysctl::CgroupSysctl::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sysctl::CgroupSysctl, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::marker::Unpin for aya::programs::cgroup_sysctl::CgroupSysctl
@@ -6452,6 +6452,8 @@ pub fn aya::programs::extension::Extension::pin<P: core::convert::AsRef<std::pat
 pub fn aya::programs::extension::Extension::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::extension::Extension
+pub fn aya::programs::extension::Extension::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::extension::Extension
@@ -6460,8 +6462,6 @@ pub fn &'a aya::programs::extension::Extension::try_from(program: &'a aya::progr
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::extension::Extension
 pub type &'a mut aya::programs::extension::Extension::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::extension::Extension::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::extension::Extension, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::extension::Extension
-pub fn aya::programs::extension::Extension::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::extension::Extension
 impl core::marker::Sync for aya::programs::extension::Extension
 impl core::marker::Unpin for aya::programs::extension::Extension
@@ -6500,6 +6500,8 @@ pub fn aya::programs::fentry::FEntry::pin<P: core::convert::AsRef<std::path::Pat
 pub fn aya::programs::fentry::FEntry::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::fentry::FEntry
+pub fn aya::programs::fentry::FEntry::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::fentry::FEntry
@@ -6508,8 +6510,6 @@ pub fn &'a aya::programs::fentry::FEntry::try_from(program: &'a aya::programs::P
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::fentry::FEntry
 pub type &'a mut aya::programs::fentry::FEntry::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::fentry::FEntry::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::fentry::FEntry, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::fentry::FEntry
-pub fn aya::programs::fentry::FEntry::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::fentry::FEntry
 impl core::marker::Sync for aya::programs::fentry::FEntry
 impl core::marker::Unpin for aya::programs::fentry::FEntry
@@ -6548,6 +6548,8 @@ pub fn aya::programs::fexit::FExit::pin<P: core::convert::AsRef<std::path::Path>
 pub fn aya::programs::fexit::FExit::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::fexit::FExit
+pub fn aya::programs::fexit::FExit::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::fexit::FExit
@@ -6556,8 +6558,6 @@ pub fn &'a aya::programs::fexit::FExit::try_from(program: &'a aya::programs::Pro
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::fexit::FExit
 pub type &'a mut aya::programs::fexit::FExit::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::fexit::FExit::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::fexit::FExit, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::fexit::FExit
-pub fn aya::programs::fexit::FExit::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::fexit::FExit
 impl core::marker::Sync for aya::programs::fexit::FExit
 impl core::marker::Unpin for aya::programs::fexit::FExit
@@ -6596,6 +6596,8 @@ pub fn aya::programs::kprobe::KProbe::pin<P: core::convert::AsRef<std::path::Pat
 pub fn aya::programs::kprobe::KProbe::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::kprobe::KProbe
+pub fn aya::programs::kprobe::KProbe::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::kprobe::KProbe
@@ -6604,8 +6606,6 @@ pub fn &'a aya::programs::kprobe::KProbe::try_from(program: &'a aya::programs::P
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::kprobe::KProbe
 pub type &'a mut aya::programs::kprobe::KProbe::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::kprobe::KProbe::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::kprobe::KProbe, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::kprobe::KProbe
-pub fn aya::programs::kprobe::KProbe::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::kprobe::KProbe
 impl core::marker::Sync for aya::programs::kprobe::KProbe
 impl core::marker::Unpin for aya::programs::kprobe::KProbe
@@ -6645,6 +6645,8 @@ pub fn aya::programs::lirc_mode2::LircMode2::pin<P: core::convert::AsRef<std::pa
 pub fn aya::programs::lirc_mode2::LircMode2::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::lirc_mode2::LircMode2
+pub fn aya::programs::lirc_mode2::LircMode2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lirc_mode2::LircMode2
@@ -6653,8 +6655,6 @@ pub fn &'a aya::programs::lirc_mode2::LircMode2::try_from(program: &'a aya::prog
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lirc_mode2::LircMode2
 pub type &'a mut aya::programs::lirc_mode2::LircMode2::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::lirc_mode2::LircMode2::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lirc_mode2::LircMode2, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::lirc_mode2::LircMode2
-pub fn aya::programs::lirc_mode2::LircMode2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::lirc_mode2::LircMode2
 impl core::marker::Sync for aya::programs::lirc_mode2::LircMode2
 impl core::marker::Unpin for aya::programs::lirc_mode2::LircMode2
@@ -6693,6 +6693,8 @@ pub fn aya::programs::lsm::Lsm::pin<P: core::convert::AsRef<std::path::Path>>(&m
 pub fn aya::programs::lsm::Lsm::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::lsm::Lsm
+pub fn aya::programs::lsm::Lsm::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lsm::Lsm
@@ -6701,8 +6703,6 @@ pub fn &'a aya::programs::lsm::Lsm::try_from(program: &'a aya::programs::Program
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lsm::Lsm
 pub type &'a mut aya::programs::lsm::Lsm::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::lsm::Lsm::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lsm::Lsm, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::lsm::Lsm
-pub fn aya::programs::lsm::Lsm::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::lsm::Lsm
 impl core::marker::Sync for aya::programs::lsm::Lsm
 impl core::marker::Unpin for aya::programs::lsm::Lsm
@@ -6741,6 +6741,8 @@ pub fn aya::programs::perf_event::PerfEvent::pin<P: core::convert::AsRef<std::pa
 pub fn aya::programs::perf_event::PerfEvent::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::perf_event::PerfEvent
+pub fn aya::programs::perf_event::PerfEvent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::perf_event::PerfEvent
@@ -6749,8 +6751,6 @@ pub fn &'a aya::programs::perf_event::PerfEvent::try_from(program: &'a aya::prog
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::perf_event::PerfEvent
 pub type &'a mut aya::programs::perf_event::PerfEvent::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::perf_event::PerfEvent::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::perf_event::PerfEvent, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::perf_event::PerfEvent
-pub fn aya::programs::perf_event::PerfEvent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::perf_event::PerfEvent
 impl core::marker::Sync for aya::programs::perf_event::PerfEvent
 impl core::marker::Unpin for aya::programs::perf_event::PerfEvent
@@ -6775,10 +6775,10 @@ pub fn aya::programs::perf_event::PerfEvent::from(t: T) -> T
 pub struct aya::programs::ProgramFd(_)
 impl aya::programs::ProgramFd
 pub fn aya::programs::ProgramFd::try_clone(&self) -> std::io::error::Result<Self>
-impl std::os::fd::owned::AsFd for aya::programs::ProgramFd
-pub fn aya::programs::ProgramFd::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
 impl core::fmt::Debug for aya::programs::ProgramFd
 pub fn aya::programs::ProgramFd::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl std::os::fd::owned::AsFd for aya::programs::ProgramFd
+pub fn aya::programs::ProgramFd::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
 impl core::marker::Send for aya::programs::ProgramFd
 impl core::marker::Sync for aya::programs::ProgramFd
 impl core::marker::Unpin for aya::programs::ProgramFd
@@ -6857,6 +6857,8 @@ pub fn aya::programs::RawTracePoint::pin<P: core::convert::AsRef<std::path::Path
 pub fn aya::programs::RawTracePoint::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::RawTracePoint
 pub fn aya::programs::RawTracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::RawTracePoint
+pub fn aya::programs::RawTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::RawTracePoint
 pub fn aya::programs::RawTracePoint::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::RawTracePoint
@@ -6865,8 +6867,6 @@ pub fn &'a aya::programs::RawTracePoint::try_from(program: &'a aya::programs::Pr
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::RawTracePoint
 pub type &'a mut aya::programs::RawTracePoint::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::RawTracePoint::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::RawTracePoint, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::RawTracePoint
-pub fn aya::programs::RawTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::RawTracePoint
 impl core::marker::Sync for aya::programs::RawTracePoint
 impl core::marker::Unpin for aya::programs::RawTracePoint
@@ -6905,6 +6905,8 @@ pub fn aya::programs::tc::SchedClassifier::pin<P: core::convert::AsRef<std::path
 pub fn aya::programs::tc::SchedClassifier::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::tc::SchedClassifier
+pub fn aya::programs::tc::SchedClassifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::tc::SchedClassifier
@@ -6913,8 +6915,6 @@ pub fn &'a aya::programs::tc::SchedClassifier::try_from(program: &'a aya::progra
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::tc::SchedClassifier
 pub type &'a mut aya::programs::tc::SchedClassifier::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::tc::SchedClassifier::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::tc::SchedClassifier, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::tc::SchedClassifier
-pub fn aya::programs::tc::SchedClassifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::tc::SchedClassifier
 impl core::marker::Sync for aya::programs::tc::SchedClassifier
 impl core::marker::Unpin for aya::programs::tc::SchedClassifier
@@ -6953,6 +6953,8 @@ pub fn aya::programs::SkLookup::pin<P: core::convert::AsRef<std::path::Path>>(&m
 pub fn aya::programs::SkLookup::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::SkLookup
 pub fn aya::programs::SkLookup::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::SkLookup
+pub fn aya::programs::SkLookup::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::SkLookup
 pub fn aya::programs::SkLookup::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SkLookup
@@ -6961,8 +6963,6 @@ pub fn &'a aya::programs::SkLookup::try_from(program: &'a aya::programs::Program
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SkLookup
 pub type &'a mut aya::programs::SkLookup::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::SkLookup::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SkLookup, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::SkLookup
-pub fn aya::programs::SkLookup::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::SkLookup
 impl core::marker::Sync for aya::programs::SkLookup
 impl core::marker::Unpin for aya::programs::SkLookup
@@ -7001,6 +7001,8 @@ pub fn aya::programs::SkMsg::pin<P: core::convert::AsRef<std::path::Path>>(&mut 
 pub fn aya::programs::SkMsg::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::SkMsg
 pub fn aya::programs::SkMsg::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::SkMsg
+pub fn aya::programs::SkMsg::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::SkMsg
 pub fn aya::programs::SkMsg::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SkMsg
@@ -7009,8 +7011,6 @@ pub fn &'a aya::programs::SkMsg::try_from(program: &'a aya::programs::Program) -
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SkMsg
 pub type &'a mut aya::programs::SkMsg::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::SkMsg::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SkMsg, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::SkMsg
-pub fn aya::programs::SkMsg::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::SkMsg
 impl core::marker::Sync for aya::programs::SkMsg
 impl core::marker::Unpin for aya::programs::SkMsg
@@ -7048,6 +7048,8 @@ pub fn aya::programs::SkSkb::pin<P: core::convert::AsRef<std::path::Path>>(&mut 
 pub fn aya::programs::SkSkb::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::SkSkb
 pub fn aya::programs::SkSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::SkSkb
+pub fn aya::programs::SkSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::SkSkb
 pub fn aya::programs::SkSkb::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SkSkb
@@ -7056,8 +7058,6 @@ pub fn &'a aya::programs::SkSkb::try_from(program: &'a aya::programs::Program) -
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SkSkb
 pub type &'a mut aya::programs::SkSkb::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::SkSkb::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SkSkb, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::SkSkb
-pub fn aya::programs::SkSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::SkSkb
 impl core::marker::Sync for aya::programs::SkSkb
 impl core::marker::Unpin for aya::programs::SkSkb
@@ -7096,6 +7096,8 @@ pub fn aya::programs::SockOps::pin<P: core::convert::AsRef<std::path::Path>>(&mu
 pub fn aya::programs::SockOps::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::SockOps
 pub fn aya::programs::SockOps::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::SockOps
+pub fn aya::programs::SockOps::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::SockOps
 pub fn aya::programs::SockOps::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SockOps
@@ -7104,8 +7106,6 @@ pub fn &'a aya::programs::SockOps::try_from(program: &'a aya::programs::Program)
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SockOps
 pub type &'a mut aya::programs::SockOps::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::SockOps::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SockOps, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::SockOps
-pub fn aya::programs::SockOps::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::SockOps
 impl core::marker::Sync for aya::programs::SockOps
 impl core::marker::Unpin for aya::programs::SockOps
@@ -7144,6 +7144,8 @@ pub fn aya::programs::SocketFilter::pin<P: core::convert::AsRef<std::path::Path>
 pub fn aya::programs::SocketFilter::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::SocketFilter
 pub fn aya::programs::SocketFilter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::SocketFilter
+pub fn aya::programs::SocketFilter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::SocketFilter
 pub fn aya::programs::SocketFilter::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SocketFilter
@@ -7152,8 +7154,6 @@ pub fn &'a aya::programs::SocketFilter::try_from(program: &'a aya::programs::Pro
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SocketFilter
 pub type &'a mut aya::programs::SocketFilter::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::SocketFilter::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SocketFilter, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::SocketFilter
-pub fn aya::programs::SocketFilter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::SocketFilter
 impl core::marker::Sync for aya::programs::SocketFilter
 impl core::marker::Unpin for aya::programs::SocketFilter
@@ -7192,6 +7192,8 @@ pub fn aya::programs::trace_point::TracePoint::pin<P: core::convert::AsRef<std::
 pub fn aya::programs::trace_point::TracePoint::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::trace_point::TracePoint
+pub fn aya::programs::trace_point::TracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::trace_point::TracePoint
@@ -7200,8 +7202,6 @@ pub fn &'a aya::programs::trace_point::TracePoint::try_from(program: &'a aya::pr
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::trace_point::TracePoint
 pub type &'a mut aya::programs::trace_point::TracePoint::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::trace_point::TracePoint::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::trace_point::TracePoint, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::trace_point::TracePoint
-pub fn aya::programs::trace_point::TracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::trace_point::TracePoint
 impl core::marker::Sync for aya::programs::trace_point::TracePoint
 impl core::marker::Unpin for aya::programs::trace_point::TracePoint
@@ -7240,6 +7240,8 @@ pub fn aya::programs::uprobe::UProbe::pin<P: core::convert::AsRef<std::path::Pat
 pub fn aya::programs::uprobe::UProbe::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::uprobe::UProbe
+pub fn aya::programs::uprobe::UProbe::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::uprobe::UProbe
@@ -7248,8 +7250,6 @@ pub fn &'a aya::programs::uprobe::UProbe::try_from(program: &'a aya::programs::P
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::uprobe::UProbe
 pub type &'a mut aya::programs::uprobe::UProbe::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::uprobe::UProbe::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::uprobe::UProbe, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::uprobe::UProbe
-pub fn aya::programs::uprobe::UProbe::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::uprobe::UProbe
 impl core::marker::Sync for aya::programs::uprobe::UProbe
 impl core::marker::Unpin for aya::programs::uprobe::UProbe
@@ -7289,6 +7289,8 @@ pub fn aya::programs::xdp::Xdp::pin<P: core::convert::AsRef<std::path::Path>>(&m
 pub fn aya::programs::xdp::Xdp::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::xdp::Xdp
+pub fn aya::programs::xdp::Xdp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::drop(&mut self)
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::xdp::Xdp
@@ -7297,8 +7299,6 @@ pub fn &'a aya::programs::xdp::Xdp::try_from(program: &'a aya::programs::Program
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::xdp::Xdp
 pub type &'a mut aya::programs::xdp::Xdp::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::xdp::Xdp::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::xdp::Xdp, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::xdp::Xdp
-pub fn aya::programs::xdp::Xdp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::xdp::Xdp
 impl core::marker::Sync for aya::programs::xdp::Xdp
 impl core::marker::Unpin for aya::programs::xdp::Xdp
@@ -7359,7 +7359,13 @@ pub fn aya::programs::xdp::XdpFlags::from_bits_retain(bits: u32) -> aya::program
 impl bitflags::traits::PublicFlags for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Internal = InternalBitFlags
 pub type aya::programs::xdp::XdpFlags::Primitive = u32
+impl core::clone::Clone for aya::programs::xdp::XdpFlags
+pub fn aya::programs::xdp::XdpFlags::clone(&self) -> aya::programs::xdp::XdpFlags
+impl core::default::Default for aya::programs::xdp::XdpFlags
+pub fn aya::programs::xdp::XdpFlags::default() -> aya::programs::xdp::XdpFlags
 impl core::fmt::Binary for aya::programs::xdp::XdpFlags
+pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Debug for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -7375,6 +7381,7 @@ impl core::iter::traits::collect::IntoIterator for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::IntoIter = bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
 pub type aya::programs::xdp::XdpFlags::Item = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::into_iter(self) -> Self::IntoIter
+impl core::marker::Copy for aya::programs::xdp::XdpFlags
 impl core::ops::arith::Sub for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::sub(self, other: Self) -> Self
@@ -7398,13 +7405,6 @@ pub fn aya::programs::xdp::XdpFlags::bitxor_assign(&mut self, other: Self)
 impl core::ops::bit::Not for aya::programs::xdp::XdpFlags
 pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::not(self) -> Self
-impl core::clone::Clone for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::clone(&self) -> aya::programs::xdp::XdpFlags
-impl core::default::Default for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::default() -> aya::programs::xdp::XdpFlags
-impl core::fmt::Debug for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for aya::programs::xdp::XdpFlags
 impl core::marker::Send for aya::programs::xdp::XdpFlags
 impl core::marker::Sync for aya::programs::xdp::XdpFlags
 impl core::marker::Unpin for aya::programs::xdp::XdpFlags
@@ -7594,10 +7594,10 @@ impl core::convert::From<aya_obj::relocation::BpfRelocationError> for aya::BpfEr
 pub fn aya::BpfError::from(source: aya_obj::relocation::BpfRelocationError) -> Self
 impl core::error::Error for aya::BpfError
 pub fn aya::BpfError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Display for aya::BpfError
-pub fn aya::BpfError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for aya::BpfError
 pub fn aya::BpfError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::BpfError
+pub fn aya::BpfError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::BpfError
 impl core::marker::Sync for aya::BpfError
 impl core::marker::Unpin for aya::BpfError
@@ -7758,9 +7758,13 @@ pub fn aya::VerifierLogLevel::from_bits_retain(bits: u32) -> aya::VerifierLogLev
 impl bitflags::traits::PublicFlags for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::Internal = InternalBitFlags
 pub type aya::VerifierLogLevel::Primitive = u32
+impl core::clone::Clone for aya::VerifierLogLevel
+pub fn aya::VerifierLogLevel::clone(&self) -> aya::VerifierLogLevel
 impl core::default::Default for aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::default() -> Self
 impl core::fmt::Binary for aya::VerifierLogLevel
+pub fn aya::VerifierLogLevel::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Debug for aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -7776,6 +7780,7 @@ impl core::iter::traits::collect::IntoIterator for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::IntoIter = bitflags::iter::Iter<aya::VerifierLogLevel>
 pub type aya::VerifierLogLevel::Item = aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::into_iter(self) -> Self::IntoIter
+impl core::marker::Copy for aya::VerifierLogLevel
 impl core::ops::arith::Sub for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::Output = aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::sub(self, other: Self) -> Self
@@ -7799,11 +7804,6 @@ pub fn aya::VerifierLogLevel::bitxor_assign(&mut self, other: Self)
 impl core::ops::bit::Not for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::Output = aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::not(self) -> Self
-impl core::clone::Clone for aya::VerifierLogLevel
-pub fn aya::VerifierLogLevel::clone(&self) -> aya::VerifierLogLevel
-impl core::fmt::Debug for aya::VerifierLogLevel
-pub fn aya::VerifierLogLevel::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for aya::VerifierLogLevel
 impl core::marker::Send for aya::VerifierLogLevel
 impl core::marker::Sync for aya::VerifierLogLevel
 impl core::marker::Unpin for aya::VerifierLogLevel

@@ -81,7 +81,7 @@ num_enum = { version = "0.7", default-features = false }
 object = { version = "0.32", default-features = false }
 proc-macro-error = { version = "1.0", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
-public-api = { version = "0.32.0", default-features = false }
+public-api = { version = "0.33.1", default-features = false }
 quote = { version = "1", default-features = false }
 rand = { version = "0.8", default-features = false }
 rbpf = { version = "0.2.0", default-features = false }

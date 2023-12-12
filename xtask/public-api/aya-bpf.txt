@@ -8,6 +8,8 @@ pub macro aya_bpf::helpers::bpf_printk!
 #[repr(transparent)] pub struct aya_bpf::helpers::PrintkArg(_)
 impl aya_bpf::helpers::PrintkArg
 pub fn aya_bpf::helpers::PrintkArg::from_raw(x: u64) -> Self
+impl core::clone::Clone for aya_bpf::helpers::PrintkArg
+pub fn aya_bpf::helpers::PrintkArg::clone(&self) -> aya_bpf::helpers::PrintkArg
 impl core::convert::From<char> for aya_bpf::helpers::PrintkArg
 pub fn aya_bpf::helpers::PrintkArg::from(x: char) -> aya_bpf::helpers::PrintkArg
 impl core::convert::From<i16> for aya_bpf::helpers::PrintkArg
@@ -30,13 +32,11 @@ impl core::convert::From<u8> for aya_bpf::helpers::PrintkArg
 pub fn aya_bpf::helpers::PrintkArg::from(x: u8) -> aya_bpf::helpers::PrintkArg
 impl core::convert::From<usize> for aya_bpf::helpers::PrintkArg
 pub fn aya_bpf::helpers::PrintkArg::from(x: usize) -> aya_bpf::helpers::PrintkArg
+impl core::marker::Copy for aya_bpf::helpers::PrintkArg
 impl<T> core::convert::From<*const T> for aya_bpf::helpers::PrintkArg
 pub fn aya_bpf::helpers::PrintkArg::from(x: *const T) -> Self
 impl<T> core::convert::From<*mut T> for aya_bpf::helpers::PrintkArg
 pub fn aya_bpf::helpers::PrintkArg::from(x: *mut T) -> Self
-impl core::clone::Clone for aya_bpf::helpers::PrintkArg
-pub fn aya_bpf::helpers::PrintkArg::clone(&self) -> aya_bpf::helpers::PrintkArg
-impl core::marker::Copy for aya_bpf::helpers::PrintkArg
 impl core::marker::Send for aya_bpf::helpers::PrintkArg
 impl core::marker::Sync for aya_bpf::helpers::PrintkArg
 impl core::marker::Unpin for aya_bpf::helpers::PrintkArg
