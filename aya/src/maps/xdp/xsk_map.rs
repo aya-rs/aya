@@ -82,7 +82,7 @@ impl<T: BorrowMut<MapData>> XskMap<T> {
     /// Removes the `AF_XDP` socket stored at `index` from the map.
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
-    /// if `bpf_map_update_elem` fails.
+    /// if `bpf_map_delete_elem` fails.
     pub fn clear_index(&mut self, index: u32) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
