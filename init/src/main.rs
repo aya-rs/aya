@@ -123,24 +123,23 @@ fn run() -> anyhow::Result<()> {
     // Iterate files in /bin.
     let read_dir = std::fs::read_dir("/bin").context("read_dir(/bin) failed")?;
     let errors = read_dir
-        .filter_map(|entry| {
-            match (|| {
-                let entry = entry.context("read_dir(/bin) failed")?;
-                let path = entry.path();
-                let status = std::process::Command::new(&path)
-                    .args(&args)
-                    .status()
-                    .with_context(|| format!("failed to execute {}", path.display()))?;
+        .map(|entry| {
+            let entry = entry.context("read_dir(/bin) failed")?;
+            let path = entry.path();
+            let status = std::process::Command::new(&path)
+                .args(&args)
+                .status()
+                .with_context(|| format!("failed to execute {}", path.display()))?;
 
-                if status.code() == Some(0) {
-                    Ok(())
-                } else {
-                    Err(anyhow::anyhow!("{} failed: {status:?}", path.display()))
-                }
-            })() {
-                Ok(()) => None,
-                Err(err) => Some(err),
+            if status.code() == Some(0) {
+                Ok(())
+            } else {
+                Err(anyhow::anyhow!("{} failed: {status:?}", path.display()))
             }
+        })
+        .filter_map(|result| match result {
+            Ok(()) => None,
+            Err(err) => Some(err),
         })
         .collect::<Vec<_>>();
     if errors.is_empty() {
