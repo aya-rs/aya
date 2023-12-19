@@ -27,8 +27,8 @@ use crate::{
 /// static MAP: DevMap = DevMap::with_max_entries(1, 0);
 ///
 /// #[xdp]
-/// fn xdp(_ctx: XdpContext) -> i32 {
-///     MAP.redirect(0, xdp_action::XDP_PASS as u64)
+/// fn xdp(_ctx: XdpContext) -> u32 {
+///     MAP.redirect(0, xdp_action::XDP_PASS as u64).unwrap_or(xdp_action::XDP_DROP)
 /// }
 /// ```
 #[repr(transparent)]
@@ -100,7 +100,7 @@ impl DevMap {
     /// #[map]
     /// static MAP: DevMap = DevMap::with_max_entries(1, 0);
     ///
-    /// let target_if_index = MAP.get(0).target_if_index;
+    /// let target_if_index = MAP.get(0).unwrap().if_index;
     ///
     /// // redirect to if_index
     /// ```

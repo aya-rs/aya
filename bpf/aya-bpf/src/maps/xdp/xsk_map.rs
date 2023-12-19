@@ -28,9 +28,9 @@ use crate::{
 /// static SOCKS: XskMap = XskMap::with_max_entries(8, 0);
 ///
 /// #[xdp]
-/// fn xdp(ctx, XdpContext) -> i32 {
+/// fn xdp(ctx: XdpContext) -> u32 {
 ///     let queue_id = unsafe { (*ctx.ctx).rx_queue_index };
-///     MAP.redirect(queue_id, xdp_action::XDP_DROP as u64)
+///     SOCKS.redirect(queue_id, xdp_action::XDP_DROP as u64).unwrap_or(xdp_action::XDP_DROP)
 /// }
 /// ```
 ///
@@ -68,7 +68,7 @@ impl XskMap {
     /// use aya_bpf::{macros::map, maps::XskMap};
     ///
     /// #[map]
-    /// static SOCKS: XskMap::with_max_entries(8, 0);
+    /// static SOCKS: XskMap =  XskMap::with_max_entries(8, 0);
     /// ```
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> XskMap {
         XskMap {
@@ -93,7 +93,7 @@ impl XskMap {
     /// use aya_bpf::{macros::map, maps::XskMap};
     ///
     /// #[map]
-    /// static SOCKS: XskMap::pinned(8, 0);
+    /// static SOCKS: XskMap = XskMap::pinned(8, 0);
     /// ```
     pub const fn pinned(max_entries: u32, flags: u32) -> XskMap {
         XskMap {
@@ -151,9 +151,9 @@ impl XskMap {
     /// static SOCKS: XskMap = XskMap::with_max_entries(8, 0);
     ///
     /// #[xdp]
-    /// fn xdp(ctx, XdpContext) -> u32 {
+    /// fn xdp(ctx: XdpContext) -> u32 {
     ///     let queue_id = unsafe { (*ctx.ctx).rx_queue_index };
-    ///     MAP.redirect(queue_id, 0).unwrap_or(xdp_action::XDP_DROP)
+    ///     SOCKS.redirect(queue_id, 0).unwrap_or(xdp_action::XDP_DROP)
     /// }
     /// ```
     #[inline(always)]

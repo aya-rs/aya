@@ -25,9 +25,9 @@ use crate::{
 /// static MAP: CpuMap = CpuMap::with_max_entries(8, 0);
 ///
 /// #[xdp]
-/// fn xdp(_ctx: XdpContext) -> i32 {
+/// fn xdp(_ctx: XdpContext) -> u32 {
 ///     // Redirect to CPU 7 or drop packet if no entry found.
-///     MAP.redirect(7, xdp_action::XDP_DROP as u64)
+///     MAP.redirect(7, xdp_action::XDP_DROP as u64).unwrap_or(xdp_action::XDP_DROP)
 /// }
 /// ```
 #[repr(transparent)]
