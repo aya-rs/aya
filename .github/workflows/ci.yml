@@ -35,7 +35,7 @@ jobs:
 
       - name: Check C formatting
         run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
-      
+
       - name: Check Markdown
         uses: DavidAnson/markdownlint-cli2-action@v14
 
@@ -111,6 +111,20 @@ jobs:
             --exclude integration-test \
             --workspace
 
+      - name: Doctests
+        env:
+          RUST_BACKTRACE: full
+        run: |
+          set -euxo pipefail
+          cargo hack test --doc --feature-powerset \
+            --exclude aya-bpf \
+            --exclude aya-bpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude init \
+            --exclude integration-ebpf \
+            --exclude integration-test \
+            --workspace
+
   build-test-aya-bpf:
     strategy:
       fail-fast: false
@@ -148,6 +162,17 @@ jobs:
             --feature-powerset \
             --target ${{ matrix.target }} \
             -Z build-std=core
+
+      - name: Test
+        env:
+          CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.arch }}
+          RUST_BACKTRACE: full
+        run: |
+          set -euxo pipefail
+          cargo hack test --doc \
+            --package aya-bpf \
+            --package aya-log-ebpf \
+            --feature-powerset
 
   run-integration-test:
     strategy:
