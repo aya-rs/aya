@@ -29,8 +29,8 @@ use crate::{
 /// static MAP: DevMapHash = DevMapHash::with_max_entries(1, 0);
 ///
 /// #[xdp]
-/// fn xdp(_ctx: XdpContext) -> i32 {
-///     MAP.redirect(42, xdp_action::XDP_PASS as u64)
+/// fn xdp(_ctx: XdpContext) -> u32 {
+///     MAP.redirect(42, xdp_action::XDP_PASS as u64).unwrap_or(xdp_action::XDP_DROP)
 /// }
 /// ```
 #[repr(transparent)]
@@ -102,7 +102,7 @@ impl DevMapHash {
     /// #[map]
     /// static MAP: DevMapHash = DevMapHash::with_max_entries(1, 0);
     ///
-    /// let target_if_index = MAP.get(42).target_if_index;
+    /// let target_if_index = MAP.get(42).unwrap().if_index;
     ///
     /// // redirect to ifindex
     /// ```
