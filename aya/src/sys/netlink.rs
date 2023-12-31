@@ -117,14 +117,28 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     prog_name: &CStr,
     priority: u16,
     handle: u32,
+    create: bool,
 ) -> Result<(u16, u32), io::Error> {
     let sock = NetlinkSocket::open()?;
     let mut req = mem::zeroed::<TcRequest>();
 
     let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>();
+    // When create=true, we're creating a new attachment so we must set NLM_F_CREATE. Then we also
+    // set NLM_F_EXCL so that attaching fails if there's already a program attached to the given
+    // handle.
+    //
+    // When create=false we're replacing an existing attachment so we must not set either flags.
+    //
+    // See https://github.com/torvalds/linux/blob/3a87498/net/sched/cls_api.c#L2304
+    let request_flags = if create {
+        NLM_F_CREATE | NLM_F_EXCL
+    } else {
+        // NLM_F_REPLACE exists, but seems unused by cls_bpf
+        0
+    };
     req.header = nlmsghdr {
         nlmsg_len: nlmsg_len as u32,
-        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE | NLM_F_ECHO) as u16,
+        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_ECHO | request_flags) as u16,
         nlmsg_type: RTM_NEWTFILTER,
         nlmsg_pid: 0,
         nlmsg_seq: 1,

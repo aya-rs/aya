@@ -152,27 +152,54 @@ impl SchedClassifier {
         attach_type: TcAttachType,
         options: TcOptions,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
-        let prog_fd = prog_fd.as_fd();
         let if_index = ifindex_from_ifname(interface)
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
+        self.do_attach(if_index as i32, attach_type, options, true)
+    }
+
+    /// Atomically replaces the program referenced by the provided link.
+    ///
+    /// Ownership of the link will transfer to this program.
+    pub fn attach_to_link(
+        &mut self,
+        link: SchedClassifierLink,
+    ) -> Result<SchedClassifierLinkId, ProgramError> {
+        let TcLink {
+            if_index,
+            attach_type,
+            priority,
+            handle,
+        } = link.into_inner();
+        self.do_attach(if_index, attach_type, TcOptions { priority, handle }, false)
+    }
+
+    fn do_attach(
+        &mut self,
+        if_index: i32,
+        attach_type: TcAttachType,
+        options: TcOptions,
+        create: bool,
+    ) -> Result<SchedClassifierLinkId, ProgramError> {
+        let prog_fd = self.fd()?;
+        let prog_fd = prog_fd.as_fd();
         let name = self.data.name.as_deref().unwrap_or_default();
         // TODO: avoid this unwrap by adding a new error variant.
         let name = CString::new(name).unwrap();
         let (priority, handle) = unsafe {
             netlink_qdisc_attach(
-                if_index as i32,
+                if_index,
                 &attach_type,
                 prog_fd,
                 &name,
                 options.priority,
                 options.handle,
+                create,
             )
         }
         .map_err(|io_error| TcError::NetlinkError { io_error })?;
 
         self.data.links.insert(SchedClassifierLink::new(TcLink {
-            if_index: if_index as i32,
+            if_index,
             attach_type,
             priority,
             handle,
