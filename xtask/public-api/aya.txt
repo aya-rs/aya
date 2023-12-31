@@ -4509,6 +4509,7 @@ pub fn aya::programs::tc::TcError::from(t: T) -> T
 pub struct aya::programs::tc::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::attach(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, link: aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType, options: aya::programs::tc::TcOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, link_id: aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
@@ -4556,6 +4557,7 @@ impl<T> core::convert::From<T> for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::from(t: T) -> T
 pub struct aya::programs::tc::SchedClassifierLink(_)
 impl aya::programs::tc::SchedClassifierLink
+pub fn aya::programs::tc::SchedClassifierLink::attach_type(&self) -> aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::SchedClassifierLink::attached(if_name: &str, attach_type: aya::programs::tc::TcAttachType, priority: u16, handle: u32) -> core::result::Result<Self, std::io::error::Error>
 pub fn aya::programs::tc::SchedClassifierLink::handle(&self) -> u32
 pub fn aya::programs::tc::SchedClassifierLink::priority(&self) -> u16
@@ -6891,6 +6893,7 @@ pub fn aya::programs::RawTracePoint::from(t: T) -> T
 pub struct aya::programs::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::attach(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, link: aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType, options: aya::programs::tc::TcOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, link_id: aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
