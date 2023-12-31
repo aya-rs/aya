@@ -292,6 +292,11 @@ impl SchedClassifierLink {
         })))
     }
 
+    /// Returns the attach type.
+    pub fn attach_type(&self) -> TcAttachType {
+        self.inner().attach_type
+    }
+
     /// Returns the allocated priority. If none was provided at attach time, this was allocated for you.
     pub fn priority(&self) -> u16 {
         self.inner().priority
