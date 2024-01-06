@@ -734,7 +734,10 @@ pub use bpf_printk;
 /// Argument ready to be passed to `printk` BPF helper.
 #[repr(transparent)]
 #[derive(Copy, Clone)]
-pub struct PrintkArg(u64);
+pub struct PrintkArg(
+    #[allow(dead_code)] // TODO(https://github.com/rust-lang/rust/issues/119659): Remove.
+    u64,
+);
 
 impl PrintkArg {
     /// Manually construct a `printk` BPF helper argument.
