@@ -71,7 +71,6 @@
     unused_macro_rules,
     unused_qualifications,
     //unused_results,
-    unused_tuple_struct_fields,
 )]
 #![allow(clippy::missing_safety_doc, clippy::len_without_is_empty)]
 #![cfg_attr(
