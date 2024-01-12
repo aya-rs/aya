@@ -11,7 +11,7 @@ type SyscallFn = unsafe fn(Syscall<'_>) -> SysResult<c_long>;
 #[cfg(test)]
 thread_local! {
     pub(crate) static TEST_SYSCALL: RefCell<SyscallFn> = RefCell::new(test_syscall);
-    pub(crate) static TEST_MMAP_RET: RefCell<*mut c_void> = RefCell::new(ptr::null_mut());
+    pub(crate) static TEST_MMAP_RET: RefCell<*mut c_void> = const { RefCell::new(ptr::null_mut()) };
 }
 
 #[cfg(test)]
