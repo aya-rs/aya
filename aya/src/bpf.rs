@@ -533,7 +533,7 @@ impl<'a> BpfLoader<'a> {
                 let section = prog_obj.section.clone();
                 let obj = (prog_obj, function_obj);
 
-                let btf_fd = btf_fd.as_ref().map(Arc::clone);
+                let btf_fd = btf_fd.clone();
                 let program = if extensions.contains(name.as_str()) {
                     Program::Extension(Extension {
                         data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
