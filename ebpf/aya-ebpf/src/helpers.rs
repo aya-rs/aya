@@ -9,7 +9,11 @@
 //! helpers, but also expose bindings to the underlying helpers as a fall-back
 //! in case of a missing implementation.
 
-use core::mem::{self, MaybeUninit};
+use core::{
+    cmp::Ordering,
+    ffi::CStr,
+    mem::{self, MaybeUninit},
+};
 
 pub use aya_ebpf_bindings::helpers as gen;
 #[doc(hidden)]
@@ -837,4 +841,24 @@ pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
         3 => printk(fmt_ptr, fmt_size, args[0], args[1], args[2]),
         _ => gen::bpf_trace_vprintk(fmt_ptr, fmt_size, args.as_ptr() as _, (NUM_ARGS * 8) as _),
     }
+}
+
+/// Compares the given byte `s1` with a [`&CStr`](core::ffi::CStr) `s2`.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use aya_ebpf::helpers::bpf_strncmp;
+/// # let data = b"something";
+/// assert_ne!(bpf_strncmp(data, c"foo"), core::cmp::Ordering::Equal);
+/// ```
+#[inline]
+pub fn bpf_strncmp<const N: usize>(s1: &[u8; N], s2: &CStr) -> Ordering {
+    // NB: s1 does not need to be null-terminated.
+    //
+    // See https://github.com/torvalds/linux/blob/adc218676/include/uapi/linux/bpf.h#L5391-L5393.
+    //
+    // NB: s1's size must be known at compile time to appease the verifier. This is also the typical
+    // usage of strncmp in C programs.
+    unsafe { gen::bpf_strncmp(s1.as_ptr() as *const _, N as u32, s2.as_ptr() as *const _) }.cmp(&0)
 }

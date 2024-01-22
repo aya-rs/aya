@@ -58,6 +58,10 @@ name = "simple_prog"
 path = "src/simple_prog.rs"
 
 [[bin]]
+name = "strncmp"
+path = "src/strncmp.rs"
+
+[[bin]]
 name = "tcx"
 path = "src/tcx.rs"
 
