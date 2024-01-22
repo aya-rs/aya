@@ -450,9 +450,9 @@ fn match_candidate<'target>(
                 candidate.btf,
                 candidate.type_id,
             )? {
-                return Ok(Some(target_spec));
+                Ok(Some(target_spec))
             } else {
-                return Ok(None);
+                Ok(None)
             }
         }
         RelocationKind::EnumVariantExists | RelocationKind::EnumVariantValue => {
@@ -477,23 +477,23 @@ fn match_candidate<'target>(
                     }
                 };
             match target_ty {
-                BtfType::Enum(en) => {
-                    for (index, member) in en.variants.iter().enumerate() {
-                        if let Ok(Some(_)) = match_enum(member.name_offset, index, &mut target_spec)
-                        {
-                            return Ok(Some(target_spec));
-                        }
-                    }
-                }
-                BtfType::Enum64(en) => {
-                    for (index, member) in en.variants.iter().enumerate() {
-                        if let Ok(Some(_)) = match_enum(member.name_offset, index, &mut target_spec)
-                        {
-                            return Ok(Some(target_spec));
-                        }
-                    }
-                }
-                _ => return Ok(None),
+                BtfType::Enum(en) => Ok(en
+                    .variants
+                    .iter()
+                    .enumerate()
+                    .find(|(index, member)| {
+                        match_enum(member.name_offset, *index, &mut target_spec).is_ok()
+                    })
+                    .map(|_| target_spec)),
+                BtfType::Enum64(en) => Ok(en
+                    .variants
+                    .iter()
+                    .enumerate()
+                    .find(|(index, member)| {
+                        match_enum(member.name_offset, *index, &mut target_spec).is_ok()
+                    })
+                    .map(|_| target_spec)),
+                _ => Ok(None),
             }
         }
         RelocationKind::FieldByteOffset
@@ -560,10 +560,9 @@ fn match_candidate<'target>(
                         accessor.index * candidate.btf.type_size(target_id)? * 8;
                 }
             }
+            Ok(Some(target_spec))
         }
-    };
-
-    Ok(Some(target_spec))
+    }
 }
 
 fn match_member<'target>(

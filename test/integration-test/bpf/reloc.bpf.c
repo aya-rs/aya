@@ -90,6 +90,38 @@ SEC("uprobe") int enum_unsigned_32(void *ctx) {
   return enum_unsigned_32_global();
 }
 
+enum relocated_enum_unsigned_32_checked_variants {
+#ifndef TARGET
+  U32_VAL_A = 0xAAAAAAAA,
+#endif
+  U32_VAL_B = 0xBBBBBBBB,
+#ifdef TARGET
+  U32_VAL_C = 0xCCCCCCCC
+#endif
+};
+
+__noinline int enum_unsigned_32_checked_variants_global() {
+#ifndef TARGET
+  if (bpf_core_enum_value_exists(
+          enum relocated_enum_unsigned_32_checked_variants, U32_VAL_A)) {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_unsigned_32_checked_variants, U32_VAL_A));
+#else
+  if (bpf_core_enum_value_exists(
+          enum relocated_enum_unsigned_32_checked_variants, U32_VAL_C)) {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_unsigned_32_checked_variants, U32_VAL_C));
+#endif
+  } else {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_unsigned_32_checked_variants, U32_VAL_B));
+  }
+}
+
+SEC("uprobe") int enum_unsigned_32_checked_variants(void *ctx) {
+  return enum_unsigned_32_checked_variants_global();
+}
+
 enum relocated_enum_signed_32 {
   S32_VAL =
 #ifndef TARGET
@@ -105,6 +137,38 @@ __noinline int enum_signed_32_global() {
 }
 
 SEC("uprobe") int enum_signed_32(void *ctx) { return enum_signed_32_global(); }
+
+enum relocated_enum_signed_32_checked_variants {
+#ifndef TARGET
+  S32_VAL_A = -0x7AAAAAAA,
+#endif
+  S32_VAL_B = -0x7BBBBBBB,
+#ifdef TARGET
+  S32_VAL_C = -0x7CCCCCCC
+#endif
+};
+
+__noinline int enum_signed_32_checked_variants_global() {
+#ifndef TARGET
+  if (bpf_core_enum_value_exists(enum relocated_enum_signed_32_checked_variants,
+                                 S32_VAL_A)) {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_signed_32_checked_variants, S32_VAL_A));
+#else
+  if (bpf_core_enum_value_exists(enum relocated_enum_signed_32_checked_variants,
+                                 S32_VAL_C)) {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_signed_32_checked_variants, S32_VAL_C));
+#endif
+  } else {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_signed_32_checked_variants, S32_VAL_B));
+  }
+}
+
+SEC("uprobe") int enum_signed_32_checked_variants(void *ctx) {
+  return enum_signed_32_checked_variants_global();
+}
 
 enum relocated_enum_unsigned_64 {
   U64_VAL =
@@ -124,6 +188,38 @@ SEC("uprobe") int enum_unsigned_64(void *ctx) {
   return enum_unsigned_64_global();
 }
 
+enum relocated_enum_unsigned_64_checked_variants {
+#ifndef TARGET
+  U64_VAL_A = 0xAAAAAAAABBBBBBBB,
+#endif
+  U64_VAL_B = 0xCCCCCCCCDDDDDDDD,
+#ifdef TARGET
+  U64_VAL_C = 0xEEEEEEEEFFFFFFFF
+#endif
+};
+
+__noinline int enum_unsigned_64_checked_variants_global() {
+#ifndef TARGET
+  if (bpf_core_enum_value_exists(
+          enum relocated_enum_unsigned_64_checked_variants, U64_VAL_A)) {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_unsigned_64_checked_variants, U64_VAL_A));
+#else
+  if (bpf_core_enum_value_exists(
+          enum relocated_enum_unsigned_64_checked_variants, U64_VAL_C)) {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_unsigned_64_checked_variants, U64_VAL_C));
+#endif
+  } else {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_unsigned_64_checked_variants, U64_VAL_B));
+  }
+}
+
+SEC("uprobe") int enum_unsigned_64_checked_variants(void *ctx) {
+  return enum_unsigned_64_checked_variants_global();
+}
+
 enum relocated_enum_signed_64 {
   S64_VAL =
 #ifndef TARGET
@@ -139,3 +235,35 @@ __noinline int enum_signed_64_global() {
 }
 
 SEC("uprobe") int enum_signed_64(void *ctx) { return enum_signed_64_global(); }
+
+enum relocated_enum_signed_64_checked_variants {
+#ifndef TARGET
+  S64_VAL_A = -0xAAAAAAABBBBBBB,
+#endif
+  S64_VAL_B = -0xCCCCCCCDDDDDDD,
+#ifdef TARGET
+  S64_VAL_C = -0xEEEEEEEFFFFFFF
+#endif
+};
+
+__noinline int enum_signed_64_checked_variants_global() {
+#ifndef TARGET
+  if (bpf_core_enum_value_exists(enum relocated_enum_signed_64_checked_variants,
+                                 S64_VAL_A)) {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_signed_64_checked_variants, S64_VAL_A));
+#else
+  if (bpf_core_enum_value_exists(enum relocated_enum_signed_64_checked_variants,
+                                 S64_VAL_C)) {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_signed_64_checked_variants, S64_VAL_C));
+#endif
+  } else {
+    return set_output(bpf_core_enum_value(
+        enum relocated_enum_signed_64_checked_variants, S64_VAL_B));
+  }
+}
+
+SEC("uprobe") int enum_signed_64_checked_variants(void *ctx) {
+  return enum_signed_64_checked_variants_global();
+}
