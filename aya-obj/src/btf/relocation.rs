@@ -484,6 +484,7 @@ fn match_candidate<'target>(
                             return Ok(Some(target_spec));
                         }
                     }
+                    return Ok(None);
                 }
                 BtfType::Enum64(en) => {
                     for (index, member) in en.variants.iter().enumerate() {
@@ -492,8 +493,11 @@ fn match_candidate<'target>(
                             return Ok(Some(target_spec));
                         }
                     }
+                    return Ok(None);
                 }
-                _ => return Ok(None),
+                _ => {
+                    return Ok(None);
+                }
             }
         }
         RelocationKind::FieldByteOffset
