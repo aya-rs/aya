@@ -7,7 +7,11 @@
 //! also expose bindings to the underlying helpers as a fall-back in case of a missing
 //! implementation.
 
-use core::mem::{self, MaybeUninit};
+use core::{
+    cmp::Ordering,
+    ffi::CStr,
+    mem::{self, MaybeUninit},
+};
 
 pub use aya_ebpf_bindings::helpers as gen;
 #[doc(hidden)]
@@ -835,4 +839,30 @@ pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
         3 => printk(fmt_ptr, fmt_size, args[0], args[1], args[2]),
         _ => gen::bpf_trace_vprintk(fmt_ptr, fmt_size, args.as_ptr() as _, (NUM_ARGS * 8) as _),
     }
+}
+
+/// Compares the given byte `s1` with a [`&CStr`](core::ffi::CStr) `s2`.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use aya_bpf::helpers::bpf_strncmp;
+/// # let data = b"something";
+/// if bpf_strncmp(data, c"foo") == core::cmp::Ordering::Equal {
+///     // The comparison succeeded.    
+/// }
+/// ```
+#[inline]
+pub fn bpf_strncmp(s1: &[u8], s2: &CStr) -> Ordering {
+    let s2 = s2.to_bytes_with_nul();
+
+    let res = unsafe {
+        gen::bpf_strncmp(
+            s1.as_ptr() as *const _,
+            // Don't include the NULL character in the comparison.
+            (s2.len() - 1) as u32,
+            s2.as_ptr() as *const _,
+        )
+    };
+    res.cmp(&0)
 }
