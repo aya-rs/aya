@@ -450,9 +450,9 @@ fn match_candidate<'target>(
                 candidate.btf,
                 candidate.type_id,
             )? {
-                return Ok(Some(target_spec));
+                Ok(Some(target_spec))
             } else {
-                return Ok(None);
+                Ok(None)
             }
         }
         RelocationKind::EnumVariantExists | RelocationKind::EnumVariantValue => {
@@ -460,8 +460,15 @@ fn match_candidate<'target>(
             let target_ty = candidate.btf.type_by_id(target_id)?;
             // the first accessor is guaranteed to have a name by construction
             let local_variant_name = local_spec.accessors[0].name.as_ref().unwrap();
-            let match_enum =
-                |name_offset, index, target_spec: &mut AccessSpec| -> Result<_, BtfError> {
+
+            fn match_enum<'a>(
+                iterator: impl Iterator<Item = (usize, u32)>,
+                candidate: &Candidate,
+                local_variant_name: &str,
+                target_id: u32,
+                mut target_spec: AccessSpec<'a>,
+            ) -> Result<Option<AccessSpec<'a>>, BtfError> {
+                for (index, name_offset) in iterator {
                     let target_variant_name = candidate.btf.string_at(name_offset)?;
                     if flavorless_name(local_variant_name) == flavorless_name(&target_variant_name)
                     {
@@ -471,29 +478,36 @@ fn match_candidate<'target>(
                             type_id: target_id,
                             name: None,
                         });
-                        Ok(Some(()))
-                    } else {
-                        Ok(None)
+                        return Ok(Some(target_spec));
                     }
-                };
+                }
+                Ok(None)
+            }
+
             match target_ty {
-                BtfType::Enum(en) => {
-                    for (index, member) in en.variants.iter().enumerate() {
-                        if let Ok(Some(_)) = match_enum(member.name_offset, index, &mut target_spec)
-                        {
-                            return Ok(Some(target_spec));
-                        }
-                    }
-                }
-                BtfType::Enum64(en) => {
-                    for (index, member) in en.variants.iter().enumerate() {
-                        if let Ok(Some(_)) = match_enum(member.name_offset, index, &mut target_spec)
-                        {
-                            return Ok(Some(target_spec));
-                        }
-                    }
-                }
-                _ => return Ok(None),
+                BtfType::Enum(en) => match_enum(
+                    en.variants
+                        .iter()
+                        .map(|member| member.name_offset)
+                        .enumerate(),
+                    candidate,
+                    local_variant_name,
+                    target_id,
+                    target_spec,
+                )
+                .map_err(Into::into),
+                BtfType::Enum64(en) => match_enum(
+                    en.variants
+                        .iter()
+                        .map(|member| member.name_offset)
+                        .enumerate(),
+                    candidate,
+                    local_variant_name,
+                    target_id,
+                    target_spec,
+                )
+                .map_err(Into::into),
+                _ => Ok(None),
             }
         }
         RelocationKind::FieldByteOffset
@@ -560,10 +574,9 @@ fn match_candidate<'target>(
                         accessor.index * candidate.btf.type_size(target_id)? * 8;
                 }
             }
+            Ok(Some(target_spec))
         }
-    };
-
-    Ok(Some(target_spec))
+    }
 }
 
 fn match_member<'target>(
