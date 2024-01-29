@@ -1824,7 +1824,6 @@ pub fn aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::fmt(&self, f:
 impl<Storage: core::hash::Hash> core::hash::Hash for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 pub fn aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl<Storage: core::marker::Copy> core::marker::Copy for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
-impl<Storage> core::marker::StructuralEq for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 impl<Storage> core::marker::StructuralPartialEq for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 impl<Storage> core::marker::Send for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Send
 impl<Storage> core::marker::Sync for aya_bpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Sync

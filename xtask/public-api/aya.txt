@@ -451,7 +451,6 @@ impl core::cmp::PartialEq for aya::maps::perf::Events
 pub fn aya::maps::perf::Events::eq(&self, other: &aya::maps::perf::Events) -> bool
 impl core::fmt::Debug for aya::maps::perf::Events
 pub fn aya::maps::perf::Events::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::StructuralEq for aya::maps::perf::Events
 impl core::marker::StructuralPartialEq for aya::maps::perf::Events
 impl core::marker::Send for aya::maps::perf::Events
 impl core::marker::Sync for aya::maps::perf::Events
@@ -2461,7 +2460,6 @@ impl core::fmt::Debug for aya::programs::cgroup_device::CgroupDeviceLinkId
 pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_device::CgroupDeviceLinkId
 pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl core::marker::Send for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl core::marker::Sync for aya::programs::cgroup_device::CgroupDeviceLinkId
@@ -2604,7 +2602,6 @@ impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkbLinkId
 pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_skb::CgroupSkbLinkId
 pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkbLinkId
@@ -2714,7 +2711,6 @@ impl core::fmt::Debug for aya::programs::cgroup_sock::CgroupSockLinkId
 pub fn aya::programs::cgroup_sock::CgroupSockLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_sock::CgroupSockLinkId
 pub fn aya::programs::cgroup_sock::CgroupSockLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::marker::Send for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSockLinkId
@@ -2824,7 +2820,6 @@ impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
@@ -2934,7 +2929,6 @@ impl core::fmt::Debug for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
@@ -3044,7 +3038,6 @@ impl core::fmt::Debug for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
@@ -3191,7 +3184,6 @@ impl core::fmt::Debug for aya::programs::extension::ExtensionLinkId
 pub fn aya::programs::extension::ExtensionLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::extension::ExtensionLinkId
 pub fn aya::programs::extension::ExtensionLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::extension::ExtensionLinkId
 impl core::marker::StructuralPartialEq for aya::programs::extension::ExtensionLinkId
 impl core::marker::Send for aya::programs::extension::ExtensionLinkId
 impl core::marker::Sync for aya::programs::extension::ExtensionLinkId
@@ -3305,7 +3297,6 @@ impl core::fmt::Debug for aya::programs::fentry::FEntryLinkId
 pub fn aya::programs::fentry::FEntryLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::fentry::FEntryLinkId
 pub fn aya::programs::fentry::FEntryLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::fentry::FEntryLinkId
 impl core::marker::StructuralPartialEq for aya::programs::fentry::FEntryLinkId
 impl core::marker::Send for aya::programs::fentry::FEntryLinkId
 impl core::marker::Sync for aya::programs::fentry::FEntryLinkId
@@ -3419,7 +3410,6 @@ impl core::fmt::Debug for aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::fexit::FExitLinkId
 impl core::marker::StructuralPartialEq for aya::programs::fexit::FExitLinkId
 impl core::marker::Send for aya::programs::fexit::FExitLinkId
 impl core::marker::Sync for aya::programs::fexit::FExitLinkId
@@ -3570,7 +3560,6 @@ impl core::fmt::Debug for aya::programs::kprobe::KProbeLinkId
 pub fn aya::programs::kprobe::KProbeLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::kprobe::KProbeLinkId
 pub fn aya::programs::kprobe::KProbeLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::kprobe::KProbeLinkId
 impl core::marker::StructuralPartialEq for aya::programs::kprobe::KProbeLinkId
 impl core::marker::Send for aya::programs::kprobe::KProbeLinkId
 impl core::marker::Sync for aya::programs::kprobe::KProbeLinkId
@@ -3716,7 +3705,6 @@ impl core::fmt::Debug for aya::programs::links::FdLinkId
 pub fn aya::programs::links::FdLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::links::FdLinkId
 pub fn aya::programs::links::FdLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::links::FdLinkId
 impl core::marker::StructuralPartialEq for aya::programs::links::FdLinkId
 impl core::marker::Send for aya::programs::links::FdLinkId
 impl core::marker::Sync for aya::programs::links::FdLinkId
@@ -3804,7 +3792,6 @@ impl core::fmt::Debug for aya::programs::links::ProgAttachLinkId
 pub fn aya::programs::links::ProgAttachLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::links::ProgAttachLinkId
 pub fn aya::programs::links::ProgAttachLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::links::ProgAttachLinkId
 impl core::marker::StructuralPartialEq for aya::programs::links::ProgAttachLinkId
 impl core::marker::Send for aya::programs::links::ProgAttachLinkId
 impl core::marker::Sync for aya::programs::links::ProgAttachLinkId
@@ -3954,7 +3941,6 @@ impl core::fmt::Debug for aya::programs::lirc_mode2::LircLinkId
 pub fn aya::programs::lirc_mode2::LircLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::lirc_mode2::LircLinkId
 pub fn aya::programs::lirc_mode2::LircLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::lirc_mode2::LircLinkId
 impl core::marker::StructuralPartialEq for aya::programs::lirc_mode2::LircLinkId
 impl core::marker::Send for aya::programs::lirc_mode2::LircLinkId
 impl core::marker::Sync for aya::programs::lirc_mode2::LircLinkId
@@ -4117,7 +4103,6 @@ impl core::fmt::Debug for aya::programs::lsm::LsmLinkId
 pub fn aya::programs::lsm::LsmLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::lsm::LsmLinkId
 pub fn aya::programs::lsm::LsmLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::lsm::LsmLinkId
 impl core::marker::StructuralPartialEq for aya::programs::lsm::LsmLinkId
 impl core::marker::Send for aya::programs::lsm::LsmLinkId
 impl core::marker::Sync for aya::programs::lsm::LsmLinkId
@@ -4177,7 +4162,6 @@ impl core::fmt::Debug for aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::perf_attach::PerfLinkId
 impl core::marker::StructuralPartialEq for aya::programs::perf_attach::PerfLinkId
 impl core::marker::Send for aya::programs::perf_attach::PerfLinkId
 impl core::marker::Sync for aya::programs::perf_attach::PerfLinkId
@@ -4406,7 +4390,6 @@ impl core::fmt::Debug for aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::perf_event::PerfEventLinkId
 impl core::marker::StructuralPartialEq for aya::programs::perf_event::PerfEventLinkId
 impl core::marker::Send for aya::programs::perf_event::PerfEventLinkId
 impl core::marker::Sync for aya::programs::perf_event::PerfEventLinkId
@@ -4444,7 +4427,6 @@ pub fn aya::programs::tc::TcAttachType::fmt(&self, f: &mut core::fmt::Formatter<
 impl core::hash::Hash for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for aya::programs::tc::TcAttachType
-impl core::marker::StructuralEq for aya::programs::tc::TcAttachType
 impl core::marker::StructuralPartialEq for aya::programs::tc::TcAttachType
 impl core::marker::Send for aya::programs::tc::TcAttachType
 impl core::marker::Sync for aya::programs::tc::TcAttachType
@@ -4598,7 +4580,6 @@ impl core::fmt::Debug for aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::tc::SchedClassifierLinkId
 impl core::marker::StructuralPartialEq for aya::programs::tc::SchedClassifierLinkId
 impl core::marker::Send for aya::programs::tc::SchedClassifierLinkId
 impl core::marker::Sync for aya::programs::tc::SchedClassifierLinkId
@@ -4740,7 +4721,6 @@ impl core::fmt::Debug for aya::programs::tp_btf::BtfTracePointLinkId
 pub fn aya::programs::tp_btf::BtfTracePointLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::tp_btf::BtfTracePointLinkId
 pub fn aya::programs::tp_btf::BtfTracePointLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::marker::StructuralPartialEq for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::marker::Send for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::marker::Sync for aya::programs::tp_btf::BtfTracePointLinkId
@@ -4891,7 +4871,6 @@ impl core::fmt::Debug for aya::programs::trace_point::TracePointLinkId
 pub fn aya::programs::trace_point::TracePointLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::trace_point::TracePointLinkId
 pub fn aya::programs::trace_point::TracePointLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::trace_point::TracePointLinkId
 impl core::marker::StructuralPartialEq for aya::programs::trace_point::TracePointLinkId
 impl core::marker::Send for aya::programs::trace_point::TracePointLinkId
 impl core::marker::Sync for aya::programs::trace_point::TracePointLinkId
@@ -5049,7 +5028,6 @@ impl core::fmt::Debug for aya::programs::uprobe::UProbeLinkId
 pub fn aya::programs::uprobe::UProbeLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::uprobe::UProbeLinkId
 pub fn aya::programs::uprobe::UProbeLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::uprobe::UProbeLinkId
 impl core::marker::StructuralPartialEq for aya::programs::uprobe::UProbeLinkId
 impl core::marker::Send for aya::programs::uprobe::UProbeLinkId
 impl core::marker::Sync for aya::programs::uprobe::UProbeLinkId
@@ -5310,7 +5288,6 @@ impl core::fmt::Debug for aya::programs::xdp::XdpLinkId
 pub fn aya::programs::xdp::XdpLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::xdp::XdpLinkId
 pub fn aya::programs::xdp::XdpLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralEq for aya::programs::xdp::XdpLinkId
 impl core::marker::StructuralPartialEq for aya::programs::xdp::XdpLinkId
 impl core::marker::Send for aya::programs::xdp::XdpLinkId
 impl core::marker::Sync for aya::programs::xdp::XdpLinkId
@@ -5930,7 +5907,6 @@ pub fn aya::programs::tc::TcAttachType::fmt(&self, f: &mut core::fmt::Formatter<
 impl core::hash::Hash for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for aya::programs::tc::TcAttachType
-impl core::marker::StructuralEq for aya::programs::tc::TcAttachType
 impl core::marker::StructuralPartialEq for aya::programs::tc::TcAttachType
 impl core::marker::Send for aya::programs::tc::TcAttachType
 impl core::marker::Sync for aya::programs::tc::TcAttachType
@@ -7538,7 +7514,6 @@ pub fn aya::util::KernelVersion::partial_cmp(&self, other: &aya::util::KernelVer
 impl core::fmt::Debug for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::util::KernelVersion
-impl core::marker::StructuralEq for aya::util::KernelVersion
 impl core::marker::StructuralPartialEq for aya::util::KernelVersion
 impl core::marker::Send for aya::util::KernelVersion
 impl core::marker::Sync for aya::util::KernelVersion
