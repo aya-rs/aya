@@ -849,6 +849,8 @@ pub fn aya::maps::stack_trace::StackTraceMap<T>::iter(&self) -> aya::maps::MapIt
 pub fn aya::maps::stack_trace::StackTraceMap<T>::stack_ids(&self) -> aya::maps::MapKeys<'_, u32>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::stack_trace::StackTraceMap<T>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::stack_trace::StackTraceMap<T>
+pub fn aya::maps::stack_trace::StackTraceMap<T>::remove(&mut self, stack_id: &u32) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -2231,6 +2233,8 @@ pub fn aya::maps::stack_trace::StackTraceMap<T>::iter(&self) -> aya::maps::MapIt
 pub fn aya::maps::stack_trace::StackTraceMap<T>::stack_ids(&self) -> aya::maps::MapKeys<'_, u32>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::stack_trace::StackTraceMap<T>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::stack_trace::StackTraceMap<T>
+pub fn aya::maps::stack_trace::StackTraceMap<T>::remove(&mut self, stack_id: &u32) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::stack_trace::StackTraceMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
