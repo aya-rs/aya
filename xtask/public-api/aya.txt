@@ -4304,7 +4304,7 @@ impl<T> core::convert::From<T> for aya::programs::perf_event::SamplePolicy
 pub fn aya::programs::perf_event::SamplePolicy::from(t: T) -> T
 pub struct aya::programs::perf_event::PerfEvent
 impl aya::programs::perf_event::PerfEvent
-pub fn aya::programs::perf_event::PerfEvent::attach(&mut self, perf_type: aya::programs::perf_event::PerfTypeId, config: u64, scope: aya::programs::perf_event::PerfEventScope, sample_policy: aya::programs::perf_event::SamplePolicy) -> core::result::Result<aya::programs::perf_event::PerfEventLinkId, aya::programs::ProgramError>
+pub fn aya::programs::perf_event::PerfEvent::attach(&mut self, perf_type: aya::programs::perf_event::PerfTypeId, config: u64, scope: aya::programs::perf_event::PerfEventScope, sample_policy: aya::programs::perf_event::SamplePolicy, inherit: bool) -> core::result::Result<aya::programs::perf_event::PerfEventLinkId, aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEvent::detach(&mut self, link_id: aya::programs::perf_event::PerfEventLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEvent::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEvent::take_link(&mut self, link_id: aya::programs::perf_event::PerfEventLinkId) -> core::result::Result<aya::programs::perf_event::PerfEventLink, aya::programs::ProgramError>
@@ -6708,7 +6708,7 @@ impl<T> core::convert::From<T> for aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::from(t: T) -> T
 pub struct aya::programs::PerfEvent
 impl aya::programs::perf_event::PerfEvent
-pub fn aya::programs::perf_event::PerfEvent::attach(&mut self, perf_type: aya::programs::perf_event::PerfTypeId, config: u64, scope: aya::programs::perf_event::PerfEventScope, sample_policy: aya::programs::perf_event::SamplePolicy) -> core::result::Result<aya::programs::perf_event::PerfEventLinkId, aya::programs::ProgramError>
+pub fn aya::programs::perf_event::PerfEvent::attach(&mut self, perf_type: aya::programs::perf_event::PerfTypeId, config: u64, scope: aya::programs::perf_event::PerfEventScope, sample_policy: aya::programs::perf_event::SamplePolicy, inherit: bool) -> core::result::Result<aya::programs::perf_event::PerfEventLinkId, aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEvent::detach(&mut self, link_id: aya::programs::perf_event::PerfEventLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEvent::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEvent::take_link(&mut self, link_id: aya::programs::perf_event::PerfEventLinkId) -> core::result::Result<aya::programs::perf_event::PerfEventLink, aya::programs::ProgramError>
