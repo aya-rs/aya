@@ -24,6 +24,7 @@ pub(crate) fn perf_event_open(
     sample_period: u64,
     sample_frequency: Option<u64>,
     wakeup: bool,
+    inherit: bool,
     flags: u32,
 ) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
@@ -32,7 +33,7 @@ pub(crate) fn perf_event_open(
     attr.size = mem::size_of::<perf_event_attr>() as u32;
     attr.type_ = perf_type;
     attr.sample_type = PERF_SAMPLE_RAW as u64;
-    // attr.inherits = if pid > 0 { 1 } else { 0 };
+    attr.set_inherit(if inherit { 1 } else { 0 });
     attr.__bindgen_anon_2.wakeup_events = u32::from(wakeup);
 
     if let Some(frequency) = sample_frequency {
@@ -54,6 +55,7 @@ pub(crate) fn perf_event_open_bpf(cpu: c_int) -> SysResult<OwnedFd> {
         1,
         None,
         true,
+        false,
         PERF_FLAG_FD_CLOEXEC,
     )
 }

@@ -115,6 +115,7 @@ pub enum PerfEventScope {
 ///         PERF_COUNT_SW_CPU_CLOCK as u64,
 ///         PerfEventScope::AllProcessesOneCpu { cpu },
 ///         SamplePolicy::Period(1000000),
+///         true,
 ///     )?;
 /// }
 /// # Ok::<(), Error>(())
@@ -137,6 +138,10 @@ impl PerfEvent {
     /// `perf_type`. See `perf_sw_ids`, `perf_hw_id`, `perf_hw_cache_id`,
     /// `perf_hw_cache_op_id` and `perf_hw_cache_op_result_id`.
     ///
+    /// The `scope` argument determines which processes are sampled. If `inherit`
+    /// is true, any new processes spawned by those processes will also
+    /// automatically get sampled.
+    ///
     /// The returned value can be used to detach, see [PerfEvent::detach].
     pub fn attach(
         &mut self,
@@ -144,6 +149,7 @@ impl PerfEvent {
         config: u64,
         scope: PerfEventScope,
         sample_policy: SamplePolicy,
+        inherit: bool,
     ) -> Result<PerfEventLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
@@ -166,6 +172,7 @@ impl PerfEvent {
             sample_period,
             sample_frequency,
             false,
+            inherit,
             0,
         )
         .map_err(|(_code, io_error)| SyscallError {
