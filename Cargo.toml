@@ -66,7 +66,7 @@ const-assert = { version = "1.0.1", default-features = false }
 core-error = { version = "0.0.0", default-features = false }
 dialoguer = { version = "0.11", default-features = false }
 diff = { version = "0.1.13", default-features = false }
-env_logger = { version = "0.10", default-features = false }
+env_logger = { version = "0.11", default-features = false }
 epoll = { version = "4.3.3", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 hashbrown = { version = "0.14", default-features = false }
@@ -95,7 +95,7 @@ test-log = { version = "0.2.13", default-features = false }
 testing_logger = { version = "0.1.1", default-features = false }
 thiserror = { version = "1", default-features = false }
 tokio = { version = "1.24.0", default-features = false }
-which = { version = "5.0.0", default-features = false }
+which = { version = "6.0.0", default-features = false }
 xdpilone = { version = "1.0", default-features = false }
 xtask = { path = "xtask", default-features = false }
 
