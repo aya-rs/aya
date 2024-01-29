@@ -55,3 +55,7 @@ path = "src/xdp_sec.rs"
 [[bin]]
 name = "ring_buf"
 path = "src/ring_buf.rs"
+
+[[bin]]
+name = "perf_events"
+path = "src/perf_events.rs"

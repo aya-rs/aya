@@ -340,9 +340,11 @@ pub mod aya_bpf::maps::perf
 #[repr(transparent)] pub struct aya_bpf::maps::perf::PerfEventArray<T>
 impl<T> aya_bpf::maps::PerfEventArray<T>
 pub const fn aya_bpf::maps::PerfEventArray<T>::new(flags: u32) -> aya_bpf::maps::PerfEventArray<T>
-pub fn aya_bpf::maps::PerfEventArray<T>::output<C: aya_bpf::BpfContext>(&self, ctx: &C, data: &T, flags: u32)
-pub fn aya_bpf::maps::PerfEventArray<T>::output_at_index<C: aya_bpf::BpfContext>(&self, ctx: &C, index: u32, data: &T, flags: u32)
+pub fn aya_bpf::maps::PerfEventArray<T>::output_at_index<C: aya_bpf::BpfContext>(&self, ctx: &C, data: &T, index: u32) -> core::result::Result<(), i64>
+pub fn aya_bpf::maps::PerfEventArray<T>::output_current_cpu<C: aya_bpf::BpfContext>(&self, ctx: &C, data: &T) -> core::result::Result<(), i64>
 pub const fn aya_bpf::maps::PerfEventArray<T>::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::PerfEventArray<T>
+pub fn aya_bpf::maps::PerfEventArray<T>::read_at_index(&self, index: u32) -> core::result::Result<aya_bpf_bindings::x86_64::bindings::bpf_perf_event_value, i64>
+pub fn aya_bpf::maps::PerfEventArray<T>::read_current_cpu(&self) -> core::result::Result<aya_bpf_bindings::x86_64::bindings::bpf_perf_event_value, i64>
 pub const fn aya_bpf::maps::PerfEventArray<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::PerfEventArray<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_bpf::maps::PerfEventArray<T>
 impl<T> core::marker::Send for aya_bpf::maps::PerfEventArray<T> where T: core::marker::Send
@@ -1044,9 +1046,11 @@ pub fn aya_bpf::maps::hash_map::PerCpuHashMap<K, V>::from(t: T) -> T
 #[repr(transparent)] pub struct aya_bpf::maps::PerfEventArray<T>
 impl<T> aya_bpf::maps::PerfEventArray<T>
 pub const fn aya_bpf::maps::PerfEventArray<T>::new(flags: u32) -> aya_bpf::maps::PerfEventArray<T>
-pub fn aya_bpf::maps::PerfEventArray<T>::output<C: aya_bpf::BpfContext>(&self, ctx: &C, data: &T, flags: u32)
-pub fn aya_bpf::maps::PerfEventArray<T>::output_at_index<C: aya_bpf::BpfContext>(&self, ctx: &C, index: u32, data: &T, flags: u32)
+pub fn aya_bpf::maps::PerfEventArray<T>::output_at_index<C: aya_bpf::BpfContext>(&self, ctx: &C, data: &T, index: u32) -> core::result::Result<(), i64>
+pub fn aya_bpf::maps::PerfEventArray<T>::output_current_cpu<C: aya_bpf::BpfContext>(&self, ctx: &C, data: &T) -> core::result::Result<(), i64>
 pub const fn aya_bpf::maps::PerfEventArray<T>::pinned(max_entries: u32, flags: u32) -> aya_bpf::maps::PerfEventArray<T>
+pub fn aya_bpf::maps::PerfEventArray<T>::read_at_index(&self, index: u32) -> core::result::Result<aya_bpf_bindings::x86_64::bindings::bpf_perf_event_value, i64>
+pub fn aya_bpf::maps::PerfEventArray<T>::read_current_cpu(&self) -> core::result::Result<aya_bpf_bindings::x86_64::bindings::bpf_perf_event_value, i64>
 pub const fn aya_bpf::maps::PerfEventArray<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_bpf::maps::PerfEventArray<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_bpf::maps::PerfEventArray<T>
 impl<T> core::marker::Send for aya_bpf::maps::PerfEventArray<T> where T: core::marker::Send
