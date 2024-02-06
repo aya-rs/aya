@@ -35,6 +35,12 @@
 //! [`Bpf::program`]: crate::Bpf::program
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [`maps`]: crate::maps
+
+// modules we don't export
+mod probe;
+mod utils;
+
+// modules we explicitly export so their pub items (Links etc) get exported too
 pub mod cgroup_device;
 pub mod cgroup_skb;
 pub mod cgroup_sock;
@@ -50,18 +56,16 @@ pub mod lirc_mode2;
 pub mod lsm;
 pub mod perf_attach;
 pub mod perf_event;
-mod probe;
-mod raw_trace_point;
-mod sk_lookup;
-mod sk_msg;
-mod sk_skb;
-mod sock_ops;
-mod socket_filter;
+pub mod raw_trace_point;
+pub mod sk_lookup;
+pub mod sk_msg;
+pub mod sk_skb;
+pub mod sock_ops;
+pub mod socket_filter;
 pub mod tc;
 pub mod tp_btf;
 pub mod trace_point;
 pub mod uprobe;
-mod utils;
 pub mod xdp;
 
 use std::{
