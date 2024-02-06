@@ -68,16 +68,7 @@ pub mod trace_point;
 pub mod uprobe;
 pub mod xdp;
 
-use std::{
-    ffi::CString,
-    io,
-    num::NonZeroU32,
-    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
-    path::{Path, PathBuf},
-    sync::Arc,
-    time::{Duration, SystemTime},
-};
-
+// re-export the main items needed to load and attach
 pub use cgroup_device::CgroupDevice;
 pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
 pub use cgroup_sock::{CgroupSock, CgroupSockAttachType};
@@ -88,12 +79,9 @@ pub use extension::{Extension, ExtensionError};
 pub use fentry::FEntry;
 pub use fexit::FExit;
 pub use kprobe::{KProbe, KProbeError};
-use libc::ENOSPC;
 pub use links::Link;
-use links::*;
 pub use lirc_mode2::LircMode2;
 pub use lsm::Lsm;
-use perf_attach::*;
 pub use perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy};
 pub use probe::ProbeKind;
 pub use raw_trace_point::RawTracePoint;
@@ -103,18 +91,33 @@ pub use sk_skb::{SkSkb, SkSkbKind};
 pub use sock_ops::SockOps;
 pub use socket_filter::{SocketFilter, SocketFilterError};
 pub use tc::{SchedClassifier, TcAttachType, TcError};
-use thiserror::Error;
 pub use tp_btf::BtfTracePoint;
 pub use trace_point::{TracePoint, TracePointError};
 pub use uprobe::{UProbe, UProbeError};
 pub use xdp::{Xdp, XdpError, XdpFlags};
+
+use libc::ENOSPC;
+use std::{
+    ffi::CString,
+    io,
+    num::NonZeroU32,
+    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::{Duration, SystemTime},
+};
+use thiserror::Error;
 
 use crate::{
     generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
     maps::MapError,
     obj::{self, btf::BtfError, VerifierLog},
     pin::PinError,
-    programs::utils::{boot_time, get_fdinfo},
+    programs::{
+        links::*,
+        perf_attach::*,
+        utils::{boot_time, get_fdinfo},
+    },
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
         bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
