@@ -68,35 +68,6 @@ pub mod trace_point;
 pub mod uprobe;
 pub mod xdp;
 
-// re-export the main items needed to load and attach
-pub use cgroup_device::CgroupDevice;
-pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
-pub use cgroup_sock::{CgroupSock, CgroupSockAttachType};
-pub use cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType};
-pub use cgroup_sockopt::{CgroupSockopt, CgroupSockoptAttachType};
-pub use cgroup_sysctl::CgroupSysctl;
-pub use extension::{Extension, ExtensionError};
-pub use fentry::FEntry;
-pub use fexit::FExit;
-pub use kprobe::{KProbe, KProbeError};
-pub use links::Link;
-pub use lirc_mode2::LircMode2;
-pub use lsm::Lsm;
-pub use perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy};
-pub use probe::ProbeKind;
-pub use raw_trace_point::RawTracePoint;
-pub use sk_lookup::SkLookup;
-pub use sk_msg::SkMsg;
-pub use sk_skb::{SkSkb, SkSkbKind};
-pub use sock_ops::SockOps;
-pub use socket_filter::{SocketFilter, SocketFilterError};
-pub use tc::{SchedClassifier, TcAttachType, TcError};
-pub use tp_btf::BtfTracePoint;
-pub use trace_point::{TracePoint, TracePointError};
-pub use uprobe::{UProbe, UProbeError};
-pub use xdp::{Xdp, XdpError, XdpFlags};
-
-use libc::ENOSPC;
 use std::{
     ffi::CString,
     io,
@@ -106,8 +77,39 @@ use std::{
     sync::Arc,
     time::{Duration, SystemTime},
 };
+
+use libc::ENOSPC;
 use thiserror::Error;
 
+// re-export the main items needed to load and attach
+pub use crate::programs::{
+    cgroup_device::CgroupDevice,
+    cgroup_skb::{CgroupSkb, CgroupSkbAttachType},
+    cgroup_sock::{CgroupSock, CgroupSockAttachType},
+    cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType},
+    cgroup_sockopt::{CgroupSockopt, CgroupSockoptAttachType},
+    cgroup_sysctl::CgroupSysctl,
+    extension::{Extension, ExtensionError},
+    fentry::FEntry,
+    fexit::FExit,
+    kprobe::{KProbe, KProbeError},
+    links::Link,
+    lirc_mode2::LircMode2,
+    lsm::Lsm,
+    perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy},
+    probe::ProbeKind,
+    raw_trace_point::RawTracePoint,
+    sk_lookup::SkLookup,
+    sk_msg::SkMsg,
+    sk_skb::{SkSkb, SkSkbKind},
+    sock_ops::SockOps,
+    socket_filter::{SocketFilter, SocketFilterError},
+    tc::{SchedClassifier, TcAttachType, TcError},
+    tp_btf::BtfTracePoint,
+    trace_point::{TracePoint, TracePointError},
+    uprobe::{UProbe, UProbeError},
+    xdp::{Xdp, XdpError, XdpFlags},
+};
 use crate::{
     generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
     maps::MapError,
