@@ -35,6 +35,12 @@
 //! [`Bpf::program`]: crate::Bpf::program
 //! [`Bpf::program_mut`]: crate::Bpf::program_mut
 //! [`maps`]: crate::maps
+
+// modules we don't export
+mod probe;
+mod utils;
+
+// modules we explicitly export so their pub items (Links etc) get exported too
 pub mod cgroup_device;
 pub mod cgroup_skb;
 pub mod cgroup_sock;
@@ -50,18 +56,16 @@ pub mod lirc_mode2;
 pub mod lsm;
 pub mod perf_attach;
 pub mod perf_event;
-mod probe;
-mod raw_trace_point;
-mod sk_lookup;
-mod sk_msg;
-mod sk_skb;
-mod sock_ops;
-mod socket_filter;
+pub mod raw_trace_point;
+pub mod sk_lookup;
+pub mod sk_msg;
+pub mod sk_skb;
+pub mod sock_ops;
+pub mod socket_filter;
 pub mod tc;
 pub mod tp_btf;
 pub mod trace_point;
 pub mod uprobe;
-mod utils;
 pub mod xdp;
 
 use std::{
@@ -74,43 +78,48 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-pub use cgroup_device::CgroupDevice;
-pub use cgroup_skb::{CgroupSkb, CgroupSkbAttachType};
-pub use cgroup_sock::{CgroupSock, CgroupSockAttachType};
-pub use cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType};
-pub use cgroup_sockopt::{CgroupSockopt, CgroupSockoptAttachType};
-pub use cgroup_sysctl::CgroupSysctl;
-pub use extension::{Extension, ExtensionError};
-pub use fentry::FEntry;
-pub use fexit::FExit;
-pub use kprobe::{KProbe, KProbeError};
 use libc::ENOSPC;
-pub use links::Link;
-use links::*;
-pub use lirc_mode2::LircMode2;
-pub use lsm::Lsm;
-use perf_attach::*;
-pub use perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy};
-pub use probe::ProbeKind;
-pub use raw_trace_point::RawTracePoint;
-pub use sk_lookup::SkLookup;
-pub use sk_msg::SkMsg;
-pub use sk_skb::{SkSkb, SkSkbKind};
-pub use sock_ops::SockOps;
-pub use socket_filter::{SocketFilter, SocketFilterError};
-pub use tc::{SchedClassifier, TcAttachType, TcError};
 use thiserror::Error;
-pub use tp_btf::BtfTracePoint;
-pub use trace_point::{TracePoint, TracePointError};
-pub use uprobe::{UProbe, UProbeError};
-pub use xdp::{Xdp, XdpError, XdpFlags};
 
+// re-export the main items needed to load and attach
+pub use crate::programs::{
+    cgroup_device::CgroupDevice,
+    cgroup_skb::{CgroupSkb, CgroupSkbAttachType},
+    cgroup_sock::{CgroupSock, CgroupSockAttachType},
+    cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType},
+    cgroup_sockopt::{CgroupSockopt, CgroupSockoptAttachType},
+    cgroup_sysctl::CgroupSysctl,
+    extension::{Extension, ExtensionError},
+    fentry::FEntry,
+    fexit::FExit,
+    kprobe::{KProbe, KProbeError},
+    links::Link,
+    lirc_mode2::LircMode2,
+    lsm::Lsm,
+    perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy},
+    probe::ProbeKind,
+    raw_trace_point::RawTracePoint,
+    sk_lookup::SkLookup,
+    sk_msg::SkMsg,
+    sk_skb::{SkSkb, SkSkbKind},
+    sock_ops::SockOps,
+    socket_filter::{SocketFilter, SocketFilterError},
+    tc::{SchedClassifier, TcAttachType, TcError},
+    tp_btf::BtfTracePoint,
+    trace_point::{TracePoint, TracePointError},
+    uprobe::{UProbe, UProbeError},
+    xdp::{Xdp, XdpError, XdpFlags},
+};
 use crate::{
     generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
     maps::MapError,
     obj::{self, btf::BtfError, VerifierLog},
     pin::PinError,
-    programs::utils::{boot_time, get_fdinfo},
+    programs::{
+        links::*,
+        perf_attach::*,
+        utils::{boot_time, get_fdinfo},
+    },
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
         bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,

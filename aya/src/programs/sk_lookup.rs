@@ -1,3 +1,4 @@
+//! Programmable socket lookup.
 use std::os::fd::AsFd;
 
 use super::links::FdLink;
