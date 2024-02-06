@@ -398,8 +398,8 @@ pub fn aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>::try_from(ma
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Sync + core::marker::Send
-impl<T> core::marker::Sync for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Sync + core::marker::Send
+impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Send + core::marker::Sync
+impl<T> core::marker::Sync for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::perf::AsyncPerfEventArray<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::AsyncPerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::AsyncPerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
@@ -422,8 +422,8 @@ pub fn aya::maps::perf::AsyncPerfEventArray<T>::from(t: T) -> T
 pub struct aya::maps::perf::AsyncPerfEventArrayBuffer<T: core::borrow::BorrowMut<aya::maps::MapData>>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::AsyncPerfEventArrayBuffer<T>
 pub async fn aya::maps::perf::AsyncPerfEventArrayBuffer<T>::read_events(&mut self, buffers: &mut [bytes::bytes_mut::BytesMut]) -> core::result::Result<aya::maps::perf::Events, aya::maps::perf::PerfBufferError>
-impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::marker::Sync + core::marker::Send
-impl<T> core::marker::Sync for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::marker::Sync + core::marker::Send
+impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::marker::Send + core::marker::Sync
+impl<T> core::marker::Sync for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::perf::AsyncPerfEventArrayBuffer<T>
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::AsyncPerfEventArrayBuffer<T>
 impl<T> !core::panic::unwind_safe::UnwindSafe for aya::maps::perf::AsyncPerfEventArrayBuffer<T>
@@ -487,8 +487,8 @@ pub fn aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::try_from(map: &'
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T> core::marker::Send for aya::maps::perf::PerfEventArray<T> where T: core::marker::Sync + core::marker::Send
-impl<T> core::marker::Sync for aya::maps::perf::PerfEventArray<T> where T: core::marker::Sync + core::marker::Send
+impl<T> core::marker::Send for aya::maps::perf::PerfEventArray<T> where T: core::marker::Send + core::marker::Sync
+impl<T> core::marker::Sync for aya::maps::perf::PerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::perf::PerfEventArray<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
@@ -516,8 +516,8 @@ impl<T: core::borrow::BorrowMut<aya::maps::MapData>> std::os::fd::owned::AsFd fo
 pub fn aya::maps::perf::PerfEventArrayBuffer<T>::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> std::os::fd::raw::AsRawFd for aya::maps::perf::PerfEventArrayBuffer<T>
 pub fn aya::maps::perf::PerfEventArrayBuffer<T>::as_raw_fd(&self) -> std::os::fd::raw::RawFd
-impl<T> core::marker::Send for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::marker::Sync + core::marker::Send
-impl<T> core::marker::Sync for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::marker::Sync + core::marker::Send
+impl<T> core::marker::Send for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::marker::Send + core::marker::Sync
+impl<T> core::marker::Sync for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::perf::PerfEventArrayBuffer<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::panic::unwind_safe::RefUnwindSafe
@@ -1418,8 +1418,8 @@ pub fn aya::maps::perf::AsyncPerfEventArray<&'a aya::maps::MapData>::try_from(ma
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>
 pub type aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::AsyncPerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Sync + core::marker::Send
-impl<T> core::marker::Sync for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Sync + core::marker::Send
+impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Send + core::marker::Sync
+impl<T> core::marker::Sync for aya::maps::perf::AsyncPerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::perf::AsyncPerfEventArray<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::AsyncPerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::AsyncPerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
@@ -1973,8 +1973,8 @@ pub fn aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::try_from(map: &'
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T> core::marker::Send for aya::maps::perf::PerfEventArray<T> where T: core::marker::Sync + core::marker::Send
-impl<T> core::marker::Sync for aya::maps::perf::PerfEventArray<T> where T: core::marker::Sync + core::marker::Send
+impl<T> core::marker::Send for aya::maps::perf::PerfEventArray<T> where T: core::marker::Send + core::marker::Sync
+impl<T> core::marker::Sync for aya::maps::perf::PerfEventArray<T> where T: core::marker::Send + core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::perf::PerfEventArray<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
@@ -3640,12 +3640,20 @@ impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fexit:
 pub fn aya::programs::fexit::FExitLink::from(b: aya::programs::links::FdLink) -> aya::programs::fexit::FExitLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::lsm::LsmLink
 pub fn aya::programs::lsm::LsmLink::from(b: aya::programs::links::FdLink) -> aya::programs::lsm::LsmLink
+impl core::convert::From<aya::programs::links::FdLink> for aya::programs::raw_trace_point::RawTracePointLink
+pub fn aya::programs::raw_trace_point::RawTracePointLink::from(b: aya::programs::links::FdLink) -> aya::programs::raw_trace_point::RawTracePointLink
+impl core::convert::From<aya::programs::links::FdLink> for aya::programs::sk_lookup::SkLookupLink
+pub fn aya::programs::sk_lookup::SkLookupLink::from(b: aya::programs::links::FdLink) -> aya::programs::sk_lookup::SkLookupLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::tp_btf::BtfTracePointLink
 pub fn aya::programs::tp_btf::BtfTracePointLink::from(b: aya::programs::links::FdLink) -> aya::programs::tp_btf::BtfTracePointLink
 impl core::convert::From<aya::programs::links::PinnedLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(p: aya::programs::links::PinnedLink) -> Self
 impl core::convert::From<aya::programs::lsm::LsmLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::lsm::LsmLink) -> aya::programs::links::FdLink
+impl core::convert::From<aya::programs::raw_trace_point::RawTracePointLink> for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(w: aya::programs::raw_trace_point::RawTracePointLink) -> aya::programs::links::FdLink
+impl core::convert::From<aya::programs::sk_lookup::SkLookupLink> for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(w: aya::programs::sk_lookup::SkLookupLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::tp_btf::BtfTracePointLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::tp_btf::BtfTracePointLink) -> aya::programs::links::FdLink
 impl core::convert::TryFrom<aya::programs::kprobe::KProbeLink> for aya::programs::links::FdLink
@@ -3765,6 +3773,18 @@ impl aya::programs::links::Link for aya::programs::links::ProgAttachLink
 pub type aya::programs::links::ProgAttachLink::Id = aya::programs::links::ProgAttachLinkId
 pub fn aya::programs::links::ProgAttachLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::links::ProgAttachLink::id(&self) -> Self::Id
+impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_msg::SkMsgLink
+pub fn aya::programs::sk_msg::SkMsgLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sk_msg::SkMsgLink
+impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_skb::SkSkbLink
+pub fn aya::programs::sk_skb::SkSkbLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sk_skb::SkSkbLink
+impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sock_ops::SockOpsLink
+pub fn aya::programs::sock_ops::SockOpsLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sock_ops::SockOpsLink
+impl core::convert::From<aya::programs::sk_msg::SkMsgLink> for aya::programs::links::ProgAttachLink
+pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sk_msg::SkMsgLink) -> aya::programs::links::ProgAttachLink
+impl core::convert::From<aya::programs::sk_skb::SkSkbLink> for aya::programs::links::ProgAttachLink
+pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sk_skb::SkSkbLink) -> aya::programs::links::ProgAttachLink
+impl core::convert::From<aya::programs::sock_ops::SockOpsLink> for aya::programs::links::ProgAttachLink
+pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sock_ops::SockOpsLink) -> aya::programs::links::ProgAttachLink
 impl core::fmt::Debug for aya::programs::links::ProgAttachLink
 pub fn aya::programs::links::ProgAttachLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Send for aya::programs::links::ProgAttachLink
@@ -3886,6 +3906,30 @@ impl aya::programs::links::Link for aya::programs::perf_event::PerfEventLink
 pub type aya::programs::perf_event::PerfEventLink::Id = aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEventLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::raw_trace_point::RawTracePointLink
+pub type aya::programs::raw_trace_point::RawTracePointLink::Id = aya::programs::raw_trace_point::RawTracePointLinkId
+pub fn aya::programs::raw_trace_point::RawTracePointLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::raw_trace_point::RawTracePointLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::sk_lookup::SkLookupLink
+pub type aya::programs::sk_lookup::SkLookupLink::Id = aya::programs::sk_lookup::SkLookupLinkId
+pub fn aya::programs::sk_lookup::SkLookupLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_lookup::SkLookupLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::sk_msg::SkMsgLink
+pub type aya::programs::sk_msg::SkMsgLink::Id = aya::programs::sk_msg::SkMsgLinkId
+pub fn aya::programs::sk_msg::SkMsgLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_msg::SkMsgLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::sk_skb::SkSkbLink
+pub type aya::programs::sk_skb::SkSkbLink::Id = aya::programs::sk_skb::SkSkbLinkId
+pub fn aya::programs::sk_skb::SkSkbLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_skb::SkSkbLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::sock_ops::SockOpsLink
+pub type aya::programs::sock_ops::SockOpsLink::Id = aya::programs::sock_ops::SockOpsLinkId
+pub fn aya::programs::sock_ops::SockOpsLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sock_ops::SockOpsLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::socket_filter::SocketFilterLink
+pub type aya::programs::socket_filter::SocketFilterLink::Id = aya::programs::socket_filter::SocketFilterLinkId
+pub fn aya::programs::socket_filter::SocketFilterLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilterLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::tc::SchedClassifierLink
 pub type aya::programs::tc::SchedClassifierLink::Id = aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -4416,6 +4460,744 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::PerfEventLinkI
 pub fn aya::programs::perf_event::PerfEventLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLinkId::from(t: T) -> T
+pub mod aya::programs::raw_trace_point
+pub struct aya::programs::raw_trace_point::RawTracePoint
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::attach(&mut self, tp_name: &str) -> core::result::Result<aya::programs::raw_trace_point::RawTracePointLinkId, aya::programs::ProgramError>
+pub fn aya::programs::raw_trace_point::RawTracePoint::detach(&mut self, link_id: aya::programs::raw_trace_point::RawTracePointLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::raw_trace_point::RawTracePoint::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::raw_trace_point::RawTracePoint::take_link(&mut self, link_id: aya::programs::raw_trace_point::RawTracePointLinkId) -> core::result::Result<aya::programs::raw_trace_point::RawTracePointLink, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::raw_trace_point::RawTracePoint::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::raw_trace_point::RawTracePoint
+pub type &'a aya::programs::raw_trace_point::RawTracePoint::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::raw_trace_point::RawTracePoint::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::raw_trace_point::RawTracePoint, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::raw_trace_point::RawTracePoint
+pub type &'a mut aya::programs::raw_trace_point::RawTracePoint::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::raw_trace_point::RawTracePoint::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::raw_trace_point::RawTracePoint, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::raw_trace_point::RawTracePoint
+impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePoint
+impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePoint
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePoint
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePoint
+impl<T, U> core::convert::Into<U> for aya::programs::raw_trace_point::RawTracePoint where U: core::convert::From<T>
+pub fn aya::programs::raw_trace_point::RawTracePoint::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::raw_trace_point::RawTracePoint where U: core::convert::Into<T>
+pub type aya::programs::raw_trace_point::RawTracePoint::Error = core::convert::Infallible
+pub fn aya::programs::raw_trace_point::RawTracePoint::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::raw_trace_point::RawTracePoint where U: core::convert::TryFrom<T>
+pub type aya::programs::raw_trace_point::RawTracePoint::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::raw_trace_point::RawTracePoint::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::raw_trace_point::RawTracePoint where T: 'static + core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePoint::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::raw_trace_point::RawTracePoint where T: core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePoint::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::raw_trace_point::RawTracePoint where T: core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePoint::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::from(t: T) -> T
+pub struct aya::programs::raw_trace_point::RawTracePointLink(_)
+impl aya::programs::links::Link for aya::programs::raw_trace_point::RawTracePointLink
+pub type aya::programs::raw_trace_point::RawTracePointLink::Id = aya::programs::raw_trace_point::RawTracePointLinkId
+pub fn aya::programs::raw_trace_point::RawTracePointLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::raw_trace_point::RawTracePointLink::id(&self) -> Self::Id
+impl core::convert::From<aya::programs::links::FdLink> for aya::programs::raw_trace_point::RawTracePointLink
+pub fn aya::programs::raw_trace_point::RawTracePointLink::from(b: aya::programs::links::FdLink) -> aya::programs::raw_trace_point::RawTracePointLink
+impl core::convert::From<aya::programs::raw_trace_point::RawTracePointLink> for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(w: aya::programs::raw_trace_point::RawTracePointLink) -> aya::programs::links::FdLink
+impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePointLink
+pub fn aya::programs::raw_trace_point::RawTracePointLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::raw_trace_point::RawTracePointLink
+pub fn aya::programs::raw_trace_point::RawTracePointLink::drop(&mut self)
+impl core::marker::Send for aya::programs::raw_trace_point::RawTracePointLink
+impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePointLink
+impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePointLink
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePointLink
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePointLink
+impl<T, U> core::convert::Into<U> for aya::programs::raw_trace_point::RawTracePointLink where U: core::convert::From<T>
+pub fn aya::programs::raw_trace_point::RawTracePointLink::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::raw_trace_point::RawTracePointLink where U: core::convert::Into<T>
+pub type aya::programs::raw_trace_point::RawTracePointLink::Error = core::convert::Infallible
+pub fn aya::programs::raw_trace_point::RawTracePointLink::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::raw_trace_point::RawTracePointLink where U: core::convert::TryFrom<T>
+pub type aya::programs::raw_trace_point::RawTracePointLink::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::raw_trace_point::RawTracePointLink::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::raw_trace_point::RawTracePointLink where T: 'static + core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePointLink::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::raw_trace_point::RawTracePointLink where T: core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePointLink::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::raw_trace_point::RawTracePointLink where T: core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePointLink::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::raw_trace_point::RawTracePointLink
+pub fn aya::programs::raw_trace_point::RawTracePointLink::from(t: T) -> T
+pub struct aya::programs::raw_trace_point::RawTracePointLinkId(_)
+impl core::cmp::Eq for aya::programs::raw_trace_point::RawTracePointLinkId
+impl core::cmp::PartialEq for aya::programs::raw_trace_point::RawTracePointLinkId
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::eq(&self, other: &aya::programs::raw_trace_point::RawTracePointLinkId) -> bool
+impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePointLinkId
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::raw_trace_point::RawTracePointLinkId
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for aya::programs::raw_trace_point::RawTracePointLinkId
+impl core::marker::Send for aya::programs::raw_trace_point::RawTracePointLinkId
+impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePointLinkId
+impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePointLinkId
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePointLinkId
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePointLinkId
+impl<T, U> core::convert::Into<U> for aya::programs::raw_trace_point::RawTracePointLinkId where U: core::convert::From<T>
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::raw_trace_point::RawTracePointLinkId where U: core::convert::Into<T>
+pub type aya::programs::raw_trace_point::RawTracePointLinkId::Error = core::convert::Infallible
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::raw_trace_point::RawTracePointLinkId where U: core::convert::TryFrom<T>
+pub type aya::programs::raw_trace_point::RawTracePointLinkId::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::raw_trace_point::RawTracePointLinkId where T: 'static + core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::raw_trace_point::RawTracePointLinkId where T: core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::raw_trace_point::RawTracePointLinkId where T: core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::raw_trace_point::RawTracePointLinkId
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::from(t: T) -> T
+pub mod aya::programs::sk_lookup
+pub struct aya::programs::sk_lookup::SkLookup
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::attach<T: std::os::fd::owned::AsFd>(&mut self, netns: T) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, aya::programs::ProgramError>
+pub fn aya::programs::sk_lookup::SkLookup::detach(&mut self, link_id: aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_lookup::SkLookup::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_lookup::SkLookup::take_link(&mut self, link_id: aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<aya::programs::sk_lookup::SkLookupLink, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::sk_lookup::SkLookup::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_lookup::SkLookup
+pub type &'a aya::programs::sk_lookup::SkLookup::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_lookup::SkLookup::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_lookup::SkLookup, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_lookup::SkLookup
+pub type &'a mut aya::programs::sk_lookup::SkLookup::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_lookup::SkLookup::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_lookup::SkLookup, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::sk_lookup::SkLookup
+impl core::marker::Sync for aya::programs::sk_lookup::SkLookup
+impl core::marker::Unpin for aya::programs::sk_lookup::SkLookup
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_lookup::SkLookup
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_lookup::SkLookup
+impl<T, U> core::convert::Into<U> for aya::programs::sk_lookup::SkLookup where U: core::convert::From<T>
+pub fn aya::programs::sk_lookup::SkLookup::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_lookup::SkLookup where U: core::convert::Into<T>
+pub type aya::programs::sk_lookup::SkLookup::Error = core::convert::Infallible
+pub fn aya::programs::sk_lookup::SkLookup::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_lookup::SkLookup where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_lookup::SkLookup::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_lookup::SkLookup::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_lookup::SkLookup where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookup::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_lookup::SkLookup where T: core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookup::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_lookup::SkLookup where T: core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookup::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::from(t: T) -> T
+pub struct aya::programs::sk_lookup::SkLookupLink(_)
+impl aya::programs::links::Link for aya::programs::sk_lookup::SkLookupLink
+pub type aya::programs::sk_lookup::SkLookupLink::Id = aya::programs::sk_lookup::SkLookupLinkId
+pub fn aya::programs::sk_lookup::SkLookupLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_lookup::SkLookupLink::id(&self) -> Self::Id
+impl core::convert::From<aya::programs::links::FdLink> for aya::programs::sk_lookup::SkLookupLink
+pub fn aya::programs::sk_lookup::SkLookupLink::from(b: aya::programs::links::FdLink) -> aya::programs::sk_lookup::SkLookupLink
+impl core::convert::From<aya::programs::sk_lookup::SkLookupLink> for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(w: aya::programs::sk_lookup::SkLookupLink) -> aya::programs::links::FdLink
+impl core::fmt::Debug for aya::programs::sk_lookup::SkLookupLink
+pub fn aya::programs::sk_lookup::SkLookupLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sk_lookup::SkLookupLink
+pub fn aya::programs::sk_lookup::SkLookupLink::drop(&mut self)
+impl core::marker::Send for aya::programs::sk_lookup::SkLookupLink
+impl core::marker::Sync for aya::programs::sk_lookup::SkLookupLink
+impl core::marker::Unpin for aya::programs::sk_lookup::SkLookupLink
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_lookup::SkLookupLink
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_lookup::SkLookupLink
+impl<T, U> core::convert::Into<U> for aya::programs::sk_lookup::SkLookupLink where U: core::convert::From<T>
+pub fn aya::programs::sk_lookup::SkLookupLink::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_lookup::SkLookupLink where U: core::convert::Into<T>
+pub type aya::programs::sk_lookup::SkLookupLink::Error = core::convert::Infallible
+pub fn aya::programs::sk_lookup::SkLookupLink::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_lookup::SkLookupLink where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_lookup::SkLookupLink::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_lookup::SkLookupLink::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_lookup::SkLookupLink where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookupLink::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_lookup::SkLookupLink where T: core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookupLink::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_lookup::SkLookupLink where T: core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookupLink::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_lookup::SkLookupLink
+pub fn aya::programs::sk_lookup::SkLookupLink::from(t: T) -> T
+pub struct aya::programs::sk_lookup::SkLookupLinkId(_)
+impl core::cmp::Eq for aya::programs::sk_lookup::SkLookupLinkId
+impl core::cmp::PartialEq for aya::programs::sk_lookup::SkLookupLinkId
+pub fn aya::programs::sk_lookup::SkLookupLinkId::eq(&self, other: &aya::programs::sk_lookup::SkLookupLinkId) -> bool
+impl core::fmt::Debug for aya::programs::sk_lookup::SkLookupLinkId
+pub fn aya::programs::sk_lookup::SkLookupLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::sk_lookup::SkLookupLinkId
+pub fn aya::programs::sk_lookup::SkLookupLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for aya::programs::sk_lookup::SkLookupLinkId
+impl core::marker::Send for aya::programs::sk_lookup::SkLookupLinkId
+impl core::marker::Sync for aya::programs::sk_lookup::SkLookupLinkId
+impl core::marker::Unpin for aya::programs::sk_lookup::SkLookupLinkId
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_lookup::SkLookupLinkId
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_lookup::SkLookupLinkId
+impl<T, U> core::convert::Into<U> for aya::programs::sk_lookup::SkLookupLinkId where U: core::convert::From<T>
+pub fn aya::programs::sk_lookup::SkLookupLinkId::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_lookup::SkLookupLinkId where U: core::convert::Into<T>
+pub type aya::programs::sk_lookup::SkLookupLinkId::Error = core::convert::Infallible
+pub fn aya::programs::sk_lookup::SkLookupLinkId::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_lookup::SkLookupLinkId where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_lookup::SkLookupLinkId::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_lookup::SkLookupLinkId::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_lookup::SkLookupLinkId where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookupLinkId::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_lookup::SkLookupLinkId where T: core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookupLinkId::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_lookup::SkLookupLinkId where T: core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookupLinkId::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_lookup::SkLookupLinkId
+pub fn aya::programs::sk_lookup::SkLookupLinkId::from(t: T) -> T
+pub mod aya::programs::sk_msg
+pub struct aya::programs::sk_msg::SkMsg
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<aya::programs::sk_msg::SkMsgLinkId, aya::programs::ProgramError>
+pub fn aya::programs::sk_msg::SkMsg::detach(&mut self, link_id: aya::programs::sk_msg::SkMsgLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_msg::SkMsg::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_msg::SkMsg::take_link(&mut self, link_id: aya::programs::sk_msg::SkMsgLinkId) -> core::result::Result<aya::programs::sk_msg::SkMsgLink, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::sk_msg::SkMsg::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_msg::SkMsg
+pub type &'a aya::programs::sk_msg::SkMsg::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_msg::SkMsg::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_msg::SkMsg, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_msg::SkMsg
+pub type &'a mut aya::programs::sk_msg::SkMsg::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_msg::SkMsg::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_msg::SkMsg, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::sk_msg::SkMsg
+impl core::marker::Sync for aya::programs::sk_msg::SkMsg
+impl core::marker::Unpin for aya::programs::sk_msg::SkMsg
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsg
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsg
+impl<T, U> core::convert::Into<U> for aya::programs::sk_msg::SkMsg where U: core::convert::From<T>
+pub fn aya::programs::sk_msg::SkMsg::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_msg::SkMsg where U: core::convert::Into<T>
+pub type aya::programs::sk_msg::SkMsg::Error = core::convert::Infallible
+pub fn aya::programs::sk_msg::SkMsg::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_msg::SkMsg where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_msg::SkMsg::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_msg::SkMsg::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_msg::SkMsg where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsg::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_msg::SkMsg where T: core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsg::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_msg::SkMsg where T: core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsg::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::from(t: T) -> T
+pub struct aya::programs::sk_msg::SkMsgLink(_)
+impl aya::programs::links::Link for aya::programs::sk_msg::SkMsgLink
+pub type aya::programs::sk_msg::SkMsgLink::Id = aya::programs::sk_msg::SkMsgLinkId
+pub fn aya::programs::sk_msg::SkMsgLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_msg::SkMsgLink::id(&self) -> Self::Id
+impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_msg::SkMsgLink
+pub fn aya::programs::sk_msg::SkMsgLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sk_msg::SkMsgLink
+impl core::convert::From<aya::programs::sk_msg::SkMsgLink> for aya::programs::links::ProgAttachLink
+pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sk_msg::SkMsgLink) -> aya::programs::links::ProgAttachLink
+impl core::fmt::Debug for aya::programs::sk_msg::SkMsgLink
+pub fn aya::programs::sk_msg::SkMsgLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sk_msg::SkMsgLink
+pub fn aya::programs::sk_msg::SkMsgLink::drop(&mut self)
+impl core::marker::Send for aya::programs::sk_msg::SkMsgLink
+impl core::marker::Sync for aya::programs::sk_msg::SkMsgLink
+impl core::marker::Unpin for aya::programs::sk_msg::SkMsgLink
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsgLink
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsgLink
+impl<T, U> core::convert::Into<U> for aya::programs::sk_msg::SkMsgLink where U: core::convert::From<T>
+pub fn aya::programs::sk_msg::SkMsgLink::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_msg::SkMsgLink where U: core::convert::Into<T>
+pub type aya::programs::sk_msg::SkMsgLink::Error = core::convert::Infallible
+pub fn aya::programs::sk_msg::SkMsgLink::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_msg::SkMsgLink where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_msg::SkMsgLink::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_msg::SkMsgLink::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_msg::SkMsgLink where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsgLink::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_msg::SkMsgLink where T: core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsgLink::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_msg::SkMsgLink where T: core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsgLink::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_msg::SkMsgLink
+pub fn aya::programs::sk_msg::SkMsgLink::from(t: T) -> T
+pub struct aya::programs::sk_msg::SkMsgLinkId(_)
+impl core::cmp::Eq for aya::programs::sk_msg::SkMsgLinkId
+impl core::cmp::PartialEq for aya::programs::sk_msg::SkMsgLinkId
+pub fn aya::programs::sk_msg::SkMsgLinkId::eq(&self, other: &aya::programs::sk_msg::SkMsgLinkId) -> bool
+impl core::fmt::Debug for aya::programs::sk_msg::SkMsgLinkId
+pub fn aya::programs::sk_msg::SkMsgLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::sk_msg::SkMsgLinkId
+pub fn aya::programs::sk_msg::SkMsgLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for aya::programs::sk_msg::SkMsgLinkId
+impl core::marker::Send for aya::programs::sk_msg::SkMsgLinkId
+impl core::marker::Sync for aya::programs::sk_msg::SkMsgLinkId
+impl core::marker::Unpin for aya::programs::sk_msg::SkMsgLinkId
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsgLinkId
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsgLinkId
+impl<T, U> core::convert::Into<U> for aya::programs::sk_msg::SkMsgLinkId where U: core::convert::From<T>
+pub fn aya::programs::sk_msg::SkMsgLinkId::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_msg::SkMsgLinkId where U: core::convert::Into<T>
+pub type aya::programs::sk_msg::SkMsgLinkId::Error = core::convert::Infallible
+pub fn aya::programs::sk_msg::SkMsgLinkId::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_msg::SkMsgLinkId where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_msg::SkMsgLinkId::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_msg::SkMsgLinkId::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_msg::SkMsgLinkId where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsgLinkId::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_msg::SkMsgLinkId where T: core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsgLinkId::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_msg::SkMsgLinkId where T: core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsgLinkId::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_msg::SkMsgLinkId
+pub fn aya::programs::sk_msg::SkMsgLinkId::from(t: T) -> T
+pub mod aya::programs::sk_skb
+pub enum aya::programs::sk_skb::SkSkbKind
+pub aya::programs::sk_skb::SkSkbKind::StreamParser
+pub aya::programs::sk_skb::SkSkbKind::StreamVerdict
+impl core::clone::Clone for aya::programs::sk_skb::SkSkbKind
+pub fn aya::programs::sk_skb::SkSkbKind::clone(&self) -> aya::programs::sk_skb::SkSkbKind
+impl core::fmt::Debug for aya::programs::sk_skb::SkSkbKind
+pub fn aya::programs::sk_skb::SkSkbKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::sk_skb::SkSkbKind
+impl core::marker::Send for aya::programs::sk_skb::SkSkbKind
+impl core::marker::Sync for aya::programs::sk_skb::SkSkbKind
+impl core::marker::Unpin for aya::programs::sk_skb::SkSkbKind
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkbKind
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbKind
+impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkbKind where U: core::convert::From<T>
+pub fn aya::programs::sk_skb::SkSkbKind::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_skb::SkSkbKind where U: core::convert::Into<T>
+pub type aya::programs::sk_skb::SkSkbKind::Error = core::convert::Infallible
+pub fn aya::programs::sk_skb::SkSkbKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_skb::SkSkbKind where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_skb::SkSkbKind::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_skb::SkSkbKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::programs::sk_skb::SkSkbKind where T: core::clone::Clone
+pub type aya::programs::sk_skb::SkSkbKind::Owned = T
+pub fn aya::programs::sk_skb::SkSkbKind::clone_into(&self, target: &mut T)
+pub fn aya::programs::sk_skb::SkSkbKind::to_owned(&self) -> T
+impl<T> core::any::Any for aya::programs::sk_skb::SkSkbKind where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbKind::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_skb::SkSkbKind where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbKind::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_skb::SkSkbKind where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbKind::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_skb::SkSkbKind
+pub fn aya::programs::sk_skb::SkSkbKind::from(t: T) -> T
+pub struct aya::programs::sk_skb::SkSkb
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<aya::programs::sk_skb::SkSkbLinkId, aya::programs::ProgramError>
+pub fn aya::programs::sk_skb::SkSkb::detach(&mut self, link_id: aya::programs::sk_skb::SkSkbLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_skb::SkSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::sk_skb::SkSkbKind) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::sk_skb::SkSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_skb::SkSkb::take_link(&mut self, link_id: aya::programs::sk_skb::SkSkbLinkId) -> core::result::Result<aya::programs::sk_skb::SkSkbLink, aya::programs::ProgramError>
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::sk_skb::SkSkb::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_skb::SkSkb
+pub type &'a aya::programs::sk_skb::SkSkb::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_skb::SkSkb::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_skb::SkSkb, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_skb::SkSkb
+pub type &'a mut aya::programs::sk_skb::SkSkb::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_skb::SkSkb::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_skb::SkSkb, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::sk_skb::SkSkb
+impl core::marker::Sync for aya::programs::sk_skb::SkSkb
+impl core::marker::Unpin for aya::programs::sk_skb::SkSkb
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkb
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkb
+impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkb where U: core::convert::From<T>
+pub fn aya::programs::sk_skb::SkSkb::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_skb::SkSkb where U: core::convert::Into<T>
+pub type aya::programs::sk_skb::SkSkb::Error = core::convert::Infallible
+pub fn aya::programs::sk_skb::SkSkb::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_skb::SkSkb where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_skb::SkSkb::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_skb::SkSkb::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_skb::SkSkb where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkb::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_skb::SkSkb where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkb::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_skb::SkSkb where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkb::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::from(t: T) -> T
+pub struct aya::programs::sk_skb::SkSkbLink(_)
+impl aya::programs::links::Link for aya::programs::sk_skb::SkSkbLink
+pub type aya::programs::sk_skb::SkSkbLink::Id = aya::programs::sk_skb::SkSkbLinkId
+pub fn aya::programs::sk_skb::SkSkbLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_skb::SkSkbLink::id(&self) -> Self::Id
+impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_skb::SkSkbLink
+pub fn aya::programs::sk_skb::SkSkbLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sk_skb::SkSkbLink
+impl core::convert::From<aya::programs::sk_skb::SkSkbLink> for aya::programs::links::ProgAttachLink
+pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sk_skb::SkSkbLink) -> aya::programs::links::ProgAttachLink
+impl core::fmt::Debug for aya::programs::sk_skb::SkSkbLink
+pub fn aya::programs::sk_skb::SkSkbLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sk_skb::SkSkbLink
+pub fn aya::programs::sk_skb::SkSkbLink::drop(&mut self)
+impl core::marker::Send for aya::programs::sk_skb::SkSkbLink
+impl core::marker::Sync for aya::programs::sk_skb::SkSkbLink
+impl core::marker::Unpin for aya::programs::sk_skb::SkSkbLink
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkbLink
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbLink
+impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkbLink where U: core::convert::From<T>
+pub fn aya::programs::sk_skb::SkSkbLink::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_skb::SkSkbLink where U: core::convert::Into<T>
+pub type aya::programs::sk_skb::SkSkbLink::Error = core::convert::Infallible
+pub fn aya::programs::sk_skb::SkSkbLink::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_skb::SkSkbLink where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_skb::SkSkbLink::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_skb::SkSkbLink::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_skb::SkSkbLink where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbLink::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_skb::SkSkbLink where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbLink::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_skb::SkSkbLink where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbLink::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_skb::SkSkbLink
+pub fn aya::programs::sk_skb::SkSkbLink::from(t: T) -> T
+pub struct aya::programs::sk_skb::SkSkbLinkId(_)
+impl core::cmp::Eq for aya::programs::sk_skb::SkSkbLinkId
+impl core::cmp::PartialEq for aya::programs::sk_skb::SkSkbLinkId
+pub fn aya::programs::sk_skb::SkSkbLinkId::eq(&self, other: &aya::programs::sk_skb::SkSkbLinkId) -> bool
+impl core::fmt::Debug for aya::programs::sk_skb::SkSkbLinkId
+pub fn aya::programs::sk_skb::SkSkbLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::sk_skb::SkSkbLinkId
+pub fn aya::programs::sk_skb::SkSkbLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for aya::programs::sk_skb::SkSkbLinkId
+impl core::marker::Send for aya::programs::sk_skb::SkSkbLinkId
+impl core::marker::Sync for aya::programs::sk_skb::SkSkbLinkId
+impl core::marker::Unpin for aya::programs::sk_skb::SkSkbLinkId
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkbLinkId
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbLinkId
+impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkbLinkId where U: core::convert::From<T>
+pub fn aya::programs::sk_skb::SkSkbLinkId::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_skb::SkSkbLinkId where U: core::convert::Into<T>
+pub type aya::programs::sk_skb::SkSkbLinkId::Error = core::convert::Infallible
+pub fn aya::programs::sk_skb::SkSkbLinkId::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_skb::SkSkbLinkId where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_skb::SkSkbLinkId::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_skb::SkSkbLinkId::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_skb::SkSkbLinkId where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbLinkId::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_skb::SkSkbLinkId where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbLinkId::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_skb::SkSkbLinkId where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbLinkId::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_skb::SkSkbLinkId
+pub fn aya::programs::sk_skb::SkSkbLinkId::from(t: T) -> T
+pub mod aya::programs::sock_ops
+pub struct aya::programs::sock_ops::SockOps
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, aya::programs::ProgramError>
+pub fn aya::programs::sock_ops::SockOps::detach(&mut self, link_id: aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sock_ops::SockOps::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sock_ops::SockOps::take_link(&mut self, link_id: aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<aya::programs::sock_ops::SockOpsLink, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::sock_ops::SockOps::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sock_ops::SockOps
+pub type &'a aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sock_ops::SockOps::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sock_ops::SockOps
+pub type &'a mut aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sock_ops::SockOps::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::sock_ops::SockOps
+impl core::marker::Sync for aya::programs::sock_ops::SockOps
+impl core::marker::Unpin for aya::programs::sock_ops::SockOps
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOps
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOps
+impl<T, U> core::convert::Into<U> for aya::programs::sock_ops::SockOps where U: core::convert::From<T>
+pub fn aya::programs::sock_ops::SockOps::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sock_ops::SockOps where U: core::convert::Into<T>
+pub type aya::programs::sock_ops::SockOps::Error = core::convert::Infallible
+pub fn aya::programs::sock_ops::SockOps::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sock_ops::SockOps where U: core::convert::TryFrom<T>
+pub type aya::programs::sock_ops::SockOps::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sock_ops::SockOps::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sock_ops::SockOps where T: 'static + core::marker::Sized
+pub fn aya::programs::sock_ops::SockOps::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sock_ops::SockOps where T: core::marker::Sized
+pub fn aya::programs::sock_ops::SockOps::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sock_ops::SockOps where T: core::marker::Sized
+pub fn aya::programs::sock_ops::SockOps::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::from(t: T) -> T
+pub struct aya::programs::sock_ops::SockOpsLink(_)
+impl aya::programs::links::Link for aya::programs::sock_ops::SockOpsLink
+pub type aya::programs::sock_ops::SockOpsLink::Id = aya::programs::sock_ops::SockOpsLinkId
+pub fn aya::programs::sock_ops::SockOpsLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sock_ops::SockOpsLink::id(&self) -> Self::Id
+impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sock_ops::SockOpsLink
+pub fn aya::programs::sock_ops::SockOpsLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sock_ops::SockOpsLink
+impl core::convert::From<aya::programs::sock_ops::SockOpsLink> for aya::programs::links::ProgAttachLink
+pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sock_ops::SockOpsLink) -> aya::programs::links::ProgAttachLink
+impl core::fmt::Debug for aya::programs::sock_ops::SockOpsLink
+pub fn aya::programs::sock_ops::SockOpsLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sock_ops::SockOpsLink
+pub fn aya::programs::sock_ops::SockOpsLink::drop(&mut self)
+impl core::marker::Send for aya::programs::sock_ops::SockOpsLink
+impl core::marker::Sync for aya::programs::sock_ops::SockOpsLink
+impl core::marker::Unpin for aya::programs::sock_ops::SockOpsLink
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOpsLink
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOpsLink
+impl<T, U> core::convert::Into<U> for aya::programs::sock_ops::SockOpsLink where U: core::convert::From<T>
+pub fn aya::programs::sock_ops::SockOpsLink::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sock_ops::SockOpsLink where U: core::convert::Into<T>
+pub type aya::programs::sock_ops::SockOpsLink::Error = core::convert::Infallible
+pub fn aya::programs::sock_ops::SockOpsLink::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sock_ops::SockOpsLink where U: core::convert::TryFrom<T>
+pub type aya::programs::sock_ops::SockOpsLink::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sock_ops::SockOpsLink::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sock_ops::SockOpsLink where T: 'static + core::marker::Sized
+pub fn aya::programs::sock_ops::SockOpsLink::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sock_ops::SockOpsLink where T: core::marker::Sized
+pub fn aya::programs::sock_ops::SockOpsLink::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sock_ops::SockOpsLink where T: core::marker::Sized
+pub fn aya::programs::sock_ops::SockOpsLink::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sock_ops::SockOpsLink
+pub fn aya::programs::sock_ops::SockOpsLink::from(t: T) -> T
+pub struct aya::programs::sock_ops::SockOpsLinkId(_)
+impl core::cmp::Eq for aya::programs::sock_ops::SockOpsLinkId
+impl core::cmp::PartialEq for aya::programs::sock_ops::SockOpsLinkId
+pub fn aya::programs::sock_ops::SockOpsLinkId::eq(&self, other: &aya::programs::sock_ops::SockOpsLinkId) -> bool
+impl core::fmt::Debug for aya::programs::sock_ops::SockOpsLinkId
+pub fn aya::programs::sock_ops::SockOpsLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::sock_ops::SockOpsLinkId
+pub fn aya::programs::sock_ops::SockOpsLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for aya::programs::sock_ops::SockOpsLinkId
+impl core::marker::Send for aya::programs::sock_ops::SockOpsLinkId
+impl core::marker::Sync for aya::programs::sock_ops::SockOpsLinkId
+impl core::marker::Unpin for aya::programs::sock_ops::SockOpsLinkId
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOpsLinkId
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOpsLinkId
+impl<T, U> core::convert::Into<U> for aya::programs::sock_ops::SockOpsLinkId where U: core::convert::From<T>
+pub fn aya::programs::sock_ops::SockOpsLinkId::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sock_ops::SockOpsLinkId where U: core::convert::Into<T>
+pub type aya::programs::sock_ops::SockOpsLinkId::Error = core::convert::Infallible
+pub fn aya::programs::sock_ops::SockOpsLinkId::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sock_ops::SockOpsLinkId where U: core::convert::TryFrom<T>
+pub type aya::programs::sock_ops::SockOpsLinkId::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sock_ops::SockOpsLinkId::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sock_ops::SockOpsLinkId where T: 'static + core::marker::Sized
+pub fn aya::programs::sock_ops::SockOpsLinkId::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sock_ops::SockOpsLinkId where T: core::marker::Sized
+pub fn aya::programs::sock_ops::SockOpsLinkId::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sock_ops::SockOpsLinkId where T: core::marker::Sized
+pub fn aya::programs::sock_ops::SockOpsLinkId::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sock_ops::SockOpsLinkId
+pub fn aya::programs::sock_ops::SockOpsLinkId::from(t: T) -> T
+pub mod aya::programs::socket_filter
+pub enum aya::programs::socket_filter::SocketFilterError
+pub aya::programs::socket_filter::SocketFilterError::SoAttachBpfError
+pub aya::programs::socket_filter::SocketFilterError::SoAttachBpfError::io_error: std::io::error::Error
+impl core::convert::From<aya::programs::socket_filter::SocketFilterError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(source: aya::programs::socket_filter::SocketFilterError) -> Self
+impl core::error::Error for aya::programs::socket_filter::SocketFilterError
+pub fn aya::programs::socket_filter::SocketFilterError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::programs::socket_filter::SocketFilterError
+pub fn aya::programs::socket_filter::SocketFilterError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::socket_filter::SocketFilterError
+pub fn aya::programs::socket_filter::SocketFilterError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya::programs::socket_filter::SocketFilterError
+impl core::marker::Sync for aya::programs::socket_filter::SocketFilterError
+impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterError
+impl !core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterError
+impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilterError where U: core::convert::From<T>
+pub fn aya::programs::socket_filter::SocketFilterError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::socket_filter::SocketFilterError where U: core::convert::Into<T>
+pub type aya::programs::socket_filter::SocketFilterError::Error = core::convert::Infallible
+pub fn aya::programs::socket_filter::SocketFilterError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::socket_filter::SocketFilterError where U: core::convert::TryFrom<T>
+pub type aya::programs::socket_filter::SocketFilterError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::socket_filter::SocketFilterError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya::programs::socket_filter::SocketFilterError where T: core::fmt::Display + core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya::programs::socket_filter::SocketFilterError where T: 'static + core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::socket_filter::SocketFilterError where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::socket_filter::SocketFilterError where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterError::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::socket_filter::SocketFilterError
+pub fn aya::programs::socket_filter::SocketFilterError::from(t: T) -> T
+pub struct aya::programs::socket_filter::SocketFilter
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::attach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<aya::programs::socket_filter::SocketFilterLinkId, aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilter::detach(&mut self, link_id: aya::programs::socket_filter::SocketFilterLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilter::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilter::take_link(&mut self, link_id: aya::programs::socket_filter::SocketFilterLinkId) -> core::result::Result<aya::programs::socket_filter::SocketFilterLink, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::socket_filter::SocketFilter::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::socket_filter::SocketFilter
+pub type &'a aya::programs::socket_filter::SocketFilter::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::socket_filter::SocketFilter::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::socket_filter::SocketFilter, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::socket_filter::SocketFilter
+pub type &'a mut aya::programs::socket_filter::SocketFilter::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::socket_filter::SocketFilter::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::socket_filter::SocketFilter, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::socket_filter::SocketFilter
+impl core::marker::Sync for aya::programs::socket_filter::SocketFilter
+impl core::marker::Unpin for aya::programs::socket_filter::SocketFilter
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilter
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilter
+impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilter where U: core::convert::From<T>
+pub fn aya::programs::socket_filter::SocketFilter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::socket_filter::SocketFilter where U: core::convert::Into<T>
+pub type aya::programs::socket_filter::SocketFilter::Error = core::convert::Infallible
+pub fn aya::programs::socket_filter::SocketFilter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::socket_filter::SocketFilter where U: core::convert::TryFrom<T>
+pub type aya::programs::socket_filter::SocketFilter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::socket_filter::SocketFilter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::socket_filter::SocketFilter where T: 'static + core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::socket_filter::SocketFilter where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::socket_filter::SocketFilter where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::from(t: T) -> T
+pub struct aya::programs::socket_filter::SocketFilterLink
+impl aya::programs::links::Link for aya::programs::socket_filter::SocketFilterLink
+pub type aya::programs::socket_filter::SocketFilterLink::Id = aya::programs::socket_filter::SocketFilterLinkId
+pub fn aya::programs::socket_filter::SocketFilterLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilterLink::id(&self) -> Self::Id
+impl core::fmt::Debug for aya::programs::socket_filter::SocketFilterLink
+pub fn aya::programs::socket_filter::SocketFilterLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya::programs::socket_filter::SocketFilterLink
+impl core::marker::Sync for aya::programs::socket_filter::SocketFilterLink
+impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterLink
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterLink
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterLink
+impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilterLink where U: core::convert::From<T>
+pub fn aya::programs::socket_filter::SocketFilterLink::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::socket_filter::SocketFilterLink where U: core::convert::Into<T>
+pub type aya::programs::socket_filter::SocketFilterLink::Error = core::convert::Infallible
+pub fn aya::programs::socket_filter::SocketFilterLink::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::socket_filter::SocketFilterLink where U: core::convert::TryFrom<T>
+pub type aya::programs::socket_filter::SocketFilterLink::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::socket_filter::SocketFilterLink::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::socket_filter::SocketFilterLink where T: 'static + core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterLink::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::socket_filter::SocketFilterLink where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterLink::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::socket_filter::SocketFilterLink where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterLink::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::socket_filter::SocketFilterLink
+pub fn aya::programs::socket_filter::SocketFilterLink::from(t: T) -> T
+pub struct aya::programs::socket_filter::SocketFilterLinkId(_, _)
+impl core::cmp::Eq for aya::programs::socket_filter::SocketFilterLinkId
+impl core::cmp::PartialEq for aya::programs::socket_filter::SocketFilterLinkId
+pub fn aya::programs::socket_filter::SocketFilterLinkId::eq(&self, other: &aya::programs::socket_filter::SocketFilterLinkId) -> bool
+impl core::fmt::Debug for aya::programs::socket_filter::SocketFilterLinkId
+pub fn aya::programs::socket_filter::SocketFilterLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::socket_filter::SocketFilterLinkId
+pub fn aya::programs::socket_filter::SocketFilterLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for aya::programs::socket_filter::SocketFilterLinkId
+impl core::marker::Send for aya::programs::socket_filter::SocketFilterLinkId
+impl core::marker::Sync for aya::programs::socket_filter::SocketFilterLinkId
+impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterLinkId
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterLinkId
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterLinkId
+impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilterLinkId where U: core::convert::From<T>
+pub fn aya::programs::socket_filter::SocketFilterLinkId::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::socket_filter::SocketFilterLinkId where U: core::convert::Into<T>
+pub type aya::programs::socket_filter::SocketFilterLinkId::Error = core::convert::Infallible
+pub fn aya::programs::socket_filter::SocketFilterLinkId::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::socket_filter::SocketFilterLinkId where U: core::convert::TryFrom<T>
+pub type aya::programs::socket_filter::SocketFilterLinkId::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::socket_filter::SocketFilterLinkId::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::socket_filter::SocketFilterLinkId where T: 'static + core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterLinkId::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::socket_filter::SocketFilterLinkId where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterLinkId::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::socket_filter::SocketFilterLinkId where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterLinkId::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::socket_filter::SocketFilterLinkId
+pub fn aya::programs::socket_filter::SocketFilterLinkId::from(t: T) -> T
 pub mod aya::programs::tc
 pub enum aya::programs::tc::TcAttachType
 pub aya::programs::tc::TcAttachType::Custom(u32)
@@ -5540,13 +6322,13 @@ pub aya::programs::Program::KProbe(aya::programs::kprobe::KProbe)
 pub aya::programs::Program::LircMode2(aya::programs::lirc_mode2::LircMode2)
 pub aya::programs::Program::Lsm(aya::programs::lsm::Lsm)
 pub aya::programs::Program::PerfEvent(aya::programs::perf_event::PerfEvent)
-pub aya::programs::Program::RawTracePoint(aya::programs::RawTracePoint)
+pub aya::programs::Program::RawTracePoint(aya::programs::raw_trace_point::RawTracePoint)
 pub aya::programs::Program::SchedClassifier(aya::programs::tc::SchedClassifier)
-pub aya::programs::Program::SkLookup(aya::programs::SkLookup)
-pub aya::programs::Program::SkMsg(aya::programs::SkMsg)
-pub aya::programs::Program::SkSkb(aya::programs::SkSkb)
-pub aya::programs::Program::SockOps(aya::programs::SockOps)
-pub aya::programs::Program::SocketFilter(aya::programs::SocketFilter)
+pub aya::programs::Program::SkLookup(aya::programs::sk_lookup::SkLookup)
+pub aya::programs::Program::SkMsg(aya::programs::sk_msg::SkMsg)
+pub aya::programs::Program::SkSkb(aya::programs::sk_skb::SkSkb)
+pub aya::programs::Program::SockOps(aya::programs::sock_ops::SockOps)
+pub aya::programs::Program::SocketFilter(aya::programs::socket_filter::SocketFilter)
 pub aya::programs::Program::TracePoint(aya::programs::trace_point::TracePoint)
 pub aya::programs::Program::UProbe(aya::programs::uprobe::UProbe)
 pub aya::programs::Program::Xdp(aya::programs::xdp::Xdp)
@@ -5558,24 +6340,6 @@ pub fn aya::programs::Program::prog_type(&self) -> aya_obj::generated::linux_bin
 pub fn aya::programs::Program::unload(self) -> core::result::Result<(), aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::Program
 pub fn aya::programs::Program::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::RawTracePoint
-pub type &'a aya::programs::RawTracePoint::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::RawTracePoint::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::RawTracePoint, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SkLookup
-pub type &'a aya::programs::SkLookup::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::SkLookup::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SkLookup, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SkMsg
-pub type &'a aya::programs::SkMsg::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::SkMsg::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SkMsg, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SkSkb
-pub type &'a aya::programs::SkSkb::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::SkSkb::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SkSkb, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SockOps
-pub type &'a aya::programs::SockOps::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::SockOps::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SockOps, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SocketFilter
-pub type &'a aya::programs::SocketFilter::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::SocketFilter::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SocketFilter, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_device::CgroupDevice
 pub type &'a aya::programs::cgroup_device::CgroupDevice::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::cgroup_device::CgroupDevice::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
@@ -5615,6 +6379,24 @@ pub fn &'a aya::programs::lsm::Lsm::try_from(program: &'a aya::programs::Program
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::perf_event::PerfEvent
 pub type &'a aya::programs::perf_event::PerfEvent::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::perf_event::PerfEvent::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::perf_event::PerfEvent, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::raw_trace_point::RawTracePoint
+pub type &'a aya::programs::raw_trace_point::RawTracePoint::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::raw_trace_point::RawTracePoint::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::raw_trace_point::RawTracePoint, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_lookup::SkLookup
+pub type &'a aya::programs::sk_lookup::SkLookup::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_lookup::SkLookup::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_lookup::SkLookup, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_msg::SkMsg
+pub type &'a aya::programs::sk_msg::SkMsg::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_msg::SkMsg::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_msg::SkMsg, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_skb::SkSkb
+pub type &'a aya::programs::sk_skb::SkSkb::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_skb::SkSkb::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_skb::SkSkb, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sock_ops::SockOps
+pub type &'a aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sock_ops::SockOps::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::socket_filter::SocketFilter
+pub type &'a aya::programs::socket_filter::SocketFilter::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::socket_filter::SocketFilter::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::socket_filter::SocketFilter, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::tc::SchedClassifier
 pub type &'a aya::programs::tc::SchedClassifier::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::tc::SchedClassifier::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::tc::SchedClassifier, aya::programs::ProgramError>
@@ -5630,24 +6412,6 @@ pub fn &'a aya::programs::uprobe::UProbe::try_from(program: &'a aya::programs::P
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::xdp::Xdp
 pub type &'a aya::programs::xdp::Xdp::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::xdp::Xdp::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::xdp::Xdp, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::RawTracePoint
-pub type &'a mut aya::programs::RawTracePoint::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::RawTracePoint::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::RawTracePoint, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SkLookup
-pub type &'a mut aya::programs::SkLookup::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::SkLookup::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SkLookup, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SkMsg
-pub type &'a mut aya::programs::SkMsg::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::SkMsg::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SkMsg, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SkSkb
-pub type &'a mut aya::programs::SkSkb::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::SkSkb::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SkSkb, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SockOps
-pub type &'a mut aya::programs::SockOps::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::SockOps::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SockOps, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SocketFilter
-pub type &'a mut aya::programs::SocketFilter::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::SocketFilter::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SocketFilter, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_device::CgroupDevice
 pub type &'a mut aya::programs::cgroup_device::CgroupDevice::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::cgroup_device::CgroupDevice::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
@@ -5687,6 +6451,24 @@ pub fn &'a mut aya::programs::lsm::Lsm::try_from(program: &'a mut aya::programs:
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::perf_event::PerfEvent
 pub type &'a mut aya::programs::perf_event::PerfEvent::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::perf_event::PerfEvent::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::perf_event::PerfEvent, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::raw_trace_point::RawTracePoint
+pub type &'a mut aya::programs::raw_trace_point::RawTracePoint::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::raw_trace_point::RawTracePoint::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::raw_trace_point::RawTracePoint, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_lookup::SkLookup
+pub type &'a mut aya::programs::sk_lookup::SkLookup::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_lookup::SkLookup::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_lookup::SkLookup, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_msg::SkMsg
+pub type &'a mut aya::programs::sk_msg::SkMsg::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_msg::SkMsg::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_msg::SkMsg, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_skb::SkSkb
+pub type &'a mut aya::programs::sk_skb::SkSkb::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_skb::SkSkb::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_skb::SkSkb, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sock_ops::SockOps
+pub type &'a mut aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sock_ops::SockOps::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::socket_filter::SocketFilter
+pub type &'a mut aya::programs::socket_filter::SocketFilter::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::socket_filter::SocketFilter::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::socket_filter::SocketFilter, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::tc::SchedClassifier
 pub type &'a mut aya::programs::tc::SchedClassifier::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::tc::SchedClassifier::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::tc::SchedClassifier, aya::programs::ProgramError>
@@ -5738,7 +6520,7 @@ pub aya::programs::ProgramError::LoadError::verifier_log: aya_obj::VerifierLog
 pub aya::programs::ProgramError::MapError(aya::maps::MapError)
 pub aya::programs::ProgramError::NotAttached
 pub aya::programs::ProgramError::NotLoaded
-pub aya::programs::ProgramError::SocketFilterError(aya::programs::SocketFilterError)
+pub aya::programs::ProgramError::SocketFilterError(aya::programs::socket_filter::SocketFilterError)
 pub aya::programs::ProgramError::SyscallError(crate::sys::SyscallError)
 pub aya::programs::ProgramError::TcError(aya::programs::tc::TcError)
 pub aya::programs::ProgramError::TracePointError(aya::programs::trace_point::TracePointError)
@@ -5751,12 +6533,12 @@ impl core::convert::From<aya::maps::MapError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::maps::MapError) -> Self
 impl core::convert::From<aya::programs::ProgramError> for aya::BpfError
 pub fn aya::BpfError::from(source: aya::programs::ProgramError) -> Self
-impl core::convert::From<aya::programs::SocketFilterError> for aya::programs::ProgramError
-pub fn aya::programs::ProgramError::from(source: aya::programs::SocketFilterError) -> Self
 impl core::convert::From<aya::programs::extension::ExtensionError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::extension::ExtensionError) -> Self
 impl core::convert::From<aya::programs::kprobe::KProbeError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::kprobe::KProbeError) -> Self
+impl core::convert::From<aya::programs::socket_filter::SocketFilterError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(source: aya::programs::socket_filter::SocketFilterError) -> Self
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::tc::TcError) -> Self
 impl core::convert::From<aya::programs::trace_point::TracePointError> for aya::programs::ProgramError
@@ -5833,70 +6615,70 @@ pub fn aya::programs::perf_event::SamplePolicy::from(t: T) -> T
 pub enum aya::programs::SkSkbKind
 pub aya::programs::SkSkbKind::StreamParser
 pub aya::programs::SkSkbKind::StreamVerdict
-impl core::clone::Clone for aya::programs::SkSkbKind
-pub fn aya::programs::SkSkbKind::clone(&self) -> aya::programs::SkSkbKind
-impl core::fmt::Debug for aya::programs::SkSkbKind
-pub fn aya::programs::SkSkbKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for aya::programs::SkSkbKind
-impl core::marker::Send for aya::programs::SkSkbKind
-impl core::marker::Sync for aya::programs::SkSkbKind
-impl core::marker::Unpin for aya::programs::SkSkbKind
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::SkSkbKind
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::SkSkbKind
-impl<T, U> core::convert::Into<U> for aya::programs::SkSkbKind where U: core::convert::From<T>
-pub fn aya::programs::SkSkbKind::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::SkSkbKind where U: core::convert::Into<T>
-pub type aya::programs::SkSkbKind::Error = core::convert::Infallible
-pub fn aya::programs::SkSkbKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::SkSkbKind where U: core::convert::TryFrom<T>
-pub type aya::programs::SkSkbKind::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::SkSkbKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for aya::programs::SkSkbKind where T: core::clone::Clone
-pub type aya::programs::SkSkbKind::Owned = T
-pub fn aya::programs::SkSkbKind::clone_into(&self, target: &mut T)
-pub fn aya::programs::SkSkbKind::to_owned(&self) -> T
-impl<T> core::any::Any for aya::programs::SkSkbKind where T: 'static + core::marker::Sized
-pub fn aya::programs::SkSkbKind::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::SkSkbKind where T: core::marker::Sized
-pub fn aya::programs::SkSkbKind::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::SkSkbKind where T: core::marker::Sized
-pub fn aya::programs::SkSkbKind::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::SkSkbKind
-pub fn aya::programs::SkSkbKind::from(t: T) -> T
+impl core::clone::Clone for aya::programs::sk_skb::SkSkbKind
+pub fn aya::programs::sk_skb::SkSkbKind::clone(&self) -> aya::programs::sk_skb::SkSkbKind
+impl core::fmt::Debug for aya::programs::sk_skb::SkSkbKind
+pub fn aya::programs::sk_skb::SkSkbKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::sk_skb::SkSkbKind
+impl core::marker::Send for aya::programs::sk_skb::SkSkbKind
+impl core::marker::Sync for aya::programs::sk_skb::SkSkbKind
+impl core::marker::Unpin for aya::programs::sk_skb::SkSkbKind
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkbKind
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbKind
+impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkbKind where U: core::convert::From<T>
+pub fn aya::programs::sk_skb::SkSkbKind::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_skb::SkSkbKind where U: core::convert::Into<T>
+pub type aya::programs::sk_skb::SkSkbKind::Error = core::convert::Infallible
+pub fn aya::programs::sk_skb::SkSkbKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_skb::SkSkbKind where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_skb::SkSkbKind::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_skb::SkSkbKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::programs::sk_skb::SkSkbKind where T: core::clone::Clone
+pub type aya::programs::sk_skb::SkSkbKind::Owned = T
+pub fn aya::programs::sk_skb::SkSkbKind::clone_into(&self, target: &mut T)
+pub fn aya::programs::sk_skb::SkSkbKind::to_owned(&self) -> T
+impl<T> core::any::Any for aya::programs::sk_skb::SkSkbKind where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbKind::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_skb::SkSkbKind where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbKind::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_skb::SkSkbKind where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbKind::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_skb::SkSkbKind
+pub fn aya::programs::sk_skb::SkSkbKind::from(t: T) -> T
 pub enum aya::programs::SocketFilterError
 pub aya::programs::SocketFilterError::SoAttachBpfError
 pub aya::programs::SocketFilterError::SoAttachBpfError::io_error: std::io::error::Error
-impl core::convert::From<aya::programs::SocketFilterError> for aya::programs::ProgramError
-pub fn aya::programs::ProgramError::from(source: aya::programs::SocketFilterError) -> Self
-impl core::error::Error for aya::programs::SocketFilterError
-pub fn aya::programs::SocketFilterError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Debug for aya::programs::SocketFilterError
-pub fn aya::programs::SocketFilterError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for aya::programs::SocketFilterError
-pub fn aya::programs::SocketFilterError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Send for aya::programs::SocketFilterError
-impl core::marker::Sync for aya::programs::SocketFilterError
-impl core::marker::Unpin for aya::programs::SocketFilterError
-impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::SocketFilterError
-impl !core::panic::unwind_safe::UnwindSafe for aya::programs::SocketFilterError
-impl<T, U> core::convert::Into<U> for aya::programs::SocketFilterError where U: core::convert::From<T>
-pub fn aya::programs::SocketFilterError::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::SocketFilterError where U: core::convert::Into<T>
-pub type aya::programs::SocketFilterError::Error = core::convert::Infallible
-pub fn aya::programs::SocketFilterError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::SocketFilterError where U: core::convert::TryFrom<T>
-pub type aya::programs::SocketFilterError::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::SocketFilterError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::string::ToString for aya::programs::SocketFilterError where T: core::fmt::Display + core::marker::Sized
-pub fn aya::programs::SocketFilterError::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for aya::programs::SocketFilterError where T: 'static + core::marker::Sized
-pub fn aya::programs::SocketFilterError::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::SocketFilterError where T: core::marker::Sized
-pub fn aya::programs::SocketFilterError::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::SocketFilterError where T: core::marker::Sized
-pub fn aya::programs::SocketFilterError::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::SocketFilterError
-pub fn aya::programs::SocketFilterError::from(t: T) -> T
+impl core::convert::From<aya::programs::socket_filter::SocketFilterError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(source: aya::programs::socket_filter::SocketFilterError) -> Self
+impl core::error::Error for aya::programs::socket_filter::SocketFilterError
+pub fn aya::programs::socket_filter::SocketFilterError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::programs::socket_filter::SocketFilterError
+pub fn aya::programs::socket_filter::SocketFilterError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::socket_filter::SocketFilterError
+pub fn aya::programs::socket_filter::SocketFilterError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya::programs::socket_filter::SocketFilterError
+impl core::marker::Sync for aya::programs::socket_filter::SocketFilterError
+impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterError
+impl !core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterError
+impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilterError where U: core::convert::From<T>
+pub fn aya::programs::socket_filter::SocketFilterError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::socket_filter::SocketFilterError where U: core::convert::Into<T>
+pub type aya::programs::socket_filter::SocketFilterError::Error = core::convert::Infallible
+pub fn aya::programs::socket_filter::SocketFilterError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::socket_filter::SocketFilterError where U: core::convert::TryFrom<T>
+pub type aya::programs::socket_filter::SocketFilterError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::socket_filter::SocketFilterError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya::programs::socket_filter::SocketFilterError where T: core::fmt::Display + core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya::programs::socket_filter::SocketFilterError where T: 'static + core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::socket_filter::SocketFilterError where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::socket_filter::SocketFilterError where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterError::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::socket_filter::SocketFilterError
+pub fn aya::programs::socket_filter::SocketFilterError::from(t: T) -> T
 pub enum aya::programs::TcAttachType
 pub aya::programs::TcAttachType::Custom(u32)
 pub aya::programs::TcAttachType::Egress
@@ -6823,53 +7605,53 @@ pub fn aya::programs::ProgramInfo::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::ProgramInfo
 pub fn aya::programs::ProgramInfo::from(t: T) -> T
 pub struct aya::programs::RawTracePoint
-impl aya::programs::RawTracePoint
-pub fn aya::programs::RawTracePoint::attach(&mut self, tp_name: &str) -> core::result::Result<RawTracePointLinkId, aya::programs::ProgramError>
-pub fn aya::programs::RawTracePoint::detach(&mut self, link_id: RawTracePointLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::RawTracePoint::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::RawTracePoint::take_link(&mut self, link_id: RawTracePointLinkId) -> core::result::Result<RawTracePointLink, aya::programs::ProgramError>
-impl aya::programs::RawTracePoint
-pub fn aya::programs::RawTracePoint::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::RawTracePoint
-pub fn aya::programs::RawTracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::RawTracePoint
-pub fn aya::programs::RawTracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::RawTracePoint
-pub fn aya::programs::RawTracePoint::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::RawTracePoint::unpin(self) -> core::result::Result<(), std::io::error::Error>
-impl aya::programs::RawTracePoint
-pub fn aya::programs::RawTracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::RawTracePoint
-pub fn aya::programs::RawTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::RawTracePoint
-pub fn aya::programs::RawTracePoint::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::RawTracePoint
-pub type &'a aya::programs::RawTracePoint::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::RawTracePoint::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::RawTracePoint, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::RawTracePoint
-pub type &'a mut aya::programs::RawTracePoint::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::RawTracePoint::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::RawTracePoint, aya::programs::ProgramError>
-impl core::marker::Send for aya::programs::RawTracePoint
-impl core::marker::Sync for aya::programs::RawTracePoint
-impl core::marker::Unpin for aya::programs::RawTracePoint
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePoint
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePoint
-impl<T, U> core::convert::Into<U> for aya::programs::RawTracePoint where U: core::convert::From<T>
-pub fn aya::programs::RawTracePoint::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::RawTracePoint where U: core::convert::Into<T>
-pub type aya::programs::RawTracePoint::Error = core::convert::Infallible
-pub fn aya::programs::RawTracePoint::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::RawTracePoint where U: core::convert::TryFrom<T>
-pub type aya::programs::RawTracePoint::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::RawTracePoint::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::programs::RawTracePoint where T: 'static + core::marker::Sized
-pub fn aya::programs::RawTracePoint::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::RawTracePoint where T: core::marker::Sized
-pub fn aya::programs::RawTracePoint::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::RawTracePoint where T: core::marker::Sized
-pub fn aya::programs::RawTracePoint::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::RawTracePoint
-pub fn aya::programs::RawTracePoint::from(t: T) -> T
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::attach(&mut self, tp_name: &str) -> core::result::Result<aya::programs::raw_trace_point::RawTracePointLinkId, aya::programs::ProgramError>
+pub fn aya::programs::raw_trace_point::RawTracePoint::detach(&mut self, link_id: aya::programs::raw_trace_point::RawTracePointLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::raw_trace_point::RawTracePoint::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::raw_trace_point::RawTracePoint::take_link(&mut self, link_id: aya::programs::raw_trace_point::RawTracePointLinkId) -> core::result::Result<aya::programs::raw_trace_point::RawTracePointLink, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::raw_trace_point::RawTracePoint::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::raw_trace_point::RawTracePoint
+pub type &'a aya::programs::raw_trace_point::RawTracePoint::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::raw_trace_point::RawTracePoint::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::raw_trace_point::RawTracePoint, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::raw_trace_point::RawTracePoint
+pub type &'a mut aya::programs::raw_trace_point::RawTracePoint::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::raw_trace_point::RawTracePoint::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::raw_trace_point::RawTracePoint, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::raw_trace_point::RawTracePoint
+impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePoint
+impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePoint
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePoint
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePoint
+impl<T, U> core::convert::Into<U> for aya::programs::raw_trace_point::RawTracePoint where U: core::convert::From<T>
+pub fn aya::programs::raw_trace_point::RawTracePoint::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::raw_trace_point::RawTracePoint where U: core::convert::Into<T>
+pub type aya::programs::raw_trace_point::RawTracePoint::Error = core::convert::Infallible
+pub fn aya::programs::raw_trace_point::RawTracePoint::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::raw_trace_point::RawTracePoint where U: core::convert::TryFrom<T>
+pub type aya::programs::raw_trace_point::RawTracePoint::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::raw_trace_point::RawTracePoint::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::raw_trace_point::RawTracePoint where T: 'static + core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePoint::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::raw_trace_point::RawTracePoint where T: core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePoint::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::raw_trace_point::RawTracePoint where T: core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePoint::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::from(t: T) -> T
 pub struct aya::programs::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::attach(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
@@ -6920,244 +7702,244 @@ pub fn aya::programs::tc::SchedClassifier::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::from(t: T) -> T
 pub struct aya::programs::SkLookup
-impl aya::programs::SkLookup
-pub fn aya::programs::SkLookup::attach<T: std::os::fd::owned::AsFd>(&mut self, netns: T) -> core::result::Result<SkLookupLinkId, aya::programs::ProgramError>
-pub fn aya::programs::SkLookup::detach(&mut self, link_id: SkLookupLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::SkLookup::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::SkLookup::take_link(&mut self, link_id: SkLookupLinkId) -> core::result::Result<SkLookupLink, aya::programs::ProgramError>
-impl aya::programs::SkLookup
-pub fn aya::programs::SkLookup::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::SkLookup
-pub fn aya::programs::SkLookup::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::SkLookup
-pub fn aya::programs::SkLookup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::SkLookup
-pub fn aya::programs::SkLookup::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::SkLookup::unpin(self) -> core::result::Result<(), std::io::error::Error>
-impl aya::programs::SkLookup
-pub fn aya::programs::SkLookup::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::SkLookup
-pub fn aya::programs::SkLookup::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::SkLookup
-pub fn aya::programs::SkLookup::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SkLookup
-pub type &'a aya::programs::SkLookup::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::SkLookup::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SkLookup, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SkLookup
-pub type &'a mut aya::programs::SkLookup::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::SkLookup::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SkLookup, aya::programs::ProgramError>
-impl core::marker::Send for aya::programs::SkLookup
-impl core::marker::Sync for aya::programs::SkLookup
-impl core::marker::Unpin for aya::programs::SkLookup
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::SkLookup
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::SkLookup
-impl<T, U> core::convert::Into<U> for aya::programs::SkLookup where U: core::convert::From<T>
-pub fn aya::programs::SkLookup::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::SkLookup where U: core::convert::Into<T>
-pub type aya::programs::SkLookup::Error = core::convert::Infallible
-pub fn aya::programs::SkLookup::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::SkLookup where U: core::convert::TryFrom<T>
-pub type aya::programs::SkLookup::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::SkLookup::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::programs::SkLookup where T: 'static + core::marker::Sized
-pub fn aya::programs::SkLookup::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::SkLookup where T: core::marker::Sized
-pub fn aya::programs::SkLookup::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::SkLookup where T: core::marker::Sized
-pub fn aya::programs::SkLookup::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::SkLookup
-pub fn aya::programs::SkLookup::from(t: T) -> T
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::attach<T: std::os::fd::owned::AsFd>(&mut self, netns: T) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, aya::programs::ProgramError>
+pub fn aya::programs::sk_lookup::SkLookup::detach(&mut self, link_id: aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_lookup::SkLookup::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_lookup::SkLookup::take_link(&mut self, link_id: aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<aya::programs::sk_lookup::SkLookupLink, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::sk_lookup::SkLookup::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_lookup::SkLookup
+pub type &'a aya::programs::sk_lookup::SkLookup::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_lookup::SkLookup::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_lookup::SkLookup, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_lookup::SkLookup
+pub type &'a mut aya::programs::sk_lookup::SkLookup::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_lookup::SkLookup::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_lookup::SkLookup, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::sk_lookup::SkLookup
+impl core::marker::Sync for aya::programs::sk_lookup::SkLookup
+impl core::marker::Unpin for aya::programs::sk_lookup::SkLookup
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_lookup::SkLookup
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_lookup::SkLookup
+impl<T, U> core::convert::Into<U> for aya::programs::sk_lookup::SkLookup where U: core::convert::From<T>
+pub fn aya::programs::sk_lookup::SkLookup::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_lookup::SkLookup where U: core::convert::Into<T>
+pub type aya::programs::sk_lookup::SkLookup::Error = core::convert::Infallible
+pub fn aya::programs::sk_lookup::SkLookup::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_lookup::SkLookup where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_lookup::SkLookup::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_lookup::SkLookup::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_lookup::SkLookup where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookup::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_lookup::SkLookup where T: core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookup::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_lookup::SkLookup where T: core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookup::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::from(t: T) -> T
 pub struct aya::programs::SkMsg
-impl aya::programs::SkMsg
-pub fn aya::programs::SkMsg::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<SkMsgLinkId, aya::programs::ProgramError>
-pub fn aya::programs::SkMsg::detach(&mut self, link_id: SkMsgLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::SkMsg::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::SkMsg::take_link(&mut self, link_id: SkMsgLinkId) -> core::result::Result<SkMsgLink, aya::programs::ProgramError>
-impl aya::programs::SkMsg
-pub fn aya::programs::SkMsg::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::SkMsg
-pub fn aya::programs::SkMsg::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::SkMsg
-pub fn aya::programs::SkMsg::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::SkMsg
-pub fn aya::programs::SkMsg::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::SkMsg::unpin(self) -> core::result::Result<(), std::io::error::Error>
-impl aya::programs::SkMsg
-pub fn aya::programs::SkMsg::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::SkMsg
-pub fn aya::programs::SkMsg::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::SkMsg
-pub fn aya::programs::SkMsg::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SkMsg
-pub type &'a aya::programs::SkMsg::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::SkMsg::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SkMsg, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SkMsg
-pub type &'a mut aya::programs::SkMsg::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::SkMsg::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SkMsg, aya::programs::ProgramError>
-impl core::marker::Send for aya::programs::SkMsg
-impl core::marker::Sync for aya::programs::SkMsg
-impl core::marker::Unpin for aya::programs::SkMsg
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::SkMsg
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::SkMsg
-impl<T, U> core::convert::Into<U> for aya::programs::SkMsg where U: core::convert::From<T>
-pub fn aya::programs::SkMsg::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::SkMsg where U: core::convert::Into<T>
-pub type aya::programs::SkMsg::Error = core::convert::Infallible
-pub fn aya::programs::SkMsg::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::SkMsg where U: core::convert::TryFrom<T>
-pub type aya::programs::SkMsg::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::SkMsg::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::programs::SkMsg where T: 'static + core::marker::Sized
-pub fn aya::programs::SkMsg::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::SkMsg where T: core::marker::Sized
-pub fn aya::programs::SkMsg::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::SkMsg where T: core::marker::Sized
-pub fn aya::programs::SkMsg::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::SkMsg
-pub fn aya::programs::SkMsg::from(t: T) -> T
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<aya::programs::sk_msg::SkMsgLinkId, aya::programs::ProgramError>
+pub fn aya::programs::sk_msg::SkMsg::detach(&mut self, link_id: aya::programs::sk_msg::SkMsgLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_msg::SkMsg::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_msg::SkMsg::take_link(&mut self, link_id: aya::programs::sk_msg::SkMsgLinkId) -> core::result::Result<aya::programs::sk_msg::SkMsgLink, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::sk_msg::SkMsg::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_msg::SkMsg
+pub type &'a aya::programs::sk_msg::SkMsg::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_msg::SkMsg::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_msg::SkMsg, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_msg::SkMsg
+pub type &'a mut aya::programs::sk_msg::SkMsg::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_msg::SkMsg::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_msg::SkMsg, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::sk_msg::SkMsg
+impl core::marker::Sync for aya::programs::sk_msg::SkMsg
+impl core::marker::Unpin for aya::programs::sk_msg::SkMsg
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsg
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsg
+impl<T, U> core::convert::Into<U> for aya::programs::sk_msg::SkMsg where U: core::convert::From<T>
+pub fn aya::programs::sk_msg::SkMsg::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_msg::SkMsg where U: core::convert::Into<T>
+pub type aya::programs::sk_msg::SkMsg::Error = core::convert::Infallible
+pub fn aya::programs::sk_msg::SkMsg::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_msg::SkMsg where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_msg::SkMsg::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_msg::SkMsg::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_msg::SkMsg where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsg::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_msg::SkMsg where T: core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsg::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_msg::SkMsg where T: core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsg::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::from(t: T) -> T
 pub struct aya::programs::SkSkb
-impl aya::programs::SkSkb
-pub fn aya::programs::SkSkb::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<SkSkbLinkId, aya::programs::ProgramError>
-pub fn aya::programs::SkSkb::detach(&mut self, link_id: SkSkbLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::SkSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::SkSkbKind) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::SkSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::SkSkb::take_link(&mut self, link_id: SkSkbLinkId) -> core::result::Result<SkSkbLink, aya::programs::ProgramError>
-impl aya::programs::SkSkb
-pub fn aya::programs::SkSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::SkSkb
-pub fn aya::programs::SkSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::SkSkb
-pub fn aya::programs::SkSkb::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::SkSkb::unpin(self) -> core::result::Result<(), std::io::error::Error>
-impl aya::programs::SkSkb
-pub fn aya::programs::SkSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::SkSkb
-pub fn aya::programs::SkSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::SkSkb
-pub fn aya::programs::SkSkb::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SkSkb
-pub type &'a aya::programs::SkSkb::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::SkSkb::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SkSkb, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SkSkb
-pub type &'a mut aya::programs::SkSkb::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::SkSkb::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SkSkb, aya::programs::ProgramError>
-impl core::marker::Send for aya::programs::SkSkb
-impl core::marker::Sync for aya::programs::SkSkb
-impl core::marker::Unpin for aya::programs::SkSkb
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::SkSkb
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::SkSkb
-impl<T, U> core::convert::Into<U> for aya::programs::SkSkb where U: core::convert::From<T>
-pub fn aya::programs::SkSkb::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::SkSkb where U: core::convert::Into<T>
-pub type aya::programs::SkSkb::Error = core::convert::Infallible
-pub fn aya::programs::SkSkb::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::SkSkb where U: core::convert::TryFrom<T>
-pub type aya::programs::SkSkb::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::SkSkb::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::programs::SkSkb where T: 'static + core::marker::Sized
-pub fn aya::programs::SkSkb::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::SkSkb where T: core::marker::Sized
-pub fn aya::programs::SkSkb::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::SkSkb where T: core::marker::Sized
-pub fn aya::programs::SkSkb::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::SkSkb
-pub fn aya::programs::SkSkb::from(t: T) -> T
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<aya::programs::sk_skb::SkSkbLinkId, aya::programs::ProgramError>
+pub fn aya::programs::sk_skb::SkSkb::detach(&mut self, link_id: aya::programs::sk_skb::SkSkbLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_skb::SkSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::sk_skb::SkSkbKind) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::sk_skb::SkSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_skb::SkSkb::take_link(&mut self, link_id: aya::programs::sk_skb::SkSkbLinkId) -> core::result::Result<aya::programs::sk_skb::SkSkbLink, aya::programs::ProgramError>
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::sk_skb::SkSkb::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_skb::SkSkb
+pub type &'a aya::programs::sk_skb::SkSkb::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_skb::SkSkb::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_skb::SkSkb, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_skb::SkSkb
+pub type &'a mut aya::programs::sk_skb::SkSkb::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_skb::SkSkb::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_skb::SkSkb, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::sk_skb::SkSkb
+impl core::marker::Sync for aya::programs::sk_skb::SkSkb
+impl core::marker::Unpin for aya::programs::sk_skb::SkSkb
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkb
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkb
+impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkb where U: core::convert::From<T>
+pub fn aya::programs::sk_skb::SkSkb::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_skb::SkSkb where U: core::convert::Into<T>
+pub type aya::programs::sk_skb::SkSkb::Error = core::convert::Infallible
+pub fn aya::programs::sk_skb::SkSkb::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sk_skb::SkSkb where U: core::convert::TryFrom<T>
+pub type aya::programs::sk_skb::SkSkb::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sk_skb::SkSkb::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sk_skb::SkSkb where T: 'static + core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkb::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sk_skb::SkSkb where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkb::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_skb::SkSkb where T: core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkb::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::from(t: T) -> T
 pub struct aya::programs::SockOps
-impl aya::programs::SockOps
-pub fn aya::programs::SockOps::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T) -> core::result::Result<SockOpsLinkId, aya::programs::ProgramError>
-pub fn aya::programs::SockOps::detach(&mut self, link_id: SockOpsLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::SockOps::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::SockOps::take_link(&mut self, link_id: SockOpsLinkId) -> core::result::Result<SockOpsLink, aya::programs::ProgramError>
-impl aya::programs::SockOps
-pub fn aya::programs::SockOps::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::SockOps
-pub fn aya::programs::SockOps::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::SockOps
-pub fn aya::programs::SockOps::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::SockOps
-pub fn aya::programs::SockOps::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::SockOps::unpin(self) -> core::result::Result<(), std::io::error::Error>
-impl aya::programs::SockOps
-pub fn aya::programs::SockOps::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::SockOps
-pub fn aya::programs::SockOps::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::SockOps
-pub fn aya::programs::SockOps::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SockOps
-pub type &'a aya::programs::SockOps::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::SockOps::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SockOps, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SockOps
-pub type &'a mut aya::programs::SockOps::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::SockOps::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SockOps, aya::programs::ProgramError>
-impl core::marker::Send for aya::programs::SockOps
-impl core::marker::Sync for aya::programs::SockOps
-impl core::marker::Unpin for aya::programs::SockOps
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::SockOps
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::SockOps
-impl<T, U> core::convert::Into<U> for aya::programs::SockOps where U: core::convert::From<T>
-pub fn aya::programs::SockOps::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::SockOps where U: core::convert::Into<T>
-pub type aya::programs::SockOps::Error = core::convert::Infallible
-pub fn aya::programs::SockOps::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::SockOps where U: core::convert::TryFrom<T>
-pub type aya::programs::SockOps::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::SockOps::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::programs::SockOps where T: 'static + core::marker::Sized
-pub fn aya::programs::SockOps::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::SockOps where T: core::marker::Sized
-pub fn aya::programs::SockOps::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::SockOps where T: core::marker::Sized
-pub fn aya::programs::SockOps::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::SockOps
-pub fn aya::programs::SockOps::from(t: T) -> T
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, aya::programs::ProgramError>
+pub fn aya::programs::sock_ops::SockOps::detach(&mut self, link_id: aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sock_ops::SockOps::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sock_ops::SockOps::take_link(&mut self, link_id: aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<aya::programs::sock_ops::SockOpsLink, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::sock_ops::SockOps::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sock_ops::SockOps
+pub type &'a aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sock_ops::SockOps::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sock_ops::SockOps
+pub type &'a mut aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sock_ops::SockOps::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::sock_ops::SockOps
+impl core::marker::Sync for aya::programs::sock_ops::SockOps
+impl core::marker::Unpin for aya::programs::sock_ops::SockOps
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOps
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOps
+impl<T, U> core::convert::Into<U> for aya::programs::sock_ops::SockOps where U: core::convert::From<T>
+pub fn aya::programs::sock_ops::SockOps::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::sock_ops::SockOps where U: core::convert::Into<T>
+pub type aya::programs::sock_ops::SockOps::Error = core::convert::Infallible
+pub fn aya::programs::sock_ops::SockOps::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::sock_ops::SockOps where U: core::convert::TryFrom<T>
+pub type aya::programs::sock_ops::SockOps::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::sock_ops::SockOps::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::sock_ops::SockOps where T: 'static + core::marker::Sized
+pub fn aya::programs::sock_ops::SockOps::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::sock_ops::SockOps where T: core::marker::Sized
+pub fn aya::programs::sock_ops::SockOps::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::sock_ops::SockOps where T: core::marker::Sized
+pub fn aya::programs::sock_ops::SockOps::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::from(t: T) -> T
 pub struct aya::programs::SocketFilter
-impl aya::programs::SocketFilter
-pub fn aya::programs::SocketFilter::attach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<SocketFilterLinkId, aya::programs::ProgramError>
-pub fn aya::programs::SocketFilter::detach(&mut self, link_id: SocketFilterLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::SocketFilter::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::SocketFilter::take_link(&mut self, link_id: SocketFilterLinkId) -> core::result::Result<SocketFilterLink, aya::programs::ProgramError>
-impl aya::programs::SocketFilter
-pub fn aya::programs::SocketFilter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::SocketFilter
-pub fn aya::programs::SocketFilter::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::SocketFilter
-pub fn aya::programs::SocketFilter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::SocketFilter
-pub fn aya::programs::SocketFilter::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::SocketFilter::unpin(self) -> core::result::Result<(), std::io::error::Error>
-impl aya::programs::SocketFilter
-pub fn aya::programs::SocketFilter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::SocketFilter
-pub fn aya::programs::SocketFilter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::SocketFilter
-pub fn aya::programs::SocketFilter::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SocketFilter
-pub type &'a aya::programs::SocketFilter::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::SocketFilter::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SocketFilter, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SocketFilter
-pub type &'a mut aya::programs::SocketFilter::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::SocketFilter::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SocketFilter, aya::programs::ProgramError>
-impl core::marker::Send for aya::programs::SocketFilter
-impl core::marker::Sync for aya::programs::SocketFilter
-impl core::marker::Unpin for aya::programs::SocketFilter
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::SocketFilter
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::SocketFilter
-impl<T, U> core::convert::Into<U> for aya::programs::SocketFilter where U: core::convert::From<T>
-pub fn aya::programs::SocketFilter::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::SocketFilter where U: core::convert::Into<T>
-pub type aya::programs::SocketFilter::Error = core::convert::Infallible
-pub fn aya::programs::SocketFilter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::SocketFilter where U: core::convert::TryFrom<T>
-pub type aya::programs::SocketFilter::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::SocketFilter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::programs::SocketFilter where T: 'static + core::marker::Sized
-pub fn aya::programs::SocketFilter::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::SocketFilter where T: core::marker::Sized
-pub fn aya::programs::SocketFilter::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::SocketFilter where T: core::marker::Sized
-pub fn aya::programs::SocketFilter::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::SocketFilter
-pub fn aya::programs::SocketFilter::from(t: T) -> T
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::attach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<aya::programs::socket_filter::SocketFilterLinkId, aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilter::detach(&mut self, link_id: aya::programs::socket_filter::SocketFilterLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilter::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilter::take_link(&mut self, link_id: aya::programs::socket_filter::SocketFilterLinkId) -> core::result::Result<aya::programs::socket_filter::SocketFilterLink, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::socket_filter::SocketFilter::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::socket_filter::SocketFilter
+pub type &'a aya::programs::socket_filter::SocketFilter::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::socket_filter::SocketFilter::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::socket_filter::SocketFilter, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::socket_filter::SocketFilter
+pub type &'a mut aya::programs::socket_filter::SocketFilter::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::socket_filter::SocketFilter::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::socket_filter::SocketFilter, aya::programs::ProgramError>
+impl core::marker::Send for aya::programs::socket_filter::SocketFilter
+impl core::marker::Sync for aya::programs::socket_filter::SocketFilter
+impl core::marker::Unpin for aya::programs::socket_filter::SocketFilter
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilter
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilter
+impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilter where U: core::convert::From<T>
+pub fn aya::programs::socket_filter::SocketFilter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::socket_filter::SocketFilter where U: core::convert::Into<T>
+pub type aya::programs::socket_filter::SocketFilter::Error = core::convert::Infallible
+pub fn aya::programs::socket_filter::SocketFilter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::socket_filter::SocketFilter where U: core::convert::TryFrom<T>
+pub type aya::programs::socket_filter::SocketFilter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::socket_filter::SocketFilter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::socket_filter::SocketFilter where T: 'static + core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::socket_filter::SocketFilter where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::socket_filter::SocketFilter where T: core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::from(t: T) -> T
 pub struct aya::programs::TracePoint
 impl aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::attach(&mut self, category: &str, name: &str) -> core::result::Result<aya::programs::trace_point::TracePointLinkId, aya::programs::ProgramError>
@@ -7481,6 +8263,30 @@ impl aya::programs::links::Link for aya::programs::perf_event::PerfEventLink
 pub type aya::programs::perf_event::PerfEventLink::Id = aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEventLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::raw_trace_point::RawTracePointLink
+pub type aya::programs::raw_trace_point::RawTracePointLink::Id = aya::programs::raw_trace_point::RawTracePointLinkId
+pub fn aya::programs::raw_trace_point::RawTracePointLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::raw_trace_point::RawTracePointLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::sk_lookup::SkLookupLink
+pub type aya::programs::sk_lookup::SkLookupLink::Id = aya::programs::sk_lookup::SkLookupLinkId
+pub fn aya::programs::sk_lookup::SkLookupLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_lookup::SkLookupLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::sk_msg::SkMsgLink
+pub type aya::programs::sk_msg::SkMsgLink::Id = aya::programs::sk_msg::SkMsgLinkId
+pub fn aya::programs::sk_msg::SkMsgLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_msg::SkMsgLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::sk_skb::SkSkbLink
+pub type aya::programs::sk_skb::SkSkbLink::Id = aya::programs::sk_skb::SkSkbLinkId
+pub fn aya::programs::sk_skb::SkSkbLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_skb::SkSkbLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::sock_ops::SockOpsLink
+pub type aya::programs::sock_ops::SockOpsLink::Id = aya::programs::sock_ops::SockOpsLinkId
+pub fn aya::programs::sock_ops::SockOpsLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sock_ops::SockOpsLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::socket_filter::SocketFilterLink
+pub type aya::programs::socket_filter::SocketFilterLink::Id = aya::programs::socket_filter::SocketFilterLinkId
+pub fn aya::programs::socket_filter::SocketFilterLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilterLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::tc::SchedClassifierLink
 pub type aya::programs::tc::SchedClassifierLink::Id = aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
