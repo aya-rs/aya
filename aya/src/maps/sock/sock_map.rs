@@ -77,7 +77,7 @@ impl<T: Borrow<MapData>> SockMap<T> {
         let fd: &MapFd = self.inner.borrow().fd();
         // TODO(https://github.com/rust-lang/rfcs/issues/3066): avoid this unsafe.
         // SAFETY: `SockMapFd` is #[repr(transparent)] over `MapFd`.
-        unsafe { std::mem::transmute(&fd) }
+        unsafe { std::mem::transmute(fd) }
     }
 }
 
