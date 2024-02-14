@@ -43,6 +43,13 @@ default-members = [
     # CARGO_CFG_BPF_TARGET_ARCH={x86_64,aarch64,arm,riscv64}
 ]
 
+[workspace.package]
+authors = ["Aya Contributors"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/aya-rs/aya"
+homepage = "https://aya-rs.dev"
+edition = "2021"
+
 # NOTE(vadorovsky): Neither cargo-udeps nor cargo-machete are able to detect
 # unused crates defined in this section. It would be nice to teach either of
 # them to do that, but in the meantime we need to be careful.

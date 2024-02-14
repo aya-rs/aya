@@ -1,7 +1,12 @@
 [package]
 name = "aya-log-ebpf"
 version = "0.1.0"
-edition = "2021"
+description = "Logging for eBPF programs"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [dependencies]
 aya-bpf = { path = "../aya-bpf" }

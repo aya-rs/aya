@@ -1,8 +1,12 @@
 [package]
 name = "aya-bpf-macros"
 version = "0.1.0"
-authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
-edition = "2021"
+description = "Proc macros used by aya-bpf"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [lib]
 proc-macro = true
