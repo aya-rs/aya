@@ -234,7 +234,7 @@ jobs:
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
           | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
           HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 \
-          brew install dpkg findutils gnu-tar llvm pkg-config qemu
+          brew install dpkg findutils gnu-tar llvm pkg-config qemu libelf
           echo /usr/local/opt/findutils/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/llvm/bin >> $GITHUB_PATH
