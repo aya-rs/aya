@@ -91,7 +91,7 @@ mod tests {
             bpf_cmd,
             bpf_map_type::{BPF_MAP_TYPE_BLOOM_FILTER, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
         },
-        maps::{Map, MapData},
+        maps::Map,
         obj::{self, maps::LegacyMap, BpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };

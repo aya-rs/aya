@@ -1394,10 +1394,8 @@ mod tests {
     use alloc::vec;
 
     use assert_matches::assert_matches;
-    use object::Endianness;
 
     use super::*;
-    use crate::maps::PinningType;
 
     const FAKE_INS_LEN: u64 = 8;
 
