@@ -86,7 +86,9 @@ where
                 }
             }
             Message::CompilerMessage(CompilerMessage { message, .. }) => {
-                println!("{message}");
+                for line in message.rendered.unwrap_or_default().split('\n') {
+                    println!("cargo:warning={line}");
+                }
             }
             Message::TextLine(line) => {
                 println!("{line}");
