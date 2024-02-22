@@ -243,7 +243,9 @@ fn main() {
                     }
                 }
                 Message::CompilerMessage(CompilerMessage { message, .. }) => {
-                    println!("cargo:warning={message}");
+                    for line in message.rendered.unwrap_or_default().split('\n') {
+                        println!("cargo:warning={line}");
+                    }
                 }
                 Message::TextLine(line) => {
                     println!("cargo:warning={line}");

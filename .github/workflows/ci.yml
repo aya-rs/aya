@@ -187,11 +187,24 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: dtolnay/rust-toolchain@master
+      - if: runner.os == 'Linux'
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
           components: rust-src
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
+
+      #### Temporary workaround for LLVM 18 not being released yet.
+      - if: runner.os == 'macOS'
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2024-02-12
+          components: rust-src
+          targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
+
+      - if: runner.os == 'macOS'
+        run: sed -i '' 's/nightly/nightly-2024-02-12/' test/integration-ebpf/rust-toolchain.toml
+      #### End of temporary workaround.
 
       - uses: Swatinem/rust-cache@v2
 
@@ -244,7 +257,8 @@ jobs:
       - name: bpf-linker
         if: runner.os == 'macOS'
         # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature).
-        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git --no-default-features
+        # Remove --rev when LLVM18 is released.
+        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git --rev 821f92990074cb7e950e25129dcd55e20424cede --no-default-features
 
       - name: Download debian kernels
         if: runner.arch == 'ARM64'
