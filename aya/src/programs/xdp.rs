@@ -1,7 +1,6 @@
 //! eXpress Data Path (XDP) programs.
 
 use std::{
-    convert::TryFrom,
     ffi::CString,
     hash::Hash,
     io,
@@ -9,7 +8,6 @@ use std::{
     path::Path,
 };
 
-use bitflags;
 use libc::if_nametoindex;
 use thiserror::Error;
 

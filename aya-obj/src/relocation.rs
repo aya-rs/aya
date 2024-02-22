@@ -498,10 +498,7 @@ mod test {
     use alloc::{string::ToString, vec, vec::Vec};
 
     use super::*;
-    use crate::{
-        maps::{BtfMap, LegacyMap, Map},
-        BpfSectionKind,
-    };
+    use crate::maps::{BtfMap, LegacyMap};
 
     fn fake_sym(index: usize, section_index: usize, address: u64, name: &str, size: u64) -> Symbol {
         Symbol {

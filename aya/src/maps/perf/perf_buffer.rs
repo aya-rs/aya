@@ -284,15 +284,12 @@ impl Drop for PerfBuffer {
 
 #[cfg(test)]
 mod tests {
-    use std::{fmt::Debug, mem};
+    use std::fmt::Debug;
 
     use assert_matches::assert_matches;
 
     use super::*;
-    use crate::{
-        generated::perf_event_mmap_page,
-        sys::{override_syscall, Syscall, TEST_MMAP_RET},
-    };
+    use crate::sys::{override_syscall, Syscall, TEST_MMAP_RET};
 
     #[repr(C)]
     #[derive(Debug)]

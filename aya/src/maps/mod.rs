@@ -1031,8 +1031,7 @@ mod tests {
     use crate::{
         bpf_map_def,
         generated::{bpf_cmd, bpf_map_type::BPF_MAP_TYPE_HASH},
-        maps::MapData,
-        obj::{maps::LegacyMap, BpfSectionKind},
+        obj::maps::LegacyMap,
         sys::{override_syscall, Syscall},
     };
 

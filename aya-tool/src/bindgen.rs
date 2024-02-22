@@ -1,4 +1,4 @@
-use bindgen::{self, Builder, EnumVariation};
+use bindgen::{Builder, EnumVariation};
 
 pub fn user_builder() -> Builder {
     bindgen::builder()
