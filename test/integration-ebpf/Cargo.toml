@@ -1,8 +1,12 @@
 [package]
 name = "integration-ebpf"
 version = "0.1.0"
-edition = "2021"
 publish = false
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [dependencies]
 aya-bpf = { path = "../../bpf/aya-bpf" }

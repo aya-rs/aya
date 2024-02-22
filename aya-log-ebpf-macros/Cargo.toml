@@ -1,7 +1,12 @@
 [package]
 name = "aya-log-ebpf-macros"
 version = "0.1.0"
-edition = "2021"
+description = "Proc macros used by aya-log-ebpf"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [dependencies]
 aya-log-common = { workspace = true }

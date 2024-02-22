@@ -1,9 +1,12 @@
 [package]
 name = "xtask"
 version = "0.1.0"
-authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
-edition = "2021"
 publish = false
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [dependencies]
 anyhow = { workspace = true, features = ["std"] }

@@ -1,9 +1,12 @@
 [package]
 name = "init"
 version = "0.1.0"
-authors = ["Tamir Duberstein <tamird@gmail.com>"]
-edition = "2021"
 publish = false
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [dependencies]
 anyhow = { workspace = true, features = ["std"] }

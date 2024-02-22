@@ -1,9 +1,11 @@
 [package]
-authors = ["Jorge Aparicio <jorge@japaric.io>"]
-edition = "2021"
 categories = ["embedded", "external-ffi-bindings", "no-std"]
 description = "Type aliases to C types like c_int for use with bindgen"
-documentation = "https://docs.rs/cty"
-license = "MIT OR Apache-2.0"
+documentation = "https://docs.rs/aya-bpf-cty"
 name = "aya-bpf-cty"
 version = "0.2.1"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true

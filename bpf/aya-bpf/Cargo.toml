@@ -1,8 +1,12 @@
 [package]
 name = "aya-bpf"
 version = "0.1.0"
-authors = ["Alessandro Decina <alessandro.d@gmail.com>"]
-edition = "2021"
+description = "A library for writing eBPF programs"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [dependencies]
 aya-bpf-cty = { path = "../aya-bpf-cty" }
