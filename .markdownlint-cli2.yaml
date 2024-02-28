@@ -4,5 +4,6 @@ config:
 globs:
   - "**/*.md"
 ignores:
+  - "**/CHANGELOG.md"
   - "target/**/*"
   - "xtask/libbpf/**/*"
