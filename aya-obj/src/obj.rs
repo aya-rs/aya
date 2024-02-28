@@ -1687,7 +1687,7 @@ mod tests {
             )),
             Ok(())
         );
-        assert!(obj.maps.get("foo").is_some());
+        assert!(obj.maps.contains_key("foo"));
     }
 
     #[test]
@@ -1774,9 +1774,9 @@ mod tests {
             )),
             Ok(())
         );
-        assert!(obj.maps.get("foo").is_some());
-        assert!(obj.maps.get("bar").is_some());
-        assert!(obj.maps.get("baz").is_some());
+        assert!(obj.maps.contains_key("foo"));
+        assert!(obj.maps.contains_key("bar"));
+        assert!(obj.maps.contains_key("baz"));
         for map in obj.maps.values() {
             assert_matches!(map, Map::Legacy(m) => {
                 assert_eq!(&m.def, def);
@@ -1796,7 +1796,7 @@ mod tests {
             )),
             Ok(())
         );
-        assert!(obj.maps.get(".bss").is_some());
+        assert!(obj.maps.contains_key(".bss"));
 
         assert_matches!(
             obj.parse_section(fake_section(
@@ -1807,7 +1807,7 @@ mod tests {
             )),
             Ok(())
         );
-        assert!(obj.maps.get(".rodata").is_some());
+        assert!(obj.maps.contains_key(".rodata"));
 
         assert_matches!(
             obj.parse_section(fake_section(
@@ -1818,7 +1818,7 @@ mod tests {
             )),
             Ok(())
         );
-        assert!(obj.maps.get(".rodata.boo").is_some());
+        assert!(obj.maps.contains_key(".rodata.boo"));
 
         assert_matches!(
             obj.parse_section(fake_section(
@@ -1829,7 +1829,7 @@ mod tests {
             )),
             Ok(())
         );
-        assert!(obj.maps.get(".data").is_some());
+        assert!(obj.maps.contains_key(".data"));
 
         assert_matches!(
             obj.parse_section(fake_section(
@@ -1840,7 +1840,7 @@ mod tests {
             )),
             Ok(())
         );
-        assert!(obj.maps.get(".data.boo").is_some());
+        assert!(obj.maps.contains_key(".data.boo"));
     }
 
     #[test]
