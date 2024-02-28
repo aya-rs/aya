@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.2.0 (2024-02-28)
 
+<csr-id-13b1fc63ef2ae083ba03ce9de24cb4f31f989d21/>
+<csr-id-b3e7ef741c5b8d09fc7dc8302576f8174be75ff4/>
+<csr-id-d16e607fd4b6258b516913071fdacafeb2bbbff9/>
+<csr-id-ca3f70b16a705bf26d2ccc7ce754de403be36223/>
+<csr-id-96fa08bd82233268154edf30b106876f5a4f0e30/>
+<csr-id-c8bf646ef098a00bc5c6e1cb5ae35ffa6fb5eac5/>
+<csr-id-84e5e2894f226f4b2c7cb637a6f44d5773b927e6/>
+<csr-id-d9f966ec9e49f4439710559cac852bde62810975/>
+<csr-id-e4537e389ad7ac6f09fc89349444e37fe01e4af4/>
+<csr-id-5603d7248a51a16233c249b645e30ea3f6804744/>
+<csr-id-1c8088b16cc255fc188b0b9a84b550a5c50a9003/>
+
 ### Chore
 
  - <csr-id-13b1fc63ef2ae083ba03ce9de24cb4f31f989d21/> Don't use path deps in workspace
@@ -22,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - repository
    - homepage
    - edition
+
+### Documentation
+
+ - <csr-id-9abb7160e51dd18c509049b1371acd96515d8f04/> Add CHANGELOG
 
 ### New Features
 
@@ -106,9 +122,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 35 commits contributed to the release over the course of 469 calendar days.
+ - 37 commits contributed to the release over the course of 469 calendar days.
  - 469 days passed between releases.
- - 13 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 14 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -118,6 +134,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Add CHANGELOG ([`9abb716`](https://github.com/aya-rs/aya/commit/9abb7160e51dd18c509049b1371acd96515d8f04))
+    - Release aya-log-common v0.1.14, aya-log v0.2.0 ([`c22a696`](https://github.com/aya-rs/aya/commit/c22a6963d44befb5591d4b21c09767c43935cb54))
     - Release aya-obj v0.1.0, aya v0.12.0, safety bump aya-log v0.2.0 ([`0e99fa0`](https://github.com/aya-rs/aya/commit/0e99fa0f340b2fb2e0da3b330aa6555322a77eec))
     - Don't use path deps in workspace ([`13b1fc6`](https://github.com/aya-rs/aya/commit/13b1fc63ef2ae083ba03ce9de24cb4f31f989d21))
     - Merge pull request #882 from dave-tucker/metadata ([`0fadd69`](https://github.com/aya-rs/aya/commit/0fadd695377b8a3f0d9a3af3bc8140f0f1bed8d2))
@@ -156,6 +174,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v0.1.13 (2022-11-16)
+
+<csr-id-832bdd280c19095d79ba2d27281c17f0b09adc15/>
+<csr-id-2223ab828d6db40a85cff4737f6164ed8ee9e42d/>
+<csr-id-b2924a3a264732e6de6898a1f03d7cb22d1d0dc5/>
+<csr-id-83ec27f06b6859f455f2b2baf985b8fd3fb4adc5/>
+<csr-id-b8b291c51ba1b43ff27c6aab6b55d6af77334aae/>
+<csr-id-611f967cd14b90e187ca86735f2131fb87e89856/>
+<csr-id-6aea88089087194c831b259a61eef5ccebcb45bc/>
+<csr-id-5789585994776d18afa58f3bb816cfcb1367298e/>
+<csr-id-628b473e0937eef94b0b337608a5d6c51ad2fd2a/>
+<csr-id-70b4e681301eb23ca776cd703e11f19cc879ac69/>
+<csr-id-d1a0ce51ee4e67cf9b03b695940f356ee950f8c2/>
+<csr-id-c4d89fa13cb4e96a62ccd5cae7cf1834c3c582f6/>
+<csr-id-bdb2750e66f922ebfbcba7250add38e2c932c293/>
+<csr-id-7f8d7057df11f41d0869f7f713d121785934adca/>
 
 ### Other
 

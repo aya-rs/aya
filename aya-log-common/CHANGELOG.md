@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.1.14 (2024-02-28)
 
+<csr-id-b3e7ef741c5b8d09fc7dc8302576f8174be75ff4/>
+<csr-id-b54a106584bf636cbd0ad217aa62124348e6b29f/>
+<csr-id-ca3f70b16a705bf26d2ccc7ce754de403be36223/>
+<csr-id-3cfd886dc512872fd3948cdf3baa8c99fe27ef0f/>
+<csr-id-fe047d79a3f501631ae6406444769f6d5f6fed24/>
+<csr-id-96fa08bd82233268154edf30b106876f5a4f0e30/>
+<csr-id-c8bf646ef098a00bc5c6e1cb5ae35ffa6fb5eac5/>
+<csr-id-6feebef9e551256156a8c22cf5de2165846a4793/>
+<csr-id-de7972483b5b97c073b337568328a022378ebca9/>
+<csr-id-47a2f25fca21e65d981b716d68f87af6203093d9/>
+<csr-id-84e5e2894f226f4b2c7cb637a6f44d5773b927e6/>
+<csr-id-d9f966ec9e49f4439710559cac852bde62810975/>
+<csr-id-9a1a720a74fd458b4865e1139dd2f4ca84994ef2/>
+<csr-id-5603d7248a51a16233c249b645e30ea3f6804744/>
+<csr-id-b10a31183be12d44292ed2540225058499a938b1/>
+
 ### Chore
 
  - <csr-id-b3e7ef741c5b8d09fc7dc8302576f8174be75ff4/> Use the cargo workspace package table
@@ -18,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - repository
    - homepage
    - edition
+
+### Documentation
+
+ - <csr-id-4f0f0957758362296c2d0a4749d354edd8dc181e/> Add CHANGELOG
 
 ### New Features
 
@@ -170,9 +190,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 35 commits contributed to the release over the course of 469 calendar days.
+ - 37 commits contributed to the release over the course of 469 calendar days.
  - 469 days passed between releases.
- - 17 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 18 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -182,6 +202,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Add CHANGELOG ([`4f0f095`](https://github.com/aya-rs/aya/commit/4f0f0957758362296c2d0a4749d354edd8dc181e))
+    - Release aya-log-common v0.1.14, aya-log v0.2.0 ([`c22a696`](https://github.com/aya-rs/aya/commit/c22a6963d44befb5591d4b21c09767c43935cb54))
     - Merge pull request #882 from dave-tucker/metadata ([`0fadd69`](https://github.com/aya-rs/aya/commit/0fadd695377b8a3f0d9a3af3bc8140f0f1bed8d2))
     - Use the cargo workspace package table ([`b3e7ef7`](https://github.com/aya-rs/aya/commit/b3e7ef741c5b8d09fc7dc8302576f8174be75ff4))
     - Merge pull request #738 from aya-rs/kill-qemu-better ([`fbbf191`](https://github.com/aya-rs/aya/commit/fbbf191bd3b12fafd2fb17a527c4855277df5869))
@@ -220,6 +242,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v0.1.13 (2022-11-16)
+
+<csr-id-832bdd280c19095d79ba2d27281c17f0b09adc15/>
+<csr-id-2223ab828d6db40a85cff4737f6164ed8ee9e42d/>
+<csr-id-83ec27f06b6859f455f2b2baf985b8fd3fb4adc5/>
+<csr-id-611f967cd14b90e187ca86735f2131fb87e89856/>
 
 ### Other
 
