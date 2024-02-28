@@ -10,7 +10,7 @@ edition.workspace = true
 
 [dependencies]
 anyhow = { workspace = true, features = ["std"] }
-aya-tool = { workspace = true }
+aya-tool = { path = "../aya-tool", version = "0.1.0", default-features = false }
 cargo_metadata = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 dialoguer = { workspace = true }

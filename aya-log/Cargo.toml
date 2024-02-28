@@ -12,8 +12,8 @@ homepage.workspace = true
 edition.workspace = true
 
 [dependencies]
-aya = { workspace = true, features = ["async_tokio"] }
-aya-log-common = { workspace = true }
+aya = { path = "../aya", version = "0.11.0", features = ["async_tokio"] }
+aya-log-common = { path = "../aya-log-common", version = "0.1.13", default-features = false }
 bytes = { workspace = true }
 log = { workspace = true }
 thiserror = { workspace = true }

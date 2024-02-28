@@ -57,13 +57,6 @@ edition = "2021"
 anyhow = { version = "1", default-features = false }
 assert_matches = { version = "1.5.0", default-features = false }
 async-io = { version = "2.0", default-features = false }
-aya = { path = "aya", version = "0.11.0", default-features = false }
-aya-bpf = { path = "bpf/aya-bpf", default-features = false }
-aya-log = { path = "aya-log", default-features = false }
-aya-log-common = { path = "aya-log-common", version = "0.1.13", default-features = false }
-aya-log-parser = { path = "aya-log-parser", default-features = false }
-aya-obj = { path = "aya-obj", version = "0.1.0", default-features = false }
-aya-tool = { path = "aya-tool", default-features = false }
 bindgen = { version = "0.69", default-features = false }
 bitflags = { version = "2.2.1", default-features = false }
 bytes = { version = "1", default-features = false }

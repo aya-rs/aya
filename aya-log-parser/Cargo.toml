@@ -1,6 +1,6 @@
 [package]
 name = "aya-log-parser"
-version = "0.1.11-dev.0"
+version = "0.1.13"
 description = "A parser for the aya log format strings"
 authors.workspace = true
 license.workspace = true
@@ -9,7 +9,7 @@ homepage.workspace = true
 edition.workspace = true
 
 [dependencies]
-aya-log-common = { workspace = true }
+aya-log-common = { path = "../aya-log-common", version = "0.1.13", default-features = false }
 
 [lib]
 path = "src/lib.rs"
