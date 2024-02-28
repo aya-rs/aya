@@ -5,7 +5,180 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.12.0 (2024-02-28)
+
+<csr-id-b3e7ef741c5b8d09fc7dc8302576f8174be75ff4/>
+<csr-id-770a95e0779a6a943c2f5439334fa208ac2ca7e6/>
+<csr-id-48fdf5a250ce74516a02c0f34b0f359f7f9a4d63/>
+<csr-id-2be705bfa04a80b1c4b58a69750e485aa0f2639a/>
+<csr-id-d570450a0c4622a5a8e7e62b321847d3155af1ea/>
+<csr-id-0f6a7343926b23190483bed49855fdc9bb10988d/>
+<csr-id-92b194788527b1318e262a3b9bb4558339aee05b/>
+<csr-id-7022528f04e08ef1a79ef0fee78323f29b6cc81c/>
+<csr-id-7c1bfeffe8988bb60020d6b61ee0f10aa5f1e1e7/>
+<csr-id-2257cbeccb18a3f486c9d64b52b33a331c89531e/>
+<csr-id-b13645b13da5b843728959e0416617ea19096613/>
+<csr-id-e9e2f48d4fa8825fec9d343e76999d58b170cdd8/>
+<csr-id-b1769678f48f7abf6c987a1d686bbaffd5d1e664/>
+<csr-id-c06fcc3edafe8efefc90d2eff1b4b4a5489fb9eb/>
+<csr-id-15faca8b2eddfad22594824cc634bfa1e540eeaa/>
+<csr-id-4d24d1cfe8108365403d834e40efa3fa72983f6d/>
+<csr-id-36420d929734beb7486cc5d14944fc7cf8e9b62a/>
+<csr-id-68ba02002fbd3bcf157c72b8212a697551cae8e6/>
+<csr-id-8780a50be194f7d7c41f6886f1c5de8eee4e59d0/>
+<csr-id-c89b2d156dbddd495f885edecbf71910cc61bba8/>
+<csr-id-984c08cbad73c51a501b528c53e72f6130976639/>
+<csr-id-e2cf734490bc188bcedb1eac92d23d81123e42cd/>
+<csr-id-4af9d1bd3ea8dd638bddeb2ae2a8ccea6d11b249/>
+<csr-id-b73c0a46f572a77d6d05d96d65f638848ac9b132/>
+<csr-id-8462b69716d5918a599933bb9688fa7f57b8ee1d/>
+<csr-id-5cdd1baf291f7d98128257a6a73cf8df2c144908/>
+<csr-id-5e637071c130fece2b26f6a7246bdef5f782fced/>
+<csr-id-cc48523347c2be5520779ef8eeadc6d3a68649d0/>
+<csr-id-7b71c7e1cd8d6948764d02afb0279151c6eae437/>
+<csr-id-0bf97eba64b44835300d8291cd4f78c220c3ad48/>
+<csr-id-bd6ba3ad8bae0537eee9eb78d20620592daa3c76/>
+<csr-id-d16e607fd4b6258b516913071fdacafeb2bbbff9/>
+<csr-id-0a6a2674fa6cbfda986b20d76f64802f0f65c2f0/>
+<csr-id-dffff1ce6b6c4500b970dec53b57b7eb9c3ec717/>
+<csr-id-00dc7a5bd4468b7d86d7f167a49e78d89016e2ac/>
+<csr-id-c6754c614ed3aca142bb27fae4e8d488aff72019/>
+<csr-id-9ed1d3d2811db89dc7314914d92922c54032382c/>
+<csr-id-f7fbbcd0e5cad297ddc5407e201580f878b4c5ee/>
+<csr-id-0647927e32333de662c6a065d5f5b9761c429e68/>
+<csr-id-139f3826383daba9a10dc7aacc079f31d28980fc/>
+<csr-id-ede3e91014075de01af02da624cad99861da2dad/>
+<csr-id-ec8293ab8644cbf8f1c4e7b1c44b286bc0ae969a/>
+<csr-id-938f979fe7a82f6d31c3b7e926682864c507e381/>
+<csr-id-0f4021ec89ef2dc5c28355ecfde4b2c53b4b6429/>
+<csr-id-0dacb34d449f71b1998b0a23cd58c0023277c2ef/>
+<csr-id-b4d5a1e8dbb82fc6fca543ad3b6e2f8175ae83b6/>
+<csr-id-f41592663cda156082255b93db145cfdd19378e5/>
+<csr-id-6ab7475fa66d1b8155487dfc548645e2b8ee20c6/>
+<csr-id-172859c66b25fbfa0d6d2af38ba7dd3f8e99d999/>
+<csr-id-2a1bf609b2b1239c9a789f1a1c814dfa888dfd1d/>
+<csr-id-8b0c7f12046c2ebadcee5e7ab813d5a34ddc08c6/>
+<csr-id-204d02022a94dab441029855e5d39d5143444204/>
+<csr-id-cee0265b5291acb747cf3a9532cfbf61c455f398/>
+<csr-id-6895b1e2ede8d571e7f7069a109932e917fd3ede/>
+<csr-id-d2e74e562dfa601397b3570ece1a51f5013b9928/>
+<csr-id-1ccfdbc17577a5f132ba0af2eb9b754e6e19ddca/>
+<csr-id-0bba9b14b02a01ca33dbb1fa4a910b77a73a4d65/>
+<csr-id-abda239d635e70c34898a425d119040d1bac39a5/>
+<csr-id-9ff1bf3d3bb8f3d51ecaf625dbf3f8d2dbb51abc/>
+<csr-id-a31544b6e77d6868d950820ad31fc1fe8ed3666b/>
+<csr-id-89bc255f1d14d72a61064b9b40b641b58f8970e0/>
+<csr-id-3d68fa32cba3dfadc6a611cf285c7f6733abd39a/>
+<csr-id-ae6526e59b2875807524d466667e2d89c4cd4b8e/>
+<csr-id-504fd1df0a29a02f5a19185e302c3e305a1045c7/>
+<csr-id-e1a556894c412daeb44c09c6aa2f9f4489952f34/>
+<csr-id-d88ca62aaaff690335c18ac725164c82fd173be2/>
+<csr-id-db975e977813ed6961963f7052ae53bc6df69309/>
+<csr-id-5ac186299b468e54f93b16393bae44b3d896c544/>
+<csr-id-c7a19bcefba25455279d9e718f6430dee7a84b74/>
+<csr-id-5138c731a92a8e5107e41829573617fc624ea9c7/>
+<csr-id-8ebf0ac3279db08a6b71ae6fed42a135d627e576/>
+<csr-id-cca9b8f1a7e345a39d852bd18a43974871d3ed4b/>
+<csr-id-81fb4e5568b2521a61db2db839126a4b7df240df/>
+<csr-id-dcc6b84a8803cfee37ab4e138c89616f1fc1b002/>
+<csr-id-71737f55764f56a764a5b21de0e59b8ecc49477c/>
+<csr-id-89ef97e8482d1d0c1bb243441d911f688e183315/>
+<csr-id-7bb9b7f5a5f03e815a5274457a93d0b20677059f/>
+<csr-id-b1404e9a73aee4cdf93e96b44d35057ae1f6f079/>
+<csr-id-a0af7e0b2fddaf297887c3e4c7480ef625c88ada/>
+<csr-id-de8519a38083e96f9a0c34f0577657b8050db8a8/>
+<csr-id-4cb3ea6e8fa990b88c5e8a67f1c852355bc7d99a/>
+<csr-id-7ee6f52a7442e97d81ef41bc75673c8560bec5b0/>
+<csr-id-dbfba18dac87cbd837820316d53ad09b27d0c469/>
+<csr-id-17f25a67934ad10443a4fbb62a563b5f6edcaa5f/>
+<csr-id-ea96c29ccbae6c59a6a5bfc90f402ad307e22665/>
+<csr-id-683a1cf2e4cdfba05ba35d708fecc4f43b0e83b3/>
+<csr-id-76c78e3bf82eb77c947dd125ed6624dfa6f4cc1c/>
+<csr-id-96fa08bd82233268154edf30b106876f5a4f0e30/>
+<csr-id-74b546827cdde13872e141e9e5b6cc9ac39efe1e/>
+<csr-id-8c61fc9ea6d1d52b38a238541fb229bc850c82ac/>
+<csr-id-27120b328aac5f992eed98b03216a9880a381749/>
+<csr-id-47f764c19185a69a00f3925239797caa98cd5afe/>
+<csr-id-00c480d2f95d4c47fc281173307c179220cc4452/>
+<csr-id-65d10f9ffcad065bd87c15aacc85cc4a0c2a03ee/>
+<csr-id-93435fc85400aa036f3890c43c78c9c9eb4baa96/>
+<csr-id-987e8489d05c50b777272124a7ec6ef6f3db6145/>
+<csr-id-49c6f5d12253cccf6354f818bf6d3b190428dc29/>
+<csr-id-8e9f395eab70b23b84b14e17d9b1518918b35ee6/>
+<csr-id-e9be3d9023478b0132779267dcd88222f69feef5/>
+<csr-id-591e21267a9bc9adca9818095de5a695cee7ee9b/>
+<csr-id-9e1109b3ce70a3668771bd11a7fda101eec3ab93/>
+<csr-id-ae8a95b0ee513b220b0b5ff1332ca24059ed3e7e/>
+<csr-id-4c78f7f1a014cf54d54c805233a0f29eb1ca5eeb/>
+<csr-id-33a0a2b604e77b63b771b9d0e167c894793492b5/>
+<csr-id-3aeeb8167baa2edb511f39b3d396d9112443aa73/>
+<csr-id-f1d891836e73d503c1841f5e7aee199d2b223afa/>
+<csr-id-1132b6e01b86856aa1fddf179fcc7e3825e79406/>
+<csr-id-7c25fe90a9611545aba047cd347ca431616130b6/>
+<csr-id-93ac3e94bcb47864670c124dfe00e16ed2ab6f5e/>
+<csr-id-bcb2972a969f85e8c6c77e1213d89cc8198e8fe7/>
+<csr-id-b614ffd603f4a276fd060659e14e5794bb26381f/>
+<csr-id-2e3c1779be03898dd6a01644012ef21b2475ad63/>
+<csr-id-94049ec661ed715e65fb4fb29c92d10d803699cc/>
+<csr-id-de4905a24bc0f665c40af964b56471c04434a8b4/>
+<csr-id-b1a70fc6e40f7ad398bce9994f3bb2642267ca8b/>
+<csr-id-ce79de7ff6b965efa25840b35b0d051c3087db0a/>
+<csr-id-7479c1dd6c1356bddb0401dbeea65618674524c9/>
+<csr-id-d0b3d3b2fac955ed0e1e3d885fcd3ba67941dc8c/>
+<csr-id-763b92a2e007a17cc2b6a17929dcb6a5c26c9f88/>
+<csr-id-ce22ca668f3e7c0f9832d28370457204537d2e50/>
+<csr-id-a18693b42dc986bde06b07540e261ecac59eef24/>
+<csr-id-7a720ab0c1061b7a6f4e8e7bf862d86550bbdc7b/>
+<csr-id-c22014c757c88c40091e44a48e14920f6e6e0334/>
+<csr-id-9c451a3357317405dd8e2e4df7d006cee943adcc/>
+<csr-id-e52497cb9c02123ae450ca36fb6f898d24b25c4b/>
+<csr-id-ac49827e204801079be2b87160a795ef412bd6cb/>
+<csr-id-81bc307dce452f0aacbfbe8c304089d11ddd8c5e/>
+<csr-id-aba99ea4b1f5694e115ae49e9dbe058d3e761fd8/>
+<csr-id-12e422b21134e3f4fb1949b248ecfd2afd768e53/>
+<csr-id-b3ae7786d335fd0294a6ddecf3f31ef28d56af9d/>
+<csr-id-51bb50ed8e9726723b395515374053e59cd4c402/>
+<csr-id-1fe7bba070cc74008cc8165030b01336cb9acbe1/>
+<csr-id-e0a98952601bf8244a1f046a106b6419313537b6/>
+<csr-id-ec2bd690532cc21b22e07cfa1539a195bf5e149c/>
+<csr-id-43aff5779390881d785a4d1c0d6c7bd681381dfe/>
+<csr-id-2eccf1d57da4c9bfa1ea4c0802bc34905c9b1f72/>
+<csr-id-5693fb994123b88eb856af83c5b8f79afd1d789f/>
+<csr-id-de6fa98963b7c5a311aafec6afe956ff716d68c5/>
+<csr-id-7c244e1f65fdb80f65c6a317773f3ff069255cd8/>
+<csr-id-f961cbb3d43693e21a9c633d8b581c8a24fa7055/>
+<csr-id-6af2053cf3fd36522642169710d2804feb1e20a5/>
+<csr-id-3bed2c2b94a47503ba32e9879c7a29fe9f8e9227/>
+<csr-id-c30ae6e0010adda3d3e3de792cf2919f3c1dcf32/>
+<csr-id-4b5b9ab3d92befe967709ad6cc55264fc0541b73/>
+<csr-id-18584e2259382bbb4e56007eacbe81dba25db05a/>
+<csr-id-f34ebeba99e409bb369a74687e1664a50c430c1e/>
+<csr-id-7b143199fb61edd168f3efc860a8e8c1d4cd9136/>
+<csr-id-4c1d645aa6e8150b50007ff42eb17e270a5b80af/>
+<csr-id-a6025255f56a941c2614d8bbf395e07b47588b75/>
+<csr-id-edd80397dce46f6e2a4cc96bd951562987721e55/>
+<csr-id-3211646aef48c7d388941a4a9e932e66bec87fd6/>
+<csr-id-03a15b98643a520269197e5db98cc48715a61577/>
+<csr-id-34ba2bc0482f9a16bc9c7ad138e9288c66e4bac4/>
+<csr-id-64f8a434d2a337578bde86c1983f46a3282e7f53/>
+<csr-id-5726b6d044011b462b04e533f881e0dd26d60d0f/>
+<csr-id-c9e70a8758ef10cfe1970e5f7a1e830e0ba5ec8e/>
+<csr-id-3d592d0f295b0a2c385e200bb0224c57c144f5ea/>
+<csr-id-bebe98e6706ec4c149508f8aabdd44707d1c6d73/>
+<csr-id-336faf553e1ef8d21298a4f6e9835a22e29904ad/>
+<csr-id-661a21570f1154f4ae32c81a8a142913f7deec86/>
+<csr-id-004f3dd6644b0c0a2ff1e877093a5ee0610eb830/>
+<csr-id-9e85b923230bd1db18fb87a3a6bc4a5c60a6b405/>
+<csr-id-b4413322e3730b183546fcfdfc4b12f0ffce4a9c/>
+<csr-id-fd52bfeadc70020e4111bb4dda0ca4e361c3be43/>
+<csr-id-ccb189784f87d58bc397b22c04e976cabcbd8e00/>
+<csr-id-623579a47f1fd169ba9503bd71550c3fcce76b21/>
+<csr-id-2b98259be73865cf6b213de1b73d0b7b0086a22f/>
+<csr-id-7b21a2d17eac57696352b2519bd76a4c7e9b1a2b/>
+<csr-id-0cd1e514763fd99dc287128317e9a36312ff6883/>
+<csr-id-572d047e37111b732be49ef3ad6fb16f70aa4063/>
+<csr-id-6f3cce75cf11af27a9267dd88a688fc24e6b17b5/>
+<csr-id-c74813f8c545fca288094f47b20096e58eb5f46a/>
 
 ### Chore
 
@@ -21,6 +194,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-770a95e0779a6a943c2f5439334fa208ac2ca7e6/> Appease clippy unused imports
  - <csr-id-48fdf5a250ce74516a02c0f34b0f359f7f9a4d63/> tracefs review fixes
 
+### Chore
+
+ - <csr-id-13b1fc63ef2ae083ba03ce9de24cb4f31f989d21/> Don't use path deps in workspace
+   This moves the path dependencies back into the per-crate Cargo.toml.
+   It is required such that the release tooling can correctly calculate
+   which version constraints require changing when we perform a release.
+
 ### Documentation
 
  - <csr-id-281ac1ac02cf0da7be1161b25c2ef023b922bc0c/> Document breaking changes
@@ -33,6 +213,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    to have an `AsyncPerfEventArray` which is documented on crates.io, but
    it's not obvious that you have to enable the `async` feature.
  - <csr-id-713cd4e858d9474318104b2a1e4dee0a25e8c67a/> Add crabby logo
+ - <csr-id-2d9d7a1a0b8fb944a9843642e85480b16c11bd11/> Document more breaking changes
+ - <csr-id-12280a83f967ba9a90dcd066b3470f4bcc4ea77c/> Add CHANGELOG
 
 ### New Features
 
@@ -646,9 +828,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 428 commits contributed to the release over the course of 631 calendar days.
+ - 433 commits contributed to the release over the course of 631 calendar days.
  - 631 days passed between releases.
- - 179 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 182 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -658,6 +840,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Don't use path deps in workspace ([`13b1fc6`](https://github.com/aya-rs/aya/commit/13b1fc63ef2ae083ba03ce9de24cb4f31f989d21))
+    - Merge pull request #892 from dave-tucker/breaking-changes-v2 ([`daa5a47`](https://github.com/aya-rs/aya/commit/daa5a473105e0c99f5f171ba519d076a7157af6e))
+    - Merge pull request #891 from dave-tucker/changelog ([`431ce23`](https://github.com/aya-rs/aya/commit/431ce23f27ef5c36a6b38c73b38f23b1cf007900))
+    - Document more breaking changes ([`2d9d7a1`](https://github.com/aya-rs/aya/commit/2d9d7a1a0b8fb944a9843642e85480b16c11bd11))
+    - Add CHANGELOG ([`12280a8`](https://github.com/aya-rs/aya/commit/12280a83f967ba9a90dcd066b3470f4bcc4ea77c))
     - Merge pull request #889 from dave-tucker/breaking-changes ([`5c9c044`](https://github.com/aya-rs/aya/commit/5c9c044719f84dcb76edfa496e3999194253b5c4))
     - Document breaking changes ([`281ac1a`](https://github.com/aya-rs/aya/commit/281ac1ac02cf0da7be1161b25c2ef023b922bc0c))
     - Merge pull request #882 from dave-tucker/metadata ([`0fadd69`](https://github.com/aya-rs/aya/commit/0fadd695377b8a3f0d9a3af3bc8140f0f1bed8d2))
@@ -1090,6 +1277,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.11.0 (2022-06-06)
 
+<csr-id-b2a6f00212997a997799c88ba9022a69d9a0b582/>
+<csr-id-2226b89ceb94ea29beb71376c43f371d2830ef61/>
+<csr-id-824baf9d642424b891ae8380cc3741fffe795123/>
+<csr-id-4a32e7d985de5b55f263cf9244791debb34cc00f/>
+<csr-id-ba312c48d561b5a414cdd1301c322266e38118a4/>
+<csr-id-af54b6c818c4f08d599df82beeb3661b8e26ca48/>
+<csr-id-8069ad14d0baad310f52b9f1f5a651b77566310f/>
+<csr-id-cdaa3af5ae12161e12db438282912f7b027ea277/>
+<csr-id-d1f22151935edebed13e0baaa04f25a96ddb30f0/>
+<csr-id-4e57d1fe32763f3016a454941b8295ece4b36f9e/>
+<csr-id-cb57d10d25611a35b2cc34523d95b9f331470958/>
+<csr-id-f357be7db45b7201be6864e83fb7eb7e78cd984a/>
+<csr-id-ad1636d2e795212ed6e326bd7df0fc60794be115/>
+
 ### Other
 
  - <csr-id-b2a6f00212997a997799c88ba9022a69d9a0b582/> Rename forget_link to take_link
@@ -1237,6 +1438,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v0.10.7 (2022-03-19)
+
+<csr-id-07e3824aa4972fee73bbb0c9e3b96a417615aafb/>
+<csr-id-9a642d373f3bd3b96b1e0a031388a8161cae5143/>
+<csr-id-7dd2e3d1f87559636ba33a7bbb76e57f20d43e8e/>
+<csr-id-5ee13217652216a3a01c82dd7d8a79ea8502ca12/>
+<csr-id-08211f6132fd93493267e853139f5f5724e093b0/>
+<csr-id-ab7eed2759d062fbe267e7e96f84c7a3f477ef11/>
+<csr-id-f169a3fc6bb203d2a41de449472c1115b49ffe15/>
+<csr-id-8202105b7dd415fc028050daada44a75d2ed7202/>
+<csr-id-825bb3ad2044e186f873acbbb0a53de8d2b6e6cc/>
+<csr-id-99fa85eab899c807c76274663240a19b4df41371/>
+<csr-id-326825aab0b54898d9eb2e5338d70c8c663ed0e3/>
+<csr-id-4efc2061a8aa0c25cb648a86cdc39ca44784de94/>
+<csr-id-a1b46ece05e73896250f86815c4ad6df6095797d/>
+<csr-id-5d8b279265bd2715b83cbed871697bbc763a00a9/>
+<csr-id-7ad0524283006fce221910df4c1817af503b5b61/>
+<csr-id-9ba2e147a1a82e97849cc8b7ca524550803ec3a9/>
+<csr-id-89b5dd32ede08d3aeb5a07cf980f8af8ff326445/>
+<csr-id-8f9a32ff10a13d414ff95edc2f5645a7a5162732/>
+<csr-id-437432cdd60bbe11e7021f52297e459fd14ff069/>
+<csr-id-5d9ff70498785ea1becbc347c6798f76be11036f/>
+<csr-id-686ce45f930cef68f6fdfb73dc5ebc2d259d5954/>
+<csr-id-4e9bc32a3dee903f8bfe71430c03b1c664607c5d/>
+<csr-id-abc8d27440de76cf5ed2ca4aa56883bc07d3afc4/>
+<csr-id-83cfe56fe7690e752ebb646509bd282db227af2b/>
+<csr-id-bca01580e722a20e5c6026a744c92c5423f6437b/>
+<csr-id-877c76043a6d313391159523dc40046426800c43/>
+<csr-id-379bb313b13dd259a26fe3513ae6784bb85291ef/>
+<csr-id-2b7dda766f3b002fc96915366d560c0a279106e3/>
+<csr-id-54b0c677958b07fb2a8ece28fd55251b74dcebc8/>
+<csr-id-18970369e27228c45117b125724a22d8999ec1fc/>
+<csr-id-f56dd0a70b36a97036eb9447efa20f0e1c93c8d7/>
+<csr-id-bb8a813eefd86fbdb218174ccb7bfd2578ab9692/>
+<csr-id-e4d9774bf780eee5c3740d153df0682265089307/>
+<csr-id-daa7ea6d0dad1895768d3a1cdc62911b15c72a94/>
+<csr-id-c7f8db9a0b4e632233561fdd075cf201ae7cccb5/>
+<csr-id-1584bc47bd027455b07e456683c0fb97920a5314/>
+<csr-id-f8f17a09fbf1b87d14735e015c55d387a6ed048b/>
+<csr-id-761cb79fe3b9006a4091dcc7d68604b671387194/>
 
 ### Chore
 
@@ -1500,6 +1740,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.10.6 (2021-11-13)
 
+<csr-id-352e54b72405b5e9f21a947ff0146f3ba162b78a/>
+<csr-id-2136f0546161adb55947c1a3ad002b236106b737/>
+<csr-id-1e6b1afbe42b191f18bef28e9dc3adff9c739eae/>
+<csr-id-27d803b634d3f540fa36163c6f6eb146ffdb7e27/>
+<csr-id-6b6d4af932a31632e8b1ee0a23be4ec6636194fb/>
+<csr-id-6539cbb555fc7e597c814f56b3ef8bacd2bcd895/>
+<csr-id-99f6f9e14d4cdcdd53b3df3cf107d041e662ea06/>
+<csr-id-4df4e9c14eb1019a8c2299c48b15420ee7f20855/>
+<csr-id-c99dcfb9d33ba762ed005ac6d53a2290901a83d7/>
+
 ### Other
 
  - <csr-id-352e54b72405b5e9f21a947ff0146f3ba162b78a/> fix name parsing for sk_skb sections
@@ -1575,6 +1825,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.10.5 (2021-10-15)
 
+<csr-id-59a1854a6bd74845e3c45227ade757399a376897/>
+<csr-id-dc4b928ec5a1a40fa19af5a4f8f5141fa7f91425/>
+<csr-id-52c51895ba1fdcd2ee627e7b7d3d8bb4622c2a1d/>
+<csr-id-64e3fb4cc82eb944327a4decc46c66d85305a564/>
+<csr-id-5f8f18e3a1b13b2452294d6c8a33dde961fa511c/>
+
 ### Other
 
  - <csr-id-59a1854a6bd74845e3c45227ade757399a376897/> fix call relocation bug
@@ -1613,6 +1869,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v0.10.4 (2021-09-21)
+
+<csr-id-98361a4c931cbfe5190da64d3efc70547219a877/>
+<csr-id-b0a05e759e49a164eead2990d93c793ca494f7c6/>
+<csr-id-c56a6b16aa3fdafeb531c280c7a5d8dae7a4612a/>
+<csr-id-d9fc0f484ffbe17a5a8b8e7b697ee9de4d46ff65/>
+<csr-id-9c27910f76d7152091973dfe99c37ae448c25541/>
+<csr-id-4e1ce2534c23a51a67cd3e56fe389e207bdcf3b3/>
+<csr-id-569b8ca39ed0aac5b814f86d6f54ed44dc6295c4/>
+<csr-id-753a683704f685582da37b0290a66cf37e1092d7/>
 
 ### Other
 
@@ -1661,6 +1926,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v0.10.3 (2021-07-31)
+
+<csr-id-66a12ffcf70b2702a9eee7f89cabe64aa9c46126/>
+<csr-id-8c03ba052a168d390c9d997f4bbf32d610864042/>
+<csr-id-fa2cbe2f825cc0c257e983793af58aa63aea6287/>
+<csr-id-c2a90c2c010e69508c5704542f1133d82f793aa0/>
+<csr-id-0a9d02140acdaa35c5f5c7e17ea08a6823922e20/>
+<csr-id-abb199e6f436b67485ed77211daca3e990ca6c0d/>
+<csr-id-9185f32f6f7bb33c160ded526e7122462fef77dd/>
+<csr-id-d996a88de47d60053504695036a14157ce6b3aa6/>
+<csr-id-0878c4505a95931c745b6b0bdbcb5413579acd85/>
+<csr-id-21e01df242376d4a9d4f67664277263f0dc8d173/>
+<csr-id-b657930a3ee61f88ada0630afdac6b1c77459244/>
+<csr-id-9c8e78b7d4192b376ec2e532d9ddcf81c3c5182e/>
+<csr-id-08c71dfeb19b2b4358d75baf5b95f8d4e6521935/>
+<csr-id-35f15f70e0d83f5e19153c9d2917add10c154d1e/>
+<csr-id-bb15e82c1d8373700dda52f69d6c4bf6f5489a03/>
+<csr-id-d8d311738c974f3b6fad22006ab2b827d0925ce8/>
+<csr-id-5f0ff1698a12141ffe50e160de252f664773c140/>
+<csr-id-7f2ceaf12e3aeadd81a55a75c268f254192cf866/>
+<csr-id-d9b5ab575f6e2cbca793881094e1846a39332fa1/>
+<csr-id-c240a2c73381a6864f343c79069abfd5f9e9b729/>
+<csr-id-bb595c4e69ff0c72c8327e7f64d43ca7a4bc16a3/>
+<csr-id-018862258064a39f5613ecc81c1e257bea2c4e74/>
+<csr-id-a0151dd48520ac801042da3c26bf4739b549d1b1/>
 
 ### Bug Fixes
 
@@ -1759,6 +2048,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.10.2 (2021-06-17)
 
+<csr-id-fee71b42f16e4d1f683e94f64b038f6e8b2f4f0a/>
+
 ### Other
 
  - <csr-id-fee71b42f16e4d1f683e94f64b038f6e8b2f4f0a/> tc: fix QdiscRequest layout
@@ -1809,6 +2100,109 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v0.10.0 (2021-06-15)
+
+<csr-id-7694bacf04f5ba3cf58b4e432ff746ce2987d67d/>
+<csr-id-9f7b017d5d4a4eb63c98c258e3b382628e711253/>
+<csr-id-768640dd4696eaf8c76d7a8b15ab195b3979b281/>
+<csr-id-ad58e171ff1645d02998b399db6535a226b5a5ec/>
+<csr-id-28158e6028b12efad61d159c3b505d58a03bfd8a/>
+<csr-id-6ecf7dabf35f22869a95a8cd176b6f217ee57b05/>
+<csr-id-6772595f3ea2d0178e02efc97a2fe2a789a04b24/>
+<csr-id-4bde0c54bdcf6f749f6b6034874cf1bfecb0b08f/>
+<csr-id-2cda5dbbe74e5d41ce7e2c895678b853d2867001/>
+<csr-id-2d7b9b2e904e2435527d6640e631195ffbd7e050/>
+<csr-id-08a68faf8a8baa344dd6fee64529ad2dcc0a0846/>
+<csr-id-fb3e2f7f9d06b22c7fe44eccefc2ce94ad322ed0/>
+<csr-id-665802594c2181ae890b3655867944a3fef11508/>
+<csr-id-81a0b61164079ca276d23e0f31f2853087650198/>
+<csr-id-b92b1e18a97135684907d238578146f7aabacc84/>
+<csr-id-20b2d4c77dbc1597f68e6ae16a55d129e42b5c5d/>
+<csr-id-6974d349e8f86c98f450122788efeedecbf61970/>
+<csr-id-31f8d71604f4eddd7981cd72e1deb01d2076f7f4/>
+<csr-id-40b7da6655aca6aed5dfe72a0db80bf0e67c2ce1/>
+<csr-id-dc4e020f29acc544bb49a74bbad4c553f370d0f3/>
+<csr-id-5effc972ac04960d0346e1f5504b595a206fc019/>
+<csr-id-4222b140ec594e99e77cda8539b16f21820ae155/>
+<csr-id-3b7ffd0048a5250ca160f8a7b584bf0ea73eb249/>
+<csr-id-30d2b25f1173904b2542a25792d7dff5b97b837f/>
+<csr-id-607cf68a692be60eb9f44d26352c513ea6295456/>
+<csr-id-bb7728a2c5905923534e51bd53d8d5720f7319e1/>
+<csr-id-9e12c9324c623bf751053ff874bc47055343753e/>
+<csr-id-9a24f20e6f85d9ff2e438dddb3530b88e9583851/>
+<csr-id-144175434f5b07ac7379be6e30a4b613c225f21b/>
+<csr-id-dad300c88bdfade10f8318fcbbe9a8b5e4de89ce/>
+<csr-id-ca4b3bfc0462b445f2aae56f9d4c2a80581eda39/>
+<csr-id-b57cace941333910891462127ce0199ae01c3c7c/>
+<csr-id-b6cd813af5fbd290a1f2e80b08c170ab868dfb3f/>
+<csr-id-0b3e532d7a4a8fe575b41f64d94cfedab10c36ea/>
+<csr-id-79f1b385a5366cc6f9a6a84172ab131850028a87/>
+<csr-id-683a58ea6dfaeb65d00ea3cf63b215cd82fd3d5a/>
+<csr-id-ae863bc663bde69eb71d5c1ec265b0d4c205f7ff/>
+<csr-id-d9634ae945ba09bedfc10c748e4e35a6ca3bfde8/>
+<csr-id-67c9cc03597e6f00bb6917a493cd9bb405a05b4d/>
+<csr-id-2cdb10e7f2734d85bd8ab115a081f4d1a8b2e2ed/>
+<csr-id-ad6d0596ab076aac84c12425ab493e6b6f24477d/>
+<csr-id-f4642797408d31c8375562ead9f4480e8579f59d/>
+<csr-id-9ad2a5e72d269724953f0f311e803a88637af2ee/>
+<csr-id-b0364f76aba500464470628f719b5ca7aab4b36a/>
+<csr-id-74d5f17559036c2eb42d4679ff98fe2ab7e76d4f/>
+<csr-id-aa3a30d1965d96f3b6fc345be763561e6270f2ae/>
+<csr-id-1746bbf5b83a5b392f39eefe02fc3731db77d893/>
+<csr-id-c3b902137becc48b72091ba59a9a4e297ba56d33/>
+<csr-id-6cec8be564a590717e9af7eb007f3f5d10ffff0e/>
+<csr-id-7a989b43b9ee5b4807f53001c2d7d8824a162a34/>
+<csr-id-635dcd44b9135dd75d958909f76da28676e6efe7/>
+<csr-id-fd142e467c32b6aa4b0d2e8d62816a63c1fa4220/>
+<csr-id-3a5b28916385b35824bc2a05606808e5e8c1968a/>
+<csr-id-d5098c9e575b7d5447506648ebeae146192eeda1/>
+<csr-id-6a12a48f0360456452c34737c5d52cd289ce23e8/>
+<csr-id-ac83273da86c5d10100f58563a9d764a79183367/>
+<csr-id-46e0a2ede4e423e620acd55f3ed4f755aa8c8b38/>
+<csr-id-7c6ae769756a9605f7823e36243b69a3a88a1370/>
+<csr-id-04fde468556ace883009b4abe63840aa7b89f29f/>
+<csr-id-eea27f52f3d6455d97838e833b36f6c846c99cb7/>
+<csr-id-5aa9cb12ade0014d64582864e66bbeae593f6edc/>
+<csr-id-d94bfde29521fa6fc1d661d1976d4800dd10b1d8/>
+<csr-id-ce3f83acb11388f2c0b07a8b1de95c7df22b97f9/>
+<csr-id-e28da8812ed5d9e76e764fbc28312e8588aff2af/>
+<csr-id-24f7c37158ede0217354d8c6305904737980f292/>
+<csr-id-3fddc8165c6e2c28c4fda19e72156b640da4a0c7/>
+<csr-id-6682a5ff395d8fbea20393ff81140adcfc2a0c09/>
+<csr-id-1bbbf616b6bedef4a6d42cd630ecd7e3b9366dc5/>
+<csr-id-563ce46118258805892bdff97f0e57b2838e0de8/>
+<csr-id-f9554d6db5c1fe3c906c798bc9b2a9c28fb0db7b/>
+<csr-id-a92bfebf50df2c56bca242c6a9c3dedd04135675/>
+<csr-id-42e0a659b2f82cca537d70f906e0a475f0ab6b03/>
+<csr-id-d3482c063ca888a6465f3e8866d5d3de93cbbd99/>
+<csr-id-ee05f9d9497ea83ee9cfffbaa0d1b87d9d57c26e/>
+<csr-id-92b4ed2664264b4af36b29c7b08d13505eae9b08/>
+<csr-id-8b0eee317d71f0139ec030b1f0583edf8670c296/>
+<csr-id-318c16cea32731613339d22fad11a29be8d79976/>
+<csr-id-286e117fe0bab8542f2e1d5fd309562689d88c00/>
+<csr-id-0199e4b29704df4cebf65d3d5f09ab1af6982cbd/>
+<csr-id-dcb5121985113e1b90a5e50a43d71b4f00826ebe/>
+<csr-id-ed53f7470b386f3a870e34399bbb52c6ea72d07d/>
+<csr-id-0a493baed6b4d020ed7d5d87191d912662eb2159/>
+<csr-id-29f2d9b2d9e4265d0d0d2f13c314ef27d5c4ebcf/>
+<csr-id-59ed237343c16ba0b96f917991a7ec2f971ecd5d/>
+<csr-id-8327ffbb8d77e39046f851ca0f38ed153e140715/>
+<csr-id-1e779c520a90daa642a67cf3b986536aa50ad5ef/>
+<csr-id-f11df77f859feee2a88a69b96da4a1a22839c45a/>
+<csr-id-b7369d2763fe8c7061071986c41d1bcb0682f5a7/>
+<csr-id-82bcef37906472e7a32fa602cf26a97387590057/>
+<csr-id-245cd46baba5e1b532c7bf8b3eb732ab398bb529/>
+<csr-id-68a633fe51299ab6feaea370fd7b86740d284731/>
+<csr-id-f56c32b46bdd4c634b1ce6136ecab3c88d202040/>
+<csr-id-0cf5d17e383d240a27d463c89bec5d3a19854e4f/>
+<csr-id-2cec04c5781bc7b03c601dbb0cb1c23f3df22385/>
+<csr-id-55d8bcf3860d2cf5db7f59b8b5caaa32de6e668d/>
+<csr-id-d326038cf4b0a6fe7966de038054966bf3016380/>
+<csr-id-f88ca1f1f1449db1a4a323a67edf0ac5a4878ee1/>
+<csr-id-ba992a2414430387737e76db2e10b04c98f56847/>
+<csr-id-14c98455a940d6cead424b7e30a62845c256ae26/>
+<csr-id-fdc4dad5ff88a419d982f67568f5271c69e73f0a/>
+<csr-id-4be0c45305f0b0c639bfb6b645848fd4e1e0774f/>
+<csr-id-95a24c6f8b2483f05afabb0b3afaacfea4ebe061/>
 
 ### Other
 

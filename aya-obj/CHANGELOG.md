@@ -5,7 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.0 (2024-02-28)
+
+<csr-id-b3e7ef741c5b8d09fc7dc8302576f8174be75ff4/>
+<csr-id-770a95e0779a6a943c2f5439334fa208ac2ca7e6/>
+<csr-id-3369169aaca6510a47318fc29bbdb801b60b1c21/>
+<csr-id-c05a3b69b7a94036c380bd64c6de51377987077c/>
+<csr-id-35e21ae0079d38e90d90fc85d29580c8b44b16d4/>
+<csr-id-cc48523347c2be5520779ef8eeadc6d3a68649d0/>
+<csr-id-d16e607fd4b6258b516913071fdacafeb2bbbff9/>
+<csr-id-00dc7a5bd4468b7d86d7f167a49e78d89016e2ac/>
+<csr-id-139f3826383daba9a10dc7aacc079f31d28980fc/>
+<csr-id-f41592663cda156082255b93db145cfdd19378e5/>
+<csr-id-c139627f8f180638b786b5e3cd48b8473d96fe56/>
+<csr-id-89bc255f1d14d72a61064b9b40b641b58f8970e0/>
+<csr-id-02124002c88d7a89d6c9afd89857c4c301e09801/>
+<csr-id-dfb6020a1dc1d0ee28426bd9e3086dd449f643f7/>
+<csr-id-098d4364bd0fb8551f0515cb84afda6aff23ed7f/>
+<csr-id-826e0e5050e9bf9e0cdff6d2a20c1169820d0e57/>
+<csr-id-2a054d76ae167e7c2a6b4bfb1cf51770f93d394a/>
+<csr-id-79ea64ca7fd3cc1b17573b539fd8fa8e76644beb/>
+<csr-id-cca9b8f1a7e345a39d852bd18a43974871d3ed4b/>
+<csr-id-677e7bda4a826aca858311670d1592162b682dff/>
+<csr-id-bf7fdff1cef28961f096d1c1e00181e0a0c2d14e/>
+<csr-id-17f25a67934ad10443a4fbb62a563b5f6edcaa5f/>
+<csr-id-96fa08bd82233268154edf30b106876f5a4f0e30/>
+<csr-id-6f2a8c8a5c47098fb5e5a75ecebdff493d486c97/>
+<csr-id-d71d1e199382379036dc4760e4edbd5e637e07c3/>
+<csr-id-27120b328aac5f992eed98b03216a9880a381749/>
+<csr-id-d9dfd94f29be8c28b7fe0ef4ab560db49f7514fb/>
+<csr-id-47f764c19185a69a00f3925239797caa98cd5afe/>
+<csr-id-93435fc85400aa036f3890c43c78c9c9eb4baa96/>
+<csr-id-f5f8083441afd2daed9344fc2031878d574efaf1/>
+<csr-id-fa3dd4bef252566aa26577a0d42b2ff59ac2ff2a/>
+<csr-id-35eaa50736d9e894eb5122b1070afd7b0442eae6/>
+<csr-id-c4e721f3d334a7c2e5e6d6cd6f4ade0f1334be72/>
+<csr-id-591e21267a9bc9adca9818095de5a695cee7ee9b/>
+<csr-id-18b3d75d096e3c90f8c5b2f7292637a3369f96a6/>
+<csr-id-9e1109b3ce70a3668771bd11a7fda101eec3ab93/>
+<csr-id-4c78f7f1a014cf54d54c805233a0f29eb1ca5eeb/>
+<csr-id-33a0a2b604e77b63b771b9d0e167c894793492b5/>
+<csr-id-1132b6e01b86856aa1fddf179fcc7e3825e79406/>
+<csr-id-4e33fa011e87cdc2fc59025b9e531b4872651cd0/>
+<csr-id-93ac3e94bcb47864670c124dfe00e16ed2ab6f5e/>
+<csr-id-b25a08981986cac4f511433d165560576a8c9856/>
+<csr-id-5c4f1d69a60e0c5324512a7cfbc4467b7f5d0bca/>
+<csr-id-dfbe1207c1bbd105d1daa9b08cec0e9803b5464e/>
+<csr-id-7479c1dd6c1356bddb0401dbeea65618674524c9/>
+<csr-id-ce22ca668f3e7c0f9832d28370457204537d2e50/>
+<csr-id-376c48640033fdbf8b5199641f353587273f8a32/>
+<csr-id-a18693b42dc986bde06b07540e261ecac59eef24/>
+<csr-id-9a6f8143a1a4c5c88a373701d74d96596c75242f/>
+<csr-id-4482db42d86c657826efe80f484f57a601ed2f38/>
+<csr-id-d6b976c6f1f6163680c179502f4f454d0cec747e/>
+<csr-id-3d03c8a8e0a9033be8c1ab020129db7790cc7493/>
+<csr-id-cb28533e2f9eb0b2cd80f4bf9515cdec31763749/>
+<csr-id-9c451a3357317405dd8e2e4df7d006cee943adcc/>
+<csr-id-772af170aea2feccb5e98cc84125e9e31b9fbe9a/>
+<csr-id-9ec3447e891ca770a65f8ff9b71884f25530f515/>
+<csr-id-30f1fabc05654e8d11dd2648767895123c141c3b/>
+<csr-id-311ead6760ce53e9503af00391e6631f7387ab4a/>
+<csr-id-e52497cb9c02123ae450ca36fb6f898d24b25c4b/>
+<csr-id-ac49827e204801079be2b87160a795ef412bd6cb/>
+<csr-id-81bc307dce452f0aacbfbe8c304089d11ddd8c5e/>
+<csr-id-572d047e37111b732be49ef3ad6fb16f70aa4063/>
 
 ### Chore
 
@@ -19,6 +82,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - homepage
    - edition
  - <csr-id-770a95e0779a6a943c2f5439334fa208ac2ca7e6/> Appease clippy unused imports
+
+### Documentation
+
+ - <csr-id-72e8aab6c8be8663c5b6ff6b606a51debf512f7d/> Add CHANGELOG
 
 ### Other
 
@@ -350,8 +417,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 143 commits contributed to the release over the course of 422 calendar days.
- - 62 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 145 commits contributed to the release over the course of 422 calendar days.
+ - 63 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#608](https://github.com/aya-rs/aya/issues/608)
 
 ### Commit Details
@@ -363,6 +430,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#608](https://github.com/aya-rs/aya/issues/608)**
     - Fix load errors for empty (but existent) BTF/BTF.ext sections ([`5894c4c`](https://github.com/aya-rs/aya/commit/5894c4ce82948c7e5fe766f41b690d036fcca907))
  * **Uncategorized**
+    - Merge pull request #891 from dave-tucker/changelog ([`431ce23`](https://github.com/aya-rs/aya/commit/431ce23f27ef5c36a6b38c73b38f23b1cf007900))
+    - Add CHANGELOG ([`72e8aab`](https://github.com/aya-rs/aya/commit/72e8aab6c8be8663c5b6ff6b606a51debf512f7d))
     - Appease new nightly clippy lints ([`3369169`](https://github.com/aya-rs/aya/commit/3369169aaca6510a47318fc29bbdb801b60b1c21))
     - Merge pull request #882 from dave-tucker/metadata ([`0fadd69`](https://github.com/aya-rs/aya/commit/0fadd695377b8a3f0d9a3af3bc8140f0f1bed8d2))
     - Use the cargo workspace package table ([`b3e7ef7`](https://github.com/aya-rs/aya/commit/b3e7ef741c5b8d09fc7dc8302576f8174be75ff4))

@@ -11,9 +11,9 @@ edition.workspace = true
 [dependencies]
 anyhow = { workspace = true, features = ["std"] }
 assert_matches = { workspace = true }
-aya = { path = "../../aya", version = "0.11.0", default-features = false }
-aya-log = { path = "../../aya-log", version = "0.1.13", default-features = false }
-aya-obj = { path = "../../aya-obj", version = "0.1.0", default-features = false }
+aya = { path = "../../aya", version = "^0.12.0", default-features = false }
+aya-log = { path = "../../aya-log", version = "^0.2.0", default-features = false }
+aya-obj = { path = "../../aya-obj", version = "^0.1.0", default-features = false }
 env_logger = { workspace = true }
 epoll = { workspace = true }
 futures = { workspace = true, features = ["std"] }
