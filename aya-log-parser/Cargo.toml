@@ -9,7 +9,7 @@ homepage.workspace = true
 edition.workspace = true
 
 [dependencies]
-aya-log-common = { path = "../aya-log-common", version = "0.1.13", default-features = false }
+aya-log-common = { path = "../aya-log-common", version = "^0.1.14", default-features = false }
 
 [lib]
 path = "src/lib.rs"
