@@ -236,6 +236,18 @@ pub struct ProgAttachLink {
 }
 
 impl ProgAttachLink {
+    pub(crate) fn new(
+        prog_fd: ProgramFd,
+        target_fd: OwnedFd,
+        attach_type: bpf_attach_type,
+    ) -> Self {
+        Self {
+            prog_fd,
+            target_fd,
+            attach_type,
+        }
+    }
+
     pub(crate) fn attach(
         prog_fd: BorrowedFd<'_>,
         target_fd: BorrowedFd<'_>,
