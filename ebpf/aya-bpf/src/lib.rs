@@ -29,8 +29,8 @@ pub mod programs;
 
 use core::ffi::c_void;
 
-pub use aya_bpf_cty as cty;
 pub use aya_bpf_macros as macros;
+pub use aya_ebpf_cty as cty;
 use cty::{c_int, c_long};
 use helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid};
 

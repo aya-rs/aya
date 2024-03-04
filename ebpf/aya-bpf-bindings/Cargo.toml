@@ -9,4 +9,4 @@ homepage.workspace = true
 edition.workspace = true
 
 [dependencies]
-aya-bpf-cty = { path = "../aya-bpf-cty" }
+aya-ebpf-cty = { path = "../aya-ebpf-cty" }

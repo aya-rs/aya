@@ -1,7 +1,7 @@
 use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
 
 use aya_bpf_bindings::bindings::BPF_F_NO_PREALLOC;
-use aya_bpf_cty::{c_long, c_void};
+use aya_ebpf_cty::{c_long, c_void};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_LPM_TRIE},

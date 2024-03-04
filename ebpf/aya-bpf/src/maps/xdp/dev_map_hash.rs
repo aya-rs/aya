@@ -1,7 +1,7 @@
 use core::{cell::UnsafeCell, mem, num::NonZeroU32, ptr::NonNull};
 
 use aya_bpf_bindings::bindings::bpf_devmap_val;
-use aya_bpf_cty::c_void;
+use aya_ebpf_cty::c_void;
 
 use super::{dev_map::DevMapValue, try_redirect_map};
 use crate::{

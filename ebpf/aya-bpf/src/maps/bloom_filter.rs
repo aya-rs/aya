@@ -1,6 +1,6 @@
 use core::{marker::PhantomData, mem};
 
-use aya_bpf_cty::c_void;
+use aya_ebpf_cty::c_void;
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER},

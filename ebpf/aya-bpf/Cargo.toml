@@ -9,7 +9,7 @@ homepage.workspace = true
 edition.workspace = true
 
 [dependencies]
-aya-bpf-cty = { path = "../aya-bpf-cty" }
+aya-ebpf-cty = { path = "../aya-ebpf-cty" }
 aya-bpf-macros = { path = "../../aya-bpf-macros" }
 aya-bpf-bindings = { path = "../aya-bpf-bindings" }
 const-assert = { workspace = true, optional = true }

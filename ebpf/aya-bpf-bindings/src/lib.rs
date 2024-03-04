@@ -43,12 +43,12 @@ pub mod bindings {
     #[repr(C)]
     #[derive(Debug, Copy, Clone)]
     pub struct bpf_map_def {
-        pub type_: ::aya_bpf_cty::c_uint,
-        pub key_size: ::aya_bpf_cty::c_uint,
-        pub value_size: ::aya_bpf_cty::c_uint,
-        pub max_entries: ::aya_bpf_cty::c_uint,
-        pub map_flags: ::aya_bpf_cty::c_uint,
-        pub id: ::aya_bpf_cty::c_uint,
-        pub pinning: ::aya_bpf_cty::c_uint,
+        pub type_: ::aya_ebpf_cty::c_uint,
+        pub key_size: ::aya_ebpf_cty::c_uint,
+        pub value_size: ::aya_ebpf_cty::c_uint,
+        pub max_entries: ::aya_ebpf_cty::c_uint,
+        pub map_flags: ::aya_ebpf_cty::c_uint,
+        pub id: ::aya_ebpf_cty::c_uint,
+        pub pinning: ::aya_ebpf_cty::c_uint,
     }
 }

@@ -26,7 +26,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
             .header(&*dir.join("include/bindings.h").to_string_lossy())
             // aya-tool uses aya_bpf::cty. We can't use that here since aya-bpf
             // depends on aya-bpf-bindings so it would create a circular dep.
-            .ctypes_prefix("::aya_bpf_cty")
+            .ctypes_prefix("::aya_ebpf_cty")
             .clang_args(&["-I", &*libbpf_dir.join("include/uapi").to_string_lossy()])
             .clang_args(&["-I", &*libbpf_dir.join("include").to_string_lossy()])
             .clang_args(&["-I", &*libbpf_dir.join("src").to_string_lossy()])
