@@ -2032,7 +2032,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Don't error out parsing padded map sections ([`b657930`](https://github.com/aya-rs/aya/commit/b657930a3ee61f88ada0630afdac6b1c77459244))
     - Added support for armv7-unknown-linux-gnueabi and armv7-unknown-linux-gnueabihf ([`8311abf`](https://github.com/aya-rs/aya/commit/8311abfdcbbe70da6abdd67b78b831d53998aad5))
     - Tc: make qdisc_add_clsact return io::Error ([`9c8e78b`](https://github.com/aya-rs/aya/commit/9c8e78b7d4192b376ec2e532d9ddcf81c3c5182e))
-    - Aya, aya-bpf-bindings: regenerate bindings ([`122a530`](https://github.com/aya-rs/aya/commit/122a5306e72c7560629bcef160e7f676b84eabd7))
+    - Aya, aya-ebpf-bindings: regenerate bindings ([`122a530`](https://github.com/aya-rs/aya/commit/122a5306e72c7560629bcef160e7f676b84eabd7))
     - Kprobe: remove pid argument ([`08c71df`](https://github.com/aya-rs/aya/commit/08c71dfeb19b2b4358d75baf5b95f8d4e6521935))
     - Add missing load() in kprobe example ([`bb15e82`](https://github.com/aya-rs/aya/commit/bb15e82c1d8373700dda52f69d6c4bf6f5489a03))
     - Support both bpf_map_def layout variants ([`d8d3117`](https://github.com/aya-rs/aya/commit/d8d311738c974f3b6fad22006ab2b827d0925ce8))

@@ -56,7 +56,7 @@ jobs:
           set -euxo pipefail
           cargo hack miri test --all-targets --feature-powerset \
             --exclude aya-bpf \
-            --exclude aya-bpf-bindings \
+            --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
             --exclude integration-test \
@@ -93,7 +93,7 @@ jobs:
           set -euxo pipefail
           cargo hack build --all-targets --feature-powerset \
             --exclude aya-bpf \
-            --exclude aya-bpf-bindings \
+            --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
             --workspace
@@ -105,7 +105,7 @@ jobs:
           set -euxo pipefail
           cargo hack test --all-targets --feature-powerset \
             --exclude aya-bpf \
-            --exclude aya-bpf-bindings \
+            --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
             --exclude integration-test \
@@ -118,7 +118,7 @@ jobs:
           set -euxo pipefail
           cargo hack test --doc --feature-powerset \
             --exclude aya-bpf \
-            --exclude aya-bpf-bindings \
+            --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude init \
             --exclude integration-ebpf \

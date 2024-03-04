@@ -11,7 +11,7 @@ edition.workspace = true
 [dependencies]
 aya-ebpf-cty = { path = "../aya-ebpf-cty" }
 aya-bpf-macros = { path = "../../aya-bpf-macros" }
-aya-bpf-bindings = { path = "../aya-bpf-bindings" }
+aya-ebpf-bindings = { path = "../aya-ebpf-bindings" }
 const-assert = { workspace = true, optional = true }
 
 [build-dependencies]

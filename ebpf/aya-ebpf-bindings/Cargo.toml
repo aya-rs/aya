@@ -1,5 +1,5 @@
 [package]
-name = "aya-bpf-bindings"
+name = "aya-ebpf-bindings"
 version = "0.1.0"
 description = "Bindings for Linux Kernel eBPF types and helpers"
 authors.workspace = true

@@ -1,6 +1,6 @@
 use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
 
-use aya_bpf_bindings::bindings::bpf_map_type::{
+use aya_ebpf_bindings::bindings::bpf_map_type::{
     BPF_MAP_TYPE_LRU_HASH, BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH,
 };
 use aya_ebpf_cty::{c_long, c_void};

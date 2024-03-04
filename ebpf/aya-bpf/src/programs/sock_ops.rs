@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use aya_bpf_bindings::helpers::bpf_sock_ops_cb_flags_set;
+use aya_ebpf_bindings::helpers::bpf_sock_ops_cb_flags_set;
 
 use crate::{bindings::bpf_sock_ops, BpfContext};
 

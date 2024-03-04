@@ -1,5 +1,5 @@
 mod aya;
-mod aya_bpf_bindings;
+mod aya_ebpf_bindings;
 mod helpers;
 
 use std::path::{Path, PathBuf};
@@ -82,8 +82,8 @@ pub struct Options {
 enum Command {
     #[command(name = "aya")]
     Aya,
-    #[command(name = "aya-bpf-bindings")]
-    AyaBpfBindings,
+    #[command(name = "aya-ebpf-bindings")]
+    AyaEbpfBindings,
 }
 
 pub fn codegen(opts: Options, libbpf_dir: &Path) -> Result<(), anyhow::Error> {
@@ -94,11 +94,11 @@ pub fn codegen(opts: Options, libbpf_dir: &Path) -> Result<(), anyhow::Error> {
     match command {
         Some(command) => match command {
             Command::Aya => aya::codegen(&sysroot_options, libbpf_dir),
-            Command::AyaBpfBindings => aya_bpf_bindings::codegen(&sysroot_options, libbpf_dir),
+            Command::AyaEbpfBindings => aya_ebpf_bindings::codegen(&sysroot_options, libbpf_dir),
         },
         None => {
             aya::codegen(&sysroot_options, libbpf_dir)?;
-            aya_bpf_bindings::codegen(&sysroot_options, libbpf_dir)
+            aya_ebpf_bindings::codegen(&sysroot_options, libbpf_dir)
         }
     }
 }

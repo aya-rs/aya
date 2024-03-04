@@ -16,7 +16,7 @@ members = [
 
     # ebpf crates
     "ebpf/aya-bpf",
-    "ebpf/aya-bpf-bindings",
+    "ebpf/aya-ebpf-bindings",
     "ebpf/aya-log-ebpf",
     "test/integration-ebpf",
 ]

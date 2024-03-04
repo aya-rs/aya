@@ -19,7 +19,7 @@
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 #![no_std]
 
-pub use aya_bpf_bindings::bindings;
+pub use aya_ebpf_bindings::bindings;
 
 mod args;
 pub use args::PtRegs;

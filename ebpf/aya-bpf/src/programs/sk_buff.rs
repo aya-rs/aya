@@ -3,7 +3,7 @@ use core::{
     mem::{self, MaybeUninit},
 };
 
-use aya_bpf_bindings::helpers::{
+use aya_ebpf_bindings::helpers::{
     bpf_clone_redirect, bpf_get_socket_uid, bpf_l3_csum_replace, bpf_l4_csum_replace,
     bpf_skb_adjust_room, bpf_skb_change_proto, bpf_skb_change_type, bpf_skb_load_bytes,
     bpf_skb_pull_data, bpf_skb_store_bytes,

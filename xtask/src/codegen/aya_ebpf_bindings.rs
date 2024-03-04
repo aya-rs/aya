@@ -19,18 +19,18 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
         riscv64_sysroot,
     } = opts;
 
-    let dir = PathBuf::from("bpf/aya-bpf-bindings");
+    let dir = PathBuf::from("bpf/aya-ebpf-bindings");
 
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
             .header(&*dir.join("include/bindings.h").to_string_lossy())
             // aya-tool uses aya_bpf::cty. We can't use that here since aya-bpf
-            // depends on aya-bpf-bindings so it would create a circular dep.
+            // depends on aya-ebpf-bindings so it would create a circular dep.
             .ctypes_prefix("::aya_ebpf_cty")
             .clang_args(&["-I", &*libbpf_dir.join("include/uapi").to_string_lossy()])
             .clang_args(&["-I", &*libbpf_dir.join("include").to_string_lossy()])
             .clang_args(&["-I", &*libbpf_dir.join("src").to_string_lossy()])
-            // open aya-bpf-bindings/.../bindings.rs and look for mod
+            // open aya-ebpf-bindings/.../bindings.rs and look for mod
             // _bindgen, those are anonymous enums
             .constified_enum("BPF_F_.*")
             .constified_enum("BPF_REG_.*")

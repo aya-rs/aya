@@ -9,7 +9,7 @@
 
 use core::mem::{self, MaybeUninit};
 
-pub use aya_bpf_bindings::helpers as gen;
+pub use aya_ebpf_bindings::helpers as gen;
 #[doc(hidden)]
 pub use gen::*;
 

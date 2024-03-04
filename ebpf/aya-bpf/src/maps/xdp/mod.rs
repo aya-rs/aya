@@ -5,7 +5,7 @@ mod xsk_map;
 
 use core::cell::UnsafeCell;
 
-use aya_bpf_bindings::{
+use aya_ebpf_bindings::{
     bindings::{bpf_map_def, xdp_action::XDP_REDIRECT},
     helpers::bpf_redirect_map,
 };

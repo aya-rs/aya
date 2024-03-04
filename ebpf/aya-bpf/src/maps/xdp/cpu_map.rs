@@ -1,6 +1,6 @@
 use core::{cell::UnsafeCell, mem};
 
-use aya_bpf_bindings::bindings::bpf_cpumap_val;
+use aya_ebpf_bindings::bindings::bpf_cpumap_val;
 
 use super::try_redirect_map;
 use crate::{
