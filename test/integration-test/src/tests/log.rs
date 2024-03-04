@@ -4,7 +4,7 @@ use std::{
 };
 
 use aya::{programs::UProbe, Bpf};
-use aya_log::BpfLogger;
+use aya_log::EbpfLogger;
 use log::{Level, Log, Record};
 use test_log::test;
 
@@ -45,7 +45,7 @@ async fn log() {
     let captured_logs = Arc::new(Mutex::new(Vec::new()));
     {
         let captured_logs = captured_logs.clone();
-        BpfLogger::init_with_logger(
+        EbpfLogger::init_with_logger(
             &mut bpf,
             TestingLogger {
                 log: move |record: &Record| {
