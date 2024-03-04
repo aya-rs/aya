@@ -29,7 +29,7 @@ impl CgroupSkb {
         let section_name: Cow<'_, _> = if self.attach_type.is_some() {
             format!("cgroup_skb/{}", self.attach_type.as_ref().unwrap()).into()
         } else {
-            "cgroup_skb".into()
+            "cgroup/skb".into()
         };
         let fn_vis = &self.item.vis;
         let fn_name = self.item.sig.ident.clone();
@@ -66,7 +66,7 @@ mod tests {
         let expanded = prog.expand().unwrap();
         let expected = quote! {
             #[no_mangle]
-            #[link_section = "cgroup_skb"]
+            #[link_section = "cgroup/skb"]
             fn foo(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
                 return foo(::aya_bpf::programs::SkBuffContext::new(ctx));
 
