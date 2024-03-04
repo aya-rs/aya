@@ -45,8 +45,8 @@ impl SkSkb {
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> u32 {
-                return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
+                return #fn_name(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 #item
             }
@@ -66,7 +66,7 @@ mod tests {
             SkSkbKind::StreamParser,
             parse_quote! {},
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::SkBuffContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> u32 {
                     0
                 }
             },
@@ -76,10 +76,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "sk_skb/stream_parser"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> u32 {
-                return prog(::aya_bpf::programs::SkBuffContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
+                return prog(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::SkBuffContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> u32 {
                     0
                 }
             }
@@ -93,7 +93,7 @@ mod tests {
             SkSkbKind::StreamVerdict,
             parse_quote! {},
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::SkBuffContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> u32 {
                     0
                 }
             },
@@ -103,10 +103,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "sk_skb/stream_verdict"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> u32 {
-                return prog(::aya_bpf::programs::SkBuffContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
+                return prog(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::SkBuffContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> u32 {
                     0
                 }
             }

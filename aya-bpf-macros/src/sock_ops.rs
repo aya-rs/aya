@@ -23,8 +23,8 @@ impl SockOps {
         Ok(quote! {
             #[no_mangle]
             #[link_section = "sockops"]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock_ops) -> u32 {
-                return #fn_name(::aya_bpf::programs::SockOpsContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sock_ops) -> u32 {
+                return #fn_name(::aya_ebpf::programs::SockOpsContext::new(ctx));
 
                 #item
             }
@@ -43,7 +43,7 @@ mod tests {
         let prog = SockOps::parse(
             parse_quote! {},
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::SockOpsContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SockOpsContext) -> u32 {
                     0
                 }
             },
@@ -53,10 +53,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "sockops"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::bpf_sock_ops) -> u32 {
-                return prog(::aya_bpf::programs::SockOpsContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::bpf_sock_ops) -> u32 {
+                return prog(::aya_ebpf::programs::SockOpsContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::SockOpsContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SockOpsContext) -> u32 {
                     0
                 }
             }

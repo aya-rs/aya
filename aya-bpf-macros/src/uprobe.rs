@@ -93,7 +93,7 @@ impl UProbe {
             #[no_mangle]
             #[link_section = #section_name]
             #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
-                let _ = #fn_name(::aya_bpf::programs::ProbeContext::new(ctx));
+                let _ = #fn_name(::aya_ebpf::programs::ProbeContext::new(ctx));
                 return 0;
 
                 #item
@@ -126,7 +126,7 @@ mod tests {
                 #[no_mangle]
                 #[link_section = "uprobe"]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_bpf::programs::ProbeContext::new(ctx));
+                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
 
                     fn foo(ctx: ProbeContext) -> u32 {
@@ -156,7 +156,7 @@ mod tests {
                 #[no_mangle]
                 #[link_section = "uprobe.s"]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_bpf::programs::ProbeContext::new(ctx));
+                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
 
                     fn foo(ctx: ProbeContext) -> u32 {
@@ -189,7 +189,7 @@ mod tests {
                 #[no_mangle]
                 #[link_section = "uprobe/self/proc/exe:trigger_uprobe"]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_bpf::programs::ProbeContext::new(ctx));
+                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
 
                     fn foo(ctx: ProbeContext) -> u32 {
@@ -221,7 +221,7 @@ mod tests {
                 #[no_mangle]
                 #[link_section = "uprobe/self/proc/exe:foo+123"]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_bpf::programs::ProbeContext::new(ctx));
+                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
 
                     fn foo(ctx: ProbeContext) -> u32 {
@@ -251,7 +251,7 @@ mod tests {
                 #[no_mangle]
                 #[link_section = "uretprobe"]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_bpf::programs::ProbeContext::new(ctx));
+                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
 
                     fn foo(ctx: ProbeContext) -> u32 {

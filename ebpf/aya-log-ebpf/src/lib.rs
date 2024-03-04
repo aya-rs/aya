@@ -2,8 +2,8 @@
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 
 #[cfg(target_arch = "bpf")]
-use aya_bpf::macros::map;
-use aya_bpf::maps::{PerCpuArray, PerfEventByteArray};
+use aya_ebpf::macros::map;
+use aya_ebpf::maps::{PerCpuArray, PerfEventByteArray};
 pub use aya_log_common::{write_record_header, Level, WriteToBuf, LOG_BUF_CAPACITY};
 pub use aya_log_ebpf_macros::{debug, error, info, log, trace, warn};
 

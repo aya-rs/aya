@@ -19,7 +19,7 @@ use crate::{
 /// # Examples
 ///
 /// ```rust,no_run
-/// use aya_bpf::{bindings::xdp_action, macros::{map, xdp}, maps::CpuMap, programs::XdpContext};
+/// use aya_ebpf::{bindings::xdp_action, macros::{map, xdp}, maps::CpuMap, programs::XdpContext};
 ///
 /// #[map]
 /// static MAP: CpuMap = CpuMap::with_max_entries(8, 0);
@@ -47,7 +47,7 @@ impl CpuMap {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{macros::map, maps::CpuMap};
+    /// use aya_ebpf::{macros::map, maps::CpuMap};
     ///
     /// #[map]
     /// static MAP: CpuMap = CpuMap::with_max_entries(8, 0);
@@ -74,7 +74,7 @@ impl CpuMap {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{macros::map, maps::CpuMap};
+    /// use aya_ebpf::{macros::map, maps::CpuMap};
     ///
     /// #[map]
     /// static MAP: CpuMap = CpuMap::pinned(8, 0);
@@ -101,7 +101,7 @@ impl CpuMap {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{bindings::xdp_action, macros::{map, xdp}, maps::CpuMap, programs::XdpContext};
+    /// use aya_ebpf::{bindings::xdp_action, macros::{map, xdp}, maps::CpuMap, programs::XdpContext};
     ///
     /// #[map]
     /// static MAP: CpuMap = CpuMap::with_max_entries(8, 0);

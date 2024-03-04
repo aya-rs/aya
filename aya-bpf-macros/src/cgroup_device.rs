@@ -23,8 +23,8 @@ impl CgroupDevice {
         Ok(quote! {
             #[no_mangle]
             #[link_section = "cgroup/dev"]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_cgroup_dev_ctx) -> i32 {
-                return #fn_name(::aya_bpf::programs::DeviceContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_cgroup_dev_ctx) -> i32 {
+                return #fn_name(::aya_ebpf::programs::DeviceContext::new(ctx));
 
                 #item
             }
@@ -53,8 +53,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/dev"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_cgroup_dev_ctx) -> i32 {
-                return foo(::aya_bpf::programs::DeviceContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_cgroup_dev_ctx) -> i32 {
+                return foo(::aya_ebpf::programs::DeviceContext::new(ctx));
 
                 fn foo(ctx: DeviceContext) -> i32 {
                     0

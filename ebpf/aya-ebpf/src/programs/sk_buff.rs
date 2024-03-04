@@ -315,7 +315,7 @@ impl SkBuffContext {
     /// ```no_run
     /// use core::mem;
     ///
-    /// use aya_bpf::{bindings::TC_ACT_PIPE, macros::map, maps::PerCpuArray, programs::SkBuffContext};
+    /// use aya_ebpf::{bindings::TC_ACT_PIPE, macros::map, maps::PerCpuArray, programs::SkBuffContext};
     /// # #[allow(non_camel_case_types)]
     /// # struct ethhdr {};
     /// # #[allow(non_camel_case_types)]
@@ -404,7 +404,7 @@ impl SkBuffContext {
     /// # Examples
     ///
     /// ```no_run
-    /// use aya_bpf::programs::SkBuffContext;
+    /// use aya_ebpf::programs::SkBuffContext;
     /// # #[allow(non_camel_case_types)]
     /// # struct ethhdr {};
     /// # #[allow(non_camel_case_types)]

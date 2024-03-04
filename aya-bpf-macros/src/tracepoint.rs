@@ -41,7 +41,7 @@ impl TracePoint {
             #[no_mangle]
             #[link_section = #section_name]
             #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
-               let _ = #fn_name(::aya_bpf::programs::TracePointContext::new(ctx));
+               let _ = #fn_name(::aya_ebpf::programs::TracePointContext::new(ctx));
                return 0;
 
                #item
@@ -61,7 +61,7 @@ mod tests {
         let prog = TracePoint::parse(
             parse_quote! { name = "sys_enter_bind", category = "syscalls" },
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::TracePointContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::TracePointContext) -> i32 {
                     0
                 }
             },
@@ -72,10 +72,10 @@ mod tests {
             #[no_mangle]
             #[link_section = "tracepoint/syscalls/sys_enter_bind"]
             fn prog(ctx: *mut ::core::ffi::c_void) -> u32 {
-               let _ = prog(::aya_bpf::programs::TracePointContext::new(ctx));
+               let _ = prog(::aya_ebpf::programs::TracePointContext::new(ctx));
                return 0;
 
-               fn prog(ctx: &mut ::aya_bpf::programs::TracePointContext) -> i32 {
+               fn prog(ctx: &mut ::aya_ebpf::programs::TracePointContext) -> i32 {
                     0
                 }
             }

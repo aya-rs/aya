@@ -40,7 +40,7 @@ impl FExit {
             #[no_mangle]
             #[link_section = #section_name]
             #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = #fn_name(::aya_bpf::programs::FExitContext::new(ctx));
+                let _ = #fn_name(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;
 
                 #item
@@ -71,7 +71,7 @@ mod tests {
             #[no_mangle]
             #[link_section = "fexit"]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = sys_clone(::aya_bpf::programs::FExitContext::new(ctx));
+                let _ = sys_clone(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;
 
                 fn sys_clone(ctx: &mut FExitContext) -> i32 {
@@ -100,7 +100,7 @@ mod tests {
             #[no_mangle]
             #[link_section = "fexit/sys_clone"]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = sys_clone(::aya_bpf::programs::FExitContext::new(ctx));
+                let _ = sys_clone(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;
 
                 fn sys_clone(ctx: &mut FExitContext) -> i32 {
@@ -129,7 +129,7 @@ mod tests {
             #[no_mangle]
             #[link_section = "fexit.s/sys_clone"]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = sys_clone(::aya_bpf::programs::FExitContext::new(ctx));
+                let _ = sys_clone(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;
 
                 fn sys_clone(ctx: &mut FExitContext) -> i32 {

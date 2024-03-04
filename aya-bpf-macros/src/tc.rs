@@ -23,8 +23,8 @@ impl SchedClassifier {
         Ok(quote! {
             #[no_mangle]
             #[link_section = "classifier"]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return #fn_name(::aya_bpf::programs::TcContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+                return #fn_name(::aya_ebpf::programs::TcContext::new(ctx));
 
                 #item
             }
@@ -43,7 +43,7 @@ mod tests {
         let prog = SchedClassifier::parse(
             parse_quote! {},
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::TcContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::TcContext) -> i32 {
                     0
                 }
             },
@@ -53,10 +53,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "classifier"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return prog(::aya_bpf::programs::TcContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+                return prog(::aya_ebpf::programs::TcContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::TcContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::TcContext) -> i32 {
                     0
                 }
             }

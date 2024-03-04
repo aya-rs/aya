@@ -67,7 +67,7 @@ impl TcContext {
     /// ```no_run
     /// use core::mem;
     ///
-    /// use aya_bpf::{bindings::TC_ACT_PIPE, macros::map, maps::PerCpuArray, programs::TcContext};
+    /// use aya_ebpf::{bindings::TC_ACT_PIPE, macros::map, maps::PerCpuArray, programs::TcContext};
     /// # #[allow(non_camel_case_types)]
     /// # struct ethhdr {};
     /// # #[allow(non_camel_case_types)]
@@ -161,7 +161,7 @@ impl TcContext {
     /// # Examples
     ///
     /// ```no_run
-    /// use aya_bpf::programs::TcContext;
+    /// use aya_ebpf::programs::TcContext;
     /// # #[allow(non_camel_case_types)]
     /// # struct ethhdr {};
     /// # #[allow(non_camel_case_types)]

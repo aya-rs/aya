@@ -53,8 +53,8 @@ impl Xdp {
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::xdp_md) -> u32 {
-                return #fn_name(::aya_bpf::programs::XdpContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
+                return #fn_name(::aya_ebpf::programs::XdpContext::new(ctx));
 
                 #item
             }
@@ -73,7 +73,7 @@ mod tests {
         let prog = Xdp::parse(
             parse_quote! {},
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             },
@@ -83,10 +83,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::xdp_md) -> u32 {
-                return prog(::aya_bpf::programs::XdpContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
+                return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             }
@@ -99,7 +99,7 @@ mod tests {
         let prog = Xdp::parse(
             parse_quote! { frags },
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             },
@@ -109,10 +109,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp.frags"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::xdp_md) -> u32 {
-                return prog(::aya_bpf::programs::XdpContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
+                return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             }
@@ -125,7 +125,7 @@ mod tests {
         let prog = Xdp::parse(
             parse_quote! { map = "cpumap" },
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             },
@@ -135,10 +135,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp/cpumap"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::xdp_md) -> u32 {
-                return prog(::aya_bpf::programs::XdpContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
+                return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             }
@@ -151,7 +151,7 @@ mod tests {
         let prog = Xdp::parse(
             parse_quote! { map = "devmap" },
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             },
@@ -161,10 +161,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp/devmap"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::xdp_md) -> u32 {
-                return prog(::aya_bpf::programs::XdpContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
+                return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             }
@@ -178,7 +178,7 @@ mod tests {
         Xdp::parse(
             parse_quote! { map = "badmap" },
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             },
@@ -191,7 +191,7 @@ mod tests {
         let prog = Xdp::parse(
             parse_quote! { frags, map = "cpumap" },
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             },
@@ -201,10 +201,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp.frags/cpumap"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::xdp_md) -> u32 {
-                return prog(::aya_bpf::programs::XdpContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
+                return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             }
@@ -217,7 +217,7 @@ mod tests {
         let prog = Xdp::parse(
             parse_quote! { frags, map = "devmap" },
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             },
@@ -227,10 +227,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp.frags/devmap"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::xdp_md) -> u32 {
-                return prog(::aya_bpf::programs::XdpContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
+                return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::XdpContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::XdpContext) -> i32 {
                     0
                 }
             }

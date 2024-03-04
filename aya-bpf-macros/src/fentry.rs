@@ -40,7 +40,7 @@ impl FEntry {
             #[no_mangle]
             #[link_section = #section_name]
             #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = #fn_name(::aya_bpf::programs::FEntryContext::new(ctx));
+                let _ = #fn_name(::aya_ebpf::programs::FEntryContext::new(ctx));
                 return 0;
 
                 #item
@@ -60,7 +60,7 @@ mod tests {
         let prog = FEntry::parse(
             parse_quote! {},
             parse_quote! {
-                fn sys_clone(ctx: &mut aya_bpf::programs::FEntryContext) -> i32 {
+                fn sys_clone(ctx: &mut aya_ebpf::programs::FEntryContext) -> i32 {
                     0
                 }
             },
@@ -71,10 +71,10 @@ mod tests {
             #[no_mangle]
             #[link_section = "fentry"]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = sys_clone(::aya_bpf::programs::FEntryContext::new(ctx));
+                let _ = sys_clone(::aya_ebpf::programs::FEntryContext::new(ctx));
                 return 0;
 
-                fn sys_clone(ctx: &mut aya_bpf::programs::FEntryContext) -> i32 {
+                fn sys_clone(ctx: &mut aya_ebpf::programs::FEntryContext) -> i32 {
                     0
                 }
             }
@@ -89,7 +89,7 @@ mod tests {
                 function = "sys_clone"
             },
             parse_quote! {
-                fn sys_clone(ctx: &mut aya_bpf::programs::FEntryContext) -> i32 {
+                fn sys_clone(ctx: &mut aya_ebpf::programs::FEntryContext) -> i32 {
                     0
                 }
             },
@@ -100,10 +100,10 @@ mod tests {
             #[no_mangle]
             #[link_section = "fentry/sys_clone"]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = sys_clone(::aya_bpf::programs::FEntryContext::new(ctx));
+                let _ = sys_clone(::aya_ebpf::programs::FEntryContext::new(ctx));
                 return 0;
 
-                fn sys_clone(ctx: &mut aya_bpf::programs::FEntryContext) -> i32 {
+                fn sys_clone(ctx: &mut aya_ebpf::programs::FEntryContext) -> i32 {
                     0
                 }
             }
@@ -118,7 +118,7 @@ mod tests {
                 sleepable
             },
             parse_quote! {
-                fn sys_clone(ctx: &mut aya_bpf::programs::FEntryContext) -> i32 {
+                fn sys_clone(ctx: &mut aya_ebpf::programs::FEntryContext) -> i32 {
                     0
                 }
             },
@@ -129,10 +129,10 @@ mod tests {
             #[no_mangle]
             #[link_section = "fentry.s"]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = sys_clone(::aya_bpf::programs::FEntryContext::new(ctx));
+                let _ = sys_clone(::aya_ebpf::programs::FEntryContext::new(ctx));
                 return 0;
 
-                fn sys_clone(ctx: &mut aya_bpf::programs::FEntryContext) -> i32 {
+                fn sys_clone(ctx: &mut aya_ebpf::programs::FEntryContext) -> i32 {
                     0
                 }
             }

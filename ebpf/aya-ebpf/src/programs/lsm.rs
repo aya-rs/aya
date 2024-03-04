@@ -30,7 +30,7 @@ impl LsmContext {
     ///
     /// ```no_run
     /// # #![allow(dead_code)]
-    /// # use aya_bpf::{programs::LsmContext, cty::{c_int, c_ulong}};
+    /// # use aya_ebpf::{programs::LsmContext, cty::{c_int, c_ulong}};
     /// unsafe fn try_lsm_mmap_addr(ctx: LsmContext) -> Result<i32, i32> {
     ///     // In the kernel, this hook is defined as:
     ///     //   LSM_HOOK(int, 0, mmap_addr, unsigned long addr)

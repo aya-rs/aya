@@ -35,8 +35,8 @@ impl CgroupSockopt {
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sockopt) -> i32 {
-                return #fn_name(::aya_bpf::programs::SockoptContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sockopt) -> i32 {
+                return #fn_name(::aya_ebpf::programs::SockoptContext::new(ctx));
 
                 #item
             }
@@ -65,8 +65,8 @@ mod tests {
         let expected = quote!(
             #[no_mangle]
             #[link_section = "cgroup/getsockopt"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sockopt) -> i32 {
-                return foo(::aya_bpf::programs::SockoptContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sockopt) -> i32 {
+                return foo(::aya_ebpf::programs::SockoptContext::new(ctx));
 
                 fn foo(ctx: SockoptContext) -> i32 {
                     0
@@ -91,8 +91,8 @@ mod tests {
         let expected = quote!(
             #[no_mangle]
             #[link_section = "cgroup/setsockopt"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sockopt) -> i32 {
-                return foo(::aya_bpf::programs::SockoptContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sockopt) -> i32 {
+                return foo(::aya_ebpf::programs::SockoptContext::new(ctx));
 
                 fn foo(ctx: SockoptContext) -> i32 {
                     0

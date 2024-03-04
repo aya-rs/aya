@@ -21,7 +21,7 @@ use crate::{
 /// # Examples
 ///
 /// ```rust,no_run
-/// use aya_bpf::{bindings::xdp_action, macros::{map, xdp}, maps::DevMap, programs::XdpContext};
+/// use aya_ebpf::{bindings::xdp_action, macros::{map, xdp}, maps::DevMap, programs::XdpContext};
 ///
 /// #[map]
 /// static MAP: DevMap = DevMap::with_max_entries(1, 0);
@@ -44,7 +44,7 @@ impl DevMap {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{macros::map, maps::DevMap};
+    /// use aya_ebpf::{macros::map, maps::DevMap};
     ///
     /// #[map]
     /// static MAP: DevMap = DevMap::with_max_entries(8, 0);
@@ -69,7 +69,7 @@ impl DevMap {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{macros::map, maps::DevMap};
+    /// use aya_ebpf::{macros::map, maps::DevMap};
     ///
     /// #[map]
     /// static MAP: DevMap = DevMap::pinned(8, 0);
@@ -95,7 +95,7 @@ impl DevMap {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{macros::map, maps::DevMap};
+    /// use aya_ebpf::{macros::map, maps::DevMap};
     ///
     /// #[map]
     /// static MAP: DevMap = DevMap::with_max_entries(1, 0);
@@ -128,7 +128,7 @@ impl DevMap {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{bindings::xdp_action, macros::{map, xdp}, maps::DevMap, programs::XdpContext};
+    /// use aya_ebpf::{bindings::xdp_action, macros::{map, xdp}, maps::DevMap, programs::XdpContext};
     ///
     /// #[map]
     /// static MAP: DevMap = DevMap::with_max_entries(8, 0);

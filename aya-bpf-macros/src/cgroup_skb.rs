@@ -37,8 +37,8 @@ impl CgroupSkb {
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+                return #fn_name(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 #item
             }
@@ -67,8 +67,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/skb"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return foo(::aya_bpf::programs::SkBuffContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+                return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 fn foo(ctx: SkBuffContext) -> i32 {
                     0
@@ -93,8 +93,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup_skb/egress"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return foo(::aya_bpf::programs::SkBuffContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+                return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 fn foo(ctx: SkBuffContext) -> i32 {
                     0
@@ -119,8 +119,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup_skb/ingress"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return foo(::aya_bpf::programs::SkBuffContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+                return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 fn foo(ctx: SkBuffContext) -> i32 {
                     0
@@ -145,8 +145,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup_skb/egress"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return foo(::aya_bpf::programs::SkBuffContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+                return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 fn foo(ctx: SkBuffContext) -> i32 {
                     0
@@ -171,8 +171,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup_skb/egress"]
-            pub fn foo(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return foo(::aya_bpf::programs::SkBuffContext::new(ctx));
+            pub fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+                return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 pub fn foo(ctx: SkBuffContext) -> i32 {
                     0
@@ -197,8 +197,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup_skb/egress"]
-            pub(crate) fn foo(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i32 {
-                return foo(::aya_bpf::programs::SkBuffContext::new(ctx));
+            pub(crate) fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+                return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 pub(crate) fn foo(ctx: SkBuffContext) -> i32 {
                     0

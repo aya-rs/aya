@@ -142,7 +142,7 @@ pub fn sk_msg(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{bindings::xdp_action::XDP_PASS, macros::xdp, programs::XdpContext};
+/// use aya_ebpf::{bindings::xdp_action::XDP_PASS, macros::xdp, programs::XdpContext};
 ///
 /// #[xdp(frags)]
 /// pub fn xdp(ctx: XdpContext) -> u32 {
@@ -222,7 +222,7 @@ pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{macros::cgroup_sock_addr, programs::SockAddrContext};
+/// use aya_ebpf::{macros::cgroup_sock_addr, programs::SockAddrContext};
 ///
 /// #[cgroup_sock_addr(connect4)]
 /// pub fn connect4(ctx: SockAddrContext) -> i32 {
@@ -300,7 +300,7 @@ pub fn perf_event(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{macros::raw_tracepoint, programs::RawTracePointContext};
+/// use aya_ebpf::{macros::raw_tracepoint, programs::RawTracePointContext};
 ///
 /// #[raw_tracepoint(tracepoint = "sys_enter")]
 /// pub fn sys_enter(ctx: RawTracePointContext) -> i32 {
@@ -347,7 +347,7 @@ pub fn raw_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{macros::lsm, programs::LsmContext};
+/// use aya_ebpf::{macros::lsm, programs::LsmContext};
 ///
 /// #[lsm(hook = "file_open")]
 /// pub fn file_open(ctx: LsmContext) -> i32 {
@@ -387,7 +387,7 @@ pub fn lsm(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{macros::btf_tracepoint, programs::BtfTracePointContext};
+/// use aya_ebpf::{macros::btf_tracepoint, programs::BtfTracePointContext};
 ///
 /// #[btf_tracepoint(function = "sched_process_fork")]
 /// pub fn sched_process_fork(ctx: BtfTracePointContext) -> u32 {
@@ -425,7 +425,7 @@ pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{macros::stream_parser, programs::SkBuffContext};
+/// use aya_ebpf::{macros::stream_parser, programs::SkBuffContext};
 ///
 ///
 ///#[stream_parser]
@@ -456,7 +456,7 @@ pub fn stream_parser(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{macros::stream_verdict, programs::SkBuffContext, bindings::sk_action};
+/// use aya_ebpf::{macros::stream_verdict, programs::SkBuffContext, bindings::sk_action};
 ///
 ///
 ///#[stream_verdict]
@@ -497,7 +497,7 @@ fn sk_skb(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> TokenStream
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{macros::socket_filter, programs::SkBuffContext};
+/// use aya_ebpf::{macros::socket_filter, programs::SkBuffContext};
 ///
 /// #[socket_filter]
 /// pub fn accept_all(_ctx: SkBuffContext) -> i64 {
@@ -529,7 +529,7 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ```no_run
 /// # #![allow(non_camel_case_types)]
-/// use aya_bpf::{macros::fentry, programs::FEntryContext};
+/// use aya_ebpf::{macros::fentry, programs::FEntryContext};
 /// # type filename = u32;
 /// # type path = u32;
 ///
@@ -574,7 +574,7 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ```no_run
 /// # #![allow(non_camel_case_types)]
-/// use aya_bpf::{macros::fexit, programs::FExitContext};
+/// use aya_ebpf::{macros::fexit, programs::FExitContext};
 /// # type filename = u32;
 /// # type path = u32;
 ///
@@ -615,7 +615,7 @@ pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{macros::sk_lookup, programs::SkLookupContext};
+/// use aya_ebpf::{macros::sk_lookup, programs::SkLookupContext};
 ///
 /// #[sk_lookup]
 /// pub fn accept_all(_ctx: SkLookupContext) -> u32 {
@@ -645,7 +645,7 @@ pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// use aya_bpf::{
+/// use aya_ebpf::{
 ///     macros::cgroup_device,
 ///     programs::DeviceContext,
 /// };

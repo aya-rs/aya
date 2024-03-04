@@ -23,8 +23,8 @@ impl SkMsg {
         Ok(quote! {
             #[no_mangle]
             #[link_section = "sk_msg"]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::sk_msg_md) -> u32 {
-                return #fn_name(::aya_bpf::programs::SkMsgContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::sk_msg_md) -> u32 {
+                return #fn_name(::aya_ebpf::programs::SkMsgContext::new(ctx));
 
                 #item
             }
@@ -43,7 +43,7 @@ mod tests {
         let prog = SkMsg::parse(
             parse_quote! {},
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::SkMsgContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkMsgContext) -> u32 {
                     0
                 }
             },
@@ -53,10 +53,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "sk_msg"]
-            fn prog(ctx: *mut ::aya_bpf::bindings:: sk_msg_md) -> u32 {
-                return prog(::aya_bpf::programs::SkMsgContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings:: sk_msg_md) -> u32 {
+                return prog(::aya_ebpf::programs::SkMsgContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::SkMsgContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkMsgContext) -> u32 {
                     0
                 }
             }

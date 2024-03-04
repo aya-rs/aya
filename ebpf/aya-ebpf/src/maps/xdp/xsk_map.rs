@@ -22,7 +22,7 @@ use crate::{
 /// # Examples
 ///
 /// ```rust,no_run
-/// use aya_bpf::{bindings::xdp_action, macros::{map, xdp}, maps::XskMap, programs::XdpContext};
+/// use aya_ebpf::{bindings::xdp_action, macros::{map, xdp}, maps::XskMap, programs::XdpContext};
 ///
 /// #[map]
 /// static SOCKS: XskMap = XskMap::with_max_entries(8, 0);
@@ -65,7 +65,7 @@ impl XskMap {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{macros::map, maps::XskMap};
+    /// use aya_ebpf::{macros::map, maps::XskMap};
     ///
     /// #[map]
     /// static SOCKS: XskMap =  XskMap::with_max_entries(8, 0);
@@ -90,7 +90,7 @@ impl XskMap {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{macros::map, maps::XskMap};
+    /// use aya_ebpf::{macros::map, maps::XskMap};
     ///
     /// #[map]
     /// static SOCKS: XskMap = XskMap::pinned(8, 0);
@@ -116,7 +116,7 @@ impl XskMap {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{macros::map, maps::XskMap};
+    /// use aya_ebpf::{macros::map, maps::XskMap};
     ///
     /// #[map]
     /// static SOCKS: XskMap = XskMap::with_max_entries(8, 0);
@@ -145,7 +145,7 @@ impl XskMap {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{bindings::xdp_action, macros::{map, xdp}, maps::XskMap, programs::XdpContext};
+    /// use aya_ebpf::{bindings::xdp_action, macros::{map, xdp}, maps::XskMap, programs::XdpContext};
     ///
     /// #[map]
     /// static SOCKS: XskMap = XskMap::with_max_entries(8, 0);

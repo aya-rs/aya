@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use aya_bpf::{bindings::xdp_action::XDP_PASS, macros::xdp, programs::XdpContext};
+use aya_ebpf::{bindings::xdp_action::XDP_PASS, macros::xdp, programs::XdpContext};
 
 macro_rules! probe {
     ($name:ident, ($($arg:ident $(= $value:literal)?),*) ) => {

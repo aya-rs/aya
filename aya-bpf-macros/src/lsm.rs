@@ -43,7 +43,7 @@ impl Lsm {
             #[no_mangle]
             #[link_section = #section_name]
             #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
-                return #fn_name(::aya_bpf::programs::LsmContext::new(ctx));
+                return #fn_name(::aya_ebpf::programs::LsmContext::new(ctx));
 
                 #item
             }
@@ -65,7 +65,7 @@ mod tests {
                 hook = "bprm_committed_creds"
             },
             parse_quote! {
-                fn bprm_committed_creds(ctx: &mut ::aya_bpf::programs::LsmContext) -> i32 {
+                fn bprm_committed_creds(ctx: &mut ::aya_ebpf::programs::LsmContext) -> i32 {
                     0
                 }
             },
@@ -76,9 +76,9 @@ mod tests {
             #[no_mangle]
             #[link_section = "lsm.s/bprm_committed_creds"]
             fn bprm_committed_creds(ctx: *mut ::core::ffi::c_void) -> i32 {
-                return bprm_committed_creds(::aya_bpf::programs::LsmContext::new(ctx));
+                return bprm_committed_creds(::aya_ebpf::programs::LsmContext::new(ctx));
 
-                fn bprm_committed_creds(ctx: &mut ::aya_bpf::programs::LsmContext) -> i32 {
+                fn bprm_committed_creds(ctx: &mut ::aya_ebpf::programs::LsmContext) -> i32 {
                     0
                 }
             }
@@ -93,7 +93,7 @@ mod tests {
                 hook = "bprm_committed_creds"
             },
             parse_quote! {
-                fn bprm_committed_creds(ctx: &mut ::aya_bpf::programs::LsmContext) -> i32 {
+                fn bprm_committed_creds(ctx: &mut ::aya_ebpf::programs::LsmContext) -> i32 {
                     0
                 }
             },
@@ -104,9 +104,9 @@ mod tests {
             #[no_mangle]
             #[link_section = "lsm/bprm_committed_creds"]
             fn bprm_committed_creds(ctx: *mut ::core::ffi::c_void) -> i32 {
-                return bprm_committed_creds(::aya_bpf::programs::LsmContext::new(ctx));
+                return bprm_committed_creds(::aya_ebpf::programs::LsmContext::new(ctx));
 
-                fn bprm_committed_creds(ctx: &mut ::aya_bpf::programs::LsmContext) -> i32 {
+                fn bprm_committed_creds(ctx: &mut ::aya_ebpf::programs::LsmContext) -> i32 {
                     0
                 }
             }

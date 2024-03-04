@@ -34,7 +34,7 @@ impl BtfTracePoint {
             #[no_mangle]
             #[link_section = #section_name]
             #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = #fn_name(::aya_bpf::programs::BtfTracePointContext::new(ctx));
+                let _ = #fn_name(::aya_ebpf::programs::BtfTracePointContext::new(ctx));
                 return 0;
 
                 #item
@@ -65,7 +65,7 @@ mod tests {
             #[no_mangle]
             #[link_section = "tp_btf"]
             fn foo(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = foo(::aya_bpf::programs::BtfTracePointContext::new(ctx));
+                let _ = foo(::aya_ebpf::programs::BtfTracePointContext::new(ctx));
                 return 0;
 
                 fn foo(ctx: BtfTracePointContext) -> i32 {
@@ -92,7 +92,7 @@ mod tests {
             #[no_mangle]
             #[link_section = "tp_btf/some_func"]
             fn foo(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = foo(::aya_bpf::programs::BtfTracePointContext::new(ctx));
+                let _ = foo(::aya_ebpf::programs::BtfTracePointContext::new(ctx));
                 return 0;
 
                 fn foo(ctx: BtfTracePointContext) -> i32 {

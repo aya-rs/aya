@@ -33,7 +33,7 @@ impl RawTracePoint {
             #[no_mangle]
             #[link_section = #section_name]
             #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
-                let _ = #fn_name(::aya_bpf::programs::RawTracePointContext::new(ctx));
+                let _ = #fn_name(::aya_ebpf::programs::RawTracePointContext::new(ctx));
                 return 0;
 
                 #item
@@ -53,7 +53,7 @@ mod tests {
         let prog = RawTracePoint::parse(
             parse_quote! { tracepoint = "sys_enter" },
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::RawTracePointContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::RawTracePointContext) -> i32 {
                     0
                 }
             },
@@ -64,10 +64,10 @@ mod tests {
             #[no_mangle]
             #[link_section = "raw_tp/sys_enter"]
             fn prog(ctx: *mut ::core::ffi::c_void) -> u32 {
-                let _ = prog(::aya_bpf::programs::RawTracePointContext::new(ctx));
+                let _ = prog(::aya_ebpf::programs::RawTracePointContext::new(ctx));
                 return 0;
 
-                fn prog(ctx: &mut ::aya_bpf::programs::RawTracePointContext) -> i32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::RawTracePointContext) -> i32 {
                     0
                 }
             }

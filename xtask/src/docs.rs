@@ -8,7 +8,10 @@ use xtask::exec;
 pub fn docs(metadata: Metadata) -> Result<()> {
     const PACKAGE_TO_DESCRIPTION: &[(&str, &str)] = &[
         ("aya", "User-space BPF program loading and manipulation"),
-        ("aya-bpf", "Kernel-space BPF program implementation toolkit"),
+        (
+            "aya-ebpf",
+            "Kernel-space BPF program implementation toolkit",
+        ),
         ("aya-log-ebpf", "Kernel-space logging from BPF programs"),
         (
             "aya-log",

@@ -30,7 +30,7 @@ use crate::{
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read};
+/// # use aya_ebpf::{cty::{c_int, c_long}, helpers::bpf_probe_read};
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const c_int = 0 as _;
 /// let my_int: c_int = unsafe { bpf_probe_read(kernel_ptr)? };
@@ -67,7 +67,7 @@ pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_buf};
+/// # use aya_ebpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_buf};
 /// # fn try_test() -> Result<(), c_long> {
 /// # let ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
@@ -103,7 +103,7 @@ pub unsafe fn bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_user};
+/// # use aya_ebpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_user};
 /// # fn try_test() -> Result<(), c_long> {
 /// # let user_ptr: *const c_int = 0 as _;
 /// let my_int: c_int = unsafe { bpf_probe_read_user(user_ptr)? };
@@ -138,7 +138,7 @@ pub unsafe fn bpf_probe_read_user<T>(src: *const T) -> Result<T, c_long> {
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_user_buf};
+/// # use aya_ebpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_user_buf};
 /// # fn try_test() -> Result<(), c_long> {
 /// # let user_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
@@ -174,7 +174,7 @@ pub unsafe fn bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> Result<
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_kernel};
+/// # use aya_ebpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_kernel};
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const c_int = 0 as _;
 /// let my_int: c_int = unsafe { bpf_probe_read_kernel(kernel_ptr)? };
@@ -209,7 +209,7 @@ pub unsafe fn bpf_probe_read_kernel<T>(src: *const T) -> Result<T, c_long> {
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_kernel_buf};
+/// # use aya_ebpf::{cty::{c_int, c_long}, helpers::bpf_probe_read_kernel_buf};
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
@@ -248,7 +248,7 @@ pub unsafe fn bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> Resul
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_str};
+/// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_str};
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const u8 = 0 as _;
 /// let mut my_str = [0u8; 16];
@@ -286,7 +286,7 @@ pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usiz
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_user_str};
+/// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_user_str};
 /// # fn try_test() -> Result<(), c_long> {
 /// # let user_ptr: *const u8 = 0 as _;
 /// let mut my_str = [0u8; 16];
@@ -327,7 +327,7 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_user_str_bytes};
+/// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_user_str_bytes};
 /// # fn try_test() -> Result<(), c_long> {
 /// # let user_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
@@ -341,8 +341,8 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 /// With a `PerCpuArray` (with size defined by us):
 ///
 /// ```no_run
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_user_str_bytes};
-/// use aya_bpf::{macros::map, maps::PerCpuArray};
+/// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_user_str_bytes};
+/// use aya_ebpf::{macros::map, maps::PerCpuArray};
 ///
 /// #[repr(C)]
 /// pub struct Buf {
@@ -370,8 +370,8 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_user_str_bytes};
-/// # use aya_bpf::{macros::map, maps::PerCpuArray};
+/// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_user_str_bytes};
+/// # use aya_ebpf::{macros::map, maps::PerCpuArray};
 /// # #[repr(C)]
 /// # pub struct Buf {
 /// #     pub buf: [u8; 4096],
@@ -436,7 +436,7 @@ fn read_str_bytes(len: i64, dest: &[u8]) -> Result<&[u8], c_long> {
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_kernel_str};
+/// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_kernel_str};
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const u8 = 0 as _;
 /// let mut my_str = [0u8; 16];
@@ -477,7 +477,7 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
+/// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
@@ -492,8 +492,8 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
-/// use aya_bpf::{macros::map, maps::PerCpuArray};
+/// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
+/// use aya_ebpf::{macros::map, maps::PerCpuArray};
 ///
 /// #[repr(C)]
 /// pub struct Buf {
@@ -521,8 +521,8 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
-/// # use aya_bpf::{macros::map, maps::PerCpuArray};
+/// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
+/// # use aya_ebpf::{macros::map, maps::PerCpuArray};
 /// # #[repr(C)]
 /// # pub struct Buf {
 /// #     pub buf: [u8; 4096],
@@ -567,7 +567,7 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::{
+/// # use aya_ebpf::{
 /// #     cty::{c_int, c_long},
 /// #     helpers::bpf_probe_write_user,
 /// #     programs::ProbeContext,
@@ -606,7 +606,7 @@ pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), 
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::helpers::bpf_get_current_comm;
+/// # use aya_ebpf::helpers::bpf_get_current_comm;
 /// let comm = bpf_get_current_comm();
 ///
 /// // Do something with comm
@@ -643,7 +643,7 @@ pub fn bpf_get_current_comm() -> Result<[u8; 16], c_long> {
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::helpers::bpf_get_current_pid_tgid;
+/// # use aya_ebpf::helpers::bpf_get_current_pid_tgid;
 /// let tgid = (bpf_get_current_pid_tgid() >> 32) as u32;
 /// let pid = bpf_get_current_pid_tgid() as u32;
 ///
@@ -666,7 +666,7 @@ pub fn bpf_get_current_pid_tgid() -> u64 {
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// # use aya_bpf::helpers::bpf_get_current_uid_gid;
+/// # use aya_ebpf::helpers::bpf_get_current_uid_gid;
 /// let gid = (bpf_get_current_uid_gid() >> 32) as u32;
 /// let uid = bpf_get_current_uid_gid() as u32;
 ///
@@ -709,7 +709,7 @@ pub fn bpf_get_current_uid_gid() -> u64 {
 /// # Example
 ///
 /// ```no_run
-/// # use aya_bpf::helpers::bpf_printk;
+/// # use aya_ebpf::helpers::bpf_printk;
 /// unsafe {
 ///   bpf_printk!(b"hi there! dec: %d, hex: 0x%08X", 42, 0x1234);
 /// }

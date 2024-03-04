@@ -23,7 +23,7 @@ use crate::{
 /// # Examples
 ///
 /// ```rust,no_run
-/// use aya_bpf::{bindings::xdp_action, macros::{map, xdp}, maps::DevMapHash, programs::XdpContext};
+/// use aya_ebpf::{bindings::xdp_action, macros::{map, xdp}, maps::DevMapHash, programs::XdpContext};
 ///
 /// #[map]
 /// static MAP: DevMapHash = DevMapHash::with_max_entries(1, 0);
@@ -46,7 +46,7 @@ impl DevMapHash {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{macros::map, maps::DevMapHash};
+    /// use aya_ebpf::{macros::map, maps::DevMapHash};
     ///
     /// #[map]
     /// static MAP: DevMapHash = DevMapHash::with_max_entries(8, 0);
@@ -71,7 +71,7 @@ impl DevMapHash {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{macros::map, maps::DevMapHash};
+    /// use aya_ebpf::{macros::map, maps::DevMapHash};
     ///
     /// #[map]
     /// static MAP: DevMapHash = DevMapHash::pinned(8, 0);
@@ -97,7 +97,7 @@ impl DevMapHash {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{macros::map, maps::DevMapHash};
+    /// use aya_ebpf::{macros::map, maps::DevMapHash};
     ///
     /// #[map]
     /// static MAP: DevMapHash = DevMapHash::with_max_entries(1, 0);
@@ -128,7 +128,7 @@ impl DevMapHash {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use aya_bpf::{bindings::xdp_action, macros::{map, xdp}, maps::DevMapHash, programs::XdpContext};
+    /// use aya_ebpf::{bindings::xdp_action, macros::{map, xdp}, maps::DevMapHash, programs::XdpContext};
     ///
     /// #[map]
     /// static MAP: DevMapHash = DevMapHash::with_max_entries(8, 0);

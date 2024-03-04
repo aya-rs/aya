@@ -35,8 +35,8 @@ impl CgroupSock {
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock) -> i32 {
-                return #fn_name(::aya_bpf::programs::SockContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sock) -> i32 {
+                return #fn_name(::aya_ebpf::programs::SockContext::new(ctx));
 
                 #item
             }
@@ -65,8 +65,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/post_bind4"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock) -> i32 {
-                return foo(::aya_bpf::programs::SockContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock) -> i32 {
+                return foo(::aya_ebpf::programs::SockContext::new(ctx));
 
                 fn foo(ctx: SockContext) -> i32 {
                     0
@@ -91,8 +91,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/post_bind6"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock) -> i32 {
-                return foo(::aya_bpf::programs::SockContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock) -> i32 {
+                return foo(::aya_ebpf::programs::SockContext::new(ctx));
 
                 fn foo(ctx: SockContext) -> i32 {
                     0
@@ -116,8 +116,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/sock_create"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock) -> i32 {
-                return foo(::aya_bpf::programs::SockContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock) -> i32 {
+                return foo(::aya_ebpf::programs::SockContext::new(ctx));
 
                 fn foo(ctx: SockContext) -> i32 {
                     0
@@ -141,8 +141,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/sock_release"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock) -> i32 {
-                return foo(::aya_bpf::programs::SockContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock) -> i32 {
+                return foo(::aya_ebpf::programs::SockContext::new(ctx));
 
                 fn foo(ctx: SockContext) -> i32 {
                     0

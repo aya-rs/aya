@@ -23,8 +23,8 @@ impl SkLookup {
         Ok(quote! {
             #[no_mangle]
             #[link_section = "sk_lookup"]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sk_lookup) -> u32 {
-                return #fn_name(::aya_bpf::programs::SkLookupContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sk_lookup) -> u32 {
+                return #fn_name(::aya_ebpf::programs::SkLookupContext::new(ctx));
 
                 #item
             }
@@ -43,7 +43,7 @@ mod tests {
         let prog = SkLookup::parse(
             parse_quote! {},
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::SkLookupContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkLookupContext) -> u32 {
                     0
                 }
             },
@@ -53,10 +53,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "sk_lookup"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::bpf_sk_lookup) -> u32 {
-                return prog(::aya_bpf::programs::SkLookupContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::bpf_sk_lookup) -> u32 {
+                return prog(::aya_ebpf::programs::SkLookupContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::SkLookupContext) -> u32 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkLookupContext) -> u32 {
                     0
                 }
             }

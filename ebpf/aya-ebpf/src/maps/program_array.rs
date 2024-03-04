@@ -15,8 +15,8 @@ use crate::{
 ///
 /// ```no_run
 /// # #![allow(dead_code)]
-/// use aya_bpf::{macros::map, maps::ProgramArray, cty::c_long};
-/// # use aya_bpf::{programs::LsmContext};
+/// use aya_ebpf::{macros::map, maps::ProgramArray, cty::c_long};
+/// # use aya_ebpf::{programs::LsmContext};
 ///
 /// #[map]
 /// static JUMP_TABLE: ProgramArray = ProgramArray::with_max_entries(16, 0);

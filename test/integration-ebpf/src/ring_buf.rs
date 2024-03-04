@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use aya_bpf::{
+use aya_ebpf::{
     macros::{map, uprobe},
     maps::{PerCpuArray, RingBuf},
     programs::ProbeContext,

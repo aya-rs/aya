@@ -37,8 +37,8 @@ impl CgroupSockAddr {
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return #fn_name(::aya_bpf::programs::SockAddrContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return #fn_name(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 #item
             }
@@ -67,8 +67,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/connect4"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0
@@ -93,8 +93,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/connect6"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0
@@ -119,8 +119,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/bind4"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0
@@ -145,8 +145,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/bind6"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0
@@ -171,8 +171,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/getpeername4"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0
@@ -197,8 +197,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/getpeername6"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0
@@ -223,8 +223,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/getsockname4"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0
@@ -249,8 +249,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/getsockname6"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0
@@ -275,8 +275,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/sendmsg4"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0
@@ -301,8 +301,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/sendmsg6"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0
@@ -327,8 +327,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/recvmsg4"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0
@@ -353,8 +353,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/recvmsg6"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sock_addr) -> i32 {
-                return foo(::aya_bpf::programs::SockAddrContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
+                return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
                 fn foo(ctx: CgroupSockAddrContext) -> i32 {
                     0

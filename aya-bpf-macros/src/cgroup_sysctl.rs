@@ -23,8 +23,8 @@ impl CgroupSysctl {
         Ok(quote! {
             #[no_mangle]
             #[link_section = "cgroup/sysctl"]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::bpf_sysctl) -> i32 {
-                return #fn_name(::aya_bpf::programs::SysctlContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sysctl) -> i32 {
+                return #fn_name(::aya_ebpf::programs::SysctlContext::new(ctx));
 
                 #item
             }
@@ -53,8 +53,8 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/sysctl"]
-            fn foo(ctx: *mut ::aya_bpf::bindings::bpf_sysctl) -> i32 {
-                return foo(::aya_bpf::programs::SysctlContext::new(ctx));
+            fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sysctl) -> i32 {
+                return foo(::aya_ebpf::programs::SysctlContext::new(ctx));
 
                 fn foo(ctx: SysctlContext) -> i32 {
                     0

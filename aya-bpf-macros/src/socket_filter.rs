@@ -23,8 +23,8 @@ impl SocketFilter {
         Ok(quote! {
             #[no_mangle]
             #[link_section = "socket"]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i64 {
-                return #fn_name(::aya_bpf::programs::SkBuffContext::new(ctx));
+            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i64 {
+                return #fn_name(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 #item
             }
@@ -43,7 +43,7 @@ mod tests {
         let prog = SocketFilter::parse(
             parse_quote! {},
             parse_quote! {
-                fn prog(ctx: &mut ::aya_bpf::programs::SkBuffContext) -> i64 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> i64 {
                     0
                 }
             },
@@ -53,10 +53,10 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "socket"]
-            fn prog(ctx: *mut ::aya_bpf::bindings::__sk_buff) -> i64 {
-                return prog(::aya_bpf::programs::SkBuffContext::new(ctx));
+            fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i64 {
+                return prog(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
-                fn prog(ctx: &mut ::aya_bpf::programs::SkBuffContext) -> i64 {
+                fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> i64 {
                     0
                 }
             }
