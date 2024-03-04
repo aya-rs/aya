@@ -5,7 +5,7 @@ use core::mem;
 
 #[cfg(not(feature = "std"))]
 use crate::std;
-use crate::BpfSectionKind;
+use crate::EbpfSectionKind;
 
 /// Invalid map type encontered
 pub struct InvalidMapTypeError {
@@ -240,10 +240,10 @@ impl Map {
     }
 
     /// Returns the section kind.
-    pub fn section_kind(&self) -> BpfSectionKind {
+    pub fn section_kind(&self) -> EbpfSectionKind {
         match self {
             Map::Legacy(m) => m.section_kind,
-            Map::Btf(_) => BpfSectionKind::BtfMaps,
+            Map::Btf(_) => EbpfSectionKind::BtfMaps,
         }
     }
 
@@ -270,7 +270,7 @@ pub struct LegacyMap {
     /// The section index
     pub section_index: usize,
     /// The section kind
-    pub section_kind: BpfSectionKind,
+    pub section_kind: EbpfSectionKind,
     /// The symbol index.
     ///
     /// This is None for data maps (.bss .data and .rodata).  We don't need

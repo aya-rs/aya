@@ -92,7 +92,7 @@ mod tests {
             bpf_map_type::{BPF_MAP_TYPE_BLOOM_FILTER, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
         },
         maps::Map,
-        obj::{self, maps::LegacyMap, BpfSectionKind},
+        obj::{self, maps::LegacyMap, EbpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
 
@@ -106,7 +106,7 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
-            section_kind: BpfSectionKind::Maps,
+            section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
             data: Vec::new(),
         })
@@ -150,7 +150,7 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
-            section_kind: BpfSectionKind::Maps,
+            section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
             data: Vec::new(),
         }));

@@ -50,7 +50,7 @@ mod test_utils {
         bpf_map_def,
         generated::{bpf_cmd, bpf_map_type},
         maps::MapData,
-        obj::{self, maps::LegacyMap, BpfSectionKind},
+        obj::{self, maps::LegacyMap, EbpfSectionKind},
         sys::{override_syscall, Syscall},
     };
 
@@ -75,7 +75,7 @@ mod test_utils {
                 ..Default::default()
             },
             section_index: 0,
-            section_kind: BpfSectionKind::Maps,
+            section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
             symbol_index: None,
         })

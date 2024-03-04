@@ -66,7 +66,7 @@ use thiserror::Error;
 
 use crate::{
     generated::bpf_map_info,
-    obj::{self, parse_map_info, BpfSectionKind},
+    obj::{self, parse_map_info, EbpfSectionKind},
     pin::PinError,
     sys::{
         bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
@@ -602,7 +602,7 @@ impl MapData {
 
     pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
         let Self { obj, fd } = self;
-        if !obj.data().is_empty() && obj.section_kind() != BpfSectionKind::Bss {
+        if !obj.data().is_empty() && obj.section_kind() != EbpfSectionKind::Bss {
             bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
                 .map_err(|(_, io_error)| SyscallError {
                     call: "bpf_map_update_elem",
@@ -610,7 +610,7 @@ impl MapData {
                 })
                 .map_err(MapError::from)?;
         }
-        if obj.section_kind() == BpfSectionKind::Rodata {
+        if obj.section_kind() == EbpfSectionKind::Rodata {
             bpf_map_freeze(fd.as_fd())
                 .map_err(|(_, io_error)| SyscallError {
                     call: "bpf_map_freeze",
@@ -1045,7 +1045,7 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
-            section_kind: BpfSectionKind::Maps,
+            section_kind: EbpfSectionKind::Maps,
             symbol_index: Some(0),
             data: Vec::new(),
         })

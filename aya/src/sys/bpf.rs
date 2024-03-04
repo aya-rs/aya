@@ -12,7 +12,7 @@ use libc::{ENOENT, ENOSPC};
 use obj::{
     btf::{BtfEnum64, Enum64},
     maps::{bpf_map_def, LegacyMap},
-    BpfSectionKind, VerifierLog,
+    EbpfSectionKind, VerifierLog,
 };
 
 use crate::{
@@ -766,7 +766,7 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
                 ..Default::default()
             },
             section_index: 0,
-            section_kind: BpfSectionKind::Maps,
+            section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
             data: Vec::new(),
         }),

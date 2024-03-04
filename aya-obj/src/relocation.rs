@@ -16,7 +16,7 @@ use crate::{
     maps::Map,
     obj::{Function, Object},
     util::{HashMap, HashSet},
-    BpfSectionKind,
+    EbpfSectionKind,
 };
 
 pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
@@ -250,7 +250,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             debug_assert_eq!(map.symbol_index(), None);
             debug_assert!(matches!(
                 map.section_kind(),
-                BpfSectionKind::Bss | BpfSectionKind::Data | BpfSectionKind::Rodata
+                EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata
             ));
             m
         };
@@ -520,7 +520,7 @@ mod test {
         Map::Legacy(LegacyMap {
             def: Default::default(),
             section_index: 0,
-            section_kind: BpfSectionKind::Undefined,
+            section_kind: EbpfSectionKind::Undefined,
             symbol_index: Some(symbol_index),
             data: Vec::new(),
         })

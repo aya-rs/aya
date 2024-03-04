@@ -14,7 +14,7 @@ use aya_obj::{
     btf::{BtfFeatures, BtfRelocationError},
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS},
     relocation::BpfRelocationError,
-    BpfSectionKind, Features,
+    EbpfSectionKind, Features,
 };
 use log::{debug, warn};
 use thiserror::Error;
@@ -456,7 +456,7 @@ impl<'a> BpfLoader<'a> {
         }
         let mut maps = HashMap::new();
         for (name, mut obj) in obj.maps.drain() {
-            if let (false, BpfSectionKind::Bss | BpfSectionKind::Data | BpfSectionKind::Rodata) =
+            if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
                 (FEATURES.bpf_global_data(), obj.section_kind())
             {
                 continue;
