@@ -15,9 +15,9 @@ members = [
     "aya-log-ebpf-macros",
 
     # ebpf crates
-    "bpf/aya-bpf",
-    "bpf/aya-bpf-bindings",
-    "bpf/aya-log-ebpf",
+    "ebpf/aya-bpf",
+    "ebpf/aya-bpf-bindings",
+    "ebpf/aya-log-ebpf",
     "test/integration-ebpf",
 ]
 

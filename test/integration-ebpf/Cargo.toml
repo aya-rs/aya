@@ -9,8 +9,8 @@ homepage.workspace = true
 edition.workspace = true
 
 [dependencies]
-aya-bpf = { path = "../../bpf/aya-bpf" }
-aya-log-ebpf = { path = "../../bpf/aya-log-ebpf" }
+aya-bpf = { path = "../../ebpf/aya-bpf" }
+aya-log-ebpf = { path = "../../ebpf/aya-log-ebpf" }
 
 [build-dependencies]
 which = { workspace = true }
