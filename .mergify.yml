@@ -52,7 +52,7 @@ pull_request_rules:
 
   - name: add labels for aya-bpf PRs
     conditions:
-      - files~=^(aya-ebpf-macros|bpf/aya-bpf(-(cty|bindings))?)/
+      - files~=^(aya-ebpf-macros|ebpf/aya-ebpf(-(cty|bindings))?)/
     actions:
       label:
         add:
@@ -68,7 +68,7 @@ pull_request_rules:
 
   - name: add labels for aya-log-ebpf PRs
     conditions:
-      - files~=^(aya-log-common|bpf/aya-log-ebpf)/
+      - files~=^(aya-log-common|ebpf/aya-log-ebpf)/
     actions:
       label:
         add:
