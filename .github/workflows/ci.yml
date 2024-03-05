@@ -55,7 +55,7 @@ jobs:
         run: |
           set -euxo pipefail
           cargo hack miri test --all-targets --feature-powerset \
-            --exclude aya-bpf \
+            --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
@@ -92,7 +92,7 @@ jobs:
         run: |
           set -euxo pipefail
           cargo hack build --all-targets --feature-powerset \
-            --exclude aya-bpf \
+            --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
@@ -104,7 +104,7 @@ jobs:
         run: |
           set -euxo pipefail
           cargo hack test --all-targets --feature-powerset \
-            --exclude aya-bpf \
+            --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
@@ -117,7 +117,7 @@ jobs:
         run: |
           set -euxo pipefail
           cargo hack test --doc --feature-powerset \
-            --exclude aya-bpf \
+            --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude init \
@@ -125,7 +125,7 @@ jobs:
             --exclude integration-test \
             --workspace
 
-  build-test-aya-bpf:
+  build-test-aya-ebpf:
     strategy:
       fail-fast: false
       matrix:
@@ -158,7 +158,7 @@ jobs:
           CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.arch }}
         run: |
           set -euxo pipefail
-          cargo hack build --package aya-bpf --package aya-log-ebpf \
+          cargo hack build --package aya-ebpf --package aya-log-ebpf \
             --feature-powerset \
             --target ${{ matrix.target }} \
             -Z build-std=core
@@ -170,7 +170,7 @@ jobs:
         run: |
           set -euxo pipefail
           cargo hack test --doc \
-            --package aya-bpf \
+            --package aya-ebpf \
             --package aya-log-ebpf \
             --feature-powerset
 
@@ -305,7 +305,7 @@ jobs:
     needs:
       - lint
       - build-test-aya
-      - build-test-aya-bpf
+      - build-test-aya-ebpf
       - run-integration-test
     runs-on: ubuntu-latest
     steps:
