@@ -110,26 +110,26 @@ pub fn features() -> &'static Features {
 /// Builder style API for advanced loading of eBPF programs.
 ///
 /// Loading eBPF code involves a few steps, including loading maps and applying
-/// relocations. You can use `BpfLoader` to customize some of the loading
+/// relocations. You can use `EbpfLoader` to customize some of the loading
 /// options.
 ///
 /// # Examples
 ///
 /// ```no_run
-/// use aya::{BpfLoader, Btf};
+/// use aya::{EbpfLoader, Btf};
 /// use std::fs;
 ///
-/// let bpf = BpfLoader::new()
+/// let bpf = EbpfLoader::new()
 ///     // load the BTF data from /sys/kernel/btf/vmlinux
 ///     .btf(Btf::from_sys_fs().ok().as_ref())
 ///     // load pinned maps from /sys/fs/bpf/my-program
 ///     .map_pin_path("/sys/fs/bpf/my-program")
 ///     // finally load the code
 ///     .load_file("file.o")?;
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[derive(Debug)]
-pub struct BpfLoader<'a> {
+pub struct EbpfLoader<'a> {
     btf: Option<Cow<'a, Btf>>,
     map_pin_path: Option<PathBuf>,
     globals: HashMap<&'a str, (&'a [u8], bool)>,
@@ -139,8 +139,12 @@ pub struct BpfLoader<'a> {
     allow_unsupported_maps: bool,
 }
 
+/// Builder style API for advanced loading of eBPF programs.
+#[deprecated(since = "0.13.0", note = "use `EbpfLoader` instead")]
+pub type BpfLoader<'a> = EbpfLoader<'a>;
+
 bitflags::bitflags! {
-    /// Used to set the verifier log level flags in [BpfLoader](BpfLoader::verifier_log_level()).
+    /// Used to set the verifier log level flags in [EbpfLoader](EbpfLoader::verifier_log_level()).
     #[derive(Clone, Copy, Debug)]
     pub struct VerifierLogLevel: u32 {
         /// Sets no verifier logging.
@@ -160,7 +164,7 @@ impl Default for VerifierLogLevel {
     }
 }
 
-impl<'a> BpfLoader<'a> {
+impl<'a> EbpfLoader<'a> {
     /// Creates a new loader instance.
     pub fn new() -> Self {
         Self {
@@ -182,16 +186,16 @@ impl<'a> BpfLoader<'a> {
     /// # Example
     ///
     /// ```no_run
-    /// use aya::{BpfLoader, Btf, Endianness};
+    /// use aya::{EbpfLoader, Btf, Endianness};
     ///
-    /// let bpf = BpfLoader::new()
+    /// let bpf = EbpfLoader::new()
     ///     // load the BTF data from a custom location
     ///     .btf(Btf::parse_file("/custom_btf_file", Endianness::default()).ok().as_ref())
     ///     .load_file("file.o")?;
     ///
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
-    pub fn btf(&mut self, btf: Option<&'a Btf>) -> &mut BpfLoader<'a> {
+    pub fn btf(&mut self, btf: Option<&'a Btf>) -> &mut EbpfLoader<'a> {
         self.btf = btf.map(Cow::Borrowed);
         self
     }
@@ -207,15 +211,15 @@ impl<'a> BpfLoader<'a> {
     /// # Example
     ///
     /// ```no_run
-    /// use aya::BpfLoader;
+    /// use aya::EbpfLoader;
     ///
-    /// let bpf = BpfLoader::new()
+    /// let bpf = EbpfLoader::new()
     ///     .allow_unsupported_maps()
     ///     .load_file("file.o")?;
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn allow_unsupported_maps(&mut self) -> &mut BpfLoader<'a> {
+    pub fn allow_unsupported_maps(&mut self) -> &mut EbpfLoader<'a> {
         self.allow_unsupported_maps = true;
         self
     }
@@ -228,22 +232,22 @@ impl<'a> BpfLoader<'a> {
     /// # Example
     ///
     /// ```no_run
-    /// use aya::BpfLoader;
+    /// use aya::EbpfLoader;
     ///
-    /// let bpf = BpfLoader::new()
+    /// let bpf = EbpfLoader::new()
     ///     .map_pin_path("/sys/fs/bpf/my-program")
     ///     .load_file("file.o")?;
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn map_pin_path<P: AsRef<Path>>(&mut self, path: P) -> &mut BpfLoader<'a> {
+    pub fn map_pin_path<P: AsRef<Path>>(&mut self, path: P) -> &mut EbpfLoader<'a> {
         self.map_pin_path = Some(path.as_ref().to_owned());
         self
     }
 
     /// Sets the value of a global variable.
     ///
-    /// If the `must_exist` argument is `true`, [`BpfLoader::load`] will fail with [`ParseError::SymbolNotFound`] if the loaded object code does not contain the variable.
+    /// If the `must_exist` argument is `true`, [`EbpfLoader::load`] will fail with [`ParseError::SymbolNotFound`] if the loaded object code does not contain the variable.
     ///
     /// From Rust eBPF, a global variable can be defined as follows:
     ///
@@ -271,13 +275,13 @@ impl<'a> BpfLoader<'a> {
     /// # Example
     ///
     /// ```no_run
-    /// use aya::BpfLoader;
+    /// use aya::EbpfLoader;
     ///
-    /// let bpf = BpfLoader::new()
+    /// let bpf = EbpfLoader::new()
     ///     .set_global("VERSION", &2, true)
     ///     .set_global("PIDS", &[1234u16, 5678], true)
     ///     .load_file("file.o")?;
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
     pub fn set_global<T: Into<GlobalData<'a>>>(
@@ -285,7 +289,7 @@ impl<'a> BpfLoader<'a> {
         name: &'a str,
         value: T,
         must_exist: bool,
-    ) -> &mut BpfLoader<'a> {
+    ) -> &mut EbpfLoader<'a> {
         self.globals.insert(name, (value.into().bytes, must_exist));
         self
     }
@@ -298,15 +302,15 @@ impl<'a> BpfLoader<'a> {
     /// # Example
     ///
     /// ```no_run
-    /// use aya::BpfLoader;
+    /// use aya::EbpfLoader;
     ///
-    /// let bpf = BpfLoader::new()
+    /// let bpf = EbpfLoader::new()
     ///     .set_max_entries("map", 64)
     ///     .load_file("file.o")?;
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn set_max_entries(&mut self, name: &'a str, size: u32) -> &mut BpfLoader<'a> {
+    pub fn set_max_entries(&mut self, name: &'a str, size: u32) -> &mut EbpfLoader<'a> {
         self.max_entries.insert(name, size);
         self
     }
@@ -320,15 +324,15 @@ impl<'a> BpfLoader<'a> {
     /// # Example
     ///
     /// ```no_run
-    /// use aya::BpfLoader;
+    /// use aya::EbpfLoader;
     ///
-    /// let bpf = BpfLoader::new()
+    /// let bpf = EbpfLoader::new()
     ///     .extension("myfunc")
     ///     .load_file("file.o")?;
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn extension(&mut self, name: &'a str) -> &mut BpfLoader<'a> {
+    pub fn extension(&mut self, name: &'a str) -> &mut EbpfLoader<'a> {
         self.extensions.insert(name);
         self
     }
@@ -338,15 +342,15 @@ impl<'a> BpfLoader<'a> {
     /// # Example
     ///
     /// ```no_run
-    /// use aya::{BpfLoader, VerifierLogLevel};
+    /// use aya::{EbpfLoader, VerifierLogLevel};
     ///
-    /// let bpf = BpfLoader::new()
+    /// let bpf = EbpfLoader::new()
     ///     .verifier_log_level(VerifierLogLevel::VERBOSE | VerifierLogLevel::STATS)
     ///     .load_file("file.o")?;
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn verifier_log_level(&mut self, level: VerifierLogLevel) -> &mut BpfLoader<'a> {
+    pub fn verifier_log_level(&mut self, level: VerifierLogLevel) -> &mut EbpfLoader<'a> {
         self.verifier_log_level = level;
         self
     }
@@ -356,14 +360,14 @@ impl<'a> BpfLoader<'a> {
     /// # Examples
     ///
     /// ```no_run
-    /// use aya::BpfLoader;
+    /// use aya::EbpfLoader;
     ///
-    /// let bpf = BpfLoader::new().load_file("file.o")?;
-    /// # Ok::<(), aya::BpfError>(())
+    /// let bpf = EbpfLoader::new().load_file("file.o")?;
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
-    pub fn load_file<P: AsRef<Path>>(&mut self, path: P) -> Result<Bpf, BpfError> {
+    pub fn load_file<P: AsRef<Path>>(&mut self, path: P) -> Result<Ebpf, EbpfError> {
         let path = path.as_ref();
-        self.load(&fs::read(path).map_err(|error| BpfError::FileError {
+        self.load(&fs::read(path).map_err(|error| EbpfError::FileError {
             path: path.to_owned(),
             error,
         })?)
@@ -374,14 +378,14 @@ impl<'a> BpfLoader<'a> {
     /// # Examples
     ///
     /// ```no_run
-    /// use aya::BpfLoader;
+    /// use aya::EbpfLoader;
     /// use std::fs;
     ///
     /// let data = fs::read("file.o").unwrap();
-    /// let bpf = BpfLoader::new().load(&data)?;
-    /// # Ok::<(), aya::BpfError>(())
+    /// let bpf = EbpfLoader::new().load(&data)?;
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
-    pub fn load(&mut self, data: &[u8]) -> Result<Bpf, BpfError> {
+    pub fn load(&mut self, data: &[u8]) -> Result<Ebpf, EbpfError> {
         let Self {
             btf,
             map_pin_path,
@@ -407,7 +411,7 @@ impl<'a> BpfLoader<'a> {
                                 | ProgramSection::FExit { sleepable: _ }
                                 | ProgramSection::Lsm { sleepable: _ }
                                 | ProgramSection::BtfTracePoint => {
-                                    return Err(BpfError::BtfError(err))
+                                    return Err(EbpfError::BtfError(err))
                                 }
                                 ProgramSection::KRetProbe
                                 | ProgramSection::KProbe
@@ -461,9 +465,9 @@ impl<'a> BpfLoader<'a> {
             {
                 continue;
             }
-            let num_cpus = || -> Result<u32, BpfError> {
+            let num_cpus = || -> Result<u32, EbpfError> {
                 Ok(possible_cpus()
-                    .map_err(|error| BpfError::FileError {
+                    .map_err(|error| EbpfError::FileError {
                         path: PathBuf::from(POSSIBLE_CPUS),
                         error,
                     })?
@@ -694,22 +698,22 @@ impl<'a> BpfLoader<'a> {
         let maps = maps
             .drain()
             .map(parse_map)
-            .collect::<Result<HashMap<String, Map>, BpfError>>()?;
+            .collect::<Result<HashMap<String, Map>, EbpfError>>()?;
 
         if !*allow_unsupported_maps {
             maps.iter().try_for_each(|(_, x)| match x {
-                Map::Unsupported(map) => Err(BpfError::MapError(MapError::Unsupported {
+                Map::Unsupported(map) => Err(EbpfError::MapError(MapError::Unsupported {
                     map_type: map.obj().map_type(),
                 })),
                 _ => Ok(()),
             })?;
         };
 
-        Ok(Bpf { maps, programs })
+        Ok(Ebpf { maps, programs })
     }
 }
 
-fn parse_map(data: (String, MapData)) -> Result<(String, Map), BpfError> {
+fn parse_map(data: (String, MapData)) -> Result<(String, Map), EbpfError> {
     let (name, map) = data;
     let map_type = bpf_map_type::try_from(map.obj().map_type()).map_err(MapError::from)?;
     let map = match map_type {
@@ -748,9 +752,9 @@ fn max_entries_override(
     map_type: bpf_map_type,
     user_override: Option<u32>,
     current_value: impl Fn() -> u32,
-    num_cpus: impl Fn() -> Result<u32, BpfError>,
+    num_cpus: impl Fn() -> Result<u32, EbpfError>,
     page_size: impl Fn() -> u32,
-) -> Result<Option<u32>, BpfError> {
+) -> Result<Option<u32>, EbpfError> {
     let max_entries = || user_override.unwrap_or_else(&current_value);
     Ok(match map_type {
         BPF_MAP_TYPE_PERF_EVENT_ARRAY if max_entries() == 0 => Some(num_cpus()?),
@@ -841,38 +845,42 @@ mod tests {
     }
 }
 
-impl Default for BpfLoader<'_> {
+impl Default for EbpfLoader<'_> {
     fn default() -> Self {
-        BpfLoader::new()
+        EbpfLoader::new()
     }
 }
 
 /// The main entry point into the library, used to work with eBPF programs and maps.
 #[derive(Debug)]
-pub struct Bpf {
+pub struct Ebpf {
     maps: HashMap<String, Map>,
     programs: HashMap<String, Program>,
 }
 
-impl Bpf {
+/// The main entry point into the library, used to work with eBPF programs and maps.
+#[deprecated(since = "0.13.0", note = "use `Ebpf` instead")]
+pub type Bpf = Ebpf;
+
+impl Ebpf {
     /// Loads eBPF bytecode from a file.
     ///
     /// Parses the given object code file and initializes the [maps](crate::maps) defined in it. If
     /// the kernel supports [BTF](Btf) debug info, it is automatically loaded from
     /// `/sys/kernel/btf/vmlinux`.
     ///
-    /// For more loading options, see [BpfLoader].
+    /// For more loading options, see [EbpfLoader].
     ///
     /// # Examples
     ///
     /// ```no_run
-    /// use aya::Bpf;
+    /// use aya::Ebpf;
     ///
-    /// let bpf = Bpf::load_file("file.o")?;
-    /// # Ok::<(), aya::BpfError>(())
+    /// let bpf = Ebpf::load_file("file.o")?;
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
-    pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Self, BpfError> {
-        BpfLoader::new()
+    pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Self, EbpfError> {
+        EbpfLoader::new()
             .btf(Btf::from_sys_fs().ok().as_ref())
             .load_file(path)
     }
@@ -883,21 +891,21 @@ impl Bpf {
     /// [maps](crate::maps) defined in it. If the kernel supports [BTF](Btf)
     /// debug info, it is automatically loaded from `/sys/kernel/btf/vmlinux`.
     ///
-    /// For more loading options, see [BpfLoader].
+    /// For more loading options, see [EbpfLoader].
     ///
     /// # Examples
     ///
     /// ```no_run
-    /// use aya::{Bpf, Btf};
+    /// use aya::{Ebpf, Btf};
     /// use std::fs;
     ///
     /// let data = fs::read("file.o").unwrap();
     /// // load the BTF data from /sys/kernel/btf/vmlinux
-    /// let bpf = Bpf::load(&data)?;
-    /// # Ok::<(), aya::BpfError>(())
+    /// let bpf = Ebpf::load(&data)?;
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
-    pub fn load(data: &[u8]) -> Result<Self, BpfError> {
-        BpfLoader::new()
+    pub fn load(data: &[u8]) -> Result<Self, EbpfError> {
+        EbpfLoader::new()
             .btf(Btf::from_sys_fs().ok().as_ref())
             .load(data)
     }
@@ -926,7 +934,7 @@ impl Bpf {
 
     /// Takes ownership of a map with the given name.
     ///
-    /// Use this when borrowing with [`map`](crate::Bpf::map) or [`map_mut`](crate::Bpf::map_mut)
+    /// Use this when borrowing with [`map`](crate::Ebpf::map) or [`map_mut`](crate::Ebpf::map_mut)
     /// is not possible (eg when using the map from an async task). The returned
     /// map will be closed on `Drop`, therefore the caller is responsible for
     /// managing its lifetime.
@@ -944,14 +952,14 @@ impl Bpf {
     ///
     /// # Examples
     /// ```no_run
-    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
     /// for (name, map) in bpf.maps() {
     ///     println!(
     ///         "found map `{}`",
     ///         name,
     ///     );
     /// }
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn maps(&self) -> impl Iterator<Item = (&str, &Map)> {
         self.maps.iter().map(|(name, map)| (name.as_str(), map))
@@ -965,11 +973,11 @@ impl Bpf {
     /// # #[derive(thiserror::Error, Debug)]
     /// # enum Error {
     /// #     #[error(transparent)]
-    /// #     Bpf(#[from] aya::BpfError),
+    /// #     Ebpf(#[from] aya::EbpfError),
     /// #     #[error(transparent)]
     /// #     Pin(#[from] aya::pin::PinError)
     /// # }
-    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
     /// # let pin_path = Path::new("/tmp/pin_path");
     /// for (_, map) in bpf.maps_mut() {
     ///     map.pin(pin_path)?;
@@ -991,10 +999,10 @@ impl Bpf {
     /// # Examples
     ///
     /// ```no_run
-    /// # let bpf = aya::Bpf::load(&[])?;
+    /// # let bpf = aya::Ebpf::load(&[])?;
     /// let program = bpf.program("SSL_read").unwrap();
     /// println!("program SSL_read is of type {:?}", program.prog_type());
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn program(&self, name: &str) -> Option<&Program> {
         self.programs.get(name)
@@ -1008,13 +1016,13 @@ impl Bpf {
     /// # Examples
     ///
     /// ```no_run
-    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
     /// use aya::programs::UProbe;
     ///
     /// let program: &mut UProbe = bpf.program_mut("SSL_read").unwrap().try_into()?;
     /// program.load()?;
     /// program.attach(Some("SSL_read"), 0, "libssl", None)?;
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn program_mut(&mut self, name: &str) -> Option<&mut Program> {
         self.programs.get_mut(name)
@@ -1024,7 +1032,7 @@ impl Bpf {
     ///
     /// # Examples
     /// ```no_run
-    /// # let bpf = aya::Bpf::load(&[])?;
+    /// # let bpf = aya::Ebpf::load(&[])?;
     /// for (name, program) in bpf.programs() {
     ///     println!(
     ///         "found program `{}` of type `{:?}`",
@@ -1032,7 +1040,7 @@ impl Bpf {
     ///         program.prog_type()
     ///     );
     /// }
-    /// # Ok::<(), aya::BpfError>(())
+    /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn programs(&self) -> impl Iterator<Item = (&str, &Program)> {
         self.programs.iter().map(|(s, p)| (s.as_str(), p))
@@ -1046,11 +1054,11 @@ impl Bpf {
     /// # #[derive(thiserror::Error, Debug)]
     /// # enum Error {
     /// #     #[error(transparent)]
-    /// #     Bpf(#[from] aya::BpfError),
+    /// #     Ebpf(#[from] aya::EbpfError),
     /// #     #[error(transparent)]
     /// #     Pin(#[from] aya::pin::PinError)
     /// # }
-    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
     /// # let pin_path = Path::new("/tmp/pin_path");
     /// for (_, program) in bpf.programs_mut() {
     ///     program.pin(pin_path)?;
@@ -1062,9 +1070,9 @@ impl Bpf {
     }
 }
 
-/// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].
+/// The error type returned by [`Ebpf::load_file`] and [`Ebpf::load`].
 #[derive(Debug, Error)]
-pub enum BpfError {
+pub enum EbpfError {
     /// Error loading file
     #[error("error loading {path}")]
     FileError {
@@ -1124,7 +1132,7 @@ fn load_btf(raw_btf: Vec<u8>, verifier_log_level: VerifierLogLevel) -> Result<Ow
 /// Global data that can be exported to eBPF programs before they are loaded.
 ///
 /// Valid global data includes `Pod` types and slices of `Pod` types. See also
-/// [BpfLoader::set_global].
+/// [EbpfLoader::set_global].
 pub struct GlobalData<'a> {
     bytes: &'a [u8],
 }

@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use aya::{programs::UProbe, Bpf};
+use aya::{programs::UProbe, Ebpf};
 use aya_log::EbpfLogger;
 use log::{Level, Log, Record};
 use test_log::test;
@@ -40,7 +40,7 @@ struct CapturedLog<'a> {
 
 #[test(tokio::test)]
 async fn log() {
-    let mut bpf = Bpf::load(crate::LOG).unwrap();
+    let mut bpf = Ebpf::load(crate::LOG).unwrap();
 
     let captured_logs = Arc::new(Mutex::new(Vec::new()));
     {

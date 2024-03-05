@@ -5,35 +5,35 @@
 //!
 //! # Loading and attaching programs
 //!
-//! When you call [`Bpf::load_file`] or [`Bpf::load`], all the programs included
+//! When you call [`Ebpf::load_file`] or [`Ebpf::load`], all the programs included
 //! in the object code are parsed and relocated. Programs are not loaded
 //! automatically though, since often you will need to do some application
 //! specific setup before you can actually load them.
 //!
-//! In order to load and attach a program, you need to retrieve it using [`Bpf::program_mut`],
+//! In order to load and attach a program, you need to retrieve it using [`Ebpf::program_mut`],
 //! then call the `load()` and `attach()` methods, for example:
 //!
 //! ```no_run
-//! use aya::{Bpf, programs::KProbe};
+//! use aya::{Ebpf, programs::KProbe};
 //!
-//! let mut bpf = Bpf::load_file("ebpf_programs.o")?;
+//! let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
 //! // intercept_wakeups is the name of the program we want to load
 //! let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 //! program.load()?;
 //! // intercept_wakeups will be called every time try_to_wake_up() is called
 //! // inside the kernel
 //! program.attach("try_to_wake_up", 0)?;
-//! # Ok::<(), aya::BpfError>(())
+//! # Ok::<(), aya::EbpfError>(())
 //! ```
 //!
 //! The signature of the `attach()` method varies depending on what kind of
 //! program you're trying to attach.
 //!
-//! [`Bpf::load_file`]: crate::Bpf::load_file
-//! [`Bpf::load`]: crate::Bpf::load
-//! [`Bpf::programs`]: crate::Bpf::programs
-//! [`Bpf::program`]: crate::Bpf::program
-//! [`Bpf::program_mut`]: crate::Bpf::program_mut
+//! [`Ebpf::load_file`]: crate::Ebpf::load_file
+//! [`Ebpf::load`]: crate::Ebpf::load
+//! [`Ebpf::programs`]: crate::Ebpf::programs
+//! [`Ebpf::program`]: crate::Ebpf::program
+//! [`Ebpf::program_mut`]: crate::Ebpf::program_mut
 //! [`maps`]: crate::maps
 
 // modules we don't export
@@ -124,7 +124,7 @@ use crate::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
         bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
         bpf_prog_query, iter_link_ids, iter_prog_ids, retry_with_verifier_logs,
-        BpfLoadProgramAttrs, SyscallError,
+        EbpfLoadProgramAttrs, SyscallError,
     },
     util::{bytes_of_bpf_name, KernelVersion},
     VerifierLogLevel,
@@ -641,7 +641,7 @@ fn load_program<T: Link>(
         None
     };
 
-    let attr = BpfLoadProgramAttrs {
+    let attr = EbpfLoadProgramAttrs {
         name: prog_name,
         ty: prog_type,
         insns: instructions,
@@ -1117,8 +1117,8 @@ impl ProgramInfo {
 
 /// Returns an iterator over all loaded bpf programs.
 ///
-/// This differs from [`crate::Bpf::programs`] since it will return all programs
-/// listed on the host system and not only programs a specific [`crate::Bpf`] instance.
+/// This differs from [`crate::Ebpf::programs`] since it will return all programs
+/// listed on the host system and not only programs a specific [`crate::Ebpf`] instance.
 ///
 /// # Example
 /// ```

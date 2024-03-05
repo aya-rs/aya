@@ -35,13 +35,13 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
-/// use aya::{Bpf, programs::KProbe};
+/// # let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
+/// use aya::{Ebpf, programs::KProbe};
 ///
 /// let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 /// program.load()?;
 /// program.attach("try_to_wake_up", 0)?;
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_KPROBE")]

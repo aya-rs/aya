@@ -28,9 +28,9 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     Map(#[from] aya::maps::MapError),
 /// #     #[error(transparent)]
-/// #     Bpf(#[from] aya::BpfError)
+/// #     Ebpf(#[from] aya::EbpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::{PerCpuArray, PerCpuValues};
 /// use aya::util::nr_cpus;
 ///

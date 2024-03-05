@@ -3,7 +3,7 @@ use std::{ffi::CStr, mem::MaybeUninit, net::UdpSocket, num::NonZeroU32, time::Du
 use aya::{
     maps::{Array, CpuMap, XskMap},
     programs::{Xdp, XdpFlags},
-    Bpf,
+    Ebpf,
 };
 use object::{Object, ObjectSection, ObjectSymbol, SymbolSection};
 use test_log::test;
@@ -15,7 +15,7 @@ use crate::utils::NetNsGuard;
 fn af_xdp() {
     let _netns = NetNsGuard::new();
 
-    let mut bpf = Bpf::load(crate::REDIRECT).unwrap();
+    let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
     let mut socks: XskMap<_> = bpf.take_map("SOCKS").unwrap().try_into().unwrap();
 
     let xdp: &mut Xdp = bpf
@@ -122,7 +122,7 @@ fn ensure_symbol(obj_file: &object::File, sec_name: &str, sym_name: &str) {
 
 #[test]
 fn map_load() {
-    let bpf = Bpf::load(crate::XDP_SEC).unwrap();
+    let bpf = Ebpf::load(crate::XDP_SEC).unwrap();
 
     bpf.program("xdp_plain").unwrap();
     bpf.program("xdp_frags").unwrap();
@@ -136,7 +136,7 @@ fn map_load() {
 fn cpumap_chain() {
     let _netns = NetNsGuard::new();
 
-    let mut bpf = Bpf::load(crate::REDIRECT).unwrap();
+    let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
 
     // Load our cpumap and our canary map
     let mut cpus: CpuMap<_> = bpf.take_map("CPUS").unwrap().try_into().unwrap();

@@ -20,7 +20,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::bloom_filter::BloomFilter;
 ///
 /// let mut bloom_filter = BloomFilter::try_from(bpf.map_mut("BLOOM_FILTER").unwrap())?;
@@ -30,7 +30,7 @@ use crate::{
 /// assert!(bloom_filter.contains(&1, 0).is_ok());
 /// assert!(bloom_filter.contains(&2, 0).is_err());
 ///
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 
 #[doc(alias = "BPF_MAP_TYPE_BLOOM_FILTER")]
@@ -114,7 +114,7 @@ mod tests {
 
     fn new_map(obj: obj::Map) -> MapData {
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
             } => Ok(1337),
@@ -197,7 +197,7 @@ mod tests {
         let mut bloom_filter = BloomFilter::<_, u32>::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
                 ..
             } => Ok(1),
@@ -226,7 +226,7 @@ mod tests {
         let bloom_filter = BloomFilter::<_, u32>::new(&map).unwrap();
 
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 ..
             } => sys_error(ENOENT),

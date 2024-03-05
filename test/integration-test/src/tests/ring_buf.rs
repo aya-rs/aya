@@ -13,7 +13,7 @@ use assert_matches::assert_matches;
 use aya::{
     maps::{array::PerCpuArray, ring_buf::RingBuf, MapData},
     programs::UProbe,
-    Bpf, BpfLoader, Pod,
+    Ebpf, EbpfLoader, Pod,
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
 use rand::Rng as _;
@@ -50,7 +50,7 @@ impl<'a> std::iter::Sum<&'a Registers> for Registers {
 unsafe impl Pod for Registers {}
 
 struct RingBufTest {
-    _bpf: Bpf,
+    _bpf: Ebpf,
     ring_buf: RingBuf<MapData>,
     regs: PerCpuArray<MapData, Registers>,
 }
@@ -67,7 +67,7 @@ impl RingBufTest {
             (RING_BUF_MAX_ENTRIES * (mem::size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
 
         // Use the loader API to control the size of the ring_buf.
-        let mut bpf = BpfLoader::new()
+        let mut bpf = EbpfLoader::new()
             .set_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
             .load(crate::RING_BUF)
             .unwrap();

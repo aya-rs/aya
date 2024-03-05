@@ -26,7 +26,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::PerCpuHashMap;
 ///
 /// const CPU_IDS: u8 = 1;
@@ -38,7 +38,7 @@ use crate::{
 /// for (cpu_id, wakeups) in cpu_ids.iter().zip(wakeups.iter()) {
 ///     println!("cpu {} woke up {} times", cpu_id, wakeups);
 /// }
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_LRU_PERCPU_HASH")]
 #[doc(alias = "BPF_MAP_TYPE_PERCPU_HASH")]
@@ -97,9 +97,9 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// #     #[error(transparent)]
     /// #     Map(#[from] aya::maps::MapError),
     /// #     #[error(transparent)]
-    /// #     Bpf(#[from] aya::BpfError)
+    /// #     Ebpf(#[from] aya::EbpfError)
     /// # }
-    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
     /// use aya::maps::{PerCpuHashMap, PerCpuValues};
     /// use aya::util::nr_cpus;
     ///

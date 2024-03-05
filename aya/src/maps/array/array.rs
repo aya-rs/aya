@@ -21,13 +21,13 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::Array;
 ///
 /// let mut array = Array::try_from(bpf.map_mut("ARRAY").unwrap())?;
 /// array.set(1, 42, 0)?;
 /// assert_eq!(array.get(&1, 0)?, 42);
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_ARRAY")]
 pub struct Array<T, V: Pod> {

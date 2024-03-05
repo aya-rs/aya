@@ -68,7 +68,7 @@ use crate::{
 /// #     }
 /// #     fn clear_ready(&mut self) {}
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::RingBuf;
 /// use std::convert::TryFrom;
 ///
@@ -82,7 +82,7 @@ use crate::{
 ///     }
 ///     guard.clear_ready();
 /// }
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 ///
 /// # Polling

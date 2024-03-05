@@ -2,7 +2,7 @@ use aya::{
     maps::loaded_maps,
     programs::{loaded_programs, Extension, TracePoint, Xdp, XdpFlags},
     util::KernelVersion,
-    Bpf, BpfLoader,
+    Ebpf, EbpfLoader,
 };
 use test_log::test;
 
@@ -18,7 +18,7 @@ fn xdp() {
 
     let _netns = NetNsGuard::new();
 
-    let mut bpf = Bpf::load(crate::PASS).unwrap();
+    let mut bpf = Ebpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
     dispatcher.attach("lo", XdpFlags::default()).unwrap();
@@ -26,7 +26,7 @@ fn xdp() {
 
 #[test]
 fn two_progs() {
-    let mut bpf = Bpf::load(crate::TWO_PROGS).unwrap();
+    let mut bpf = Ebpf::load(crate::TWO_PROGS).unwrap();
 
     let prog_one: &mut TracePoint = bpf
         .program_mut("test_tracepoint_one")
@@ -56,12 +56,12 @@ fn extension() {
 
     let _netns = NetNsGuard::new();
 
-    let mut bpf = Bpf::load(crate::MAIN).unwrap();
+    let mut bpf = Ebpf::load(crate::MAIN).unwrap();
     let pass: &mut Xdp = bpf.program_mut("xdp_pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
     pass.attach("lo", XdpFlags::default()).unwrap();
 
-    let mut bpf = BpfLoader::new()
+    let mut bpf = EbpfLoader::new()
         .extension("xdp_drop")
         .load(crate::EXT)
         .unwrap();
@@ -74,7 +74,7 @@ fn extension() {
 #[test]
 fn list_loaded_programs() {
     // Load a program.
-    let mut bpf = Bpf::load(crate::PASS).unwrap();
+    let mut bpf = Ebpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
     dispatcher.attach("lo", XdpFlags::default()).unwrap();
@@ -103,7 +103,7 @@ fn list_loaded_programs() {
 #[test]
 fn list_loaded_maps() {
     // Load a program with maps.
-    let mut bpf = Bpf::load(crate::MAP_TEST).unwrap();
+    let mut bpf = Ebpf::load(crate::MAP_TEST).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
     dispatcher.attach("lo", XdpFlags::default()).unwrap();

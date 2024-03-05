@@ -56,7 +56,7 @@ mod test_utils {
 
     pub(super) fn new_map(obj: obj::Map) -> MapData {
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
             } => Ok(1337),

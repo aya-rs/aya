@@ -1,4 +1,4 @@
-use aya::{programs::UProbe, util::KernelVersion, Bpf};
+use aya::{programs::UProbe, util::KernelVersion, Ebpf};
 use test_log::test;
 
 #[test]
@@ -33,8 +33,8 @@ fn text_64_64_reloc() {
     assert_eq!(m.get(&1, 0).unwrap(), 3);
 }
 
-fn load_and_attach(name: &str, bytes: &[u8]) -> Bpf {
-    let mut bpf = Bpf::load(bytes).unwrap();
+fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
+    let mut bpf = Ebpf::load(bytes).unwrap();
 
     let prog: &mut UProbe = bpf.program_mut(name).unwrap().try_into().unwrap();
     prog.load().unwrap();

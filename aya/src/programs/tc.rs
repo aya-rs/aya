@@ -55,9 +55,9 @@ pub enum TcAttachType {
 /// #     #[error(transparent)]
 /// #     Program(#[from] aya::programs::ProgramError),
 /// #     #[error(transparent)]
-/// #     Bpf(#[from] aya::BpfError)
+/// #     Ebpf(#[from] aya::EbpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::programs::{tc, SchedClassifier, TcAttachType};
 ///
 /// // the clsact qdisc needs to be added before SchedClassifier programs can be

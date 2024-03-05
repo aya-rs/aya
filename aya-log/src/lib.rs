@@ -12,7 +12,7 @@
 //! This example uses the [env_logger] crate to log messages to the terminal.
 //!
 //! ```no_run
-//! # let mut bpf = aya::Bpf::load(&[]).unwrap();
+//! # let mut bpf = aya::Ebpf::load(&[]).unwrap();
 //! use aya_log::EbpfLogger;
 //!
 //! // initialize env_logger as the default logger
@@ -65,7 +65,7 @@ use aya::{
         MapError,
     },
     util::online_cpus,
-    Bpf, Pod,
+    Ebpf, Pod,
 };
 use aya_log_common::{
     Argument, DisplayHint, Level, LogValueLength, RecordField, LOG_BUF_CAPACITY, LOG_FIELDS,
@@ -102,14 +102,14 @@ pub type BpfLogger = EbpfLogger;
 impl EbpfLogger {
     /// Starts reading log records created with `aya-log-ebpf` and logs them
     /// with the default logger. See [log::logger].
-    pub fn init(bpf: &mut Bpf) -> Result<EbpfLogger, Error> {
+    pub fn init(bpf: &mut Ebpf) -> Result<EbpfLogger, Error> {
         EbpfLogger::init_with_logger(bpf, log::logger())
     }
 
     /// Starts reading log records created with `aya-log-ebpf` and logs them
     /// with the given logger.
     pub fn init_with_logger<T: Log + 'static>(
-        bpf: &mut Bpf,
+        bpf: &mut Ebpf,
         logger: T,
     ) -> Result<EbpfLogger, Error> {
         let logger = Arc::new(logger);

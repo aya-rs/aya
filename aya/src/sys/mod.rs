@@ -26,7 +26,7 @@ use crate::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 pub(crate) type SysResult<T> = Result<T, (c_long, io::Error)>;
 
 pub(crate) enum Syscall<'a> {
-    Bpf {
+    Ebpf {
         cmd: bpf_cmd,
         attr: &'a mut bpf_attr,
     },
@@ -57,8 +57,8 @@ pub struct SyscallError {
 impl std::fmt::Debug for Syscall<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Bpf { cmd, attr: _ } => f
-                .debug_struct("Syscall::Bpf")
+            Self::Ebpf { cmd, attr: _ } => f
+                .debug_struct("Syscall::Ebpf")
                 .field("cmd", cmd)
                 .field("attr", &format_args!("_"))
                 .finish(),
@@ -93,7 +93,7 @@ fn syscall(call: Syscall<'_>) -> SysResult<c_long> {
     #[cfg_attr(test, allow(unreachable_code))]
     match unsafe {
         match call {
-            Syscall::Bpf { cmd, attr } => {
+            Syscall::Ebpf { cmd, attr } => {
                 libc::syscall(SYS_bpf, cmd, attr, mem::size_of::<bpf_attr>())
             }
             Syscall::PerfEventOpen {

@@ -27,14 +27,14 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::xdp::DevMapHash;
 ///
 /// let mut devmap = DevMapHash::try_from(bpf.map_mut("IFACES").unwrap())?;
 /// // Lookups with key 2 will redirect packets to interface with index 3 (e.g. eth1)
 /// devmap.insert(2, 3, None, 0);
 ///
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 ///
 /// # See also

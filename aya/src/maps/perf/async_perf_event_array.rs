@@ -42,13 +42,13 @@ use crate::maps::{
 /// #    #[error(transparent)]
 /// #    Map(#[from] aya::maps::MapError),
 /// #    #[error(transparent)]
-/// #    Bpf(#[from] aya::BpfError),
+/// #    Ebpf(#[from] aya::EbpfError),
 /// #    #[error(transparent)]
 /// #    PerfBuf(#[from] aya::maps::perf::PerfBufferError),
 /// # }
 /// # #[cfg(feature = "async_tokio")]
 /// # async fn try_main() -> Result<(), Error> {
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::perf::{AsyncPerfEventArray, PerfBufferError};
 /// use aya::util::online_cpus;
 /// use bytes::BytesMut;
