@@ -431,7 +431,7 @@ impl MMap {
                 io_error: io::Error::last_os_error(),
             })),
             ptr => Ok(Self {
-                ptr: ptr::NonNull::new(ptr).ok_or(
+                ptr: NonNull::new(ptr).ok_or(
                     // This should never happen, but to be paranoid, and so we never need to talk
                     // about a null pointer, we check it anyway.
                     MapError::SyscallError(SyscallError {

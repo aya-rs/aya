@@ -611,7 +611,7 @@ fn load_program<T: Link>(
     }
     let obj = obj.as_ref().unwrap();
     let (
-        crate::obj::Program {
+        obj::Program {
             license,
             kernel_version,
             ..
