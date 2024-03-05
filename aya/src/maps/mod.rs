@@ -222,7 +222,7 @@ impl AsFd for MapFd {
 /// Raises a warning about rlimit. Should be used only if creating a map was not
 /// successful.
 fn maybe_warn_rlimit() {
-    let mut limit = std::mem::MaybeUninit::<rlimit>::uninit();
+    let mut limit = mem::MaybeUninit::<rlimit>::uninit();
     let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
     if ret == 0 {
         let limit = unsafe { limit.assume_init() };
