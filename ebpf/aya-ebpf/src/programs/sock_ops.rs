@@ -2,7 +2,7 @@ use core::ffi::c_void;
 
 use aya_ebpf_bindings::helpers::bpf_sock_ops_cb_flags_set;
 
-use crate::{bindings::bpf_sock_ops, BpfContext};
+use crate::{bindings::bpf_sock_ops, EbpfContext};
 
 pub struct SockOpsContext {
     pub ops: *mut bpf_sock_ops,
@@ -63,7 +63,7 @@ impl SockOpsContext {
     }
 }
 
-impl BpfContext for SockOpsContext {
+impl EbpfContext for SockOpsContext {
     fn as_ptr(&self) -> *mut c_void {
         self.ops as *mut _
     }

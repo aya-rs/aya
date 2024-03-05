@@ -4,7 +4,7 @@ use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_STACK_TRACE},
     helpers::bpf_get_stackid,
     maps::PinningType,
-    BpfContext,
+    EbpfContext,
 };
 
 #[repr(transparent)]
@@ -45,7 +45,7 @@ impl StackTrace {
         }
     }
 
-    pub unsafe fn get_stackid<C: BpfContext>(&self, ctx: &C, flags: u64) -> Result<i64, i64> {
+    pub unsafe fn get_stackid<C: EbpfContext>(&self, ctx: &C, flags: u64) -> Result<i64, i64> {
         let ret = bpf_get_stackid(ctx.as_ptr(), self.def.get() as *mut _, flags);
         if ret < 0 {
             Err(ret)

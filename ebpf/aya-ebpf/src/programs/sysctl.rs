@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{bindings::bpf_sysctl, BpfContext};
+use crate::{bindings::bpf_sysctl, EbpfContext};
 
 pub struct SysctlContext {
     pub sysctl: *mut bpf_sysctl,
@@ -12,7 +12,7 @@ impl SysctlContext {
     }
 }
 
-impl BpfContext for SysctlContext {
+impl EbpfContext for SysctlContext {
     fn as_ptr(&self) -> *mut c_void {
         self.sysctl as *mut _
     }

@@ -6,7 +6,7 @@ use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY},
     helpers::bpf_tail_call,
     maps::PinningType,
-    BpfContext,
+    EbpfContext,
 };
 
 /// A BPF map that stores an array of program indices for tail calling.
@@ -81,7 +81,7 @@ impl ProgramArray {
     /// On success, this function **does not return** into the original program.
     /// On failure, a negative error is returned, wrapped in `Err()`.
     #[cfg(not(unstable))]
-    pub unsafe fn tail_call<C: BpfContext>(&self, ctx: &C, index: u32) -> Result<(), c_long> {
+    pub unsafe fn tail_call<C: EbpfContext>(&self, ctx: &C, index: u32) -> Result<(), c_long> {
         let res = bpf_tail_call(ctx.as_ptr(), self.def.get() as *mut _, index);
         if res != 0 {
             Err(res)
@@ -104,7 +104,7 @@ impl ProgramArray {
     /// On success, this function **does not return** into the original program.
     /// On failure, a negative error is returned, wrapped in `Err()`.
     #[cfg(unstable)]
-    pub unsafe fn tail_call<C: BpfContext>(&self, ctx: &C, index: u32) -> Result<!, c_long> {
+    pub unsafe fn tail_call<C: EbpfContext>(&self, ctx: &C, index: u32) -> Result<!, c_long> {
         let res = bpf_tail_call(ctx.as_ptr(), self.def.get() as *mut _, index);
         if res != 0 {
             Err(res)

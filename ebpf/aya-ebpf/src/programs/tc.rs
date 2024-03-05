@@ -1,6 +1,6 @@
 use aya_ebpf_cty::{c_long, c_void};
 
-use crate::{bindings::__sk_buff, programs::sk_buff::SkBuff, BpfContext};
+use crate::{bindings::__sk_buff, programs::sk_buff::SkBuff, EbpfContext};
 
 pub struct TcContext {
     pub skb: SkBuff,
@@ -187,7 +187,7 @@ impl TcContext {
     }
 }
 
-impl BpfContext for TcContext {
+impl EbpfContext for TcContext {
     fn as_ptr(&self) -> *mut c_void {
         self.skb.as_ptr()
     }

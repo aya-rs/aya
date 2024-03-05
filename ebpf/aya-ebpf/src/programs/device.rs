@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{bindings::bpf_cgroup_dev_ctx, BpfContext};
+use crate::{bindings::bpf_cgroup_dev_ctx, EbpfContext};
 
 pub struct DeviceContext {
     pub device: *mut bpf_cgroup_dev_ctx,
@@ -12,7 +12,7 @@ impl DeviceContext {
     }
 }
 
-impl BpfContext for DeviceContext {
+impl EbpfContext for DeviceContext {
     fn as_ptr(&self) -> *mut c_void {
         self.device as *mut _
     }

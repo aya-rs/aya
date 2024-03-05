@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{helpers::bpf_probe_read, BpfContext};
+use crate::{helpers::bpf_probe_read, EbpfContext};
 
 pub struct TracePointContext {
     ctx: *mut c_void,
@@ -16,7 +16,7 @@ impl TracePointContext {
     }
 }
 
-impl BpfContext for TracePointContext {
+impl EbpfContext for TracePointContext {
     fn as_ptr(&self) -> *mut c_void {
         self.ctx
     }

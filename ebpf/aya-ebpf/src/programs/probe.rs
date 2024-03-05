@@ -6,7 +6,7 @@ use crate::bindings::pt_regs;
 use crate::bindings::user_pt_regs as pt_regs;
 #[cfg(bpf_target_arch = "riscv64")]
 use crate::bindings::user_regs_struct as pt_regs;
-use crate::{args::FromPtRegs, BpfContext};
+use crate::{args::FromPtRegs, EbpfContext};
 
 pub struct ProbeContext {
     pub regs: *mut pt_regs,
@@ -64,7 +64,7 @@ impl ProbeContext {
     }
 }
 
-impl BpfContext for ProbeContext {
+impl EbpfContext for ProbeContext {
     fn as_ptr(&self) -> *mut c_void {
         self.regs as *mut c_void
     }

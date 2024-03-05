@@ -10,7 +10,7 @@ use aya_ebpf_bindings::helpers::{
 };
 use aya_ebpf_cty::c_long;
 
-use crate::{bindings::__sk_buff, BpfContext};
+use crate::{bindings::__sk_buff, EbpfContext};
 
 pub struct SkBuff {
     pub skb: *mut __sk_buff,
@@ -430,7 +430,7 @@ impl SkBuffContext {
     }
 }
 
-impl BpfContext for SkBuffContext {
+impl EbpfContext for SkBuffContext {
     fn as_ptr(&self) -> *mut c_void {
         self.skb.as_ptr()
     }

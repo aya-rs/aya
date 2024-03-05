@@ -4,7 +4,7 @@ use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY, BPF_F_CURRENT_CPU},
     helpers::bpf_perf_event_output,
     maps::PinningType,
-    BpfContext,
+    EbpfContext,
 };
 
 #[repr(transparent)]
@@ -50,11 +50,11 @@ impl<T> PerfEventArray<T> {
         }
     }
 
-    pub fn output<C: BpfContext>(&self, ctx: &C, data: &T, flags: u32) {
+    pub fn output<C: EbpfContext>(&self, ctx: &C, data: &T, flags: u32) {
         self.output_at_index(ctx, BPF_F_CURRENT_CPU as u32, data, flags)
     }
 
-    pub fn output_at_index<C: BpfContext>(&self, ctx: &C, index: u32, data: &T, flags: u32) {
+    pub fn output_at_index<C: EbpfContext>(&self, ctx: &C, index: u32, data: &T, flags: u32) {
         let flags = u64::from(flags) << 32 | u64::from(index);
         unsafe {
             bpf_perf_event_output(

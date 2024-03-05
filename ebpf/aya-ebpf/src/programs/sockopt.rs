@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{bindings::bpf_sockopt, BpfContext};
+use crate::{bindings::bpf_sockopt, EbpfContext};
 
 pub struct SockoptContext {
     pub sockopt: *mut bpf_sockopt,
@@ -12,7 +12,7 @@ impl SockoptContext {
     }
 }
 
-impl BpfContext for SockoptContext {
+impl EbpfContext for SockoptContext {
     fn as_ptr(&self) -> *mut c_void {
         self.sockopt as *mut _
     }

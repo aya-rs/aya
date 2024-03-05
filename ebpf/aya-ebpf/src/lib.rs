@@ -36,7 +36,7 @@ use helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_ui
 
 pub const TASK_COMM_LEN: usize = 16;
 
-pub trait BpfContext {
+pub trait EbpfContext {
     fn as_ptr(&self) -> *mut c_void;
 
     #[inline]

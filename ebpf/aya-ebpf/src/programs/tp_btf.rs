@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{args::FromBtfArgument, BpfContext};
+use crate::{args::FromBtfArgument, EbpfContext};
 
 pub struct BtfTracePointContext {
     ctx: *mut c_void,
@@ -45,7 +45,7 @@ impl BtfTracePointContext {
     }
 }
 
-impl BpfContext for BtfTracePointContext {
+impl EbpfContext for BtfTracePointContext {
     fn as_ptr(&self) -> *mut c_void {
         self.ctx
     }

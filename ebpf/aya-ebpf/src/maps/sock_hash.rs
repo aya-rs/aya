@@ -10,7 +10,7 @@ use crate::{
     },
     maps::PinningType,
     programs::{SkBuffContext, SkLookupContext, SkMsgContext},
-    BpfContext,
+    EbpfContext,
 };
 
 #[repr(transparent)]

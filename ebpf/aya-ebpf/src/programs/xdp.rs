@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{bindings::xdp_md, BpfContext};
+use crate::{bindings::xdp_md, EbpfContext};
 
 pub struct XdpContext {
     pub ctx: *mut xdp_md,
@@ -34,7 +34,7 @@ impl XdpContext {
     }
 }
 
-impl BpfContext for XdpContext {
+impl EbpfContext for XdpContext {
     fn as_ptr(&self) -> *mut c_void {
         self.ctx as *mut _
     }

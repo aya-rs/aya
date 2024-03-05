@@ -3,7 +3,7 @@ use core::ffi::c_void;
 use crate::{
     bindings::sk_msg_md,
     helpers::{bpf_msg_pop_data, bpf_msg_push_data},
-    BpfContext,
+    EbpfContext,
 };
 
 pub struct SkMsgContext {
@@ -46,7 +46,7 @@ impl SkMsgContext {
     }
 }
 
-impl BpfContext for SkMsgContext {
+impl EbpfContext for SkMsgContext {
     fn as_ptr(&self) -> *mut c_void {
         self.msg as *mut _
     }

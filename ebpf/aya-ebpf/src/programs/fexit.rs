@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{args::FromBtfArgument, BpfContext};
+use crate::{args::FromBtfArgument, EbpfContext};
 
 pub struct FExitContext {
     ctx: *mut c_void,
@@ -36,7 +36,7 @@ impl FExitContext {
     }
 }
 
-impl BpfContext for FExitContext {
+impl EbpfContext for FExitContext {
     fn as_ptr(&self) -> *mut c_void {
         self.ctx
     }
