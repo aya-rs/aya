@@ -1326,8 +1326,8 @@ pub aya::maps::MapError::ProgramNotLoaded
 pub aya::maps::MapError::SyscallError(crate::sys::SyscallError)
 pub aya::maps::MapError::Unsupported
 pub aya::maps::MapError::Unsupported::map_type: u32
-impl core::convert::From<aya::maps::MapError> for aya::BpfError
-pub fn aya::BpfError::from(source: aya::maps::MapError) -> Self
+impl core::convert::From<aya::maps::MapError> for aya::EbpfError
+pub fn aya::EbpfError::from(source: aya::maps::MapError) -> Self
 impl core::convert::From<aya::maps::MapError> for aya::maps::xdp::XdpMapError
 pub fn aya::maps::xdp::XdpMapError::from(source: aya::maps::MapError) -> Self
 impl core::convert::From<aya::maps::MapError> for aya::programs::ProgramError
@@ -5060,8 +5060,8 @@ impl<T> core::convert::From<T> for aya::programs::sock_ops::SockOpsLinkId
 pub fn aya::programs::sock_ops::SockOpsLinkId::from(t: T) -> T
 pub mod aya::programs::socket_filter
 pub enum aya::programs::socket_filter::SocketFilterError
-pub aya::programs::socket_filter::SocketFilterError::SoAttachBpfError
-pub aya::programs::socket_filter::SocketFilterError::SoAttachBpfError::io_error: std::io::error::Error
+pub aya::programs::socket_filter::SocketFilterError::SoAttachEbpfError
+pub aya::programs::socket_filter::SocketFilterError::SoAttachEbpfError::io_error: std::io::error::Error
 impl core::convert::From<aya::programs::socket_filter::SocketFilterError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::socket_filter::SocketFilterError) -> Self
 impl core::error::Error for aya::programs::socket_filter::SocketFilterError
@@ -6532,8 +6532,8 @@ pub aya::programs::ProgramError::UnknownInterface::name: alloc::string::String
 pub aya::programs::ProgramError::XdpError(aya::programs::xdp::XdpError)
 impl core::convert::From<aya::maps::MapError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::maps::MapError) -> Self
-impl core::convert::From<aya::programs::ProgramError> for aya::BpfError
-pub fn aya::BpfError::from(source: aya::programs::ProgramError) -> Self
+impl core::convert::From<aya::programs::ProgramError> for aya::EbpfError
+pub fn aya::EbpfError::from(source: aya::programs::ProgramError) -> Self
 impl core::convert::From<aya::programs::extension::ExtensionError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::extension::ExtensionError) -> Self
 impl core::convert::From<aya::programs::kprobe::KProbeError> for aya::programs::ProgramError
@@ -6647,8 +6647,8 @@ pub fn aya::programs::sk_skb::SkSkbKind::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::sk_skb::SkSkbKind
 pub fn aya::programs::sk_skb::SkSkbKind::from(t: T) -> T
 pub enum aya::programs::SocketFilterError
-pub aya::programs::SocketFilterError::SoAttachBpfError
-pub aya::programs::SocketFilterError::SoAttachBpfError::io_error: std::io::error::Error
+pub aya::programs::SocketFilterError::SoAttachEbpfError
+pub aya::programs::SocketFilterError::SoAttachEbpfError::io_error: std::io::error::Error
 impl core::convert::From<aya::programs::socket_filter::SocketFilterError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::socket_filter::SocketFilterError) -> Self
 impl core::error::Error for aya::programs::socket_filter::SocketFilterError
@@ -8357,133 +8357,133 @@ pub fn aya::util::nr_cpus() -> core::result::Result<usize, std::io::error::Error
 pub fn aya::util::online_cpus() -> core::result::Result<alloc::vec::Vec<u32>, std::io::error::Error>
 pub fn aya::util::syscall_prefix() -> core::result::Result<&'static str, std::io::error::Error>
 pub macro aya::include_bytes_aligned!
-pub enum aya::BpfError
-pub aya::BpfError::BtfError(aya_obj::btf::btf::BtfError)
-pub aya::BpfError::BtfRelocationError(aya_obj::btf::relocation::BtfRelocationError)
-pub aya::BpfError::FileError
-pub aya::BpfError::FileError::error: std::io::error::Error
-pub aya::BpfError::FileError::path: std::path::PathBuf
-pub aya::BpfError::MapError(aya::maps::MapError)
-pub aya::BpfError::NoBTF
-pub aya::BpfError::ParseError(aya_obj::obj::ParseError)
-pub aya::BpfError::ProgramError(aya::programs::ProgramError)
-pub aya::BpfError::RelocationError(aya_obj::relocation::BpfRelocationError)
-pub aya::BpfError::UnexpectedPinningType
-pub aya::BpfError::UnexpectedPinningType::name: u32
-impl core::convert::From<aya::maps::MapError> for aya::BpfError
-pub fn aya::BpfError::from(source: aya::maps::MapError) -> Self
-impl core::convert::From<aya::programs::ProgramError> for aya::BpfError
-pub fn aya::BpfError::from(source: aya::programs::ProgramError) -> Self
-impl core::convert::From<aya_obj::btf::btf::BtfError> for aya::BpfError
-pub fn aya::BpfError::from(source: aya_obj::btf::btf::BtfError) -> Self
-impl core::convert::From<aya_obj::btf::relocation::BtfRelocationError> for aya::BpfError
-pub fn aya::BpfError::from(source: aya_obj::btf::relocation::BtfRelocationError) -> Self
-impl core::convert::From<aya_obj::obj::ParseError> for aya::BpfError
-pub fn aya::BpfError::from(source: aya_obj::obj::ParseError) -> Self
-impl core::convert::From<aya_obj::relocation::BpfRelocationError> for aya::BpfError
-pub fn aya::BpfError::from(source: aya_obj::relocation::BpfRelocationError) -> Self
-impl core::error::Error for aya::BpfError
-pub fn aya::BpfError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Debug for aya::BpfError
-pub fn aya::BpfError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for aya::BpfError
-pub fn aya::BpfError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Send for aya::BpfError
-impl core::marker::Sync for aya::BpfError
-impl core::marker::Unpin for aya::BpfError
-impl !core::panic::unwind_safe::RefUnwindSafe for aya::BpfError
-impl !core::panic::unwind_safe::UnwindSafe for aya::BpfError
-impl<T, U> core::convert::Into<U> for aya::BpfError where U: core::convert::From<T>
-pub fn aya::BpfError::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::BpfError where U: core::convert::Into<T>
-pub type aya::BpfError::Error = core::convert::Infallible
-pub fn aya::BpfError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::BpfError where U: core::convert::TryFrom<T>
-pub type aya::BpfError::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::BpfError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::string::ToString for aya::BpfError where T: core::fmt::Display + core::marker::Sized
-pub fn aya::BpfError::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for aya::BpfError where T: 'static + core::marker::Sized
-pub fn aya::BpfError::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::BpfError where T: core::marker::Sized
-pub fn aya::BpfError::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::BpfError where T: core::marker::Sized
-pub fn aya::BpfError::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::BpfError
-pub fn aya::BpfError::from(t: T) -> T
-pub struct aya::Bpf
-impl aya::Bpf
-pub fn aya::Bpf::load(data: &[u8]) -> core::result::Result<Self, aya::BpfError>
-pub fn aya::Bpf::load_file<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::BpfError>
-pub fn aya::Bpf::map(&self, name: &str) -> core::option::Option<&aya::maps::Map>
-pub fn aya::Bpf::map_mut(&mut self, name: &str) -> core::option::Option<&mut aya::maps::Map>
-pub fn aya::Bpf::maps(&self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &aya::maps::Map)>
-pub fn aya::Bpf::maps_mut(&mut self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &mut aya::maps::Map)>
-pub fn aya::Bpf::program(&self, name: &str) -> core::option::Option<&aya::programs::Program>
-pub fn aya::Bpf::program_mut(&mut self, name: &str) -> core::option::Option<&mut aya::programs::Program>
-pub fn aya::Bpf::programs(&self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &aya::programs::Program)>
-pub fn aya::Bpf::programs_mut(&mut self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &mut aya::programs::Program)>
-pub fn aya::Bpf::take_map(&mut self, name: &str) -> core::option::Option<aya::maps::Map>
-impl core::fmt::Debug for aya::Bpf
-pub fn aya::Bpf::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Send for aya::Bpf
-impl core::marker::Sync for aya::Bpf
-impl core::marker::Unpin for aya::Bpf
-impl core::panic::unwind_safe::RefUnwindSafe for aya::Bpf
-impl core::panic::unwind_safe::UnwindSafe for aya::Bpf
-impl<T, U> core::convert::Into<U> for aya::Bpf where U: core::convert::From<T>
-pub fn aya::Bpf::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::Bpf where U: core::convert::Into<T>
-pub type aya::Bpf::Error = core::convert::Infallible
-pub fn aya::Bpf::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::Bpf where U: core::convert::TryFrom<T>
-pub type aya::Bpf::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::Bpf::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::Bpf where T: 'static + core::marker::Sized
-pub fn aya::Bpf::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::Bpf where T: core::marker::Sized
-pub fn aya::Bpf::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::Bpf where T: core::marker::Sized
-pub fn aya::Bpf::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::Bpf
-pub fn aya::Bpf::from(t: T) -> T
-pub struct aya::BpfLoader<'a>
-impl<'a> aya::BpfLoader<'a>
-pub fn aya::BpfLoader<'a>::allow_unsupported_maps(&mut self) -> &mut aya::BpfLoader<'a>
-pub fn aya::BpfLoader<'a>::btf(&mut self, btf: core::option::Option<&'a aya_obj::btf::btf::Btf>) -> &mut aya::BpfLoader<'a>
-pub fn aya::BpfLoader<'a>::extension(&mut self, name: &'a str) -> &mut aya::BpfLoader<'a>
-pub fn aya::BpfLoader<'a>::load(&mut self, data: &[u8]) -> core::result::Result<aya::Bpf, aya::BpfError>
-pub fn aya::BpfLoader<'a>::load_file<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<aya::Bpf, aya::BpfError>
-pub fn aya::BpfLoader<'a>::map_pin_path<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> &mut aya::BpfLoader<'a>
-pub fn aya::BpfLoader<'a>::new() -> Self
-pub fn aya::BpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut aya::BpfLoader<'a>
-pub fn aya::BpfLoader<'a>::set_max_entries(&mut self, name: &'a str, size: u32) -> &mut aya::BpfLoader<'a>
-pub fn aya::BpfLoader<'a>::verifier_log_level(&mut self, level: aya::VerifierLogLevel) -> &mut aya::BpfLoader<'a>
-impl core::default::Default for aya::BpfLoader<'_>
-pub fn aya::BpfLoader<'_>::default() -> Self
-impl<'a> core::fmt::Debug for aya::BpfLoader<'a>
-pub fn aya::BpfLoader<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<'a> core::marker::Send for aya::BpfLoader<'a>
-impl<'a> core::marker::Sync for aya::BpfLoader<'a>
-impl<'a> core::marker::Unpin for aya::BpfLoader<'a>
-impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::BpfLoader<'a>
-impl<'a> core::panic::unwind_safe::UnwindSafe for aya::BpfLoader<'a>
-impl<T, U> core::convert::Into<U> for aya::BpfLoader<'a> where U: core::convert::From<T>
-pub fn aya::BpfLoader<'a>::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::BpfLoader<'a> where U: core::convert::Into<T>
-pub type aya::BpfLoader<'a>::Error = core::convert::Infallible
-pub fn aya::BpfLoader<'a>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::BpfLoader<'a> where U: core::convert::TryFrom<T>
-pub type aya::BpfLoader<'a>::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::BpfLoader<'a>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::BpfLoader<'a> where T: 'static + core::marker::Sized
-pub fn aya::BpfLoader<'a>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::BpfLoader<'a> where T: core::marker::Sized
-pub fn aya::BpfLoader<'a>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::BpfLoader<'a> where T: core::marker::Sized
-pub fn aya::BpfLoader<'a>::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::BpfLoader<'a>
-pub fn aya::BpfLoader<'a>::from(t: T) -> T
+pub enum aya::EbpfError
+pub aya::EbpfError::BtfError(aya_obj::btf::btf::BtfError)
+pub aya::EbpfError::BtfRelocationError(aya_obj::btf::relocation::BtfRelocationError)
+pub aya::EbpfError::FileError
+pub aya::EbpfError::FileError::error: std::io::error::Error
+pub aya::EbpfError::FileError::path: std::path::PathBuf
+pub aya::EbpfError::MapError(aya::maps::MapError)
+pub aya::EbpfError::NoBTF
+pub aya::EbpfError::ParseError(aya_obj::obj::ParseError)
+pub aya::EbpfError::ProgramError(aya::programs::ProgramError)
+pub aya::EbpfError::RelocationError(aya_obj::relocation::EbpfRelocationError)
+pub aya::EbpfError::UnexpectedPinningType
+pub aya::EbpfError::UnexpectedPinningType::name: u32
+impl core::convert::From<aya::maps::MapError> for aya::EbpfError
+pub fn aya::EbpfError::from(source: aya::maps::MapError) -> Self
+impl core::convert::From<aya::programs::ProgramError> for aya::EbpfError
+pub fn aya::EbpfError::from(source: aya::programs::ProgramError) -> Self
+impl core::convert::From<aya_obj::btf::btf::BtfError> for aya::EbpfError
+pub fn aya::EbpfError::from(source: aya_obj::btf::btf::BtfError) -> Self
+impl core::convert::From<aya_obj::btf::relocation::BtfRelocationError> for aya::EbpfError
+pub fn aya::EbpfError::from(source: aya_obj::btf::relocation::BtfRelocationError) -> Self
+impl core::convert::From<aya_obj::obj::ParseError> for aya::EbpfError
+pub fn aya::EbpfError::from(source: aya_obj::obj::ParseError) -> Self
+impl core::convert::From<aya_obj::relocation::EbpfRelocationError> for aya::EbpfError
+pub fn aya::EbpfError::from(source: aya_obj::relocation::EbpfRelocationError) -> Self
+impl core::error::Error for aya::EbpfError
+pub fn aya::EbpfError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::EbpfError
+pub fn aya::EbpfError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::EbpfError
+pub fn aya::EbpfError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya::EbpfError
+impl core::marker::Sync for aya::EbpfError
+impl core::marker::Unpin for aya::EbpfError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::EbpfError
+impl !core::panic::unwind_safe::UnwindSafe for aya::EbpfError
+impl<T, U> core::convert::Into<U> for aya::EbpfError where U: core::convert::From<T>
+pub fn aya::EbpfError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::EbpfError where U: core::convert::Into<T>
+pub type aya::EbpfError::Error = core::convert::Infallible
+pub fn aya::EbpfError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::EbpfError where U: core::convert::TryFrom<T>
+pub type aya::EbpfError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::EbpfError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya::EbpfError where T: core::fmt::Display + core::marker::Sized
+pub fn aya::EbpfError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya::EbpfError where T: 'static + core::marker::Sized
+pub fn aya::EbpfError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::EbpfError where T: core::marker::Sized
+pub fn aya::EbpfError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::EbpfError where T: core::marker::Sized
+pub fn aya::EbpfError::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::EbpfError
+pub fn aya::EbpfError::from(t: T) -> T
+pub struct aya::Ebpf
+impl aya::Ebpf
+pub fn aya::Ebpf::load(data: &[u8]) -> core::result::Result<Self, aya::EbpfError>
+pub fn aya::Ebpf::load_file<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::EbpfError>
+pub fn aya::Ebpf::map(&self, name: &str) -> core::option::Option<&aya::maps::Map>
+pub fn aya::Ebpf::map_mut(&mut self, name: &str) -> core::option::Option<&mut aya::maps::Map>
+pub fn aya::Ebpf::maps(&self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &aya::maps::Map)>
+pub fn aya::Ebpf::maps_mut(&mut self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &mut aya::maps::Map)>
+pub fn aya::Ebpf::program(&self, name: &str) -> core::option::Option<&aya::programs::Program>
+pub fn aya::Ebpf::program_mut(&mut self, name: &str) -> core::option::Option<&mut aya::programs::Program>
+pub fn aya::Ebpf::programs(&self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &aya::programs::Program)>
+pub fn aya::Ebpf::programs_mut(&mut self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &mut aya::programs::Program)>
+pub fn aya::Ebpf::take_map(&mut self, name: &str) -> core::option::Option<aya::maps::Map>
+impl core::fmt::Debug for aya::Ebpf
+pub fn aya::Ebpf::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya::Ebpf
+impl core::marker::Sync for aya::Ebpf
+impl core::marker::Unpin for aya::Ebpf
+impl core::panic::unwind_safe::RefUnwindSafe for aya::Ebpf
+impl core::panic::unwind_safe::UnwindSafe for aya::Ebpf
+impl<T, U> core::convert::Into<U> for aya::Ebpf where U: core::convert::From<T>
+pub fn aya::Ebpf::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::Ebpf where U: core::convert::Into<T>
+pub type aya::Ebpf::Error = core::convert::Infallible
+pub fn aya::Ebpf::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::Ebpf where U: core::convert::TryFrom<T>
+pub type aya::Ebpf::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::Ebpf::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::Ebpf where T: 'static + core::marker::Sized
+pub fn aya::Ebpf::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::Ebpf where T: core::marker::Sized
+pub fn aya::Ebpf::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::Ebpf where T: core::marker::Sized
+pub fn aya::Ebpf::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::Ebpf
+pub fn aya::Ebpf::from(t: T) -> T
+pub struct aya::EbpfLoader<'a>
+impl<'a> aya::EbpfLoader<'a>
+pub fn aya::EbpfLoader<'a>::allow_unsupported_maps(&mut self) -> &mut aya::EbpfLoader<'a>
+pub fn aya::EbpfLoader<'a>::btf(&mut self, btf: core::option::Option<&'a aya_obj::btf::btf::Btf>) -> &mut aya::EbpfLoader<'a>
+pub fn aya::EbpfLoader<'a>::extension(&mut self, name: &'a str) -> &mut aya::EbpfLoader<'a>
+pub fn aya::EbpfLoader<'a>::load(&mut self, data: &[u8]) -> core::result::Result<aya::Ebpf, aya::EbpfError>
+pub fn aya::EbpfLoader<'a>::load_file<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<aya::Ebpf, aya::EbpfError>
+pub fn aya::EbpfLoader<'a>::map_pin_path<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> &mut aya::EbpfLoader<'a>
+pub fn aya::EbpfLoader<'a>::new() -> Self
+pub fn aya::EbpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut aya::EbpfLoader<'a>
+pub fn aya::EbpfLoader<'a>::set_max_entries(&mut self, name: &'a str, size: u32) -> &mut aya::EbpfLoader<'a>
+pub fn aya::EbpfLoader<'a>::verifier_log_level(&mut self, level: aya::VerifierLogLevel) -> &mut aya::EbpfLoader<'a>
+impl core::default::Default for aya::EbpfLoader<'_>
+pub fn aya::EbpfLoader<'_>::default() -> Self
+impl<'a> core::fmt::Debug for aya::EbpfLoader<'a>
+pub fn aya::EbpfLoader<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Send for aya::EbpfLoader<'a>
+impl<'a> core::marker::Sync for aya::EbpfLoader<'a>
+impl<'a> core::marker::Unpin for aya::EbpfLoader<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::EbpfLoader<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::EbpfLoader<'a>
+impl<T, U> core::convert::Into<U> for aya::EbpfLoader<'a> where U: core::convert::From<T>
+pub fn aya::EbpfLoader<'a>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::EbpfLoader<'a> where U: core::convert::Into<T>
+pub type aya::EbpfLoader<'a>::Error = core::convert::Infallible
+pub fn aya::EbpfLoader<'a>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::EbpfLoader<'a> where U: core::convert::TryFrom<T>
+pub type aya::EbpfLoader<'a>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::EbpfLoader<'a>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::EbpfLoader<'a> where T: 'static + core::marker::Sized
+pub fn aya::EbpfLoader<'a>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::EbpfLoader<'a> where T: core::marker::Sized
+pub fn aya::EbpfLoader<'a>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::EbpfLoader<'a> where T: core::marker::Sized
+pub fn aya::EbpfLoader<'a>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::EbpfLoader<'a>
+pub fn aya::EbpfLoader<'a>::from(t: T) -> T
 pub struct aya::GlobalData<'a>
 impl<'a, T: aya::Pod> core::convert::From<&'a T> for aya::GlobalData<'a>
 pub fn aya::GlobalData<'a>::from(v: &'a T) -> Self
@@ -8636,3 +8636,5 @@ impl<K: aya::Pod> aya::Pod for aya::maps::lpm_trie::Key<K>
 impl<T: aya::Pod, const N: usize> aya::Pod for [T; N]
 pub fn aya::features() -> &'static aya_obj::obj::Features
 pub fn aya::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
+pub type aya::Bpf = aya::Ebpf
+pub type aya::BpfLoader<'a> = aya::EbpfLoader<'a>
