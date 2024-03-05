@@ -66,4 +66,12 @@ impl<T> PerfEventArray<T> {
             );
         }
     }
+
+    pub fn skb_output<C: BpfContext>(&self, ctx: &C, skb_len: u32, data: &T) {
+        self.output_at_index(ctx, BPF_F_CURRENT_CPU as u32, data, skb_len)
+    }
+
+    pub fn xdp_output<C: BpfContext>(&self, ctx: &C, xdp_len: u32, data: &T) {
+        self.output_at_index(ctx, BPF_F_CURRENT_CPU as u32, data, xdp_len)
+    }
 }
