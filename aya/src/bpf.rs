@@ -13,7 +13,7 @@ use std::{
 use aya_obj::{
     btf::{BtfFeatures, BtfRelocationError},
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS},
-    relocation::BpfRelocationError,
+    relocation::EbpfRelocationError,
     EbpfSectionKind, Features,
 };
 use log::{debug, warn};
@@ -1092,7 +1092,7 @@ pub enum BpfError {
 
     /// Error performing relocations
     #[error("error relocating function")]
-    RelocationError(#[from] BpfRelocationError),
+    RelocationError(#[from] EbpfRelocationError),
 
     /// Error performing relocations
     #[error("error relocating section")]
