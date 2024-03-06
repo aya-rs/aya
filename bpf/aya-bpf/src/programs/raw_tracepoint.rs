@@ -1,19 +1,25 @@
 use core::ffi::c_void;
 
-use crate::BpfContext;
+use crate::{args::FromRawTracepointArgs, bindings::bpf_raw_tracepoint_args, BpfContext};
 
 pub struct RawTracePointContext {
-    ctx: *mut c_void,
+    ctx: *mut bpf_raw_tracepoint_args,
 }
 
 impl RawTracePointContext {
     pub fn new(ctx: *mut c_void) -> RawTracePointContext {
-        RawTracePointContext { ctx }
+        RawTracePointContext {
+            ctx: ctx as *mut bpf_raw_tracepoint_args,
+        }
+    }
+
+    pub unsafe fn arg<T: FromRawTracepointArgs>(&self, n: usize) -> T {
+        T::from_argument(&*self.ctx, n)
     }
 }
 
 impl BpfContext for RawTracePointContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.ctx
+        self.ctx as *mut c_void
     }
 }
