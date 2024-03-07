@@ -82,6 +82,10 @@ impl Const {
             btf_type,
         }
     }
+    /// The target type of the const.
+    pub fn btf_type(&self) -> u32 {
+        self.btf_type
+    }
 }
 
 #[repr(C)]
@@ -104,6 +108,11 @@ impl Volatile {
     pub(crate) fn type_info_size(&self) -> usize {
         mem::size_of::<Self>()
     }
+
+    /// The target type of the volatile.
+    pub fn btf_type(&self) -> u32 {
+        self.btf_type
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -124,6 +133,11 @@ impl Restrict {
 
     pub(crate) fn type_info_size(&self) -> usize {
         mem::size_of::<Self>()
+    }
+
+    /// The target type of the restrict.
+    pub fn btf_type(&self) -> u32 {
+        self.btf_type
     }
 }
 
@@ -156,6 +170,11 @@ impl Ptr {
             btf_type,
         }
     }
+
+    /// The target type of the pointer.
+    pub fn btf_type(&self) -> u32 {
+        self.btf_type
+    }
 }
 
 #[repr(C)]
@@ -186,6 +205,11 @@ impl Typedef {
             info,
             btf_type,
         }
+    }
+
+    /// The target type of the typedef.
+    pub fn btf_type(&self) -> u32 {
+        self.btf_type
     }
 }
 
@@ -275,6 +299,11 @@ impl Func {
 
     pub(crate) fn set_linkage(&mut self, linkage: FuncLinkage) {
         self.info = (self.info & 0xFFFF0000) | (linkage as u32) & 0xFFFF;
+    }
+
+    /// The target type of the func.
+    pub fn btf_type(&self) -> u32 {
+        self.btf_type
     }
 }
 
@@ -378,17 +407,23 @@ impl Int {
         }
     }
 
-    pub(crate) fn encoding(&self) -> IntEncoding {
+    /// The integer size.
+    pub fn size(&self) -> u32 {
+        self.size
+    }
+
+    /// The integer encoding.
+    pub fn encoding(&self) -> IntEncoding {
         ((self.data & 0x0f000000) >> 24).into()
     }
 
-    pub(crate) fn offset(&self) -> u32 {
+    /// The offset of the integer.
+    pub fn offset(&self) -> u32 {
         (self.data & 0x00ff0000) >> 16
     }
 
-    // TODO: Remove directive this when this crate is pub
-    #[cfg(test)]
-    pub(crate) fn bits(&self) -> u32 {
+    /// The size of the integer in bits.
+    pub fn bits(&self) -> u32 {
         self.data & 0x000000ff
     }
 }
@@ -563,13 +598,25 @@ impl Enum64 {
         }
     }
 }
-
+/// A member of a struct or union.
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct BtfMember {
+pub struct BtfMember {
     pub(crate) name_offset: u32,
     pub(crate) btf_type: u32,
     pub(crate) offset: u32,
+}
+
+impl BtfMember {
+    /// The offset of the members name in the BTF string section.
+    pub fn name_offset(&self) -> u32 {
+        self.name_offset
+    }
+
+    /// The type of the member.
+    pub fn btf_type(&self) -> u32 {
+        self.btf_type
+    }
 }
 
 #[repr(C)]
@@ -632,7 +679,8 @@ impl Struct {
         }
     }
 
-    pub(crate) fn member_bit_offset(&self, member: &BtfMember) -> usize {
+    /// The offset of the member within the struct or union.
+    pub fn member_bit_offset(&self, member: &BtfMember) -> usize {
         let k_flag = self.info >> 31 == 1;
         let bit_offset = if k_flag {
             member.offset & 0xFFFFFF
@@ -648,6 +696,21 @@ impl Struct {
         let size = if k_flag { member.offset >> 24 } else { 0 };
 
         size as usize
+    }
+
+    /// The size of the struct.
+    pub fn size(&self) -> u32 {
+        self.size
+    }
+
+    /// Vlen
+    pub fn vlen(&self) -> usize {
+        type_vlen(self.info)
+    }
+
+    /// The members of the struct.
+    pub fn members(&self) -> &[BtfMember] {
+        &self.members
     }
 }
 
@@ -771,6 +834,14 @@ impl Array {
         mem::size_of::<Self>()
     }
 
+    pub fn index_type(&self) -> u32 {
+        self.array.index_type
+    }
+
+    pub fn len(&self) -> u32 {
+        self.array.len
+    }
+
     #[cfg(test)]
     pub(crate) fn new(name_offset: u32, element_type: u32, index_type: u32, len: u32) -> Self {
         let info = (BtfKind::Array as u32) << 24;
@@ -790,8 +861,24 @@ impl Array {
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct BtfParam {
-    pub name_offset: u32,
-    pub btf_type: u32,
+    pub(crate) name_offset: u32,
+    pub(crate) btf_type: u32,
+}
+
+impl BtfParam {
+    pub fn new(name_offset: u32, btf_type: u32) -> Self {
+        Self {
+            name_offset,
+            btf_type,
+        }
+    }
+
+    pub fn name_offset(&self) -> u32 {
+        self.name_offset
+    }
+    pub fn btf_type(&self) -> u32 {
+        self.btf_type
+    }
 }
 
 #[repr(C)]
@@ -834,6 +921,18 @@ impl FuncProto {
 
     pub(crate) fn type_info_size(&self) -> usize {
         mem::size_of::<Fwd>() + mem::size_of::<BtfParam>() * self.params.len()
+    }
+
+    pub fn return_type(&self) -> u32 {
+        self.return_type
+    }
+
+    pub fn vlen(&self) -> usize {
+        type_vlen(self.info)
+    }
+
+    pub fn params(&self) -> &[BtfParam] {
+        &self.params
     }
 
     pub fn new(params: Vec<BtfParam>, return_type: u32) -> Self {
@@ -911,14 +1010,43 @@ impl Var {
             linkage,
         }
     }
+
+    pub fn btf_type(&self) -> u32 {
+        self.btf_type
+    }
+
+    pub fn linkage(&self) -> &VarLinkage {
+        &self.linkage
+    }
 }
 
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct DataSecEntry {
-    pub btf_type: u32,
-    pub offset: u32,
-    pub size: u32,
+    pub(crate) btf_type: u32,
+    pub(crate) offset: u32,
+    pub(crate) size: u32,
+}
+
+impl DataSecEntry {
+    pub fn new(btf_type: u32, offset: u32, size: u32) -> Self {
+        Self {
+            btf_type,
+            offset,
+            size,
+        }
+    }
+    pub fn btf_type(&self) -> u32 {
+        self.btf_type
+    }
+
+    pub fn offset(&self) -> u32 {
+        self.offset
+    }
+
+    pub fn size(&self) -> u32 {
+        self.size
+    }
 }
 
 #[repr(C)]
@@ -979,6 +1107,18 @@ impl DataSec {
             size,
             entries,
         }
+    }
+
+    pub fn size(&self) -> u32 {
+        self.size
+    }
+
+    pub fn vlen(&self) -> usize {
+        type_vlen(self.info)
+    }
+
+    pub fn entries(&self) -> &[DataSecEntry] {
+        &self.entries
     }
 }
 
@@ -1337,7 +1477,8 @@ impl BtfType {
         }
     }
 
-    pub(crate) fn name_offset(&self) -> u32 {
+    /// Returns the name offset of the BTF type.
+    pub fn name_offset(&self) -> u32 {
         match self {
             BtfType::Unknown => 0,
             BtfType::Fwd(t) => t.name_offset,
@@ -1362,7 +1503,8 @@ impl BtfType {
         }
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    /// Returns the kind of the BTF type.
+    pub fn kind(&self) -> BtfKind {
         match self {
             BtfType::Unknown => BtfKind::Unknown,
             BtfType::Fwd(t) => t.kind(),
