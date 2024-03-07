@@ -8637,4 +8637,5 @@ impl<T: aya::Pod, const N: usize> aya::Pod for [T; N]
 pub fn aya::features() -> &'static aya_obj::obj::Features
 pub fn aya::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
 pub type aya::Bpf = aya::Ebpf
+pub type aya::BpfError = aya::EbpfError
 pub type aya::BpfLoader<'a> = aya::EbpfLoader<'a>
