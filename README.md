@@ -74,14 +74,14 @@ use a `BPF_PROG_TYPE_CGROUP_SKB` program with aya:
 
 ```rust
 use std::fs::File;
-use aya::Bpf;
+use aya::Ebpf;
 use aya::programs::{CgroupSkb, CgroupSkbAttachType};
 
 // load the BPF code
-let mut bpf = Bpf::load_file("bpf.o")?;
+let mut ebpf = Ebpf::load_file("ebpf.o")?;
 
-// get the `ingress_filter` program compiled into `bpf.o`.
-let ingress: &mut CgroupSkb = bpf.program_mut("ingress_filter")?.try_into()?;
+// get the `ingress_filter` program compiled into `ebpf.o`.
+let ingress: &mut CgroupSkb = ebpf.program_mut("ingress_filter")?.try_into()?;
 
 // load the program into the kernel
 ingress.load()?;
