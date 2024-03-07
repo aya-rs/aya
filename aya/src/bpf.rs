@@ -1119,6 +1119,10 @@ pub enum EbpfError {
     ProgramError(#[from] ProgramError),
 }
 
+/// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].
+#[deprecated(since = "0.13.0", note = "use `EbpfError` instead")]
+pub type BpfError = EbpfError;
+
 fn load_btf(raw_btf: Vec<u8>, verifier_log_level: VerifierLogLevel) -> Result<OwnedFd, BtfError> {
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
         bpf_load_btf(raw_btf.as_slice(), logger, verifier_log_level)
