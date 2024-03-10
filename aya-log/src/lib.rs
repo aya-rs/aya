@@ -60,10 +60,12 @@ use std::{
 const MAP_NAME: &str = "AYA_LOGS";
 
 use aya::{
+    loaded_programs,
     maps::{
         perf::{AsyncPerfEventArray, Events, PerfBufferError},
-        MapError,
+        Map, MapData, MapError, MapInfo,
     },
+    programs::ProgramError,
     util::online_cpus,
     Bpf, Pod,
 };
@@ -108,12 +110,54 @@ impl BpfLogger {
         bpf: &mut Bpf,
         logger: T,
     ) -> Result<BpfLogger, Error> {
-        let logger = Arc::new(logger);
-        let mut logs: AsyncPerfEventArray<_> = bpf
-            .take_map(MAP_NAME)
-            .ok_or(Error::MapNotFound)?
-            .try_into()?;
+        let map = bpf.take_map(MAP_NAME).ok_or(Error::MapNotFound)?;
+        Self::read_logs_async(map, logger)?;
+        Ok(BpfLogger {})
+    }
 
+    /// Attaches to an existing `aya-log-ebpf` log created by a running ebpf
+    /// program identified by `program_id` and starts a background thread that
+    /// writes the log records to the default logger. See [log::logger].
+    /// It can be used to review the log for a pinned program after the user
+    /// application exits.
+    pub fn init_from_id(program_id: u32) -> Result<BpfLogger, Error> {
+        Self::init_from_id_with_logger(program_id, log::logger())
+    }
+
+    /// Attaches to an existing `aya-log-ebpf` log created by a running ebpf
+    /// program identified by `program_id` and starts a background thread that
+    /// writes the log records to the provided logger.
+    /// It can be used to review the log for a pinned program after the user
+    /// application exits.
+    pub fn init_from_id_with_logger<T: Log + 'static>(
+        program_id: u32,
+        logger: T,
+    ) -> Result<BpfLogger, Error> {
+        let program_info = loaded_programs()
+            .filter_map(|info| info.ok())
+            .find(|info| info.id() == program_id)
+            .ok_or(Error::ProgramNotFound)?;
+        let map = program_info
+            .map_ids()
+            .map_err(Error::GetProgramMapIds)?
+            .iter()
+            .filter_map(|id| MapInfo::from_id(*id).ok())
+            .find(|map_info| match map_info.name_as_str() {
+                Some(name) => name == MAP_NAME,
+                None => false,
+            })
+            .ok_or(Error::MapNotFound)?;
+        let map = MapData::from_id(map.id()).map_err(Error::MapError)?;
+
+        Self::read_logs_async(Map::PerfEventArray(map), logger)?;
+
+        Ok(BpfLogger {})
+    }
+
+    fn read_logs_async<T: Log + 'static>(map: Map, logger: T) -> Result<(), Error> {
+        let mut logs: AsyncPerfEventArray<_> = map.try_into()?;
+
+        let logger = Arc::new(logger);
         for cpu_id in online_cpus().map_err(Error::InvalidOnlineCpu)? {
             let mut buf = logs.open(cpu_id, None)?;
 
@@ -130,8 +174,7 @@ impl BpfLogger {
                 }
             });
         }
-
-        Ok(BpfLogger {})
+        Ok(())
     }
 }
 
@@ -370,6 +413,12 @@ pub enum Error {
 
     #[error("invalid /sys/devices/system/cpu/online format")]
     InvalidOnlineCpu(#[source] io::Error),
+
+    #[error("program not found")]
+    ProgramNotFound,
+
+    #[error("error getting in use program maps")]
+    GetProgramMapIds(#[source] ProgramError),
 }
 
 fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
