@@ -73,6 +73,7 @@ pub unsafe fn aya_bpf::helpers::bpf_probe_read_user_buf(src: *const u8, dst: &mu
 pub unsafe fn aya_bpf::helpers::bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, aya_bpf_cty::od::c_long>
 pub unsafe fn aya_bpf::helpers::bpf_probe_read_user_str_bytes(src: *const u8, dest: &mut [u8]) -> core::result::Result<&[u8], aya_bpf_cty::od::c_long>
 pub unsafe fn aya_bpf::helpers::bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> core::result::Result<(), aya_bpf_cty::od::c_long>
+pub fn aya_bpf::helpers::bpf_strncmp(s1: &[u8], s2: &core::ffi::c_str::CStr) -> core::cmp::Ordering
 pub mod aya_bpf::maps
 pub mod aya_bpf::maps::array
 #[repr(transparent)] pub struct aya_bpf::maps::array::Array<T>
