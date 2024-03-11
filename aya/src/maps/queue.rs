@@ -19,14 +19,14 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::Queue;
 ///
 /// let mut queue = Queue::try_from(bpf.map_mut("ARRAY").unwrap())?;
 /// queue.push(42, 0)?;
 /// queue.push(43, 0)?;
 /// assert_eq!(queue.pop(0)?, 42);
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_QUEUE")]
 pub struct Queue<T, V: Pod> {

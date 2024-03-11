@@ -30,14 +30,14 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     Program(#[from] aya::programs::ProgramError),
 /// #     #[error(transparent)]
-/// #     Bpf(#[from] aya::BpfError)
+/// #     Ebpf(#[from] aya::EbpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::fs::File;
 /// use aya::programs::LircMode2;
 ///
 /// let file = File::open("/dev/lirc0")?;
-/// let mut bpf = aya::Bpf::load_file("imon_rsc.o")?;
+/// let mut bpf = aya::Ebpf::load_file("imon_rsc.o")?;
 /// let decoder: &mut LircMode2 = bpf.program_mut("imon_rsc").unwrap().try_into().unwrap();
 /// decoder.load()?;
 /// decoder.attach(file)?;

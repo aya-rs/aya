@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use aya_bpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
+use aya_ebpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
 
 #[xdp]
 pub fn ihaveaverylongname(ctx: XdpContext) -> u32 {

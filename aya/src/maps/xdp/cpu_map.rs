@@ -31,7 +31,7 @@ use crate::{
 /// use aya::maps::xdp::CpuMap;
 ///
 /// let ncpus = aya::util::nr_cpus().unwrap() as u32;
-/// let mut bpf = aya::BpfLoader::new()
+/// let mut bpf = aya::EbpfLoader::new()
 ///     .set_max_entries("CPUS", ncpus)
 ///     .load(elf_bytes)
 ///     .unwrap();
@@ -42,7 +42,7 @@ use crate::{
 ///     cpumap.set(i, queue_size, None, flags);
 /// }
 ///
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 ///
 /// # See also

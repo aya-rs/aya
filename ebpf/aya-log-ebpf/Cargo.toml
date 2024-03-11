@@ -1,0 +1,17 @@
+[package]
+name = "aya-log-ebpf"
+version = "0.1.0"
+description = "Logging for eBPF programs"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
+
+[dependencies]
+aya-ebpf = { path = "../aya-ebpf" }
+aya-log-common = { path = "../../aya-log-common" }
+aya-log-ebpf-macros = { path = "../../aya-log-ebpf-macros" }
+
+[lib]
+path = "src/lib.rs"

@@ -46,9 +46,9 @@ pub enum SkSkbKind {
 /// #     #[error(transparent)]
 /// #     Program(#[from] aya::programs::ProgramError),
 /// #     #[error(transparent)]
-/// #     Bpf(#[from] aya::BpfError)
+/// #     Ebpf(#[from] aya::EbpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::SockMap;
 /// use aya::programs::SkSkb;
 ///

@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use aya_bpf::{
+use aya_ebpf::{
     bindings::xdp_action,
     macros::{map, xdp},
     maps::Array,

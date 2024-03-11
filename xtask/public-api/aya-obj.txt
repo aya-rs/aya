@@ -5392,7 +5392,7 @@ pub fn aya_obj::maps::Map::map_type(&self) -> u32
 pub fn aya_obj::maps::Map::max_entries(&self) -> u32
 pub fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
 pub fn aya_obj::maps::Map::section_index(&self) -> usize
-pub fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::BpfSectionKind
+pub fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::EbpfSectionKind
 pub fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
 pub fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
 pub fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
@@ -5596,7 +5596,7 @@ pub struct aya_obj::maps::LegacyMap
 pub aya_obj::maps::LegacyMap::data: alloc::vec::Vec<u8>
 pub aya_obj::maps::LegacyMap::def: aya_obj::maps::bpf_map_def
 pub aya_obj::maps::LegacyMap::section_index: usize
-pub aya_obj::maps::LegacyMap::section_kind: aya_obj::BpfSectionKind
+pub aya_obj::maps::LegacyMap::section_kind: aya_obj::EbpfSectionKind
 pub aya_obj::maps::LegacyMap::symbol_index: core::option::Option<usize>
 impl core::clone::Clone for aya_obj::maps::LegacyMap
 pub fn aya_obj::maps::LegacyMap::clone(&self) -> aya_obj::maps::LegacyMap
@@ -5672,53 +5672,53 @@ pub fn aya_obj::maps::bpf_map_def::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::maps::bpf_map_def
 pub fn aya_obj::maps::bpf_map_def::from(t: T) -> T
 pub mod aya_obj::obj
-pub enum aya_obj::obj::BpfSectionKind
-pub aya_obj::obj::BpfSectionKind::Bss
-pub aya_obj::obj::BpfSectionKind::Btf
-pub aya_obj::obj::BpfSectionKind::BtfExt
-pub aya_obj::obj::BpfSectionKind::BtfMaps
-pub aya_obj::obj::BpfSectionKind::Data
-pub aya_obj::obj::BpfSectionKind::License
-pub aya_obj::obj::BpfSectionKind::Maps
-pub aya_obj::obj::BpfSectionKind::Program
-pub aya_obj::obj::BpfSectionKind::Rodata
-pub aya_obj::obj::BpfSectionKind::Text
-pub aya_obj::obj::BpfSectionKind::Undefined
-pub aya_obj::obj::BpfSectionKind::Version
-impl core::clone::Clone for aya_obj::BpfSectionKind
-pub fn aya_obj::BpfSectionKind::clone(&self) -> aya_obj::BpfSectionKind
-impl core::cmp::Eq for aya_obj::BpfSectionKind
-impl core::cmp::PartialEq for aya_obj::BpfSectionKind
-pub fn aya_obj::BpfSectionKind::eq(&self, other: &aya_obj::BpfSectionKind) -> bool
-impl core::fmt::Debug for aya_obj::BpfSectionKind
-pub fn aya_obj::BpfSectionKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for aya_obj::BpfSectionKind
-impl core::marker::StructuralPartialEq for aya_obj::BpfSectionKind
-impl core::marker::Send for aya_obj::BpfSectionKind
-impl core::marker::Sync for aya_obj::BpfSectionKind
-impl core::marker::Unpin for aya_obj::BpfSectionKind
-impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::BpfSectionKind
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::BpfSectionKind
-impl<T, U> core::convert::Into<U> for aya_obj::BpfSectionKind where U: core::convert::From<T>
-pub fn aya_obj::BpfSectionKind::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya_obj::BpfSectionKind where U: core::convert::Into<T>
-pub type aya_obj::BpfSectionKind::Error = core::convert::Infallible
-pub fn aya_obj::BpfSectionKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya_obj::BpfSectionKind where U: core::convert::TryFrom<T>
-pub type aya_obj::BpfSectionKind::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya_obj::BpfSectionKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for aya_obj::BpfSectionKind where T: core::clone::Clone
-pub type aya_obj::BpfSectionKind::Owned = T
-pub fn aya_obj::BpfSectionKind::clone_into(&self, target: &mut T)
-pub fn aya_obj::BpfSectionKind::to_owned(&self) -> T
-impl<T> core::any::Any for aya_obj::BpfSectionKind where T: 'static + core::marker::Sized
-pub fn aya_obj::BpfSectionKind::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_obj::BpfSectionKind where T: core::marker::Sized
-pub fn aya_obj::BpfSectionKind::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_obj::BpfSectionKind where T: core::marker::Sized
-pub fn aya_obj::BpfSectionKind::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya_obj::BpfSectionKind
-pub fn aya_obj::BpfSectionKind::from(t: T) -> T
+pub enum aya_obj::obj::EbpfSectionKind
+pub aya_obj::obj::EbpfSectionKind::Bss
+pub aya_obj::obj::EbpfSectionKind::Btf
+pub aya_obj::obj::EbpfSectionKind::BtfExt
+pub aya_obj::obj::EbpfSectionKind::BtfMaps
+pub aya_obj::obj::EbpfSectionKind::Data
+pub aya_obj::obj::EbpfSectionKind::License
+pub aya_obj::obj::EbpfSectionKind::Maps
+pub aya_obj::obj::EbpfSectionKind::Program
+pub aya_obj::obj::EbpfSectionKind::Rodata
+pub aya_obj::obj::EbpfSectionKind::Text
+pub aya_obj::obj::EbpfSectionKind::Undefined
+pub aya_obj::obj::EbpfSectionKind::Version
+impl core::clone::Clone for aya_obj::EbpfSectionKind
+pub fn aya_obj::EbpfSectionKind::clone(&self) -> aya_obj::EbpfSectionKind
+impl core::cmp::Eq for aya_obj::EbpfSectionKind
+impl core::cmp::PartialEq for aya_obj::EbpfSectionKind
+pub fn aya_obj::EbpfSectionKind::eq(&self, other: &aya_obj::EbpfSectionKind) -> bool
+impl core::fmt::Debug for aya_obj::EbpfSectionKind
+pub fn aya_obj::EbpfSectionKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::EbpfSectionKind
+impl core::marker::StructuralPartialEq for aya_obj::EbpfSectionKind
+impl core::marker::Send for aya_obj::EbpfSectionKind
+impl core::marker::Sync for aya_obj::EbpfSectionKind
+impl core::marker::Unpin for aya_obj::EbpfSectionKind
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::EbpfSectionKind
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::EbpfSectionKind
+impl<T, U> core::convert::Into<U> for aya_obj::EbpfSectionKind where U: core::convert::From<T>
+pub fn aya_obj::EbpfSectionKind::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::EbpfSectionKind where U: core::convert::Into<T>
+pub type aya_obj::EbpfSectionKind::Error = core::convert::Infallible
+pub fn aya_obj::EbpfSectionKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::EbpfSectionKind where U: core::convert::TryFrom<T>
+pub type aya_obj::EbpfSectionKind::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::EbpfSectionKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::EbpfSectionKind where T: core::clone::Clone
+pub type aya_obj::EbpfSectionKind::Owned = T
+pub fn aya_obj::EbpfSectionKind::clone_into(&self, target: &mut T)
+pub fn aya_obj::EbpfSectionKind::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::EbpfSectionKind where T: 'static + core::marker::Sized
+pub fn aya_obj::EbpfSectionKind::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::EbpfSectionKind where T: core::marker::Sized
+pub fn aya_obj::EbpfSectionKind::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::EbpfSectionKind where T: core::marker::Sized
+pub fn aya_obj::EbpfSectionKind::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::EbpfSectionKind
+pub fn aya_obj::EbpfSectionKind::from(t: T) -> T
 pub enum aya_obj::obj::ParseError
 pub aya_obj::obj::ParseError::BtfError(aya_obj::btf::BtfError)
 pub aya_obj::obj::ParseError::ElfError(object::read::Error)
@@ -5954,8 +5954,8 @@ pub fn aya_obj::Object::sanitize_functions(&mut self, features: &aya_obj::Featur
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
-pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
-pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
+pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object
@@ -6384,83 +6384,83 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::relocation::RelocationError wher
 pub fn aya_obj::relocation::RelocationError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::relocation::RelocationError
 pub fn aya_obj::relocation::RelocationError::from(t: T) -> T
-pub struct aya_obj::relocation::BpfRelocationError
-impl core::error::Error for aya_obj::relocation::BpfRelocationError
-pub fn aya_obj::relocation::BpfRelocationError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Debug for aya_obj::relocation::BpfRelocationError
-pub fn aya_obj::relocation::BpfRelocationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for aya_obj::relocation::BpfRelocationError
-pub fn aya_obj::relocation::BpfRelocationError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Send for aya_obj::relocation::BpfRelocationError
-impl core::marker::Sync for aya_obj::relocation::BpfRelocationError
-impl core::marker::Unpin for aya_obj::relocation::BpfRelocationError
-impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::relocation::BpfRelocationError
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::BpfRelocationError
-impl<T, U> core::convert::Into<U> for aya_obj::relocation::BpfRelocationError where U: core::convert::From<T>
-pub fn aya_obj::relocation::BpfRelocationError::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya_obj::relocation::BpfRelocationError where U: core::convert::Into<T>
-pub type aya_obj::relocation::BpfRelocationError::Error = core::convert::Infallible
-pub fn aya_obj::relocation::BpfRelocationError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya_obj::relocation::BpfRelocationError where U: core::convert::TryFrom<T>
-pub type aya_obj::relocation::BpfRelocationError::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya_obj::relocation::BpfRelocationError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::string::ToString for aya_obj::relocation::BpfRelocationError where T: core::fmt::Display + core::marker::Sized
-pub fn aya_obj::relocation::BpfRelocationError::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for aya_obj::relocation::BpfRelocationError where T: 'static + core::marker::Sized
-pub fn aya_obj::relocation::BpfRelocationError::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_obj::relocation::BpfRelocationError where T: core::marker::Sized
-pub fn aya_obj::relocation::BpfRelocationError::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_obj::relocation::BpfRelocationError where T: core::marker::Sized
-pub fn aya_obj::relocation::BpfRelocationError::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya_obj::relocation::BpfRelocationError
-pub fn aya_obj::relocation::BpfRelocationError::from(t: T) -> T
-pub enum aya_obj::BpfSectionKind
-pub aya_obj::BpfSectionKind::Bss
-pub aya_obj::BpfSectionKind::Btf
-pub aya_obj::BpfSectionKind::BtfExt
-pub aya_obj::BpfSectionKind::BtfMaps
-pub aya_obj::BpfSectionKind::Data
-pub aya_obj::BpfSectionKind::License
-pub aya_obj::BpfSectionKind::Maps
-pub aya_obj::BpfSectionKind::Program
-pub aya_obj::BpfSectionKind::Rodata
-pub aya_obj::BpfSectionKind::Text
-pub aya_obj::BpfSectionKind::Undefined
-pub aya_obj::BpfSectionKind::Version
-impl core::clone::Clone for aya_obj::BpfSectionKind
-pub fn aya_obj::BpfSectionKind::clone(&self) -> aya_obj::BpfSectionKind
-impl core::cmp::Eq for aya_obj::BpfSectionKind
-impl core::cmp::PartialEq for aya_obj::BpfSectionKind
-pub fn aya_obj::BpfSectionKind::eq(&self, other: &aya_obj::BpfSectionKind) -> bool
-impl core::fmt::Debug for aya_obj::BpfSectionKind
-pub fn aya_obj::BpfSectionKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for aya_obj::BpfSectionKind
-impl core::marker::StructuralPartialEq for aya_obj::BpfSectionKind
-impl core::marker::Send for aya_obj::BpfSectionKind
-impl core::marker::Sync for aya_obj::BpfSectionKind
-impl core::marker::Unpin for aya_obj::BpfSectionKind
-impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::BpfSectionKind
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::BpfSectionKind
-impl<T, U> core::convert::Into<U> for aya_obj::BpfSectionKind where U: core::convert::From<T>
-pub fn aya_obj::BpfSectionKind::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya_obj::BpfSectionKind where U: core::convert::Into<T>
-pub type aya_obj::BpfSectionKind::Error = core::convert::Infallible
-pub fn aya_obj::BpfSectionKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya_obj::BpfSectionKind where U: core::convert::TryFrom<T>
-pub type aya_obj::BpfSectionKind::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya_obj::BpfSectionKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for aya_obj::BpfSectionKind where T: core::clone::Clone
-pub type aya_obj::BpfSectionKind::Owned = T
-pub fn aya_obj::BpfSectionKind::clone_into(&self, target: &mut T)
-pub fn aya_obj::BpfSectionKind::to_owned(&self) -> T
-impl<T> core::any::Any for aya_obj::BpfSectionKind where T: 'static + core::marker::Sized
-pub fn aya_obj::BpfSectionKind::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_obj::BpfSectionKind where T: core::marker::Sized
-pub fn aya_obj::BpfSectionKind::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_obj::BpfSectionKind where T: core::marker::Sized
-pub fn aya_obj::BpfSectionKind::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya_obj::BpfSectionKind
-pub fn aya_obj::BpfSectionKind::from(t: T) -> T
+pub struct aya_obj::relocation::EbpfRelocationError
+impl core::error::Error for aya_obj::relocation::EbpfRelocationError
+pub fn aya_obj::relocation::EbpfRelocationError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya_obj::relocation::EbpfRelocationError
+pub fn aya_obj::relocation::EbpfRelocationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya_obj::relocation::EbpfRelocationError
+pub fn aya_obj::relocation::EbpfRelocationError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Send for aya_obj::relocation::EbpfRelocationError
+impl core::marker::Sync for aya_obj::relocation::EbpfRelocationError
+impl core::marker::Unpin for aya_obj::relocation::EbpfRelocationError
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::relocation::EbpfRelocationError
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::EbpfRelocationError
+impl<T, U> core::convert::Into<U> for aya_obj::relocation::EbpfRelocationError where U: core::convert::From<T>
+pub fn aya_obj::relocation::EbpfRelocationError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::relocation::EbpfRelocationError where U: core::convert::Into<T>
+pub type aya_obj::relocation::EbpfRelocationError::Error = core::convert::Infallible
+pub fn aya_obj::relocation::EbpfRelocationError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::relocation::EbpfRelocationError where U: core::convert::TryFrom<T>
+pub type aya_obj::relocation::EbpfRelocationError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::relocation::EbpfRelocationError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya_obj::relocation::EbpfRelocationError where T: core::fmt::Display + core::marker::Sized
+pub fn aya_obj::relocation::EbpfRelocationError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya_obj::relocation::EbpfRelocationError where T: 'static + core::marker::Sized
+pub fn aya_obj::relocation::EbpfRelocationError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::relocation::EbpfRelocationError where T: core::marker::Sized
+pub fn aya_obj::relocation::EbpfRelocationError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::relocation::EbpfRelocationError where T: core::marker::Sized
+pub fn aya_obj::relocation::EbpfRelocationError::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::relocation::EbpfRelocationError
+pub fn aya_obj::relocation::EbpfRelocationError::from(t: T) -> T
+pub enum aya_obj::EbpfSectionKind
+pub aya_obj::EbpfSectionKind::Bss
+pub aya_obj::EbpfSectionKind::Btf
+pub aya_obj::EbpfSectionKind::BtfExt
+pub aya_obj::EbpfSectionKind::BtfMaps
+pub aya_obj::EbpfSectionKind::Data
+pub aya_obj::EbpfSectionKind::License
+pub aya_obj::EbpfSectionKind::Maps
+pub aya_obj::EbpfSectionKind::Program
+pub aya_obj::EbpfSectionKind::Rodata
+pub aya_obj::EbpfSectionKind::Text
+pub aya_obj::EbpfSectionKind::Undefined
+pub aya_obj::EbpfSectionKind::Version
+impl core::clone::Clone for aya_obj::EbpfSectionKind
+pub fn aya_obj::EbpfSectionKind::clone(&self) -> aya_obj::EbpfSectionKind
+impl core::cmp::Eq for aya_obj::EbpfSectionKind
+impl core::cmp::PartialEq for aya_obj::EbpfSectionKind
+pub fn aya_obj::EbpfSectionKind::eq(&self, other: &aya_obj::EbpfSectionKind) -> bool
+impl core::fmt::Debug for aya_obj::EbpfSectionKind
+pub fn aya_obj::EbpfSectionKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::EbpfSectionKind
+impl core::marker::StructuralPartialEq for aya_obj::EbpfSectionKind
+impl core::marker::Send for aya_obj::EbpfSectionKind
+impl core::marker::Sync for aya_obj::EbpfSectionKind
+impl core::marker::Unpin for aya_obj::EbpfSectionKind
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::EbpfSectionKind
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::EbpfSectionKind
+impl<T, U> core::convert::Into<U> for aya_obj::EbpfSectionKind where U: core::convert::From<T>
+pub fn aya_obj::EbpfSectionKind::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::EbpfSectionKind where U: core::convert::Into<T>
+pub type aya_obj::EbpfSectionKind::Error = core::convert::Infallible
+pub fn aya_obj::EbpfSectionKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::EbpfSectionKind where U: core::convert::TryFrom<T>
+pub type aya_obj::EbpfSectionKind::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::EbpfSectionKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::EbpfSectionKind where T: core::clone::Clone
+pub type aya_obj::EbpfSectionKind::Owned = T
+pub fn aya_obj::EbpfSectionKind::clone_into(&self, target: &mut T)
+pub fn aya_obj::EbpfSectionKind::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::EbpfSectionKind where T: 'static + core::marker::Sized
+pub fn aya_obj::EbpfSectionKind::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::EbpfSectionKind where T: core::marker::Sized
+pub fn aya_obj::EbpfSectionKind::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::EbpfSectionKind where T: core::marker::Sized
+pub fn aya_obj::EbpfSectionKind::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::EbpfSectionKind
+pub fn aya_obj::EbpfSectionKind::from(t: T) -> T
 pub enum aya_obj::Map
 pub aya_obj::Map::Btf(aya_obj::maps::BtfMap)
 pub aya_obj::Map::Legacy(aya_obj::maps::LegacyMap)
@@ -6473,7 +6473,7 @@ pub fn aya_obj::maps::Map::map_type(&self) -> u32
 pub fn aya_obj::maps::Map::max_entries(&self) -> u32
 pub fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
 pub fn aya_obj::maps::Map::section_index(&self) -> usize
-pub fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::BpfSectionKind
+pub fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::EbpfSectionKind
 pub fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
 pub fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
 pub fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
@@ -6742,8 +6742,8 @@ pub fn aya_obj::Object::sanitize_functions(&mut self, features: &aya_obj::Featur
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
-pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
-pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::BpfRelocationError>
+pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object

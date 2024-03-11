@@ -19,14 +19,14 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::Stack;
 ///
 /// let mut stack = Stack::try_from(bpf.map_mut("STACK").unwrap())?;
 /// stack.push(42, 0)?;
 /// stack.push(43, 0)?;
 /// assert_eq!(stack.pop(0)?, 43);
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_STACK")]
 pub struct Stack<T, V: Pod> {

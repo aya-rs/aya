@@ -35,9 +35,9 @@ use crate::{
 /// #     #[error(transparent)]
 /// #     Map(#[from] aya::maps::MapError),
 /// #     #[error(transparent)]
-/// #     Bpf(#[from] aya::BpfError)
+/// #     Ebpf(#[from] aya::EbpfError)
 /// # }
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::StackTraceMap;
 /// use aya::util::kernel_symbols;
 ///

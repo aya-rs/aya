@@ -1,0 +1,25 @@
+[package]
+name = "aya-ebpf"
+version = "0.1.0"
+description = "A library for writing eBPF programs"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
+
+[dependencies]
+aya-ebpf-cty = { path = "../aya-ebpf-cty" }
+aya-ebpf-macros = { path = "../../aya-ebpf-macros" }
+aya-ebpf-bindings = { path = "../aya-ebpf-bindings" }
+const-assert = { workspace = true, optional = true }
+
+[build-dependencies]
+rustversion = { workspace = true }
+
+[features]
+default = []
+# TODO(https://github.com/rust-lang/rust/issues/76560): Always utilize the
+# logic gated behind this feature. This is not currently possible because the
+# underlying `const_generic_exprs` language feature is still incomplete.
+const_assert = ["const-assert"]

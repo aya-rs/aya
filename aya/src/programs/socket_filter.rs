@@ -17,7 +17,7 @@ use crate::{
 pub enum SocketFilterError {
     /// Setting the `SO_ATTACH_BPF` socket option failed.
     #[error("setsockopt SO_ATTACH_BPF failed")]
-    SoAttachBpfError {
+    SoAttachEbpfError {
         /// original [`io::Error`]
         #[source]
         io_error: io::Error,
@@ -45,9 +45,9 @@ pub enum SocketFilterError {
 /// #     #[error(transparent)]
 /// #     Program(#[from] aya::programs::ProgramError),
 /// #     #[error(transparent)]
-/// #     Bpf(#[from] aya::BpfError)
+/// #     Ebpf(#[from] aya::EbpfError)
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::net::TcpStream;
 /// use aya::programs::SocketFilter;
 ///
@@ -89,7 +89,7 @@ impl SocketFilter {
             )
         };
         if ret < 0 {
-            return Err(SocketFilterError::SoAttachBpfError {
+            return Err(SocketFilterError::SoAttachEbpfError {
                 io_error: io::Error::last_os_error(),
             }
             .into());

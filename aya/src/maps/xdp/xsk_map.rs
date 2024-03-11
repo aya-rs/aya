@@ -21,14 +21,14 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// # let socket_fd = 1;
 /// use aya::maps::XskMap;
 ///
 /// let mut xskmap = XskMap::try_from(bpf.map_mut("SOCKETS").unwrap())?;
 /// // socket_fd is the RawFd of an AF_XDP socket
 /// xskmap.set(0, socket_fd, 0);
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 ///
 /// # See also

@@ -108,11 +108,11 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// #    #[error(transparent)]
 /// #    Map(#[from] aya::maps::MapError),
 /// #    #[error(transparent)]
-/// #    Bpf(#[from] aya::BpfError),
+/// #    Ebpf(#[from] aya::EbpfError),
 /// #    #[error(transparent)]
 /// #    PerfBuf(#[from] aya::maps::perf::PerfBufferError),
 /// # }
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::PerfEventArray;
 /// use aya::util::online_cpus;
 /// use bytes::BytesMut;

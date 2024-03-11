@@ -23,7 +23,7 @@ use crate::{
 ///
 /// # Examples
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::ProgramArray;
 /// use aya::programs::CgroupSkb;
 ///
@@ -44,7 +44,7 @@ use crate::{
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 2) will jump to prog_2
 /// prog_array.set(2, &prog_2_fd, flags);
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_PROG_ARRAY")]
 pub struct ProgramArray<T> {

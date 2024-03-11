@@ -93,8 +93,8 @@ pub struct FdLinkId(pub(crate) RawFd);
 /// # Example
 ///
 ///```no_run
-/// # let mut bpf = Bpf::load_file("ebpf_programs.o")?;
-/// use aya::{Bpf, programs::{links::FdLink, KProbe}};
+/// # let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
+/// use aya::{Ebpf, programs::{links::FdLink, KProbe}};
 ///
 /// let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 /// program.load()?;
@@ -103,7 +103,7 @@ pub struct FdLinkId(pub(crate) RawFd);
 /// let fd_link: FdLink = link.try_into().unwrap();
 /// fd_link.pin("/sys/fs/bpf/intercept_wakeups_link").unwrap();
 ///
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[derive(Debug)]
 pub struct FdLink {
@@ -130,13 +130,13 @@ impl FdLink {
     /// # #[derive(thiserror::Error, Debug)]
     /// # enum Error {
     /// #     #[error(transparent)]
-    /// #     Bpf(#[from] aya::BpfError),
+    /// #     Ebpf(#[from] aya::EbpfError),
     /// #     #[error(transparent)]
     /// #     Pin(#[from] aya::pin::PinError),
     /// #     #[error(transparent)]
     /// #     Program(#[from] aya::programs::ProgramError)
     /// # }
-    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
     /// # let prog: &mut Extension = bpf.program_mut("example").unwrap().try_into()?;
     /// let link_id = prog.attach()?;
     /// let owned_link = prog.take_link(link_id)?;

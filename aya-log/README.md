@@ -33,12 +33,12 @@ to log eBPF messages to the terminal.
 ### User space code
 
 ```rust
-use aya_log::BpfLogger;
+use aya_log::EbpfLogger;
 
 env_logger::init();
 
 // Will log using the default logger, which is TermLogger in this case
-BpfLogger::init(&mut bpf).unwrap();
+EbpfLogger::init(&mut bpf).unwrap();
 ```
 
 ### eBPF code

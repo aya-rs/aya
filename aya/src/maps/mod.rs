@@ -2,17 +2,17 @@
 //!
 //! The eBPF platform provides data structures - maps in eBPF speak - that are
 //! used to setup and share data with eBPF programs. When you call
-//! [`Bpf::load_file`](crate::Bpf::load_file) or
-//! [`Bpf::load`](crate::Bpf::load), all the maps defined in the eBPF code get
-//! initialized and can then be accessed using [`Bpf::map`](crate::Bpf::map),
-//! [`Bpf::map_mut`](crate::Bpf::map_mut), or
-//! [`Bpf::take_map`](crate::Bpf::take_map).
+//! [`Ebpf::load_file`](crate::Ebpf::load_file) or
+//! [`Ebpf::load`](crate::Ebpf::load), all the maps defined in the eBPF code get
+//! initialized and can then be accessed using [`Ebpf::map`](crate::Ebpf::map),
+//! [`Ebpf::map_mut`](crate::Ebpf::map_mut), or
+//! [`Ebpf::take_map`](crate::Ebpf::take_map).
 //!
 //! # Typed maps
 //!
 //! The eBPF API includes many map types each supporting different operations.
-//! [`Bpf::map`](crate::Bpf::map), [`Bpf::map_mut`](crate::Bpf::map_mut), and
-//! [`Bpf::take_map`](crate::Bpf::take_map) always return the opaque
+//! [`Ebpf::map`](crate::Ebpf::map), [`Ebpf::map_mut`](crate::Ebpf::map_mut), and
+//! [`Ebpf::take_map`](crate::Ebpf::take_map) always return the opaque
 //! [`&Map`](crate::maps::Map), [`&mut Map`](crate::maps::Map), and [`Map`]
 //! types respectively. Those three types can be converted to *typed maps* using
 //! the [`TryFrom`] or [`TryInto`] trait. For example:
@@ -27,9 +27,9 @@
 //! #     #[error(transparent)]
 //! #     Program(#[from] aya::programs::ProgramError),
 //! #     #[error(transparent)]
-//! #     Bpf(#[from] aya::BpfError)
+//! #     Ebpf(#[from] aya::EbpfError)
 //! # }
-//! # let mut bpf = aya::Bpf::load(&[])?;
+//! # let mut bpf = aya::Ebpf::load(&[])?;
 //! use aya::maps::SockMap;
 //! use aya::programs::SkMsg;
 //!
@@ -66,7 +66,7 @@ use thiserror::Error;
 
 use crate::{
     generated::bpf_map_info,
-    obj::{self, parse_map_info, BpfSectionKind},
+    obj::{self, parse_map_info, EbpfSectionKind},
     pin::PinError,
     sys::{
         bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
@@ -602,7 +602,7 @@ impl MapData {
 
     pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
         let Self { obj, fd } = self;
-        if !obj.data().is_empty() && obj.section_kind() != BpfSectionKind::Bss {
+        if !obj.data().is_empty() && obj.section_kind() != EbpfSectionKind::Bss {
             bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
                 .map_err(|(_, io_error)| SyscallError {
                     call: "bpf_map_update_elem",
@@ -610,7 +610,7 @@ impl MapData {
                 })
                 .map_err(MapError::from)?;
         }
-        if obj.section_kind() == BpfSectionKind::Rodata {
+        if obj.section_kind() == EbpfSectionKind::Rodata {
             bpf_map_freeze(fd.as_fd())
                 .map_err(|(_, io_error)| SyscallError {
                     call: "bpf_map_freeze",
@@ -678,7 +678,7 @@ impl MapData {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut bpf = aya::Bpf::load(&[])?;
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
     /// # use aya::maps::MapData;
     ///
     /// let mut map = MapData::from_pin("/sys/fs/bpf/my_map")?;
@@ -833,9 +833,9 @@ impl PerCpuKernelMem {
 /// #     #[error(transparent)]
 /// #     Map(#[from] aya::maps::MapError),
 /// #     #[error(transparent)]
-/// #     Bpf(#[from] aya::BpfError)
+/// #     Ebpf(#[from] aya::EbpfError)
 /// # }
-/// # let bpf = aya::Bpf::load(&[])?;
+/// # let bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::PerCpuValues;
 /// use aya::util::nr_cpus;
 ///
@@ -992,8 +992,8 @@ impl MapInfo {
 
 /// Returns an iterator over all loaded bpf maps.
 ///
-/// This differs from [`crate::Bpf::maps`] since it will return all maps
-/// listed on the host system and not only maps for a specific [`crate::Bpf`] instance.
+/// This differs from [`crate::Ebpf::maps`] since it will return all maps
+/// listed on the host system and not only maps for a specific [`crate::Ebpf`] instance.
 ///
 /// # Example
 /// ```
@@ -1045,7 +1045,7 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
-            section_kind: BpfSectionKind::Maps,
+            section_kind: EbpfSectionKind::Maps,
             symbol_index: Some(0),
             data: Vec::new(),
         })
@@ -1054,7 +1054,7 @@ mod tests {
     #[test]
     fn test_from_map_id() {
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_FD_BY_ID,
                 attr,
             } => {
@@ -1064,7 +1064,7 @@ mod tests {
                 );
                 Ok(42)
             }
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
                 attr,
             } => {
@@ -1086,7 +1086,7 @@ mod tests {
     #[test]
     fn test_create() {
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
             } => Ok(42),
@@ -1113,11 +1113,11 @@ mod tests {
         const TEST_NAME: &str = "foo";
 
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
             } => Ok(42),
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
                 attr,
             } => {
@@ -1146,7 +1146,7 @@ mod tests {
         use crate::generated::bpf_map_info;
 
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_ID,
                 attr,
             } => unsafe {
@@ -1158,11 +1158,11 @@ mod tests {
                     Err((-1, io::Error::from_raw_os_error(libc::ENOENT)))
                 }
             },
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_FD_BY_ID,
                 attr,
             } => Ok((1000 + unsafe { attr.__bindgen_anon_6.__bindgen_anon_1.map_id }) as c_long),
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
                 attr,
             } => {

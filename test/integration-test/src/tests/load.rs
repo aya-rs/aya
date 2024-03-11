@@ -13,7 +13,7 @@ use aya::{
         loaded_links, loaded_programs, KProbe, TracePoint, UProbe, Xdp, XdpFlags,
     },
     util::KernelVersion,
-    Bpf,
+    Ebpf,
 };
 use aya_obj::programs::XdpAttachType;
 use test_log::test;
@@ -23,7 +23,7 @@ const RETRY_DURATION: Duration = Duration::from_millis(10);
 
 #[test]
 fn long_name() {
-    let mut bpf = Bpf::load(crate::NAME_TEST).unwrap();
+    let mut bpf = Ebpf::load(crate::NAME_TEST).unwrap();
     let name_prog: &mut Xdp = bpf
         .program_mut("ihaveaverylongname")
         .unwrap()
@@ -39,7 +39,7 @@ fn long_name() {
 
 #[test]
 fn multiple_btf_maps() {
-    let mut bpf = Bpf::load(crate::MULTIMAP_BTF).unwrap();
+    let mut bpf = Ebpf::load(crate::MULTIMAP_BTF).unwrap();
 
     let map_1: Array<_, u64> = bpf.take_map("map_1").unwrap().try_into().unwrap();
     let map_2: Array<_, u64> = bpf.take_map("map_2").unwrap().try_into().unwrap();
@@ -69,7 +69,7 @@ fn multiple_btf_maps() {
 
 #[test]
 fn pin_lifecycle_multiple_btf_maps() {
-    let mut bpf = Bpf::load(crate::MULTIMAP_BTF).unwrap();
+    let mut bpf = Ebpf::load(crate::MULTIMAP_BTF).unwrap();
 
     // "map_pin_by_name" should already be pinned, unpin and pin again later
     let map_pin_by_name_path = Path::new("/sys/fs/bpf/map_pin_by_name");
@@ -198,7 +198,7 @@ fn assert_unloaded(name: &str) {
 
 #[test]
 fn unload_xdp() {
-    let mut bpf = Bpf::load(crate::TEST).unwrap();
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     prog.load().unwrap();
     assert_loaded("pass");
@@ -223,7 +223,7 @@ fn unload_xdp() {
 
 #[test]
 fn test_loaded_at() {
-    let mut bpf = Bpf::load(crate::TEST).unwrap();
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
 
     // SystemTime is not monotonic, which can cause this test to flake. We don't expect the clock
@@ -259,7 +259,7 @@ fn test_loaded_at() {
 
 #[test]
 fn unload_kprobe() {
-    let mut bpf = Bpf::load(crate::TEST).unwrap();
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut KProbe = bpf.program_mut("test_kprobe").unwrap().try_into().unwrap();
     prog.load().unwrap();
     assert_loaded("test_kprobe");
@@ -284,7 +284,7 @@ fn unload_kprobe() {
 
 #[test]
 fn basic_tracepoint() {
-    let mut bpf = Bpf::load(crate::TEST).unwrap();
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut TracePoint = bpf
         .program_mut("test_tracepoint")
         .unwrap()
@@ -315,7 +315,7 @@ fn basic_tracepoint() {
 
 #[test]
 fn basic_uprobe() {
-    let mut bpf = Bpf::load(crate::TEST).unwrap();
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut UProbe = bpf.program_mut("test_uprobe").unwrap().try_into().unwrap();
 
     prog.load().unwrap();
@@ -351,7 +351,7 @@ fn pin_link() {
         return;
     }
 
-    let mut bpf = Bpf::load(crate::TEST).unwrap();
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     prog.load().unwrap();
     let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
@@ -384,7 +384,7 @@ fn pin_lifecycle() {
 
     // 1. Load Program and Pin
     {
-        let mut bpf = Bpf::load(crate::PASS).unwrap();
+        let mut bpf = Ebpf::load(crate::PASS).unwrap();
         let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
         prog.load().unwrap();
         prog.pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
@@ -419,7 +419,7 @@ fn pin_lifecycle() {
 
     // 4. Load a new version of the program, unpin link, and atomically replace old program
     {
-        let mut bpf = Bpf::load(crate::PASS).unwrap();
+        let mut bpf = Ebpf::load(crate::PASS).unwrap();
         let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
         prog.load().unwrap();
 
@@ -439,7 +439,7 @@ fn pin_lifecycle() {
 fn pin_lifecycle_tracepoint() {
     // 1. Load Program and Pin
     {
-        let mut bpf = Bpf::load(crate::TEST).unwrap();
+        let mut bpf = Ebpf::load(crate::TEST).unwrap();
         let prog: &mut TracePoint = bpf
             .program_mut("test_tracepoint")
             .unwrap()
@@ -493,7 +493,7 @@ fn pin_lifecycle_tracepoint() {
 fn pin_lifecycle_kprobe() {
     // 1. Load Program and Pin
     {
-        let mut bpf = Bpf::load(crate::TEST).unwrap();
+        let mut bpf = Ebpf::load(crate::TEST).unwrap();
         let prog: &mut KProbe = bpf.program_mut("test_kprobe").unwrap().try_into().unwrap();
         prog.load().unwrap();
         prog.pin("/sys/fs/bpf/aya-kprobe-test-prog").unwrap();
@@ -560,7 +560,7 @@ fn pin_lifecycle_uprobe() {
 
     // 1. Load Program and Pin
     {
-        let mut bpf = Bpf::load(crate::TEST).unwrap();
+        let mut bpf = Ebpf::load(crate::TEST).unwrap();
         let prog: &mut UProbe = bpf.program_mut("test_uprobe").unwrap().try_into().unwrap();
         prog.load().unwrap();
         prog.pin(FIRST_PIN_PATH).unwrap();

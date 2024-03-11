@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use aya_bpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
+use aya_ebpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
 
 // Note: the `frags` attribute causes this probe to be incompatible with kernel versions < 5.18.0.
 // See https://github.com/torvalds/linux/commit/c2f2cdb.

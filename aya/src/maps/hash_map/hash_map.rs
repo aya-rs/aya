@@ -19,7 +19,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::HashMap;
 ///
 /// let mut redirect_ports = HashMap::try_from(bpf.map_mut("REDIRECT_PORTS").unwrap())?;
@@ -28,7 +28,7 @@ use crate::{
 /// redirect_ports.insert(80, 8080, 0);
 /// // redirect port 443 to 8443
 /// redirect_ports.insert(443, 8443, 0);
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_HASH")]
 #[doc(alias = "BPF_MAP_TYPE_LRU_HASH")]
@@ -218,7 +218,7 @@ mod tests {
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
                 ..
             } => Ok(1),
@@ -234,7 +234,7 @@ mod tests {
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
                 ..
             } => Ok(1),
@@ -263,7 +263,7 @@ mod tests {
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_DELETE_ELEM,
                 ..
             } => Ok(1),
@@ -289,7 +289,7 @@ mod tests {
     fn test_get_not_found() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 ..
             } => sys_error(ENOENT),
@@ -321,7 +321,7 @@ mod tests {
     fn test_keys_empty() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 ..
             } => sys_error(ENOENT),
@@ -365,7 +365,7 @@ mod tests {
         let map = new_map(new_obj_map());
 
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
             } => get_next_key(attr),
@@ -386,7 +386,7 @@ mod tests {
     fn test_keys_error() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
             } => {
@@ -423,11 +423,11 @@ mod tests {
     fn test_iter() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
             } => get_next_key(attr),
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 attr,
             } => lookup_elem(attr),
@@ -446,11 +446,11 @@ mod tests {
     fn test_iter_key_deleted() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
             } => get_next_key(attr),
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 attr,
             } => {
@@ -480,7 +480,7 @@ mod tests {
     fn test_iter_key_error() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
             } => {
@@ -494,7 +494,7 @@ mod tests {
 
                 Ok(1)
             }
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 attr,
             } => lookup_elem(attr),
@@ -523,11 +523,11 @@ mod tests {
     fn test_iter_value_error() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
             } => get_next_key(attr),
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 attr,
             } => {

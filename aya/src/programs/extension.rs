@@ -35,9 +35,9 @@ pub enum ExtensionError {
 /// # Examples
 ///
 /// ```no_run
-/// use aya::{BpfLoader, programs::{Xdp, XdpFlags, Extension}};
+/// use aya::{EbpfLoader, programs::{Xdp, XdpFlags, Extension}};
 ///
-/// let mut bpf = BpfLoader::new().extension("extension").load_file("app.o")?;
+/// let mut bpf = EbpfLoader::new().extension("extension").load_file("app.o")?;
 /// let prog: &mut Xdp = bpf.program_mut("main").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach("eth0", XdpFlags::default())?;
@@ -47,7 +47,7 @@ pub enum ExtensionError {
 /// let ext: &mut Extension = bpf.program_mut("extension").unwrap().try_into()?;
 /// ext.load(prog_fd, "function_to_replace")?;
 /// ext.attach()?;
-/// Ok::<(), aya::BpfError>(())
+/// Ok::<(), aya::EbpfError>(())
 /// ```
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_EXT")]

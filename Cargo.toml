@@ -11,13 +11,13 @@ members = [
     "xtask",
 
     # macros
-    "aya-bpf-macros",
+    "aya-ebpf-macros",
     "aya-log-ebpf-macros",
 
     # ebpf crates
-    "bpf/aya-bpf",
-    "bpf/aya-bpf-bindings",
-    "bpf/aya-log-ebpf",
+    "ebpf/aya-ebpf",
+    "ebpf/aya-ebpf-bindings",
+    "ebpf/aya-log-ebpf",
     "test/integration-ebpf",
 ]
 
@@ -35,7 +35,7 @@ default-members = [
     # tests, and that doesn't work unless they've been built with `cargo xtask`.
     "xtask",
 
-    "aya-bpf-macros",
+    "aya-ebpf-macros",
     "aya-log-ebpf-macros",
 
     # ebpf crates are omitted; they must be built with:

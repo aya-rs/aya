@@ -3,7 +3,7 @@
 #![no_std]
 #![no_main]
 
-use aya_bpf::{macros::tracepoint, programs::TracePointContext};
+use aya_ebpf::{macros::tracepoint, programs::TracePointContext};
 
 #[tracepoint]
 pub fn test_tracepoint_one(_ctx: TracePointContext) -> u32 {

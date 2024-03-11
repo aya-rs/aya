@@ -3,7 +3,7 @@
 
 use core::hint;
 
-use aya_bpf::{
+use aya_ebpf::{
     macros::{map, uprobe},
     maps::Array,
     programs::ProbeContext,

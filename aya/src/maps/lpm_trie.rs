@@ -20,7 +20,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let mut bpf = aya::Bpf::load(&[])?;
+/// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::lpm_trie::{LpmTrie, Key};
 /// use std::net::Ipv4Addr;
 ///
@@ -42,7 +42,7 @@ use crate::{
 /// trie.insert(&longer_key, 2, 0)?;
 /// let value = trie.get(&lookup, 0)?;
 /// assert_eq!(value, 2);
-/// # Ok::<(), aya::BpfError>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 
 #[doc(alias = "BPF_MAP_TYPE_LPM_TRIE")]
@@ -209,7 +209,7 @@ mod tests {
             bpf_map_type::{BPF_MAP_TYPE_LPM_TRIE, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
         },
         maps::Map,
-        obj::{self, maps::LegacyMap, BpfSectionKind},
+        obj::{self, maps::LegacyMap, EbpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
 
@@ -223,7 +223,7 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
-            section_kind: BpfSectionKind::Maps,
+            section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
             data: Vec::new(),
         })
@@ -231,7 +231,7 @@ mod tests {
 
     fn new_map(obj: obj::Map) -> MapData {
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
             } => Ok(1337),
@@ -279,7 +279,7 @@ mod tests {
                 ..Default::default()
             },
             section_index: 0,
-            section_kind: BpfSectionKind::Maps,
+            section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
             data: Vec::new(),
         }));
@@ -330,7 +330,7 @@ mod tests {
         let key = Key::new(16, u32::from(ipaddr).to_be());
 
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
                 ..
             } => Ok(1),
@@ -363,7 +363,7 @@ mod tests {
         let key = Key::new(16, u32::from(ipaddr).to_be());
 
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_DELETE_ELEM,
                 ..
             } => Ok(1),
@@ -396,7 +396,7 @@ mod tests {
         let key = Key::new(16, u32::from(ipaddr).to_be());
 
         override_syscall(|call| match call {
-            Syscall::Bpf {
+            Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 ..
             } => sys_error(ENOENT),

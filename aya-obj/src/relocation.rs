@@ -16,7 +16,7 @@ use crate::{
     maps::Map,
     obj::{Function, Object},
     util::{HashMap, HashSet},
-    BpfSectionKind,
+    EbpfSectionKind,
 };
 
 pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
@@ -24,7 +24,7 @@ pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
 /// The error type returned by [`Object::relocate_maps`] and [`Object::relocate_calls`]
 #[derive(thiserror::Error, Debug)]
 #[error("error relocating `{function}`")]
-pub struct BpfRelocationError {
+pub struct EbpfRelocationError {
     /// The function name
     function: String,
     #[source]
@@ -108,7 +108,7 @@ impl Object {
         &mut self,
         maps: I,
         text_sections: &HashSet<usize>,
-    ) -> Result<(), BpfRelocationError> {
+    ) -> Result<(), EbpfRelocationError> {
         let mut maps_by_section = HashMap::new();
         let mut maps_by_symbol = HashMap::new();
         for (name, fd, map) in maps {
@@ -128,7 +128,7 @@ impl Object {
                     &self.symbol_table,
                     text_sections,
                 )
-                .map_err(|error| BpfRelocationError {
+                .map_err(|error| EbpfRelocationError {
                     function: function.name.clone(),
                     error,
                 })?;
@@ -142,7 +142,7 @@ impl Object {
     pub fn relocate_calls(
         &mut self,
         text_sections: &HashSet<usize>,
-    ) -> Result<(), BpfRelocationError> {
+    ) -> Result<(), EbpfRelocationError> {
         for (name, program) in self.programs.iter() {
             let linker = FunctionLinker::new(
                 &self.functions,
@@ -154,7 +154,7 @@ impl Object {
             let func_orig =
                 self.functions
                     .get(&program.function_key())
-                    .ok_or_else(|| BpfRelocationError {
+                    .ok_or_else(|| EbpfRelocationError {
                         function: name.clone(),
                         error: RelocationError::UnknownProgram {
                             section_index: program.section_index,
@@ -162,10 +162,12 @@ impl Object {
                         },
                     })?;
 
-            let func = linker.link(func_orig).map_err(|error| BpfRelocationError {
-                function: name.to_owned(),
-                error,
-            })?;
+            let func = linker
+                .link(func_orig)
+                .map_err(|error| EbpfRelocationError {
+                    function: name.to_owned(),
+                    error,
+                })?;
 
             self.functions.insert(program.function_key(), func);
         }
@@ -250,7 +252,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             debug_assert_eq!(map.symbol_index(), None);
             debug_assert!(matches!(
                 map.section_kind(),
-                BpfSectionKind::Bss | BpfSectionKind::Data | BpfSectionKind::Rodata
+                EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata
             ));
             m
         };
@@ -520,7 +522,7 @@ mod test {
         Map::Legacy(LegacyMap {
             def: Default::default(),
             section_index: 0,
-            section_kind: BpfSectionKind::Undefined,
+            section_kind: EbpfSectionKind::Undefined,
             symbol_index: Some(symbol_index),
             data: Vec::new(),
         })
