@@ -20,6 +20,7 @@ impl core::fmt::Debug for aya_tool::generate::Error
 pub fn aya_tool::generate::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_tool::generate::Error
 pub fn aya_tool::generate::Error::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya_tool::generate::Error
 impl core::marker::Send for aya_tool::generate::Error
 impl core::marker::Sync for aya_tool::generate::Error
 impl core::marker::Unpin for aya_tool::generate::Error
@@ -46,6 +47,7 @@ pub fn aya_tool::generate::Error::from(t: T) -> T
 pub enum aya_tool::generate::InputFile
 pub aya_tool::generate::InputFile::Btf(std::path::PathBuf)
 pub aya_tool::generate::InputFile::Header(std::path::PathBuf)
+impl core::marker::Freeze for aya_tool::generate::InputFile
 impl core::marker::Send for aya_tool::generate::InputFile
 impl core::marker::Sync for aya_tool::generate::InputFile
 impl core::marker::Unpin for aya_tool::generate::InputFile
@@ -73,6 +75,7 @@ pub fn aya_tool::rustfmt::format(code: &str) -> core::result::Result<alloc::stri
 pub enum aya_tool::InputFile
 pub aya_tool::InputFile::Btf(std::path::PathBuf)
 pub aya_tool::InputFile::Header(std::path::PathBuf)
+impl core::marker::Freeze for aya_tool::generate::InputFile
 impl core::marker::Send for aya_tool::generate::InputFile
 impl core::marker::Sync for aya_tool::generate::InputFile
 impl core::marker::Unpin for aya_tool::generate::InputFile

@@ -10,6 +10,7 @@ pub fn aya_log_parser::Fragment::eq(&self, other: &aya_log_parser::Fragment) -> 
 impl core::fmt::Debug for aya_log_parser::Fragment
 pub fn aya_log_parser::Fragment::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::StructuralPartialEq for aya_log_parser::Fragment
+impl core::marker::Freeze for aya_log_parser::Fragment
 impl core::marker::Send for aya_log_parser::Fragment
 impl core::marker::Sync for aya_log_parser::Fragment
 impl core::marker::Unpin for aya_log_parser::Fragment
@@ -45,6 +46,7 @@ pub fn aya_log_parser::Parameter::eq(&self, other: &aya_log_parser::Parameter) -
 impl core::fmt::Debug for aya_log_parser::Parameter
 pub fn aya_log_parser::Parameter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::StructuralPartialEq for aya_log_parser::Parameter
+impl core::marker::Freeze for aya_log_parser::Parameter
 impl core::marker::Send for aya_log_parser::Parameter
 impl core::marker::Sync for aya_log_parser::Parameter
 impl core::marker::Unpin for aya_log_parser::Parameter

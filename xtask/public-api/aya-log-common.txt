@@ -25,6 +25,7 @@ pub fn u8::from(enum_value: aya_log_common::Argument) -> Self
 impl core::fmt::Debug for aya_log_common::Argument
 pub fn aya_log_common::Argument::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_log_common::Argument
+impl core::marker::Freeze for aya_log_common::Argument
 impl core::marker::Send for aya_log_common::Argument
 impl core::marker::Sync for aya_log_common::Argument
 impl core::marker::Unpin for aya_log_common::Argument
@@ -66,6 +67,7 @@ impl core::fmt::Debug for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_log_common::DisplayHint
 impl core::marker::StructuralPartialEq for aya_log_common::DisplayHint
+impl core::marker::Freeze for aya_log_common::DisplayHint
 impl core::marker::Send for aya_log_common::DisplayHint
 impl core::marker::Sync for aya_log_common::DisplayHint
 impl core::marker::Unpin for aya_log_common::DisplayHint
@@ -106,6 +108,7 @@ impl core::hash::Hash for aya_log_common::Level
 pub fn aya_log_common::Level::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for aya_log_common::Level
 impl core::marker::StructuralPartialEq for aya_log_common::Level
+impl core::marker::Freeze for aya_log_common::Level
 impl core::marker::Send for aya_log_common::Level
 impl core::marker::Sync for aya_log_common::Level
 impl core::marker::Unpin for aya_log_common::Level
@@ -141,6 +144,7 @@ pub fn u8::from(enum_value: aya_log_common::RecordField) -> Self
 impl core::fmt::Debug for aya_log_common::RecordField
 pub fn aya_log_common::RecordField::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_log_common::RecordField
+impl core::marker::Freeze for aya_log_common::RecordField
 impl core::marker::Send for aya_log_common::RecordField
 impl core::marker::Sync for aya_log_common::RecordField
 impl core::marker::Unpin for aya_log_common::RecordField

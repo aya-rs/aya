@@ -37,6 +37,7 @@ impl<T> core::convert::From<*const T> for aya_ebpf::helpers::PrintkArg
 pub fn aya_ebpf::helpers::PrintkArg::from(x: *const T) -> Self
 impl<T> core::convert::From<*mut T> for aya_ebpf::helpers::PrintkArg
 pub fn aya_ebpf::helpers::PrintkArg::from(x: *mut T) -> Self
+impl core::marker::Freeze for aya_ebpf::helpers::PrintkArg
 impl core::marker::Send for aya_ebpf::helpers::PrintkArg
 impl core::marker::Sync for aya_ebpf::helpers::PrintkArg
 impl core::marker::Unpin for aya_ebpf::helpers::PrintkArg
@@ -83,6 +84,7 @@ pub fn aya_ebpf::maps::array::Array<T>::get_ptr_mut(&self, index: u32) -> core::
 pub const fn aya_ebpf::maps::array::Array<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::array::Array<T>
 pub const fn aya_ebpf::maps::array::Array<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::array::Array<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::array::Array<T>
+impl<T> !core::marker::Freeze for aya_ebpf::maps::array::Array<T>
 impl<T> core::marker::Send for aya_ebpf::maps::array::Array<T> where T: core::marker::Send
 impl<T> core::marker::Unpin for aya_ebpf::maps::array::Array<T> where T: core::marker::Unpin
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::array::Array<T>
@@ -110,6 +112,7 @@ pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&mut self, value: 
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&mut self, value: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::bloom_filter::BloomFilter<T>
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::bloom_filter::BloomFilter<T>
+impl<T> core::marker::Freeze for aya_ebpf::maps::bloom_filter::BloomFilter<T>
 impl<T> core::marker::Send for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: core::marker::Unpin
@@ -142,6 +145,7 @@ pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::pinned(max_entries: u32, f
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::HashMap<K, V>
+impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::HashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::HashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::hash_map::HashMap<K, V>
@@ -172,6 +176,7 @@ pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::pinned(max_entries: u32
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruHashMap<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::LruHashMap<K, V>
+impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::LruHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::LruHashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::hash_map::LruHashMap<K, V>
@@ -202,6 +207,7 @@ pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::pinned(max_entrie
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
+impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
@@ -232,6 +238,7 @@ pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::pinned(max_entries: 
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
+impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
@@ -258,6 +265,7 @@ pub aya_ebpf::maps::lpm_trie::Key::data: K
 pub aya_ebpf::maps::lpm_trie::Key::prefix_len: u32
 impl<K> aya_ebpf::maps::lpm_trie::Key<K>
 pub fn aya_ebpf::maps::lpm_trie::Key<K>::new(prefix_len: u32, data: K) -> Self
+impl<K> core::marker::Freeze for aya_ebpf::maps::lpm_trie::Key<K> where K: core::marker::Freeze
 impl<K> core::marker::Send for aya_ebpf::maps::lpm_trie::Key<K> where K: core::marker::Send
 impl<K> core::marker::Sync for aya_ebpf::maps::lpm_trie::Key<K> where K: core::marker::Sync
 impl<K> core::marker::Unpin for aya_ebpf::maps::lpm_trie::Key<K> where K: core::marker::Unpin
@@ -287,6 +295,7 @@ pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::pinned(max_entries: u32, f
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::remove(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
+impl<K, V> !core::marker::Freeze for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
@@ -316,6 +325,7 @@ pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get_ptr_mut(&self, index: 
 pub const fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 pub const fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 impl<T> core::marker::Sync for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
+impl<T> !core::marker::Freeze for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 impl<T> core::marker::Send for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: core::marker::Send
 impl<T> core::marker::Unpin for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: core::marker::Unpin
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
@@ -345,6 +355,7 @@ pub fn aya_ebpf::maps::PerfEventArray<T>::output_at_index<C: aya_ebpf::EbpfConte
 pub const fn aya_ebpf::maps::PerfEventArray<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
 pub const fn aya_ebpf::maps::PerfEventArray<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::PerfEventArray<T>
+impl<T> !core::marker::Freeze for aya_ebpf::maps::PerfEventArray<T>
 impl<T> core::marker::Send for aya_ebpf::maps::PerfEventArray<T> where T: core::marker::Send
 impl<T> core::marker::Unpin for aya_ebpf::maps::PerfEventArray<T> where T: core::marker::Unpin
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::PerfEventArray<T>
@@ -373,6 +384,7 @@ pub fn aya_ebpf::maps::PerfEventByteArray::output_at_index<C: aya_ebpf::EbpfCont
 pub const fn aya_ebpf::maps::PerfEventByteArray::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventByteArray
 pub const fn aya_ebpf::maps::PerfEventByteArray::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventByteArray
 impl core::marker::Sync for aya_ebpf::maps::PerfEventByteArray
+impl !core::marker::Freeze for aya_ebpf::maps::PerfEventByteArray
 impl core::marker::Send for aya_ebpf::maps::PerfEventByteArray
 impl core::marker::Unpin for aya_ebpf::maps::PerfEventByteArray
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::PerfEventByteArray
@@ -400,6 +412,7 @@ pub const fn aya_ebpf::maps::program_array::ProgramArray::pinned(max_entries: u3
 pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<never, aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::program_array::ProgramArray::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Sync for aya_ebpf::maps::program_array::ProgramArray
+impl !core::marker::Freeze for aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Send for aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Unpin for aya_ebpf::maps::program_array::ProgramArray
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::program_array::ProgramArray
@@ -428,6 +441,7 @@ pub fn aya_ebpf::maps::queue::Queue<T>::pop(&self) -> core::option::Option<T>
 pub fn aya_ebpf::maps::queue::Queue<T>::push(&self, value: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::queue::Queue<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::queue::Queue<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::queue::Queue<T>
+impl<T> !core::marker::Freeze for aya_ebpf::maps::queue::Queue<T>
 impl<T> core::marker::Send for aya_ebpf::maps::queue::Queue<T> where T: core::marker::Send
 impl<T> core::marker::Unpin for aya_ebpf::maps::queue::Queue<T> where T: core::marker::Unpin
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::queue::Queue<T>
@@ -457,6 +471,7 @@ pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
 pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where const_assert::Assert<{ _ }>: const_assert::IsTrue
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl core::marker::Sync for aya_ebpf::maps::ring_buf::RingBuf
+impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
 impl core::marker::Send for aya_ebpf::maps::ring_buf::RingBuf
 impl core::marker::Unpin for aya_ebpf::maps::ring_buf::RingBuf
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::ring_buf::RingBuf
@@ -486,6 +501,7 @@ pub type aya_ebpf::maps::ring_buf::RingBufEntry<T>::Target = core::mem::maybe_un
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::deref(&self) -> &Self::Target
 impl<T> core::ops::deref::DerefMut for aya_ebpf::maps::ring_buf::RingBufEntry<T>
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::deref_mut(&mut self) -> &mut Self::Target
+impl<T> core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBufEntry<T>
 impl<T> core::marker::Send for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_ebpf::maps::ring_buf::RingBufEntry<T>
@@ -517,6 +533,7 @@ pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_skb(&self, ctx: &aya_ebp
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: &mut K, sk_ops: &mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::sock_hash::SockHash<K>
+impl<K> !core::marker::Freeze for aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K> core::marker::Send for aya_ebpf::maps::sock_hash::SockHash<K> where K: core::marker::Send
 impl<K> core::marker::Unpin for aya_ebpf::maps::sock_hash::SockHash<K> where K: core::marker::Unpin
 impl<K> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::sock_hash::SockHash<K>
@@ -547,6 +564,7 @@ pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, ctx: &aya_e
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_map::SockMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_map::SockMap
 impl core::marker::Sync for aya_ebpf::maps::sock_map::SockMap
+impl !core::marker::Freeze for aya_ebpf::maps::sock_map::SockMap
 impl core::marker::Send for aya_ebpf::maps::sock_map::SockMap
 impl core::marker::Unpin for aya_ebpf::maps::sock_map::SockMap
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::sock_map::SockMap
@@ -574,6 +592,7 @@ pub const fn aya_ebpf::maps::stack::Stack<T>::pinned(max_entries: u32, flags: u3
 pub fn aya_ebpf::maps::stack::Stack<T>::pop(&mut self) -> core::option::Option<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::push(&mut self, value: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::stack::Stack<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack::Stack<T>
+impl<T> core::marker::Freeze for aya_ebpf::maps::stack::Stack<T>
 impl<T> core::marker::Send for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Unpin
@@ -602,6 +621,7 @@ pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack_trace::StackTrace
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack_trace::StackTrace
 impl core::marker::Sync for aya_ebpf::maps::stack_trace::StackTrace
+impl !core::marker::Freeze for aya_ebpf::maps::stack_trace::StackTrace
 impl core::marker::Send for aya_ebpf::maps::stack_trace::StackTrace
 impl core::marker::Unpin for aya_ebpf::maps::stack_trace::StackTrace
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::stack_trace::StackTrace
@@ -629,6 +649,7 @@ pub const fn aya_ebpf::maps::CpuMap::pinned(max_entries: u32, flags: u32) -> aya
 pub fn aya_ebpf::maps::CpuMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::CpuMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::CpuMap
 impl core::marker::Sync for aya_ebpf::maps::CpuMap
+impl !core::marker::Freeze for aya_ebpf::maps::CpuMap
 impl core::marker::Send for aya_ebpf::maps::CpuMap
 impl core::marker::Unpin for aya_ebpf::maps::CpuMap
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::CpuMap
@@ -656,6 +677,7 @@ pub const fn aya_ebpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya
 pub fn aya_ebpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
 impl core::marker::Sync for aya_ebpf::maps::DevMap
+impl !core::marker::Freeze for aya_ebpf::maps::DevMap
 impl core::marker::Send for aya_ebpf::maps::DevMap
 impl core::marker::Unpin for aya_ebpf::maps::DevMap
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::DevMap
@@ -683,6 +705,7 @@ pub const fn aya_ebpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) ->
 pub fn aya_ebpf::maps::DevMapHash::redirect(&self, key: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMapHash::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
 impl core::marker::Sync for aya_ebpf::maps::DevMapHash
+impl !core::marker::Freeze for aya_ebpf::maps::DevMapHash
 impl core::marker::Send for aya_ebpf::maps::DevMapHash
 impl core::marker::Unpin for aya_ebpf::maps::DevMapHash
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::DevMapHash
@@ -710,6 +733,7 @@ pub const fn aya_ebpf::maps::XskMap::pinned(max_entries: u32, flags: u32) -> aya
 pub fn aya_ebpf::maps::XskMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::XskMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::XskMap
 impl core::marker::Sync for aya_ebpf::maps::XskMap
+impl !core::marker::Freeze for aya_ebpf::maps::XskMap
 impl core::marker::Send for aya_ebpf::maps::XskMap
 impl core::marker::Unpin for aya_ebpf::maps::XskMap
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::XskMap
@@ -738,6 +762,7 @@ pub fn aya_ebpf::maps::array::Array<T>::get_ptr_mut(&self, index: u32) -> core::
 pub const fn aya_ebpf::maps::array::Array<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::array::Array<T>
 pub const fn aya_ebpf::maps::array::Array<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::array::Array<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::array::Array<T>
+impl<T> !core::marker::Freeze for aya_ebpf::maps::array::Array<T>
 impl<T> core::marker::Send for aya_ebpf::maps::array::Array<T> where T: core::marker::Send
 impl<T> core::marker::Unpin for aya_ebpf::maps::array::Array<T> where T: core::marker::Unpin
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::array::Array<T>
@@ -764,6 +789,7 @@ pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&mut self, value: 
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&mut self, value: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::bloom_filter::BloomFilter<T>
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::bloom_filter::BloomFilter<T>
+impl<T> core::marker::Freeze for aya_ebpf::maps::bloom_filter::BloomFilter<T>
 impl<T> core::marker::Send for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: core::marker::Unpin
@@ -791,6 +817,7 @@ pub const fn aya_ebpf::maps::CpuMap::pinned(max_entries: u32, flags: u32) -> aya
 pub fn aya_ebpf::maps::CpuMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::CpuMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::CpuMap
 impl core::marker::Sync for aya_ebpf::maps::CpuMap
+impl !core::marker::Freeze for aya_ebpf::maps::CpuMap
 impl core::marker::Send for aya_ebpf::maps::CpuMap
 impl core::marker::Unpin for aya_ebpf::maps::CpuMap
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::CpuMap
@@ -818,6 +845,7 @@ pub const fn aya_ebpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya
 pub fn aya_ebpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
 impl core::marker::Sync for aya_ebpf::maps::DevMap
+impl !core::marker::Freeze for aya_ebpf::maps::DevMap
 impl core::marker::Send for aya_ebpf::maps::DevMap
 impl core::marker::Unpin for aya_ebpf::maps::DevMap
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::DevMap
@@ -845,6 +873,7 @@ pub const fn aya_ebpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) ->
 pub fn aya_ebpf::maps::DevMapHash::redirect(&self, key: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMapHash::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
 impl core::marker::Sync for aya_ebpf::maps::DevMapHash
+impl !core::marker::Freeze for aya_ebpf::maps::DevMapHash
 impl core::marker::Send for aya_ebpf::maps::DevMapHash
 impl core::marker::Unpin for aya_ebpf::maps::DevMapHash
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::DevMapHash
@@ -875,6 +904,7 @@ pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::pinned(max_entries: u32, f
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::HashMap<K, V>
+impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::HashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::HashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::hash_map::HashMap<K, V>
@@ -903,6 +933,7 @@ pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::pinned(max_entries: u32, f
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::remove(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
+impl<K, V> !core::marker::Freeze for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
@@ -933,6 +964,7 @@ pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::pinned(max_entries: u32
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruHashMap<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::LruHashMap<K, V>
+impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::LruHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::LruHashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::hash_map::LruHashMap<K, V>
@@ -963,6 +995,7 @@ pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::pinned(max_entrie
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
+impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
@@ -991,6 +1024,7 @@ pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get_ptr_mut(&self, index: 
 pub const fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 pub const fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 impl<T> core::marker::Sync for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
+impl<T> !core::marker::Freeze for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 impl<T> core::marker::Send for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: core::marker::Send
 impl<T> core::marker::Unpin for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: core::marker::Unpin
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
@@ -1021,6 +1055,7 @@ pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::pinned(max_entries: 
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
+impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
@@ -1049,6 +1084,7 @@ pub fn aya_ebpf::maps::PerfEventArray<T>::output_at_index<C: aya_ebpf::EbpfConte
 pub const fn aya_ebpf::maps::PerfEventArray<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
 pub const fn aya_ebpf::maps::PerfEventArray<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::PerfEventArray<T>
+impl<T> !core::marker::Freeze for aya_ebpf::maps::PerfEventArray<T>
 impl<T> core::marker::Send for aya_ebpf::maps::PerfEventArray<T> where T: core::marker::Send
 impl<T> core::marker::Unpin for aya_ebpf::maps::PerfEventArray<T> where T: core::marker::Unpin
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::PerfEventArray<T>
@@ -1077,6 +1113,7 @@ pub fn aya_ebpf::maps::PerfEventByteArray::output_at_index<C: aya_ebpf::EbpfCont
 pub const fn aya_ebpf::maps::PerfEventByteArray::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventByteArray
 pub const fn aya_ebpf::maps::PerfEventByteArray::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventByteArray
 impl core::marker::Sync for aya_ebpf::maps::PerfEventByteArray
+impl !core::marker::Freeze for aya_ebpf::maps::PerfEventByteArray
 impl core::marker::Send for aya_ebpf::maps::PerfEventByteArray
 impl core::marker::Unpin for aya_ebpf::maps::PerfEventByteArray
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::PerfEventByteArray
@@ -1103,6 +1140,7 @@ pub const fn aya_ebpf::maps::program_array::ProgramArray::pinned(max_entries: u3
 pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<never, aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::program_array::ProgramArray::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Sync for aya_ebpf::maps::program_array::ProgramArray
+impl !core::marker::Freeze for aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Send for aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Unpin for aya_ebpf::maps::program_array::ProgramArray
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::program_array::ProgramArray
@@ -1130,6 +1168,7 @@ pub fn aya_ebpf::maps::queue::Queue<T>::pop(&self) -> core::option::Option<T>
 pub fn aya_ebpf::maps::queue::Queue<T>::push(&self, value: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::queue::Queue<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::queue::Queue<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::queue::Queue<T>
+impl<T> !core::marker::Freeze for aya_ebpf::maps::queue::Queue<T>
 impl<T> core::marker::Send for aya_ebpf::maps::queue::Queue<T> where T: core::marker::Send
 impl<T> core::marker::Unpin for aya_ebpf::maps::queue::Queue<T> where T: core::marker::Unpin
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::queue::Queue<T>
@@ -1158,6 +1197,7 @@ pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
 pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where const_assert::Assert<{ _ }>: const_assert::IsTrue
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl core::marker::Sync for aya_ebpf::maps::ring_buf::RingBuf
+impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
 impl core::marker::Send for aya_ebpf::maps::ring_buf::RingBuf
 impl core::marker::Unpin for aya_ebpf::maps::ring_buf::RingBuf
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::ring_buf::RingBuf
@@ -1187,6 +1227,7 @@ pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_skb(&self, ctx: &aya_ebp
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: &mut K, sk_ops: &mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::sock_hash::SockHash<K>
+impl<K> !core::marker::Freeze for aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K> core::marker::Send for aya_ebpf::maps::sock_hash::SockHash<K> where K: core::marker::Send
 impl<K> core::marker::Unpin for aya_ebpf::maps::sock_hash::SockHash<K> where K: core::marker::Unpin
 impl<K> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::sock_hash::SockHash<K>
@@ -1216,6 +1257,7 @@ pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, ctx: &aya_e
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_map::SockMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_map::SockMap
 impl core::marker::Sync for aya_ebpf::maps::sock_map::SockMap
+impl !core::marker::Freeze for aya_ebpf::maps::sock_map::SockMap
 impl core::marker::Send for aya_ebpf::maps::sock_map::SockMap
 impl core::marker::Unpin for aya_ebpf::maps::sock_map::SockMap
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::sock_map::SockMap
@@ -1242,6 +1284,7 @@ pub const fn aya_ebpf::maps::stack::Stack<T>::pinned(max_entries: u32, flags: u3
 pub fn aya_ebpf::maps::stack::Stack<T>::pop(&mut self) -> core::option::Option<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::push(&mut self, value: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::stack::Stack<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack::Stack<T>
+impl<T> core::marker::Freeze for aya_ebpf::maps::stack::Stack<T>
 impl<T> core::marker::Send for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Unpin
@@ -1269,6 +1312,7 @@ pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack_trace::StackTrace
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack_trace::StackTrace
 impl core::marker::Sync for aya_ebpf::maps::stack_trace::StackTrace
+impl !core::marker::Freeze for aya_ebpf::maps::stack_trace::StackTrace
 impl core::marker::Send for aya_ebpf::maps::stack_trace::StackTrace
 impl core::marker::Unpin for aya_ebpf::maps::stack_trace::StackTrace
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::stack_trace::StackTrace
@@ -1296,6 +1340,7 @@ pub const fn aya_ebpf::maps::XskMap::pinned(max_entries: u32, flags: u32) -> aya
 pub fn aya_ebpf::maps::XskMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::XskMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::XskMap
 impl core::marker::Sync for aya_ebpf::maps::XskMap
+impl !core::marker::Freeze for aya_ebpf::maps::XskMap
 impl core::marker::Send for aya_ebpf::maps::XskMap
 impl core::marker::Unpin for aya_ebpf::maps::XskMap
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::XskMap
@@ -1324,6 +1369,7 @@ impl aya_ebpf::programs::device::DeviceContext
 pub fn aya_ebpf::programs::device::DeviceContext::new(device: *mut aya_ebpf_bindings::x86_64::bindings::bpf_cgroup_dev_ctx) -> aya_ebpf::programs::device::DeviceContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::device::DeviceContext
 pub fn aya_ebpf::programs::device::DeviceContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::device::DeviceContext
 impl !core::marker::Send for aya_ebpf::programs::device::DeviceContext
 impl !core::marker::Sync for aya_ebpf::programs::device::DeviceContext
 impl core::marker::Unpin for aya_ebpf::programs::device::DeviceContext
@@ -1352,6 +1398,7 @@ pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: FromBtfArgument>
 pub fn aya_ebpf::programs::fentry::FEntryContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fentry::FEntryContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::fentry::FEntryContext
 impl !core::marker::Send for aya_ebpf::programs::fentry::FEntryContext
 impl !core::marker::Sync for aya_ebpf::programs::fentry::FEntryContext
 impl core::marker::Unpin for aya_ebpf::programs::fentry::FEntryContext
@@ -1380,6 +1427,7 @@ pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: FromBtfArgument>(&
 pub fn aya_ebpf::programs::fexit::FExitContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::fexit::FExitContext
 impl !core::marker::Send for aya_ebpf::programs::fexit::FExitContext
 impl !core::marker::Sync for aya_ebpf::programs::fexit::FExitContext
 impl core::marker::Unpin for aya_ebpf::programs::fexit::FExitContext
@@ -1408,6 +1456,7 @@ pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: FromBtfArgument>(&self
 pub fn aya_ebpf::programs::lsm::LsmContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::lsm::LsmContext
 impl !core::marker::Send for aya_ebpf::programs::lsm::LsmContext
 impl !core::marker::Sync for aya_ebpf::programs::lsm::LsmContext
 impl core::marker::Unpin for aya_ebpf::programs::lsm::LsmContext
@@ -1435,6 +1484,7 @@ impl aya_ebpf::programs::perf_event::PerfEventContext
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::perf_event::PerfEventContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::perf_event::PerfEventContext
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::perf_event::PerfEventContext
 impl !core::marker::Send for aya_ebpf::programs::perf_event::PerfEventContext
 impl !core::marker::Sync for aya_ebpf::programs::perf_event::PerfEventContext
 impl core::marker::Unpin for aya_ebpf::programs::perf_event::PerfEventContext
@@ -1465,6 +1515,7 @@ pub fn aya_ebpf::programs::probe::ProbeContext::new(ctx: *mut core::ffi::c_void)
 pub fn aya_ebpf::programs::probe::ProbeContext::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::probe::ProbeContext
 impl !core::marker::Send for aya_ebpf::programs::probe::ProbeContext
 impl !core::marker::Sync for aya_ebpf::programs::probe::ProbeContext
 impl core::marker::Unpin for aya_ebpf::programs::probe::ProbeContext
@@ -1492,6 +1543,7 @@ impl aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl !core::marker::Send for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl core::marker::Unpin for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
@@ -1541,6 +1593,7 @@ pub fn aya_ebpf::programs::sk_buff::SkBuff::remote_ipv6(&self) -> &[u32; 4]
 pub fn aya_ebpf::programs::sk_buff::SkBuff::remote_port(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::set_mark(&mut self, mark: u32)
 pub fn aya_ebpf::programs::sk_buff::SkBuff::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+impl core::marker::Freeze for aya_ebpf::programs::sk_buff::SkBuff
 impl !core::marker::Send for aya_ebpf::programs::sk_buff::SkBuff
 impl !core::marker::Sync for aya_ebpf::programs::sk_buff::SkBuff
 impl core::marker::Unpin for aya_ebpf::programs::sk_buff::SkBuff
@@ -1582,6 +1635,7 @@ pub fn aya_ebpf::programs::sk_buff::SkBuffContext::set_mark(&mut self, mark: u32
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sk_buff::SkBuffContext
 impl !core::marker::Send for aya_ebpf::programs::sk_buff::SkBuffContext
 impl !core::marker::Sync for aya_ebpf::programs::sk_buff::SkBuffContext
 impl core::marker::Unpin for aya_ebpf::programs::sk_buff::SkBuffContext
@@ -1610,6 +1664,7 @@ impl aya_ebpf::programs::sk_lookup::SkLookupContext
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::new(lookup: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sk_lookup) -> aya_ebpf::programs::sk_lookup::SkLookupContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_lookup::SkLookupContext
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sk_lookup::SkLookupContext
 impl !core::marker::Send for aya_ebpf::programs::sk_lookup::SkLookupContext
 impl !core::marker::Sync for aya_ebpf::programs::sk_lookup::SkLookupContext
 impl core::marker::Unpin for aya_ebpf::programs::sk_lookup::SkLookupContext
@@ -1643,6 +1698,7 @@ pub fn aya_ebpf::programs::sk_msg::SkMsgContext::push_data(&self, start: u32, le
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::size(&self) -> u32
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sk_msg::SkMsgContext
 impl !core::marker::Send for aya_ebpf::programs::sk_msg::SkMsgContext
 impl !core::marker::Sync for aya_ebpf::programs::sk_msg::SkMsgContext
 impl core::marker::Unpin for aya_ebpf::programs::sk_msg::SkMsgContext
@@ -1671,6 +1727,7 @@ impl aya_ebpf::programs::sock::SockContext
 pub fn aya_ebpf::programs::sock::SockContext::new(sock: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> aya_ebpf::programs::sock::SockContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock::SockContext
 pub fn aya_ebpf::programs::sock::SockContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sock::SockContext
 impl !core::marker::Send for aya_ebpf::programs::sock::SockContext
 impl !core::marker::Sync for aya_ebpf::programs::sock::SockContext
 impl core::marker::Unpin for aya_ebpf::programs::sock::SockContext
@@ -1699,6 +1756,7 @@ impl aya_ebpf::programs::sock_addr::SockAddrContext
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::new(sock_addr: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_addr) -> aya_ebpf::programs::sock_addr::SockAddrContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock_addr::SockAddrContext
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sock_addr::SockAddrContext
 impl !core::marker::Send for aya_ebpf::programs::sock_addr::SockAddrContext
 impl !core::marker::Sync for aya_ebpf::programs::sock_addr::SockAddrContext
 impl core::marker::Unpin for aya_ebpf::programs::sock_addr::SockAddrContext
@@ -1738,6 +1796,7 @@ pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_port(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_cb_flags(&self, flags: i32) -> core::result::Result<(), i64>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sock_ops::SockOpsContext
 impl !core::marker::Send for aya_ebpf::programs::sock_ops::SockOpsContext
 impl !core::marker::Sync for aya_ebpf::programs::sock_ops::SockOpsContext
 impl core::marker::Unpin for aya_ebpf::programs::sock_ops::SockOpsContext
@@ -1766,6 +1825,7 @@ impl aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::new(sockopt: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sockopt) -> aya_ebpf::programs::sockopt::SockoptContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sockopt::SockoptContext
 impl !core::marker::Send for aya_ebpf::programs::sockopt::SockoptContext
 impl !core::marker::Sync for aya_ebpf::programs::sockopt::SockoptContext
 impl core::marker::Unpin for aya_ebpf::programs::sockopt::SockoptContext
@@ -1794,6 +1854,7 @@ impl aya_ebpf::programs::sysctl::SysctlContext
 pub fn aya_ebpf::programs::sysctl::SysctlContext::new(sysctl: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sysctl) -> aya_ebpf::programs::sysctl::SysctlContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sysctl::SysctlContext
 pub fn aya_ebpf::programs::sysctl::SysctlContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sysctl::SysctlContext
 impl !core::marker::Send for aya_ebpf::programs::sysctl::SysctlContext
 impl !core::marker::Sync for aya_ebpf::programs::sysctl::SysctlContext
 impl core::marker::Unpin for aya_ebpf::programs::sysctl::SysctlContext
@@ -1839,6 +1900,7 @@ pub fn aya_ebpf::programs::tc::TcContext::set_mark(&mut self, mark: u32)
 pub fn aya_ebpf::programs::tc::TcContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tc::TcContext
 pub fn aya_ebpf::programs::tc::TcContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
+impl core::marker::Freeze for aya_ebpf::programs::tc::TcContext
 impl !core::marker::Send for aya_ebpf::programs::tc::TcContext
 impl !core::marker::Sync for aya_ebpf::programs::tc::TcContext
 impl core::marker::Unpin for aya_ebpf::programs::tc::TcContext
@@ -1867,6 +1929,7 @@ pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: FromBtfAr
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl !core::marker::Send for aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl core::marker::Unpin for aya_ebpf::programs::tp_btf::BtfTracePointContext
@@ -1895,6 +1958,7 @@ pub fn aya_ebpf::programs::tracepoint::TracePointContext::new(ctx: *mut core::ff
 pub unsafe fn aya_ebpf::programs::tracepoint::TracePointContext::read_at<T>(&self, offset: usize) -> core::result::Result<T, i64>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tracepoint::TracePointContext
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::tracepoint::TracePointContext
 impl !core::marker::Send for aya_ebpf::programs::tracepoint::TracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::tracepoint::TracePointContext
 impl core::marker::Unpin for aya_ebpf::programs::tracepoint::TracePointContext
@@ -1927,6 +1991,7 @@ pub fn aya_ebpf::programs::xdp::XdpContext::metadata_end(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::new(ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md) -> aya_ebpf::programs::xdp::XdpContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::xdp::XdpContext
 impl !core::marker::Send for aya_ebpf::programs::xdp::XdpContext
 impl !core::marker::Sync for aya_ebpf::programs::xdp::XdpContext
 impl core::marker::Unpin for aya_ebpf::programs::xdp::XdpContext
@@ -1954,6 +2019,7 @@ pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: FromBtfAr
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl !core::marker::Send for aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl core::marker::Unpin for aya_ebpf::programs::tp_btf::BtfTracePointContext
@@ -1981,6 +2047,7 @@ impl aya_ebpf::programs::device::DeviceContext
 pub fn aya_ebpf::programs::device::DeviceContext::new(device: *mut aya_ebpf_bindings::x86_64::bindings::bpf_cgroup_dev_ctx) -> aya_ebpf::programs::device::DeviceContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::device::DeviceContext
 pub fn aya_ebpf::programs::device::DeviceContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::device::DeviceContext
 impl !core::marker::Send for aya_ebpf::programs::device::DeviceContext
 impl !core::marker::Sync for aya_ebpf::programs::device::DeviceContext
 impl core::marker::Unpin for aya_ebpf::programs::device::DeviceContext
@@ -2008,6 +2075,7 @@ pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: FromBtfArgument>
 pub fn aya_ebpf::programs::fentry::FEntryContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fentry::FEntryContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::fentry::FEntryContext
 impl !core::marker::Send for aya_ebpf::programs::fentry::FEntryContext
 impl !core::marker::Sync for aya_ebpf::programs::fentry::FEntryContext
 impl core::marker::Unpin for aya_ebpf::programs::fentry::FEntryContext
@@ -2035,6 +2103,7 @@ pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: FromBtfArgument>(&
 pub fn aya_ebpf::programs::fexit::FExitContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::fexit::FExitContext
 impl !core::marker::Send for aya_ebpf::programs::fexit::FExitContext
 impl !core::marker::Sync for aya_ebpf::programs::fexit::FExitContext
 impl core::marker::Unpin for aya_ebpf::programs::fexit::FExitContext
@@ -2062,6 +2131,7 @@ pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: FromBtfArgument>(&self
 pub fn aya_ebpf::programs::lsm::LsmContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::lsm::LsmContext
 impl !core::marker::Send for aya_ebpf::programs::lsm::LsmContext
 impl !core::marker::Sync for aya_ebpf::programs::lsm::LsmContext
 impl core::marker::Unpin for aya_ebpf::programs::lsm::LsmContext
@@ -2088,6 +2158,7 @@ impl aya_ebpf::programs::perf_event::PerfEventContext
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::perf_event::PerfEventContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::perf_event::PerfEventContext
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::perf_event::PerfEventContext
 impl !core::marker::Send for aya_ebpf::programs::perf_event::PerfEventContext
 impl !core::marker::Sync for aya_ebpf::programs::perf_event::PerfEventContext
 impl core::marker::Unpin for aya_ebpf::programs::perf_event::PerfEventContext
@@ -2117,6 +2188,7 @@ pub fn aya_ebpf::programs::probe::ProbeContext::new(ctx: *mut core::ffi::c_void)
 pub fn aya_ebpf::programs::probe::ProbeContext::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::probe::ProbeContext
 impl !core::marker::Send for aya_ebpf::programs::probe::ProbeContext
 impl !core::marker::Sync for aya_ebpf::programs::probe::ProbeContext
 impl core::marker::Unpin for aya_ebpf::programs::probe::ProbeContext
@@ -2143,6 +2215,7 @@ impl aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl !core::marker::Send for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl core::marker::Unpin for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
@@ -2184,6 +2257,7 @@ pub fn aya_ebpf::programs::sk_buff::SkBuffContext::set_mark(&mut self, mark: u32
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sk_buff::SkBuffContext
 impl !core::marker::Send for aya_ebpf::programs::sk_buff::SkBuffContext
 impl !core::marker::Sync for aya_ebpf::programs::sk_buff::SkBuffContext
 impl core::marker::Unpin for aya_ebpf::programs::sk_buff::SkBuffContext
@@ -2211,6 +2285,7 @@ impl aya_ebpf::programs::sk_lookup::SkLookupContext
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::new(lookup: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sk_lookup) -> aya_ebpf::programs::sk_lookup::SkLookupContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_lookup::SkLookupContext
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sk_lookup::SkLookupContext
 impl !core::marker::Send for aya_ebpf::programs::sk_lookup::SkLookupContext
 impl !core::marker::Sync for aya_ebpf::programs::sk_lookup::SkLookupContext
 impl core::marker::Unpin for aya_ebpf::programs::sk_lookup::SkLookupContext
@@ -2243,6 +2318,7 @@ pub fn aya_ebpf::programs::sk_msg::SkMsgContext::push_data(&self, start: u32, le
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::size(&self) -> u32
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sk_msg::SkMsgContext
 impl !core::marker::Send for aya_ebpf::programs::sk_msg::SkMsgContext
 impl !core::marker::Sync for aya_ebpf::programs::sk_msg::SkMsgContext
 impl core::marker::Unpin for aya_ebpf::programs::sk_msg::SkMsgContext
@@ -2270,6 +2346,7 @@ impl aya_ebpf::programs::sock_addr::SockAddrContext
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::new(sock_addr: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_addr) -> aya_ebpf::programs::sock_addr::SockAddrContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock_addr::SockAddrContext
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sock_addr::SockAddrContext
 impl !core::marker::Send for aya_ebpf::programs::sock_addr::SockAddrContext
 impl !core::marker::Sync for aya_ebpf::programs::sock_addr::SockAddrContext
 impl core::marker::Unpin for aya_ebpf::programs::sock_addr::SockAddrContext
@@ -2297,6 +2374,7 @@ impl aya_ebpf::programs::sock::SockContext
 pub fn aya_ebpf::programs::sock::SockContext::new(sock: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> aya_ebpf::programs::sock::SockContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock::SockContext
 pub fn aya_ebpf::programs::sock::SockContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sock::SockContext
 impl !core::marker::Send for aya_ebpf::programs::sock::SockContext
 impl !core::marker::Sync for aya_ebpf::programs::sock::SockContext
 impl core::marker::Unpin for aya_ebpf::programs::sock::SockContext
@@ -2335,6 +2413,7 @@ pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_port(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_cb_flags(&self, flags: i32) -> core::result::Result<(), i64>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sock_ops::SockOpsContext
 impl !core::marker::Send for aya_ebpf::programs::sock_ops::SockOpsContext
 impl !core::marker::Sync for aya_ebpf::programs::sock_ops::SockOpsContext
 impl core::marker::Unpin for aya_ebpf::programs::sock_ops::SockOpsContext
@@ -2362,6 +2441,7 @@ impl aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::new(sockopt: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sockopt) -> aya_ebpf::programs::sockopt::SockoptContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sockopt::SockoptContext
 impl !core::marker::Send for aya_ebpf::programs::sockopt::SockoptContext
 impl !core::marker::Sync for aya_ebpf::programs::sockopt::SockoptContext
 impl core::marker::Unpin for aya_ebpf::programs::sockopt::SockoptContext
@@ -2389,6 +2469,7 @@ impl aya_ebpf::programs::sysctl::SysctlContext
 pub fn aya_ebpf::programs::sysctl::SysctlContext::new(sysctl: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sysctl) -> aya_ebpf::programs::sysctl::SysctlContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sysctl::SysctlContext
 pub fn aya_ebpf::programs::sysctl::SysctlContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::sysctl::SysctlContext
 impl !core::marker::Send for aya_ebpf::programs::sysctl::SysctlContext
 impl !core::marker::Sync for aya_ebpf::programs::sysctl::SysctlContext
 impl core::marker::Unpin for aya_ebpf::programs::sysctl::SysctlContext
@@ -2433,6 +2514,7 @@ pub fn aya_ebpf::programs::tc::TcContext::set_mark(&mut self, mark: u32)
 pub fn aya_ebpf::programs::tc::TcContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tc::TcContext
 pub fn aya_ebpf::programs::tc::TcContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
+impl core::marker::Freeze for aya_ebpf::programs::tc::TcContext
 impl !core::marker::Send for aya_ebpf::programs::tc::TcContext
 impl !core::marker::Sync for aya_ebpf::programs::tc::TcContext
 impl core::marker::Unpin for aya_ebpf::programs::tc::TcContext
@@ -2460,6 +2542,7 @@ pub fn aya_ebpf::programs::tracepoint::TracePointContext::new(ctx: *mut core::ff
 pub unsafe fn aya_ebpf::programs::tracepoint::TracePointContext::read_at<T>(&self, offset: usize) -> core::result::Result<T, i64>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tracepoint::TracePointContext
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::tracepoint::TracePointContext
 impl !core::marker::Send for aya_ebpf::programs::tracepoint::TracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::tracepoint::TracePointContext
 impl core::marker::Unpin for aya_ebpf::programs::tracepoint::TracePointContext
@@ -2491,6 +2574,7 @@ pub fn aya_ebpf::programs::xdp::XdpContext::metadata_end(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::new(ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md) -> aya_ebpf::programs::xdp::XdpContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::xdp::XdpContext
 impl !core::marker::Send for aya_ebpf::programs::xdp::XdpContext
 impl !core::marker::Sync for aya_ebpf::programs::xdp::XdpContext
 impl core::marker::Unpin for aya_ebpf::programs::xdp::XdpContext
@@ -2519,6 +2603,7 @@ pub fn aya_ebpf::PtRegs::arg<T: FromPtRegs>(&self, n: usize) -> core::option::Op
 pub fn aya_ebpf::PtRegs::as_ptr(&self) -> *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
 pub fn aya_ebpf::PtRegs::new(regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs) -> Self
 pub fn aya_ebpf::PtRegs::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
+impl core::marker::Freeze for aya_ebpf::PtRegs
 impl !core::marker::Send for aya_ebpf::PtRegs
 impl !core::marker::Sync for aya_ebpf::PtRegs
 impl core::marker::Unpin for aya_ebpf::PtRegs
