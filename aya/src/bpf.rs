@@ -195,7 +195,7 @@ impl<'a> EbpfLoader<'a> {
     ///
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
-    pub fn btf(&mut self, btf: Option<&'a Btf>) -> &mut EbpfLoader<'a> {
+    pub fn btf(&mut self, btf: Option<&'a Btf>) -> &mut Self {
         self.btf = btf.map(Cow::Borrowed);
         self
     }
@@ -219,7 +219,7 @@ impl<'a> EbpfLoader<'a> {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn allow_unsupported_maps(&mut self) -> &mut EbpfLoader<'a> {
+    pub fn allow_unsupported_maps(&mut self) -> &mut Self {
         self.allow_unsupported_maps = true;
         self
     }
@@ -240,7 +240,7 @@ impl<'a> EbpfLoader<'a> {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn map_pin_path<P: AsRef<Path>>(&mut self, path: P) -> &mut EbpfLoader<'a> {
+    pub fn map_pin_path<P: AsRef<Path>>(&mut self, path: P) -> &mut Self {
         self.map_pin_path = Some(path.as_ref().to_owned());
         self
     }
@@ -289,7 +289,7 @@ impl<'a> EbpfLoader<'a> {
         name: &'a str,
         value: T,
         must_exist: bool,
-    ) -> &mut EbpfLoader<'a> {
+    ) -> &mut Self {
         self.globals.insert(name, (value.into().bytes, must_exist));
         self
     }
@@ -310,7 +310,7 @@ impl<'a> EbpfLoader<'a> {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn set_max_entries(&mut self, name: &'a str, size: u32) -> &mut EbpfLoader<'a> {
+    pub fn set_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self {
         self.max_entries.insert(name, size);
         self
     }
@@ -332,7 +332,7 @@ impl<'a> EbpfLoader<'a> {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn extension(&mut self, name: &'a str) -> &mut EbpfLoader<'a> {
+    pub fn extension(&mut self, name: &'a str) -> &mut Self {
         self.extensions.insert(name);
         self
     }
@@ -350,7 +350,7 @@ impl<'a> EbpfLoader<'a> {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn verifier_log_level(&mut self, level: VerifierLogLevel) -> &mut EbpfLoader<'a> {
+    pub fn verifier_log_level(&mut self, level: VerifierLogLevel) -> &mut Self {
         self.verifier_log_level = level;
         self
     }
