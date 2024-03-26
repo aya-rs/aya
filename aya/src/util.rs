@@ -88,19 +88,31 @@ impl KernelVersion {
         (u32::from(major) << 16) + (u32::from(minor) << 8) + u32::from(patch)
     }
 
-    // This is ported from https://github.com/torvalds/linux/blob/3f01e9f/tools/lib/bpf/libbpf_probes.c#L21-L101.
-
+    // These (get_ubuntu_kernel_version, parse_ubuntu_kernel_version, read_ubuntu_kernel_version_file)
+    // are ported from https://github.com/torvalds/linux/blob/3f01e9f/tools/lib/bpf/libbpf_probes.c#L21-L101.
     fn get_ubuntu_kernel_version() -> Result<Option<Self>, CurrentKernelVersionError> {
+        Self::read_ubuntu_kernel_version_file().and_then(|content| {
+            content
+                .and_then(|content| Self::parse_ubuntu_kernel_version(&content).transpose())
+                .transpose()
+        })
+    }
+
+    fn read_ubuntu_kernel_version_file() -> Result<Option<String>, CurrentKernelVersionError> {
         const UBUNTU_KVER_FILE: &str = "/proc/version_signature";
-        let s = match fs::read_to_string(UBUNTU_KVER_FILE) {
-            Ok(s) => s,
+        match fs::read_to_string(UBUNTU_KVER_FILE) {
+            Ok(s) => Ok(Some(s)),
             Err(e) => {
-                if e.kind() == io::ErrorKind::NotFound {
-                    return Ok(None);
+                if e.kind() != io::ErrorKind::NotFound {
+                    Err(e.into())
+                } else {
+                    Ok(None)
                 }
-                return Err(e.into());
             }
-        };
+        }
+    }
+
+    fn parse_ubuntu_kernel_version(s: &str) -> Result<Option<Self>, CurrentKernelVersionError> {
         let mut parts = s.split_terminator(char::is_whitespace);
         let mut next = || {
             parts
@@ -130,7 +142,7 @@ impl KernelVersion {
     }
 
     fn get_kernel_version() -> Result<Self, CurrentKernelVersionError> {
-        if let Some(v) = Self::get_ubuntu_kernel_version()? {
+        if let Ok(Some(v)) = Self::get_ubuntu_kernel_version() {
             return Ok(v);
         }
 
@@ -378,6 +390,12 @@ mod tests {
 
     #[test]
     fn test_parse_kernel_version_string() {
+        // cat /proc/version_signature on Proxmox VE 8.1.4.
+        assert_matches!(KernelVersion::parse_ubuntu_kernel_version(""), Err(CurrentKernelVersionError::ParseError(s)) if s.is_empty());
+        // cat /proc/version_signature on Ubuntu 22.04.
+        assert_matches!(KernelVersion::parse_ubuntu_kernel_version( "Ubuntu 5.15.0-82.91-generic 5.15.111"), Ok(Some(kernel_version)) => {
+            assert_eq!(kernel_version, KernelVersion::new(5, 15, 111))
+        });
         // WSL.
         assert_matches!(KernelVersion::parse_kernel_version_string("5.15.90.1-microsoft-standard-WSL2"), Ok(kernel_version) => {
             assert_eq!(kernel_version, KernelVersion::new(5, 15, 90))
