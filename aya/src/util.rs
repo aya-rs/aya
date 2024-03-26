@@ -130,7 +130,7 @@ impl KernelVersion {
     }
 
     fn get_kernel_version() -> Result<Self, CurrentKernelVersionError> {
-        if let Some(v) = Self::get_ubuntu_kernel_version()? {
+        if let Some(v) = Self::get_ubuntu_kernel_version().ok().flatten() {
             return Ok(v);
         }
 
