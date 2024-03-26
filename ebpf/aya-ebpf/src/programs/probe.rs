@@ -43,25 +43,6 @@ impl ProbeContext {
     pub fn arg<T: FromPtRegs>(&self, n: usize) -> Option<T> {
         T::from_argument(unsafe { &*self.regs }, n)
     }
-
-    /// Returns the return value of the probed function.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// # #![allow(dead_code)]
-    /// # use aya_ebpf::{programs::ProbeContext, cty::c_int};
-    /// unsafe fn try_kretprobe_try_to_wake_up(ctx: ProbeContext) -> Result<u32, u32> {
-    ///     let retval: c_int = ctx.ret().ok_or(1u32)?;
-    ///
-    ///     // Do something with retval
-    ///
-    ///     Ok(0)
-    /// }
-    /// ```
-    pub fn ret<T: FromPtRegs>(&self) -> Option<T> {
-        T::from_retval(unsafe { &*self.regs })
-    }
 }
 
 impl EbpfContext for ProbeContext {
