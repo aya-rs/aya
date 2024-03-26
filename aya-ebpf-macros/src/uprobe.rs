@@ -86,6 +86,12 @@ impl UProbe {
         } else {
             prefix.to_string().into()
         };
+
+        let probe_type = if section_name.as_ref().starts_with("uprobe") {
+            quote! { ProbeContext }
+        } else {
+            quote! { RetProbeContext }
+        };
         let fn_vis = &self.item.vis;
         let fn_name = self.item.sig.ident.clone();
         let item = &self.item;
@@ -93,7 +99,7 @@ impl UProbe {
             #[no_mangle]
             #[link_section = #section_name]
             #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
-                let _ = #fn_name(::aya_ebpf::programs::ProbeContext::new(ctx));
+                let _ = #fn_name(::aya_ebpf::programs::#probe_type::new(ctx));
                 return 0;
 
                 #item
@@ -251,7 +257,7 @@ mod tests {
                 #[no_mangle]
                 #[link_section = "uretprobe"]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
+                    let _ = foo(::aya_ebpf::programs::RetProbeContext::new(ctx));
                     return 0;
 
                     fn foo(ctx: ProbeContext) -> u32 {
