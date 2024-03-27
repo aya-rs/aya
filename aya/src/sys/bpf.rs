@@ -849,14 +849,8 @@ pub(crate) fn is_btf_func_supported() -> bool {
     let a_name = btf.add_string("a");
     let b_name = btf.add_string("b");
     let params = vec![
-        BtfParam {
-            name_offset: a_name,
-            btf_type: int_type_id,
-        },
-        BtfParam {
-            name_offset: b_name,
-            btf_type: int_type_id,
-        },
+        BtfParam::new(a_name, int_type_id),
+        BtfParam::new(b_name, int_type_id),
     ];
     let func_proto = BtfType::FuncProto(FuncProto::new(params, int_type_id));
     let func_proto_type_id = btf.add_type(func_proto);
@@ -879,14 +873,8 @@ pub(crate) fn is_btf_func_global_supported() -> bool {
     let a_name = btf.add_string("a");
     let b_name = btf.add_string("b");
     let params = vec![
-        BtfParam {
-            name_offset: a_name,
-            btf_type: int_type_id,
-        },
-        BtfParam {
-            name_offset: b_name,
-            btf_type: int_type_id,
-        },
+        BtfParam::new(a_name, int_type_id),
+        BtfParam::new(b_name, int_type_id),
     ];
     let func_proto = BtfType::FuncProto(FuncProto::new(params, int_type_id));
     let func_proto_type_id = btf.add_type(func_proto);
@@ -911,11 +899,7 @@ pub(crate) fn is_btf_datasec_supported() -> bool {
     let var_type_id = btf.add_type(var_type);
 
     let name_offset = btf.add_string(".data");
-    let variables = vec![DataSecEntry {
-        btf_type: var_type_id,
-        offset: 0,
-        size: 4,
-    }];
+    let variables = vec![DataSecEntry::new(var_type_id, 0, 4)];
     let datasec_type = BtfType::DataSec(DataSec::new(name_offset, variables, 4));
     btf.add_type(datasec_type);
 
