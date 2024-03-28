@@ -2,24 +2,28 @@ use std::{
     collections::HashMap,
     ffi::CStr,
     io, mem,
+    net::Ipv4Addr,
     os::fd::{AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd},
     ptr, slice,
 };
 
 use libc::{
-    getsockname, nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl, socket,
-    AF_NETLINK, AF_UNSPEC, ETH_P_ALL, IFF_UP, IFLA_XDP, NETLINK_EXT_ACK, NETLINK_ROUTE,
+    getsockname, nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl, socket, AF_INET,
+    AF_NETLINK, AF_UNSPEC, ETH_P_ALL, IFA_F_PERMANENT, IFA_LOCAL, IFF_UP, IFLA_IFNAME,
+    IFLA_INFO_DATA, IFLA_INFO_KIND, IFLA_LINKINFO, IFLA_XDP, NETLINK_EXT_ACK, NETLINK_ROUTE,
     NLA_ALIGNTO, NLA_F_NESTED, NLA_TYPE_MASK, NLMSG_DONE, NLMSG_ERROR, NLM_F_ACK, NLM_F_CREATE,
-    NLM_F_DUMP, NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI, NLM_F_REQUEST, RTM_DELTFILTER, RTM_GETTFILTER,
-    RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK, SOCK_RAW, SOL_NETLINK,
+    NLM_F_DUMP, NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI, NLM_F_REQUEST, RTM_DELLINK, RTM_DELTFILTER,
+    RTM_GETTFILTER, RTM_NEWADDR, RTM_NEWLINK, RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK,
+    RT_SCOPE_UNIVERSE, SOCK_RAW, SOL_NETLINK,
 };
 use thiserror::Error;
 
 use crate::{
     generated::{
-        ifinfomsg, tcmsg, IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS, NLMSG_ALIGNTO,
-        TCA_BPF_FD, TCA_BPF_FLAGS, TCA_BPF_FLAG_ACT_DIRECT, TCA_BPF_NAME, TCA_KIND, TCA_OPTIONS,
-        TC_H_CLSACT, TC_H_INGRESS, TC_H_MAJ_MASK, TC_H_UNSPEC, XDP_FLAGS_REPLACE,
+        ifaddrmsg, ifinfomsg, tcmsg, IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS,
+        NLMSG_ALIGNTO, TCA_BPF_FD, TCA_BPF_FLAGS, TCA_BPF_FLAG_ACT_DIRECT, TCA_BPF_NAME, TCA_KIND,
+        TCA_OPTIONS, TC_H_CLSACT, TC_H_INGRESS, TC_H_MAJ_MASK, TC_H_UNSPEC, VETH_INFO_PEER,
+        XDP_FLAGS_REPLACE,
     },
     programs::TcAttachType,
     util::tc_handler_make,
@@ -267,6 +271,63 @@ pub(crate) unsafe fn netlink_find_filter_with_name(
 }
 
 #[doc(hidden)]
+pub unsafe fn netlink_add_veth_pair(name1: &CStr, name2: &CStr) -> Result<(), io::Error> {
+    let sock = NetlinkSocket::open()?;
+
+    // Safety: Request is POD so this is safe
+    let mut req = mem::zeroed::<Request>();
+
+    let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<ifinfomsg>();
+    req.header = nlmsghdr {
+        nlmsg_len: nlmsg_len as u32,
+        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE) as u16,
+        nlmsg_type: RTM_NEWLINK,
+        nlmsg_pid: 0,
+        nlmsg_seq: 1,
+    };
+    req.if_info.ifi_family = AF_UNSPEC as u8;
+    req.if_info.ifi_index = 0;
+    req.if_info.ifi_flags = 0;
+    req.if_info.ifi_change = 0;
+
+    let attrs_buf = request_attributes(&mut req, nlmsg_len);
+
+    // add IFLA_IFNAME
+    let ifname_len = write_attr_bytes(attrs_buf, 0, IFLA_IFNAME, name1.to_bytes_with_nul())?;
+
+    // add IFLA_LINKINFO which includes IFLA_INFO_KIND and IFLA_INFO_DATA
+    let mut linkinfo = NestedAttrs::new(&mut attrs_buf[ifname_len..], IFLA_LINKINFO);
+    linkinfo.write_attr_bytes(IFLA_INFO_KIND, b"veth")?;
+
+    linkinfo.write_nested_attrs(IFLA_INFO_DATA, |info_data| {
+        info_data.write_nested_attrs(VETH_INFO_PEER as u16, |info_peer| {
+            // Safety: ifinfomsg is POD so this is safe
+            let mut peer_if_info = mem::zeroed::<ifinfomsg>();
+            peer_if_info.ifi_family = AF_UNSPEC as u8;
+            peer_if_info.ifi_index = 0;
+            peer_if_info.ifi_flags = 0;
+            peer_if_info.ifi_change = 0;
+
+            info_peer.write_bytes(bytes_of(&peer_if_info))?;
+
+            // add IFLA_IFNAME
+            info_peer.write_attr_bytes(IFLA_IFNAME, name2.to_bytes_with_nul())?;
+
+            Ok(())
+        })?;
+        Ok(())
+    })?;
+
+    let linkinfo_len = linkinfo.finish()?;
+
+    req.header.nlmsg_len += align_to(ifname_len + linkinfo_len, NLA_ALIGNTO as usize) as u32;
+    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    sock.recv()?;
+
+    Ok(())
+}
+
+#[doc(hidden)]
 pub unsafe fn netlink_set_link_up(if_index: i32) -> Result<(), io::Error> {
     let sock = NetlinkSocket::open()?;
 
@@ -292,17 +353,113 @@ pub unsafe fn netlink_set_link_up(if_index: i32) -> Result<(), io::Error> {
     Ok(())
 }
 
+#[doc(hidden)]
+pub unsafe fn netlink_set_link_down(if_index: i32) -> Result<(), io::Error> {
+    let sock = NetlinkSocket::open()?;
+
+    // Safety: Request is POD so this is safe
+    let mut req = mem::zeroed::<Request>();
+
+    let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<ifinfomsg>();
+    req.header = nlmsghdr {
+        nlmsg_len: nlmsg_len as u32,
+        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
+        nlmsg_type: RTM_SETLINK,
+        nlmsg_pid: 0,
+        nlmsg_seq: 1,
+    };
+    req.if_info.ifi_family = AF_UNSPEC as u8;
+    req.if_info.ifi_index = if_index;
+    req.if_info.ifi_flags = 0;
+    req.if_info.ifi_change = IFF_UP as u32;
+
+    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    sock.recv()?;
+
+    Ok(())
+}
+
+#[doc(hidden)]
+pub unsafe fn netlink_delete_link(if_index: i32) -> Result<(), io::Error> {
+    let sock = NetlinkSocket::open()?;
+
+    // Safety: Request is POD so this is safe
+    let mut req = mem::zeroed::<Request>();
+
+    let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<ifinfomsg>();
+    req.header = nlmsghdr {
+        nlmsg_len: nlmsg_len as u32,
+        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
+        nlmsg_type: RTM_DELLINK,
+        nlmsg_pid: 0,
+        nlmsg_seq: 1,
+    };
+    req.if_info.ifi_family = AF_UNSPEC as u8;
+    req.if_info.ifi_index = if_index;
+    req.if_info.ifi_flags = 0;
+    req.if_info.ifi_change = 0;
+
+    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    sock.recv()?;
+
+    Ok(())
+}
+
+#[doc(hidden)]
+pub unsafe fn netlink_add_ip_addr(
+    if_index: u32,
+    ipv4_addr: Ipv4Addr,
+    ipv4_prefix: u8,
+) -> Result<(), io::Error> {
+    let sock = NetlinkSocket::open()?;
+
+    // Safety: AddrRequest is POD so this is safe
+    let mut req = mem::zeroed::<AddrRequest>();
+
+    let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<ifaddrmsg>();
+    req.header = nlmsghdr {
+        nlmsg_len: nlmsg_len as u32,
+        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE) as u16,
+        nlmsg_type: RTM_NEWADDR,
+        nlmsg_pid: 0,
+        nlmsg_seq: 1,
+    };
+    req.if_addr.ifa_family = AF_INET as u8;
+    req.if_addr.ifa_prefixlen = ipv4_prefix;
+    req.if_addr.ifa_flags = IFA_F_PERMANENT as u8;
+    req.if_addr.ifa_scope = RT_SCOPE_UNIVERSE;
+    req.if_addr.ifa_index = if_index;
+
+    let attrs_buf = request_attributes(&mut req, nlmsg_len);
+
+    // add IFA_LOCAL
+    let local_len = write_attr_bytes(attrs_buf, 0, IFA_LOCAL, &ipv4_addr.octets())?;
+
+    req.header.nlmsg_len += align_to(local_len, NLA_ALIGNTO as usize) as u32;
+    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    sock.recv()?;
+
+    Ok(())
+}
+
 #[repr(C)]
 struct Request {
     header: nlmsghdr,
     if_info: ifinfomsg,
-    attrs: [u8; 64],
+    attrs: [u8; 128],
 }
 
 #[repr(C)]
 struct TcRequest {
     header: nlmsghdr,
     tc_info: tcmsg,
+    attrs: [u8; 64],
+}
+
+#[repr(C)]
+struct AddrRequest {
+    header: nlmsghdr,
+    if_addr: ifaddrmsg,
     attrs: [u8; 64],
 }
 
@@ -501,6 +658,23 @@ impl<'a> NestedAttrs<'a> {
 
     fn write_attr_bytes(&mut self, attr_type: u16, value: &[u8]) -> Result<usize, io::Error> {
         let size = write_attr_bytes(self.buf, self.offset, attr_type, value)?;
+        self.offset += size;
+        Ok(size)
+    }
+
+    fn write_bytes(&mut self, value: &[u8]) -> Result<usize, io::Error> {
+        let size = write_bytes(self.buf, self.offset, value)?;
+        self.offset += size;
+        Ok(size)
+    }
+
+    fn write_nested_attrs<F>(&mut self, attr_type: u16, f: F) -> Result<usize, io::Error>
+    where
+        F: FnOnce(&mut NestedAttrs<'_>) -> Result<(), io::Error>,
+    {
+        let mut nested_attrs = NestedAttrs::new(&mut self.buf[self.offset..], attr_type);
+        f(&mut nested_attrs)?;
+        let size = nested_attrs.finish()?;
         self.offset += size;
         Ok(size)
     }
