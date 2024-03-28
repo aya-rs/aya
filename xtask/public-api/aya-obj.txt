@@ -1321,6 +1321,47 @@ pub const aya_obj::generated::bpf_core_relo_kind::BPF_CORE_TYPE_ID_TARGET: aya_o
 pub const aya_obj::generated::bpf_core_relo_kind::BPF_CORE_TYPE_MATCHES: aya_obj::generated::bpf_core_relo_kind::Type = 12u32
 pub const aya_obj::generated::bpf_core_relo_kind::BPF_CORE_TYPE_SIZE: aya_obj::generated::bpf_core_relo_kind::Type = 9u32
 pub type aya_obj::generated::bpf_core_relo_kind::Type = core::ffi::c_uint
+#[repr(u32)] pub enum aya_obj::generated::_bindgen_ty_175
+pub aya_obj::generated::_bindgen_ty_175::VETH_INFO_PEER = 1
+pub aya_obj::generated::_bindgen_ty_175::VETH_INFO_UNSPEC = 0
+pub aya_obj::generated::_bindgen_ty_175::__VETH_INFO_MAX = 2
+impl core::clone::Clone for aya_obj::generated::_bindgen_ty_175
+pub fn aya_obj::generated::_bindgen_ty_175::clone(&self) -> aya_obj::generated::_bindgen_ty_175
+impl core::cmp::Eq for aya_obj::generated::_bindgen_ty_175
+impl core::cmp::PartialEq for aya_obj::generated::_bindgen_ty_175
+pub fn aya_obj::generated::_bindgen_ty_175::eq(&self, other: &aya_obj::generated::_bindgen_ty_175) -> bool
+impl core::fmt::Debug for aya_obj::generated::_bindgen_ty_175
+pub fn aya_obj::generated::_bindgen_ty_175::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya_obj::generated::_bindgen_ty_175
+pub fn aya_obj::generated::_bindgen_ty_175::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya_obj::generated::_bindgen_ty_175
+impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_175
+impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_175
+impl core::marker::Send for aya_obj::generated::_bindgen_ty_175
+impl core::marker::Sync for aya_obj::generated::_bindgen_ty_175
+impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_175
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_175
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_175
+impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_175 where U: core::convert::From<T>
+pub fn aya_obj::generated::_bindgen_ty_175::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::_bindgen_ty_175 where U: core::convert::Into<T>
+pub type aya_obj::generated::_bindgen_ty_175::Error = core::convert::Infallible
+pub fn aya_obj::generated::_bindgen_ty_175::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::_bindgen_ty_175 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::_bindgen_ty_175::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::_bindgen_ty_175::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::_bindgen_ty_175 where T: core::clone::Clone
+pub type aya_obj::generated::_bindgen_ty_175::Owned = T
+pub fn aya_obj::generated::_bindgen_ty_175::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::_bindgen_ty_175::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::_bindgen_ty_175 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::_bindgen_ty_175::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::_bindgen_ty_175 where T: core::marker::Sized
+pub fn aya_obj::generated::_bindgen_ty_175::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::_bindgen_ty_175 where T: core::marker::Sized
+pub fn aya_obj::generated::_bindgen_ty_175::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::_bindgen_ty_175
+pub fn aya_obj::generated::_bindgen_ty_175::from(t: T) -> T
 #[repr(u32)] pub enum aya_obj::generated::bpf_attach_type
 pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_DEVICE = 6
 pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_GETSOCKOPT = 21
@@ -5680,6 +5721,43 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::btf_var_secinfo where
 pub fn aya_obj::generated::btf_var_secinfo::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::btf_var_secinfo
 pub fn aya_obj::generated::btf_var_secinfo::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::ifaddrmsg
+pub aya_obj::generated::ifaddrmsg::ifa_family: aya_obj::generated::__u8
+pub aya_obj::generated::ifaddrmsg::ifa_flags: aya_obj::generated::__u8
+pub aya_obj::generated::ifaddrmsg::ifa_index: aya_obj::generated::__u32
+pub aya_obj::generated::ifaddrmsg::ifa_prefixlen: aya_obj::generated::__u8
+pub aya_obj::generated::ifaddrmsg::ifa_scope: aya_obj::generated::__u8
+impl core::clone::Clone for aya_obj::generated::ifaddrmsg
+pub fn aya_obj::generated::ifaddrmsg::clone(&self) -> aya_obj::generated::ifaddrmsg
+impl core::fmt::Debug for aya_obj::generated::ifaddrmsg
+pub fn aya_obj::generated::ifaddrmsg::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::ifaddrmsg
+impl core::marker::Freeze for aya_obj::generated::ifaddrmsg
+impl core::marker::Send for aya_obj::generated::ifaddrmsg
+impl core::marker::Sync for aya_obj::generated::ifaddrmsg
+impl core::marker::Unpin for aya_obj::generated::ifaddrmsg
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::ifaddrmsg
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::ifaddrmsg
+impl<T, U> core::convert::Into<U> for aya_obj::generated::ifaddrmsg where U: core::convert::From<T>
+pub fn aya_obj::generated::ifaddrmsg::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::ifaddrmsg where U: core::convert::Into<T>
+pub type aya_obj::generated::ifaddrmsg::Error = core::convert::Infallible
+pub fn aya_obj::generated::ifaddrmsg::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::ifaddrmsg where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::ifaddrmsg::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::ifaddrmsg::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::ifaddrmsg where T: core::clone::Clone
+pub type aya_obj::generated::ifaddrmsg::Owned = T
+pub fn aya_obj::generated::ifaddrmsg::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::ifaddrmsg::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::ifaddrmsg where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::ifaddrmsg::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::ifaddrmsg where T: core::marker::Sized
+pub fn aya_obj::generated::ifaddrmsg::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::ifaddrmsg where T: core::marker::Sized
+pub fn aya_obj::generated::ifaddrmsg::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::ifaddrmsg
+pub fn aya_obj::generated::ifaddrmsg::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::ifinfomsg
 pub aya_obj::generated::ifinfomsg::__ifi_pad: core::ffi::c_uchar
 pub aya_obj::generated::ifinfomsg::ifi_change: core::ffi::c_uint
@@ -6222,6 +6300,8 @@ pub const aya_obj::generated::TC_H_MIN_MASK: u32 = 65_535u32
 pub const aya_obj::generated::TC_H_MIN_PRIORITY: u32 = 65_504u32
 pub const aya_obj::generated::TC_H_ROOT: u32 = 4_294_967_295u32
 pub const aya_obj::generated::TC_H_UNSPEC: u32 = 0u32
+pub const aya_obj::generated::VETH_INFO_PEER: _bindgen_ty_175::VETH_INFO_PEER
+pub const aya_obj::generated::VETH_INFO_UNSPEC: _bindgen_ty_175::VETH_INFO_UNSPEC
 pub const aya_obj::generated::XDP_FLAGS_DRV_MODE: u32 = 4u32
 pub const aya_obj::generated::XDP_FLAGS_HW_MODE: u32 = 8u32
 pub const aya_obj::generated::XDP_FLAGS_MASK: u32 = 31u32
@@ -6232,6 +6312,7 @@ pub const aya_obj::generated::XDP_FLAGS_UPDATE_IF_NOEXIST: u32 = 1u32
 pub const aya_obj::generated::__IFLA_XDP_MAX: aya_obj::generated::_bindgen_ty_92 = 9u32
 pub const aya_obj::generated::__TCA_BPF_MAX: aya_obj::generated::_bindgen_ty_152 = 12u32
 pub const aya_obj::generated::__TCA_MAX: aya_obj::generated::_bindgen_ty_172 = 16u32
+pub const aya_obj::generated::__VETH_INFO_MAX: _bindgen_ty_175::__VETH_INFO_MAX
 pub type aya_obj::generated::__s16 = core::ffi::c_short
 pub type aya_obj::generated::__s32 = core::ffi::c_int
 pub type aya_obj::generated::__s64 = core::ffi::c_longlong

@@ -103,6 +103,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         "perf_type_id",
         "perf_event_type",
         // NETLINK
+        "ifaddrmsg",
         "ifinfomsg",
         "tcmsg",
     ];
@@ -155,6 +156,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         "TC_H_MIN_PRIORITY",
         "TC_H_MIN_INGRESS",
         "TC_H_MIN_EGRESS",
+        "VETH_INFO_PEER",
         // Ringbuf
         "BPF_RINGBUF_.*",
     ];
