@@ -1,4 +1,4 @@
-use std::{ffi::CStr, mem::MaybeUninit, net::UdpSocket, num::NonZeroU32, time::Duration};
+use std::{mem::MaybeUninit, net::UdpSocket, num::NonZeroU32, time::Duration};
 
 use aya::{
     maps::{Array, CpuMap, XskMap},
@@ -9,11 +9,11 @@ use object::{Object, ObjectSection, ObjectSymbol, SymbolSection};
 use test_log::test;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
-use crate::utils::NetNsGuard;
+use crate::utils::{NetNsGuard, IP_ADDR_1, IP_ADDR_2};
 
 #[test]
 fn af_xdp() {
-    let _netns = NetNsGuard::new();
+    let netns = NetNsGuard::new();
 
     let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
     let mut socks: XskMap<_> = bpf.take_map("SOCKS").unwrap().try_into().unwrap();
@@ -24,7 +24,8 @@ fn af_xdp() {
         .try_into()
         .unwrap();
     xdp.load().unwrap();
-    xdp.attach("lo", XdpFlags::default()).unwrap();
+    xdp.attach_to_if_index(netns.if_idx2, XdpFlags::default())
+        .unwrap();
 
     // So this needs to be page aligned. Pages are 4k on all mainstream architectures except for
     // Apple Silicon which uses 16k pages. So let's align on that for tests to run natively there.
@@ -41,9 +42,7 @@ fn af_xdp() {
     };
 
     let mut iface = IfInfo::invalid();
-    iface
-        .from_name(CStr::from_bytes_with_nul(b"lo\0").unwrap())
-        .unwrap();
+    iface.from_ifindex(netns.if_idx1).unwrap();
     let sock = Socket::with_shared(&iface, &umem).unwrap();
 
     let mut fq_cq = umem.fq_cq(&sock).unwrap(); // Fill Queue / Completion Queue
@@ -66,9 +65,12 @@ fn af_xdp() {
     writer.insert_once(frame.offset);
     writer.commit();
 
-    let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
-    let port = sock.local_addr().unwrap().port();
-    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    let sock = UdpSocket::bind((IP_ADDR_1, 0)).unwrap();
+    let src_port = sock.local_addr().unwrap().port();
+
+    const DST_PORT: u16 = 1777;
+    sock.send_to(b"hello AF_XDP", (IP_ADDR_2, DST_PORT))
+        .unwrap();
 
     assert_eq!(rx.available(), 1);
     let desc = rx.receive(1).read().unwrap();
@@ -81,8 +83,8 @@ fn af_xdp() {
     let (ip, buf) = buf.split_at(20);
     assert_eq!(ip[9], 17); // UDP
     let (udp, payload) = buf.split_at(8);
-    assert_eq!(&udp[0..2], port.to_be_bytes().as_slice()); // Source
-    assert_eq!(&udp[2..4], 1777u16.to_be_bytes().as_slice()); // Dest
+    assert_eq!(&udp[0..2], src_port.to_be_bytes().as_slice()); // Source
+    assert_eq!(&udp[2..4], DST_PORT.to_be_bytes().as_slice()); // Dest
     assert_eq!(payload, b"hello AF_XDP");
 }
 
@@ -134,7 +136,7 @@ fn map_load() {
 
 #[test]
 fn cpumap_chain() {
-    let _netns = NetNsGuard::new();
+    let netns = NetNsGuard::new();
 
     let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
 
@@ -157,20 +159,24 @@ fn cpumap_chain() {
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut("redirect_cpu").unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    xdp.attach("lo", XdpFlags::default()).unwrap();
+    xdp.attach_to_if_index(netns.if_idx2, XdpFlags::default())
+        .unwrap();
 
     const PAYLOAD: &str = "hello cpumap";
 
-    let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
-    let addr = sock.local_addr().unwrap();
-    sock.set_read_timeout(Some(Duration::from_secs(60)))
+    let sock1 = UdpSocket::bind((IP_ADDR_1, 0)).unwrap();
+    let sock2 = UdpSocket::bind((IP_ADDR_2, 0)).unwrap();
+    sock2
+        .set_read_timeout(Some(Duration::from_secs(60)))
         .unwrap();
-    sock.send_to(PAYLOAD.as_bytes(), addr).unwrap();
+    sock1
+        .send_to(PAYLOAD.as_bytes(), sock2.local_addr().unwrap())
+        .unwrap();
 
     // Read back the packet to ensure it went through the entire network stack, including our two
     // probes.
     let mut buf = [0u8; PAYLOAD.len() + 1];
-    let n = sock.recv(&mut buf).unwrap();
+    let n = sock2.recv(&mut buf).unwrap();
 
     assert_eq!(&buf[..n], PAYLOAD.as_bytes());
     assert_eq!(hits.get(&0, 0).unwrap(), 1);
