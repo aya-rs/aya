@@ -2,9 +2,7 @@ use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
 
 use aya_ebpf_bindings::{
     bindings::{
-        bpf_map_def,
-        bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_INODE_STORAGE},
-        BPF_LOCAL_STORAGE_GET_F_CREATE,
+        bpf_map_def, bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE, BPF_LOCAL_STORAGE_GET_F_CREATE,
     },
     helpers::{bpf_inode_storage_delete, bpf_inode_storage_get},
 };
