@@ -8,6 +8,7 @@ pub(crate) enum PinningType {
 pub mod array;
 pub mod bloom_filter;
 pub mod hash_map;
+pub mod inode_storage;
 pub mod lpm_trie;
 pub mod per_cpu_array;
 pub mod perf;
