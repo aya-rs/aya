@@ -18,6 +18,8 @@ pub struct InodeStorage<V> {
     _v: PhantomData<V>,
 }
 
+unsafe impl<T: Sync> Sync for InodeStorage<T> {}
+
 impl<V> InodeStorage<V> {
     /// Instantiate a [`InodeStorage`] map with the provided flags.
     pub const fn new(flags: u32) -> InodeStorage<V> {
@@ -61,13 +63,14 @@ impl<V> InodeStorage<V> {
     /// value and get the mutable reference to the information stored within the inode. Returns
     /// [`None`] if there was an issue with inserting the new value.
     #[inline]
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn get_or_insert_ptr(&self, inode: *mut c_void, initial: &V) -> Option<*mut V> {
         unsafe {
             let ptr = bpf_inode_storage_get(
                 self.def.get() as *mut c_void,
                 inode,
                 initial as *const V as *const c_void as *mut c_void,
-                BPF_LOCAL_STORAGE_GET_F_CREATE as u64,
+                u64::from(BPF_LOCAL_STORAGE_GET_F_CREATE),
             );
             NonNull::new(ptr as *mut V).map(|p| p.as_ptr())
         }
@@ -108,6 +111,7 @@ impl<V> InodeStorage<V> {
     /// no such value exists. You are responsible for ensuring that at most one mutable reference to
     /// the same inode local storage exists at a given time.
     #[inline]
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn get_ptr_mut(&self, inode: *mut c_void) -> Option<*mut V> {
         unsafe {
             let ptr = bpf_inode_storage_get(
@@ -123,6 +127,7 @@ impl<V> InodeStorage<V> {
     /// Remove a local storage entry associated with this inode. Returns `Err(-ENOENT)` if no such
     /// value was present.
     #[inline]
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     pub fn remove(&self, inode: *mut c_void) -> Result<(), c_int> {
         let ret = unsafe { bpf_inode_storage_delete(self.def.get() as *mut c_void, inode) };
         if ret == 0 {
