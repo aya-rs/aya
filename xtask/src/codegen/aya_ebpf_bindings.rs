@@ -19,7 +19,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
         riscv64_sysroot,
     } = opts;
 
-    let dir = PathBuf::from("bpf/aya-ebpf-bindings");
+    let dir = PathBuf::from("ebpf/aya-ebpf-bindings");
 
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
@@ -95,7 +95,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
 
         let bindings = bindgen
             .generate()
-            .map_err(|_| anyhow!("bindgen failed"))?
+            .map_err(|op| anyhow!("bindgen failed - {op}"))?
             .to_string();
 
         let mut tree = parse_str::<syn::File>(&bindings).unwrap();

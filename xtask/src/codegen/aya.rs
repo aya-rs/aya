@@ -42,7 +42,7 @@ fn codegen_internal_btf_bindings(libbpf_dir: &Path) -> Result<(), anyhow::Error>
 
     let bindings = bindgen
         .generate()
-        .map_err(|_| anyhow!("bindgen failed"))?
+        .map_err(|op| anyhow!("bindgen failed - {op}"))?
         .to_string();
 
     // write the bindings, with the original helpers removed
@@ -216,7 +216,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
 
         let bindings = bindgen
             .generate()
-            .map_err(|_| anyhow!("bindgen failed"))?
+            .map_err(|op| anyhow!("bindgen failed - {op}"))?
             .to_string();
 
         // write the bindings, with the original helpers removed
