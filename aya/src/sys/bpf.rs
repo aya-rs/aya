@@ -435,7 +435,7 @@ pub(crate) fn bpf_prog_attach(
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_5.attach_bpf_fd = prog_fd.as_raw_fd() as u32;
-    attr.__bindgen_anon_5.target_fd = target_fd.as_raw_fd() as u32;
+    attr.__bindgen_anon_5.__bindgen_anon_1.target_fd = target_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.attach_type = attach_type as u32;
 
     let ret = sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &mut attr).map_err(|(code, io_error)| {
@@ -457,7 +457,7 @@ pub(crate) fn bpf_prog_detach(
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_5.attach_bpf_fd = prog_fd.as_raw_fd() as u32;
-    attr.__bindgen_anon_5.target_fd = target_fd.as_raw_fd() as u32;
+    attr.__bindgen_anon_5.__bindgen_anon_1.target_fd = target_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.attach_type = attach_type as u32;
 
     let ret = sys_bpf(bpf_cmd::BPF_PROG_DETACH, &mut attr).map_err(|(code, io_error)| {
@@ -481,15 +481,15 @@ pub(crate) fn bpf_prog_query(
 ) -> SysResult<c_long> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
-    attr.query.target_fd = target_fd as u32;
+    attr.query.__bindgen_anon_1.target_fd = target_fd as u32;
     attr.query.attach_type = attach_type as u32;
     attr.query.query_flags = query_flags;
-    attr.query.prog_cnt = prog_ids.len() as u32;
+    attr.query.__bindgen_anon_2.prog_cnt = prog_ids.len() as u32;
     attr.query.prog_ids = prog_ids.as_mut_ptr() as u64;
 
     let ret = sys_bpf(bpf_cmd::BPF_PROG_QUERY, &mut attr);
 
-    *prog_cnt = unsafe { attr.query.prog_cnt };
+    *prog_cnt = unsafe { attr.query.__bindgen_anon_2.prog_cnt };
 
     if let Some(attach_flags) = attach_flags {
         *attach_flags = unsafe { attr.query.attach_flags };
