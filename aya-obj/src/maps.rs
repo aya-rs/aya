@@ -44,8 +44,8 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
             }
             x if x == BPF_MAP_TYPE_CGRP_STORAGE as u32 => BPF_MAP_TYPE_CGRP_STORAGE,
             x if x == BPF_MAP_TYPE_REUSEPORT_SOCKARRAY as u32 => BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
-            x if x == BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE as u32 => {
-                BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE
+            x if x == BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED as u32 => {
+                BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED
             }
             x if x == BPF_MAP_TYPE_QUEUE as u32 => BPF_MAP_TYPE_QUEUE,
             x if x == BPF_MAP_TYPE_STACK as u32 => BPF_MAP_TYPE_STACK,
