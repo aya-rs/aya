@@ -1345,11 +1345,19 @@ pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_UDP4_RECVMSG = 19
 pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_UDP4_SENDMSG = 14
 pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_UDP6_RECVMSG = 20
 pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_UDP6_SENDMSG = 15
+pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_UNIX_CONNECT = 49
+pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_UNIX_GETPEERNAME = 52
+pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_UNIX_GETSOCKNAME = 53
+pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_UNIX_RECVMSG = 51
+pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_UNIX_SENDMSG = 50
 pub aya_obj::generated::bpf_attach_type::BPF_FLOW_DISSECTOR = 17
 pub aya_obj::generated::bpf_attach_type::BPF_LIRC_MODE2 = 16
 pub aya_obj::generated::bpf_attach_type::BPF_LSM_CGROUP = 43
 pub aya_obj::generated::bpf_attach_type::BPF_LSM_MAC = 27
 pub aya_obj::generated::bpf_attach_type::BPF_MODIFY_RETURN = 26
+pub aya_obj::generated::bpf_attach_type::BPF_NETFILTER = 45
+pub aya_obj::generated::bpf_attach_type::BPF_NETKIT_PEER = 55
+pub aya_obj::generated::bpf_attach_type::BPF_NETKIT_PRIMARY = 54
 pub aya_obj::generated::bpf_attach_type::BPF_PERF_EVENT = 41
 pub aya_obj::generated::bpf_attach_type::BPF_SK_LOOKUP = 36
 pub aya_obj::generated::bpf_attach_type::BPF_SK_MSG_VERDICT = 7
@@ -1359,15 +1367,18 @@ pub aya_obj::generated::bpf_attach_type::BPF_SK_SKB_STREAM_PARSER = 4
 pub aya_obj::generated::bpf_attach_type::BPF_SK_SKB_STREAM_VERDICT = 5
 pub aya_obj::generated::bpf_attach_type::BPF_SK_SKB_VERDICT = 38
 pub aya_obj::generated::bpf_attach_type::BPF_STRUCT_OPS = 44
+pub aya_obj::generated::bpf_attach_type::BPF_TCX_EGRESS = 47
+pub aya_obj::generated::bpf_attach_type::BPF_TCX_INGRESS = 46
 pub aya_obj::generated::bpf_attach_type::BPF_TRACE_FENTRY = 24
 pub aya_obj::generated::bpf_attach_type::BPF_TRACE_FEXIT = 25
 pub aya_obj::generated::bpf_attach_type::BPF_TRACE_ITER = 28
 pub aya_obj::generated::bpf_attach_type::BPF_TRACE_KPROBE_MULTI = 42
 pub aya_obj::generated::bpf_attach_type::BPF_TRACE_RAW_TP = 23
+pub aya_obj::generated::bpf_attach_type::BPF_TRACE_UPROBE_MULTI = 48
 pub aya_obj::generated::bpf_attach_type::BPF_XDP = 37
 pub aya_obj::generated::bpf_attach_type::BPF_XDP_CPUMAP = 35
 pub aya_obj::generated::bpf_attach_type::BPF_XDP_DEVMAP = 33
-pub aya_obj::generated::bpf_attach_type::__MAX_BPF_ATTACH_TYPE = 45
+pub aya_obj::generated::bpf_attach_type::__MAX_BPF_ATTACH_TYPE = 56
 impl core::clone::Clone for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::clone(&self) -> aya_obj::generated::bpf_attach_type
 impl core::cmp::Eq for aya_obj::generated::bpf_attach_type
@@ -1450,6 +1461,8 @@ pub aya_obj::generated::bpf_cmd::BPF_PROG_QUERY = 16
 pub aya_obj::generated::bpf_cmd::BPF_PROG_TEST_RUN = 10
 pub aya_obj::generated::bpf_cmd::BPF_RAW_TRACEPOINT_OPEN = 17
 pub aya_obj::generated::bpf_cmd::BPF_TASK_FD_QUERY = 20
+pub aya_obj::generated::bpf_cmd::BPF_TOKEN_CREATE = 36
+pub aya_obj::generated::bpf_cmd::__MAX_BPF_CMD = 37
 impl aya_obj::generated::bpf_cmd
 pub const aya_obj::generated::bpf_cmd::BPF_PROG_RUN: aya_obj::generated::bpf_cmd
 impl core::clone::Clone for aya_obj::generated::bpf_cmd
@@ -1494,14 +1507,17 @@ pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_CGROUP = 3
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_ITER = 4
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI = 8
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_NETFILTER = 10
+pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_NETKIT = 13
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_NETNS = 5
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_PERF_EVENT = 7
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_RAW_TRACEPOINT = 1
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_STRUCT_OPS = 9
+pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_TCX = 11
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_TRACING = 2
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_UNSPEC = 0
+pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_UPROBE_MULTI = 12
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_XDP = 6
-pub aya_obj::generated::bpf_link_type::MAX_BPF_LINK_TYPE = 11
+pub aya_obj::generated::bpf_link_type::__MAX_BPF_LINK_TYPE = 14
 impl core::clone::Clone for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::clone(&self) -> aya_obj::generated::bpf_link_type
 impl core::cmp::Eq for aya_obj::generated::bpf_link_type
@@ -1540,6 +1556,7 @@ pub fn aya_obj::generated::bpf_link_type::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::from(t: T) -> T
 #[repr(u32)] pub enum aya_obj::generated::bpf_map_type
+pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARENA = 33
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY = 2
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS = 12
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER = 30
@@ -1556,7 +1573,7 @@ pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_LPM_TRIE = 11
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_LRU_HASH = 9
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH = 10
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY = 6
-pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE = 21
+pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED = 21
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH = 5
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY = 4
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY = 3
@@ -1573,8 +1590,11 @@ pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_TASK_STORAGE = 29
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_UNSPEC = 0
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF = 31
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_XSKMAP = 17
+pub aya_obj::generated::bpf_map_type::__MAX_BPF_MAP_TYPE = 34
 impl aya_obj::generated::bpf_map_type
 pub const aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE: aya_obj::generated::bpf_map_type
+impl aya_obj::generated::bpf_map_type
+pub const aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE: aya_obj::generated::bpf_map_type
 impl core::clone::Clone for aya_obj::generated::bpf_map_type
 pub fn aya_obj::generated::bpf_map_type::clone(&self) -> aya_obj::generated::bpf_map_type
 impl core::cmp::Eq for aya_obj::generated::bpf_map_type
@@ -1649,6 +1669,7 @@ pub aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT = 5
 pub aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_TRACING = 26
 pub aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_UNSPEC = 0
 pub aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_XDP = 6
+pub aya_obj::generated::bpf_prog_type::__MAX_BPF_PROG_TYPE = 33
 impl core::clone::Clone for aya_obj::generated::bpf_prog_type
 pub fn aya_obj::generated::bpf_prog_type::clone(&self) -> aya_obj::generated::bpf_prog_type
 impl core::cmp::Eq for aya_obj::generated::bpf_prog_type
@@ -2145,6 +2166,7 @@ pub aya_obj::generated::bpf_attr::query: aya_obj::generated::bpf_attr__bindgen_t
 pub aya_obj::generated::bpf_attr::raw_tracepoint: aya_obj::generated::bpf_attr__bindgen_ty_11
 pub aya_obj::generated::bpf_attr::task_fd_query: aya_obj::generated::bpf_attr__bindgen_ty_13
 pub aya_obj::generated::bpf_attr::test: aya_obj::generated::bpf_attr__bindgen_ty_7
+pub aya_obj::generated::bpf_attr::token_create: aya_obj::generated::bpf_attr__bindgen_ty_20
 impl core::clone::Clone for aya_obj::generated::bpf_attr
 pub fn aya_obj::generated::bpf_attr::clone(&self) -> aya_obj::generated::bpf_attr
 impl core::marker::Copy for aya_obj::generated::bpf_attr
@@ -2174,6 +2196,70 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr where T: cor
 pub fn aya_obj::generated::bpf_attr::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr
 pub fn aya_obj::generated::bpf_attr::from(t: T) -> T
+#[repr(C)] pub union aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+pub aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::target_fd: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::target_ifindex: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::Owned = T
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::from(t: T) -> T
+#[repr(C)] pub union aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+pub aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::count: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::prog_cnt: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::Owned = T
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::from(t: T) -> T
 #[repr(C)] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1::map_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1::prog_fd: aya_obj::generated::__u32
@@ -2242,9 +2328,12 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2::from(t: T) -> 
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::kprobe_multi: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::netfilter: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::netkit: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::perf_event: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::target_btf_id: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::tcx: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::tracing: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::uprobe_multi: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
@@ -2274,6 +2363,70 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::from(t: T) -> T
+#[repr(C)] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::relative_fd: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::relative_id: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::Owned = T
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::from(t: T) -> T
+#[repr(C)] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::relative_fd: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::relative_id: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::Owned = T
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::from(t: T) -> T
 #[repr(C)] pub union aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1::new_map_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1::new_prog_fd: aya_obj::generated::__u32
@@ -2402,6 +2555,70 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1::from(t: T) -> T
+#[repr(C)] pub union aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+pub aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::target_fd: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::target_ifindex: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::Owned = T
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::from(t: T) -> T
+#[repr(C)] pub union aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+pub aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::relative_fd: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::relative_id: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::Owned = T
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::from(t: T) -> T
 #[repr(C)] pub union aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1::btf_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1::link_id: aya_obj::generated::__u32
@@ -2504,11 +2721,16 @@ pub fn aya_obj::generated::bpf_devmap_val__bindgen_ty_1::from(t: T) -> T
 #[repr(C)] pub union aya_obj::generated::bpf_link_info__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::cgroup: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::iter: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1::kprobe_multi: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::netfilter: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1::netkit: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::netns: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1::perf_event: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::raw_tracepoint: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::struct_ops: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1::tcx: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::tracing: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1::uprobe_multi: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::xdp: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1
@@ -2539,6 +2761,40 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindge
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1::from(t: T) -> T
+#[repr(C)] pub union aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::event: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::kprobe: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::tracepoint: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::uprobe: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::Owned = T
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::from(t: T) -> T
 #[repr(C)] pub union aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1::map: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
@@ -2893,10 +3149,12 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_extra: aya_obj::generated::_
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_ifindex: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_name: [core::ffi::c_char; 16]
+pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_token_fd: aya_obj::generated::__s32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_type: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::max_entries: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::numa_node: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::value_size: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_1::value_type_btf_obj_fd: aya_obj::generated::__s32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_1
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_1
@@ -2929,17 +3187,22 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_1::borrow_mut(&mut self) -> &mut
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_1::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_10
+pub aya_obj::generated::bpf_attr__bindgen_ty_10::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+pub aya_obj::generated::bpf_attr__bindgen_ty_10::__bindgen_anon_2: aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+pub aya_obj::generated::bpf_attr__bindgen_ty_10::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
+pub aya_obj::generated::bpf_attr__bindgen_ty_10::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::attach_flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::attach_type: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_10::link_attach_flags: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_attr__bindgen_ty_10::link_ids: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::prog_attach_flags: aya_obj::generated::__u64
-pub aya_obj::generated::bpf_attr__bindgen_ty_10::prog_cnt: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::prog_ids: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::query_flags: aya_obj::generated::__u32
-pub aya_obj::generated::bpf_attr__bindgen_ty_10::target_fd: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_10::revision: aya_obj::generated::__u64
+impl aya_obj::generated::bpf_attr__bindgen_ty_10
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_10::new_bitfield_1() -> aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_10
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_10::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_10
-impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_10
-pub fn aya_obj::generated::bpf_attr__bindgen_ty_10::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_10
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_10
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_10
@@ -2968,8 +3231,13 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_10::borrow_mut(&mut self) -> &mu
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_10
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_10::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_11
+pub aya_obj::generated::bpf_attr__bindgen_ty_11::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
+pub aya_obj::generated::bpf_attr__bindgen_ty_11::_bitfield_align_1: [u8; 0]
+pub aya_obj::generated::bpf_attr__bindgen_ty_11::cookie: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_11::name: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_11::prog_fd: aya_obj::generated::__u32
+impl aya_obj::generated::bpf_attr__bindgen_ty_11
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_11::new_bitfield_1() -> aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_11
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_11::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_11
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_11
@@ -3003,11 +3271,13 @@ impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_11
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_11::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_12
 pub aya_obj::generated::bpf_attr__bindgen_ty_12::btf: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_attr__bindgen_ty_12::btf_flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_12::btf_log_buf: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_12::btf_log_level: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_12::btf_log_size: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_12::btf_log_true_size: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_12::btf_size: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_12::btf_token_fd: aya_obj::generated::__s32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_12
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_12::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_12
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_12
@@ -3289,6 +3559,109 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::expected_revision: aya_obj::generated::__u64
+impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::Owned = T
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::cnt: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::cookies: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::flags: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::offsets: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::path: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::pid: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::ref_ctr_offsets: aya_obj::generated::__u64
+impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::Owned = T
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::expected_revision: aya_obj::generated::__u64
+impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::Owned = T
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_15
 pub aya_obj::generated::bpf_attr__bindgen_ty_15::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_15::__bindgen_anon_2: aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
@@ -3492,6 +3865,40 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_2::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_2::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_20
+pub aya_obj::generated::bpf_attr__bindgen_ty_20::bpffs_fd: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_20::flags: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_20
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_20
+impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_20
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_20
+impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_20
+impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_20
+impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_20
+impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_20
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_20
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_20
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_20 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_attr__bindgen_ty_20 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_20::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_attr__bindgen_ty_20 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_attr__bindgen_ty_20::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_attr__bindgen_ty_20 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_attr__bindgen_ty_20::Owned = T
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_attr__bindgen_ty_20 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_attr__bindgen_ty_20 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_attr__bindgen_ty_20 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_20
+pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_3
 pub aya_obj::generated::bpf_attr__bindgen_ty_3::count: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_3::elem_flags: aya_obj::generated::__u64
@@ -3558,6 +3965,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_btf_fd: aya_obj::generated:
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_ifindex: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_name: [core::ffi::c_char; 16]
+pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_token_fd: aya_obj::generated::__s32
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_type: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_4
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_4::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_4
@@ -3625,15 +4033,15 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_5::borrow_mut(&mut self) -> &mut
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_5
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_5::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_6
+pub aya_obj::generated::bpf_attr__bindgen_ty_6::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+pub aya_obj::generated::bpf_attr__bindgen_ty_6::__bindgen_anon_2: aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_6::attach_bpf_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_6::attach_flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_6::attach_type: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_attr__bindgen_ty_6::expected_revision: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_6::replace_bpf_fd: aya_obj::generated::__u32
-pub aya_obj::generated::bpf_attr__bindgen_ty_6::target_fd: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_6
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_6::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_6
-impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_6
-pub fn aya_obj::generated::bpf_attr__bindgen_ty_6::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_6
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_6
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_6
@@ -4095,6 +4503,302 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindge
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::cookies: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::count: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::flags: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::offsets: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::path: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::path_size: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::pid: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::ref_ctr_offsets: aya_obj::generated::__u64
+impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::Owned = T
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::__bindgen_anon_1: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::_bitfield_align_1: [u8; 0]
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::type_: aya_obj::generated::__u32
+impl aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::new_bitfield_1() -> aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
+impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::Owned = T
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::cookie: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::file_name: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::name_len: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::offset: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::Owned = T
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::addr: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::cookie: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::func_name: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::missed: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::name_len: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::offset: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::Owned = T
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::_bitfield_align_1: [u8; 0]
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::cookie: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::name_len: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::tp_name: aya_obj::generated::__u64
+impl aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::new_bitfield_1() -> aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
+impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::Owned = T
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::_bitfield_align_1: [u8; 0]
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::config: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::cookie: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::type_: aya_obj::generated::__u32
+impl aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::new_bitfield_1() -> aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
+impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::Owned = T
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::attach_type: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::ifindex: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::Owned = T
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::attach_type: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::ifindex: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::Owned = T
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2::attach_type: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2::target_btf_id: aya_obj::generated::__u32
@@ -4435,6 +5139,43 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindge
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8::from(t: T) -> T
+#[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::addrs: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::cookies: aya_obj::generated::__u64
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::count: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::flags: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::missed: aya_obj::generated::__u64
+impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9 where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9 where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9 where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9 where T: core::clone::Clone
+pub type aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::Owned = T
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9 where T: 'static + core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9 where T: core::marker::Sized
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::bpf_lpm_trie_key
 pub aya_obj::generated::bpf_lpm_trie_key::data: aya_obj::generated::__IncompleteArrayField<aya_obj::generated::__u8>
 pub aya_obj::generated::bpf_lpm_trie_key::prefixlen: aya_obj::generated::__u32
@@ -4463,11 +5204,10 @@ pub fn aya_obj::generated::bpf_lpm_trie_key::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_lpm_trie_key
 pub fn aya_obj::generated::bpf_lpm_trie_key::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::bpf_map_info
-pub aya_obj::generated::bpf_map_info::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
-pub aya_obj::generated::bpf_map_info::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_map_info::btf_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_map_info::btf_key_type_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_map_info::btf_value_type_id: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_map_info::btf_vmlinux_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_map_info::btf_vmlinux_value_type_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_map_info::id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_map_info::ifindex: aya_obj::generated::__u32
@@ -4480,8 +5220,6 @@ pub aya_obj::generated::bpf_map_info::netns_dev: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_map_info::netns_ino: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_map_info::type_: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_map_info::value_size: aya_obj::generated::__u32
-impl aya_obj::generated::bpf_map_info
-pub fn aya_obj::generated::bpf_map_info::new_bitfield_1() -> aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
 impl core::clone::Clone for aya_obj::generated::bpf_map_info
 pub fn aya_obj::generated::bpf_map_info::clone(&self) -> aya_obj::generated::bpf_map_info
 impl core::fmt::Debug for aya_obj::generated::bpf_map_info
@@ -5203,7 +5941,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::perf_event_mmap_page 
 pub fn aya_obj::generated::perf_event_mmap_page::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_mmap_page
 pub fn aya_obj::generated::perf_event_mmap_page::from(t: T) -> T
-#[repr(C)] #[repr(align(8))] pub struct aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
+#[repr(C)] pub struct aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::_bitfield_align_1: [u64; 0]
 impl aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
@@ -5297,84 +6035,95 @@ pub const aya_obj::generated::AYA_PERF_EVENT_IOC_ENABLE: core::ffi::c_int = 9_21
 pub const aya_obj::generated::AYA_PERF_EVENT_IOC_SET_BPF: core::ffi::c_int = 1_074_013_192i32
 pub const aya_obj::generated::BPF_ALU: u32 = 4u32
 pub const aya_obj::generated::BPF_ALU64: u32 = 7u32
-pub const aya_obj::generated::BPF_ANY: aya_obj::generated::_bindgen_ty_2 = 0u32
+pub const aya_obj::generated::BPF_ANY: aya_obj::generated::_bindgen_ty_4 = 0u32
 pub const aya_obj::generated::BPF_B: u32 = 16u32
 pub const aya_obj::generated::BPF_CALL: u32 = 128u32
 pub const aya_obj::generated::BPF_DW: u32 = 24u32
-pub const aya_obj::generated::BPF_EXIST: aya_obj::generated::_bindgen_ty_2 = 2u32
-pub const aya_obj::generated::BPF_F_ADJ_ROOM_DECAP_L3_IPV4: aya_obj::generated::_bindgen_ty_15 = 128u32
-pub const aya_obj::generated::BPF_F_ADJ_ROOM_DECAP_L3_IPV6: aya_obj::generated::_bindgen_ty_15 = 256u32
-pub const aya_obj::generated::BPF_F_ADJ_ROOM_ENCAP_L2_ETH: aya_obj::generated::_bindgen_ty_15 = 64u32
-pub const aya_obj::generated::BPF_F_ADJ_ROOM_ENCAP_L3_IPV4: aya_obj::generated::_bindgen_ty_15 = 2u32
-pub const aya_obj::generated::BPF_F_ADJ_ROOM_ENCAP_L3_IPV6: aya_obj::generated::_bindgen_ty_15 = 4u32
-pub const aya_obj::generated::BPF_F_ADJ_ROOM_ENCAP_L4_GRE: aya_obj::generated::_bindgen_ty_15 = 8u32
-pub const aya_obj::generated::BPF_F_ADJ_ROOM_ENCAP_L4_UDP: aya_obj::generated::_bindgen_ty_15 = 16u32
-pub const aya_obj::generated::BPF_F_ADJ_ROOM_FIXED_GSO: aya_obj::generated::_bindgen_ty_15 = 1u32
-pub const aya_obj::generated::BPF_F_ADJ_ROOM_NO_CSUM_RESET: aya_obj::generated::_bindgen_ty_15 = 32u32
+pub const aya_obj::generated::BPF_EXIST: aya_obj::generated::_bindgen_ty_4 = 2u32
+pub const aya_obj::generated::BPF_F_ADJ_ROOM_DECAP_L3_IPV4: aya_obj::generated::_bindgen_ty_17 = 128u32
+pub const aya_obj::generated::BPF_F_ADJ_ROOM_DECAP_L3_IPV6: aya_obj::generated::_bindgen_ty_17 = 256u32
+pub const aya_obj::generated::BPF_F_ADJ_ROOM_ENCAP_L2_ETH: aya_obj::generated::_bindgen_ty_17 = 64u32
+pub const aya_obj::generated::BPF_F_ADJ_ROOM_ENCAP_L3_IPV4: aya_obj::generated::_bindgen_ty_17 = 2u32
+pub const aya_obj::generated::BPF_F_ADJ_ROOM_ENCAP_L3_IPV6: aya_obj::generated::_bindgen_ty_17 = 4u32
+pub const aya_obj::generated::BPF_F_ADJ_ROOM_ENCAP_L4_GRE: aya_obj::generated::_bindgen_ty_17 = 8u32
+pub const aya_obj::generated::BPF_F_ADJ_ROOM_ENCAP_L4_UDP: aya_obj::generated::_bindgen_ty_17 = 16u32
+pub const aya_obj::generated::BPF_F_ADJ_ROOM_FIXED_GSO: aya_obj::generated::_bindgen_ty_17 = 1u32
+pub const aya_obj::generated::BPF_F_ADJ_ROOM_NO_CSUM_RESET: aya_obj::generated::_bindgen_ty_17 = 32u32
+pub const aya_obj::generated::BPF_F_AFTER: u32 = 16u32
 pub const aya_obj::generated::BPF_F_ALLOW_MULTI: u32 = 2u32
 pub const aya_obj::generated::BPF_F_ALLOW_OVERRIDE: u32 = 1u32
 pub const aya_obj::generated::BPF_F_ANY_ALIGNMENT: u32 = 2u32
-pub const aya_obj::generated::BPF_F_BPRM_SECUREEXEC: aya_obj::generated::_bindgen_ty_24 = 1u32
-pub const aya_obj::generated::BPF_F_BROADCAST: aya_obj::generated::_bindgen_ty_25 = 8u32
-pub const aya_obj::generated::BPF_F_CLONE: aya_obj::generated::_bindgen_ty_3 = 512u32
-pub const aya_obj::generated::BPF_F_CTXLEN_MASK: aya_obj::generated::_bindgen_ty_12 = 4_503_595_332_403_200u64
-pub const aya_obj::generated::BPF_F_CURRENT_CPU: aya_obj::generated::_bindgen_ty_12 = 4_294_967_295u64
-pub const aya_obj::generated::BPF_F_CURRENT_NETNS: aya_obj::generated::_bindgen_ty_13 = -1i32
-pub const aya_obj::generated::BPF_F_DONT_FRAGMENT: aya_obj::generated::_bindgen_ty_10 = 4u32
-pub const aya_obj::generated::BPF_F_EXCLUDE_INGRESS: aya_obj::generated::_bindgen_ty_25 = 16u32
-pub const aya_obj::generated::BPF_F_FAST_STACK_CMP: aya_obj::generated::_bindgen_ty_9 = 512u32
-pub const aya_obj::generated::BPF_F_GET_BRANCH_RECORDS_SIZE: aya_obj::generated::_bindgen_ty_19 = 1u32
-pub const aya_obj::generated::BPF_F_HDR_FIELD_MASK: aya_obj::generated::_bindgen_ty_5 = 15u32
-pub const aya_obj::generated::BPF_F_INDEX_MASK: aya_obj::generated::_bindgen_ty_12 = 4_294_967_295u64
-pub const aya_obj::generated::BPF_F_INGRESS: aya_obj::generated::_bindgen_ty_7 = 1u32
-pub const aya_obj::generated::BPF_F_INNER_MAP: aya_obj::generated::_bindgen_ty_3 = 4_096u32
-pub const aya_obj::generated::BPF_F_INVALIDATE_HASH: aya_obj::generated::_bindgen_ty_4 = 2u32
-pub const aya_obj::generated::BPF_F_KPROBE_MULTI_RETURN: u32 = 1u32
-pub const aya_obj::generated::BPF_F_LINK: aya_obj::generated::_bindgen_ty_3 = 8_192u32
-pub const aya_obj::generated::BPF_F_LOCK: aya_obj::generated::_bindgen_ty_2 = 4u32
-pub const aya_obj::generated::BPF_F_MARK_ENFORCE: aya_obj::generated::_bindgen_ty_6 = 64u32
-pub const aya_obj::generated::BPF_F_MARK_MANGLED_0: aya_obj::generated::_bindgen_ty_6 = 32u32
-pub const aya_obj::generated::BPF_F_MMAPABLE: aya_obj::generated::_bindgen_ty_3 = 1_024u32
-pub const aya_obj::generated::BPF_F_NO_COMMON_LRU: aya_obj::generated::_bindgen_ty_3 = 2u32
-pub const aya_obj::generated::BPF_F_NO_PREALLOC: aya_obj::generated::_bindgen_ty_3 = 1u32
-pub const aya_obj::generated::BPF_F_NO_TUNNEL_KEY: aya_obj::generated::_bindgen_ty_10 = 16u32
-pub const aya_obj::generated::BPF_F_NUMA_NODE: aya_obj::generated::_bindgen_ty_3 = 4u32
-pub const aya_obj::generated::BPF_F_PATH_FD: aya_obj::generated::_bindgen_ty_3 = 16_384u32
-pub const aya_obj::generated::BPF_F_PRESERVE_ELEMS: aya_obj::generated::_bindgen_ty_3 = 2_048u32
-pub const aya_obj::generated::BPF_F_PSEUDO_HDR: aya_obj::generated::_bindgen_ty_6 = 16u32
+pub const aya_obj::generated::BPF_F_BEFORE: u32 = 8u32
+pub const aya_obj::generated::BPF_F_BPRM_SECUREEXEC: aya_obj::generated::_bindgen_ty_26 = 1u32
+pub const aya_obj::generated::BPF_F_BROADCAST: aya_obj::generated::_bindgen_ty_27 = 8u32
+pub const aya_obj::generated::BPF_F_CLONE: aya_obj::generated::_bindgen_ty_5 = 512u32
+pub const aya_obj::generated::BPF_F_CTXLEN_MASK: aya_obj::generated::_bindgen_ty_14 = 4_503_595_332_403_200u64
+pub const aya_obj::generated::BPF_F_CURRENT_CPU: aya_obj::generated::_bindgen_ty_14 = 4_294_967_295u64
+pub const aya_obj::generated::BPF_F_CURRENT_NETNS: aya_obj::generated::_bindgen_ty_15 = -1i32
+pub const aya_obj::generated::BPF_F_DONT_FRAGMENT: aya_obj::generated::_bindgen_ty_12 = 4u32
+pub const aya_obj::generated::BPF_F_EXCLUDE_INGRESS: aya_obj::generated::_bindgen_ty_27 = 16u32
+pub const aya_obj::generated::BPF_F_FAST_STACK_CMP: aya_obj::generated::_bindgen_ty_11 = 512u32
+pub const aya_obj::generated::BPF_F_GET_BRANCH_RECORDS_SIZE: aya_obj::generated::_bindgen_ty_21 = 1u32
+pub const aya_obj::generated::BPF_F_HDR_FIELD_MASK: aya_obj::generated::_bindgen_ty_7 = 15u32
+pub const aya_obj::generated::BPF_F_ID: u32 = 32u32
+pub const aya_obj::generated::BPF_F_INDEX_MASK: aya_obj::generated::_bindgen_ty_14 = 4_294_967_295u64
+pub const aya_obj::generated::BPF_F_INGRESS: aya_obj::generated::_bindgen_ty_9 = 1u32
+pub const aya_obj::generated::BPF_F_INNER_MAP: aya_obj::generated::_bindgen_ty_5 = 4_096u32
+pub const aya_obj::generated::BPF_F_INVALIDATE_HASH: aya_obj::generated::_bindgen_ty_6 = 2u32
+pub const aya_obj::generated::BPF_F_KPROBE_MULTI_RETURN: aya_obj::generated::_bindgen_ty_2 = 1u32
+pub const aya_obj::generated::BPF_F_LINK: aya_obj::generated::_bindgen_ty_5 = 8_192u32
+pub const aya_obj::generated::BPF_F_LOCK: aya_obj::generated::_bindgen_ty_4 = 4u32
+pub const aya_obj::generated::BPF_F_MARK_ENFORCE: aya_obj::generated::_bindgen_ty_8 = 64u32
+pub const aya_obj::generated::BPF_F_MARK_MANGLED_0: aya_obj::generated::_bindgen_ty_8 = 32u32
+pub const aya_obj::generated::BPF_F_MMAPABLE: aya_obj::generated::_bindgen_ty_5 = 1_024u32
+pub const aya_obj::generated::BPF_F_NETFILTER_IP_DEFRAG: u32 = 1u32
+pub const aya_obj::generated::BPF_F_NO_COMMON_LRU: aya_obj::generated::_bindgen_ty_5 = 2u32
+pub const aya_obj::generated::BPF_F_NO_PREALLOC: aya_obj::generated::_bindgen_ty_5 = 1u32
+pub const aya_obj::generated::BPF_F_NO_TUNNEL_KEY: aya_obj::generated::_bindgen_ty_12 = 16u32
+pub const aya_obj::generated::BPF_F_NO_USER_CONV: aya_obj::generated::_bindgen_ty_5 = 262_144u32
+pub const aya_obj::generated::BPF_F_NUMA_NODE: aya_obj::generated::_bindgen_ty_5 = 4u32
+pub const aya_obj::generated::BPF_F_PATH_FD: aya_obj::generated::_bindgen_ty_5 = 16_384u32
+pub const aya_obj::generated::BPF_F_PRESERVE_ELEMS: aya_obj::generated::_bindgen_ty_5 = 2_048u32
+pub const aya_obj::generated::BPF_F_PSEUDO_HDR: aya_obj::generated::_bindgen_ty_8 = 16u32
 pub const aya_obj::generated::BPF_F_QUERY_EFFECTIVE: u32 = 1u32
-pub const aya_obj::generated::BPF_F_RDONLY: aya_obj::generated::_bindgen_ty_3 = 8u32
-pub const aya_obj::generated::BPF_F_RDONLY_PROG: aya_obj::generated::_bindgen_ty_3 = 128u32
-pub const aya_obj::generated::BPF_F_RECOMPUTE_CSUM: aya_obj::generated::_bindgen_ty_4 = 1u32
+pub const aya_obj::generated::BPF_F_RDONLY: aya_obj::generated::_bindgen_ty_5 = 8u32
+pub const aya_obj::generated::BPF_F_RDONLY_PROG: aya_obj::generated::_bindgen_ty_5 = 128u32
+pub const aya_obj::generated::BPF_F_RECOMPUTE_CSUM: aya_obj::generated::_bindgen_ty_6 = 1u32
 pub const aya_obj::generated::BPF_F_REPLACE: u32 = 4u32
-pub const aya_obj::generated::BPF_F_REUSE_STACKID: aya_obj::generated::_bindgen_ty_9 = 1_024u32
-pub const aya_obj::generated::BPF_F_SEQ_NUMBER: aya_obj::generated::_bindgen_ty_10 = 8u32
-pub const aya_obj::generated::BPF_F_SKIP_FIELD_MASK: aya_obj::generated::_bindgen_ty_9 = 255u32
+pub const aya_obj::generated::BPF_F_REUSE_STACKID: aya_obj::generated::_bindgen_ty_11 = 1_024u32
+pub const aya_obj::generated::BPF_F_SEGV_ON_FAULT: aya_obj::generated::_bindgen_ty_5 = 131_072u32
+pub const aya_obj::generated::BPF_F_SEQ_NUMBER: aya_obj::generated::_bindgen_ty_12 = 8u32
+pub const aya_obj::generated::BPF_F_SKIP_FIELD_MASK: aya_obj::generated::_bindgen_ty_11 = 255u32
 pub const aya_obj::generated::BPF_F_SLEEPABLE: u32 = 16u32
-pub const aya_obj::generated::BPF_F_STACK_BUILD_ID: aya_obj::generated::_bindgen_ty_3 = 32u32
+pub const aya_obj::generated::BPF_F_STACK_BUILD_ID: aya_obj::generated::_bindgen_ty_5 = 32u32
 pub const aya_obj::generated::BPF_F_STRICT_ALIGNMENT: u32 = 1u32
-pub const aya_obj::generated::BPF_F_SYSCTL_BASE_NAME: aya_obj::generated::_bindgen_ty_17 = 1u32
+pub const aya_obj::generated::BPF_F_SYSCTL_BASE_NAME: aya_obj::generated::_bindgen_ty_19 = 1u32
+pub const aya_obj::generated::BPF_F_TEST_REG_INVARIANTS: u32 = 128u32
 pub const aya_obj::generated::BPF_F_TEST_RND_HI32: u32 = 4u32
 pub const aya_obj::generated::BPF_F_TEST_RUN_ON_CPU: u32 = 1u32
 pub const aya_obj::generated::BPF_F_TEST_STATE_FREQ: u32 = 8u32
 pub const aya_obj::generated::BPF_F_TEST_XDP_LIVE_FRAMES: u32 = 2u32
-pub const aya_obj::generated::BPF_F_TIMER_ABS: aya_obj::generated::_bindgen_ty_39 = 1u32
-pub const aya_obj::generated::BPF_F_TUNINFO_FLAGS: aya_obj::generated::_bindgen_ty_11 = 16u32
-pub const aya_obj::generated::BPF_F_TUNINFO_IPV6: aya_obj::generated::_bindgen_ty_8 = 1u32
-pub const aya_obj::generated::BPF_F_USER_BUILD_ID: aya_obj::generated::_bindgen_ty_9 = 2_048u32
-pub const aya_obj::generated::BPF_F_USER_STACK: aya_obj::generated::_bindgen_ty_9 = 256u32
-pub const aya_obj::generated::BPF_F_WRONLY: aya_obj::generated::_bindgen_ty_3 = 16u32
-pub const aya_obj::generated::BPF_F_WRONLY_PROG: aya_obj::generated::_bindgen_ty_3 = 256u32
+pub const aya_obj::generated::BPF_F_TIMER_ABS: aya_obj::generated::_bindgen_ty_41 = 1u32
+pub const aya_obj::generated::BPF_F_TIMER_CPU_PIN: aya_obj::generated::_bindgen_ty_41 = 2u32
+pub const aya_obj::generated::BPF_F_TOKEN_FD: aya_obj::generated::_bindgen_ty_5 = 65_536u32
+pub const aya_obj::generated::BPF_F_TUNINFO_FLAGS: aya_obj::generated::_bindgen_ty_13 = 16u32
+pub const aya_obj::generated::BPF_F_TUNINFO_IPV6: aya_obj::generated::_bindgen_ty_10 = 1u32
+pub const aya_obj::generated::BPF_F_UPROBE_MULTI_RETURN: aya_obj::generated::_bindgen_ty_3 = 1u32
+pub const aya_obj::generated::BPF_F_USER_BUILD_ID: aya_obj::generated::_bindgen_ty_11 = 2_048u32
+pub const aya_obj::generated::BPF_F_USER_STACK: aya_obj::generated::_bindgen_ty_11 = 256u32
+pub const aya_obj::generated::BPF_F_VTYPE_BTF_OBJ_FD: aya_obj::generated::_bindgen_ty_5 = 32_768u32
+pub const aya_obj::generated::BPF_F_WRONLY: aya_obj::generated::_bindgen_ty_5 = 16u32
+pub const aya_obj::generated::BPF_F_WRONLY_PROG: aya_obj::generated::_bindgen_ty_5 = 256u32
 pub const aya_obj::generated::BPF_F_XDP_DEV_BOUND_ONLY: u32 = 64u32
 pub const aya_obj::generated::BPF_F_XDP_HAS_FRAGS: u32 = 32u32
-pub const aya_obj::generated::BPF_F_ZERO_CSUM_TX: aya_obj::generated::_bindgen_ty_10 = 2u32
-pub const aya_obj::generated::BPF_F_ZERO_SEED: aya_obj::generated::_bindgen_ty_3 = 64u32
+pub const aya_obj::generated::BPF_F_ZERO_CSUM_TX: aya_obj::generated::_bindgen_ty_12 = 2u32
+pub const aya_obj::generated::BPF_F_ZERO_SEED: aya_obj::generated::_bindgen_ty_5 = 64u32
 pub const aya_obj::generated::BPF_H: u32 = 8u32
 pub const aya_obj::generated::BPF_JMP: u32 = 5u32
 pub const aya_obj::generated::BPF_K: u32 = 0u32
 pub const aya_obj::generated::BPF_LD: u32 = 0u32
 pub const aya_obj::generated::BPF_LDX: u32 = 1u32
-pub const aya_obj::generated::BPF_NOEXIST: aya_obj::generated::_bindgen_ty_2 = 1u32
+pub const aya_obj::generated::BPF_NOEXIST: aya_obj::generated::_bindgen_ty_4 = 1u32
 pub const aya_obj::generated::BPF_PSEUDO_BTF_ID: u32 = 3u32
 pub const aya_obj::generated::BPF_PSEUDO_CALL: u32 = 1u32
 pub const aya_obj::generated::BPF_PSEUDO_FUNC: u32 = 4u32
@@ -5383,50 +6132,50 @@ pub const aya_obj::generated::BPF_PSEUDO_MAP_FD: u32 = 1u32
 pub const aya_obj::generated::BPF_PSEUDO_MAP_IDX: u32 = 5u32
 pub const aya_obj::generated::BPF_PSEUDO_MAP_IDX_VALUE: u32 = 6u32
 pub const aya_obj::generated::BPF_PSEUDO_MAP_VALUE: u32 = 2u32
-pub const aya_obj::generated::BPF_RINGBUF_BUSY_BIT: aya_obj::generated::_bindgen_ty_22 = 2_147_483_648u32
-pub const aya_obj::generated::BPF_RINGBUF_DISCARD_BIT: aya_obj::generated::_bindgen_ty_22 = 1_073_741_824u32
-pub const aya_obj::generated::BPF_RINGBUF_HDR_SZ: aya_obj::generated::_bindgen_ty_22 = 8u32
+pub const aya_obj::generated::BPF_RINGBUF_BUSY_BIT: aya_obj::generated::_bindgen_ty_24 = 2_147_483_648u32
+pub const aya_obj::generated::BPF_RINGBUF_DISCARD_BIT: aya_obj::generated::_bindgen_ty_24 = 1_073_741_824u32
+pub const aya_obj::generated::BPF_RINGBUF_HDR_SZ: aya_obj::generated::_bindgen_ty_24 = 8u32
 pub const aya_obj::generated::BPF_ST: u32 = 2u32
 pub const aya_obj::generated::BPF_STX: u32 = 3u32
 pub const aya_obj::generated::BPF_W: u32 = 0u32
 pub const aya_obj::generated::BTF_INT_BOOL: u32 = 4u32
 pub const aya_obj::generated::BTF_INT_CHAR: u32 = 2u32
 pub const aya_obj::generated::BTF_INT_SIGNED: u32 = 1u32
-pub const aya_obj::generated::BTF_KIND_ARRAY: aya_obj::generated::_bindgen_ty_40 = 3u32
-pub const aya_obj::generated::BTF_KIND_CONST: aya_obj::generated::_bindgen_ty_40 = 10u32
-pub const aya_obj::generated::BTF_KIND_DATASEC: aya_obj::generated::_bindgen_ty_40 = 15u32
-pub const aya_obj::generated::BTF_KIND_DECL_TAG: aya_obj::generated::_bindgen_ty_40 = 17u32
-pub const aya_obj::generated::BTF_KIND_ENUM: aya_obj::generated::_bindgen_ty_40 = 6u32
-pub const aya_obj::generated::BTF_KIND_ENUM64: aya_obj::generated::_bindgen_ty_40 = 19u32
-pub const aya_obj::generated::BTF_KIND_FLOAT: aya_obj::generated::_bindgen_ty_40 = 16u32
-pub const aya_obj::generated::BTF_KIND_FUNC: aya_obj::generated::_bindgen_ty_40 = 12u32
-pub const aya_obj::generated::BTF_KIND_FUNC_PROTO: aya_obj::generated::_bindgen_ty_40 = 13u32
-pub const aya_obj::generated::BTF_KIND_FWD: aya_obj::generated::_bindgen_ty_40 = 7u32
-pub const aya_obj::generated::BTF_KIND_INT: aya_obj::generated::_bindgen_ty_40 = 1u32
-pub const aya_obj::generated::BTF_KIND_MAX: aya_obj::generated::_bindgen_ty_40 = 19u32
-pub const aya_obj::generated::BTF_KIND_PTR: aya_obj::generated::_bindgen_ty_40 = 2u32
-pub const aya_obj::generated::BTF_KIND_RESTRICT: aya_obj::generated::_bindgen_ty_40 = 11u32
-pub const aya_obj::generated::BTF_KIND_STRUCT: aya_obj::generated::_bindgen_ty_40 = 4u32
-pub const aya_obj::generated::BTF_KIND_TYPEDEF: aya_obj::generated::_bindgen_ty_40 = 8u32
-pub const aya_obj::generated::BTF_KIND_TYPE_TAG: aya_obj::generated::_bindgen_ty_40 = 18u32
-pub const aya_obj::generated::BTF_KIND_UNION: aya_obj::generated::_bindgen_ty_40 = 5u32
-pub const aya_obj::generated::BTF_KIND_UNKN: aya_obj::generated::_bindgen_ty_40 = 0u32
-pub const aya_obj::generated::BTF_KIND_VAR: aya_obj::generated::_bindgen_ty_40 = 14u32
-pub const aya_obj::generated::BTF_KIND_VOLATILE: aya_obj::generated::_bindgen_ty_40 = 9u32
-pub const aya_obj::generated::BTF_VAR_GLOBAL_ALLOCATED: aya_obj::generated::_bindgen_ty_41 = 1u32
-pub const aya_obj::generated::BTF_VAR_GLOBAL_EXTERN: aya_obj::generated::_bindgen_ty_41 = 2u32
-pub const aya_obj::generated::BTF_VAR_STATIC: aya_obj::generated::_bindgen_ty_41 = 0u32
-pub const aya_obj::generated::IFLA_XDP_ATTACHED: aya_obj::generated::_bindgen_ty_90 = 2u32
-pub const aya_obj::generated::IFLA_XDP_DRV_PROG_ID: aya_obj::generated::_bindgen_ty_90 = 5u32
-pub const aya_obj::generated::IFLA_XDP_EXPECTED_FD: aya_obj::generated::_bindgen_ty_90 = 8u32
-pub const aya_obj::generated::IFLA_XDP_FD: aya_obj::generated::_bindgen_ty_90 = 1u32
-pub const aya_obj::generated::IFLA_XDP_FLAGS: aya_obj::generated::_bindgen_ty_90 = 3u32
-pub const aya_obj::generated::IFLA_XDP_HW_PROG_ID: aya_obj::generated::_bindgen_ty_90 = 7u32
-pub const aya_obj::generated::IFLA_XDP_PROG_ID: aya_obj::generated::_bindgen_ty_90 = 4u32
-pub const aya_obj::generated::IFLA_XDP_SKB_PROG_ID: aya_obj::generated::_bindgen_ty_90 = 6u32
-pub const aya_obj::generated::IFLA_XDP_UNSPEC: aya_obj::generated::_bindgen_ty_90 = 0u32
+pub const aya_obj::generated::BTF_KIND_ARRAY: aya_obj::generated::_bindgen_ty_42 = 3u32
+pub const aya_obj::generated::BTF_KIND_CONST: aya_obj::generated::_bindgen_ty_42 = 10u32
+pub const aya_obj::generated::BTF_KIND_DATASEC: aya_obj::generated::_bindgen_ty_42 = 15u32
+pub const aya_obj::generated::BTF_KIND_DECL_TAG: aya_obj::generated::_bindgen_ty_42 = 17u32
+pub const aya_obj::generated::BTF_KIND_ENUM: aya_obj::generated::_bindgen_ty_42 = 6u32
+pub const aya_obj::generated::BTF_KIND_ENUM64: aya_obj::generated::_bindgen_ty_42 = 19u32
+pub const aya_obj::generated::BTF_KIND_FLOAT: aya_obj::generated::_bindgen_ty_42 = 16u32
+pub const aya_obj::generated::BTF_KIND_FUNC: aya_obj::generated::_bindgen_ty_42 = 12u32
+pub const aya_obj::generated::BTF_KIND_FUNC_PROTO: aya_obj::generated::_bindgen_ty_42 = 13u32
+pub const aya_obj::generated::BTF_KIND_FWD: aya_obj::generated::_bindgen_ty_42 = 7u32
+pub const aya_obj::generated::BTF_KIND_INT: aya_obj::generated::_bindgen_ty_42 = 1u32
+pub const aya_obj::generated::BTF_KIND_MAX: aya_obj::generated::_bindgen_ty_42 = 19u32
+pub const aya_obj::generated::BTF_KIND_PTR: aya_obj::generated::_bindgen_ty_42 = 2u32
+pub const aya_obj::generated::BTF_KIND_RESTRICT: aya_obj::generated::_bindgen_ty_42 = 11u32
+pub const aya_obj::generated::BTF_KIND_STRUCT: aya_obj::generated::_bindgen_ty_42 = 4u32
+pub const aya_obj::generated::BTF_KIND_TYPEDEF: aya_obj::generated::_bindgen_ty_42 = 8u32
+pub const aya_obj::generated::BTF_KIND_TYPE_TAG: aya_obj::generated::_bindgen_ty_42 = 18u32
+pub const aya_obj::generated::BTF_KIND_UNION: aya_obj::generated::_bindgen_ty_42 = 5u32
+pub const aya_obj::generated::BTF_KIND_UNKN: aya_obj::generated::_bindgen_ty_42 = 0u32
+pub const aya_obj::generated::BTF_KIND_VAR: aya_obj::generated::_bindgen_ty_42 = 14u32
+pub const aya_obj::generated::BTF_KIND_VOLATILE: aya_obj::generated::_bindgen_ty_42 = 9u32
+pub const aya_obj::generated::BTF_VAR_GLOBAL_ALLOCATED: aya_obj::generated::_bindgen_ty_43 = 1u32
+pub const aya_obj::generated::BTF_VAR_GLOBAL_EXTERN: aya_obj::generated::_bindgen_ty_43 = 2u32
+pub const aya_obj::generated::BTF_VAR_STATIC: aya_obj::generated::_bindgen_ty_43 = 0u32
+pub const aya_obj::generated::IFLA_XDP_ATTACHED: aya_obj::generated::_bindgen_ty_92 = 2u32
+pub const aya_obj::generated::IFLA_XDP_DRV_PROG_ID: aya_obj::generated::_bindgen_ty_92 = 5u32
+pub const aya_obj::generated::IFLA_XDP_EXPECTED_FD: aya_obj::generated::_bindgen_ty_92 = 8u32
+pub const aya_obj::generated::IFLA_XDP_FD: aya_obj::generated::_bindgen_ty_92 = 1u32
+pub const aya_obj::generated::IFLA_XDP_FLAGS: aya_obj::generated::_bindgen_ty_92 = 3u32
+pub const aya_obj::generated::IFLA_XDP_HW_PROG_ID: aya_obj::generated::_bindgen_ty_92 = 7u32
+pub const aya_obj::generated::IFLA_XDP_PROG_ID: aya_obj::generated::_bindgen_ty_92 = 4u32
+pub const aya_obj::generated::IFLA_XDP_SKB_PROG_ID: aya_obj::generated::_bindgen_ty_92 = 6u32
+pub const aya_obj::generated::IFLA_XDP_UNSPEC: aya_obj::generated::_bindgen_ty_92 = 0u32
 pub const aya_obj::generated::NLMSG_ALIGNTO: u32 = 4u32
-pub const aya_obj::generated::NR_BTF_KINDS: aya_obj::generated::_bindgen_ty_40 = 20u32
+pub const aya_obj::generated::NR_BTF_KINDS: aya_obj::generated::_bindgen_ty_42 = 20u32
 pub const aya_obj::generated::PERF_FLAG_FD_CLOEXEC: u32 = 8u32
 pub const aya_obj::generated::PERF_FLAG_FD_NO_GROUP: u32 = 1u32
 pub const aya_obj::generated::PERF_FLAG_FD_OUTPUT: u32 = 2u32
@@ -5435,34 +6184,35 @@ pub const aya_obj::generated::PERF_MAX_CONTEXTS_PER_STACK: u32 = 8u32
 pub const aya_obj::generated::PERF_MAX_STACK_DEPTH: u32 = 127u32
 pub const aya_obj::generated::SO_ATTACH_BPF: u32 = 50u32
 pub const aya_obj::generated::SO_DETACH_BPF: u32 = 27u32
-pub const aya_obj::generated::TCA_BPF_ACT: aya_obj::generated::_bindgen_ty_159 = 1u32
-pub const aya_obj::generated::TCA_BPF_CLASSID: aya_obj::generated::_bindgen_ty_159 = 3u32
-pub const aya_obj::generated::TCA_BPF_FD: aya_obj::generated::_bindgen_ty_159 = 6u32
-pub const aya_obj::generated::TCA_BPF_FLAGS: aya_obj::generated::_bindgen_ty_159 = 8u32
-pub const aya_obj::generated::TCA_BPF_FLAGS_GEN: aya_obj::generated::_bindgen_ty_159 = 9u32
+pub const aya_obj::generated::TCA_BPF_ACT: aya_obj::generated::_bindgen_ty_152 = 1u32
+pub const aya_obj::generated::TCA_BPF_CLASSID: aya_obj::generated::_bindgen_ty_152 = 3u32
+pub const aya_obj::generated::TCA_BPF_FD: aya_obj::generated::_bindgen_ty_152 = 6u32
+pub const aya_obj::generated::TCA_BPF_FLAGS: aya_obj::generated::_bindgen_ty_152 = 8u32
+pub const aya_obj::generated::TCA_BPF_FLAGS_GEN: aya_obj::generated::_bindgen_ty_152 = 9u32
 pub const aya_obj::generated::TCA_BPF_FLAG_ACT_DIRECT: u32 = 1u32
-pub const aya_obj::generated::TCA_BPF_ID: aya_obj::generated::_bindgen_ty_159 = 11u32
-pub const aya_obj::generated::TCA_BPF_NAME: aya_obj::generated::_bindgen_ty_159 = 7u32
-pub const aya_obj::generated::TCA_BPF_OPS: aya_obj::generated::_bindgen_ty_159 = 5u32
-pub const aya_obj::generated::TCA_BPF_OPS_LEN: aya_obj::generated::_bindgen_ty_159 = 4u32
-pub const aya_obj::generated::TCA_BPF_POLICE: aya_obj::generated::_bindgen_ty_159 = 2u32
-pub const aya_obj::generated::TCA_BPF_TAG: aya_obj::generated::_bindgen_ty_159 = 10u32
-pub const aya_obj::generated::TCA_BPF_UNSPEC: aya_obj::generated::_bindgen_ty_159 = 0u32
-pub const aya_obj::generated::TCA_CHAIN: aya_obj::generated::_bindgen_ty_103 = 11u32
-pub const aya_obj::generated::TCA_DUMP_INVISIBLE: aya_obj::generated::_bindgen_ty_103 = 10u32
-pub const aya_obj::generated::TCA_EGRESS_BLOCK: aya_obj::generated::_bindgen_ty_103 = 14u32
-pub const aya_obj::generated::TCA_FCNT: aya_obj::generated::_bindgen_ty_103 = 6u32
-pub const aya_obj::generated::TCA_HW_OFFLOAD: aya_obj::generated::_bindgen_ty_103 = 12u32
-pub const aya_obj::generated::TCA_INGRESS_BLOCK: aya_obj::generated::_bindgen_ty_103 = 13u32
-pub const aya_obj::generated::TCA_KIND: aya_obj::generated::_bindgen_ty_103 = 1u32
-pub const aya_obj::generated::TCA_OPTIONS: aya_obj::generated::_bindgen_ty_103 = 2u32
-pub const aya_obj::generated::TCA_PAD: aya_obj::generated::_bindgen_ty_103 = 9u32
-pub const aya_obj::generated::TCA_RATE: aya_obj::generated::_bindgen_ty_103 = 5u32
-pub const aya_obj::generated::TCA_STAB: aya_obj::generated::_bindgen_ty_103 = 8u32
-pub const aya_obj::generated::TCA_STATS: aya_obj::generated::_bindgen_ty_103 = 3u32
-pub const aya_obj::generated::TCA_STATS2: aya_obj::generated::_bindgen_ty_103 = 7u32
-pub const aya_obj::generated::TCA_UNSPEC: aya_obj::generated::_bindgen_ty_103 = 0u32
-pub const aya_obj::generated::TCA_XSTATS: aya_obj::generated::_bindgen_ty_103 = 4u32
+pub const aya_obj::generated::TCA_BPF_ID: aya_obj::generated::_bindgen_ty_152 = 11u32
+pub const aya_obj::generated::TCA_BPF_NAME: aya_obj::generated::_bindgen_ty_152 = 7u32
+pub const aya_obj::generated::TCA_BPF_OPS: aya_obj::generated::_bindgen_ty_152 = 5u32
+pub const aya_obj::generated::TCA_BPF_OPS_LEN: aya_obj::generated::_bindgen_ty_152 = 4u32
+pub const aya_obj::generated::TCA_BPF_POLICE: aya_obj::generated::_bindgen_ty_152 = 2u32
+pub const aya_obj::generated::TCA_BPF_TAG: aya_obj::generated::_bindgen_ty_152 = 10u32
+pub const aya_obj::generated::TCA_BPF_UNSPEC: aya_obj::generated::_bindgen_ty_152 = 0u32
+pub const aya_obj::generated::TCA_CHAIN: aya_obj::generated::_bindgen_ty_172 = 11u32
+pub const aya_obj::generated::TCA_DUMP_FLAGS: aya_obj::generated::_bindgen_ty_172 = 15u32
+pub const aya_obj::generated::TCA_DUMP_INVISIBLE: aya_obj::generated::_bindgen_ty_172 = 10u32
+pub const aya_obj::generated::TCA_EGRESS_BLOCK: aya_obj::generated::_bindgen_ty_172 = 14u32
+pub const aya_obj::generated::TCA_FCNT: aya_obj::generated::_bindgen_ty_172 = 6u32
+pub const aya_obj::generated::TCA_HW_OFFLOAD: aya_obj::generated::_bindgen_ty_172 = 12u32
+pub const aya_obj::generated::TCA_INGRESS_BLOCK: aya_obj::generated::_bindgen_ty_172 = 13u32
+pub const aya_obj::generated::TCA_KIND: aya_obj::generated::_bindgen_ty_172 = 1u32
+pub const aya_obj::generated::TCA_OPTIONS: aya_obj::generated::_bindgen_ty_172 = 2u32
+pub const aya_obj::generated::TCA_PAD: aya_obj::generated::_bindgen_ty_172 = 9u32
+pub const aya_obj::generated::TCA_RATE: aya_obj::generated::_bindgen_ty_172 = 5u32
+pub const aya_obj::generated::TCA_STAB: aya_obj::generated::_bindgen_ty_172 = 8u32
+pub const aya_obj::generated::TCA_STATS: aya_obj::generated::_bindgen_ty_172 = 3u32
+pub const aya_obj::generated::TCA_STATS2: aya_obj::generated::_bindgen_ty_172 = 7u32
+pub const aya_obj::generated::TCA_UNSPEC: aya_obj::generated::_bindgen_ty_172 = 0u32
+pub const aya_obj::generated::TCA_XSTATS: aya_obj::generated::_bindgen_ty_172 = 4u32
 pub const aya_obj::generated::TC_H_CLSACT: u32 = 4_294_967_281u32
 pub const aya_obj::generated::TC_H_INGRESS: u32 = 4_294_967_281u32
 pub const aya_obj::generated::TC_H_MAJ_MASK: u32 = 4_294_901_760u32
@@ -5479,9 +6229,9 @@ pub const aya_obj::generated::XDP_FLAGS_MODES: u32 = 14u32
 pub const aya_obj::generated::XDP_FLAGS_REPLACE: u32 = 16u32
 pub const aya_obj::generated::XDP_FLAGS_SKB_MODE: u32 = 2u32
 pub const aya_obj::generated::XDP_FLAGS_UPDATE_IF_NOEXIST: u32 = 1u32
-pub const aya_obj::generated::__IFLA_XDP_MAX: aya_obj::generated::_bindgen_ty_90 = 9u32
-pub const aya_obj::generated::__TCA_BPF_MAX: aya_obj::generated::_bindgen_ty_159 = 12u32
-pub const aya_obj::generated::__TCA_MAX: aya_obj::generated::_bindgen_ty_103 = 15u32
+pub const aya_obj::generated::__IFLA_XDP_MAX: aya_obj::generated::_bindgen_ty_92 = 9u32
+pub const aya_obj::generated::__TCA_BPF_MAX: aya_obj::generated::_bindgen_ty_152 = 12u32
+pub const aya_obj::generated::__TCA_MAX: aya_obj::generated::_bindgen_ty_172 = 16u32
 pub type aya_obj::generated::__s16 = core::ffi::c_short
 pub type aya_obj::generated::__s32 = core::ffi::c_int
 pub type aya_obj::generated::__s64 = core::ffi::c_longlong
@@ -5490,29 +6240,31 @@ pub type aya_obj::generated::__u32 = core::ffi::c_uint
 pub type aya_obj::generated::__u64 = core::ffi::c_ulonglong
 pub type aya_obj::generated::__u8 = core::ffi::c_uchar
 pub type aya_obj::generated::_bindgen_ty_10 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_103 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_11 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_12 = core::ffi::c_ulong
-pub type aya_obj::generated::_bindgen_ty_13 = core::ffi::c_int
-pub type aya_obj::generated::_bindgen_ty_15 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_159 = core::ffi::c_uint
+pub type aya_obj::generated::_bindgen_ty_12 = core::ffi::c_uint
+pub type aya_obj::generated::_bindgen_ty_13 = core::ffi::c_uint
+pub type aya_obj::generated::_bindgen_ty_14 = core::ffi::c_ulong
+pub type aya_obj::generated::_bindgen_ty_15 = core::ffi::c_int
+pub type aya_obj::generated::_bindgen_ty_152 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_17 = core::ffi::c_uint
+pub type aya_obj::generated::_bindgen_ty_172 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_19 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_2 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_22 = core::ffi::c_uint
+pub type aya_obj::generated::_bindgen_ty_21 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_24 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_25 = core::ffi::c_uint
+pub type aya_obj::generated::_bindgen_ty_26 = core::ffi::c_uint
+pub type aya_obj::generated::_bindgen_ty_27 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_3 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_39 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_4 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_40 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_41 = core::ffi::c_uint
+pub type aya_obj::generated::_bindgen_ty_42 = core::ffi::c_uint
+pub type aya_obj::generated::_bindgen_ty_43 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_5 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_6 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_7 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_8 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_9 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_90 = core::ffi::c_uint
+pub type aya_obj::generated::_bindgen_ty_92 = core::ffi::c_uint
 pub mod aya_obj::maps
 pub enum aya_obj::maps::Map
 pub aya_obj::maps::Map::Btf(aya_obj::maps::BtfMap)
