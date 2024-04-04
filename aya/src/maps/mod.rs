@@ -385,6 +385,42 @@ pub enum Map {
 }
 
 impl Map {
+    /// Returns the low level map.
+    pub(crate) const fn map_data(&self) -> &MapData {
+        match self {
+            Self::Array(map) => map,
+            Self::ArrayOfMaps(map) => map,
+            Self::BloomFilter(map) => map,
+            Self::CgroupArray(map) => map,
+            Self::CgroupStorage(map) => map,
+            Self::CgrpStorage(map) => map,
+            Self::CpuMap(map) => map,
+            Self::DevMap(map) => map,
+            Self::DevMapHash(map) => map,
+            Self::HashMap(map) => map,
+            Self::HashOfMaps(map) => map,
+            Self::InodeStorage(map) => map,
+            Self::LpmTrie(map) => map,
+            Self::LruHashMap(map) => map,
+            Self::PerCpuArray(map) => map,
+            Self::PerCpuCgroupStorage(map) => map,
+            Self::PerCpuHashMap(map) => map,
+            Self::PerCpuLruHashMap(map) => map,
+            Self::PerfEventArray(map) => map,
+            Self::ProgramArray(map) => map,
+            Self::Queue(map) => map,
+            Self::ReusePortSockArray(map) => map,
+            Self::RingBuf(map) => map,
+            Self::SockHash(map) => map,
+            Self::SockMap(map) => map,
+            Self::SkStorage(map) => map,
+            Self::Stack(map) => map,
+            Self::StackTraceMap(map) => map,
+            Self::Unsupported(map) => map,
+            Self::XskMap(map) => map,
+        }
+    }
+
     /// Returns the low level map type.
     const fn map_type(&self) -> u32 {
         match self {
@@ -869,6 +905,17 @@ pub struct MapData {
 }
 
 impl MapData {
+    /// Recreates a [`MapData`] from an existing [`MapFd`].
+    pub(crate) fn create_from_fd(obj: aya_obj::Map, fd: &MapFd) -> Result<Self, MapError> {
+        Ok(Self {
+            obj,
+            fd: fd.try_clone().map_err(|io_error| SyscallError {
+                call: "dup2",
+                io_error,
+            })?,
+        })
+    }
+
     /// Creates a new map with the provided `name`
     pub fn create(
         obj: aya_obj::Map,

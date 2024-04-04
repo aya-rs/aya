@@ -78,6 +78,7 @@ pub struct EbpfLoader<'a> {
     btf: TargetBtf<'a>,
     default_map_pin_directory: Option<PathBuf>,
     globals: HashMap<&'a str, (&'a [u8], bool)>,
+    maps: HashMap<&'a str, &'a Map>,
     // Max entries overrides the max_entries field of the map that matches the provided name
     // before the map is created.
     max_entries: HashMap<&'a str, u32>,
@@ -150,6 +151,7 @@ impl<'a> EbpfLoader<'a> {
             btf: TargetBtf::System,
             default_map_pin_directory: None,
             globals: HashMap::new(),
+            maps: HashMap::new(),
             max_entries: HashMap::new(),
             map_pin_path_by_name: HashMap::new(),
             extensions: HashSet::new(),
@@ -321,6 +323,29 @@ impl<'a> EbpfLoader<'a> {
         self.override_global(name, value, must_exist)
     }
 
+    /// Allows to share a map between multiple eBPF without pinning.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::BpfLoader;
+    /// use aya::maps::Map;
+    ///
+    /// let mut shared_bpf = BpfLoader::new()
+    ///     .load_file("shared.o")?;
+    ///
+    /// let shared_map = shared_bpf.take_map("shared_map").unwrap();
+    ///
+    /// let bpf = BpfLoader::new()
+    ///     .map("shared_map", &shared_map)
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::BpfError>(())
+    /// ```
+    pub fn map(&mut self, name: &'a str, map: &'a Map) -> &mut Self {
+        self.maps.insert(name, map);
+        self
+    }
+
     /// Set the `max_entries` for specified map.
     ///
     /// Overwrite the value of `max_entries` of the map that matches
@@ -459,6 +484,7 @@ impl<'a> EbpfLoader<'a> {
             verifier_log_level,
             allow_unsupported_maps,
             map_pin_path_by_name,
+            ..
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
@@ -649,15 +675,22 @@ impl<'a> EbpfLoader<'a> {
             } else {
                 match map_obj.pinning() {
                     PinningType::None => {
-                        let btf_inner_map;
-                        let inner_map_fd = if let Some(inner_map_obj) = inner_map_obj {
-                            btf_inner_map =
-                                MapData::create(inner_map_obj, &format!("{name}.inner"), btf_fd)?;
-                            Some(btf_inner_map.fd().as_fd())
+                        if let Some(map) = self.maps.get(name.as_str()) {
+                            MapData::create_from_fd(map_obj, map.map_data().fd())?
                         } else {
-                            None
-                        };
-                        MapData::create_with_inner_map_fd(map_obj, &name, btf_fd, inner_map_fd)?
+                            let btf_inner_map;
+                            let inner_map_fd = if let Some(inner_map_obj) = inner_map_obj {
+                                btf_inner_map = MapData::create(
+                                    inner_map_obj,
+                                    &format!("{name}.inner"),
+                                    btf_fd,
+                                )?;
+                                Some(btf_inner_map.fd().as_fd())
+                            } else {
+                                None
+                            };
+                            MapData::create_with_inner_map_fd(map_obj, &name, btf_fd, inner_map_fd)?
+                        }
                     }
                     PinningType::ByName => {
                         // pin maps in /sys/fs/bpf by default to align with libbpf
