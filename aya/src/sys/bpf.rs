@@ -29,6 +29,7 @@ use crate::{
         },
         copy_instructions,
     },
+    programs::links::MprogFlags,
     sys::{syscall, SysResult, Syscall, SyscallError},
     util::KernelVersion,
     Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN,
@@ -407,6 +408,57 @@ pub(crate) fn bpf_link_create(
 }
 
 // since kernel 5.7
+pub(crate) fn bpf_tcxlink_create(
+    prog_fd: BorrowedFd<'_>,
+    target: LinkTarget<'_>,
+    attach_type: bpf_attach_type,
+    fd: Option<BorrowedFd<'_>>,
+    id: Option<u32>,
+    expected_revision: Option<u64>,
+    flags: MprogFlags,
+) -> SysResult<OwnedFd> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    attr.link_create.__bindgen_anon_1.prog_fd = prog_fd.as_raw_fd() as u32;
+
+    match target {
+        LinkTarget::Fd(fd) => {
+            attr.link_create.__bindgen_anon_2.target_fd = fd.as_raw_fd() as u32;
+        }
+        LinkTarget::IfIndex(ifindex) => {
+            attr.link_create.__bindgen_anon_2.target_ifindex = ifindex;
+        }
+    };
+    attr.link_create.attach_type = attach_type as u32;
+    attr.link_create.flags = flags.bits();
+
+    if let Some(expected_revision) = expected_revision {
+        attr.link_create.__bindgen_anon_3.tcx.expected_revision = expected_revision;
+    }
+
+    match (fd, id) {
+        (Some(fd), None) => {
+            attr.link_create
+                .__bindgen_anon_3
+                .tcx
+                .__bindgen_anon_1
+                .relative_fd = fd.as_raw_fd() as u32;
+        }
+        (None, Some(id)) => {
+            attr.link_create
+                .__bindgen_anon_3
+                .tcx
+                .__bindgen_anon_1
+                .relative_id = id;
+        }
+        _ => {}
+    }
+
+    // SAFETY: BPF_LINK_CREATE returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }
+}
+
+// since kernel 5.7
 pub(crate) fn bpf_link_update(
     link_fd: BorrowedFd<'_>,
     new_prog_fd: BorrowedFd<'_>,
@@ -426,6 +478,62 @@ pub(crate) fn bpf_link_update(
 
     sys_bpf(bpf_cmd::BPF_LINK_UPDATE, &mut attr)
 }
+
+// pub(crate) fn bpf_tcxprog_attach(
+//     prog_fd: BorrowedFd<'_>,
+//     target: LinkTarget<'_>,
+//     attach_type: bpf_attach_type,
+//     fd: Option<BorrowedFd<'_>>,
+//     id: Option<u32>,
+//     expected_revision: Option<u64>,
+//     flags: MprogFlags,
+// ) -> Result<(), SyscallError> {
+//     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+//     attr.__bindgen_anon_5.attach_bpf_fd = prog_fd.as_raw_fd() as u32;
+//     attr.link_create.attach_type = attach_type as u32;
+
+//     if let Some(expected_revision) = expected_revision {
+//         attr.link_create.__bindgen_anon_3.tcx.expected_revision = expected_revision;
+//     }
+
+//     match (fd, id) {
+//         (Some(fd), None) => {
+//             attr.link_create
+//                 .__bindgen_anon_3
+//                 .tcx
+//                 .__bindgen_anon_1
+//                 .relative_fd = fd.as_raw_fd() as u32;
+//         }
+//         (None, Some(id)) => {
+//             attr.link_create
+//                 .__bindgen_anon_3
+//                 .tcx
+//                 .__bindgen_anon_1
+//                 .relative_id = id;
+//         }
+//         _ => {}
+//     }
+
+//     match target {
+//         LinkTarget::Fd(fd) => {
+//             attr.link_create.__bindgen_anon_2.target_fd = fd.as_raw_fd() as u32;
+//         }
+//         LinkTarget::IfIndex(ifindex) => {
+//             attr.link_create.__bindgen_anon_2.target_ifindex = ifindex;
+//         }
+//     };
+
+//     let ret = sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &mut attr).map_err(|(code, io_error)| {
+//         assert_eq!(code, -1);
+//         SyscallError {
+//             call: "bpf_prog_attach",
+//             io_error,
+//         }
+//     })?;
+//     assert_eq!(ret, 0);
+//     Ok(())
+// }
 
 pub(crate) fn bpf_prog_attach(
     prog_fd: BorrowedFd<'_>,

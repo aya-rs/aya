@@ -8,14 +8,18 @@ use std::{
 
 use thiserror::Error;
 
+use super::FdLink;
 use crate::{
     generated::{
-        bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS, TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
+        bpf_attach_type::{self, BPF_TCX_EGRESS, BPF_TCX_INGRESS},
+        bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS,
+        TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     },
-    programs::{define_link_wrapper, load_program, Link, ProgramData, ProgramError},
+    programs::{define_link_wrapper, load_program, Link, LinkOrdering, ProgramData, ProgramError},
     sys::{
-        netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
-        netlink_qdisc_detach,
+        bpf_link_update, bpf_tcxlink_create, netlink_find_filter_with_name,
+        netlink_qdisc_add_clsact, netlink_qdisc_attach, netlink_qdisc_detach, LinkTarget,
+        SyscallError,
     },
     util::{ifindex_from_ifname, tc_handler_make},
     VerifierLogLevel,
@@ -89,6 +93,12 @@ pub enum TcError {
     /// the clsact qdisc is already attached
     #[error("the clsact qdisc is already attached")]
     AlreadyAttached,
+    /// tcx links can only be attached to ingress or egress
+    #[error("tcx links can only be attached to ingress or egress")]
+    InvalidTcxAttach,
+    /// program was loaded via tcx not netlink
+    #[error("program was loaded via tcx not netlink")]
+    InvalidTcLink,
 }
 
 impl TcAttachType {
@@ -99,11 +109,39 @@ impl TcAttachType {
             Self::Egress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_EGRESS),
         }
     }
+
+    pub(crate) fn tcx_attach(&self) -> Result<bpf_attach_type, TcError> {
+        match self {
+            Self::Ingress => Ok(BPF_TCX_INGRESS),
+            Self::Egress => Ok(BPF_TCX_EGRESS),
+            Self::Custom(_) => Err(TcError::InvalidTcxAttach),
+        }
+    }
 }
 
-/// Options for SchedClassifier attach
-#[derive(Default)]
-pub struct TcOptions {
+/// Options for a SchedClassifier attach.  The attach options are different for
+/// the legacy netlink mechanism versus the modern TCX link type.
+pub enum TcAttachOptions {
+    /// Netlink attach options.
+    NlOptions(NlOptions),
+    /// Tcx attach options.
+    TCXOptions(TcxOptions),
+}
+
+/// Options for SchedClassifer attach via TCX.
+#[derive(Debug)]
+pub struct TcxOptions {
+    /// Ordering defines the tcx link ordering relative to other links on the
+    /// same interface.
+    pub ordering: LinkOrdering,
+    /// Expected revision is used to ensure that tcx link order setting is not
+    /// racing with another process.
+    pub expected_revision: Option<u64>,
+}
+
+/// Options for SchedClassifier attach via netlink
+#[derive(Debug, Default, Hash, Eq, PartialEq)]
+pub struct NlOptions {
     /// Priority assigned to tc program with lower number = higher priority.
     /// If set to default (0), the system chooses the next highest priority or 49152 if no filters exist yet
     pub priority: u16,
@@ -133,10 +171,14 @@ impl SchedClassifier {
         interface: &str,
         attach_type: TcAttachType,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
-        self.attach_with_options(interface, attach_type, TcOptions::default())
+        self.attach_with_options(
+            interface,
+            attach_type,
+            TcAttachOptions::NlOptions(NlOptions::default()),
+        )
     }
 
-    /// Attaches the program to the given `interface` with options defined in [`TcOptions`].
+    /// Attaches the program to the given `interface` with options defined in [`NlOptions`].
     ///
     /// The returned value can be used to detach, see [SchedClassifier::detach].
     ///
@@ -150,60 +192,115 @@ impl SchedClassifier {
         &mut self,
         interface: &str,
         attach_type: TcAttachType,
-        options: TcOptions,
+        options: TcAttachOptions,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
         let if_index = ifindex_from_ifname(interface)
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
-        self.do_attach(if_index as i32, attach_type, options, true)
+        self.do_attach(if_index, attach_type, options, true)
     }
 
     /// Atomically replaces the program referenced by the provided link.
     ///
     /// Ownership of the link will transfer to this program.
+    /// TODO(astoycos) change this to use tcx
     pub fn attach_to_link(
         &mut self,
         link: SchedClassifierLink,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
-        let TcLink {
-            if_index,
-            attach_type,
-            priority,
-            handle,
-        } = link.into_inner();
-        self.do_attach(if_index, attach_type, TcOptions { priority, handle }, false)
+        let prog_fd = self.fd()?;
+        let prog_fd = prog_fd.as_fd();
+        match link.into_inner() {
+            TcLinkInner::TcxLink(link) => {
+                let fd = link.fd;
+                let link_fd = fd.as_fd();
+
+                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|(_, io_error)| {
+                    SyscallError {
+                        call: "bpf_link_update",
+                        io_error,
+                    }
+                })?;
+
+                self.data
+                    .links
+                    .insert(SchedClassifierLink::new(TcLinkInner::TcxLink(FdLink::new(
+                        fd,
+                    ))))
+            }
+            TcLinkInner::NlLink(NlLink {
+                if_index,
+                attach_type,
+                priority,
+                handle,
+            }) => self.do_attach(
+                if_index,
+                attach_type,
+                TcAttachOptions::NlOptions(NlOptions { priority, handle }),
+                false,
+            ),
+        }
     }
 
     fn do_attach(
         &mut self,
-        if_index: i32,
+        if_index: u32,
         attach_type: TcAttachType,
-        options: TcOptions,
+        options: TcAttachOptions,
         create: bool,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let name = self.data.name.as_deref().unwrap_or_default();
-        // TODO: avoid this unwrap by adding a new error variant.
-        let name = CString::new(name).unwrap();
-        let (priority, handle) = unsafe {
-            netlink_qdisc_attach(
-                if_index,
-                &attach_type,
-                prog_fd,
-                &name,
-                options.priority,
-                options.handle,
-                create,
-            )
-        }
-        .map_err(|io_error| TcError::NetlinkError { io_error })?;
 
-        self.data.links.insert(SchedClassifierLink::new(TcLink {
-            if_index,
-            attach_type,
-            priority,
-            handle,
-        }))
+        match options {
+            TcAttachOptions::NlOptions(options) => {
+                let name = self.data.name.as_deref().unwrap_or_default();
+                // TODO: avoid this unwrap by adding a new error variant.
+                let name = CString::new(name).unwrap();
+                let (priority, handle) = unsafe {
+                    netlink_qdisc_attach(
+                        if_index as i32,
+                        &attach_type,
+                        prog_fd,
+                        &name,
+                        options.priority,
+                        options.handle,
+                        create,
+                    )
+                }
+                .map_err(|io_error| TcError::NetlinkError { io_error })?;
+
+                self.data
+                    .links
+                    .insert(SchedClassifierLink::new(TcLinkInner::NlLink(NlLink {
+                        if_index,
+                        attach_type,
+                        priority,
+                        handle,
+                    })))
+            }
+            TcAttachOptions::TCXOptions(options) => {
+                let (id, fd, flags) = options.ordering.order()?;
+                let link_fd = bpf_tcxlink_create(
+                    prog_fd,
+                    LinkTarget::IfIndex(if_index),
+                    attach_type.tcx_attach()?,
+                    fd,
+                    id,
+                    options.expected_revision,
+                    flags,
+                )
+                .map_err(|(_, io_error)| SyscallError {
+                    call: "bpf_mprog_attach",
+                    io_error,
+                })?;
+
+                self.data
+                    .links
+                    .insert(SchedClassifierLink::new(TcLinkInner::TcxLink(FdLink::new(
+                        link_fd,
+                    ))))
+            }
+        }
     }
 
     /// Detaches the program.
@@ -237,29 +334,64 @@ impl SchedClassifier {
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub(crate) struct TcLinkId(i32, TcAttachType, u16, u32);
+pub(crate) struct NlLinkId(u32, TcAttachType, u16, u32);
 
 #[derive(Debug)]
-struct TcLink {
-    if_index: i32,
+pub(crate) struct NlLink {
+    if_index: u32,
     attach_type: TcAttachType,
     priority: u16,
     handle: u32,
 }
 
-impl Link for TcLink {
-    type Id = TcLinkId;
+impl Link for NlLink {
+    type Id = NlLinkId;
 
     fn id(&self) -> Self::Id {
-        TcLinkId(self.if_index, self.attach_type, self.priority, self.handle)
+        NlLinkId(self.if_index, self.attach_type, self.priority, self.handle)
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         unsafe {
-            netlink_qdisc_detach(self.if_index, &self.attach_type, self.priority, self.handle)
+            netlink_qdisc_detach(
+                self.if_index as i32,
+                &self.attach_type,
+                self.priority,
+                self.handle,
+            )
         }
         .map_err(|io_error| TcError::NetlinkError { io_error })?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Hash, Eq, PartialEq)]
+pub(crate) enum TcLinkIdInner {
+    TcxLinkId(<FdLink as Link>::Id),
+    NlLinkId(<NlLink as Link>::Id),
+}
+
+#[derive(Debug)]
+pub(crate) enum TcLinkInner {
+    TcxLink(FdLink),
+    NlLink(NlLink),
+}
+
+impl Link for TcLinkInner {
+    type Id = TcLinkIdInner;
+
+    fn id(&self) -> Self::Id {
+        match self {
+            Self::TcxLink(link) => TcLinkIdInner::TcxLinkId(link.id()),
+            Self::NlLink(link) => TcLinkIdInner::NlLinkId(link.id()),
+        }
+    }
+
+    fn detach(self) -> Result<(), ProgramError> {
+        match self {
+            Self::TcxLink(link) => link.detach(),
+            Self::NlLink(link) => link.detach(),
+        }
     }
 }
 
@@ -268,8 +400,8 @@ define_link_wrapper!(
     SchedClassifierLink,
     /// The type returned by [SchedClassifier::attach]. Can be passed to [SchedClassifier::detach].
     SchedClassifierLinkId,
-    TcLink,
-    TcLinkId
+    TcLinkInner,
+    TcLinkIdInner
 );
 
 impl SchedClassifierLink {
@@ -311,27 +443,39 @@ impl SchedClassifierLink {
         handle: u32,
     ) -> Result<Self, io::Error> {
         let if_index = ifindex_from_ifname(if_name)?;
-        Ok(Self(Some(TcLink {
-            if_index: if_index as i32,
+        Ok(Self(Some(TcLinkInner::NlLink(NlLink {
+            if_index,
             attach_type,
             priority,
             handle,
-        })))
+        }))))
     }
 
     /// Returns the attach type.
-    pub fn attach_type(&self) -> TcAttachType {
-        self.inner().attach_type
+    pub fn attach_type(&self) -> Result<TcAttachType, ProgramError> {
+        if let TcLinkInner::NlLink(n) = self.inner() {
+            Ok(n.attach_type)
+        } else {
+            Err(TcError::InvalidTcLink.into())
+        }
     }
 
     /// Returns the allocated priority. If none was provided at attach time, this was allocated for you.
-    pub fn priority(&self) -> u16 {
-        self.inner().priority
+    pub fn priority(&self) -> Result<u16, ProgramError> {
+        if let TcLinkInner::NlLink(n) = self.inner() {
+            Ok(n.priority)
+        } else {
+            Err(TcError::InvalidTcLink.into())
+        }
     }
 
     /// Returns the assigned handle. If none was provided at attach time, this was allocated for you.
-    pub fn handle(&self) -> u32 {
-        self.inner().handle
+    pub fn handle(&self) -> Result<u32, ProgramError> {
+        if let TcLinkInner::NlLink(n) = self.inner() {
+            Ok(n.handle)
+        } else {
+            Err(TcError::InvalidTcLink.into())
+        }
     }
 }
 
