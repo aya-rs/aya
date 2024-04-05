@@ -10,9 +10,12 @@ use std::{
 use thiserror::Error;
 
 use crate::{
-    generated::{bpf_attach_type, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE},
+    generated::{
+        bpf_attach_type, BPF_F_AFTER, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE, BPF_F_BEFORE,
+        BPF_F_ID, BPF_F_LINK, BPF_F_REPLACE,
+    },
     pin::PinError,
-    programs::{ProgramError, ProgramFd},
+    programs::{MultiProgLink, MultiProgProgram, ProgramError, ProgramFd, ProgramId},
     sys::{bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach, SyscallError},
 };
 
@@ -329,7 +332,7 @@ macro_rules! define_link_wrapper {
         pub struct $wrapper(Option<$base>);
 
         #[allow(dead_code)]
-        // allow dead code since currently XDP is the only consumer of inner and
+        // allow dead code since currently XDP/TC are the only consumers of inner and
         // into_inner
         impl $wrapper {
             fn new(base: $base) -> $wrapper {
@@ -392,6 +395,125 @@ pub enum LinkError {
     /// Syscall failed.
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
+}
+
+#[derive(Debug)]
+pub(crate) enum LinkRef {
+    Id(u32),
+    Fd(RawFd),
+}
+
+bitflags::bitflags! {
+    /// Flags which are use to build a set of MprogOptions.
+    #[derive(Clone, Copy, Debug, Default)]
+    pub(crate) struct MprogFlags: u32 {
+        const REPLACE = BPF_F_REPLACE;
+        const BEFORE = BPF_F_BEFORE;
+        const AFTER = BPF_F_AFTER;
+        const ID = BPF_F_ID;
+        const LINK = BPF_F_LINK;
+    }
+}
+
+/// Arguments required for interacting with the kernel's multi-prog API.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.6.0.
+///
+/// # Example
+///
+///```no_run
+/// # let mut bpf = aya::Ebpf::load(&[])?;
+/// use aya::programs::{tc, SchedClassifier, TcAttachType, tc::TcAttachOptions, LinkOrder};
+///
+/// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
+/// prog.load()?;
+/// let options = TcAttachOptions::TcxOrder(LinkOrder::first());
+/// prog.attach_with_options("eth0", TcAttachType::Ingress, options)?;
+///
+/// # Ok::<(), aya::EbpfError>(())
+/// ```
+#[derive(Debug)]
+pub struct LinkOrder {
+    pub(crate) link_ref: LinkRef,
+    pub(crate) flags: MprogFlags,
+}
+
+/// Ensure that default link ordering is to be attached last.
+impl Default for LinkOrder {
+    fn default() -> Self {
+        Self {
+            link_ref: LinkRef::Fd(0),
+            flags: MprogFlags::AFTER,
+        }
+    }
+}
+
+impl LinkOrder {
+    /// Attach before all other links.
+    pub fn first() -> Self {
+        Self {
+            link_ref: LinkRef::Id(0),
+            flags: MprogFlags::BEFORE,
+        }
+    }
+
+    /// Attach after all other links.
+    pub fn last() -> Self {
+        Self {
+            link_ref: LinkRef::Id(0),
+            flags: MprogFlags::AFTER,
+        }
+    }
+
+    /// Attach before the given link.
+    pub fn before_link<L: MultiProgLink>(link: &L) -> Result<Self, LinkError> {
+        Ok(Self {
+            link_ref: LinkRef::Fd(link.fd()?.as_raw_fd()),
+            flags: MprogFlags::BEFORE | MprogFlags::LINK,
+        })
+    }
+
+    /// Attach after the given link.
+    pub fn after_link<L: MultiProgLink>(link: &L) -> Result<Self, LinkError> {
+        Ok(Self {
+            link_ref: LinkRef::Fd(link.fd()?.as_raw_fd()),
+            flags: MprogFlags::AFTER | MprogFlags::LINK,
+        })
+    }
+
+    /// Attach before the given program.
+    pub fn before_program<P: MultiProgProgram>(program: &P) -> Result<Self, ProgramError> {
+        Ok(Self {
+            link_ref: LinkRef::Fd(program.fd()?.as_raw_fd()),
+            flags: MprogFlags::BEFORE,
+        })
+    }
+
+    /// Attach after the given program.
+    pub fn after_program<P: MultiProgProgram>(program: &P) -> Result<Self, ProgramError> {
+        Ok(Self {
+            link_ref: LinkRef::Fd(program.fd()?.as_raw_fd()),
+            flags: MprogFlags::AFTER,
+        })
+    }
+
+    /// Attach before the program with the given id.
+    pub fn before_program_id(id: ProgramId) -> Self {
+        Self {
+            link_ref: LinkRef::Id(id.0),
+            flags: MprogFlags::BEFORE | MprogFlags::ID,
+        }
+    }
+
+    /// Attach after the program with the given id.
+    pub fn after_program_id(id: ProgramId) -> Self {
+        Self {
+            link_ref: LinkRef::Id(id.0),
+            flags: MprogFlags::AFTER | MprogFlags::ID,
+        }
+    }
 }
 
 #[cfg(test)]

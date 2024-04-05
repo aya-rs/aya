@@ -81,6 +81,7 @@ impl CgroupSockopt {
                 attach_type,
                 None,
                 mode.into(),
+                None,
             )
             .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
