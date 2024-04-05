@@ -3711,6 +3711,41 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::links::LinkError where T: 
 pub fn aya::programs::links::LinkError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::links::LinkError
 pub fn aya::programs::links::LinkError::from(t: T) -> T
+pub enum aya::programs::links::LinkOrdering
+pub aya::programs::links::LinkOrdering::AfterLink(aya::programs::links::FdLink)
+pub aya::programs::links::LinkOrdering::AfterLinkId(u32)
+pub aya::programs::links::LinkOrdering::AfterProgram(aya::programs::Program)
+pub aya::programs::links::LinkOrdering::AfterProgramID(u32)
+pub aya::programs::links::LinkOrdering::BeforeLink(aya::programs::links::FdLink)
+pub aya::programs::links::LinkOrdering::BeforeLinkId(u32)
+pub aya::programs::links::LinkOrdering::BeforeProgram(aya::programs::Program)
+pub aya::programs::links::LinkOrdering::BeforeProgramID(u32)
+pub aya::programs::links::LinkOrdering::First
+pub aya::programs::links::LinkOrdering::Last
+impl core::fmt::Debug for aya::programs::links::LinkOrdering
+pub fn aya::programs::links::LinkOrdering::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::links::LinkOrdering
+impl core::marker::Send for aya::programs::links::LinkOrdering
+impl core::marker::Sync for aya::programs::links::LinkOrdering
+impl core::marker::Unpin for aya::programs::links::LinkOrdering
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::LinkOrdering
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::LinkOrdering
+impl<T, U> core::convert::Into<U> for aya::programs::links::LinkOrdering where U: core::convert::From<T>
+pub fn aya::programs::links::LinkOrdering::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::links::LinkOrdering where U: core::convert::Into<T>
+pub type aya::programs::links::LinkOrdering::Error = core::convert::Infallible
+pub fn aya::programs::links::LinkOrdering::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::links::LinkOrdering where U: core::convert::TryFrom<T>
+pub type aya::programs::links::LinkOrdering::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::links::LinkOrdering::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::links::LinkOrdering where T: 'static + core::marker::Sized
+pub fn aya::programs::links::LinkOrdering::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::links::LinkOrdering where T: core::marker::Sized
+pub fn aya::programs::links::LinkOrdering::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::links::LinkOrdering where T: core::marker::Sized
+pub fn aya::programs::links::LinkOrdering::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::links::LinkOrdering
+pub fn aya::programs::links::LinkOrdering::from(t: T) -> T
 pub struct aya::programs::links::FdLink
 impl aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<aya::programs::links::PinnedLink, aya::pin::PinError>
@@ -5330,6 +5365,31 @@ pub fn aya::programs::socket_filter::SocketFilterLinkId::borrow_mut(&mut self) -
 impl<T> core::convert::From<T> for aya::programs::socket_filter::SocketFilterLinkId
 pub fn aya::programs::socket_filter::SocketFilterLinkId::from(t: T) -> T
 pub mod aya::programs::tc
+pub enum aya::programs::tc::TcAttachOptions
+pub aya::programs::tc::TcAttachOptions::NlOptions(aya::programs::tc::NlOptions)
+pub aya::programs::tc::TcAttachOptions::TCXOptions(aya::programs::tc::TcxOptions)
+impl core::marker::Freeze for aya::programs::tc::TcAttachOptions
+impl core::marker::Send for aya::programs::tc::TcAttachOptions
+impl core::marker::Sync for aya::programs::tc::TcAttachOptions
+impl core::marker::Unpin for aya::programs::tc::TcAttachOptions
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcAttachOptions
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachOptions
+impl<T, U> core::convert::Into<U> for aya::programs::tc::TcAttachOptions where U: core::convert::From<T>
+pub fn aya::programs::tc::TcAttachOptions::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::tc::TcAttachOptions where U: core::convert::Into<T>
+pub type aya::programs::tc::TcAttachOptions::Error = core::convert::Infallible
+pub fn aya::programs::tc::TcAttachOptions::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::tc::TcAttachOptions where U: core::convert::TryFrom<T>
+pub type aya::programs::tc::TcAttachOptions::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::tc::TcAttachOptions::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::tc::TcAttachOptions where T: 'static + core::marker::Sized
+pub fn aya::programs::tc::TcAttachOptions::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::tc::TcAttachOptions where T: core::marker::Sized
+pub fn aya::programs::tc::TcAttachOptions::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::tc::TcAttachOptions where T: core::marker::Sized
+pub fn aya::programs::tc::TcAttachOptions::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::tc::TcAttachOptions
+pub fn aya::programs::tc::TcAttachOptions::from(t: T) -> T
 pub enum aya::programs::tc::TcAttachType
 pub aya::programs::tc::TcAttachType::Custom(u32)
 pub aya::programs::tc::TcAttachType::Egress
@@ -5373,6 +5433,8 @@ impl<T> core::convert::From<T> for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::from(t: T) -> T
 pub enum aya::programs::tc::TcError
 pub aya::programs::tc::TcError::AlreadyAttached
+pub aya::programs::tc::TcError::InvalidTcLink
+pub aya::programs::tc::TcError::InvalidTcxAttach
 pub aya::programs::tc::TcError::NetlinkError
 pub aya::programs::tc::TcError::NetlinkError::io_error: std::io::error::Error
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
@@ -5407,11 +5469,46 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::tc::TcError where T: core:
 pub fn aya::programs::tc::TcError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::from(t: T) -> T
+pub struct aya::programs::tc::NlOptions
+pub aya::programs::tc::NlOptions::handle: u32
+pub aya::programs::tc::NlOptions::priority: u16
+impl core::cmp::Eq for aya::programs::tc::NlOptions
+impl core::cmp::PartialEq for aya::programs::tc::NlOptions
+pub fn aya::programs::tc::NlOptions::eq(&self, other: &aya::programs::tc::NlOptions) -> bool
+impl core::default::Default for aya::programs::tc::NlOptions
+pub fn aya::programs::tc::NlOptions::default() -> aya::programs::tc::NlOptions
+impl core::fmt::Debug for aya::programs::tc::NlOptions
+pub fn aya::programs::tc::NlOptions::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::tc::NlOptions
+pub fn aya::programs::tc::NlOptions::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for aya::programs::tc::NlOptions
+impl core::marker::Freeze for aya::programs::tc::NlOptions
+impl core::marker::Send for aya::programs::tc::NlOptions
+impl core::marker::Sync for aya::programs::tc::NlOptions
+impl core::marker::Unpin for aya::programs::tc::NlOptions
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::NlOptions
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::NlOptions
+impl<T, U> core::convert::Into<U> for aya::programs::tc::NlOptions where U: core::convert::From<T>
+pub fn aya::programs::tc::NlOptions::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::tc::NlOptions where U: core::convert::Into<T>
+pub type aya::programs::tc::NlOptions::Error = core::convert::Infallible
+pub fn aya::programs::tc::NlOptions::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::tc::NlOptions where U: core::convert::TryFrom<T>
+pub type aya::programs::tc::NlOptions::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::tc::NlOptions::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::tc::NlOptions where T: 'static + core::marker::Sized
+pub fn aya::programs::tc::NlOptions::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::tc::NlOptions where T: core::marker::Sized
+pub fn aya::programs::tc::NlOptions::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::tc::NlOptions where T: core::marker::Sized
+pub fn aya::programs::tc::NlOptions::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::tc::NlOptions
+pub fn aya::programs::tc::NlOptions::from(t: T) -> T
 pub struct aya::programs::tc::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::attach(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, link: aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType, options: aya::programs::tc::TcOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType, options: aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, link_id: aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -5459,10 +5556,10 @@ impl<T> core::convert::From<T> for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::from(t: T) -> T
 pub struct aya::programs::tc::SchedClassifierLink(_)
 impl aya::programs::tc::SchedClassifierLink
-pub fn aya::programs::tc::SchedClassifierLink::attach_type(&self) -> aya::programs::tc::TcAttachType
+pub fn aya::programs::tc::SchedClassifierLink::attach_type(&self) -> core::result::Result<aya::programs::tc::TcAttachType, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::attached(if_name: &str, attach_type: aya::programs::tc::TcAttachType, priority: u16, handle: u32) -> core::result::Result<Self, std::io::error::Error>
-pub fn aya::programs::tc::SchedClassifierLink::handle(&self) -> u32
-pub fn aya::programs::tc::SchedClassifierLink::priority(&self) -> u16
+pub fn aya::programs::tc::SchedClassifierLink::handle(&self) -> core::result::Result<u32, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifierLink::priority(&self) -> core::result::Result<u16, aya::programs::ProgramError>
 impl aya::programs::links::Link for aya::programs::tc::SchedClassifierLink
 pub type aya::programs::tc::SchedClassifierLink::Id = aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -5524,33 +5621,33 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::tc::SchedClassifierLinkId 
 pub fn aya::programs::tc::SchedClassifierLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLinkId::from(t: T) -> T
-pub struct aya::programs::tc::TcOptions
-pub aya::programs::tc::TcOptions::handle: u32
-pub aya::programs::tc::TcOptions::priority: u16
-impl core::default::Default for aya::programs::tc::TcOptions
-pub fn aya::programs::tc::TcOptions::default() -> aya::programs::tc::TcOptions
-impl core::marker::Freeze for aya::programs::tc::TcOptions
-impl core::marker::Send for aya::programs::tc::TcOptions
-impl core::marker::Sync for aya::programs::tc::TcOptions
-impl core::marker::Unpin for aya::programs::tc::TcOptions
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcOptions
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcOptions
-impl<T, U> core::convert::Into<U> for aya::programs::tc::TcOptions where U: core::convert::From<T>
-pub fn aya::programs::tc::TcOptions::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::tc::TcOptions where U: core::convert::Into<T>
-pub type aya::programs::tc::TcOptions::Error = core::convert::Infallible
-pub fn aya::programs::tc::TcOptions::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::tc::TcOptions where U: core::convert::TryFrom<T>
-pub type aya::programs::tc::TcOptions::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::tc::TcOptions::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::programs::tc::TcOptions where T: 'static + core::marker::Sized
-pub fn aya::programs::tc::TcOptions::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::tc::TcOptions where T: core::marker::Sized
-pub fn aya::programs::tc::TcOptions::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::tc::TcOptions where T: core::marker::Sized
-pub fn aya::programs::tc::TcOptions::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::tc::TcOptions
-pub fn aya::programs::tc::TcOptions::from(t: T) -> T
+pub struct aya::programs::tc::TcxOptions
+pub aya::programs::tc::TcxOptions::expected_revision: core::option::Option<u64>
+pub aya::programs::tc::TcxOptions::ordering: aya::programs::links::LinkOrdering
+impl core::fmt::Debug for aya::programs::tc::TcxOptions
+pub fn aya::programs::tc::TcxOptions::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::tc::TcxOptions
+impl core::marker::Send for aya::programs::tc::TcxOptions
+impl core::marker::Sync for aya::programs::tc::TcxOptions
+impl core::marker::Unpin for aya::programs::tc::TcxOptions
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcxOptions
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcxOptions
+impl<T, U> core::convert::Into<U> for aya::programs::tc::TcxOptions where U: core::convert::From<T>
+pub fn aya::programs::tc::TcxOptions::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::tc::TcxOptions where U: core::convert::Into<T>
+pub type aya::programs::tc::TcxOptions::Error = core::convert::Infallible
+pub fn aya::programs::tc::TcxOptions::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::tc::TcxOptions where U: core::convert::TryFrom<T>
+pub type aya::programs::tc::TcxOptions::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::tc::TcxOptions::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::tc::TcxOptions where T: 'static + core::marker::Sized
+pub fn aya::programs::tc::TcxOptions::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::tc::TcxOptions where T: core::marker::Sized
+pub fn aya::programs::tc::TcxOptions::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::tc::TcxOptions where T: core::marker::Sized
+pub fn aya::programs::tc::TcxOptions::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::tc::TcxOptions
+pub fn aya::programs::tc::TcxOptions::from(t: T) -> T
 pub fn aya::programs::tc::qdisc_add_clsact(if_name: &str) -> core::result::Result<(), std::io::error::Error>
 pub fn aya::programs::tc::qdisc_detach_program(if_name: &str, attach_type: aya::programs::tc::TcAttachType, name: &str) -> core::result::Result<(), std::io::error::Error>
 pub mod aya::programs::tp_btf
@@ -6352,6 +6449,41 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::kprobe::KProbeError where 
 pub fn aya::programs::kprobe::KProbeError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::kprobe::KProbeError
 pub fn aya::programs::kprobe::KProbeError::from(t: T) -> T
+pub enum aya::programs::LinkOrdering
+pub aya::programs::LinkOrdering::AfterLink(aya::programs::links::FdLink)
+pub aya::programs::LinkOrdering::AfterLinkId(u32)
+pub aya::programs::LinkOrdering::AfterProgram(aya::programs::Program)
+pub aya::programs::LinkOrdering::AfterProgramID(u32)
+pub aya::programs::LinkOrdering::BeforeLink(aya::programs::links::FdLink)
+pub aya::programs::LinkOrdering::BeforeLinkId(u32)
+pub aya::programs::LinkOrdering::BeforeProgram(aya::programs::Program)
+pub aya::programs::LinkOrdering::BeforeProgramID(u32)
+pub aya::programs::LinkOrdering::First
+pub aya::programs::LinkOrdering::Last
+impl core::fmt::Debug for aya::programs::links::LinkOrdering
+pub fn aya::programs::links::LinkOrdering::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::links::LinkOrdering
+impl core::marker::Send for aya::programs::links::LinkOrdering
+impl core::marker::Sync for aya::programs::links::LinkOrdering
+impl core::marker::Unpin for aya::programs::links::LinkOrdering
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::LinkOrdering
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::LinkOrdering
+impl<T, U> core::convert::Into<U> for aya::programs::links::LinkOrdering where U: core::convert::From<T>
+pub fn aya::programs::links::LinkOrdering::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::links::LinkOrdering where U: core::convert::Into<T>
+pub type aya::programs::links::LinkOrdering::Error = core::convert::Infallible
+pub fn aya::programs::links::LinkOrdering::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::links::LinkOrdering where U: core::convert::TryFrom<T>
+pub type aya::programs::links::LinkOrdering::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::links::LinkOrdering::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::links::LinkOrdering where T: 'static + core::marker::Sized
+pub fn aya::programs::links::LinkOrdering::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::links::LinkOrdering where T: core::marker::Sized
+pub fn aya::programs::links::LinkOrdering::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::links::LinkOrdering where T: core::marker::Sized
+pub fn aya::programs::links::LinkOrdering::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::links::LinkOrdering
+pub fn aya::programs::links::LinkOrdering::from(t: T) -> T
 pub enum aya::programs::PerfEventScope
 pub aya::programs::PerfEventScope::AllProcessesOneCpu
 pub aya::programs::PerfEventScope::AllProcessesOneCpu::cpu: u32
@@ -6886,6 +7018,8 @@ impl<T> core::convert::From<T> for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::from(t: T) -> T
 pub enum aya::programs::TcError
 pub aya::programs::TcError::AlreadyAttached
+pub aya::programs::TcError::InvalidTcLink
+pub aya::programs::TcError::InvalidTcxAttach
 pub aya::programs::TcError::NetlinkError
 pub aya::programs::TcError::NetlinkError::io_error: std::io::error::Error
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
@@ -7843,7 +7977,7 @@ pub struct aya::programs::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::attach(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, link: aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType, options: aya::programs::tc::TcOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType, options: aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, link_id: aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
