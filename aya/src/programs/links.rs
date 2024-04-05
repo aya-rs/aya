@@ -10,9 +10,12 @@ use std::{
 use thiserror::Error;
 
 use crate::{
-    generated::{bpf_attach_type, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE},
+    generated::{
+        bpf_attach_type, BPF_F_AFTER, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE, BPF_F_BEFORE,
+        BPF_F_ID, BPF_F_LINK, BPF_F_REPLACE,
+    },
     pin::PinError,
-    programs::{ProgramError, ProgramFd},
+    programs::{MprogLink, MprogProgram, ProgramError, ProgramFd, ProgramId},
     sys::{bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach, SyscallError},
 };
 
@@ -329,7 +332,7 @@ macro_rules! define_link_wrapper {
         pub struct $wrapper(Option<$base>);
 
         #[allow(dead_code)]
-        // allow dead code since currently XDP is the only consumer of inner and
+        // allow dead code since currently XDP/TC are the only consumers of inner and
         // into_inner
         impl $wrapper {
             fn new(base: $base) -> $wrapper {
@@ -392,6 +395,180 @@ pub enum LinkError {
     /// Syscall failed.
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
+}
+
+/// A [`Link`] identifier, which may or may not be owned by aya.
+pub struct LinkId(u32);
+
+impl LinkId {
+    /// A wrapper for an arbitrary loaded link specified by its kernel id,
+    /// unsafe because there is no guarantee provided by aya that the link is
+    /// still loaded or even exists.
+    pub unsafe fn new(id: u32) -> Self {
+        Self(id)
+    }
+}
+
+bitflags::bitflags! {
+    /// Flags which are use to build a set of MprogOptions.
+    #[derive(Clone, Copy, Debug, Default)]
+    pub(crate) struct MprogFlags: u32 {
+        const REPLACE = BPF_F_REPLACE;
+        const BEFORE = BPF_F_BEFORE;
+        const AFTER = BPF_F_AFTER;
+        const ID = BPF_F_ID;
+        const LINK = BPF_F_LINK;
+    }
+}
+
+/// Struct defining the arguments required for interacting with the kernel's
+/// multi-prog API.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.6.
+///
+/// # Example
+///
+///```no_run
+/// # let mut bpf = aya::Ebpf::load(&[])?;
+/// use aya::programs::{tc, SchedClassifier, TcAttachType, tc::TcAttachOptions, LinkOrder};
+///
+/// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
+/// prog.load()?;
+/// let options = TcAttachOptions::tcxoptions(LinkOrder::first());
+/// prog.attach_with_options("eth0", TcAttachType::Ingress, options)?;
+///
+/// # Ok::<(), aya::EbpfError>(())
+/// ```
+#[derive(Debug)]
+pub struct LinkOrder {
+    pub(crate) id: Option<u32>,
+    pub(crate) fd: Option<RawFd>,
+    pub(crate) expected_revision: Option<u64>,
+    pub(crate) flags: MprogFlags,
+}
+
+/// Ensure that default link ordering is to be attached last.
+impl Default for LinkOrder {
+    fn default() -> Self {
+        Self {
+            id: Some(0),
+            fd: None,
+            flags: MprogFlags::AFTER,
+            expected_revision: None,
+        }
+    }
+}
+
+impl LinkOrder {
+    /// Ensure the link is created before all other links at a given attachment point.
+    pub fn first() -> Self {
+        Self {
+            id: Some(0),
+            fd: None,
+            flags: MprogFlags::BEFORE,
+            expected_revision: None,
+        }
+    }
+
+    /// Ensure the link is created after all other links for a given attachment point.
+    pub fn last() -> Self {
+        Self {
+            id: Some(0),
+            fd: None,
+            flags: MprogFlags::AFTER,
+            expected_revision: None,
+        }
+    }
+
+    /// Ensure the link is created before the specified aya-owned link for a given attachment point.
+    pub fn before_link<L: MprogLink>(link: &L) -> Result<Self, LinkError> {
+        Ok(Self {
+            id: None,
+            fd: Some(link.fd()?.as_raw_fd()),
+            flags: MprogFlags::BEFORE | MprogFlags::LINK,
+            expected_revision: None,
+        })
+    }
+
+    /// Ensure the link is created after the specified aya-owned link for a given attachment point.
+    pub fn after_link<L: MprogLink>(link: &L) -> Result<Self, LinkError> {
+        Ok(Self {
+            id: None,
+            fd: Some(link.fd()?.as_raw_fd()),
+            flags: MprogFlags::AFTER | MprogFlags::LINK,
+            expected_revision: None,
+        })
+    }
+
+    /// Ensure the link is created before a link specified by its kernel id for a given attachment point.
+    pub fn before_link_id(id: LinkId) -> Result<Self, LinkError> {
+        Ok(Self {
+            id: Some(id.0),
+            fd: None,
+            flags: MprogFlags::BEFORE | MprogFlags::LINK | MprogFlags::ID,
+            expected_revision: None,
+        })
+    }
+
+    /// Ensure the link is created after a link specified by its kernel id for a given attachment point.
+    pub fn after_link_id(id: LinkId) -> Result<Self, LinkError> {
+        Ok(Self {
+            id: Some(id.0),
+            fd: None,
+            flags: MprogFlags::AFTER | MprogFlags::LINK | MprogFlags::ID,
+            expected_revision: None,
+        })
+    }
+
+    /// Ensure the link is created before the specified aya-owned program for a given attachment point.
+    pub fn before_program<P: MprogProgram>(program: &P) -> Result<Self, ProgramError> {
+        Ok(Self {
+            id: None,
+            fd: Some(program.fd()?.as_raw_fd()),
+            flags: MprogFlags::BEFORE,
+            expected_revision: None,
+        })
+    }
+
+    /// Ensure the link is created after the specified aya-owned program for a given attachment point.
+    pub fn after_program<P: MprogProgram>(program: &P) -> Result<Self, ProgramError> {
+        Ok(Self {
+            id: None,
+            fd: Some(program.fd()?.as_raw_fd()),
+            flags: MprogFlags::AFTER,
+            expected_revision: None,
+        })
+    }
+
+    /// Ensure the link is created before a program specified by its kernel id for a given attachment point.
+    pub fn before_program_id(id: ProgramId) -> Self {
+        Self {
+            id: Some(id.0),
+            fd: None,
+            flags: MprogFlags::BEFORE | MprogFlags::ID,
+            expected_revision: None,
+        }
+    }
+
+    /// Ensure the link is created after a program specified by its kernel id for a given attachment point.
+    pub fn after_program_id(id: ProgramId) -> Self {
+        Self {
+            id: Some(id.0),
+            fd: None,
+            flags: MprogFlags::AFTER | MprogFlags::ID,
+            expected_revision: None,
+        }
+    }
+
+    /// set the expected revision for the link, the revision changes
+    /// with each modification of the list of attached programs. User space
+    /// can pass an expected revision when creating a new link. The kernel
+    /// then rejects the update if the revision has changed.
+    pub fn set_expected_revision(&mut self, revision: u64) {
+        self.expected_revision = Some(revision);
+    }
 }
 
 #[cfg(test)]

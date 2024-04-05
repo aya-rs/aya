@@ -75,11 +75,20 @@ pub(crate) fn perf_attach(
     fd: crate::MockableFd,
 ) -> Result<PerfLinkInner, ProgramError> {
     if FEATURES.bpf_perf_link() {
-        let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(fd.as_fd()), BPF_PERF_EVENT, None, 0)
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+        let link_fd = bpf_link_create(
+            prog_fd,
+            LinkTarget::Fd(fd.as_fd()),
+            BPF_PERF_EVENT,
+            None,
+            0,
+            None,
+            None,
+            None,
+        )
+        .map_err(|(_, io_error)| SyscallError {
+            call: "bpf_link_create",
+            io_error,
+        })?;
         Ok(PerfLinkInner::FdLink(FdLink::new(link_fd)))
     } else {
         perf_attach_either(prog_fd, fd, None)
