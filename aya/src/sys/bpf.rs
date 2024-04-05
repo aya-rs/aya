@@ -379,12 +379,16 @@ pub(crate) enum LinkTarget<'f> {
 }
 
 // since kernel 5.7
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn bpf_link_create(
     prog_fd: BorrowedFd<'_>,
     target: LinkTarget<'_>,
     attach_type: bpf_attach_type,
     btf_id: Option<u32>,
     flags: u32,
+    relative_id: Option<u32>,
+    relative_fd: Option<RawFd>,
+    expected_revision: Option<u64>,
 ) -> SysResult<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -399,10 +403,35 @@ pub(crate) fn bpf_link_create(
         }
     };
     attr.link_create.attach_type = attach_type as u32;
-    attr.link_create.flags = flags;
+
     if let Some(btf_id) = btf_id {
         attr.link_create.__bindgen_anon_3.target_btf_id = btf_id;
     }
+
+    attr.link_create.flags = flags;
+
+    // since kernel 6.6
+    if let Some(expected_revision) = expected_revision {
+        attr.link_create.__bindgen_anon_3.tcx.expected_revision = expected_revision;
+    }
+
+    match (relative_fd, relative_id) {
+        (Some(fd), None) => {
+            attr.link_create
+                .__bindgen_anon_3
+                .tcx
+                .__bindgen_anon_1
+                .relative_fd = fd as u32;
+        }
+        (None, Some(id)) => {
+            attr.link_create
+                .__bindgen_anon_3
+                .tcx
+                .__bindgen_anon_1
+                .relative_id = id;
+        }
+        _ => {}
+    };
 
     // SAFETY: BPF_LINK_CREATE returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }
@@ -826,7 +855,7 @@ pub(crate) fn is_perf_link_supported() -> bool {
         let fd = fd.as_fd();
         matches!(
             // Uses an invalid target FD so we get EBADF if supported.
-            bpf_link_create(fd, LinkTarget::IfIndex(u32::MAX), bpf_attach_type::BPF_PERF_EVENT, None, 0),
+            bpf_link_create(fd, LinkTarget::IfIndex(u32::MAX), bpf_attach_type::BPF_PERF_EVENT, None, 0, None, None, None),
             // Returns EINVAL if unsupported. EBADF if supported.
             Err((_, e)) if e.raw_os_error() == Some(libc::EBADF),
         )
