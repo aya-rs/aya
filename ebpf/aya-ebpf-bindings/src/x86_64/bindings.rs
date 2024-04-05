@@ -284,6 +284,11 @@ pub const SO_PREFER_BUSY_POLL: u32 = 69;
 pub const SO_BUSY_POLL_BUDGET: u32 = 70;
 pub const SO_NETNS_COOKIE: u32 = 71;
 pub const SO_BUF_LOCK: u32 = 72;
+pub const SO_RESERVE_MEM: u32 = 73;
+pub const SO_TXREHASH: u32 = 74;
+pub const SO_RCVMARK: u32 = 75;
+pub const SO_PASSPIDFD: u32 = 76;
+pub const SO_PEERPIDFD: u32 = 77;
 pub const SO_TIMESTAMP: u32 = 29;
 pub const SO_TIMESTAMPNS: u32 = 35;
 pub const SO_TIMESTAMPING: u32 = 37;
@@ -1714,6 +1719,13 @@ pub struct bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2 {
     pub daddr: [__be32; 4usize],
     pub sport: __be16,
     pub dport: __be16,
+}
+pub mod tcx_action_base {
+    pub type Type = ::aya_ebpf_cty::c_int;
+    pub const TCX_NEXT: Type = -1;
+    pub const TCX_PASS: Type = 0;
+    pub const TCX_DROP: Type = 2;
+    pub const TCX_REDIRECT: Type = 7;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
