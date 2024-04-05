@@ -77,6 +77,9 @@ impl CgroupDevice {
                 BPF_CGROUP_DEVICE,
                 None,
                 mode.into(),
+                Some(0),
+                None,
+                None,
             )
             .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",

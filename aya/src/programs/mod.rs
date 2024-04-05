@@ -80,6 +80,7 @@ use std::{
 use info::impl_info;
 pub use info::{loaded_programs, ProgramInfo, ProgramType};
 use libc::ENOSPC;
+use tc::SchedClassifierLink;
 use thiserror::Error;
 
 // re-export the main items needed to load and attach
@@ -94,7 +95,7 @@ pub use crate::programs::{
     fentry::FEntry,
     fexit::FExit,
     kprobe::{KProbe, KProbeError},
-    links::{CgroupAttachMode, Link},
+    links::{CgroupAttachMode, Link, LinkOrder},
     lirc_mode2::LircMode2,
     lsm::Lsm,
     perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy},
@@ -239,6 +240,19 @@ impl AsFd for ProgramFd {
 }
 
 /// The various eBPF programs.
+/// A [`Program`] identifier, which may or may not be owned by aya.
+pub struct ProgramId(u32);
+
+impl ProgramId {
+    /// A wrapper for an arbitrary loaded program specified by its kernel id,
+    /// unsafe because there is no guarantee provided by aya that the program is
+    /// still loaded or even exists.
+    pub unsafe fn new(id: u32) -> Self {
+        Self(id)
+    }
+}
+
+/// eBPF program type.
 #[derive(Debug)]
 pub enum Program {
     /// A [`KProbe`] program
@@ -796,6 +810,61 @@ impl_fd!(
     CgroupSock,
     CgroupDevice,
 );
+
+/// Defines which [`Program`]s support the kernel's
+/// generic multi-prog API.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.6.
+pub trait MprogProgram {
+    /// Returns a borrowed reference to the file descriptor of a given
+    /// [`Program`] which has support for the kernel's generic multi-prog API.
+    fn fd(&self) -> Result<BorrowedFd<'_>, ProgramError>;
+}
+
+macro_rules! impl_mprog_fd {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl MprogProgram for $struct_name {
+                /// Returns the a borrowed reference file descriptor of this Program.
+                fn fd(&self) -> Result<BorrowedFd<'_>, ProgramError> {
+                    Ok(self.fd()?.as_fd())
+                }
+            }
+        )+
+    }
+}
+
+impl_mprog_fd!(SchedClassifier,);
+
+/// Defines which [`Link`]s support the kernel's
+/// generic multi-prog API.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.6.
+pub trait MprogLink {
+    /// Returns a borrowed reference to the file descriptor of a given
+    /// [`Link`] which has support for the kernel's generic multi-prog API.
+    fn fd(&self) -> Result<BorrowedFd<'_>, LinkError>;
+}
+
+macro_rules! impl_mproglink_fd {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl MprogLink for $struct_name {
+                /// Returns the a borrowed reference file descriptor of this Program.
+                fn fd(&self) -> Result<BorrowedFd<'_>, LinkError> {
+                    let link: &FdLink = self.try_into()?;
+                    Ok(link.fd.as_fd())
+                }
+            }
+        )+
+    }
+}
+
+impl_mproglink_fd!(SchedClassifierLink);
 
 macro_rules! impl_program_pin{
     ($($struct_name:ident),+ $(,)?) => {

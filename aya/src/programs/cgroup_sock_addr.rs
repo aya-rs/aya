@@ -84,6 +84,9 @@ impl CgroupSockAddr {
                 attach_type,
                 None,
                 mode.into(),
+                Some(0),
+                None,
+                None,
             )
             .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
