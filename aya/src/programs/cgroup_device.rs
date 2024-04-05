@@ -8,7 +8,7 @@ use crate::{
         bpf_prog_get_fd_by_id, define_link_wrapper, load_program, query, CgroupAttachMode, FdLink,
         Link, ProgAttachLink, ProgramData, ProgramError, ProgramFd,
     },
-    sys::{bpf_link_create, LinkTarget, SyscallError},
+    sys::{bpf_link_create, LinkTarget, ProgQueryTarget, SyscallError},
     util::KernelVersion,
 };
 
@@ -77,6 +77,7 @@ impl CgroupDevice {
                 BPF_CGROUP_DEVICE,
                 None,
                 mode.into(),
+                None,
             )
             .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
@@ -119,7 +120,12 @@ impl CgroupDevice {
     /// Queries the cgroup for attached programs.
     pub fn query<T: AsFd>(target_fd: T) -> Result<Vec<CgroupDeviceLink>, ProgramError> {
         let target_fd = target_fd.as_fd();
-        let prog_ids = query(target_fd, BPF_CGROUP_DEVICE, 0, &mut None)?;
+        let (_, prog_ids) = query(
+            ProgQueryTarget::Fd(target_fd),
+            BPF_CGROUP_DEVICE,
+            0,
+            &mut None,
+        )?;
 
         prog_ids
             .into_iter()

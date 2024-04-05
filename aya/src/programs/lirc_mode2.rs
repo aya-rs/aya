@@ -7,7 +7,7 @@ use crate::{
         load_program, query, CgroupAttachMode, Link, ProgramData, ProgramError, ProgramFd,
         ProgramInfo,
     },
-    sys::{bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
+    sys::{bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id, ProgQueryTarget},
 };
 
 /// A program used to decode IR into key events for a lirc device.
@@ -100,7 +100,7 @@ impl LircMode2 {
     /// Queries the lirc device for attached programs.
     pub fn query<T: AsFd>(target_fd: T) -> Result<Vec<LircLink>, ProgramError> {
         let target_fd = target_fd.as_fd();
-        let prog_ids = query(target_fd, BPF_LIRC_MODE2, 0, &mut None)?;
+        let (_, prog_ids) = query(ProgQueryTarget::Fd(target_fd), BPF_LIRC_MODE2, 0, &mut None)?;
 
         prog_ids
             .into_iter()

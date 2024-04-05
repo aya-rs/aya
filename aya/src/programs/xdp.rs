@@ -140,7 +140,7 @@ impl Xdp {
             // if the program has been loaded, i.e. there is an fd. We get one by:
             // - Using `Xdp::from_pin` that sets `expected_attach_type`
             // - Calling `Xdp::attach` that sets `expected_attach_type`, as geting an `Xdp`
-            //   instance trhough `Xdp:try_from(Program)` does not set any fd.
+            //   instance through `Xdp:try_from(Program)` does not set any fd.
             // So, in all cases where we have an fd, we have an expected_attach_type. Thus, if we
             // reach this point, expected_attach_type is guaranteed to be Some(_).
             let attach_type = self.data.expected_attach_type.unwrap();
@@ -150,6 +150,7 @@ impl Xdp {
                 attach_type,
                 None,
                 flags.bits(),
+                None,
             )
             .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
