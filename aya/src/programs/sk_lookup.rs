@@ -65,11 +65,18 @@ impl SkLookup {
         let prog_fd = prog_fd.as_fd();
         let netns_fd = netns.as_fd();
 
-        let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(netns_fd), BPF_SK_LOOKUP, None, 0)
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+        let link_fd = bpf_link_create(
+            prog_fd,
+            LinkTarget::Fd(netns_fd),
+            BPF_SK_LOOKUP,
+            None,
+            0,
+            None,
+        )
+        .map_err(|(_, io_error)| SyscallError {
+            call: "bpf_link_create",
+            io_error,
+        })?;
         self.data
             .links
             .insert(SkLookupLink::new(FdLink::new(link_fd)))

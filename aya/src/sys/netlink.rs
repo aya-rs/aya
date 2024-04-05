@@ -146,7 +146,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     req.tc_info.tcm_family = AF_UNSPEC as u8;
     req.tc_info.tcm_handle = handle; // auto-assigned, if zero
     req.tc_info.tcm_ifindex = if_index;
-    req.tc_info.tcm_parent = attach_type.parent();
+    req.tc_info.tcm_parent = attach_type.tc_parent();
     req.tc_info.tcm_info = tc_handler_make((priority as u32) << 16, htons(ETH_P_ALL as u16) as u32);
 
     let attrs_buf = request_attributes(&mut req, nlmsg_len);
@@ -207,7 +207,7 @@ pub(crate) unsafe fn netlink_qdisc_detach(
     req.tc_info.tcm_family = AF_UNSPEC as u8;
     req.tc_info.tcm_handle = handle; // auto-assigned, if zero
     req.tc_info.tcm_info = tc_handler_make((priority as u32) << 16, htons(ETH_P_ALL as u16) as u32);
-    req.tc_info.tcm_parent = attach_type.parent();
+    req.tc_info.tcm_parent = attach_type.tc_parent();
     req.tc_info.tcm_ifindex = if_index;
 
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
@@ -236,7 +236,7 @@ pub(crate) unsafe fn netlink_find_filter_with_name(
     req.tc_info.tcm_family = AF_UNSPEC as u8;
     req.tc_info.tcm_handle = 0; // auto-assigned, if zero
     req.tc_info.tcm_ifindex = if_index;
-    req.tc_info.tcm_parent = attach_type.parent();
+    req.tc_info.tcm_parent = attach_type.tc_parent();
 
     let sock = NetlinkSocket::open()?;
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
