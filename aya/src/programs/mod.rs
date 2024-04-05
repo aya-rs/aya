@@ -72,7 +72,7 @@ pub mod xdp;
 use std::{
     ffi::CString,
     io,
-    os::fd::{AsFd, AsRawFd, BorrowedFd},
+    os::fd::{AsFd, BorrowedFd},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -80,6 +80,7 @@ use std::{
 use info::impl_info;
 pub use info::{loaded_programs, ProgramInfo, ProgramType};
 use libc::ENOSPC;
+use tc::SchedClassifierLink;
 use thiserror::Error;
 
 // re-export the main items needed to load and attach
@@ -94,7 +95,7 @@ pub use crate::programs::{
     fentry::FEntry,
     fexit::FExit,
     kprobe::{KProbe, KProbeError},
-    links::{CgroupAttachMode, Link},
+    links::{CgroupAttachMode, Link, LinkOrder},
     lirc_mode2::LircMode2,
     lsm::Lsm,
     perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy},
@@ -120,7 +121,7 @@ use crate::{
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
         bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids,
-        retry_with_verifier_logs, EbpfLoadProgramAttrs, SyscallError,
+        retry_with_verifier_logs, EbpfLoadProgramAttrs, ProgQueryTarget, SyscallError,
     },
     util::KernelVersion,
     VerifierLogLevel,
@@ -216,6 +217,13 @@ pub enum ProgramError {
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
+
+    /// Value is too large to use as an interface index.
+    #[error("Value {value} is too large to use as an interface index")]
+    InvalidIfIndex {
+        /// Value used in conversion attempt.
+        value: u32,
+    },
 }
 
 /// A [`Program`] file descriptor.
@@ -238,7 +246,20 @@ impl AsFd for ProgramFd {
     }
 }
 
-/// The various eBPF programs.
+/// A [`Program`] identifier.
+pub struct ProgramId(u32);
+
+impl ProgramId {
+    /// Create a new program id.  
+    ///  
+    /// This method is unsafe since it doesn't check that the given `id` is a
+    /// valid program id.
+    pub unsafe fn new(id: u32) -> Self {
+        Self(id)
+    }
+}
+
+/// eBPF program type.
 #[derive(Debug)]
 pub enum Program {
     /// A [`KProbe`] program
@@ -668,28 +689,30 @@ fn load_program<T: Link>(
 }
 
 pub(crate) fn query(
-    target_fd: BorrowedFd<'_>,
+    target: ProgQueryTarget<'_>,
     attach_type: bpf_attach_type,
     query_flags: u32,
     attach_flags: &mut Option<u32>,
-) -> Result<Vec<u32>, ProgramError> {
+) -> Result<(u64, Vec<u32>), ProgramError> {
     let mut prog_ids = vec![0u32; 64];
     let mut prog_cnt = prog_ids.len() as u32;
+    let mut revision = 0;
 
     let mut retries = 0;
 
     loop {
         match bpf_prog_query(
-            target_fd.as_fd().as_raw_fd(),
+            &target,
             attach_type,
             query_flags,
             attach_flags.as_mut(),
             &mut prog_ids,
             &mut prog_cnt,
+            &mut revision,
         ) {
             Ok(_) => {
                 prog_ids.resize(prog_cnt as usize, 0);
-                return Ok(prog_ids);
+                return Ok((revision, prog_ids));
             }
             Err((_, io_error)) => {
                 if retries == 0 && io_error.raw_os_error() == Some(ENOSPC) {
@@ -796,6 +819,57 @@ impl_fd!(
     CgroupSock,
     CgroupDevice,
 );
+
+/// Trait implemented by the [`Program`] types which support the kernel's
+/// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.6.0.
+pub trait MultiProgram {
+    /// Borrows the file descriptor.
+    fn fd(&self) -> Result<BorrowedFd<'_>, ProgramError>;
+}
+
+macro_rules! impl_multiprog_fd {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl MultiProgram for $struct_name {
+                fn fd(&self) -> Result<BorrowedFd<'_>, ProgramError> {
+                    Ok(self.fd()?.as_fd())
+                }
+            }
+        )+
+    }
+}
+
+impl_multiprog_fd!(SchedClassifier);
+
+/// Trait implemented by the [`Link`] types which support the kernel's
+/// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.6.0.
+pub trait MultiProgLink {
+    /// Borrows the file descriptor.
+    fn fd(&self) -> Result<BorrowedFd<'_>, LinkError>;
+}
+
+macro_rules! impl_multiproglink_fd {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl MultiProgLink for $struct_name {
+                fn fd(&self) -> Result<BorrowedFd<'_>, LinkError> {
+                    let link: &FdLink = self.try_into()?;
+                    Ok(link.fd.as_fd())
+                }
+            }
+        )+
+    }
+}
+
+impl_multiproglink_fd!(SchedClassifierLink);
 
 macro_rules! impl_program_pin{
     ($($struct_name:ident),+ $(,)?) => {
