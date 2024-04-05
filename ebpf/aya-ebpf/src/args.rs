@@ -33,6 +33,14 @@ unsafe impl<T> FromBtfArgument for *const T {
     }
 }
 
+unsafe impl<T> FromBtfArgument for *mut T {
+    unsafe fn from_argument(ctx: *const c_void, n: usize) -> *mut T {
+        // BTF arguments are exposed as an array of `usize` where `usize` can
+        // either be treated as a pointer or a primitive type
+        *(ctx as *const usize).add(n) as _
+    }
+}
+
 /// Helper macro to implement [`FromBtfArgument`] for a primitive type.
 macro_rules! unsafe_impl_from_btf_argument {
     ($type:ident) => {

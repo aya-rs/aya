@@ -143,7 +143,7 @@ const fn build_def<V>(ty: u32, flags: u32, pin: PinningType) -> bpf_map_def {
         type_: ty,
         key_size: mem::size_of::<c_int>() as u32,
         value_size: mem::size_of::<V>() as u32,
-        max_entries: 0,
+        max_entries: 1,
         map_flags: flags,
         id: 0,
         pinning: pin as u32,
