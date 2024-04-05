@@ -76,6 +76,7 @@ impl CgroupSysctl {
                 BPF_CGROUP_SYSCTL,
                 None,
                 mode.into(),
+                None,
             )
             .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
