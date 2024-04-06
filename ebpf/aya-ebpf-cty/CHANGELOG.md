@@ -64,3 +64,29 @@ This project adheres to $[Semantic Versioning](http://semver.org/).
 [v0.1.3]: https://github.com/japaric/cty/compare/v0.1.2...v0.1.3
 [v0.1.2]: https://github.com/japaric/cty/compare/v0.1.1...v0.1.2
 [v0.1.1]: https://github.com/japaric/cty/compare/v0.1.0...v0.1.1
+
+## v0.2.1 (2024-04-06)
+
+### Chore
+
+ - <csr-id-21f570a19cd8d6e8eeaa6127d936877a701ceac3/> Rename bpf -> ebpf
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release over the course of 29 calendar days.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge pull request #528 from dave-tucker/rename-all-the-things ([`63d8d4d`](https://github.com/aya-rs/aya/commit/63d8d4d34bdbbee149047dc0a5e9c2b191f3b32d))
+    - Rename bpf -> ebpf ([`21f570a`](https://github.com/aya-rs/aya/commit/21f570a19cd8d6e8eeaa6127d936877a701ceac3))
+</details>
+

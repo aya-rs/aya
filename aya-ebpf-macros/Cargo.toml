@@ -18,4 +18,4 @@ quote = { workspace = true }
 syn = { workspace = true, default-features = true, features = ["full"] }
 
 [dev-dependencies]
-aya-ebpf = { path = "../ebpf/aya-ebpf", version = "0.1.0", default-features = false }
+aya-ebpf = { path = "../ebpf/aya-ebpf", version = "^0.1.0", default-features = false }
