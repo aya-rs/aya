@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.1.0 (2024-04-06)
 
+<csr-id-70ac91dc1e6f209a701cd868db215763d65efa73/>
+<csr-id-b06ff402780b80862933791831c578e4c339fc96/>
+
 ### Chore
 
  - <csr-id-70ac91dc1e6f209a701cd868db215763d65efa73/> Rename bpf -> ebpf
+
+### Chore
+
+ - <csr-id-c7fe60d47e0cc32fc7123e37532d104eaa392b50/> add changelogs
 
 ### Other
 
@@ -19,8 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 31 calendar days.
- - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 4 commits contributed to the release over the course of 31 calendar days.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -30,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Add changelogs ([`c7fe60d`](https://github.com/aya-rs/aya/commit/c7fe60d47e0cc32fc7123e37532d104eaa392b50))
     - Generate new bindings ([`b06ff40`](https://github.com/aya-rs/aya/commit/b06ff402780b80862933791831c578e4c339fc96))
     - Merge pull request #528 from dave-tucker/rename-all-the-things ([`63d8d4d`](https://github.com/aya-rs/aya/commit/63d8d4d34bdbbee149047dc0a5e9c2b191f3b32d))
     - Rename bpf -> ebpf ([`70ac91d`](https://github.com/aya-rs/aya/commit/70ac91dc1e6f209a701cd868db215763d65efa73))
