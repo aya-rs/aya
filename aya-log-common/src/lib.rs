@@ -217,7 +217,7 @@ impl WriteToBuf for [u16; 8] {
     // compile-time constant.
     #[inline(never)]
     fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
-        let bytes = unsafe { core::mem::transmute::<_, [u8; 16]>(self) };
+        let bytes = unsafe { core::mem::transmute::<[u16; 8], [u8; 16]>(self) };
         write(Argument::ArrU16Len8.into(), &bytes, buf)
     }
 }

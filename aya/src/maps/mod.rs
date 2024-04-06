@@ -1127,7 +1127,7 @@ mod tests {
                 );
                 let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
                 map_info.name[..TEST_NAME.len()]
-                    .copy_from_slice(unsafe { mem::transmute(TEST_NAME) });
+                    .copy_from_slice(unsafe { mem::transmute::<&[u8], &[i8]>(TEST_NAME.as_bytes()) });
                 Ok(0)
             }
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
