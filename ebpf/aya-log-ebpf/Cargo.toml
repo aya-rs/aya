@@ -9,7 +9,7 @@ homepage.workspace = true
 edition.workspace = true
 
 [dependencies]
-aya-ebpf = { version = "0.1.0", path = "../aya-ebpf" }
+aya-ebpf = { version = "^0.1.0", path = "../aya-ebpf" }
 aya-log-common = { version = "0.1.14", path = "../../aya-log-common" }
 aya-log-ebpf-macros = { version = "0.1.0", path = "../../aya-log-ebpf-macros" }
 

@@ -10,8 +10,8 @@ edition.workspace = true
 
 [dependencies]
 aya-ebpf-cty = { version = "0.2.1", path = "../aya-ebpf-cty" }
-aya-ebpf-macros = { version = "0.1.0", path = "../../aya-ebpf-macros" }
-aya-ebpf-bindings = { version = "0.1.0", path = "../aya-ebpf-bindings" }
+aya-ebpf-macros = { version = "^0.1.0", path = "../../aya-ebpf-macros" }
+aya-ebpf-bindings = { version = "^0.1.0", path = "../aya-ebpf-bindings" }
 const-assert = { workspace = true, optional = true }
 
 [build-dependencies]
