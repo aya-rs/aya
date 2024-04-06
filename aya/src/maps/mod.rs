@@ -1025,7 +1025,7 @@ mod tests {
     use std::os::fd::AsRawFd as _;
 
     use assert_matches::assert_matches;
-    use libc::EFAULT;
+    use libc::{c_char, EFAULT};
 
     use super::*;
     use crate::{
@@ -1126,8 +1126,9 @@ mod tests {
                     mem::size_of::<bpf_map_info>() as u32
                 );
                 let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
-                map_info.name[..TEST_NAME.len()]
-                    .copy_from_slice(unsafe { mem::transmute(TEST_NAME) });
+                map_info.name[..TEST_NAME.len()].copy_from_slice(unsafe {
+                    mem::transmute::<&[u8], &[c_char]>(TEST_NAME.as_bytes())
+                });
                 Ok(0)
             }
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
