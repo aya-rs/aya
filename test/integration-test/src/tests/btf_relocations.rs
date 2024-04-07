@@ -1,8 +1,6 @@
 use aya::{maps::Array, programs::UProbe, util::KernelVersion, Btf, EbpfLoader, Endianness};
 use test_case::test_case;
 
-// False positive, see: https://github.com/rust-lang/rust-clippy/issues/12537.
-#[allow(clippy::duplicated_attributes)]
 #[test_case("enum_signed_32", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7AAAAAAAi32 as u64)]
 #[test_case("enum_signed_32", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7BBBBBBBi32 as u64)]
 #[test_case("enum_signed_32_checked_variants", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7AAAAAAAi32 as u64)]
