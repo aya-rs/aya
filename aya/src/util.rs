@@ -130,7 +130,7 @@ impl KernelVersion {
     }
 
     fn get_kernel_version() -> Result<Self, CurrentKernelVersionError> {
-        if let Some(v) = Self::get_ubuntu_kernel_version()? {
+        if let Ok(Some(v)) = Self::get_ubuntu_kernel_version() {
             return Ok(v);
         }
 
@@ -139,7 +139,7 @@ impl KernelVersion {
             return Err(io::Error::last_os_error().into());
         }
 
-        if let Some(v) = Self::get_debian_kernel_version(&info)? {
+        if let Ok(Some(v)) = Self::get_debian_kernel_version(&info) {
             return Ok(v);
         }
 
