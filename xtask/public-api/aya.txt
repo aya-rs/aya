@@ -27,12 +27,12 @@ pub fn aya::maps::array::Array<T, V>::map(&self) -> &aya::maps::MapData
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::array::Array<aya::maps::MapData, V>
 pub type aya::maps::array::Array<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::array::Array<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T, V> core::marker::Freeze for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, V> core::marker::Send for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, V> core::marker::Sync for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, V> core::marker::Unpin for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, V> core::marker::Freeze for aya::maps::array::Array<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::array::Array<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::array::Array<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::array::Array<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::array::Array<T, V> where U: core::convert::From<T>
 pub fn aya::maps::array::Array<T, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::array::Array<T, V> where U: core::convert::Into<T>
@@ -70,12 +70,12 @@ pub fn aya::maps::PerCpuArray<T, V>::map(&self) -> &aya::maps::MapData
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::PerCpuArray<aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::PerCpuArray<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T, V> core::marker::Freeze for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, V> core::marker::Send for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, V> core::marker::Sync for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, V> core::marker::Unpin for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, V> core::marker::Freeze for aya::maps::PerCpuArray<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::PerCpuArray<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::PerCpuArray<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::PerCpuArray<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::PerCpuArray<T, V> where U: core::convert::From<T>
 pub fn aya::maps::PerCpuArray<T, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::PerCpuArray<T, V> where U: core::convert::Into<T>
@@ -150,12 +150,12 @@ pub fn aya::maps::bloom_filter::BloomFilter<T, V>::fmt(&self, f: &mut core::fmt:
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T, V> core::marker::Freeze for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, V> core::marker::Send for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, V> core::marker::Sync for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, V> core::marker::Unpin for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, V> core::marker::Freeze for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::bloom_filter::BloomFilter<T, V> where U: core::convert::From<T>
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::bloom_filter::BloomFilter<T, V> where U: core::convert::Into<T>
@@ -241,12 +241,12 @@ pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::try_from(ma
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<K, aya::maps::PerCpuValues<V>> for aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::get(&self, key: &K) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::map(&self) -> &aya::maps::MapData
-impl<T, K, V> core::marker::Freeze for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static, K: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, K, V> core::marker::Send for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, K, V> core::marker::Sync for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, K, V> core::marker::Unpin for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, K: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, K: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, K, V> core::marker::Freeze for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Freeze
+impl<T, K, V> core::marker::Send for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Send, K: core::marker::Send, V: core::marker::Send
+impl<T, K, V> core::marker::Sync for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Sync, K: core::marker::Sync, V: core::marker::Sync
+impl<T, K, V> core::marker::Unpin for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Unpin, K: core::marker::Unpin, V: core::marker::Unpin
+impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::hash_map::PerCpuHashMap<T, K, V> where U: core::convert::From<T>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::hash_map::PerCpuHashMap<T, K, V> where U: core::convert::Into<T>
@@ -276,12 +276,12 @@ impl<K: aya::Pod> core::marker::Copy for aya::maps::lpm_trie::Key<K>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<aya::maps::lpm_trie::Key<K>, V> for aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::get(&self, key: &aya::maps::lpm_trie::Key<K>) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::map(&self) -> &aya::maps::MapData
-impl<K> core::marker::Freeze for aya::maps::lpm_trie::Key<K> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Freeze
-impl<K> core::marker::Send for aya::maps::lpm_trie::Key<K> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send
-impl<K> core::marker::Sync for aya::maps::lpm_trie::Key<K> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync
-impl<K> core::marker::Unpin for aya::maps::lpm_trie::Key<K> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin
-impl<K> core::panic::unwind_safe::RefUnwindSafe for aya::maps::lpm_trie::Key<K> where K: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe
-impl<K> core::panic::unwind_safe::UnwindSafe for aya::maps::lpm_trie::Key<K> where K: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe
+impl<K> core::marker::Freeze for aya::maps::lpm_trie::Key<K> where K: core::marker::Freeze
+impl<K> core::marker::Send for aya::maps::lpm_trie::Key<K> where K: core::marker::Send
+impl<K> core::marker::Sync for aya::maps::lpm_trie::Key<K> where K: core::marker::Sync
+impl<K> core::marker::Unpin for aya::maps::lpm_trie::Key<K> where K: core::marker::Unpin
+impl<K> core::panic::unwind_safe::RefUnwindSafe for aya::maps::lpm_trie::Key<K> where K: core::panic::unwind_safe::RefUnwindSafe
+impl<K> core::panic::unwind_safe::UnwindSafe for aya::maps::lpm_trie::Key<K> where K: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::lpm_trie::Key<K> where U: core::convert::From<T>
 pub fn aya::maps::lpm_trie::Key<K>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::lpm_trie::Key<K> where U: core::convert::Into<T>
@@ -433,9 +433,9 @@ pub struct aya::maps::perf::AsyncPerfEventArrayBuffer<T: core::borrow::BorrowMut
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::AsyncPerfEventArrayBuffer<T>
 pub async fn aya::maps::perf::AsyncPerfEventArrayBuffer<T>::read_events(&mut self, buffers: &mut [bytes::bytes_mut::BytesMut]) -> core::result::Result<aya::maps::perf::Events, aya::maps::perf::PerfBufferError>
 impl<T> !core::marker::Freeze for aya::maps::perf::AsyncPerfEventArrayBuffer<T>
-impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::borrow::Borrow<aya::maps::MapData> + core::marker::Sync + core::marker::Send
-impl<T> core::marker::Sync for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::borrow::Borrow<aya::maps::MapData> + core::marker::Sync + core::marker::Send
-impl<T> core::marker::Unpin for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::borrow::Borrow<aya::maps::MapData>
+impl<T> core::marker::Send for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::marker::Sync + core::marker::Send
+impl<T> core::marker::Sync for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where T: core::marker::Sync + core::marker::Send
+impl<T> core::marker::Unpin for aya::maps::perf::AsyncPerfEventArrayBuffer<T>
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::AsyncPerfEventArrayBuffer<T>
 impl<T> !core::panic::unwind_safe::UnwindSafe for aya::maps::perf::AsyncPerfEventArrayBuffer<T>
 impl<T, U> core::convert::Into<U> for aya::maps::perf::AsyncPerfEventArrayBuffer<T> where U: core::convert::From<T>
@@ -569,12 +569,12 @@ pub fn aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::try_from(map: &'a
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::queue::Queue<aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T, V> core::marker::Freeze for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, V> core::marker::Send for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, V> core::marker::Sync for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, V> core::marker::Unpin for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, V> core::marker::Freeze for aya::maps::queue::Queue<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::queue::Queue<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::queue::Queue<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::queue::Queue<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::queue::Queue<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::queue::Queue<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::queue::Queue<T, V> where U: core::convert::From<T>
 pub fn aya::maps::queue::Queue<T, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::queue::Queue<T, V> where U: core::convert::Into<T>
@@ -789,12 +789,12 @@ pub fn aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::try_from(map: &'a
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::stack::Stack<aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T, V> core::marker::Freeze for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, V> core::marker::Send for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, V> core::marker::Sync for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, V> core::marker::Unpin for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, V> core::marker::Freeze for aya::maps::stack::Stack<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::stack::Stack<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::stack::Stack<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::stack::Stack<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::stack::Stack<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::stack::Stack<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::stack::Stack<T, V> where U: core::convert::From<T>
 pub fn aya::maps::stack::Stack<T, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::stack::Stack<T, V> where U: core::convert::Into<T>
@@ -1415,12 +1415,12 @@ pub fn aya::maps::array::Array<T, V>::map(&self) -> &aya::maps::MapData
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::array::Array<aya::maps::MapData, V>
 pub type aya::maps::array::Array<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::array::Array<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T, V> core::marker::Freeze for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, V> core::marker::Send for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, V> core::marker::Sync for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, V> core::marker::Unpin for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::array::Array<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, V> core::marker::Freeze for aya::maps::array::Array<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::array::Array<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::array::Array<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::array::Array<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::array::Array<T, V> where U: core::convert::From<T>
 pub fn aya::maps::array::Array<T, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::array::Array<T, V> where U: core::convert::Into<T>
@@ -1490,12 +1490,12 @@ pub fn aya::maps::bloom_filter::BloomFilter<T, V>::fmt(&self, f: &mut core::fmt:
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T, V> core::marker::Freeze for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, V> core::marker::Send for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, V> core::marker::Sync for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, V> core::marker::Unpin for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, V> core::marker::Freeze for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::bloom_filter::BloomFilter<T, V> where U: core::convert::From<T>
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::bloom_filter::BloomFilter<T, V> where U: core::convert::Into<T>
@@ -1826,12 +1826,12 @@ pub struct aya::maps::MapIter<'coll, K: aya::Pod, V, I: aya::maps::IterableMap<K
 impl<K: aya::Pod, V, I: aya::maps::IterableMap<K, V>> core::iter::traits::iterator::Iterator for aya::maps::MapIter<'_, K, V, I>
 pub type aya::maps::MapIter<'_, K, V, I>::Item = core::result::Result<(K, V), aya::maps::MapError>
 pub fn aya::maps::MapIter<'_, K, V, I>::next(&mut self) -> core::option::Option<Self::Item>
-impl<'coll, K, V, I> core::marker::Freeze for aya::maps::MapIter<'coll, K, V, I> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Freeze
-impl<'coll, K, V, I> core::marker::Send for aya::maps::MapIter<'coll, K, V, I> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, I: core::marker::Sync, V: core::marker::Send
-impl<'coll, K, V, I> core::marker::Sync for aya::maps::MapIter<'coll, K, V, I> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, I: core::marker::Sync, V: core::marker::Sync
-impl<'coll, K, V, I> core::marker::Unpin for aya::maps::MapIter<'coll, K, V, I> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, V: core::marker::Unpin
-impl<'coll, K, V, I> core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapIter<'coll, K, V, I> where K: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, I: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
-impl<'coll, K, V, I> core::panic::unwind_safe::UnwindSafe for aya::maps::MapIter<'coll, K, V, I> where K: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, I: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+impl<'coll, K, V, I> core::marker::Freeze for aya::maps::MapIter<'coll, K, V, I> where K: core::marker::Freeze
+impl<'coll, K, V, I> core::marker::Send for aya::maps::MapIter<'coll, K, V, I> where I: core::marker::Sync, V: core::marker::Send, K: core::marker::Send
+impl<'coll, K, V, I> core::marker::Sync for aya::maps::MapIter<'coll, K, V, I> where I: core::marker::Sync, V: core::marker::Sync, K: core::marker::Sync
+impl<'coll, K, V, I> core::marker::Unpin for aya::maps::MapIter<'coll, K, V, I> where V: core::marker::Unpin, K: core::marker::Unpin
+impl<'coll, K, V, I> core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapIter<'coll, K, V, I> where I: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe
+impl<'coll, K, V, I> core::panic::unwind_safe::UnwindSafe for aya::maps::MapIter<'coll, K, V, I> where I: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe
 impl<I> core::iter::traits::collect::IntoIterator for aya::maps::MapIter<'coll, K, V, I> where I: core::iter::traits::iterator::Iterator
 pub type aya::maps::MapIter<'coll, K, V, I>::IntoIter = I
 pub type aya::maps::MapIter<'coll, K, V, I>::Item = <I as core::iter::traits::iterator::Iterator>::Item
@@ -1856,12 +1856,12 @@ pub struct aya::maps::MapKeys<'coll, K: aya::Pod>
 impl<K: aya::Pod> core::iter::traits::iterator::Iterator for aya::maps::MapKeys<'_, K>
 pub type aya::maps::MapKeys<'_, K>::Item = core::result::Result<K, aya::maps::MapError>
 pub fn aya::maps::MapKeys<'_, K>::next(&mut self) -> core::option::Option<core::result::Result<K, aya::maps::MapError>>
-impl<'coll, K> core::marker::Freeze for aya::maps::MapKeys<'coll, K> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Freeze
-impl<'coll, K> core::marker::Send for aya::maps::MapKeys<'coll, K> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send
-impl<'coll, K> core::marker::Sync for aya::maps::MapKeys<'coll, K> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync
-impl<'coll, K> core::marker::Unpin for aya::maps::MapKeys<'coll, K> where K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin
-impl<'coll, K> core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapKeys<'coll, K> where K: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe
-impl<'coll, K> core::panic::unwind_safe::UnwindSafe for aya::maps::MapKeys<'coll, K> where K: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe
+impl<'coll, K> core::marker::Freeze for aya::maps::MapKeys<'coll, K> where K: core::marker::Freeze
+impl<'coll, K> core::marker::Send for aya::maps::MapKeys<'coll, K> where K: core::marker::Send
+impl<'coll, K> core::marker::Sync for aya::maps::MapKeys<'coll, K> where K: core::marker::Sync
+impl<'coll, K> core::marker::Unpin for aya::maps::MapKeys<'coll, K> where K: core::marker::Unpin
+impl<'coll, K> core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapKeys<'coll, K> where K: core::panic::unwind_safe::RefUnwindSafe
+impl<'coll, K> core::panic::unwind_safe::UnwindSafe for aya::maps::MapKeys<'coll, K> where K: core::panic::unwind_safe::UnwindSafe
 impl<I> core::iter::traits::collect::IntoIterator for aya::maps::MapKeys<'coll, K> where I: core::iter::traits::iterator::Iterator
 pub type aya::maps::MapKeys<'coll, K>::IntoIter = I
 pub type aya::maps::MapKeys<'coll, K>::Item = <I as core::iter::traits::iterator::Iterator>::Item
@@ -1903,12 +1903,12 @@ pub fn aya::maps::PerCpuArray<T, V>::map(&self) -> &aya::maps::MapData
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::PerCpuArray<aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::PerCpuArray<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T, V> core::marker::Freeze for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, V> core::marker::Send for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, V> core::marker::Sync for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, V> core::marker::Unpin for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuArray<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, V> core::marker::Freeze for aya::maps::PerCpuArray<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::PerCpuArray<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::PerCpuArray<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::PerCpuArray<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::PerCpuArray<T, V> where U: core::convert::From<T>
 pub fn aya::maps::PerCpuArray<T, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::PerCpuArray<T, V> where U: core::convert::Into<T>
@@ -1947,12 +1947,12 @@ pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::try_from(ma
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<K, aya::maps::PerCpuValues<V>> for aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::get(&self, key: &K) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::map(&self) -> &aya::maps::MapData
-impl<T, K, V> core::marker::Freeze for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static, K: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, K, V> core::marker::Send for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, K, V> core::marker::Sync for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, K, V> core::marker::Unpin for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, K: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, K: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, K: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, K, V> core::marker::Freeze for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Freeze
+impl<T, K, V> core::marker::Send for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Send, K: core::marker::Send, V: core::marker::Send
+impl<T, K, V> core::marker::Sync for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Sync, K: core::marker::Sync, V: core::marker::Sync
+impl<T, K, V> core::marker::Unpin for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Unpin, K: core::marker::Unpin, V: core::marker::Unpin
+impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::hash_map::PerCpuHashMap<T, K, V> where U: core::convert::From<T>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::hash_map::PerCpuHashMap<T, K, V> where U: core::convert::Into<T>
@@ -1984,12 +1984,12 @@ pub fn aya::maps::PerCpuArray<T, V>::get(&self, index: &u32) -> core::result::Re
 pub fn aya::maps::PerCpuArray<T, V>::map(&self) -> &aya::maps::MapData
 impl<T: core::fmt::Debug + aya::Pod> core::fmt::Debug for aya::maps::PerCpuValues<T>
 pub fn aya::maps::PerCpuValues<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<T> core::marker::Freeze for aya::maps::PerCpuValues<T> where T: core::marker::Copy + core::clone::Clone + 'static
-impl<T> core::marker::Send for aya::maps::PerCpuValues<T> where T: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send
-impl<T> core::marker::Sync for aya::maps::PerCpuValues<T> where T: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync
-impl<T> core::marker::Unpin for aya::maps::PerCpuValues<T> where T: core::marker::Copy + core::clone::Clone + 'static
-impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuValues<T> where T: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe
-impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuValues<T> where T: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe
+impl<T> core::marker::Freeze for aya::maps::PerCpuValues<T>
+impl<T> core::marker::Send for aya::maps::PerCpuValues<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya::maps::PerCpuValues<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya::maps::PerCpuValues<T>
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuValues<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuValues<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::PerCpuValues<T> where U: core::convert::From<T>
 pub fn aya::maps::PerCpuValues<T>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::PerCpuValues<T> where U: core::convert::Into<T>
@@ -2098,12 +2098,12 @@ pub fn aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::try_from(map: &'a
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::queue::Queue<aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T, V> core::marker::Freeze for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, V> core::marker::Send for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, V> core::marker::Sync for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, V> core::marker::Unpin for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::queue::Queue<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, V> core::marker::Freeze for aya::maps::queue::Queue<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::queue::Queue<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::queue::Queue<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::queue::Queue<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::queue::Queue<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::queue::Queue<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::queue::Queue<T, V> where U: core::convert::From<T>
 pub fn aya::maps::queue::Queue<T, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::queue::Queue<T, V> where U: core::convert::Into<T>
@@ -2258,12 +2258,12 @@ pub fn aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::try_from(map: &'a
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::stack::Stack<aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
-impl<T, V> core::marker::Freeze for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static, T: core::marker::Freeze
-impl<T, V> core::marker::Send for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Send, T: core::marker::Send
-impl<T, V> core::marker::Sync for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Sync, T: core::marker::Sync
-impl<T, V> core::marker::Unpin for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::marker::Unpin, T: core::marker::Unpin
-impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::RefUnwindSafe, T: core::panic::unwind_safe::RefUnwindSafe
-impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::stack::Stack<T, V> where V: core::marker::Copy + core::clone::Clone + 'static + core::panic::unwind_safe::UnwindSafe, T: core::panic::unwind_safe::UnwindSafe
+impl<T, V> core::marker::Freeze for aya::maps::stack::Stack<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::stack::Stack<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::stack::Stack<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::stack::Stack<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::stack::Stack<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::stack::Stack<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::stack::Stack<T, V> where U: core::convert::From<T>
 pub fn aya::maps::stack::Stack<T, V>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::stack::Stack<T, V> where U: core::convert::Into<T>
