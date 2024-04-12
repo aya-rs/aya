@@ -48,10 +48,10 @@ pub(crate) enum Syscall<'a> {
 #[error("`{call}` failed")]
 pub struct SyscallError {
     /// The name of the syscall which failed.
-    pub(crate) call: &'static str,
+    pub call: &'static str,
     /// The [`io::Error`] returned by the syscall.
     #[source]
-    pub(crate) io_error: io::Error,
+    pub io_error: io::Error,
 }
 
 impl std::fmt::Debug for Syscall<'_> {
