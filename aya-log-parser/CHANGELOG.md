@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.1.13 (2024-04-12)
 
+<csr-id-13b1fc63ef2ae083ba03ce9de24cb4f31f989d21/>
+<csr-id-b3e7ef741c5b8d09fc7dc8302576f8174be75ff4/>
+<csr-id-8e485bc77aaa49d41063853f83ab6017d334939e/>
+<csr-id-96fa08bd82233268154edf30b106876f5a4f0e30/>
+<csr-id-e08c6471dd351a1b717a38301a0ded5f04d1450d/>
+<csr-id-84e5e2894f226f4b2c7cb637a6f44d5773b927e6/>
+<csr-id-2223ab828d6db40a85cff4737f6164ed8ee9e42d/>
+<csr-id-83ec27f06b6859f455f2b2baf985b8fd3fb4adc5/>
+
 ### Chore
 
  - <csr-id-13b1fc63ef2ae083ba03ce9de24cb4f31f989d21/> Don't use path deps in workspace
@@ -22,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - repository
    - homepage
    - edition
+
+### Chore
+
+ - <csr-id-1d515fe810c6e646ca405d8f97803698deda148c/> add missing changelogs
 
 ### Other
 
@@ -70,8 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release over the course of 589 calendar days.
- - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 18 commits contributed to the release over the course of 591 calendar days.
+ - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -81,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Add missing changelogs ([`1d515fe`](https://github.com/aya-rs/aya/commit/1d515fe810c6e646ca405d8f97803698deda148c))
     - Release aya-log-common v0.1.14, aya-log v0.2.0 ([`c22a696`](https://github.com/aya-rs/aya/commit/c22a6963d44befb5591d4b21c09767c43935cb54))
     - Don't use path deps in workspace ([`13b1fc6`](https://github.com/aya-rs/aya/commit/13b1fc63ef2ae083ba03ce9de24cb4f31f989d21))
     - Merge pull request #882 from dave-tucker/metadata ([`0fadd69`](https://github.com/aya-rs/aya/commit/0fadd695377b8a3f0d9a3af3bc8140f0f1bed8d2))
