@@ -2,9 +2,9 @@
 
 use std::{
     ffi::CStr,
-    io,
+    io::{self, Write},
     net::Ipv4Addr,
-    process,
+    process::{self, Command},
     sync::atomic::{AtomicU64, Ordering},
 };
 
@@ -66,6 +66,30 @@ impl NetNsGuard {
 
         unsafe { netlink_set_link_up(lo_idx as i32) }
             .unwrap_or_else(|e| panic!("Failed to set `lo` up in netns {}: {e}", name));
+
+        let ls_output = Command::new("sh").args(["-c", "ls -la /"]).output();
+        match ls_output {
+            Ok(output) => {
+                eprintln!("ls status: {}", output.status);
+                io::stdout().write_all(&output.stdout).unwrap();
+                io::stderr().write_all(&output.stderr).unwrap();
+            }
+            Err(e) => {
+                eprintln!("Failed to run ls -la: {e}");
+            }
+        }
+
+        let check_config_output = Command::new("release-check-config.sh").output();
+        match check_config_output {
+            Ok(output) => {
+                eprintln!("check_config status: {}", output.status);
+                io::stdout().write_all(&output.stdout).unwrap();
+                io::stderr().write_all(&output.stderr).unwrap();
+            }
+            Err(e) => {
+                eprintln!("Failed to run check-config.sh: {e}");
+            }
+        }
 
         setup_test_veth_pair();
 
