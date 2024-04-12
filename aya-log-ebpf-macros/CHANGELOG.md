@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.1.0 (2024-04-12)
 
+<csr-id-13b1fc63ef2ae083ba03ce9de24cb4f31f989d21/>
+<csr-id-b3e7ef741c5b8d09fc7dc8302576f8174be75ff4/>
+<csr-id-2227223a96b0016ec960a8d5ba354d8c889ecc68/>
+<csr-id-d16e607fd4b6258b516913071fdacafeb2bbbff9/>
+<csr-id-ca3f70b16a705bf26d2ccc7ce754de403be36223/>
+<csr-id-96fa08bd82233268154edf30b106876f5a4f0e30/>
+<csr-id-6feebef9e551256156a8c22cf5de2165846a4793/>
+<csr-id-de7972483b5b97c073b337568328a022378ebca9/>
+<csr-id-47a2f25fca21e65d981b716d68f87af6203093d9/>
+<csr-id-84e5e2894f226f4b2c7cb637a6f44d5773b927e6/>
+<csr-id-4d098ef413dee3fe1cd260f19f7f90e69a06f06c/>
+<csr-id-45072c078903a062f6aba4ed1562e0df091ee90e/>
+<csr-id-2223ab828d6db40a85cff4737f6164ed8ee9e42d/>
+<csr-id-9a8409e3a24179f4f60e6587b70e2ecd12322973/>
+<csr-id-83ec27f06b6859f455f2b2baf985b8fd3fb4adc5/>
+
 ### Chore
 
  - <csr-id-13b1fc63ef2ae083ba03ce9de24cb4f31f989d21/> Don't use path deps in workspace
@@ -22,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - repository
    - homepage
    - edition
+
+### Chore
+
+ - <csr-id-1d515fe810c6e646ca405d8f97803698deda148c/> add missing changelogs
 
 ### New Features
 
@@ -130,8 +150,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 33 commits contributed to the release over the course of 621 calendar days.
- - 16 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 35 commits contributed to the release over the course of 623 calendar days.
+ - 17 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -141,6 +161,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release aya-log-parser v0.1.13 ([`04ee35d`](https://github.com/aya-rs/aya/commit/04ee35d1392ab7dc2d97c6e0f1449e98b1283ffe))
+    - Add missing changelogs ([`1d515fe`](https://github.com/aya-rs/aya/commit/1d515fe810c6e646ca405d8f97803698deda148c))
     - Release aya-log-common v0.1.14, aya-log v0.2.0 ([`c22a696`](https://github.com/aya-rs/aya/commit/c22a6963d44befb5591d4b21c09767c43935cb54))
     - Don't use path deps in workspace ([`13b1fc6`](https://github.com/aya-rs/aya/commit/13b1fc63ef2ae083ba03ce9de24cb4f31f989d21))
     - Merge pull request #882 from dave-tucker/metadata ([`0fadd69`](https://github.com/aya-rs/aya/commit/0fadd695377b8a3f0d9a3af3bc8140f0f1bed8d2))
