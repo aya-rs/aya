@@ -44,6 +44,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_tool::generate::Error where T: core::
 pub fn aya_tool::generate::Error::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_tool::generate::Error
 pub fn aya_tool::generate::Error::from(t: T) -> T
+impl<T> either::into_either::IntoEither for aya_tool::generate::Error
 pub enum aya_tool::generate::InputFile
 pub aya_tool::generate::InputFile::Btf(std::path::PathBuf)
 pub aya_tool::generate::InputFile::Header(std::path::PathBuf)
@@ -69,6 +70,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_tool::generate::InputFile where T: co
 pub fn aya_tool::generate::InputFile::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_tool::generate::InputFile
 pub fn aya_tool::generate::InputFile::from(t: T) -> T
+impl<T> either::into_either::IntoEither for aya_tool::generate::InputFile
 pub fn aya_tool::generate::generate<T: core::convert::AsRef<str>>(input_file: aya_tool::generate::InputFile, types: &[T], additional_flags: &[T]) -> core::result::Result<alloc::string::String, aya_tool::generate::Error>
 pub mod aya_tool::rustfmt
 pub fn aya_tool::rustfmt::format(code: &str) -> core::result::Result<alloc::string::String, std::io::error::Error>
@@ -97,6 +99,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_tool::generate::InputFile where T: co
 pub fn aya_tool::generate::InputFile::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_tool::generate::InputFile
 pub fn aya_tool::generate::InputFile::from(t: T) -> T
+impl<T> either::into_either::IntoEither for aya_tool::generate::InputFile
 pub fn aya_tool::generate<T: core::convert::AsRef<str>>(input_file: aya_tool::generate::InputFile, types: &[T], additional_flags: &[T]) -> core::result::Result<alloc::string::String, aya_tool::generate::Error>
 pub fn aya_tool::write_to_file<T: core::convert::AsRef<std::path::Path>>(path: T, code: &str) -> core::result::Result<(), std::io::error::Error>
 pub fn aya_tool::write_to_file_fmt<T: core::convert::AsRef<std::path::Path>>(path: T, code: &str) -> core::result::Result<(), std::io::error::Error>
