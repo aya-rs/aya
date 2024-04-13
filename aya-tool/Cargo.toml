@@ -1,6 +1,7 @@
 [package]
 name = "aya-tool"
 version = "0.1.0"
+publish = false
 description = "A tool for generating bindings for Linux Kernel types"
 authors.workspace = true
 license.workspace = true
