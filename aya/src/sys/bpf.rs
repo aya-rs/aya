@@ -75,8 +75,8 @@ pub(crate) fn bpf_create_map(
                 u.btf_fd = 0;
             }
             _ => {
-                u.btf_key_type_id = m.def.btf_key_type_id;
-                u.btf_value_type_id = m.def.btf_value_type_id;
+                u.btf_key_type_id = m.def.btf_key_type_id.unwrap_or_default();
+                u.btf_value_type_id = m.def.btf_value_type_id.unwrap_or_default();
                 u.btf_fd = btf_fd.map(|fd| fd.as_raw_fd()).unwrap_or_default() as u32;
             }
         }

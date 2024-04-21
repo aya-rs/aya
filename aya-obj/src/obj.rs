@@ -26,7 +26,7 @@ use crate::{
         bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL, BPF_F_RDONLY_PROG,
         BPF_JMP, BPF_K,
     },
-    maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, PinningType, MINIMUM_MAP_SIZE},
+    maps::{bpf_map_def, BtfMap, LegacyMap, Map, MapDef, PinningType, MINIMUM_MAP_SIZE},
     programs::{
         CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType, XdpAttachType,
     },
@@ -1217,7 +1217,7 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     }
 }
 
-fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDef), BtfError> {
+fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, MapDef), BtfError> {
     let ty = match btf.type_by_id(info.btf_type)? {
         BtfType::Var(var) => var,
         other => {
@@ -1227,7 +1227,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         }
     };
     let map_name = btf.string_at(ty.name_offset)?;
-    let mut map_def = BtfMapDef::default();
+    let mut map_def = MapDef::default();
 
     // Safety: union
     let root_type = btf.resolve_type(ty.btf_type)?;
@@ -1250,7 +1250,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
                     // Safety: union
                     let t = pty.btf_type;
                     map_def.key_size = btf.type_size(t)? as u32;
-                    map_def.btf_key_type_id = t;
+                    map_def.btf_key_type_id = Some(t);
                 } else {
                     return Err(BtfError::UnexpectedBtfType {
                         type_id: m.btf_type,
@@ -1264,7 +1264,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
                 if let BtfType::Ptr(pty) = btf.type_by_id(m.btf_type)? {
                     let t = pty.btf_type;
                     map_def.value_size = btf.type_size(t)? as u32;
-                    map_def.btf_value_type_id = t;
+                    map_def.btf_value_type_id = Some(t);
                 } else {
                     return Err(BtfError::UnexpectedBtfType {
                         type_id: m.btf_type,
@@ -1300,15 +1300,15 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
 pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
     if info.btf_key_type_id != 0 {
         Map::Btf(BtfMap {
-            def: BtfMapDef {
+            def: MapDef {
                 map_type: info.type_,
                 key_size: info.key_size,
                 value_size: info.value_size,
                 max_entries: info.max_entries,
                 map_flags: info.map_flags,
                 pinning: pinned,
-                btf_key_type_id: info.btf_key_type_id,
-                btf_value_type_id: info.btf_value_type_id,
+                btf_key_type_id: Some(info.btf_key_type_id),
+                btf_value_type_id: Some(info.btf_value_type_id),
             },
             section_index: 0,
             symbol_index: 0,

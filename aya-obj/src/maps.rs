@@ -65,7 +65,7 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
 
 /// BTF definition of a map
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub struct BtfMapDef {
+pub struct MapDef {
     pub(crate) map_type: u32,
     pub(crate) key_size: u32,
     pub(crate) value_size: u32,
@@ -73,9 +73,9 @@ pub struct BtfMapDef {
     pub(crate) map_flags: u32,
     pub(crate) pinning: PinningType,
     /// BTF type id of the map key
-    pub btf_key_type_id: u32,
+    pub btf_key_type_id: Option<u32>,
     /// BTF type id of the map value
-    pub btf_value_type_id: u32,
+    pub btf_value_type_id: Option<u32>,
 }
 
 /// The pinning type
@@ -285,7 +285,7 @@ pub struct LegacyMap {
 #[derive(Debug, Clone)]
 pub struct BtfMap {
     /// The definition of the map
-    pub def: BtfMapDef,
+    pub def: MapDef,
     pub(crate) section_index: usize,
     pub(crate) symbol_index: usize,
     pub(crate) data: Vec<u8>,
