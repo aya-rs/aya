@@ -54,7 +54,10 @@ use std::{
     marker::PhantomData,
     mem,
     ops::Deref,
-    os::fd::{AsFd, BorrowedFd, OwnedFd},
+    os::{
+        fd::{AsFd, BorrowedFd, OwnedFd},
+        unix::ffi::OsStrExt as _,
+    },
     path::Path,
     ptr,
 };
@@ -66,7 +69,7 @@ use thiserror::Error;
 
 use crate::{
     generated::bpf_map_info,
-    obj::{self, parse_map_info, EbpfSectionKind},
+    obj::{self, EbpfSectionKind},
     pin::PinError,
     sys::{
         bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
@@ -74,7 +77,7 @@ use crate::{
         iter_map_ids, SyscallError,
     },
     util::{bytes_of_bpf_name, nr_cpus, KernelVersion},
-    PinningType, Pod,
+    Pod,
 };
 
 pub mod array;
@@ -304,27 +307,27 @@ impl Map {
     /// Returns the low level map type.
     fn map_type(&self) -> u32 {
         match self {
-            Self::Array(map) => map.obj.map_type(),
-            Self::BloomFilter(map) => map.obj.map_type(),
-            Self::CpuMap(map) => map.obj.map_type(),
-            Self::DevMap(map) => map.obj.map_type(),
-            Self::DevMapHash(map) => map.obj.map_type(),
-            Self::HashMap(map) => map.obj.map_type(),
-            Self::LpmTrie(map) => map.obj.map_type(),
-            Self::LruHashMap(map) => map.obj.map_type(),
-            Self::PerCpuArray(map) => map.obj.map_type(),
-            Self::PerCpuHashMap(map) => map.obj.map_type(),
-            Self::PerCpuLruHashMap(map) => map.obj.map_type(),
-            Self::PerfEventArray(map) => map.obj.map_type(),
-            Self::ProgramArray(map) => map.obj.map_type(),
-            Self::Queue(map) => map.obj.map_type(),
-            Self::RingBuf(map) => map.obj.map_type(),
-            Self::SockHash(map) => map.obj.map_type(),
-            Self::SockMap(map) => map.obj.map_type(),
-            Self::Stack(map) => map.obj.map_type(),
-            Self::StackTraceMap(map) => map.obj.map_type(),
-            Self::Unsupported(map) => map.obj.map_type(),
-            Self::XskMap(map) => map.obj.map_type(),
+            Self::Array(map) => map.def.map_type(),
+            Self::BloomFilter(map) => map.def.map_type(),
+            Self::CpuMap(map) => map.def.map_type(),
+            Self::DevMap(map) => map.def.map_type(),
+            Self::DevMapHash(map) => map.def.map_type(),
+            Self::HashMap(map) => map.def.map_type(),
+            Self::LpmTrie(map) => map.def.map_type(),
+            Self::LruHashMap(map) => map.def.map_type(),
+            Self::PerCpuArray(map) => map.def.map_type(),
+            Self::PerCpuHashMap(map) => map.def.map_type(),
+            Self::PerCpuLruHashMap(map) => map.def.map_type(),
+            Self::PerfEventArray(map) => map.def.map_type(),
+            Self::ProgramArray(map) => map.def.map_type(),
+            Self::Queue(map) => map.def.map_type(),
+            Self::RingBuf(map) => map.def.map_type(),
+            Self::SockHash(map) => map.def.map_type(),
+            Self::SockMap(map) => map.def.map_type(),
+            Self::Stack(map) => map.def.map_type(),
+            Self::StackTraceMap(map) => map.def.map_type(),
+            Self::Unsupported(map) => map.def.map_type(),
+            Self::XskMap(map) => map.def.map_type(),
         }
     }
 
@@ -493,7 +496,7 @@ impl_try_from_map!((K, V) {
 });
 
 pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
-    let max_entries = map.obj.max_entries();
+    let max_entries = map.def.max_entries();
     if index >= max_entries {
         Err(MapError::OutOfBounds { index, max_entries })
     } else {
@@ -503,12 +506,12 @@ pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
 
 pub(crate) fn check_kv_size<K, V>(map: &MapData) -> Result<(), MapError> {
     let size = mem::size_of::<K>();
-    let expected = map.obj.key_size() as usize;
+    let expected = map.def.key_size() as usize;
     if size != expected {
         return Err(MapError::InvalidKeySize { size, expected });
     }
     let size = mem::size_of::<V>();
-    let expected = map.obj.value_size() as usize;
+    let expected = map.def.value_size() as usize;
     if size != expected {
         return Err(MapError::InvalidValueSize { size, expected });
     };
@@ -517,25 +520,22 @@ pub(crate) fn check_kv_size<K, V>(map: &MapData) -> Result<(), MapError> {
 
 pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
     let size = mem::size_of::<V>();
-    let expected = map.obj.value_size() as usize;
+    let expected = map.def.value_size() as usize;
     if size != expected {
         return Err(MapError::InvalidValueSize { size, expected });
     };
     Ok(())
 }
 
-/// A generic handle to a BPF map.
-///
-/// You should never need to use this unless you're implementing a new map type.
 #[derive(Debug)]
-pub struct MapData {
-    obj: obj::Map,
-    fd: MapFd,
+pub(crate) struct ElfMapData {
+    pub(crate) obj: obj::Map,
+    pub(crate) fd: MapFd,
 }
 
-impl MapData {
+impl ElfMapData {
     /// Creates a new map with the provided `name`
-    pub fn create(
+    pub(crate) fn create(
         obj: obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
@@ -591,7 +591,7 @@ impl MapData {
             }
             Err(_) => {
                 let map = Self::create(obj, name, btf_fd)?;
-                map.pin(&path).map_err(|error| MapError::PinError {
+                pin_map(&map.fd, &path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,
                 })?;
@@ -620,7 +620,18 @@ impl MapData {
         }
         Ok(())
     }
+}
 
+/// A generic handle to a BPF map.
+///
+/// You should never need to use this unless you're implementing a new map type.
+#[derive(Debug)]
+pub struct MapData {
+    pub(crate) def: obj::MapDef,
+    pub(crate) fd: MapFd,
+}
+
+impl MapData {
     /// Loads a map from a pinned path in bpffs.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
@@ -657,7 +668,7 @@ impl MapData {
     pub fn from_fd(fd: OwnedFd) -> Result<Self, MapError> {
         let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
         Ok(Self {
-            obj: parse_map_info(info, PinningType::None),
+            def: info.into(),
             fd: MapFd(fd),
         })
     }
@@ -687,38 +698,45 @@ impl MapData {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
-        use std::os::unix::ffi::OsStrExt as _;
-
-        let Self { fd, obj: _ } = self;
-        let path = path.as_ref();
-        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
-            PinError::InvalidPinPath {
-                path: path.to_path_buf(),
-                error,
-            }
-        })?;
-        bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
-            call: "BPF_OBJ_PIN",
-            io_error,
-        })?;
-        Ok(())
+        let Self { fd, def: _ } = self;
+        pin_map(fd, path)
     }
 
     /// Returns the file descriptor of the map.
     pub fn fd(&self) -> &MapFd {
-        let Self { obj: _, fd } = self;
+        let Self { def: _, fd } = self;
         fd
-    }
-
-    pub(crate) fn obj(&self) -> &obj::Map {
-        let Self { obj, fd: _ } = self;
-        obj
     }
 
     /// Returns the kernel's information about the loaded map.
     pub fn info(&self) -> Result<MapInfo, MapError> {
         MapInfo::new_from_fd(self.fd.as_fd())
     }
+}
+
+impl From<ElfMapData> for MapData {
+    fn from(elf_map: ElfMapData) -> Self {
+        let ElfMapData { fd, obj } = elf_map;
+        let def = match obj {
+            aya_obj::Map::Legacy(m) => m.def,
+            aya_obj::Map::Btf(m) => m.def,
+        };
+        Self { def, fd }
+    }
+}
+
+fn pin_map(fd: &MapFd, path: impl AsRef<Path>) -> Result<(), PinError> {
+    let path = path.as_ref();
+    let path_string =
+        CString::new(path.as_os_str().as_bytes()).map_err(|error| PinError::InvalidPinPath {
+            path: path.to_path_buf(),
+            error,
+        })?;
+    bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
+        call: "BPF_OBJ_PIN",
+        io_error,
+    })?;
+    Ok(())
 }
 
 /// An iterable map
@@ -1078,7 +1096,7 @@ mod tests {
         assert_matches!(
             MapData::from_id(1234),
             Ok(MapData {
-                obj: _,
+                def: _,
                 fd,
             }) => assert_eq!(fd.as_fd().as_raw_fd(), 42)
         );
@@ -1095,8 +1113,8 @@ mod tests {
         });
 
         assert_matches!(
-            MapData::create(new_obj_map(), "foo", None),
-            Ok(MapData {
+            ElfMapData::create(new_obj_map(), "foo", None),
+            Ok(ElfMapData {
                 obj: _,
                 fd,
             }) => assert_eq!(fd.as_fd().as_raw_fd(), 42)
@@ -1135,8 +1153,9 @@ mod tests {
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
         });
 
-        let map_data = MapData::create(new_obj_map(), TEST_NAME, None).unwrap();
-        assert_eq!(TEST_NAME, map_data.info().unwrap().name_as_str().unwrap());
+        let map_data = ElfMapData::create(new_obj_map(), TEST_NAME, None).unwrap();
+        let info = MapInfo::new_from_fd(map_data.fd.as_fd()).unwrap();
+        assert_eq!(TEST_NAME, info.name_as_str().unwrap());
     }
 
     #[test]
@@ -1199,7 +1218,7 @@ mod tests {
         override_syscall(|_| Err((-42, io::Error::from_raw_os_error(EFAULT))));
 
         assert_matches!(
-            MapData::create(new_obj_map(), "foo", None),
+            ElfMapData::create(new_obj_map(), "foo", None),
             Err(MapError::CreateError { name, code, io_error }) => {
                 assert_eq!(name, "foo");
                 assert_eq!(code, -42);

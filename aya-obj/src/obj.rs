@@ -23,8 +23,7 @@ use crate::{
         Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
     },
     generated::{
-        bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL, BPF_F_RDONLY_PROG,
-        BPF_JMP, BPF_K,
+        bpf_insn, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K,
     },
     maps::{bpf_map_def, BtfMap, LegacyMap, Map, MapDef, PinningType, MINIMUM_MAP_SIZE},
     programs::{
@@ -1296,44 +1295,6 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, MapDef),
     Ok((map_name.to_string(), map_def))
 }
 
-/// Parses a [bpf_map_info] into a [Map].
-pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
-    if info.btf_key_type_id != 0 {
-        Map::Btf(BtfMap {
-            def: MapDef {
-                map_type: info.type_,
-                key_size: info.key_size,
-                value_size: info.value_size,
-                max_entries: info.max_entries,
-                map_flags: info.map_flags,
-                pinning: pinned,
-                btf_key_type_id: Some(info.btf_key_type_id),
-                btf_value_type_id: Some(info.btf_value_type_id),
-            },
-            section_index: 0,
-            symbol_index: 0,
-            data: Vec::new(),
-        })
-    } else {
-        Map::Legacy(LegacyMap {
-            def: bpf_map_def {
-                map_type: info.type_,
-                key_size: info.key_size,
-                value_size: info.value_size,
-                max_entries: info.max_entries,
-                map_flags: info.map_flags,
-                pinning: pinned,
-                id: info.id,
-            }
-            .into(),
-            section_index: 0,
-            symbol_index: None,
-            section_kind: EbpfSectionKind::Undefined,
-            data: Vec::new(),
-        })
-    }
-}
-
 /// Copies a block of eBPF instructions
 pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
     if data.len() % mem::size_of::<bpf_insn>() > 0 {
@@ -1581,6 +1542,7 @@ mod tests {
                     max_entries: 1,
                     map_flags: 0,
                     pinning: PinningType::None,
+                    id: None,
                     btf_key_type_id: None,
                     btf_value_type_id: None,
                 },

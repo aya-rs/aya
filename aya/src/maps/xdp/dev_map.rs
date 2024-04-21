@@ -62,7 +62,7 @@ impl<T: Borrow<MapData>> DevMap<T> {
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
     pub fn len(&self) -> u32 {
-        self.inner.borrow().obj.max_entries()
+        self.inner.borrow().def.max_entries()
     }
 
     /// Returns the target interface index and optional program at a given index.

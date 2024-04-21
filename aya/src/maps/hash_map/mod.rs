@@ -49,7 +49,7 @@ mod test_utils {
     use crate::{
         bpf_map_def,
         generated::{bpf_cmd, bpf_map_type},
-        maps::MapData,
+        maps::{ElfMapData, MapData},
         obj::{self, maps::LegacyMap, EbpfSectionKind},
         sys::{override_syscall, Syscall},
     };
@@ -62,7 +62,7 @@ mod test_utils {
             } => Ok(1337),
             call => panic!("unexpected syscall {:?}", call),
         });
-        MapData::create(obj, "foo", None).unwrap()
+        ElfMapData::create(obj, "foo", None).unwrap().into()
     }
 
     pub(super) fn new_obj_map(map_type: bpf_map_type) -> obj::Map {

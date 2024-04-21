@@ -21,10 +21,10 @@ use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_map_type, bpf_map_type::*, AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE,
-        AYA_PERF_EVENT_IOC_SET_BPF,
+        bpf_map_type::{self, *},
+        AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE, AYA_PERF_EVENT_IOC_SET_BPF,
     },
-    maps::{Map, MapData, MapError},
+    maps::{ElfMapData, Map, MapData, MapError},
     obj::{
         btf::{Btf, BtfError},
         Object, ParseError, ProgramSection,
@@ -494,7 +494,7 @@ impl<'a> EbpfLoader<'a> {
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
             let mut map = match obj.pinning() {
-                PinningType::None => MapData::create(obj, &name, btf_fd)?,
+                PinningType::None => ElfMapData::create(obj, &name, btf_fd)?,
                 PinningType::ByName => {
                     // pin maps in /sys/fs/bpf by default to align with libbpf
                     // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
@@ -502,7 +502,7 @@ impl<'a> EbpfLoader<'a> {
                         .as_deref()
                         .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
 
-                    MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                    ElfMapData::create_pinned_by_name(path, obj, &name, btf_fd)?
                 }
             };
             map.finalize()?;
@@ -517,7 +517,7 @@ impl<'a> EbpfLoader<'a> {
 
         obj.relocate_maps(
             maps.iter()
-                .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
+                .map(|(s, data)| (s.as_str(), data.fd.as_fd().as_raw_fd(), &data.obj)),
             &text_sections,
         )?;
         obj.relocate_calls(&text_sections)?;
@@ -697,13 +697,14 @@ impl<'a> EbpfLoader<'a> {
             .collect();
         let maps = maps
             .drain()
+            .map(|(name, elf_map)| (name, elf_map.into()))
             .map(parse_map)
             .collect::<Result<HashMap<String, Map>, EbpfError>>()?;
 
         if !*allow_unsupported_maps {
             maps.iter().try_for_each(|(_, x)| match x {
                 Map::Unsupported(map) => Err(EbpfError::MapError(MapError::Unsupported {
-                    map_type: map.obj().map_type(),
+                    map_type: map.def.map_type(),
                 })),
                 _ => Ok(()),
             })?;
@@ -715,7 +716,7 @@ impl<'a> EbpfLoader<'a> {
 
 fn parse_map(data: (String, MapData)) -> Result<(String, Map), EbpfError> {
     let (name, map) = data;
-    let map_type = bpf_map_type::try_from(map.obj().map_type()).map_err(MapError::from)?;
+    let map_type = bpf_map_type::try_from(map.def.map_type()).map_err(MapError::from)?;
     let map = match map_type {
         BPF_MAP_TYPE_ARRAY => Map::Array(map),
         BPF_MAP_TYPE_PERCPU_ARRAY => Map::PerCpuArray(map),

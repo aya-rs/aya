@@ -81,7 +81,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         let expected = mem::size_of::<u32>();
-        let size = data.obj.key_size() as usize;
+        let size = data.def.key_size() as usize;
         if size != expected {
             return Err(MapError::InvalidKeySize { size, expected });
         }
@@ -91,7 +91,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
                 call: "sysctl",
                 io_error,
             })?;
-        let size = data.obj.value_size() as usize;
+        let size = data.def.value_size() as usize;
         if size > max_stack_depth * mem::size_of::<u64>() {
             return Err(MapError::InvalidValueSize { size, expected });
         }

@@ -20,7 +20,7 @@ use crate::{
         bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info,
         bpf_map_type, bpf_prog_info, bpf_prog_type, BPF_F_REPLACE,
     },
-    maps::{MapData, PerCpuValues},
+    maps::{ElfMapData, PerCpuValues},
     obj::{
         self,
         btf::{
@@ -75,8 +75,8 @@ pub(crate) fn bpf_create_map(
                 u.btf_fd = 0;
             }
             _ => {
-                u.btf_key_type_id = m.def.btf_key_type_id.unwrap_or_default();
-                u.btf_value_type_id = m.def.btf_value_type_id.unwrap_or_default();
+                u.btf_key_type_id = m.def.btf_key_type_id().unwrap_or_default();
+                u.btf_value_type_id = m.def.btf_value_type_id().unwrap_or_default();
                 u.btf_fd = btf_fd.map(|fd| fd.as_raw_fd()).unwrap_or_default() as u32;
             }
         }
@@ -756,7 +756,7 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
 
     let mut insns = copy_instructions(prog).unwrap();
 
-    let map = MapData::create(
+    let map = ElfMapData::create(
         obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: bpf_map_type::BPF_MAP_TYPE_ARRAY as u32,
@@ -776,7 +776,7 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
     );
 
     if let Ok(map) = map {
-        insns[0].imm = map.fd().as_fd().as_raw_fd();
+        insns[0].imm = map.fd.as_fd().as_raw_fd();
 
         let gpl = b"GPL\0";
         u.license = gpl.as_ptr() as u64;

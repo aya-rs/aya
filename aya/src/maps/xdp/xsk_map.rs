@@ -51,7 +51,7 @@ impl<T: Borrow<MapData>> XskMap<T> {
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
     pub fn len(&self) -> u32 {
-        self.inner.borrow().obj.max_entries()
+        self.inner.borrow().def.max_entries()
     }
 }
 

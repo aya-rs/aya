@@ -93,7 +93,7 @@ pub mod programs;
 pub mod relocation;
 mod util;
 
-pub use maps::Map;
+pub use maps::{Map, MapDef};
 pub use obj::*;
 
 /// An error returned from the verifier.
