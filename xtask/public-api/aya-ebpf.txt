@@ -1512,7 +1512,6 @@ pub aya_ebpf::programs::probe::ProbeContext::regs: *mut aya_ebpf_bindings::x86_6
 impl aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: FromPtRegs>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::probe::ProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::probe::ProbeContext
-pub fn aya_ebpf::programs::probe::ProbeContext::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::probe::ProbeContext
@@ -1565,6 +1564,36 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::raw_tracepoint::RawTr
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::from(t: T) -> T
+pub mod aya_ebpf::programs::retprobe
+pub struct aya_ebpf::programs::retprobe::RetProbeContext
+pub aya_ebpf::programs::retprobe::RetProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
+impl aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::retprobe::RetProbeContext
+impl !core::marker::Send for aya_ebpf::programs::retprobe::RetProbeContext
+impl !core::marker::Sync for aya_ebpf::programs::retprobe::RetProbeContext
+impl core::marker::Unpin for aya_ebpf::programs::retprobe::RetProbeContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::retprobe::RetProbeContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::retprobe::RetProbeContext
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::retprobe::RetProbeContext where U: core::convert::From<T>
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::retprobe::RetProbeContext where U: core::convert::Into<T>
+pub type aya_ebpf::programs::retprobe::RetProbeContext::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::retprobe::RetProbeContext where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::retprobe::RetProbeContext::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::retprobe::RetProbeContext where T: 'static + core::marker::Sized
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: core::marker::Sized
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: core::marker::Sized
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::from(t: T) -> T
 pub mod aya_ebpf::programs::sk_buff
 pub struct aya_ebpf::programs::sk_buff::SkBuff
 pub aya_ebpf::programs::sk_buff::SkBuff::skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff
@@ -2185,7 +2214,6 @@ pub aya_ebpf::programs::ProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bind
 impl aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: FromPtRegs>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::probe::ProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::probe::ProbeContext
-pub fn aya_ebpf::programs::probe::ProbeContext::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::probe::ProbeContext
@@ -2237,6 +2265,35 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::raw_tracepoint::RawTr
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::from(t: T) -> T
+pub struct aya_ebpf::programs::RetProbeContext
+pub aya_ebpf::programs::RetProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
+impl aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::retprobe::RetProbeContext
+impl !core::marker::Send for aya_ebpf::programs::retprobe::RetProbeContext
+impl !core::marker::Sync for aya_ebpf::programs::retprobe::RetProbeContext
+impl core::marker::Unpin for aya_ebpf::programs::retprobe::RetProbeContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::retprobe::RetProbeContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::retprobe::RetProbeContext
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::retprobe::RetProbeContext where U: core::convert::From<T>
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::retprobe::RetProbeContext where U: core::convert::Into<T>
+pub type aya_ebpf::programs::retprobe::RetProbeContext::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::retprobe::RetProbeContext where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::retprobe::RetProbeContext::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::retprobe::RetProbeContext where T: 'static + core::marker::Sized
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: core::marker::Sized
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: core::marker::Sized
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::from(t: T) -> T
 pub struct aya_ebpf::programs::SkBuffContext
 pub aya_ebpf::programs::SkBuffContext::skb: aya_ebpf::programs::sk_buff::SkBuff
 impl aya_ebpf::programs::sk_buff::SkBuffContext
@@ -2647,6 +2704,8 @@ impl aya_ebpf::EbpfContext for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_lookup::SkLookupContext
