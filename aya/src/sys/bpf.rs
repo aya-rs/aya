@@ -764,7 +764,8 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
                 value_size: 32,
                 max_entries: 1,
                 ..Default::default()
-            },
+            }
+            .into(),
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             symbol_index: None,

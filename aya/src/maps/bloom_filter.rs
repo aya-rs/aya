@@ -104,7 +104,8 @@ mod tests {
                 value_size: 4,
                 max_entries: 1024,
                 ..Default::default()
-            },
+            }
+            .into(),
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
@@ -148,7 +149,8 @@ mod tests {
                 value_size: 4,
                 max_entries: 1024,
                 ..Default::default()
-            },
+            }
+            .into(),
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             symbol_index: None,

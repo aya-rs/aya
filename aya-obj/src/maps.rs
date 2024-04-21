@@ -78,6 +78,21 @@ pub struct MapDef {
     pub btf_value_type_id: Option<u32>,
 }
 
+impl From<bpf_map_def> for MapDef {
+    fn from(def: bpf_map_def) -> Self {
+        Self {
+            map_type: def.map_type,
+            key_size: def.key_size,
+            value_size: def.value_size,
+            max_entries: def.max_entries,
+            map_flags: def.map_flags,
+            pinning: def.pinning,
+            btf_key_type_id: None,
+            btf_value_type_id: None,
+        }
+    }
+}
+
 /// The pinning type
 ///
 /// Upon pinning a map, a file representation is created for the map,
@@ -266,7 +281,7 @@ impl Map {
 #[derive(Debug, Clone)]
 pub struct LegacyMap {
     /// The definition of the map
-    pub def: bpf_map_def,
+    pub def: MapDef,
     /// The section index
     pub section_index: usize,
     /// The section kind

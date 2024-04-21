@@ -794,14 +794,14 @@ impl Object {
                 .name
                 .as_ref()
                 .ok_or(ParseError::MapSymbolNameNotFound { i: *i })?;
-            let def = parse_map_def(name, data)?;
+            let def = parse_legacy_map_def(name, data)?;
             maps.insert(
                 name.to_string(),
                 Map::Legacy(LegacyMap {
                     section_index: section.index.0,
                     section_kind: section.kind,
                     symbol_index: Some(sym.index),
-                    def,
+                    def: def.into(),
                     data: Vec::new(),
                 }),
             );
@@ -1192,12 +1192,12 @@ fn parse_data_map_section(section: &Section) -> Result<Map, ParseError> {
         section_kind: section.kind,
         // Data maps don't require symbols to be relocated
         symbol_index: None,
-        def,
+        def: def.into(),
         data,
     }))
 }
 
-fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
+fn parse_legacy_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     if data.len() < MINIMUM_MAP_SIZE {
         return Err(ParseError::InvalidMapDefinition {
             name: name.to_owned(),
@@ -1324,7 +1324,8 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 map_flags: info.map_flags,
                 pinning: pinned,
                 id: info.id,
-            },
+            }
+            .into(),
             section_index: 0,
             symbol_index: None,
             section_kind: EbpfSectionKind::Undefined,
@@ -1502,7 +1503,7 @@ mod tests {
     #[test]
     fn test_parse_map_def_error() {
         assert_matches!(
-            parse_map_def("foo", &[]),
+            parse_legacy_map_def("foo", &[]),
             Err(ParseError::InvalidMapDefinition { .. })
         );
     }
@@ -1520,7 +1521,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse_map_def("foo", &bytes_of(&def)[..MINIMUM_MAP_SIZE]).unwrap(),
+            parse_legacy_map_def("foo", &bytes_of(&def)[..MINIMUM_MAP_SIZE]).unwrap(),
             def
         );
     }
@@ -1537,7 +1538,7 @@ mod tests {
             pinning: PinningType::ByName,
         };
 
-        assert_eq!(parse_map_def("foo", bytes_of(&def)).unwrap(), def);
+        assert_eq!(parse_legacy_map_def("foo", bytes_of(&def)).unwrap(), def);
     }
 
     #[test]
@@ -1554,7 +1555,7 @@ mod tests {
         let mut buf = [0u8; 128];
         unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, def) };
 
-        assert_eq!(parse_map_def("foo", &buf).unwrap(), def);
+        assert_eq!(parse_legacy_map_def("foo", &buf).unwrap(), def);
     }
 
     #[test]
@@ -1573,14 +1574,15 @@ mod tests {
                 section_index: 0,
                 section_kind: EbpfSectionKind::Data,
                 symbol_index: None,
-                def: bpf_map_def {
+                def: MapDef {
                     map_type: _map_type,
                     key_size: 4,
                     value_size,
                     max_entries: 1,
                     map_flags: 0,
-                    id: 0,
                     pinning: PinningType::None,
+                    btf_key_type_id: None,
+                    btf_value_type_id: None,
                 },
                 data,
             })) if data == map_data && value_size == map_data.len() as u32
@@ -1755,7 +1757,7 @@ mod tests {
         fake_sym(&mut obj, 0, 0, "foo", mem::size_of::<bpf_map_def>() as u64);
         fake_sym(&mut obj, 0, 28, "bar", mem::size_of::<bpf_map_def>() as u64);
         fake_sym(&mut obj, 0, 60, "baz", mem::size_of::<bpf_map_def>() as u64);
-        let def = &bpf_map_def {
+        let def = bpf_map_def {
             map_type: 1,
             key_size: 2,
             value_size: 3,
@@ -1763,7 +1765,7 @@ mod tests {
             map_flags: 5,
             ..Default::default()
         };
-        let map_data = bytes_of(def).to_vec();
+        let map_data = bytes_of(&def).to_vec();
         let mut buf = vec![];
         buf.extend(&map_data);
         buf.extend(&map_data);
@@ -1782,9 +1784,10 @@ mod tests {
         assert!(obj.maps.contains_key("foo"));
         assert!(obj.maps.contains_key("bar"));
         assert!(obj.maps.contains_key("baz"));
+        let def = MapDef::from(def);
         for map in obj.maps.values() {
             assert_matches!(map, Map::Legacy(m) => {
-                assert_eq!(&m.def, def);
+                assert_eq!(m.def, def);
             })
         }
     }
@@ -2549,7 +2552,8 @@ mod tests {
                     map_flags: BPF_F_RDONLY_PROG,
                     id: 1,
                     pinning: PinningType::None,
-                },
+                }
+                .into(),
                 section_index: 1,
                 section_kind: EbpfSectionKind::Rodata,
                 symbol_index: Some(1),
