@@ -4,10 +4,14 @@ pub aya_log::Error::InvalidOnlineCpu(std::io::error::Error)
 pub aya_log::Error::MapError(aya::maps::MapError)
 pub aya_log::Error::MapNotFound
 pub aya_log::Error::PerfBufferError(aya::maps::perf::perf_buffer::PerfBufferError)
+pub aya_log::Error::ProgramError(aya::programs::ProgramError)
+pub aya_log::Error::ProgramNotFound
 impl core::convert::From<aya::maps::MapError> for aya_log::Error
 pub fn aya_log::Error::from(source: aya::maps::MapError) -> Self
 impl core::convert::From<aya::maps::perf::perf_buffer::PerfBufferError> for aya_log::Error
 pub fn aya_log::Error::from(source: aya::maps::perf::perf_buffer::PerfBufferError) -> Self
+impl core::convert::From<aya::programs::ProgramError> for aya_log::Error
+pub fn aya_log::Error::from(source: aya::programs::ProgramError) -> Self
 impl core::error::Error for aya_log::Error
 pub fn aya_log::Error::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya_log::Error
@@ -66,6 +70,8 @@ pub fn aya_log::DefaultFormatter::from(t: T) -> T
 pub struct aya_log::EbpfLogger
 impl aya_log::EbpfLogger
 pub fn aya_log::EbpfLogger::init(bpf: &mut aya::bpf::Ebpf) -> core::result::Result<aya_log::EbpfLogger, aya_log::Error>
+pub fn aya_log::EbpfLogger::init_from_id(program_id: u32) -> core::result::Result<aya_log::EbpfLogger, aya_log::Error>
+pub fn aya_log::EbpfLogger::init_from_id_with_logger<T: log::Log + 'static>(program_id: u32, logger: T) -> core::result::Result<aya_log::EbpfLogger, aya_log::Error>
 pub fn aya_log::EbpfLogger::init_with_logger<T: log::Log + 'static>(bpf: &mut aya::bpf::Ebpf, logger: T) -> core::result::Result<aya_log::EbpfLogger, aya_log::Error>
 impl core::marker::Freeze for aya_log::EbpfLogger
 impl core::marker::Send for aya_log::EbpfLogger
