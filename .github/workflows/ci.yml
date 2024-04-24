@@ -256,9 +256,10 @@ jobs:
 
       - name: bpf-linker
         if: runner.os == 'macOS'
-        # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature).
+        # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature). We also
+        # --force so that bpf-linker gets always relinked against the latest LLVM installed by brew.
         # Remove --rev when LLVM18 is released.
-        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git --rev 821f92990074cb7e950e25129dcd55e20424cede --no-default-features
+        run: cargo install --force bpf-linker --git https://github.com/aya-rs/bpf-linker.git --rev 821f92990074cb7e950e25129dcd55e20424cede --no-default-features
 
       - name: Download debian kernels
         if: runner.arch == 'ARM64'
