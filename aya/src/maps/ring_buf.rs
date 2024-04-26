@@ -103,7 +103,7 @@ impl<T: Borrow<MapData>> RingBuf<T> {
         let data: &MapData = map.borrow();
         let page_size = page_size();
         let map_fd = data.fd().as_fd();
-        let byte_size = data.obj.max_entries();
+        let byte_size = data.def.max_entries();
         let consumer_metadata = ConsumerMetadata::new(map_fd, 0, page_size)?;
         let consumer = ConsumerPos::new(consumer_metadata);
         let producer = ProducerData::new(map_fd, page_size, page_size, byte_size)?;

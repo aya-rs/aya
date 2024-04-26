@@ -5,7 +5,7 @@ use core::mem;
 
 #[cfg(not(feature = "std"))]
 use crate::std;
-use crate::EbpfSectionKind;
+use crate::{generated::bpf_map_info, EbpfSectionKind};
 
 /// Invalid map type encontered
 pub struct InvalidMapTypeError {
@@ -65,17 +65,92 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
 
 /// BTF definition of a map
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub struct BtfMapDef {
+pub struct MapDef {
     pub(crate) map_type: u32,
     pub(crate) key_size: u32,
     pub(crate) value_size: u32,
     pub(crate) max_entries: u32,
     pub(crate) map_flags: u32,
     pub(crate) pinning: PinningType,
+    pub(crate) id: Option<u32>,
     /// BTF type id of the map key
-    pub btf_key_type_id: u32,
+    pub(crate) btf_key_type_id: Option<u32>,
     /// BTF type id of the map value
-    pub btf_value_type_id: u32,
+    pub(crate) btf_value_type_id: Option<u32>,
+}
+
+impl From<bpf_map_def> for MapDef {
+    fn from(def: bpf_map_def) -> Self {
+        Self {
+            map_type: def.map_type,
+            key_size: def.key_size,
+            value_size: def.value_size,
+            max_entries: def.max_entries,
+            map_flags: def.map_flags,
+            pinning: def.pinning,
+            id: Option::from(def.id).filter(|id| *id != 0),
+            btf_key_type_id: None,
+            btf_value_type_id: None,
+        }
+    }
+}
+
+impl From<bpf_map_info> for MapDef {
+    fn from(info: bpf_map_info) -> Self {
+        MapDef {
+            map_type: info.type_,
+            key_size: info.key_size,
+            value_size: info.value_size,
+            max_entries: info.max_entries,
+            map_flags: info.map_flags,
+            pinning: PinningType::None,
+            id: Option::from(info.id).filter(|id| *id != 0),
+            btf_key_type_id: Option::from(info.btf_key_type_id).filter(|id| *id != 0),
+            btf_value_type_id: Option::from(info.btf_value_type_id).filter(|id| *id != 0),
+        }
+    }
+}
+
+impl MapDef {
+    /// Returns the map type
+    pub fn map_type(&self) -> u32 {
+        self.map_type
+    }
+
+    /// Returns the key size in bytes
+    pub fn key_size(&self) -> u32 {
+        self.key_size
+    }
+
+    /// Returns the value size in bytes
+    pub fn value_size(&self) -> u32 {
+        self.value_size
+    }
+
+    /// Returns the max entry number
+    pub fn max_entries(&self) -> u32 {
+        self.max_entries
+    }
+
+    /// Returns the map flags
+    pub fn map_flags(&self) -> u32 {
+        self.map_flags
+    }
+
+    /// Returns the pinning type of the map
+    pub fn pinning(&self) -> PinningType {
+        self.pinning
+    }
+
+    /// Returns the BTF type id of the map key
+    pub fn btf_key_type_id(&self) -> Option<u32> {
+        self.btf_key_type_id
+    }
+
+    /// Returns the BTF type id of the map value
+    pub fn btf_value_type_id(&self) -> Option<u32> {
+        self.btf_value_type_id
+    }
 }
 
 /// The pinning type
@@ -266,7 +341,7 @@ impl Map {
 #[derive(Debug, Clone)]
 pub struct LegacyMap {
     /// The definition of the map
-    pub def: bpf_map_def,
+    pub def: MapDef,
     /// The section index
     pub section_index: usize,
     /// The section kind
@@ -285,7 +360,7 @@ pub struct LegacyMap {
 #[derive(Debug, Clone)]
 pub struct BtfMap {
     /// The definition of the map
-    pub def: BtfMapDef,
+    pub def: MapDef,
     pub(crate) section_index: usize,
     pub(crate) symbol_index: usize,
     pub(crate) data: Vec<u8>,

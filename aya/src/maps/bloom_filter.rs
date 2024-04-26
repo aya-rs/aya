@@ -91,7 +91,7 @@ mod tests {
             bpf_cmd,
             bpf_map_type::{BPF_MAP_TYPE_BLOOM_FILTER, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
         },
-        maps::Map,
+        maps::{ElfMapData, Map},
         obj::{self, maps::LegacyMap, EbpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
@@ -104,7 +104,8 @@ mod tests {
                 value_size: 4,
                 max_entries: 1024,
                 ..Default::default()
-            },
+            }
+            .into(),
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
@@ -120,7 +121,7 @@ mod tests {
             } => Ok(1337),
             call => panic!("unexpected syscall {:?}", call),
         });
-        MapData::create(obj, "foo", None).unwrap()
+        ElfMapData::create(obj, "foo", None).unwrap().into()
     }
 
     fn sys_error(value: i32) -> SysResult<c_long> {
@@ -148,7 +149,8 @@ mod tests {
                 value_size: 4,
                 max_entries: 1024,
                 ..Default::default()
-            },
+            }
+            .into(),
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
