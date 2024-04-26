@@ -16,12 +16,14 @@ fn xdp() {
         return;
     }
 
-    let _netns = NetNsGuard::new();
+    let netns = NetNsGuard::new();
 
     let mut bpf = Ebpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
-    dispatcher.attach("lo", XdpFlags::default()).unwrap();
+    dispatcher
+        .attach_to_if_index(netns.if_idx2, XdpFlags::default())
+        .unwrap();
 }
 
 #[test]
@@ -54,12 +56,13 @@ fn extension() {
         return;
     }
 
-    let _netns = NetNsGuard::new();
+    let netns = NetNsGuard::new();
 
     let mut bpf = Ebpf::load(crate::MAIN).unwrap();
     let pass: &mut Xdp = bpf.program_mut("xdp_pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
-    pass.attach("lo", XdpFlags::default()).unwrap();
+    pass.attach_to_if_index(netns.if_idx2, XdpFlags::default())
+        .unwrap();
 
     let mut bpf = EbpfLoader::new()
         .extension("xdp_drop")
@@ -73,11 +76,15 @@ fn extension() {
 
 #[test]
 fn list_loaded_programs() {
+    let netns = NetNsGuard::new();
+
     // Load a program.
     let mut bpf = Ebpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
-    dispatcher.attach("lo", XdpFlags::default()).unwrap();
+    dispatcher
+        .attach_to_if_index(netns.if_idx2, XdpFlags::default())
+        .unwrap();
 
     // Ensure the loaded_programs() api doesn't panic.
     let prog = loaded_programs()
@@ -102,11 +109,15 @@ fn list_loaded_programs() {
 
 #[test]
 fn list_loaded_maps() {
+    let netns = NetNsGuard::new();
+
     // Load a program with maps.
     let mut bpf = Ebpf::load(crate::MAP_TEST).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
-    dispatcher.attach("lo", XdpFlags::default()).unwrap();
+    dispatcher
+        .attach_to_if_index(netns.if_idx2, XdpFlags::default())
+        .unwrap();
 
     // Ensure the loaded_maps() api doesn't panic and retrieve a map.
     let map = loaded_maps()

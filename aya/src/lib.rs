@@ -92,4 +92,7 @@ pub use bpf::*;
 pub use obj::btf::{Btf, BtfError};
 pub use object::Endianness;
 #[doc(hidden)]
-pub use sys::netlink_set_link_up;
+pub use sys::{
+    netlink_add_ip_addr, netlink_add_veth_pair, netlink_delete_link, netlink_set_link_down,
+    netlink_set_link_up,
+};

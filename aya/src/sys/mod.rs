@@ -15,9 +15,12 @@ pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
 use libc::{pid_t, SYS_bpf, SYS_perf_event_open};
-#[doc(hidden)]
-pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
+#[doc(hidden)]
+pub use netlink::{
+    netlink_add_ip_addr, netlink_add_veth_pair, netlink_delete_link, netlink_set_link_down,
+    netlink_set_link_up,
+};
 pub(crate) use perf_event::*;
 use thiserror::Error;
 

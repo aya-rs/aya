@@ -18,11 +18,15 @@ use aya::{
 use aya_obj::programs::XdpAttachType;
 use test_log::test;
 
+use crate::utils::NetNsGuard;
+
 const MAX_RETRIES: usize = 100;
 const RETRY_DURATION: Duration = Duration::from_millis(10);
 
 #[test]
 fn long_name() {
+    let netns = NetNsGuard::new();
+
     let mut bpf = Ebpf::load(crate::NAME_TEST).unwrap();
     let name_prog: &mut Xdp = bpf
         .program_mut("ihaveaverylongname")
@@ -30,7 +34,9 @@ fn long_name() {
         .try_into()
         .unwrap();
     name_prog.load().unwrap();
-    name_prog.attach("lo", XdpFlags::default()).unwrap();
+    name_prog
+        .attach_to_if_index(netns.if_idx2, XdpFlags::default())
+        .unwrap();
 
     // We used to be able to assert with bpftool that the program name was short.
     // It seem though that it now uses the name from the ELF symbol table instead.
@@ -198,11 +204,15 @@ fn assert_unloaded(name: &str) {
 
 #[test]
 fn unload_xdp() {
+    let netns = NetNsGuard::new();
+
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     prog.load().unwrap();
     assert_loaded("pass");
-    let link = prog.attach("lo", XdpFlags::default()).unwrap();
+    let link = prog
+        .attach_to_if_index(netns.if_idx2, XdpFlags::default())
+        .unwrap();
     {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
@@ -213,7 +223,8 @@ fn unload_xdp() {
     prog.load().unwrap();
 
     assert_loaded("pass");
-    prog.attach("lo", XdpFlags::default()).unwrap();
+    prog.attach_to_if_index(netns.if_idx2, XdpFlags::default())
+        .unwrap();
 
     assert_loaded("pass");
     prog.unload().unwrap();
@@ -351,15 +362,19 @@ fn pin_link() {
         return;
     }
 
+    let netns = NetNsGuard::new();
+
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
+    let link_id = prog
+        .attach_to_if_index(netns.if_idx2, XdpFlags::default())
+        .unwrap();
     let link = prog.take_link(link_id).unwrap();
     assert_loaded("pass");
 
     let fd_link: FdLink = link.try_into().unwrap();
-    let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
+    let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-veth-pair").unwrap();
 
     // because of the pin, the program is still attached
     prog.unload().unwrap();
@@ -381,6 +396,8 @@ fn pin_lifecycle() {
         eprintln!("skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb");
         return;
     }
+
+    let netns = NetNsGuard::new();
 
     // 1. Load Program and Pin
     {
@@ -405,10 +422,12 @@ fn pin_lifecycle() {
     {
         let mut prog =
             Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog", XdpAttachType::Interface).unwrap();
-        let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
+        let link_id = prog
+            .attach_to_if_index(netns.if_idx2, XdpFlags::default())
+            .unwrap();
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
-        fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
+        fd_link.pin("/sys/fs/bpf/aya-xdp-test-veth-pair").unwrap();
 
         // Unpin the program. It will stay attached since its links were pinned.
         prog.unpin().unwrap();
@@ -423,7 +442,7 @@ fn pin_lifecycle() {
         let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
         prog.load().unwrap();
 
-        let link = PinnedLink::from_pin("/sys/fs/bpf/aya-xdp-test-lo")
+        let link = PinnedLink::from_pin("/sys/fs/bpf/aya-xdp-test-veth-pair")
             .unwrap()
             .unpin()
             .unwrap();

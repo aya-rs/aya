@@ -6,6 +6,7 @@
 #include <linux/pkt_cls.h>
 #include <linux/pkt_sched.h>
 #include <linux/rtnetlink.h>
+#include <linux/veth.h>
 
 /* workaround the fact that bindgen can't parse the IOC macros */
 int AYA_PERF_EVENT_IOC_ENABLE = PERF_EVENT_IOC_ENABLE;

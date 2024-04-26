@@ -114,11 +114,11 @@ pub fn run(opts: Options) -> Result<()> {
     } = opts;
 
     type Binary = (String, PathBuf);
-    fn binaries(target: Option<&str>) -> Result<Vec<(&str, Vec<Binary>)>> {
+    fn binaries(target: Option<&str>, is_vm: bool) -> Result<Vec<(&str, Vec<Binary>)>> {
         ["dev", "release"]
             .into_iter()
             .map(|profile| {
-                let binaries = build(target, |cmd| {
+                let mut binaries = build(target, |cmd| {
                     cmd.env(AYA_BUILD_INTEGRATION_BPF, "true").args([
                         "--package",
                         "integration-test",
@@ -127,6 +127,12 @@ pub fn run(opts: Options) -> Result<()> {
                         profile,
                     ])
                 })?;
+                if is_vm {
+                    binaries.push((
+                        "check-config.sh".to_owned(),
+                        PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/check-config.sh")),
+                    ));
+                }
                 anyhow::Ok((profile, binaries))
             })
             .collect()
@@ -143,7 +149,7 @@ pub fn run(opts: Options) -> Result<()> {
             let runner = args.next().ok_or(anyhow!("no first argument"))?;
             let args = args.collect::<Vec<_>>();
 
-            let binaries = binaries(None)?;
+            let binaries = binaries(None, false)?;
 
             let mut failures = String::new();
             for (profile, binaries) in binaries {
@@ -281,7 +287,7 @@ pub fn run(opts: Options) -> Result<()> {
                     init => bail!("expected exactly one init program, found {init:?}"),
                 };
 
-                let binaries = binaries(Some(&target))?;
+                let binaries = binaries(Some(&target), true)?;
 
                 let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
 
@@ -325,10 +331,13 @@ pub fn run(opts: Options) -> Result<()> {
                 for (profile, binaries) in binaries {
                     for (name, binary) in binaries {
                         let name = format!("{}-{}", profile, name);
+                        eprintln!("Name: {name}");
                         let path = tmp_dir.path().join(&name);
                         copy(&binary, &path).with_context(|| {
                             format!("copy({}, {}) failed", binary.display(), path.display())
                         })?;
+                        eprintln!("Binary: {}", binary.display());
+                        eprintln!("Path: {}", path.display());
                         for bytes in [
                             "file /bin/".as_bytes(),
                             name.as_bytes(),

@@ -2384,6 +2384,15 @@ pub const __TCA_BPF_MAX: _bindgen_ty_152 = 12;
 pub type _bindgen_ty_152 = ::core::ffi::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct ifaddrmsg {
+    pub ifa_family: __u8,
+    pub ifa_prefixlen: __u8,
+    pub ifa_flags: __u8,
+    pub ifa_scope: __u8,
+    pub ifa_index: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct ifinfomsg {
     pub ifi_family: ::core::ffi::c_uchar,
     pub __ifi_pad: ::core::ffi::c_uchar,
@@ -2421,6 +2430,16 @@ pub const TCA_EGRESS_BLOCK: _bindgen_ty_172 = 14;
 pub const TCA_DUMP_FLAGS: _bindgen_ty_172 = 15;
 pub const __TCA_MAX: _bindgen_ty_172 = 16;
 pub type _bindgen_ty_172 = ::core::ffi::c_uint;
+pub const VETH_INFO_UNSPEC: _bindgen_ty_175 = _bindgen_ty_175::VETH_INFO_UNSPEC;
+pub const VETH_INFO_PEER: _bindgen_ty_175 = _bindgen_ty_175::VETH_INFO_PEER;
+pub const __VETH_INFO_MAX: _bindgen_ty_175 = _bindgen_ty_175::__VETH_INFO_MAX;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_175 {
+    VETH_INFO_UNSPEC = 0,
+    VETH_INFO_PEER = 1,
+    __VETH_INFO_MAX = 2,
+}
 pub const AYA_PERF_EVENT_IOC_ENABLE: ::core::ffi::c_int = 9216;
 pub const AYA_PERF_EVENT_IOC_DISABLE: ::core::ffi::c_int = 9217;
 pub const AYA_PERF_EVENT_IOC_SET_BPF: ::core::ffi::c_int = 1074013192;
