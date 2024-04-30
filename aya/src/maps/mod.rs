@@ -1031,11 +1031,15 @@ mod test_utils {
     };
 
     pub(super) fn new_map(obj: obj::Map) -> MapData {
+        use std::os::fd::IntoRawFd as _;
+
         override_syscall(|call| match call {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
-            } => Ok(1337),
+            } => std::fs::File::open("/dev/null")
+                .map(|f| f.into_raw_fd().into())
+                .map_err(|e| (-1, e)),
             call => panic!("unexpected syscall {:?}", call),
         });
         MapData::create(obj, "foo", None).unwrap()
