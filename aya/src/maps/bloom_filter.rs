@@ -91,36 +91,16 @@ mod tests {
             bpf_cmd,
             bpf_map_type::{BPF_MAP_TYPE_BLOOM_FILTER, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
         },
-        maps::Map,
+        maps::{
+            test_utils::{self, new_map},
+            Map,
+        },
         obj::{self, maps::LegacyMap, EbpfSectionKind},
         sys::{override_syscall, SysResult, Syscall},
     };
 
     fn new_obj_map() -> obj::Map {
-        obj::Map::Legacy(LegacyMap {
-            def: bpf_map_def {
-                map_type: BPF_MAP_TYPE_BLOOM_FILTER as u32,
-                key_size: 4,
-                value_size: 4,
-                max_entries: 1024,
-                ..Default::default()
-            },
-            section_index: 0,
-            section_kind: EbpfSectionKind::Maps,
-            symbol_index: None,
-            data: Vec::new(),
-        })
-    }
-
-    fn new_map(obj: obj::Map) -> MapData {
-        override_syscall(|call| match call {
-            Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_CREATE,
-                ..
-            } => Ok(1337),
-            call => panic!("unexpected syscall {:?}", call),
-        });
-        MapData::create(obj, "foo", None).unwrap()
+        test_utils::new_obj_map(BPF_MAP_TYPE_BLOOM_FILTER)
     }
 
     fn sys_error(value: i32) -> SysResult<c_long> {

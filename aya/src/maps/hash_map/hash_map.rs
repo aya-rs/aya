@@ -108,16 +108,16 @@ mod tests {
     use assert_matches::assert_matches;
     use libc::{EFAULT, ENOENT};
 
-    use super::{
-        super::test_utils::{self, new_map},
-        *,
-    };
+    use super::*;
     use crate::{
         generated::{
             bpf_attr, bpf_cmd,
             bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_LRU_HASH},
         },
-        maps::Map,
+        maps::{
+            test_utils::{self, new_map},
+            Map,
+        },
         obj,
         sys::{override_syscall, SysResult, Syscall},
     };

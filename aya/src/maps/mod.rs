@@ -1021,24 +1021,30 @@ pub fn loaded_maps() -> impl Iterator<Item = Result<MapInfo, MapError>> {
 }
 
 #[cfg(test)]
-mod tests {
-    use std::os::fd::AsRawFd as _;
-
-    use assert_matches::assert_matches;
-    use libc::{c_char, EFAULT};
-
-    use super::*;
+mod test_utils {
     use crate::{
         bpf_map_def,
-        generated::{bpf_cmd, bpf_map_type::BPF_MAP_TYPE_HASH},
-        obj::maps::LegacyMap,
+        generated::{bpf_cmd, bpf_map_type},
+        maps::MapData,
+        obj::{self, maps::LegacyMap, EbpfSectionKind},
         sys::{override_syscall, Syscall},
     };
 
-    fn new_obj_map() -> obj::Map {
+    pub(super) fn new_map(obj: obj::Map) -> MapData {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                ..
+            } => Ok(1337),
+            call => panic!("unexpected syscall {:?}", call),
+        });
+        MapData::create(obj, "foo", None).unwrap()
+    }
+
+    pub(super) fn new_obj_map(map_type: bpf_map_type) -> obj::Map {
         obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
-                map_type: BPF_MAP_TYPE_HASH as u32,
+                map_type: map_type as u32,
                 key_size: 4,
                 value_size: 4,
                 max_entries: 1024,
@@ -1046,10 +1052,28 @@ mod tests {
             },
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
-            symbol_index: Some(0),
             data: Vec::new(),
+            symbol_index: None,
         })
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::os::fd::AsRawFd as _;
+
+    use assert_matches::assert_matches;
+    use libc::{c_char, EFAULT};
+
+    fn new_obj_map() -> obj::Map {
+        test_utils::new_obj_map(crate::generated::bpf_map_type::BPF_MAP_TYPE_HASH)
+    }
+
+    use super::*;
+    use crate::{
+        generated::bpf_cmd,
+        sys::{override_syscall, Syscall},
+    };
 
     #[test]
     fn test_from_map_id() {
