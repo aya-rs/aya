@@ -150,15 +150,15 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, PerCpuValues<V>>
 
 #[cfg(test)]
 mod tests {
-    use super::{super::test_utils, *};
+    use super::*;
     use crate::{
         generated::bpf_map_type::{BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH},
-        maps::Map,
+        maps::{test_utils, Map},
     };
 
     #[test]
     fn test_try_from_ok() {
-        let map = Map::PerCpuHashMap(test_utils::new_map(test_utils::new_obj_map(
+        let map = Map::PerCpuHashMap(test_utils::new_map(test_utils::new_obj_map::<u32>(
             BPF_MAP_TYPE_PERCPU_HASH,
         )));
         assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok())
@@ -166,7 +166,7 @@ mod tests {
     #[test]
     fn test_try_from_ok_lru() {
         let map_data =
-            || test_utils::new_map(test_utils::new_obj_map(BPF_MAP_TYPE_LRU_PERCPU_HASH));
+            || test_utils::new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_LRU_PERCPU_HASH));
         let map = Map::PerCpuHashMap(map_data());
         assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok());
         let map = Map::PerCpuLruHashMap(map_data());

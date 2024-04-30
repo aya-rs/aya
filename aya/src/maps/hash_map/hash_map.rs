@@ -108,22 +108,22 @@ mod tests {
     use assert_matches::assert_matches;
     use libc::{EFAULT, ENOENT};
 
-    use super::{
-        super::test_utils::{self, new_map},
-        *,
-    };
+    use super::*;
     use crate::{
         generated::{
             bpf_attr, bpf_cmd,
             bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_LRU_HASH},
         },
-        maps::Map,
+        maps::{
+            test_utils::{self, new_map},
+            Map,
+        },
         obj,
         sys::{override_syscall, SysResult, Syscall},
     };
 
     fn new_obj_map() -> obj::Map {
-        test_utils::new_obj_map(BPF_MAP_TYPE_HASH)
+        test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_HASH)
     }
 
     fn sys_error(value: i32) -> SysResult<c_long> {
@@ -192,7 +192,7 @@ mod tests {
 
     #[test]
     fn test_try_from_ok_lru() {
-        let map_data = || new_map(test_utils::new_obj_map(BPF_MAP_TYPE_LRU_HASH));
+        let map_data = || new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_LRU_HASH));
         let map = Map::HashMap(map_data());
         assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok());
         let map = Map::LruHashMap(map_data());
