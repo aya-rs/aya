@@ -1703,7 +1703,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "std")]
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(miri, ignore = "`open` not available when isolation is enabled")]
     fn test_read_btf_from_sys_fs() {
         let btf = Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default()).unwrap();
         let task_struct_id = btf

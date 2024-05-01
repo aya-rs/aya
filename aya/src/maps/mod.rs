@@ -1147,10 +1147,10 @@ mod tests {
     }
 
     #[test]
-    // Syscall overrides are performing integer-to-pointer conversions, which
-    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
-    // to support stable as well.
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(
+        miri,
+        ignore = "`let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) }` is trying to retag from <wildcard> for Unique permission, but no exposed tags have suitable permission in the borrow stack for this location"
+    )]
     fn test_name() {
         use crate::generated::bpf_map_info;
 
@@ -1183,10 +1183,10 @@ mod tests {
     }
 
     #[test]
-    // Syscall overrides are performing integer-to-pointer conversions, which
-    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
-    // to support stable as well.
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(
+        miri,
+        ignore = "`let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) }` is trying to retag from <wildcard> for Unique permission, but no exposed tags have suitable permission in the borrow stack for this location"
+    )]
     fn test_loaded_maps() {
         use crate::generated::bpf_map_info;
 
