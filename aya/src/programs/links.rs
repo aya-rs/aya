@@ -504,7 +504,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(miri, ignore = "`mkdir` not available when isolation is enabled")]
     fn test_pin() {
         let dir = tempdir().unwrap();
         let f1 = File::create(dir.path().join("f1")).expect("unable to create file in tmpdir");

@@ -327,7 +327,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
     fn test_no_out_bufs() {
         let mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
@@ -339,7 +338,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(
+        miri,
+        ignore = "`unsafe { (*header).data_tail = tail as u64 };` is attempting a write access using using a tag that only grants SharedReadOnly permission"
+    )]
     fn test_no_events() {
         let mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
@@ -355,7 +357,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(
+        miri,
+        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
+    )]
     fn test_read_first_lost() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
@@ -428,7 +433,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(
+        miri,
+        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
+    )]
     fn test_read_first_sample() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
@@ -446,7 +454,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(
+        miri,
+        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
+    )]
     fn test_read_many_with_many_reads() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
@@ -469,7 +480,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(
+        miri,
+        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
+    )]
     fn test_read_many_with_one_read() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
@@ -491,7 +505,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(
+        miri,
+        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
+    )]
     fn test_read_last_sample() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
@@ -511,7 +528,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(
+        miri,
+        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
+    )]
     fn test_read_wrapping_sample_size() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
@@ -540,7 +560,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore)]
+    #[cfg_attr(
+        miri,
+        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
+    )]
     fn test_read_wrapping_value() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
