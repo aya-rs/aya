@@ -219,9 +219,12 @@ impl PerfBuffer {
 
         let head = unsafe { (*header).data_head } as usize;
         let mut tail = unsafe { (*header).data_tail } as usize;
-        while head != tail {
+        let result = loop {
+            if head == tail {
+                break Ok(());
+            }
             if buf_n == buffers.len() {
-                break;
+                break Ok(());
             }
 
             let buf = &mut buffers[buf_n];
@@ -243,18 +246,16 @@ impl PerfBuffer {
                 Err(e) => {
                     // we got an error and we didn't process any events, propagate the error
                     // and give the caller a chance to increase buffers
-                    atomic::fence(Ordering::SeqCst);
-                    unsafe { (*header).data_tail = tail as u64 };
-                    return Err(e);
+                    break Err(e);
                 }
             }
             tail += event_size;
-        }
+        };
 
         atomic::fence(Ordering::SeqCst);
         unsafe { (*header).data_tail = tail as u64 };
 
-        Ok(events)
+        result.map(|()| events)
     }
 }
 
