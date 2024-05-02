@@ -1758,7 +1758,7 @@ impl<T> core::borrow::BorrowMut<T> for aya::maps::MapData where T: core::marker:
 pub fn aya::maps::MapData::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::MapData
 pub fn aya::maps::MapData::from(t: T) -> T
-pub struct aya::maps::MapFd(_)
+pub struct aya::maps::MapFd
 impl core::fmt::Debug for aya::maps::MapFd
 pub fn aya::maps::MapFd::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl std::os::fd::owned::AsFd for aya::maps::MapFd

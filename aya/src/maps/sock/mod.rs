@@ -18,9 +18,7 @@ impl SockMapFd {
     /// Creates a new instance that shares the same underlying file description as [`self`].
     pub fn try_clone(&self) -> io::Result<Self> {
         let Self(inner) = self;
-        let super::MapFd(inner) = inner;
         let inner = inner.try_clone()?;
-        let inner = super::MapFd(inner);
         Ok(Self(inner))
     }
 }
