@@ -196,7 +196,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<Key<K>, V> for LpmTrie<T, K
 
 #[cfg(test)]
 mod tests {
-    use std::{ffi::c_long, io, net::Ipv4Addr};
+    use std::{io, net::Ipv4Addr};
 
     use assert_matches::assert_matches;
     use libc::{EFAULT, ENOENT};
@@ -219,7 +219,7 @@ mod tests {
         test_utils::new_obj_map::<Key<u32>>(BPF_MAP_TYPE_LPM_TRIE)
     }
 
-    fn sys_error(value: i32) -> SysResult<c_long> {
+    fn sys_error(value: i32) -> SysResult<i64> {
         Err((-1, io::Error::from_raw_os_error(value)))
     }
 

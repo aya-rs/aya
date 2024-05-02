@@ -79,7 +79,7 @@ impl<T: BorrowMut<MapData>, V: Pod> BloomFilter<T, V> {
 
 #[cfg(test)]
 mod tests {
-    use std::{ffi::c_long, io};
+    use std::io;
 
     use assert_matches::assert_matches;
     use libc::{EFAULT, ENOENT};
@@ -102,7 +102,7 @@ mod tests {
         test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_BLOOM_FILTER)
     }
 
-    fn sys_error(value: i32) -> SysResult<c_long> {
+    fn sys_error(value: i32) -> SysResult<i64> {
         Err((-1, io::Error::from_raw_os_error(value)))
     }
 

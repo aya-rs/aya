@@ -49,7 +49,7 @@
 //! implement the [Pod] trait.
 use std::{
     borrow::Borrow,
-    ffi::{c_long, CString},
+    ffi::CString,
     fmt, io,
     marker::PhantomData,
     mem,
@@ -127,7 +127,7 @@ pub enum MapError {
         /// Map name
         name: String,
         /// Error code
-        code: c_long,
+        code: i64,
         #[source]
         /// Original io::Error
         io_error: io::Error,
@@ -211,12 +211,12 @@ impl From<InvalidMapTypeError> for MapError {
 /// A map file descriptor.
 #[derive(Debug)]
 pub struct MapFd {
-    fd: crate::MiriSafeFd,
+    fd: crate::MockableFd,
 }
 
 impl MapFd {
     fn from_fd(fd: OwnedFd) -> Self {
-        let fd = crate::MiriSafeFd::from_fd(fd);
+        let fd = crate::MockableFd::from_fd(fd);
         Self { fd }
     }
 
@@ -1052,7 +1052,7 @@ mod test_utils {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
-            } => Ok(crate::MiriSafeFd::MOCK_FD.into()),
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
             call => panic!("unexpected syscall {:?}", call),
         });
         MapData::create(obj, "foo", None).unwrap()
@@ -1103,7 +1103,7 @@ mod tests {
                     unsafe { attr.__bindgen_anon_6.__bindgen_anon_1.map_id },
                     1234
                 );
-                Ok(crate::MiriSafeFd::MOCK_FD.into())
+                Ok(crate::MockableFd::mock_signed_fd().into())
             }
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
@@ -1111,7 +1111,7 @@ mod tests {
             } => {
                 assert_eq!(
                     unsafe { attr.info.bpf_fd },
-                    crate::MiriSafeFd::MOCK_FD.into()
+                    crate::MockableFd::mock_unsigned_fd(),
                 );
                 Ok(0)
             }
@@ -1123,7 +1123,7 @@ mod tests {
             Ok(MapData {
                 obj: _,
                 fd,
-            }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MiriSafeFd::MOCK_FD.into())
+            }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd())
         );
     }
 
@@ -1133,7 +1133,7 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
-            } => Ok(crate::MiriSafeFd::MOCK_FD.into()),
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
         });
 
@@ -1142,7 +1142,7 @@ mod tests {
             Ok(MapData {
                 obj: _,
                 fd,
-            }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MiriSafeFd::MOCK_FD.into())
+            }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd())
         );
     }
 
@@ -1160,7 +1160,7 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
-            } => Ok(42),
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
                 attr,
@@ -1206,13 +1206,15 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_FD_BY_ID,
                 attr,
-            } => Ok((1000 + unsafe { attr.__bindgen_anon_6.__bindgen_anon_1.map_id }) as c_long),
+            } => Ok((unsafe { attr.__bindgen_anon_6.__bindgen_anon_1.map_id }
+                + crate::MockableFd::mock_unsigned_fd())
+            .into()),
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
                 attr,
             } => {
                 let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
-                map_info.id = unsafe { attr.info.bpf_fd } - 1000;
+                map_info.id = unsafe { attr.info.bpf_fd } - crate::MockableFd::mock_unsigned_fd();
                 map_info.key_size = 32;
                 map_info.value_size = 64;
                 map_info.map_flags = 1234;
@@ -1222,19 +1224,31 @@ mod tests {
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
         });
 
-        let loaded_maps: Vec<_> = loaded_maps().collect();
-        assert_eq!(loaded_maps.len(), 5);
-
-        for (i, map_info) in loaded_maps.into_iter().enumerate() {
-            let i = i + 1;
-            let map_info = map_info.unwrap();
-            assert_eq!(map_info.id(), i as u32);
-            assert_eq!(map_info.key_size(), 32);
-            assert_eq!(map_info.value_size(), 64);
-            assert_eq!(map_info.map_flags(), 1234);
-            assert_eq!(map_info.max_entries(), 99);
-            assert_eq!(map_info.fd().unwrap().as_fd().as_raw_fd(), 1000 + i as i32);
-        }
+        assert_eq!(
+            loaded_maps()
+                .map(|map_info| {
+                    let map_info = map_info.unwrap();
+                    (
+                        map_info.id(),
+                        map_info.key_size(),
+                        map_info.value_size(),
+                        map_info.map_flags(),
+                        map_info.max_entries(),
+                        map_info.fd().unwrap().as_fd().as_raw_fd(),
+                    )
+                })
+                .collect::<Vec<_>>(),
+            (1..6)
+                .map(|i: u8| (
+                    i.into(),
+                    32,
+                    64,
+                    1234,
+                    99,
+                    crate::MockableFd::mock_signed_fd() + i32::from(i)
+                ))
+                .collect::<Vec<_>>(),
+        );
     }
 
     #[test]

@@ -1,6 +1,6 @@
 use std::{
     cmp,
-    ffi::{c_char, c_long, CStr, CString},
+    ffi::{c_char, CStr, CString},
     io, iter,
     mem::{self, MaybeUninit},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
@@ -96,7 +96,7 @@ pub(crate) fn bpf_create_map(
     unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) }
 }
 
-pub(crate) fn bpf_pin_object(fd: BorrowedFd<'_>, path: &CStr) -> SysResult<c_long> {
+pub(crate) fn bpf_pin_object(fd: BorrowedFd<'_>, path: &CStr) -> SysResult<i64> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_4 };
     u.bpf_fd = fd.as_raw_fd() as u32;
@@ -200,7 +200,7 @@ fn lookup<K: Pod, V: Pod>(
     key: Option<&K>,
     flags: u64,
     cmd: bpf_cmd,
-) -> Result<Option<V>, (c_long, io::Error)> {
+) -> SysResult<Option<V>> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let mut value = MaybeUninit::zeroed();
 
@@ -223,7 +223,7 @@ pub(crate) fn bpf_map_lookup_elem<K: Pod, V: Pod>(
     fd: BorrowedFd<'_>,
     key: &K,
     flags: u64,
-) -> Result<Option<V>, (c_long, io::Error)> {
+) -> SysResult<Option<V>> {
     lookup(fd, Some(key), flags, bpf_cmd::BPF_MAP_LOOKUP_ELEM)
 }
 
@@ -231,7 +231,7 @@ pub(crate) fn bpf_map_lookup_and_delete_elem<K: Pod, V: Pod>(
     fd: BorrowedFd<'_>,
     key: Option<&K>,
     flags: u64,
-) -> Result<Option<V>, (c_long, io::Error)> {
+) -> SysResult<Option<V>> {
     lookup(fd, key, flags, bpf_cmd::BPF_MAP_LOOKUP_AND_DELETE_ELEM)
 }
 
@@ -239,7 +239,7 @@ pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
     fd: BorrowedFd<'_>,
     key: &K,
     flags: u64,
-) -> Result<Option<PerCpuValues<V>>, (c_long, io::Error)> {
+) -> SysResult<Option<PerCpuValues<V>>> {
     let mut mem = PerCpuValues::<V>::alloc_kernel_mem().map_err(|io_error| (-1, io_error))?;
     match bpf_map_lookup_elem_ptr(fd, Some(key), mem.as_mut_ptr(), flags) {
         Ok(_) => Ok(Some(unsafe { PerCpuValues::from_kernel_mem(mem) })),
@@ -253,7 +253,7 @@ pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
     key: Option<&K>,
     value: *mut V,
     flags: u64,
-) -> Result<Option<()>, (c_long, io::Error)> {
+) -> SysResult<Option<()>> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -276,7 +276,7 @@ pub(crate) fn bpf_map_update_elem<K: Pod, V: Pod>(
     key: Option<&K>,
     value: &V,
     flags: u64,
-) -> SysResult<c_long> {
+) -> SysResult<i64> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -294,7 +294,7 @@ pub(crate) fn bpf_map_push_elem<V: Pod>(
     fd: BorrowedFd<'_>,
     value: &V,
     flags: u64,
-) -> SysResult<c_long> {
+) -> SysResult<i64> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -310,7 +310,7 @@ pub(crate) fn bpf_map_update_elem_ptr<K, V>(
     key: *const K,
     value: *mut V,
     flags: u64,
-) -> SysResult<c_long> {
+) -> SysResult<i64> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -327,12 +327,12 @@ pub(crate) fn bpf_map_update_elem_per_cpu<K: Pod, V: Pod>(
     key: &K,
     values: &PerCpuValues<V>,
     flags: u64,
-) -> SysResult<c_long> {
+) -> SysResult<i64> {
     let mut mem = values.build_kernel_mem().map_err(|e| (-1, e))?;
     bpf_map_update_elem_ptr(fd, key, mem.as_mut_ptr(), flags)
 }
 
-pub(crate) fn bpf_map_delete_elem<K: Pod>(fd: BorrowedFd<'_>, key: &K) -> SysResult<c_long> {
+pub(crate) fn bpf_map_delete_elem<K: Pod>(fd: BorrowedFd<'_>, key: &K) -> SysResult<i64> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
@@ -345,7 +345,7 @@ pub(crate) fn bpf_map_delete_elem<K: Pod>(fd: BorrowedFd<'_>, key: &K) -> SysRes
 pub(crate) fn bpf_map_get_next_key<K: Pod>(
     fd: BorrowedFd<'_>,
     key: Option<&K>,
-) -> Result<Option<K>, (c_long, io::Error)> {
+) -> SysResult<Option<K>> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let mut next_key = MaybeUninit::uninit();
 
@@ -364,7 +364,7 @@ pub(crate) fn bpf_map_get_next_key<K: Pod>(
 }
 
 // since kernel 5.2
-pub(crate) fn bpf_map_freeze(fd: BorrowedFd<'_>) -> SysResult<c_long> {
+pub(crate) fn bpf_map_freeze(fd: BorrowedFd<'_>) -> SysResult<i64> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd.as_raw_fd() as u32;
@@ -412,7 +412,7 @@ pub(crate) fn bpf_link_update(
     new_prog_fd: BorrowedFd<'_>,
     old_prog_fd: Option<RawFd>,
     flags: u32,
-) -> SysResult<c_long> {
+) -> SysResult<i64> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.link_update.link_fd = link_fd.as_raw_fd() as u32;
@@ -478,7 +478,7 @@ pub(crate) fn bpf_prog_query(
     attach_flags: Option<&mut u32>,
     prog_ids: &mut [u32],
     prog_cnt: &mut u32,
-) -> SysResult<c_long> {
+) -> SysResult<i64> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.query.__bindgen_anon_1.target_fd = target_fd as u32;
@@ -730,7 +730,7 @@ pub(crate) fn is_perf_link_supported() -> bool {
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
 
     if let Ok(fd) = bpf_prog_load(&mut attr) {
-        let fd = crate::MiriSafeFd::from_fd(fd);
+        let fd = crate::MockableFd::from_fd(fd);
         let fd = fd.as_fd();
         matches!(
             // Uses an invalid target FD so we get EBADF if supported.
@@ -830,7 +830,7 @@ pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
 
     // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
     let fd = unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) };
-    let fd = fd.map(crate::MiriSafeFd::from_fd);
+    let fd = fd.map(crate::MockableFd::from_fd);
     fd.is_ok()
 }
 
@@ -995,7 +995,7 @@ fn bpf_prog_load(attr: &mut bpf_attr) -> SysResult<OwnedFd> {
     unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) }
 }
 
-fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<c_long> {
+fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<i64> {
     syscall(Syscall::Ebpf { cmd, attr })
 }
 
@@ -1103,7 +1103,7 @@ mod tests {
                 cmd: bpf_cmd::BPF_LINK_CREATE,
                 ..
             } => Err((-1, io::Error::from_raw_os_error(EBADF))),
-            _ => Ok(crate::MiriSafeFd::MOCK_FD.into()),
+            _ => Ok(crate::MockableFd::mock_signed_fd().into()),
         });
         let supported = is_perf_link_supported();
         assert!(supported);
@@ -1113,7 +1113,7 @@ mod tests {
                 cmd: bpf_cmd::BPF_LINK_CREATE,
                 ..
             } => Err((-1, io::Error::from_raw_os_error(EINVAL))),
-            _ => Ok(crate::MiriSafeFd::MOCK_FD.into()),
+            _ => Ok(crate::MockableFd::mock_signed_fd().into()),
         });
         let supported = is_perf_link_supported();
         assert!(!supported);
@@ -1121,7 +1121,7 @@ mod tests {
 
     #[test]
     fn test_prog_id_supported() {
-        override_syscall(|_call| Ok(crate::MiriSafeFd::MOCK_FD.into()));
+        override_syscall(|_call| Ok(crate::MockableFd::mock_signed_fd().into()));
 
         // Ensure that the three map types we can check are accepted
         let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP);
