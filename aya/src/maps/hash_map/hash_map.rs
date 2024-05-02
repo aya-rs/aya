@@ -357,10 +357,6 @@ mod tests {
     }
 
     #[test]
-    // Syscall overrides are performing integer-to-pointer conversions, which
-    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
-    // to support stable as well.
-    #[cfg_attr(miri, ignore)]
     fn test_keys() {
         let map = new_map(new_obj_map());
 
@@ -379,10 +375,6 @@ mod tests {
     }
 
     #[test]
-    // Syscall overrides are performing integer-to-pointer conversions, which
-    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
-    // to support stable as well.
-    #[cfg_attr(miri, ignore)]
     fn test_keys_error() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
@@ -416,10 +408,6 @@ mod tests {
     }
 
     #[test]
-    // Syscall overrides are performing integer-to-pointer conversions, which
-    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
-    // to support stable as well.
-    #[cfg_attr(miri, ignore)]
     fn test_iter() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
@@ -439,10 +427,6 @@ mod tests {
     }
 
     #[test]
-    // Syscall overrides are performing integer-to-pointer conversions, which
-    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
-    // to support stable as well.
-    #[cfg_attr(miri, ignore)]
     fn test_iter_key_deleted() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
@@ -473,10 +457,6 @@ mod tests {
     }
 
     #[test]
-    // Syscall overrides are performing integer-to-pointer conversions, which
-    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
-    // to support stable as well.
-    #[cfg_attr(miri, ignore)]
     fn test_iter_key_error() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
@@ -516,10 +496,6 @@ mod tests {
     }
 
     #[test]
-    // Syscall overrides are performing integer-to-pointer conversions, which
-    // should be done with `ptr::from_exposed_addr` in Rust nightly, but we have
-    // to support stable as well.
-    #[cfg_attr(miri, ignore)]
     fn test_iter_value_error() {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
