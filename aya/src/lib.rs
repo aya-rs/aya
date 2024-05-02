@@ -97,37 +97,44 @@ pub use object::Endianness;
 pub use sys::netlink_set_link_up;
 
 // See https://github.com/rust-lang/rust/pull/124210; this structure exists to avoid crashing the
-// process when we try to close a fake file descriptor in Miri.
+// process when we try to close a fake file descriptor.
 #[derive(Debug)]
-struct MiriSafeFd {
-    #[cfg(not(miri))]
+struct MockableFd {
+    #[cfg(not(test))]
     fd: OwnedFd,
-    #[cfg(miri)]
+    #[cfg(test)]
     fd: Option<OwnedFd>,
 }
 
-impl MiriSafeFd {
-    #[cfg(any(test, miri))]
-    const MOCK_FD: u16 = 1337;
+impl MockableFd {
+    #[cfg(test)]
+    const fn mock_signed_fd() -> i32 {
+        1337
+    }
 
-    #[cfg(not(miri))]
+    #[cfg(test)]
+    const fn mock_unsigned_fd() -> u32 {
+        1337
+    }
+
+    #[cfg(not(test))]
     fn from_fd(fd: OwnedFd) -> Self {
         Self { fd }
     }
 
-    #[cfg(miri)]
+    #[cfg(test)]
     fn from_fd(fd: OwnedFd) -> Self {
         Self { fd: Some(fd) }
     }
 
-    #[cfg(not(miri))]
+    #[cfg(not(test))]
     fn try_clone(&self) -> std::io::Result<Self> {
         let Self { fd } = self;
         let fd = fd.try_clone()?;
         Ok(Self { fd })
     }
 
-    #[cfg(miri)]
+    #[cfg(test)]
     fn try_clone(&self) -> std::io::Result<Self> {
         let Self { fd } = self;
         let fd = fd.as_ref().map(OwnedFd::try_clone).transpose()?;
@@ -135,33 +142,34 @@ impl MiriSafeFd {
     }
 }
 
-impl AsFd for MiriSafeFd {
-    #[cfg(not(miri))]
+impl AsFd for MockableFd {
+    #[cfg(not(test))]
     fn as_fd(&self) -> BorrowedFd<'_> {
         let Self { fd } = self;
         fd.as_fd()
     }
 
-    #[cfg(miri)]
+    #[cfg(test)]
     fn as_fd(&self) -> BorrowedFd<'_> {
         let Self { fd } = self;
         fd.as_ref().unwrap().as_fd()
     }
 }
 
-impl Drop for MiriSafeFd {
-    #[cfg(not(miri))]
+impl Drop for MockableFd {
+    #[cfg(not(test))]
     fn drop(&mut self) {
         // Intentional no-op.
     }
 
-    #[cfg(miri)]
+    #[cfg(test)]
     fn drop(&mut self) {
         use std::os::fd::AsRawFd as _;
 
         let Self { fd } = self;
-        let fd = fd.take().unwrap();
-        assert_eq!(fd.as_raw_fd(), Self::MOCK_FD.into());
-        std::mem::forget(fd)
+        if fd.as_ref().unwrap().as_raw_fd() >= Self::mock_signed_fd() {
+            let fd: OwnedFd = fd.take().unwrap();
+            std::mem::forget(fd)
+        }
     }
 }

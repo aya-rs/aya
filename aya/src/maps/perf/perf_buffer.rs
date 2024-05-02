@@ -88,7 +88,7 @@ pub(crate) struct PerfBuffer {
     buf: AtomicPtr<perf_event_mmap_page>,
     size: usize,
     page_size: usize,
-    fd: crate::MiriSafeFd,
+    fd: crate::MockableFd,
 }
 
 impl PerfBuffer {
@@ -120,7 +120,7 @@ impl PerfBuffer {
             });
         }
 
-        let fd = crate::MiriSafeFd::from_fd(fd);
+        let fd = crate::MockableFd::from_fd(fd);
         let perf_buf = Self {
             buf: AtomicPtr::new(buf as *mut perf_event_mmap_page),
             size,
@@ -303,7 +303,7 @@ mod tests {
     fn fake_mmap(buf: &MMappedBuf) {
         override_syscall(|call| match call {
             Syscall::PerfEventOpen { .. } | Syscall::PerfEventIoctl { .. } => {
-                Ok(crate::MiriSafeFd::MOCK_FD.into())
+                Ok(crate::MockableFd::mock_signed_fd().into())
             }
             call => panic!("unexpected syscall: {:?}", call),
         });
