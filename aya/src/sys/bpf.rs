@@ -730,6 +730,7 @@ pub(crate) fn is_perf_link_supported() -> bool {
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
 
     if let Ok(fd) = bpf_prog_load(&mut attr) {
+        let fd = crate::MiriSafeFd::from_fd(fd);
         let fd = fd.as_fd();
         matches!(
             // Uses an invalid target FD so we get EBADF if supported.
@@ -828,7 +829,9 @@ pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
     u.map_flags = 0;
 
     // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
-    unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) }.is_ok()
+    let fd = unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) };
+    let fd = fd.map(crate::MiriSafeFd::from_fd);
+    fd.is_ok()
 }
 
 pub(crate) fn is_btf_supported() -> bool {
@@ -1100,7 +1103,7 @@ mod tests {
                 cmd: bpf_cmd::BPF_LINK_CREATE,
                 ..
             } => Err((-1, io::Error::from_raw_os_error(EBADF))),
-            _ => Ok(42),
+            _ => Ok(crate::MiriSafeFd::MOCK_FD.into()),
         });
         let supported = is_perf_link_supported();
         assert!(supported);
@@ -1110,7 +1113,7 @@ mod tests {
                 cmd: bpf_cmd::BPF_LINK_CREATE,
                 ..
             } => Err((-1, io::Error::from_raw_os_error(EINVAL))),
-            _ => Ok(42),
+            _ => Ok(crate::MiriSafeFd::MOCK_FD.into()),
         });
         let supported = is_perf_link_supported();
         assert!(!supported);
@@ -1118,7 +1121,7 @@ mod tests {
 
     #[test]
     fn test_prog_id_supported() {
-        override_syscall(|_call| Ok(42));
+        override_syscall(|_call| Ok(crate::MiriSafeFd::MOCK_FD.into()));
 
         // Ensure that the three map types we can check are accepted
         let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP);

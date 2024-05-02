@@ -88,8 +88,80 @@ pub use programs::loaded_programs;
 mod sys;
 pub mod util;
 
+use std::os::fd::{AsFd, BorrowedFd, OwnedFd};
+
 pub use bpf::*;
 pub use obj::btf::{Btf, BtfError};
 pub use object::Endianness;
 #[doc(hidden)]
 pub use sys::netlink_set_link_up;
+
+// See https://github.com/rust-lang/rust/pull/124210; this structure exists to avoid crashing the
+// process when we try to close a fake file descriptor in Miri.
+#[derive(Debug)]
+struct MiriSafeFd {
+    #[cfg(not(miri))]
+    fd: OwnedFd,
+    #[cfg(miri)]
+    fd: Option<OwnedFd>,
+}
+
+impl MiriSafeFd {
+    #[cfg(any(test, miri))]
+    const MOCK_FD: u16 = 1337;
+
+    #[cfg(not(miri))]
+    fn from_fd(fd: OwnedFd) -> Self {
+        Self { fd }
+    }
+
+    #[cfg(miri)]
+    fn from_fd(fd: OwnedFd) -> Self {
+        Self { fd: Some(fd) }
+    }
+
+    #[cfg(not(miri))]
+    fn try_clone(&self) -> std::io::Result<Self> {
+        let Self { fd } = self;
+        let fd = fd.try_clone()?;
+        Ok(Self { fd })
+    }
+
+    #[cfg(miri)]
+    fn try_clone(&self) -> std::io::Result<Self> {
+        let Self { fd } = self;
+        let fd = fd.as_ref().map(OwnedFd::try_clone).transpose()?;
+        Ok(Self { fd })
+    }
+}
+
+impl AsFd for MiriSafeFd {
+    #[cfg(not(miri))]
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        let Self { fd } = self;
+        fd.as_fd()
+    }
+
+    #[cfg(miri)]
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        let Self { fd } = self;
+        fd.as_ref().unwrap().as_fd()
+    }
+}
+
+impl Drop for MiriSafeFd {
+    #[cfg(not(miri))]
+    fn drop(&mut self) {
+        // Intentional no-op.
+    }
+
+    #[cfg(miri)]
+    fn drop(&mut self) {
+        use std::os::fd::AsRawFd as _;
+
+        let Self { fd } = self;
+        let fd = fd.take().unwrap();
+        assert_eq!(fd.as_raw_fd(), Self::MOCK_FD.into());
+        std::mem::forget(fd)
+    }
+}

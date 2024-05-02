@@ -1,7 +1,7 @@
 use std::{
     ffi::c_void,
     io, mem,
-    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd, RawFd},
+    os::fd::{AsFd, BorrowedFd},
     ptr, slice,
     sync::atomic::{self, AtomicPtr, Ordering},
 };
@@ -88,7 +88,7 @@ pub(crate) struct PerfBuffer {
     buf: AtomicPtr<perf_event_mmap_page>,
     size: usize,
     page_size: usize,
-    fd: OwnedFd,
+    fd: crate::MiriSafeFd,
 }
 
 impl PerfBuffer {
@@ -120,11 +120,12 @@ impl PerfBuffer {
             });
         }
 
+        let fd = crate::MiriSafeFd::from_fd(fd);
         let perf_buf = Self {
             buf: AtomicPtr::new(buf as *mut perf_event_mmap_page),
-            fd,
             size,
             page_size,
+            fd,
         };
 
         perf_event_ioctl(perf_buf.fd.as_fd(), PERF_EVENT_IOC_ENABLE, 0)
@@ -259,12 +260,6 @@ impl PerfBuffer {
     }
 }
 
-impl AsRawFd for PerfBuffer {
-    fn as_raw_fd(&self) -> RawFd {
-        self.fd.as_raw_fd()
-    }
-}
-
 impl AsFd for PerfBuffer {
     fn as_fd(&self) -> BorrowedFd<'_> {
         self.fd.as_fd()
@@ -307,7 +302,9 @@ mod tests {
 
     fn fake_mmap(buf: &MMappedBuf) {
         override_syscall(|call| match call {
-            Syscall::PerfEventOpen { .. } | Syscall::PerfEventIoctl { .. } => Ok(42),
+            Syscall::PerfEventOpen { .. } | Syscall::PerfEventIoctl { .. } => {
+                Ok(crate::MiriSafeFd::MOCK_FD.into())
+            }
             call => panic!("unexpected syscall: {:?}", call),
         });
         TEST_MMAP_RET.with(|ret| *ret.borrow_mut() = buf as *const _ as *mut _);

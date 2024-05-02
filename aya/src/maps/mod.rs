@@ -210,11 +210,26 @@ impl From<InvalidMapTypeError> for MapError {
 
 /// A map file descriptor.
 #[derive(Debug)]
-pub struct MapFd(OwnedFd);
+pub struct MapFd {
+    fd: crate::MiriSafeFd,
+}
+
+impl MapFd {
+    fn from_fd(fd: OwnedFd) -> Self {
+        let fd = crate::MiriSafeFd::from_fd(fd);
+        Self { fd }
+    }
+
+    fn try_clone(&self) -> io::Result<Self> {
+        let Self { fd } = self;
+        let fd = fd.try_clone()?;
+        Ok(Self { fd })
+    }
+}
 
 impl AsFd for MapFd {
     fn as_fd(&self) -> BorrowedFd<'_> {
-        let Self(fd) = self;
+        let Self { fd } = self;
         fd.as_fd()
     }
 }
@@ -558,8 +573,10 @@ impl MapData {
                     io_error,
                 }
             })?;
-        let fd = MapFd(fd);
-        Ok(Self { obj, fd })
+        Ok(Self {
+            obj,
+            fd: MapFd::from_fd(fd),
+        })
     }
 
     pub(crate) fn create_pinned_by_name<P: AsRef<Path>>(
@@ -585,10 +602,10 @@ impl MapData {
             call: "BPF_OBJ_GET",
             io_error,
         }) {
-            Ok(fd) => {
-                let fd = MapFd(fd);
-                Ok(Self { obj, fd })
-            }
+            Ok(fd) => Ok(Self {
+                obj,
+                fd: MapFd::from_fd(fd),
+            }),
             Err(_) => {
                 let map = Self::create(obj, name, btf_fd)?;
                 map.pin(&path).map_err(|error| MapError::PinError {
@@ -658,7 +675,7 @@ impl MapData {
         let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
         Ok(Self {
             obj: parse_map_info(info, PinningType::None),
-            fd: MapFd(fd),
+            fd: MapFd::from_fd(fd),
         })
     }
 
@@ -972,7 +989,7 @@ impl MapInfo {
     pub fn fd(&self) -> Result<MapFd, MapError> {
         let Self(info) = self;
         let fd = bpf_map_get_fd_by_id(info.id)?;
-        Ok(MapFd(fd))
+        Ok(MapFd::from_fd(fd))
     }
 
     /// Loads a map from a pinned path in bpffs.
@@ -1035,7 +1052,7 @@ mod test_utils {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
-            } => Ok(1337),
+            } => Ok(crate::MiriSafeFd::MOCK_FD.into()),
             call => panic!("unexpected syscall {:?}", call),
         });
         MapData::create(obj, "foo", None).unwrap()
@@ -1086,13 +1103,16 @@ mod tests {
                     unsafe { attr.__bindgen_anon_6.__bindgen_anon_1.map_id },
                     1234
                 );
-                Ok(42)
+                Ok(crate::MiriSafeFd::MOCK_FD.into())
             }
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
                 attr,
             } => {
-                assert_eq!(unsafe { attr.info.bpf_fd }, 42);
+                assert_eq!(
+                    unsafe { attr.info.bpf_fd },
+                    crate::MiriSafeFd::MOCK_FD.into()
+                );
                 Ok(0)
             }
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
@@ -1103,7 +1123,7 @@ mod tests {
             Ok(MapData {
                 obj: _,
                 fd,
-            }) => assert_eq!(fd.as_fd().as_raw_fd(), 42)
+            }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MiriSafeFd::MOCK_FD.into())
         );
     }
 
@@ -1113,7 +1133,7 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
-            } => Ok(42),
+            } => Ok(crate::MiriSafeFd::MOCK_FD.into()),
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
         });
 
@@ -1122,7 +1142,7 @@ mod tests {
             Ok(MapData {
                 obj: _,
                 fd,
-            }) => assert_eq!(fd.as_fd().as_raw_fd(), 42)
+            }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MiriSafeFd::MOCK_FD.into())
         );
     }
 
