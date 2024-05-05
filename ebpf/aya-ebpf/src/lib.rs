@@ -16,6 +16,7 @@
 #![cfg_attr(unstable, feature(never_type))]
 #![cfg_attr(target_arch = "bpf", feature(asm_experimental_arch))]
 #![allow(clippy::missing_safety_doc)]
+#![deny(warnings)]
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 #![no_std]
 
