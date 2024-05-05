@@ -9,4 +9,5 @@ fn main() {
         let arch = arch.split_once('-').map_or(&*arch, |x| x.0);
         println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
     }
+    println!("cargo::rustc-check-cfg=cfg(target_arch, values(\"asmjs\",\"nvptx\",\"xtensa\"))");
 }
