@@ -1,5 +1,6 @@
-#![no_std]
 #![allow(non_camel_case_types, non_upper_case_globals, non_snake_case)]
+#![deny(warnings)]
+#![no_std]
 
 #[cfg(bpf_target_arch = "x86_64")]
 mod x86_64;
