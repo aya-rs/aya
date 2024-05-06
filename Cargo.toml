@@ -78,7 +78,7 @@ log = { version = "0.4", default-features = false }
 netns-rs = { version = "0.1", default-features = false }
 nix = { version = "0.28.0", default-features = false }
 num_enum = { version = "0.7", default-features = false }
-object = { version = "0.34", default-features = false }
+object = { version = "0.35", default-features = false }
 proc-macro-error = { version = "1.0", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
 public-api = { version = "0.33.1", default-features = false }
