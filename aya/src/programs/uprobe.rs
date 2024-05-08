@@ -648,12 +648,41 @@ mod tests {
         obj.write()
     }
 
+    fn aligned_slice<'a>(vec: &'a mut Vec<u8>) -> &'a mut [u8] {
+        let alignment = 8;
+
+        let original_size = vec.len();
+        let total_size = original_size + alignment - 1;
+
+        if vec.capacity() < total_size {
+            vec.reserve(total_size - vec.capacity());
+        }
+
+        if vec.len() < total_size {
+            vec.resize(total_size, 0);
+        }
+
+        let ptr = vec.as_ptr() as usize;
+
+        let aligned_ptr = (ptr + alignment - 1) & !(alignment - 1);
+
+        let offset = aligned_ptr - ptr;
+
+        if offset > 0 {
+            let tmp = vec.len();
+            vec.copy_within(0..tmp - offset, offset);
+        }
+
+        &mut vec[offset..offset + original_size]
+    }
+
     #[test]
     fn test_find_debug_path_success() {
         let debug_filepath = b"main.debug";
-        let main_bytes = create_elf_with_debuglink(debug_filepath, 0x123 /* fake CRC */)
+        let mut main_bytes = create_elf_with_debuglink(debug_filepath, 0x123 /* fake CRC */)
             .expect("got main_bytes");
-        let main_obj = object::File::parse(&*main_bytes).expect("got main obj");
+        let align_bytes = aligned_slice(&mut main_bytes);
+        let main_obj = object::File::parse(&*align_bytes).expect("got main obj");
 
         let main_path = Path::new("/path/to/main");
         let result = find_debug_path_in_object(&main_obj, main_path, "symbol");
@@ -664,11 +693,13 @@ mod tests {
     #[test]
     fn test_verify_build_ids_same() {
         let build_id = b"test_build_id";
-        let main_bytes = create_elf_with_build_id(build_id).expect("got main_bytes");
-        let main_obj = object::File::parse(&*main_bytes).expect("got main obj");
+        let mut main_bytes = create_elf_with_build_id(build_id).expect("got main_bytes");
+        let align_bytes = aligned_slice(&mut main_bytes);
+        let main_obj = object::File::parse(&*align_bytes).expect("got main obj");
         let debug_build_id = b"test_build_id";
-        let debug_bytes = create_elf_with_build_id(debug_build_id).expect("got debug bytes");
-        let debug_obj = object::File::parse(&*debug_bytes).expect("got debug obj");
+        let mut debug_bytes = create_elf_with_build_id(debug_build_id).expect("got debug bytes");
+        let align_bytes = aligned_slice(&mut debug_bytes);
+        let debug_obj = object::File::parse(&*align_bytes).expect("got debug obj");
 
         assert!(verify_build_ids(&main_obj, &debug_obj, "symbol_name").is_ok());
     }
@@ -676,11 +707,13 @@ mod tests {
     #[test]
     fn test_verify_build_ids_different() {
         let build_id = b"main_build_id";
-        let main_bytes = create_elf_with_build_id(build_id).expect("got main_bytes");
-        let main_obj = object::File::parse(&*main_bytes).expect("got main obj");
+        let mut main_bytes = create_elf_with_build_id(build_id).expect("got main_bytes");
+        let align_bytes = aligned_slice(&mut main_bytes);
+        let main_obj = object::File::parse(&*align_bytes).expect("got main obj");
         let debug_build_id = b"debug_build_id";
-        let debug_bytes = create_elf_with_build_id(debug_build_id).expect("got debug bytes");
-        let debug_obj = object::File::parse(&*debug_bytes).expect("got debug obj");
+        let mut debug_bytes = create_elf_with_build_id(debug_build_id).expect("got debug bytes");
+        let align_bytes = aligned_slice(&mut debug_bytes);
+        let debug_obj = object::File::parse(&*align_bytes).expect("got debug obj");
 
         assert!(matches!(
             verify_build_ids(&main_obj, &debug_obj, "symbol_name"),
