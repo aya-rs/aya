@@ -6,13 +6,13 @@ use std::{
     fs,
     io::{self, BufRead, Cursor, Read},
     mem,
-    os::{fd::AsFd as _, raw::c_char},
+    os::{fd::AsFd as _, raw::c_char, unix::ffi::OsStrExt},
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 use libc::pid_t;
-use object::{Object, ObjectSection, ObjectSymbol};
+use object::{Object, ObjectSection, ObjectSymbol, Symbol};
 use thiserror::Error;
 
 use crate::{
@@ -432,17 +432,103 @@ enum ResolveSymbolError {
 
     #[error("symbol `{0}` in section `{1:?}` which has no offset")]
     SectionFileRangeNone(String, Result<String, object::Error>),
+
+    #[error("failed to access debuglink file `{0}`: `{1}`")]
+    DebuglinkAccessError(String, io::Error),
+
+    #[error("symbol `{0}` not found, mismatched build IDs in main and debug files")]
+    BuildIdMismatch(String),
+}
+
+fn construct_debuglink_path(
+    filename: &[u8],
+    main_path: &Path,
+) -> Result<PathBuf, ResolveSymbolError> {
+    let filename_str = OsStr::from_bytes(filename);
+    let debuglink_path = Path::new(filename_str);
+
+    let resolved_path = if debuglink_path.is_relative() {
+        // If the debug path is relative, resolve it against the parent of the main path
+        main_path.parent().map_or_else(
+            || PathBuf::from(debuglink_path), // Use original if no parent
+            |parent| parent.join(debuglink_path),
+        )
+    } else {
+        // If the path is not relative, just use original
+        PathBuf::from(debuglink_path)
+    };
+
+    Ok(resolved_path)
+}
+
+fn verify_build_ids<'a>(
+    main_obj: &'a object::File<'a>,
+    debug_obj: &'a object::File<'a>,
+    symbol_name: &str,
+) -> Result<(), ResolveSymbolError> {
+    let main_build_id = main_obj.build_id().ok().flatten();
+    let debug_build_id = debug_obj.build_id().ok().flatten();
+
+    match (debug_build_id, main_build_id) {
+        (Some(debug_build_id), Some(main_build_id)) => {
+            // Only perform a comparison if both build IDs are present
+            if debug_build_id != main_build_id {
+                return Err(ResolveSymbolError::BuildIdMismatch(symbol_name.to_owned()));
+            }
+            Ok(())
+        }
+        _ => Ok(()),
+    }
+}
+
+fn find_debug_path_in_object<'a>(
+    obj: &'a object::File<'a>,
+    main_path: &Path,
+    symbol: &str,
+) -> Result<PathBuf, ResolveSymbolError> {
+    match obj.gnu_debuglink() {
+        Ok(Some((filename, _))) => construct_debuglink_path(filename, main_path),
+        Ok(None) => Err(ResolveSymbolError::Unknown(symbol.to_string())),
+        Err(err) => Err(ResolveSymbolError::Object(err)),
+    }
+}
+
+fn find_symbol_in_object<'a>(obj: &'a object::File<'a>, symbol: &str) -> Option<Symbol<'a, 'a>> {
+    obj.dynamic_symbols()
+        .chain(obj.symbols())
+        .find(|sym| sym.name().map(|name| name == symbol).unwrap_or(false))
 }
 
 fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> {
     let data = fs::read(path)?;
     let obj = object::read::File::parse(&*data)?;
 
-    let sym = obj
-        .dynamic_symbols()
-        .chain(obj.symbols())
-        .find(|sym| sym.name().map(|name| name == symbol).unwrap_or(false))
-        .ok_or_else(|| ResolveSymbolError::Unknown(symbol.to_string()))?;
+    let mut debug_data = Vec::default();
+    let mut debug_obj_keeper = None;
+
+    let sym = find_symbol_in_object(&obj, symbol).map_or_else(
+        || {
+            // Only search in the debug object if the symbol was not found in the main object
+            let debug_path = find_debug_path_in_object(&obj, path, symbol)?;
+            debug_data = fs::read(&debug_path).map_err(|e| {
+                ResolveSymbolError::DebuglinkAccessError(
+                    debug_path
+                        .to_str()
+                        .unwrap_or("Debuglink path missing")
+                        .to_string(),
+                    e,
+                )
+            })?;
+            let debug_obj = object::read::File::parse(&*debug_data)?;
+
+            verify_build_ids(&obj, &debug_obj, symbol)?;
+
+            debug_obj_keeper = Some(debug_obj);
+            find_symbol_in_object(debug_obj_keeper.as_ref().unwrap(), symbol)
+                .ok_or_else(|| ResolveSymbolError::Unknown(symbol.to_string()))
+        },
+        Ok,
+    )?;
 
     let needs_addr_translation = matches!(
         obj.kind(),
@@ -462,5 +548,176 @@ fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> 
             )
         })?;
         Ok(sym.address() - section.address() + offset)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use object::{write::SectionKind, Architecture, BinaryFormat, Endianness};
+
+    use super::*;
+
+    #[test]
+    fn test_relative_path_with_parent() {
+        let filename = b"debug_info";
+        let main_path = Path::new("/usr/lib/main_binary");
+        let expected = Path::new("/usr/lib/debug_info");
+
+        let result = construct_debuglink_path(filename, main_path).unwrap();
+        assert_eq!(
+            result, expected,
+            "The debug path should resolve relative to the main path's parent"
+        );
+    }
+
+    #[test]
+    fn test_relative_path_without_parent() {
+        let filename = b"debug_info";
+        let main_path = Path::new("main_binary");
+        let expected = Path::new("debug_info");
+
+        let result = construct_debuglink_path(filename, main_path).unwrap();
+        assert_eq!(
+            result, expected,
+            "The debug path should be the original path as there is no parent"
+        );
+    }
+
+    #[test]
+    fn test_absolute_path() {
+        let filename = b"/absolute/path/to/debug_info";
+        let main_path = Path::new("/usr/lib/main_binary");
+        let expected = Path::new("/absolute/path/to/debug_info");
+
+        let result = construct_debuglink_path(filename, main_path).unwrap();
+        assert_eq!(
+            result, expected,
+            "The debug path should be the same as the input absolute path"
+        );
+    }
+
+    fn create_elf_with_debuglink(
+        debug_filename: &[u8],
+        crc: u32,
+    ) -> Result<Vec<u8>, object::write::Error> {
+        let mut obj =
+            object::write::Object::new(BinaryFormat::Elf, Architecture::X86_64, Endianness::Little);
+
+        let section_name = b".gnu_debuglink";
+
+        let section_id = obj.add_section(vec![], section_name.to_vec(), SectionKind::Note);
+
+        let mut debuglink_data = Vec::new();
+
+        debuglink_data.extend_from_slice(debug_filename);
+        debuglink_data.push(0); // Null terminator
+
+        while debuglink_data.len() % 4 != 0 {
+            debuglink_data.push(0);
+        }
+
+        debuglink_data.extend(&crc.to_le_bytes());
+
+        obj.append_section_data(section_id, &debuglink_data, 4 /* align */);
+
+        obj.write()
+    }
+
+    fn create_elf_with_build_id(build_id: &[u8]) -> Result<Vec<u8>, object::write::Error> {
+        let mut obj =
+            object::write::Object::new(BinaryFormat::Elf, Architecture::X86_64, Endianness::Little);
+
+        let section_name = b".note.gnu.build-id";
+
+        let section_id = obj.add_section(vec![], section_name.to_vec(), SectionKind::Note);
+
+        let mut note_data = Vec::new();
+        let build_id_name = b"GNU";
+
+        note_data.extend(&(build_id_name.len() as u32 + 1).to_le_bytes());
+        note_data.extend(&(build_id.len() as u32).to_le_bytes());
+        note_data.extend(&3u32.to_le_bytes());
+
+        note_data.extend_from_slice(build_id_name);
+        note_data.push(0); // Null terminator
+        note_data.extend_from_slice(build_id);
+
+        obj.append_section_data(section_id, &note_data, 4 /* align */);
+
+        obj.write()
+    }
+
+    fn aligned_slice(vec: &mut Vec<u8>) -> &mut [u8] {
+        let alignment = 8;
+
+        let original_size = vec.len();
+        let total_size = original_size + alignment - 1;
+
+        if vec.capacity() < total_size {
+            vec.reserve(total_size - vec.capacity());
+        }
+
+        if vec.len() < total_size {
+            vec.resize(total_size, 0);
+        }
+
+        let ptr = vec.as_ptr() as usize;
+
+        let aligned_ptr = (ptr + alignment - 1) & !(alignment - 1);
+
+        let offset = aligned_ptr - ptr;
+
+        if offset > 0 {
+            let tmp = vec.len();
+            vec.copy_within(0..tmp - offset, offset);
+        }
+
+        &mut vec[offset..offset + original_size]
+    }
+
+    #[test]
+    fn test_find_debug_path_success() {
+        let debug_filepath = b"main.debug";
+        let mut main_bytes = create_elf_with_debuglink(debug_filepath, 0x123 /* fake CRC */)
+            .expect("got main_bytes");
+        let align_bytes = aligned_slice(&mut main_bytes);
+        let main_obj = object::File::parse(&*align_bytes).expect("got main obj");
+
+        let main_path = Path::new("/path/to/main");
+        let result = find_debug_path_in_object(&main_obj, main_path, "symbol");
+
+        assert_eq!(result.unwrap(), Path::new("/path/to/main.debug"));
+    }
+
+    #[test]
+    fn test_verify_build_ids_same() {
+        let build_id = b"test_build_id";
+        let mut main_bytes = create_elf_with_build_id(build_id).expect("got main_bytes");
+        let align_bytes = aligned_slice(&mut main_bytes);
+        let main_obj = object::File::parse(&*align_bytes).expect("got main obj");
+        let debug_build_id = b"test_build_id";
+        let mut debug_bytes = create_elf_with_build_id(debug_build_id).expect("got debug bytes");
+        let align_bytes = aligned_slice(&mut debug_bytes);
+        let debug_obj = object::File::parse(&*align_bytes).expect("got debug obj");
+
+        assert!(verify_build_ids(&main_obj, &debug_obj, "symbol_name").is_ok());
+    }
+
+    #[test]
+    fn test_verify_build_ids_different() {
+        let build_id = b"main_build_id";
+        let mut main_bytes = create_elf_with_build_id(build_id).expect("got main_bytes");
+        let align_bytes = aligned_slice(&mut main_bytes);
+        let main_obj = object::File::parse(&*align_bytes).expect("got main obj");
+        let debug_build_id = b"debug_build_id";
+        let mut debug_bytes = create_elf_with_build_id(debug_build_id).expect("got debug bytes");
+        let align_bytes = aligned_slice(&mut debug_bytes);
+        let debug_obj = object::File::parse(&*align_bytes).expect("got debug obj");
+
+        assert!(matches!(
+            verify_build_ids(&main_obj, &debug_obj, "symbol_name"),
+            Err(ResolveSymbolError::BuildIdMismatch(_))
+        ));
     }
 }
