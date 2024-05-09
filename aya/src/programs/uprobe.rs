@@ -648,7 +648,7 @@ mod tests {
         obj.write()
     }
 
-    fn aligned_slice<'a>(vec: &'a mut Vec<u8>) -> &'a mut [u8] {
+    fn aligned_slice(vec: &mut Vec<u8>) -> &mut [u8] {
         let alignment = 8;
 
         let original_size = vec.len();
