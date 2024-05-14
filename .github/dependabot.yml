@@ -8,16 +8,14 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      production-dependencies:
-        dependency-type: "production"
-      development-dependencies:
-        dependency-type: "development"
+      cargo-crates:
+        patterns:
+          - "*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     groups:
-      production-dependencies:
-        dependency-type: "production"
-      development-dependencies:
-        dependency-type: "development"
+      github-actions:
+        patterns:
+          - "*"
