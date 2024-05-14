@@ -41,7 +41,7 @@ impl ProbeContext {
     /// }
     /// ```
     pub fn arg<T: FromPtRegs>(&self, n: usize) -> Option<T> {
-        T::from_argument(unsafe { &*self.regs }, n)
+        T::from_argument(self.regs, n)
     }
 }
 
