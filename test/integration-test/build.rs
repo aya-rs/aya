@@ -14,9 +14,11 @@ use xtask::{exec, AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR};
 
 /// This crate has a runtime dependency on artifacts produced by the `integration-ebpf` crate. This
 /// would be better expressed as one or more [artifact-dependencies][bindeps] but issues such as:
+///
 /// * https://github.com/rust-lang/cargo/issues/12374
 /// * https://github.com/rust-lang/cargo/issues/12375
 /// * https://github.com/rust-lang/cargo/issues/12385
+///
 /// prevent their use for the time being.
 ///
 /// This file, along with the xtask crate, allows analysis tools such as `cargo check`, `cargo
