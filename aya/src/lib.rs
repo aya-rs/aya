@@ -54,7 +54,6 @@
     missing_docs,
     non_ascii_idents,
     noop_method_call,
-    pointer_structural_match,
     rust_2021_incompatible_closure_captures,
     rust_2021_incompatible_or_patterns,
     rust_2021_prefixes_incompatible_syntax,
