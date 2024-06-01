@@ -1,6 +1,12 @@
-mod bpf;
+mod btf;
+pub(crate) mod feature_probe;
+mod link;
+mod map;
 mod netlink;
+mod object;
 mod perf_event;
+mod program;
+mod utils;
 
 #[cfg(test)]
 mod fake;
@@ -11,15 +17,21 @@ use std::{
     os::fd::{AsRawFd as _, BorrowedFd},
 };
 
-pub(crate) use bpf::*;
+use aya_obj::VerifierLog;
+pub(crate) use btf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
-use libc::{pid_t, SYS_bpf, SYS_perf_event_open};
+use libc::{pid_t, SYS_bpf, SYS_perf_event_open, ENOSPC};
+pub(crate) use link::*;
+pub(crate) use map::*;
 #[doc(hidden)]
 pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
+pub(crate) use object::*;
 pub(crate) use perf_event::*;
+pub(crate) use program::*;
 use thiserror::Error;
+pub(crate) use utils::*;
 
 use crate::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 
@@ -136,4 +148,37 @@ pub(crate) unsafe fn mmap(
 
     #[cfg(test)]
     TEST_MMAP_RET.with(|ret| *ret.borrow())
+}
+
+pub(crate) fn retry_with_verifier_logs<T>(
+    max_retries: usize,
+    f: impl Fn(&mut [u8]) -> SysResult<T>,
+) -> (SysResult<T>, VerifierLog) {
+    const MIN_LOG_BUF_SIZE: usize = 1024 * 10;
+    const MAX_LOG_BUF_SIZE: usize = (u32::MAX >> 8) as usize;
+
+    let mut log_buf = Vec::new();
+    let mut retries = 0;
+    loop {
+        let ret = f(log_buf.as_mut_slice());
+        if retries != max_retries {
+            if let Err((_, io_error)) = &ret {
+                if retries == 0 || io_error.raw_os_error() == Some(ENOSPC) {
+                    let len = (log_buf.capacity() * 10).clamp(MIN_LOG_BUF_SIZE, MAX_LOG_BUF_SIZE);
+                    log_buf.resize(len, 0);
+                    if let Some(first) = log_buf.first_mut() {
+                        *first = 0;
+                    }
+                    retries += 1;
+                    continue;
+                }
+            }
+        }
+        if let Some(pos) = log_buf.iter().position(|b| *b == 0) {
+            log_buf.truncate(pos);
+        }
+        let log_buf = String::from_utf8(log_buf).unwrap();
+
+        break (ret, VerifierLog::new(log_buf));
+    }
 }
