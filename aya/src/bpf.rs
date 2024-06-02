@@ -14,15 +14,15 @@ use aya_obj::{
     btf::{BtfFeatures, BtfRelocationError},
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS},
     relocation::EbpfRelocationError,
-    EbpfSectionKind, Features,
+    BpfStatsType, EbpfSectionKind, Features,
 };
 use log::{debug, warn};
 use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_map_type, bpf_map_type::*, AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE,
-        AYA_PERF_EVENT_IOC_SET_BPF,
+        bpf_map_type::{self, *},
+        AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE, AYA_PERF_EVENT_IOC_SET_BPF,
     },
     maps::{Map, MapData, MapError},
     obj::{
@@ -36,12 +36,12 @@ use crate::{
         SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
-        bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
+        bpf_enable_stats, bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
         is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_enum64_supported,
         is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
         is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
         is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
-        retry_with_verifier_logs,
+        retry_with_verifier_logs, SyscallError,
     },
     util::{bytes_of, bytes_of_slice, page_size, possible_cpus, POSSIBLE_CPUS},
 };
@@ -1068,6 +1068,29 @@ impl Ebpf {
     pub fn programs_mut(&mut self) -> impl Iterator<Item = (&str, &mut Program)> {
         self.programs.iter_mut().map(|(s, p)| (s.as_str(), p))
     }
+
+    /// Enable global statistics tracking for all programs and returns a file descriptor handler.
+    ///
+    /// Statistics tracking will be disabled once the file descriptor is closed or released.
+    ///
+    /// Typical usage:
+    /// 1. Obtain fd from `enable_stats_fd` and bind it to a variable.
+    /// 2. Record the statistic of interest.
+    /// 3. Wait for a recorded period of time.
+    /// 4. Record the statistic of interest again, and calculate the difference.
+    /// 5. Close/release fd.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use aya::{Ebpf, EbpfError};
+    /// # use aya_obj::BpfStatsType;
+    /// let _fd = Ebpf::enable_stats_fd(BpfStatsType::RunTime)?;
+    /// # Ok::<(), EbpfError>(())
+    /// ```
+    pub fn enable_stats_fd(stats_type: BpfStatsType) -> Result<OwnedFd, SyscallError> {
+        bpf_enable_stats(stats_type.into())
+    }
 }
 
 /// The error type returned by [`Ebpf::load_file`] and [`Ebpf::load`].
@@ -1117,6 +1140,10 @@ pub enum EbpfError {
     #[error("program error: {0}")]
     /// A program error
     ProgramError(#[from] ProgramError),
+
+    #[error("syscall error: {0}")]
+    /// A syscall error
+    SyscallError(#[from] SyscallError),
 }
 
 /// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].
