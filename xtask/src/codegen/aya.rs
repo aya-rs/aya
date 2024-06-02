@@ -79,6 +79,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         "bpf_lpm_trie_key",
         "bpf_cpumap_val",
         "bpf_devmap_val",
+        "bpf_stats_type",
         // BTF
         "btf_header",
         "btf_ext_info",
