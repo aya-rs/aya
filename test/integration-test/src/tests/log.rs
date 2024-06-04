@@ -106,7 +106,34 @@ async fn log() {
     assert_eq!(
         records.next(),
         Some(&CapturedLog {
-            body: "ipv4: 10.0.0.1, ipv6: 2001:db8::1".into(),
+            body: "ip structs: ipv4: 10.0.0.1, ipv6: 2001:db8::1".into(),
+            level: Level::Info,
+            target: "log".into(),
+        })
+    );
+
+    assert_eq!(
+        records.next(),
+        Some(&CapturedLog {
+            body: "ip enums: ipv4: 10.0.0.1, ipv6: 2001:db8::1".into(),
+            level: Level::Info,
+            target: "log".into(),
+        })
+    );
+
+    assert_eq!(
+        records.next(),
+        Some(&CapturedLog {
+            body: "ip as bits: ipv4: 10.0.0.1".into(),
+            level: Level::Info,
+            target: "log".into(),
+        })
+    );
+
+    assert_eq!(
+        records.next(),
+        Some(&CapturedLog {
+            body: "ip as octets: ipv4: 10.0.0.1, ipv6: 2001:db8::1".into(),
             level: Level::Info,
             target: "log".into(),
         })
