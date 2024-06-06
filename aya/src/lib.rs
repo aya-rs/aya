@@ -68,7 +68,7 @@
     unused_import_braces,
     unused_lifetimes,
     unused_macro_rules,
-    unused_qualifications,
+    //unused_qualifications, https://github.com/rust-lang/rust/commit/9ccc7b7 added size_of to the prelude, but we need to continue to qualify it so that we build on older compilers.
     //unused_results,
 )]
 #![allow(clippy::missing_safety_doc, clippy::len_without_is_empty)]
