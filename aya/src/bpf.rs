@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
     fs, io,
     os::{
-        fd::{AsFd as _, AsRawFd as _, FromRawFd, OwnedFd},
+        fd::{AsFd as _, AsRawFd as _, OwnedFd},
         raw::c_int,
     },
     path::{Path, PathBuf},
@@ -24,7 +24,7 @@ use crate::{
         bpf_map_type::{self, *}, AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE,
         AYA_PERF_EVENT_IOC_SET_BPF,
     },
-    maps::{Map, MapData, MapError, MapFd},
+    maps::{Map, MapData, MapError},
     obj::{
         btf::{Btf, BtfError},
         Object, ParseError, ProgramSection,
@@ -237,7 +237,7 @@ impl<'a> EbpfLoader<'a> {
     /// 
     /// ```no_run
     /// use aya::EbpfLoader;
-    /// use aya_obj::btf::Btf::bpf_map_type;
+    /// use aya_obj::generated::bpf_map_type;
     /// 
     /// let mut set = HashSet::new();
     /// set.insert(bpf_map_type::BPF_MAP_TYPE_RINGBUF);
@@ -425,6 +425,7 @@ impl<'a> EbpfLoader<'a> {
             deactivate_maps,
         } = self;
         let mut obj = Object::parse(data)?;
+        obj.patch_map_data(globals.clone())?;
 
         let btf_fd = if let Some(features) = &FEATURES.btf() {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
@@ -495,9 +496,12 @@ impl<'a> EbpfLoader<'a> {
             {
                 continue;
             }
+            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
 
-            if deactivate_maps.contains(&obj.map_type().try_into().map_err(|_| EbpfError::MapError(MapError::InvalidMapType { map_type: obj.map_type() }))?) {
+            if deactivate_maps.contains(&map_type) {
                 ignored_maps.insert(name, obj);
+                // ignore map creation. The map is saved in `ignored_maps` and filtered out
+                // in `relocate_maps()` later on
                 continue;
             }
 
@@ -509,7 +513,6 @@ impl<'a> EbpfLoader<'a> {
                     })?
                     .len() as u32)
             };
-            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
             if let Some(max_entries) = max_entries_override(
                 map_type,
                 max_entries.get(name.as_str()).copied(),

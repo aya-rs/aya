@@ -416,20 +416,6 @@ impl Btf {
         self.string_at(ty.name_offset()).ok().map(String::from)
     }
 
-    /// Returns a type id matching the type name
-    pub fn id_by_type_name(&self, name: &str) -> Result<u32, BtfError> {
-        for (type_id, ty) in self.types().enumerate() {
-            if self.type_name(ty)? == name {
-                return Ok(type_id as u32);
-            }
-            continue;
-        }
-
-        Err(BtfError::UnknownBtfTypeName {
-            type_name: name.to_owned(),
-        })
-    }
-
     /// Returns a type id matching the type name and [BtfKind]
     pub fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
         for (type_id, ty) in self.types().enumerate() {

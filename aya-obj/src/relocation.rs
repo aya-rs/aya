@@ -2,7 +2,6 @@
 
 use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
 use core::mem;
-use std::println;
 
 use log::debug;
 use object::{SectionIndex, SymbolKind};
@@ -116,7 +115,7 @@ impl Object {
         let mut ignored_by_section = HashSet::new();
         let mut ignored_by_symbol = HashSet::new();
 
-        for (name, map) in ignored_maps {
+        for map in ignored_maps.values() {
             ignored_by_section.insert(map.section_index());
             if let Some(index) = map.symbol_index() {
                 ignored_by_symbol.insert(index);
