@@ -238,11 +238,12 @@ impl<'a> EbpfLoader<'a> {
     /// ```no_run
     /// use aya::EbpfLoader;
     /// use aya_obj::generated::bpf_map_type;
+    /// use std::collections::HashSet;
     /// 
     /// let mut set = HashSet::new();
     /// set.insert(bpf_map_type::BPF_MAP_TYPE_RINGBUF);
     /// let ebpf = EbpfLoader::new()
-    ///     .disable_maps(set)
+    ///     .deactivate_maps(set)
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
