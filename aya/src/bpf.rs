@@ -226,7 +226,27 @@ impl<'a> EbpfLoader<'a> {
         self
     }
 
-    /// Documentaaaaaaaaaaaaation
+    /// Allows programs containing unsupported maps for the current kernel to be loaded
+    /// by skipping map creation and relocation before loading.
+    /// 
+    /// This is useful when you have a single program containing e.g. a `RingBuf`
+    /// and a `PerfEventArray` and you decide which one to use before loading the bytecode.
+    /// Can be used with `.set_global()` to signal if the map is supported.
+    /// 
+    /// # Example
+    /// 
+    /// ```no_run
+    /// use aya::EbpfLoader;
+    /// use aya_obj::btf::Btf::bpf_map_type;
+    /// 
+    /// let mut set = HashSet::new();
+    /// set.insert(bpf_map_type::BPF_MAP_TYPE_RINGBUF);
+    /// let ebpf = EbpfLoader::new()
+    ///     .disable_maps(set)
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    /// 
     pub fn deactivate_maps(&mut self, set: HashSet<bpf_map_type>) -> &mut Self {
         self.deactivate_maps = set;
         self
