@@ -2,6 +2,7 @@
 
 use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
 use core::mem;
+use std::println;
 
 use log::debug;
 use object::{SectionIndex, SymbolKind};
@@ -108,9 +109,20 @@ impl Object {
         &mut self,
         maps: I,
         text_sections: &HashSet<usize>,
+        ignored_maps: &HashMap<String, Map>,
     ) -> Result<(), EbpfRelocationError> {
         let mut maps_by_section = HashMap::new();
         let mut maps_by_symbol = HashMap::new();
+        let mut ignored_by_section = HashSet::new();
+        let mut ignored_by_symbol = HashSet::new();
+
+        for (name, map) in ignored_maps {
+            ignored_by_section.insert(map.section_index());
+            if let Some(index) = map.symbol_index() {
+                ignored_by_symbol.insert(index);
+            }
+        }
+
         for (name, fd, map) in maps {
             maps_by_section.insert(map.section_index(), (name, fd, map));
             if let Some(index) = map.symbol_index() {
@@ -127,6 +139,8 @@ impl Object {
                     &maps_by_symbol,
                     &self.symbol_table,
                     text_sections,
+                    &ignored_by_section,
+                    &ignored_by_symbol,
                 )
                 .map_err(|error| EbpfRelocationError {
                     function: function.name.clone(),
@@ -176,6 +190,7 @@ impl Object {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     fun: &mut Function,
     relocations: I,
@@ -183,6 +198,8 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     maps_by_symbol: &HashMap<usize, (&str, std::os::fd::RawFd, &Map)>,
     symbol_table: &HashMap<usize, Symbol>,
     text_sections: &HashSet<usize>,
+    ignored_by_section: &HashSet<usize>,
+    ignored_by_symbol: &HashSet<usize>,
 ) -> Result<(), RelocationError> {
     let section_offset = fun.section_offset;
     let instructions = &mut fun.instructions;
@@ -212,6 +229,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
                 index: rel.symbol_index,
             })?;
 
+
         let Some(section_index) = sym.section_index else {
             // this is not a map relocation
             continue;
@@ -222,7 +240,9 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             continue;
         }
 
-        let (_name, fd, map) = if let Some(m) = maps_by_symbol.get(&rel.symbol_index) {
+        let (_name, fd, map) = if ignored_by_symbol.contains(&rel.symbol_index) {
+            continue
+        } else if let Some(m) = maps_by_symbol.get(&rel.symbol_index) {
             let map = &m.2;
             debug!(
                 "relocating map by symbol index {:?}, kind {:?} at insn {ins_index} in section {}",
@@ -232,6 +252,8 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             );
             debug_assert_eq!(map.symbol_index().unwrap(), rel.symbol_index);
             m
+        } else if ignored_by_section.contains(&section_index) {
+            continue
         } else {
             let Some(m) = maps_by_section.get(&section_index) else {
                 debug!("failed relocating map by section index {}", section_index);
@@ -580,6 +602,8 @@ mod test {
             &maps_by_symbol,
             &symbol_table,
             &HashSet::new(),
+            &HashSet::new(),
+            &HashSet::new(),
         )
         .unwrap();
 
@@ -636,6 +660,8 @@ mod test {
             &maps_by_symbol,
             &symbol_table,
             &HashSet::new(),
+            &HashSet::new(),
+            &HashSet::new(),
         )
         .unwrap();
 
@@ -674,6 +700,8 @@ mod test {
             &maps_by_section,
             &maps_by_symbol,
             &symbol_table,
+            &HashSet::new(),
+            &HashSet::new(),
             &HashSet::new(),
         )
         .unwrap();
@@ -730,6 +758,8 @@ mod test {
             &maps_by_section,
             &maps_by_symbol,
             &symbol_table,
+            &HashSet::new(),
+            &HashSet::new(),
             &HashSet::new(),
         )
         .unwrap();

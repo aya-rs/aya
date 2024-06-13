@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
     fs, io,
     os::{
-        fd::{AsFd as _, AsRawFd as _, OwnedFd},
+        fd::{AsFd as _, AsRawFd as _, FromRawFd, OwnedFd},
         raw::c_int,
     },
     path::{Path, PathBuf},
@@ -21,10 +21,10 @@ use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_map_type, bpf_map_type::*, AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE,
+        bpf_map_type::{self, *}, AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE,
         AYA_PERF_EVENT_IOC_SET_BPF,
     },
-    maps::{Map, MapData, MapError},
+    maps::{Map, MapData, MapError, MapFd},
     obj::{
         btf::{Btf, BtfError},
         Object, ParseError, ProgramSection,
@@ -137,6 +137,7 @@ pub struct EbpfLoader<'a> {
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
+    deactivate_maps: HashSet<bpf_map_type>,
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -175,6 +176,7 @@ impl<'a> EbpfLoader<'a> {
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
             allow_unsupported_maps: false,
+            deactivate_maps: HashSet::new(),
         }
     }
 
@@ -221,6 +223,12 @@ impl<'a> EbpfLoader<'a> {
     ///
     pub fn allow_unsupported_maps(&mut self) -> &mut Self {
         self.allow_unsupported_maps = true;
+        self
+    }
+
+    /// Documentaaaaaaaaaaaaation
+    pub fn deactivate_maps(&mut self, set: HashSet<bpf_map_type>) -> &mut Self {
+        self.deactivate_maps = set;
         self
     }
 
@@ -394,9 +402,9 @@ impl<'a> EbpfLoader<'a> {
             extensions,
             verifier_log_level,
             allow_unsupported_maps,
+            deactivate_maps,
         } = self;
         let mut obj = Object::parse(data)?;
-        obj.patch_map_data(globals.clone())?;
 
         let btf_fd = if let Some(features) = &FEATURES.btf() {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
@@ -459,12 +467,20 @@ impl<'a> EbpfLoader<'a> {
             obj.relocate_btf(btf)?;
         }
         let mut maps = HashMap::new();
+        let mut ignored_maps = HashMap::new();
+
         for (name, mut obj) in obj.maps.drain() {
             if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
                 (FEATURES.bpf_global_data(), obj.section_kind())
             {
                 continue;
             }
+
+            if deactivate_maps.contains(&obj.map_type().try_into().map_err(|_| EbpfError::MapError(MapError::InvalidMapType { map_type: obj.map_type() }))?) {
+                ignored_maps.insert(name, obj);
+                continue;
+            }
+
             let num_cpus = || -> Result<u32, EbpfError> {
                 Ok(possible_cpus()
                     .map_err(|error| EbpfError::FileError {
@@ -498,17 +514,16 @@ impl<'a> EbpfLoader<'a> {
                 PinningType::ByName => {
                     // pin maps in /sys/fs/bpf by default to align with libbpf
                     // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
-                    let path = map_pin_path
-                        .as_deref()
-                        .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
+                    let path: &Path = map_pin_path
+                    .as_deref()
+                    .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
 
-                    MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
                 }
             };
             map.finalize()?;
             maps.insert(name, map);
         }
-
         let text_sections = obj
             .functions
             .keys()
@@ -519,6 +534,7 @@ impl<'a> EbpfLoader<'a> {
             maps.iter()
                 .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
+            &ignored_maps,
         )?;
         obj.relocate_calls(&text_sections)?;
         obj.sanitize_functions(&FEATURES);
