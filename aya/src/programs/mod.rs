@@ -93,7 +93,7 @@ pub use crate::programs::{
     fentry::FEntry,
     fexit::FExit,
     kprobe::{KProbe, KProbeError},
-    links::Link,
+    links::{Link, LinkOrdering},
     lirc_mode2::LircMode2,
     lsm::Lsm,
     perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy},

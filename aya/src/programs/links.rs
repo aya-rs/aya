@@ -10,9 +10,9 @@ use std::{
 use thiserror::Error;
 
 use crate::{
-    generated::bpf_attach_type,
+    generated::{bpf_attach_type, BPF_F_AFTER, BPF_F_BEFORE, BPF_F_ID, BPF_F_LINK, BPF_F_REPLACE},
     pin::PinError,
-    programs::{ProgramError, ProgramFd},
+    programs::{Program, ProgramError, ProgramFd},
     sys::{bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach, SyscallError},
 };
 
@@ -365,6 +365,84 @@ pub enum LinkError {
     /// Syscall failed.
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
+}
+
+bitflags::bitflags! {
+    /// Flags which are use to build a set of MprogOptions.
+    #[derive(Clone, Copy, Debug, Default)]
+    pub(crate) struct MprogFlags: u32 {
+        const REPLACE = BPF_F_REPLACE;
+        const BEFORE = BPF_F_BEFORE;
+        const AFTER = BPF_F_AFTER;
+        const ID = BPF_F_ID;
+        const FD = BPF_F_LINK;
+    }
+}
+
+#[derive(Debug)]
+/// Defines how to assign a link priorty when using the kernels mprog feature.
+pub enum LinkOrdering {
+    /// Assign the link as the first link.
+    First,
+    /// Assign the link as the last link.
+    Last,
+    /// Assign the link before the given link specified by it's file descriptor.
+    BeforeLink(FdLink),
+    /// Assign the link after the given link specified by it's file descriptor.
+    AfterLink(FdLink),
+    /// Assign the link before the given link specified by it's id.
+    BeforeLinkId(u32),
+    /// Assign the link after the given link specified by it's id.
+    AfterLinkId(u32),
+    /// Assign the link before the given program specified by it's file descriptor.
+    BeforeProgram(Program),
+    /// Assign the link after the given program specified by it's file descriptor.
+    AfterProgram(Program),
+    /// Assign the link before the given program specified by it's id.
+    BeforeProgramID(u32),
+    /// Assign the link after the given program specified by it's id.
+    AfterProgramID(u32),
+}
+
+impl LinkOrdering {
+    pub(crate) fn order(
+        &self,
+    ) -> Result<(Option<u32>, Option<BorrowedFd<'_>>, MprogFlags), ProgramError> {
+        Ok(match self {
+            Self::First => (Some(0), None, MprogFlags::BEFORE),
+            Self::Last => (Some(0), None, MprogFlags::AFTER),
+            Self::BeforeLink(l) => (
+                None,
+                Some(l.fd.as_fd()),
+                MprogFlags::BEFORE | MprogFlags::FD,
+            ),
+            Self::AfterLink(l) => (None, Some(l.fd.as_fd()), MprogFlags::AFTER | MprogFlags::FD),
+            Self::BeforeLinkId(i) => (
+                Some(i.to_owned()),
+                None,
+                MprogFlags::BEFORE | MprogFlags::ID,
+            ),
+            Self::AfterLinkId(i) => (Some(i.to_owned()), None, MprogFlags::AFTER | MprogFlags::ID),
+            Self::BeforeProgram(p) => (
+                None,
+                Some(p.fd()?.as_fd()),
+                MprogFlags::BEFORE | MprogFlags::FD,
+            ),
+            Self::AfterProgram(p) => (
+                None,
+                Some(p.fd()?.as_fd()),
+                MprogFlags::AFTER | MprogFlags::FD,
+            ),
+            Self::BeforeProgramID(i) => (
+                Some(i.to_owned()),
+                None,
+                MprogFlags::BEFORE | MprogFlags::ID,
+            ),
+            Self::AfterProgramID(i) => {
+                (Some(i.to_owned()), None, MprogFlags::AFTER | MprogFlags::ID)
+            }
+        })
+    }
 }
 
 #[cfg(test)]
