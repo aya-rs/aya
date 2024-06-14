@@ -154,10 +154,7 @@ impl KernelVersion {
 
     fn parse_kernel_version_string(s: &str) -> Result<Self, CurrentKernelVersionError> {
         fn parse<T: FromStr<Err = ParseIntError>>(s: Option<&str>) -> Option<T> {
-            match s.map(str::parse).transpose() {
-                Ok(option) => option,
-                Err(ParseIntError { .. }) => None,
-            }
+            s.map(str::parse).transpose().unwrap_or_default()
         }
         let error = || CurrentKernelVersionError::ParseError(s.to_string());
         let mut parts = s.split(|c: char| c == '.' || !c.is_ascii_digit());
