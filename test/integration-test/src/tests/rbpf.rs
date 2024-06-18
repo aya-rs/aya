@@ -81,11 +81,13 @@ fn use_map_with_rbpf() {
         .iter()
         .map(|((section_index, _), _)| *section_index)
         .collect();
+    let ignored_maps = HashMap::new();
     object
         .relocate_maps(
             maps.iter()
                 .map(|(s, (fd, map))| (s.as_ref() as &str, *fd, map)),
             &text_sections,
+            &ignored_maps,
         )
         .expect("Relocation failed");
     // Actually there is no local function call involved.
