@@ -13,6 +13,7 @@ use std::{
 use anyhow::{anyhow, bail, Context as _, Result};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
+use which::which;
 use xtask::{exec, Errors, AYA_BUILD_INTEGRATION_BPF};
 
 #[derive(Parser)]
@@ -55,11 +56,21 @@ pub fn build<F>(target: Option<&str>, f: F) -> Result<Vec<(String, PathBuf)>>
 where
     F: FnOnce(&mut Command) -> &mut Command,
 {
-    // Always use rust-lld and -Zbuild-std in case we're cross-compiling.
+    // Always use lld and -Zbuild-std in case we're cross-compiling.
     let mut cmd = Command::new("cargo");
     cmd.args(["build", "--message-format=json"]);
     if let Some(target) = target {
-        let config = format!("target.{target}.linker = \"rust-lld\"");
+        let linker = if which("clang").is_ok() && which("lld").is_ok() {
+            // If clang and lld are available in the system, use them.
+            "clang"
+        } else {
+            // Otherwise, fall back to rust-lld. However, it's unaware of
+            // system library paths and therefore it might throw "unable to
+            // find library" errors. When experiencing that, better install an
+            // LLVM toolchain.
+            "rust-lld"
+        };
+        let config = format!("target.{target}.linker = \"{linker}\"");
         cmd.args(["--target", target, "--config", &config]);
     }
     f(&mut cmd);
