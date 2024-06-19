@@ -990,6 +990,36 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
     bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
+pub(crate) fn is_map_type_supported(map_type: bpf_map_type) -> bool {
+    map_create(map_type)
+}
+
+pub(crate) fn is_ringbuf_supported() -> bool {
+    map_create(bpf_map_type::BPF_MAP_TYPE_RINGBUF)
+}
+
+fn map_create(map_type: bpf_map_type ) -> bool {
+    let def = obj::Map::Legacy(LegacyMap {
+        def: aya_obj::maps::bpf_map_def {
+             map_type: map_type as u32,
+             key_size: std::mem::size_of::<u32>() as u32,
+             value_size: std::mem::size_of::<u32>() as u32,
+             max_entries: 1,
+             map_flags: 0,
+             id: 0,
+             pinning: aya_obj::maps::PinningType::None,
+        },
+        section_index: 0,
+        section_kind: EbpfSectionKind::Undefined,
+        symbol_index: None,
+        data: vec![],
+    });
+
+    let map = MapData::create(def, "", None);
+
+    map.is_ok()
+}
+
 fn bpf_prog_load(attr: &mut bpf_attr) -> SysResult<OwnedFd> {
     // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) }
@@ -1091,10 +1121,63 @@ pub(crate) fn retry_with_verifier_logs<T>(
 
 #[cfg(test)]
 mod tests {
+    use std::os::fd::IntoRawFd;
+
     use libc::{EBADF, EINVAL};
 
     use super::*;
     use crate::sys::override_syscall;
+
+    #[test]
+    fn test_probe_map_create_success() {
+        override_syscall(|syscall| {
+            match syscall {
+                Syscall::Ebpf{cmd, attr} => {
+                    assert_eq!(cmd, bpf_cmd::BPF_MAP_CREATE);
+
+                    let u = unsafe { &mut attr.__bindgen_anon_1 };
+
+                    assert_eq!(u.map_type, bpf_map_type::BPF_MAP_TYPE_RINGBUF as u32);
+                    assert_eq!(u.key_size, std::mem::size_of::<u32>() as u32);
+                    assert_eq!(u.value_size, std::mem::size_of::<u32>() as u32);
+                }
+                _ => {
+                    panic!();
+                }
+            }
+
+            let fd = std::fs::File::open("/dev/null").unwrap().into_raw_fd();
+            Ok(fd as i64)
+        });
+
+        let supported = map_create(bpf_map_type::BPF_MAP_TYPE_RINGBUF);
+        assert!(supported);
+    }
+
+    #[test]
+    fn test_probe_map_create_failed() {
+        override_syscall(|syscall| {
+            match syscall {
+                Syscall::Ebpf{cmd, attr} => {
+                    assert_eq!(cmd, bpf_cmd::BPF_MAP_CREATE);
+
+                    let u = unsafe { &mut attr.__bindgen_anon_1 };
+
+                    assert_eq!(u.map_type, bpf_map_type::BPF_MAP_TYPE_RINGBUF as u32);
+                    assert_eq!(u.key_size, std::mem::size_of::<u32>() as u32);
+                    assert_eq!(u.value_size, std::mem::size_of::<u32>() as u32);
+                }
+                _ => {
+                    panic!();
+                }
+            }
+
+            Err((-1, std::io::Error::from_raw_os_error(libc::EINVAL)))
+        });
+
+        let supported = map_create(bpf_map_type::BPF_MAP_TYPE_RINGBUF);
+        assert!(!supported);
+    }
 
     #[test]
     fn test_perf_link_supported() {
