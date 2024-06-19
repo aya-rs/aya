@@ -571,10 +571,10 @@ impl<'a> EbpfLoader<'a> {
                     // pin maps in /sys/fs/bpf by default to align with libbpf
                     // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
                     let path: &Path = map_pin_path
-                    .as_deref()
-                    .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
+                        .as_deref()
+                        .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
 
-                MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                    MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
                 }
             };
             map.finalize()?;
