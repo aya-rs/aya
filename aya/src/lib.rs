@@ -86,6 +86,7 @@ pub mod programs;
 pub use programs::loaded_programs;
 mod sys;
 pub mod util;
+pub mod features;
 
 use std::os::fd::{AsFd, BorrowedFd, OwnedFd};
 
