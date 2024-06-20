@@ -11,13 +11,15 @@ enum DisableMapRelocation<'a> {
 
 #[test]
 fn test_ignored_map_relocation_by_type() {
-    let mut ebpf = relocation_load_and_attach("test_ignored_map_relocation", crate::IGNORE_MAP, DisableMapRelocation::ByType(bpf_map_type::BPF_MAP_TYPE_RINGBUF));
+    let mut ebpf = relocation_load_and_attach(
+        "test_ignored_map_relocation",
+        crate::IGNORE_MAP,
+        DisableMapRelocation::ByType(bpf_map_type::BPF_MAP_TYPE_RINGBUF),
+    );
 
-    let perf = ebpf
-        .take_map("PERFBUF");
+    let perf = ebpf.take_map("PERFBUF");
 
-    let ring =  ebpf
-        .take_map("RINGBUF");
+    let ring = ebpf.take_map("RINGBUF");
 
     assert!(perf.is_some());
     assert!(ring.is_none());
@@ -25,13 +27,15 @@ fn test_ignored_map_relocation_by_type() {
 
 #[test]
 fn test_ignored_map_relocation_by_name() {
-    let mut ebpf = relocation_load_and_attach("test_ignored_map_relocation", crate::IGNORE_MAP, DisableMapRelocation::ByName("RINGBUF"));
+    let mut ebpf = relocation_load_and_attach(
+        "test_ignored_map_relocation",
+        crate::IGNORE_MAP,
+        DisableMapRelocation::ByName("RINGBUF"),
+    );
 
-    let perf = ebpf
-        .take_map("PERFBUF");
+    let perf = ebpf.take_map("PERFBUF");
 
-    let ring =  ebpf
-        .take_map("RINGBUF");
+    let ring = ebpf.take_map("RINGBUF");
 
     assert!(perf.is_some());
     assert!(ring.is_none());
@@ -69,7 +73,11 @@ fn text_64_64_reloc() {
     assert_eq!(m.get(&1, 0).unwrap(), 3);
 }
 
-fn relocation_load_and_attach(name: &str, bytes: &[u8], disable_type: DisableMapRelocation) -> Ebpf {
+fn relocation_load_and_attach(
+    name: &str,
+    bytes: &[u8],
+    disable_type: DisableMapRelocation,
+) -> Ebpf {
     let mut ebpf = match disable_type {
         DisableMapRelocation::ByType(bmt) => {
             let mut set = HashSet::new();
@@ -80,13 +88,11 @@ fn relocation_load_and_attach(name: &str, bytes: &[u8], disable_type: DisableMap
                 .load(bytes)
                 .unwrap()
         }
-        DisableMapRelocation::ByName(name) => {
-            EbpfLoader::new()
-                .ignore_maps_by_name(&[name])
-                .set_global("RINGBUF_SUPPORTED", &0, true)
-                .load(bytes)
-                .unwrap()
-        }
+        DisableMapRelocation::ByName(name) => EbpfLoader::new()
+            .ignore_maps_by_name(&[name])
+            .set_global("RINGBUF_SUPPORTED", &0, true)
+            .load(bytes)
+            .unwrap(),
     };
 
     let prog: &mut UProbe = ebpf.program_mut(name).unwrap().try_into().unwrap();

@@ -228,7 +228,6 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
                 index: rel.symbol_index,
             })?;
 
-
         let Some(section_index) = sym.section_index else {
             // this is not a map relocation
             continue;
@@ -240,7 +239,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
         }
 
         let (_name, fd, map) = if ignored_by_symbol.contains(&rel.symbol_index) {
-            continue
+            continue;
         } else if let Some(m) = maps_by_symbol.get(&rel.symbol_index) {
             let map = &m.2;
             debug!(
@@ -252,7 +251,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             debug_assert_eq!(map.symbol_index().unwrap(), rel.symbol_index);
             m
         } else if ignored_by_section.contains(&section_index) {
-            continue
+            continue;
         } else {
             let Some(m) = maps_by_section.get(&section_index) else {
                 debug!("failed relocating map by section index {}", section_index);

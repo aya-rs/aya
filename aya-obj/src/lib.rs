@@ -32,7 +32,7 @@
 //!
 //! ```no_run
 //! use aya_obj::{generated::bpf_insn, Object, Map};
-//! 
+//!
 //! // Parse the object file
 //! let bytes = std::fs::read("program.o").unwrap();
 //! let mut object = Object::parse(&bytes).unwrap();

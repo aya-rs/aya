@@ -21,8 +21,8 @@ use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_map_type::{self, *}, AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE,
-        AYA_PERF_EVENT_IOC_SET_BPF,
+        bpf_map_type::{self, *},
+        AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE, AYA_PERF_EVENT_IOC_SET_BPF,
     },
     maps::{Map, MapData, MapError},
     obj::{
@@ -230,19 +230,19 @@ impl<'a> EbpfLoader<'a> {
 
     /// Allows programs containing unsupported maps for the current kernel to be loaded
     /// by skipping map creation and relocation before loading.
-    /// 
+    ///
     /// This is useful when you have a single ebpf program containing e.g. a `RingBuf`
     /// and a `PerfEventArray` and you decide which one to use before loading the bytecode.
-    /// 
+    ///
     /// Must be used with `.set_global()` to signal if the map is supported in the ebpf program.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```no_run
     /// use aya::EbpfLoader;
     /// use aya_obj::generated::bpf_map_type;
     /// use std::collections::HashSet;
-    /// 
+    ///
     /// let ringbuf_supported = 0;
     /// let mut set = HashSet::new();
     /// set.insert(bpf_map_type::BPF_MAP_TYPE_RINGBUF);
@@ -252,7 +252,7 @@ impl<'a> EbpfLoader<'a> {
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
-    /// 
+    ///
     pub fn ignore_maps_by_type(&mut self, set: HashSet<bpf_map_type>) -> &mut Self {
         self.ignore_maps_by_type = set;
         self
@@ -260,17 +260,17 @@ impl<'a> EbpfLoader<'a> {
 
     /// Allows programs containing unsupported maps for the current kernel to be loaded
     /// by skipping map creation and relocation before loading.
-    /// 
+    ///
     /// This is useful when you have a single ebpf program containing e.g. a `RingBuf`
     /// and a `PerfEventArray` and you decide which one to use before loading the bytecode.
-    /// 
+    ///
     /// Must be used with `.set_global()` to signal if the map is supported in the ebpf program.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```no_run
     /// use aya::EbpfLoader;
-    /// 
+    ///
     /// let ringbuf_supported = 0;
     /// let ebpf = EbpfLoader::new()
     ///     .ignore_maps_by_name(&["RINGBUF"])
@@ -278,7 +278,7 @@ impl<'a> EbpfLoader<'a> {
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
-    /// 
+    ///
     pub fn ignore_maps_by_name(&mut self, name: &'a [&'a str]) -> &mut Self {
         self.ignore_maps_by_name = name;
         self
@@ -531,7 +531,9 @@ impl<'a> EbpfLoader<'a> {
             }
             let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
 
-            if ignore_maps_by_type.contains(&map_type) || ignore_maps_by_name.contains(&name.as_str()) {
+            if ignore_maps_by_type.contains(&map_type)
+                || ignore_maps_by_name.contains(&name.as_str())
+            {
                 ignored_maps.insert(name, obj);
                 // ignore map creation. The map is saved in `ignored_maps` and filtered out
                 // in `relocate_maps()` later on
