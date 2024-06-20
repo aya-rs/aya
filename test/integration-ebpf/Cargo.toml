@@ -25,6 +25,10 @@ name = "map_test"
 path = "src/map_test.rs"
 
 [[bin]]
+name = "inode_storage"
+path = "src/inode_storage.rs"
+
+[[bin]]
 name = "name_test"
 path = "src/name_test.rs"
 

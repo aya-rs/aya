@@ -259,6 +259,40 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::from(t: T) -> T
+pub mod aya_ebpf::maps::inode_storage
+#[repr(transparent)] pub struct aya_ebpf::maps::inode_storage::InodeStorage<V>
+impl<V> aya_ebpf::maps::inode_storage::InodeStorage<V>
+pub unsafe fn aya_ebpf::maps::inode_storage::InodeStorage<V>::get(&self, inode: *mut aya_ebpf_cty::c_void) -> core::option::Option<&V>
+pub unsafe fn aya_ebpf::maps::inode_storage::InodeStorage<V>::get_mut(&self, inode: *mut aya_ebpf_cty::c_void) -> core::option::Option<&mut V>
+pub unsafe fn aya_ebpf::maps::inode_storage::InodeStorage<V>::get_or_insert(&self, inode: *mut aya_ebpf_cty::c_void, initial: &V) -> core::option::Option<&mut V>
+pub fn aya_ebpf::maps::inode_storage::InodeStorage<V>::get_or_insert_ptr(&self, inode: *mut aya_ebpf_cty::c_void, initial: &V) -> core::option::Option<*mut V>
+pub fn aya_ebpf::maps::inode_storage::InodeStorage<V>::get_ptr(&self, inode: *mut aya_ebpf_cty::c_void) -> core::option::Option<*const V>
+pub fn aya_ebpf::maps::inode_storage::InodeStorage<V>::get_ptr_mut(&self, inode: *mut aya_ebpf_cty::c_void) -> core::option::Option<*mut V>
+pub const fn aya_ebpf::maps::inode_storage::InodeStorage<V>::new(flags: u32) -> aya_ebpf::maps::inode_storage::InodeStorage<V>
+pub const fn aya_ebpf::maps::inode_storage::InodeStorage<V>::pinned(flags: u32) -> aya_ebpf::maps::inode_storage::InodeStorage<V>
+pub fn aya_ebpf::maps::inode_storage::InodeStorage<V>::remove(&self, inode: *mut aya_ebpf_cty::c_void) -> core::result::Result<(), aya_ebpf_cty::ad::c_int>
+impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::inode_storage::InodeStorage<T>
+impl<V> !core::marker::Freeze for aya_ebpf::maps::inode_storage::InodeStorage<V>
+impl<V> core::marker::Send for aya_ebpf::maps::inode_storage::InodeStorage<V> where V: core::marker::Send
+impl<V> core::marker::Unpin for aya_ebpf::maps::inode_storage::InodeStorage<V> where V: core::marker::Unpin
+impl<V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::inode_storage::InodeStorage<V>
+impl<V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::inode_storage::InodeStorage<V> where V: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for aya_ebpf::maps::inode_storage::InodeStorage<V> where U: core::convert::From<T>
+pub fn aya_ebpf::maps::inode_storage::InodeStorage<V>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::maps::inode_storage::InodeStorage<V> where U: core::convert::Into<T>
+pub type aya_ebpf::maps::inode_storage::InodeStorage<V>::Error = core::convert::Infallible
+pub fn aya_ebpf::maps::inode_storage::InodeStorage<V>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::inode_storage::InodeStorage<V> where U: core::convert::TryFrom<T>
+pub type aya_ebpf::maps::inode_storage::InodeStorage<V>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::maps::inode_storage::InodeStorage<V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::maps::inode_storage::InodeStorage<V> where T: 'static + core::marker::Sized
+pub fn aya_ebpf::maps::inode_storage::InodeStorage<V>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::inode_storage::InodeStorage<V> where T: core::marker::Sized
+pub fn aya_ebpf::maps::inode_storage::InodeStorage<V>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::inode_storage::InodeStorage<V> where T: core::marker::Sized
+pub fn aya_ebpf::maps::inode_storage::InodeStorage<V>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::maps::inode_storage::InodeStorage<V>
+pub fn aya_ebpf::maps::inode_storage::InodeStorage<V>::from(t: T) -> T
 pub mod aya_ebpf::maps::lpm_trie
 #[repr(packed)] pub struct aya_ebpf::maps::lpm_trie::Key<K>
 pub aya_ebpf::maps::lpm_trie::Key::data: K
