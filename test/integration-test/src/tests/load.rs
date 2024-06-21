@@ -283,6 +283,15 @@ fn unload_kprobe() {
 }
 
 #[test]
+fn memmove() {
+    let mut bpf = Ebpf::load(crate::MEMMOVE_TEST).unwrap();
+    let prog: &mut Xdp = bpf.program_mut("do_dnat").unwrap().try_into().unwrap();
+
+    prog.load().unwrap();
+    assert_loaded("do_dnat");
+}
+
+#[test]
 fn basic_tracepoint() {
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut TracePoint = bpf
