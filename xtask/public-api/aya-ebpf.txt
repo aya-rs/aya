@@ -2736,4 +2736,5 @@ impl aya_ebpf::EbpfContext for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::as_ptr(&self) -> *mut core::ffi::c_void
 pub fn aya_ebpf::check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool
 #[no_mangle] pub unsafe c fn aya_ebpf::memcpy(dest: *mut u8, src: *mut u8, n: usize)
+#[no_mangle] pub unsafe c fn aya_ebpf::memmove(dest: *mut u8, src: *mut u8, n: usize)
 #[no_mangle] pub unsafe c fn aya_ebpf::memset(s: *mut u8, c: aya_ebpf_cty::ad::c_int, n: usize)
