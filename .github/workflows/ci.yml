@@ -72,6 +72,8 @@ jobs:
           - aarch64-unknown-linux-gnu
           - armv7-unknown-linux-gnueabi
           - riscv64gc-unknown-linux-gnu
+          - powerpc64le-unknown-linux-gnu
+          - s390x-unknown-linux-gnu
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -135,6 +137,8 @@ jobs:
           - aarch64
           - arm
           - riscv64
+          - powerpc64
+          - s390x
         target:
           - bpfel-unknown-none
           - bpfeb-unknown-none
