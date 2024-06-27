@@ -547,8 +547,17 @@ mod tests {
         let offset = PAGE_SIZE - mem::size_of::<perf_event_header>() - 2;
         mmapped_buf.mmap_page.data_tail = offset as u64;
         write(&mut mmapped_buf, offset, header);
-        write(&mut mmapped_buf, PAGE_SIZE - 2, 0x0004u16);
-        write(&mut mmapped_buf, 0, 0x0000u16);
+        #[cfg(target_endian = "little")]
+        {
+            write(&mut mmapped_buf, PAGE_SIZE - 2, 0x0004u16);
+            write(&mut mmapped_buf, 0, 0x0000u16);
+        }
+        #[cfg(target_endian = "big")]
+        {
+            write(&mut mmapped_buf, PAGE_SIZE - 2, 0x0000u16);
+            write(&mut mmapped_buf, 0, 0x0004u16);
+        }
+
         write(&mut mmapped_buf, 2, 0xBAADCAFEu32);
 
         let mut out_bufs = [BytesMut::with_capacity(8)];
@@ -579,13 +588,19 @@ mod tests {
                 },
                 size: mem::size_of::<u64>() as u32,
             },
+            #[cfg(target_endian = "little")]
             value: 0xCAFEBABEu32,
+            #[cfg(target_endian = "big")]
+            value: 0xBAADCAFEu32,
         };
 
         let offset = PAGE_SIZE - mem::size_of::<PerfSample<u32>>();
         mmapped_buf.mmap_page.data_tail = offset as u64;
         write(&mut mmapped_buf, offset, sample);
+        #[cfg(target_endian = "little")]
         write(&mut mmapped_buf, 0, 0xBAADCAFEu32);
+        #[cfg(target_endian = "big")]
+        write(&mut mmapped_buf, 0, 0xCAFEBABEu32);
 
         let mut out_bufs = [BytesMut::with_capacity(8)];
 
