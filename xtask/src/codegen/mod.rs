@@ -11,6 +11,8 @@ const SUPPORTED_ARCHS: &[Architecture] = &[
     Architecture::ARMv7,
     Architecture::AArch64,
     Architecture::RISCV64,
+    Architecture::PowerPC64,
+    Architecture::S390X,
 ];
 
 #[derive(Debug, Copy, Clone)]
@@ -19,6 +21,8 @@ pub enum Architecture {
     ARMv7,
     AArch64,
     RISCV64,
+    PowerPC64,
+    S390X,
 }
 
 impl Architecture {
@@ -36,6 +40,8 @@ impl std::str::FromStr for Architecture {
             "armv7" => Architecture::ARMv7,
             "aarch64" => Architecture::AArch64,
             "riscv64" => Architecture::RISCV64,
+            "powerpc64" => Architecture::PowerPC64,
+            "s390x" => Architecture::S390X,
             _ => return Err("invalid architecture"),
         })
     }
@@ -48,6 +54,8 @@ impl std::fmt::Display for Architecture {
             Architecture::ARMv7 => "armv7",
             Architecture::AArch64 => "aarch64",
             Architecture::RISCV64 => "riscv64",
+            Architecture::PowerPC64 => "powerpc64",
+            Architecture::S390X => "s390x",
         })
     }
 }
@@ -67,6 +75,12 @@ pub struct SysrootOptions {
 
     #[arg(long, default_value = "/usr/riscv64-linux-gnu/include", action)]
     riscv64_sysroot: PathBuf,
+
+    #[arg(long, default_value = "/usr/powerpc64le-linux-gnu/include", action)]
+    powerpc64_sysroot: PathBuf,
+
+    #[arg(long, default_value = "/usr/s390x-linux-gnu/include", action)]
+    s390x_sysroot: PathBuf,
 }
 
 #[derive(Parser)]
