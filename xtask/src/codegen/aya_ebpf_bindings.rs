@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fs::create_dir_all,
+    path::{Path, PathBuf},
+};
 
 use anyhow::anyhow;
 use aya_tool::{bindgen, write_to_file_fmt};
@@ -112,6 +115,10 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
         }
 
         let generated = dir.join("src").join(arch.to_string());
+        if !generated.exists() {
+            create_dir_all(&generated)?;
+        }
+
         // write the bindings, with the original helpers removed
         write_to_file_fmt(
             generated.join("bindings.rs"),
