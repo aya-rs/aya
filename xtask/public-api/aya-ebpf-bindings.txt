@@ -7263,9 +7263,7 @@ pub const aya_ebpf_bindings::bindings::SO_BINDTOIFINDEX: u32
 pub const aya_ebpf_bindings::bindings::SO_BPF_EXTENSIONS: u32
 pub const aya_ebpf_bindings::bindings::SO_BROADCAST: u32
 pub const aya_ebpf_bindings::bindings::SO_BSDCOMPAT: u32
-pub const aya_ebpf_bindings::bindings::SO_BUF_LOCK: u32
 pub const aya_ebpf_bindings::bindings::SO_BUSY_POLL: u32
-pub const aya_ebpf_bindings::bindings::SO_BUSY_POLL_BUDGET: u32
 pub const aya_ebpf_bindings::bindings::SO_CNX_ADVICE: u32
 pub const aya_ebpf_bindings::bindings::SO_COOKIE: u32
 pub const aya_ebpf_bindings::bindings::SO_DEBUG: u32
@@ -7284,7 +7282,6 @@ pub const aya_ebpf_bindings::bindings::SO_LOCK_FILTER: u32
 pub const aya_ebpf_bindings::bindings::SO_MARK: u32
 pub const aya_ebpf_bindings::bindings::SO_MAX_PACING_RATE: u32
 pub const aya_ebpf_bindings::bindings::SO_MEMINFO: u32
-pub const aya_ebpf_bindings::bindings::SO_NETNS_COOKIE: u32
 pub const aya_ebpf_bindings::bindings::SO_NOFCS: u32
 pub const aya_ebpf_bindings::bindings::SO_NO_CHECK: u32
 pub const aya_ebpf_bindings::bindings::SO_OOBINLINE: u32
@@ -7295,7 +7292,6 @@ pub const aya_ebpf_bindings::bindings::SO_PEERCRED: u32
 pub const aya_ebpf_bindings::bindings::SO_PEERGROUPS: u32
 pub const aya_ebpf_bindings::bindings::SO_PEERNAME: u32
 pub const aya_ebpf_bindings::bindings::SO_PEERSEC: u32
-pub const aya_ebpf_bindings::bindings::SO_PREFER_BUSY_POLL: u32
 pub const aya_ebpf_bindings::bindings::SO_PRIORITY: u32
 pub const aya_ebpf_bindings::bindings::SO_PROTOCOL: u32
 pub const aya_ebpf_bindings::bindings::SO_RCVBUF: u32

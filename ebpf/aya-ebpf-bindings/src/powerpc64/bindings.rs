@@ -211,6 +211,12 @@ pub const TC_ACT_REDIRECT: u32 = 7;
 pub const TC_ACT_TRAP: u32 = 8;
 pub const TC_ACT_VALUE_MAX: u32 = 8;
 pub const TC_ACT_EXT_VAL_MASK: u32 = 268435455;
+pub const SO_RCVLOWAT: u32 = 16;
+pub const SO_SNDLOWAT: u32 = 17;
+pub const SO_RCVTIMEO_OLD: u32 = 18;
+pub const SO_SNDTIMEO_OLD: u32 = 19;
+pub const SO_PASSCRED: u32 = 20;
+pub const SO_PEERCRED: u32 = 21;
 pub const SOL_SOCKET: u32 = 1;
 pub const SO_DEBUG: u32 = 1;
 pub const SO_REUSEADDR: u32 = 2;
@@ -229,12 +235,6 @@ pub const SO_PRIORITY: u32 = 12;
 pub const SO_LINGER: u32 = 13;
 pub const SO_BSDCOMPAT: u32 = 14;
 pub const SO_REUSEPORT: u32 = 15;
-pub const SO_PASSCRED: u32 = 16;
-pub const SO_PEERCRED: u32 = 17;
-pub const SO_RCVLOWAT: u32 = 18;
-pub const SO_SNDLOWAT: u32 = 19;
-pub const SO_RCVTIMEO_OLD: u32 = 20;
-pub const SO_SNDTIMEO_OLD: u32 = 21;
 pub const SO_SECURITY_AUTHENTICATION: u32 = 22;
 pub const SO_SECURITY_ENCRYPTION_TRANSPORT: u32 = 23;
 pub const SO_SECURITY_ENCRYPTION_NETWORK: u32 = 24;
@@ -283,15 +283,15 @@ pub const SO_DETACH_REUSEPORT_BPF: u32 = 68;
 pub const SO_TIMESTAMP: u32 = 29;
 pub const SO_TIMESTAMPNS: u32 = 35;
 pub const SO_TIMESTAMPING: u32 = 37;
-pub const SO_RCVTIMEO: u32 = 20;
-pub const SO_SNDTIMEO: u32 = 21;
+pub const SO_RCVTIMEO: u32 = 18;
+pub const SO_SNDTIMEO: u32 = 19;
 pub type __u8 = ::aya_ebpf_cty::c_uchar;
 pub type __s16 = ::aya_ebpf_cty::c_short;
 pub type __u16 = ::aya_ebpf_cty::c_ushort;
 pub type __s32 = ::aya_ebpf_cty::c_int;
 pub type __u32 = ::aya_ebpf_cty::c_uint;
-pub type __s64 = ::aya_ebpf_cty::c_longlong;
-pub type __u64 = ::aya_ebpf_cty::c_ulonglong;
+pub type __s64 = ::aya_ebpf_cty::c_long;
+pub type __u64 = ::aya_ebpf_cty::c_ulong;
 pub type __be16 = __u16;
 pub type __be32 = __u32;
 pub type __wsum = __u32;
@@ -303,11 +303,6 @@ pub struct bpf_perf_event_data {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct linux_binprm {
-    _unused: [u8; 0],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct pt_regs {
     _unused: [u8; 0],
 }
 #[repr(C)]
@@ -2740,11 +2735,20 @@ pub struct bpf_iter_num {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct user_pt_regs {
-    pub regs: [__u64; 31usize],
-    pub sp: __u64,
-    pub pc: __u64,
-    pub pstate: __u64,
+pub struct pt_regs {
+    pub gpr: [::aya_ebpf_cty::c_ulong; 32usize],
+    pub nip: ::aya_ebpf_cty::c_ulong,
+    pub msr: ::aya_ebpf_cty::c_ulong,
+    pub orig_gpr3: ::aya_ebpf_cty::c_ulong,
+    pub ctr: ::aya_ebpf_cty::c_ulong,
+    pub link: ::aya_ebpf_cty::c_ulong,
+    pub xer: ::aya_ebpf_cty::c_ulong,
+    pub ccr: ::aya_ebpf_cty::c_ulong,
+    pub softe: ::aya_ebpf_cty::c_ulong,
+    pub trap: ::aya_ebpf_cty::c_ulong,
+    pub dar: ::aya_ebpf_cty::c_ulong,
+    pub dsisr: ::aya_ebpf_cty::c_ulong,
+    pub result: ::aya_ebpf_cty::c_ulong,
 }
 pub type sa_family_t = ::aya_ebpf_cty::c_ushort;
 #[repr(C)]

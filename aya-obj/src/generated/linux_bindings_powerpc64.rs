@@ -183,8 +183,8 @@ pub type __s16 = ::core::ffi::c_short;
 pub type __u16 = ::core::ffi::c_ushort;
 pub type __s32 = ::core::ffi::c_int;
 pub type __u32 = ::core::ffi::c_uint;
-pub type __s64 = ::core::ffi::c_longlong;
-pub type __u64 = ::core::ffi::c_ulonglong;
+pub type __s64 = ::core::ffi::c_long;
+pub type __u64 = ::core::ffi::c_ulong;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct bpf_insn {
@@ -2420,6 +2420,6 @@ pub const TCA_INGRESS_BLOCK: _bindgen_ty_170 = 13;
 pub const TCA_EGRESS_BLOCK: _bindgen_ty_170 = 14;
 pub const __TCA_MAX: _bindgen_ty_170 = 15;
 pub type _bindgen_ty_170 = ::core::ffi::c_uint;
-pub const AYA_PERF_EVENT_IOC_ENABLE: ::core::ffi::c_int = 9216;
-pub const AYA_PERF_EVENT_IOC_DISABLE: ::core::ffi::c_int = 9217;
-pub const AYA_PERF_EVENT_IOC_SET_BPF: ::core::ffi::c_int = 1074013192;
+pub const AYA_PERF_EVENT_IOC_ENABLE: ::core::ffi::c_int = 536880128;
+pub const AYA_PERF_EVENT_IOC_DISABLE: ::core::ffi::c_int = 536880129;
+pub const AYA_PERF_EVENT_IOC_SET_BPF: ::core::ffi::c_int = -2147212280;
