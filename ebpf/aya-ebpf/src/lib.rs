@@ -73,7 +73,31 @@ pub unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
 
 #[no_mangle]
 pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *mut u8, n: usize) {
+    copy_forward(dest, src, n);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn memmove(dest: *mut u8, src: *mut u8, n: usize) {
+    let delta = (dest as usize).wrapping_sub(src as usize);
+    if delta >= n {
+        // We can copy forwards because either dest is far enough ahead of src,
+        // or src is ahead of dest (and delta overflowed).
+        copy_forward(dest, src, n);
+    } else {
+        copy_backward(dest, src, n);
+    }
+}
+
+#[inline(always)]
+unsafe fn copy_forward(dest: *mut u8, src: *mut u8, n: usize) {
     for i in 0..n {
+        *dest.add(i) = *src.add(i);
+    }
+}
+
+#[inline(always)]
+unsafe fn copy_backward(dest: *mut u8, src: *mut u8, n: usize) {
+    for i in (0..n).rev() {
         *dest.add(i) = *src.add(i);
     }
 }
