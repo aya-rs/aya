@@ -21,8 +21,8 @@ use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_map_type, bpf_map_type::*, AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE,
-        AYA_PERF_EVENT_IOC_SET_BPF,
+        bpf_map_type::{self, *},
+        AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE, AYA_PERF_EVENT_IOC_SET_BPF,
     },
     maps::{Map, MapData, MapError},
     obj::{
@@ -137,6 +137,8 @@ pub struct EbpfLoader<'a> {
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
+    ignore_maps_by_type: HashSet<bpf_map_type>,
+    ignore_maps_by_name: &'a [&'a str],
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -175,6 +177,8 @@ impl<'a> EbpfLoader<'a> {
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
             allow_unsupported_maps: false,
+            ignore_maps_by_type: HashSet::new(),
+            ignore_maps_by_name: &[],
         }
     }
 
@@ -221,6 +225,62 @@ impl<'a> EbpfLoader<'a> {
     ///
     pub fn allow_unsupported_maps(&mut self) -> &mut Self {
         self.allow_unsupported_maps = true;
+        self
+    }
+
+    /// Allows programs containing unsupported maps for the current kernel to be loaded
+    /// by skipping map creation and relocation before loading.
+    ///
+    /// This is useful when you have a single ebpf program containing e.g. a `RingBuf`
+    /// and a `PerfEventArray` and you decide which one to use before loading the bytecode.
+    ///
+    /// Must be used with `.set_global()` to signal if the map is supported in the ebpf program.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::EbpfLoader;
+    /// use aya_obj::generated::bpf_map_type;
+    /// use std::collections::HashSet;
+    ///
+    /// let ringbuf_supported = 0;
+    /// let mut set = HashSet::new();
+    /// set.insert(bpf_map_type::BPF_MAP_TYPE_RINGBUF);
+    /// let ebpf = EbpfLoader::new()
+    ///     .ignore_maps_by_type(set)
+    ///     .set_global("RINGBUF_SUPPORTED", &ringbuf_supported, true)
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    ///
+    pub fn ignore_maps_by_type(&mut self, set: HashSet<bpf_map_type>) -> &mut Self {
+        self.ignore_maps_by_type = set;
+        self
+    }
+
+    /// Allows programs containing unsupported maps for the current kernel to be loaded
+    /// by skipping map creation and relocation before loading.
+    ///
+    /// This is useful when you have a single ebpf program containing e.g. a `RingBuf`
+    /// and a `PerfEventArray` and you decide which one to use before loading the bytecode.
+    ///
+    /// Must be used with `.set_global()` to signal if the map is supported in the ebpf program.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::EbpfLoader;
+    ///
+    /// let ringbuf_supported = 0;
+    /// let ebpf = EbpfLoader::new()
+    ///     .ignore_maps_by_name(&["RINGBUF"])
+    ///     .set_global("RINGBUF_SUPPORTED", &ringbuf_supported, true)
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    ///
+    pub fn ignore_maps_by_name(&mut self, name: &'a [&'a str]) -> &mut Self {
+        self.ignore_maps_by_name = name;
         self
     }
 
@@ -394,6 +454,8 @@ impl<'a> EbpfLoader<'a> {
             extensions,
             verifier_log_level,
             allow_unsupported_maps,
+            ignore_maps_by_type,
+            ignore_maps_by_name,
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
@@ -459,12 +521,25 @@ impl<'a> EbpfLoader<'a> {
             obj.relocate_btf(btf)?;
         }
         let mut maps = HashMap::new();
+        let mut ignored_maps = HashMap::new();
+
         for (name, mut obj) in obj.maps.drain() {
             if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
                 (FEATURES.bpf_global_data(), obj.section_kind())
             {
                 continue;
             }
+            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
+
+            if ignore_maps_by_type.contains(&map_type)
+                || ignore_maps_by_name.contains(&name.as_str())
+            {
+                ignored_maps.insert(name, obj);
+                // ignore map creation. The map is saved in `ignored_maps` and filtered out
+                // in `relocate_maps()` later on
+                continue;
+            }
+
             let num_cpus = || -> Result<u32, EbpfError> {
                 Ok(possible_cpus()
                     .map_err(|error| EbpfError::FileError {
@@ -473,7 +548,6 @@ impl<'a> EbpfLoader<'a> {
                     })?
                     .len() as u32)
             };
-            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
             if let Some(max_entries) = max_entries_override(
                 map_type,
                 max_entries.get(name.as_str()).copied(),
@@ -498,7 +572,7 @@ impl<'a> EbpfLoader<'a> {
                 PinningType::ByName => {
                     // pin maps in /sys/fs/bpf by default to align with libbpf
                     // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
-                    let path = map_pin_path
+                    let path: &Path = map_pin_path
                         .as_deref()
                         .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
 
@@ -508,7 +582,6 @@ impl<'a> EbpfLoader<'a> {
             map.finalize()?;
             maps.insert(name, map);
         }
-
         let text_sections = obj
             .functions
             .keys()
@@ -519,6 +592,7 @@ impl<'a> EbpfLoader<'a> {
             maps.iter()
                 .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
+            &ignored_maps,
         )?;
         obj.relocate_calls(&text_sections)?;
         obj.sanitize_functions(&FEATURES);

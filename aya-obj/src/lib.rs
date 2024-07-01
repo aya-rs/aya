@@ -31,7 +31,7 @@
 //! This example loads a simple eBPF program and runs it with [rbpf].
 //!
 //! ```no_run
-//! use aya_obj::{generated::bpf_insn, Object};
+//! use aya_obj::{generated::bpf_insn, Object, Map};
 //!
 //! // Parse the object file
 //! let bytes = std::fs::read("program.o").unwrap();
@@ -39,10 +39,14 @@
 //! // Relocate the programs
 //! #[cfg(feature = "std")]
 //! let text_sections = std::collections::HashSet::new();
+//! #[cfg(feature = "std")]
+//! let ignore_maps = std::collections::HashMap::new();
 //! #[cfg(not(feature = "std"))]
 //! let text_sections = hashbrown::HashSet::new();
+//! #[cfg(not(feature = "std"))]
+//! let ignore_maps = hashbrown::HashMap::new();
 //! object.relocate_calls(&text_sections).unwrap();
-//! object.relocate_maps(std::iter::empty(), &text_sections).unwrap();
+//! object.relocate_maps(std::iter::empty(), &text_sections, &ignore_maps).unwrap();
 //!
 //! // Run with rbpf
 //! let function = object.functions.get(&object.programs["prog_name"].function_key()).unwrap();
