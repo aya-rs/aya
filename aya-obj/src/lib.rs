@@ -91,10 +91,12 @@ pub mod maps;
 pub mod obj;
 pub mod programs;
 pub mod relocation;
+pub mod stats;
 mod util;
 
 pub use maps::Map;
 pub use obj::*;
+pub use stats::BpfStatsType;
 
 /// An error returned from the verifier.
 ///

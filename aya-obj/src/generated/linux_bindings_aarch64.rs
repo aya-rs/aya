@@ -476,6 +476,11 @@ pub const BPF_F_TOKEN_FD: _bindgen_ty_5 = 65536;
 pub const BPF_F_SEGV_ON_FAULT: _bindgen_ty_5 = 131072;
 pub const BPF_F_NO_USER_CONV: _bindgen_ty_5 = 262144;
 pub type _bindgen_ty_5 = ::core::ffi::c_uint;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum bpf_stats_type {
+    BPF_STATS_RUN_TIME = 0,
+}
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union bpf_attr {
