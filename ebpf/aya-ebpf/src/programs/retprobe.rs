@@ -1,9 +1,15 @@
 use core::ffi::c_void;
 
-#[cfg(not(any(bpf_target_arch = "aarch64", bpf_target_arch = "riscv64")))]
+#[cfg(any(
+    bpf_target_arch = "x86_64",
+    bpf_target_arch = "arm",
+    bpf_target_arch = "powerpc64"
+))]
 use crate::bindings::pt_regs;
-#[cfg(bpf_target_arch = "aarch64")]
+// aarch64 uses user_pt_regs instead of pt_regs
+#[cfg(any(bpf_target_arch = "aarch64", bpf_target_arch = "s390x"))]
 use crate::bindings::user_pt_regs as pt_regs;
+// riscv64 uses user_regs_struct instead of pt_regs
 #[cfg(bpf_target_arch = "riscv64")]
 use crate::bindings::user_regs_struct as pt_regs;
 use crate::{args::FromPtRegs, EbpfContext};
