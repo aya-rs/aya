@@ -35,7 +35,7 @@ impl RetProbeContext {
     /// }
     /// ```
     pub fn ret<T: FromPtRegs>(&self) -> Option<T> {
-        T::from_retval(unsafe { &*self.regs })
+        T::from_retval(self.regs)
     }
 }
 
