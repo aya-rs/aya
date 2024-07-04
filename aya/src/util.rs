@@ -151,7 +151,7 @@ impl KernelVersion {
             return Err(io::Error::last_os_error().into());
         }
 
-        if let Some(v) = Self::get_debian_kernel_version(&info)? {
+        if let Ok(Some(v)) = Self::get_debian_kernel_version(&info) {
             return Ok(v);
         }
 
