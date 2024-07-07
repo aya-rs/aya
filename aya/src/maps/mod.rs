@@ -59,6 +59,7 @@ use std::{
     ptr,
 };
 
+use aya_obj::generated::bpf_map_type;
 use libc::{getrlimit, rlim_t, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
 use obj::maps::InvalidMapTypeError;
@@ -960,6 +961,12 @@ impl MapInfo {
     /// [`bpf_map_type`](https://elixir.bootlin.com/linux/v6.4.4/source/include/uapi/linux/bpf.h#L905).
     pub fn map_type(&self) -> u32 {
         self.0.type_
+    }
+
+    /// The map type as defined by the linux kernel enum
+    /// [`bpf_map_type`](https://elixir.bootlin.com/linux/v6.4.4/source/include/uapi/linux/bpf.h#L905).
+    pub fn map_type_enum(&self) -> bpf_map_type {
+        bpf_map_type::try_from(self.0.type_).unwrap_or(bpf_map_type::__MAX_BPF_MAP_TYPE)
     }
 
     /// The key size for this map.

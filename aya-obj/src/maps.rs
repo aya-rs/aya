@@ -5,7 +5,7 @@ use core::mem;
 
 #[cfg(not(feature = "std"))]
 use crate::std;
-use crate::EbpfSectionKind;
+use crate::{generated::bpf_map_type::*, EbpfSectionKind};
 
 /// Invalid map type encontered
 pub struct InvalidMapTypeError {
@@ -17,7 +17,6 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
     type Error = InvalidMapTypeError;
 
     fn try_from(map_type: u32) -> Result<Self, Self::Error> {
-        use crate::generated::bpf_map_type::*;
         Ok(match map_type {
             x if x == BPF_MAP_TYPE_UNSPEC as u32 => BPF_MAP_TYPE_UNSPEC,
             x if x == BPF_MAP_TYPE_HASH as u32 => BPF_MAP_TYPE_HASH,
@@ -31,7 +30,6 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
             x if x == BPF_MAP_TYPE_LRU_HASH as u32 => BPF_MAP_TYPE_LRU_HASH,
             x if x == BPF_MAP_TYPE_LRU_PERCPU_HASH as u32 => BPF_MAP_TYPE_LRU_PERCPU_HASH,
             x if x == BPF_MAP_TYPE_LPM_TRIE as u32 => BPF_MAP_TYPE_LPM_TRIE,
-            x if x == BPF_MAP_TYPE_BLOOM_FILTER as u32 => BPF_MAP_TYPE_BLOOM_FILTER,
             x if x == BPF_MAP_TYPE_ARRAY_OF_MAPS as u32 => BPF_MAP_TYPE_ARRAY_OF_MAPS,
             x if x == BPF_MAP_TYPE_HASH_OF_MAPS as u32 => BPF_MAP_TYPE_HASH_OF_MAPS,
             x if x == BPF_MAP_TYPE_DEVMAP as u32 => BPF_MAP_TYPE_DEVMAP,
@@ -42,7 +40,6 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
             x if x == BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED as u32 => {
                 BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED
             }
-            x if x == BPF_MAP_TYPE_CGRP_STORAGE as u32 => BPF_MAP_TYPE_CGRP_STORAGE,
             x if x == BPF_MAP_TYPE_REUSEPORT_SOCKARRAY as u32 => BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
             x if x == BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED as u32 => {
                 BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED
@@ -58,6 +55,7 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
             x if x == BPF_MAP_TYPE_BLOOM_FILTER as u32 => BPF_MAP_TYPE_BLOOM_FILTER,
             x if x == BPF_MAP_TYPE_USER_RINGBUF as u32 => BPF_MAP_TYPE_USER_RINGBUF,
             x if x == BPF_MAP_TYPE_CGRP_STORAGE as u32 => BPF_MAP_TYPE_CGRP_STORAGE,
+            x if x == BPF_MAP_TYPE_ARENA as u32 => BPF_MAP_TYPE_ARENA,
             _ => return Err(InvalidMapTypeError { map_type }),
         })
     }
@@ -289,4 +287,50 @@ pub struct BtfMap {
     pub(crate) section_index: usize,
     pub(crate) symbol_index: usize,
     pub(crate) data: Vec<u8>,
+}
+
+impl core::fmt::Display for crate::generated::bpf_map_type {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                BPF_MAP_TYPE_UNSPEC => "Unspec",
+                BPF_MAP_TYPE_HASH => "Hash",
+                BPF_MAP_TYPE_ARRAY => "Array",
+                BPF_MAP_TYPE_PROG_ARRAY => "ProgArray",
+                BPF_MAP_TYPE_PERF_EVENT_ARRAY => "PerfEventArray",
+                BPF_MAP_TYPE_PERCPU_HASH => "PerCpuHash",
+                BPF_MAP_TYPE_PERCPU_ARRAY => "PerCpuArray",
+                BPF_MAP_TYPE_STACK_TRACE => "StackTrace",
+                BPF_MAP_TYPE_CGROUP_ARRAY => "CgroupArray",
+                BPF_MAP_TYPE_LRU_HASH => "LruHash",
+                BPF_MAP_TYPE_LRU_PERCPU_HASH => "LruPerCpuHash",
+                BPF_MAP_TYPE_LPM_TRIE => "LpmTrie",
+                BPF_MAP_TYPE_ARRAY_OF_MAPS => "ArrayOfMaps",
+                BPF_MAP_TYPE_HASH_OF_MAPS => "HashOfMaps",
+                BPF_MAP_TYPE_DEVMAP => "DevMap",
+                BPF_MAP_TYPE_SOCKMAP => "SockMap",
+                BPF_MAP_TYPE_CPUMAP => "CpuMap",
+                BPF_MAP_TYPE_XSKMAP => "XskMap",
+                BPF_MAP_TYPE_SOCKHASH => "SockHash",
+                BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => "CgroupStorageDeprecated",
+                BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => "ReusePortSockArray",
+                BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED => "PerCpuCgroupStorageDeprecated",
+                BPF_MAP_TYPE_QUEUE => "Queue",
+                BPF_MAP_TYPE_STACK => "Stack",
+                BPF_MAP_TYPE_SK_STORAGE => "SkStorage",
+                BPF_MAP_TYPE_DEVMAP_HASH => "DevMapHash",
+                BPF_MAP_TYPE_STRUCT_OPS => "StructOps",
+                BPF_MAP_TYPE_RINGBUF => "RingBuf",
+                BPF_MAP_TYPE_INODE_STORAGE => "InodeStorage",
+                BPF_MAP_TYPE_TASK_STORAGE => "TaskStorage",
+                BPF_MAP_TYPE_BLOOM_FILTER => "BloomFilter",
+                BPF_MAP_TYPE_USER_RINGBUF => "UserRingBuf",
+                BPF_MAP_TYPE_CGRP_STORAGE => "CgrpStorage",
+                BPF_MAP_TYPE_ARENA => "Arena",
+                __MAX_BPF_MAP_TYPE => "MaxMapType",
+            }
+        )
+    }
 }
