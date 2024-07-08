@@ -7884,6 +7884,8 @@ pub fn aya::programs::ProgramInfo::name(&self) -> &[u8]
 pub fn aya::programs::ProgramInfo::name_as_str(&self) -> core::option::Option<&str>
 pub fn aya::programs::ProgramInfo::program_type(&self) -> u32
 pub fn aya::programs::ProgramInfo::program_type_enum(&self) -> aya_obj::generated::linux_bindings_x86_64::bpf_prog_type
+pub fn aya::programs::ProgramInfo::run_cnt(&self) -> u64
+pub fn aya::programs::ProgramInfo::run_time_ns(&self) -> u64
 pub fn aya::programs::ProgramInfo::size_jitted(&self) -> u32
 pub fn aya::programs::ProgramInfo::size_translated(&self) -> u32
 pub fn aya::programs::ProgramInfo::tag(&self) -> u64
@@ -8690,6 +8692,7 @@ pub aya::EbpfError::NoBTF
 pub aya::EbpfError::ParseError(aya_obj::obj::ParseError)
 pub aya::EbpfError::ProgramError(aya::programs::ProgramError)
 pub aya::EbpfError::RelocationError(aya_obj::relocation::EbpfRelocationError)
+pub aya::EbpfError::SyscallError(crate::sys::SyscallError)
 pub aya::EbpfError::UnexpectedPinningType
 pub aya::EbpfError::UnexpectedPinningType::name: u32
 impl core::convert::From<aya::maps::MapError> for aya::EbpfError
@@ -8736,6 +8739,7 @@ impl<T> core::convert::From<T> for aya::EbpfError
 pub fn aya::EbpfError::from(t: T) -> T
 pub struct aya::Ebpf
 impl aya::Ebpf
+pub fn aya::Ebpf::enable_stats_fd(stats_type: aya_obj::stats::BpfStatsType) -> core::result::Result<std::os::fd::owned::OwnedFd, SyscallError>
 pub fn aya::Ebpf::load(data: &[u8]) -> core::result::Result<Self, aya::EbpfError>
 pub fn aya::Ebpf::load_file<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::EbpfError>
 pub fn aya::Ebpf::map(&self, name: &str) -> core::option::Option<&aya::maps::Map>

@@ -98,6 +98,8 @@ fn list_loaded_programs() {
     prog.verified_instruction_count();
     prog.loaded_at();
     prog.fd().unwrap();
+    prog.run_time_ns();
+    prog.run_cnt();
 }
 
 #[test]

@@ -8,6 +8,7 @@ use std::{
 };
 
 use assert_matches::assert_matches;
+use aya_obj::generated::bpf_stats_type;
 use libc::{ENOENT, ENOSPC};
 use obj::{
     btf::{BtfEnum64, Enum64},
@@ -1054,6 +1055,20 @@ pub(crate) fn iter_link_ids() -> impl Iterator<Item = Result<u32, SyscallError>>
 
 pub(crate) fn iter_map_ids() -> impl Iterator<Item = Result<u32, SyscallError>> {
     iter_obj_ids(bpf_cmd::BPF_MAP_GET_NEXT_ID, "bpf_map_get_next_id")
+}
+
+pub(crate) fn bpf_enable_stats(bpf_stats_type: bpf_stats_type) -> Result<OwnedFd, SyscallError> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    attr.enable_stats.type_ = bpf_stats_type as u32;
+
+    // SAFETY: BPF_ENABLE_STATS returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_ENABLE_STATS, &mut attr) }.map_err(|(code, io_error)| {
+        assert_eq!(code, -1);
+        SyscallError {
+            call: "bpf_enable_stats",
+            io_error,
+        }
+    })
 }
 
 pub(crate) fn retry_with_verifier_logs<T>(
