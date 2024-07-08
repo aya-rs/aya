@@ -1523,7 +1523,11 @@ pub fn aya_obj::generated::bpf_link_type::clone(&self) -> aya_obj::generated::bp
 impl core::cmp::Eq for aya_obj::generated::bpf_link_type
 impl core::cmp::PartialEq for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::eq(&self, other: &aya_obj::generated::bpf_link_type) -> bool
+impl core::convert::From<u32> for aya_obj::generated::bpf_link_type
+pub fn aya_obj::generated::bpf_link_type::from(link_type: u32) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_link_type
+pub fn aya_obj::generated::bpf_link_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
@@ -1547,6 +1551,8 @@ impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_link_type where T: co
 pub type aya_obj::generated::bpf_link_type::Owned = T
 pub fn aya_obj::generated::bpf_link_type::clone_into(&self, target: &mut T)
 pub fn aya_obj::generated::bpf_link_type::to_owned(&self) -> T
+impl<T> alloc::string::ToString for aya_obj::generated::bpf_link_type where T: core::fmt::Display + core::marker::Sized
+pub fn aya_obj::generated::bpf_link_type::to_string(&self) -> alloc::string::String
 impl<T> core::any::Any for aya_obj::generated::bpf_link_type where T: 'static + core::marker::Sized
 pub fn aya_obj::generated::bpf_link_type::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_link_type where T: core::marker::Sized
@@ -1605,6 +1611,8 @@ pub type aya_obj::generated::bpf_map_type::Error = aya_obj::maps::InvalidMapType
 pub fn aya_obj::generated::bpf_map_type::try_from(map_type: u32) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya_obj::generated::bpf_map_type
 pub fn aya_obj::generated::bpf_map_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya_obj::generated::bpf_map_type
+pub fn aya_obj::generated::bpf_map_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya_obj::generated::bpf_map_type
 pub fn aya_obj::generated::bpf_map_type::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for aya_obj::generated::bpf_map_type
@@ -1627,6 +1635,8 @@ impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_map_type where T: cor
 pub type aya_obj::generated::bpf_map_type::Owned = T
 pub fn aya_obj::generated::bpf_map_type::clone_into(&self, target: &mut T)
 pub fn aya_obj::generated::bpf_map_type::to_owned(&self) -> T
+impl<T> alloc::string::ToString for aya_obj::generated::bpf_map_type where T: core::fmt::Display + core::marker::Sized
+pub fn aya_obj::generated::bpf_map_type::to_string(&self) -> alloc::string::String
 impl<T> core::any::Any for aya_obj::generated::bpf_map_type where T: 'static + core::marker::Sized
 pub fn aya_obj::generated::bpf_map_type::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_map_type where T: core::marker::Sized
@@ -6270,6 +6280,7 @@ pub type aya_obj::generated::_bindgen_ty_7 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_8 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_9 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_92 = core::ffi::c_uint
+pub mod aya_obj::links
 pub mod aya_obj::maps
 pub enum aya_obj::maps::Map
 pub aya_obj::maps::Map::Btf(aya_obj::maps::BtfMap)
