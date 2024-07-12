@@ -7,6 +7,7 @@ use std::{
 };
 
 use aya::{
+    features,
     maps::Array,
     programs::{
         links::{FdLink, PinnedLink},
@@ -385,6 +386,7 @@ fn pin_link() {
 
 #[test]
 fn pin_lifecycle() {
+    let features = features(None);
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 18, 0) {
         eprintln!("skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb");
@@ -404,7 +406,13 @@ fn pin_lifecycle() {
 
     // 2. Load program from bpffs but don't attach it
     {
-        let _ = Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog", XdpAttachType::Interface).unwrap();
+        let _ = Xdp::from_pin(
+            "/sys/fs/bpf/aya-xdp-test-prog",
+            XdpAttachType::Interface,
+            None,
+            features.clone(),
+        )
+        .unwrap();
     }
 
     // should still be loaded since prog was pinned
@@ -412,8 +420,13 @@ fn pin_lifecycle() {
 
     // 3. Load program from bpffs and attach
     {
-        let mut prog =
-            Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog", XdpAttachType::Interface).unwrap();
+        let mut prog = Xdp::from_pin(
+            "/sys/fs/bpf/aya-xdp-test-prog",
+            XdpAttachType::Interface,
+            None,
+            features.clone(),
+        )
+        .unwrap();
         let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
@@ -446,6 +459,7 @@ fn pin_lifecycle() {
 
 #[test]
 fn pin_lifecycle_tracepoint() {
+    let features = features(None);
     // 1. Load Program and Pin
     {
         let mut bpf = Ebpf::load(crate::TEST).unwrap();
@@ -463,7 +477,12 @@ fn pin_lifecycle_tracepoint() {
 
     // 2. Load program from bpffs but don't attach it
     {
-        let _ = TracePoint::from_pin("/sys/fs/bpf/aya-tracepoint-test-prog").unwrap();
+        let _ = TracePoint::from_pin(
+            "/sys/fs/bpf/aya-tracepoint-test-prog",
+            None,
+            features.clone(),
+        )
+        .unwrap();
     }
 
     // should still be loaded since prog was pinned
@@ -471,7 +490,8 @@ fn pin_lifecycle_tracepoint() {
 
     // 3. Load program from bpffs and attach
     {
-        let mut prog = TracePoint::from_pin("/sys/fs/bpf/aya-tracepoint-test-prog").unwrap();
+        let mut prog =
+            TracePoint::from_pin("/sys/fs/bpf/aya-tracepoint-test-prog", None, features).unwrap();
         let link_id = prog.attach("syscalls", "sys_enter_kill").unwrap();
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
@@ -500,6 +520,7 @@ fn pin_lifecycle_tracepoint() {
 
 #[test]
 fn pin_lifecycle_kprobe() {
+    let features = features(None);
     // 1. Load Program and Pin
     {
         let mut bpf = Ebpf::load(crate::TEST).unwrap();
@@ -516,6 +537,8 @@ fn pin_lifecycle_kprobe() {
         let _ = KProbe::from_pin(
             "/sys/fs/bpf/aya-kprobe-test-prog",
             aya::programs::ProbeKind::KProbe,
+            None,
+            features.clone(),
         )
         .unwrap();
     }
@@ -528,6 +551,8 @@ fn pin_lifecycle_kprobe() {
         let mut prog = KProbe::from_pin(
             "/sys/fs/bpf/aya-kprobe-test-prog",
             aya::programs::ProbeKind::KProbe,
+            None,
+            features.clone(),
         )
         .unwrap();
         let link_id = prog.attach("try_to_wake_up", 0).unwrap();
@@ -564,6 +589,7 @@ extern "C" fn uprobe_function() {
 
 #[test]
 fn pin_lifecycle_uprobe() {
+    let features = features(None);
     const FIRST_PIN_PATH: &str = "/sys/fs/bpf/aya-uprobe-test-prog-1";
     const SECOND_PIN_PATH: &str = "/sys/fs/bpf/aya-uprobe-test-prog-2";
 
@@ -580,7 +606,13 @@ fn pin_lifecycle_uprobe() {
 
     // 2. Load program from bpffs but don't attach it
     {
-        let _ = UProbe::from_pin(FIRST_PIN_PATH, aya::programs::ProbeKind::UProbe).unwrap();
+        let _ = UProbe::from_pin(
+            FIRST_PIN_PATH,
+            aya::programs::ProbeKind::UProbe,
+            None,
+            features.clone(),
+        )
+        .unwrap();
     }
 
     // should still be loaded since prog was pinned
@@ -588,7 +620,13 @@ fn pin_lifecycle_uprobe() {
 
     // 3. Load program from bpffs and attach
     {
-        let mut prog = UProbe::from_pin(FIRST_PIN_PATH, aya::programs::ProbeKind::UProbe).unwrap();
+        let mut prog = UProbe::from_pin(
+            FIRST_PIN_PATH,
+            aya::programs::ProbeKind::UProbe,
+            None,
+            features.clone(),
+        )
+        .unwrap();
         let link_id = prog
             .attach(Some("uprobe_function"), 0, "/proc/self/exe", None)
             .unwrap();

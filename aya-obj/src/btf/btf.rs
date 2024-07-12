@@ -160,7 +160,7 @@ pub enum BtfError {
 }
 
 /// Available BTF features
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 #[allow(missing_docs)]
 pub struct BtfFeatures {
     btf_func: bool,

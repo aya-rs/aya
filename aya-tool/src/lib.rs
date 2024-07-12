@@ -4,6 +4,7 @@ use std::{
     path::Path,
 };
 
+pub mod args;
 pub mod bindgen;
 pub mod generate;
 pub mod rustfmt;

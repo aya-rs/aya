@@ -89,7 +89,7 @@ impl TracePoint {
                 io_error,
             })?;
 
-        let link = perf_attach(prog_fd, fd)?;
+        let link = perf_attach(prog_fd, fd, &self.data.features)?;
         self.data.links.insert(TracePointLink::new(link))
     }
 

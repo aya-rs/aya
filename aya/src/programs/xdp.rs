@@ -4,10 +4,12 @@ use std::{
     ffi::CString,
     hash::Hash,
     io,
-    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, OwnedFd, RawFd},
     path::Path,
+    sync::Arc,
 };
 
+use aya_obj::Features;
 use libc::if_nametoindex;
 use thiserror::Error;
 
@@ -183,8 +185,11 @@ impl Xdp {
     pub fn from_pin<P: AsRef<Path>>(
         path: P,
         attach_type: XdpAttachType,
+        token_fd: Option<Arc<OwnedFd>>,
+        features: Features,
     ) -> Result<Self, ProgramError> {
-        let mut data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        let mut data =
+            ProgramData::from_pinned_path(path, VerifierLogLevel::default(), token_fd, features)?;
         data.expected_attach_type = Some(attach_type.into());
         Ok(Self { data, attach_type })
     }

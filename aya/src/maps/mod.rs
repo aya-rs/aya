@@ -57,8 +57,10 @@ use std::{
     os::fd::{AsFd, BorrowedFd, OwnedFd},
     path::Path,
     ptr,
+    sync::Arc,
 };
 
+use aya_obj::Features;
 use libc::{getrlimit, rlim_t, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
 use obj::maps::InvalidMapTypeError;
@@ -546,6 +548,7 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 pub struct MapData {
     obj: obj::Map,
     fd: MapFd,
+    features: Features,
 }
 
 impl MapData {
@@ -554,6 +557,8 @@ impl MapData {
         obj: obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
+        token_fd: Option<Arc<OwnedFd>>,
+        features: Features,
     ) -> Result<Self, MapError> {
         let c_name = CString::new(name).map_err(|_| MapError::InvalidName { name: name.into() })?;
 
@@ -561,21 +566,28 @@ impl MapData {
         let kernel_version = KernelVersion::current().unwrap();
         #[cfg(test)]
         let kernel_version = KernelVersion::new(0xff, 0xff, 0xff);
-        let fd =
-            bpf_create_map(&c_name, &obj, btf_fd, kernel_version).map_err(|(code, io_error)| {
-                if kernel_version < KernelVersion::new(5, 11, 0) {
-                    maybe_warn_rlimit();
-                }
+        let fd = bpf_create_map(
+            &c_name,
+            &obj,
+            btf_fd,
+            kernel_version,
+            token_fd.as_ref().map(|fd| fd.as_fd()),
+        )
+        .map_err(|(code, io_error)| {
+            if kernel_version < KernelVersion::new(5, 11, 0) {
+                maybe_warn_rlimit();
+            }
 
-                MapError::CreateError {
-                    name: name.into(),
-                    code,
-                    io_error,
-                }
-            })?;
+            MapError::CreateError {
+                name: name.into(),
+                code,
+                io_error,
+            }
+        })?;
         Ok(Self {
             obj,
             fd: MapFd::from_fd(fd),
+            features,
         })
     }
 
@@ -584,6 +596,8 @@ impl MapData {
         obj: obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
+        token_fd: Option<Arc<OwnedFd>>,
+        features: Features,
     ) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
 
@@ -605,9 +619,10 @@ impl MapData {
             Ok(fd) => Ok(Self {
                 obj,
                 fd: MapFd::from_fd(fd),
+                features,
             }),
             Err(_) => {
-                let map = Self::create(obj, name, btf_fd)?;
+                let map = Self::create(obj, name, btf_fd, token_fd, features)?;
                 map.pin(&path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,
@@ -618,7 +633,11 @@ impl MapData {
     }
 
     pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
-        let Self { obj, fd } = self;
+        let Self {
+            obj,
+            fd,
+            features: _,
+        } = self;
         if !obj.data().is_empty() && obj.section_kind() != EbpfSectionKind::Bss {
             bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
                 .map_err(|(_, io_error)| SyscallError {
@@ -639,7 +658,7 @@ impl MapData {
     }
 
     /// Loads a map from a pinned path in bpffs.
-    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, MapError> {
+    pub fn from_pin<P: AsRef<Path>>(path: P, features: Features) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
 
         let path = path.as_ref();
@@ -657,13 +676,13 @@ impl MapData {
             io_error,
         })?;
 
-        Self::from_fd(fd)
+        Self::from_fd(fd, features)
     }
 
     /// Loads a map from a map id.
-    pub fn from_id(id: u32) -> Result<Self, MapError> {
+    pub fn from_id(id: u32, features: Features) -> Result<Self, MapError> {
         let fd = bpf_map_get_fd_by_id(id)?;
-        Self::from_fd(fd)
+        Self::from_fd(fd, features)
     }
 
     /// Loads a map from a file descriptor.
@@ -671,11 +690,12 @@ impl MapData {
     /// If loading from a BPF Filesystem (bpffs) you should use [`Map::from_pin`](crate::maps::MapData::from_pin).
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
-    pub fn from_fd(fd: OwnedFd) -> Result<Self, MapError> {
+    pub fn from_fd(fd: OwnedFd, features: Features) -> Result<Self, MapError> {
         let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
         Ok(Self {
             obj: parse_map_info(info, PinningType::None),
             fd: MapFd::from_fd(fd),
+            features,
         })
     }
 
@@ -706,7 +726,11 @@ impl MapData {
     pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        let Self { fd, obj: _ } = self;
+        let Self {
+            fd,
+            obj: _,
+            features: _,
+        } = self;
         let path = path.as_ref();
         let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
             PinError::InvalidPinPath {
@@ -723,12 +747,20 @@ impl MapData {
 
     /// Returns the file descriptor of the map.
     pub fn fd(&self) -> &MapFd {
-        let Self { obj: _, fd } = self;
+        let Self {
+            obj: _,
+            fd,
+            features: _,
+        } = self;
         fd
     }
 
     pub(crate) fn obj(&self) -> &obj::Map {
-        let Self { obj, fd: _ } = self;
+        let Self {
+            obj,
+            fd: _,
+            features: _,
+        } = self;
         obj
     }
 
@@ -1039,6 +1071,8 @@ pub fn loaded_maps() -> impl Iterator<Item = Result<MapInfo, MapError>> {
 
 #[cfg(test)]
 mod test_utils {
+    use aya_obj::Features;
+
     use crate::{
         bpf_map_def,
         generated::{bpf_cmd, bpf_map_type},
@@ -1055,7 +1089,7 @@ mod test_utils {
             } => Ok(crate::MockableFd::mock_signed_fd().into()),
             call => panic!("unexpected syscall {:?}", call),
         });
-        MapData::create(obj, "foo", None).unwrap()
+        MapData::create(obj, "foo", None, None, Features::default()).unwrap()
     }
 
     pub(super) fn new_obj_map<K>(map_type: bpf_map_type) -> obj::Map {
@@ -1119,10 +1153,11 @@ mod tests {
         });
 
         assert_matches!(
-            MapData::from_id(1234),
+            MapData::from_id(1234, Features::default()),
             Ok(MapData {
                 obj: _,
                 fd,
+                features: _,
             }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd())
         );
     }
@@ -1138,10 +1173,11 @@ mod tests {
         });
 
         assert_matches!(
-            MapData::create(new_obj_map(), "foo", None),
+            MapData::create(new_obj_map(), "foo", None, None, Features::default()),
             Ok(MapData {
                 obj: _,
                 fd,
+                features: _,
             }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd())
         );
     }
@@ -1178,7 +1214,8 @@ mod tests {
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
         });
 
-        let map_data = MapData::create(new_obj_map(), TEST_NAME, None).unwrap();
+        let map_data =
+            MapData::create(new_obj_map(), TEST_NAME, None, None, Features::default()).unwrap();
         assert_eq!(TEST_NAME, map_data.info().unwrap().name_as_str().unwrap());
     }
 
@@ -1256,7 +1293,7 @@ mod tests {
         override_syscall(|_| Err((-42, io::Error::from_raw_os_error(EFAULT))));
 
         assert_matches!(
-            MapData::create(new_obj_map(), "foo", None),
+            MapData::create(new_obj_map(), "foo", None, None, Features::default()),
             Err(MapError::CreateError { name, code, io_error }) => {
                 assert_eq!(name, "foo");
                 assert_eq!(code, -42);

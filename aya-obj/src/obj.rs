@@ -37,7 +37,7 @@ use crate::{
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
 
 /// Features implements BPF and BTF feature detection
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 #[allow(missing_docs)]
 pub struct Features {
     bpf_name: bool,

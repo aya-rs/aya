@@ -1,6 +1,8 @@
 //! Perf attach links.
 use std::os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, OwnedFd, RawFd};
 
+use aya_obj::Features;
+
 use crate::{
     generated::bpf_attach_type::BPF_PERF_EVENT,
     programs::{
@@ -8,7 +10,7 @@ use crate::{
         FdLink, Link, ProgramError,
     },
     sys::{bpf_link_create, perf_event_ioctl, LinkTarget, SysResult, SyscallError},
-    FEATURES, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE, PERF_EVENT_IOC_SET_BPF,
+    PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE, PERF_EVENT_IOC_SET_BPF,
 };
 
 #[derive(Debug, Hash, Eq, PartialEq)]
@@ -73,8 +75,9 @@ impl Link for PerfLink {
 pub(crate) fn perf_attach(
     prog_fd: BorrowedFd<'_>,
     fd: OwnedFd,
+    features: &Features,
 ) -> Result<PerfLinkInner, ProgramError> {
-    if FEATURES.bpf_perf_link() {
+    if features.bpf_perf_link() {
         let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(fd.as_fd()), BPF_PERF_EVENT, None, 0)
             .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",

@@ -10,6 +10,7 @@ homepage.workspace = true
 edition.workspace = true
 
 [dependencies]
+aya = { version = "0.12", path = "../aya" }
 bindgen = { workspace = true, default-features = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
 anyhow = { workspace = true, default-features = true }

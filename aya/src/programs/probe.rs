@@ -9,6 +9,7 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
+use aya_obj::Features;
 use libc::pid_t;
 
 use crate::{
@@ -112,6 +113,7 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     fn_name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
+    features: &Features,
 ) -> Result<T::Id, ProgramError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
     // Use debugfs to create probe
@@ -122,7 +124,7 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
         perf_attach_debugfs(prog_fd, fd, ProbeEvent { kind, event_alias })
     } else {
         let fd = create_as_probe(kind, fn_name, offset, pid)?;
-        perf_attach(prog_fd, fd)
+        perf_attach(prog_fd, fd, features)
     }?;
     program_data.links.insert(T::from(link))
 }

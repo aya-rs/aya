@@ -2,10 +2,12 @@
 use std::{
     ffi::{CStr, CString},
     io,
-    os::fd::AsFd as _,
+    os::fd::{AsFd as _, OwnedFd},
     path::Path,
+    sync::Arc,
 };
 
+use aya_obj::Features;
 use thiserror::Error;
 
 use crate::{
@@ -230,8 +232,13 @@ impl SchedClassifier {
     ///
     /// On drop, any managed links are detached and the program is unloaded. This will not result in
     /// the program being unloaded from the kernel if it is still pinned.
-    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+    pub fn from_pin<P: AsRef<Path>>(
+        path: P,
+        token_fd: Option<Arc<OwnedFd>>,
+        features: Features,
+    ) -> Result<Self, ProgramError> {
+        let data =
+            ProgramData::from_pinned_path(path, VerifierLogLevel::default(), token_fd, features)?;
         Ok(Self { data })
     }
 }
