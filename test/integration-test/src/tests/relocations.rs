@@ -3,11 +3,8 @@ use test_log::test;
 
 #[test]
 fn ignored_map_relocation_by_name() {
-    let mut ebpf = relocation_load_and_attach(
-        "test_ignored_map_relocation",
-        crate::IGNORE_MAP,
-        "RINGBUF",
-    );
+    let mut ebpf =
+        relocation_load_and_attach("test_ignored_map_relocation", crate::IGNORE_MAP, "RINGBUF");
 
     let perf = ebpf.take_map("PERFBUF");
 
@@ -49,11 +46,7 @@ fn text_64_64_reloc() {
     assert_eq!(m.get(&1, 0).unwrap(), 3);
 }
 
-fn relocation_load_and_attach(
-    name: &str,
-    bytes: &[u8],
-    disable_map_name: &str,
-) -> Ebpf {
+fn relocation_load_and_attach(name: &str, bytes: &[u8], disable_map_name: &str) -> Ebpf {
     let mut ebpf = EbpfLoader::new()
         .ignore_maps_by_name(&[disable_map_name])
         .set_global("RINGBUF_SUPPORTED", &0, true)
