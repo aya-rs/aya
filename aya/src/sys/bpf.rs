@@ -3,12 +3,21 @@ use std::{
     ffi::{c_char, CStr, CString},
     io, iter,
     mem::{self, MaybeUninit},
-    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
+    os::{
+        fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
+        unix::ffi::OsStrExt as _,
+    },
+    path::Path,
+    ptr::null,
     slice,
 };
 
 use assert_matches::assert_matches;
-use libc::{ENOENT, ENOSPC};
+use aya_obj::{
+    attach::BpfAttachType, cmd::BpfCommand, generated::BPF_F_TOKEN_FD, maps::BpfMapType,
+    programs::BpfProgType, Features,
+};
+use libc::{c_void, AT_FDCWD, ENOENT, ENOSPC, MOVE_MOUNT_F_EMPTY_PATH};
 use obj::{
     btf::{BtfEnum64, Enum64},
     maps::{bpf_map_def, LegacyMap},
@@ -39,6 +48,7 @@ pub(crate) fn bpf_create_map(
     def: &obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
     kernel_version: KernelVersion,
+    token_fd: Option<BorrowedFd<'_>>,
 ) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -48,6 +58,10 @@ pub(crate) fn bpf_create_map(
     u.value_size = def.value_size();
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
+    if let Some(v) = token_fd {
+        u.map_token_fd = v.as_raw_fd();
+        u.map_flags |= BPF_F_TOKEN_FD;
+    }
 
     if let obj::Map::Btf(m) = def {
         use bpf_map_type::*;
@@ -134,6 +148,7 @@ pub(crate) fn bpf_load_program(
     aya_attr: &EbpfLoadProgramAttrs<'_>,
     log_buf: &mut [u8],
     verifier_log_level: VerifierLogLevel,
+    token_fd: Option<BorrowedFd<'_>>,
 ) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -158,6 +173,10 @@ pub(crate) fn bpf_load_program(
     u.insn_cnt = aya_attr.insns.len() as u32;
     u.license = aya_attr.license.as_ptr() as u64;
     u.kern_version = aya_attr.kernel_version;
+    if let Some(v) = token_fd {
+        u.prog_token_fd = v.as_raw_fd();
+        u.prog_flags |= BPF_F_TOKEN_FD;
+    }
 
     // these must be allocated here to ensure the slice outlives the pointer
     // so .as_ptr below won't point to garbage
@@ -617,6 +636,7 @@ pub(crate) fn bpf_load_btf(
     raw_btf: &[u8],
     log_buf: &mut [u8],
     verifier_log_level: VerifierLogLevel,
+    token_fd: Option<BorrowedFd<'_>>,
 ) -> SysResult<OwnedFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_7 };
@@ -627,8 +647,19 @@ pub(crate) fn bpf_load_btf(
         u.btf_log_buf = log_buf.as_mut_ptr() as u64;
         u.btf_log_size = log_buf.len() as u32;
     }
+    if let Some(v) = token_fd {
+        u.btf_token_fd = v.as_raw_fd();
+        u.btf_flags |= BPF_F_TOKEN_FD;
+    }
     // SAFETY: `BPF_BTF_LOAD` returns a newly created fd.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_BTF_LOAD, &mut attr) }
+}
+
+pub(crate) fn bpf_token_create(bpf_fs_fd: BorrowedFd<'_>, flags: u32) -> SysResult<OwnedFd> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    attr.token_create.bpffs_fd = bpf_fs_fd.as_raw_fd() as u32;
+    attr.token_create.flags = flags;
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_TOKEN_CREATE, &mut attr) }
 }
 
 // SAFETY: only use for bpf_cmd that return a new file descriptor on success.
@@ -660,7 +691,7 @@ pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<OwnedFd, SyscallError> {
     })
 }
 
-pub(crate) fn is_prog_name_supported() -> bool {
+pub(crate) fn is_prog_name_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
     let mut name: [c_char; 16] = [0; 16];
@@ -684,11 +715,14 @@ pub(crate) fn is_prog_name_supported() -> bool {
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
-
+    if let Some(v) = token_fd {
+        u.prog_token_fd = v.as_raw_fd();
+        u.prog_flags |= BPF_F_TOKEN_FD;
+    }
     bpf_prog_load(&mut attr).is_ok()
 }
 
-pub(crate) fn is_probe_read_kernel_supported() -> bool {
+pub(crate) fn is_probe_read_kernel_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
@@ -708,11 +742,14 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
-
+    if let Some(v) = token_fd {
+        u.prog_token_fd = v.as_raw_fd();
+        u.prog_flags |= BPF_F_TOKEN_FD;
+    }
     bpf_prog_load(&mut attr).is_ok()
 }
 
-pub(crate) fn is_perf_link_supported() -> bool {
+pub(crate) fn is_perf_link_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
@@ -728,7 +765,10 @@ pub(crate) fn is_perf_link_supported() -> bool {
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
-
+    if let Some(v) = token_fd {
+        u.prog_token_fd = v.as_raw_fd();
+        u.prog_flags |= BPF_F_TOKEN_FD;
+    }
     if let Ok(fd) = bpf_prog_load(&mut attr) {
         let fd = crate::MockableFd::from_fd(fd);
         let fd = fd.as_fd();
@@ -743,7 +783,7 @@ pub(crate) fn is_perf_link_supported() -> bool {
     }
 }
 
-pub(crate) fn is_bpf_global_data_supported() -> bool {
+pub(crate) fn is_bpf_global_data_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
@@ -773,6 +813,8 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
         }),
         "aya_global",
         None,
+        None,
+        Features::default(),
     );
 
     if let Ok(map) = map {
@@ -783,14 +825,17 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
         u.insn_cnt = insns.len() as u32;
         u.insns = insns.as_ptr() as u64;
         u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
-
+        if let Some(v) = token_fd {
+            u.prog_token_fd = v.as_raw_fd();
+            u.prog_flags |= BPF_F_TOKEN_FD;
+        }
         bpf_prog_load(&mut attr).is_ok()
     } else {
         false
     }
 }
 
-pub(crate) fn is_bpf_cookie_supported() -> bool {
+pub(crate) fn is_bpf_cookie_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
@@ -806,12 +851,18 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_KPROBE as u32;
-
+    if let Some(v) = token_fd {
+        u.prog_token_fd = v.as_raw_fd();
+        u.prog_flags |= BPF_F_TOKEN_FD;
+    }
     bpf_prog_load(&mut attr).is_ok()
 }
 
 /// Tests whether CpuMap, DevMap and DevMapHash support program ids
-pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
+pub(crate) fn is_prog_id_supported(
+    map_type: bpf_map_type,
+    token_fd: Option<BorrowedFd<'_>>,
+) -> bool {
     assert_matches!(
         map_type,
         bpf_map_type::BPF_MAP_TYPE_CPUMAP
@@ -828,22 +879,27 @@ pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
     u.max_entries = 1;
     u.map_flags = 0;
 
+    if let Some(v) = token_fd {
+        u.map_token_fd = v.as_raw_fd();
+        u.map_flags |= BPF_F_TOKEN_FD;
+    }
+
     // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
     let fd = unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) };
     let fd = fd.map(crate::MockableFd::from_fd);
     fd.is_ok()
 }
 
-pub(crate) fn is_btf_supported() -> bool {
+pub(crate) fn is_btf_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
     btf.add_type(int_type);
     let btf_bytes = btf.to_bytes();
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
-pub(crate) fn is_btf_func_supported() -> bool {
+pub(crate) fn is_btf_func_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -870,10 +926,10 @@ pub(crate) fn is_btf_func_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
-pub(crate) fn is_btf_func_global_supported() -> bool {
+pub(crate) fn is_btf_func_global_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -900,10 +956,10 @@ pub(crate) fn is_btf_func_global_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
-pub(crate) fn is_btf_datasec_supported() -> bool {
+pub(crate) fn is_btf_datasec_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -924,10 +980,10 @@ pub(crate) fn is_btf_datasec_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
-pub(crate) fn is_btf_enum64_supported() -> bool {
+pub(crate) fn is_btf_enum64_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("enum64");
 
@@ -940,10 +996,10 @@ pub(crate) fn is_btf_enum64_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
-pub(crate) fn is_btf_float_supported() -> bool {
+pub(crate) fn is_btf_float_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("float");
     let float_type = BtfType::Float(Float::new(name_offset, 16));
@@ -951,10 +1007,10 @@ pub(crate) fn is_btf_float_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
-pub(crate) fn is_btf_decl_tag_supported() -> bool {
+pub(crate) fn is_btf_decl_tag_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -970,10 +1026,10 @@ pub(crate) fn is_btf_decl_tag_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
-pub(crate) fn is_btf_type_tag_supported() -> bool {
+pub(crate) fn is_btf_type_tag_supported(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
 
     let int_type = BtfType::Int(Int::new(0, 4, IntEncoding::Signed, 0));
@@ -987,7 +1043,7 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
 fn bpf_prog_load(attr: &mut bpf_attr) -> SysResult<OwnedFd> {
@@ -997,6 +1053,274 @@ fn bpf_prog_load(attr: &mut bpf_attr) -> SysResult<OwnedFd> {
 
 fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<i64> {
     syscall(Syscall::Ebpf { cmd, attr })
+}
+
+/// The permissions of an eBPF filesystem.
+///
+/// By default, all commands, programs, maps and attach types are allowed.
+/// You can restrict the permissions by adding specific commands, programs, maps
+/// and attach types.
+#[derive(Debug, Clone)]
+pub struct FilesystemPermissions {
+    cmds: CString,
+    progs: CString,
+    maps: CString,
+    attach: CString,
+}
+
+impl Default for FilesystemPermissions {
+    fn default() -> Self {
+        Self {
+            cmds: CString::new("any").unwrap(),
+            progs: CString::new("any").unwrap(),
+            maps: CString::new("any").unwrap(),
+            attach: CString::new("any").unwrap(),
+        }
+    }
+}
+
+impl FilesystemPermissions {
+    /// Create a new set of permissions using a `[`FilesystemPermissionsBuilder`]`.
+    pub fn builder() -> FilesystemPermissionsBuilder {
+        FilesystemPermissionsBuilder::default()
+    }
+}
+
+/// Builder for [`FilesystemPermissions`].
+#[derive(Debug, Clone, Default)]
+pub struct FilesystemPermissionsBuilder {
+    cmds: Vec<BpfCommand>,
+    progs: Vec<BpfProgType>,
+    maps: Vec<BpfMapType>,
+    attach: Vec<BpfAttachType>,
+}
+
+impl FilesystemPermissionsBuilder {
+    /// Add a command to the permissions.
+    pub fn cmd(&mut self, cmd: BpfCommand) -> &mut Self {
+        self.cmds.push(cmd);
+        self
+    }
+
+    /// Add a program type to the permissions.
+    pub fn prog(&mut self, prog: BpfProgType) -> &mut Self {
+        self.progs.push(prog);
+        self
+    }
+
+    /// Add a map type to the permissions.
+    pub fn map(&mut self, map: BpfMapType) -> &mut Self {
+        self.maps.push(map);
+        self
+    }
+
+    /// Add an attach type to the permissions.
+    pub fn attach(&mut self, attach: BpfAttachType) -> &mut Self {
+        self.attach.push(attach);
+        self
+    }
+
+    /// Build the permissions.
+    pub fn build(&mut self) -> FilesystemPermissions {
+        let cmds_mask = if self.cmds.is_empty() {
+            CString::new("any").unwrap()
+        } else {
+            CString::new(format!(
+                "0x{:#x}",
+                self.cmds
+                    .iter()
+                    .map(|cmd| 1u64 << bpf_cmd::from(*cmd) as u64)
+                    .fold(0, |acc, cmd| acc | cmd)
+            ))
+            .unwrap()
+        };
+        let progs_mask = if self.progs.is_empty() {
+            CString::new("any").unwrap()
+        } else {
+            CString::new(format!(
+                "0x{:#x}",
+                self.progs
+                    .iter()
+                    .map(|prog| 1u64 << bpf_prog_type::from(*prog) as u64)
+                    .fold(0, |acc, prog| acc | prog)
+            ))
+            .unwrap()
+        };
+        let maps_mask = if self.maps.is_empty() {
+            CString::new("any").unwrap()
+        } else {
+            CString::new(format!(
+                "0x{:#x}",
+                self.maps
+                    .iter()
+                    .map(|map| 1u64 << bpf_map_type::from(*map) as u64)
+                    .fold(0, |acc, map| acc | map)
+            ))
+            .unwrap()
+        };
+        let attach_mask = if self.attach.is_empty() {
+            CString::new("any").unwrap()
+        } else {
+            CString::new(format!(
+                "0x{:#x}",
+                self.attach
+                    .iter()
+                    .map(|attach| 1u64 << bpf_attach_type::from(*attach) as u64)
+                    .fold(0, |acc, attach| acc | attach)
+            ))
+            .unwrap()
+        };
+        FilesystemPermissions {
+            cmds: cmds_mask,
+            progs: progs_mask,
+            maps: maps_mask,
+            attach: attach_mask,
+        }
+    }
+}
+
+const FSCONFIG_SET_STRING: u32 = 1;
+const FSCONFIG_CMD_CREATE: u32 = 6;
+
+/// Create a new eBPF filesystem at the given path.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya_obj::{cmd::BpfCommand, maps::BpfMapType, programs::BpfProgType};
+/// use aya::{FilesystemPermissionsBuilder, create_bpf_filesystem};
+///
+/// let path = "/sys/fs/bpf";
+/// let perms = FilesystemPermissionsBuilder::default()
+///     .cmd(BpfCommand::ProgLoad)
+///     .prog(BpfProgType::SocketFilter)
+///     .map(BpfMapType::Array)
+///     .build();
+/// create_bpf_filesystem(path, perms).unwrap();
+/// ```
+pub fn create_bpf_filesystem<P: AsRef<Path>>(
+    path: P,
+    perms: FilesystemPermissions,
+) -> Result<(), SyscallError> {
+    let path = path.as_ref();
+
+    let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|_| SyscallError {
+        call: "create_bpffs",
+        io_error: io::Error::new(io::ErrorKind::InvalidInput, "path contains a null byte"),
+    })?;
+
+    let fd = syscall(Syscall::FsOpen {
+        fsname: c"bpf".as_ptr(),
+        flags: 0,
+    })
+    .map_err(|(_, io_error)| SyscallError {
+        call: "fsopen",
+        io_error,
+    })?;
+
+    let fd = fd.try_into().map_err(|_| SyscallError {
+        call: "fsopen",
+        io_error: io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("create_bpffs: invalid fd returned: {fd}"),
+        ),
+    })?;
+
+    let fd = unsafe { OwnedFd::from_raw_fd(fd) };
+
+    let _ = syscall(Syscall::FsConfig {
+        fd: fd.as_fd(),
+        cmd: FSCONFIG_SET_STRING,
+        key: c"delegate_cmds".as_ptr(),
+        value: perms.cmds.as_ptr() as *const c_void,
+        aux: 0,
+    })
+    .map_err(|(_, io_error)| SyscallError {
+        call: "fsconfig",
+        io_error,
+    })?;
+
+    let _ = syscall(Syscall::FsConfig {
+        fd: fd.as_fd(),
+        cmd: FSCONFIG_SET_STRING,
+        key: c"delegate_maps".as_ptr(),
+        value: perms.maps.as_ptr() as *const c_void,
+        aux: 0,
+    })
+    .map_err(|(_, io_error)| SyscallError {
+        call: "fsconfig",
+        io_error,
+    })?;
+
+    let _ = syscall(Syscall::FsConfig {
+        fd: fd.as_fd(),
+        cmd: FSCONFIG_SET_STRING,
+        key: c"delegate_progs".as_ptr(),
+        value: perms.progs.as_ptr() as *const c_void,
+        aux: 0,
+    })
+    .map_err(|(_, io_error)| SyscallError {
+        call: "fsconfig",
+        io_error,
+    })?;
+
+    let _ = syscall(Syscall::FsConfig {
+        fd: fd.as_fd(),
+        cmd: FSCONFIG_SET_STRING,
+        key: c"delegate_attachs".as_ptr(),
+        value: perms.attach.as_ptr() as *const c_void,
+        aux: 0,
+    })
+    .map_err(|(_, io_error)| SyscallError {
+        call: "fsconfig",
+        io_error,
+    })?;
+
+    let _ = syscall(Syscall::FsConfig {
+        fd: fd.as_fd(),
+        cmd: FSCONFIG_CMD_CREATE,
+        key: null(),
+        value: null(),
+        aux: 0,
+    })
+    .map_err(|(_, io_error)| SyscallError {
+        call: "fsconfig",
+        io_error,
+    })?;
+
+    let mount_fd = syscall(Syscall::FsMount {
+        fd: fd.as_fd(),
+        flags: 0,
+        mount_attrs: 0,
+    })
+    .map_err(|(_, io_error)| SyscallError {
+        call: "fsmount",
+        io_error,
+    })?;
+
+    let mount_fd = mount_fd.try_into().map_err(|_| SyscallError {
+        call: "fsopen",
+        io_error: io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("create_bpffs: invalid fd returned: {mount_fd}"),
+        ),
+    })?;
+
+    let mount_fd = unsafe { OwnedFd::from_raw_fd(mount_fd) };
+
+    let _ = syscall(Syscall::MoveMount {
+        from_dirfd: mount_fd.as_fd(),
+        from_pathname: c"".as_ptr(),
+        to_dirfd: unsafe { BorrowedFd::borrow_raw(AT_FDCWD) },
+        to_pathname: path_string.as_ptr(),
+        flags: MOVE_MOUNT_F_EMPTY_PATH,
+    })
+    .map_err(|(_, io_error)| SyscallError {
+        call: "fsmount",
+        io_error,
+    })?;
+
+    Ok(())
 }
 
 fn bpf_obj_get_next_id(
@@ -1105,7 +1429,7 @@ mod tests {
             } => Err((-1, io::Error::from_raw_os_error(EBADF))),
             _ => Ok(crate::MockableFd::mock_signed_fd().into()),
         });
-        let supported = is_perf_link_supported();
+        let supported = is_perf_link_supported(None);
         assert!(supported);
 
         override_syscall(|call| match call {
@@ -1115,7 +1439,7 @@ mod tests {
             } => Err((-1, io::Error::from_raw_os_error(EINVAL))),
             _ => Ok(crate::MockableFd::mock_signed_fd().into()),
         });
-        let supported = is_perf_link_supported();
+        let supported = is_perf_link_supported(None);
         assert!(!supported);
     }
 
@@ -1124,15 +1448,15 @@ mod tests {
         override_syscall(|_call| Ok(crate::MockableFd::mock_signed_fd().into()));
 
         // Ensure that the three map types we can check are accepted
-        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP);
+        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP, None);
         assert!(supported);
-        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP);
+        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP, None);
         assert!(supported);
-        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH);
+        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH, None);
         assert!(supported);
 
         override_syscall(|_call| Err((-1, io::Error::from_raw_os_error(EINVAL))));
-        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP);
+        let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP, None);
         assert!(!supported);
     }
 
@@ -1140,6 +1464,27 @@ mod tests {
     #[should_panic = "assertion failed: `BPF_MAP_TYPE_HASH` does not match `bpf_map_type::BPF_MAP_TYPE_CPUMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP |
 bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
     fn test_prog_id_supported_reject_types() {
-        is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_HASH);
+        is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_HASH, None);
+    }
+
+    #[test]
+    fn test_bpf_create_filesystem() {
+        override_syscall(|call| match call {
+            Syscall::FsOpen { .. } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            Syscall::FsConfig { .. } => Ok(0),
+            Syscall::FsMount {
+                flags, mount_attrs, ..
+            } => {
+                assert_eq!(flags, 0);
+                assert_eq!(mount_attrs, 0);
+                Ok(crate::MockableFd::mock_signed_fd().into())
+            }
+            Syscall::MoveMount { flags, .. } => {
+                assert_eq!(flags, MOVE_MOUNT_F_EMPTY_PATH);
+                Ok(0)
+            }
+            _ => Ok(crate::MockableFd::mock_signed_fd().into()),
+        });
+        create_bpf_filesystem("/foo", FilesystemPermissions::default()).unwrap();
     }
 }

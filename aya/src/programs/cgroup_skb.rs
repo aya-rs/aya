@@ -1,6 +1,13 @@
 //! Cgroup skb programs.
 
-use std::{hash::Hash, os::fd::AsFd, path::Path};
+use std::{
+    hash::Hash,
+    os::fd::{AsFd, OwnedFd},
+    path::Path,
+    sync::Arc,
+};
+
+use aya_obj::Features;
 
 use crate::{
     generated::{
@@ -140,8 +147,11 @@ impl CgroupSkb {
     pub fn from_pin<P: AsRef<Path>>(
         path: P,
         expected_attach_type: CgroupSkbAttachType,
+        token_fd: Option<Arc<OwnedFd>>,
+        features: Features,
     ) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        let data =
+            ProgramData::from_pinned_path(path, VerifierLogLevel::default(), token_fd, features)?;
         Ok(Self {
             data,
             expected_attach_type: Some(expected_attach_type),

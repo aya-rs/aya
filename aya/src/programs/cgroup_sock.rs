@@ -1,8 +1,14 @@
 //! Cgroup socket programs.
 
-use std::{hash::Hash, os::fd::AsFd, path::Path};
+use std::{
+    hash::Hash,
+    os::fd::{AsFd, OwnedFd},
+    path::Path,
+    sync::Arc,
+};
 
 pub use aya_obj::programs::CgroupSockAttachType;
+use aya_obj::Features;
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK,
@@ -115,8 +121,11 @@ impl CgroupSock {
     pub fn from_pin<P: AsRef<Path>>(
         path: P,
         attach_type: CgroupSockAttachType,
+        token_fd: Option<Arc<OwnedFd>>,
+        features: Features,
     ) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        let data =
+            ProgramData::from_pinned_path(path, VerifierLogLevel::default(), token_fd, features)?;
         Ok(Self { data, attach_type })
     }
 }

@@ -5,12 +5,130 @@ use core::mem;
 
 #[cfg(not(feature = "std"))]
 use crate::std;
-use crate::EbpfSectionKind;
+use crate::{generated::bpf_map_type, EbpfSectionKind};
 
 /// Invalid map type encontered
 pub struct InvalidMapTypeError {
     /// The map type
     pub map_type: u32,
+}
+
+/// The type of BPF Map
+#[derive(Copy, Clone, Debug)]
+pub enum BpfMapType {
+    /// Not Specified
+    Unspecified,
+    /// Hash
+    Hash,
+    /// Array
+    Array,
+    /// Prog Array
+    ProgArray,
+    /// Perf Event Array
+    PerfEventArray,
+    /// Per-CPU Hash
+    PerCpuHash,
+    /// Per-CPU Array
+    PerCpuArray,
+    /// Stack Trace
+    StackTrace,
+    /// Cgroup Array
+    CgroupArray,
+    /// LRU Hash
+    LruHash,
+    /// LRU Per-CPU Hash
+    LruPerCpuHash,
+    /// LPM Trie
+    LpmTrie,
+    /// Array of Maps
+    ArrayOfMaps,
+    /// Hash of Maps
+    HashOfMaps,
+    /// Devmap
+    Devmap,
+    /// Sockmap
+    Sockmap,
+    /// Cpumap
+    Cpumap,
+    /// Xskmap
+    Xskmap,
+    /// Sockhash
+    Sockhash,
+    /// Cgroup Storage (deprecated)
+    CgroupStorageDeprecated,
+    /// Reuseport Sockarray
+    ReuseportSockarray,
+    /// Per-CPU Cgroup Storage (deprecated)
+    PerCpuCgroupStorageDeprecated,
+    /// Queue
+    Queue,
+    /// Stack
+    Stack,
+    /// Sk Storage
+    SkStorage,
+    /// Devmap Hash
+    DevmapHash,
+    /// Struct Ops
+    StructOps,
+    /// Ringbuf
+    Ringbuf,
+    /// Inode Storage
+    InodeStorage,
+    /// Task Storage
+    TaskStorage,
+    /// Bloom Filter
+    BloomFilter,
+    /// User Ringbuf
+    UserRingbuf,
+    /// Cgroup Storage
+    CgroupStorage,
+    /// Arena
+    Arena,
+}
+
+impl From<BpfMapType> for bpf_map_type {
+    fn from(value: BpfMapType) -> Self {
+        match value {
+            BpfMapType::Unspecified => bpf_map_type::BPF_MAP_TYPE_UNSPEC,
+            BpfMapType::Hash => bpf_map_type::BPF_MAP_TYPE_HASH,
+            BpfMapType::Array => bpf_map_type::BPF_MAP_TYPE_ARRAY,
+            BpfMapType::ProgArray => bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY,
+            BpfMapType::PerfEventArray => bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+            BpfMapType::PerCpuHash => bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH,
+            BpfMapType::PerCpuArray => bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY,
+            BpfMapType::StackTrace => bpf_map_type::BPF_MAP_TYPE_STACK_TRACE,
+            BpfMapType::CgroupArray => bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY,
+            BpfMapType::LruHash => bpf_map_type::BPF_MAP_TYPE_LRU_HASH,
+            BpfMapType::LruPerCpuHash => bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH,
+            BpfMapType::LpmTrie => bpf_map_type::BPF_MAP_TYPE_LPM_TRIE,
+            BpfMapType::ArrayOfMaps => bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS,
+            BpfMapType::HashOfMaps => bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS,
+            BpfMapType::Devmap => bpf_map_type::BPF_MAP_TYPE_DEVMAP,
+            BpfMapType::Sockmap => bpf_map_type::BPF_MAP_TYPE_SOCKMAP,
+            BpfMapType::Cpumap => bpf_map_type::BPF_MAP_TYPE_CPUMAP,
+            BpfMapType::Xskmap => bpf_map_type::BPF_MAP_TYPE_XSKMAP,
+            BpfMapType::Sockhash => bpf_map_type::BPF_MAP_TYPE_SOCKHASH,
+            BpfMapType::CgroupStorageDeprecated => {
+                bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED
+            }
+            BpfMapType::ReuseportSockarray => bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
+            BpfMapType::PerCpuCgroupStorageDeprecated => {
+                bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED
+            }
+            BpfMapType::Queue => bpf_map_type::BPF_MAP_TYPE_QUEUE,
+            BpfMapType::Stack => bpf_map_type::BPF_MAP_TYPE_STACK,
+            BpfMapType::SkStorage => bpf_map_type::BPF_MAP_TYPE_SK_STORAGE,
+            BpfMapType::DevmapHash => bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH,
+            BpfMapType::StructOps => bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS,
+            BpfMapType::Ringbuf => bpf_map_type::BPF_MAP_TYPE_RINGBUF,
+            BpfMapType::InodeStorage => bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE,
+            BpfMapType::TaskStorage => bpf_map_type::BPF_MAP_TYPE_TASK_STORAGE,
+            BpfMapType::BloomFilter => bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER,
+            BpfMapType::UserRingbuf => bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF,
+            BpfMapType::CgroupStorage => bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE,
+            BpfMapType::Arena => bpf_map_type::BPF_MAP_TYPE_ARENA,
+        }
+    }
 }
 
 impl TryFrom<u32> for crate::generated::bpf_map_type {

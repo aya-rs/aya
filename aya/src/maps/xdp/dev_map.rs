@@ -13,7 +13,7 @@ use crate::{
     maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
     programs::ProgramFd,
     sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
-    Pod, FEATURES,
+    Pod,
 };
 
 /// An array of network devices.
@@ -48,8 +48,7 @@ pub struct DevMap<T> {
 impl<T: Borrow<MapData>> DevMap<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
-
-        if FEATURES.devmap_prog_id() {
+        if data.features.devmap_prog_id() {
             check_kv_size::<u32, bpf_devmap_val>(data)?;
         } else {
             check_kv_size::<u32, u32>(data)?;
@@ -75,8 +74,7 @@ impl<T: Borrow<MapData>> DevMap<T> {
         let data = self.inner.borrow();
         check_bounds(data, index)?;
         let fd = data.fd().as_fd();
-
-        let value = if FEATURES.devmap_prog_id() {
+        let value = if data.features.devmap_prog_id() {
             bpf_map_lookup_elem::<_, bpf_devmap_val>(fd, &index, flags).map(|value| {
                 value.map(|value| DevMapValue {
                     if_index: value.ifindex,
@@ -136,8 +134,7 @@ impl<T: BorrowMut<MapData>> DevMap<T> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd().as_fd();
-
-        let res = if FEATURES.devmap_prog_id() {
+        let res = if data.features.devmap_prog_id() {
             let mut value = unsafe { std::mem::zeroed::<bpf_devmap_val>() };
             value.ifindex = target_if_index;
             // Default is valid as the kernel will only consider fd > 0:
