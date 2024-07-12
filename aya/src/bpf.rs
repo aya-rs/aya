@@ -232,7 +232,7 @@ impl<'a> EbpfLoader<'a> {
     /// This is useful when you have a single ebpf program containing e.g. a `RingBuf`
     /// and a `PerfEventArray` and you decide which one to use before loading the bytecode.
     ///
-    /// Must be used with [.set_global()] to signal if the map is supported in the ebpf program.
+    /// Must be used with [`EbpfLoader::set_global`] to signal if the map is supported in the ebpf program.
     ///
     /// # Example
     ///
