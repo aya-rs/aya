@@ -31,7 +31,7 @@
 //! This example loads a simple eBPF program and runs it with [rbpf].
 //!
 //! ```no_run
-//! use aya_obj::{generated::bpf_insn, Object, Map};
+//! use aya_obj::{generated::bpf_insn, Object};
 //!
 //! // Parse the object file
 //! let bytes = std::fs::read("program.o").unwrap();
