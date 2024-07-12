@@ -496,7 +496,6 @@ impl<'a> EbpfLoader<'a> {
             {
                 continue;
             }
-            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
 
             if ignore_maps_by_name.contains(&name.as_str()) {
                 ignored_maps.insert(name, obj);
@@ -513,6 +512,7 @@ impl<'a> EbpfLoader<'a> {
                     })?
                     .len() as u32)
             };
+            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
             if let Some(max_entries) = max_entries_override(
                 map_type,
                 max_entries.get(name.as_str()).copied(),
