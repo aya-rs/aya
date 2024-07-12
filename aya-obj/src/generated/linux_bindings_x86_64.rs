@@ -2403,24 +2403,23 @@ pub struct tcmsg {
     pub tcm_parent: __u32,
     pub tcm_info: __u32,
 }
-pub const TCA_UNSPEC: _bindgen_ty_172 = 0;
-pub const TCA_KIND: _bindgen_ty_172 = 1;
-pub const TCA_OPTIONS: _bindgen_ty_172 = 2;
-pub const TCA_STATS: _bindgen_ty_172 = 3;
-pub const TCA_XSTATS: _bindgen_ty_172 = 4;
-pub const TCA_RATE: _bindgen_ty_172 = 5;
-pub const TCA_FCNT: _bindgen_ty_172 = 6;
-pub const TCA_STATS2: _bindgen_ty_172 = 7;
-pub const TCA_STAB: _bindgen_ty_172 = 8;
-pub const TCA_PAD: _bindgen_ty_172 = 9;
-pub const TCA_DUMP_INVISIBLE: _bindgen_ty_172 = 10;
-pub const TCA_CHAIN: _bindgen_ty_172 = 11;
-pub const TCA_HW_OFFLOAD: _bindgen_ty_172 = 12;
-pub const TCA_INGRESS_BLOCK: _bindgen_ty_172 = 13;
-pub const TCA_EGRESS_BLOCK: _bindgen_ty_172 = 14;
-pub const TCA_DUMP_FLAGS: _bindgen_ty_172 = 15;
-pub const __TCA_MAX: _bindgen_ty_172 = 16;
-pub type _bindgen_ty_172 = ::core::ffi::c_uint;
+pub const TCA_UNSPEC: _bindgen_ty_170 = 0;
+pub const TCA_KIND: _bindgen_ty_170 = 1;
+pub const TCA_OPTIONS: _bindgen_ty_170 = 2;
+pub const TCA_STATS: _bindgen_ty_170 = 3;
+pub const TCA_XSTATS: _bindgen_ty_170 = 4;
+pub const TCA_RATE: _bindgen_ty_170 = 5;
+pub const TCA_FCNT: _bindgen_ty_170 = 6;
+pub const TCA_STATS2: _bindgen_ty_170 = 7;
+pub const TCA_STAB: _bindgen_ty_170 = 8;
+pub const TCA_PAD: _bindgen_ty_170 = 9;
+pub const TCA_DUMP_INVISIBLE: _bindgen_ty_170 = 10;
+pub const TCA_CHAIN: _bindgen_ty_170 = 11;
+pub const TCA_HW_OFFLOAD: _bindgen_ty_170 = 12;
+pub const TCA_INGRESS_BLOCK: _bindgen_ty_170 = 13;
+pub const TCA_EGRESS_BLOCK: _bindgen_ty_170 = 14;
+pub const __TCA_MAX: _bindgen_ty_170 = 15;
+pub type _bindgen_ty_170 = ::core::ffi::c_uint;
 pub const AYA_PERF_EVENT_IOC_ENABLE: ::core::ffi::c_int = 9216;
 pub const AYA_PERF_EVENT_IOC_DISABLE: ::core::ffi::c_int = 9217;
 pub const AYA_PERF_EVENT_IOC_SET_BPF: ::core::ffi::c_int = 1074013192;

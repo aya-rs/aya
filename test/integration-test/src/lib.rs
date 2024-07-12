@@ -23,6 +23,7 @@ pub const REDIRECT: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/re
 pub const XDP_SEC: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/xdp_sec"));
 pub const RING_BUF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ring_buf"));
 pub const IGNORE_MAP: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ignore_map"));
+pub const MEMMOVE_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/memmove_test"));
 
 #[cfg(test)]
 mod tests;

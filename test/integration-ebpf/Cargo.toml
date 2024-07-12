@@ -11,6 +11,7 @@ edition.workspace = true
 [dependencies]
 aya-ebpf = { path = "../../ebpf/aya-ebpf" }
 aya-log-ebpf = { path = "../../ebpf/aya-log-ebpf" }
+network-types = "0.0.6"
 
 [build-dependencies]
 which = { workspace = true }
@@ -63,3 +64,7 @@ path = "src/ring_buf.rs"
 [[bin]]
 name = "ignore_map"
 path = "src/ignore_map.rs"
+
+[[bin]]
+name = "memmove_test"
+path = "src/memmove_test.rs"

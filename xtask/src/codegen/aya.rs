@@ -57,6 +57,8 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         aarch64_sysroot,
         armv7_sysroot,
         riscv64_sysroot,
+        powerpc64_sysroot,
+        s390x_sysroot,
     } = opts;
     let types = [
         // BPF
@@ -179,6 +181,8 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
             Architecture::ARMv7 => "armv7-unknown-linux-gnu",
             Architecture::AArch64 => "aarch64-unknown-linux-gnu",
             Architecture::RISCV64 => "riscv64-unknown-linux-gnu",
+            Architecture::PowerPC64 => "powerpc64le-unknown-linux-gnu",
+            Architecture::S390X => "s390x-unknown-linux-gnu",
         };
         bindgen = bindgen.clang_args(&["-target", target]);
 
@@ -189,6 +193,8 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
             Architecture::ARMv7 => armv7_sysroot,
             Architecture::AArch64 => aarch64_sysroot,
             Architecture::RISCV64 => riscv64_sysroot,
+            Architecture::PowerPC64 => powerpc64_sysroot,
+            Architecture::S390X => s390x_sysroot,
         };
         bindgen = bindgen.clang_args(&["-I", &*sysroot.to_string_lossy()]);
 
