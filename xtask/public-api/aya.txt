@@ -7923,6 +7923,8 @@ pub fn aya::programs::ProgramInfo::memory_locked(&self) -> core::result::Result<
 pub fn aya::programs::ProgramInfo::name(&self) -> &[u8]
 pub fn aya::programs::ProgramInfo::name_as_str(&self) -> core::option::Option<&str>
 pub fn aya::programs::ProgramInfo::program_type(&self) -> u32
+pub fn aya::programs::ProgramInfo::run_count(&self) -> u64
+pub fn aya::programs::ProgramInfo::run_time(&self) -> core::time::Duration
 pub fn aya::programs::ProgramInfo::size_jitted(&self) -> u32
 pub fn aya::programs::ProgramInfo::size_translated(&self) -> u32
 pub fn aya::programs::ProgramInfo::tag(&self) -> u64

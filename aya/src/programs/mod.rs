@@ -1000,6 +1000,7 @@ impl_info!(
 );
 
 /// Provides information about a loaded program, like name, id and statistics
+#[doc(alias = "bpf_prog_info")]
 #[derive(Debug)]
 pub struct ProgramInfo(bpf_prog_info);
 
@@ -1097,6 +1098,27 @@ impl ProgramInfo {
         let Self(info) = self;
         let fd = bpf_prog_get_fd_by_id(info.id)?;
         Ok(ProgramFd(fd))
+    }
+
+    /// The accumulated time that the program has been actively running.
+    ///
+    /// This is not to be confused with the duration since the program was
+    /// first loaded on the host.
+    ///
+    /// Note this field is only updated for as long as
+    /// [`enable_stats`](crate::sys::enable_stats) is enabled
+    /// with [`Stats::RunTime`](crate::sys::Stats::RunTime).
+    pub fn run_time(&self) -> Duration {
+        Duration::from_nanos(self.0.run_time_ns)
+    }
+
+    /// The accumulated execution count of the program.
+    ///
+    /// Note this field is only updated for as long as
+    /// [`enable_stats`](crate::sys::enable_stats) is enabled
+    /// with [`Stats::RunTime`](crate::sys::Stats::RunTime).
+    pub fn run_count(&self) -> u64 {
+        self.0.run_cnt
     }
 
     /// Loads a program from a pinned path in bpffs.

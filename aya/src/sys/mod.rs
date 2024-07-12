@@ -146,7 +146,8 @@ pub(crate) unsafe fn mmap(
 #[doc(alias = "bpf_stats_type")]
 #[derive(Copy, Clone, Debug)]
 pub enum Stats {
-    /// Tracks `run_time_ns` and `run_cnt`.
+    /// Tracks [`run_time`](crate::programs::ProgramInfo::run_time) and
+    /// [`run_count`](crate::programs::ProgramInfo::run_count) fields.
     #[doc(alias = "BPF_STATS_RUN_TIME")]
     RunTime,
 }
