@@ -11,6 +11,8 @@ pub aya_log_common::Argument::I16
 pub aya_log_common::Argument::I32
 pub aya_log_common::Argument::I64
 pub aya_log_common::Argument::I8
+pub aya_log_common::Argument::Ipv4Addr
+pub aya_log_common::Argument::Ipv6Addr
 pub aya_log_common::Argument::Isize
 pub aya_log_common::Argument::Str
 pub aya_log_common::Argument::U16
@@ -204,6 +206,9 @@ impl aya_log_common::DefaultFormatter for usize
 pub trait aya_log_common::IpFormatter
 impl aya_log_common::IpFormatter for [u16; 8]
 impl aya_log_common::IpFormatter for [u8; 16]
+impl aya_log_common::IpFormatter for core::net::ip_addr::IpAddr
+impl aya_log_common::IpFormatter for core::net::ip_addr::Ipv4Addr
+impl aya_log_common::IpFormatter for core::net::ip_addr::Ipv6Addr
 impl aya_log_common::IpFormatter for u32
 pub trait aya_log_common::LowerHexFormatter
 impl aya_log_common::LowerHexFormatter for &[u8]
@@ -247,6 +252,12 @@ impl aya_log_common::WriteToBuf for [u8; 6]
 pub fn [u8; 6]::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
+impl aya_log_common::WriteToBuf for core::net::ip_addr::IpAddr
+pub fn core::net::ip_addr::IpAddr::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
+impl aya_log_common::WriteToBuf for core::net::ip_addr::Ipv4Addr
+pub fn core::net::ip_addr::Ipv4Addr::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
+impl aya_log_common::WriteToBuf for core::net::ip_addr::Ipv6Addr
+pub fn core::net::ip_addr::Ipv6Addr::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for f32
 pub fn f32::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 impl aya_log_common::WriteToBuf for f64
