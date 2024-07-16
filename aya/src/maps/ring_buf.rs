@@ -35,7 +35,7 @@ use crate::{
 ///   reasons. By default, a notification will be sent if the consumer is caught up at the time of
 ///   committing. The eBPF program can use the `BPF_RB_NO_WAKEUP` or `BPF_RB_FORCE_WAKEUP` flags to
 ///   control this behavior.
-/// * On the eBPF side, it supports the reverse-commit pattern where the event can be directly
+/// * On the eBPF side, it supports the reserve-commit pattern where the event can be directly
 ///   written into the ring without copying from a temporary location.
 /// * Dropped sample notifications go to the eBPF program as the return value of `reserve`/`output`,
 ///   and not the userspace reader. This might require extra code to handle, but allows for more
