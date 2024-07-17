@@ -310,6 +310,48 @@ impl Format for u32 {
     }
 }
 
+impl Format for Ipv4Addr {
+    fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
+            Some(DisplayHint::Default) => Ok(Ipv4Formatter::format(*self)),
+            Some(DisplayHint::LowerHex) => Err(()),
+            Some(DisplayHint::UpperHex) => Err(()),
+            Some(DisplayHint::Ip) => Ok(Ipv4Formatter::format(*self)),
+            Some(DisplayHint::LowerMac) => Err(()),
+            Some(DisplayHint::UpperMac) => Err(()),
+            None => Ok(Ipv4Formatter::format(*self)),
+        }
+    }
+}
+
+impl Format for Ipv6Addr {
+    fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
+            Some(DisplayHint::Default) => Ok(Ipv6Formatter::format(*self)),
+            Some(DisplayHint::LowerHex) => Err(()),
+            Some(DisplayHint::UpperHex) => Err(()),
+            Some(DisplayHint::Ip) => Ok(Ipv6Formatter::format(*self)),
+            Some(DisplayHint::LowerMac) => Err(()),
+            Some(DisplayHint::UpperMac) => Err(()),
+            None => Ok(Ipv6Formatter::format(*self)),
+        }
+    }
+}
+
+impl Format for [u8; 4] {
+    fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
+            Some(DisplayHint::Default) => Ok(Ipv4Formatter::format(*self)),
+            Some(DisplayHint::LowerHex) => Err(()),
+            Some(DisplayHint::UpperHex) => Err(()),
+            Some(DisplayHint::Ip) => Ok(Ipv4Formatter::format(*self)),
+            Some(DisplayHint::LowerMac) => Err(()),
+            Some(DisplayHint::UpperMac) => Err(()),
+            None => Ok(Ipv4Formatter::format(*self)),
+        }
+    }
+}
+
 impl Format for [u8; 6] {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
         match last_hint.map(|DisplayHintWrapper(dh)| dh) {
@@ -548,6 +590,20 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
                         .format(last_hint.take())?,
                 );
             }
+            Argument::Ipv4Addr => {
+                let value: [u8; 4] = value.try_into().map_err(|_| ())?;
+                let value = Ipv4Addr::from(value);
+                full_log_msg.push_str(&value.format(last_hint.take())?)
+            }
+            Argument::Ipv6Addr => {
+                let value: [u8; 16] = value.try_into().map_err(|_| ())?;
+                let value = Ipv6Addr::from(value);
+                full_log_msg.push_str(&value.format(last_hint.take())?)
+            }
+            Argument::ArrU8Len4 => {
+                let value: [u8; 4] = value.try_into().map_err(|_| ())?;
+                full_log_msg.push_str(&value.format(last_hint.take())?);
+            }
             Argument::ArrU8Len6 => {
                 let value: [u8; 6] = value.try_into().map_err(|_| ())?;
                 full_log_msg.push_str(&value.format(last_hint.take())?);
@@ -615,6 +671,8 @@ fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
 
 #[cfg(test)]
 mod test {
+    use std::net::IpAddr;
+
     use aya_log_common::{write_record_header, WriteToBuf};
     use log::{logger, Level};
 
@@ -796,6 +854,52 @@ mod test {
 
         len += "ipv4: ".write(&mut input[len..]).unwrap().get();
         len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
+        len += Ipv4Addr::new(10, 0, 0, 1)
+            .write(&mut input[len..])
+            .unwrap()
+            .get();
+
+        _ = len;
+
+        let logger = logger();
+        let () = log_buf(&input, logger).unwrap();
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "ipv4: 10.0.0.1");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_display_hint_ip_ipv4() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(3).unwrap();
+
+        len += "ipv4: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
+        len += IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1))
+            .write(&mut input[len..])
+            .unwrap()
+            .get();
+
+        _ = len;
+
+        let logger = logger();
+        let () = log_buf(&input, logger).unwrap();
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "ipv4: 10.0.0.1");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_display_hint_ipv4_u32() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(3).unwrap();
+
+        len += "ipv4: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
         // 10.0.0.1 as u32
         len += 167772161u32.write(&mut input[len..]).unwrap().get();
 
@@ -806,6 +910,56 @@ mod test {
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "ipv4: 10.0.0.1");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_display_hint_ipv6() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(3).unwrap();
+
+        len += "ipv6: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
+        len += Ipv6Addr::new(
+            0x2001, 0x0db8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001, 0x0001,
+        )
+        .write(&mut input[len..])
+        .unwrap()
+        .get();
+
+        _ = len;
+
+        let logger = logger();
+        let () = log_buf(&input, logger).unwrap();
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "ipv6: 2001:db8::1:1");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_display_hint_ip_ipv6() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(3).unwrap();
+
+        len += "ipv6: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
+        len += IpAddr::V6(Ipv6Addr::new(
+            0x2001, 0x0db8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001, 0x0001,
+        ))
+        .write(&mut input[len..])
+        .unwrap()
+        .get();
+
+        _ = len;
+
+        let logger = logger();
+        let () = log_buf(&input, logger).unwrap();
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "ipv6: 2001:db8::1:1");
             assert_eq!(captured_logs[0].level, Level::Info);
         });
     }
