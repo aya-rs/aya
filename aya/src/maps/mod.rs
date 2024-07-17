@@ -59,10 +59,9 @@ use std::{
     ptr,
 };
 
-use aya_obj::generated::bpf_map_type;
+use aya_obj::{generated::bpf_map_type, InvalidTypeBinding};
 use libc::{getrlimit, rlim_t, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
-use obj::maps::InvalidMapTypeError;
 use thiserror::Error;
 
 use crate::{
@@ -203,13 +202,10 @@ pub enum MapError {
     },
 }
 
-// Note that this is not just derived using #[from] because InvalidMapTypeError cannot implement
-// Error due the the fact that aya-obj is no_std and error_in_core is not stabilized
-// (https://github.com/rust-lang/rust/issues/103765).
-impl From<InvalidMapTypeError> for MapError {
-    fn from(e: InvalidMapTypeError) -> Self {
-        let InvalidMapTypeError { map_type } = e;
-        Self::InvalidMapType { map_type }
+impl From<InvalidTypeBinding<u32>> for MapError {
+    fn from(e: InvalidTypeBinding<u32>) -> Self {
+        let InvalidTypeBinding { value } = e;
+        Self::InvalidMapType { map_type: value }
     }
 }
 

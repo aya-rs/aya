@@ -1371,8 +1371,8 @@ impl core::convert::From<aya::maps::MapError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::maps::MapError) -> Self
 impl core::convert::From<aya::sys::SyscallError> for aya::maps::MapError
 pub fn aya::maps::MapError::from(source: aya::sys::SyscallError) -> Self
-impl core::convert::From<aya_obj::maps::InvalidMapTypeError> for aya::maps::MapError
-pub fn aya::maps::MapError::from(e: aya_obj::maps::InvalidMapTypeError) -> Self
+impl core::convert::From<aya_obj::obj::InvalidTypeBinding<u32>> for aya::maps::MapError
+pub fn aya::maps::MapError::from(e: aya_obj::obj::InvalidTypeBinding<u32>) -> Self
 impl core::convert::From<std::io::error::Error> for aya::maps::MapError
 pub fn aya::maps::MapError::from(source: std::io::error::Error) -> Self
 impl core::error::Error for aya::maps::MapError

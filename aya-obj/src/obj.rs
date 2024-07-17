@@ -987,6 +987,12 @@ pub enum ParseError {
     NoBTF,
 }
 
+/// Invalid bindings to the bpf type from the parsed/received value.
+pub struct InvalidTypeBinding<T> {
+    /// The value parsed/received.
+    pub value: T,
+}
+
 /// The kind of an ELF section.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum EbpfSectionKind {
