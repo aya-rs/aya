@@ -1,6 +1,9 @@
 #![no_std]
 
-use core::num::{NonZeroUsize, TryFromIntError};
+use core::{
+    net::{IpAddr, Ipv4Addr, Ipv6Addr},
+    num::{NonZeroUsize, TryFromIntError},
+};
 
 use num_enum::IntoPrimitive;
 
@@ -52,7 +55,8 @@ impl_formatter_for_types!(
         f32, f64,
         char,
         str,
-        &str
+        &str,
+        IpAddr, Ipv4Addr, Ipv6Addr
     }
 );
 
@@ -75,7 +79,11 @@ impl_formatter_for_types!(
 );
 
 pub trait IpFormatter {}
+impl IpFormatter for IpAddr {}
+impl IpFormatter for Ipv4Addr {}
+impl IpFormatter for Ipv6Addr {}
 impl IpFormatter for u32 {}
+impl IpFormatter for [u8; 4] {}
 impl IpFormatter for [u8; 16] {}
 impl IpFormatter for [u16; 8] {}
 
@@ -118,6 +126,11 @@ pub enum Argument {
     F32,
     F64,
 
+    Ipv4Addr,
+    Ipv6Addr,
+
+    /// `[u8; 4]` array which represents an IPv4 address.
+    ArrU8Len4,
     /// `[u8; 6]` array which represents a MAC address.
     ArrU8Len6,
     /// `[u8; 16]` array which represents an IPv6 address.
@@ -202,6 +215,36 @@ impl_write_to_buf!(usize, Argument::Usize);
 
 impl_write_to_buf!(f32, Argument::F32);
 impl_write_to_buf!(f64, Argument::F64);
+
+impl WriteToBuf for IpAddr {
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
+        match self {
+            IpAddr::V4(ipv4_addr) => write(Argument::Ipv4Addr.into(), &ipv4_addr.octets(), buf),
+            IpAddr::V6(ipv6_addr) => write(Argument::Ipv6Addr.into(), &ipv6_addr.octets(), buf),
+        }
+    }
+}
+
+impl WriteToBuf for Ipv4Addr {
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
+        write(Argument::Ipv4Addr.into(), &self.octets(), buf)
+    }
+}
+
+impl WriteToBuf for [u8; 4] {
+    // This need not be inlined because the return value is Option<N> where N is 16, which is a
+    // compile-time constant.
+    #[inline(never)]
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
+        write(Argument::ArrU8Len4.into(), &self, buf)
+    }
+}
+
+impl WriteToBuf for Ipv6Addr {
+    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
+        write(Argument::Ipv6Addr.into(), &self.octets(), buf)
+    }
+}
 
 impl WriteToBuf for [u8; 16] {
     // This need not be inlined because the return value is Option<N> where N is 16, which is a
