@@ -1599,6 +1599,8 @@ pub fn aya_obj::generated::bpf_link_type::clone(&self) -> aya_obj::generated::bp
 impl core::cmp::Eq for aya_obj::generated::bpf_link_type
 impl core::cmp::PartialEq for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::eq(&self, other: &aya_obj::generated::bpf_link_type) -> bool
+impl core::convert::From<u32> for aya_obj::generated::bpf_link_type
+pub fn aya_obj::generated::bpf_link_type::from(link_type: u32) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya_obj::generated::bpf_link_type
@@ -1759,6 +1761,8 @@ pub fn aya_obj::generated::bpf_prog_type::clone(&self) -> aya_obj::generated::bp
 impl core::cmp::Eq for aya_obj::generated::bpf_prog_type
 impl core::cmp::PartialEq for aya_obj::generated::bpf_prog_type
 pub fn aya_obj::generated::bpf_prog_type::eq(&self, other: &aya_obj::generated::bpf_prog_type) -> bool
+impl core::convert::From<u32> for aya_obj::generated::bpf_prog_type
+pub fn aya_obj::generated::bpf_prog_type::from(prog_type: u32) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_prog_type
 pub fn aya_obj::generated::bpf_prog_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya_obj::generated::bpf_prog_type
@@ -6839,6 +6843,7 @@ pub type aya_obj::generated::_bindgen_ty_7 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_8 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_9 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_92 = core::ffi::c_uint
+pub mod aya_obj::links
 pub mod aya_obj::maps
 pub enum aya_obj::maps::Map
 pub aya_obj::maps::Map::Btf(aya_obj::maps::BtfMap)
@@ -7667,6 +7672,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::programs::cgroup_sockopt::Cgroup
 pub unsafe fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::clone_to_uninit(&self, dst: *mut T)
 impl<T> core::convert::From<T> for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::from(t: T) -> T
+pub mod aya_obj::programs::prog_type
 pub mod aya_obj::programs::xdp
 pub enum aya_obj::programs::xdp::XdpAttachType
 pub aya_obj::programs::xdp::XdpAttachType::CpuMap

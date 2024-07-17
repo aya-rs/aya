@@ -31,7 +31,6 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
             x if x == BPF_MAP_TYPE_LRU_HASH as u32 => BPF_MAP_TYPE_LRU_HASH,
             x if x == BPF_MAP_TYPE_LRU_PERCPU_HASH as u32 => BPF_MAP_TYPE_LRU_PERCPU_HASH,
             x if x == BPF_MAP_TYPE_LPM_TRIE as u32 => BPF_MAP_TYPE_LPM_TRIE,
-            x if x == BPF_MAP_TYPE_BLOOM_FILTER as u32 => BPF_MAP_TYPE_BLOOM_FILTER,
             x if x == BPF_MAP_TYPE_ARRAY_OF_MAPS as u32 => BPF_MAP_TYPE_ARRAY_OF_MAPS,
             x if x == BPF_MAP_TYPE_HASH_OF_MAPS as u32 => BPF_MAP_TYPE_HASH_OF_MAPS,
             x if x == BPF_MAP_TYPE_DEVMAP as u32 => BPF_MAP_TYPE_DEVMAP,
@@ -42,7 +41,6 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
             x if x == BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED as u32 => {
                 BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED
             }
-            x if x == BPF_MAP_TYPE_CGRP_STORAGE as u32 => BPF_MAP_TYPE_CGRP_STORAGE,
             x if x == BPF_MAP_TYPE_REUSEPORT_SOCKARRAY as u32 => BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
             x if x == BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED as u32 => {
                 BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED
@@ -58,6 +56,7 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
             x if x == BPF_MAP_TYPE_BLOOM_FILTER as u32 => BPF_MAP_TYPE_BLOOM_FILTER,
             x if x == BPF_MAP_TYPE_USER_RINGBUF as u32 => BPF_MAP_TYPE_USER_RINGBUF,
             x if x == BPF_MAP_TYPE_CGRP_STORAGE as u32 => BPF_MAP_TYPE_CGRP_STORAGE,
+            x if x == BPF_MAP_TYPE_ARENA as u32 => BPF_MAP_TYPE_ARENA,
             _ => return Err(InvalidMapTypeError { map_type }),
         })
     }
