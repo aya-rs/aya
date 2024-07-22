@@ -88,7 +88,7 @@ mod tests {
     use crate::{
         generated::{
             bpf_cmd,
-            bpf_map_type::{BPF_MAP_TYPE_BLOOM_FILTER, BPF_MAP_TYPE_PERF_EVENT_ARRAY},
+            bpf_map_type::{BPF_MAP_TYPE_ARRAY, BPF_MAP_TYPE_BLOOM_FILTER},
         },
         maps::{
             test_utils::{self, new_map},
@@ -120,10 +120,8 @@ mod tests {
 
     #[test]
     fn test_try_from_wrong_map() {
-        let map = new_map(test_utils::new_obj_map::<u32>(
-            BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-        ));
-        let map = Map::PerfEventArray(map);
+        let map = new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_ARRAY));
+        let map = Map::Array(map);
 
         assert_matches!(
             BloomFilter::<_, u32>::try_from(&map),
