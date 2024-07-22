@@ -356,8 +356,7 @@ impl<T> aya_ebpf::maps::PerfEventArray<T>
 pub const fn aya_ebpf::maps::PerfEventArray<T>::new(flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
 pub fn aya_ebpf::maps::PerfEventArray<T>::output<C: aya_ebpf::EbpfContext>(&self, ctx: &C, data: &T, flags: u32)
 pub fn aya_ebpf::maps::PerfEventArray<T>::output_at_index<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32, data: &T, flags: u32)
-pub const fn aya_ebpf::maps::PerfEventArray<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
-pub const fn aya_ebpf::maps::PerfEventArray<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
+pub const fn aya_ebpf::maps::PerfEventArray<T>::pinned(flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::PerfEventArray<T>
 impl<T> !core::marker::Freeze for aya_ebpf::maps::PerfEventArray<T>
 impl<T> core::marker::Send for aya_ebpf::maps::PerfEventArray<T> where T: core::marker::Send
@@ -385,8 +384,7 @@ impl aya_ebpf::maps::PerfEventByteArray
 pub const fn aya_ebpf::maps::PerfEventByteArray::new(flags: u32) -> aya_ebpf::maps::PerfEventByteArray
 pub fn aya_ebpf::maps::PerfEventByteArray::output<C: aya_ebpf::EbpfContext>(&self, ctx: &C, data: &[u8], flags: u32)
 pub fn aya_ebpf::maps::PerfEventByteArray::output_at_index<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32, data: &[u8], flags: u32)
-pub const fn aya_ebpf::maps::PerfEventByteArray::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventByteArray
-pub const fn aya_ebpf::maps::PerfEventByteArray::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventByteArray
+pub const fn aya_ebpf::maps::PerfEventByteArray::pinned(flags: u32) -> aya_ebpf::maps::PerfEventByteArray
 impl core::marker::Sync for aya_ebpf::maps::PerfEventByteArray
 impl !core::marker::Freeze for aya_ebpf::maps::PerfEventByteArray
 impl core::marker::Send for aya_ebpf::maps::PerfEventByteArray
@@ -1085,8 +1083,7 @@ impl<T> aya_ebpf::maps::PerfEventArray<T>
 pub const fn aya_ebpf::maps::PerfEventArray<T>::new(flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
 pub fn aya_ebpf::maps::PerfEventArray<T>::output<C: aya_ebpf::EbpfContext>(&self, ctx: &C, data: &T, flags: u32)
 pub fn aya_ebpf::maps::PerfEventArray<T>::output_at_index<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32, data: &T, flags: u32)
-pub const fn aya_ebpf::maps::PerfEventArray<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
-pub const fn aya_ebpf::maps::PerfEventArray<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
+pub const fn aya_ebpf::maps::PerfEventArray<T>::pinned(flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::PerfEventArray<T>
 impl<T> !core::marker::Freeze for aya_ebpf::maps::PerfEventArray<T>
 impl<T> core::marker::Send for aya_ebpf::maps::PerfEventArray<T> where T: core::marker::Send
@@ -1114,8 +1111,7 @@ impl aya_ebpf::maps::PerfEventByteArray
 pub const fn aya_ebpf::maps::PerfEventByteArray::new(flags: u32) -> aya_ebpf::maps::PerfEventByteArray
 pub fn aya_ebpf::maps::PerfEventByteArray::output<C: aya_ebpf::EbpfContext>(&self, ctx: &C, data: &[u8], flags: u32)
 pub fn aya_ebpf::maps::PerfEventByteArray::output_at_index<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32, data: &[u8], flags: u32)
-pub const fn aya_ebpf::maps::PerfEventByteArray::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventByteArray
-pub const fn aya_ebpf::maps::PerfEventByteArray::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::PerfEventByteArray
+pub const fn aya_ebpf::maps::PerfEventByteArray::pinned(flags: u32) -> aya_ebpf::maps::PerfEventByteArray
 impl core::marker::Sync for aya_ebpf::maps::PerfEventByteArray
 impl !core::marker::Freeze for aya_ebpf::maps::PerfEventByteArray
 impl core::marker::Send for aya_ebpf::maps::PerfEventByteArray
