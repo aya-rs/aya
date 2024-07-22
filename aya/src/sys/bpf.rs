@@ -30,7 +30,7 @@ use crate::{
         copy_instructions,
     },
     sys::{syscall, SysResult, Syscall, SyscallError},
-    util::KernelVersion,
+    util::{nr_cpus, KernelVersion},
     Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN,
 };
 
@@ -46,6 +46,26 @@ pub(crate) fn bpf_create_map(
     u.map_type = def.map_type();
     u.key_size = def.key_size();
     u.value_size = def.value_size();
+    u.max_entries = def.max_entries();
+
+    // BPF_MAP_TYPE_PERF_EVENT_ARRAY's max_entries should not exceed the number of
+    // CPUs.
+    //
+    // By default, the newest versions of Aya, libbpf and cilium/ebpf define `max_entries` of
+    // `PerfEventArray` as `0`, with an intention to get it replaced with a correct value
+    // by the loader.
+    //
+    // We allow custom values (potentially coming either from older versions of aya-ebpf or
+    // programs written in C) as long as they don't exceed the number of CPUs.
+    //
+    // Otherwise, when the value is `0` or too large, we set it to the number of CPUs.
+    if def.map_type() == bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 {
+        let ncpus = nr_cpus().map_err(|e| (-1i64, e))? as u32;
+        if u.max_entries == 0 || u.max_entries > ncpus {
+            u.max_entries = ncpus;
+        }
+    };
+
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
 
