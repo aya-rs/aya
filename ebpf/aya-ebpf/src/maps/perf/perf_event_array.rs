@@ -17,16 +17,12 @@ unsafe impl<T: Sync> Sync for PerfEventArray<T> {}
 
 impl<T> PerfEventArray<T> {
     pub const fn new(flags: u32) -> PerfEventArray<T> {
-        PerfEventArray::with_max_entries(0, flags)
-    }
-
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> PerfEventArray<T> {
         PerfEventArray {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
                 value_size: mem::size_of::<u32>() as u32,
-                max_entries,
+                max_entries: 0,
                 map_flags: flags,
                 id: 0,
                 pinning: PinningType::None as u32,
@@ -35,13 +31,13 @@ impl<T> PerfEventArray<T> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> PerfEventArray<T> {
+    pub const fn pinned(flags: u32) -> PerfEventArray<T> {
         PerfEventArray {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
                 value_size: mem::size_of::<u32>() as u32,
-                max_entries,
+                max_entries: 0,
                 map_flags: flags,
                 id: 0,
                 pinning: PinningType::ByName as u32,
