@@ -672,6 +672,11 @@ pub(crate) fn is_prog_name_supported() -> bool {
     });
     u.prog_name = name;
 
+    // The fields conforming an encoded basic instruction are stored in the following order:
+    //   opcode:8 src_reg:4 dst_reg:4 offset:16 imm:32   - In little-endian BPF.
+    //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
+    // Multi-byte fields ('imm' and 'offset') are stored using endian order.
+    // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
     let prog: &[u8] = &[
         0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
@@ -692,12 +697,27 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
+    // The fields conforming an encoded basic instruction are stored in the following order:
+    //   opcode:8 src_reg:4 dst_reg:4 offset:16 imm:32   - In little-endian BPF.
+    //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
+    // Multi-byte fields ('imm' and 'offset') are stored using endian order.
+    // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
+    #[cfg(target_endian = "little")]
     let prog: &[u8] = &[
         0xbf, 0xa1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // r1 = r10
         0x07, 0x01, 0x00, 0x00, 0xf8, 0xff, 0xff, 0xff, // r1 -= 8
         0xb7, 0x02, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, // r2 = 8
         0xb7, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // r3 = 0
         0x85, 0x00, 0x00, 0x00, 0x71, 0x00, 0x00, 0x00, // call 113
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+    #[cfg(target_endian = "big")]
+    let prog: &[u8] = &[
+        0xbf, 0x1a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // r1 = r10
+        0x07, 0x10, 0x00, 0x00, 0xff, 0xff, 0xff, 0xf8, // r1 -= 8
+        0xb7, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, // r2 = 8
+        0xb7, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // r3 = 0
+        0x85, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x71, // call 113
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
 
@@ -716,6 +736,11 @@ pub(crate) fn is_perf_link_supported() -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
+    // The fields conforming an encoded basic instruction are stored in the following order:
+    //   opcode:8 src_reg:4 dst_reg:4 offset:16 imm:32   - In little-endian BPF.
+    //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
+    // Multi-byte fields ('imm' and 'offset') are stored using endian order.
+    // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
     let prog: &[u8] = &[
         0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
@@ -746,10 +771,24 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
+    // The fields conforming an encoded basic instruction are stored in the following order:
+    //   opcode:8 src_reg:4 dst_reg:4 offset:16 imm:32   - In little-endian BPF.
+    //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
+    // Multi-byte fields ('imm' and 'offset') are stored using endian order.
+    // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
+    #[cfg(target_endian = "little")]
     let prog: &[u8] = &[
         0x18, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // ld_pseudo r1, 0x2, 0x0
         0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, //
         0x7a, 0x01, 0x00, 0x00, 0x2a, 0x00, 0x00, 0x00, // stdw [r1 + 0x0], 0x2a
+        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+    #[cfg(target_endian = "big")]
+    let prog: &[u8] = &[
+        0x18, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, // ld_pseudo r1, 0x2, 0x0
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, //
+        0x7a, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2a, // stdw [r1 + 0x0], 0x2a
         0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
@@ -793,8 +832,19 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
+    // The fields conforming an encoded basic instruction are stored in the following order:
+    //   opcode:8 src_reg:4 dst_reg:4 offset:16 imm:32   - In little-endian BPF.
+    //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
+    // Multi-byte fields ('imm' and 'offset') are stored using endian order.
+    // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
+    #[cfg(target_endian = "little")]
     let prog: &[u8] = &[
         0x85, 0x00, 0x00, 0x00, 0xae, 0x00, 0x00, 0x00, // call bpf_get_attach_cookie
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+    #[cfg(target_endian = "big")]
+    let prog: &[u8] = &[
+        0x85, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xae, // call bpf_get_attach_cookie
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
 
