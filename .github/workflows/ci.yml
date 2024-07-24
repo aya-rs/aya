@@ -238,8 +238,6 @@ jobs:
           echo /usr/local/opt/findutils/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
           echo /usr/local/opt/llvm/bin >> $GITHUB_PATH
-          # https://github.com/Homebrew/homebrew-core/issues/140244
-          codesign --verify $(which qemu-system-x86_64) || brew reinstall qemu --build-from-source
 
       - name: bpf-linker
         if: runner.os == 'macOS'
