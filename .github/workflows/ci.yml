@@ -179,7 +179,11 @@ jobs:
       fail-fast: false
       matrix:
         runner:
-          - macos-12
+          # macos-14 is arm64 per
+          # https://github.com/actions/runner-images#available-images which
+          # doesn't support nested virtualization per
+          # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#limitations-for-arm64-macos-runners
+          - macos-13
           - ubuntu-22.04
     runs-on: ${{ matrix.runner }}
     steps:
