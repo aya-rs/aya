@@ -191,14 +191,6 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly
-          components: rust-src
-          targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
-
-      - uses: Swatinem/rust-cache@v2
-
       - name: Install prerequisites
         if: runner.os == 'Linux'
         # ubuntu-22.04 comes with clang 14[0] which doesn't include support for signed and 64bit
@@ -242,6 +234,14 @@ jobs:
           echo $(brew --prefix)/opt/findutils/libexec/gnubin >> $GITHUB_PATH
           echo $(brew --prefix)/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
           echo $(brew --prefix)/opt/llvm/bin >> $GITHUB_PATH
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: rust-src
+          targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
+
+      - uses: Swatinem/rust-cache@v2
 
       - name: bpf-linker
         if: runner.os == 'macOS'
