@@ -14,6 +14,7 @@ use obj::{
     maps::{bpf_map_def, LegacyMap},
     EbpfSectionKind, VerifierLog,
 };
+use solana_rbpf::{assembler::assemble, program::BuiltinProgram, vm::TestContextObject};
 
 use crate::{
     generated::{
@@ -677,10 +678,20 @@ pub(crate) fn is_prog_name_supported() -> bool {
     //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
     // Multi-byte fields ('imm' and 'offset') are stored using endian order.
     // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
+    /*
     let prog: &[u8] = &[
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0, 0
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
+    */
+    let executable = assemble::<TestContextObject>(
+        "mov64 r0, 0
+         exit",
+        std::sync::Arc::new(BuiltinProgram::new_mock()),
+    )
+    .unwrap();
+    let prog = executable.get_text_bytes().1;
+    println!("BILLY: name_supported {:x?}", prog);
 
     let gpl = b"GPL\0";
     u.license = gpl.as_ptr() as u64;
@@ -702,13 +713,15 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
     //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
     // Multi-byte fields ('imm' and 'offset') are stored using endian order.
     // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
+    /*
     #[cfg(target_endian = "little")]
     let prog: &[u8] = &[
-        0xbf, 0xa1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // r1 = r10
-        0x07, 0x01, 0x00, 0x00, 0xf8, 0xff, 0xff, 0xff, // r1 -= 8
-        0xb7, 0x02, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, // r2 = 8
-        0xb7, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // r3 = 0
-        0x85, 0x00, 0x00, 0x00, 0x71, 0x00, 0x00, 0x00, // call 113
+        0xbf, 0xa1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r1, r10
+        0x07, 0x01, 0x00, 0x00, 0xf8, 0xff, 0xff, 0xff, // add64 r1, -8
+        0xb7, 0x02, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, // mov64 r2, 8
+        0xb7, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r3, 0
+        0x85, 0x00, 0x00, 0x00, 0x71, 0x00, 0x00, 0x00, // call 113  <-- BILLY: TODO
+        0x85, 0x10, 0x00, 0x00, 0x76, 0x00, 0x00, 0x00, //           <-- BILLY: ERROR - SEEING
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
     #[cfg(target_endian = "big")]
@@ -720,6 +733,19 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
         0x85, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x71, // call 113
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
+    */
+    let executable = assemble::<TestContextObject>(
+        "mov64 r1, r10
+         add64 r1, -8
+         mov64 r2, 8
+         mov64 r3, 0
+         call 113
+         exit",
+        std::sync::Arc::new(BuiltinProgram::new_mock()),
+    )
+    .unwrap();
+    let prog = executable.get_text_bytes().1;
+    println!("BILLY: read_kernel_supported {:x?}", prog);
 
     let gpl = b"GPL\0";
     u.license = gpl.as_ptr() as u64;
@@ -741,10 +767,20 @@ pub(crate) fn is_perf_link_supported() -> bool {
     //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
     // Multi-byte fields ('imm' and 'offset') are stored using endian order.
     // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
+    /*
     let prog: &[u8] = &[
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0, 0
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
+    */
+    let executable = assemble::<TestContextObject>(
+        "mov64 r0, 0
+         exit",
+        std::sync::Arc::new(BuiltinProgram::new_mock()),
+    )
+    .unwrap();
+    let prog = executable.get_text_bytes().1;
+    println!("BILLY: perf_link_supported {:x?}", prog);
 
     let gpl = b"GPL\0";
     u.license = gpl.as_ptr() as u64;
@@ -777,9 +813,12 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
     //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
     // Multi-byte fields ('imm' and 'offset') are stored using endian order.
     // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
+    /*
     #[cfg(target_endian = "little")]
     let prog: &[u8] = &[
-        0x18, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // ld_pseudo r1, 0x2, 0x0
+        0x18, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // lddw r1, 0x2, 0x0            <-- BILLY: TODO
+        0x18, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // lddw r1, 0x0000001000000000  <-- ERROR - SEEING AND COMMAND DOESN'T SEEM CORRECT
+        0x79, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // ldxdw r1, [r2 + 0x0]         <-- ERROR - SEEING AND COMMAND DOESN'T SEEM CORRECT
         0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, //
         0x7a, 0x01, 0x00, 0x00, 0x2a, 0x00, 0x00, 0x00, // stdw [r1 + 0x0], 0x2a
         0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
@@ -790,9 +829,20 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
         0x18, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, // ld_pseudo r1, 0x2, 0x0
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, //
         0x7a, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2a, // stdw [r1 + 0x0], 0x2a
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0, 0
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
+    */
+    let executable = assemble::<TestContextObject>(
+        "lddw r1, 0x0000001000000000
+         stdw [r1 + 0x0], 0x2a
+         mov64 r0, 0
+         exit",
+        std::sync::Arc::new(BuiltinProgram::new_mock()),
+    )
+    .unwrap();
+    let prog = executable.get_text_bytes().1;
+    println!("BILLY: global_data_supported {:x?}", prog);
 
     let mut insns = copy_instructions(prog).unwrap();
 
@@ -838,9 +888,11 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
     //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
     // Multi-byte fields ('imm' and 'offset') are stored using endian order.
     // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
+    /*
     #[cfg(target_endian = "little")]
     let prog: &[u8] = &[
-        0x85, 0x00, 0x00, 0x00, 0xae, 0x00, 0x00, 0x00, // call bpf_get_attach_cookie
+        0x85, 0x00, 0x00, 0x00, 0xae, 0x00, 0x00, 0x00, // call bpf_get_attach_cookie  <-- BILLY: TODO
+        0x85, 0x00, 0x00, 0x00, 0x1f, 0x03, 0x66, 0xe0, //                             <-- BILLY: ERROR - SEEING
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
     #[cfg(target_endian = "big")]
@@ -848,6 +900,15 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
         0x85, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xae, // call bpf_get_attach_cookie
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
+    */
+    let executable = assemble::<TestContextObject>(
+        "syscall bpf_get_attach_cookie
+         exit",
+        std::sync::Arc::new(BuiltinProgram::new_mock()),
+    )
+    .unwrap();
+    let prog = executable.get_text_bytes().1;
+    println!("BILLY: cookie_supported {:x?}", prog);
 
     let gpl = b"GPL\0";
     u.license = gpl.as_ptr() as u64;
@@ -1184,6 +1245,20 @@ mod tests {
         override_syscall(|_call| Err((-1, io::Error::from_raw_os_error(EINVAL))));
         let supported = is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP);
         assert!(!supported);
+    }
+
+    #[test]
+    fn test_prog_name_supported() {
+        let name_supported = is_prog_name_supported();
+        assert!(!name_supported);
+        let read_kernel_supported = is_probe_read_kernel_supported();
+        assert!(!read_kernel_supported);
+        let perf_link_supported = is_perf_link_supported();
+        assert!(!perf_link_supported);
+        let global_data_supported = is_bpf_global_data_supported();
+        assert!(!global_data_supported);
+        let cookie_supported = is_bpf_cookie_supported();
+        assert!(!cookie_supported);
     }
 
     #[test]

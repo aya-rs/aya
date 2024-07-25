@@ -110,7 +110,7 @@ jobs:
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
             --exclude integration-test \
-            --workspace
+            --workspace -- --nocapture
 
       - name: Doctests
         env:

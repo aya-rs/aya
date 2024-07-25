@@ -22,6 +22,7 @@ lazy_static = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }
 object = { workspace = true, features = ["elf", "read_core", "std", "write"] }
+solana_rbpf = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["rt"], optional = true }
 

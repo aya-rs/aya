@@ -88,6 +88,7 @@ rbpf = { version = "0.2.0", default-features = false }
 rustdoc-json = { version = "0.9.0", default-features = false }
 rustup-toolchain = { version = "0.1.5", default-features = false }
 rustversion = { version = "1.0.0", default-features = false }
+solana_rbpf = { version = "0.8.2", default-features = false }
 syn = { version = "2", default-features = false }
 tempfile = { version = "3", default-features = false }
 test-case = { version = "3.1.0", default-features = false }
