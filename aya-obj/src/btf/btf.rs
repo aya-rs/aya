@@ -1110,17 +1110,18 @@ mod tests {
 
     #[test]
     fn test_parse_header() {
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x9f, 0xeb, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x64, 0x54,
-            0x2a, 0x00, 0x64, 0x54, 0x2a, 0x00, 0x10, 0x64, 0x1c, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0xeb, 0x9f, 0x01, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2a,
-            0x54, 0x64, 0x00, 0x2a, 0x54, 0x64, 0x00, 0x1c, 0x64, 0x10,
-        ];
-        let header = unsafe { read_btf_header(data) };
+        let header = btf_header {
+            magic: 0xeb9f,
+            version: 0x01,
+            flags: 0x00,
+            hdr_len: 0x18,
+            type_off: 0x00,
+            type_len: 0x2a5464,
+            str_off: 0x2a5464,
+            str_len: 0x1c6410,
+        };
+        let data = unsafe { bytes_of::<btf_header>(&header).to_vec() };
+        let header = unsafe { read_btf_header(&data) };
         assert_eq!(header.magic, 0xeb9f);
         assert_eq!(header.version, 0x01);
         assert_eq!(header.flags, 0x00);
@@ -1221,51 +1222,88 @@ mod tests {
         assert_eq!(data2.len(), 517);
         assert_eq!(data, data2);
 
-        #[cfg(target_endian = "little")]
-        let ext_data: &[u8] = &[
-            0x9f, 0xeb, 0x01, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00,
-            0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x1c, 0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x72, 0x00, 0x00, 0x00, 0x01, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
-            0x72, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7b, 0x00,
-            0x00, 0x00, 0xa2, 0x00, 0x00, 0x00, 0x05, 0x2c, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let ext_data: &[u8] = &[
-            0xeb, 0x9f, 0x01, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x14, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x1c, 0x00, 0x00, 0x00, 0x30,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x72, 0x00, 0x00,
-            0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x10,
-            0x00, 0x00, 0x00, 0x72, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x7b, 0x00, 0x00, 0x00, 0xa2, 0x00, 0x00, 0x2c, 0x05,
-        ];
+        const FUNC_LEN: u32 = 0x14;
+        const LINE_INFO_LEN: u32 = 0x1c;
+        const CORE_RELO_LEN: u32 = 0;
+        const DATA_LEN: u32 = (FUNC_LEN + LINE_INFO_LEN + CORE_RELO_LEN) / 4;
+        struct TestStruct {
+            _header: btf_ext_header,
+            _data: [u32; DATA_LEN as usize],
+        }
+        let test_data = TestStruct {
+            _header: btf_ext_header {
+                magic: 0xeb9f,
+                version: 1,
+                flags: 0,
+                hdr_len: 0x20,
+                func_info_off: 0,
+                func_info_len: FUNC_LEN,
+                line_info_off: FUNC_LEN,
+                line_info_len: LINE_INFO_LEN,
+                core_relo_off: FUNC_LEN + LINE_INFO_LEN,
+                core_relo_len: CORE_RELO_LEN,
+            },
+            _data: [
+                0x00000008u32,
+                0x00000072u32,
+                0x00000001u32,
+                0x00000000u32,
+                0x00000007u32,
+                0x00000010u32,
+                0x00000072u32,
+                0x00000001u32,
+                0x00000000u32,
+                0x0000007bu32,
+                0x000000a2u32,
+                0x00002c05u32,
+            ],
+        };
+        let ext_data = unsafe { bytes_of::<TestStruct>(&test_data).to_vec() };
 
         assert_eq!(ext_data.len(), 80);
-        let _: BtfExt = BtfExt::parse(ext_data, Endianness::default(), &btf)
+        let _: BtfExt = BtfExt::parse(&ext_data, Endianness::default(), &btf)
             .unwrap_or_else(|e| panic!("{}", e));
     }
 
     #[test]
     fn parsing_older_ext_data() {
-        #[cfg(target_endian = "little")]
-        let btf_data = [
-            159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-        ];
-        #[cfg(target_endian = "big")]
-        let btf_data = [
-            235, 159, 1, 0, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-        ];
+        const TYPE_LEN: u32 = 0;
+        const STR_LEN: u32 = 1;
+        struct BtfTestStruct {
+            _header: btf_header,
+            _data: [u8; (TYPE_LEN + STR_LEN) as usize],
+        }
+        let btf_test_data = BtfTestStruct {
+            _header: btf_header {
+                magic: 0xeb9f,
+                version: 0x01,
+                flags: 0x00,
+                hdr_len: 24,
+                type_off: 0,
+                type_len: TYPE_LEN,
+                str_off: TYPE_LEN,
+                str_len: TYPE_LEN + STR_LEN,
+            },
+            _data: [0x00u8],
+        };
+        let btf_data = unsafe { bytes_of::<BtfTestStruct>(&btf_test_data).to_vec() };
 
-        #[cfg(target_endian = "little")]
-        let btf_ext_data = [
-            159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 8, 0, 0,
-            0, 16, 0, 0, 0,
-        ];
-        #[cfg(target_endian = "big")]
-        let btf_ext_data = [
-            235, 159, 1, 0, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0,
-            8, 0, 0, 0, 16,
-        ];
+        const FUNC_INFO_LEN: u32 = 4;
+        const LINE_INFO_LEN: u32 = 4;
+        const CORE_RELO_LEN: u32 = 16;
+        let ext_header = btf_ext_header {
+            magic: 0xeb9f,
+            version: 1,
+            flags: 0,
+            hdr_len: 24,
+            func_info_off: 0,
+            func_info_len: FUNC_INFO_LEN,
+            line_info_off: FUNC_INFO_LEN,
+            line_info_len: LINE_INFO_LEN,
+            core_relo_off: FUNC_INFO_LEN + LINE_INFO_LEN,
+            core_relo_len: CORE_RELO_LEN,
+        };
+        let btf_ext_data = unsafe { bytes_of::<btf_ext_header>(&ext_header).to_vec() };
 
         let btf = Btf::parse(&btf_data, Endianness::default()).unwrap();
         let btf_ext = BtfExt::parse(&btf_ext_data, Endianness::default(), &btf).unwrap();
@@ -1771,6 +1809,7 @@ mod tests {
         Btf::parse(&raw, Endianness::default()).unwrap();
     }
 
+    // Not possible to emulate file system file "/sys/kernel/btf/vmlinux" as big endian, so skip
     #[test]
     #[cfg(feature = "std")]
     #[cfg_attr(miri, ignore = "`open` not available when isolation is enabled")]

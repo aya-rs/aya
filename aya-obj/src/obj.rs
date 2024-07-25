@@ -1396,6 +1396,7 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
+    use crate::generated::btf_ext_header;
 
     const FAKE_INS_LEN: u64 = 8;
 
@@ -1594,46 +1595,32 @@ mod tests {
     #[test]
     fn sanitizes_empty_btf_files_to_none() {
         let mut obj = fake_obj();
-        #[cfg(target_endian = "little")]
-        obj.parse_section(fake_section(
-            EbpfSectionKind::Btf,
-            ".BTF",
-            &[
-                159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-            ],
-            None,
-        ))
-        .unwrap();
-        #[cfg(target_endian = "big")]
-        obj.parse_section(fake_section(
-            EbpfSectionKind::Btf,
-            ".BTF",
-            &[
-                235, 159, 1, 0, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-            ],
-            None,
-        ))
-        .unwrap();
 
-        #[cfg(target_endian = "little")]
+        let btf = Btf::new();
+        let btf_bytes = btf.to_bytes();
+        obj.parse_section(fake_section(EbpfSectionKind::Btf, ".BTF", &btf_bytes, None))
+            .unwrap();
+
+        const FUNC_INFO_LEN: u32 = 4;
+        const LINE_INFO_LEN: u32 = 4;
+        const CORE_RELO_LEN: u32 = 16;
+        let ext_header = btf_ext_header {
+            magic: 0xeb9f,
+            version: 1,
+            flags: 0,
+            hdr_len: 24,
+            func_info_off: 0,
+            func_info_len: FUNC_INFO_LEN,
+            line_info_off: FUNC_INFO_LEN,
+            line_info_len: LINE_INFO_LEN,
+            core_relo_off: FUNC_INFO_LEN + LINE_INFO_LEN,
+            core_relo_len: CORE_RELO_LEN,
+        };
+        let btf_ext_bytes = bytes_of::<btf_ext_header>(&ext_header).to_vec();
         obj.parse_section(fake_section(
             EbpfSectionKind::BtfExt,
             ".BTF.ext",
-            &[
-                159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 8, 0,
-                0, 0, 16, 0, 0, 0,
-            ],
-            None,
-        ))
-        .unwrap();
-        #[cfg(target_endian = "big")]
-        obj.parse_section(fake_section(
-            EbpfSectionKind::BtfExt,
-            ".BTF.ext",
-            &[
-                235, 129, 1, 0, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0,
-                0, 8, 0, 0, 0, 16,
-            ],
+            &btf_ext_bytes,
             None,
         ))
         .unwrap();
