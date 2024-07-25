@@ -14,6 +14,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  LLVM_VERSION: 18
 
 jobs:
   lint:
@@ -206,9 +207,10 @@ jobs:
         run: |
           set -euxo pipefail
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          echo deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy main | sudo tee /etc/apt/sources.list.d/llvm.list
+          echo deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-${{ env.LLVM_VERSION }} main | sudo tee /etc/apt/sources.list.d/llvm.list
           sudo apt update
-          sudo apt -y install clang gcc-multilib llvm locate qemu-system-{arm,x86}
+          sudo apt -y install clang-${{ env.LLVM_VERSION }} gcc-multilib llvm-${{ env.LLVM_VERSION }} locate qemu-system-{arm,x86}
+          echo /usr/lib/llvm-${{ env.LLVM_VERSION }}/bin >> $GITHUB_PATH
 
       - name: bpf-linker
         if: runner.os == 'Linux'
