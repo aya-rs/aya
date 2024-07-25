@@ -662,7 +662,8 @@ pub struct Union {
 
 impl Union {
     pub(crate) fn new(name_offset: u32, size: u32, members: Vec<BtfMember>) -> Self {
-        let info = (BtfKind::Union as u32) << 24;
+        let mut info = (BtfKind::Union as u32) << 24;
+        info |= (members.len() as u32) & 0xFFFF;
         Self {
             name_offset,
             info,
@@ -1577,16 +1578,8 @@ mod tests {
     #[test]
     fn test_read_btf_type_int() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x08, 0x00, 0x00, 0x00, 0x40, 0x00,
-            0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00,
-            0x00, 0x40,
-        ];
+        let bpf_type = BtfType::Int(Int::new(1, 8, IntEncoding::None, 0));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Int(new @ Int {
             name_offset,
             info: _,
@@ -1601,64 +1594,10 @@ mod tests {
     }
 
     #[test]
-    fn test_write_btf_long_unsigned_int() {
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x08, 0x00, 0x00, 0x00, 0x40, 0x00,
-            0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00,
-            0x00, 0x40,
-        ];
-        let int = Int::new(1, 8, IntEncoding::None, 0);
-        assert_eq!(int.to_bytes(), data);
-    }
-
-    #[test]
-    fn test_write_btf_uchar() {
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x13, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00,
-            0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x13, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
-            0x00, 0x08,
-        ];
-        let int = Int::new(0x13, 1, IntEncoding::None, 0);
-        assert_eq!(int.to_bytes(), data);
-    }
-
-    #[test]
-    fn test_write_btf_signed_short_int() {
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x4a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00, 0x10, 0x00,
-            0x00, 0x01,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x4a, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00,
-            0x00, 0x10,
-        ];
-        let int = Int::new(0x4a, 2, IntEncoding::Signed, 0);
-        assert_eq!(int.to_bytes(), data);
-    }
-
-    #[test]
     fn test_read_btf_type_ptr() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x06, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06,
-        ];
+        let bpf_type = BtfType::Ptr(Ptr::new(0, 0x06));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Ptr(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1667,16 +1606,8 @@ mod tests {
     #[test]
     fn test_read_btf_type_array() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
-            0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x01, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x02,
-        ];
+        let bpf_type = BtfType::Array(Array::new(0, 1, 0x12, 2));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Array(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1685,16 +1616,13 @@ mod tests {
     #[test]
     fn test_read_btf_type_struct() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x00, 0x47, 0x02,
-            0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00,
-            0x02, 0x47, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00,
-        ];
+        let members = vec![BtfMember {
+            name_offset: 0x0247,
+            btf_type: 0x12,
+            offset: 0,
+        }];
+        let bpf_type = BtfType::Struct(Struct::new(0, members, 4));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Struct(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1703,16 +1631,13 @@ mod tests {
     #[test]
     fn test_read_btf_type_union() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x05, 0x04, 0x00, 0x00, 0x00, 0x0d, 0x04,
-            0x00, 0x00, 0x68, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00,
-            0x04, 0x0d, 0x00, 0x00, 0x00, 0x68, 0x00, 0x00, 0x00, 0x00,
-        ];
+        let members = vec![BtfMember {
+            name_offset: 0x040d,
+            btf_type: 0x68,
+            offset: 0,
+        }];
+        let bpf_type = BtfType::Union(Union::new(0, 4, members));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Union(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1721,16 +1646,11 @@ mod tests {
     #[test]
     fn test_read_btf_type_enum() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x06, 0x04, 0x00, 0x00, 0x00, 0xc9, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xcf, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00,
-            0x00, 0xc9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xcf, 0x00, 0x00, 0x00, 0x01,
-        ];
+        let enum1 = BtfEnum::new(0xc9, 0);
+        let enum2 = BtfEnum::new(0xcf, 1);
+        let variants = vec![enum1, enum2];
+        let bpf_type = BtfType::Enum(Enum::new(0, false, variants));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Enum(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1739,14 +1659,13 @@ mod tests {
     #[test]
     fn test_read_btf_type_fwd() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x0b, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x55, 0x0b, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        ];
+        let info = (BtfKind::Fwd as u32) << 24;
+        let bpf_type = BtfType::Fwd(Fwd {
+            name_offset: 0x550b,
+            info,
+            _unused: 0,
+        });
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Fwd(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1755,14 +1674,8 @@ mod tests {
     #[test]
     fn test_read_btf_type_typedef() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x0b, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x31, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0b,
-        ];
+        let bpf_type = BtfType::Typedef(Typedef::new(0x31, 0x0b));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Typedef(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1771,14 +1684,13 @@ mod tests {
     #[test]
     fn test_read_btf_type_volatile() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x24, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x24,
-        ];
+        let info = (BtfKind::Volatile as u32) << 24;
+        let bpf_type = BtfType::Volatile(Volatile {
+            name_offset: 0,
+            info,
+            btf_type: 0x24,
+        });
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Volatile(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1787,14 +1699,8 @@ mod tests {
     #[test]
     fn test_read_btf_type_const() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x01, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-        ];
+        let bpf_type = BtfType::Const(Const::new(1));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Const(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1803,14 +1709,13 @@ mod tests {
     #[test]
     fn test_read_btf_type_restrict() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x04, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
-        ];
+        let info = (BtfKind::Restrict as u32) << 24;
+        let bpf_type = BtfType::Restrict(Restrict {
+            name_offset: 0,
+            _info: info,
+            btf_type: 4,
+        });
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Restrict(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1819,14 +1724,8 @@ mod tests {
     #[test]
     fn test_read_btf_type_func() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x17, 0x8b, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x0c, 0xf0, 0xe4, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x0f, 0x8b, 0x17, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0xe4, 0xf0,
-        ];
+        let bpf_type = BtfType::Func(Func::new(0x000f8b17, 0xe4f0, FuncLinkage::Global));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Func(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1835,16 +1734,12 @@ mod tests {
     #[test]
     fn test_read_btf_type_func_proto() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x12, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x12,
-        ];
+        let params = vec![BtfParam {
+            name_offset: 0,
+            btf_type: 0x12,
+        }];
+        let bpf_type = BtfType::FuncProto(FuncProto::new(params, 0));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::FuncProto(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1854,16 +1749,8 @@ mod tests {
     fn test_read_btf_type_func_var() {
         let endianness = Endianness::default();
         // NOTE: There was no data in /sys/kernell/btf/vmlinux for this type
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x00, 0x00,
-            0x00, 0x00,
-        ];
+        let bpf_type = BtfType::Var(Var::new(0, 0xf0, VarLinkage::Static));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Var(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1872,16 +1759,13 @@ mod tests {
     #[test]
     fn test_read_btf_type_func_datasec() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0xd9, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0xd9, 0x0f, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
-        ];
+        let entries = vec![DataSecEntry {
+            btf_type: 11,
+            offset: 0,
+            size: 4,
+        }];
+        let bpf_type = BtfType::DataSec(DataSec::new(0xd9, entries, 0));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::DataSec(DataSec {
             name_offset: _,
             info: _,
@@ -1903,14 +1787,8 @@ mod tests {
     #[test]
     fn test_read_btf_type_float() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x78, 0xfd, 0x02, 0x00, 0x00, 0x00, 0x00, 0x10, 0x08, 0x00, 0x00, 0x00,
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x02, 0xfd, 0x78, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08,
-        ];
+        let bpf_type = BtfType::Float(Float::new(0x02fd, 8));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Float(got) => {
             assert_eq!(got.to_bytes(), data);
         });
@@ -1962,25 +1840,9 @@ mod tests {
     #[test]
     pub fn test_read_btf_type_enum64() {
         let endianness = Endianness::default();
-        #[cfg(target_endian = "little")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, // name offset
-            0x01, 0x00, 0x00, 0x13, // info: vlen, type_kind
-            0x08, 0x00, 0x00, 0x00, // size
-            0xd7, 0x06, 0x00, 0x00, // enum variant name offset
-            0xbb, 0xbb, 0xbb, 0xbb, // enum variant low
-            0xaa, 0xaa, 0xaa, 0xaa, // enum variant high
-        ];
-        #[cfg(target_endian = "big")]
-        let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x00, // name offset
-            0x13, 0x00, 0x00, 0x01, // info: vlen, type_kind
-            0x00, 0x00, 0x00, 0x08, // size
-            0x00, 0x00, 0x06, 0xd7, // enum variant name offset
-            0xbb, 0xbb, 0xbb, 0xbb, // enum variant low
-            0xaa, 0xaa, 0xaa, 0xaa, // enum variant high
-        ];
-
+        let variants = vec![BtfEnum64::new(0, 0xbbbbbbbbaaaaaaaau64)];
+        let bpf_type = BtfType::Enum64(Enum64::new(0, false, variants));
+        let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Enum64(got) => {
             assert_eq!(got.to_bytes(), data);
         });
