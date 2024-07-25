@@ -85,8 +85,11 @@ mod std {
     }
 }
 
+pub mod attach;
 pub mod btf;
+pub mod cmd;
 pub mod generated;
+pub mod links;
 pub mod maps;
 pub mod obj;
 pub mod programs;

@@ -6,15 +6,19 @@ mod perf_event;
 mod fake;
 
 use std::{
-    ffi::{c_int, c_void},
+    ffi::{c_int, c_uint, c_void},
     io, mem,
     os::fd::{AsRawFd as _, BorrowedFd},
 };
 
 pub(crate) use bpf::*;
+pub use bpf::{create_bpf_filesystem, FilesystemPermissions, FilesystemPermissionsBuilder};
 #[cfg(test)]
 pub(crate) use fake::*;
-use libc::{pid_t, SYS_bpf, SYS_perf_event_open};
+use libc::{
+    c_char, pid_t, SYS_bpf, SYS_fsconfig, SYS_fsmount, SYS_fsopen, SYS_move_mount,
+    SYS_perf_event_open,
+};
 #[doc(hidden)]
 pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
@@ -41,6 +45,29 @@ pub(crate) enum Syscall<'a> {
         fd: BorrowedFd<'a>,
         request: c_int,
         arg: c_int,
+    },
+    FsOpen {
+        fsname: *const c_char,
+        flags: u32,
+    },
+    FsMount {
+        fd: BorrowedFd<'a>,
+        flags: c_uint,
+        mount_attrs: c_uint,
+    },
+    FsConfig {
+        fd: BorrowedFd<'a>,
+        cmd: c_uint,
+        key: *const c_char,
+        value: *const c_void,
+        aux: c_int,
+    },
+    MoveMount {
+        from_dirfd: BorrowedFd<'a>,
+        from_pathname: *const c_char,
+        to_dirfd: BorrowedFd<'a>,
+        to_pathname: *const c_char,
+        flags: u32,
     },
 }
 
@@ -82,6 +109,49 @@ impl std::fmt::Debug for Syscall<'_> {
                 .field("request", request)
                 .field("arg", arg)
                 .finish(),
+            Self::FsOpen { fsname, flags } => f
+                .debug_struct("Syscall::FsOpen")
+                .field("fsname", fsname)
+                .field("flags", flags)
+                .finish(),
+            Self::FsMount {
+                fd,
+                flags,
+                mount_attrs,
+            } => f
+                .debug_struct("Syscall::FsMount")
+                .field("fd", fd)
+                .field("flags", flags)
+                .field("mount_attrs", mount_attrs)
+                .finish(),
+            Self::FsConfig {
+                fd,
+                cmd,
+                key,
+                value,
+                aux,
+            } => f
+                .debug_struct("Syscall::FsConfig")
+                .field("fd", fd)
+                .field("cmd", cmd)
+                .field("key", key)
+                .field("value", value)
+                .field("aux", aux)
+                .finish(),
+            Self::MoveMount {
+                from_dirfd,
+                from_pathname,
+                to_dirfd,
+                to_pathname,
+                flags,
+            } => f
+                .debug_struct("Syscall::MoveMount")
+                .field("from_dirfd", from_dirfd)
+                .field("from_pathname", from_pathname)
+                .field("to_dirfd", to_dirfd)
+                .field("to_pathname", to_pathname)
+                .field("flags", flags)
+                .finish(),
         }
     }
 }
@@ -110,6 +180,33 @@ fn syscall(call: Syscall<'_>) -> SysResult<i64> {
                     #[allow(clippy::useless_conversion)]
                     ret.into()
                 }
+                Syscall::FsOpen { fsname, flags } => libc::syscall(SYS_fsopen, fsname, flags),
+                Syscall::FsMount {
+                    fd,
+                    flags,
+                    mount_attrs,
+                } => libc::syscall(SYS_fsmount, fd.as_raw_fd(), flags, mount_attrs),
+                Syscall::FsConfig {
+                    fd,
+                    cmd,
+                    key,
+                    value,
+                    aux,
+                } => libc::syscall(SYS_fsconfig, fd.as_raw_fd(), cmd, key, value, aux),
+                Syscall::MoveMount {
+                    from_dirfd,
+                    from_pathname,
+                    to_dirfd,
+                    to_pathname,
+                    flags,
+                } => libc::syscall(
+                    SYS_move_mount,
+                    from_dirfd.as_raw_fd(),
+                    from_pathname,
+                    to_dirfd.as_raw_fd(),
+                    to_pathname,
+                    flags,
+                ),
             }
         };
 

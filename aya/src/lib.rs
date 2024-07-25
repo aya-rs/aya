@@ -94,6 +94,7 @@ pub use obj::btf::{Btf, BtfError};
 pub use object::Endianness;
 #[doc(hidden)]
 pub use sys::netlink_set_link_up;
+pub use sys::{create_bpf_filesystem, FilesystemPermissions, FilesystemPermissionsBuilder};
 
 // See https://github.com/rust-lang/rust/pull/124210; this structure exists to avoid crashing the
 // process when we try to close a fake file descriptor.

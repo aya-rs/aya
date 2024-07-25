@@ -6,11 +6,16 @@ use std::{
     fs,
     io::{self, BufRead, Cursor, Read},
     mem,
-    os::{fd::AsFd as _, raw::c_char, unix::ffi::OsStrExt},
+    os::{
+        fd::{AsFd as _, OwnedFd},
+        raw::c_char,
+        unix::ffi::OsStrExt,
+    },
     path::{Path, PathBuf},
     sync::Arc,
 };
 
+use aya_obj::Features;
 use libc::pid_t;
 use object::{Object, ObjectSection, ObjectSymbol, Symbol};
 use thiserror::Error;
@@ -96,7 +101,15 @@ impl UProbe {
         };
 
         let path = path.as_os_str();
-        attach(&mut self.data, self.kind, path, sym_offset + offset, pid)
+        let features = self.data.features.clone();
+        attach(
+            &mut self.data,
+            self.kind,
+            path,
+            sym_offset + offset,
+            pid,
+            &features,
+        )
     }
 
     /// Detaches the program.
@@ -120,8 +133,14 @@ impl UProbe {
     ///
     /// On drop, any managed links are detached and the program is unloaded. This will not result in
     /// the program being unloaded from the kernel if it is still pinned.
-    pub fn from_pin<P: AsRef<Path>>(path: P, kind: ProbeKind) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+    pub fn from_pin<P: AsRef<Path>>(
+        path: P,
+        kind: ProbeKind,
+        token_fd: Option<Arc<OwnedFd>>,
+        features: Features,
+    ) -> Result<Self, ProgramError> {
+        let data =
+            ProgramData::from_pinned_path(path, VerifierLogLevel::default(), token_fd, features)?;
         Ok(Self { data, kind })
     }
 }

@@ -2,10 +2,12 @@
 use std::{
     ffi::OsStr,
     io,
-    os::fd::AsFd as _,
+    os::fd::{AsFd as _, OwnedFd},
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
+use aya_obj::Features;
 use thiserror::Error;
 
 use crate::{
@@ -78,7 +80,15 @@ impl KProbe {
         fn_name: T,
         offset: u64,
     ) -> Result<KProbeLinkId, ProgramError> {
-        attach(&mut self.data, self.kind, fn_name.as_ref(), offset, None)
+        let features = self.data.features.clone();
+        attach(
+            &mut self.data,
+            self.kind,
+            fn_name.as_ref(),
+            offset,
+            None,
+            &features,
+        )
     }
 
     /// Detaches the program.
@@ -102,8 +112,14 @@ impl KProbe {
     ///
     /// On drop, any managed links are detached and the program is unloaded. This will not result in
     /// the program being unloaded from the kernel if it is still pinned.
-    pub fn from_pin<P: AsRef<Path>>(path: P, kind: ProbeKind) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+    pub fn from_pin<P: AsRef<Path>>(
+        path: P,
+        kind: ProbeKind,
+        token_fd: Option<Arc<OwnedFd>>,
+        features: Features,
+    ) -> Result<Self, ProgramError> {
+        let data =
+            ProgramData::from_pinned_path(path, VerifierLogLevel::default(), token_fd, features)?;
         Ok(Self { data, kind })
     }
 }
