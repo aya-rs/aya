@@ -122,6 +122,7 @@ impl CgroupDevice {
             .map(|prog_id| {
                 let prog_fd = bpf_prog_get_fd_by_id(prog_id)?;
                 let target_fd = target_fd.try_clone_to_owned()?;
+                let target_fd = crate::MockableFd::from_fd(target_fd);
                 let prog_fd = ProgramFd(prog_fd);
                 Ok(CgroupDeviceLink::new(CgroupDeviceLinkInner::ProgAttach(
                     ProgAttachLink::new(prog_fd, target_fd, BPF_CGROUP_DEVICE),

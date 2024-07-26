@@ -1,5 +1,5 @@
 //! Lirc programs.
-use std::os::fd::{AsFd, AsRawFd as _, OwnedFd, RawFd};
+use std::os::fd::{AsFd, AsRawFd as _, RawFd};
 
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
@@ -67,6 +67,7 @@ impl LircMode2 {
         // descriptor is closed at drop in case it fails to attach.
         let prog_fd = prog_fd.try_clone()?;
         let lircdev_fd = lircdev.as_fd().try_clone_to_owned()?;
+        let lircdev_fd = crate::MockableFd::from_fd(lircdev_fd);
 
         bpf_prog_attach(prog_fd.as_fd(), lircdev_fd.as_fd(), BPF_LIRC_MODE2)?;
 
@@ -98,6 +99,7 @@ impl LircMode2 {
             .map(|prog_id| {
                 let prog_fd = bpf_prog_get_fd_by_id(prog_id)?;
                 let target_fd = target_fd.try_clone_to_owned()?;
+                let target_fd = crate::MockableFd::from_fd(target_fd);
                 let prog_fd = ProgramFd(prog_fd);
                 Ok(LircLink::new(prog_fd, target_fd))
             })
@@ -113,11 +115,11 @@ pub struct LircLinkId(RawFd, RawFd);
 /// An LircMode2 Link
 pub struct LircLink {
     prog_fd: ProgramFd,
-    target_fd: OwnedFd,
+    target_fd: crate::MockableFd,
 }
 
 impl LircLink {
-    pub(crate) fn new(prog_fd: ProgramFd, target_fd: OwnedFd) -> Self {
+    pub(crate) fn new(prog_fd: ProgramFd, target_fd: crate::MockableFd) -> Self {
         Self { prog_fd, target_fd }
     }
 

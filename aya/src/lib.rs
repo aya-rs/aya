@@ -87,7 +87,7 @@ pub use programs::loaded_programs;
 mod sys;
 pub mod util;
 
-use std::os::fd::{AsFd, BorrowedFd, OwnedFd};
+use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 
 pub use bpf::*;
 pub use obj::btf::{Btf, BtfError};
@@ -123,7 +123,20 @@ impl MockableFd {
 
     #[cfg(test)]
     fn from_fd(fd: OwnedFd) -> Self {
-        Self { fd: Some(fd) }
+        let fd = Some(fd);
+        Self { fd }
+    }
+
+    #[cfg(not(test))]
+    fn inner(&self) -> &OwnedFd {
+        let Self { fd } = self;
+        fd
+    }
+
+    #[cfg(test)]
+    fn inner(&self) -> &OwnedFd {
+        let Self { fd } = self;
+        fd.as_ref().unwrap()
     }
 
     #[cfg(not(test))]
@@ -141,17 +154,46 @@ impl MockableFd {
     }
 }
 
-impl AsFd for MockableFd {
+impl<T> From<T> for MockableFd
+where
+    OwnedFd: From<T>,
+{
     #[cfg(not(test))]
-    fn as_fd(&self) -> BorrowedFd<'_> {
-        let Self { fd } = self;
-        fd.as_fd()
+    fn from(value: T) -> Self {
+        let fd = OwnedFd::from(value);
+        Self { fd }
     }
 
     #[cfg(test)]
+    fn from(value: T) -> Self {
+        let fd = Some(OwnedFd::from(value));
+        Self { fd }
+    }
+}
+
+impl AsFd for MockableFd {
     fn as_fd(&self) -> BorrowedFd<'_> {
-        let Self { fd } = self;
-        fd.as_ref().unwrap().as_fd()
+        self.inner().as_fd()
+    }
+}
+
+impl AsRawFd for MockableFd {
+    fn as_raw_fd(&self) -> RawFd {
+        self.inner().as_raw_fd()
+    }
+}
+
+impl FromRawFd for MockableFd {
+    #[cfg(not(test))]
+    unsafe fn from_raw_fd(fd: RawFd) -> Self {
+        let fd = OwnedFd::from_raw_fd(fd);
+        Self { fd }
+    }
+
+    #[cfg(test)]
+    unsafe fn from_raw_fd(fd: RawFd) -> Self {
+        let fd = Some(OwnedFd::from_raw_fd(fd));
+        Self { fd }
     }
 }
 
@@ -166,9 +208,9 @@ impl Drop for MockableFd {
         use std::os::fd::AsRawFd as _;
 
         let Self { fd } = self;
-        if fd.as_ref().unwrap().as_raw_fd() >= Self::mock_signed_fd() {
-            let fd: OwnedFd = fd.take().unwrap();
-            std::mem::forget(fd)
+        let fd = fd.take().unwrap();
+        if fd.as_raw_fd() >= Self::mock_signed_fd() {
+            std::mem::forget(fd);
         }
     }
 }

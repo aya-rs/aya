@@ -1,7 +1,7 @@
 use std::{
     ffi::{c_int, CString, OsStr},
     io, mem,
-    os::fd::{BorrowedFd, FromRawFd as _, OwnedFd},
+    os::fd::{BorrowedFd, FromRawFd as _},
 };
 
 use libc::pid_t;
@@ -26,7 +26,7 @@ pub(crate) fn perf_event_open(
     wakeup: bool,
     inherit: bool,
     flags: u32,
-) -> SysResult<OwnedFd> {
+) -> SysResult<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     attr.config = config;
@@ -46,7 +46,7 @@ pub(crate) fn perf_event_open(
     perf_event_sys(attr, pid, cpu, flags)
 }
 
-pub(crate) fn perf_event_open_bpf(cpu: c_int) -> SysResult<OwnedFd> {
+pub(crate) fn perf_event_open_bpf(cpu: c_int) -> SysResult<crate::MockableFd> {
     perf_event_open(
         PERF_TYPE_SOFTWARE as u32,
         PERF_COUNT_SW_BPF_OUTPUT as u64,
@@ -66,7 +66,7 @@ pub(crate) fn perf_event_open_probe(
     name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
-) -> SysResult<OwnedFd> {
+) -> SysResult<crate::MockableFd> {
     use std::os::unix::ffi::OsStrExt as _;
 
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
@@ -88,7 +88,10 @@ pub(crate) fn perf_event_open_probe(
     perf_event_sys(attr, pid, cpu, PERF_FLAG_FD_CLOEXEC)
 }
 
-pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> SysResult<OwnedFd> {
+pub(crate) fn perf_event_open_trace_point(
+    id: u32,
+    pid: Option<pid_t>,
+) -> SysResult<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     attr.size = mem::size_of::<perf_event_attr>() as u32;
@@ -110,7 +113,12 @@ pub(crate) fn perf_event_ioctl(fd: BorrowedFd<'_>, request: c_int, arg: c_int) -
     return crate::sys::TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
 }
 
-fn perf_event_sys(attr: perf_event_attr, pid: pid_t, cpu: i32, flags: u32) -> SysResult<OwnedFd> {
+fn perf_event_sys(
+    attr: perf_event_attr,
+    pid: pid_t,
+    cpu: i32,
+    flags: u32,
+) -> SysResult<crate::MockableFd> {
     let fd = syscall(Syscall::PerfEventOpen {
         attr,
         pid,
@@ -130,7 +138,7 @@ fn perf_event_sys(attr: perf_event_attr, pid: pid_t, cpu: i32, flags: u32) -> Sy
     })?;
 
     // SAFETY: perf_event_open returns a new file descriptor on success.
-    unsafe { Ok(OwnedFd::from_raw_fd(fd)) }
+    unsafe { Ok(crate::MockableFd::from_raw_fd(fd)) }
 }
 
 /*
