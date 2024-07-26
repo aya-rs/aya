@@ -2,7 +2,7 @@ use std::{
     collections::HashMap,
     ffi::CStr,
     io, mem,
-    os::fd::{AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd},
+    os::fd::{AsRawFd as _, BorrowedFd, FromRawFd as _},
     ptr, slice,
 };
 
@@ -307,7 +307,7 @@ struct TcRequest {
 }
 
 struct NetlinkSocket {
-    sock: OwnedFd,
+    sock: crate::MockableFd,
     _nl_pid: u32,
 }
 
@@ -319,7 +319,7 @@ impl NetlinkSocket {
             return Err(io::Error::last_os_error());
         }
         // SAFETY: `socket` returns a file descriptor.
-        let sock = unsafe { OwnedFd::from_raw_fd(sock) };
+        let sock = unsafe { crate::MockableFd::from_raw_fd(sock) };
 
         let enable = 1i32;
         // Safety: libc wrapper

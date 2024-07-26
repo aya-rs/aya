@@ -120,7 +120,6 @@ impl PerfBuffer {
             });
         }
 
-        let fd = crate::MockableFd::from_fd(fd);
         let perf_buf = Self {
             buf: AtomicPtr::new(buf as *mut perf_event_mmap_page),
             size,

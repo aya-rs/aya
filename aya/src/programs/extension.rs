@@ -1,6 +1,6 @@
 //! Extension programs.
 
-use std::os::fd::{AsFd as _, BorrowedFd, OwnedFd};
+use std::os::fd::{AsFd as _, BorrowedFd};
 
 use object::Endianness;
 use thiserror::Error;
@@ -169,7 +169,10 @@ impl Extension {
 
 /// Retrieves the FD of the BTF object for the provided `prog_fd` and the BTF ID of the function
 /// with the name `func_name` within that BTF object.
-fn get_btf_info(prog_fd: BorrowedFd<'_>, func_name: &str) -> Result<(OwnedFd, u32), ProgramError> {
+fn get_btf_info(
+    prog_fd: BorrowedFd<'_>,
+    func_name: &str,
+) -> Result<(crate::MockableFd, u32), ProgramError> {
     // retrieve program information
     let info = sys::bpf_prog_get_info_by_fd(prog_fd, &mut [])?;
 

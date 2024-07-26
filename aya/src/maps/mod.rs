@@ -215,8 +215,7 @@ pub struct MapFd {
 }
 
 impl MapFd {
-    fn from_fd(fd: OwnedFd) -> Self {
-        let fd = crate::MockableFd::from_fd(fd);
+    fn from_fd(fd: crate::MockableFd) -> Self {
         Self { fd }
     }
 
@@ -657,13 +656,21 @@ impl MapData {
             io_error,
         })?;
 
-        Self::from_fd(fd)
+        Self::from_fd_inner(fd)
     }
 
     /// Loads a map from a map id.
     pub fn from_id(id: u32) -> Result<Self, MapError> {
         let fd = bpf_map_get_fd_by_id(id)?;
-        Self::from_fd(fd)
+        Self::from_fd_inner(fd)
+    }
+
+    fn from_fd_inner(fd: crate::MockableFd) -> Result<Self, MapError> {
+        let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
+        Ok(Self {
+            obj: parse_map_info(info, PinningType::None),
+            fd: MapFd::from_fd(fd),
+        })
     }
 
     /// Loads a map from a file descriptor.
@@ -672,11 +679,8 @@ impl MapData {
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
     pub fn from_fd(fd: OwnedFd) -> Result<Self, MapError> {
-        let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
-        Ok(Self {
-            obj: parse_map_info(info, PinningType::None),
-            fd: MapFd::from_fd(fd),
-        })
+        let fd = crate::MockableFd::from_fd(fd);
+        Self::from_fd_inner(fd)
     }
 
     /// Allows the map to be pinned to the provided path.

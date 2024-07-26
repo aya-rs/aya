@@ -3,7 +3,7 @@ use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::CString,
     io,
-    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, OwnedFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
     path::{Path, PathBuf},
 };
 
@@ -107,11 +107,11 @@ pub struct FdLinkId(pub(crate) RawFd);
 /// ```
 #[derive(Debug)]
 pub struct FdLink {
-    pub(crate) fd: OwnedFd,
+    pub(crate) fd: crate::MockableFd,
 }
 
 impl FdLink {
-    pub(crate) fn new(fd: OwnedFd) -> Self {
+    pub(crate) fn new(fd: crate::MockableFd) -> Self {
         Self { fd }
     }
 
@@ -231,14 +231,14 @@ pub struct ProgAttachLinkId(RawFd, RawFd, bpf_attach_type);
 #[derive(Debug)]
 pub struct ProgAttachLink {
     prog_fd: ProgramFd,
-    target_fd: OwnedFd,
+    target_fd: crate::MockableFd,
     attach_type: bpf_attach_type,
 }
 
 impl ProgAttachLink {
     pub(crate) fn new(
         prog_fd: ProgramFd,
-        target_fd: OwnedFd,
+        target_fd: crate::MockableFd,
         attach_type: bpf_attach_type,
     ) -> Self {
         Self {
@@ -258,7 +258,9 @@ impl ProgAttachLink {
         // duplicate it prior to attaching it so the new file
         // descriptor is closed at drop in case it fails to attach.
         let prog_fd = prog_fd.try_clone_to_owned()?;
+        let prog_fd = crate::MockableFd::from_fd(prog_fd);
         let target_fd = target_fd.try_clone_to_owned()?;
+        let target_fd = crate::MockableFd::from_fd(target_fd);
         bpf_prog_attach(prog_fd.as_fd(), target_fd.as_fd(), attach_type)?;
 
         let prog_fd = ProgramFd(prog_fd);

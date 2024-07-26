@@ -72,7 +72,7 @@ use std::{
     ffi::CString,
     io,
     num::NonZeroU32,
-    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd},
     path::{Path, PathBuf},
     sync::Arc,
     time::{Duration, SystemTime},
@@ -224,7 +224,7 @@ pub enum ProgramError {
 
 /// A [`Program`] file descriptor.
 #[derive(Debug)]
-pub struct ProgramFd(OwnedFd);
+pub struct ProgramFd(crate::MockableFd);
 
 impl ProgramFd {
     /// Creates a new instance that shares the same underlying file description as [`self`].
@@ -460,10 +460,10 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) fd: Option<ProgramFd>,
     pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
-    pub(crate) attach_btf_obj_fd: Option<OwnedFd>,
+    pub(crate) attach_btf_obj_fd: Option<crate::MockableFd>,
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<ProgramFd>,
-    pub(crate) btf_fd: Option<Arc<OwnedFd>>,
+    pub(crate) btf_fd: Option<Arc<crate::MockableFd>>,
     pub(crate) verifier_log_level: VerifierLogLevel,
     pub(crate) path: Option<PathBuf>,
     pub(crate) flags: u32,
@@ -473,7 +473,7 @@ impl<T: Link> ProgramData<T> {
     pub(crate) fn new(
         name: Option<String>,
         obj: (obj::Program, obj::Function),
-        btf_fd: Option<Arc<OwnedFd>>,
+        btf_fd: Option<Arc<crate::MockableFd>>,
         verifier_log_level: VerifierLogLevel,
     ) -> Self {
         Self {
@@ -494,7 +494,7 @@ impl<T: Link> ProgramData<T> {
 
     pub(crate) fn from_bpf_prog_info(
         name: Option<String>,
-        fd: OwnedFd,
+        fd: crate::MockableFd,
         path: &Path,
         info: bpf_prog_info,
         verifier_log_level: VerifierLogLevel,

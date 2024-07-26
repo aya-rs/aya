@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
     fs, io,
     os::{
-        fd::{AsFd as _, AsRawFd as _, OwnedFd},
+        fd::{AsFd as _, AsRawFd as _},
         raw::c_int,
     },
     path::{Path, PathBuf},
@@ -1123,7 +1123,10 @@ pub enum EbpfError {
 #[deprecated(since = "0.13.0", note = "use `EbpfError` instead")]
 pub type BpfError = EbpfError;
 
-fn load_btf(raw_btf: Vec<u8>, verifier_log_level: VerifierLogLevel) -> Result<OwnedFd, BtfError> {
+fn load_btf(
+    raw_btf: Vec<u8>,
+    verifier_log_level: VerifierLogLevel,
+) -> Result<crate::MockableFd, BtfError> {
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
         bpf_load_btf(raw_btf.as_slice(), logger, verifier_log_level)
     });
