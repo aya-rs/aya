@@ -3,7 +3,7 @@ use std::{
     fmt::Write as _,
     fs::{self, OpenOptions},
     io::{self, Write},
-    os::fd::{AsFd as _, OwnedFd},
+    os::fd::AsFd as _,
     path::{Path, PathBuf},
     process,
     sync::atomic::{AtomicUsize, Ordering},
@@ -150,7 +150,7 @@ fn create_as_probe(
     fn_name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<OwnedFd, ProgramError> {
+) -> Result<crate::MockableFd, ProgramError> {
     use ProbeKind::*;
 
     let perf_ty = match kind {
@@ -186,7 +186,7 @@ fn create_as_trace_point(
     name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<(OwnedFd, OsString), ProgramError> {
+) -> Result<(crate::MockableFd, OsString), ProgramError> {
     use ProbeKind::*;
 
     let tracefs = find_tracefs_path()?;
