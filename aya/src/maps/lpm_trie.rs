@@ -249,8 +249,7 @@ mod tests {
 
     #[test]
     fn test_try_from_wrong_map() {
-        // This is necessary to stop miri tripping over the PERF_EVENT_ARRAY
-        // logic and attempting to open a file to read number of online CPUs.
+        // Use any map type here other than BPF_MAP_TYPE_PERF_EVENT_ARRAY as it will trip miri
         let map = new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_ARRAY));
         let map = Map::Array(map);
 

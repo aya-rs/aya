@@ -59,6 +59,7 @@ use std::{
     ptr,
 };
 
+use aya_obj::generated::bpf_map_type;
 use libc::{getrlimit, rlim_t, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
 use obj::maps::InvalidMapTypeError;
@@ -171,6 +172,10 @@ pub enum MapError {
     /// Progam Not Loaded
     #[error("the program is not loaded")]
     ProgramNotLoaded,
+
+    /// An IO error occurred
+    #[error(transparent)]
+    IoError(#[from] io::Error),
 
     /// Syscall failed
     #[error(transparent)]
@@ -550,11 +555,29 @@ pub struct MapData {
 impl MapData {
     /// Creates a new map with the provided `name`
     pub fn create(
-        obj: obj::Map,
+        mut obj: obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
         let c_name = CString::new(name).map_err(|_| MapError::InvalidName { name: name.into() })?;
+
+        // BPF_MAP_TYPE_PERF_EVENT_ARRAY's max_entries should not exceed the number of
+        // CPUs.
+        //
+        // By default, the newest versions of Aya, libbpf and cilium/ebpf define `max_entries` of
+        // `PerfEventArray` as `0`, with an intention to get it replaced with a correct value
+        // by the loader.
+        //
+        // We allow custom values (potentially coming either from older versions of aya-ebpf or
+        // programs written in C) as long as they don't exceed the number of CPUs.
+        //
+        // Otherwise, when the value is `0` or too large, we set it to the number of CPUs.
+        if obj.map_type() == bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 {
+            let ncpus = nr_cpus().map_err(MapError::IoError)? as u32;
+            if obj.max_entries() == 0 || obj.max_entries() > ncpus {
+                obj.set_max_entries(ncpus);
+            }
+        };
 
         #[cfg(not(test))]
         let kernel_version = KernelVersion::current().unwrap();
@@ -1077,6 +1100,25 @@ mod test_utils {
             symbol_index: None,
         })
     }
+
+    pub(super) fn new_obj_map_with_max_entries<K>(
+        map_type: bpf_map_type,
+        max_entries: u32,
+    ) -> obj::Map {
+        obj::Map::Legacy(LegacyMap {
+            def: bpf_map_def {
+                map_type: map_type as u32,
+                key_size: std::mem::size_of::<K>() as u32,
+                value_size: 4,
+                max_entries,
+                ..Default::default()
+            },
+            section_index: 0,
+            section_kind: EbpfSectionKind::Maps,
+            data: Vec::new(),
+            symbol_index: None,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -1147,6 +1189,65 @@ mod tests {
                 obj: _,
                 fd,
             }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd())
+        );
+    }
+
+    #[test]
+    #[cfg_attr(miri, ignore = "nr_cpus() opens a file on procfs that upsets miri")]
+    fn test_create_perf_event_array() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+        });
+
+        let ncpus = nr_cpus().unwrap();
+
+        // Create with max_entries > ncpus is clamped to ncpus
+        assert_matches!(
+            MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
+                crate::generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                65535,
+            ), "foo", None),
+            Ok(MapData {
+                obj,
+                fd,
+            }) => {
+                assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
+                assert_eq!(obj.max_entries(), ncpus as u32)
+            }
+        );
+
+        // Create with max_entries = 0 is set to ncpus
+        assert_matches!(
+            MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
+                crate::generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                0,
+            ), "foo", None),
+            Ok(MapData {
+                obj,
+                fd,
+            }) => {
+                assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
+                assert_eq!(obj.max_entries(), ncpus as u32)
+            }
+        );
+
+        // Create with max_entries < ncpus is unchanged
+        assert_matches!(
+            MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
+                crate::generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                1,
+            ), "foo", None),
+            Ok(MapData {
+                obj,
+                fd,
+            }) => {
+                assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
+                assert_eq!(obj.max_entries(), 1)
+            }
         );
     }
 
