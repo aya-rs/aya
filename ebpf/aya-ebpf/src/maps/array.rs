@@ -1,6 +1,7 @@
 use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
 
-use aya_ebpf_cty::c_void;
+use aya_ebpf_bindings::helpers::bpf_map_update_elem;
+use aya_ebpf_cty::{c_long, c_void};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_ARRAY},
@@ -71,4 +72,22 @@ impl<T> Array<T> {
         );
         NonNull::new(ptr as *mut T)
     }
+
+    /// Sets the value of the element at the given index.
+    pub fn set(&self, index: u32, value: &T, flags: u64) -> Result<(), c_long> {
+        insert(self.def.get(), &index, value, flags)
+    }
+}
+
+#[inline]
+fn insert<K, V>(def: *mut bpf_map_def, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
+    let ret = unsafe {
+        bpf_map_update_elem(
+            def as *mut _,
+            key as *const _ as *const _,
+            value as *const _ as *const _,
+            flags,
+        )
+    };
+    (ret == 0).then_some(()).ok_or(ret)
 }

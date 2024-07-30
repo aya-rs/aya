@@ -31,6 +31,12 @@ pub fn simple_prog(_ctx: SkBuffContext) -> i64 {
     0
 }
 
+#[xdp]
+pub fn foo_map_insert(_ctx: XdpContext) -> u32 {
+    FOO.set(0, &1234, 0).ok();
+    xdp_action::XDP_PASS
+}
+
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
