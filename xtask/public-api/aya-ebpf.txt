@@ -85,6 +85,7 @@ pub fn aya_ebpf::maps::array::Array<T>::get(&self, index: u32) -> core::option::
 pub fn aya_ebpf::maps::array::Array<T>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
 pub fn aya_ebpf::maps::array::Array<T>::get_ptr_mut(&self, index: u32) -> core::option::Option<*mut T>
 pub const fn aya_ebpf::maps::array::Array<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::array::Array<T>
+pub fn aya_ebpf::maps::array::Array<T>::set(&self, index: u32, value: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::array::Array<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::array::Array<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::array::Array<T>
 impl<T> !core::marker::Freeze for aya_ebpf::maps::array::Array<T>
@@ -763,6 +764,7 @@ pub fn aya_ebpf::maps::array::Array<T>::get(&self, index: u32) -> core::option::
 pub fn aya_ebpf::maps::array::Array<T>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
 pub fn aya_ebpf::maps::array::Array<T>::get_ptr_mut(&self, index: u32) -> core::option::Option<*mut T>
 pub const fn aya_ebpf::maps::array::Array<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::array::Array<T>
+pub fn aya_ebpf::maps::array::Array<T>::set(&self, index: u32, value: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::array::Array<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::array::Array<T>
 impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::array::Array<T>
 impl<T> !core::marker::Freeze for aya_ebpf::maps::array::Array<T>
