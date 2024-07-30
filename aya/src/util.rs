@@ -3,6 +3,7 @@ use std::{
     collections::BTreeMap,
     error::Error,
     ffi::{CStr, CString},
+    fmt::Display,
     fs::{self, File},
     io::{self, BufRead, BufReader},
     mem,
@@ -174,6 +175,12 @@ impl KernelVersion {
         let minor = parse(parts.next()).ok_or_else(error)?;
         let patch = parse(parts.next()).ok_or_else(error)?;
         Ok(Self::new(major, minor, patch))
+    }
+}
+
+impl Display for KernelVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
     }
 }
 

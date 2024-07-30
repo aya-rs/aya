@@ -1039,6 +1039,8 @@ impl MapInfo {
 /// This differs from [`crate::Ebpf::maps`] since it will return all maps
 /// listed on the host system and not only maps for a specific [`crate::Ebpf`] instance.
 ///
+/// Uses kernel v4.13 features.
+///
 /// # Example
 /// ```
 /// # use aya::maps::loaded_maps;
