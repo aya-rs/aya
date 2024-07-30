@@ -9,8 +9,8 @@ use crate::{
     },
     maps::sock::SockMapFd,
     programs::{
-        define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
-        ProgramError,
+        define_link_wrapper, load_program, CgroupAttachFlags, ProgAttachLink, ProgAttachLinkId,
+        ProgramData, ProgramError,
     },
     VerifierLogLevel,
 };
@@ -50,14 +50,14 @@ pub enum SkSkbKind {
 /// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::SockMap;
-/// use aya::programs::SkSkb;
+/// use aya::programs::{CgroupAttachFlags, SkSkb};
 ///
 /// let intercept_ingress: SockMap<_> = bpf.map("INTERCEPT_INGRESS").unwrap().try_into()?;
 /// let map_fd = intercept_ingress.fd().try_clone()?;
 ///
 /// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(&map_fd)?;
+/// prog.attach(&map_fd, CgroupAttachFlags::empty())?;
 ///
 /// # Ok::<(), Error>(())
 /// ```
@@ -81,7 +81,11 @@ impl SkSkb {
     /// Attaches the program to the given socket map.
     ///
     /// The returned value can be used to detach, see [SkSkb::detach].
-    pub fn attach(&mut self, map: &SockMapFd) -> Result<SkSkbLinkId, ProgramError> {
+    pub fn attach(
+        &mut self,
+        map: &SockMapFd,
+        flags: CgroupAttachFlags,
+    ) -> Result<SkSkbLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
 
@@ -90,7 +94,7 @@ impl SkSkb {
             SkSkbKind::StreamVerdict => BPF_SK_SKB_STREAM_VERDICT,
         };
 
-        let link = ProgAttachLink::attach(prog_fd, map.as_fd(), attach_type)?;
+        let link = ProgAttachLink::attach(prog_fd, map.as_fd(), attach_type, flags.bits())?;
 
         self.data.links.insert(SkSkbLink::new(link))
     }

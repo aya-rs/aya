@@ -10,7 +10,7 @@ use std::{
 use thiserror::Error;
 
 use crate::{
-    generated::bpf_attach_type,
+    generated::{bpf_attach_type, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE},
     pin::PinError,
     programs::{ProgramError, ProgramFd},
     sys::{bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach, SyscallError},
@@ -26,6 +26,17 @@ pub trait Link: std::fmt::Debug + 'static {
 
     /// Detaches the LinkOwnedLink is gone... but this doesn't work :(
     fn detach(self) -> Result<(), ProgramError>;
+}
+
+bitflags::bitflags! {
+    /// Program attachment flags.
+    #[derive(Clone, Copy, Debug, Default)]
+    pub struct CgroupAttachFlags: u32 {
+        /// Allows the eBPF program to be overridden by ones in a descendent cgroup.
+        const ALLOW_OVERRIDE = BPF_F_ALLOW_OVERRIDE;
+        /// Allows multiple eBPF programs to be attached.
+        const ALLOW_MULTI = BPF_F_ALLOW_MULTI;
+    }
 }
 
 #[derive(Debug)]
@@ -252,6 +263,7 @@ impl ProgAttachLink {
         prog_fd: BorrowedFd<'_>,
         target_fd: BorrowedFd<'_>,
         attach_type: bpf_attach_type,
+        flags: u32,
     ) -> Result<Self, ProgramError> {
         // The link is going to own this new file descriptor so we are
         // going to need a duplicate whose lifetime we manage. Let's
@@ -261,7 +273,7 @@ impl ProgAttachLink {
         let prog_fd = crate::MockableFd::from_fd(prog_fd);
         let target_fd = target_fd.try_clone_to_owned()?;
         let target_fd = crate::MockableFd::from_fd(target_fd);
-        bpf_prog_attach(prog_fd.as_fd(), target_fd.as_fd(), attach_type)?;
+        bpf_prog_attach(prog_fd.as_fd(), target_fd.as_fd(), attach_type, flags)?;
 
         let prog_fd = ProgramFd(prog_fd);
         Ok(Self {
@@ -377,7 +389,10 @@ mod tests {
     use tempfile::tempdir;
 
     use super::{FdLink, Link, LinkMap};
-    use crate::{programs::ProgramError, sys::override_syscall};
+    use crate::{
+        programs::{CgroupAttachFlags, ProgramError},
+        sys::override_syscall,
+    };
 
     #[derive(Debug, Hash, Eq, PartialEq)]
     struct TestLinkId(u8, u8);
@@ -522,5 +537,12 @@ mod tests {
         let pinned_link = fd_link.pin(&pin).expect("pin failed");
         pinned_link.unpin().expect("unpin failed");
         assert!(!pin.exists());
+    }
+
+    #[test]
+    fn test_cgroup_attach_flags() {
+        assert_eq!(CgroupAttachFlags::empty().bits(), 0);
+        assert!(CgroupAttachFlags::ALLOW_OVERRIDE.bits() != 0);
+        assert!(CgroupAttachFlags::ALLOW_MULTI.bits() != 0);
     }
 }
