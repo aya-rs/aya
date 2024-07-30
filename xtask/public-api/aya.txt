@@ -8765,6 +8765,8 @@ impl core::cmp::PartialOrd for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::partial_cmp(&self, other: &aya::util::KernelVersion) -> core::option::Option<core::cmp::Ordering>
 impl core::fmt::Debug for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::util::KernelVersion
+pub fn aya::util::KernelVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::util::KernelVersion
 impl core::marker::StructuralPartialEq for aya::util::KernelVersion
 impl core::marker::Freeze for aya::util::KernelVersion
@@ -8789,6 +8791,8 @@ impl<T> alloc::borrow::ToOwned for aya::util::KernelVersion where T: core::clone
 pub type aya::util::KernelVersion::Owned = T
 pub fn aya::util::KernelVersion::clone_into(&self, target: &mut T)
 pub fn aya::util::KernelVersion::to_owned(&self) -> T
+impl<T> alloc::string::ToString for aya::util::KernelVersion where T: core::fmt::Display + core::marker::Sized
+pub fn aya::util::KernelVersion::to_string(&self) -> alloc::string::String
 impl<T> core::any::Any for aya::util::KernelVersion where T: 'static + core::marker::Sized
 pub fn aya::util::KernelVersion::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya::util::KernelVersion where T: core::marker::Sized

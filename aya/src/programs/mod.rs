@@ -961,7 +961,9 @@ macro_rules! impl_info {
     ($($struct_name:ident),+ $(,)?) => {
         $(
             impl $struct_name {
-                /// Returns the file descriptor of this Program.
+                /// Returns metadata information of this program.
+                ///
+                /// Uses kernel v4.13 features.
                 pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
                     let ProgramFd(fd) = self.fd()?;
 
@@ -1141,6 +1143,8 @@ impl ProgramInfo {
 ///
 /// This differs from [`crate::Ebpf::programs`] since it will return all programs
 /// listed on the host system and not only programs a specific [`crate::Ebpf`] instance.
+///
+/// Uses kernel v4.13 features.
 ///
 /// # Example
 /// ```

@@ -8,7 +8,7 @@ use std::{
 };
 
 use assert_matches::assert_matches;
-use libc::{ENOENT, ENOSPC};
+use libc::{E2BIG, ENOENT, ENOSPC};
 use obj::{
     btf::{BtfEnum64, Enum64},
     generated::bpf_stats_type,
@@ -499,6 +499,7 @@ pub(crate) fn bpf_prog_query(
     ret
 }
 
+/// Introduced in kernel v4.13.
 pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<crate::MockableFd, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -513,6 +514,7 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<crate::MockableFd, S
     })
 }
 
+/// Introduced in kernel v4.13.
 fn bpf_obj_get_info_by_fd<T, F: FnOnce(&mut T)>(
     fd: BorrowedFd<'_>,
     init: F,
@@ -541,16 +543,31 @@ fn bpf_obj_get_info_by_fd<T, F: FnOnce(&mut T)>(
     }
 }
 
+/// Introduced in kernel v4.13.
 pub(crate) fn bpf_prog_get_info_by_fd(
     fd: BorrowedFd<'_>,
     map_ids: &mut [u32],
 ) -> Result<bpf_prog_info, SyscallError> {
-    bpf_obj_get_info_by_fd(fd, |info: &mut bpf_prog_info| {
+    // Attempt syscall with the map info filled.
+    let mut info = bpf_obj_get_info_by_fd(fd, |info: &mut bpf_prog_info| {
         info.nr_map_ids = map_ids.len() as _;
         info.map_ids = map_ids.as_mut_ptr() as _;
-    })
+    });
+
+    // An `E2BIG` error can occur on kernels below v4.15 when handing over a large struct where the
+    // extra space is not all-zero bytes.
+    if let Err(err) = &info {
+        if let Some(errno) = &err.io_error.raw_os_error() {
+            if errno == &E2BIG {
+                info = bpf_obj_get_info_by_fd(fd, |_| {});
+            }
+        }
+    }
+
+    info
 }
 
+/// Introduced in kernel v4.13.
 pub(crate) fn bpf_map_get_fd_by_id(map_id: u32) -> Result<crate::MockableFd, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -1093,6 +1110,7 @@ fn iter_obj_ids(
     })
 }
 
+/// Introduced in kernel v4.13.
 pub(crate) fn iter_prog_ids() -> impl Iterator<Item = Result<u32, SyscallError>> {
     iter_obj_ids(bpf_cmd::BPF_PROG_GET_NEXT_ID, "bpf_prog_get_next_id")
 }
@@ -1101,6 +1119,7 @@ pub(crate) fn iter_link_ids() -> impl Iterator<Item = Result<u32, SyscallError>>
     iter_obj_ids(bpf_cmd::BPF_LINK_GET_NEXT_ID, "bpf_link_get_next_id")
 }
 
+/// Introduced in kernel v4.13.
 pub(crate) fn iter_map_ids() -> impl Iterator<Item = Result<u32, SyscallError>> {
     iter_obj_ids(bpf_cmd::BPF_MAP_GET_NEXT_ID, "bpf_map_get_next_id")
 }

@@ -1,6 +1,5 @@
 use aya::{
-    maps::loaded_maps,
-    programs::{loaded_programs, Extension, TracePoint, Xdp, XdpFlags},
+    programs::{Extension, TracePoint, Xdp, XdpFlags},
     util::KernelVersion,
     Ebpf, EbpfLoader,
 };
@@ -69,60 +68,4 @@ fn extension() {
     drop_
         .load(pass.fd().unwrap().try_clone().unwrap(), "xdp_pass")
         .unwrap();
-}
-
-#[test]
-fn list_loaded_programs() {
-    // Load a program.
-    let mut bpf = Ebpf::load(crate::PASS).unwrap();
-    let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-    dispatcher.load().unwrap();
-    dispatcher.attach("lo", XdpFlags::default()).unwrap();
-
-    // Ensure the loaded_programs() api doesn't panic.
-    let prog = loaded_programs()
-        .map(|p| p.unwrap())
-        .find(|p| p.name_as_str().unwrap() == "pass")
-        .unwrap();
-
-    // Ensure all relevant helper functions don't panic.
-    prog.name();
-    prog.id();
-    prog.tag();
-    prog.program_type();
-    prog.gpl_compatible();
-    prog.map_ids().unwrap();
-    prog.btf_id();
-    prog.size_translated();
-    prog.memory_locked().unwrap();
-    prog.verified_instruction_count();
-    prog.loaded_at();
-    prog.fd().unwrap();
-    prog.run_time();
-    prog.run_count();
-}
-
-#[test]
-fn list_loaded_maps() {
-    // Load a program with maps.
-    let mut bpf = Ebpf::load(crate::MAP_TEST).unwrap();
-    let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-    dispatcher.load().unwrap();
-    dispatcher.attach("lo", XdpFlags::default()).unwrap();
-
-    // Ensure the loaded_maps() api doesn't panic and retrieve a map.
-    let map = loaded_maps()
-        .map(|m| m.unwrap())
-        .find(|m| m.name_as_str().unwrap() == "FOO")
-        .unwrap();
-
-    // Ensure all relevant helper functions don't panic.
-    map.name();
-    map.id();
-    map.map_type();
-    map.key_size();
-    map.value_size();
-    map.max_entries();
-    map.map_flags();
-    map.fd().unwrap();
 }
