@@ -1,3 +1,5 @@
+//! System calls that perform a range of eBPF related operations.
+
 mod bpf;
 mod netlink;
 mod perf_event;
@@ -8,9 +10,10 @@ mod fake;
 use std::{
     ffi::{c_int, c_void},
     io, mem,
-    os::fd::{AsRawFd as _, BorrowedFd},
+    os::fd::{AsRawFd as _, BorrowedFd, OwnedFd},
 };
 
+use aya_obj::StatsType;
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
@@ -44,6 +47,7 @@ pub(crate) enum Syscall<'a> {
     },
 }
 
+/// A system call error.
 #[derive(Debug, Error)]
 #[error("`{call}` failed")]
 pub struct SyscallError {
@@ -136,4 +140,29 @@ pub(crate) unsafe fn mmap(
 
     #[cfg(test)]
     TEST_MMAP_RET.with(|ret| *ret.borrow())
+}
+
+/// Enable global statistics tracking for all programs and returns a file descriptor handler.
+///
+/// Statistics tracking will be disabled once the file descriptor is closed or released.
+///
+/// Usage:
+/// 1. Obtain fd from [`enable_stats`] and bind it to a variable.
+/// 2. Record the statistic of interest.
+/// 3. Wait for a recorded period of time.
+/// 4. Record the statistic of interest again, and calculate the difference.
+/// 5. Close/release fd.
+///
+/// Introduced in kernel v5.8.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use aya::EbpfError;
+/// let _fd = aya::enable_stats(aya_obj::StatsType::RunTime)?;
+/// # Ok::<(), EbpfError>(())
+/// ```
+#[doc(alias = "BPF_ENABLE_STATS")]
+pub fn enable_stats(stats_type: StatsType) -> Result<OwnedFd, SyscallError> {
+    bpf_enable_stats(stats_type.into()).map(|fd| fd.into_inner())
 }

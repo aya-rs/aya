@@ -1802,6 +1802,8 @@ pub fn aya_obj::generated::bpf_stats_type::clone(&self) -> aya_obj::generated::b
 impl core::cmp::Eq for aya_obj::generated::bpf_stats_type
 impl core::cmp::PartialEq for aya_obj::generated::bpf_stats_type
 pub fn aya_obj::generated::bpf_stats_type::eq(&self, other: &aya_obj::generated::bpf_stats_type) -> bool
+impl core::convert::From<aya_obj::StatsType> for aya_obj::generated::bpf_stats_type
+pub fn aya_obj::generated::bpf_stats_type::from(value: aya_obj::StatsType) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_stats_type
 pub fn aya_obj::generated::bpf_stats_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya_obj::generated::bpf_stats_type
@@ -8209,6 +8211,45 @@ impl<T> core::clone::CloneToUninit for aya_obj::ProgramSection where T: core::cl
 pub unsafe fn aya_obj::ProgramSection::clone_to_uninit(&self, dst: *mut T)
 impl<T> core::convert::From<T> for aya_obj::ProgramSection
 pub fn aya_obj::ProgramSection::from(t: T) -> T
+#[non_exhaustive] pub enum aya_obj::StatsType
+pub aya_obj::StatsType::RunTime
+impl core::clone::Clone for aya_obj::StatsType
+pub fn aya_obj::StatsType::clone(&self) -> aya_obj::StatsType
+impl core::convert::From<aya_obj::StatsType> for aya_obj::generated::bpf_stats_type
+pub fn aya_obj::generated::bpf_stats_type::from(value: aya_obj::StatsType) -> Self
+impl core::fmt::Debug for aya_obj::StatsType
+pub fn aya_obj::StatsType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::StatsType
+impl core::marker::Freeze for aya_obj::StatsType
+impl core::marker::Send for aya_obj::StatsType
+impl core::marker::Sync for aya_obj::StatsType
+impl core::marker::Unpin for aya_obj::StatsType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::StatsType
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::StatsType
+impl<T, U> core::convert::Into<U> for aya_obj::StatsType where U: core::convert::From<T>
+pub fn aya_obj::StatsType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::StatsType where U: core::convert::Into<T>
+pub type aya_obj::StatsType::Error = core::convert::Infallible
+pub fn aya_obj::StatsType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::StatsType where U: core::convert::TryFrom<T>
+pub type aya_obj::StatsType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::StatsType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::StatsType where T: core::clone::Clone
+pub type aya_obj::StatsType::Owned = T
+pub fn aya_obj::StatsType::clone_into(&self, target: &mut T)
+pub fn aya_obj::StatsType::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::StatsType where T: 'static + core::marker::Sized
+pub fn aya_obj::StatsType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::StatsType where T: core::marker::Sized
+pub fn aya_obj::StatsType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::StatsType where T: core::marker::Sized
+pub fn aya_obj::StatsType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::StatsType where T: core::clone::Clone
+pub unsafe fn aya_obj::StatsType::clone_to_uninit(&self, dst: *mut T)
+impl<T> core::clone::CloneToUninit for aya_obj::StatsType where T: core::marker::Copy
+pub unsafe fn aya_obj::StatsType::clone_to_uninit(&self, dst: *mut T)
+impl<T> core::convert::From<T> for aya_obj::StatsType
+pub fn aya_obj::StatsType::from(t: T) -> T
 pub struct aya_obj::Features
 impl aya_obj::Features
 pub fn aya_obj::Features::bpf_cookie(&self) -> bool

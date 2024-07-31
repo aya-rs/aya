@@ -1099,6 +1099,27 @@ impl ProgramInfo {
         Ok(ProgramFd(fd))
     }
 
+    /// The accumulated time that the program has been actively running.
+    ///
+    /// This is not to be confused with the duration since the program was
+    /// first loaded on the host.
+    ///
+    /// Note this statistic is only updated for as long as
+    /// [`BPF_ENABLE_STATS`](crate::sys::enable_stats) is enabled with
+    /// [`BPF_STATS_RUN_TIME`](aya_obj::StatsType::RunTime) type set.
+    pub fn run_time(&self) -> Duration {
+        Duration::from_nanos(self.0.run_time_ns)
+    }
+
+    /// The accumulated execution count of the program.
+    ///
+    /// Note this statistic is only updated for as long as
+    /// [`BPF_ENABLE_STATS`](crate::sys::enable_stats) is enabled with
+    /// [`BPF_STATS_RUN_TIME`](aya_obj::StatsType::RunTime) type set.
+    pub fn run_count(&self) -> u64 {
+        self.0.run_cnt
+    }
+
     /// Loads a program from a pinned path in bpffs.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
