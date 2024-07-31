@@ -78,20 +78,21 @@
 )]
 
 mod bpf;
-use aya_obj::generated;
 pub mod maps;
-use aya_obj as obj;
 pub mod pin;
 pub mod programs;
-pub use programs::loaded_programs;
 mod sys;
 pub mod util;
 
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 
+use aya_obj as obj;
+use aya_obj::generated;
 pub use bpf::*;
 pub use obj::btf::{Btf, BtfError};
 pub use object::Endianness;
+pub use programs::loaded_programs;
+pub use sys::enable_stats;
 #[doc(hidden)]
 pub use sys::netlink_set_link_up;
 
@@ -137,6 +138,16 @@ impl MockableFd {
     fn inner(&self) -> &OwnedFd {
         let Self { fd } = self;
         fd.as_ref().unwrap()
+    }
+
+    #[cfg(not(test))]
+    fn into_inner(self) -> OwnedFd {
+        unsafe { OwnedFd::from_raw_fd(self.as_raw_fd()) }
+    }
+
+    #[cfg(test)]
+    fn into_inner(mut self) -> OwnedFd {
+        self.fd.take().unwrap()
     }
 
     fn try_clone(&self) -> std::io::Result<Self> {

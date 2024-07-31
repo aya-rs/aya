@@ -21,8 +21,8 @@ use thiserror::Error;
 
 use crate::{
     generated::{
-        bpf_map_type, bpf_map_type::*, AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE,
-        AYA_PERF_EVENT_IOC_SET_BPF,
+        bpf_map_type::{self, *},
+        AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE, AYA_PERF_EVENT_IOC_SET_BPF,
     },
     maps::{Map, MapData, MapError},
     obj::{
@@ -41,7 +41,7 @@ use crate::{
         is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
         is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
         is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
-        retry_with_verifier_logs,
+        retry_with_verifier_logs, SyscallError,
     },
     util::{bytes_of, bytes_of_slice, page_size, possible_cpus, POSSIBLE_CPUS},
 };
@@ -1117,6 +1117,10 @@ pub enum EbpfError {
     #[error("program error: {0}")]
     /// A program error
     ProgramError(#[from] ProgramError),
+
+    #[error("syscall error: {0}")]
+    /// A syscall error
+    SyscallError(#[from] SyscallError),
 }
 
 /// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].

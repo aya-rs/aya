@@ -8747,6 +8747,7 @@ pub aya::EbpfError::NoBTF
 pub aya::EbpfError::ParseError(aya_obj::obj::ParseError)
 pub aya::EbpfError::ProgramError(aya::programs::ProgramError)
 pub aya::EbpfError::RelocationError(aya_obj::relocation::EbpfRelocationError)
+pub aya::EbpfError::SyscallError(crate::sys::SyscallError)
 pub aya::EbpfError::UnexpectedPinningType
 pub aya::EbpfError::UnexpectedPinningType::name: u32
 impl core::convert::From<aya::maps::MapError> for aya::EbpfError
@@ -9022,6 +9023,7 @@ impl aya::Pod for u64
 impl aya::Pod for u8
 impl<K: aya::Pod> aya::Pod for aya::maps::lpm_trie::Key<K>
 impl<T: aya::Pod, const N: usize> aya::Pod for [T; N]
+pub fn aya::enable_stats(stats_type: aya_obj::types::StatsType) -> core::result::Result<std::os::fd::owned::OwnedFd, SyscallError>
 pub fn aya::features() -> &'static aya_obj::obj::Features
 pub fn aya::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
 pub type aya::Bpf = aya::Ebpf
