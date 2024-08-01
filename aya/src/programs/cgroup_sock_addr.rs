@@ -73,11 +73,18 @@ impl CgroupSockAddr {
         let cgroup_fd = cgroup.as_fd();
         let attach_type = self.data.expected_attach_type.unwrap();
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), attach_type, None, 0)
-                .map_err(|(_, io_error)| SyscallError {
-                    call: "bpf_link_create",
-                    io_error,
-                })?;
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(cgroup_fd),
+                attach_type,
+                None,
+                Some(0),
+                None,
+            )
+            .map_err(|(_, io_error)| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
             self.data
                 .links
                 .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(

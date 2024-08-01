@@ -29,6 +29,7 @@ use crate::{
         },
         copy_instructions,
     },
+    programs::links::LinkOrder,
     sys::{syscall, SysResult, Syscall, SyscallError},
     util::KernelVersion,
     Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN,
@@ -382,7 +383,8 @@ pub(crate) fn bpf_link_create(
     target: LinkTarget<'_>,
     attach_type: bpf_attach_type,
     btf_id: Option<u32>,
-    flags: u32,
+    flags: Option<u32>,
+    ordering: Option<LinkOrder>,
 ) -> SysResult<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -397,10 +399,38 @@ pub(crate) fn bpf_link_create(
         }
     };
     attr.link_create.attach_type = attach_type as u32;
-    attr.link_create.flags = flags;
+
     if let Some(btf_id) = btf_id {
         attr.link_create.__bindgen_anon_3.target_btf_id = btf_id;
     }
+
+    if let Some(ordering) = ordering {
+        attr.link_create.flags = ordering.flags.bits();
+
+        if let Some(expected_revision) = ordering.expected_revision {
+            attr.link_create.__bindgen_anon_3.tcx.expected_revision = expected_revision;
+        }
+
+        match (ordering.fd, ordering.id) {
+            (Some(fd), None) => {
+                attr.link_create
+                    .__bindgen_anon_3
+                    .tcx
+                    .__bindgen_anon_1
+                    .relative_fd = fd.as_raw_fd() as u32;
+            }
+            (None, Some(id)) => {
+                attr.link_create
+                    .__bindgen_anon_3
+                    .tcx
+                    .__bindgen_anon_1
+                    .relative_id = id;
+            }
+            _ => {}
+        }
+    } else if let Some(flags) = flags {
+        attr.link_create.flags = flags
+    };
 
     // SAFETY: BPF_LINK_CREATE returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }
@@ -733,7 +763,7 @@ pub(crate) fn is_perf_link_supported() -> bool {
         let fd = fd.as_fd();
         matches!(
             // Uses an invalid target FD so we get EBADF if supported.
-            bpf_link_create(fd, LinkTarget::IfIndex(u32::MAX), bpf_attach_type::BPF_PERF_EVENT, None, 0),
+            bpf_link_create(fd, LinkTarget::IfIndex(u32::MAX), bpf_attach_type::BPF_PERF_EVENT, None, None, None),
             // Returns EINVAL if unsupported. EBADF if supported.
             Err((_, e)) if e.raw_os_error() == Some(libc::EBADF),
         )

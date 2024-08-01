@@ -72,7 +72,8 @@ impl CgroupDevice {
                 LinkTarget::Fd(cgroup_fd),
                 BPF_CGROUP_DEVICE,
                 None,
-                0,
+                Some(0),
+                None,
             )
             .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",

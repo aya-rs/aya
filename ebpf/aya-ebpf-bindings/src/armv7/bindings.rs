@@ -1708,6 +1708,13 @@ pub struct bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2 {
     pub sport: __be16,
     pub dport: __be16,
 }
+pub mod tcx_action_base {
+    pub type Type = ::aya_ebpf_cty::c_int;
+    pub const TCX_NEXT: Type = -1;
+    pub const TCX_PASS: Type = 0;
+    pub const TCX_DROP: Type = 2;
+    pub const TCX_REDIRECT: Type = 7;
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct bpf_xdp_sock {

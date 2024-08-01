@@ -503,6 +503,12 @@ pub mod aya_ebpf_bindings::bindings::sk_action
 pub const aya_ebpf_bindings::bindings::sk_action::SK_DROP: aya_ebpf_bindings::bindings::sk_action::Type
 pub const aya_ebpf_bindings::bindings::sk_action::SK_PASS: aya_ebpf_bindings::bindings::sk_action::Type
 pub type aya_ebpf_bindings::bindings::sk_action::Type = aya_ebpf_cty::ad::c_uint
+pub mod aya_ebpf_bindings::bindings::tcx_action_base
+pub const aya_ebpf_bindings::bindings::tcx_action_base::TCX_DROP: aya_ebpf_bindings::bindings::tcx_action_base::Type
+pub const aya_ebpf_bindings::bindings::tcx_action_base::TCX_NEXT: aya_ebpf_bindings::bindings::tcx_action_base::Type
+pub const aya_ebpf_bindings::bindings::tcx_action_base::TCX_PASS: aya_ebpf_bindings::bindings::tcx_action_base::Type
+pub const aya_ebpf_bindings::bindings::tcx_action_base::TCX_REDIRECT: aya_ebpf_bindings::bindings::tcx_action_base::Type
+pub type aya_ebpf_bindings::bindings::tcx_action_base::Type = aya_ebpf_cty::ad::c_int
 pub mod aya_ebpf_bindings::bindings::xdp_action
 pub const aya_ebpf_bindings::bindings::xdp_action::XDP_ABORTED: aya_ebpf_bindings::bindings::xdp_action::Type
 pub const aya_ebpf_bindings::bindings::xdp_action::XDP_DROP: aya_ebpf_bindings::bindings::xdp_action::Type
