@@ -150,7 +150,7 @@ impl EbpfLogger {
                 None => false,
             })
             .ok_or(Error::MapNotFound)?;
-        let map = MapData::from_id(map.id()).map_err(Error::MapError)?;
+        let map = MapData::from_id(map.id().unwrap().get()).map_err(Error::MapError)?;
 
         Self::read_logs_async(Map::PerfEventArray(map), logger)?;
 

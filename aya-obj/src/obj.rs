@@ -81,7 +81,10 @@ impl Features {
         }
     }
 
-    /// Returns whether BPF program names are supported.
+    /// Returns whether BPF program names and map names are supported.
+    ///
+    /// Although the feature probe performs the check for program name, we can use this to also
+    /// detect if map name is supported since they were both introduced in the same commit.
     pub fn bpf_name(&self) -> bool {
         self.bpf_name
     }
