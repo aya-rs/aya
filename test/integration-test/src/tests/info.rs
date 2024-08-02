@@ -3,7 +3,7 @@
 use std::{fs, time::SystemTime};
 
 use aya::{
-    maps::{loaded_maps, MapError},
+    maps::{loaded_maps, Array, HashMap, IterableMap, MapError},
     programs::{loaded_programs, ProgramError, SocketFilter},
     util::KernelVersion,
     Ebpf,
@@ -161,13 +161,13 @@ fn test_loaded_at() {
 }
 
 #[test]
-fn list_loaded_maps() {
+fn test_loaded_maps() {
     // Load a program with maps.
     let mut bpf: Ebpf = Ebpf::load(crate::MAP_TEST).unwrap();
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
 
-    // Ensure the loaded_maps() api doesn't panic and retrieve loaded maps.
+    // Ensure the loaded_maps() api doesn't panic
     let mut maps = loaded_maps().peekable();
     if let Err(err) = maps.peek().unwrap() {
         if let MapError::SyscallError(err) = &err {
@@ -184,64 +184,94 @@ fn list_loaded_maps() {
         }
         panic!("{err}");
     }
-    let mut maps: Vec<_> = maps.filter_map(|m| m.ok()).collect();
 
-    // There's not a good way to extract our maps of interest with load order being
-    // non-deterministic. Since we are trying to be more considerate of older kernels, we should
-    // only rely on v4.13 feats.
-    // Expected sort order should be: `BAR`, `aya_global` (if avail), `FOO`
-    maps.sort_unstable_by_key(|m| (m.map_type(), m.id()));
-
-    // Ensure program has the 2 maps.
-    if let Ok(info) = prog.info() {
-        let map_ids = info.map_ids().unwrap();
-        kernel_assert!(map_ids.is_some(), KernelVersion::new(4, 15, 0));
-
-        if let Some(map_ids) = map_ids {
+    // Loaded maps should contain our test maps
+    let maps: Vec<_> = maps.filter_map(|m| m.ok()).collect();
+    if let Ok(info) = &prog.info() {
+        if let Some(map_ids) = info.map_ids().unwrap() {
             assert_eq!(2, map_ids.len());
             for id in map_ids.iter() {
                 assert!(
-                    maps.iter().any(|m| m.id() == id.get()),
+                    maps.iter().any(|m| &m.id().unwrap() == id),
                     "expected `loaded_maps()` to have `map_ids` from program"
                 );
             }
         }
     }
 
-    // Test `bpf_map_info` fields.
-    let hash = maps.first().unwrap();
-    kernel_assert_eq!(
-        bpf_map_type::BPF_MAP_TYPE_HASH as u32,
-        hash.map_type(),
-        KernelVersion::new(4, 13, 0)
+    let hash: HashMap<_, u32, u8> = HashMap::try_from(bpf.map("BAR").unwrap()).unwrap();
+    let hash_id = hash.map().info().unwrap().id();
+    kernel_assert!(
+        maps.iter().any(|map| map.id() == hash_id),
+        KernelVersion::new(4, 13, 0),
     );
-    kernel_assert!(hash.id() > 0, KernelVersion::new(4, 13, 0));
-    kernel_assert_eq!(4, hash.key_size(), KernelVersion::new(4, 13, 0));
-    kernel_assert_eq!(1, hash.value_size(), KernelVersion::new(4, 13, 0));
-    kernel_assert_eq!(8, hash.max_entries(), KernelVersion::new(4, 13, 0));
+
+    let array: Array<_, u32> = Array::try_from(bpf.map("FOO").unwrap()).unwrap();
+    let array_id = array.map().info().unwrap().id();
+    kernel_assert!(
+        maps.iter().any(|map| map.id() == array_id),
+        KernelVersion::new(4, 13, 0),
+    );
+}
+
+#[test]
+fn test_map_info() {
+    let mut bpf: Ebpf = Ebpf::load(crate::MAP_TEST).unwrap();
+    let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    // Test `bpf_map_info` fields.
+    let hash: HashMap<_, u32, u8> = HashMap::try_from(bpf.map("BAR").unwrap()).unwrap();
+    let hash = hash.map().info().unwrap();
     kernel_assert_eq!(
-        "BAR",
-        hash.name_as_str().unwrap(),
-        KernelVersion::new(4, 15, 0)
+        bpf_map_type::BPF_MAP_TYPE_HASH,
+        hash.map_type(),
+        KernelVersion::new(4, 13, 0),
+    );
+    kernel_assert!(hash.id().is_some(), KernelVersion::new(4, 13, 0));
+    kernel_assert!(
+        hash.key_size().is_some_and(|size| size.get() == 4),
+        KernelVersion::new(4, 13, 0),
+    );
+    kernel_assert!(
+        hash.value_size().is_some_and(|size| size.get() == 1),
+        KernelVersion::new(4, 13, 0),
+    );
+    kernel_assert!(
+        hash.max_entries().is_some_and(|size| size.get() == 8),
+        KernelVersion::new(4, 13, 0),
+    );
+    kernel_assert!(
+        hash.name_as_str().is_some_and(|name| name == "BAR"),
+        KernelVersion::new(4, 15, 0),
     );
 
     hash.map_flags();
     hash.fd().unwrap();
 
-    let array = maps.last().unwrap();
+    let array: Array<_, u32> = Array::try_from(bpf.map("FOO").unwrap()).unwrap();
+    let array = array.map().info().unwrap();
     kernel_assert_eq!(
-        bpf_map_type::BPF_MAP_TYPE_ARRAY as u32,
+        bpf_map_type::BPF_MAP_TYPE_ARRAY,
         array.map_type(),
-        KernelVersion::new(4, 13, 0)
+        KernelVersion::new(4, 13, 0),
     );
-    kernel_assert!(array.id() > 0, KernelVersion::new(4, 13, 0));
-    kernel_assert_eq!(4, array.key_size(), KernelVersion::new(4, 13, 0));
-    kernel_assert_eq!(4, array.value_size(), KernelVersion::new(4, 13, 0));
-    kernel_assert_eq!(10, array.max_entries(), KernelVersion::new(4, 13, 0));
-    kernel_assert_eq!(
-        "FOO",
-        array.name_as_str().unwrap(),
-        KernelVersion::new(4, 15, 0)
+    kernel_assert!(array.id().is_some(), KernelVersion::new(4, 13, 0));
+    kernel_assert!(
+        array.key_size().is_some_and(|size| size.get() == 4),
+        KernelVersion::new(4, 13, 0),
+    );
+    kernel_assert!(
+        array.value_size().is_some_and(|size| size.get() == 4),
+        KernelVersion::new(4, 13, 0),
+    );
+    kernel_assert!(
+        array.max_entries().is_some_and(|size| size.get() == 10),
+        KernelVersion::new(4, 13, 0),
+    );
+    kernel_assert!(
+        array.name_as_str().is_some_and(|name| name == "FOO"),
+        KernelVersion::new(4, 15, 0),
     );
 
     array.map_flags();
