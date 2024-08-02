@@ -1,5 +1,18 @@
-use aya::{programs::UProbe, util::KernelVersion, Ebpf};
+use aya::{programs::UProbe, util::KernelVersion, Ebpf, EbpfLoader};
 use test_log::test;
+
+#[test]
+fn ignored_map_relocation_by_name() {
+    let mut ebpf =
+        relocation_load_and_attach("test_ignored_map_relocation", crate::IGNORE_MAP, "RINGBUF");
+
+    let perf = ebpf.take_map("PERFBUF");
+
+    let ring = ebpf.take_map("RINGBUF");
+
+    assert!(perf.is_some());
+    assert!(ring.is_none());
+}
 
 #[test]
 fn relocations() {
@@ -31,6 +44,27 @@ fn text_64_64_reloc() {
 
     assert_eq!(m.get(&0, 0).unwrap(), 2);
     assert_eq!(m.get(&1, 0).unwrap(), 3);
+}
+
+fn relocation_load_and_attach(name: &str, bytes: &[u8], disable_map_name: &str) -> Ebpf {
+    let mut ebpf = EbpfLoader::new()
+        .ignore_maps_by_name(&[disable_map_name])
+        .set_global("RINGBUF_SUPPORTED", &0, true)
+        .load(bytes)
+        .unwrap();
+
+    let prog: &mut UProbe = ebpf.program_mut(name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    prog.attach(
+        Some("trigger_relocations_program"),
+        0,
+        "/proc/self/exe",
+        None,
+    )
+    .unwrap();
+
+    ebpf
 }
 
 fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
