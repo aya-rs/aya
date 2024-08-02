@@ -1,82 +1,229 @@
 //! Tests the Info API.
 
-use std::{fs, time::SystemTime};
+use std::{fs, panic, path::Path, time::SystemTime};
 
 use aya::{
     maps::{loaded_maps, MapError},
-    programs::{loaded_programs, ProgramError, SocketFilter},
+    programs::{loaded_programs, ProgramError, ProgramType, SocketFilter, TracePoint},
+    sys::enable_stats,
     util::KernelVersion,
     Ebpf,
 };
-use aya_obj::generated::{bpf_map_type, bpf_prog_type};
+use aya_obj::generated::bpf_map_type;
 use libc::EINVAL;
 
 use crate::utils::{kernel_assert, kernel_assert_eq};
 
 const BPF_JIT_ENABLE: &str = "/proc/sys/net/core/bpf_jit_enable";
+const BPF_STATS_ENABLED: &str = "/proc/sys/kernel/bpf_stats_enabled";
 
 #[test]
-fn list_loaded_programs() {
-    // Kernels below v4.15 have been observed to have `bpf_jit_enable` disabled by default.
-    let jit_enabled = enable_jit();
-
+fn test_loaded_programs() {
     // Load a program.
     // Since we are only testing the programs for their metadata, there is no need to "attach" them.
     let mut bpf = Ebpf::load(crate::SIMPLE_PROG).unwrap();
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
+    let test_prog = prog.info().unwrap();
 
-    // Ensure the `loaded_programs()` api does not panic and grab the last loaded program in the
-    // iter, which should be our test program.
-    let prog = match loaded_programs().last().unwrap() {
-        Ok(prog) => prog,
-        Err(err) => {
-            if let ProgramError::SyscallError(err) = &err {
-                // Skip entire test since feature not available
-                if err
-                    .io_error
-                    .raw_os_error()
-                    .is_some_and(|errno| errno == EINVAL)
-                {
-                    eprintln!("ignoring test completely as `loaded_programs()` is not available on the host");
-                    return;
-                }
+    // Ensure loaded program doesn't panic
+    let mut programs = loaded_programs().peekable();
+    if let Err(err) = programs.peek().unwrap() {
+        if let ProgramError::SyscallError(err) = &err {
+            // Skip entire test since feature not available
+            if err
+                .io_error
+                .raw_os_error()
+                .is_some_and(|errno| errno == EINVAL)
+            {
+                eprintln!(
+                    "ignoring test completely as `loaded_programs()` is not available on the host"
+                );
+                return;
             }
-            panic!("{err}");
         }
-    };
+        panic!("{err}");
+    }
+
+    // Loaded programs should contain our test program
+    let mut programs = programs.filter_map(|prog| prog.ok());
+    kernel_assert!(
+        programs.any(|prog| prog.id() == test_prog.id()),
+        KernelVersion::new(4, 13, 0)
+    );
+}
+
+#[test]
+fn test_program_info() {
+    // Kernels below v4.15 have been observed to have `bpf_jit_enable` disabled by default.
+    let previously_enabled = is_sysctl_enabled(BPF_JIT_ENABLE);
+    // Restore to previous state when panic occurs.
+    let prev_panic = panic::take_hook();
+    panic::set_hook(Box::new(move |panic_info| {
+        if !previously_enabled {
+            disable_sysctl_param(BPF_JIT_ENABLE);
+        }
+        prev_panic(panic_info);
+    }));
+    let jit_enabled = previously_enabled || enable_sysctl_param(BPF_JIT_ENABLE);
+
+    let mut bpf = Ebpf::load(crate::SIMPLE_PROG).unwrap();
+    let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+    let test_prog = prog.info().unwrap();
 
     // Test `bpf_prog_info` fields.
     kernel_assert_eq!(
-        bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32,
-        prog.program_type(),
+        ProgramType::SocketFilter,
+        test_prog.program_type().unwrap_or(ProgramType::Unspecified),
         KernelVersion::new(4, 13, 0),
     );
-    kernel_assert!(prog.id() > 0, KernelVersion::new(4, 13, 0));
-    kernel_assert!(prog.tag() > 0, KernelVersion::new(4, 13, 0));
+    kernel_assert!(test_prog.id().is_some(), KernelVersion::new(4, 13, 0));
+    kernel_assert!(test_prog.tag().is_some(), KernelVersion::new(4, 13, 0));
     if jit_enabled {
-        kernel_assert!(prog.size_jitted() > 0, KernelVersion::new(4, 13, 0));
+        kernel_assert!(
+            test_prog.size_jitted().is_some(),
+            KernelVersion::new(4, 13, 0),
+        );
     }
-    kernel_assert!(prog.size_translated() > 0, KernelVersion::new(4, 13, 0));
-    let uptime = SystemTime::now().duration_since(prog.loaded_at()).unwrap();
-    kernel_assert!(uptime.as_nanos() > 0, KernelVersion::new(4, 15, 0));
-    let maps = prog.map_ids().unwrap();
-    kernel_assert!(maps.is_empty(), KernelVersion::new(4, 15, 0));
-    let name = prog.name_as_str().unwrap();
-    kernel_assert_eq!("simple_prog", name, KernelVersion::new(4, 15, 0));
-    kernel_assert!(prog.gpl_compatible(), KernelVersion::new(4, 18, 0));
     kernel_assert!(
-        prog.verified_instruction_count() > 0,
-        KernelVersion::new(5, 16, 0)
+        test_prog.size_translated().is_some(),
+        KernelVersion::new(4, 13, 0),
+    );
+    kernel_assert!(
+        test_prog.loaded_at().is_some(),
+        KernelVersion::new(4, 15, 0),
+    );
+    kernel_assert!(
+        test_prog.created_by_uid().is_some_and(|uid| uid == 0),
+        KernelVersion::new(4, 15, 0),
+    );
+    let maps = test_prog.map_ids().unwrap();
+    kernel_assert!(
+        maps.is_some_and(|ids| ids.is_empty()),
+        KernelVersion::new(4, 15, 0),
+    );
+    kernel_assert!(
+        test_prog
+            .name_as_str()
+            .is_some_and(|name| name == "simple_prog"),
+        KernelVersion::new(4, 15, 0),
+    );
+    kernel_assert!(
+        test_prog.gpl_compatible().is_some_and(|gpl| gpl),
+        KernelVersion::new(4, 18, 0),
+    );
+    kernel_assert!(
+        test_prog.verified_instruction_count().is_some(),
+        KernelVersion::new(5, 16, 0),
     );
 
     // We can't reliably test these fields since `0` can be interpreted as the actual value or
     // unavailable.
-    prog.btf_id();
+    test_prog.btf_id();
 
     // Ensure rest of the fields do not panic.
-    prog.memory_locked().unwrap();
-    prog.fd().unwrap();
+    test_prog.memory_locked().unwrap();
+    test_prog.fd().unwrap();
+
+    // Restore to previous state
+    if !previously_enabled {
+        disable_sysctl_param(BPF_JIT_ENABLE);
+    }
+}
+
+#[test]
+fn test_loaded_at() {
+    let mut bpf: Ebpf = Ebpf::load(crate::SIMPLE_PROG).unwrap();
+    let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
+
+    // SystemTime is not monotonic, which can cause this test to flake. We don't expect the clock
+    // timestamp to continuously jump around, so we add some retries. If the test is ever correct,
+    // we know that the value returned by loaded_at() was reasonable relative to SystemTime::now().
+    let mut failures = Vec::new();
+    for _ in 0..5 {
+        let t1 = SystemTime::now();
+        prog.load().unwrap();
+
+        let t2 = SystemTime::now();
+        let loaded_at = match prog.info().unwrap().loaded_at() {
+            Some(time) => time,
+            None => {
+                eprintln!("ignoring test completely as `load_time` field of `bpf_prog_info` is not available on the host");
+                return;
+            }
+        };
+        prog.unload().unwrap();
+
+        let range = t1..t2;
+        if range.contains(&loaded_at) {
+            failures.clear();
+            break;
+        }
+        failures.push(LoadedAtRange(loaded_at, range));
+    }
+    assert!(
+        failures.is_empty(),
+        "loaded_at was not in range: {failures:?}",
+    );
+
+    struct LoadedAtRange(SystemTime, std::ops::Range<SystemTime>);
+    impl std::fmt::Debug for LoadedAtRange {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let Self(loaded_at, range) = self;
+            write!(f, "{range:?}.contains({loaded_at:?})")
+        }
+    }
+}
+
+#[test]
+fn test_prog_stats() {
+    // Test depends on whether trace point exists.
+    if !Path::new("/sys/kernel/debug/tracing/events/syscalls/sys_enter_bpf").exists() {
+        eprintln!(
+            "ignoring test completely as `syscalls/sys_enter_bpf` is not available on the host"
+        );
+        return;
+    }
+
+    let stats_fd = enable_stats(aya::sys::Stats::RunTime).ok();
+    // Restore to previous state when panic occurs.
+    let previously_enabled = is_sysctl_enabled(BPF_STATS_ENABLED);
+    let prev_panic = panic::take_hook();
+    panic::set_hook(Box::new(move |panic_info| {
+        if !previously_enabled {
+            disable_sysctl_param(BPF_STATS_ENABLED);
+        }
+        prev_panic(panic_info);
+    }));
+
+    let stats_enabled =
+        stats_fd.is_some() || previously_enabled || enable_sysctl_param(BPF_STATS_ENABLED);
+    if !stats_enabled {
+        eprintln!("ignoring test completely as bpf stats could not be enabled on the host");
+        return;
+    }
+
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
+    let prog: &mut TracePoint = bpf
+        .program_mut("test_tracepoint")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+    prog.attach("syscalls", "sys_enter_bpf").unwrap();
+    let test_prog = prog.info().unwrap();
+
+    kernel_assert!(
+        test_prog.run_time().as_nanos() > 0,
+        KernelVersion::new(5, 1, 0)
+    );
+    kernel_assert!(test_prog.run_count() > 0, KernelVersion::new(5, 1, 0));
+
+    // Restore to previous state
+    if !previously_enabled {
+        disable_sysctl_param(BPF_STATS_ENABLED);
+    }
 }
 
 #[test]
@@ -108,19 +255,22 @@ fn list_loaded_maps() {
     // There's not a good way to extract our maps of interest with load order being
     // non-deterministic. Since we are trying to be more considerate of older kernels, we should
     // only rely on v4.13 feats.
-    // Expected sort order should be: `BAR`, `aya_global` (if ran local), `FOO`
+    // Expected sort order should be: `BAR`, `aya_global` (if avail), `FOO`
     maps.sort_unstable_by_key(|m| (m.map_type(), m.id()));
 
     // Ensure program has the 2 maps.
     if let Ok(info) = prog.info() {
         let map_ids = info.map_ids().unwrap();
-        kernel_assert_eq!(2, map_ids.len(), KernelVersion::new(4, 15, 0));
+        kernel_assert!(map_ids.is_some(), KernelVersion::new(4, 15, 0));
 
-        for id in map_ids.iter() {
-            assert!(
-                maps.iter().any(|m| m.id() == *id),
-                "expected `loaded_maps()` to have `map_ids` from program"
-            );
+        if let Some(map_ids) = map_ids {
+            assert_eq!(2, map_ids.len());
+            for id in map_ids.iter() {
+                assert!(
+                    maps.iter().any(|m| m.id() == id.get()),
+                    "expected `loaded_maps()` to have `map_ids` from program"
+                );
+            }
         }
     }
 
@@ -164,18 +314,20 @@ fn list_loaded_maps() {
     array.fd().unwrap();
 }
 
-/// Enable program to be JIT-compiled if not already enabled.
-fn enable_jit() -> bool {
-    match fs::read_to_string(BPF_JIT_ENABLE) {
-        Ok(contents) => {
-            if contents.chars().next().is_some_and(|c| c == '0') {
-                let failed = fs::write(BPF_JIT_ENABLE, b"1").is_err();
-                if failed {
-                    return false;
-                }
-            }
-            true
-        }
+/// Whether sysctl parameter is enabled in the `/proc` file.
+fn is_sysctl_enabled(path: &str) -> bool {
+    match fs::read_to_string(path) {
+        Ok(contents) => contents.chars().next().is_some_and(|c| c == '1'),
         Err(_) => false,
     }
+}
+
+/// Enable sysctl parameter through procfs.
+fn enable_sysctl_param(path: &str) -> bool {
+    fs::write(path, b"1").is_ok()
+}
+
+/// Disable sysctl parameter through procfs.
+fn disable_sysctl_param(path: &str) -> bool {
+    fs::write(path, b"0").is_ok()
 }

@@ -8,7 +8,7 @@ use std::{
 };
 
 use assert_matches::assert_matches;
-use libc::{E2BIG, ENOENT, ENOSPC};
+use libc::{ENOENT, ENOSPC};
 use obj::{
     btf::{BtfEnum64, Enum64},
     generated::bpf_stats_type,
@@ -32,7 +32,7 @@ use crate::{
     },
     sys::{syscall, SysResult, Syscall, SyscallError},
     util::KernelVersion,
-    Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN,
+    Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN, FEATURES,
 };
 
 pub(crate) fn bpf_create_map(
@@ -105,6 +105,7 @@ pub(crate) fn bpf_pin_object(fd: BorrowedFd<'_>, path: &CStr) -> SysResult<i64> 
     sys_bpf(bpf_cmd::BPF_OBJ_PIN, &mut attr)
 }
 
+/// Introduced in kernel v4.4.
 pub(crate) fn bpf_get_object(path: &CStr) -> SysResult<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_4 };
@@ -548,23 +549,14 @@ pub(crate) fn bpf_prog_get_info_by_fd(
     fd: BorrowedFd<'_>,
     map_ids: &mut [u32],
 ) -> Result<bpf_prog_info, SyscallError> {
-    // Attempt syscall with the map info filled.
-    let mut info = bpf_obj_get_info_by_fd(fd, |info: &mut bpf_prog_info| {
-        info.nr_map_ids = map_ids.len() as _;
-        info.map_ids = map_ids.as_mut_ptr() as _;
-    });
-
     // An `E2BIG` error can occur on kernels below v4.15 when handing over a large struct where the
     // extra space is not all-zero bytes.
-    if let Err(err) = &info {
-        if let Some(errno) = &err.io_error.raw_os_error() {
-            if errno == &E2BIG {
-                info = bpf_obj_get_info_by_fd(fd, |_| {});
-            }
+    bpf_obj_get_info_by_fd(fd, |info: &mut bpf_prog_info| {
+        if FEATURES.prog_info_map_ids() {
+            info.nr_map_ids = map_ids.len() as _;
+            info.map_ids = map_ids.as_mut_ptr() as _;
         }
-    }
-
-    info
+    })
 }
 
 /// Introduced in kernel v4.13.
@@ -709,6 +701,62 @@ pub(crate) fn is_prog_name_supported() -> bool {
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
 
     bpf_prog_load(&mut attr).is_ok()
+}
+
+/// Tests whether `nr_map_ids` & `map_ids` fields in `bpf_prog_info` is available.
+pub(crate) fn is_info_map_ids_supported() -> bool {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
+
+    let prog: &[u8] = &[
+        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+    let insns = copy_instructions(prog).unwrap();
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+
+    let prog_fd = match bpf_prog_load(&mut attr) {
+        Ok(fd) => fd,
+        Err(_) => return false,
+    };
+    bpf_obj_get_info_by_fd(prog_fd.as_fd(), |info: &mut bpf_prog_info| {
+        info.nr_map_ids = 1
+    })
+    .is_ok()
+}
+
+/// Tests whether `gpl_compatible` field in `bpf_prog_info` is available.
+pub(crate) fn is_info_gpl_compatible_supported() -> bool {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
+
+    let prog: &[u8] = &[
+        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+    ];
+    let insns = copy_instructions(prog).unwrap();
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+
+    let prog_fd = match bpf_prog_load(&mut attr) {
+        Ok(fd) => fd,
+        Err(_) => return false,
+    };
+    if let Ok::<bpf_prog_info, _>(info) = bpf_obj_get_info_by_fd(prog_fd.as_fd(), |_| {}) {
+        return info.gpl_compatible() != 0;
+    }
+    false
 }
 
 pub(crate) fn is_probe_read_kernel_supported() -> bool {

@@ -37,6 +37,7 @@
 //! [`maps`]: crate::maps
 
 // modules we don't export
+mod info;
 mod probe;
 mod utils;
 
@@ -71,13 +72,13 @@ pub mod xdp;
 use std::{
     ffi::CString,
     io,
-    num::NonZeroU32,
     os::fd::{AsFd, AsRawFd, BorrowedFd},
     path::{Path, PathBuf},
     sync::Arc,
-    time::{Duration, SystemTime},
 };
 
+use info::impl_info;
+pub use info::{loaded_programs, ProgramInfo, ProgramType};
 use libc::ENOSPC;
 use thiserror::Error;
 
@@ -115,18 +116,13 @@ use crate::{
     maps::MapError,
     obj::{self, btf::BtfError, VerifierLog},
     pin::PinError,
-    programs::{
-        links::*,
-        perf_attach::*,
-        utils::{boot_time, get_fdinfo},
-    },
+    programs::{links::*, perf_attach::*},
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
-        bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
-        bpf_prog_query, iter_link_ids, iter_prog_ids, retry_with_verifier_logs,
-        EbpfLoadProgramAttrs, SyscallError,
+        bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids,
+        retry_with_verifier_logs, EbpfLoadProgramAttrs, SyscallError,
     },
-    util::{bytes_of_bpf_name, KernelVersion},
+    util::KernelVersion,
     VerifierLogLevel,
 };
 
@@ -242,7 +238,7 @@ impl AsFd for ProgramFd {
     }
 }
 
-/// eBPF program type.
+/// The various eBPF programs.
 #[derive(Debug)]
 pub enum Program {
     /// A [`KProbe`] program
@@ -296,34 +292,30 @@ pub enum Program {
 }
 
 impl Program {
-    /// Returns the low level program type.
-    pub fn prog_type(&self) -> bpf_prog_type {
-        use crate::generated::bpf_prog_type::*;
+    /// Returns the program type.
+    pub fn prog_type(&self) -> ProgramType {
         match self {
-            Self::KProbe(_) => BPF_PROG_TYPE_KPROBE,
-            Self::UProbe(_) => BPF_PROG_TYPE_KPROBE,
-            Self::TracePoint(_) => BPF_PROG_TYPE_TRACEPOINT,
-            Self::SocketFilter(_) => BPF_PROG_TYPE_SOCKET_FILTER,
-            Self::Xdp(_) => BPF_PROG_TYPE_XDP,
-            Self::SkMsg(_) => BPF_PROG_TYPE_SK_MSG,
-            Self::SkSkb(_) => BPF_PROG_TYPE_SK_SKB,
-            Self::SockOps(_) => BPF_PROG_TYPE_SOCK_OPS,
-            Self::SchedClassifier(_) => BPF_PROG_TYPE_SCHED_CLS,
-            Self::CgroupSkb(_) => BPF_PROG_TYPE_CGROUP_SKB,
-            Self::CgroupSysctl(_) => BPF_PROG_TYPE_CGROUP_SYSCTL,
-            Self::CgroupSockopt(_) => BPF_PROG_TYPE_CGROUP_SOCKOPT,
-            Self::LircMode2(_) => BPF_PROG_TYPE_LIRC_MODE2,
-            Self::PerfEvent(_) => BPF_PROG_TYPE_PERF_EVENT,
-            Self::RawTracePoint(_) => BPF_PROG_TYPE_RAW_TRACEPOINT,
-            Self::Lsm(_) => BPF_PROG_TYPE_LSM,
-            Self::BtfTracePoint(_) => BPF_PROG_TYPE_TRACING,
-            Self::FEntry(_) => BPF_PROG_TYPE_TRACING,
-            Self::FExit(_) => BPF_PROG_TYPE_TRACING,
-            Self::Extension(_) => BPF_PROG_TYPE_EXT,
-            Self::CgroupSockAddr(_) => BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
-            Self::SkLookup(_) => BPF_PROG_TYPE_SK_LOOKUP,
-            Self::CgroupSock(_) => BPF_PROG_TYPE_CGROUP_SOCK,
-            Self::CgroupDevice(_) => BPF_PROG_TYPE_CGROUP_DEVICE,
+            Self::KProbe(_) | Self::UProbe(_) => ProgramType::KProbe,
+            Self::TracePoint(_) => ProgramType::TracePoint,
+            Self::SocketFilter(_) => ProgramType::SocketFilter,
+            Self::Xdp(_) => ProgramType::Xdp,
+            Self::SkMsg(_) => ProgramType::SkMsg,
+            Self::SkSkb(_) => ProgramType::SkSkb,
+            Self::SockOps(_) => ProgramType::SockOps,
+            Self::SchedClassifier(_) => ProgramType::SchedClassifier,
+            Self::CgroupSkb(_) => ProgramType::CgroupSkb,
+            Self::CgroupSysctl(_) => ProgramType::CgroupSysctl,
+            Self::CgroupSockopt(_) => ProgramType::CgroupSockopt,
+            Self::LircMode2(_) => ProgramType::LircMode2,
+            Self::PerfEvent(_) => ProgramType::PerfEvent,
+            Self::RawTracePoint(_) => ProgramType::RawTracePoint,
+            Self::Lsm(_) => ProgramType::Lsm,
+            Self::BtfTracePoint(_) | Self::FEntry(_) | Self::FExit(_) => ProgramType::Tracing,
+            Self::Extension(_) => ProgramType::Extension,
+            Self::CgroupSockAddr(_) => ProgramType::CgroupSockAddr,
+            Self::SkLookup(_) => ProgramType::SkLookup,
+            Self::CgroupSock(_) => ProgramType::CgroupSock,
+            Self::CgroupDevice(_) => ProgramType::CgroupDevice,
         }
     }
 
@@ -952,28 +944,6 @@ impl_try_from_program!(
     CgroupDevice,
 );
 
-/// Returns information about a loaded program with the [`ProgramInfo`] structure.
-///
-/// This information is populated at load time by the kernel and can be used
-/// to correlate a given [`Program`] to it's corresponding [`ProgramInfo`]
-/// metadata.
-macro_rules! impl_info {
-    ($($struct_name:ident),+ $(,)?) => {
-        $(
-            impl $struct_name {
-                /// Returns metadata information of this program.
-                ///
-                /// Uses kernel v4.13 features.
-                pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-                    let ProgramFd(fd) = self.fd()?;
-
-                    ProgramInfo::new_from_fd(fd.as_fd())
-                }
-            }
-        )+
-    }
-}
-
 impl_info!(
     KProbe,
     UProbe,
@@ -1000,182 +970,6 @@ impl_info!(
     CgroupSock,
     CgroupDevice,
 );
-
-/// Provides information about a loaded program, like name, id and statistics
-#[doc(alias = "bpf_prog_info")]
-#[derive(Debug)]
-pub struct ProgramInfo(bpf_prog_info);
-
-impl ProgramInfo {
-    fn new_from_fd(fd: BorrowedFd<'_>) -> Result<Self, ProgramError> {
-        let info = bpf_prog_get_info_by_fd(fd, &mut [])?;
-        Ok(Self(info))
-    }
-
-    /// The name of the program as was provided when it was load. This is limited to 16 bytes
-    pub fn name(&self) -> &[u8] {
-        bytes_of_bpf_name(&self.0.name)
-    }
-
-    /// The name of the program as a &str. If the name was not valid unicode, None is returned.
-    pub fn name_as_str(&self) -> Option<&str> {
-        std::str::from_utf8(self.name()).ok()
-    }
-
-    /// The id for this program. Each program has a unique id.
-    pub fn id(&self) -> u32 {
-        self.0.id
-    }
-
-    /// The program tag.
-    ///
-    /// The program tag is a SHA sum of the program's instructions which be used as an alternative to
-    /// [`Self::id()`]". A program's id can vary every time it's loaded or unloaded, but the tag
-    /// will remain the same.
-    pub fn tag(&self) -> u64 {
-        u64::from_be_bytes(self.0.tag)
-    }
-
-    /// The program type as defined by the linux kernel enum
-    /// [`bpf_prog_type`](https://elixir.bootlin.com/linux/v6.4.4/source/include/uapi/linux/bpf.h#L948).
-    pub fn program_type(&self) -> u32 {
-        self.0.type_
-    }
-
-    /// Returns true if the program is defined with a GPL-compatible license.
-    pub fn gpl_compatible(&self) -> bool {
-        self.0.gpl_compatible() != 0
-    }
-
-    /// The ids of the maps used by the program.
-    pub fn map_ids(&self) -> Result<Vec<u32>, ProgramError> {
-        let ProgramFd(fd) = self.fd()?;
-        let mut map_ids = vec![0u32; self.0.nr_map_ids as usize];
-
-        bpf_prog_get_info_by_fd(fd.as_fd(), &mut map_ids)?;
-
-        Ok(map_ids)
-    }
-
-    /// The btf id for the program.
-    pub fn btf_id(&self) -> Option<NonZeroU32> {
-        NonZeroU32::new(self.0.btf_id)
-    }
-
-    /// The size in bytes of the program's translated eBPF bytecode, which is
-    /// the bytecode after it has been passed though the verifier where it was
-    /// possibly modified by the kernel.
-    pub fn size_translated(&self) -> u32 {
-        self.0.xlated_prog_len
-    }
-
-    /// The size in bytes of the program's JIT-compiled machine code.
-    pub fn size_jitted(&self) -> u32 {
-        self.0.jited_prog_len
-    }
-
-    /// How much memory in bytes has been allocated and locked for the program.
-    pub fn memory_locked(&self) -> Result<u32, ProgramError> {
-        get_fdinfo(self.fd()?.as_fd(), "memlock")
-    }
-
-    /// The number of verified instructions in the program.
-    ///
-    /// This may be less than the total number of instructions in the compiled
-    /// program due to dead code elimination in the verifier.
-    pub fn verified_instruction_count(&self) -> u32 {
-        self.0.verified_insns
-    }
-
-    /// The time the program was loaded.
-    pub fn loaded_at(&self) -> SystemTime {
-        boot_time() + Duration::from_nanos(self.0.load_time)
-    }
-
-    /// Returns a file descriptor referencing the program.
-    ///
-    /// The returned file descriptor can be closed at any time and doing so does
-    /// not influence the life cycle of the program.
-    pub fn fd(&self) -> Result<ProgramFd, ProgramError> {
-        let Self(info) = self;
-        let fd = bpf_prog_get_fd_by_id(info.id)?;
-        Ok(ProgramFd(fd))
-    }
-
-    /// The accumulated time that the program has been actively running.
-    ///
-    /// This is not to be confused with the duration since the program was
-    /// first loaded on the host.
-    ///
-    /// Note this field is only updated for as long as
-    /// [`enable_stats`](crate::sys::enable_stats) is enabled
-    /// with [`Stats::RunTime`](crate::sys::Stats::RunTime).
-    pub fn run_time(&self) -> Duration {
-        Duration::from_nanos(self.0.run_time_ns)
-    }
-
-    /// The accumulated execution count of the program.
-    ///
-    /// Note this field is only updated for as long as
-    /// [`enable_stats`](crate::sys::enable_stats) is enabled
-    /// with [`Stats::RunTime`](crate::sys::Stats::RunTime).
-    pub fn run_count(&self) -> u64 {
-        self.0.run_cnt
-    }
-
-    /// Loads a program from a pinned path in bpffs.
-    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
-        use std::os::unix::ffi::OsStrExt as _;
-
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        })?;
-
-        let info = bpf_prog_get_info_by_fd(fd.as_fd(), &mut [])?;
-        Ok(Self(info))
-    }
-}
-
-/// Returns an iterator over all loaded bpf programs.
-///
-/// This differs from [`crate::Ebpf::programs`] since it will return all programs
-/// listed on the host system and not only programs a specific [`crate::Ebpf`] instance.
-///
-/// Uses kernel v4.13 features.
-///
-/// # Example
-/// ```
-/// # use aya::programs::loaded_programs;
-///
-/// for p in loaded_programs() {
-///     match p {
-///         Ok(program) => println!("{}", String::from_utf8_lossy(program.name())),
-///         Err(e) => println!("Error iterating programs: {:?}", e),
-///     }
-/// }
-/// ```
-///
-/// # Errors
-///
-/// Returns [`ProgramError::SyscallError`] if any of the syscalls required to either get
-/// next program id, get the program fd, or the [`ProgramInfo`] fail. In cases where
-/// iteration can't be performed, for example the caller does not have the necessary privileges,
-/// a single item will be yielded containing the error that occurred.
-pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramError>> {
-    iter_prog_ids()
-        .map(|id| {
-            let id = id?;
-            bpf_prog_get_fd_by_id(id)
-        })
-        .map(|fd| {
-            let fd = fd?;
-            bpf_prog_get_info_by_fd(fd.as_fd(), &mut [])
-        })
-        .map(|result| result.map(ProgramInfo).map_err(Into::into))
-}
 
 // TODO(https://github.com/aya-rs/aya/issues/645): this API is currently used in tests. Stabilize
 // and remove doc(hidden).

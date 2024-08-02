@@ -91,7 +91,6 @@ use aya_obj::generated;
 pub use bpf::*;
 pub use obj::btf::{Btf, BtfError};
 pub use object::Endianness;
-pub use programs::loaded_programs;
 #[doc(hidden)]
 pub use sys::netlink_set_link_up;
 
