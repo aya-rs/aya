@@ -39,14 +39,14 @@ use crate::{
 /// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::SockMap;
-/// use aya::programs::SkSkb;
+/// use aya::programs::{CgroupAttachFlags, SkSkb};
 ///
 /// let intercept_ingress = SockMap::try_from(bpf.map("INTERCEPT_INGRESS").unwrap())?;
 /// let map_fd = intercept_ingress.fd().try_clone()?;
 ///
 /// let prog: &mut SkSkb = bpf.program_mut("intercept_ingress_packet").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(&map_fd)?;
+/// prog.attach(&map_fd, CgroupAttachFlags::empty())?;
 ///
 /// # Ok::<(), Error>(())
 /// ```

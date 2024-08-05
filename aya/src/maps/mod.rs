@@ -31,13 +31,13 @@
 //! # }
 //! # let mut bpf = aya::Ebpf::load(&[])?;
 //! use aya::maps::SockMap;
-//! use aya::programs::SkMsg;
+//! use aya::programs::{CgroupAttachFlags, SkMsg};
 //!
 //! let intercept_egress = SockMap::try_from(bpf.map_mut("INTERCEPT_EGRESS").unwrap())?;
 //! let map_fd = intercept_egress.fd().try_clone()?;
 //! let prog: &mut SkMsg = bpf.program_mut("intercept_egress_packet").unwrap().try_into()?;
 //! prog.load()?;
-//! prog.attach(&map_fd)?;
+//! prog.attach(&map_fd, CgroupAttachFlags::empty())?;
 //!
 //! # Ok::<(), Error>(())
 //! ```
