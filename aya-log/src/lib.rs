@@ -205,15 +205,12 @@ where
     }
 }
 
-pub struct LowerHexDebugFormatter;
-impl<T> Formatter<&[T]> for LowerHexDebugFormatter
-where
-    T: LowerHex,
-{
-    fn format(v: &[T]) -> String {
+pub struct LowerHexBytesFormatter;
+impl Formatter<&[u8]> for LowerHexBytesFormatter {
+    fn format(v: &[u8]) -> String {
         let mut s = String::new();
         for v in v {
-            let () = core::fmt::write(&mut s, format_args!("{v:x}")).unwrap();
+            let () = core::fmt::write(&mut s, format_args!("{v:02x}")).unwrap();
         }
         s
     }
@@ -229,15 +226,12 @@ where
     }
 }
 
-pub struct UpperHexDebugFormatter;
-impl<T> Formatter<&[T]> for UpperHexDebugFormatter
-where
-    T: UpperHex,
-{
-    fn format(v: &[T]) -> String {
+pub struct UpperHexBytesFormatter;
+impl Formatter<&[u8]> for UpperHexBytesFormatter {
+    fn format(v: &[u8]) -> String {
         let mut s = String::new();
         for v in v {
-            let () = core::fmt::write(&mut s, format_args!("{v:X}")).unwrap();
+            let () = core::fmt::write(&mut s, format_args!("{v:02X}")).unwrap();
         }
         s
     }
@@ -290,8 +284,8 @@ trait Format {
 impl Format for &[u8] {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
         match last_hint.map(|DisplayHintWrapper(dh)| dh) {
-            Some(DisplayHint::LowerHex) => Ok(LowerHexDebugFormatter::format(self)),
-            Some(DisplayHint::UpperHex) => Ok(UpperHexDebugFormatter::format(self)),
+            Some(DisplayHint::LowerHex) => Ok(LowerHexBytesFormatter::format(self)),
+            Some(DisplayHint::UpperHex) => Ok(UpperHexBytesFormatter::format(self)),
             _ => Err(()),
         }
     }
@@ -778,6 +772,36 @@ mod test {
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "dead BEEF");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_bytes_unambiguous() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(5).unwrap();
+
+        len += DisplayHint::LowerHex
+            .write(&mut input[len..])
+            .unwrap()
+            .get();
+        len += [0x01, 0x02].write(&mut input[len..]).unwrap().get();
+
+        len += " ".write(&mut input[len..]).unwrap().get();
+
+        len += DisplayHint::LowerHex
+            .write(&mut input[len..])
+            .unwrap()
+            .get();
+        len += [0x12].write(&mut input[len..]).unwrap().get();
+
+        _ = len;
+
+        let logger = logger();
+        let () = log_buf(&input, logger).unwrap();
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "0102 12");
             assert_eq!(captured_logs[0].level, Level::Info);
         });
     }
