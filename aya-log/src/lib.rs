@@ -286,9 +286,22 @@ trait Format {
 
 impl Format for &[u8] {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
+        use core::fmt::Write;
         match last_hint.map(|DisplayHintWrapper(dh)| dh) {
-            Some(DisplayHint::LowerHex) => Ok(LowerHexDebugFormatter::format(self)),
-            Some(DisplayHint::UpperHex) => Ok(UpperHexDebugFormatter::format(self)),
+            Some(DisplayHint::LowerHex) => {
+                let mut s = String::new();
+                for &byte in *self {
+                    write!(&mut s, "{byte:02x}").unwrap();
+                }
+                Ok(s)
+            }
+            Some(DisplayHint::UpperHex) => {
+                let mut s = String::new();
+                for &byte in *self {
+                    write!(&mut s, "{byte:02X}").unwrap();
+                }
+                Ok(s)
+            }
             _ => Err(()),
         }
     }
