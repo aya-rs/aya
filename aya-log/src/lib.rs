@@ -77,9 +77,11 @@ use log::{error, Log, Record};
 use thiserror::Error;
 
 #[derive(Copy, Clone)]
+#[allow(dead_code)]
 #[repr(transparent)]
 struct RecordFieldWrapper(RecordField);
 #[derive(Copy, Clone)]
+#[allow(dead_code)]
 #[repr(transparent)]
 struct ArgumentWrapper(Argument);
 #[derive(Copy, Clone)]
