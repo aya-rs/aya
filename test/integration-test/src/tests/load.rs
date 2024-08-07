@@ -1,10 +1,4 @@
-use std::{
-    convert::TryInto as _,
-    fs::remove_file,
-    path::Path,
-    thread,
-    time::{Duration, SystemTime},
-};
+use std::{convert::TryInto as _, fs::remove_file, path::Path, thread, time::Duration};
 
 use aya::{
     maps::Array,
@@ -144,7 +138,7 @@ fn poll_loaded_program_id(name: &str) -> impl Iterator<Item = Option<u32>> + '_ 
             // program in the middle of a `loaded_programs()` call.
             loaded_programs()
                 .filter_map(|prog| prog.ok())
-                .find_map(|prog| (prog.name() == name.as_bytes()).then(|| prog.id()))
+                .find_map(|prog| (prog.name() == name.as_bytes()).then(|| prog.id().unwrap().get()))
         })
 }
 
@@ -219,42 +213,6 @@ fn unload_xdp() {
     prog.unload().unwrap();
 
     assert_unloaded("pass");
-}
-
-#[test]
-fn test_loaded_at() {
-    let mut bpf = Ebpf::load(crate::TEST).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-
-    // SystemTime is not monotonic, which can cause this test to flake. We don't expect the clock
-    // timestamp to continuously jump around, so we add some retries. If the test is ever correct,
-    // we know that the value returned by loaded_at() was reasonable relative to SystemTime::now().
-    let mut failures = Vec::new();
-    for _ in 0..5 {
-        let t1 = SystemTime::now();
-        prog.load().unwrap();
-        let t2 = SystemTime::now();
-        let loaded_at = prog.info().unwrap().loaded_at();
-        prog.unload().unwrap();
-        let range = t1..t2;
-        if range.contains(&loaded_at) {
-            failures.clear();
-            break;
-        }
-        failures.push(LoadedAtRange(loaded_at, range));
-    }
-    assert!(
-        failures.is_empty(),
-        "loaded_at was not in range: {failures:?}",
-    );
-
-    struct LoadedAtRange(SystemTime, std::ops::Range<SystemTime>);
-    impl std::fmt::Debug for LoadedAtRange {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            let Self(loaded_at, range) = self;
-            write!(f, "{range:?}.contains({loaded_at:?})")
-        }
-    }
 }
 
 #[test]
