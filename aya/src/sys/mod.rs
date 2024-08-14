@@ -1,3 +1,5 @@
+//! A collection of system calls for performing eBPF related operations.
+
 mod bpf;
 mod netlink;
 mod perf_event;
@@ -8,7 +10,7 @@ mod fake;
 use std::{
     ffi::{c_int, c_void},
     io, mem,
-    os::fd::{AsRawFd as _, BorrowedFd},
+    os::fd::{AsRawFd as _, BorrowedFd, OwnedFd},
 };
 
 pub(crate) use bpf::*;
@@ -44,6 +46,7 @@ pub(crate) enum Syscall<'a> {
     },
 }
 
+/// A system call error.
 #[derive(Debug, Error)]
 #[error("`{call}` failed")]
 pub struct SyscallError {
@@ -136,4 +139,54 @@ pub(crate) unsafe fn mmap(
 
     #[cfg(test)]
     TEST_MMAP_RET.with(|ret| *ret.borrow())
+}
+
+/// The type of eBPF statistic to enable.
+#[non_exhaustive]
+#[doc(alias = "bpf_stats_type")]
+#[derive(Copy, Clone, Debug)]
+pub enum Stats {
+    /// Tracks `run_time_ns` and `run_cnt`.
+    #[doc(alias = "BPF_STATS_RUN_TIME")]
+    RunTime,
+}
+
+impl From<Stats> for crate::generated::bpf_stats_type {
+    fn from(value: Stats) -> Self {
+        use crate::generated::bpf_stats_type::*;
+
+        match value {
+            Stats::RunTime => BPF_STATS_RUN_TIME,
+        }
+    }
+}
+
+/// Enable global statistics tracking for eBPF programs and returns a
+/// [file descriptor](`OwnedFd`) handler.
+///
+/// Statistics tracking is disabled when the [file descriptor](`OwnedFd`) is
+/// dropped (either automatically when the variable goes out of scope or
+/// manually through [`Drop`]).
+///
+/// Usage:
+/// 1. Obtain fd from [`enable_stats`] and bind it to a variable.
+/// 2. Record the statistic of interest.
+/// 3. Wait for a recorded period of time.
+/// 4. Record the statistic of interest again, and calculate the difference.
+/// 5. Close/release fd automatically or manually.
+///
+/// Introduced in kernel v5.8.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use aya::sys::{SyscallError};
+/// use aya::sys::{enable_stats, Stats};
+///
+/// let _fd = enable_stats(Stats::RunTime)?;
+/// # Ok::<(), SyscallError>(())
+/// ```
+#[doc(alias = "BPF_ENABLE_STATS")]
+pub fn enable_stats(stats_type: Stats) -> Result<OwnedFd, SyscallError> {
+    bpf_enable_stats(stats_type.into()).map(|fd| fd.into_inner())
 }

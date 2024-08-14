@@ -1360,7 +1360,7 @@ pub aya::maps::MapError::PinError::error: aya::pin::PinError
 pub aya::maps::MapError::PinError::name: core::option::Option<alloc::string::String>
 pub aya::maps::MapError::ProgIdNotSupported
 pub aya::maps::MapError::ProgramNotLoaded
-pub aya::maps::MapError::SyscallError(crate::sys::SyscallError)
+pub aya::maps::MapError::SyscallError(aya::sys::SyscallError)
 pub aya::maps::MapError::Unsupported
 pub aya::maps::MapError::Unsupported::map_type: u32
 impl core::convert::From<aya::maps::MapError> for aya::EbpfError
@@ -1369,6 +1369,8 @@ impl core::convert::From<aya::maps::MapError> for aya::maps::xdp::XdpMapError
 pub fn aya::maps::xdp::XdpMapError::from(source: aya::maps::MapError) -> Self
 impl core::convert::From<aya::maps::MapError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::maps::MapError) -> Self
+impl core::convert::From<aya::sys::SyscallError> for aya::maps::MapError
+pub fn aya::maps::MapError::from(source: aya::sys::SyscallError) -> Self
 impl core::convert::From<aya_obj::maps::InvalidMapTypeError> for aya::maps::MapError
 pub fn aya::maps::MapError::from(e: aya_obj::maps::InvalidMapTypeError) -> Self
 impl core::convert::From<std::io::error::Error> for aya::maps::MapError
@@ -2408,7 +2410,9 @@ pub aya::pin::PinError::InvalidPinPath::error: alloc::ffi::c_str::NulError
 pub aya::pin::PinError::InvalidPinPath::path: std::path::PathBuf
 pub aya::pin::PinError::NoFd
 pub aya::pin::PinError::NoFd::name: alloc::string::String
-pub aya::pin::PinError::SyscallError(crate::sys::SyscallError)
+pub aya::pin::PinError::SyscallError(aya::sys::SyscallError)
+impl core::convert::From<aya::sys::SyscallError> for aya::pin::PinError
+pub fn aya::pin::PinError::from(source: aya::sys::SyscallError) -> Self
 impl core::error::Error for aya::pin::PinError
 pub fn aya::pin::PinError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya::pin::PinError
@@ -3731,7 +3735,9 @@ pub fn aya::programs::kprobe::KProbeLinkId::from(t: T) -> T
 pub mod aya::programs::links
 pub enum aya::programs::links::LinkError
 pub aya::programs::links::LinkError::InvalidLink
-pub aya::programs::links::LinkError::SyscallError(crate::sys::SyscallError)
+pub aya::programs::links::LinkError::SyscallError(aya::sys::SyscallError)
+impl core::convert::From<aya::sys::SyscallError> for aya::programs::links::LinkError
+pub fn aya::programs::links::LinkError::from(source: aya::sys::SyscallError) -> Self
 impl core::error::Error for aya::programs::links::LinkError
 pub fn aya::programs::links::LinkError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya::programs::links::LinkError
@@ -6824,7 +6830,7 @@ pub aya::programs::ProgramError::MapError(aya::maps::MapError)
 pub aya::programs::ProgramError::NotAttached
 pub aya::programs::ProgramError::NotLoaded
 pub aya::programs::ProgramError::SocketFilterError(aya::programs::socket_filter::SocketFilterError)
-pub aya::programs::ProgramError::SyscallError(crate::sys::SyscallError)
+pub aya::programs::ProgramError::SyscallError(aya::sys::SyscallError)
 pub aya::programs::ProgramError::TcError(aya::programs::tc::TcError)
 pub aya::programs::ProgramError::TracePointError(aya::programs::trace_point::TracePointError)
 pub aya::programs::ProgramError::UProbeError(aya::programs::uprobe::UProbeError)
@@ -6850,6 +6856,8 @@ impl core::convert::From<aya::programs::uprobe::UProbeError> for aya::programs::
 pub fn aya::programs::ProgramError::from(source: aya::programs::uprobe::UProbeError) -> Self
 impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::xdp::XdpError) -> Self
+impl core::convert::From<aya::sys::SyscallError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(source: aya::sys::SyscallError) -> Self
 impl core::convert::From<aya_obj::btf::btf::BtfError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya_obj::btf::btf::BtfError) -> Self
 impl core::convert::From<std::io::error::Error> for aya::programs::ProgramError
@@ -8660,6 +8668,86 @@ pub type aya::programs::xdp::XdpLink::Id = aya::programs::xdp::XdpLinkId
 pub fn aya::programs::xdp::XdpLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::xdp::XdpLink::id(&self) -> Self::Id
 pub fn aya::programs::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
+pub mod aya::sys
+#[non_exhaustive] pub enum aya::sys::Stats
+pub aya::sys::Stats::RunTime
+impl core::clone::Clone for aya::sys::Stats
+pub fn aya::sys::Stats::clone(&self) -> aya::sys::Stats
+impl core::convert::From<aya::sys::Stats> for aya_obj::generated::linux_bindings_x86_64::bpf_stats_type
+pub fn aya_obj::generated::linux_bindings_x86_64::bpf_stats_type::from(value: aya::sys::Stats) -> Self
+impl core::fmt::Debug for aya::sys::Stats
+pub fn aya::sys::Stats::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::sys::Stats
+impl core::marker::Freeze for aya::sys::Stats
+impl core::marker::Send for aya::sys::Stats
+impl core::marker::Sync for aya::sys::Stats
+impl core::marker::Unpin for aya::sys::Stats
+impl core::panic::unwind_safe::RefUnwindSafe for aya::sys::Stats
+impl core::panic::unwind_safe::UnwindSafe for aya::sys::Stats
+impl<T, U> core::convert::Into<U> for aya::sys::Stats where U: core::convert::From<T>
+pub fn aya::sys::Stats::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::sys::Stats where U: core::convert::Into<T>
+pub type aya::sys::Stats::Error = core::convert::Infallible
+pub fn aya::sys::Stats::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::sys::Stats where U: core::convert::TryFrom<T>
+pub type aya::sys::Stats::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::sys::Stats::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::sys::Stats where T: core::clone::Clone
+pub type aya::sys::Stats::Owned = T
+pub fn aya::sys::Stats::clone_into(&self, target: &mut T)
+pub fn aya::sys::Stats::to_owned(&self) -> T
+impl<T> core::any::Any for aya::sys::Stats where T: 'static + core::marker::Sized
+pub fn aya::sys::Stats::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::sys::Stats where T: core::marker::Sized
+pub fn aya::sys::Stats::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::sys::Stats where T: core::marker::Sized
+pub fn aya::sys::Stats::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya::sys::Stats where T: core::clone::Clone
+pub unsafe fn aya::sys::Stats::clone_to_uninit(&self, dst: *mut T)
+impl<T> core::convert::From<T> for aya::sys::Stats
+pub fn aya::sys::Stats::from(t: T) -> T
+pub struct aya::sys::SyscallError
+pub aya::sys::SyscallError::call: &'static str
+pub aya::sys::SyscallError::io_error: std::io::error::Error
+impl core::convert::From<aya::sys::SyscallError> for aya::maps::MapError
+pub fn aya::maps::MapError::from(source: aya::sys::SyscallError) -> Self
+impl core::convert::From<aya::sys::SyscallError> for aya::pin::PinError
+pub fn aya::pin::PinError::from(source: aya::sys::SyscallError) -> Self
+impl core::convert::From<aya::sys::SyscallError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(source: aya::sys::SyscallError) -> Self
+impl core::convert::From<aya::sys::SyscallError> for aya::programs::links::LinkError
+pub fn aya::programs::links::LinkError::from(source: aya::sys::SyscallError) -> Self
+impl core::error::Error for aya::sys::SyscallError
+pub fn aya::sys::SyscallError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::sys::SyscallError
+pub fn aya::sys::SyscallError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::sys::SyscallError
+pub fn aya::sys::SyscallError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::sys::SyscallError
+impl core::marker::Send for aya::sys::SyscallError
+impl core::marker::Sync for aya::sys::SyscallError
+impl core::marker::Unpin for aya::sys::SyscallError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::sys::SyscallError
+impl !core::panic::unwind_safe::UnwindSafe for aya::sys::SyscallError
+impl<T, U> core::convert::Into<U> for aya::sys::SyscallError where U: core::convert::From<T>
+pub fn aya::sys::SyscallError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::sys::SyscallError where U: core::convert::Into<T>
+pub type aya::sys::SyscallError::Error = core::convert::Infallible
+pub fn aya::sys::SyscallError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::sys::SyscallError where U: core::convert::TryFrom<T>
+pub type aya::sys::SyscallError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::sys::SyscallError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya::sys::SyscallError where T: core::fmt::Display + core::marker::Sized
+pub fn aya::sys::SyscallError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya::sys::SyscallError where T: 'static + core::marker::Sized
+pub fn aya::sys::SyscallError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::sys::SyscallError where T: core::marker::Sized
+pub fn aya::sys::SyscallError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::sys::SyscallError where T: core::marker::Sized
+pub fn aya::sys::SyscallError::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::sys::SyscallError
+pub fn aya::sys::SyscallError::from(t: T) -> T
+pub fn aya::sys::enable_stats(stats_type: aya::sys::Stats) -> core::result::Result<std::os::fd::owned::OwnedFd, aya::sys::SyscallError>
 pub mod aya::util
 pub struct aya::util::KernelVersion
 impl aya::util::KernelVersion
