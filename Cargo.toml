@@ -57,7 +57,7 @@ edition = "2021"
 anyhow = { version = "1", default-features = false }
 assert_matches = { version = "1.5.0", default-features = false }
 async-io = { version = "2.0", default-features = false }
-bindgen = { version = "0.69", default-features = false }
+bindgen = { version = "0.70", default-features = false }
 bitflags = { version = "2.2.1", default-features = false }
 bytes = { version = "1", default-features = false }
 cargo_metadata = { version = "0.18.0", default-features = false }
@@ -81,7 +81,7 @@ num_enum = { version = "0.7", default-features = false }
 object = { version = "0.36", default-features = false }
 proc-macro-error = { version = "1.0", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
-public-api = { version = "0.36.0", default-features = false }
+public-api = { version = "0.37.0", default-features = false }
 quote = { version = "1", default-features = false }
 rand = { version = "0.8", default-features = false }
 rbpf = { version = "0.2.0", default-features = false }
