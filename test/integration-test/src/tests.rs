@@ -8,4 +8,5 @@ mod rbpf;
 mod relocations;
 mod ring_buf;
 mod smoke;
+mod tcx;
 mod xdp;
