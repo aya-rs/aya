@@ -38,6 +38,10 @@ name = "test"
 path = "src/test.rs"
 
 [[bin]]
+name = "tcx"
+path = "src/tcx.rs"
+
+[[bin]]
 name = "relocations"
 path = "src/relocations.rs"
 

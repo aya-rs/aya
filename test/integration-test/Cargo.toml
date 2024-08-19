@@ -27,6 +27,7 @@ test-case = { workspace = true }
 test-log = { workspace = true, features = ["log"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
 xdpilone = { workspace = true }
+chrono = { workspace = true }
 
 [build-dependencies]
 cargo_metadata = { workspace = true }
