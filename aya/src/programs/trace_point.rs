@@ -41,24 +41,13 @@ pub enum TracePointError {
 /// # Examples
 ///
 /// ```no_run
-/// # #[derive(Debug, thiserror::Error)]
-/// # enum Error {
-/// #     #[error(transparent)]
-/// #     IO(#[from] std::io::Error),
-/// #     #[error(transparent)]
-/// #     Map(#[from] aya::maps::MapError),
-/// #     #[error(transparent)]
-/// #     Program(#[from] aya::programs::ProgramError),
-/// #     #[error(transparent)]
-/// #     Ebpf(#[from] aya::EbpfError)
-/// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::programs::TracePoint;
 ///
 /// let prog: &mut TracePoint = bpf.program_mut("trace_context_switch").unwrap().try_into()?;
 /// prog.load()?;
 /// prog.attach("sched", "sched_switch")?;
-/// # Ok::<(), Error>(())
+/// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_TRACEPOINT")]
