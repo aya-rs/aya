@@ -1,11 +1,13 @@
-//! This module contains kernel helper functions that may be exposed to specific BPF
-//! program types. These helpers can be used to perform common tasks, query and operate on
-//! data exposed by the kernel, and perform some operations that would normally be denied
-//! by the BPF verifier.
+//! This module contains kernel helper functions that may be exposed to specific
+//! BPF program types.
 //!
-//! Here, we provide some higher-level wrappers around the underlying kernel helpers, but
-//! also expose bindings to the underlying helpers as a fall-back in case of a missing
-//! implementation.
+//! These helpers can be used to perform common tasks, query and operate on data
+//! exposed by the kernel, and perform some operations that would normally be
+//! denied by the BPF verifier.
+//!
+//! Here, we provide some higher-level wrappers around the underlying kernel
+//! helpers, but also expose bindings to the underlying helpers as a fall-back
+//! in case of a missing implementation.
 
 use core::mem::{self, MaybeUninit};
 
