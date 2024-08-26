@@ -9,9 +9,10 @@ use crate::{
     },
 };
 
-/// A program that can be attached at a pre-defined kernel trace point, but also
-/// has an access to kernel internal arguments of trace points, which
-/// differentiates them from traditional tracepoint eBPF programs.
+/// A program that can be attached at a pre-defined kernel trace point.
+///
+/// Unlike [`TracePoint`](super::TracePoint), the kernel does not pre-process
+/// the arguments before calling the program.
 ///
 /// The kernel provides a set of pre-defined trace points that eBPF programs can
 /// be attached to. See`/sys/kernel/debug/tracing/events` for a list of which
