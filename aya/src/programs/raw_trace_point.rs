@@ -25,8 +25,8 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
-/// use aya::{Ebpf, programs::RawTracePoint};
+/// # let mut bpf = aya::Ebpf::load(&[])?;
+/// use aya::programs::RawTracePoint;
 ///
 /// let program: &mut RawTracePoint = bpf.program_mut("sys_enter").unwrap().try_into()?;
 /// program.load()?;
