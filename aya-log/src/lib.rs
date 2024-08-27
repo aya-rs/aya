@@ -997,8 +997,13 @@ mod test {
         len += "ipv6: ".write(&mut input[len..]).unwrap().get();
         len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
         // 2001:db8::1:1 as u16 array
+        #[cfg(target_endian = "little")]
         let ipv6_arr: [u16; 8] = [
             0x2001, 0x0db8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001, 0x0001,
+        ];
+        #[cfg(target_endian = "big")]
+        let ipv6_arr: [u16; 8] = [
+            0x0120, 0xb80d, 0x0000, 0x0000, 0x0000, 0x0000, 0x0100, 0x0100,
         ];
         len += ipv6_arr.write(&mut input[len..]).unwrap().get();
 

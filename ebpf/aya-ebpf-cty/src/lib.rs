@@ -24,7 +24,13 @@ mod ad {
     #[cfg(bpf_target_arch = "aarch64")]
     pub type c_char = super::c_uchar;
 
+    #[cfg(bpf_target_arch = "powerpc64")]
+    pub type c_char = super::c_uchar;
+
     #[cfg(bpf_target_arch = "riscv64")]
+    pub type c_char = super::c_uchar;
+
+    #[cfg(bpf_target_arch = "s390x")]
     pub type c_char = super::c_uchar;
 
     #[cfg(bpf_target_arch = "x86_64")]

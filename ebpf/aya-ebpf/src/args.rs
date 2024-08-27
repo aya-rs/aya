@@ -1,8 +1,13 @@
-// aarch64 uses user_pt_regs instead of pt_regs
-#[cfg(not(any(bpf_target_arch = "aarch64", bpf_target_arch = "riscv64")))]
+#[cfg(any(
+    bpf_target_arch = "x86_64",
+    bpf_target_arch = "arm",
+    bpf_target_arch = "powerpc64"
+))]
 use crate::bindings::pt_regs;
-#[cfg(bpf_target_arch = "aarch64")]
+// aarch64 uses user_pt_regs instead of pt_regs
+#[cfg(any(bpf_target_arch = "aarch64", bpf_target_arch = "s390x"))]
 use crate::bindings::user_pt_regs as pt_regs;
+// riscv64 uses user_regs_struct instead of pt_regs
 #[cfg(bpf_target_arch = "riscv64")]
 use crate::bindings::user_regs_struct as pt_regs;
 use crate::{cty::c_void, helpers::bpf_probe_read};
@@ -168,6 +173,36 @@ impl<T> FromPtRegs for *const T {
     }
 }
 
+#[cfg(bpf_target_arch = "powerpc64")]
+impl<T> FromPtRegs for *const T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        if n <= 7 {
+            unsafe { bpf_probe_read(&ctx.gpr[3 + n]).map(|v| v as *const _).ok() }
+        } else {
+            None
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.gpr[3]).map(|v| v as *const _).ok() }
+    }
+}
+
+#[cfg(bpf_target_arch = "s390x")]
+impl<T> FromPtRegs for *const T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        if n <= 4 {
+            unsafe { bpf_probe_read(&ctx.gprs[2 + n]).map(|v| v as *const _).ok() }
+        } else {
+            None
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.gprs[2]).map(|v| v as *const _).ok() }
+    }
+}
+
 #[cfg(bpf_target_arch = "x86_64")]
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
@@ -235,6 +270,36 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
         unsafe { bpf_probe_read(&ctx.ra).map(|v| v as *mut _).ok() }
+    }
+}
+
+#[cfg(bpf_target_arch = "powerpc64")]
+impl<T> FromPtRegs for *mut T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        if n <= 7 {
+            unsafe { bpf_probe_read(&ctx.gpr[3 + n]).map(|v| v as *mut _).ok() }
+        } else {
+            None
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.gpr[3]).map(|v| v as *mut _).ok() }
+    }
+}
+
+#[cfg(bpf_target_arch = "s390x")]
+impl<T> FromPtRegs for *mut T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        if n <= 4 {
+            unsafe { bpf_probe_read(&ctx.gprs[2 + n]).map(|v| v as *mut _).ok() }
+        } else {
+            None
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.gprs[2]).map(|v| v as *mut _).ok() }
     }
 }
 
@@ -308,6 +373,36 @@ macro_rules! impl_from_pt_regs {
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
                 Some(ctx.ra as *const $type as _)
+            }
+        }
+
+        #[cfg(bpf_target_arch = "powerpc64")]
+        impl FromPtRegs for $type {
+            fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+                if n <= 7 {
+                    Some(ctx.gpr[3 + n] as *const $type as _)
+                } else {
+                    None
+                }
+            }
+
+            fn from_retval(ctx: &pt_regs) -> Option<Self> {
+                Some(ctx.gpr[3] as *const $type as _)
+            }
+        }
+
+        #[cfg(bpf_target_arch = "s390x")]
+        impl FromPtRegs for $type {
+            fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+                if n <= 4 {
+                    Some(ctx.gprs[2 + n] as *const $type as _)
+                } else {
+                    None
+                }
+            }
+
+            fn from_retval(ctx: &pt_regs) -> Option<Self> {
+                Some(ctx.gprs[2] as *const $type as _)
             }
         }
     };

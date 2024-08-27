@@ -1215,7 +1215,7 @@ impl ComputedRelocation {
             }
             #[cfg(target_endian = "big")]
             FieldLShift64 => {
-                value.value = (8 - byte_size) * 8 + (bit_off - byte_off * 8);
+                value.value = ((8 - byte_size) * 8 + (bit_off - byte_off * 8)) as u64;
             }
             FieldRShift64 => {
                 value.value = 64 - bit_size as u64;

@@ -14,13 +14,23 @@ mod aarch64;
 #[cfg(bpf_target_arch = "riscv64")]
 mod riscv64;
 
+#[cfg(bpf_target_arch = "powerpc64")]
+mod powerpc64;
+
+#[cfg(bpf_target_arch = "s390x")]
+mod s390x;
+
 mod gen {
     #[cfg(bpf_target_arch = "aarch64")]
     pub use super::aarch64::*;
     #[cfg(bpf_target_arch = "arm")]
     pub use super::armv7::*;
+    #[cfg(bpf_target_arch = "powerpc64")]
+    pub use super::powerpc64::*;
     #[cfg(bpf_target_arch = "riscv64")]
     pub use super::riscv64::*;
+    #[cfg(bpf_target_arch = "s390x")]
+    pub use super::s390x::*;
     #[cfg(bpf_target_arch = "x86_64")]
     pub use super::x86_64::*;
 }
