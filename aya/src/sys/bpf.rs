@@ -11,6 +11,7 @@ use assert_matches::assert_matches;
 use libc::{ENOENT, ENOSPC};
 use obj::{
     btf::{BtfEnum64, Enum64},
+    generated::bpf_stats_type,
     maps::{bpf_map_def, LegacyMap},
     EbpfSectionKind, VerifierLog,
 };
@@ -1102,6 +1103,22 @@ pub(crate) fn iter_link_ids() -> impl Iterator<Item = Result<u32, SyscallError>>
 
 pub(crate) fn iter_map_ids() -> impl Iterator<Item = Result<u32, SyscallError>> {
     iter_obj_ids(bpf_cmd::BPF_MAP_GET_NEXT_ID, "bpf_map_get_next_id")
+}
+
+/// Introduced in kernel v5.8.
+pub(crate) fn bpf_enable_stats(
+    stats_type: bpf_stats_type,
+) -> Result<crate::MockableFd, SyscallError> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    attr.enable_stats.type_ = stats_type as u32;
+
+    // SAFETY: BPF_ENABLE_STATS returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_ENABLE_STATS, &mut attr) }.map_err(|(_, io_error)| {
+        SyscallError {
+            call: "bpf_enable_stats",
+            io_error,
+        }
+    })
 }
 
 pub(crate) fn retry_with_verifier_logs<T>(
