@@ -122,9 +122,9 @@ use crate::{
     },
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
-        bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
-        bpf_prog_query, iter_link_ids, iter_prog_ids, retry_with_verifier_logs,
-        EbpfLoadProgramAttrs, SyscallError,
+        bpf_load_program, bpf_pin_object, bpf_prog_detach, bpf_prog_get_fd_by_id,
+        bpf_prog_get_info_by_fd, bpf_prog_query, iter_link_ids, iter_prog_ids,
+        retry_with_verifier_logs, EbpfLoadProgramAttrs, SyscallError,
     },
     util::{bytes_of_bpf_name, KernelVersion},
     VerifierLogLevel,
@@ -1171,6 +1171,15 @@ pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramErro
             bpf_prog_get_info_by_fd(fd.as_fd(), &mut [])
         })
         .map(|result| result.map(ProgramInfo).map_err(Into::into))
+}
+
+/// Detaches the given program, unloading it from the kernel.
+pub fn detach_program(
+    prog_fd: BorrowedFd<'_>,
+    target_fd: BorrowedFd<'_>,
+    attach_type: bpf_attach_type,
+) -> Result<(), ProgramError> {
+    bpf_prog_detach(prog_fd, target_fd, attach_type).map_err(Into::into)
 }
 
 // TODO(https://github.com/aya-rs/aya/issues/645): this API is currently used in tests. Stabilize
