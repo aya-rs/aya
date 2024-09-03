@@ -1458,6 +1458,9 @@ impl core::convert::From<aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachT
 pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> aya_obj::generated::bpf_attach_type
 impl core::convert::From<aya_obj::programs::xdp::XdpAttachType> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::xdp::XdpAttachType) -> Self
+impl core::convert::TryFrom<u32> for aya_obj::generated::bpf_attach_type
+pub type aya_obj::generated::bpf_attach_type::Error = aya_obj::InvalidTypeBinding<u32>
+pub fn aya_obj::generated::bpf_attach_type::try_from(attach_type: u32) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya_obj::generated::bpf_attach_type
@@ -1593,6 +1596,9 @@ pub fn aya_obj::generated::bpf_link_type::clone(&self) -> aya_obj::generated::bp
 impl core::cmp::Eq for aya_obj::generated::bpf_link_type
 impl core::cmp::PartialEq for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::eq(&self, other: &aya_obj::generated::bpf_link_type) -> bool
+impl core::convert::TryFrom<u32> for aya_obj::generated::bpf_link_type
+pub type aya_obj::generated::bpf_link_type::Error = aya_obj::InvalidTypeBinding<u32>
+pub fn aya_obj::generated::bpf_link_type::try_from(link_type: u32) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya_obj::generated::bpf_link_type
@@ -1673,7 +1679,7 @@ impl core::cmp::Eq for aya_obj::generated::bpf_map_type
 impl core::cmp::PartialEq for aya_obj::generated::bpf_map_type
 pub fn aya_obj::generated::bpf_map_type::eq(&self, other: &aya_obj::generated::bpf_map_type) -> bool
 impl core::convert::TryFrom<u32> for aya_obj::generated::bpf_map_type
-pub type aya_obj::generated::bpf_map_type::Error = aya_obj::maps::InvalidMapTypeError
+pub type aya_obj::generated::bpf_map_type::Error = aya_obj::InvalidTypeBinding<u32>
 pub fn aya_obj::generated::bpf_map_type::try_from(map_type: u32) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya_obj::generated::bpf_map_type
 pub fn aya_obj::generated::bpf_map_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1749,6 +1755,9 @@ pub fn aya_obj::generated::bpf_prog_type::clone(&self) -> aya_obj::generated::bp
 impl core::cmp::Eq for aya_obj::generated::bpf_prog_type
 impl core::cmp::PartialEq for aya_obj::generated::bpf_prog_type
 pub fn aya_obj::generated::bpf_prog_type::eq(&self, other: &aya_obj::generated::bpf_prog_type) -> bool
+impl core::convert::TryFrom<u32> for aya_obj::generated::bpf_prog_type
+pub type aya_obj::generated::bpf_prog_type::Error = aya_obj::InvalidTypeBinding<u32>
+pub fn aya_obj::generated::bpf_prog_type::try_from(prog_type: u32) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya_obj::generated::bpf_prog_type
 pub fn aya_obj::generated::bpf_prog_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya_obj::generated::bpf_prog_type
@@ -6603,6 +6612,7 @@ pub type aya_obj::generated::_bindgen_ty_7 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_8 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_9 = core::ffi::c_uint
 pub type aya_obj::generated::_bindgen_ty_92 = core::ffi::c_uint
+pub mod aya_obj::links
 pub mod aya_obj::maps
 pub enum aya_obj::maps::Map
 pub aya_obj::maps::Map::Btf(aya_obj::maps::BtfMap)
@@ -6806,30 +6816,6 @@ impl<T> core::clone::CloneToUninit for aya_obj::maps::BtfMapDef where T: core::c
 pub unsafe fn aya_obj::maps::BtfMapDef::clone_to_uninit(&self, dst: *mut T)
 impl<T> core::convert::From<T> for aya_obj::maps::BtfMapDef
 pub fn aya_obj::maps::BtfMapDef::from(t: T) -> T
-pub struct aya_obj::maps::InvalidMapTypeError
-pub aya_obj::maps::InvalidMapTypeError::map_type: u32
-impl core::marker::Freeze for aya_obj::maps::InvalidMapTypeError
-impl core::marker::Send for aya_obj::maps::InvalidMapTypeError
-impl core::marker::Sync for aya_obj::maps::InvalidMapTypeError
-impl core::marker::Unpin for aya_obj::maps::InvalidMapTypeError
-impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::InvalidMapTypeError
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::InvalidMapTypeError
-impl<T, U> core::convert::Into<U> for aya_obj::maps::InvalidMapTypeError where U: core::convert::From<T>
-pub fn aya_obj::maps::InvalidMapTypeError::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya_obj::maps::InvalidMapTypeError where U: core::convert::Into<T>
-pub type aya_obj::maps::InvalidMapTypeError::Error = core::convert::Infallible
-pub fn aya_obj::maps::InvalidMapTypeError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya_obj::maps::InvalidMapTypeError where U: core::convert::TryFrom<T>
-pub type aya_obj::maps::InvalidMapTypeError::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya_obj::maps::InvalidMapTypeError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_obj::maps::InvalidMapTypeError where T: 'static + core::marker::Sized
-pub fn aya_obj::maps::InvalidMapTypeError::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_obj::maps::InvalidMapTypeError where T: core::marker::Sized
-pub fn aya_obj::maps::InvalidMapTypeError::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_obj::maps::InvalidMapTypeError where T: core::marker::Sized
-pub fn aya_obj::maps::InvalidMapTypeError::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya_obj::maps::InvalidMapTypeError
-pub fn aya_obj::maps::InvalidMapTypeError::from(t: T) -> T
 pub struct aya_obj::maps::LegacyMap
 pub aya_obj::maps::LegacyMap::data: alloc::vec::Vec<u8>
 pub aya_obj::maps::LegacyMap::def: aya_obj::maps::bpf_map_def
@@ -7123,6 +7109,8 @@ pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
 pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
 pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
 pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
+pub fn aya_obj::Features::prog_info_gpl_compatible(&self) -> bool
+pub fn aya_obj::Features::prog_info_map_ids(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features
@@ -7191,6 +7179,30 @@ impl<T> core::clone::CloneToUninit for aya_obj::Function where T: core::clone::C
 pub unsafe fn aya_obj::Function::clone_to_uninit(&self, dst: *mut T)
 impl<T> core::convert::From<T> for aya_obj::Function
 pub fn aya_obj::Function::from(t: T) -> T
+pub struct aya_obj::obj::InvalidTypeBinding<T>
+pub aya_obj::obj::InvalidTypeBinding::value: T
+impl<T> core::marker::Freeze for aya_obj::InvalidTypeBinding<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for aya_obj::InvalidTypeBinding<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya_obj::InvalidTypeBinding<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya_obj::InvalidTypeBinding<T> where T: core::marker::Unpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for aya_obj::InvalidTypeBinding<T> where U: core::convert::From<T>
+pub fn aya_obj::InvalidTypeBinding<T>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::InvalidTypeBinding<T> where U: core::convert::Into<T>
+pub type aya_obj::InvalidTypeBinding<T>::Error = core::convert::Infallible
+pub fn aya_obj::InvalidTypeBinding<T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::InvalidTypeBinding<T> where U: core::convert::TryFrom<T>
+pub type aya_obj::InvalidTypeBinding<T>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::InvalidTypeBinding<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_obj::InvalidTypeBinding<T> where T: 'static + core::marker::Sized
+pub fn aya_obj::InvalidTypeBinding<T>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::InvalidTypeBinding<T> where T: core::marker::Sized
+pub fn aya_obj::InvalidTypeBinding<T>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::InvalidTypeBinding<T> where T: core::marker::Sized
+pub fn aya_obj::InvalidTypeBinding<T>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::InvalidTypeBinding<T>
+pub fn aya_obj::InvalidTypeBinding<T>::from(t: T) -> T
 pub struct aya_obj::obj::Object
 pub aya_obj::obj::Object::btf: core::option::Option<aya_obj::btf::Btf>
 pub aya_obj::obj::Object::btf_ext: core::option::Option<aya_obj::btf::BtfExt>
@@ -7957,6 +7969,8 @@ pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
 pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
 pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
 pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
+pub fn aya_obj::Features::prog_info_gpl_compatible(&self) -> bool
+pub fn aya_obj::Features::prog_info_map_ids(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features
@@ -8025,6 +8039,30 @@ impl<T> core::clone::CloneToUninit for aya_obj::Function where T: core::clone::C
 pub unsafe fn aya_obj::Function::clone_to_uninit(&self, dst: *mut T)
 impl<T> core::convert::From<T> for aya_obj::Function
 pub fn aya_obj::Function::from(t: T) -> T
+pub struct aya_obj::InvalidTypeBinding<T>
+pub aya_obj::InvalidTypeBinding::value: T
+impl<T> core::marker::Freeze for aya_obj::InvalidTypeBinding<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for aya_obj::InvalidTypeBinding<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya_obj::InvalidTypeBinding<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya_obj::InvalidTypeBinding<T> where T: core::marker::Unpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for aya_obj::InvalidTypeBinding<T> where U: core::convert::From<T>
+pub fn aya_obj::InvalidTypeBinding<T>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::InvalidTypeBinding<T> where U: core::convert::Into<T>
+pub type aya_obj::InvalidTypeBinding<T>::Error = core::convert::Infallible
+pub fn aya_obj::InvalidTypeBinding<T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::InvalidTypeBinding<T> where U: core::convert::TryFrom<T>
+pub type aya_obj::InvalidTypeBinding<T>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::InvalidTypeBinding<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_obj::InvalidTypeBinding<T> where T: 'static + core::marker::Sized
+pub fn aya_obj::InvalidTypeBinding<T>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::InvalidTypeBinding<T> where T: core::marker::Sized
+pub fn aya_obj::InvalidTypeBinding<T>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::InvalidTypeBinding<T> where T: core::marker::Sized
+pub fn aya_obj::InvalidTypeBinding<T>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::InvalidTypeBinding<T>
+pub fn aya_obj::InvalidTypeBinding<T>::from(t: T) -> T
 pub struct aya_obj::Object
 pub aya_obj::Object::btf: core::option::Option<aya_obj::btf::Btf>
 pub aya_obj::Object::btf_ext: core::option::Option<aya_obj::btf::BtfExt>

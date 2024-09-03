@@ -70,3 +70,62 @@ impl Drop for NetNsGuard {
         println!("Exited network namespace {}", self.name);
     }
 }
+
+/// Performs `assert!` macro. If the assertion fails and host kernel version
+/// is above feature version, then fail test.
+macro_rules! kernel_assert {
+    ($cond:expr, $version:expr $(,)?) => {
+        let pass: bool = $cond;
+        if !pass {
+            let feat_version: aya::util::KernelVersion = $version;
+            let current = aya::util::KernelVersion::current().unwrap();
+            let cond_literal = stringify!($cond);
+            if current >= feat_version {
+                // Host kernel is expected to have the feat but does not
+                panic!(
+                    r#"  assertion `{cond_literal}` failed: expected host kernel v{current} to have v{feat_version} feature"#,
+                );
+            } else {
+                // Continue with tests since host is not expected to have feat
+                eprintln!(
+                    r#"ignoring assertion at {}:{}
+  assertion `{cond_literal}` failed: continuing since host kernel v{current} is not expected to have v{feat_version} feature"#,
+                    file!(), line!(),
+                );
+            }
+        }
+    };
+}
+
+pub(crate) use kernel_assert;
+
+/// Performs `assert_eq!` macro. If the assertion fails and host kernel version
+/// is above feature version, then fail test.
+macro_rules! kernel_assert_eq {
+    ($left:expr, $right:expr, $version:expr $(,)?) => {
+        if $left != $right {
+            let feat_version: aya::util::KernelVersion = $version;
+            let current = aya::util::KernelVersion::current().unwrap();
+            if current >= feat_version {
+                // Host kernel is expected to have the feat but does not
+                panic!(
+                    r#"  assertion `left == right` failed: expected host kernel v{current} to have v{feat_version} feature
+    left: {:?}
+   right: {:?}"#,
+                    $left, $right,
+                );
+            } else {
+                // Continue with tests since host is not expected to have feat
+                eprintln!(
+                    r#"ignoring assertion at {}:{}
+  assertion `left == right` failed: continuing since host kernel v{current} is not expected to have v{feat_version} feature
+    left: {:?}
+   right: {:?}"#,
+                    file!(), line!(), $left, $right,
+                );
+            }
+        }
+    };
+}
+
+pub(crate) use kernel_assert_eq;

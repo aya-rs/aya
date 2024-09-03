@@ -60,12 +60,11 @@ use std::{
 const MAP_NAME: &str = "AYA_LOGS";
 
 use aya::{
-    loaded_programs,
     maps::{
         perf::{AsyncPerfEventArray, Events, PerfBufferError},
         Map, MapData, MapError, MapInfo,
     },
-    programs::ProgramError,
+    programs::{loaded_programs, ProgramError},
     util::online_cpus,
     Ebpf, Pod,
 };
@@ -137,19 +136,21 @@ impl EbpfLogger {
     ) -> Result<EbpfLogger, Error> {
         let program_info = loaded_programs()
             .filter_map(|info| info.ok())
-            .find(|info| info.id() == program_id)
+            .find(|info| info.id().is_some_and(|id| id.get() == program_id))
             .ok_or(Error::ProgramNotFound)?;
+
         let map = program_info
             .map_ids()
             .map_err(Error::ProgramError)?
+            .expect("`map_ids` field in `bpf_prog_info` not available")
             .iter()
-            .filter_map(|id| MapInfo::from_id(*id).ok())
+            .filter_map(|id| MapInfo::from_id(id.get()).ok())
             .find(|map_info| match map_info.name_as_str() {
                 Some(name) => name == MAP_NAME,
                 None => false,
             })
             .ok_or(Error::MapNotFound)?;
-        let map = MapData::from_id(map.id()).map_err(Error::MapError)?;
+        let map = MapData::from_id(map.id().unwrap().get()).map_err(Error::MapError)?;
 
         Self::read_logs_async(Map::PerfEventArray(map), logger)?;
 

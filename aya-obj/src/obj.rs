@@ -47,6 +47,8 @@ pub struct Features {
     bpf_cookie: bool,
     cpumap_prog_id: bool,
     devmap_prog_id: bool,
+    prog_info_map_ids: bool,
+    prog_info_gpl_compatible: bool,
     btf: Option<BtfFeatures>,
 }
 
@@ -61,6 +63,8 @@ impl Features {
         bpf_cookie: bool,
         cpumap_prog_id: bool,
         devmap_prog_id: bool,
+        prog_info_map_ids: bool,
+        prog_info_gpl_compatible: bool,
         btf: Option<BtfFeatures>,
     ) -> Self {
         Self {
@@ -71,11 +75,16 @@ impl Features {
             bpf_cookie,
             cpumap_prog_id,
             devmap_prog_id,
+            prog_info_map_ids,
+            prog_info_gpl_compatible,
             btf,
         }
     }
 
-    /// Returns whether BPF program names are supported.
+    /// Returns whether BPF program names and map names are supported.
+    ///
+    /// Although the feature probe performs the check for program name, we can use this to also
+    /// detect if map name is supported since they were both introduced in the same commit.
     pub fn bpf_name(&self) -> bool {
         self.bpf_name
     }
@@ -108,6 +117,16 @@ impl Features {
     /// Returns whether XDP Device Maps support chained program IDs.
     pub fn devmap_prog_id(&self) -> bool {
         self.devmap_prog_id
+    }
+
+    /// Returns whether `bpf_prog_info` supports `nr_map_ids` & `map_ids` fields.
+    pub fn prog_info_map_ids(&self) -> bool {
+        self.prog_info_map_ids
+    }
+
+    /// Returns whether `bpf_prog_info` supports `gpl_compatible` field.
+    pub fn prog_info_gpl_compatible(&self) -> bool {
+        self.prog_info_gpl_compatible
     }
 
     /// If BTF is supported, returns which BTF features are supported.
@@ -985,6 +1004,12 @@ pub enum ParseError {
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
     NoBTF,
+}
+
+/// Invalid bindings to the bpf type from the parsed/received value.
+pub struct InvalidTypeBinding<T> {
+    /// The value parsed/received.
+    pub value: T,
 }
 
 /// The kind of an ELF section.

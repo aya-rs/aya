@@ -1371,8 +1371,8 @@ impl core::convert::From<aya::maps::MapError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::maps::MapError) -> Self
 impl core::convert::From<aya::sys::SyscallError> for aya::maps::MapError
 pub fn aya::maps::MapError::from(source: aya::sys::SyscallError) -> Self
-impl core::convert::From<aya_obj::maps::InvalidMapTypeError> for aya::maps::MapError
-pub fn aya::maps::MapError::from(e: aya_obj::maps::InvalidMapTypeError) -> Self
+impl core::convert::From<aya_obj::obj::InvalidTypeBinding<u32>> for aya::maps::MapError
+pub fn aya::maps::MapError::from(e: aya_obj::obj::InvalidTypeBinding<u32>) -> Self
 impl core::convert::From<std::io::error::Error> for aya::maps::MapError
 pub fn aya::maps::MapError::from(source: std::io::error::Error) -> Self
 impl core::error::Error for aya::maps::MapError
@@ -1405,6 +1405,80 @@ impl<T> core::borrow::BorrowMut<T> for aya::maps::MapError where T: core::marker
 pub fn aya::maps::MapError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::MapError
 pub fn aya::maps::MapError::from(t: T) -> T
+#[non_exhaustive] pub enum aya::maps::MapType
+pub aya::maps::MapType::Arena = 33
+pub aya::maps::MapType::Array = 2
+pub aya::maps::MapType::ArrayOfMaps = 12
+pub aya::maps::MapType::BloomFilter = 30
+pub aya::maps::MapType::CgroupArray = 8
+pub aya::maps::MapType::CgroupStorage = 19
+pub aya::maps::MapType::CgrpStorage = 32
+pub aya::maps::MapType::CpuMap = 16
+pub aya::maps::MapType::DevMap = 14
+pub aya::maps::MapType::DevMapHash = 25
+pub aya::maps::MapType::Hash = 1
+pub aya::maps::MapType::HashOfMaps = 13
+pub aya::maps::MapType::InodeStorage = 28
+pub aya::maps::MapType::LpmTrie = 11
+pub aya::maps::MapType::LruHash = 9
+pub aya::maps::MapType::LruPerCpuHash = 10
+pub aya::maps::MapType::PerCpuArray = 6
+pub aya::maps::MapType::PerCpuCgroupStorage = 21
+pub aya::maps::MapType::PerCpuHash = 5
+pub aya::maps::MapType::PerfEventArray = 4
+pub aya::maps::MapType::ProgramArray = 3
+pub aya::maps::MapType::Queue = 22
+pub aya::maps::MapType::ReuseportSockArray = 20
+pub aya::maps::MapType::RingBuf = 27
+pub aya::maps::MapType::SkStorage = 24
+pub aya::maps::MapType::SockHash = 18
+pub aya::maps::MapType::SockMap = 15
+pub aya::maps::MapType::Stack = 23
+pub aya::maps::MapType::StackTrace = 7
+pub aya::maps::MapType::StructOps = 26
+pub aya::maps::MapType::TaskStorage = 29
+pub aya::maps::MapType::Unspecified = 0
+pub aya::maps::MapType::UserRingBuf = 31
+pub aya::maps::MapType::XskMap = 17
+impl core::clone::Clone for aya::maps::MapType
+pub fn aya::maps::MapType::clone(&self) -> aya::maps::MapType
+impl core::cmp::PartialEq for aya::maps::MapType
+pub fn aya::maps::MapType::eq(&self, other: &aya::maps::MapType) -> bool
+impl core::convert::TryFrom<aya_obj::generated::linux_bindings_x86_64::bpf_map_type> for aya::maps::MapType
+pub type aya::maps::MapType::Error = aya::maps::MapError
+pub fn aya::maps::MapType::try_from(map_type: aya_obj::generated::linux_bindings_x86_64::bpf_map_type) -> core::result::Result<Self, Self::Error>
+impl core::fmt::Debug for aya::maps::MapType
+pub fn aya::maps::MapType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::maps::MapType
+impl core::marker::StructuralPartialEq for aya::maps::MapType
+impl core::marker::Freeze for aya::maps::MapType
+impl core::marker::Send for aya::maps::MapType
+impl core::marker::Sync for aya::maps::MapType
+impl core::marker::Unpin for aya::maps::MapType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapType
+impl core::panic::unwind_safe::UnwindSafe for aya::maps::MapType
+impl<T, U> core::convert::Into<U> for aya::maps::MapType where U: core::convert::From<T>
+pub fn aya::maps::MapType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::maps::MapType where U: core::convert::Into<T>
+pub type aya::maps::MapType::Error = core::convert::Infallible
+pub fn aya::maps::MapType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::maps::MapType where U: core::convert::TryFrom<T>
+pub type aya::maps::MapType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::maps::MapType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::maps::MapType where T: core::clone::Clone
+pub type aya::maps::MapType::Owned = T
+pub fn aya::maps::MapType::clone_into(&self, target: &mut T)
+pub fn aya::maps::MapType::to_owned(&self) -> T
+impl<T> core::any::Any for aya::maps::MapType where T: 'static + core::marker::Sized
+pub fn aya::maps::MapType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::maps::MapType where T: core::marker::Sized
+pub fn aya::maps::MapType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::maps::MapType where T: core::marker::Sized
+pub fn aya::maps::MapType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya::maps::MapType where T: core::clone::Clone
+pub unsafe fn aya::maps::MapType::clone_to_uninit(&self, dst: *mut T)
+impl<T> core::convert::From<T> for aya::maps::MapType
+pub fn aya::maps::MapType::from(t: T) -> T
 pub struct aya::maps::Array<T, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::array::Array<T, V>
 pub fn aya::maps::array::Array<T, V>::get(&self, index: &u32, flags: u64) -> core::result::Result<V, aya::maps::MapError>
@@ -1801,14 +1875,14 @@ impl aya::maps::MapInfo
 pub fn aya::maps::MapInfo::fd(&self) -> core::result::Result<aya::maps::MapFd, aya::maps::MapError>
 pub fn aya::maps::MapInfo::from_id(id: u32) -> core::result::Result<Self, aya::maps::MapError>
 pub fn aya::maps::MapInfo::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::maps::MapError>
-pub fn aya::maps::MapInfo::id(&self) -> u32
-pub fn aya::maps::MapInfo::key_size(&self) -> u32
+pub fn aya::maps::MapInfo::id(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
+pub fn aya::maps::MapInfo::key_size(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
 pub fn aya::maps::MapInfo::map_flags(&self) -> u32
-pub fn aya::maps::MapInfo::map_type(&self) -> u32
-pub fn aya::maps::MapInfo::max_entries(&self) -> u32
+pub fn aya::maps::MapInfo::map_type(&self) -> core::result::Result<aya::maps::MapType, aya::maps::MapError>
+pub fn aya::maps::MapInfo::max_entries(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
 pub fn aya::maps::MapInfo::name(&self) -> &[u8]
 pub fn aya::maps::MapInfo::name_as_str(&self) -> core::option::Option<&str>
-pub fn aya::maps::MapInfo::value_size(&self) -> u32
+pub fn aya::maps::MapInfo::value_size(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
 impl core::fmt::Debug for aya::maps::MapInfo
 pub fn aya::maps::MapInfo::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::maps::MapInfo
@@ -6644,7 +6718,7 @@ impl aya::programs::Program
 pub fn aya::programs::Program::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 pub fn aya::programs::Program::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 pub fn aya::programs::Program::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::Program::prog_type(&self) -> aya_obj::generated::linux_bindings_x86_64::bpf_prog_type
+pub fn aya::programs::Program::prog_type(&self) -> aya::programs::ProgramType
 pub fn aya::programs::Program::unload(self) -> core::result::Result<(), aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::Program
 pub fn aya::programs::Program::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -6892,6 +6966,79 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::ProgramError where T: core
 pub fn aya::programs::ProgramError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(t: T) -> T
+#[non_exhaustive] pub enum aya::programs::ProgramType
+pub aya::programs::ProgramType::CgroupDevice = 15
+pub aya::programs::ProgramType::CgroupSkb = 8
+pub aya::programs::ProgramType::CgroupSock = 9
+pub aya::programs::ProgramType::CgroupSockAddr = 18
+pub aya::programs::ProgramType::CgroupSockopt = 25
+pub aya::programs::ProgramType::CgroupSysctl = 23
+pub aya::programs::ProgramType::Extension = 28
+pub aya::programs::ProgramType::FlowDissector = 22
+pub aya::programs::ProgramType::KProbe = 2
+pub aya::programs::ProgramType::LircMode2 = 20
+pub aya::programs::ProgramType::Lsm = 29
+pub aya::programs::ProgramType::LwtInput = 10
+pub aya::programs::ProgramType::LwtOutput = 11
+pub aya::programs::ProgramType::LwtSeg6local = 19
+pub aya::programs::ProgramType::LwtXmit = 12
+pub aya::programs::ProgramType::Netfilter = 32
+pub aya::programs::ProgramType::PerfEvent = 7
+pub aya::programs::ProgramType::RawTracePoint = 17
+pub aya::programs::ProgramType::RawTracePointWritable = 24
+pub aya::programs::ProgramType::SchedAction = 4
+pub aya::programs::ProgramType::SchedClassifier = 3
+pub aya::programs::ProgramType::SkLookup = 30
+pub aya::programs::ProgramType::SkMsg = 16
+pub aya::programs::ProgramType::SkReuseport = 21
+pub aya::programs::ProgramType::SkSkb = 14
+pub aya::programs::ProgramType::SockOps = 13
+pub aya::programs::ProgramType::SocketFilter = 1
+pub aya::programs::ProgramType::StructOps = 27
+pub aya::programs::ProgramType::Syscall = 31
+pub aya::programs::ProgramType::TracePoint = 5
+pub aya::programs::ProgramType::Tracing = 26
+pub aya::programs::ProgramType::Unspecified = 0
+pub aya::programs::ProgramType::Xdp = 6
+impl core::clone::Clone for aya::programs::ProgramType
+pub fn aya::programs::ProgramType::clone(&self) -> aya::programs::ProgramType
+impl core::cmp::PartialEq for aya::programs::ProgramType
+pub fn aya::programs::ProgramType::eq(&self, other: &aya::programs::ProgramType) -> bool
+impl core::convert::TryFrom<aya_obj::generated::linux_bindings_x86_64::bpf_prog_type> for aya::programs::ProgramType
+pub type aya::programs::ProgramType::Error = aya::programs::ProgramError
+pub fn aya::programs::ProgramType::try_from(prog_type: aya_obj::generated::linux_bindings_x86_64::bpf_prog_type) -> core::result::Result<Self, Self::Error>
+impl core::fmt::Debug for aya::programs::ProgramType
+pub fn aya::programs::ProgramType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::ProgramType
+impl core::marker::StructuralPartialEq for aya::programs::ProgramType
+impl core::marker::Freeze for aya::programs::ProgramType
+impl core::marker::Send for aya::programs::ProgramType
+impl core::marker::Sync for aya::programs::ProgramType
+impl core::marker::Unpin for aya::programs::ProgramType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProgramType
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::ProgramType
+impl<T, U> core::convert::Into<U> for aya::programs::ProgramType where U: core::convert::From<T>
+pub fn aya::programs::ProgramType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::ProgramType where U: core::convert::Into<T>
+pub type aya::programs::ProgramType::Error = core::convert::Infallible
+pub fn aya::programs::ProgramType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::ProgramType where U: core::convert::TryFrom<T>
+pub type aya::programs::ProgramType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::ProgramType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::programs::ProgramType where T: core::clone::Clone
+pub type aya::programs::ProgramType::Owned = T
+pub fn aya::programs::ProgramType::clone_into(&self, target: &mut T)
+pub fn aya::programs::ProgramType::to_owned(&self) -> T
+impl<T> core::any::Any for aya::programs::ProgramType where T: 'static + core::marker::Sized
+pub fn aya::programs::ProgramType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::ProgramType where T: core::marker::Sized
+pub fn aya::programs::ProgramType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::ProgramType where T: core::marker::Sized
+pub fn aya::programs::ProgramType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya::programs::ProgramType where T: core::clone::Clone
+pub unsafe fn aya::programs::ProgramType::clone_to_uninit(&self, dst: *mut T)
+impl<T> core::convert::From<T> for aya::programs::ProgramType
+pub fn aya::programs::ProgramType::from(t: T) -> T
 pub enum aya::programs::SamplePolicy
 pub aya::programs::SamplePolicy::Frequency(u64)
 pub aya::programs::SamplePolicy::Period(u64)
@@ -7913,22 +8060,23 @@ pub fn aya::programs::ProgramFd::from(t: T) -> T
 pub struct aya::programs::ProgramInfo(_)
 impl aya::programs::ProgramInfo
 pub fn aya::programs::ProgramInfo::btf_id(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
+pub fn aya::programs::ProgramInfo::created_by_uid(&self) -> core::option::Option<u32>
 pub fn aya::programs::ProgramInfo::fd(&self) -> core::result::Result<aya::programs::ProgramFd, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::ProgramInfo::gpl_compatible(&self) -> bool
-pub fn aya::programs::ProgramInfo::id(&self) -> u32
-pub fn aya::programs::ProgramInfo::loaded_at(&self) -> std::time::SystemTime
-pub fn aya::programs::ProgramInfo::map_ids(&self) -> core::result::Result<alloc::vec::Vec<u32>, aya::programs::ProgramError>
+pub fn aya::programs::ProgramInfo::gpl_compatible(&self) -> core::option::Option<bool>
+pub fn aya::programs::ProgramInfo::id(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
+pub fn aya::programs::ProgramInfo::loaded_at(&self) -> core::option::Option<std::time::SystemTime>
+pub fn aya::programs::ProgramInfo::map_ids(&self) -> core::result::Result<core::option::Option<alloc::vec::Vec<core::num::nonzero::NonZeroU32>>, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::memory_locked(&self) -> core::result::Result<u32, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::name(&self) -> &[u8]
 pub fn aya::programs::ProgramInfo::name_as_str(&self) -> core::option::Option<&str>
-pub fn aya::programs::ProgramInfo::program_type(&self) -> u32
+pub fn aya::programs::ProgramInfo::program_type(&self) -> core::result::Result<aya::programs::ProgramType, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::run_count(&self) -> u64
 pub fn aya::programs::ProgramInfo::run_time(&self) -> core::time::Duration
-pub fn aya::programs::ProgramInfo::size_jitted(&self) -> u32
-pub fn aya::programs::ProgramInfo::size_translated(&self) -> u32
-pub fn aya::programs::ProgramInfo::tag(&self) -> u64
-pub fn aya::programs::ProgramInfo::verified_instruction_count(&self) -> u32
+pub fn aya::programs::ProgramInfo::size_jitted(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
+pub fn aya::programs::ProgramInfo::size_translated(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
+pub fn aya::programs::ProgramInfo::tag(&self) -> core::option::Option<core::num::nonzero::NonZeroU64>
+pub fn aya::programs::ProgramInfo::verified_instruction_count(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
 impl core::fmt::Debug for aya::programs::ProgramInfo
 pub fn aya::programs::ProgramInfo::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::programs::ProgramInfo
@@ -8765,6 +8913,8 @@ impl core::cmp::PartialOrd for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::partial_cmp(&self, other: &aya::util::KernelVersion) -> core::option::Option<core::cmp::Ordering>
 impl core::fmt::Debug for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::util::KernelVersion
+pub fn aya::util::KernelVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::util::KernelVersion
 impl core::marker::StructuralPartialEq for aya::util::KernelVersion
 impl core::marker::Freeze for aya::util::KernelVersion
@@ -8789,6 +8939,8 @@ impl<T> alloc::borrow::ToOwned for aya::util::KernelVersion where T: core::clone
 pub type aya::util::KernelVersion::Owned = T
 pub fn aya::util::KernelVersion::clone_into(&self, target: &mut T)
 pub fn aya::util::KernelVersion::to_owned(&self) -> T
+impl<T> alloc::string::ToString for aya::util::KernelVersion where T: core::fmt::Display + core::marker::Sized
+pub fn aya::util::KernelVersion::to_string(&self) -> alloc::string::String
 impl<T> core::any::Any for aya::util::KernelVersion where T: 'static + core::marker::Sized
 pub fn aya::util::KernelVersion::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya::util::KernelVersion where T: core::marker::Sized
@@ -9089,7 +9241,6 @@ impl aya::Pod for u8
 impl<K: aya::Pod> aya::Pod for aya::maps::lpm_trie::Key<K>
 impl<T: aya::Pod, const N: usize> aya::Pod for [T; N]
 pub fn aya::features() -> &'static aya_obj::obj::Features
-pub fn aya::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
 pub type aya::Bpf = aya::Ebpf
 pub type aya::BpfError = aya::EbpfError
 pub type aya::BpfLoader<'a> = aya::EbpfLoader<'a>
