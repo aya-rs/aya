@@ -77,7 +77,6 @@ impl CgroupDevice {
                 BPF_CGROUP_DEVICE,
                 None,
                 mode.into(),
-                Some(0),
                 None,
                 None,
             )

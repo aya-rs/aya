@@ -1,11 +1,11 @@
 use std::{
     borrow::Cow,
     sync::{Arc, Mutex},
+    time::Instant,
 };
 
 use aya::{programs::UProbe, Ebpf};
 use aya_log::EbpfLogger;
-use chrono::{DateTime, Utc};
 use log::{Level, Log, Record};
 use test_log::test;
 
@@ -37,7 +37,7 @@ pub(crate) struct CapturedLog<'a> {
     pub(crate) body: Cow<'a, str>,
     pub(crate) level: Level,
     pub(crate) target: Cow<'a, str>,
-    pub(crate) timestamp: Option<DateTime<Utc>>,
+    pub(crate) timestamp: Option<Instant>,
 }
 
 #[test(tokio::test)]

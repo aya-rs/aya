@@ -19,7 +19,6 @@ use network_types::{
 static ORDER: i32 = 0;
 
 // Gives us raw pointers to a specific offset in the packet
-#[inline(always)]
 unsafe fn ptr_at<T>(ctx: &TcContext, offset: usize) -> Result<*mut T, i64> {
     let start = ctx.data();
     let end = ctx.data_end();
