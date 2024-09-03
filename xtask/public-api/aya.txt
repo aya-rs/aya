@@ -4045,13 +4045,13 @@ impl<T> core::convert::From<T> for aya::programs::links::LinkId
 pub fn aya::programs::links::LinkId::from(t: T) -> T
 pub struct aya::programs::links::LinkOrder
 impl aya::programs::links::LinkOrder
-pub fn aya::programs::links::LinkOrder::after_link<L: aya::programs::MprogLink>(link: &L) -> core::result::Result<Self, aya::programs::links::LinkError>
+pub fn aya::programs::links::LinkOrder::after_link<L: aya::programs::MultiProgLink>(link: &L) -> core::result::Result<Self, aya::programs::links::LinkError>
 pub fn aya::programs::links::LinkOrder::after_link_id(id: aya::programs::links::LinkId) -> core::result::Result<Self, aya::programs::links::LinkError>
-pub fn aya::programs::links::LinkOrder::after_program<P: aya::programs::MprogProgram>(program: &P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::links::LinkOrder::after_program<P: aya::programs::MultiProgProgram>(program: &P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::links::LinkOrder::after_program_id(id: aya::programs::ProgramId) -> Self
-pub fn aya::programs::links::LinkOrder::before_link<L: aya::programs::MprogLink>(link: &L) -> core::result::Result<Self, aya::programs::links::LinkError>
+pub fn aya::programs::links::LinkOrder::before_link<L: aya::programs::MultiProgLink>(link: &L) -> core::result::Result<Self, aya::programs::links::LinkError>
 pub fn aya::programs::links::LinkOrder::before_link_id(id: aya::programs::links::LinkId) -> core::result::Result<Self, aya::programs::links::LinkError>
-pub fn aya::programs::links::LinkOrder::before_program<P: aya::programs::MprogProgram>(program: &P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::links::LinkOrder::before_program<P: aya::programs::MultiProgProgram>(program: &P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::links::LinkOrder::before_program_id(id: aya::programs::ProgramId) -> Self
 pub fn aya::programs::links::LinkOrder::first() -> Self
 pub fn aya::programs::links::LinkOrder::last() -> Self
@@ -5624,11 +5624,10 @@ impl<T> core::convert::From<T> for aya::programs::socket_filter::SocketFilterLin
 pub fn aya::programs::socket_filter::SocketFilterLinkId::from(t: T) -> T
 pub mod aya::programs::tc
 pub enum aya::programs::tc::TcAttachOptions
-pub aya::programs::tc::TcAttachOptions::NlOptions(aya::programs::tc::NlOptions)
-pub aya::programs::tc::TcAttachOptions::TCXOptions(aya::programs::links::LinkOrder)
-impl aya::programs::tc::TcAttachOptions
-pub fn aya::programs::tc::TcAttachOptions::nloptions(nl: aya::programs::tc::NlOptions) -> Self
-pub fn aya::programs::tc::TcAttachOptions::tcxoptions(order: aya::programs::links::LinkOrder) -> Self
+pub aya::programs::tc::TcAttachOptions::Netlink(aya::programs::tc::NlOptions)
+pub aya::programs::tc::TcAttachOptions::TcxOrder(aya::programs::links::LinkOrder)
+impl core::fmt::Debug for aya::programs::tc::TcAttachOptions
+pub fn aya::programs::tc::TcAttachOptions::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::programs::tc::TcAttachOptions
 impl core::marker::Send for aya::programs::tc::TcAttachOptions
 impl core::marker::Sync for aya::programs::tc::TcAttachOptions
@@ -5700,8 +5699,8 @@ impl<T> core::convert::From<T> for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::from(t: T) -> T
 pub enum aya::programs::tc::TcError
 pub aya::programs::tc::TcError::AlreadyAttached
-pub aya::programs::tc::TcError::InvalidTcLink
-pub aya::programs::tc::TcError::InvalidTcxAttach
+pub aya::programs::tc::TcError::InvalidLink
+pub aya::programs::tc::TcError::InvalidTcxAttach(u32)
 pub aya::programs::tc::TcError::NetlinkError
 pub aya::programs::tc::TcError::NetlinkError::io_error: std::io::error::Error
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
@@ -5793,7 +5792,7 @@ pub fn aya::programs::tc::SchedClassifier::pin<P: core::convert::AsRef<std::path
 pub fn aya::programs::tc::SchedClassifier::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::MprogProgram for aya::programs::tc::SchedClassifier
+impl aya::programs::MultiProgProgram for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -5833,7 +5832,7 @@ pub fn aya::programs::tc::SchedClassifierLink::attach_type(&self) -> core::resul
 pub fn aya::programs::tc::SchedClassifierLink::attached(if_name: &str, attach_type: aya::programs::tc::TcAttachType, priority: u16, handle: u32) -> core::result::Result<Self, std::io::error::Error>
 pub fn aya::programs::tc::SchedClassifierLink::handle(&self) -> core::result::Result<u32, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::priority(&self) -> core::result::Result<u16, aya::programs::ProgramError>
-impl aya::programs::MprogLink for aya::programs::tc::SchedClassifierLink
+impl aya::programs::MultiProgLink for aya::programs::tc::SchedClassifierLink
 pub fn aya::programs::tc::SchedClassifierLink::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::links::LinkError>
 impl aya::programs::links::Link for aya::programs::tc::SchedClassifierLink
 pub type aya::programs::tc::SchedClassifierLink::Id = aya::programs::tc::SchedClassifierLinkId
@@ -7396,8 +7395,8 @@ impl<T> core::convert::From<T> for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::from(t: T) -> T
 pub enum aya::programs::TcError
 pub aya::programs::TcError::AlreadyAttached
-pub aya::programs::TcError::InvalidTcLink
-pub aya::programs::TcError::InvalidTcxAttach
+pub aya::programs::TcError::InvalidLink
+pub aya::programs::TcError::InvalidTcxAttach(u32)
 pub aya::programs::TcError::NetlinkError
 pub aya::programs::TcError::NetlinkError::io_error: std::io::error::Error
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
@@ -8086,13 +8085,13 @@ impl<T> core::convert::From<T> for aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::from(t: T) -> T
 pub struct aya::programs::LinkOrder
 impl aya::programs::links::LinkOrder
-pub fn aya::programs::links::LinkOrder::after_link<L: aya::programs::MprogLink>(link: &L) -> core::result::Result<Self, aya::programs::links::LinkError>
+pub fn aya::programs::links::LinkOrder::after_link<L: aya::programs::MultiProgLink>(link: &L) -> core::result::Result<Self, aya::programs::links::LinkError>
 pub fn aya::programs::links::LinkOrder::after_link_id(id: aya::programs::links::LinkId) -> core::result::Result<Self, aya::programs::links::LinkError>
-pub fn aya::programs::links::LinkOrder::after_program<P: aya::programs::MprogProgram>(program: &P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::links::LinkOrder::after_program<P: aya::programs::MultiProgProgram>(program: &P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::links::LinkOrder::after_program_id(id: aya::programs::ProgramId) -> Self
-pub fn aya::programs::links::LinkOrder::before_link<L: aya::programs::MprogLink>(link: &L) -> core::result::Result<Self, aya::programs::links::LinkError>
+pub fn aya::programs::links::LinkOrder::before_link<L: aya::programs::MultiProgLink>(link: &L) -> core::result::Result<Self, aya::programs::links::LinkError>
 pub fn aya::programs::links::LinkOrder::before_link_id(id: aya::programs::links::LinkId) -> core::result::Result<Self, aya::programs::links::LinkError>
-pub fn aya::programs::links::LinkOrder::before_program<P: aya::programs::MprogProgram>(program: &P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::links::LinkOrder::before_program<P: aya::programs::MultiProgProgram>(program: &P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::links::LinkOrder::before_program_id(id: aya::programs::ProgramId) -> Self
 pub fn aya::programs::links::LinkOrder::first() -> Self
 pub fn aya::programs::links::LinkOrder::last() -> Self
@@ -8436,7 +8435,7 @@ pub fn aya::programs::tc::SchedClassifier::pin<P: core::convert::AsRef<std::path
 pub fn aya::programs::tc::SchedClassifier::unpin(self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::MprogProgram for aya::programs::tc::SchedClassifier
+impl aya::programs::MultiProgProgram for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -9087,13 +9086,13 @@ impl aya::programs::links::Link for aya::programs::xdp::XdpLink
 pub type aya::programs::xdp::XdpLink::Id = aya::programs::xdp::XdpLinkId
 pub fn aya::programs::xdp::XdpLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::xdp::XdpLink::id(&self) -> Self::Id
-pub trait aya::programs::MprogLink
-pub fn aya::programs::MprogLink::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::links::LinkError>
-impl aya::programs::MprogLink for aya::programs::tc::SchedClassifierLink
+pub trait aya::programs::MultiProgLink
+pub fn aya::programs::MultiProgLink::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::links::LinkError>
+impl aya::programs::MultiProgLink for aya::programs::tc::SchedClassifierLink
 pub fn aya::programs::tc::SchedClassifierLink::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::links::LinkError>
-pub trait aya::programs::MprogProgram
-pub fn aya::programs::MprogProgram::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
-impl aya::programs::MprogProgram for aya::programs::tc::SchedClassifier
+pub trait aya::programs::MultiProgProgram
+pub fn aya::programs::MultiProgProgram::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
+impl aya::programs::MultiProgProgram for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
 pub fn aya::programs::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
 pub mod aya::sys

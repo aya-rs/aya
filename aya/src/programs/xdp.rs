@@ -152,7 +152,6 @@ impl Xdp {
                 flags.bits(),
                 None,
                 None,
-                None,
             )
             .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
