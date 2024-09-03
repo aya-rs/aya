@@ -105,7 +105,6 @@ impl Extension {
             0,
             None,
             None,
-            None,
         )
         .map_err(|(_, io_error)| SyscallError {
             call: "bpf_link_create",
@@ -143,7 +142,6 @@ impl Extension {
             BPF_CGROUP_INET_INGRESS,
             Some(btf_id),
             0,
-            None,
             None,
             None,
         )

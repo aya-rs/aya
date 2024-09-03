@@ -76,7 +76,6 @@ impl CgroupSysctl {
                 BPF_CGROUP_SYSCTL,
                 None,
                 mode.into(),
-                Some(0),
                 None,
                 None,
             )

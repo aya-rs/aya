@@ -83,7 +83,6 @@ impl CgroupSock {
                 attach_type,
                 None,
                 mode.into(),
-                Some(0),
                 None,
                 None,
             )

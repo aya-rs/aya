@@ -1,7 +1,7 @@
 use std::{
     net::UdpSocket,
     sync::{Arc, Mutex},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use aya::{
@@ -10,7 +10,6 @@ use aya::{
     Ebpf, EbpfLoader,
 };
 use aya_log::EbpfLogger;
-use chrono::Utc;
 use log::{debug, Record};
 use test_log::test;
 
@@ -30,7 +29,7 @@ fn setup_logs(loader: &mut Ebpf, logs: &Arc<Mutex<Vec<CapturedLog<'static>>>>) {
                     body: format!("{}", record.args()).into(),
                     level: record.level(),
                     target: record.target().to_string().into(),
-                    timestamp: Some(Utc::now()),
+                    timestamp: Some(Instant::now()),
                 });
             },
         },
@@ -105,15 +104,23 @@ async fn tcx_ordering() {
         .unwrap();
     prog3.load().unwrap();
 
-    // Test LinkOrder::first()
-    let options = TcAttachOptions::tcxoptions(LinkOrder::first());
+    // Test LinkOrder::first() and LinkOrder::set_expected_revision()
+    let mut order: LinkOrder = LinkOrder::last();
+    order.set_expected_revision(u64::MAX);
+    let options = TcAttachOptions::TcxOrder(order);
+    let result = prog0.attach_with_options("lo", TcAttachType::Ingress, options);
+    assert!(result.is_err());
+
+    let mut order: LinkOrder = LinkOrder::last();
+    order.set_expected_revision(0);
+    let options = TcAttachOptions::TcxOrder(order);
     prog0
         .attach_with_options("lo", TcAttachType::Ingress, options)
         .unwrap();
 
     // Test LinkOrder::after_program()
     let order = LinkOrder::after_program(prog0).unwrap();
-    let options = TcAttachOptions::tcxoptions(order);
+    let options = TcAttachOptions::TcxOrder(order);
     let prog1_link_id = prog1
         .attach_with_options("lo", TcAttachType::Ingress, options)
         .unwrap();
@@ -122,13 +129,13 @@ async fn tcx_ordering() {
 
     // Test LinkOrder::after_link()
     let order = LinkOrder::after_link(&prog1_link).unwrap();
-    let options = TcAttachOptions::tcxoptions(order);
+    let options = TcAttachOptions::TcxOrder(order);
     prog2
         .attach_with_options("lo", TcAttachType::Ingress, options)
         .unwrap();
 
     // Test LinkOrder::last()
-    let options = TcAttachOptions::tcxoptions(LinkOrder::last());
+    let options = TcAttachOptions::TcxOrder(LinkOrder::last());
     prog3
         .attach_with_options("lo", TcAttachType::Ingress, options)
         .unwrap();
@@ -139,7 +146,7 @@ async fn tcx_ordering() {
     let addr = sock.local_addr().unwrap();
     sock.set_read_timeout(Some(Duration::from_secs(60)))
         .unwrap();
-    // We only need to send data since we're attaching tx programs to the ingress hook
+    // We only need to send data since we're attaching tcx programs to the ingress hook
     sock.send_to(PAYLOAD.as_bytes(), addr).unwrap();
 
     // Allow logs to populate

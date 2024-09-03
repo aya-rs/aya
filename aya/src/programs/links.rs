@@ -15,7 +15,7 @@ use crate::{
         BPF_F_ID, BPF_F_LINK, BPF_F_REPLACE,
     },
     pin::PinError,
-    programs::{MprogLink, MprogProgram, ProgramError, ProgramFd, ProgramId},
+    programs::{MultiProgLink, MultiProgProgram, ProgramError, ProgramFd, ProgramId},
     sys::{bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach, SyscallError},
 };
 
@@ -409,6 +409,12 @@ impl LinkId {
     }
 }
 
+#[derive(Debug)]
+pub(crate) enum LinkRef {
+    Id(u32),
+    Fd(RawFd),
+}
+
 bitflags::bitflags! {
     /// Flags which are use to build a set of MprogOptions.
     #[derive(Clone, Copy, Debug, Default)]
@@ -426,7 +432,7 @@ bitflags::bitflags! {
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 6.6.
+/// The minimum kernel version required to use this feature is 6.6.0.
 ///
 /// # Example
 ///
@@ -443,8 +449,7 @@ bitflags::bitflags! {
 /// ```
 #[derive(Debug)]
 pub struct LinkOrder {
-    pub(crate) id: Option<u32>,
-    pub(crate) fd: Option<RawFd>,
+    pub(crate) link_ref: LinkRef,
     pub(crate) expected_revision: Option<u64>,
     pub(crate) flags: MprogFlags,
 }
@@ -453,8 +458,7 @@ pub struct LinkOrder {
 impl Default for LinkOrder {
     fn default() -> Self {
         Self {
-            id: Some(0),
-            fd: None,
+            link_ref: LinkRef::Fd(0),
             flags: MprogFlags::AFTER,
             expected_revision: None,
         }
@@ -465,8 +469,7 @@ impl LinkOrder {
     /// Ensure the link is created before all other links at a given attachment point.
     pub fn first() -> Self {
         Self {
-            id: Some(0),
-            fd: None,
+            link_ref: LinkRef::Id(0),
             flags: MprogFlags::BEFORE,
             expected_revision: None,
         }
@@ -475,28 +478,25 @@ impl LinkOrder {
     /// Ensure the link is created after all other links for a given attachment point.
     pub fn last() -> Self {
         Self {
-            id: Some(0),
-            fd: None,
+            link_ref: LinkRef::Id(0),
             flags: MprogFlags::AFTER,
             expected_revision: None,
         }
     }
 
     /// Ensure the link is created before the specified aya-owned link for a given attachment point.
-    pub fn before_link<L: MprogLink>(link: &L) -> Result<Self, LinkError> {
+    pub fn before_link<L: MultiProgLink>(link: &L) -> Result<Self, LinkError> {
         Ok(Self {
-            id: None,
-            fd: Some(link.fd()?.as_raw_fd()),
+            link_ref: LinkRef::Fd(link.fd()?.as_raw_fd()),
             flags: MprogFlags::BEFORE | MprogFlags::LINK,
             expected_revision: None,
         })
     }
 
     /// Ensure the link is created after the specified aya-owned link for a given attachment point.
-    pub fn after_link<L: MprogLink>(link: &L) -> Result<Self, LinkError> {
+    pub fn after_link<L: MultiProgLink>(link: &L) -> Result<Self, LinkError> {
         Ok(Self {
-            id: None,
-            fd: Some(link.fd()?.as_raw_fd()),
+            link_ref: LinkRef::Fd(link.fd()?.as_raw_fd()),
             flags: MprogFlags::AFTER | MprogFlags::LINK,
             expected_revision: None,
         })
@@ -505,8 +505,7 @@ impl LinkOrder {
     /// Ensure the link is created before a link specified by its kernel id for a given attachment point.
     pub fn before_link_id(id: LinkId) -> Result<Self, LinkError> {
         Ok(Self {
-            id: Some(id.0),
-            fd: None,
+            link_ref: LinkRef::Id(id.0),
             flags: MprogFlags::BEFORE | MprogFlags::LINK | MprogFlags::ID,
             expected_revision: None,
         })
@@ -515,28 +514,25 @@ impl LinkOrder {
     /// Ensure the link is created after a link specified by its kernel id for a given attachment point.
     pub fn after_link_id(id: LinkId) -> Result<Self, LinkError> {
         Ok(Self {
-            id: Some(id.0),
-            fd: None,
+            link_ref: LinkRef::Id(id.0),
             flags: MprogFlags::AFTER | MprogFlags::LINK | MprogFlags::ID,
             expected_revision: None,
         })
     }
 
     /// Ensure the link is created before the specified aya-owned program for a given attachment point.
-    pub fn before_program<P: MprogProgram>(program: &P) -> Result<Self, ProgramError> {
+    pub fn before_program<P: MultiProgProgram>(program: &P) -> Result<Self, ProgramError> {
         Ok(Self {
-            id: None,
-            fd: Some(program.fd()?.as_raw_fd()),
+            link_ref: LinkRef::Fd(program.fd()?.as_raw_fd()),
             flags: MprogFlags::BEFORE,
             expected_revision: None,
         })
     }
 
     /// Ensure the link is created after the specified aya-owned program for a given attachment point.
-    pub fn after_program<P: MprogProgram>(program: &P) -> Result<Self, ProgramError> {
+    pub fn after_program<P: MultiProgProgram>(program: &P) -> Result<Self, ProgramError> {
         Ok(Self {
-            id: None,
-            fd: Some(program.fd()?.as_raw_fd()),
+            link_ref: LinkRef::Fd(program.fd()?.as_raw_fd()),
             flags: MprogFlags::AFTER,
             expected_revision: None,
         })
@@ -545,8 +541,7 @@ impl LinkOrder {
     /// Ensure the link is created before a program specified by its kernel id for a given attachment point.
     pub fn before_program_id(id: ProgramId) -> Self {
         Self {
-            id: Some(id.0),
-            fd: None,
+            link_ref: LinkRef::Id(id.0),
             flags: MprogFlags::BEFORE | MprogFlags::ID,
             expected_revision: None,
         }
@@ -555,8 +550,7 @@ impl LinkOrder {
     /// Ensure the link is created after a program specified by its kernel id for a given attachment point.
     pub fn after_program_id(id: ProgramId) -> Self {
         Self {
-            id: Some(id.0),
-            fd: None,
+            link_ref: LinkRef::Id(id.0),
             flags: MprogFlags::AFTER | MprogFlags::ID,
             expected_revision: None,
         }
