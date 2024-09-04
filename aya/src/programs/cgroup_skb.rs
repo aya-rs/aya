@@ -8,7 +8,8 @@ use crate::{
         bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB,
     },
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
+        define_link_wrapper, load_program, CgroupAttachMode, FdLink, Link, ProgAttachLink,
+        ProgramData, ProgramError,
     },
     sys::{bpf_link_create, LinkTarget, SyscallError},
     util::KernelVersion,
@@ -43,12 +44,12 @@ use crate::{
 /// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::fs::File;
-/// use aya::programs::{CgroupSkb, CgroupSkbAttachType};
+/// use aya::programs::{CgroupAttachMode, CgroupSkb, CgroupSkbAttachType};
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
 /// let egress: &mut CgroupSkb = bpf.program_mut("egress_filter").unwrap().try_into()?;
 /// egress.load()?;
-/// egress.attach(file, CgroupSkbAttachType::Egress)?;
+/// egress.attach(file, CgroupSkbAttachType::Egress, CgroupAttachMode::Single)?;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
@@ -87,6 +88,7 @@ impl CgroupSkb {
         &mut self,
         cgroup: T,
         attach_type: CgroupSkbAttachType,
+        mode: CgroupAttachMode,
     ) -> Result<CgroupSkbLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
@@ -97,18 +99,24 @@ impl CgroupSkb {
             CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
         };
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), attach_type, None, 0)
-                .map_err(|(_, io_error)| SyscallError {
-                    call: "bpf_link_create",
-                    io_error,
-                })?;
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(cgroup_fd),
+                attach_type,
+                None,
+                mode.into(),
+            )
+            .map_err(|(_, io_error)| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
             self.data
                 .links
                 .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
                     link_fd,
                 ))))
         } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type)?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
             self.data
                 .links

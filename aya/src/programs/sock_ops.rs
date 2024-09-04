@@ -4,8 +4,8 @@ use std::os::fd::AsFd;
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS},
     programs::{
-        define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
-        ProgramError,
+        define_link_wrapper, load_program, CgroupAttachMode, ProgAttachLink, ProgAttachLinkId,
+        ProgramData, ProgramError,
     },
 };
 
@@ -35,12 +35,12 @@ use crate::{
 /// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::fs::File;
-/// use aya::programs::SockOps;
+/// use aya::programs::{CgroupAttachMode, SockOps};
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
 /// let prog: &mut SockOps = bpf.program_mut("intercept_active_sockets").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(file)?;
+/// prog.attach(file, CgroupAttachMode::Single)?;
 /// # Ok::<(), Error>(())
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_SOCK_OPS")]
@@ -57,10 +57,15 @@ impl SockOps {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [SockOps::detach].
-    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<SockOpsLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(
+        &mut self,
+        cgroup: T,
+        mode: CgroupAttachMode,
+    ) -> Result<SockOpsLinkId, ProgramError> {
         let prog_fd = self.fd()?;
 
-        let link = ProgAttachLink::attach(prog_fd.as_fd(), cgroup.as_fd(), BPF_CGROUP_SOCK_OPS)?;
+        let link =
+            ProgAttachLink::attach(prog_fd.as_fd(), cgroup.as_fd(), BPF_CGROUP_SOCK_OPS, mode)?;
         self.data.links.insert(SockOpsLink::new(link))
     }
 

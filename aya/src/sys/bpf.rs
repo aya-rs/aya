@@ -433,12 +433,14 @@ pub(crate) fn bpf_prog_attach(
     prog_fd: BorrowedFd<'_>,
     target_fd: BorrowedFd<'_>,
     attach_type: bpf_attach_type,
+    flags: u32,
 ) -> Result<(), SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_5.attach_bpf_fd = prog_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.__bindgen_anon_1.target_fd = target_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.attach_type = attach_type as u32;
+    attr.__bindgen_anon_5.attach_flags = flags;
 
     let ret = sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &mut attr).map_err(|(code, io_error)| {
         assert_eq!(code, -1);
@@ -1227,6 +1229,49 @@ mod tests {
 
     use super::*;
     use crate::sys::override_syscall;
+
+    #[test]
+    fn test_attach_with_attributes() {
+        const FAKE_FLAGS: u32 = 1234;
+        const FAKE_FD: i32 = 4321;
+
+        // Test attach flags propagated to system call.
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_PROG_ATTACH,
+                attr,
+            } => {
+                assert_eq!(unsafe { attr.__bindgen_anon_5.attach_flags }, FAKE_FLAGS);
+                Ok(0)
+            }
+            _ => Err((-1, io::Error::from_raw_os_error(EINVAL))),
+        });
+
+        let prog_fd = unsafe { BorrowedFd::borrow_raw(FAKE_FD) };
+        let tgt_fd = unsafe { BorrowedFd::borrow_raw(FAKE_FD) };
+        let mut result = bpf_prog_attach(
+            prog_fd,
+            tgt_fd,
+            bpf_attach_type::BPF_CGROUP_SOCK_OPS,
+            FAKE_FLAGS,
+        );
+        result.unwrap();
+
+        // Test with no flags.
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_PROG_ATTACH,
+                attr,
+            } => {
+                assert_eq!(unsafe { attr.__bindgen_anon_5.attach_flags }, 0);
+                Ok(0)
+            }
+            _ => Err((-1, io::Error::from_raw_os_error(EINVAL))),
+        });
+
+        result = bpf_prog_attach(prog_fd, tgt_fd, bpf_attach_type::BPF_CGROUP_SOCK_OPS, 0);
+        result.unwrap();
+    }
 
     #[test]
     fn test_perf_link_supported() {

@@ -10,7 +10,7 @@ use std::{
 use thiserror::Error;
 
 use crate::{
-    generated::bpf_attach_type,
+    generated::{bpf_attach_type, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE},
     pin::PinError,
     programs::{ProgramError, ProgramFd},
     sys::{bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach, SyscallError},
@@ -26,6 +26,30 @@ pub trait Link: std::fmt::Debug + 'static {
 
     /// Detaches the LinkOwnedLink is gone... but this doesn't work :(
     fn detach(self) -> Result<(), ProgramError>;
+}
+
+/// Program attachment mode.
+#[derive(Clone, Copy, Debug, Default)]
+pub enum CgroupAttachMode {
+    /// Allows only one BPF program in the cgroup subtree.
+    #[default]
+    Single,
+
+    /// Allows the program to be overridden by one in a sub-cgroup.
+    AllowOverride,
+
+    /// Allows multiple programs to be run in the cgroup subtree.
+    AllowMultiple,
+}
+
+impl From<CgroupAttachMode> for u32 {
+    fn from(mode: CgroupAttachMode) -> Self {
+        match mode {
+            CgroupAttachMode::Single => 0,
+            CgroupAttachMode::AllowOverride => BPF_F_ALLOW_OVERRIDE,
+            CgroupAttachMode::AllowMultiple => BPF_F_ALLOW_MULTI,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -252,6 +276,7 @@ impl ProgAttachLink {
         prog_fd: BorrowedFd<'_>,
         target_fd: BorrowedFd<'_>,
         attach_type: bpf_attach_type,
+        mode: CgroupAttachMode,
     ) -> Result<Self, ProgramError> {
         // The link is going to own this new file descriptor so we are
         // going to need a duplicate whose lifetime we manage. Let's
@@ -261,7 +286,7 @@ impl ProgAttachLink {
         let prog_fd = crate::MockableFd::from_fd(prog_fd);
         let target_fd = target_fd.try_clone_to_owned()?;
         let target_fd = crate::MockableFd::from_fd(target_fd);
-        bpf_prog_attach(prog_fd.as_fd(), target_fd.as_fd(), attach_type)?;
+        bpf_prog_attach(prog_fd.as_fd(), target_fd.as_fd(), attach_type, mode.into())?;
 
         let prog_fd = ProgramFd(prog_fd);
         Ok(Self {
@@ -377,7 +402,11 @@ mod tests {
     use tempfile::tempdir;
 
     use super::{FdLink, Link, LinkMap};
-    use crate::{programs::ProgramError, sys::override_syscall};
+    use crate::{
+        generated::{BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE},
+        programs::{CgroupAttachMode, ProgramError},
+        sys::override_syscall,
+    };
 
     #[derive(Debug, Hash, Eq, PartialEq)]
     struct TestLinkId(u8, u8);
@@ -522,5 +551,18 @@ mod tests {
         let pinned_link = fd_link.pin(&pin).expect("pin failed");
         pinned_link.unpin().expect("unpin failed");
         assert!(!pin.exists());
+    }
+
+    #[test]
+    fn test_cgroup_attach_flag() {
+        assert_eq!(u32::from(CgroupAttachMode::Single), 0);
+        assert_eq!(
+            u32::from(CgroupAttachMode::AllowOverride),
+            BPF_F_ALLOW_OVERRIDE
+        );
+        assert_eq!(
+            u32::from(CgroupAttachMode::AllowMultiple),
+            BPF_F_ALLOW_MULTI
+        );
     }
 }

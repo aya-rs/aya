@@ -7,7 +7,8 @@ pub use aya_obj::programs::CgroupSockAttachType;
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK,
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
+        define_link_wrapper, load_program, CgroupAttachMode, FdLink, Link, ProgAttachLink,
+        ProgramData, ProgramError,
     },
     sys::{bpf_link_create, LinkTarget, SyscallError},
     util::KernelVersion,
@@ -41,12 +42,12 @@ use crate::{
 /// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::fs::File;
-/// use aya::programs::{CgroupSock, CgroupSockAttachType};
+/// use aya::programs::{CgroupAttachMode, CgroupSock, CgroupSockAttachType};
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
 /// let bind: &mut CgroupSock = bpf.program_mut("bind").unwrap().try_into()?;
 /// bind.load()?;
-/// bind.attach(file)?;
+/// bind.attach(file, CgroupAttachMode::Single)?;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
@@ -66,24 +67,34 @@ impl CgroupSock {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupSock::detach].
-    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<CgroupSockLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(
+        &mut self,
+        cgroup: T,
+        mode: CgroupAttachMode,
+    ) -> Result<CgroupSockLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
         let attach_type = self.data.expected_attach_type.unwrap();
         if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), attach_type, None, 0)
-                .map_err(|(_, io_error)| SyscallError {
-                    call: "bpf_link_create",
-                    io_error,
-                })?;
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(cgroup_fd),
+                attach_type,
+                None,
+                mode.into(),
+            )
+            .map_err(|(_, io_error)| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
             self.data
                 .links
                 .insert(CgroupSockLink::new(CgroupSockLinkInner::Fd(FdLink::new(
                     link_fd,
                 ))))
         } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type)?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
             self.data
                 .links
