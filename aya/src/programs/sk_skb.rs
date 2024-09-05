@@ -9,8 +9,8 @@ use crate::{
     },
     maps::sock::SockMapFd,
     programs::{
-        define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
-        ProgramError,
+        define_link_wrapper, load_program, CgroupAttachMode, ProgAttachLink, ProgAttachLinkId,
+        ProgramData, ProgramError,
     },
     VerifierLogLevel,
 };
@@ -90,7 +90,8 @@ impl SkSkb {
             SkSkbKind::StreamVerdict => BPF_SK_SKB_STREAM_VERDICT,
         };
 
-        let link = ProgAttachLink::attach(prog_fd, map.as_fd(), attach_type)?;
+        let link =
+            ProgAttachLink::attach(prog_fd, map.as_fd(), attach_type, CgroupAttachMode::Single)?;
 
         self.data.links.insert(SkSkbLink::new(link))
     }

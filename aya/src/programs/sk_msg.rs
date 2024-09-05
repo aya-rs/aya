@@ -6,8 +6,8 @@ use crate::{
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
     maps::sock::SockMapFd,
     programs::{
-        define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
-        ProgramError,
+        define_link_wrapper, load_program, CgroupAttachMode, ProgAttachLink, ProgAttachLinkId,
+        ProgramData, ProgramError,
     },
 };
 
@@ -80,7 +80,12 @@ impl SkMsg {
     pub fn attach(&mut self, map: &SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let link = ProgAttachLink::attach(prog_fd, map.as_fd(), BPF_SK_MSG_VERDICT)?;
+        let link = ProgAttachLink::attach(
+            prog_fd,
+            map.as_fd(),
+            BPF_SK_MSG_VERDICT,
+            CgroupAttachMode::Single,
+        )?;
 
         self.data.links.insert(SkMsgLink::new(link))
     }

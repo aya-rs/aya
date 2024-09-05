@@ -5,8 +5,8 @@ use std::os::fd::AsFd;
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE},
     programs::{
-        bpf_prog_get_fd_by_id, define_link_wrapper, load_program, query, FdLink, Link,
-        ProgAttachLink, ProgramData, ProgramError, ProgramFd,
+        bpf_prog_get_fd_by_id, define_link_wrapper, load_program, query, CgroupAttachMode, FdLink,
+        Link, ProgAttachLink, ProgramData, ProgramError, ProgramFd,
     },
     sys::{bpf_link_create, LinkTarget, SyscallError},
     util::KernelVersion,
@@ -38,12 +38,12 @@ use crate::{
 /// #     Ebpf(#[from] aya::EbpfError)
 /// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
-/// use aya::programs::CgroupDevice;
+/// use aya::programs::{CgroupAttachMode, CgroupDevice};
 ///
 /// let cgroup = std::fs::File::open("/sys/fs/cgroup/unified")?;
 /// let program: &mut CgroupDevice = bpf.program_mut("cgroup_dev").unwrap().try_into()?;
 /// program.load()?;
-/// program.attach(cgroup)?;
+/// program.attach(cgroup, CgroupAttachMode::Single)?;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
@@ -61,7 +61,11 @@ impl CgroupDevice {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupDevice::detach]
-    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<CgroupDeviceLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(
+        &mut self,
+        cgroup: T,
+        mode: CgroupAttachMode,
+    ) -> Result<CgroupDeviceLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
@@ -72,7 +76,7 @@ impl CgroupDevice {
                 LinkTarget::Fd(cgroup_fd),
                 BPF_CGROUP_DEVICE,
                 None,
-                0,
+                mode.into(),
             )
             .map_err(|(_, io_error)| SyscallError {
                 call: "bpf_link_create",
@@ -84,7 +88,7 @@ impl CgroupDevice {
                     FdLink::new(link_fd),
                 )))
         } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE)?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE, mode)?;
 
             self.data
                 .links
