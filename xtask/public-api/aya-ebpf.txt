@@ -1821,6 +1821,7 @@ pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip4(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip6(&self) -> [u32; 4]
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_port(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_cb_flags(&self, flags: i32) -> core::result::Result<(), i64>
+pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_reply(&mut self, reply: u32)
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sock_ops::SockOpsContext
@@ -2466,6 +2467,7 @@ pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip4(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip6(&self) -> [u32; 4]
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_port(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_cb_flags(&self, flags: i32) -> core::result::Result<(), i64>
+pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_reply(&mut self, reply: u32)
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sock_ops::SockOpsContext
