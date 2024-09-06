@@ -138,7 +138,7 @@ fn poll_loaded_program_id(name: &str) -> impl Iterator<Item = Option<u32>> + '_ 
             // program in the middle of a `loaded_programs()` call.
             loaded_programs()
                 .filter_map(|prog| prog.ok())
-                .find_map(|prog| (prog.name() == name.as_bytes()).then(|| prog.id().unwrap().get()))
+                .find_map(|prog| (prog.name() == name.as_bytes()).then(|| prog.id()))
         })
 }
 

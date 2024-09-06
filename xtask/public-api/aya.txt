@@ -1875,14 +1875,14 @@ impl aya::maps::MapInfo
 pub fn aya::maps::MapInfo::fd(&self) -> core::result::Result<aya::maps::MapFd, aya::maps::MapError>
 pub fn aya::maps::MapInfo::from_id(id: u32) -> core::result::Result<Self, aya::maps::MapError>
 pub fn aya::maps::MapInfo::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::maps::MapError>
-pub fn aya::maps::MapInfo::id(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
-pub fn aya::maps::MapInfo::key_size(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
+pub fn aya::maps::MapInfo::id(&self) -> u32
+pub fn aya::maps::MapInfo::key_size(&self) -> u32
 pub fn aya::maps::MapInfo::map_flags(&self) -> u32
 pub fn aya::maps::MapInfo::map_type(&self) -> core::result::Result<aya::maps::MapType, aya::maps::MapError>
-pub fn aya::maps::MapInfo::max_entries(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
+pub fn aya::maps::MapInfo::max_entries(&self) -> u32
 pub fn aya::maps::MapInfo::name(&self) -> &[u8]
 pub fn aya::maps::MapInfo::name_as_str(&self) -> core::option::Option<&str>
-pub fn aya::maps::MapInfo::value_size(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
+pub fn aya::maps::MapInfo::value_size(&self) -> u32
 impl core::fmt::Debug for aya::maps::MapInfo
 pub fn aya::maps::MapInfo::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::maps::MapInfo
@@ -8141,24 +8141,24 @@ impl<T> core::convert::From<T> for aya::programs::ProgramFd
 pub fn aya::programs::ProgramFd::from(t: T) -> T
 pub struct aya::programs::ProgramInfo(_)
 impl aya::programs::ProgramInfo
-pub fn aya::programs::ProgramInfo::btf_id(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
+pub fn aya::programs::ProgramInfo::btf_id(&self) -> core::option::Option<u32>
 pub fn aya::programs::ProgramInfo::created_by_uid(&self) -> core::option::Option<u32>
 pub fn aya::programs::ProgramInfo::fd(&self) -> core::result::Result<aya::programs::ProgramFd, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::gpl_compatible(&self) -> core::option::Option<bool>
-pub fn aya::programs::ProgramInfo::id(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
+pub fn aya::programs::ProgramInfo::id(&self) -> u32
 pub fn aya::programs::ProgramInfo::loaded_at(&self) -> core::option::Option<std::time::SystemTime>
-pub fn aya::programs::ProgramInfo::map_ids(&self) -> core::result::Result<core::option::Option<alloc::vec::Vec<core::num::nonzero::NonZeroU32>>, aya::programs::ProgramError>
+pub fn aya::programs::ProgramInfo::map_ids(&self) -> core::result::Result<core::option::Option<alloc::vec::Vec<u32>>, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::memory_locked(&self) -> core::result::Result<u32, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::name(&self) -> &[u8]
 pub fn aya::programs::ProgramInfo::name_as_str(&self) -> core::option::Option<&str>
 pub fn aya::programs::ProgramInfo::program_type(&self) -> core::result::Result<aya::programs::ProgramType, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::run_count(&self) -> u64
 pub fn aya::programs::ProgramInfo::run_time(&self) -> core::time::Duration
-pub fn aya::programs::ProgramInfo::size_jitted(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
-pub fn aya::programs::ProgramInfo::size_translated(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
-pub fn aya::programs::ProgramInfo::tag(&self) -> core::option::Option<core::num::nonzero::NonZeroU64>
-pub fn aya::programs::ProgramInfo::verified_instruction_count(&self) -> core::option::Option<core::num::nonzero::NonZeroU32>
+pub fn aya::programs::ProgramInfo::size_jitted(&self) -> u32
+pub fn aya::programs::ProgramInfo::size_translated(&self) -> core::option::Option<u32>
+pub fn aya::programs::ProgramInfo::tag(&self) -> u64
+pub fn aya::programs::ProgramInfo::verified_instruction_count(&self) -> core::option::Option<u32>
 impl core::fmt::Debug for aya::programs::ProgramInfo
 pub fn aya::programs::ProgramInfo::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::programs::ProgramInfo
