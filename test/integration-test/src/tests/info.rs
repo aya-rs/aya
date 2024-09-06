@@ -1,4 +1,9 @@
 //! Tests the Info API.
+// TODO: Figure out a way to assert that field is truely not present.
+//       We can call `bpf_obj_get_info_by_fd()` and fill our target field with arbitrary data.
+//       `E2BIG` error from `bpf_check_uarg_tail_zero()` will detect if we're accessing fields that
+//       isn't supported on the kernel.
+//       Issue is that `bpf_obj_get_info_by_fd()` will need to be public. :/
 
 use std::{fs, panic, path::Path, time::SystemTime};
 
@@ -77,13 +82,10 @@ fn test_program_info() {
         test_prog.program_type().unwrap_or(ProgramType::Unspecified),
         KernelVersion::new(4, 13, 0),
     );
-    kernel_assert!(test_prog.id().is_some(), KernelVersion::new(4, 13, 0));
-    kernel_assert!(test_prog.tag().is_some(), KernelVersion::new(4, 13, 0));
+    kernel_assert!(test_prog.id() > 0, KernelVersion::new(4, 13, 0));
+    kernel_assert!(test_prog.tag() > 0, KernelVersion::new(4, 13, 0));
     if jit_enabled {
-        kernel_assert!(
-            test_prog.size_jitted().is_some(),
-            KernelVersion::new(4, 13, 0),
-        );
+        kernel_assert!(test_prog.size_jitted() > 0, KernelVersion::new(4, 13, 0));
     }
     kernel_assert!(
         test_prog.size_translated().is_some(),
@@ -93,8 +95,9 @@ fn test_program_info() {
         test_prog.loaded_at().is_some(),
         KernelVersion::new(4, 15, 0),
     );
-    kernel_assert!(
-        test_prog.created_by_uid().is_some_and(|uid| uid == 0),
+    kernel_assert_eq!(
+        Some(0),
+        test_prog.created_by_uid(),
         KernelVersion::new(4, 15, 0),
     );
     let maps = test_prog.map_ids().unwrap();
@@ -102,14 +105,14 @@ fn test_program_info() {
         maps.is_some_and(|ids| ids.is_empty()),
         KernelVersion::new(4, 15, 0),
     );
-    kernel_assert!(
-        test_prog
-            .name_as_str()
-            .is_some_and(|name| name == "simple_prog"),
+    kernel_assert_eq!(
+        Some("simple_prog"),
+        test_prog.name_as_str(),
         KernelVersion::new(4, 15, 0),
     );
-    kernel_assert!(
-        test_prog.gpl_compatible().is_some_and(|gpl| gpl),
+    kernel_assert_eq!(
+        Some(true),
+        test_prog.gpl_compatible(),
         KernelVersion::new(4, 18, 0),
     );
     kernel_assert!(
@@ -255,9 +258,9 @@ fn list_loaded_maps() {
     if let Ok(info) = &prog.info() {
         if let Some(map_ids) = info.map_ids().unwrap() {
             assert_eq!(2, map_ids.len());
-            for id in map_ids.iter() {
+            for id in map_ids {
                 assert!(
-                    maps.iter().any(|m| &m.id().unwrap() == id),
+                    maps.iter().any(|m| m.id() == id),
                     "expected `loaded_maps()` to have `map_ids` from program",
                 );
             }
@@ -293,21 +296,13 @@ fn test_map_info() {
         hash.map_type().unwrap_or(MapType::Unspecified),
         KernelVersion::new(4, 13, 0),
     );
-    kernel_assert!(hash.id().is_some(), KernelVersion::new(4, 13, 0));
-    kernel_assert!(
-        hash.key_size().is_some_and(|size| size.get() == 4),
-        KernelVersion::new(4, 13, 0),
-    );
-    kernel_assert!(
-        hash.value_size().is_some_and(|size| size.get() == 1),
-        KernelVersion::new(4, 13, 0),
-    );
-    kernel_assert!(
-        hash.max_entries().is_some_and(|size| size.get() == 8),
-        KernelVersion::new(4, 13, 0),
-    );
-    kernel_assert!(
-        hash.name_as_str().is_some_and(|name| name == "BAR"),
+    kernel_assert!(hash.id() > 0, KernelVersion::new(4, 13, 0));
+    kernel_assert_eq!(4, hash.key_size(), KernelVersion::new(4, 13, 0));
+    kernel_assert_eq!(1, hash.value_size(), KernelVersion::new(4, 13, 0));
+    kernel_assert_eq!(8, hash.max_entries(), KernelVersion::new(4, 13, 0));
+    kernel_assert_eq!(
+        Some("BAR"),
+        hash.name_as_str(),
         KernelVersion::new(4, 15, 0),
     );
 
@@ -321,21 +316,13 @@ fn test_map_info() {
         array.map_type().unwrap_or(MapType::Unspecified),
         KernelVersion::new(4, 13, 0),
     );
-    kernel_assert!(array.id().is_some(), KernelVersion::new(4, 13, 0));
-    kernel_assert!(
-        array.key_size().is_some_and(|size| size.get() == 4),
-        KernelVersion::new(4, 13, 0),
-    );
-    kernel_assert!(
-        array.value_size().is_some_and(|size| size.get() == 4),
-        KernelVersion::new(4, 13, 0),
-    );
-    kernel_assert!(
-        array.max_entries().is_some_and(|size| size.get() == 10),
-        KernelVersion::new(4, 13, 0),
-    );
-    kernel_assert!(
-        array.name_as_str().is_some_and(|name| name == "FOO"),
+    kernel_assert!(array.id() > 0, KernelVersion::new(4, 13, 0));
+    kernel_assert_eq!(4, array.key_size(), KernelVersion::new(4, 13, 0));
+    kernel_assert_eq!(4, array.value_size(), KernelVersion::new(4, 13, 0));
+    kernel_assert_eq!(10, array.max_entries(), KernelVersion::new(4, 13, 0));
+    kernel_assert_eq!(
+        Some("FOO"),
+        array.name_as_str(),
         KernelVersion::new(4, 15, 0),
     );
 

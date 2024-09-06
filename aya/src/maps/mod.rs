@@ -1217,11 +1217,11 @@ mod tests {
                 .map(|map_info| {
                     let map_info = map_info.unwrap();
                     (
-                        map_info.id().unwrap().get(),
-                        map_info.key_size().unwrap().get(),
-                        map_info.value_size().unwrap().get(),
+                        map_info.id(),
+                        map_info.key_size(),
+                        map_info.value_size(),
                         map_info.map_flags(),
-                        map_info.max_entries().unwrap().get(),
+                        map_info.max_entries(),
                         map_info.fd().unwrap().as_fd().as_raw_fd(),
                     )
                 })

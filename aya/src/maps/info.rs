@@ -2,7 +2,6 @@
 
 use std::{
     ffi::CString,
-    num::NonZeroU32,
     os::fd::{AsFd as _, BorrowedFd},
     path::Path,
 };
@@ -19,6 +18,8 @@ use crate::{
 };
 
 /// Provides Provides metadata information about a loaded eBPF map.
+///
+/// Introduced in kernel v4.13.
 #[doc(alias = "bpf_map_info")]
 #[derive(Debug)]
 pub struct MapInfo(pub(crate) bpf_map_info);
@@ -49,38 +50,30 @@ impl MapInfo {
 
     /// The unique ID for this map.
     ///
-    /// `None` is returned if the field is not available.
-    ///
     /// Introduced in kernel v4.13.
-    pub fn id(&self) -> Option<NonZeroU32> {
-        NonZeroU32::new(self.0.id)
+    pub fn id(&self) -> u32 {
+        self.0.id
     }
 
     /// The key size for this map in bytes.
     ///
-    /// `None` is returned if the field is not available.
-    ///
     /// Introduced in kernel v4.13.
-    pub fn key_size(&self) -> Option<NonZeroU32> {
-        NonZeroU32::new(self.0.key_size)
+    pub fn key_size(&self) -> u32 {
+        self.0.key_size
     }
 
     /// The value size for this map in bytes.
     ///
-    /// `None` is returned if the field is not available.
-    ///
     /// Introduced in kernel v4.13.
-    pub fn value_size(&self) -> Option<NonZeroU32> {
-        NonZeroU32::new(self.0.value_size)
+    pub fn value_size(&self) -> u32 {
+        self.0.value_size
     }
 
     /// The maximum number of entries in this map.
     ///
-    /// `None` is returned if the field is not available.
-    ///
     /// Introduced in kernel v4.13.
-    pub fn max_entries(&self) -> Option<NonZeroU32> {
-        NonZeroU32::new(self.0.max_entries)
+    pub fn max_entries(&self) -> u32 {
+        self.0.max_entries
     }
 
     /// The flags used in loading this map.
@@ -103,14 +96,9 @@ impl MapInfo {
     ///
     /// Introduced in kernel v4.15.
     pub fn name_as_str(&self) -> Option<&str> {
-        let name = std::str::from_utf8(self.name()).ok();
-        if let Some(name_str) = name {
-            // Char in program name was introduced in the same commit as map name
-            if FEATURES.bpf_name() || !name_str.is_empty() {
-                return name;
-            }
-        }
-        None
+        let name = std::str::from_utf8(self.name()).ok()?;
+        // Char in program name was introduced in the same commit as map name
+        (FEATURES.bpf_name() || !name.is_empty()).then_some(name)
     }
 
     /// Returns a file descriptor referencing the map.

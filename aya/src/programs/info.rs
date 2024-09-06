@@ -2,7 +2,6 @@
 
 use std::{
     ffi::CString,
-    num::{NonZeroU32, NonZeroU64},
     os::fd::{AsFd as _, BorrowedFd},
     path::Path,
     time::{Duration, SystemTime},
@@ -46,11 +45,9 @@ impl ProgramInfo {
 
     /// The unique ID for this program.
     ///
-    /// `None` is returned if the field is not available.
-    ///
     /// Introduced in kernel v4.13.
-    pub fn id(&self) -> Option<NonZeroU32> {
-        NonZeroU32::new(self.0.id)
+    pub fn id(&self) -> u32 {
+        self.0.id
     }
 
     /// The program tag.
@@ -59,11 +56,9 @@ impl ProgramInfo {
     /// [`Self::id()`]. A program's ID can vary every time it's loaded or unloaded, but the tag
     /// will remain the same.
     ///
-    /// `None` is returned if the field is not available.
-    ///
     /// Introduced in kernel v4.13.
-    pub fn tag(&self) -> Option<NonZeroU64> {
-        NonZeroU64::new(u64::from_be_bytes(self.0.tag))
+    pub fn tag(&self) -> u64 {
+        u64::from_be_bytes(self.0.tag)
     }
 
     /// The size in bytes of the program's JIT-compiled machine code.
@@ -71,11 +66,9 @@ impl ProgramInfo {
     /// Note that this field is only updated when BPF JIT compiler is enabled. Kernels v4.15 and
     /// above may already have it enabled by default.
     ///
-    /// `None` is returned if the field is not available, or if the JIT compiler is not enabled.
-    ///
     /// Introduced in kernel v4.13.
-    pub fn size_jitted(&self) -> Option<NonZeroU32> {
-        NonZeroU32::new(self.0.jited_prog_len)
+    pub fn size_jitted(&self) -> u32 {
+        self.0.jited_prog_len
     }
 
     /// The size in bytes of the program's translated eBPF bytecode.
@@ -86,8 +79,8 @@ impl ProgramInfo {
     /// `None` is returned if the field is not available.
     ///
     /// Introduced in kernel v4.15.
-    pub fn size_translated(&self) -> Option<NonZeroU32> {
-        NonZeroU32::new(self.0.xlated_prog_len)
+    pub fn size_translated(&self) -> Option<u32> {
+        (self.0.xlated_prog_len > 0).then_some(self.0.xlated_prog_len)
     }
 
     /// The time when the program was loaded.
@@ -96,11 +89,7 @@ impl ProgramInfo {
     ///
     /// Introduced in kernel v4.15.
     pub fn loaded_at(&self) -> Option<SystemTime> {
-        if self.0.load_time > 0 {
-            Some(boot_time() + Duration::from_nanos(self.0.load_time))
-        } else {
-            None
-        }
+        (self.0.load_time > 0).then_some(boot_time() + Duration::from_nanos(self.0.load_time))
     }
 
     /// The user ID of the process who loaded the program.
@@ -110,11 +99,7 @@ impl ProgramInfo {
     /// Introduced in kernel v4.15.
     pub fn created_by_uid(&self) -> Option<u32> {
         // This field was introduced in the same commit as `load_time`.
-        if self.0.load_time > 0 {
-            Some(self.0.created_by_uid)
-        } else {
-            None
-        }
+        (self.0.load_time > 0).then_some(self.0.created_by_uid)
     }
 
     /// The IDs of the maps used by the program.
@@ -122,17 +107,11 @@ impl ProgramInfo {
     /// `None` is returned if the field is not available.
     ///
     /// Introduced in kernel v4.15.
-    pub fn map_ids(&self) -> Result<Option<Vec<NonZeroU32>>, ProgramError> {
+    pub fn map_ids(&self) -> Result<Option<Vec<u32>>, ProgramError> {
         if FEATURES.prog_info_map_ids() {
             let mut map_ids = vec![0u32; self.0.nr_map_ids as usize];
             bpf_prog_get_info_by_fd(self.fd()?.as_fd(), &mut map_ids)?;
-
-            Ok(Some(
-                map_ids
-                    .into_iter()
-                    .map(|id| NonZeroU32::new(id).unwrap())
-                    .collect(),
-            ))
+            Ok(Some(map_ids))
         } else {
             Ok(None)
         }
@@ -151,13 +130,8 @@ impl ProgramInfo {
     ///
     /// Introduced in kernel v4.15.
     pub fn name_as_str(&self) -> Option<&str> {
-        let name = std::str::from_utf8(self.name()).ok();
-        if let Some(name_str) = name {
-            if FEATURES.bpf_name() || !name_str.is_empty() {
-                return name;
-            }
-        }
-        None
+        let name = std::str::from_utf8(self.name()).ok()?;
+        (FEATURES.bpf_name() || !name.is_empty()).then_some(name)
     }
 
     /// Returns true if the program is defined with a GPL-compatible license.
@@ -166,18 +140,16 @@ impl ProgramInfo {
     ///
     /// Introduced in kernel v4.18.
     pub fn gpl_compatible(&self) -> Option<bool> {
-        if FEATURES.prog_info_gpl_compatible() {
-            Some(self.0.gpl_compatible() != 0)
-        } else {
-            None
-        }
+        FEATURES
+            .prog_info_gpl_compatible()
+            .then_some(self.0.gpl_compatible() != 0)
     }
 
     /// The BTF ID for the program.
     ///
     /// Introduced in kernel v5.0.
-    pub fn btf_id(&self) -> Option<NonZeroU32> {
-        NonZeroU32::new(self.0.btf_id)
+    pub fn btf_id(&self) -> Option<u32> {
+        (self.0.btf_id > 0).then_some(self.0.btf_id)
     }
 
     /// The accumulated time that the program has been actively running.
@@ -213,8 +185,8 @@ impl ProgramInfo {
     /// `None` is returned if the field is not available.
     ///
     /// Introduced in kernel v5.16.
-    pub fn verified_instruction_count(&self) -> Option<NonZeroU32> {
-        NonZeroU32::new(self.0.verified_insns)
+    pub fn verified_instruction_count(&self) -> Option<u32> {
+        (self.0.verified_insns > 0).then_some(self.0.verified_insns)
     }
 
     /// How much memory in bytes has been allocated and locked for the program.
