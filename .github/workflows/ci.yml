@@ -182,15 +182,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner:
-          # macos-14 is arm64 per
-          # https://github.com/actions/runner-images#available-images which
-          # doesn't support nested virtualization per
-          # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#limitations-for-arm64-macos-runners
-          - macos-13
-          # We don't use ubuntu-latest because we care about the apt packages available.
-          - ubuntu-22.04
-    runs-on: ${{ matrix.runner }}
+        include:
+          - target: x86_64-apple-darwin
+            # macos-14 is arm64[0] which doesn't support nested
+            # virtualization[1].
+            #
+            # [0] https://github.com/actions/runner-images#available-images
+            #
+            # [1] https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#limitations-for-arm64-macos-runners
+            os: macos-13
+          - target: x86_64-unknown-linux-gnu
+            # We don't use ubuntu-latest because we care about the apt packages available.
+            os: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -212,10 +216,6 @@ jobs:
           sudo apt -y install gcc-multilib locate qemu-system-{arm,x86}
           echo /usr/lib/llvm-15/bin >> $GITHUB_PATH
 
-      - name: bpf-linker
-        if: runner.os == 'Linux'
-        run: cargo install bpf-linker --git https://github.com/aya-rs/bpf-linker.git
-
       - name: Install prerequisites
         if: runner.os == 'macOS'
         # The xargs shipped on macOS always exits 0 with -P0, so we need GNU findutils.
@@ -223,8 +223,6 @@ jobs:
         # The tar shipped on macOS doesn't support --wildcards, so we need GNU tar.
         #
         # The clang shipped on macOS doesn't support BPF, so we need LLVM from brew.
-        #
-        # We also need LLVM for bpf-linker, see comment below.
         run: |
           set -euxo pipefail
           brew update
@@ -245,10 +243,30 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - name: Install libLLVM
+        # Download libLLVM from Rust CI to ensure that the libLLVM version
+        # matches exactly with the version used by the current Rust nightly. A
+        # mismatch between libLLVM (used by bpf-linker) and Rust's LLVM version
+        # can lead to linking issues.
+        run: |
+          set -euxo pipefail
+          # Get the partial SHA from Rust nightly.
+          rustc_sha=$(rustc +nightly --version | grep -oE '[a-f0-9]{7,40}')
+          # Get the full SHA from GitHub.
+          rustc_sha=$(curl -s https://api.github.com/repos/rust-lang/rust/commits/$rustc_sha \
+            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+            --header 'content-type: application/json' \
+            | jq -r '.sha')
+          mkdir -p /tmp/rustc-llvm
+          wget -q -O - https://ci-artifacts.rust-lang.org/rustc-builds/$rustc_sha/rust-dev-nightly-${{ matrix.target }}.tar.xz | \
+            tar -xJ --strip-components 2 -C /tmp/rustc-llvm
+          echo /tmp/rustc-llvm/bin >> $GITHUB_PATH
+
       - name: bpf-linker
-        if: runner.os == 'macOS'
         # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature). We also
-        # --force so that bpf-linker gets always relinked against the latest LLVM installed by brew.
+        # --force so that bpf-linker gets always relinked against the latest LLVM downloaded above.
+        #
+        # Do this on all system (not just macOS) to avoid relying on rustc-provided libLLVM.so.
         run: cargo install --force bpf-linker --git https://github.com/aya-rs/bpf-linker.git --no-default-features
 
       - name: Download debian kernels
