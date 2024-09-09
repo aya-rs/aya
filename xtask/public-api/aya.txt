@@ -4048,14 +4048,10 @@ impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs
 pub fn aya::programs::sk_msg::SkMsgLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sk_msg::SkMsgLink
 impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_skb::SkSkbLink
 pub fn aya::programs::sk_skb::SkSkbLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sk_skb::SkSkbLink
-impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sock_ops::SockOpsLink
-pub fn aya::programs::sock_ops::SockOpsLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sock_ops::SockOpsLink
 impl core::convert::From<aya::programs::sk_msg::SkMsgLink> for aya::programs::links::ProgAttachLink
 pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sk_msg::SkMsgLink) -> aya::programs::links::ProgAttachLink
 impl core::convert::From<aya::programs::sk_skb::SkSkbLink> for aya::programs::links::ProgAttachLink
 pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sk_skb::SkSkbLink) -> aya::programs::links::ProgAttachLink
-impl core::convert::From<aya::programs::sock_ops::SockOpsLink> for aya::programs::links::ProgAttachLink
-pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sock_ops::SockOpsLink) -> aya::programs::links::ProgAttachLink
 impl core::fmt::Debug for aya::programs::links::ProgAttachLink
 pub fn aya::programs::links::ProgAttachLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::programs::links::ProgAttachLink
@@ -5343,10 +5339,6 @@ impl aya::programs::links::Link for aya::programs::sock_ops::SockOpsLink
 pub type aya::programs::sock_ops::SockOpsLink::Id = aya::programs::sock_ops::SockOpsLinkId
 pub fn aya::programs::sock_ops::SockOpsLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sock_ops::SockOpsLink::id(&self) -> Self::Id
-impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sock_ops::SockOpsLink
-pub fn aya::programs::sock_ops::SockOpsLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sock_ops::SockOpsLink
-impl core::convert::From<aya::programs::sock_ops::SockOpsLink> for aya::programs::links::ProgAttachLink
-pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sock_ops::SockOpsLink) -> aya::programs::links::ProgAttachLink
 impl core::fmt::Debug for aya::programs::sock_ops::SockOpsLink
 pub fn aya::programs::sock_ops::SockOpsLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::sock_ops::SockOpsLink
