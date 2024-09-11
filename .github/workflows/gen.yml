@@ -21,7 +21,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly
+          toolchain: nightly-2024-09-09
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2

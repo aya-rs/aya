@@ -24,7 +24,7 @@ pub struct Options {
 }
 
 pub fn public_api(options: Options, metadata: Metadata) -> Result<()> {
-    let toolchain = "nightly";
+    let toolchain = "nightly-2024-09-09";
     let Options { bless, target } = options;
 
     if !rustup_toolchain::is_installed(toolchain)? {

@@ -44,7 +44,7 @@ pub fn docs(metadata: Metadata) -> Result<()> {
         Command::new("cargo")
             .current_dir(&workspace_root)
             .env("RUSTDOCFLAGS", rustdocflags)
-            .args(["+nightly", "doc", "--no-deps", "--all-features"])
+            .args(["+nightly-2024-09-09", "doc", "--no-deps", "--all-features"])
             .args(
                 PACKAGE_TO_DESCRIPTION
                     .iter()
