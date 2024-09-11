@@ -429,7 +429,7 @@ pub(crate) fn bpf_link_create(
                 .__bindgen_anon_1
                 .relative_id = id.to_owned();
         }
-        _ => {}
+        None => {}
     };
 
     // SAFETY: BPF_LINK_CREATE returns a new file descriptor.

@@ -397,13 +397,14 @@ pub enum LinkError {
     SyscallError(#[from] SyscallError),
 }
 
-/// A [`Link`] identifier, which may or may not be owned by aya.
+/// A [`Link`] identifier.
 pub struct LinkId(u32);
 
 impl LinkId {
-    /// A wrapper for an arbitrary loaded link specified by its kernel id,
-    /// unsafe because there is no guarantee provided by aya that the link is
-    /// still loaded or even exists.
+    /// Create a new [`LinkId`] from its kernel id.
+    ///
+    /// This method is unsafe since it doesn't check that the given `id` is a an
+    /// existing link id.
     pub unsafe fn new(id: u32) -> Self {
         Self(id)
     }
@@ -427,8 +428,7 @@ bitflags::bitflags! {
     }
 }
 
-/// Struct defining the arguments required for interacting with the kernel's
-/// multi-prog API.
+/// Arguments required for interacting with the kernel's multi-prog API.
 ///
 /// # Minimum kernel version
 ///
@@ -466,7 +466,7 @@ impl Default for LinkOrder {
 }
 
 impl LinkOrder {
-    /// Ensure the link is created before all other links at a given attachment point.
+    /// Attach before all other links.
     pub fn first() -> Self {
         Self {
             link_ref: LinkRef::Id(0),
@@ -475,7 +475,7 @@ impl LinkOrder {
         }
     }
 
-    /// Ensure the link is created after all other links for a given attachment point.
+    /// Attach after all other links.
     pub fn last() -> Self {
         Self {
             link_ref: LinkRef::Id(0),
@@ -484,7 +484,7 @@ impl LinkOrder {
         }
     }
 
-    /// Ensure the link is created before the specified aya-owned link for a given attachment point.
+    /// Attach before the given link.
     pub fn before_link<L: MultiProgLink>(link: &L) -> Result<Self, LinkError> {
         Ok(Self {
             link_ref: LinkRef::Fd(link.fd()?.as_raw_fd()),
@@ -493,7 +493,7 @@ impl LinkOrder {
         })
     }
 
-    /// Ensure the link is created after the specified aya-owned link for a given attachment point.
+    /// Attach after the given link.
     pub fn after_link<L: MultiProgLink>(link: &L) -> Result<Self, LinkError> {
         Ok(Self {
             link_ref: LinkRef::Fd(link.fd()?.as_raw_fd()),
@@ -502,7 +502,7 @@ impl LinkOrder {
         })
     }
 
-    /// Ensure the link is created before a link specified by its kernel id for a given attachment point.
+    /// Attach before the link with the given id.
     pub fn before_link_id(id: LinkId) -> Result<Self, LinkError> {
         Ok(Self {
             link_ref: LinkRef::Id(id.0),
@@ -511,7 +511,7 @@ impl LinkOrder {
         })
     }
 
-    /// Ensure the link is created after a link specified by its kernel id for a given attachment point.
+    /// Attach after the link with the given id.
     pub fn after_link_id(id: LinkId) -> Result<Self, LinkError> {
         Ok(Self {
             link_ref: LinkRef::Id(id.0),
@@ -520,7 +520,7 @@ impl LinkOrder {
         })
     }
 
-    /// Ensure the link is created before the specified aya-owned program for a given attachment point.
+    /// Attach before the given program.
     pub fn before_program<P: MultiProgProgram>(program: &P) -> Result<Self, ProgramError> {
         Ok(Self {
             link_ref: LinkRef::Fd(program.fd()?.as_raw_fd()),
@@ -529,7 +529,7 @@ impl LinkOrder {
         })
     }
 
-    /// Ensure the link is created after the specified aya-owned program for a given attachment point.
+    /// Attach after the given program.
     pub fn after_program<P: MultiProgProgram>(program: &P) -> Result<Self, ProgramError> {
         Ok(Self {
             link_ref: LinkRef::Fd(program.fd()?.as_raw_fd()),
@@ -538,7 +538,7 @@ impl LinkOrder {
         })
     }
 
-    /// Ensure the link is created before a program specified by its kernel id for a given attachment point.
+    /// Attach before the program with the given id.
     pub fn before_program_id(id: ProgramId) -> Self {
         Self {
             link_ref: LinkRef::Id(id.0),
@@ -547,7 +547,7 @@ impl LinkOrder {
         }
     }
 
-    /// Ensure the link is created after a program specified by its kernel id for a given attachment point.
+    /// Attach after the program with the given id.
     pub fn after_program_id(id: ProgramId) -> Self {
         Self {
             link_ref: LinkRef::Id(id.0),
