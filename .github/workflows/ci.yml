@@ -26,6 +26,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
+          #toolchain: nightly-2024-09-09
           components: rustfmt, clippy, miri, rust-src
 
       - uses: Swatinem/rust-cache@v2
@@ -150,6 +151,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
+          #toolchain: nightly-2024-09-09
           components: rust-src
 
       - uses: Swatinem/rust-cache@v2
@@ -244,6 +246,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
+          #toolchain: nightly-2024-09-09
           components: rust-src
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
