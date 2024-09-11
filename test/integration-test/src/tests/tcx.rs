@@ -104,22 +104,17 @@ async fn tcx_ordering() {
         .unwrap();
     prog3.load().unwrap();
 
-    // Test LinkOrder::first() and LinkOrder::set_expected_revision()
+    // Test LinkOrder::last() with correct expected_revision
     let mut order: LinkOrder = LinkOrder::last();
-    order.set_expected_revision(u64::MAX);
-    let options = TcAttachOptions::TcxOrder(order);
-    let result = prog0.attach_with_options("lo", TcAttachType::Ingress, options);
-    assert!(result.is_err());
-
-    let mut order: LinkOrder = LinkOrder::last();
-    order.set_expected_revision(0);
+    order.set_expected_revision(1);
     let options = TcAttachOptions::TcxOrder(order);
     prog0
         .attach_with_options("lo", TcAttachType::Ingress, options)
         .unwrap();
 
-    // Test LinkOrder::after_program()
-    let order = LinkOrder::after_program(prog0).unwrap();
+    // Test LinkOrder::after_program() with correct expected_revision
+    let mut order = LinkOrder::after_program(prog0).unwrap();
+    order.set_expected_revision(2);
     let options = TcAttachOptions::TcxOrder(order);
     let prog1_link_id = prog1
         .attach_with_options("lo", TcAttachType::Ingress, options)
@@ -127,18 +122,30 @@ async fn tcx_ordering() {
 
     let prog1_link = prog1.take_link(prog1_link_id).unwrap();
 
-    // Test LinkOrder::after_link()
-    let order = LinkOrder::after_link(&prog1_link).unwrap();
+    // Test incorrect expected_revision and expect an error
+    let mut order = LinkOrder::after_link(&prog1_link).unwrap();
+    order.set_expected_revision(7);
+    let options = TcAttachOptions::TcxOrder(order);
+    let result = prog2.attach_with_options("lo", TcAttachType::Ingress, options);
+    assert!(result.is_err());
+
+    // Test LinkOrder::after_link() again with expected_revision == 0 which
+    // means the expected_revision should be ignored.
+    let mut order = LinkOrder::after_link(&prog1_link).unwrap();
+    order.set_expected_revision(0);
     let options = TcAttachOptions::TcxOrder(order);
     prog2
         .attach_with_options("lo", TcAttachType::Ingress, options)
         .unwrap();
 
-    // Test LinkOrder::last()
+    // Test LinkOrder::last() with no expected_revision
     let options = TcAttachOptions::TcxOrder(LinkOrder::last());
     prog3
         .attach_with_options("lo", TcAttachType::Ingress, options)
         .unwrap();
+
+    // Wait for system to stabilize
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
     const PAYLOAD: &str = "hello tcx";
 
