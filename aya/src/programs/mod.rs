@@ -217,6 +217,15 @@ pub enum ProgramError {
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
+
+    /// An error occurred when attmpting to convert a type.
+    #[error("conversion error from {from} to {to}")]
+    ConversionError {
+        /// The type being converted from.
+        from: String,
+        /// The type being converted to.
+        to: String,
+    },
 }
 
 /// A [`Program`] file descriptor.
@@ -240,13 +249,14 @@ impl AsFd for ProgramFd {
 }
 
 /// The various eBPF programs.
-/// A [`Program`] identifier, which may or may not be owned by aya.
+/// A [`Program`] identifier.
 pub struct ProgramId(u32);
 
 impl ProgramId {
-    /// A wrapper for an arbitrary loaded program specified by its kernel id,
-    /// unsafe because there is no guarantee provided by aya that the program is
-    /// still loaded or even exists.
+    /// Create a new program id.  
+    ///  
+    /// This method is unsafe since it doesn't check that the given `id` is a
+    /// valid program id.
     pub unsafe fn new(id: u32) -> Self {
         Self(id)
     }
@@ -811,15 +821,14 @@ impl_fd!(
     CgroupDevice,
 );
 
-/// Defines which [`Program`]s support the kernel's
-/// generic multi-prog API.
+/// Defines the [`Program`] types which support the kernel's
+/// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
 ///
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 6.6.0.
 pub trait MultiProgProgram {
-    /// Returns a borrowed reference to the file descriptor of a given
-    /// [`Program`] which has support for the kernel's generic multi-prog API.
+    /// Borrows the file descriptor.
     fn fd(&self) -> Result<BorrowedFd<'_>, ProgramError>;
 }
 
@@ -827,7 +836,6 @@ macro_rules! impl_multiprog_fd {
     ($($struct_name:ident),+ $(,)?) => {
         $(
             impl MultiProgProgram for $struct_name {
-                /// Returns the a borrowed reference file descriptor of this Program.
                 fn fd(&self) -> Result<BorrowedFd<'_>, ProgramError> {
                     Ok(self.fd()?.as_fd())
                 }
@@ -838,14 +846,14 @@ macro_rules! impl_multiprog_fd {
 
 impl_multiprog_fd!(SchedClassifier);
 
-/// Defines the [Link] types which support the kernel's [generic multi-prog API](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=053c8e1f235dc3f69d13375b32f4209228e1cb96).
+/// Defines the [`Link`] types which support the kernel's
+/// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
 ///
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 6.6.0.
 pub trait MultiProgLink {
-    /// Returns a borrowed reference to the file descriptor of a given
-    /// [`Link`] which has support for the kernel's generic multi-prog API.
+    /// Borrows the file descriptor.
     fn fd(&self) -> Result<BorrowedFd<'_>, LinkError>;
 }
 
@@ -853,7 +861,6 @@ macro_rules! impl_multiproglink_fd {
     ($($struct_name:ident),+ $(,)?) => {
         $(
             impl MultiProgLink for $struct_name {
-                /// Returns the a borrowed reference file descriptor of this Program.
                 fn fd(&self) -> Result<BorrowedFd<'_>, LinkError> {
                     let link: &FdLink = self.try_into()?;
                     Ok(link.fd.as_fd())
