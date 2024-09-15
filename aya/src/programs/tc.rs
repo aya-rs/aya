@@ -128,16 +128,16 @@ impl TcAttachType {
 /// older than 6.6.0 must utilize netlink for attachments, while newer kernels
 /// can utilize the modern TCX eBPF link type which supports the kernel's
 /// multi-prog API.
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum TcAttachOptions {
     /// Netlink attach options.
     Netlink(NlOptions),
     /// Tcx attach options.
-    TcxOrder(LinkOrder),
+    Tcx(TcxOptions),
 }
 
 /// Options for SchedClassifier attach via netlink.
-#[derive(Debug, Default, Hash, Eq, PartialEq)]
+#[derive(Debug, Default, Hash, Eq, PartialEq, Copy, Clone)]
 pub struct NlOptions {
     /// Priority assigned to tc program with lower number = higher priority.
     /// If set to default (0), the system chooses the next highest priority or 49152 if no filters exist yet
@@ -145,6 +145,21 @@ pub struct NlOptions {
     /// Handle used to uniquely identify a program at a given priority level.
     /// If set to default (0), the system chooses a handle.
     pub handle: u32,
+}
+
+/// Options for SchedClassifier attach via TCX.
+#[derive(Debug, Default, Copy, Clone)]
+pub struct TcxOptions {
+    /// Attributes that define the position of the program in the TCX chain.
+    pub link_order: LinkOrder,
+    /// Expected revision for the attach operation.  The kernel maintains a
+    /// revision for each attach point (interface/direction).  Each time a
+    /// program is attached or detached to a given attach point, the revision
+    /// for that attach point is incremented.  If the expected revision does not
+    /// match the revision, the attach will fail.
+    ///
+    /// TODO: Implement an API to query the current revision for an interface.
+    pub expected_revision: Option<u64>,
 }
 
 impl SchedClassifier {
@@ -179,7 +194,7 @@ impl SchedClassifier {
             self.attach_with_options(
                 interface,
                 attach_type,
-                TcAttachOptions::TcxOrder(LinkOrder::default()),
+                TcAttachOptions::Tcx(TcxOptions::default()),
             )
         } else {
             self.attach_with_options(
@@ -294,14 +309,14 @@ impl SchedClassifier {
                         handle,
                     })))
             }
-            TcAttachOptions::TcxOrder(options) => {
+            TcAttachOptions::Tcx(options) => {
                 let link_fd = bpf_link_create(
                     prog_fd,
                     LinkTarget::IfIndex(if_index),
                     attach_type.tcx_attach_type()?,
                     None,
-                    options.flags.bits(),
-                    Some(&options.link_ref),
+                    options.link_order.flags.bits(),
+                    Some(&options.link_order.link_ref),
                     options.expected_revision,
                 )
                 .map_err(|(_, io_error)| SyscallError {

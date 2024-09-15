@@ -410,7 +410,7 @@ impl LinkId {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub(crate) enum LinkRef {
     Id(u32),
     Fd(RawFd),
@@ -438,19 +438,26 @@ bitflags::bitflags! {
 ///
 ///```no_run
 /// # let mut bpf = aya::Ebpf::load(&[])?;
-/// use aya::programs::{tc, SchedClassifier, TcAttachType, tc::TcAttachOptions, LinkOrder};
+/// use aya::{
+///     programs::{
+///         tc::{TcAttachOptions, TcxOptions},
+///         LinkOrder, SchedClassifier, TcAttachType,
+///     },
+/// };
 ///
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
-/// let options = TcAttachOptions::TcxOrder(LinkOrder::first());
+/// let options = TcAttachOptions::Tcx(TcxOptions {
+///     link_order: LinkOrder::first(),
+///     expected_revision: None, // incorrect expected_revision
+/// });
 /// prog.attach_with_options("eth0", TcAttachType::Ingress, options)?;
 ///
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct LinkOrder {
     pub(crate) link_ref: LinkRef,
-    pub(crate) expected_revision: Option<u64>,
     pub(crate) flags: MprogFlags,
 }
 
@@ -460,7 +467,6 @@ impl Default for LinkOrder {
         Self {
             link_ref: LinkRef::Fd(0),
             flags: MprogFlags::AFTER,
-            expected_revision: None,
         }
     }
 }
@@ -471,7 +477,6 @@ impl LinkOrder {
         Self {
             link_ref: LinkRef::Id(0),
             flags: MprogFlags::BEFORE,
-            expected_revision: None,
         }
     }
 
@@ -480,7 +485,6 @@ impl LinkOrder {
         Self {
             link_ref: LinkRef::Id(0),
             flags: MprogFlags::AFTER,
-            expected_revision: None,
         }
     }
 
@@ -489,7 +493,6 @@ impl LinkOrder {
         Ok(Self {
             link_ref: LinkRef::Fd(link.fd()?.as_raw_fd()),
             flags: MprogFlags::BEFORE | MprogFlags::LINK,
-            expected_revision: None,
         })
     }
 
@@ -498,7 +501,6 @@ impl LinkOrder {
         Ok(Self {
             link_ref: LinkRef::Fd(link.fd()?.as_raw_fd()),
             flags: MprogFlags::AFTER | MprogFlags::LINK,
-            expected_revision: None,
         })
     }
 
@@ -507,7 +509,6 @@ impl LinkOrder {
         Ok(Self {
             link_ref: LinkRef::Id(id.0),
             flags: MprogFlags::BEFORE | MprogFlags::LINK | MprogFlags::ID,
-            expected_revision: None,
         })
     }
 
@@ -516,7 +517,6 @@ impl LinkOrder {
         Ok(Self {
             link_ref: LinkRef::Id(id.0),
             flags: MprogFlags::AFTER | MprogFlags::LINK | MprogFlags::ID,
-            expected_revision: None,
         })
     }
 
@@ -525,7 +525,6 @@ impl LinkOrder {
         Ok(Self {
             link_ref: LinkRef::Fd(program.fd()?.as_raw_fd()),
             flags: MprogFlags::BEFORE,
-            expected_revision: None,
         })
     }
 
@@ -534,7 +533,6 @@ impl LinkOrder {
         Ok(Self {
             link_ref: LinkRef::Fd(program.fd()?.as_raw_fd()),
             flags: MprogFlags::AFTER,
-            expected_revision: None,
         })
     }
 
@@ -543,7 +541,6 @@ impl LinkOrder {
         Self {
             link_ref: LinkRef::Id(id.0),
             flags: MprogFlags::BEFORE | MprogFlags::ID,
-            expected_revision: None,
         }
     }
 
@@ -552,16 +549,7 @@ impl LinkOrder {
         Self {
             link_ref: LinkRef::Id(id.0),
             flags: MprogFlags::AFTER | MprogFlags::ID,
-            expected_revision: None,
         }
-    }
-
-    /// set the expected revision for the link, the revision changes
-    /// with each modification of the list of attached programs. User space
-    /// can pass an expected revision when creating a new link. The kernel
-    /// then rejects the update if the revision has changed.
-    pub fn set_expected_revision(&mut self, revision: u64) {
-        self.expected_revision = Some(revision);
     }
 }
 

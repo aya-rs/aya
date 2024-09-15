@@ -5,7 +5,10 @@ use std::{
 };
 
 use aya::{
-    programs::{tc::TcAttachOptions, LinkOrder, SchedClassifier, TcAttachType},
+    programs::{
+        tc::{TcAttachOptions, TcxOptions},
+        LinkOrder, SchedClassifier, TcAttachType,
+    },
     util::KernelVersion,
     Ebpf, EbpfLoader,
 };
@@ -105,17 +108,19 @@ async fn tcx_ordering() {
     prog3.load().unwrap();
 
     // Test LinkOrder::last() with correct expected_revision
-    let mut order: LinkOrder = LinkOrder::last();
-    order.set_expected_revision(1);
-    let options = TcAttachOptions::TcxOrder(order);
+    let options = TcAttachOptions::Tcx(TcxOptions {
+        link_order: LinkOrder::first(),
+        expected_revision: Some(1),
+    });
     prog0
         .attach_with_options("lo", TcAttachType::Ingress, options)
         .unwrap();
 
     // Test LinkOrder::after_program() with correct expected_revision
-    let mut order = LinkOrder::after_program(prog0).unwrap();
-    order.set_expected_revision(2);
-    let options = TcAttachOptions::TcxOrder(order);
+    let options = TcAttachOptions::Tcx(TcxOptions {
+        link_order: LinkOrder::after_program(prog0).unwrap(),
+        expected_revision: Some(2),
+    });
     let prog1_link_id = prog1
         .attach_with_options("lo", TcAttachType::Ingress, options)
         .unwrap();
@@ -123,23 +128,33 @@ async fn tcx_ordering() {
     let prog1_link = prog1.take_link(prog1_link_id).unwrap();
 
     // Test incorrect expected_revision and expect an error
-    let mut order = LinkOrder::after_link(&prog1_link).unwrap();
-    order.set_expected_revision(7);
-    let options = TcAttachOptions::TcxOrder(order);
-    let result = prog2.attach_with_options("lo", TcAttachType::Ingress, options);
+    let mut tcx_options = TcxOptions {
+        link_order: LinkOrder::after_link(&prog1_link).unwrap(),
+        expected_revision: Some(7), // incorrect expected_revision
+    };
+    let result = prog2.attach_with_options(
+        "lo",
+        TcAttachType::Ingress,
+        TcAttachOptions::Tcx(tcx_options),
+    );
     assert!(result.is_err());
 
-    // Test LinkOrder::after_link() again with expected_revision == 0 which
-    // means the expected_revision should be ignored.
-    let mut order = LinkOrder::after_link(&prog1_link).unwrap();
-    order.set_expected_revision(0);
-    let options = TcAttachOptions::TcxOrder(order);
+    // Test LinkOrder::after_link() again after updating expected_revision to 3
+    // which should be the correct revision.
+    tcx_options.expected_revision = Some(3);
     prog2
-        .attach_with_options("lo", TcAttachType::Ingress, options)
+        .attach_with_options(
+            "lo",
+            TcAttachType::Ingress,
+            TcAttachOptions::Tcx(tcx_options),
+        )
         .unwrap();
 
     // Test LinkOrder::last() with no expected_revision
-    let options = TcAttachOptions::TcxOrder(LinkOrder::last());
+    let options = TcAttachOptions::Tcx(TcxOptions {
+        link_order: LinkOrder::last(),
+        expected_revision: None, // incorrect expected_revision
+    });
     prog3
         .attach_with_options("lo", TcAttachType::Ingress, options)
         .unwrap();
