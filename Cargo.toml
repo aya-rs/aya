@@ -84,7 +84,7 @@ proc-macro2 = { version = "1", default-features = false }
 public-api = { version = "0.37.0", default-features = false }
 quote = { version = "1", default-features = false }
 rand = { version = "0.8", default-features = false }
-rbpf = { version = "0.2.0", default-features = false }
+rbpf = { version = "0.3.0", default-features = false }
 rustdoc-json = { version = "0.9.0", default-features = false }
 rustup-toolchain = { version = "0.1.5", default-features = false }
 rustversion = { version = "1.0.0", default-features = false }

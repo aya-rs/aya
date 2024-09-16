@@ -11,7 +11,7 @@ edition.workspace = true
 [dependencies]
 aya-ebpf = { path = "../../ebpf/aya-ebpf" }
 aya-log-ebpf = { path = "../../ebpf/aya-log-ebpf" }
-network-types = "0.0.6"
+network-types = "0.0.7"
 
 [build-dependencies]
 which = { workspace = true }
