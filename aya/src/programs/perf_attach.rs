@@ -82,7 +82,6 @@ pub(crate) fn perf_attach(
             None,
             0,
             None,
-            None,
         )
         .map_err(|(_, io_error)| SyscallError {
             call: "bpf_link_create",

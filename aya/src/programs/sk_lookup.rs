@@ -72,7 +72,6 @@ impl SkLookup {
             None,
             0,
             None,
-            None,
         )
         .map_err(|(_, io_error)| SyscallError {
             call: "bpf_link_create",

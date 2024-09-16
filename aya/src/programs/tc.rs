@@ -302,7 +302,6 @@ impl SchedClassifier {
                     None,
                     options.flags.bits(),
                     Some(&options.link_ref),
-                    options.expected_revision,
                 )
                 .map_err(|(_, io_error)| SyscallError {
                     call: "bpf_mprog_attach",

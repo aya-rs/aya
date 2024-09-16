@@ -387,7 +387,6 @@ pub(crate) fn bpf_link_create(
     btf_id: Option<u32>,
     flags: u32,
     link_ref: Option<&LinkRef>,
-    expected_revision: Option<u64>,
 ) -> SysResult<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -410,10 +409,6 @@ pub(crate) fn bpf_link_create(
     attr.link_create.flags = flags;
 
     // since kernel 6.6
-    if let Some(expected_revision) = expected_revision {
-        attr.link_create.__bindgen_anon_3.tcx.expected_revision = expected_revision;
-    }
-
     match link_ref {
         Some(LinkRef::Fd(fd)) => {
             attr.link_create
@@ -854,7 +849,7 @@ pub(crate) fn is_perf_link_supported() -> bool {
         let fd = fd.as_fd();
         matches!(
             // Uses an invalid target FD so we get EBADF if supported.
-            bpf_link_create(fd, LinkTarget::IfIndex(u32::MAX), bpf_attach_type::BPF_PERF_EVENT, None, 0, None, None),
+            bpf_link_create(fd, LinkTarget::IfIndex(u32::MAX), bpf_attach_type::BPF_PERF_EVENT, None, 0, None),
             // Returns EINVAL if unsupported. EBADF if supported.
             Err((_, e)) if e.raw_os_error() == Some(libc::EBADF),
         )
