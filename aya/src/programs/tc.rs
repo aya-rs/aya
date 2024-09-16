@@ -269,12 +269,7 @@ impl SchedClassifier {
                 let name = CString::new(name).unwrap();
                 let (priority, handle) = unsafe {
                     netlink_qdisc_attach(
-                        if_index
-                            .try_into()
-                            .map_err(|_| ProgramError::ConversionError {
-                                from: "u32".to_string(),
-                                to: "i32".to_string(),
-                            })?,
+                        if_index.try_into().map_err(ProgramError::TryFromIntError)?,
                         &attach_type,
                         prog_fd,
                         &name,
@@ -366,13 +361,10 @@ impl Link for NlLink {
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        let if_index: i32 =
-            self.if_index
-                .try_into()
-                .map_err(|_| ProgramError::ConversionError {
-                    from: "u32".to_string(),
-                    to: "i32".to_string(),
-                })?;
+        let if_index: i32 = self
+            .if_index
+            .try_into()
+            .map_err(ProgramError::TryFromIntError)?;
         unsafe { netlink_qdisc_detach(if_index, &self.attach_type, self.priority, self.handle) }
             .map_err(|io_error| TcError::NetlinkError { io_error })?;
         Ok(())

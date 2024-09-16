@@ -72,6 +72,7 @@ pub mod xdp;
 use std::{
     ffi::CString,
     io,
+    num::TryFromIntError,
     os::fd::{AsFd, AsRawFd, BorrowedFd},
     path::{Path, PathBuf},
     sync::Arc,
@@ -218,14 +219,9 @@ pub enum ProgramError {
     #[error(transparent)]
     IOError(#[from] io::Error),
 
-    /// An error occurred when attmpting to convert a type.
-    #[error("conversion error from {from} to {to}")]
-    ConversionError {
-        /// The type being converted from.
-        from: String,
-        /// The type being converted to.
-        to: String,
-    },
+    /// A checked integral type conversion failed.
+    #[error(transparent)]
+    TryFromIntError(#[from] TryFromIntError),
 }
 
 /// A [`Program`] file descriptor.

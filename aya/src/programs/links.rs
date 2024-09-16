@@ -397,19 +397,6 @@ pub enum LinkError {
     SyscallError(#[from] SyscallError),
 }
 
-/// A [`Link`] identifier.
-pub struct LinkId(u32);
-
-impl LinkId {
-    /// Create a new [`LinkId`] from its kernel id.
-    ///
-    /// This method is unsafe since it doesn't check that the given `id` is a an
-    /// existing link id.
-    pub unsafe fn new(id: u32) -> Self {
-        Self(id)
-    }
-}
-
 #[derive(Debug)]
 pub(crate) enum LinkRef {
     Id(u32),
@@ -493,22 +480,6 @@ impl LinkOrder {
         Ok(Self {
             link_ref: LinkRef::Fd(link.fd()?.as_raw_fd()),
             flags: MprogFlags::AFTER | MprogFlags::LINK,
-        })
-    }
-
-    /// Attach before the link with the given id.
-    pub fn before_link_id(id: LinkId) -> Result<Self, LinkError> {
-        Ok(Self {
-            link_ref: LinkRef::Id(id.0),
-            flags: MprogFlags::BEFORE | MprogFlags::LINK | MprogFlags::ID,
-        })
-    }
-
-    /// Attach after the link with the given id.
-    pub fn after_link_id(id: LinkId) -> Result<Self, LinkError> {
-        Ok(Self {
-            link_ref: LinkRef::Id(id.0),
-            flags: MprogFlags::AFTER | MprogFlags::LINK | MprogFlags::ID,
         })
     }
 
