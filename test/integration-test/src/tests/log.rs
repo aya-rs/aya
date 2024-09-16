@@ -1,7 +1,6 @@
 use std::{
     borrow::Cow,
     sync::{Arc, Mutex},
-    time::Instant,
 };
 
 use aya::{programs::UProbe, Ebpf};
@@ -15,8 +14,8 @@ pub extern "C" fn trigger_ebpf_program() {
     core::hint::black_box(trigger_ebpf_program);
 }
 
-pub(crate) struct TestingLogger<F> {
-    pub(crate) log: F,
+struct TestingLogger<F> {
+    log: F,
 }
 
 impl<F: Send + Sync + Fn(&Record)> Log for TestingLogger<F> {
@@ -33,11 +32,10 @@ impl<F: Send + Sync + Fn(&Record)> Log for TestingLogger<F> {
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) struct CapturedLog<'a> {
-    pub(crate) body: Cow<'a, str>,
-    pub(crate) level: Level,
-    pub(crate) target: Cow<'a, str>,
-    pub(crate) timestamp: Option<Instant>,
+struct CapturedLog<'a> {
+    pub body: Cow<'a, str>,
+    pub level: Level,
+    pub target: Cow<'a, str>,
 }
 
 #[test(tokio::test)]
@@ -56,7 +54,6 @@ async fn log() {
                         body: format!("{}", record.args()).into(),
                         level: record.level(),
                         target: record.target().to_string().into(),
-                        timestamp: None,
                     });
                 },
             },
@@ -94,7 +91,6 @@ async fn log() {
             body: "Hello from eBPF!".into(),
             level: Level::Debug,
             target: "log".into(),
-            timestamp: None,
         }),
     );
 
@@ -104,7 +100,6 @@ async fn log() {
             body: "69, 420, wao, 77616f".into(),
             level: Level::Error,
             target: "log".into(),
-            timestamp: None,
         })
     );
 
@@ -114,7 +109,6 @@ async fn log() {
             body: "ip structs, without format hint: ipv4: 10.0.0.1, ipv6: 2001:db8::1".into(),
             level: Level::Info,
             target: "log".into(),
-            timestamp: None,
         })
     );
 
@@ -124,7 +118,6 @@ async fn log() {
             body: "ip structs, with format hint: ipv4: 10.0.0.1, ipv6: 2001:db8::1".into(),
             level: Level::Info,
             target: "log".into(),
-            timestamp: None,
         })
     );
 
@@ -134,7 +127,6 @@ async fn log() {
             body: "ip enums, without format hint: ipv4: 10.0.0.1, ipv6: 2001:db8::1".into(),
             level: Level::Info,
             target: "log".into(),
-            timestamp: None,
         })
     );
 
@@ -144,7 +136,6 @@ async fn log() {
             body: "ip enums, with format hint: ipv4: 10.0.0.1, ipv6: 2001:db8::1".into(),
             level: Level::Info,
             target: "log".into(),
-            timestamp: None,
         })
     );
 
@@ -154,7 +145,6 @@ async fn log() {
             body: "ip as bits: ipv4: 10.0.0.1".into(),
             level: Level::Info,
             target: "log".into(),
-            timestamp: None,
         })
     );
 
@@ -164,7 +154,6 @@ async fn log() {
             body: "ip as octets: ipv4: 10.0.0.1, ipv6: 2001:db8::1".into(),
             level: Level::Info,
             target: "log".into(),
-            timestamp: None,
         })
     );
 
@@ -174,7 +163,6 @@ async fn log() {
             body: "mac lc: 04:20:06:09:00:40, mac uc: 04:20:06:09:00:40".into(),
             level: Level::Trace,
             target: "log".into(),
-            timestamp: None,
         })
     );
 
@@ -184,7 +172,6 @@ async fn log() {
             body: "hex lc: 2f, hex uc: 2F".into(),
             level: Level::Warn,
             target: "log".into(),
-            timestamp: None,
         })
     );
 
@@ -194,7 +181,6 @@ async fn log() {
             body: "hex lc: deadbeef, hex uc: DEADBEEF".into(),
             level: Level::Debug,
             target: "log".into(),
-            timestamp: None,
         })
     );
 
@@ -204,7 +190,6 @@ async fn log() {
             body: "42 43 44 45".into(),
             level: Level::Debug,
             target: "log".into(),
-            timestamp: None,
         })
     );
 
