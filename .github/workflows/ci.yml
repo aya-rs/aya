@@ -299,7 +299,7 @@ jobs:
         run: |
           set -euxo pipefail
           find test/.tmp -name '*.deb' -print0 | xargs -t -0 -I {} \
-            sh -c "dpkg --fsys-tarfile {} | tar -C test/.tmp --wildcards --extract '*vmlinuz*' --file -"
+            sh -c "dpkg --fsys-tarfile {} | tar -C test/.tmp --wildcards --extract '*vmlinuz*' --wildcards --extract '*config*' --file -"
 
       - name: Run local integration tests
         if: runner.os == 'Linux'
