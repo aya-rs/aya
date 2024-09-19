@@ -8,7 +8,7 @@ use std::{
 
 use thiserror::Error;
 
-use super::FdLink;
+use super::{FdLink, ProgramInfo};
 use crate::{
     generated::{
         bpf_attach_type::{self, BPF_TCX_EGRESS, BPF_TCX_INGRESS},
@@ -17,12 +17,13 @@ use crate::{
         TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     },
     programs::{
-        define_link_wrapper, load_program, Link, LinkError, LinkOrder, ProgramData, ProgramError,
+        define_link_wrapper, load_program, query, Link, LinkError, LinkOrder, ProgramData,
+        ProgramError,
     },
     sys::{
-        bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, netlink_find_filter_with_name,
-        netlink_qdisc_add_clsact, netlink_qdisc_attach, netlink_qdisc_detach, LinkTarget,
-        SyscallError,
+        bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, bpf_prog_get_fd_by_id,
+        netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
+        netlink_qdisc_detach, LinkTarget, ProgQueryTarget, SyscallError,
     },
     util::{ifindex_from_ifname, tc_handler_make, KernelVersion},
     VerifierLogLevel,
@@ -339,6 +340,46 @@ impl SchedClassifier {
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data })
+    }
+
+    /// Queries a given interface for attached TCX programs.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use aya::programs::tc::{TcAttachType, SchedClassifier};
+    /// # #[derive(Debug, thiserror::Error)]
+    /// # enum Error {
+    /// #     #[error(transparent)]
+    /// #     Program(#[from] aya::programs::ProgramError),
+    /// # }
+    /// let (revision, programs) = SchedClassifier::query_tcx("eth0", TcAttachType::Ingress)?;
+    /// # Ok::<(), Error>(())
+    /// ```
+    pub fn query_tcx(
+        interface: &str,
+        attach_type: TcAttachType,
+    ) -> Result<(u64, Vec<ProgramInfo>), ProgramError> {
+        let if_index = ifindex_from_ifname(interface)
+            .map_err(|io_error| TcError::NetlinkError { io_error })?;
+
+        let (revision, prog_ids) = query(
+            ProgQueryTarget::IfIndex(if_index),
+            attach_type.tcx_attach_type()?,
+            0,
+            &mut None,
+        )?;
+
+        let prog_infos = prog_ids
+            .into_iter()
+            .map(|prog_id| {
+                let prog_fd = bpf_prog_get_fd_by_id(prog_id)?;
+                let prog_info = ProgramInfo::new_from_fd(prog_fd.as_fd())?;
+                Ok::<ProgramInfo, ProgramError>(prog_info)
+            })
+            .collect::<Result<_, _>>()?;
+
+        Ok((revision, prog_infos))
     }
 }
 

@@ -1,12 +1,7 @@
-use std::collections::HashMap;
-
 use aya::{
-    programs::{
-        tc::{SchedClassifierLink, TcAttachOptions},
-        LinkOrder, ProgramId, SchedClassifier, TcAttachType,
-    },
+    programs::{tc::TcAttachOptions, LinkOrder, ProgramId, SchedClassifier, TcAttachType},
     util::KernelVersion,
-    Ebpf, EbpfLoader,
+    Ebpf,
 };
 use test_log::test;
 
@@ -25,110 +20,98 @@ async fn tcx() {
     // We need a dedicated `Ebpf` instance for each program that we load
     // since TCX does not allow the same program ID to be attached multiple
     // times to the same interface/direction.
-    let mut attached_programs: HashMap<&str, (Ebpf, SchedClassifierLink)> = HashMap::new();
+    //
+    // Variables declared within this macro are within a closure scope to avoid
+    // variable name conflicts.
+    //
+    // Yields a tuple of the `Ebpf` which must remain in scope for the duration
+    // of the test, and the link ID of the attached program.
     macro_rules! attach_program_with_linkorder {
-        ($name:literal,$link_order:expr) => {{
-            let mut loader = EbpfLoader::new().load(crate::TCX).unwrap();
+        ($link_order:expr) => {{
+            let mut ebpf = Ebpf::load(crate::TCX).unwrap();
             let program: &mut SchedClassifier =
-                loader.program_mut("tcx_next").unwrap().try_into().unwrap();
+                ebpf.program_mut("tcx_next").unwrap().try_into().unwrap();
             program.load().unwrap();
-            let options = TcAttachOptions::TcxOrder($link_order);
             let link_id = program
-                .attach_with_options("lo", TcAttachType::Ingress, options)
+                .attach_with_options(
+                    "lo",
+                    TcAttachType::Ingress,
+                    TcAttachOptions::TcxOrder($link_order),
+                )
                 .unwrap();
-            let link = program.take_link(link_id).unwrap();
-            attached_programs.insert($name, (loader, link));
+            (ebpf, link_id)
         }};
     }
 
-    // TODO: Assert in position 4 at the end of the test.
-    attach_program_with_linkorder!("default", LinkOrder::default());
-    // TODO: Assert in position 1 at the end of the test.
-    attach_program_with_linkorder!("first", LinkOrder::first());
-    // TODO: Assert in position 7 at the end of the test.
-    attach_program_with_linkorder!("last", LinkOrder::last());
-    // TODO: Assert in position 6 at the end of the test.
-    attach_program_with_linkorder!(
-        "before_last",
-        LinkOrder::before_link(&attached_programs.get("last").unwrap().1).unwrap()
-    );
-    // TODO: Assert in position 8 at the end of the test.
-    attach_program_with_linkorder!(
-        "after_last",
-        LinkOrder::after_link(&attached_programs.get("last").unwrap().1).unwrap()
-    );
-    // TODO: Assert in position 3 at the end of the test.
-    attach_program_with_linkorder!(
-        "before_default",
-        LinkOrder::before_program(
-            TryInto::<&SchedClassifier>::try_into(
-                attached_programs
-                    .get("default")
-                    .unwrap()
-                    .0
-                    .program("tcx_next")
-                    .unwrap(),
-            )
+    let (default, _) = attach_program_with_linkorder!(LinkOrder::default());
+    let (first, _) = attach_program_with_linkorder!(LinkOrder::first());
+    let (mut last, last_link_id) = attach_program_with_linkorder!(LinkOrder::last());
+
+    let default_prog: &SchedClassifier = default.program("tcx_next").unwrap().try_into().unwrap();
+    let first_prog: &SchedClassifier = first.program("tcx_next").unwrap().try_into().unwrap();
+    let last_prog: &mut SchedClassifier = last.program_mut("tcx_next").unwrap().try_into().unwrap();
+
+    let last_link = last_prog.take_link(last_link_id).unwrap();
+
+    let (before_last, _) =
+        attach_program_with_linkorder!(LinkOrder::before_link(&last_link).unwrap());
+    let (after_last, _) =
+        attach_program_with_linkorder!(LinkOrder::after_link(&last_link).unwrap());
+
+    let (before_default, _) =
+        attach_program_with_linkorder!(LinkOrder::before_program(default_prog).unwrap());
+    let (after_default, _) =
+        attach_program_with_linkorder!(LinkOrder::after_program(default_prog).unwrap());
+
+    let (before_first, _) = attach_program_with_linkorder!(LinkOrder::before_program_id(unsafe {
+        ProgramId::new(first_prog.info().unwrap().id())
+    }));
+    let (after_first, _) = attach_program_with_linkorder!(LinkOrder::after_program_id(unsafe {
+        ProgramId::new(first_prog.info().unwrap().id())
+    }));
+
+    let expected_order = [
+        before_first
+            .program("tcx_next")
             .unwrap()
-        )
-        .unwrap()
-    );
-    // TODO: Assert in position 5 at the end of the test.
-    attach_program_with_linkorder!(
-        "after_default",
-        LinkOrder::after_program(
-            TryInto::<&SchedClassifier>::try_into(
-                attached_programs
-                    .get("default")
-                    .unwrap()
-                    .0
-                    .program("tcx_next")
-                    .unwrap(),
-            )
+            .info()
             .unwrap()
-        )
-        .unwrap()
+            .id(),
+        first_prog.info().unwrap().id(),
+        after_first
+            .program("tcx_next")
+            .unwrap()
+            .info()
+            .unwrap()
+            .id(),
+        before_default
+            .program("tcx_next")
+            .unwrap()
+            .info()
+            .unwrap()
+            .id(),
+        default_prog.info().unwrap().id(),
+        after_default
+            .program("tcx_next")
+            .unwrap()
+            .info()
+            .unwrap()
+            .id(),
+        before_last
+            .program("tcx_next")
+            .unwrap()
+            .info()
+            .unwrap()
+            .id(),
+        last_prog.info().unwrap().id(),
+        after_last.program("tcx_next").unwrap().info().unwrap().id(),
+    ];
+
+    let (revision, got_order) = SchedClassifier::query_tcx("lo", TcAttachType::Ingress).unwrap();
+    assert_eq!(got_order.len(), expected_order.len());
+    assert_eq!(revision, 10);
+    assert_eq!(
+        format!("{:?}", got_order.iter().map(|p| p.id()).collect::<Vec<_>>()),
+        format!("{:?}", expected_order)
     );
-    // TODO: Assert in position 0 at the end of the test.
-    attach_program_with_linkorder!(
-        "before_first",
-        LinkOrder::before_program_id(unsafe {
-            ProgramId::new(
-                TryInto::<&SchedClassifier>::try_into(
-                    attached_programs
-                        .get("first")
-                        .unwrap()
-                        .0
-                        .program("tcx_next")
-                        .unwrap(),
-                )
-                .unwrap()
-                .info()
-                .unwrap()
-                .id(),
-            )
-        })
-    );
-    // TODO: Assert in position 2 at the end of the test.
-    attach_program_with_linkorder!(
-        "after_first",
-        LinkOrder::after_program_id(unsafe {
-            ProgramId::new(
-                TryInto::<&SchedClassifier>::try_into(
-                    attached_programs
-                        .get("first")
-                        .unwrap()
-                        .0
-                        .program("tcx_next")
-                        .unwrap(),
-                )
-                .unwrap()
-                .info()
-                .unwrap()
-                .id(),
-            )
-        })
-    );
-    // TODO: Add code here to automatically verify the order after the API based
-    // on the BPF_PROG_QUERY syscall is implemented.
 }
