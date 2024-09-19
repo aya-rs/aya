@@ -100,7 +100,7 @@ impl LircMode2 {
     /// Queries the lirc device for attached programs.
     pub fn query<T: AsFd>(target_fd: T) -> Result<Vec<LircLink>, ProgramError> {
         let target_fd = target_fd.as_fd();
-        let prog_ids = query(target_fd, BPF_LIRC_MODE2, 0, &mut None)?;
+        let (_, prog_ids) = query(Some(target_fd), None, BPF_LIRC_MODE2, 0, &mut None)?;
 
         prog_ids
             .into_iter()

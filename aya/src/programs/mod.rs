@@ -80,7 +80,7 @@ use std::{
 
 use info::impl_info;
 pub use info::{loaded_programs, ProgramInfo, ProgramType};
-use libc::ENOSPC;
+use libc::{if_nametoindex, ENOSPC};
 use tc::SchedClassifierLink;
 use thiserror::Error;
 
@@ -688,28 +688,37 @@ fn load_program<T: Link>(
 }
 
 pub(crate) fn query(
-    target_fd: BorrowedFd<'_>,
+    target_fd: Option<BorrowedFd<'_>>,
+    target_ifindex: Option<&str>,
     attach_type: bpf_attach_type,
     query_flags: u32,
     attach_flags: &mut Option<u32>,
-) -> Result<Vec<u32>, ProgramError> {
+) -> Result<(u64, Vec<u32>), ProgramError> {
+    assert!(target_fd.is_none() || target_ifindex.is_none());
     let mut prog_ids = vec![0u32; 64];
     let mut prog_cnt = prog_ids.len() as u32;
+    let mut revision = 0;
 
     let mut retries = 0;
 
+    let target_ifindex = target_ifindex.map(|name| {
+        let c_interface = CString::new(name).unwrap();
+        unsafe { if_nametoindex(c_interface.as_ptr()) }
+    });
     loop {
         match bpf_prog_query(
-            target_fd.as_fd().as_raw_fd(),
+            target_fd.map(|fd| fd.as_fd().as_raw_fd()),
+            target_ifindex,
             attach_type,
             query_flags,
             attach_flags.as_mut(),
             &mut prog_ids,
             &mut prog_cnt,
+            &mut revision,
         ) {
             Ok(_) => {
                 prog_ids.resize(prog_cnt as usize, 0);
-                return Ok(prog_ids);
+                return Ok((revision, prog_ids));
             }
             Err((_, io_error)) => {
                 if retries == 0 && io_error.raw_os_error() == Some(ENOSPC) {
