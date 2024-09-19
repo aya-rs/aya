@@ -73,7 +73,7 @@ use std::{
     ffi::CString,
     io,
     num::TryFromIntError,
-    os::fd::{AsFd, AsRawFd, BorrowedFd},
+    os::fd::{AsFd, BorrowedFd},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -122,7 +122,7 @@ use crate::{
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
         bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids,
-        retry_with_verifier_logs, EbpfLoadProgramAttrs, SyscallError,
+        retry_with_verifier_logs, EbpfLoadProgramAttrs, ProgQueryTarget, SyscallError,
     },
     util::KernelVersion,
     VerifierLogLevel,
@@ -688,28 +688,30 @@ fn load_program<T: Link>(
 }
 
 pub(crate) fn query(
-    target_fd: BorrowedFd<'_>,
+    target: ProgQueryTarget<'_>,
     attach_type: bpf_attach_type,
     query_flags: u32,
     attach_flags: &mut Option<u32>,
-) -> Result<Vec<u32>, ProgramError> {
+) -> Result<(u64, Vec<u32>), ProgramError> {
     let mut prog_ids = vec![0u32; 64];
     let mut prog_cnt = prog_ids.len() as u32;
+    let mut revision = 0;
 
     let mut retries = 0;
 
     loop {
         match bpf_prog_query(
-            target_fd.as_fd().as_raw_fd(),
+            &target,
             attach_type,
             query_flags,
             attach_flags.as_mut(),
             &mut prog_ids,
             &mut prog_cnt,
+            &mut revision,
         ) {
             Ok(_) => {
                 prog_ids.resize(prog_cnt as usize, 0);
-                return Ok(prog_ids);
+                return Ok((revision, prog_ids));
             }
             Err((_, io_error)) => {
                 if retries == 0 && io_error.raw_os_error() == Some(ENOSPC) {
