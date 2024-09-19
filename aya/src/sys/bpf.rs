@@ -498,25 +498,39 @@ pub(crate) fn bpf_prog_detach(
     Ok(())
 }
 
+#[derive(Debug, Clone)]
+pub(crate) enum ProgQueryTarget<'a> {
+    Fd(BorrowedFd<'a>),
+    IfIndex(u32),
+}
+
 pub(crate) fn bpf_prog_query(
-    target_fd: RawFd,
+    target: &ProgQueryTarget<'_>,
     attach_type: bpf_attach_type,
     query_flags: u32,
     attach_flags: Option<&mut u32>,
     prog_ids: &mut [u32],
     prog_cnt: &mut u32,
+    revision: &mut u64,
 ) -> SysResult<i64> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
-    attr.query.__bindgen_anon_1.target_fd = target_fd as u32;
+    match target {
+        ProgQueryTarget::Fd(fd) => {
+            attr.query.__bindgen_anon_1.target_fd = fd.as_raw_fd() as u32;
+        }
+        ProgQueryTarget::IfIndex(ifindex) => {
+            attr.query.__bindgen_anon_1.target_ifindex = *ifindex;
+        }
+    }
     attr.query.attach_type = attach_type as u32;
     attr.query.query_flags = query_flags;
     attr.query.__bindgen_anon_2.prog_cnt = prog_ids.len() as u32;
     attr.query.prog_ids = prog_ids.as_mut_ptr() as u64;
-
     let ret = sys_bpf(bpf_cmd::BPF_PROG_QUERY, &mut attr);
 
     *prog_cnt = unsafe { attr.query.__bindgen_anon_2.prog_cnt };
+    *revision = unsafe { attr.query.revision };
 
     if let Some(attach_flags) = attach_flags {
         *attach_flags = unsafe { attr.query.attach_flags };
