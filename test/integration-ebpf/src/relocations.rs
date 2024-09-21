@@ -10,7 +10,7 @@ use aya_ebpf::{
 };
 
 #[map]
-static mut RESULTS: Array<u64> = Array::with_max_entries(3, 0);
+static RESULTS: Array<u64> = Array::with_max_entries(3, 0);
 
 #[uprobe]
 pub fn test_64_32_call_relocs(_ctx: ProbeContext) {

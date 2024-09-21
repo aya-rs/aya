@@ -53,6 +53,9 @@ fn use_map_with_rbpf() {
     //   so we keeps the pointers to our maps in MULTIMAP_MAPS, to be used in helpers.
     let mut maps = HashMap::new();
     let mut map_instances = vec![vec![0u64], vec![0u64], vec![0u64]];
+    unsafe {
+        MULTIMAP_MAPS = [null_mut(); 3];
+    }
     for (name, map) in object.maps.iter() {
         assert_eq!(map.key_size(), size_of::<u32>() as u32);
         assert_eq!(map.value_size(), size_of::<u64>() as u32);
@@ -110,10 +113,6 @@ fn use_map_with_rbpf() {
     assert_eq!(vm.execute_program().unwrap(), 0);
 
     assert_eq!(map_instances, [[24], [42], [44]]);
-
-    unsafe {
-        MULTIMAP_MAPS.iter_mut().for_each(|v| *v = null_mut());
-    }
 }
 
 #[track_caller]
