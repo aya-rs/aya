@@ -22,7 +22,7 @@ static CPUS: CpuMap = CpuMap::with_max_entries(1, 0);
 /// counts how many times the map programs got executed.
 /// This allows the test harness to assert that a specific step got executed.
 #[map]
-static mut HITS: Array<u32> = Array::with_max_entries(2, 0);
+static HITS: Array<u32> = Array::with_max_entries(2, 0);
 
 #[xdp]
 pub fn redirect_sock(_ctx: XdpContext) -> u32 {
@@ -61,7 +61,7 @@ pub fn redirect_dev_chain(_ctx: XdpContext) -> u32 {
 
 #[inline(always)]
 fn inc_hit(index: u32) {
-    if let Some(hit) = unsafe { HITS.get_ptr_mut(index) } {
+    if let Some(hit) = HITS.get_ptr_mut(index) {
         unsafe { *hit += 1 };
     }
 }
