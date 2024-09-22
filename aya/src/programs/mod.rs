@@ -74,7 +74,7 @@ pub mod xdp;
 
 use std::{
     borrow::Cow,
-    ffi::CString,
+    ffi::{CString, OsStr},
     io,
     os::fd::{AsFd, BorrowedFd},
     path::{Path, PathBuf},
@@ -125,6 +125,13 @@ pub use crate::programs::{
     uprobe::{UProbe, UProbeError},
     xdp::{Xdp, XdpError, XdpFlags},
 };
+
+pub(crate) fn test_kprobe_creation(
+    fn_name: &OsStr,
+    offset: u64,
+) -> Result<crate::MockableFd, ProgramError> {
+    probe::create_as_probe::<KProbe>(ProbeKind::Entry, fn_name, offset, None)
+}
 use crate::{
     VerifierLogLevel,
     maps::MapError,

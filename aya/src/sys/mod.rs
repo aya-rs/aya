@@ -243,3 +243,28 @@ impl From<Stats> for bpf_stats_type {
 pub fn enable_stats(stats_type: Stats) -> Result<OwnedFd, SyscallError> {
     bpf_enable_stats(stats_type.into()).map(super::MockableFd::into_inner)
 }
+
+#[cfg(test)]
+#[expect(
+    clippy::unnecessary_wraps,
+    reason = "matches non-test signature for call sites"
+)]
+pub(crate) fn kernel_release() -> Result<String, ()> {
+    Ok("unknown".to_string())
+}
+
+#[cfg(not(test))]
+pub(crate) fn kernel_release() -> Result<String, ()> {
+    use std::ffi::CStr;
+
+    unsafe {
+        let mut v = std::mem::zeroed::<libc::utsname>();
+        if libc::uname(std::ptr::from_mut(&mut v)) != 0 {
+            return Err(());
+        }
+
+        let release = CStr::from_ptr(v.release.as_ptr());
+
+        Ok(release.to_string_lossy().into_owned())
+    }
+}
