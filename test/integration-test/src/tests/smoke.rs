@@ -1,5 +1,5 @@
 use aya::{
-    Ebpf, EbpfLoader,
+    Ebpf, EbpfLoader, KConfig,
     programs::{Extension, TracePoint, Xdp, XdpFlags, tc},
     util::KernelVersion,
 };
@@ -82,4 +82,23 @@ fn extension() {
     drop_
         .load(pass.fd().unwrap().try_clone().unwrap(), "xdp_pass")
         .unwrap();
+}
+
+#[test]
+fn kconfig() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 9, 0) {
+        eprintln!(
+            "skipping test on kernel {kernel_version:?}, kconfig support for BPF requires 5.9.0"
+        );
+        return;
+    }
+    let kconfig = KConfig::from_system();
+    let mut bpf = EbpfLoader::new()
+        .kconfig(kconfig)
+        .load(crate::KCONFIG)
+        .unwrap();
+    let pass: &mut Xdp = bpf.program_mut("kconfig").unwrap().try_into().unwrap();
+    pass.load().unwrap();
+    pass.attach("lo", XdpFlags::default()).unwrap();
 }
