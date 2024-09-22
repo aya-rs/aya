@@ -145,7 +145,7 @@ pub(crate) fn detach_debug_fs(event: ProbeEvent) -> Result<(), ProgramError> {
     })
 }
 
-fn create_as_probe(
+pub(crate) fn create_as_probe(
     kind: ProbeKind,
     fn_name: &OsStr,
     offset: u64,
