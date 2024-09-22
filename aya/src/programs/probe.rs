@@ -197,6 +197,16 @@ fn create_as_probe<P: Probe>(
         .map_err(Into::into)
 }
 
+/// Test helper to check if a kprobe can be created for the given function name.
+/// This is used for capability detection.
+pub(crate) fn test_kprobe_creation(
+    fn_name: &OsStr,
+    offset: u64,
+) -> Result<crate::MockableFd, ProgramError> {
+    use crate::programs::KProbe;
+    create_as_probe::<KProbe>(ProbeKind::Entry, fn_name, offset, None)
+}
+
 fn create_as_trace_point<P: Probe>(
     kind: ProbeKind,
     name: &OsStr,

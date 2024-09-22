@@ -1,6 +1,6 @@
 use std::{
     cmp,
-    ffi::{CStr, CString, c_char},
+    ffi::{CStr, CString, OsStr, c_char},
     fmt, io, iter,
     mem::{self, MaybeUninit},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, RawFd},
@@ -32,7 +32,7 @@ use log::warn;
 use crate::{
     Btf, Pod, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
-    programs::{LsmAttachType, ProgramType, links::LinkRef},
+    programs::{LsmAttachType, ProgramType, links::LinkRef, probe::test_kprobe_creation},
     sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
 };
@@ -1012,6 +1012,48 @@ pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
     u.map_flags = 0;
 
     bpf_map_create(&mut attr).is_ok()
+}
+
+fn arch_specific_syscall_prefix() -> Option<&'static str> {
+    if cfg!(target_arch = "aarch64") {
+        Some("arm64")
+    } else if cfg!(target_arch = "arm") {
+        Some("arm")
+    } else if cfg!(target_arch = "powerpc") {
+        Some("powerpc")
+    } else if cfg!(target_arch = "powerpc64") {
+        Some("powerpc64")
+    } else if cfg!(target_arch = "riscv32") || cfg!(target_arch = "riscv64") {
+        Some("riscv")
+    } else if cfg!(target_arch = "x86") {
+        Some("ia32")
+    } else if cfg!(target_arch = "x86_64") {
+        Some("x64")
+    } else if cfg!(target_arch = "s390x") {
+        Some("s390x")
+    } else if cfg!(target_arch = "mips") || cfg!(target_arch = "mips64") {
+        Some("mips")
+    } else {
+        None
+    }
+}
+
+pub(crate) fn is_bpf_syscall_wrapper_supported() -> bool {
+    let syscall_prefix_opt = arch_specific_syscall_prefix();
+
+    if let Some(syscall_prefix) = syscall_prefix_opt {
+        let syscall_name = format!("__{}_sys_bpf", syscall_prefix);
+        let syscall_name = OsStr::new(syscall_name.as_str());
+
+        if cfg!(miri) {
+            // Miri runs with isolation; avoid filesystem/probe checks.
+            return true;
+        }
+
+        return test_kprobe_creation(syscall_name, 0).is_ok();
+    }
+
+    false
 }
 
 pub(crate) fn is_btf_supported() -> bool {
