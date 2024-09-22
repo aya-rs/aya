@@ -21,6 +21,7 @@ assert_matches = { workspace = true }
 aya-obj = { path = "../aya-obj", version = "^0.2.2", features = ["std"] }
 bitflags = { workspace = true }
 bytes = { workspace = true }
+flate2 = { workspace = true, features = ["rust_backend"] }
 hashbrown = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }
