@@ -14,11 +14,10 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  LLVM_VERSION: 18
 
 jobs:
   lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -74,7 +73,7 @@ jobs:
           - riscv64gc-unknown-linux-gnu
           - powerpc64le-unknown-linux-gnu
           - s390x-unknown-linux-gnu
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -142,7 +141,7 @@ jobs:
         target:
           - bpfel-unknown-none
           - bpfeb-unknown-none
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -189,6 +188,7 @@ jobs:
           # doesn't support nested virtualization per
           # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#limitations-for-arm64-macos-runners
           - macos-13
+          # We don't use ubuntu-latest because we care about the apt packages available.
           - ubuntu-22.04
     runs-on: ${{ matrix.runner }}
     steps:
@@ -198,23 +198,15 @@ jobs:
 
       - name: Install prerequisites
         if: runner.os == 'Linux'
-        # ubuntu-22.04 comes with clang 14[0] which doesn't include support for signed and 64bit
-        # enum values which was added in clang 15[1].
-        #
         # gcc-multilib provides at least <asm/types.h> which is referenced by libbpf.
         #
         # llvm provides llvm-objcopy which is used to build the BTF relocation tests.
-        #
-        # [0] https://github.com/actions/runner-images/blob/ubuntu22/20230724.1/images/linux/Ubuntu2204-Readme.md
-        #
-        # [1] https://github.com/llvm/llvm-project/commit/dc1c43d
         run: |
           set -euxo pipefail
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          echo deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-${{ env.LLVM_VERSION }} main | sudo tee /etc/apt/sources.list.d/llvm.list
           sudo apt update
-          sudo apt -y install clang-${{ env.LLVM_VERSION }} gcc-multilib llvm-${{ env.LLVM_VERSION }} locate qemu-system-{arm,x86}
-          echo /usr/lib/llvm-${{ env.LLVM_VERSION }}/bin >> $GITHUB_PATH
+          clang --version
+          sudo apt -y install gcc-multilib llvm locate qemu-system-{arm,x86}
+          llvm-objcopy --version
 
       - name: bpf-linker
         if: runner.os == 'Linux'
