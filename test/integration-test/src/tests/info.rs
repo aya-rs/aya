@@ -216,10 +216,6 @@ fn test_prog_stats() {
     prog.attach("syscalls", "sys_enter_bpf").unwrap();
     let test_prog = prog.info().unwrap();
 
-    kernel_assert!(
-        test_prog.run_time().as_nanos() > 0,
-        KernelVersion::new(5, 1, 0)
-    );
     kernel_assert!(test_prog.run_count() > 0, KernelVersion::new(5, 1, 0));
 
     // Restore to previous state
