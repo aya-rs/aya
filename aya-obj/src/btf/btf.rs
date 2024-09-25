@@ -544,22 +544,23 @@ impl Btf {
         target_var_name: &str,
     ) -> Result<(String, Var), BtfError> {
         for t in &self.types.types {
-            if let BtfType::DataSec(d) = t {
-                let sec_name = self.string_at(d.name_offset)?;
+            let BtfType::DataSec(d) = t else {
+                continue;
+            };
+            let sec_name = self.string_at(d.name_offset)?;
 
-                for d in &d.entries {
-                    if let BtfType::Var(var) = self.types.type_by_id(d.btf_type)? {
-                        let var_name = self.string_at(var.name_offset)?;
+            for d in &d.entries {
+                let BtfType::Var(var) = self.types.type_by_id(d.btf_type)? else {
+                    continue;
+                };
 
-                        if target_var_name == var_name {
-                            if var.linkage != VarLinkage::Extern {
-                                return Err(BtfError::InvalidExternalSymbol {
-                                    symbol_name: var_name.into(),
-                                });
-                            }
-
-                            return Ok((sec_name.into(), var.clone()));
-                        }
+                if target_var_name == self.string_at(var.name_offset)? {
+                    if var.linkage == VarLinkage::Extern {
+                        return Ok((sec_name.into(), var.clone()));
+                    } else {
+                        return Err(BtfError::InvalidExternalSymbol {
+                            symbol_name: target_var_name.into(),
+                        });
                     }
                 }
             }
