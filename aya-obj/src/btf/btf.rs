@@ -889,8 +889,8 @@ impl Object {
                         section_data.resize((symbol.address - offset) as usize, 0);
 
                         self.symbol_offset_by_name.insert(name, symbol.address);
+                        offset = symbol.address + section_data.len() as u64;
                         section_data.extend(data);
-                        offset = symbol.address + data.len() as u64;
                     } else {
                         return Err(BtfError::ExternalSymbolNotFound { symbol_name: name });
                     }
