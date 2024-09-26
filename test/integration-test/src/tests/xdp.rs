@@ -1,4 +1,4 @@
-use std::{ffi::CStr, mem::MaybeUninit, net::UdpSocket, num::NonZeroU32, time::Duration};
+use std::{mem::MaybeUninit, net::UdpSocket, num::NonZeroU32, time::Duration};
 
 use aya::{
     maps::{Array, CpuMap, XskMap},
@@ -41,9 +41,7 @@ fn af_xdp() {
     };
 
     let mut iface = IfInfo::invalid();
-    iface
-        .from_name(CStr::from_bytes_with_nul(b"lo\0").unwrap())
-        .unwrap();
+    iface.from_name(c"lo").unwrap();
     let sock = Socket::with_shared(&iface, &umem).unwrap();
 
     let mut fq_cq = umem.fq_cq(&sock).unwrap(); // Fill Queue / Completion Queue

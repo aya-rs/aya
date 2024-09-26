@@ -44,7 +44,6 @@ use crate::{
 /// assert_eq!(value, 2);
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
-
 #[doc(alias = "BPF_MAP_TYPE_LPM_TRIE")]
 #[derive(Debug)]
 pub struct LpmTrie<T, K, V> {
