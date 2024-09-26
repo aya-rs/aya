@@ -14,7 +14,6 @@ use xtask::AYA_BUILD_INTEGRATION_BPF;
 /// which would likely mean far too much cache invalidation.
 ///
 /// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
-
 fn main() {
     println!("cargo:rerun-if-env-changed={}", AYA_BUILD_INTEGRATION_BPF);
 

@@ -32,7 +32,6 @@ use crate::{
 ///
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
-
 #[doc(alias = "BPF_MAP_TYPE_BLOOM_FILTER")]
 #[derive(Debug)]
 pub struct BloomFilter<T, V: Pod> {
