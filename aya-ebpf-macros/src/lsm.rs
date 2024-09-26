@@ -112,7 +112,7 @@ impl Lsm {
     }
 
      // LSM probes need to return an integer corresponding to the correct
-        // policy decision. Therefore we do not simply default to a return value
+    // policy decision. Therefore we do not simply default to a return value
         // of 0 as in other program types.
 >>>>>>> bcb9baa (lsm_cgroup program type support for aya)
 }
@@ -128,8 +128,7 @@ mod tests {
         let prog = Lsm::parse(
             parse_quote! {
                 sleepable,
-                hook = "bprm_committed_creds",
-                cgroup = false
+                hook = "bprm_committed_creds"
             },
             parse_quote! {
                 fn bprm_committed_creds(ctx: &mut ::aya_ebpf::programs::LsmContext) -> i32 {
@@ -170,6 +169,35 @@ mod tests {
         let expected = quote! {
             #[no_mangle]
             #[link_section = "lsm/bprm_committed_creds"]
+            fn bprm_committed_creds(ctx: *mut ::core::ffi::c_void) -> i32 {
+                return bprm_committed_creds(::aya_ebpf::programs::LsmContext::new(ctx));
+
+                fn bprm_committed_creds(ctx: &mut ::aya_ebpf::programs::LsmContext) -> i32 {
+                    0
+                }
+            }
+        };
+        assert_eq!(expected.to_string(), expanded.to_string());
+    }
+
+    #[test]
+    fn test_lsm_cgroup() {
+        let prog = Lsm::parse(
+            parse_quote! {
+                hook = "bprm_committed_creds",
+                cgroup
+            },
+            parse_quote! {
+                fn bprm_committed_creds(ctx: &mut ::aya_ebpf::programs::LsmContext) -> i32 {
+                    0
+                }
+            },
+        )
+        .unwrap();
+        let expanded = prog.expand().unwrap();
+        let expected = quote! {
+            #[no_mangle]
+            #[link_section = "lsm_cgroup/bprm_committed_creds"]
             fn bprm_committed_creds(ctx: *mut ::core::ffi::c_void) -> i32 {
                 return bprm_committed_creds(::aya_ebpf::programs::LsmContext::new(ctx));
 

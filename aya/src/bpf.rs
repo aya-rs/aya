@@ -11,7 +11,7 @@ use std::{
 };
 
 use aya_obj::{
-    btf::{BtfFeatures, BtfRelocationError}, generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS}, programs::LsmAttachType, relocation::EbpfRelocationError, EbpfSectionKind, Features
+    btf::{BtfFeatures, BtfRelocationError}, generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS}, relocation::EbpfRelocationError, EbpfSectionKind, Features
 };
 use log::{debug, warn};
 use thiserror::Error;

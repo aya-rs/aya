@@ -16,7 +16,6 @@ impl From<LsmAttachType> for bpf_attach_type {
         match value {
             LsmAttachType::Cgroup => bpf_attach_type::BPF_LSM_CGROUP,
             LsmAttachType::Mac => bpf_attach_type::BPF_LSM_MAC,
-            
         }
     }
 }

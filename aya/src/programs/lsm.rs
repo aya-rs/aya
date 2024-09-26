@@ -30,7 +30,7 @@ use super::Link;
 /// The minimum kernel version required to use this feature is 5.7.
 ///
 /// # Examples
-///
+/// LSM with MAC attachment type
 /// ```no_run
 /// # #[derive(thiserror::Error, Debug)]
 /// # enum LsmError {
@@ -50,6 +50,29 @@ use super::Link;
 /// program.attach()?;
 /// # Ok::<(), LsmError>(())
 /// ```
+/// 
+/// LSM with cgroup attachment type
+/// ```no_run
+/// # #[derive(thiserror::Error, Debug)]
+/// # enum LsmError {
+/// #     #[error(transparent)]
+/// #     BtfError(#[from] aya::BtfError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Ebpf(#[from] aya::EbpfError),
+/// # }
+/// # let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
+/// use aya::{Ebpf, programs::Lsm, BtfError, Btf};
+///
+/// let btf = Btf::from_sys_fs()?;
+/// let file = File::open("/sys/fs/cgroup/unified")?;
+/// let program: &mut Lsm = bpf.program_mut("lsm_prog").unwrap().try_into()?;
+/// program.load("security_bprm_exec", &btf)?;
+/// program.attach(Some(file))?;
+/// # Ok::<(), LsmError>(())
+/// ```
+/// 
 ///
 /// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
 #[derive(Debug)]
@@ -92,7 +115,7 @@ impl Lsm {
                         prog_fd,
                         LinkTarget::Fd(cgroup_fd),
                         attach_type,
-                        None,
+                        btf_id,
                         0,
                     )
                     .map_err(|(_, io_error)| SyscallError {
@@ -121,31 +144,6 @@ impl Lsm {
     }
 }
 
-// #[derive(Debug, Hash, Eq, PartialEq)]
-// enum LsmLinkIdInner {
-//     Fd(<FdLink as Link>::Id),
-// }
-
-// #[derive(Debug)]
-// enum LsmLinkInner {
-//     Fd(FdLink),
-// }
-
-// impl Link for LsmLinkInner {
-//     type Id = LsmLinkIdInner;
-
-//     fn id(&self) -> Self::Id {
-//         match self {
-//             LsmLinkInner::Fd(fd) => LsmLinkIdInner::Fd(fd.id()),
-//         }
-//     }
-
-//     fn detach(self) -> Result<(), ProgramError> {
-//         match self {
-//             LsmLinkInner::Fd(fd) => fd.detach(),
-//         }
-//     }
-// }
 
 define_link_wrapper!(
     /// The link used by [Lsm] programs.

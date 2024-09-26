@@ -9,7 +9,6 @@ mod cgroup_sysctl;
 mod fentry;
 mod fexit;
 mod kprobe;
-mod lsm_cgroup;
 mod lsm;
 mod map;
 mod perf_event;
@@ -35,7 +34,6 @@ use fentry::FEntry;
 use fexit::FExit;
 use kprobe::{KProbe, KProbeKind};
 use lsm::Lsm;
-use lsm_cgroup::LsmCgroup;
 use map::Map;
 use perf_event::PerfEvent;
 use proc_macro::TokenStream;
@@ -327,52 +325,6 @@ pub fn lsm(attrs: TokenStream, item: TokenStream) -> TokenStream {
         Err(err) => err.into_compile_error(),
     }
     .into()
-}
-
-/// Marks a function as an LSM program that can be attached to Linux LSM hooks
-/// within a [cgroup]. Used to implement security policy and audit logging.
-///
-/// LSM probes can be attached to the kernel's security hooks to implement mandatory
-/// access control policy and security auditing.
-///
-/// LSM probes require a kernel compiled with `CONFIG_BPF_LSM=y` and
-/// `CONFIG_DEBUG_INFO_BTF=y`. In order for the probes to fire, you also need
-/// the BPF LSM to be enabled through your kernel's `lsm` option. If your kernel
-/// is not built with `lsm=[...],bpf` option, BPF LSM needs to be enabled
-/// through the kernel's boot parameter (like `lsm=lockdown,yama,bpf`).
-///
-/// # Minimum kernel version
-///
-/// The minimum kernel version required to use this feature is 6.0.
-///
-/// # Examples
-///
-/// ```no_run
-/// use aya_bpf::{macros::lsm, programs::LsmContext};
-///
-/// #[lsm(name = "file_open")]
-/// pub fn file_open(ctx: LsmContext) -> i32 {
-///     match unsafe { try_file_open(ctx) } {
-///         Ok(ret) => ret,
-///         Err(ret) => ret,
-///     }
-/// }
-///
-/// unsafe fn try_file_open(_ctx: LsmContext) -> Result<i32, i32> {
-///     Ok(0)
-/// }
-/// ```
-
-#[proc_macro_error]
-#[proc_macro_attribute]
-pub fn lsm_cgroup(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    match LsmCgroup::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
-    }
 }
 
 /// Marks a function as a [BTF-enabled raw tracepoint][1] eBPF program that can be attached at
