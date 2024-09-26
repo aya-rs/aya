@@ -1,13 +1,19 @@
 //! LSM probes.
 
+use std::os::fd::AsFd;
+
+use aya_obj::{generated::bpf_attach_type, programs::LsmAttachType};
+
 use crate::{
     generated::{bpf_attach_type::BPF_LSM_MAC, bpf_prog_type::BPF_PROG_TYPE_LSM},
     obj::btf::{Btf, BtfKind},
     programs::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
         ProgramData, ProgramError,
-    },
+    }, sys::{bpf_link_create, LinkTarget, SyscallError},
 };
+
+use super::Link;
 
 /// A program that attaches to Linux LSM hooks. Used to implement security policy and
 /// audit logging.
@@ -50,6 +56,7 @@ use crate::{
 #[doc(alias = "BPF_PROG_TYPE_LSM")]
 pub struct Lsm {
     pub(crate) data: ProgramData<LsmLink>,
+    pub(crate) attach_type: LsmAttachType,
 }
 
 impl Lsm {
@@ -60,7 +67,7 @@ impl Lsm {
     /// * `lsm_hook_name` - full name of the LSM hook that the program should
     ///   be attached to
     pub fn load(&mut self, lsm_hook_name: &str, btf: &Btf) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_LSM_MAC);
+        self.data.expected_attach_type = Some(self.attach_type.into());
         let type_name = format!("bpf_lsm_{lsm_hook_name}");
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
@@ -70,10 +77,75 @@ impl Lsm {
     /// Attaches the program.
     ///
     /// The returned value can be used to detach, see [Lsm::detach].
-    pub fn attach(&mut self) -> Result<LsmLinkId, ProgramError> {
-        attach_raw_tracepoint(&mut self.data, None)
+    pub fn attach<T: AsFd>(&mut self, cgroup: Option<T>) -> Result<LsmLinkId, ProgramError> {
+        match self.attach_type{
+            LsmAttachType::Cgroup => {
+                if let Some(cgroup) = cgroup{
+                    let prog_fd = self.fd()?;
+                    let prog_fd = prog_fd.as_fd();
+                    let cgroup_fd = cgroup.as_fd();
+                    let attach_type = self.data.expected_attach_type.unwrap();
+                    let btf_id = self.data.attach_btf_id;
+            
+                
+                    let link_fd = bpf_link_create(
+                        prog_fd,
+                        LinkTarget::Fd(cgroup_fd),
+                        attach_type,
+                        None,
+                        0,
+                    )
+                    .map_err(|(_, io_error)| SyscallError {
+                        call: "bpf_link_create",
+                        io_error,
+                    })?;
+            
+                    self.data
+                        .links
+                        .insert(LsmLink::new(FdLink::new(
+                            link_fd,
+                        )))
+                }else {
+                    return Err(ProgramError::UnexpectedProgramType);
+                }
+            },
+            LsmAttachType::Mac => {
+                attach_raw_tracepoint(&mut self.data, None)
+            },
+            _ => { 
+                //should not happen
+                return Err(ProgramError::UnexpectedProgramType);
+            }
+        }
+       
     }
 }
+
+// #[derive(Debug, Hash, Eq, PartialEq)]
+// enum LsmLinkIdInner {
+//     Fd(<FdLink as Link>::Id),
+// }
+
+// #[derive(Debug)]
+// enum LsmLinkInner {
+//     Fd(FdLink),
+// }
+
+// impl Link for LsmLinkInner {
+//     type Id = LsmLinkIdInner;
+
+//     fn id(&self) -> Self::Id {
+//         match self {
+//             LsmLinkInner::Fd(fd) => LsmLinkIdInner::Fd(fd.id()),
+//         }
+//     }
+
+//     fn detach(self) -> Result<(), ProgramError> {
+//         match self {
+//             LsmLinkInner::Fd(fd) => fd.detach(),
+//         }
+//     }
+// }
 
 define_link_wrapper!(
     /// The link used by [Lsm] programs.
