@@ -159,37 +159,8 @@ fn compute_kconfig_definition(features: &Features) -> HashMap<String, Vec<u8>> {
         to_bytes(bpf_syscall_wrapper).to_vec(),
     );
 
-    let mut raw_config_opt = None;
-
-    let proc_config_path = PathBuf::from("/proc/config.gz");
-
-    if proc_config_path.exists() {
-        if let Ok(file) = File::open(proc_config_path) {
-            let mut file = GzDecoder::new(file);
-            let mut output = String::new();
-            if file.read_to_string(&mut output).is_ok() {
-                raw_config_opt = Some(output);
-            }
-        }
-    }
-
-    if raw_config_opt.is_none() {
-        if let Ok(release) = sys::kernel_release() {
-            let config_path = PathBuf::from("/boot").join(format!("config-{}", release));
-
-            if config_path.exists() {
-                if let Ok(mut file) = File::open(config_path) {
-                    let mut output = String::new();
-                    if file.read_to_string(&mut output).is_ok() {
-                        raw_config_opt = Some(output);
-                    }
-                }
-            }
-        }
-    }
-
-    if let Some(raw_config) = raw_config_opt {
-        for line in raw_config.split('\n') {
+    if let Some(raw_config) = read_kconfig() {
+        for line in raw_config.lines() {
             if !line.starts_with("CONFIG_") {
                 continue;
             }
@@ -228,6 +199,50 @@ fn compute_kconfig_definition(features: &Features) -> HashMap<String, Vec<u8>> {
     }
 
     result
+}
+
+fn read_kconfig() -> Option<String> {
+    let config_path = PathBuf::from("/proc/config.gz");
+    if config_path.exists() {
+        debug!("Found kernel config at {}", config_path.to_string_lossy());
+        return read_kconfig_file(&config_path, true);
+    }
+
+    let Ok(release) = sys::kernel_release() else {
+        return None;
+    };
+
+    let config_path = PathBuf::from("/boot").join(format!("config-{}", release));
+    if config_path.exists() {
+        debug!("Found kernel config at {}", config_path.to_string_lossy());
+        return read_kconfig_file(&config_path, false);
+    }
+
+    None
+}
+
+fn read_kconfig_file(path: &PathBuf, gzip: bool) -> Option<String> {
+    let mut output = String::new();
+
+    let res = if gzip {
+        File::open(path)
+            .map(GzDecoder::new)
+            .and_then(|mut file| file.read_to_string(&mut output))
+    } else {
+        File::open(path).and_then(|mut file| file.read_to_string(&mut output))
+    };
+
+    match res {
+        Ok(_) => Some(output),
+        Err(e) => {
+            warn!(
+                "Unable to read kernel config {}: {:?}",
+                path.to_string_lossy(),
+                e
+            );
+            None
+        }
+    }
 }
 
 /// Builder style API for advanced loading of eBPF programs.
