@@ -62,6 +62,10 @@ name = "ring_buf"
 path = "src/ring_buf.rs"
 
 [[bin]]
+name = "ignore_map"
+path = "src/ignore_map.rs"
+
+[[bin]]
 name = "memmove_test"
 path = "src/memmove_test.rs"
 
