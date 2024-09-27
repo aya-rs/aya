@@ -10,6 +10,7 @@ use std::{
 };
 
 use libc::pid_t;
+use log::warn;
 
 use crate::{
     programs::{
@@ -117,13 +118,23 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let link = if KernelVersion::current().unwrap() < KernelVersion::new(4, 17, 0) {
-        let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
-        perf_attach_debugfs(prog_fd, fd, ProbeEvent { kind, event_alias })
-    } else {
-        let fd = create_as_probe(kind, fn_name, offset, pid)?;
-        perf_attach(prog_fd, fd)
+    let link = match KernelVersion::current() {
+        Ok(version) => {
+            if version < KernelVersion::new(4, 17, 0) {
+                let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
+                perf_attach_debugfs(prog_fd, fd, ProbeEvent { kind, event_alias })
+            } else {
+                let fd = create_as_probe(kind, fn_name, offset, pid)?;
+                perf_attach(prog_fd, fd)
+            }
+        }
+        Err(_) => {
+            warn!("Warning: Can not get the current kernel version");
+            let fd = create_as_probe(kind, fn_name, offset, pid)?;
+            perf_attach(prog_fd, fd)
+        }
     }?;
+
     program_data.links.insert(T::from(link))
 }
 

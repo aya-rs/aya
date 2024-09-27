@@ -9,6 +9,7 @@ use std::{
 };
 
 use libc::if_nametoindex;
+use log::warn;
 use thiserror::Error;
 
 use crate::{
@@ -135,42 +136,61 @@ impl Xdp {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
 
-        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 9, 0) {
-            // Unwrap safety: the function starts with `self.fd()?` that will succeed if and only
-            // if the program has been loaded, i.e. there is an fd. We get one by:
-            // - Using `Xdp::from_pin` that sets `expected_attach_type`
-            // - Calling `Xdp::attach` that sets `expected_attach_type`, as geting an `Xdp`
-            //   instance trhough `Xdp:try_from(Program)` does not set any fd.
-            // So, in all cases where we have an fd, we have an expected_attach_type. Thus, if we
-            // reach this point, expected_attach_type is guaranteed to be Some(_).
-            let attach_type = self.data.expected_attach_type.unwrap();
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::IfIndex(if_index),
-                attach_type,
-                None,
-                flags.bits(),
-            )
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
-            self.data
-                .links
-                .insert(XdpLink::new(XdpLinkInner::FdLink(FdLink::new(link_fd))))
-        } else {
-            let if_index = if_index as i32;
-            unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, flags.bits()) }
-                .map_err(|io_error| XdpError::NetlinkError { io_error })?;
+        match KernelVersion::current() {
+            Ok(kernel_version) => {
+                if kernel_version >= KernelVersion::new(5, 9, 0) {
+                    // Unwrap safety: the function starts with `self.fd()?` that will succeed if and only
+                    // if the program has been loaded, i.e. there is an fd. We get one by:
+                    // - Using `Xdp::from_pin` that sets `expected_attach_type`
+                    // - Calling `Xdp::attach` that sets `expected_attach_type`, as geting an `Xdp`
+                    //   instance trhough `Xdp:try_from(Program)` does not set any fd.
+                    // So, in all cases where we have an fd, we have an expected_attach_type. Thus, if we
+                    // reach this point, expected_attach_type is guaranteed to be Some(_).
+                    let attach_type = self.data.expected_attach_type.unwrap();
+                    let link_fd = bpf_link_create(
+                        prog_fd,
+                        LinkTarget::IfIndex(if_index),
+                        attach_type,
+                        None,
+                        flags.bits(),
+                    )
+                    .map_err(|(_, io_error)| SyscallError {
+                        call: "bpf_link_create",
+                        io_error,
+                    })?;
+                    self.data
+                        .links
+                        .insert(XdpLink::new(XdpLinkInner::FdLink(FdLink::new(link_fd))))
+                } else {
+                    let if_index = if_index as i32;
+                    unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, flags.bits()) }
+                        .map_err(|io_error| XdpError::NetlinkError { io_error })?;
 
-            let prog_fd = prog_fd.as_raw_fd();
-            self.data
-                .links
-                .insert(XdpLink::new(XdpLinkInner::NlLink(NlLink {
-                    if_index,
-                    prog_fd,
-                    flags,
-                })))
+                    let prog_fd = prog_fd.as_raw_fd();
+                    self.data
+                        .links
+                        .insert(XdpLink::new(XdpLinkInner::NlLink(NlLink {
+                            if_index,
+                            prog_fd,
+                            flags,
+                        })))
+                }
+            }
+            Err(e) => {
+                eprintln!("Error getting the current kernel version");
+                let if_index = if_index as i32;
+                unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, flags.bits()) }
+                    .map_err(|io_error| XdpError::NetlinkError { io_error })?;
+
+                let prog_fd = prog_fd.as_raw_fd();
+                self.data
+                    .links
+                    .insert(XdpLink::new(XdpLinkInner::NlLink(NlLink {
+                        if_index,
+                        prog_fd,
+                        flags,
+                    })))
+            }
         }
     }
 
@@ -269,11 +289,20 @@ impl Link for NlLink {
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        let flags = if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            self.flags.bits() | XDP_FLAGS_REPLACE
-        } else {
-            self.flags.bits()
+        let flags = match KernelVersion::current() {
+            Ok(kernel_version) => {
+                if kernel_version >= KernelVersion::new(5, 7, 0) {
+                    self.flags.bits() | XDP_FLAGS_REPLACE
+                } else {
+                    self.flags.bits()
+                }
+            }
+            Err(_) => {
+                warn!("Warning: Can not get the current kernel version");
+                self.flags.bits()
+            }
         };
+
         // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
         let prog_fd = unsafe { BorrowedFd::borrow_raw(self.prog_fd) };
         let _ = unsafe { netlink_set_xdp_fd(self.if_index, None, Some(prog_fd), flags) };

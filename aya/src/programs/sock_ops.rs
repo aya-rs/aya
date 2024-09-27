@@ -1,6 +1,8 @@
 //! Socket option programs.
 use std::os::fd::AsFd;
 
+use log::warn;
+
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS},
     programs::{
@@ -68,27 +70,40 @@ impl SockOps {
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
         let attach_type = BPF_CGROUP_SOCK_OPS;
-        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                attach_type,
-                None,
-                mode.into(),
-            )
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
-            self.data
-                .links
-                .insert(SockOpsLink::new(SockOpsLinkInner::Fd(FdLink::new(link_fd))))
-        } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
-            self.data
-                .links
-                .insert(SockOpsLink::new(SockOpsLinkInner::ProgAttach(link)))
+        match KernelVersion::current() {
+            Ok(version) => {
+                if version >= KernelVersion::new(5, 7, 0) {
+                    let link_fd = bpf_link_create(
+                        prog_fd,
+                        LinkTarget::Fd(cgroup_fd),
+                        attach_type,
+                        None,
+                        mode.into(),
+                    )
+                    .map_err(|(_, io_error)| SyscallError {
+                        call: "bpf_link_create",
+                        io_error,
+                    })?;
+                    self.data
+                        .links
+                        .insert(SockOpsLink::new(SockOpsLinkInner::Fd(FdLink::new(link_fd))))
+                } else {
+                    let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
+
+                    self.data
+                        .links
+                        .insert(SockOpsLink::new(SockOpsLinkInner::ProgAttach(link)))
+                }
+            }
+            Err(_) => {
+                warn!("Warning: Can not get the current kernel version");
+                let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
+
+                self.data
+                    .links
+                    .insert(SockOpsLink::new(SockOpsLinkInner::ProgAttach(link)))
+            }
         }
     }
 
