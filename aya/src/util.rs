@@ -196,7 +196,15 @@ pub fn online_cpus() -> Result<Vec<u32>, (&'static str, io::Error)> {
 ///
 /// See `/sys/devices/system/cpu/possible`.
 pub fn nr_cpus() -> Result<usize, (&'static str, io::Error)> {
-    read_cpu_ranges(POSSIBLE_CPUS).map(|cpus| cpus.len())
+    thread_local! {
+        // TODO(https://github.com/rust-lang/rust/issues/109737): Use
+        // `std::cell::OnceCell` when `get_or_try_init` is stabilized.
+        static CACHE: once_cell::unsync::OnceCell<usize> = const { once_cell::unsync::OnceCell::new() };
+    }
+    CACHE.with(|cell| {
+        cell.get_or_try_init(|| read_cpu_ranges(POSSIBLE_CPUS).map(|cpus| cpus.len()))
+            .copied()
+    })
 }
 
 fn read_cpu_ranges(path: &'static str) -> Result<Vec<u32>, (&'static str, io::Error)> {
