@@ -69,3 +69,16 @@ fn extension() {
         .load(pass.fd().unwrap().try_clone().unwrap(), "xdp_pass")
         .unwrap();
 }
+
+#[test]
+fn kconfig() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 9, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
+        return;
+    }
+    let mut bpf = Ebpf::load(crate::KCONFIG).unwrap();
+    let pass: &mut Xdp = bpf.program_mut("kconfig").unwrap().try_into().unwrap();
+    pass.load().unwrap();
+    pass.attach("lo", XdpFlags::default()).unwrap();
+}

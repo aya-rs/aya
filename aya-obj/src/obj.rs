@@ -49,6 +49,7 @@ pub struct Features {
     devmap_prog_id: bool,
     prog_info_map_ids: bool,
     prog_info_gpl_compatible: bool,
+    bpf_syscall_wrapper: bool,
     btf: Option<BtfFeatures>,
 }
 
@@ -65,6 +66,7 @@ impl Features {
         devmap_prog_id: bool,
         prog_info_map_ids: bool,
         prog_info_gpl_compatible: bool,
+        bpf_syscall_wrapper: bool,
         btf: Option<BtfFeatures>,
     ) -> Self {
         Self {
@@ -77,6 +79,7 @@ impl Features {
             devmap_prog_id,
             prog_info_map_ids,
             prog_info_gpl_compatible,
+            bpf_syscall_wrapper,
             btf,
         }
     }
@@ -117,6 +120,10 @@ impl Features {
     /// Returns whether XDP Device Maps support chained program IDs.
     pub fn devmap_prog_id(&self) -> bool {
         self.devmap_prog_id
+    }
+    /// Returns whether BPF syscall wrapper hooking is supported.
+    pub fn bpf_syscall_wrapper(&self) -> bool {
+        self.bpf_syscall_wrapper
     }
 
     /// Returns whether `bpf_prog_info` supports `nr_map_ids` & `map_ids` fields.
@@ -483,6 +490,8 @@ impl Object {
                     address: symbol.address(),
                     size: symbol.size(),
                     is_definition: symbol.is_definition(),
+                    is_external: symbol.is_undefined() && (symbol.is_global() || symbol.is_weak()),
+                    is_weak: symbol.is_weak(),
                     kind: symbol.kind(),
                 };
                 bpf_obj.symbol_table.insert(symbol.index().0, sym);
@@ -1465,6 +1474,8 @@ mod tests {
                 size,
                 is_definition: false,
                 kind: SymbolKind::Text,
+                is_external: false,
+                is_weak: false,
             },
         );
         obj.symbols_by_section
@@ -2601,6 +2612,8 @@ mod tests {
                 address: 0,
                 size: 3,
                 is_definition: true,
+                is_external: false,
+                is_weak: false,
                 kind: SymbolKind::Data,
             },
         );

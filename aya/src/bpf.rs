@@ -1,7 +1,8 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    fs, io,
+    fs::{self, File},
+    io::{self, Read},
     os::{
         fd::{AsFd as _, AsRawFd as _},
         raw::c_int,
@@ -16,6 +17,8 @@ use aya_obj::{
     relocation::EbpfRelocationError,
     EbpfSectionKind, Features,
 };
+use flate2::read::GzDecoder;
+use lazy_static::lazy_static;
 use log::{debug, warn};
 use thiserror::Error;
 
@@ -36,14 +39,15 @@ use crate::{
         SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
-        bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
-        is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_enum64_supported,
-        is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
-        is_btf_supported, is_btf_type_tag_supported, is_info_gpl_compatible_supported,
-        is_info_map_ids_supported, is_perf_link_supported, is_probe_read_kernel_supported,
-        is_prog_id_supported, is_prog_name_supported, retry_with_verifier_logs,
+        self, bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
+        is_bpf_syscall_wrapper_supported, is_btf_datasec_supported, is_btf_decl_tag_supported,
+        is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
+        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported,
+        is_info_gpl_compatible_supported, is_info_map_ids_supported, is_perf_link_supported,
+        is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
+        retry_with_verifier_logs,
     },
-    util::{bytes_of, bytes_of_slice, page_size, possible_cpus, POSSIBLE_CPUS},
+    util::{bytes_of, bytes_of_slice, page_size, possible_cpus, KernelVersion, POSSIBLE_CPUS},
 };
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
@@ -98,6 +102,7 @@ fn detect_features() -> Features {
         is_prog_id_supported(BPF_MAP_TYPE_DEVMAP),
         is_info_map_ids_supported(),
         is_info_gpl_compatible_supported(),
+        is_bpf_syscall_wrapper_supported(),
         btf,
     );
     debug!("BPF Feature Detection: {:#?}", f);
@@ -107,6 +112,133 @@ fn detect_features() -> Features {
 /// Returns a reference to the detected BPF features.
 pub fn features() -> &'static Features {
     &FEATURES
+}
+
+lazy_static! {
+    static ref KCONFIG_DEFINITION: HashMap<String, Vec<u8>> = compute_kconfig_definition(&FEATURES);
+}
+
+fn to_bytes(value: u64) -> [u8; 8] {
+    if cfg!(target_endian = "big") {
+        value.to_be_bytes()
+    } else {
+        value.to_le_bytes()
+    }
+}
+
+fn compute_kconfig_definition(features: &Features) -> HashMap<String, Vec<u8>> {
+    let mut result = HashMap::new();
+
+    if let Ok(KernelVersion {
+        major,
+        minor,
+        patch,
+    }) = KernelVersion::current()
+    {
+        result.insert(
+            "LINUX_KERNEL_VERSION".to_string(),
+            to_bytes((u64::from(major) << 16) + (u64::from(minor) << 8) + u64::from(patch))
+                .to_vec(),
+        );
+    }
+
+    let bpf_cookie = if features.bpf_cookie() { 1u64 } else { 0u64 };
+    let bpf_syscall_wrapper = if features.bpf_syscall_wrapper() {
+        1u64
+    } else {
+        0u64
+    };
+
+    result.insert(
+        "LINUX_HAS_BPF_COOKIE".to_string(),
+        to_bytes(bpf_cookie).to_vec(),
+    );
+
+    result.insert(
+        "LINUX_HAS_SYSCALL_WRAPPER".to_string(),
+        to_bytes(bpf_syscall_wrapper).to_vec(),
+    );
+
+    if let Some(raw_config) = read_kconfig() {
+        for line in raw_config.lines() {
+            if !line.starts_with("CONFIG_") {
+                continue;
+            }
+
+            let mut parts = line.split('=');
+            let (key, raw_value) = match (parts.next(), parts.next(), parts.count()) {
+                (Some(key), Some(value), 0) => (key, value),
+                _ => continue,
+            };
+
+            let value = match raw_value.chars().next() {
+                Some('n') => to_bytes(0).to_vec(),
+                Some('y') => to_bytes(1).to_vec(),
+                Some('m') => to_bytes(2).to_vec(),
+                Some('"') => {
+                    let raw_value = &raw_value[1..raw_value.len() - 1];
+
+                    raw_value.as_bytes().to_vec()
+                }
+                Some(_) => {
+                    if let Ok(value) = raw_value.parse::<u64>() {
+                        to_bytes(value).to_vec()
+                    } else {
+                        continue;
+                    }
+                }
+                None => continue,
+            };
+
+            result.insert(key.to_string(), value);
+        }
+    }
+
+    result
+}
+
+fn read_kconfig() -> Option<String> {
+    let config_path = PathBuf::from("/proc/config.gz");
+    if config_path.exists() {
+        debug!("Found kernel config at {}", config_path.to_string_lossy());
+        return read_kconfig_file(&config_path, true);
+    }
+
+    let Ok(release) = sys::kernel_release() else {
+        return None;
+    };
+
+    let config_path = PathBuf::from("/boot").join(format!("config-{}", release));
+    if config_path.exists() {
+        debug!("Found kernel config at {}", config_path.to_string_lossy());
+        return read_kconfig_file(&config_path, false);
+    }
+
+    None
+}
+
+fn read_kconfig_file(path: &PathBuf, gzip: bool) -> Option<String> {
+    let mut output = String::new();
+
+    let res = if gzip {
+        File::open(path)
+            .map(GzDecoder::new)
+            .and_then(|mut file| file.read_to_string(&mut output))
+    } else {
+        File::open(path).and_then(|mut file| file.read_to_string(&mut output))
+    };
+
+    match res {
+        Ok(_) => Some(output),
+        Err(e) => {
+            warn!(
+                "Unable to read kernel config {}: {:?}",
+                path.to_string_lossy(),
+                e
+            );
+            None
+        }
+    }
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -399,6 +531,7 @@ impl<'a> EbpfLoader<'a> {
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
+        obj.patch_extern_data(&KCONFIG_DEFINITION)?;
 
         let btf_fd = if let Some(features) = &FEATURES.btf() {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {

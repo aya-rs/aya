@@ -340,6 +340,28 @@ pub fn run(opts: Options) -> Result<()> {
                         }
                     }
                 }
+
+                // Copy kernel configs as well (based on Debian path conventions)
+                let config_path = PathBuf::from(
+                    kernel_image
+                        .to_string_lossy()
+                        .replace("vmlinuz-", "config-"),
+                );
+                if config_path.exists() {
+                    let mut destination = PathBuf::from("/boot");
+                    destination.push(config_path.file_name().expect("filename"));
+                    for bytes in [
+                        "dir /boot 0755 0 0\n".as_bytes(),
+                        "file ".as_bytes(),
+                        destination.as_os_str().as_bytes(),
+                        " ".as_bytes(),
+                        config_path.as_os_str().as_bytes(),
+                        " 0755 0 0\n".as_bytes(),
+                    ] {
+                        stdin.write_all(bytes).expect("write");
+                    }
+                }
+
                 // Must explicitly close to signal EOF.
                 drop(stdin);
 
