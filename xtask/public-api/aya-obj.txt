@@ -1,10 +1,14 @@
 pub mod aya_obj
 pub mod aya_obj::btf
 pub enum aya_obj::btf::BtfError
+pub aya_obj::btf::BtfError::ExternalSymbolNotFound
+pub aya_obj::btf::BtfError::ExternalSymbolNotFound::symbol_name: alloc::string::String
 pub aya_obj::btf::BtfError::FileError
 pub aya_obj::btf::BtfError::FileError::error: std::io::error::Error
 pub aya_obj::btf::BtfError::FileError::path: std::path::PathBuf
 pub aya_obj::btf::BtfError::InvalidDatasec
+pub aya_obj::btf::BtfError::InvalidExternalSymbol
+pub aya_obj::btf::BtfError::InvalidExternalSymbol::symbol_name: alloc::string::String
 pub aya_obj::btf::BtfError::InvalidHeader
 pub aya_obj::btf::BtfError::InvalidInfo
 pub aya_obj::btf::BtfError::InvalidInfo::len: usize
@@ -7106,6 +7110,7 @@ pub fn aya_obj::Features::bpf_global_data(&self) -> bool
 pub fn aya_obj::Features::bpf_name(&self) -> bool
 pub fn aya_obj::Features::bpf_perf_link(&self) -> bool
 pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
+pub fn aya_obj::Features::bpf_syscall_wrapper(&self) -> bool
 pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
 pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
 pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
@@ -7214,6 +7219,7 @@ pub aya_obj::obj::Object::maps: std::collections::hash::map::HashMap<alloc::stri
 pub aya_obj::obj::Object::programs: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::Program>
 impl aya_obj::Object
 pub fn aya_obj::Object::fixup_and_sanitize_btf(&mut self, features: &aya_obj::btf::BtfFeatures) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError>
+pub fn aya_obj::Object::patch_extern_data(&mut self, externs: &std::collections::hash::map::HashMap<alloc::string::String, alloc::vec::Vec<u8>>) -> core::result::Result<(), aya_obj::btf::BtfError>
 impl aya_obj::Object
 pub fn aya_obj::Object::parse(data: &[u8]) -> core::result::Result<aya_obj::Object, aya_obj::ParseError>
 pub fn aya_obj::Object::patch_map_data(&mut self, globals: std::collections::hash::map::HashMap<&str, (&[u8], bool)>) -> core::result::Result<(), aya_obj::ParseError>
@@ -7966,6 +7972,7 @@ pub fn aya_obj::Features::bpf_global_data(&self) -> bool
 pub fn aya_obj::Features::bpf_name(&self) -> bool
 pub fn aya_obj::Features::bpf_perf_link(&self) -> bool
 pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
+pub fn aya_obj::Features::bpf_syscall_wrapper(&self) -> bool
 pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
 pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
 pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
@@ -8074,6 +8081,7 @@ pub aya_obj::Object::maps: std::collections::hash::map::HashMap<alloc::string::S
 pub aya_obj::Object::programs: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::Program>
 impl aya_obj::Object
 pub fn aya_obj::Object::fixup_and_sanitize_btf(&mut self, features: &aya_obj::btf::BtfFeatures) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError>
+pub fn aya_obj::Object::patch_extern_data(&mut self, externs: &std::collections::hash::map::HashMap<alloc::string::String, alloc::vec::Vec<u8>>) -> core::result::Result<(), aya_obj::btf::BtfError>
 impl aya_obj::Object
 pub fn aya_obj::Object::parse(data: &[u8]) -> core::result::Result<aya_obj::Object, aya_obj::ParseError>
 pub fn aya_obj::Object::patch_map_data(&mut self, globals: std::collections::hash::map::HashMap<&str, (&[u8], bool)>) -> core::result::Result<(), aya_obj::ParseError>

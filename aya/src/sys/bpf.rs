@@ -1,6 +1,6 @@
 use std::{
     cmp,
-    ffi::{c_char, CStr, CString},
+    ffi::{c_char, CStr, CString, OsStr},
     io, iter,
     mem::{self, MaybeUninit},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, RawFd},
@@ -30,6 +30,7 @@ use crate::{
         },
         copy_instructions,
     },
+    programs::probe::create_as_probe,
     sys::{syscall, SysResult, Syscall, SyscallError},
     util::KernelVersion,
     Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN, FEATURES,
@@ -948,6 +949,43 @@ pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
     // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
     let fd = unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) };
     fd.is_ok()
+}
+
+fn arch_specific_syscall_prefix() -> Option<&'static str> {
+    if cfg!(target_arch = "aarch64") {
+        Some("arm64")
+    } else if cfg!(target_arch = "arm") {
+        Some("arm")
+    } else if cfg!(target_arch = "powerpc") {
+        Some("powerpc")
+    } else if cfg!(target_arch = "powerpc64") {
+        Some("powerpc64")
+    } else if cfg!(target_arch = "riscv32") || cfg!(target_arch = "riscv64") {
+        Some("riscv")
+    } else if cfg!(target_arch = "x86") {
+        Some("ia32")
+    } else if cfg!(target_arch = "x86_64") {
+        Some("x64")
+    } else if cfg!(target_arch = "s390x") {
+        Some("s390x")
+    } else if cfg!(target_arch = "mips") || cfg!(target_arch = "mips64") {
+        Some("mips")
+    } else {
+        None
+    }
+}
+
+pub(crate) fn is_bpf_syscall_wrapper_supported() -> bool {
+    let syscall_prefix_opt = arch_specific_syscall_prefix();
+
+    if let Some(syscall_prefix) = syscall_prefix_opt {
+        let syscall_name = format!("__{}_sys_bpf", syscall_prefix);
+        let syscall_name = OsStr::new(syscall_name.as_str());
+
+        return create_as_probe(crate::programs::ProbeKind::KProbe, syscall_name, 0, None).is_ok();
+    }
+
+    false
 }
 
 pub(crate) fn is_btf_supported() -> bool {

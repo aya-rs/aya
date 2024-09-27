@@ -191,3 +191,26 @@ impl From<Stats> for crate::generated::bpf_stats_type {
 pub fn enable_stats(stats_type: Stats) -> Result<OwnedFd, SyscallError> {
     bpf_enable_stats(stats_type.into()).map(|fd| fd.into_inner())
 }
+
+#[cfg(test)]
+pub(crate) fn kernel_release() -> Result<String, ()> {
+    Ok("unknown".to_string())
+}
+
+#[cfg(not(test))]
+pub(crate) fn kernel_release() -> Result<String, ()> {
+    use std::ffi::CStr;
+
+    use libc::utsname;
+
+    unsafe {
+        let mut v = mem::zeroed::<utsname>();
+        if libc::uname(&mut v as *mut _) != 0 {
+            return Err(());
+        }
+
+        let release = CStr::from_ptr(v.release.as_ptr());
+
+        Ok(release.to_string_lossy().into_owned())
+    }
+}
