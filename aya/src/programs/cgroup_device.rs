@@ -1,7 +1,8 @@
 //! Cgroup device programs.
 
-use log::warn;
 use std::os::fd::AsFd;
+
+use log::warn;
 
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE},
