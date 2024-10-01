@@ -203,30 +203,33 @@ fn read_cpu_ranges(path: &'static str) -> Result<Vec<u32>, (&'static str, io::Er
     (|| {
         let data = fs::read_to_string(path)?;
         parse_cpu_ranges(data.trim())
-            .map_err(|range| io::Error::new(io::ErrorKind::InvalidData, range))
     })()
     .map_err(|error| (path, error))
 }
 
-fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, &str> {
-    let mut cpus = Vec::new();
-    for range in data.split(',') {
-        cpus.extend({
-            match range
-                .splitn(2, '-')
-                .map(u32::from_str)
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(|ParseIntError { .. }| range)?
-                .as_slice()
-            {
-                &[] | &[_, _, _, ..] => return Err(range),
-                &[start] => start..=start,
-                &[start, end] => start..=end,
-            }
+fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, io::Error> {
+    data.split(',')
+        .map(|range| {
+            let mut iter = range
+                .split('-')
+                .map(|s| s.parse::<u32>().map_err(|ParseIntError { .. }| range));
+            let start = iter.next().unwrap()?; // str::split always returns at least one element.
+            let end = match iter.next() {
+                None => start,
+                Some(end) => {
+                    if iter.next().is_some() {
+                        return Err(range);
+                    }
+                    end?
+                }
+            };
+            Ok(start..=end)
         })
-    }
-
-    Ok(cpus)
+        .try_fold(Vec::new(), |mut cpus, range| {
+            let range = range.map_err(|range| io::Error::new(io::ErrorKind::InvalidData, range))?;
+            cpus.extend(range);
+            Ok(cpus)
+        })
 }
 
 /// Loads kernel symbols from `/proc/kallsyms`.
