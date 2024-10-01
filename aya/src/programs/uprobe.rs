@@ -8,7 +8,7 @@ use std::{
     mem,
     os::{fd::AsFd as _, raw::c_char, unix::ffi::OsStrExt},
     path::{Path, PathBuf},
-    sync::{Arc, LazyLock},
+    sync::LazyLock,
 };
 
 use libc::pid_t;
@@ -29,8 +29,8 @@ use crate::{
 
 const LD_SO_CACHE_FILE: &str = "/etc/ld.so.cache";
 
-static LD_SO_CACHE: LazyLock<Result<LdSoCache, Arc<io::Error>>> =
-    LazyLock::new(|| LdSoCache::load(LD_SO_CACHE_FILE).map_err(Arc::new));
+static LD_SO_CACHE: LazyLock<Result<LdSoCache, io::Error>> =
+    LazyLock::new(|| LdSoCache::load(LD_SO_CACHE_FILE));
 const LD_SO_CACHE_HEADER_OLD: &str = "ld.so-1.7.0\0";
 const LD_SO_CACHE_HEADER_NEW: &str = "glibc-ld.so.cache1.1";
 
@@ -140,9 +140,7 @@ fn resolve_attach_path(target: &Path, pid: Option<pid_t>) -> Result<Cow<'_, Path
     .or_else(|| {
         LD_SO_CACHE
             .as_ref()
-            .map_err(|error| UProbeError::InvalidLdSoCache {
-                io_error: error.clone(),
-            })
+            .map_err(|io_error| UProbeError::InvalidLdSoCache { io_error })
             .map(|cache| cache.resolve(target).map(Cow::Borrowed))
             .transpose()
     })
@@ -215,7 +213,7 @@ pub enum UProbeError {
     InvalidLdSoCache {
         /// the original [`io::Error`]
         #[source]
-        io_error: Arc<io::Error>,
+        io_error: &'static io::Error,
     },
 
     /// The target program could not be found.
