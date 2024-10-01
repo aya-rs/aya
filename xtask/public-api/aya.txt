@@ -9026,8 +9026,8 @@ pub unsafe fn aya::util::KernelVersion::clone_to_uninit(&self, dst: *mut T)
 impl<T> core::convert::From<T> for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::from(t: T) -> T
 pub fn aya::util::kernel_symbols() -> core::result::Result<alloc::collections::btree::map::BTreeMap<u64, alloc::string::String>, std::io::error::Error>
-pub fn aya::util::nr_cpus() -> core::result::Result<usize, std::io::error::Error>
-pub fn aya::util::online_cpus() -> core::result::Result<alloc::vec::Vec<u32>, std::io::error::Error>
+pub fn aya::util::nr_cpus() -> core::result::Result<usize, (&'static str, std::io::error::Error)>
+pub fn aya::util::online_cpus() -> core::result::Result<alloc::vec::Vec<u32>, (&'static str, std::io::error::Error)>
 pub fn aya::util::syscall_prefix() -> core::result::Result<&'static str, std::io::error::Error>
 pub macro aya::include_bytes_aligned!
 pub enum aya::EbpfError

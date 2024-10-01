@@ -122,7 +122,7 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// // eBPF programs are going to write to the EVENTS perf array, using the id of the CPU they're
 /// // running on as the array index.
 /// let mut perf_buffers = Vec::new();
-/// for cpu_id in online_cpus()? {
+/// for cpu_id in online_cpus().map_err(|(_, error)| error)? {
 ///     // this perf buffer will receive events generated on the CPU with id cpu_id
 ///     perf_buffers.push(perf_array.open(cpu_id, None)?);
 /// }

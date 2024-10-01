@@ -43,7 +43,7 @@ use crate::{
         is_info_map_ids_supported, is_perf_link_supported, is_probe_read_kernel_supported,
         is_prog_id_supported, is_prog_name_supported, retry_with_verifier_logs,
     },
-    util::{bytes_of, bytes_of_slice, page_size, possible_cpus, POSSIBLE_CPUS},
+    util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
 
 pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
@@ -465,13 +465,11 @@ impl<'a> EbpfLoader<'a> {
             {
                 continue;
             }
-            let num_cpus = || -> Result<u32, EbpfError> {
-                Ok(possible_cpus()
-                    .map_err(|error| EbpfError::FileError {
-                        path: PathBuf::from(POSSIBLE_CPUS),
-                        error,
-                    })?
-                    .len() as u32)
+            let num_cpus = || {
+                Ok(nr_cpus().map_err(|(path, error)| EbpfError::FileError {
+                    path: PathBuf::from(path),
+                    error,
+                })? as u32)
             };
             let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
             if let Some(max_entries) = max_entries_override(

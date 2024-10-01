@@ -161,7 +161,7 @@ impl EbpfLogger {
         let mut logs: AsyncPerfEventArray<_> = map.try_into()?;
 
         let logger = Arc::new(logger);
-        for cpu_id in online_cpus().map_err(Error::InvalidOnlineCpu)? {
+        for cpu_id in online_cpus().map_err(|(_, error)| Error::InvalidOnlineCpu(error))? {
             let mut buf = logs.open(cpu_id, None)?;
 
             let log = logger.clone();

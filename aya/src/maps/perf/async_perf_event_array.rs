@@ -57,7 +57,7 @@ use crate::maps::{
 /// // try to convert the PERF_ARRAY map to an AsyncPerfEventArray
 /// let mut perf_array = AsyncPerfEventArray::try_from(bpf.take_map("PERF_ARRAY").unwrap())?;
 ///
-/// for cpu_id in online_cpus()? {
+/// for cpu_id in online_cpus().map_err(|(_, error)| error)? {
 ///     // open a separate perf buffer for each cpu
 ///     let mut buf = perf_array.open(cpu_id, None)?;
 ///
