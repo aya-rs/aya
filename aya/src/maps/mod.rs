@@ -569,9 +569,9 @@ impl MapData {
         //
         // Otherwise, when the value is `0` or too large, we set it to the number of CPUs.
         if obj.map_type() == bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 {
-            let ncpus = nr_cpus().map_err(MapError::IoError)? as u32;
-            if obj.max_entries() == 0 || obj.max_entries() > ncpus {
-                obj.set_max_entries(ncpus);
+            let nr_cpus = nr_cpus().map_err(|(_, error)| MapError::IoError(error))? as u32;
+            if obj.max_entries() == 0 || obj.max_entries() > nr_cpus {
+                obj.set_max_entries(nr_cpus);
             }
         };
 
@@ -891,7 +891,7 @@ impl<T: Pod> TryFrom<Vec<T>> for PerCpuValues<T> {
     type Error = io::Error;
 
     fn try_from(values: Vec<T>) -> Result<Self, Self::Error> {
-        let nr_cpus = nr_cpus()?;
+        let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
         if values.len() != nr_cpus {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
@@ -907,8 +907,9 @@ impl<T: Pod> TryFrom<Vec<T>> for PerCpuValues<T> {
 impl<T: Pod> PerCpuValues<T> {
     pub(crate) fn alloc_kernel_mem() -> Result<PerCpuKernelMem, io::Error> {
         let value_size = (mem::size_of::<T>() + 7) & !7;
+        let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
         Ok(PerCpuKernelMem {
-            bytes: vec![0u8; nr_cpus()? * value_size],
+            bytes: vec![0u8; nr_cpus * value_size],
         })
     }
 
@@ -1086,9 +1087,9 @@ mod tests {
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
         });
 
-        let ncpus = nr_cpus().unwrap();
+        let nr_cpus = nr_cpus().unwrap();
 
-        // Create with max_entries > ncpus is clamped to ncpus
+        // Create with max_entries > nr_cpus is clamped to nr_cpus
         assert_matches!(
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
                 crate::generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
@@ -1099,11 +1100,11 @@ mod tests {
                 fd,
             }) => {
                 assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
-                assert_eq!(obj.max_entries(), ncpus as u32)
+                assert_eq!(obj.max_entries(), nr_cpus as u32)
             }
         );
 
-        // Create with max_entries = 0 is set to ncpus
+        // Create with max_entries = 0 is set to nr_cpus
         assert_matches!(
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
                 crate::generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
@@ -1114,11 +1115,11 @@ mod tests {
                 fd,
             }) => {
                 assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
-                assert_eq!(obj.max_entries(), ncpus as u32)
+                assert_eq!(obj.max_entries(), nr_cpus as u32)
             }
         );
 
-        // Create with max_entries < ncpus is unchanged
+        // Create with max_entries < nr_cpus is unchanged
         assert_matches!(
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
                 crate::generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
