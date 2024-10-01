@@ -8,7 +8,7 @@ use std::{
     mem,
     os::{fd::AsFd as _, raw::c_char, unix::ffi::OsStrExt},
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, LazyLock},
 };
 
 use libc::pid_t;
@@ -29,10 +29,8 @@ use crate::{
 
 const LD_SO_CACHE_FILE: &str = "/etc/ld.so.cache";
 
-lazy_static::lazy_static! {
-    static ref LD_SO_CACHE: Result<LdSoCache, Arc<io::Error>> =
-        LdSoCache::load(LD_SO_CACHE_FILE).map_err(Arc::new);
-}
+static LD_SO_CACHE: LazyLock<Result<LdSoCache, Arc<io::Error>>> =
+    LazyLock::new(|| LdSoCache::load(LD_SO_CACHE_FILE).map_err(Arc::new));
 const LD_SO_CACHE_HEADER_OLD: &str = "ld.so-1.7.0\0";
 const LD_SO_CACHE_HEADER_NEW: &str = "glibc-ld.so.cache1.1";
 

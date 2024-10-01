@@ -5,6 +5,7 @@ use std::{
     io::{self, BufRead, BufReader},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd},
     path::Path,
+    sync::LazyLock,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
@@ -31,27 +32,26 @@ pub(crate) fn attach_raw_tracepoint<T: Link + From<FdLink>>(
 
 /// Find tracefs filesystem path.
 pub(crate) fn find_tracefs_path() -> Result<&'static Path, ProgramError> {
-    lazy_static::lazy_static! {
-        static ref TRACE_FS: Option<&'static Path> = {
-            let known_mounts = [
-                Path::new("/sys/kernel/tracing"),
-                Path::new("/sys/kernel/debug/tracing"),
-            ];
-
-            for mount in known_mounts {
-                // Check that the mount point exists and is not empty
-                // Documented here: (https://www.kernel.org/doc/Documentation/trace/ftrace.txt)
-                // In some cases, tracefs will only mount at /sys/kernel/debug/tracing
-                // but, the kernel will still create the directory /sys/kernel/tracing.
-                // The user may be expected to manually mount the directory in order for it to
-                // exist in /sys/kernel/tracing according to the documentation.
-                if mount.exists() && mount.read_dir().ok()?.next().is_some() {
-                    return Some(mount);
+    static TRACE_FS: LazyLock<Option<&'static Path>> = LazyLock::new(|| {
+        [
+            Path::new("/sys/kernel/tracing"),
+            Path::new("/sys/kernel/debug/tracing"),
+        ]
+        .into_iter()
+        .find(|&mount| {
+            // Check that the mount point exists and is not empty
+            // Documented here: (https://www.kernel.org/doc/Documentation/trace/ftrace.txt)
+            // In some cases, tracefs will only mount at /sys/kernel/debug/tracing
+            // but, the kernel will still create the directory /sys/kernel/tracing.
+            // The user may be expected to manually mount the directory in order for it to
+            // exist in /sys/kernel/tracing according to the documentation.
+            mount.exists()
+                && match mount.read_dir() {
+                    Ok(mut entries) => entries.next().is_some(),
+                    Err(io::Error { .. }) => false,
                 }
-            }
-            None
-        };
-    }
+        })
+    });
 
     TRACE_FS
         .as_deref()

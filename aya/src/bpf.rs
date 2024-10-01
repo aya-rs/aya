@@ -7,7 +7,7 @@ use std::{
         raw::c_int,
     },
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, LazyLock},
 };
 
 use aya_obj::{
@@ -70,9 +70,7 @@ unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 
 pub use aya_obj::maps::{bpf_map_def, PinningType};
 
-lazy_static::lazy_static! {
-    pub(crate) static ref FEATURES: Features = detect_features();
-}
+pub(crate) static FEATURES: LazyLock<Features> = LazyLock::new(detect_features);
 
 fn detect_features() -> Features {
     let btf = if is_btf_supported() {
