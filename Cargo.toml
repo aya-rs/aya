@@ -72,7 +72,6 @@ futures = { version = "0.3.28", default-features = false }
 hashbrown = { version = "0.14.3", default-features = false }
 indoc = { version = "2.0", default-features = false }
 integration-ebpf = { path = "test/integration-ebpf", default-features = false }
-lazy_static = { version = "1", default-features = false }
 libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
 netns-rs = { version = "0.1", default-features = false }
