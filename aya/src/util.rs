@@ -185,40 +185,30 @@ impl Display for KernelVersion {
 }
 
 const ONLINE_CPUS: &str = "/sys/devices/system/cpu/online";
-pub(crate) const POSSIBLE_CPUS: &str = "/sys/devices/system/cpu/possible";
+const POSSIBLE_CPUS: &str = "/sys/devices/system/cpu/possible";
 
 /// Returns the numeric IDs of the CPUs currently online.
-pub fn online_cpus() -> Result<Vec<u32>, io::Error> {
-    let data = fs::read_to_string(ONLINE_CPUS)?;
-    parse_cpu_ranges(data.trim()).map_err(|_| {
-        io::Error::new(
-            io::ErrorKind::Other,
-            format!("unexpected {ONLINE_CPUS} format"),
-        )
-    })
+pub fn online_cpus() -> Result<Vec<u32>, (&'static str, io::Error)> {
+    read_cpu_ranges(ONLINE_CPUS)
 }
 
 /// Get the number of possible cpus.
 ///
 /// See `/sys/devices/system/cpu/possible`.
-pub fn nr_cpus() -> Result<usize, io::Error> {
-    Ok(possible_cpus()?.len())
+pub fn nr_cpus() -> Result<usize, (&'static str, io::Error)> {
+    read_cpu_ranges(POSSIBLE_CPUS).map(|cpus| cpus.len())
 }
 
-/// Get the list of possible cpus.
-///
-/// See `/sys/devices/system/cpu/possible`.
-pub(crate) fn possible_cpus() -> Result<Vec<u32>, io::Error> {
-    let data = fs::read_to_string(POSSIBLE_CPUS)?;
-    parse_cpu_ranges(data.trim()).map_err(|_| {
-        io::Error::new(
-            io::ErrorKind::Other,
-            format!("unexpected {POSSIBLE_CPUS} format"),
-        )
-    })
+fn read_cpu_ranges(path: &'static str) -> Result<Vec<u32>, (&'static str, io::Error)> {
+    (|| {
+        let data = fs::read_to_string(path)?;
+        parse_cpu_ranges(data.trim())
+            .map_err(|range| io::Error::new(io::ErrorKind::InvalidData, range))
+    })()
+    .map_err(|error| (path, error))
 }
 
-fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, ()> {
+fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, &str> {
     let mut cpus = Vec::new();
     for range in data.split(',') {
         cpus.extend({
@@ -226,10 +216,10 @@ fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, ()> {
                 .splitn(2, '-')
                 .map(u32::from_str)
                 .collect::<Result<Vec<_>, _>>()
-                .map_err(|_| ())?
+                .map_err(|ParseIntError { .. }| range)?
                 .as_slice()
             {
-                &[] | &[_, _, _, ..] => return Err(()),
+                &[] | &[_, _, _, ..] => return Err(range),
                 &[start] => start..=start,
                 &[start, end] => start..=end,
             }

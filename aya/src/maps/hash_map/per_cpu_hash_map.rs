@@ -105,10 +105,11 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     ///
     /// const RETRIES: u8 = 1;
     ///
+    /// let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
     /// let mut hm = PerCpuHashMap::<_, u8, u32>::try_from(bpf.map_mut("PER_CPU_STORAGE").unwrap())?;
     /// hm.insert(
     ///     RETRIES,
-    ///     PerCpuValues::try_from(vec![3u32; nr_cpus()?])?,
+    ///     PerCpuValues::try_from(vec![3u32; nr_cpus])?,
     ///     0,
     /// )?;
     /// # Ok::<(), Error>(())

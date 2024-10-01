@@ -29,16 +29,17 @@ use crate::{
 /// ```no_run
 /// # let elf_bytes = &[];
 /// use aya::maps::xdp::CpuMap;
+/// use aya::util::nr_cpus;
 ///
-/// let ncpus = aya::util::nr_cpus().unwrap() as u32;
+/// let nr_cpus = nr_cpus().unwrap() as u32;
 /// let mut bpf = aya::EbpfLoader::new()
-///     .set_max_entries("CPUS", ncpus)
+///     .set_max_entries("CPUS", nr_cpus)
 ///     .load(elf_bytes)
 ///     .unwrap();
 /// let mut cpumap = CpuMap::try_from(bpf.map_mut("CPUS").unwrap())?;
 /// let flags = 0;
 /// let queue_size = 2048;
-/// for i in 0..ncpus {
+/// for i in 0..nr_cpus {
 ///     cpumap.set(i, queue_size, None, flags);
 /// }
 ///

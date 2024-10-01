@@ -109,7 +109,7 @@ pub enum PerfEventScope {
 /// let prog: &mut PerfEvent = bpf.program_mut("observe_cpu_clock").unwrap().try_into()?;
 /// prog.load()?;
 ///
-/// for cpu in online_cpus()? {
+/// for cpu in online_cpus().map_err(|(_, error)| error)? {
 ///     prog.attach(
 ///         PerfTypeId::Software,
 ///         PERF_COUNT_SW_CPU_CLOCK as u64,
