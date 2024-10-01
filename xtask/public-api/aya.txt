@@ -6067,7 +6067,7 @@ pub aya::programs::uprobe::UProbeError::FileError
 pub aya::programs::uprobe::UProbeError::FileError::filename: std::path::PathBuf
 pub aya::programs::uprobe::UProbeError::FileError::io_error: std::io::error::Error
 pub aya::programs::uprobe::UProbeError::InvalidLdSoCache
-pub aya::programs::uprobe::UProbeError::InvalidLdSoCache::io_error: alloc::sync::Arc<std::io::error::Error>
+pub aya::programs::uprobe::UProbeError::InvalidLdSoCache::io_error: &'static std::io::error::Error
 pub aya::programs::uprobe::UProbeError::InvalidTarget
 pub aya::programs::uprobe::UProbeError::InvalidTarget::path: std::path::PathBuf
 pub aya::programs::uprobe::UProbeError::SymbolError
@@ -7343,7 +7343,7 @@ pub aya::programs::UProbeError::FileError
 pub aya::programs::UProbeError::FileError::filename: std::path::PathBuf
 pub aya::programs::UProbeError::FileError::io_error: std::io::error::Error
 pub aya::programs::UProbeError::InvalidLdSoCache
-pub aya::programs::UProbeError::InvalidLdSoCache::io_error: alloc::sync::Arc<std::io::error::Error>
+pub aya::programs::UProbeError::InvalidLdSoCache::io_error: &'static std::io::error::Error
 pub aya::programs::UProbeError::InvalidTarget
 pub aya::programs::UProbeError::InvalidTarget::path: std::path::PathBuf
 pub aya::programs::UProbeError::SymbolError
