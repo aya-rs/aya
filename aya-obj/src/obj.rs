@@ -1080,7 +1080,7 @@ struct Section<'a> {
     relocations: Vec<Relocation>,
 }
 
-impl<'data, 'file, 'a> TryFrom<&'a ObjSection<'data, 'file>> for Section<'a> {
+impl<'a> TryFrom<&'a ObjSection<'_, '_>> for Section<'a> {
     type Error = ParseError;
 
     fn try_from(section: &'a ObjSection) -> Result<Section<'a>, ParseError> {
