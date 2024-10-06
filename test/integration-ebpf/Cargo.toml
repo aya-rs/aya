@@ -71,4 +71,4 @@ path = "src/simple_prog.rs"
 
 [[bin]]
 name = "greened-test"
-path = "src/greened-test.rs"
+path = "src/greened_test.rs"
