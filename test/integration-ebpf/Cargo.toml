@@ -68,3 +68,7 @@ path = "src/memmove_test.rs"
 [[bin]]
 name = "simple_prog"
 path = "src/simple_prog.rs"
+
+[[bin]]
+name = "greened-test"
+path = "src/greened-test.rs"
