@@ -9,3 +9,4 @@ mod relocations;
 mod ring_buf;
 mod smoke;
 mod xdp;
+mod greened_test;
