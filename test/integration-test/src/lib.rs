@@ -24,7 +24,7 @@ pub const XDP_SEC: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/xdp
 pub const RING_BUF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ring_buf"));
 pub const MEMMOVE_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/memmove_test"));
 pub const SIMPLE_PROG: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/simple_prog"));
-
+pub const GREENED_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/greened_test"));
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
