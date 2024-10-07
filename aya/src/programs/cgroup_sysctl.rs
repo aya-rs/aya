@@ -2,6 +2,8 @@
 
 use std::{hash::Hash, os::fd::AsFd};
 
+use log::warn;
+
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SYSCTL, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL},
     programs::{
@@ -69,31 +71,43 @@ impl CgroupSysctl {
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
 
-        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                BPF_CGROUP_SYSCTL,
-                None,
-                mode.into(),
-            )
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
-            self.data
-                .links
-                .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::Fd(
-                    FdLink::new(link_fd),
-                )))
-        } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL, mode)?;
+        match KernelVersion::current() {
+            Ok(version) => {
+                if version >= KernelVersion::new(5, 7, 0) {
+                    let link_fd = bpf_link_create(
+                        prog_fd,
+                        LinkTarget::Fd(cgroup_fd),
+                        BPF_CGROUP_SYSCTL,
+                        None,
+                        mode.into(),
+                    )
+                    .map_err(|(_, io_error)| SyscallError {
+                        call: "bpf_link_create",
+                        io_error,
+                    })?;
+                    self.data
+                        .links
+                        .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::Fd(
+                            FdLink::new(link_fd),
+                        )))
+                } else {
+                    let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL, mode)?;
 
-            self.data
-                .links
-                .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::ProgAttach(
-                    link,
-                )))
+                    self.data.links.insert(CgroupSysctlLink::new(
+                        CgroupSysctlLinkInner::ProgAttach(link),
+                    ))
+                }
+            }
+            Err(_) => {
+                warn!("Warning: Can not get the current kernel version");
+                let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL, mode)?;
+
+                self.data
+                    .links
+                    .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::ProgAttach(
+                        link,
+                    )))
+            }
         }
     }
 

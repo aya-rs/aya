@@ -3,6 +3,7 @@
 use std::{hash::Hash, os::fd::AsFd, path::Path};
 
 pub use aya_obj::programs::CgroupSockAttachType;
+use log::warn;
 
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK,
@@ -76,29 +77,42 @@ impl CgroupSock {
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
         let attach_type = self.data.expected_attach_type.unwrap();
-        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                attach_type,
-                None,
-                mode.into(),
-            )
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
-            self.data
-                .links
-                .insert(CgroupSockLink::new(CgroupSockLinkInner::Fd(FdLink::new(
-                    link_fd,
-                ))))
-        } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
-            self.data
-                .links
-                .insert(CgroupSockLink::new(CgroupSockLinkInner::ProgAttach(link)))
+        match KernelVersion::current() {
+            Ok(version) => {
+                if version >= KernelVersion::new(5, 7, 0) {
+                    let link_fd = bpf_link_create(
+                        prog_fd,
+                        LinkTarget::Fd(cgroup_fd),
+                        attach_type,
+                        None,
+                        mode.into(),
+                    )
+                    .map_err(|(_, io_error)| SyscallError {
+                        call: "bpf_link_create",
+                        io_error,
+                    })?;
+                    self.data
+                        .links
+                        .insert(CgroupSockLink::new(CgroupSockLinkInner::Fd(FdLink::new(
+                            link_fd,
+                        ))))
+                } else {
+                    let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
+
+                    self.data
+                        .links
+                        .insert(CgroupSockLink::new(CgroupSockLinkInner::ProgAttach(link)))
+                }
+            }
+            Err(_) => {
+                warn!("Warning: Can not get the current kernel version");
+                let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
+
+                self.data
+                    .links
+                    .insert(CgroupSockLink::new(CgroupSockLinkInner::ProgAttach(link)))
+            }
         }
     }
 

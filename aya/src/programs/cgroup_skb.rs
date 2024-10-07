@@ -2,6 +2,8 @@
 
 use std::{hash::Hash, os::fd::AsFd, path::Path};
 
+use log::warn;
+
 use crate::{
     generated::{
         bpf_attach_type::{BPF_CGROUP_INET_EGRESS, BPF_CGROUP_INET_INGRESS},
@@ -98,29 +100,41 @@ impl CgroupSkb {
             CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
             CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
         };
-        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                attach_type,
-                None,
-                mode.into(),
-            )
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
-            self.data
-                .links
-                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
-                    link_fd,
-                ))))
-        } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
+        match KernelVersion::current() {
+            Ok(version) => {
+                if version >= KernelVersion::new(5, 7, 0) {
+                    let link_fd = bpf_link_create(
+                        prog_fd,
+                        LinkTarget::Fd(cgroup_fd),
+                        attach_type,
+                        None,
+                        mode.into(),
+                    )
+                    .map_err(|(_, io_error)| SyscallError {
+                        call: "bpf_link_create",
+                        io_error,
+                    })?;
+                    self.data
+                        .links
+                        .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
+                            link_fd,
+                        ))))
+                } else {
+                    let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
-            self.data
-                .links
-                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(link)))
+                    self.data
+                        .links
+                        .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(link)))
+                }
+            }
+            Err(_) => {
+                warn!("Warning: Can not get the current kernel version");
+                let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
+
+                self.data
+                    .links
+                    .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(link)))
+            }
         }
     }
 
