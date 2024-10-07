@@ -473,8 +473,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::Events
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::perf::Events
 impl<Q, K> equivalent::Equivalent<K> for aya::maps::perf::Events where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::maps::perf::Events::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::maps::perf::Events where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::maps::perf::Events::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::maps::perf::Events where U: core::convert::From<T>
 pub fn aya::maps::perf::Events::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::perf::Events where U: core::convert::Into<T>
@@ -2620,8 +2618,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_device::C
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_device::CgroupDeviceLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::cgroup_device::CgroupDeviceLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_device::CgroupDeviceLinkId where U: core::convert::From<T>
 pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::cgroup_device::CgroupDeviceLinkId where U: core::convert::Into<T>
@@ -2772,8 +2768,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_skb::Cgro
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_skb::CgroupSkbLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::cgroup_skb::CgroupSkbLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_skb::CgroupSkbLinkId where U: core::convert::From<T>
 pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::cgroup_skb::CgroupSkbLinkId where U: core::convert::Into<T>
@@ -2887,8 +2881,6 @@ impl core::marker::Unpin for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock::CgroupSockLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sock::CgroupSockLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::cgroup_sock::CgroupSockLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::cgroup_sock::CgroupSockLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::cgroup_sock::CgroupSockLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sock::CgroupSockLinkId where U: core::convert::From<T>
 pub fn aya::programs::cgroup_sock::CgroupSockLinkId::into(self) -> U
@@ -3004,8 +2996,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock_addr
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId where U: core::convert::From<T>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId where U: core::convert::Into<T>
@@ -3120,8 +3110,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sockopt::
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sockopt::CgroupSockoptLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::cgroup_sockopt::CgroupSockoptLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sockopt::CgroupSockoptLinkId where U: core::convert::From<T>
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::cgroup_sockopt::CgroupSockoptLinkId where U: core::convert::Into<T>
@@ -3235,8 +3223,6 @@ impl core::marker::Unpin for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sysctl::CgroupSysctlLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::cgroup_sysctl::CgroupSysctlLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sysctl::CgroupSysctlLinkId where U: core::convert::From<T>
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::into(self) -> U
@@ -3390,8 +3376,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::extension::Exten
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::extension::ExtensionLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::extension::ExtensionLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::extension::ExtensionLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::extension::ExtensionLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::extension::ExtensionLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::extension::ExtensionLinkId where U: core::convert::From<T>
 pub fn aya::programs::extension::ExtensionLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::extension::ExtensionLinkId where U: core::convert::Into<T>
@@ -3510,8 +3494,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fentry::FEntryLi
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fentry::FEntryLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::fentry::FEntryLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::fentry::FEntryLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::fentry::FEntryLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::fentry::FEntryLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::fentry::FEntryLinkId where U: core::convert::From<T>
 pub fn aya::programs::fentry::FEntryLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::fentry::FEntryLinkId where U: core::convert::Into<T>
@@ -3629,8 +3611,6 @@ impl core::marker::Unpin for aya::programs::fexit::FExitLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fexit::FExitLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fexit::FExitLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::fexit::FExitLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::fexit::FExitLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::fexit::FExitLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::fexit::FExitLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::fexit::FExitLinkId where U: core::convert::From<T>
 pub fn aya::programs::fexit::FExitLinkId::into(self) -> U
@@ -3787,8 +3767,6 @@ impl core::marker::Unpin for aya::programs::kprobe::KProbeLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbeLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::kprobe::KProbeLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::kprobe::KProbeLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::kprobe::KProbeLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::kprobe::KProbeLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::kprobe::KProbeLinkId where U: core::convert::From<T>
 pub fn aya::programs::kprobe::KProbeLinkId::into(self) -> U
@@ -3991,8 +3969,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::FdLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::FdLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::links::FdLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::links::FdLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::links::FdLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::links::FdLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::links::FdLinkId where U: core::convert::From<T>
 pub fn aya::programs::links::FdLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::links::FdLinkId where U: core::convert::Into<T>
@@ -4092,8 +4068,6 @@ impl core::marker::Unpin for aya::programs::links::ProgAttachLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::ProgAttachLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::ProgAttachLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::links::ProgAttachLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::links::ProgAttachLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::links::ProgAttachLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::links::ProgAttachLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::links::ProgAttachLinkId where U: core::convert::From<T>
 pub fn aya::programs::links::ProgAttachLinkId::into(self) -> U
@@ -4272,8 +4246,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lirc_mode2::Lirc
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lirc_mode2::LircLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::lirc_mode2::LircLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::lirc_mode2::LircLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::lirc_mode2::LircLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::lirc_mode2::LircLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::lirc_mode2::LircLinkId where U: core::convert::From<T>
 pub fn aya::programs::lirc_mode2::LircLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::lirc_mode2::LircLinkId where U: core::convert::Into<T>
@@ -4442,8 +4414,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm::LsmLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm::LsmLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::lsm::LsmLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::lsm::LsmLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::lsm::LsmLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::lsm::LsmLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::lsm::LsmLinkId where U: core::convert::From<T>
 pub fn aya::programs::lsm::LsmLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::lsm::LsmLinkId where U: core::convert::Into<T>
@@ -4506,8 +4476,6 @@ impl core::marker::Unpin for aya::programs::perf_attach::PerfLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_attach::PerfLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_attach::PerfLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::perf_attach::PerfLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::perf_attach::PerfLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::perf_attach::PerfLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::perf_attach::PerfLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::perf_attach::PerfLinkId where U: core::convert::From<T>
 pub fn aya::programs::perf_attach::PerfLinkId::into(self) -> U
@@ -4751,8 +4719,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::Perf
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::perf_event::PerfEventLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::perf_event::PerfEventLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::perf_event::PerfEventLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::perf_event::PerfEventLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfEventLinkId where U: core::convert::From<T>
 pub fn aya::programs::perf_event::PerfEventLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_event::PerfEventLinkId where U: core::convert::Into<T>
@@ -4870,8 +4836,6 @@ impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePointLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePointLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePointLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::raw_trace_point::RawTracePointLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::raw_trace_point::RawTracePointLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::raw_trace_point::RawTracePointLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::raw_trace_point::RawTracePointLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::raw_trace_point::RawTracePointLinkId where U: core::convert::From<T>
 pub fn aya::programs::raw_trace_point::RawTracePointLinkId::into(self) -> U
@@ -4991,8 +4955,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_lookup::SkLoo
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_lookup::SkLookupLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_lookup::SkLookupLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::sk_lookup::SkLookupLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::sk_lookup::SkLookupLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::sk_lookup::SkLookupLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::sk_lookup::SkLookupLinkId where U: core::convert::From<T>
 pub fn aya::programs::sk_lookup::SkLookupLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_lookup::SkLookupLinkId where U: core::convert::Into<T>
@@ -5110,8 +5072,6 @@ impl core::marker::Unpin for aya::programs::sk_msg::SkMsgLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsgLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsgLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_msg::SkMsgLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::sk_msg::SkMsgLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::sk_msg::SkMsgLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::sk_msg::SkMsgLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::sk_msg::SkMsgLinkId where U: core::convert::From<T>
 pub fn aya::programs::sk_msg::SkMsgLinkId::into(self) -> U
@@ -5266,8 +5226,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkbLin
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_skb::SkSkbLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::sk_skb::SkSkbLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::sk_skb::SkSkbLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::sk_skb::SkSkbLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkbLinkId where U: core::convert::From<T>
 pub fn aya::programs::sk_skb::SkSkbLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_skb::SkSkbLinkId where U: core::convert::Into<T>
@@ -5381,8 +5339,6 @@ impl core::marker::Unpin for aya::programs::sock_ops::SockOpsLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOpsLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOpsLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sock_ops::SockOpsLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::sock_ops::SockOpsLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::sock_ops::SockOpsLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::sock_ops::SockOpsLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::sock_ops::SockOpsLinkId where U: core::convert::From<T>
 pub fn aya::programs::sock_ops::SockOpsLinkId::into(self) -> U
@@ -5531,8 +5487,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::S
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::socket_filter::SocketFilterLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::socket_filter::SocketFilterLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::socket_filter::SocketFilterLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::socket_filter::SocketFilterLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilterLinkId where U: core::convert::From<T>
 pub fn aya::programs::socket_filter::SocketFilterLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::socket_filter::SocketFilterLinkId where U: core::convert::Into<T>
@@ -5572,8 +5526,6 @@ impl core::marker::Unpin for aya::programs::tc::TcAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachType
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::tc::TcAttachType where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::tc::TcAttachType::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::tc::TcAttachType where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::tc::TcAttachType::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::tc::TcAttachType where U: core::convert::From<T>
 pub fn aya::programs::tc::TcAttachType::into(self) -> U
@@ -5736,8 +5688,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::SchedClassif
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifierLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::tc::SchedClassifierLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::tc::SchedClassifierLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::tc::SchedClassifierLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::tc::SchedClassifierLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::tc::SchedClassifierLinkId where U: core::convert::From<T>
 pub fn aya::programs::tc::SchedClassifierLinkId::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::tc::SchedClassifierLinkId where U: core::convert::Into<T>
@@ -5884,8 +5834,6 @@ impl core::marker::Unpin for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tp_btf::BtfTracePointLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::tp_btf::BtfTracePointLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::tp_btf::BtfTracePointLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::tp_btf::BtfTracePointLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::tp_btf::BtfTracePointLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::tp_btf::BtfTracePointLinkId where U: core::convert::From<T>
 pub fn aya::programs::tp_btf::BtfTracePointLinkId::into(self) -> U
@@ -6042,8 +5990,6 @@ impl core::marker::Unpin for aya::programs::trace_point::TracePointLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePointLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePointLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::trace_point::TracePointLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::trace_point::TracePointLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::trace_point::TracePointLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::trace_point::TracePointLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::trace_point::TracePointLinkId where U: core::convert::From<T>
 pub fn aya::programs::trace_point::TracePointLinkId::into(self) -> U
@@ -6207,8 +6153,6 @@ impl core::marker::Unpin for aya::programs::uprobe::UProbeLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::uprobe::UProbeLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::uprobe::UProbeLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::uprobe::UProbeLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::uprobe::UProbeLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::uprobe::UProbeLinkId where U: core::convert::From<T>
 pub fn aya::programs::uprobe::UProbeLinkId::into(self) -> U
@@ -6478,8 +6422,6 @@ impl core::marker::Unpin for aya::programs::xdp::XdpLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::xdp::XdpLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::xdp::XdpLinkId::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::xdp::XdpLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::xdp::XdpLinkId::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::XdpLinkId where U: core::convert::From<T>
 pub fn aya::programs::xdp::XdpLinkId::into(self) -> U
@@ -7241,8 +7183,6 @@ impl core::marker::Unpin for aya::programs::tc::TcAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachType
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::tc::TcAttachType where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::programs::tc::TcAttachType::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::programs::tc::TcAttachType where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::programs::tc::TcAttachType::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::tc::TcAttachType where U: core::convert::From<T>
 pub fn aya::programs::tc::TcAttachType::into(self) -> U
@@ -8998,8 +8938,6 @@ impl core::marker::Unpin for aya::util::KernelVersion
 impl core::panic::unwind_safe::RefUnwindSafe for aya::util::KernelVersion
 impl core::panic::unwind_safe::UnwindSafe for aya::util::KernelVersion
 impl<Q, K> equivalent::Equivalent<K> for aya::util::KernelVersion where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
-pub fn aya::util::KernelVersion::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for aya::util::KernelVersion where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
 pub fn aya::util::KernelVersion::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::util::KernelVersion where U: core::convert::From<T>
 pub fn aya::util::KernelVersion::into(self) -> U

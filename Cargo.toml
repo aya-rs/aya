@@ -69,7 +69,7 @@ diff = { version = "0.1.13", default-features = false }
 env_logger = { version = "0.11", default-features = false }
 epoll = { version = "4.3.3", default-features = false }
 futures = { version = "0.3.28", default-features = false }
-hashbrown = { version = "0.14.3", default-features = false }
+hashbrown = { version = "0.15.0", default-features = false }
 indoc = { version = "2.0", default-features = false }
 integration-ebpf = { path = "test/integration-ebpf", default-features = false }
 libc = { version = "0.2.105", default-features = false }
