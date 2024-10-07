@@ -42,7 +42,7 @@ pub enum XdpError {
 
 bitflags::bitflags! {
     /// Flags passed to [`Xdp::attach()`].
-    #[derive(Clone, Copy, Debug, Default)]
+    #[derive(Clone, Copy, Debug)]
     pub struct XdpFlags: u32 {
         /// Skb mode.
         const SKB_MODE = XDP_FLAGS_SKB_MODE;
@@ -54,6 +54,12 @@ bitflags::bitflags! {
         const REPLACE = XDP_FLAGS_REPLACE;
         /// Only attach if there isn't another XDP program already attached.
         const UPDATE_IF_NOEXIST = XDP_FLAGS_UPDATE_IF_NOEXIST;
+    }
+}
+
+impl Default for XdpFlags {
+    fn default() -> Self {
+        Self::SKB_MODE
     }
 }
 
