@@ -98,7 +98,7 @@ pub use crate::programs::{
     links::{CgroupAttachMode, Link, LinkOrder},
     lirc_mode2::LircMode2,
     lsm::Lsm,
-    perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy},
+    perf_event::{PerfEvent, PerfEventScope, SamplePolicy},
     probe::ProbeKind,
     raw_trace_point::RawTracePoint,
     sk_lookup::SkLookup,
