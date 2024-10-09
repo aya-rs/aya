@@ -1,6 +1,6 @@
 [package]
 name = "aya-log"
-version = "0.2.0"
+version = "0.2.1"
 description = "A logging library for eBPF programs."
 keywords = ["bpf", "ebpf", "log", "logging"]
 readme = "README.md"
