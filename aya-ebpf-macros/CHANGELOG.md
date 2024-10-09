@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.1.1 (2024-10-09)
+
+### Chore
+
+ - <csr-id-a6f4739b5b138e718632758cad266ee3cb7b1b65/> aya-ebpf-macros: uncomment aya-ebpf dev-dep
+   This wasn't meant to be committed, cargo-smart-release. Commenting is
+   needed to fix the cyclic dep aya-ebpf-macros -> aya-ebpf ->
+   aya-ebpf-macros. See
+   https://github.com/rust-lang/cargo/issues/4242#issuecomment-413203081
+
+### Other
+
+ - <csr-id-b84ede10b9c4813f221fade16b60d5ced4ecdc58/> separate probe to probe ctx & retprobe to retprobe ctx
+   Added logic in expand function in both kprobe.rs and uprobe.rs for valid
+   macros. Now, kprobe & uprobe proc macros only accept ProbeContext, and
+   kretprobe & uretprobe only accept RetProbeContext.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 185 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Separate probe to probe ctx & retprobe to retprobe ctx ([`b84ede1`](https://github.com/aya-rs/aya/commit/b84ede10b9c4813f221fade16b60d5ced4ecdc58))
+    - Aya-ebpf-macros: uncomment aya-ebpf dev-dep ([`a6f4739`](https://github.com/aya-rs/aya/commit/a6f4739b5b138e718632758cad266ee3cb7b1b65))
+</details>
+
 ## v0.1.0 (2024-04-06)
 
 <csr-id-ea8073793e44c593e983e69eaa43a4f72799bfc5/>
@@ -22,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 31 calendar days.
+ - 9 commits contributed to the release.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -33,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release aya-ebpf-macros v0.1.0 ([`9d24bbe`](https://github.com/aya-rs/aya/commit/9d24bbe316ddf5caca7413198d6f79a0064def88))
     - Release aya-ebpf-macros v0.1.0 ([`90f68db`](https://github.com/aya-rs/aya/commit/90f68dbd074e4cd74540d98fb9f17b6c2de3d054))
     - Release aya-ebpf-macros v0.1.0, aya-ebpf v0.1.0 ([`eb3947b`](https://github.com/aya-rs/aya/commit/eb3947bf14e8e7ab0f70e12306e38fb8056edf57))
     - Release aya-ebpf-bindings v0.1.0, aya-ebpf-macros v0.1.0, aya-ebpf v0.1.0 ([`a34c5e4`](https://github.com/aya-rs/aya/commit/a34c5e43b85dd176b9b18f1cc9c9d80d52f10a1f))
