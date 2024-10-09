@@ -5,6 +5,113 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.0 (2024-10-09)
+
+### New Features
+
+ - <csr-id-8c79b71bd5699a686f33360520aa95c1a2895fa5/> Rename Bpf to Ebpf
+   And BpfLoader to EbpfLoader.
+   This also adds type aliases to preserve the use of the old names, making
+   updating to a new Aya release less of a burden. These aliases are marked
+   as deprecated since we'll likely remove them in a later release.
+
+### Other
+
+ - <csr-id-fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41/> revamp MapInfo be more friendly with older kernels
+   Adds detection for whether a field is available in `MapInfo`:
+   - For `map_type()`, we treturn new enum `MapType` instead of the integer
+     representation.
+   - For fields that can't be zero, we return `Option<NonZero*>` type.
+   - For `name_as_str()`, it now uses the feature probe `bpf_name()` to
+     detect if field is available.
+     Although the feature probe checks for program name, it can also be
+     used for map name since they were both introduced in the same commit.
+ - <csr-id-88f5ac31142f1657b41b1ee0f217dcd9125b210a/> revamp ProgramInfo be more friendly with older kernels
+   Purpose of this commit is to add detections for whether a field is
+   available in `ProgramInfo`.
+   - For `program_type()`, we return the new enum `ProgramType` instead of
+     the integer representation.
+   - For fields that we know cannot be zero, we return `Option<NonZero*>`
+     type.
+   - For `name_as_str()`, it now also uses the feature probe `bpf_name()`
+     to detect if field is available or not.
+   - Two additional feature probes are added for the fields:
+     - `prog_info_map_ids()` probe -> `map_ids()` field
+     - `prog_info_gpl_compatible()` probe -> `gpl_compatible()` field
+   
+   With the `prog_info_map_ids()` probe, the previous implementation that
+   I had for `bpf_prog_get_info_by_fd()` is shortened to use the probe
+   instead of having to make 2 potential syscalls.
+   
+   The `test_loaded_at()` test is also moved into info tests since it is
+   better related to the info tests.
+ - <csr-id-1634fa7188e40ed75da53517f1fdb7396c348c34/> add conversion u32 to enum type for prog, link, & attach type
+   Add conversion from u32 to program type, link type, and attach type.
+   Additionally, remove duplicate match statement for u32 conversion to
+   `BPF_MAP_TYPE_BLOOM_FILTER` & `BPF_MAP_TYPE_CGRP_STORAGE`.
+   
+   New error `InvalidTypeBinding<T>` is created to represent when a
+   parsed/received value binding to a type is invalid.
+   This is used in the new conversions added here, and also replaces
+   `InvalidMapTypeError` in `TryFrom` for `bpf_map_type`.
+ - <csr-id-b513af12e8baa5c5097eaf0afdae61a830c3f877/> add archs powerpc64 and s390x to aya
+   bpfman, a project using aya, has a requirement to support powerpc64 and
+   s390x architectures. Adding these two architectures to aya.
+ - <csr-id-b06ff402780b80862933791831c578e4c339fc96/> Generate new bindings
+
+### Test
+
+ - <csr-id-4dc4b5ccd48bd86e2cc59ad7386514c1531450af/> adjust test to not use byte arrays
+   Where possible, replace the hardcoded byte arrays in the tests with the
+   structs they represent, then convert the structs to byte arrays.
+ - <csr-id-eef7346fb2231f8741410381198015cceeebfac9/> adjust test byte arrays for big endian
+   Adding support for s390x (big endian architecture) and found that some
+   of the unit tests have structures and files implemented as byte arrays.
+   They are all coded as little endian and need a bug endian version to
+   work properly.
+
+### New Features (BREAKING)
+
+ - <csr-id-fd48c55466a23953ce7a4912306e1acf059b498b/> Rename BpfRelocationError -> EbpfRelocationError
+ - <csr-id-cf3e2ca677c81224368fb2838ebc5b10ee98419a/> Rename BpfSectionKind to EbpfSectionKind
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 19 commits contributed to the release.
+ - 223 days passed between releases.
+ - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Appease clippy ([`aa240ba`](https://github.com/aya-rs/aya/commit/aa240baadf99d3fea0477a9b3966789b0f4ffe57))
+    - Merge pull request #1007 from tyrone-wu/aya/info-api ([`15eb935`](https://github.com/aya-rs/aya/commit/15eb935bce6d41fb67189c48ce582b074544e0ed))
+    - Revamp MapInfo be more friendly with older kernels ([`fbb0930`](https://github.com/aya-rs/aya/commit/fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41))
+    - Revamp ProgramInfo be more friendly with older kernels ([`88f5ac3`](https://github.com/aya-rs/aya/commit/88f5ac31142f1657b41b1ee0f217dcd9125b210a))
+    - Add conversion u32 to enum type for prog, link, & attach type ([`1634fa7`](https://github.com/aya-rs/aya/commit/1634fa7188e40ed75da53517f1fdb7396c348c34))
+    - Merge pull request #974 from Billy99/billy99-arch-ppc64-s390x ([`ab5e688`](https://github.com/aya-rs/aya/commit/ab5e688fd49fcfb402ad47d51cb445437fbd8cb7))
+    - Adjust test to not use byte arrays ([`4dc4b5c`](https://github.com/aya-rs/aya/commit/4dc4b5ccd48bd86e2cc59ad7386514c1531450af))
+    - Add archs powerpc64 and s390x to aya ([`b513af1`](https://github.com/aya-rs/aya/commit/b513af12e8baa5c5097eaf0afdae61a830c3f877))
+    - Adjust test byte arrays for big endian ([`eef7346`](https://github.com/aya-rs/aya/commit/eef7346fb2231f8741410381198015cceeebfac9))
+    - Merge pull request #989 from aya-rs/codegen ([`8015e10`](https://github.com/aya-rs/aya/commit/8015e100796c550804ccf8fea691c63ec1ac36b8))
+    - [codegen] Update libbpf to 686f600bca59e107af4040d0838ca2b02c14ff50 ([`8d7446e`](https://github.com/aya-rs/aya/commit/8d7446e01132fe1751605b87a6b4a0165273de15))
+    - Merge pull request #978 from aya-rs/codegen ([`06aa5c8`](https://github.com/aya-rs/aya/commit/06aa5c8ed344bd0d85096a0fd033ff0bd90a2f88))
+    - [codegen] Update libbpf to c1a6c770c46c6e78ad6755bf596c23a4e6f6b216 ([`8b50a6a`](https://github.com/aya-rs/aya/commit/8b50a6a5738b5a57121205490d26805c74cb63de))
+    - Document miri skip reasons ([`35962a4`](https://github.com/aya-rs/aya/commit/35962a4794484aa3b37dadc98a70a659fd107b75))
+    - Generate new bindings ([`b06ff40`](https://github.com/aya-rs/aya/commit/b06ff402780b80862933791831c578e4c339fc96))
+    - Merge pull request #528 from dave-tucker/rename-all-the-things ([`63d8d4d`](https://github.com/aya-rs/aya/commit/63d8d4d34bdbbee149047dc0a5e9c2b191f3b32d))
+    - Rename Bpf to Ebpf ([`8c79b71`](https://github.com/aya-rs/aya/commit/8c79b71bd5699a686f33360520aa95c1a2895fa5))
+    - Rename BpfRelocationError -> EbpfRelocationError ([`fd48c55`](https://github.com/aya-rs/aya/commit/fd48c55466a23953ce7a4912306e1acf059b498b))
+    - Rename BpfSectionKind to EbpfSectionKind ([`cf3e2ca`](https://github.com/aya-rs/aya/commit/cf3e2ca677c81224368fb2838ebc5b10ee98419a))
+</details>
+
 ## 0.1.0 (2024-02-28)
 
 <csr-id-b3e7ef741c5b8d09fc7dc8302576f8174be75ff4/>
@@ -417,7 +524,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 145 commits contributed to the release over the course of 422 calendar days.
+ - 146 commits contributed to the release.
  - 63 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#608](https://github.com/aya-rs/aya/issues/608)
 
@@ -430,6 +537,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#608](https://github.com/aya-rs/aya/issues/608)**
     - Fix load errors for empty (but existent) BTF/BTF.ext sections ([`5894c4c`](https://github.com/aya-rs/aya/commit/5894c4ce82948c7e5fe766f41b690d036fcca907))
  * **Uncategorized**
+    - Release aya-obj v0.1.0, aya v0.12.0, safety bump aya-log v0.2.0 ([`0e99fa0`](https://github.com/aya-rs/aya/commit/0e99fa0f340b2fb2e0da3b330aa6555322a77eec))
     - Merge pull request #891 from dave-tucker/changelog ([`431ce23`](https://github.com/aya-rs/aya/commit/431ce23f27ef5c36a6b38c73b38f23b1cf007900))
     - Add CHANGELOG ([`72e8aab`](https://github.com/aya-rs/aya/commit/72e8aab6c8be8663c5b6ff6b606a51debf512f7d))
     - Appease new nightly clippy lints ([`3369169`](https://github.com/aya-rs/aya/commit/3369169aaca6510a47318fc29bbdb801b60b1c21))

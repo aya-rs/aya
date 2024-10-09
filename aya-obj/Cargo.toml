@@ -1,6 +1,6 @@
 [package]
 name = "aya-obj"
-version = "0.1.0"
+version = "0.2.0"
 description = "An eBPF object file parsing library with BTF and relocation support."
 keywords = ["bpf", "btf", "ebpf", "elf", "object"]
 readme = "README.md"
