@@ -43,4 +43,4 @@ cargo_metadata = { workspace = true }
 # workflows with stable cargo; stable cargo outright refuses to load manifests that use unstable
 # features.
 integration-ebpf = { path = "../integration-ebpf" }
-xtask = { workspace = true }
+xtask = { path = "../../xtask" }
