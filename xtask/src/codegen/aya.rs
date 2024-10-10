@@ -109,6 +109,10 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         // NETLINK
         "ifinfomsg",
         "tcmsg",
+        // ITER
+        "bpf_cgroup_iter_order",
+        // NETFILTER
+        "nf_inet_hooks",
     ];
 
     let vars = [
@@ -161,6 +165,8 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         "TC_H_MIN_EGRESS",
         // Ringbuf
         "BPF_RINGBUF_.*",
+        // NETFILTER
+        "NFPROTO_.*",
     ];
 
     let dir = PathBuf::from("aya-obj");
@@ -211,7 +217,9 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
                 .constified_enum("BTF_VAR_.*")
                 .constified_enum("IFLA_.*")
                 .constified_enum("TCA_.*")
-                .constified_enum("BPF_RINGBUF_.*");
+                .constified_enum("BPF_RINGBUF_.*")
+                // NETFILTER
+                .constified_enum("NFPROTO_.*");
         }
 
         for x in &types {
