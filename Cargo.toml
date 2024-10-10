@@ -71,7 +71,6 @@ epoll = { version = "4.3.3", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 hashbrown = { version = "0.15.0", default-features = false }
 indoc = { version = "2.0", default-features = false }
-integration-ebpf = { path = "test/integration-ebpf", default-features = false }
 libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
 netns-rs = { version = "0.1", default-features = false }
@@ -97,7 +96,6 @@ thiserror = { version = "1", default-features = false }
 tokio = { version = "1.24.0", default-features = false }
 which = { version = "6.0.0", default-features = false }
 xdpilone = { version = "1.0.5", default-features = false }
-xtask = { path = "xtask", default-features = false }
 
 [profile.dev]
 panic = "abort"
