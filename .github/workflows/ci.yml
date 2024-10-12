@@ -13,6 +13,7 @@ on:
     - cron: 00 4 * * *
 
 env:
+  ALPINE_VERSION: 3.20
   CARGO_TERM_COLOR: always
 
 jobs:
@@ -178,7 +179,49 @@ jobs:
             --package aya-log-ebpf \
             --feature-powerset
 
+  # Build a container image based on Alpine which:
+  # - Has a regular user in the `wheel` group, so we don't have to run all
+  #   commands as root.
+  # - Has git installed, so the `checkout` action works.
+  build-container-image:
+    strategy:
+      fail-fast: false      
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Check if Docker image already exists
+        id: check_image
+        run: |
+          if docker pull $IMAGE_NAME; then
+            echo "exists=true" >> $GITHUB_ENV
+          else
+            echo "exists=false" >> $GITHUB_ENV
+          fi
+
+      - name: Build Alpine container image (with a regular user)
+        if: env.exists == 'false'
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/alpine:${{ env.ALPINE_VERSION }}
+
+          cat << 'EOF' > Dockerfile
+          FROM alpine:${{ env.ALPINE_VERSION }}
+
+          RUN apk update && apk add --no-cache git sudo \
+              && adduser -D aya \
+              && echo "aya ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+          USER aya
+          WORKDIR /home/aya
+          EOF
+
+          docker build -t $IMAGE_NAME .
+          docker push $IMAGE_NAME
+
   run-integration-test:
+    needs:
+      - build-container-image
     strategy:
       fail-fast: false
       matrix:
@@ -194,14 +237,24 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             # We don't use ubuntu-latest because we care about the apt packages available.
             os: ubuntu-22.04
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-22.04
+            container: ghcr.io/aya-rs/alpine:3.20
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
     steps:
+      - name: Install git
+        if: runner.os == 'Linux' && contains(matrix.container, 'alpine')
+        run: |
+          set -euxo pipefail
+          apk add git
+
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Install prerequisites
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.container == ''
         # ubuntu-22.04 comes with clang 13-15[0]; support for signed and 64bit
         # enum values was added in clang 15[1] which isn't in `$PATH`.
         #
@@ -215,6 +268,24 @@ jobs:
           sudo apt update
           sudo apt -y install gcc-multilib locate qemu-system-{arm,x86}
           echo /usr/lib/llvm-15/bin >> $GITHUB_PATH
+
+      - name: Install prerequisites
+        if: runner.os == 'Linux' && contains(matrix.container, 'alpine')
+        # Use clang for building the C eBPF programs for integration tests.
+        # Use gcc with binutils as the linker and libgcc_s as the runtime
+        # library.
+        run: |
+          set -euxo pipefail
+          apk add \
+            bash \
+            clang \
+            curl \
+            dpkg \
+            gcc \
+            jq \
+            qemu-system-arm \
+            qemu-system-x86_64 \
+            wget
 
       - name: Install prerequisites
         if: runner.os == 'macOS'
@@ -317,6 +388,7 @@ jobs:
       - lint
       - build-test-aya
       - build-test-aya-ebpf
+      - build-container-image
       - run-integration-test
     runs-on: ubuntu-latest
     steps:
