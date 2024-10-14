@@ -6,16 +6,16 @@ use std::{
     path::Path,
 };
 
+use aya_obj::generated::{
+    bpf_attach_type::{self, BPF_TCX_EGRESS, BPF_TCX_INGRESS},
+    bpf_link_type,
+    bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS,
+    TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
+};
 use thiserror::Error;
 
 use super::{FdLink, ProgramInfo};
 use crate::{
-    generated::{
-        bpf_attach_type::{self, BPF_TCX_EGRESS, BPF_TCX_INGRESS},
-        bpf_link_type,
-        bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS,
-        TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
-    },
     programs::{
         define_link_wrapper, id_as_key, load_program, query, Link, LinkError, LinkOrder,
         ProgramData, ProgramError,

@@ -1,8 +1,11 @@
 //! Lirc programs.
 use std::os::fd::{AsFd, AsRawFd as _, RawFd};
 
+use aya_obj::generated::{
+    bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2,
+};
+
 use crate::{
-    generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
     programs::{
         id_as_key, load_program, query, CgroupAttachMode, Link, ProgramData, ProgramError,
         ProgramFd, ProgramInfo,

@@ -86,10 +86,8 @@ pub mod util;
 
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 
-use aya_obj as obj;
-use aya_obj::generated;
+pub use aya_obj::btf::{Btf, BtfError};
 pub use bpf::*;
-pub use obj::btf::{Btf, BtfError};
 pub use object::Endianness;
 #[doc(hidden)]
 pub use sys::netlink_set_link_up;

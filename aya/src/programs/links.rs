@@ -6,14 +6,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use aya_obj::generated::{
+    bpf_attach_type, BPF_F_AFTER, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE, BPF_F_BEFORE, BPF_F_ID,
+    BPF_F_LINK, BPF_F_REPLACE,
+};
 use hashbrown::hash_set::{Entry, HashSet};
 use thiserror::Error;
 
 use crate::{
-    generated::{
-        bpf_attach_type, BPF_F_AFTER, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE, BPF_F_BEFORE,
-        BPF_F_ID, BPF_F_LINK, BPF_F_REPLACE,
-    },
     pin::PinError,
     programs::{MultiProgLink, MultiProgram, ProgramError, ProgramFd, ProgramId},
     sys::{bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach, SyscallError},
@@ -578,11 +578,11 @@ mod tests {
     use std::{cell::RefCell, fs::File, rc::Rc};
 
     use assert_matches::assert_matches;
+    use aya_obj::generated::{BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE};
     use tempfile::tempdir;
 
     use super::{FdLink, Link, Links};
     use crate::{
-        generated::{BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE},
         programs::{CgroupAttachMode, ProgramError},
         sys::override_syscall,
     };

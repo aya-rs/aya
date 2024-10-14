@@ -6,10 +6,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE};
 use thiserror::Error;
 
 use crate::{
-    generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE},
     programs::{
         define_link_wrapper, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},

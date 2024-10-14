@@ -4,13 +4,13 @@ use std::{
     os::fd::{AsFd, AsRawFd, RawFd},
 };
 
+use aya_obj::generated::{
+    bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF,
+};
 use libc::{setsockopt, SOL_SOCKET};
 use thiserror::Error;
 
-use crate::{
-    generated::{bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF},
-    programs::{id_as_key, load_program, Link, ProgramData, ProgramError},
-};
+use crate::programs::{id_as_key, load_program, Link, ProgramData, ProgramError};
 
 /// The type returned when attaching a [`SocketFilter`] fails.
 #[derive(Debug, Error)]

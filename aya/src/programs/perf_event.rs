@@ -2,18 +2,19 @@
 
 use std::os::fd::AsFd as _;
 
-pub use crate::generated::{
+use aya_obj::generated::{
+    bpf_link_type,
+    bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT,
+    perf_type_id::{
+        PERF_TYPE_BREAKPOINT, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE, PERF_TYPE_RAW,
+        PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT,
+    },
+};
+pub use aya_obj::generated::{
     perf_hw_cache_id, perf_hw_cache_op_id, perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids,
 };
+
 use crate::{
-    generated::{
-        bpf_link_type,
-        bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT,
-        perf_type_id::{
-            PERF_TYPE_BREAKPOINT, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE, PERF_TYPE_RAW,
-            PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT,
-        },
-    },
     programs::{
         links::define_link_wrapper,
         load_program, perf_attach,

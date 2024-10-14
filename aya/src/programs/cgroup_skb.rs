@@ -2,11 +2,12 @@
 
 use std::{hash::Hash, os::fd::AsFd, path::Path};
 
+use aya_obj::generated::{
+    bpf_attach_type::{BPF_CGROUP_INET_EGRESS, BPF_CGROUP_INET_INGRESS},
+    bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB,
+};
+
 use crate::{
-    generated::{
-        bpf_attach_type::{BPF_CGROUP_INET_EGRESS, BPF_CGROUP_INET_INGRESS},
-        bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB,
-    },
     programs::{
         define_link_wrapper, id_as_key, load_program, CgroupAttachMode, FdLink, Link,
         ProgAttachLink, ProgramData, ProgramError,
