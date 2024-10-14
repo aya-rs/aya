@@ -77,6 +77,11 @@ use std::{
     sync::Arc,
 };
 
+use aya_obj::{
+    btf::BtfError,
+    generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
+    VerifierLog,
+};
 use info::impl_info;
 pub use info::{loaded_programs, ProgramInfo, ProgramType};
 use libc::ENOSPC;
@@ -113,9 +118,7 @@ pub use crate::programs::{
     xdp::{Xdp, XdpError, XdpFlags},
 };
 use crate::{
-    generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
     maps::MapError,
-    obj::{self, btf::BtfError, VerifierLog},
     pin::PinError,
     programs::{links::*, perf_attach::*},
     sys::{
@@ -462,7 +465,7 @@ impl Program {
 #[derive(Debug)]
 pub(crate) struct ProgramData<T: Link> {
     pub(crate) name: Option<String>,
-    pub(crate) obj: Option<(obj::Program, obj::Function)>,
+    pub(crate) obj: Option<(aya_obj::Program, aya_obj::Function)>,
     pub(crate) fd: Option<ProgramFd>,
     pub(crate) links: LinkMap<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
@@ -478,7 +481,7 @@ pub(crate) struct ProgramData<T: Link> {
 impl<T: Link> ProgramData<T> {
     pub(crate) fn new(
         name: Option<String>,
-        obj: (obj::Program, obj::Function),
+        obj: (aya_obj::Program, aya_obj::Function),
         btf_fd: Option<Arc<crate::MockableFd>>,
         verifier_log_level: VerifierLogLevel,
     ) -> Self {
@@ -617,12 +620,12 @@ fn load_program<T: Link>(
     }
     let obj = obj.as_ref().unwrap();
     let (
-        obj::Program {
+        aya_obj::Program {
             license,
             kernel_version,
             ..
         },
-        obj::Function {
+        aya_obj::Function {
             instructions,
             func_info,
             line_info,

@@ -2,10 +2,10 @@
 
 use std::{hash::Hash, os::fd::AsFd, path::Path};
 
+use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK;
 pub use aya_obj::programs::CgroupSockAttachType;
 
 use crate::{
-    generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK,
     programs::{
         define_link_wrapper, load_program, CgroupAttachMode, FdLink, Link, ProgAttachLink,
         ProgramData, ProgramError,

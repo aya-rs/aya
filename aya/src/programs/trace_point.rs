@@ -1,10 +1,10 @@
 //! Tracepoint programs.
 use std::{fs, io, os::fd::AsFd as _, path::Path};
 
+use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT};
 use thiserror::Error;
 
 use crate::{
-    generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT},
     programs::{
         define_link_wrapper, load_program,
         perf_attach::{perf_attach, PerfLinkIdInner, PerfLinkInner},
