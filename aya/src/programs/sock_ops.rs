@@ -1,8 +1,11 @@
 //! Socket option programs.
 use std::os::fd::AsFd;
 
+use aya_obj::generated::{
+    bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS,
+};
+
 use crate::{
-    generated::{bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS},
     programs::{
         define_link_wrapper, id_as_key, load_program, CgroupAttachMode, FdLink, Link,
         ProgAttachLink, ProgramData, ProgramError,

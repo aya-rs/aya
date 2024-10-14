@@ -81,23 +81,22 @@ mod tests {
     use std::{ffi::c_long, io};
 
     use assert_matches::assert_matches;
+    use aya_obj::generated::{
+        bpf_cmd,
+        bpf_map_type::{BPF_MAP_TYPE_ARRAY, BPF_MAP_TYPE_BLOOM_FILTER},
+    };
     use libc::{EFAULT, ENOENT};
 
     use super::*;
     use crate::{
-        generated::{
-            bpf_cmd,
-            bpf_map_type::{BPF_MAP_TYPE_ARRAY, BPF_MAP_TYPE_BLOOM_FILTER},
-        },
         maps::{
             test_utils::{self, new_map},
             Map,
         },
-        obj,
         sys::{override_syscall, SysResult, Syscall},
     };
 
-    fn new_obj_map() -> obj::Map {
+    fn new_obj_map() -> aya_obj::Map {
         test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_BLOOM_FILTER)
     }
 

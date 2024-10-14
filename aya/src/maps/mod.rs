@@ -59,13 +59,12 @@ use std::{
     ptr,
 };
 
-use aya_obj::{generated::bpf_map_type, InvalidTypeBinding};
+use aya_obj::{generated::bpf_map_type, parse_map_info, EbpfSectionKind, InvalidTypeBinding};
 use libc::{getrlimit, rlim_t, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
 use thiserror::Error;
 
 use crate::{
-    obj::{self, parse_map_info, EbpfSectionKind},
     pin::PinError,
     sys::{
         bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id, bpf_map_get_next_key,
@@ -548,14 +547,14 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 /// You should never need to use this unless you're implementing a new map type.
 #[derive(Debug)]
 pub struct MapData {
-    obj: obj::Map,
+    obj: aya_obj::Map,
     fd: MapFd,
 }
 
 impl MapData {
     /// Creates a new map with the provided `name`
     pub fn create(
-        mut obj: obj::Map,
+        mut obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
@@ -603,7 +602,7 @@ impl MapData {
 
     pub(crate) fn create_pinned_by_name<P: AsRef<Path>>(
         path: P,
-        obj: obj::Map,
+        obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
@@ -754,7 +753,7 @@ impl MapData {
         fd
     }
 
-    pub(crate) fn obj(&self) -> &obj::Map {
+    pub(crate) fn obj(&self) -> &aya_obj::Map {
         let Self { obj, fd: _ } = self;
         obj
     }
@@ -955,15 +954,19 @@ impl<T: Pod> Deref for PerCpuValues<T> {
 
 #[cfg(test)]
 mod test_utils {
+    use aya_obj::{
+        generated::{bpf_cmd, bpf_map_type},
+        maps::LegacyMap,
+        EbpfSectionKind,
+    };
+
     use crate::{
         bpf_map_def,
-        generated::{bpf_cmd, bpf_map_type},
         maps::MapData,
-        obj::{self, maps::LegacyMap, EbpfSectionKind},
         sys::{override_syscall, Syscall},
     };
 
-    pub(super) fn new_map(obj: obj::Map) -> MapData {
+    pub(super) fn new_map(obj: aya_obj::Map) -> MapData {
         override_syscall(|call| match call {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
@@ -974,8 +977,8 @@ mod test_utils {
         MapData::create(obj, "foo", None).unwrap()
     }
 
-    pub(super) fn new_obj_map<K>(map_type: bpf_map_type) -> obj::Map {
-        obj::Map::Legacy(LegacyMap {
+    pub(super) fn new_obj_map<K>(map_type: bpf_map_type) -> aya_obj::Map {
+        aya_obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: map_type as u32,
                 key_size: std::mem::size_of::<K>() as u32,
@@ -993,8 +996,8 @@ mod test_utils {
     pub(super) fn new_obj_map_with_max_entries<K>(
         map_type: bpf_map_type,
         max_entries: u32,
-    ) -> obj::Map {
-        obj::Map::Legacy(LegacyMap {
+    ) -> aya_obj::Map {
+        aya_obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: map_type as u32,
                 key_size: std::mem::size_of::<K>() as u32,
@@ -1015,17 +1018,15 @@ mod tests {
     use std::{ffi::c_char, os::fd::AsRawFd as _};
 
     use assert_matches::assert_matches;
+    use aya_obj::generated::{bpf_cmd, bpf_map_info, bpf_map_type};
     use libc::EFAULT;
 
-    fn new_obj_map() -> obj::Map {
-        test_utils::new_obj_map::<u32>(crate::generated::bpf_map_type::BPF_MAP_TYPE_HASH)
-    }
-
     use super::*;
-    use crate::{
-        generated::bpf_cmd,
-        sys::{override_syscall, Syscall},
-    };
+    use crate::sys::{override_syscall, Syscall};
+
+    fn new_obj_map() -> aya_obj::Map {
+        test_utils::new_obj_map::<u32>(bpf_map_type::BPF_MAP_TYPE_HASH)
+    }
 
     #[test]
     fn test_from_map_id() {
@@ -1097,7 +1098,7 @@ mod tests {
         // Create with max_entries > nr_cpus is clamped to nr_cpus
         assert_matches!(
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
-                crate::generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 65535,
             ), "foo", None),
             Ok(MapData {
@@ -1112,7 +1113,7 @@ mod tests {
         // Create with max_entries = 0 is set to nr_cpus
         assert_matches!(
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
-                crate::generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 0,
             ), "foo", None),
             Ok(MapData {
@@ -1127,7 +1128,7 @@ mod tests {
         // Create with max_entries < nr_cpus is unchanged
         assert_matches!(
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
-                crate::generated::bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 1,
             ), "foo", None),
             Ok(MapData {
@@ -1146,8 +1147,6 @@ mod tests {
         ignore = "`let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) }` is trying to retag from <wildcard> for Unique permission, but no exposed tags have suitable permission in the borrow stack for this location"
     )]
     fn test_name() {
-        use crate::generated::bpf_map_info;
-
         const TEST_NAME: &str = "foo";
 
         override_syscall(|call| match call {
@@ -1182,8 +1181,6 @@ mod tests {
         ignore = "`let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) }` is trying to retag from <wildcard> for Unique permission, but no exposed tags have suitable permission in the borrow stack for this location"
     )]
     fn test_loaded_maps() {
-        use crate::generated::bpf_map_info;
-
         override_syscall(|call| match call {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_ID,

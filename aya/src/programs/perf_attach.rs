@@ -1,8 +1,9 @@
 //! Perf attach links.
 use std::os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd};
 
+use aya_obj::generated::bpf_attach_type::BPF_PERF_EVENT;
+
 use crate::{
-    generated::bpf_attach_type::BPF_PERF_EVENT,
     programs::{
         id_as_key,
         probe::{detach_debug_fs, ProbeEvent},

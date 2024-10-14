@@ -2,12 +2,14 @@
 
 use std::os::fd::{AsFd as _, BorrowedFd};
 
+use aya_obj::{
+    btf::BtfKind,
+    generated::{bpf_attach_type::BPF_CGROUP_INET_INGRESS, bpf_prog_type::BPF_PROG_TYPE_EXT},
+};
 use object::Endianness;
 use thiserror::Error;
 
 use crate::{
-    generated::{bpf_attach_type::BPF_CGROUP_INET_INGRESS, bpf_prog_type::BPF_PROG_TYPE_EXT},
-    obj::btf::BtfKind,
     programs::{
         define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd,
     },
