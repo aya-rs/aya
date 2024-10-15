@@ -101,6 +101,10 @@ impl CgroupSock {
                 .insert(CgroupSockLink::new(CgroupSockLinkInner::ProgAttach(link)))
         }
     }
+    
+    pub fn auto_attach(&self) -> Result<CgroupSockLinkId, ProgramError>{
+        todo!();
+    }
 
     /// Creates a program from a pinned entry on a bpffs.
     ///

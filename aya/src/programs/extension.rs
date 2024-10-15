@@ -112,6 +112,10 @@ impl Extension {
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))
     }
+    
+    pub fn auto_attach(&self) -> Result<ExtensionLinkId, ProgramError>{
+        todo!();
+    }
 
     /// Attaches the extension to another program.
     ///

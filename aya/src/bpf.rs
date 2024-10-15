@@ -28,10 +28,11 @@ use crate::{
         Object, ParseError, ProgramSection,
     },
     programs::{
-        BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
-        CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, Iter, KProbe, LircMode2, Lsm,
-        PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier,
-        SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        trace_point::TracePointAttachInfo, BtfTracePoint, CgroupDevice, CgroupSkb,
+        CgroupSkbAttachType, CgroupSock, CgroupSockAddr, CgroupSockopt, CgroupSysctl, Extension,
+        FEntry, FExit, Iter, KProbe, LircMode2, Lsm, PerfEvent, ProbeKind, Program, ProgramData,
+        ProgramError, RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps,
+        SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -412,7 +413,7 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::FEntry { sleepable: _ }
                                 | ProgramSection::FExit { sleepable: _ }
                                 | ProgramSection::Lsm { sleepable: _ }
-                                | ProgramSection::BtfTracePoint
+                                | ProgramSection::BtfTracePoint { trace_point: _ }
                                 | ProgramSection::Iter { sleepable: _ } => {
                                     return Err(EbpfError::BtfError(err))
                                 }
@@ -420,7 +421,10 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::KProbe
                                 | ProgramSection::UProbe { sleepable: _ }
                                 | ProgramSection::URetProbe { sleepable: _ }
-                                | ProgramSection::TracePoint
+                                | ProgramSection::TracePoint {
+                                    category: _,
+                                    name: _,
+                                }
                                 | ProgramSection::SocketFilter
                                 | ProgramSection::Xdp {
                                     frags: _,
@@ -575,9 +579,19 @@ impl<'a> EbpfLoader<'a> {
                                 kind: ProbeKind::URetProbe,
                             })
                         }
-                        ProgramSection::TracePoint => Program::TracePoint(TracePoint {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                        }),
+                        ProgramSection::TracePoint { category, name } => {
+                            let expected_attach_info = match (category, name) {
+                                (Some(category), Some(name)) => Some(TracePointAttachInfo {
+                                    category: category.clone(),
+                                    name: name.clone(),
+                                }),
+                                _ => None,
+                            };
+                            Program::TracePoint(TracePoint {
+                                data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                                expected_attach_info,
+                            })
+                        }
                         ProgramSection::SocketFilter => Program::SocketFilter(SocketFilter {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
@@ -657,9 +671,11 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::Lsm(Lsm { data })
                         }
-                        ProgramSection::BtfTracePoint => Program::BtfTracePoint(BtfTracePoint {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                        }),
+                        ProgramSection::BtfTracePoint { trace_point: _ } => {
+                            Program::BtfTracePoint(BtfTracePoint {
+                                data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                            })
+                        }
                         ProgramSection::FEntry { sleepable } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
@@ -1080,6 +1096,14 @@ impl Ebpf {
     /// ```
     pub fn programs_mut(&mut self) -> impl Iterator<Item = (&str, &mut Program)> {
         self.programs.iter_mut().map(|(s, p)| (s.as_str(), p))
+    }
+
+    /// TODO
+    pub fn auto_attach(&mut self) {
+        for (_, program) in self.programs_mut() {
+            let btf = Btf::from_sys_fs().expect("unable to get btf info");
+            program.auto_attach(Some(&btf)).unwrap();
+        }
     }
 }
 

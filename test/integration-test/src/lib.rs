@@ -5,6 +5,8 @@ pub const ITER_TASK: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/i
 pub const MAIN: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/main.bpf.o"));
 pub const MULTIMAP_BTF: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/multimap-btf.bpf.o"));
+pub const PROBE_AUTO_ATTACH: &[u8] =
+    include_bytes_aligned!(concat!(env!("OUT_DIR"), "/probe_auto_attach.bpf.o"));
 pub const RELOC_BPF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/reloc.bpf.o"));
 pub const RELOC_BTF: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/reloc.bpf.target.o"));

@@ -95,6 +95,10 @@ impl SkSkb {
 
         self.data.links.insert(SkSkbLink::new(link))
     }
+    
+    pub fn auto_attach(&self) -> Result<SkSkbLinkId, ProgramError>{
+        todo!();
+    }
 
     /// Creates a program from a pinned entry on a bpffs.
     ///

@@ -98,6 +98,10 @@ impl SocketFilter {
         self.data.links.insert(SocketFilterLink { socket, prog_fd })
     }
 
+    pub fn auto_attach(&self) -> Result<SocketFilterLinkId, ProgramError> {
+        todo!();
+    }
+
     /// Detaches the program.
     ///
     /// See [`Self::attach``].

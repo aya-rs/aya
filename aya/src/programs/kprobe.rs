@@ -88,6 +88,10 @@ impl KProbe {
         )
     }
 
+    pub fn auto_attach(&mut self) -> Result<KProbeLinkId, ProgramError> {
+        todo!();
+    }
+
     /// Creates a program from a pinned entry on a bpffs.
     ///
     /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
