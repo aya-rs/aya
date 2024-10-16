@@ -146,6 +146,10 @@ pub enum ProgramError {
     #[error("the program is not attached")]
     NotAttached,
 
+    /// The program cannot be auto attached.
+    #[error("the program cannot be auto attached")]
+    CannotAutoAttach,
+
     /// Loading the program failed.
     #[error("the BPF_PROG_LOAD syscall failed. Verifier output: {verifier_log}")]
     LoadError {
@@ -939,7 +943,6 @@ macro_rules! impl_from_pin {
 
 // Use impl_from_pin if the program doesn't require additional data
 impl_from_pin!(
-    TracePoint,
     SocketFilter,
     SkMsg,
     CgroupSysctl,
