@@ -620,7 +620,8 @@ pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), 
 #[inline]
 pub fn bpf_get_current_comm() -> Result<[u8; 16], c_long> {
     let mut comm: [u8; 16usize] = [0; 16];
-    let ret = unsafe { gen::bpf_get_current_comm(&mut comm as *mut _ as *mut c_void, 16u32) };
+    let ret =
+        unsafe { gen::bpf_get_current_comm(&mut comm as *mut _ as *mut c_void, comm.len() as u32) };
     if ret == 0 {
         Ok(comm)
     } else {
