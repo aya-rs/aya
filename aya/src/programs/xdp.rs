@@ -3,42 +3,26 @@
 use std::{
     ffi::CString,
     hash::Hash,
-    io,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
     path::Path,
 };
 
 use libc::if_nametoindex;
-use thiserror::Error;
 
 use crate::{
+    errors::{InternalLinkError, LinkError},
     generated::{
         bpf_link_type, bpf_prog_type, XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE,
         XDP_FLAGS_SKB_MODE, XDP_FLAGS_UPDATE_IF_NOEXIST,
     },
     obj::programs::XdpAttachType,
-    programs::{
-        define_link_wrapper, load_program, FdLink, Link, LinkError, ProgramData, ProgramError,
-    },
+    programs::{define_link_wrapper, load_program, FdLink, Link, ProgramData, ProgramError},
     sys::{
         bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, netlink_set_xdp_fd, LinkTarget,
-        SyscallError,
     },
     util::KernelVersion,
     VerifierLogLevel,
 };
-
-/// The type returned when attaching an [`Xdp`] program fails on kernels `< 5.9`.
-#[derive(Debug, Error)]
-pub enum XdpError {
-    /// netlink error while attaching XDP program
-    #[error("netlink error while attaching XDP program")]
-    NetlinkError {
-        /// the [`io::Error`] from the netlink call
-        #[source]
-        io_error: io::Error,
-    },
-}
 
 bitflags::bitflags! {
     /// Flags passed to [`Xdp::attach()`].
@@ -105,14 +89,15 @@ impl Xdp {
     /// kernels `>= 5.9.0`, and instead
     /// [`XdpError::NetlinkError`] is returned for older
     /// kernels.
-    pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<XdpLinkId, ProgramError> {
+    pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<XdpLinkId, LinkError> {
         // TODO: avoid this unwrap by adding a new error variant.
         let c_interface = CString::new(interface).unwrap();
         let if_index = unsafe { if_nametoindex(c_interface.as_ptr()) };
         if if_index == 0 {
-            return Err(ProgramError::UnknownInterface {
+            return Err(InternalLinkError::UnknownInterface {
                 name: interface.to_string(),
-            });
+            }
+            .into());
         }
         self.attach_to_if_index(if_index, flags)
     }
@@ -131,7 +116,7 @@ impl Xdp {
         &mut self,
         if_index: u32,
         flags: XdpFlags,
-    ) -> Result<XdpLinkId, ProgramError> {
+    ) -> Result<XdpLinkId, LinkError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
 
@@ -151,18 +136,14 @@ impl Xdp {
                 None,
                 flags.bits(),
                 None,
-            )
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+            )?;
             self.data
                 .links
                 .insert(XdpLink::new(XdpLinkInner::FdLink(FdLink::new(link_fd))))
         } else {
             let if_index = if_index as i32;
             unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, flags.bits()) }
-                .map_err(|io_error| XdpError::NetlinkError { io_error })?;
+                .map_err(|io_error| InternalLinkError::NetlinkError { io_error })?;
 
             let prog_fd = prog_fd.as_raw_fd();
             self.data
@@ -193,7 +174,7 @@ impl Xdp {
     /// Detaches the program.
     ///
     /// See [Xdp::attach].
-    pub fn detach(&mut self, link_id: XdpLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: XdpLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -201,25 +182,20 @@ impl Xdp {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: XdpLinkId) -> Result<XdpLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: XdpLinkId) -> Result<XdpLink, LinkError> {
         self.data.take_link(link_id)
     }
 
     /// Atomically replaces the program referenced by the provided link.
     ///
     /// Ownership of the link will transfer to this program.
-    pub fn attach_to_link(&mut self, link: XdpLink) -> Result<XdpLinkId, ProgramError> {
+    pub fn attach_to_link(&mut self, link: XdpLink) -> Result<XdpLinkId, LinkError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         match link.into_inner() {
             XdpLinkInner::FdLink(fd_link) => {
                 let link_fd = fd_link.fd;
-                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|(_, io_error)| {
-                    SyscallError {
-                        call: "bpf_link_update",
-                        io_error,
-                    }
-                })?;
+                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0)?;
 
                 self.data
                     .links
@@ -239,7 +215,7 @@ impl Xdp {
                         Some(old_prog_fd),
                         replace_flags.bits(),
                     )
-                    .map_err(|io_error| XdpError::NetlinkError { io_error })?;
+                    .map_err(|io_error| InternalLinkError::NetlinkError { io_error })?;
                 }
 
                 let prog_fd = prog_fd.as_raw_fd();
@@ -269,7 +245,7 @@ impl Link for NlLink {
         (self.if_index, self.prog_fd)
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), LinkError> {
         let flags = if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
             self.flags.bits() | XDP_FLAGS_REPLACE
         } else {
@@ -304,7 +280,7 @@ impl Link for XdpLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), LinkError> {
         match self {
             Self::FdLink(link) => link.detach(),
             Self::NlLink(link) => link.detach(),

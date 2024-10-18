@@ -8,11 +8,10 @@ use std::{
 
 use aya_obj::generated::bpf_cpumap_val;
 
-use super::XdpMapError;
 use crate::{
     maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
     programs::ProgramFd,
-    sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
+    sys::{bpf_map_lookup_elem, bpf_map_update_elem},
     Pod, FEATURES,
 };
 
@@ -102,12 +101,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
                 })
             })
         };
-        value
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_map_lookup_elem",
-                io_error,
-            })?
-            .ok_or(MapError::KeyNotFound)
+        value?.ok_or(MapError::KeyNotFound)
     }
 
     /// An iterator over the elements of the map.
@@ -142,7 +136,7 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
         queue_size: u32,
         program: Option<&ProgramFd>,
         flags: u64,
-    ) -> Result<(), XdpMapError> {
+    ) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, cpu_index)?;
         let fd = data.fd().as_fd();
@@ -158,17 +152,12 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
             bpf_map_update_elem(fd, Some(&cpu_index), &value, flags)
         } else {
             if program.is_some() {
-                return Err(XdpMapError::ChainedProgramNotSupported);
+                return Err(MapError::ChainedProgramNotSupported);
             }
             bpf_map_update_elem(fd, Some(&cpu_index), &queue_size, flags)
         };
 
-        res.map_err(|(_, io_error)| {
-            MapError::from(SyscallError {
-                call: "bpf_map_update_elem",
-                io_error,
-            })
-        })?;
+        res?;
         Ok(())
     }
 }

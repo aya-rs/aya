@@ -1,7 +1,6 @@
 //! User space probes.
 use std::{
     borrow::Cow,
-    error::Error,
     ffi::{CStr, OsStr, OsString},
     fs,
     io::{self, BufRead, Cursor, Read},
@@ -13,15 +12,15 @@ use std::{
 
 use libc::pid_t;
 use object::{Object, ObjectSection, ObjectSymbol, Symbol};
-use thiserror::Error;
 
 use crate::{
+    errors::{InternalLinkError, LinkError, ResolveSymbolError},
     generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE},
     programs::{
         define_link_wrapper, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{attach, OsStringExt as _, ProbeKind},
-        FdLink, LinkError, ProgramData, ProgramError,
+        FdLink, ProgramData, ProgramError,
     },
     sys::bpf_link_get_info_by_fd,
     VerifierLogLevel,
@@ -81,14 +80,11 @@ impl UProbe {
         offset: u64,
         target: T,
         pid: Option<pid_t>,
-    ) -> Result<UProbeLinkId, ProgramError> {
+    ) -> Result<UProbeLinkId, LinkError> {
         let path = resolve_attach_path(target.as_ref(), pid)?;
 
         let sym_offset = if let Some(fn_name) = fn_name {
-            resolve_symbol(&path, fn_name).map_err(|error| UProbeError::SymbolError {
-                symbol: fn_name.to_string(),
-                error: Box::new(error),
-            })?
+            resolve_symbol(&path, fn_name)?
         } else {
             0
         };
@@ -100,7 +96,7 @@ impl UProbe {
     /// Detaches the program.
     ///
     /// See [UProbe::attach].
-    pub fn detach(&mut self, link_id: UProbeLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: UProbeLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -108,7 +104,7 @@ impl UProbe {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: UProbeLinkId) -> Result<UProbeLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: UProbeLinkId) -> Result<UProbeLink, LinkError> {
         self.data.take_link(link_id)
     }
 
@@ -124,15 +120,12 @@ impl UProbe {
     }
 }
 
-fn resolve_attach_path(target: &Path, pid: Option<pid_t>) -> Result<Cow<'_, Path>, UProbeError> {
+fn resolve_attach_path(target: &Path, pid: Option<pid_t>) -> Result<Cow<'_, Path>, LinkError> {
     // Look up the path for the target. If it there is a pid, and the target is a library name
     // that is in the process's memory map, use the path of that library. Otherwise, use the target as-is.
     pid.and_then(|pid| {
         find_lib_in_proc_maps(pid, target)
-            .map_err(|io_error| UProbeError::FileError {
-                filename: Path::new("/proc").join(pid.to_string()).join("maps"),
-                io_error,
-            })
+            .map_err(Into::into)
             .map(|v| v.map(Cow::Owned))
             .transpose()
     })
@@ -140,14 +133,15 @@ fn resolve_attach_path(target: &Path, pid: Option<pid_t>) -> Result<Cow<'_, Path
     .or_else(|| {
         LD_SO_CACHE
             .as_ref()
-            .map_err(|io_error| UProbeError::InvalidLdSoCache { io_error })
+            .map_err(|io_error| InternalLinkError::LdSoCache { io_error }.into())
             .map(|cache| cache.resolve(target).map(Cow::Borrowed))
             .transpose()
     })
     .unwrap_or_else(|| {
-        Err(UProbeError::InvalidTarget {
+        Err(InternalLinkError::InvalidTarget {
             path: target.to_owned(),
-        })
+        }
+        .into())
     })
 }
 
@@ -203,45 +197,6 @@ impl TryFrom<FdLink> for UProbeLink {
         }
         Err(LinkError::InvalidLink)
     }
-}
-
-/// The type returned when attaching an [`UProbe`] fails.
-#[derive(Debug, Error)]
-pub enum UProbeError {
-    /// There was an error parsing `/etc/ld.so.cache`.
-    #[error("error reading `{}` file", LD_SO_CACHE_FILE)]
-    InvalidLdSoCache {
-        /// the original [`io::Error`]
-        #[source]
-        io_error: &'static io::Error,
-    },
-
-    /// The target program could not be found.
-    #[error("could not resolve uprobe target `{path}`")]
-    InvalidTarget {
-        /// path to target
-        path: PathBuf,
-    },
-
-    /// There was an error resolving the target symbol.
-    #[error("error resolving symbol")]
-    SymbolError {
-        /// symbol name
-        symbol: String,
-        /// the original error
-        #[source]
-        error: Box<dyn Error + Send + Sync>,
-    },
-
-    /// There was an error accessing `filename`.
-    #[error("`{filename}`")]
-    FileError {
-        /// The file name
-        filename: PathBuf,
-        /// The [`io::Error`] returned from the file operation
-        #[source]
-        io_error: io::Error,
-    },
 }
 
 fn proc_maps_libs(pid: pid_t) -> Result<Vec<(OsString, PathBuf)>, io::Error> {
@@ -410,30 +365,6 @@ impl LdSoCache {
                 })
             })
     }
-}
-
-#[derive(Error, Debug)]
-enum ResolveSymbolError {
-    #[error(transparent)]
-    Io(#[from] io::Error),
-
-    #[error("error parsing ELF")]
-    Object(#[from] object::Error),
-
-    #[error("unknown symbol `{0}`")]
-    Unknown(String),
-
-    #[error("symbol `{0}` does not appear in section")]
-    NotInSection(String),
-
-    #[error("symbol `{0}` in section `{1:?}` which has no offset")]
-    SectionFileRangeNone(String, Result<String, object::Error>),
-
-    #[error("failed to access debuglink file `{0}`: `{1}`")]
-    DebuglinkAccessError(String, io::Error),
-
-    #[error("symbol `{0}` not found, mismatched build IDs in main and debug files")]
-    BuildIdMismatch(String),
 }
 
 fn construct_debuglink_path(

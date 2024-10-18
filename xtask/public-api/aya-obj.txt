@@ -28,6 +28,7 @@ pub aya_obj::btf::BtfError::LoadError::io_error: std::io::error::Error
 pub aya_obj::btf::BtfError::LoadError::verifier_log: aya_obj::VerifierLog
 pub aya_obj::btf::BtfError::MaximumTypeDepthReached
 pub aya_obj::btf::BtfError::MaximumTypeDepthReached::type_id: u32
+pub aya_obj::btf::BtfError::Other(alloc::boxed::Box<dyn core::error::Error>)
 pub aya_obj::btf::BtfError::SymbolOffsetNotFound
 pub aya_obj::btf::BtfError::SymbolOffsetNotFound::symbol_name: alloc::string::String
 pub aya_obj::btf::BtfError::UnexpectedBtfType
@@ -38,6 +39,8 @@ pub aya_obj::btf::BtfError::UnknownBtfTypeName
 pub aya_obj::btf::BtfError::UnknownBtfTypeName::type_name: alloc::string::String
 pub aya_obj::btf::BtfError::UnknownSectionSize
 pub aya_obj::btf::BtfError::UnknownSectionSize::section_name: alloc::string::String
+impl core::convert::From<alloc::boxed::Box<dyn core::error::Error>> for aya_obj::btf::BtfError
+pub fn aya_obj::btf::BtfError::from(source: alloc::boxed::Box<dyn core::error::Error>) -> Self
 impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::ParseError
 pub fn aya_obj::ParseError::from(source: aya_obj::btf::BtfError) -> Self
 impl core::error::Error for aya_obj::btf::BtfError
@@ -47,8 +50,8 @@ pub fn aya_obj::btf::BtfError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> c
 impl core::fmt::Display for aya_obj::btf::BtfError
 pub fn aya_obj::btf::BtfError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya_obj::btf::BtfError
-impl core::marker::Send for aya_obj::btf::BtfError
-impl core::marker::Sync for aya_obj::btf::BtfError
+impl !core::marker::Send for aya_obj::btf::BtfError
+impl !core::marker::Sync for aya_obj::btf::BtfError
 impl core::marker::Unpin for aya_obj::btf::BtfError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfError
@@ -582,8 +585,8 @@ pub fn aya_obj::btf::BtfRelocationError::fmt(&self, f: &mut core::fmt::Formatter
 impl core::fmt::Display for aya_obj::btf::BtfRelocationError
 pub fn aya_obj::btf::BtfRelocationError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya_obj::btf::BtfRelocationError
-impl core::marker::Send for aya_obj::btf::BtfRelocationError
-impl core::marker::Sync for aya_obj::btf::BtfRelocationError
+impl !core::marker::Send for aya_obj::btf::BtfRelocationError
+impl !core::marker::Sync for aya_obj::btf::BtfRelocationError
 impl core::marker::Unpin for aya_obj::btf::BtfRelocationError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfRelocationError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfRelocationError
@@ -7001,8 +7004,8 @@ pub fn aya_obj::ParseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core
 impl core::fmt::Display for aya_obj::ParseError
 pub fn aya_obj::ParseError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya_obj::ParseError
-impl core::marker::Send for aya_obj::ParseError
-impl core::marker::Sync for aya_obj::ParseError
+impl !core::marker::Send for aya_obj::ParseError
+impl !core::marker::Sync for aya_obj::ParseError
 impl core::marker::Unpin for aya_obj::ParseError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::ParseError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::ParseError
@@ -7861,8 +7864,8 @@ pub fn aya_obj::ParseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core
 impl core::fmt::Display for aya_obj::ParseError
 pub fn aya_obj::ParseError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya_obj::ParseError
-impl core::marker::Send for aya_obj::ParseError
-impl core::marker::Sync for aya_obj::ParseError
+impl !core::marker::Send for aya_obj::ParseError
+impl !core::marker::Sync for aya_obj::ParseError
 impl core::marker::Unpin for aya_obj::ParseError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::ParseError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::ParseError

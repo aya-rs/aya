@@ -3,12 +3,13 @@
 use std::{hash::Hash, os::fd::AsFd};
 
 use crate::{
+    errors::{LinkError, ProgramError},
     generated::{bpf_attach_type::BPF_CGROUP_SYSCTL, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL},
     programs::{
         define_link_wrapper, load_program, CgroupAttachMode, FdLink, Link, ProgAttachLink,
-        ProgramData, ProgramError,
+        ProgramData,
     },
-    sys::{bpf_link_create, LinkTarget, SyscallError},
+    sys::{bpf_link_create, LinkTarget},
     util::KernelVersion,
 };
 
@@ -64,7 +65,7 @@ impl CgroupSysctl {
         &mut self,
         cgroup: T,
         mode: CgroupAttachMode,
-    ) -> Result<CgroupSysctlLinkId, ProgramError> {
+    ) -> Result<CgroupSysctlLinkId, LinkError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
@@ -77,11 +78,7 @@ impl CgroupSysctl {
                 None,
                 mode.into(),
                 None,
-            )
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+            )?;
             self.data
                 .links
                 .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::Fd(
@@ -105,14 +102,14 @@ impl CgroupSysctl {
     pub fn take_link(
         &mut self,
         link_id: CgroupSysctlLinkId,
-    ) -> Result<CgroupSysctlLink, ProgramError> {
+    ) -> Result<CgroupSysctlLink, LinkError> {
         self.data.take_link(link_id)
     }
 
     /// Detaches the program.
     ///
     /// See [CgroupSysctl::attach].
-    pub fn detach(&mut self, link_id: CgroupSysctlLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: CgroupSysctlLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 }
@@ -139,7 +136,7 @@ impl Link for CgroupSysctlLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), LinkError> {
         match self {
             Self::Fd(fd) => fd.detach(),
             Self::ProgAttach(p) => p.detach(),

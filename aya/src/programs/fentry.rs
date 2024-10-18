@@ -1,11 +1,12 @@
 //! Fentry programs.
 
 use crate::{
+    errors::{LinkError, ProgramError},
     generated::{bpf_attach_type::BPF_TRACE_FENTRY, bpf_prog_type::BPF_PROG_TYPE_TRACING},
     obj::btf::{Btf, BtfKind},
     programs::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
-        ProgramData, ProgramError,
+        ProgramData,
     },
 };
 
@@ -64,14 +65,14 @@ impl FEntry {
     /// Attaches the program.
     ///
     /// The returned value can be used to detach, see [FEntry::detach].
-    pub fn attach(&mut self) -> Result<FEntryLinkId, ProgramError> {
+    pub fn attach(&mut self) -> Result<FEntryLinkId, LinkError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
 
     /// Detaches the program.
     ///
     /// See [FEntry::attach].
-    pub fn detach(&mut self, link_id: FEntryLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: FEntryLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -79,7 +80,7 @@ impl FEntry {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: FEntryLinkId) -> Result<FEntryLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: FEntryLinkId) -> Result<FEntryLink, LinkError> {
         self.data.take_link(link_id)
     }
 }

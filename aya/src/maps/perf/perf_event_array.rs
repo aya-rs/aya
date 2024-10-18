@@ -12,9 +12,10 @@ use std::{
 use bytes::BytesMut;
 
 use crate::{
+    errors::{MapError, PerfBufferError},
     maps::{
-        perf::{Events, PerfBuffer, PerfBufferError},
-        MapData, MapError, PinError,
+        perf::{Events, PerfBuffer},
+        MapData,
     },
     sys::bpf_map_update_elem,
     util::page_size,
@@ -179,7 +180,7 @@ impl<T: Borrow<MapData>> PerfEventArray<T> {
     ///
     /// When a map is pinned it will remain loaded until the corresponding file
     /// is deleted. All parent directories in the given `path` must already exist.
-    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
+    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), MapError> {
         let data: &MapData = self.map.deref().borrow();
         data.pin(path)
     }
@@ -199,8 +200,7 @@ impl<T: BorrowMut<MapData>> PerfEventArray<T> {
         let map_data: &MapData = self.map.deref().borrow();
         let map_fd = map_data.fd().as_fd();
         let buf = PerfBuffer::open(index, self.page_size, page_count.unwrap_or(2))?;
-        bpf_map_update_elem(map_fd, Some(&index), &buf.as_fd().as_raw_fd(), 0)
-            .map_err(|(_, io_error)| io_error)?;
+        bpf_map_update_elem(map_fd, Some(&index), &buf.as_fd().as_raw_fd(), 0)?;
 
         Ok(PerfEventArrayBuffer {
             buf,

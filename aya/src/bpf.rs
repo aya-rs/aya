@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    fs, io,
+    fs,
     os::{
         fd::{AsFd as _, AsRawFd as _},
         raw::c_int,
@@ -11,29 +11,28 @@ use std::{
 };
 
 use aya_obj::{
-    btf::{BtfFeatures, BtfRelocationError},
+    btf::BtfFeatures,
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS},
-    relocation::EbpfRelocationError,
     EbpfSectionKind, Features,
 };
 use log::{debug, warn};
-use thiserror::Error;
 
 use crate::{
+    errors::{EbpfError, InternalMapError, MapError, SysError},
     generated::{
         bpf_map_type::{self, *},
         AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE, AYA_PERF_EVENT_IOC_SET_BPF,
     },
-    maps::{Map, MapData, MapError},
+    maps::{Map, MapData},
     obj::{
         btf::{Btf, BtfError},
-        Object, ParseError, ProgramSection,
+        Object, ProgramSection,
     },
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent,
-        ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkLookup,
-        SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        ProbeKind, Program, ProgramData, RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb,
+        SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -395,11 +394,15 @@ impl<'a> EbpfLoader<'a> {
             verifier_log_level,
             allow_unsupported_maps,
         } = self;
-        let mut obj = Object::parse(data)?;
-        obj.patch_map_data(globals.clone())?;
+        let mut obj = Object::parse(data).map_err(|e| EbpfError::Other(e.into()))?;
+        obj.patch_map_data(globals.clone())
+            .map_err(|e| EbpfError::Other(e.into()))?;
 
         let btf_fd = if let Some(features) = &FEATURES.btf() {
-            if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
+            if let Some(btf) = obj
+                .fixup_and_sanitize_btf(features)
+                .map_err(|e| EbpfError::Other(e.into()))?
+            {
                 match load_btf(btf.to_bytes(), *verifier_log_level) {
                     Ok(btf_fd) => Some(Arc::new(btf_fd)),
                     // Only report an error here if the BTF is truly needed, otherwise proceed without.
@@ -411,7 +414,7 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::FExit { sleepable: _ }
                                 | ProgramSection::Lsm { sleepable: _ }
                                 | ProgramSection::BtfTracePoint => {
-                                    return Err(EbpfError::BtfError(err))
+                                    return Err(EbpfError::Other(err.into()));
                                 }
                                 ProgramSection::KRetProbe
                                 | ProgramSection::KProbe
@@ -456,7 +459,8 @@ impl<'a> EbpfLoader<'a> {
         };
 
         if let Some(btf) = &btf {
-            obj.relocate_btf(btf)?;
+            obj.relocate_btf(btf)
+                .map_err(|e| EbpfError::Other(e.into()))?;
         }
         let mut maps = HashMap::new();
         for (name, mut obj) in obj.maps.drain() {
@@ -471,7 +475,10 @@ impl<'a> EbpfLoader<'a> {
                     error,
                 })? as u32)
             };
-            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
+            let map_type: bpf_map_type = obj
+                .map_type()
+                .try_into()
+                .map_err(|e| EbpfError::MapError(MapError::from(e)))?;
             if let Some(max_entries) = max_entries_override(
                 map_type,
                 max_entries.get(name.as_str()).copied(),
@@ -492,7 +499,9 @@ impl<'a> EbpfLoader<'a> {
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
             let mut map = match obj.pinning() {
-                PinningType::None => MapData::create(obj, &name, btf_fd)?,
+                PinningType::None => {
+                    MapData::create(obj, &name, btf_fd).map_err(|e| EbpfError::Other(e.into()))?
+                }
                 PinningType::ByName => {
                     // pin maps in /sys/fs/bpf by default to align with libbpf
                     // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
@@ -517,8 +526,10 @@ impl<'a> EbpfLoader<'a> {
             maps.iter()
                 .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
-        )?;
-        obj.relocate_calls(&text_sections)?;
+        )
+        .map_err(|e| EbpfError::Other(e.into()))?;
+        obj.relocate_calls(&text_sections)
+            .map_err(|e| EbpfError::Other(e.into()))?;
         obj.sanitize_functions(&FEATURES);
 
         let programs = obj
@@ -699,10 +710,10 @@ impl<'a> EbpfLoader<'a> {
             .collect::<Result<HashMap<String, Map>, EbpfError>>()?;
 
         if !*allow_unsupported_maps {
-            maps.iter().try_for_each(|(_, x)| match x {
-                Map::Unsupported(map) => Err(EbpfError::MapError(MapError::Unsupported {
-                    map_type: map.obj().map_type(),
-                })),
+            maps.iter().try_for_each(|(name, x)| match x {
+                Map::Unsupported(_) => Err(EbpfError::Other(Box::new(
+                    InternalMapError::Unsupported(name.clone()),
+                ))),
                 _ => Ok(()),
             })?;
         };
@@ -713,7 +724,8 @@ impl<'a> EbpfLoader<'a> {
 
 fn parse_map(data: (String, MapData)) -> Result<(String, Map), EbpfError> {
     let (name, map) = data;
-    let map_type = bpf_map_type::try_from(map.obj().map_type()).map_err(MapError::from)?;
+    let map_type = bpf_map_type::try_from(map.obj().map_type())
+        .map_err(|e| EbpfError::Other(Box::new(MapError::from(e))))?;
     let map = match map_type {
         BPF_MAP_TYPE_ARRAY => Map::Array(map),
         BPF_MAP_TYPE_PERCPU_ARRAY => Map::PerCpuArray(map),
@@ -1068,55 +1080,6 @@ impl Ebpf {
     }
 }
 
-/// The error type returned by [`Ebpf::load_file`] and [`Ebpf::load`].
-#[derive(Debug, Error)]
-pub enum EbpfError {
-    /// Error loading file
-    #[error("error loading {path}")]
-    FileError {
-        /// The file path
-        path: PathBuf,
-        #[source]
-        /// The original io::Error
-        error: io::Error,
-    },
-
-    /// Unexpected pinning type
-    #[error("unexpected pinning type {name}")]
-    UnexpectedPinningType {
-        /// The value encountered
-        name: u32,
-    },
-
-    /// Error parsing BPF object
-    #[error("error parsing BPF object: {0}")]
-    ParseError(#[from] ParseError),
-
-    /// Error parsing BTF object
-    #[error("BTF error: {0}")]
-    BtfError(#[from] BtfError),
-
-    /// Error performing relocations
-    #[error("error relocating function")]
-    RelocationError(#[from] EbpfRelocationError),
-
-    /// Error performing relocations
-    #[error("error relocating section")]
-    BtfRelocationError(#[from] BtfRelocationError),
-
-    /// No BTF parsed for object
-    #[error("no BTF parsed for object")]
-    NoBTF,
-
-    #[error("map error: {0}")]
-    /// A map error
-    MapError(#[from] MapError),
-
-    #[error("program error: {0}")]
-    /// A program error
-    ProgramError(#[from] ProgramError),
-}
-
 /// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].
 #[deprecated(since = "0.13.0", note = "use `EbpfError` instead")]
 pub type BpfError = EbpfError;
@@ -1128,10 +1091,14 @@ fn load_btf(
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
         bpf_load_btf(raw_btf.as_slice(), logger, verifier_log_level)
     });
-    ret.map_err(|(_, io_error)| BtfError::LoadError {
-        io_error,
-        verifier_log,
-    })
+    match ret {
+        Ok(fd) => Ok(fd),
+        Err((_, SysError::Syscall { call: _, io_error })) => Err(BtfError::LoadError {
+            io_error,
+            verifier_log,
+        }),
+        Err((_, e)) => Err(BtfError::Other(Box::new(e))),
+    }
 }
 
 /// Global data that can be exported to eBPF programs before they are loaded.

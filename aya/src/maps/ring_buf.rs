@@ -20,9 +20,10 @@ use std::{
 use libc::{munmap, off_t, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
 
 use crate::{
+    errors::SysError,
     generated::{BPF_RINGBUF_BUSY_BIT, BPF_RINGBUF_DISCARD_BIT, BPF_RINGBUF_HDR_SZ},
     maps::{MapData, MapError},
-    sys::{mmap, SyscallError},
+    sys::mmap,
     util::page_size,
 };
 
@@ -426,21 +427,21 @@ impl MMap {
         offset: off_t,
     ) -> Result<Self, MapError> {
         match unsafe { mmap(ptr::null_mut(), len, prot, flags, fd, offset) } {
-            MAP_FAILED => Err(MapError::SyscallError(SyscallError {
-                call: "mmap",
+            MAP_FAILED => Err(SysError::Mmap {
                 io_error: io::Error::last_os_error(),
-            })),
+            }
+            .into()),
             ptr => Ok(Self {
-                ptr: NonNull::new(ptr).ok_or(
+                ptr: NonNull::new(ptr).ok_or::<MapError>(
                     // This should never happen, but to be paranoid, and so we never need to talk
                     // about a null pointer, we check it anyway.
-                    MapError::SyscallError(SyscallError {
-                        call: "mmap",
+                    SysError::Mmap {
                         io_error: io::Error::new(
                             io::ErrorKind::Other,
                             "mmap returned null pointer",
                         ),
-                    }),
+                    }
+                    .into(),
                 )?,
                 len,
             }),

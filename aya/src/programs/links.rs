@@ -7,16 +7,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use thiserror::Error;
-
 use crate::{
+    errors::LinkError,
     generated::{
         bpf_attach_type, BPF_F_AFTER, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE, BPF_F_BEFORE,
         BPF_F_ID, BPF_F_LINK, BPF_F_REPLACE,
     },
-    pin::PinError,
     programs::{MultiProgLink, MultiProgram, ProgramError, ProgramFd, ProgramId},
-    sys::{bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach, SyscallError},
+    sys::{bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach},
 };
 
 /// A Link.
@@ -28,7 +26,7 @@ pub trait Link: std::fmt::Debug + 'static {
     fn id(&self) -> Self::Id;
 
     /// Detaches the LinkOwnedLink is gone... but this doesn't work :(
-    fn detach(self) -> Result<(), ProgramError>;
+    fn detach(self) -> Result<(), LinkError>;
 }
 
 /// Program attachment mode.
@@ -67,33 +65,33 @@ impl<T: Link> LinkMap<T> {
         }
     }
 
-    pub(crate) fn insert(&mut self, link: T) -> Result<T::Id, ProgramError> {
+    pub(crate) fn insert(&mut self, link: T) -> Result<T::Id, LinkError> {
         let id = link.id();
 
         match self.links.entry(link.id()) {
-            Entry::Occupied(_) => return Err(ProgramError::AlreadyAttached),
+            Entry::Occupied(_) => return Err(LinkError::AlreadyAttached),
             Entry::Vacant(e) => e.insert(link),
         };
 
         Ok(id)
     }
 
-    pub(crate) fn remove(&mut self, link_id: T::Id) -> Result<(), ProgramError> {
+    pub(crate) fn remove(&mut self, link_id: T::Id) -> Result<(), LinkError> {
         self.links
             .remove(&link_id)
-            .ok_or(ProgramError::NotAttached)?
+            .ok_or(LinkError::NotAttached)?
             .detach()
     }
 
-    pub(crate) fn remove_all(&mut self) -> Result<(), ProgramError> {
+    pub(crate) fn remove_all(&mut self) -> Result<(), LinkError> {
         for (_, link) in self.links.drain() {
             link.detach()?;
         }
         Ok(())
     }
 
-    pub(crate) fn forget(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
-        self.links.remove(&link_id).ok_or(ProgramError::NotAttached)
+    pub(crate) fn forget(&mut self, link_id: T::Id) -> Result<T, LinkError> {
+        self.links.remove(&link_id).ok_or(LinkError::NotAttached)
     }
 }
 
@@ -159,8 +157,6 @@ impl FdLink {
     /// #     #[error(transparent)]
     /// #     Ebpf(#[from] aya::EbpfError),
     /// #     #[error(transparent)]
-    /// #     Pin(#[from] aya::pin::PinError),
-    /// #     #[error(transparent)]
     /// #     Program(#[from] aya::programs::ProgramError)
     /// # }
     /// # let mut bpf = aya::Ebpf::load(&[])?;
@@ -171,20 +167,12 @@ impl FdLink {
     /// let pinned_link = fd_link.pin("/sys/fs/bpf/example")?;
     /// # Ok::<(), Error>(())
     /// ```
-    pub fn pin<P: AsRef<Path>>(self, path: P) -> Result<PinnedLink, PinError> {
+    pub fn pin<P: AsRef<Path>>(self, path: P) -> Result<PinnedLink, LinkError> {
         use std::os::unix::ffi::OsStrExt as _;
 
         let path = path.as_ref();
-        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
-            PinError::InvalidPinPath {
-                path: path.into(),
-                error,
-            }
-        })?;
-        bpf_pin_object(self.fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
-            call: "BPF_OBJ_PIN",
-            io_error,
-        })?;
+        let path_string = CString::new(path.as_os_str().as_bytes())?;
+        bpf_pin_object(self.fd.as_fd(), &path_string)?;
         Ok(PinnedLink::new(path.into(), self))
     }
 }
@@ -196,7 +184,7 @@ impl Link for FdLink {
         FdLinkId(self.fd.as_raw_fd())
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), LinkError> {
         // detach is a noop since it consumes self. once self is consumed, drop will be triggered
         // and the link will be detached.
         //
@@ -234,12 +222,7 @@ impl PinnedLink {
 
         // TODO: avoid this unwrap by adding a new error variant.
         let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| {
-            LinkError::SyscallError(SyscallError {
-                call: "BPF_OBJ_GET",
-                io_error,
-            })
-        })?;
+        let fd = bpf_get_object(&path_string)?;
         Ok(Self::new(path.as_ref().to_path_buf(), FdLink::new(fd)))
     }
 
@@ -280,7 +263,7 @@ impl ProgAttachLink {
         target_fd: BorrowedFd<'_>,
         attach_type: bpf_attach_type,
         mode: CgroupAttachMode,
-    ) -> Result<Self, ProgramError> {
+    ) -> Result<Self, LinkError> {
         // The link is going to own this new file descriptor so we are
         // going to need a duplicate whose lifetime we manage. Let's
         // duplicate it prior to attaching it so the new file
@@ -311,7 +294,7 @@ impl Link for ProgAttachLink {
         )
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), LinkError> {
         bpf_prog_detach(
             self.prog_fd.as_fd(),
             self.target_fd.as_fd(),
@@ -365,7 +348,7 @@ macro_rules! define_link_wrapper {
                 $wrapper_id(self.0.as_ref().unwrap().id())
             }
 
-            fn detach(mut self) -> Result<(), ProgramError> {
+            fn detach(mut self) -> Result<(), crate::errors::LinkError> {
                 self.0.take().unwrap().detach()
             }
         }
@@ -385,17 +368,6 @@ macro_rules! define_link_wrapper {
 }
 
 pub(crate) use define_link_wrapper;
-
-#[derive(Error, Debug)]
-/// Errors from operations on links.
-pub enum LinkError {
-    /// Invalid link.
-    #[error("Invalid link")]
-    InvalidLink,
-    /// Syscall failed.
-    #[error(transparent)]
-    SyscallError(#[from] SyscallError),
-}
 
 #[derive(Debug)]
 pub(crate) enum LinkRef {
@@ -525,8 +497,9 @@ mod tests {
 
     use super::{FdLink, Link, LinkMap};
     use crate::{
+        errors::LinkError,
         generated::{BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE},
-        programs::{CgroupAttachMode, ProgramError},
+        programs::CgroupAttachMode,
         sys::override_syscall,
     };
 
@@ -555,7 +528,7 @@ mod tests {
             TestLinkId(self.id.0, self.id.1)
         }
 
-        fn detach(self) -> Result<(), ProgramError> {
+        fn detach(self) -> Result<(), LinkError> {
             *self.detached.borrow_mut() += 1;
             Ok(())
         }
@@ -591,7 +564,7 @@ mod tests {
         links.insert(TestLink::new(1, 2)).unwrap();
         assert_matches!(
             links.insert(TestLink::new(1, 2)),
-            Err(ProgramError::AlreadyAttached)
+            Err(LinkError::AlreadyAttached)
         );
     }
 
@@ -604,7 +577,7 @@ mod tests {
         let l1_id2 = l1.id();
         links.insert(TestLink::new(1, 2)).unwrap();
         links.remove(l1_id1).unwrap();
-        assert_matches!(links.remove(l1_id2), Err(ProgramError::NotAttached));
+        assert_matches!(links.remove(l1_id2), Err(LinkError::NotAttached));
     }
 
     #[test]
