@@ -9,14 +9,13 @@ use std::{
 
 use aya_obj::generated::{bpf_prog_info, bpf_prog_type};
 
-use super::{
-    utils::{boot_time, get_fdinfo},
-    ProgramError, ProgramFd,
-};
 use crate::{
-    sys::{
-        bpf_get_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, iter_prog_ids, SyscallError,
+    errors::ProgramError,
+    programs::{
+        utils::{boot_time, get_fdinfo},
+        ProgramFd,
     },
+    sys::{bpf_get_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, iter_prog_ids},
     util::bytes_of_bpf_name,
     FEATURES,
 };
@@ -214,10 +213,7 @@ impl ProgramInfo {
 
         // TODO: avoid this unwrap by adding a new error variant.
         let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        })?;
+        let fd = bpf_get_object(&path_string)?;
 
         Self::new_from_fd(fd.as_fd())
     }
@@ -235,7 +231,7 @@ macro_rules! impl_info {
                 /// Returns metadata information of this program.
                 ///
                 /// Uses kernel v4.13 features.
-                pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
+                pub fn info(&self) -> Result<ProgramInfo, crate::errors::ProgramError> {
                     let ProgramFd(fd) = self.fd()?;
                     ProgramInfo::new_from_fd(fd.as_fd())
                 }

@@ -1,20 +1,14 @@
 //! Kernel space probes.
-use std::{
-    ffi::OsStr,
-    io,
-    os::fd::AsFd as _,
-    path::{Path, PathBuf},
-};
-
-use thiserror::Error;
+use std::{ffi::OsStr, os::fd::AsFd as _, path::Path};
 
 use crate::{
+    errors::LinkError,
     generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE},
     programs::{
         define_link_wrapper, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{attach, ProbeKind},
-        FdLink, LinkError, ProgramData, ProgramError,
+        FdLink, ProgramData, ProgramError,
     },
     sys::bpf_link_get_info_by_fd,
     VerifierLogLevel,
@@ -77,14 +71,14 @@ impl KProbe {
         &mut self,
         fn_name: T,
         offset: u64,
-    ) -> Result<KProbeLinkId, ProgramError> {
+    ) -> Result<KProbeLinkId, LinkError> {
         attach(&mut self.data, self.kind, fn_name.as_ref(), offset, None)
     }
 
     /// Detaches the program.
     ///
     /// See [KProbe::attach].
-    pub fn detach(&mut self, link_id: KProbeLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: KProbeLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -92,7 +86,7 @@ impl KProbe {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: KProbeLinkId) -> Result<KProbeLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: KProbeLinkId) -> Result<KProbeLink, LinkError> {
         self.data.take_link(link_id)
     }
 
@@ -116,20 +110,6 @@ define_link_wrapper!(
     PerfLinkInner,
     PerfLinkIdInner
 );
-
-/// The type returned when attaching a [`KProbe`] fails.
-#[derive(Debug, Error)]
-pub enum KProbeError {
-    /// Error detaching from debugfs
-    #[error("`{filename}`")]
-    FileError {
-        /// The file name
-        filename: PathBuf,
-        /// The [`io::Error`] returned from the file operation
-        #[source]
-        io_error: io::Error,
-    },
-}
 
 impl TryFrom<KProbeLink> for FdLink {
     type Error = LinkError;

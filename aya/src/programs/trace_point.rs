@@ -1,32 +1,17 @@
 //! Tracepoint programs.
-use std::{fs, io, os::fd::AsFd as _, path::Path};
-
-use thiserror::Error;
+use std::{fs, os::fd::AsFd as _, path::Path};
 
 use crate::{
+    errors::LinkError,
     generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT},
     programs::{
         define_link_wrapper, load_program,
         perf_attach::{perf_attach, PerfLinkIdInner, PerfLinkInner},
         utils::find_tracefs_path,
-        FdLink, LinkError, ProgramData, ProgramError,
+        FdLink, ProgramData, ProgramError,
     },
-    sys::{bpf_link_get_info_by_fd, perf_event_open_trace_point, SyscallError},
+    sys::{bpf_link_get_info_by_fd, perf_event_open_trace_point},
 };
-
-/// The type returned when attaching a [`TracePoint`] fails.
-#[derive(Debug, Error)]
-pub enum TracePointError {
-    /// Error detaching from debugfs
-    #[error("`{filename}`")]
-    FileError {
-        /// The file name
-        filename: String,
-        /// The [`io::Error`] returned from the file operation
-        #[source]
-        io_error: io::Error,
-    },
-}
 
 /// A program that can be attached at a pre-defined kernel trace point.
 ///
@@ -67,16 +52,12 @@ impl TracePoint {
     /// `/sys/kernel/debug/tracing/events`.
     ///
     /// The returned value can be used to detach, see [TracePoint::detach].
-    pub fn attach(&mut self, category: &str, name: &str) -> Result<TracePointLinkId, ProgramError> {
+    pub fn attach(&mut self, category: &str, name: &str) -> Result<TracePointLinkId, LinkError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let tracefs = find_tracefs_path()?;
         let id = read_sys_fs_trace_point_id(tracefs, category, name.as_ref())?;
-        let fd =
-            perf_event_open_trace_point(id, None).map_err(|(_code, io_error)| SyscallError {
-                call: "perf_event_open_trace_point",
-                io_error,
-            })?;
+        let fd = perf_event_open_trace_point(id, None)?;
 
         let link = perf_attach(prog_fd, fd)?;
         self.data.links.insert(TracePointLink::new(link))
@@ -85,7 +66,7 @@ impl TracePoint {
     /// Detaches from a trace point.
     ///
     /// See [TracePoint::attach].
-    pub fn detach(&mut self, link_id: TracePointLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: TracePointLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -93,7 +74,7 @@ impl TracePoint {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: TracePointLinkId) -> Result<TracePointLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: TracePointLinkId) -> Result<TracePointLink, LinkError> {
         self.data.take_link(link_id)
     }
 }
@@ -135,20 +116,11 @@ pub(crate) fn read_sys_fs_trace_point_id(
     tracefs: &Path,
     category: &str,
     name: &Path,
-) -> Result<u32, TracePointError> {
+) -> Result<u32, LinkError> {
     let file = tracefs.join("events").join(category).join(name).join("id");
 
-    let id = fs::read_to_string(&file).map_err(|io_error| TracePointError::FileError {
-        filename: file.display().to_string(),
-        io_error,
-    })?;
-    let id = id
-        .trim()
-        .parse::<u32>()
-        .map_err(|error| TracePointError::FileError {
-            filename: file.display().to_string(),
-            io_error: io::Error::new(io::ErrorKind::Other, error),
-        })?;
+    let id = fs::read_to_string(&file)?;
+    let id = id.trim().parse::<u32>()?;
 
     Ok(id)
 }

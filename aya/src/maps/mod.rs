@@ -59,17 +59,16 @@ use std::{
     ptr,
 };
 
-use aya_obj::{generated::bpf_map_type, InvalidTypeBinding};
+use aya_obj::generated::bpf_map_type;
 use libc::{getrlimit, rlim_t, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
 use log::warn;
-use thiserror::Error;
 
 use crate::{
+    errors::{InternalMapError, MapError, PinError},
     obj::{self, parse_map_info, EbpfSectionKind},
-    pin::PinError,
     sys::{
         bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id, bpf_map_get_next_key,
-        bpf_map_update_elem_ptr, bpf_pin_object, SyscallError,
+        bpf_map_update_elem_ptr, bpf_pin_object,
     },
     util::{nr_cpus, KernelVersion},
     PinningType, Pod,
@@ -103,111 +102,6 @@ pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
 pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
-
-#[derive(Error, Debug)]
-/// Errors occuring from working with Maps
-pub enum MapError {
-    /// Invalid map type encontered
-    #[error("invalid map type {map_type}")]
-    InvalidMapType {
-        /// The map type
-        map_type: u32,
-    },
-
-    /// Invalid map name encountered
-    #[error("invalid map name `{name}`")]
-    InvalidName {
-        /// The map name
-        name: String,
-    },
-
-    /// Failed to create map
-    #[error("failed to create map `{name}` with code {code}")]
-    CreateError {
-        /// Map name
-        name: String,
-        /// Error code
-        code: i64,
-        #[source]
-        /// Original io::Error
-        io_error: io::Error,
-    },
-
-    /// Invalid key size
-    #[error("invalid key size {size}, expected {expected}")]
-    InvalidKeySize {
-        /// Size encountered
-        size: usize,
-        /// Size expected
-        expected: usize,
-    },
-
-    /// Invalid value size
-    #[error("invalid value size {size}, expected {expected}")]
-    InvalidValueSize {
-        /// Size encountered
-        size: usize,
-        /// Size expected
-        expected: usize,
-    },
-
-    /// Index is out of bounds
-    #[error("the index is {index} but `max_entries` is {max_entries}")]
-    OutOfBounds {
-        /// Index accessed
-        index: u32,
-        /// Map size
-        max_entries: u32,
-    },
-
-    /// Key not found
-    #[error("key not found")]
-    KeyNotFound,
-
-    /// Element not found
-    #[error("element not found")]
-    ElementNotFound,
-
-    /// Progam Not Loaded
-    #[error("the program is not loaded")]
-    ProgramNotLoaded,
-
-    /// An IO error occurred
-    #[error(transparent)]
-    IoError(#[from] io::Error),
-
-    /// Syscall failed
-    #[error(transparent)]
-    SyscallError(#[from] SyscallError),
-
-    /// Could not pin map
-    #[error("map `{name:?}` requested pinning. pinning failed")]
-    PinError {
-        /// The map name
-        name: Option<String>,
-        /// The reason for the failure
-        #[source]
-        error: PinError,
-    },
-
-    /// Program IDs are not supported
-    #[error("program ids are not supported by the current kernel")]
-    ProgIdNotSupported,
-
-    /// Unsupported Map type
-    #[error("Unsupported map type found {map_type}")]
-    Unsupported {
-        /// The map type
-        map_type: u32,
-    },
-}
-
-impl From<InvalidTypeBinding<u32>> for MapError {
-    fn from(e: InvalidTypeBinding<u32>) -> Self {
-        let InvalidTypeBinding { value } = e;
-        Self::InvalidMapType { map_type: value }
-    }
-}
 
 /// A map file descriptor.
 #[derive(Debug)]
@@ -347,7 +241,7 @@ impl Map {
     ///
     /// When a map is pinned it will remain loaded until the corresponding file
     /// is deleted. All parent directories in the given `path` must already exist.
-    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
+    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), MapError> {
         match self {
             Self::Array(map) => map.pin(path),
             Self::BloomFilter(map) => map.pin(path),
@@ -391,7 +285,7 @@ macro_rules! impl_map_pin {
                     ///
                     /// When a map is pinned it will remain loaded until the corresponding file
                     /// is deleted. All parent directories in the given `path` must already exist.
-                    pub fn pin<P: AsRef<Path>>(self, path: P) -> Result<(), PinError> {
+                    pub fn pin<P: AsRef<Path>>(self, path: P) -> Result<(), MapError> {
                         let data = self.inner.borrow();
                         data.pin(path)
                     }
@@ -516,25 +410,25 @@ pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
     }
 }
 
-pub(crate) fn check_kv_size<K, V>(map: &MapData) -> Result<(), MapError> {
+pub(crate) fn check_kv_size<K, V>(map: &MapData) -> Result<(), InternalMapError> {
     let size = mem::size_of::<K>();
     let expected = map.obj.key_size() as usize;
     if size != expected {
-        return Err(MapError::InvalidKeySize { size, expected });
+        return Err(InternalMapError::InvalidKeySize { size, expected });
     }
     let size = mem::size_of::<V>();
     let expected = map.obj.value_size() as usize;
     if size != expected {
-        return Err(MapError::InvalidValueSize { size, expected });
+        return Err(InternalMapError::InvalidValueSize { size, expected });
     };
     Ok(())
 }
 
-pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
+pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), InternalMapError> {
     let size = mem::size_of::<V>();
     let expected = map.obj.value_size() as usize;
     if size != expected {
-        return Err(MapError::InvalidValueSize { size, expected });
+        return Err(InternalMapError::InvalidValueSize { size, expected });
     };
     Ok(())
 }
@@ -555,7 +449,8 @@ impl MapData {
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
-        let c_name = CString::new(name).map_err(|_| MapError::InvalidName { name: name.into() })?;
+        let c_name =
+            CString::new(name).map_err(|_| InternalMapError::InvalidName { name: name.into() })?;
 
         // BPF_MAP_TYPE_PERF_EVENT_ARRAY's max_entries should not exceed the number of
         // CPUs.
@@ -569,7 +464,7 @@ impl MapData {
         //
         // Otherwise, when the value is `0` or too large, we set it to the number of CPUs.
         if obj.map_type() == bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 {
-            let nr_cpus = nr_cpus().map_err(|(_, error)| MapError::IoError(error))? as u32;
+            let nr_cpus = nr_cpus().map_err(|(_, error)| InternalMapError::IoError(error))? as u32;
             if obj.max_entries() == 0 || obj.max_entries() > nr_cpus {
                 obj.set_max_entries(nr_cpus);
             }
@@ -580,15 +475,14 @@ impl MapData {
         #[cfg(test)]
         let kernel_version = KernelVersion::new(0xff, 0xff, 0xff);
         let fd =
-            bpf_create_map(&c_name, &obj, btf_fd, kernel_version).map_err(|(code, io_error)| {
+            bpf_create_map(&c_name, &obj, btf_fd, kernel_version).map_err(|(code, source)| {
                 if kernel_version < KernelVersion::new(5, 11, 0) {
                     maybe_warn_rlimit();
                 }
-
-                MapError::CreateError {
+                InternalMapError::CreateError {
                     name: name.into(),
                     code,
-                    io_error,
+                    source,
                 }
             })?;
         Ok(Self {
@@ -610,26 +504,17 @@ impl MapData {
         let path_string = match CString::new(path.as_os_str().as_bytes()) {
             Ok(path) => path,
             Err(error) => {
-                return Err(MapError::PinError {
-                    name: Some(name.into()),
-                    error: PinError::InvalidPinPath { path, error },
-                });
+                return Err(PinError::InvalidPinPath { path, error }.into());
             }
         };
-        match bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        }) {
+        match bpf_get_object(&path_string) {
             Ok(fd) => Ok(Self {
                 obj,
                 fd: MapFd::from_fd(fd),
             }),
             Err(_) => {
                 let map = Self::create(obj, name, btf_fd)?;
-                map.pin(&path).map_err(|error| MapError::PinError {
-                    name: Some(name.into()),
-                    error,
-                })?;
+                map.pin(&path)?;
                 Ok(map)
             }
         }
@@ -638,20 +523,10 @@ impl MapData {
     pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
         let Self { obj, fd } = self;
         if !obj.data().is_empty() && obj.section_kind() != EbpfSectionKind::Bss {
-            bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
-                .map_err(|(_, io_error)| SyscallError {
-                    call: "bpf_map_update_elem",
-                    io_error,
-                })
-                .map_err(MapError::from)?;
+            bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)?;
         }
         if obj.section_kind() == EbpfSectionKind::Rodata {
-            bpf_map_freeze(fd.as_fd())
-                .map_err(|(_, io_error)| SyscallError {
-                    call: "bpf_map_freeze",
-                    io_error,
-                })
-                .map_err(MapError::from)?;
+            bpf_map_freeze(fd.as_fd())?;
         }
         Ok(())
     }
@@ -661,19 +536,8 @@ impl MapData {
         use std::os::unix::ffi::OsStrExt as _;
 
         let path = path.as_ref();
-        let path_string =
-            CString::new(path.as_os_str().as_bytes()).map_err(|error| MapError::PinError {
-                name: None,
-                error: PinError::InvalidPinPath {
-                    path: path.into(),
-                    error,
-                },
-            })?;
-
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        })?;
+        let path_string = CString::new(path.as_os_str().as_bytes())?;
+        let fd = bpf_get_object(&path_string)?;
 
         Self::from_fd_inner(fd)
     }
@@ -726,21 +590,13 @@ impl MapData {
     ///
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
+    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), MapError> {
         use std::os::unix::ffi::OsStrExt as _;
 
         let Self { fd, obj: _ } = self;
         let path = path.as_ref();
-        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
-            PinError::InvalidPinPath {
-                path: path.to_path_buf(),
-                error,
-            }
-        })?;
-        bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
-            call: "BPF_OBJ_PIN",
-            io_error,
-        })?;
+        let path_string = CString::new(path.as_os_str().as_bytes())?;
+        bpf_pin_object(fd.as_fd(), &path_string)?;
         Ok(())
     }
 
@@ -796,11 +652,7 @@ impl<K: Pod> Iterator for MapKeys<'_, K> {
         }
 
         let fd = self.map.fd().as_fd();
-        let key =
-            bpf_map_get_next_key(fd, self.key.as_ref()).map_err(|(_, io_error)| SyscallError {
-                call: "bpf_map_get_next_key",
-                io_error,
-            });
+        let key = bpf_map_get_next_key(fd, self.key.as_ref());
         match key {
             Err(err) => {
                 self.err = true;
@@ -953,16 +805,16 @@ impl<T: Pod> Deref for PerCpuValues<T> {
 mod test_utils {
     use crate::{
         bpf_map_def,
-        generated::{bpf_cmd, bpf_map_type},
+        generated::bpf_map_type,
         maps::MapData,
         obj::{self, maps::LegacyMap, EbpfSectionKind},
-        sys::{override_syscall, Syscall},
+        sys::{override_syscall, BpfCmd, Syscall},
     };
 
     pub(super) fn new_map(obj: obj::Map) -> MapData {
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_CREATE,
+                cmd: BpfCmd::MapCreate,
                 ..
             } => Ok(crate::MockableFd::mock_signed_fd().into()),
             call => panic!("unexpected syscall {:?}", call),
@@ -1019,15 +871,15 @@ mod tests {
 
     use super::*;
     use crate::{
-        generated::bpf_cmd,
-        sys::{override_syscall, Syscall},
+        errors::SysError,
+        sys::{override_syscall, BpfCmd, Syscall},
     };
 
     #[test]
     fn test_from_map_id() {
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_GET_FD_BY_ID,
+                cmd: BpfCmd::MapGetFdById,
                 attr,
             } => {
                 assert_eq!(
@@ -1037,7 +889,7 @@ mod tests {
                 Ok(crate::MockableFd::mock_signed_fd().into())
             }
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                cmd: BpfCmd::ObjGetInfoByFd,
                 attr,
             } => {
                 assert_eq!(
@@ -1046,7 +898,13 @@ mod tests {
                 );
                 Ok(0)
             }
-            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+            _ => Err((
+                -1,
+                SysError::Syscall {
+                    call: "unexpected".to_string(),
+                    io_error: io::Error::from_raw_os_error(EFAULT),
+                },
+            )),
         });
 
         assert_matches!(
@@ -1062,10 +920,16 @@ mod tests {
     fn test_create() {
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_CREATE,
+                cmd: BpfCmd::MapCreate,
                 ..
             } => Ok(crate::MockableFd::mock_signed_fd().into()),
-            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+            _ => Err((
+                -1,
+                SysError::Syscall {
+                    call: "unexpected".to_string(),
+                    io_error: io::Error::from_raw_os_error(EFAULT),
+                },
+            )),
         });
 
         assert_matches!(
@@ -1082,10 +946,16 @@ mod tests {
     fn test_create_perf_event_array() {
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_CREATE,
+                cmd: BpfCmd::MapCreate,
                 ..
             } => Ok(crate::MockableFd::mock_signed_fd().into()),
-            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+            _ => Err((
+                -1,
+                SysError::Syscall {
+                    call: "unexpected".to_string(),
+                    io_error: io::Error::from_raw_os_error(EFAULT),
+                },
+            )),
         });
 
         let nr_cpus = nr_cpus().unwrap();
@@ -1148,11 +1018,11 @@ mod tests {
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_CREATE,
+                cmd: BpfCmd::MapCreate,
                 ..
             } => Ok(crate::MockableFd::mock_signed_fd().into()),
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                cmd: BpfCmd::ObjGetInfoByFd,
                 attr,
             } => {
                 assert_eq!(
@@ -1165,7 +1035,13 @@ mod tests {
                 });
                 Ok(0)
             }
-            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+            _ => Err((
+                -1,
+                SysError::Syscall {
+                    call: "unexpected".to_string(),
+                    io_error: io::Error::from_raw_os_error(EFAULT),
+                },
+            )),
         });
 
         let map_data = MapData::create(new_obj_map(), TEST_NAME, None).unwrap();
@@ -1182,7 +1058,7 @@ mod tests {
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_GET_NEXT_ID,
+                cmd: BpfCmd::MapGetNextId,
                 attr,
             } => unsafe {
                 let id = attr.__bindgen_anon_6.__bindgen_anon_1.start_id;
@@ -1190,17 +1066,23 @@ mod tests {
                     attr.__bindgen_anon_6.next_id = id + 1;
                     Ok(0)
                 } else {
-                    Err((-1, io::Error::from_raw_os_error(libc::ENOENT)))
+                    Err((
+                        -1,
+                        SysError::Syscall {
+                            call: "unexpected".to_string(),
+                            io_error: io::Error::from_raw_os_error(EFAULT),
+                        },
+                    ))
                 }
             },
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_GET_FD_BY_ID,
+                cmd: BpfCmd::MapGetFdById,
                 attr,
             } => Ok((unsafe { attr.__bindgen_anon_6.__bindgen_anon_1.map_id }
                 + crate::MockableFd::mock_unsigned_fd())
             .into()),
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                cmd: BpfCmd::ObjGetInfoByFd,
                 attr,
             } => {
                 let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
@@ -1211,7 +1093,13 @@ mod tests {
                 map_info.max_entries = 99;
                 Ok(0)
             }
-            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+            _ => Err((
+                -1,
+                SysError::Syscall {
+                    call: "unexpected".to_string(),
+                    io_error: io::Error::from_raw_os_error(EFAULT),
+                },
+            )),
         });
 
         assert_eq!(
@@ -1243,15 +1131,34 @@ mod tests {
 
     #[test]
     fn test_create_failed() {
-        override_syscall(|_| Err((-42, io::Error::from_raw_os_error(EFAULT))));
+        override_syscall(|_| {
+            Err((
+                -42,
+                SysError::Syscall {
+                    call: "unexpected".to_string(),
+                    io_error: io::Error::from_raw_os_error(EFAULT),
+                },
+            ))
+        });
 
-        assert_matches!(
-            MapData::create(new_obj_map(), "foo", None),
-            Err(MapError::CreateError { name, code, io_error }) => {
-                assert_eq!(name, "foo");
-                assert_eq!(code, -42);
-                assert_eq!(io_error.raw_os_error(), Some(EFAULT));
-            }
-        );
+        let res = MapData::create(new_obj_map(), "foo", None);
+        assert!(res.is_err());
+        let res = res.unwrap_err();
+        if let MapError::Other(e) = res {
+            assert_matches!(
+                e.downcast_ref::<InternalMapError>().unwrap(),
+                InternalMapError::CreateError { name, code, source} => {
+                    assert_eq!(name, "foo");
+                    assert_eq!(*code, -42);
+                    if let SysError::Syscall { call: _, io_error } = source {
+                        assert_eq!(io_error.raw_os_error(), Some(EFAULT));
+                    } else {
+                        panic!("unexpected source: {:?}", source);
+                    }
+                }
+            );
+        } else {
+            panic!("unexpected error: {:?}", res);
+        }
     }
 }

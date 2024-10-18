@@ -2,12 +2,13 @@
 use std::os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd};
 
 use crate::{
+    errors::LinkError,
     generated::bpf_attach_type::BPF_PERF_EVENT,
     programs::{
         probe::{detach_debug_fs, ProbeEvent},
-        FdLink, Link, ProgramError,
+        FdLink, Link,
     },
-    sys::{bpf_link_create, perf_event_ioctl, LinkTarget, SysResult, SyscallError},
+    sys::{bpf_link_create, perf_event_ioctl, LinkTarget, SysResult},
     FEATURES, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE, PERF_EVENT_IOC_SET_BPF,
 };
 
@@ -33,7 +34,7 @@ impl Link for PerfLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), LinkError> {
         match self {
             Self::FdLink(link) => link.detach(),
             Self::PerfLink(link) => link.detach(),
@@ -59,7 +60,7 @@ impl Link for PerfLink {
         PerfLinkId(self.perf_fd.as_raw_fd())
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), LinkError> {
         let Self { perf_fd, event } = self;
         let _: SysResult<_> = perf_event_ioctl(perf_fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
         if let Some(event) = event {
@@ -73,7 +74,7 @@ impl Link for PerfLink {
 pub(crate) fn perf_attach(
     prog_fd: BorrowedFd<'_>,
     fd: crate::MockableFd,
-) -> Result<PerfLinkInner, ProgramError> {
+) -> Result<PerfLinkInner, LinkError> {
     if FEATURES.bpf_perf_link() {
         let link_fd = bpf_link_create(
             prog_fd,
@@ -82,11 +83,7 @@ pub(crate) fn perf_attach(
             None,
             0,
             None,
-        )
-        .map_err(|(_, io_error)| SyscallError {
-            call: "bpf_link_create",
-            io_error,
-        })?;
+        )?;
         Ok(PerfLinkInner::FdLink(FdLink::new(link_fd)))
     } else {
         perf_attach_either(prog_fd, fd, None)
@@ -97,7 +94,7 @@ pub(crate) fn perf_attach_debugfs(
     prog_fd: BorrowedFd<'_>,
     fd: crate::MockableFd,
     event: ProbeEvent,
-) -> Result<PerfLinkInner, ProgramError> {
+) -> Result<PerfLinkInner, LinkError> {
     perf_attach_either(prog_fd, fd, Some(event))
 }
 
@@ -105,19 +102,9 @@ fn perf_attach_either(
     prog_fd: BorrowedFd<'_>,
     fd: crate::MockableFd,
     event: Option<ProbeEvent>,
-) -> Result<PerfLinkInner, ProgramError> {
-    perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_SET_BPF, prog_fd.as_raw_fd()).map_err(
-        |(_, io_error)| SyscallError {
-            call: "PERF_EVENT_IOC_SET_BPF",
-            io_error,
-        },
-    )?;
-    perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_ENABLE, 0).map_err(|(_, io_error)| {
-        SyscallError {
-            call: "PERF_EVENT_IOC_ENABLE",
-            io_error,
-        }
-    })?;
+) -> Result<PerfLinkInner, LinkError> {
+    perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_SET_BPF, prog_fd.as_raw_fd())?;
+    perf_event_ioctl(fd.as_fd(), PERF_EVENT_IOC_ENABLE, 0)?;
 
     Ok(PerfLinkInner::PerfLink(PerfLink { perf_fd: fd, event }))
 }

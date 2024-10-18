@@ -8,8 +8,9 @@
 use std::{fs, panic, path::Path, time::SystemTime};
 
 use aya::{
-    maps::{loaded_maps, Array, HashMap, IterableMap as _, MapError, MapType},
-    programs::{loaded_programs, ProgramError, ProgramType, SocketFilter, TracePoint},
+    errors::{MapError, ProgramError, SysError},
+    maps::{loaded_maps, Array, HashMap, IterableMap as _, MapType},
+    programs::{loaded_programs, ProgramType, SocketFilter, TracePoint},
     sys::enable_stats,
     util::KernelVersion,
     Ebpf,
@@ -33,13 +34,9 @@ fn test_loaded_programs() {
     // Ensure loaded program doesn't panic
     let mut programs = loaded_programs().peekable();
     if let Err(err) = programs.peek().unwrap() {
-        if let ProgramError::SyscallError(err) = &err {
+        if let ProgramError::Syscall(SysError::Syscall { call: _, io_error }) = &err {
             // Skip entire test since feature not available
-            if err
-                .io_error
-                .raw_os_error()
-                .is_some_and(|errno| errno == EINVAL)
-            {
+            if io_error.raw_os_error().is_some_and(|errno| errno == EINVAL) {
                 eprintln!(
                     "ignoring test completely as `loaded_programs()` is not available on the host"
                 );
@@ -234,12 +231,8 @@ fn list_loaded_maps() {
     // Ensure the loaded_maps() api doesn't panic
     let mut maps = loaded_maps().peekable();
     if let Err(err) = maps.peek().unwrap() {
-        if let MapError::SyscallError(err) = &err {
-            if err
-                .io_error
-                .raw_os_error()
-                .is_some_and(|errno| errno == EINVAL)
-            {
+        if let MapError::Syscall(SysError::Syscall { call: _, io_error }) = &err {
+            if io_error.raw_os_error().is_some_and(|errno| errno == EINVAL) {
                 eprintln!(
                     "ignoring test completely as `loaded_maps()` is not available on the host"
                 );

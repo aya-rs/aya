@@ -3,6 +3,7 @@
 use std::os::fd::AsFd as _;
 
 use crate::{
+    errors::LinkError,
     generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
     maps::sock::SockMapFd,
     programs::{
@@ -77,7 +78,7 @@ impl SkMsg {
     /// Attaches the program to the given sockmap.
     ///
     /// The returned value can be used to detach, see [SkMsg::detach].
-    pub fn attach(&mut self, map: &SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
+    pub fn attach(&mut self, map: &SockMapFd) -> Result<SkMsgLinkId, LinkError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let link = ProgAttachLink::attach(
@@ -93,7 +94,7 @@ impl SkMsg {
     /// Detaches the program from a sockmap.
     ///
     /// See [SkMsg::attach].
-    pub fn detach(&mut self, link_id: SkMsgLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: SkMsgLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -101,7 +102,7 @@ impl SkMsg {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: SkMsgLinkId) -> Result<SkMsgLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: SkMsgLinkId) -> Result<SkMsgLink, LinkError> {
         self.data.take_link(link_id)
     }
 }

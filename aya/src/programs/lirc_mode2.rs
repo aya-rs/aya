@@ -2,6 +2,7 @@
 use std::os::fd::{AsFd, AsRawFd as _, RawFd};
 
 use crate::{
+    errors::LinkError,
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
     programs::{
         load_program, query, CgroupAttachMode, Link, ProgramData, ProgramError, ProgramFd,
@@ -61,7 +62,7 @@ impl LircMode2 {
     /// Attaches the program to the given lirc device.
     ///
     /// The returned value can be used to detach, see [LircMode2::detach].
-    pub fn attach<T: AsFd>(&mut self, lircdev: T) -> Result<LircLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, lircdev: T) -> Result<LircLinkId, LinkError> {
         let prog_fd = self.fd()?;
 
         // The link is going to own this new file descriptor so we are
@@ -85,7 +86,7 @@ impl LircMode2 {
     /// Detaches the program.
     ///
     /// See [LircMode2::attach].
-    pub fn detach(&mut self, link_id: LircLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: LircLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -93,7 +94,7 @@ impl LircMode2 {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: LircLinkId) -> Result<LircLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: LircLinkId) -> Result<LircLink, LinkError> {
         self.data.take_link(link_id)
     }
 
@@ -148,7 +149,7 @@ impl Link for LircLink {
         LircLinkId(self.prog_fd.as_fd().as_raw_fd(), self.target_fd.as_raw_fd())
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), LinkError> {
         bpf_prog_detach(self.prog_fd.as_fd(), self.target_fd.as_fd(), BPF_LIRC_MODE2)
             .map_err(Into::into)
     }

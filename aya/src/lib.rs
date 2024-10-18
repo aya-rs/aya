@@ -78,8 +78,8 @@
 )]
 
 mod bpf;
+pub mod errors;
 pub mod maps;
-pub mod pin;
 pub mod programs;
 pub mod sys;
 pub mod util;

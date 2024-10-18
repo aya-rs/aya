@@ -1,6 +1,7 @@
 //! BTF-enabled raw tracepoints.
 
 use crate::{
+    errors::LinkError,
     generated::{bpf_attach_type::BPF_TRACE_RAW_TP, bpf_prog_type::BPF_PROG_TYPE_TRACING},
     obj::btf::{Btf, BtfKind},
     programs::{
@@ -68,14 +69,14 @@ impl BtfTracePoint {
     /// Attaches the program.
     ///
     /// The returned value can be used to detach, see [BtfTracePoint::detach].
-    pub fn attach(&mut self) -> Result<BtfTracePointLinkId, ProgramError> {
+    pub fn attach(&mut self) -> Result<BtfTracePointLinkId, LinkError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
 
     /// Detaches the program.
     ///
     /// See [BtfTracePoint::attach].
-    pub fn detach(&mut self, link_id: BtfTracePointLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: BtfTracePointLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -86,7 +87,7 @@ impl BtfTracePoint {
     pub fn take_link(
         &mut self,
         link_id: BtfTracePointLinkId,
-    ) -> Result<BtfTracePointLink, ProgramError> {
+    ) -> Result<BtfTracePointLink, LinkError> {
         self.data.take_link(link_id)
     }
 }

@@ -3,9 +3,10 @@ use std::os::fd::AsFd;
 
 use super::links::FdLink;
 use crate::{
+    errors::LinkError,
     generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP},
     programs::{define_link_wrapper, load_program, FdLinkId, ProgramData, ProgramError},
-    sys::{bpf_link_create, LinkTarget, SyscallError},
+    sys::{bpf_link_create, LinkTarget},
 };
 
 /// A program used to redirect incoming packets to a local socket.
@@ -60,7 +61,7 @@ impl SkLookup {
     /// Attaches the program to the given network namespace.
     ///
     /// The returned value can be used to detach, see [SkLookup::detach].
-    pub fn attach<T: AsFd>(&mut self, netns: T) -> Result<SkLookupLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, netns: T) -> Result<SkLookupLinkId, LinkError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let netns_fd = netns.as_fd();
@@ -72,11 +73,7 @@ impl SkLookup {
             None,
             0,
             None,
-        )
-        .map_err(|(_, io_error)| SyscallError {
-            call: "bpf_link_create",
-            io_error,
-        })?;
+        )?;
         self.data
             .links
             .insert(SkLookupLink::new(FdLink::new(link_fd)))
@@ -86,14 +83,14 @@ impl SkLookup {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: SkLookupLinkId) -> Result<SkLookupLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: SkLookupLinkId) -> Result<SkLookupLink, LinkError> {
         self.data.take_link(link_id)
     }
 
     /// Detaches the program.
     ///
     /// See [SkLookup::attach].
-    pub fn detach(&mut self, link_id: SkLookupLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: SkLookupLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 }

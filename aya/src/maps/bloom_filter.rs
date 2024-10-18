@@ -6,8 +6,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_v_size, MapData, MapError},
-    sys::{bpf_map_lookup_elem_ptr, bpf_map_push_elem, SyscallError},
+    errors::MapError,
+    maps::{check_v_size, MapData},
+    sys::{bpf_map_lookup_elem_ptr, bpf_map_push_elem},
     Pod,
 };
 
@@ -54,11 +55,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
 
-        bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_map_lookup_elem",
-                io_error,
-            })?
+        bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)?
             .ok_or(MapError::ElementNotFound)?;
         Ok(())
     }
@@ -68,10 +65,7 @@ impl<T: BorrowMut<MapData>, V: Pod> BloomFilter<T, V> {
     /// Inserts a value into the map.
     pub fn insert(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow_mut().fd().as_fd();
-        bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| SyscallError {
-            call: "bpf_map_push_elem",
-            io_error,
-        })?;
+        bpf_map_push_elem(fd, value.borrow(), flags)?;
         Ok(())
     }
 }
@@ -81,40 +75,60 @@ mod tests {
     use std::io;
 
     use assert_matches::assert_matches;
-    use libc::{EFAULT, ENOENT};
+    use libc::{EFAULT, EINVAL, ENOENT};
 
     use super::*;
     use crate::{
-        generated::{
-            bpf_cmd,
-            bpf_map_type::{BPF_MAP_TYPE_ARRAY, BPF_MAP_TYPE_BLOOM_FILTER},
-        },
+        errors::{InternalMapError, SysError},
+        generated::bpf_map_type::{BPF_MAP_TYPE_ARRAY, BPF_MAP_TYPE_BLOOM_FILTER},
         maps::{
             test_utils::{self, new_map},
             Map,
         },
         obj,
-        sys::{override_syscall, SysResult, Syscall},
+        sys::{override_syscall, BpfCmd, SysResult, Syscall},
     };
 
     fn new_obj_map() -> obj::Map {
         test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_BLOOM_FILTER)
     }
 
-    fn sys_error(value: i32) -> SysResult<i64> {
-        Err((-1, io::Error::from_raw_os_error(value)))
+    fn sys_error(call: Syscall<'_>, value: i32) -> SysResult<i64> {
+        match call {
+            Syscall::Ebpf { .. } => Err((
+                -1,
+                SysError::Syscall {
+                    call: format!("{:?}", call),
+                    io_error: io::Error::from_raw_os_error(value),
+                },
+            )),
+            _ => Err((
+                -1,
+                SysError::Syscall {
+                    call: "UNEXPECTED!!!".to_string(),
+                    io_error: io::Error::from_raw_os_error(EINVAL),
+                },
+            )),
+        }
     }
 
     #[test]
     fn test_wrong_value_size() {
         let map = new_map(new_obj_map());
-        assert_matches!(
-            BloomFilter::<_, u16>::new(&map),
-            Err(MapError::InvalidValueSize {
-                size: 2,
-                expected: 4
-            })
-        );
+        let res = BloomFilter::<_, u16>::new(&map);
+        assert!(res.is_err());
+        let res = res.unwrap_err();
+        if let MapError::Other(map_err) = res {
+            assert_matches!(
+                map_err.downcast_ref::<InternalMapError>().unwrap(),
+                InternalMapError::InvalidKeySize {
+                    size: 2,
+                    expected: 4
+                }
+            );
+        } else {
+            panic!("unexpected error: {:?}", res);
+        }
     }
 
     #[test]
@@ -149,12 +163,9 @@ mod tests {
         let mut map = new_map(new_obj_map());
         let mut bloom_filter = BloomFilter::<_, u32>::new(&mut map).unwrap();
 
-        override_syscall(|_| sys_error(EFAULT));
+        override_syscall(|c| sys_error(c, EFAULT));
 
-        assert_matches!(
-            bloom_filter.insert(1, 0),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_push_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
-        );
+        assert!(bloom_filter.insert(1, 0).is_err());
     }
 
     #[test]
@@ -164,10 +175,10 @@ mod tests {
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
+                cmd: BpfCmd::MapUpdateElem,
                 ..
             } => Ok(1),
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
 
         assert!(bloom_filter.insert(0, 42).is_ok());
@@ -178,12 +189,9 @@ mod tests {
         let map = new_map(new_obj_map());
         let bloom_filter = BloomFilter::<_, u32>::new(&map).unwrap();
 
-        override_syscall(|_| sys_error(EFAULT));
+        override_syscall(|c| sys_error(c, EFAULT));
 
-        assert_matches!(
-            bloom_filter.contains(&1, 0),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
-        );
+        assert!(bloom_filter.contains(&1, 0).is_err());
     }
 
     #[test]
@@ -193,10 +201,10 @@ mod tests {
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                cmd: BpfCmd::MapUpdateElem,
                 ..
-            } => sys_error(ENOENT),
-            _ => sys_error(EFAULT),
+            } => sys_error(call, ENOENT),
+            c => sys_error(c, EFAULT),
         });
 
         assert_matches!(bloom_filter.contains(&1, 0), Err(MapError::ElementNotFound));

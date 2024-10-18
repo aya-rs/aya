@@ -5,8 +5,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError, PerCpuValues},
-    sys::{bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu, SyscallError},
+    errors::MapError,
+    maps::{check_bounds, check_kv_size, IterableMap, MapData, PerCpuValues},
+    sys::{bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu},
     Pod,
 };
 
@@ -83,12 +84,7 @@ impl<T: Borrow<MapData>, V: Pod> PerCpuArray<T, V> {
         check_bounds(data, *index)?;
         let fd = data.fd().as_fd();
 
-        let value = bpf_map_lookup_elem_per_cpu(fd, index, flags).map_err(|(_, io_error)| {
-            SyscallError {
-                call: "bpf_map_lookup_elem",
-                io_error,
-            }
-        })?;
+        let value = bpf_map_lookup_elem_per_cpu(fd, index, flags)?;
         value.ok_or(MapError::KeyNotFound)
     }
 
@@ -104,19 +100,14 @@ impl<T: BorrowMut<MapData>, V: Pod> PerCpuArray<T, V> {
     ///
     /// # Errors
     ///
-    /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
-    /// if `bpf_map_update_elem` fails.
+    /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::Other`]
+    /// if `bpf_map_update_elem` fails for any other reason.
     pub fn set(&mut self, index: u32, values: PerCpuValues<V>, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd().as_fd();
 
-        bpf_map_update_elem_per_cpu(fd, &index, &values, flags).map_err(|(_, io_error)| {
-            SyscallError {
-                call: "bpf_map_update_elem",
-                io_error,
-            }
-        })?;
+        bpf_map_update_elem_per_cpu(fd, &index, &values, flags)?;
         Ok(())
     }
 }

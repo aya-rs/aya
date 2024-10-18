@@ -1,6 +1,7 @@
 //! LSM probes.
 
 use crate::{
+    errors::LinkError,
     generated::{bpf_attach_type::BPF_LSM_MAC, bpf_prog_type::BPF_PROG_TYPE_LSM},
     obj::btf::{Btf, BtfKind},
     programs::{
@@ -70,14 +71,14 @@ impl Lsm {
     /// Attaches the program.
     ///
     /// The returned value can be used to detach, see [Lsm::detach].
-    pub fn attach(&mut self) -> Result<LsmLinkId, ProgramError> {
+    pub fn attach(&mut self) -> Result<LsmLinkId, LinkError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
 
     /// Detaches the program.
     ///
     /// See [Lsm::attach].
-    pub fn detach(&mut self, link_id: LsmLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: LsmLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -85,7 +86,7 @@ impl Lsm {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: LsmLinkId) -> Result<LsmLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: LsmLinkId) -> Result<LsmLink, LinkError> {
         self.data.take_link(link_id)
     }
 }

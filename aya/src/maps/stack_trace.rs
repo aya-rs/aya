@@ -10,8 +10,9 @@ use std::{
 };
 
 use crate::{
-    maps::{IterableMap, MapData, MapError, MapIter, MapKeys},
-    sys::{bpf_map_delete_elem, bpf_map_lookup_elem_ptr, SyscallError},
+    errors::{InternalMapError, MapError},
+    maps::{IterableMap, MapData, MapIter, MapKeys},
+    sys::{bpf_map_delete_elem, bpf_map_lookup_elem_ptr},
 };
 
 /// A hash map of kernel or user space stack traces.
@@ -83,17 +84,13 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
         let expected = mem::size_of::<u32>();
         let size = data.obj.key_size() as usize;
         if size != expected {
-            return Err(MapError::InvalidKeySize { size, expected });
+            return Err(InternalMapError::InvalidKeySize { size, expected }.into());
         }
 
-        let max_stack_depth =
-            sysctl::<usize>("kernel/perf_event_max_stack").map_err(|io_error| SyscallError {
-                call: "sysctl",
-                io_error,
-            })?;
+        let max_stack_depth = sysctl::<usize>("kernel/perf_event_max_stack")?;
         let size = data.obj.value_size() as usize;
         if size > max_stack_depth * mem::size_of::<u64>() {
-            return Err(MapError::InvalidValueSize { size, expected });
+            return Err(InternalMapError::InvalidValueSize { size, expected }.into());
         }
 
         Ok(Self {
@@ -112,11 +109,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
         let fd = self.inner.borrow().fd().as_fd();
 
         let mut frames = vec![0; self.max_stack_depth];
-        bpf_map_lookup_elem_ptr(fd, Some(stack_id), frames.as_mut_ptr(), flags)
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_map_lookup_elem",
-                io_error,
-            })?
+        bpf_map_lookup_elem_ptr(fd, Some(stack_id), frames.as_mut_ptr(), flags)?
             .ok_or(MapError::KeyNotFound)?;
 
         let frames = frames
@@ -169,13 +162,7 @@ impl<T: BorrowMut<MapData>> StackTraceMap<T> {
         let fd = self.inner.borrow().fd().as_fd();
         bpf_map_delete_elem(fd, stack_id)
             .map(|_| ())
-            .map_err(|(_, io_error)| {
-                SyscallError {
-                    call: "bpf_map_delete_elem",
-                    io_error,
-                }
-                .into()
-            })
+            .map_err(Into::into)
     }
 }
 

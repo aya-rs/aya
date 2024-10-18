@@ -60,11 +60,12 @@ use std::{
 const MAP_NAME: &str = "AYA_LOGS";
 
 use aya::{
+    errors::{MapError, PerfBufferError, ProgramError},
     maps::{
-        perf::{AsyncPerfEventArray, Events, PerfBufferError},
-        Map, MapData, MapError, MapInfo,
+        perf::{AsyncPerfEventArray, Events},
+        Map, MapData, MapInfo,
     },
-    programs::{loaded_programs, ProgramError},
+    programs::loaded_programs,
     util::online_cpus,
     Ebpf, Pod,
 };

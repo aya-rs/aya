@@ -3,6 +3,7 @@
 use std::{os::fd::AsFd as _, path::Path};
 
 use crate::{
+    errors::LinkError,
     generated::{
         bpf_attach_type::{BPF_SK_SKB_STREAM_PARSER, BPF_SK_SKB_STREAM_VERDICT},
         bpf_prog_type::BPF_PROG_TYPE_SK_SKB,
@@ -81,7 +82,7 @@ impl SkSkb {
     /// Attaches the program to the given socket map.
     ///
     /// The returned value can be used to detach, see [SkSkb::detach].
-    pub fn attach(&mut self, map: &SockMapFd) -> Result<SkSkbLinkId, ProgramError> {
+    pub fn attach(&mut self, map: &SockMapFd) -> Result<SkSkbLinkId, LinkError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
 
@@ -99,7 +100,7 @@ impl SkSkb {
     /// Detaches the program.
     ///
     /// See [SkSkb::attach].
-    pub fn detach(&mut self, link_id: SkSkbLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: SkSkbLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -107,7 +108,7 @@ impl SkSkb {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: SkSkbLinkId) -> Result<SkSkbLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: SkSkbLinkId) -> Result<SkSkbLink, LinkError> {
         self.data.take_link(link_id)
     }
 

@@ -7,12 +7,15 @@ use std::{
 use libc::pid_t;
 
 use super::{syscall, SysResult, Syscall};
-use crate::generated::{
-    perf_event_attr,
-    perf_event_sample_format::PERF_SAMPLE_RAW,
-    perf_sw_ids::PERF_COUNT_SW_BPF_OUTPUT,
-    perf_type_id::{PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT},
-    PERF_FLAG_FD_CLOEXEC,
+use crate::{
+    errors::SysError,
+    generated::{
+        perf_event_attr,
+        perf_event_sample_format::PERF_SAMPLE_RAW,
+        perf_sw_ids::PERF_COUNT_SW_BPF_OUTPUT,
+        perf_type_id::{PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT},
+        PERF_FLAG_FD_CLOEXEC,
+    },
 };
 
 #[allow(clippy::too_many_arguments)]
@@ -130,10 +133,10 @@ fn perf_event_sys(
     let fd = fd.try_into().map_err(|_| {
         (
             fd,
-            io::Error::new(
+            SysError::Other(Box::new(io::Error::new(
                 io::ErrorKind::InvalidData,
                 format!("perf_event_open: invalid fd returned: {fd}"),
-            ),
+            ))),
         )
     })?;
 

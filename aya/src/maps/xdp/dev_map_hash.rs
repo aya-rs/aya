@@ -8,11 +8,13 @@ use std::{
 
 use aya_obj::generated::bpf_devmap_val;
 
-use super::{dev_map::DevMapValue, XdpMapError};
 use crate::{
-    maps::{check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
+    errors::MapError,
+    maps::{
+        check_kv_size, hash_map, xdp::dev_map::DevMapValue, IterableMap, MapData, MapIter, MapKeys,
+    },
     programs::ProgramFd,
-    sys::{bpf_map_lookup_elem, SyscallError},
+    sys::bpf_map_lookup_elem,
     FEATURES,
 };
 
@@ -83,12 +85,7 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
                 })
             })
         };
-        value
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_map_lookup_elem",
-                io_error,
-            })?
-            .ok_or(MapError::KeyNotFound)
+        value?.ok_or(MapError::KeyNotFound)
     }
 
     /// An iterator over the elements of the devmap in arbitrary order.
@@ -126,7 +123,7 @@ impl<T: BorrowMut<MapData>> DevMapHash<T> {
         target_if_index: u32,
         program: Option<&ProgramFd>,
         flags: u64,
-    ) -> Result<(), XdpMapError> {
+    ) -> Result<(), MapError> {
         if FEATURES.devmap_prog_id() {
             let mut value = unsafe { std::mem::zeroed::<bpf_devmap_val>() };
             value.ifindex = target_if_index;
@@ -139,7 +136,7 @@ impl<T: BorrowMut<MapData>> DevMapHash<T> {
             hash_map::insert(self.inner.borrow_mut(), &key, &value, flags)?;
         } else {
             if program.is_some() {
-                return Err(XdpMapError::ChainedProgramNotSupported);
+                return Err(MapError::ChainedProgramNotSupported);
             }
             hash_map::insert(self.inner.borrow_mut(), &key, &target_if_index, flags)?;
         }

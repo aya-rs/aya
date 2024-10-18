@@ -5,24 +5,12 @@ use std::{
 };
 
 use libc::{setsockopt, SOL_SOCKET};
-use thiserror::Error;
 
 use crate::{
+    errors::{InternalLinkError, LinkError},
     generated::{bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF},
     programs::{load_program, Link, ProgramData, ProgramError},
 };
-
-/// The type returned when attaching a [`SocketFilter`] fails.
-#[derive(Debug, Error)]
-pub enum SocketFilterError {
-    /// Setting the `SO_ATTACH_BPF` socket option failed.
-    #[error("setsockopt SO_ATTACH_BPF failed")]
-    SoAttachEbpfError {
-        /// original [`io::Error`]
-        #[source]
-        io_error: io::Error,
-    },
-}
 
 /// A program used to inspect and filter incoming packets on a socket.
 ///
@@ -72,7 +60,7 @@ impl SocketFilter {
     /// Attaches the filter on the given socket.
     ///
     /// The returned value can be used to detach from the socket, see [SocketFilter::detach].
-    pub fn attach<T: AsFd>(&mut self, socket: T) -> Result<SocketFilterLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(&mut self, socket: T) -> Result<SocketFilterLinkId, LinkError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let prog_fd = prog_fd.as_raw_fd();
@@ -89,7 +77,7 @@ impl SocketFilter {
             )
         };
         if ret < 0 {
-            return Err(SocketFilterError::SoAttachEbpfError {
+            return Err(InternalLinkError::SoAttachEbpf {
                 io_error: io::Error::last_os_error(),
             }
             .into());
@@ -101,7 +89,7 @@ impl SocketFilter {
     /// Detaches the program.
     ///
     /// See [SocketFilter::attach].
-    pub fn detach(&mut self, link_id: SocketFilterLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: SocketFilterLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -112,7 +100,7 @@ impl SocketFilter {
     pub fn take_link(
         &mut self,
         link_id: SocketFilterLinkId,
-    ) -> Result<SocketFilterLink, ProgramError> {
+    ) -> Result<SocketFilterLink, LinkError> {
         self.data.take_link(link_id)
     }
 }
@@ -135,7 +123,7 @@ impl Link for SocketFilterLink {
         SocketFilterLinkId(self.socket, self.prog_fd)
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), LinkError> {
         unsafe {
             setsockopt(
                 self.socket,

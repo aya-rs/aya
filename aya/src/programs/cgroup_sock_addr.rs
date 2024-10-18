@@ -5,12 +5,13 @@ use std::{hash::Hash, os::fd::AsFd, path::Path};
 pub use aya_obj::programs::CgroupSockAddrAttachType;
 
 use crate::{
+    errors::{LinkError, ProgramError},
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
     programs::{
         define_link_wrapper, load_program, CgroupAttachMode, FdLink, Link, ProgAttachLink,
-        ProgramData, ProgramError,
+        ProgramData,
     },
-    sys::{bpf_link_create, LinkTarget, SyscallError},
+    sys::{bpf_link_create, LinkTarget},
     util::KernelVersion,
     VerifierLogLevel,
 };
@@ -72,7 +73,7 @@ impl CgroupSockAddr {
         &mut self,
         cgroup: T,
         mode: CgroupAttachMode,
-    ) -> Result<CgroupSockAddrLinkId, ProgramError> {
+    ) -> Result<CgroupSockAddrLinkId, LinkError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
@@ -85,11 +86,7 @@ impl CgroupSockAddr {
                 None,
                 mode.into(),
                 None,
-            )
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+            )?;
             self.data
                 .links
                 .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
@@ -111,14 +108,14 @@ impl CgroupSockAddr {
     pub fn take_link(
         &mut self,
         link_id: CgroupSockAddrLinkId,
-    ) -> Result<CgroupSockAddrLink, ProgramError> {
+    ) -> Result<CgroupSockAddrLink, LinkError> {
         self.data.take_link(link_id)
     }
 
     /// Detaches the program.
     ///
     /// See [CgroupSockAddr::attach].
-    pub fn detach(&mut self, link_id: CgroupSockAddrLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: CgroupSockAddrLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -159,7 +156,7 @@ impl Link for CgroupSockAddrLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), LinkError> {
         match self {
             Self::Fd(fd) => fd.detach(),
             Self::ProgAttach(p) => p.detach(),

@@ -2,6 +2,7 @@
 use std::ffi::CString;
 
 use crate::{
+    errors::LinkError,
     generated::bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT,
     programs::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
@@ -48,7 +49,7 @@ impl RawTracePoint {
     /// Attaches the program to the given tracepoint.
     ///
     /// The returned value can be used to detach, see [RawTracePoint::detach].
-    pub fn attach(&mut self, tp_name: &str) -> Result<RawTracePointLinkId, ProgramError> {
+    pub fn attach(&mut self, tp_name: &str) -> Result<RawTracePointLinkId, LinkError> {
         let tp_name_c = CString::new(tp_name).unwrap();
         attach_raw_tracepoint(&mut self.data, Some(&tp_name_c))
     }
@@ -56,7 +57,7 @@ impl RawTracePoint {
     /// Detaches from a tracepoint.
     ///
     /// See [RawTracePoint::attach].
-    pub fn detach(&mut self, link_id: RawTracePointLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: RawTracePointLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -67,7 +68,7 @@ impl RawTracePoint {
     pub fn take_link(
         &mut self,
         link_id: RawTracePointLinkId,
-    ) -> Result<RawTracePointLink, ProgramError> {
+    ) -> Result<RawTracePointLink, LinkError> {
         self.data.take_link(link_id)
     }
 }

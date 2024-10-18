@@ -1,5 +1,6 @@
 use alloc::{
     borrow::{Cow, ToOwned as _},
+    boxed::Box,
     format,
     string::String,
     vec,
@@ -157,6 +158,10 @@ pub enum BtfError {
     /// unable to get symbol name
     #[error("Unable to get symbol name")]
     InvalidSymbolName,
+
+    /// an irrecoverable error occurred
+    #[error(transparent)]
+    Other(#[from] Box<dyn std::error::Error>),
 }
 
 /// Available BTF features
@@ -889,7 +894,7 @@ impl BtfExt {
                     );
                     Ok((name, info))
                 })
-                .collect::<Result<HashMap<_, _>, _>>()?,
+                .collect::<Result<HashMap<_, _>, BtfError>>()?,
         );
 
         let line_info_rec_size = ext.line_info_rec_size;
@@ -910,7 +915,7 @@ impl BtfExt {
                     );
                     Ok((name, info))
                 })
-                .collect::<Result<HashMap<_, _>, _>>()?,
+                .collect::<Result<HashMap<_, _>, BtfError>>()?,
         );
 
         let rec_size = ext.core_relo_rec_size;
@@ -925,7 +930,7 @@ impl BtfExt {
                         .collect::<Result<Vec<_>, _>>()?;
                     Ok((sec.name_offset, relos))
                 })
-                .collect::<Result<Vec<_>, _>>()?,
+                .collect::<Result<Vec<_>, BtfError>>()?,
         );
 
         Ok(ext)
