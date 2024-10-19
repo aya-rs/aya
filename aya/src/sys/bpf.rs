@@ -1174,7 +1174,7 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
     bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
-fn bpf_prog_load(attr: &mut bpf_attr) -> SysResult<crate::MockableFd> {
+pub(super) fn bpf_prog_load(attr: &mut bpf_attr) -> SysResult<crate::MockableFd> {
     // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) }
 }

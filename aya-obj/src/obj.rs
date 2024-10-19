@@ -22,8 +22,8 @@ use crate::{
         Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
     },
     generated::{
-        bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL, BPF_F_RDONLY_PROG,
-        BPF_JMP, BPF_K,
+        __BindgenBitfieldUnit, bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL,
+        BPF_F_RDONLY_PROG, BPF_JMP, BPF_K,
     },
     maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, PinningType, MINIMUM_MAP_SIZE},
     programs::{
@@ -131,6 +131,42 @@ impl Features {
     /// If BTF is supported, returns which BTF features are supported.
     pub fn btf(&self) -> Option<&BtfFeatures> {
         self.btf.as_ref()
+    }
+}
+
+impl bpf_insn {
+    /// Creates a [BPF instruction](bpf_insn).
+    ///
+    /// The arguments will be converted to the host's endianness.
+    pub const fn new(code: u8, dst_reg: u8, src_reg: u8, off: i16, imm: i32) -> Self {
+        if dst_reg > 10 || src_reg > 10 {
+            panic!("invalid register number");
+        }
+
+        let registers;
+        let offset;
+        let immediate;
+
+        #[cfg(target_endian = "little")]
+        {
+            registers = (src_reg << 4) | dst_reg;
+            offset = off.swap_bytes();
+            immediate = imm.swap_bytes();
+        }
+        #[cfg(target_endian = "big")]
+        {
+            registers = (dst_reg << 4) | src_reg;
+            offset = off;
+            immediate = imm;
+        }
+
+        bpf_insn {
+            code,
+            _bitfield_align_1: [],
+            _bitfield_1: __BindgenBitfieldUnit::new([registers]),
+            off: offset,
+            imm: immediate,
+        }
     }
 }
 
