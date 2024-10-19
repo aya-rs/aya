@@ -14,7 +14,7 @@ use aya_obj::programs::XdpAttachType;
 use test_log::test;
 
 const MAX_RETRIES: usize = 100;
-const RETRY_DURATION: Duration = Duration::from_millis(10);
+pub(crate) const RETRY_DURATION: Duration = Duration::from_millis(10);
 
 #[test]
 fn long_name() {
