@@ -5128,6 +5128,8 @@ pub fn aya_obj::generated::bpf_insn::set_src_reg(&mut self, val: aya_obj::genera
 pub unsafe fn aya_obj::generated::bpf_insn::set_src_reg_raw(this: *mut Self, val: aya_obj::generated::__u8)
 pub fn aya_obj::generated::bpf_insn::src_reg(&self) -> aya_obj::generated::__u8
 pub unsafe fn aya_obj::generated::bpf_insn::src_reg_raw(this: *const Self) -> aya_obj::generated::__u8
+impl aya_obj::generated::bpf_insn
+pub const fn aya_obj::generated::bpf_insn::new(code: u8, dst_reg: u8, src_reg: u8, off: i16, imm: i32) -> Self
 impl core::clone::Clone for aya_obj::generated::bpf_insn
 pub fn aya_obj::generated::bpf_insn::clone(&self) -> aya_obj::generated::bpf_insn
 impl core::fmt::Debug for aya_obj::generated::bpf_insn
