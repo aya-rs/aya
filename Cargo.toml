@@ -87,6 +87,7 @@ octorust = { version = "0.10", default-features = false }
 once_cell = { version = "1.20.1", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
 proc-macro2-diagnostics = { version = "0.10.1", default-features = false }
+procfs = { version = "0.17.0", default-features = false }
 public-api = { version = "0.44.0", default-features = false }
 quote = { version = "1", default-features = false }
 rand = { version = "0.9", default-features = false }
