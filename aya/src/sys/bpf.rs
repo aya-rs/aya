@@ -729,7 +729,7 @@ fn new_insn(code: u8, dst_reg: u8, src_reg: u8, offset: i16, imm: i32) -> bpf_in
     insn
 }
 
-fn with_trivial_prog<T, F>(op: F) -> T
+pub(super) fn with_trivial_prog<T, F>(op: F) -> T
 where
     F: FnOnce(&mut bpf_attr) -> T,
 {
@@ -1075,7 +1075,7 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
     bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
-fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
+pub(super) fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
     // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) }
 }

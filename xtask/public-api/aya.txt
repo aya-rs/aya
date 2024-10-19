@@ -9622,6 +9622,8 @@ impl aya::programs::MultiProgram for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
 pub fn aya::programs::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
 pub mod aya::sys
+pub mod aya::sys::feature_probe
+pub fn aya::sys::feature_probe::is_program_supported(program_type: aya::programs::ProgramType) -> core::result::Result<bool, aya::programs::ProgramError>
 #[non_exhaustive] pub enum aya::sys::Stats
 pub aya::sys::Stats::RunTime
 impl core::clone::Clone for aya::sys::Stats
