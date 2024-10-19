@@ -27,7 +27,7 @@ use libc::{ENOENT, ENOSPC};
 use crate::{
     Btf, FEATURES, Pod, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
-    programs::links::LinkRef,
+    programs::{ProgramType, links::LinkRef},
     sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
 };
@@ -706,7 +706,7 @@ pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<crate::MockableFd, Syscall
 }
 
 pub(crate) fn is_prog_name_supported() -> bool {
-    with_trivial_prog(|attr| {
+    with_trivial_prog(ProgramType::TracePoint, |attr| {
         let u = unsafe { &mut attr.__bindgen_anon_3 };
         let name = c"aya_name_check";
         let name_bytes = name.to_bytes();
@@ -727,7 +727,7 @@ fn new_insn(code: u8, dst_reg: u8, src_reg: u8, offset: i16, imm: i32) -> bpf_in
     insn
 }
 
-fn with_trivial_prog<T, F>(op: F) -> T
+pub(super) fn with_trivial_prog<T, F>(program_type: ProgramType, op: F) -> T
 where
     F: FnOnce(&mut bpf_attr) -> T,
 {
@@ -743,14 +743,45 @@ where
 
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
-    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
+
+    // Setting `expected_attach_type` for cgroup_sock produces `E2BIG` in versions 4.16 and below.
+    // `bpf_prog_load_fixup_attach_type()` https://elixir.bootlin.com/linux/v4.17/source/kernel/bpf/syscall.c#L1195
+    // takes care of it for us in v4.17 and onwards.
+    let expected_attach_type = match program_type {
+        ProgramType::CgroupSkb => Some(bpf_attach_type::BPF_CGROUP_INET_INGRESS),
+        ProgramType::CgroupSockAddr => Some(bpf_attach_type::BPF_CGROUP_INET4_BIND),
+        ProgramType::LircMode2 => Some(bpf_attach_type::BPF_LIRC_MODE2),
+        ProgramType::CgroupSockopt => Some(bpf_attach_type::BPF_CGROUP_GETSOCKOPT),
+        ProgramType::Tracing => Some(bpf_attach_type::BPF_TRACE_FENTRY),
+        ProgramType::Lsm => Some(bpf_attach_type::BPF_LSM_MAC),
+        ProgramType::SkLookup => Some(bpf_attach_type::BPF_SK_LOOKUP),
+        ProgramType::SkReuseport => Some(bpf_attach_type::BPF_SK_REUSEPORT_SELECT),
+        ProgramType::Netfilter => Some(bpf_attach_type::BPF_NETFILTER),
+        _ => None,
+    };
+
+    match program_type {
+        ProgramType::KProbe => {
+            if let Ok(current_version) = KernelVersion::current() {
+                u.kern_version = current_version.code();
+            }
+        }
+        // syscall required to be sleepable: https://elixir.bootlin.com/linux/v5.14/source/kernel/bpf/verifier.c#L13240
+        ProgramType::Syscall => u.prog_flags = aya_obj::generated::BPF_F_SLEEPABLE,
+        _ => {}
+    }
+
+    u.prog_type = program_type as u32;
+    if let Some(expected_attach_type) = expected_attach_type {
+        u.expected_attach_type = expected_attach_type as u32;
+    }
 
     op(&mut attr)
 }
 
 /// Tests whether `nr_map_ids` & `map_ids` fields in `bpf_prog_info` is available.
 pub(crate) fn is_info_map_ids_supported() -> bool {
-    with_trivial_prog(|attr| {
+    with_trivial_prog(ProgramType::TracePoint, |attr| {
         let prog_fd = match bpf_prog_load(attr) {
             Ok(fd) => fd,
             Err(_) => return false,
@@ -764,7 +795,7 @@ pub(crate) fn is_info_map_ids_supported() -> bool {
 
 /// Tests whether `gpl_compatible` field in `bpf_prog_info` is available.
 pub(crate) fn is_info_gpl_compatible_supported() -> bool {
-    with_trivial_prog(|attr| {
+    with_trivial_prog(ProgramType::TracePoint, |attr| {
         let prog_fd = match bpf_prog_load(attr) {
             Ok(fd) => fd,
             Err(_) => return false,
@@ -805,7 +836,7 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
 }
 
 pub(crate) fn is_perf_link_supported() -> bool {
-    with_trivial_prog(|attr| {
+    with_trivial_prog(ProgramType::TracePoint, |attr| {
         if let Ok(fd) = bpf_prog_load(attr) {
             let fd = fd.as_fd();
             // Uses an invalid target FD so we get EBADF if supported.
@@ -1073,7 +1104,7 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
     bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
-fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
+pub(super) fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
     // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) }
 }
