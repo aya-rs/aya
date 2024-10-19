@@ -1,6 +1,7 @@
 //! A collection of system calls for performing eBPF related operations.
 
 mod bpf;
+mod feature_probe;
 mod netlink;
 mod perf_event;
 
@@ -17,6 +18,7 @@ use aya_obj::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
+pub use feature_probe::is_program_supported;
 #[doc(hidden)]
 pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
