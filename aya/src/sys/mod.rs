@@ -1,6 +1,7 @@
 //! A collection of system calls for performing eBPF related operations.
 
 mod bpf;
+pub mod feature_probe;
 mod netlink;
 mod perf_event;
 
