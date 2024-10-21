@@ -85,6 +85,16 @@ impl<K, V> HashMap<K, V> {
     }
 }
 
+impl<K> HashMap<K, u32> {
+    /// Retrieve the value associate with `key` from the map. This can not lead
+    /// to memory/type-safety bugs because a corrupt scalar can only lead to
+    /// logic bugs.
+    #[inline]
+    pub fn get_corrupt_u32(&self, key: &K) -> Option<&u32> {
+        unsafe { get(self.def.get(), key) }
+    }
+}
+
 #[repr(transparent)]
 pub struct LruHashMap<K, V> {
     def: UnsafeCell<bpf_map_def>,
