@@ -80,7 +80,7 @@ object = { version = "0.36", default-features = false }
 once_cell = { version = "1.20.1", default-features = false }
 proc-macro-error = { version = "1.0", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
-public-api = { version = "0.39.0", default-features = false }
+public-api = { version = "0.40.0", default-features = false }
 quote = { version = "1", default-features = false }
 rand = { version = "0.8", default-features = false }
 rbpf = { version = "0.3.0", default-features = false }
