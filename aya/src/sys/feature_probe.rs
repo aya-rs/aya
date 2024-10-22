@@ -3,16 +3,17 @@
 use std::{mem, os::fd::AsRawFd};
 
 use aya_obj::generated::{
-    bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn, BPF_F_MMAPABLE, BPF_F_NO_PREALLOC,
+    bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn, bpf_prog_info, BPF_F_MMAPABLE, BPF_F_NO_PREALLOC,
     BPF_F_SLEEPABLE,
 };
 use libc::{E2BIG, EINVAL};
 
-use super::{bpf_prog_load, fd_sys_bpf, SyscallError};
+use super::{bpf_prog_load, fd_sys_bpf, sys_bpf, SyscallError};
 use crate::{
     maps::MapType,
     programs::ProgramType,
     util::{page_size, KernelVersion},
+    MockableFd,
 };
 
 const RETURN_ZERO_INSNS: &[bpf_insn] = &[
@@ -252,5 +253,66 @@ fn dummy_map() -> Result<crate::MockableFd, SyscallError> {
             call: "bpf_map_create",
             io_error,
         }
+    })
+}
+
+/// Whether `nr_map_ids` & `map_ids` fields in `bpf_prog_info` are supported.
+pub(crate) fn is_prog_info_map_ids_supported() -> Result<bool, SyscallError> {
+    let fd = dummy_prog()?;
+
+    // SAFETY: all-zero byte-pattern valid for `bpf_prog_info`
+    let mut info = unsafe { mem::zeroed::<bpf_prog_info>() };
+    info.nr_map_ids = 1;
+
+    probe_bpf_info(fd, info)
+}
+
+/// Tests whether `bpf_prog_info.gpl_compatible` field is supported.
+pub(crate) fn is_prog_info_license_supported() -> Result<bool, SyscallError> {
+    let fd = dummy_prog()?;
+
+    // SAFETY: all-zero byte-pattern valid for `bpf_prog_info`
+    let mut info = unsafe { mem::zeroed::<bpf_prog_info>() };
+    info.set_gpl_compatible(1);
+
+    probe_bpf_info(fd, info)
+}
+
+/// Probes program and map info.
+fn probe_bpf_info<T>(fd: MockableFd, info: T) -> Result<bool, SyscallError> {
+    // SAFETY: all-zero byte-pattern valid for `bpf_attr`
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    attr.info.bpf_fd = fd.as_raw_fd() as u32;
+    attr.info.info_len = mem::size_of_val(&info) as u32;
+    attr.info.info = &info as *const _ as u64;
+
+    let io_error = match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
+        Ok(_) => return Ok(true),
+        Err((_, io_error)) => io_error,
+    };
+    match io_error.raw_os_error() {
+        // `E2BIG` from `bpf_check_uarg_tail_zero()`
+        Some(E2BIG) => Ok(false),
+        _ => Err(SyscallError {
+            call: "bpf_obj_get_info_by_fd",
+            io_error,
+        }),
+    }
+}
+
+/// Create a program and returns its fd.
+fn dummy_prog() -> Result<crate::MockableFd, SyscallError> {
+    // SAFETY: all-zero byte-pattern valid for `bpf_attr`
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    // SAFETY: union access
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+    u.prog_type = 1;
+    u.insn_cnt = 2;
+    u.insns = RETURN_ZERO_INSNS.as_ptr() as u64;
+    u.license = GPL_COMPATIBLE.as_ptr() as u64;
+
+    bpf_prog_load(&mut attr).map_err(|(_, io_error)| SyscallError {
+        call: "bpf_prog_load",
+        io_error,
     })
 }
