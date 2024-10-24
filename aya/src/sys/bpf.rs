@@ -8,37 +8,33 @@ use std::{
 };
 
 use assert_matches::assert_matches;
-use libc::{ENOENT, ENOSPC};
-use obj::{
-    btf::{BtfEnum64, Enum64},
-    generated::bpf_stats_type,
+use aya_obj::{
+    btf::{
+        BtfEnum64, BtfParam, BtfType, DataSec, DataSecEntry, DeclTag, Enum64, Float, Func,
+        FuncLinkage, FuncProto, FuncSecInfo, Int, IntEncoding, LineSecInfo, Ptr, TypeTag, Var,
+        VarLinkage,
+    },
+    copy_instructions,
+    generated::{
+        bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info,
+        bpf_map_type, bpf_prog_info, bpf_prog_type, bpf_stats_type, BPF_F_REPLACE,
+    },
     maps::{bpf_map_def, LegacyMap},
     EbpfSectionKind, VerifierLog,
 };
+use libc::{ENOENT, ENOSPC};
 
 use crate::{
-    generated::{
-        bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info,
-        bpf_map_type, bpf_prog_info, bpf_prog_type, BPF_F_REPLACE,
-    },
     maps::{MapData, PerCpuValues},
-    obj::{
-        self,
-        btf::{
-            BtfParam, BtfType, DataSec, DataSecEntry, DeclTag, Float, Func, FuncLinkage, FuncProto,
-            FuncSecInfo, Int, IntEncoding, LineSecInfo, Ptr, TypeTag, Var, VarLinkage,
-        },
-        copy_instructions,
-    },
     programs::links::LinkRef,
     sys::{syscall, SysResult, Syscall, SyscallError},
     util::KernelVersion,
-    Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN, FEATURES,
+    Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN,
 };
 
 pub(crate) fn bpf_create_map(
     name: &CStr,
-    def: &obj::Map,
+    def: &aya_obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
     kernel_version: KernelVersion,
 ) -> SysResult<crate::MockableFd> {
@@ -51,7 +47,7 @@ pub(crate) fn bpf_create_map(
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
 
-    if let obj::Map::Btf(m) = def {
+    if let aya_obj::Map::Btf(m) = def {
         use bpf_map_type::*;
 
         // Mimic https://github.com/libbpf/libbpf/issues/355
@@ -591,7 +587,7 @@ pub(crate) fn bpf_prog_get_info_by_fd(
     // An `E2BIG` error can occur on kernels below v4.15 when handing over a large struct where the
     // extra space is not all-zero bytes.
     bpf_obj_get_info_by_fd(fd, |info: &mut bpf_prog_info| {
-        if FEATURES.prog_info_map_ids() {
+        if !map_ids.is_empty() {
             info.nr_map_ids = map_ids.len() as _;
             info.map_ids = map_ids.as_mut_ptr() as _;
         }
@@ -681,7 +677,7 @@ pub(crate) fn bpf_load_btf(
 }
 
 // SAFETY: only use for bpf_cmd that return a new file descriptor on success.
-unsafe fn fd_sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<crate::MockableFd> {
+pub(super) unsafe fn fd_sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<crate::MockableFd> {
     let fd = sys_bpf(cmd, attr)?;
     let fd = fd.try_into().map_err(|_| {
         (
@@ -740,62 +736,6 @@ pub(crate) fn is_prog_name_supported() -> bool {
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
 
     bpf_prog_load(&mut attr).is_ok()
-}
-
-/// Tests whether `nr_map_ids` & `map_ids` fields in `bpf_prog_info` is available.
-pub(crate) fn is_info_map_ids_supported() -> bool {
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_3 };
-
-    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
-
-    let prog: &[u8] = &[
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
-        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
-    ];
-    let insns = copy_instructions(prog).unwrap();
-    u.insn_cnt = insns.len() as u32;
-    u.insns = insns.as_ptr() as u64;
-
-    let gpl = b"GPL\0";
-    u.license = gpl.as_ptr() as u64;
-
-    let prog_fd = match bpf_prog_load(&mut attr) {
-        Ok(fd) => fd,
-        Err(_) => return false,
-    };
-    bpf_obj_get_info_by_fd(prog_fd.as_fd(), |info: &mut bpf_prog_info| {
-        info.nr_map_ids = 1
-    })
-    .is_ok()
-}
-
-/// Tests whether `gpl_compatible` field in `bpf_prog_info` is available.
-pub(crate) fn is_info_gpl_compatible_supported() -> bool {
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_3 };
-
-    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
-
-    let prog: &[u8] = &[
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
-        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
-    ];
-    let insns = copy_instructions(prog).unwrap();
-    u.insn_cnt = insns.len() as u32;
-    u.insns = insns.as_ptr() as u64;
-
-    let gpl = b"GPL\0";
-    u.license = gpl.as_ptr() as u64;
-
-    let prog_fd = match bpf_prog_load(&mut attr) {
-        Ok(fd) => fd,
-        Err(_) => return false,
-    };
-    if let Ok::<bpf_prog_info, _>(info) = bpf_obj_get_info_by_fd(prog_fd.as_fd(), |_| {}) {
-        return info.gpl_compatible() != 0;
-    }
-    false
 }
 
 pub(crate) fn is_probe_read_kernel_supported() -> bool {
@@ -901,7 +841,7 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
     let mut insns = copy_instructions(prog).unwrap();
 
     let map = MapData::create(
-        obj::Map::Legacy(LegacyMap {
+        aya_obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: bpf_map_type::BPF_MAP_TYPE_ARRAY as u32,
                 key_size: 4,
@@ -1143,12 +1083,12 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
     bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
-fn bpf_prog_load(attr: &mut bpf_attr) -> SysResult<crate::MockableFd> {
+pub(super) fn bpf_prog_load(attr: &mut bpf_attr) -> SysResult<crate::MockableFd> {
     // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) }
 }
 
-fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<i64> {
+pub(super) fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> SysResult<i64> {
     syscall(Syscall::Ebpf { cmd, attr })
 }
 
