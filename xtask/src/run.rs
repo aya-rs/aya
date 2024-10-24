@@ -257,10 +257,10 @@ pub fn run(opts: Options) -> Result<()> {
                     .ok_or_else(|| anyhow!("failed to parse {cmd:?} stdout: {stdout}"))?;
                 let guest_arch = guest_arch.trim();
 
-                let (guest_arch, machine, cpu) = match guest_arch {
-                    "ARM64" => ("aarch64", Some("virt"), Some("cortex-a57")),
-                    "x86" => ("x86_64", Some("q35"), Some("qemu64")),
-                    guest_arch => (guest_arch, None, None),
+                let (guest_arch, machine, cpu, console) = match guest_arch {
+                    "ARM64" => ("aarch64", Some("virt"), Some("max"), "ttyAMA0"),
+                    "x86" => ("x86_64", None, None, "ttyS0"),
+                    guest_arch => (guest_arch, None, None, "ttyS0"),
                 };
 
                 let target = format!("{guest_arch}-unknown-linux-musl");
@@ -355,6 +355,9 @@ pub fn run(opts: Options) -> Result<()> {
                 if let Some(machine) = machine {
                     qemu.args(["-machine", machine]);
                 }
+                if let Some(cpu) = cpu {
+                    qemu.args(["-cpu", cpu]);
+                }
                 if guest_arch == ARCH {
                     match OS {
                         "linux" => {
@@ -377,10 +380,8 @@ pub fn run(opts: Options) -> Result<()> {
                         }
                         os => bail!("unsupported OS: {os}"),
                     }
-                } else if let Some(cpu) = cpu {
-                    qemu.args(["-cpu", cpu]);
                 }
-                let console = OsString::from("ttyS0");
+                let console = OsString::from(console);
                 let mut kernel_args = std::iter::once(("console", &console))
                     .chain(run_args.clone().map(|run_arg| ("init.arg", run_arg)))
                     .enumerate()
@@ -406,45 +407,6 @@ pub fn run(opts: Options) -> Result<()> {
                     .arg(&kernel_image)
                     .arg("-initrd")
                     .arg(&initrd_image);
-                if guest_arch == "aarch64" {
-                    match OS {
-                        "linux" => {
-                            let mut cmd = Command::new("locate");
-                            let output = cmd
-                                .arg("QEMU_EFI.fd")
-                                .output()
-                                .with_context(|| format!("failed to run {cmd:?}"))?;
-                            let Output { status, .. } = &output;
-                            if status.code() != Some(0) {
-                                bail!("{qemu:?} failed: {output:?}")
-                            }
-                            let Output { stdout, .. } = output;
-                            let bios = String::from_utf8(stdout)
-                                .with_context(|| format!("failed to parse output of {cmd:?}"))?;
-                            qemu.args(["-bios", bios.trim()]);
-                        }
-                        "macos" => {
-                            let mut cmd = Command::new("brew");
-                            let output = cmd
-                                .args(["list", "qemu", "-1", "-v"])
-                                .output()
-                                .with_context(|| format!("failed to run {cmd:?}"))?;
-                            let Output { status, .. } = &output;
-                            if status.code() != Some(0) {
-                                bail!("{qemu:?} failed: {output:?}")
-                            }
-                            let Output { stdout, .. } = output;
-                            let output = String::from_utf8(stdout)
-                                .with_context(|| format!("failed to parse output of {cmd:?}"))?;
-                            const NAME: &str = "edk2-aarch64-code.fd";
-                            let bios = output.lines().find(|line| line.contains(NAME)).ok_or_else(
-                                || anyhow!("failed to find {NAME} in output of {cmd:?}: {output}"),
-                            )?;
-                            qemu.args(["-bios", bios.trim()]);
-                        }
-                        os => bail!("unsupported OS: {os}"),
-                    };
-                }
                 let mut qemu_child = qemu
                     .stdin(Stdio::piped())
                     .stdout(Stdio::piped())

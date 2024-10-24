@@ -213,7 +213,7 @@ jobs:
         run: |
           set -euxo pipefail
           sudo apt update
-          sudo apt -y install gcc-multilib locate qemu-system-{arm,x86}
+          sudo apt -y install gcc-multilib qemu-system-{arm,x86}
           echo /usr/lib/llvm-15/bin >> $GITHUB_PATH
 
       - name: Install prerequisites
@@ -230,8 +230,7 @@ jobs:
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
           | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
           HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 \
-          brew install dpkg findutils gnu-tar llvm pkg-config qemu
-          echo $(brew --prefix)/opt/findutils/libexec/gnubin >> $GITHUB_PATH
+          brew install dpkg gnu-tar llvm pkg-config qemu
           echo $(brew --prefix)/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
           echo $(brew --prefix)/opt/llvm/bin >> $GITHUB_PATH
 
