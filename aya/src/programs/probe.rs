@@ -12,12 +12,15 @@ use std::{
 use libc::pid_t;
 
 use crate::{
+    errors::LinkError,
     programs::{
-        kprobe::KProbeError, perf_attach, perf_attach::PerfLinkInner, perf_attach_debugfs,
-        trace_point::read_sys_fs_trace_point_id, uprobe::UProbeError, utils::find_tracefs_path,
-        Link, ProgramData, ProgramError,
+        perf_attach::{perf_attach, PerfLinkInner},
+        perf_attach_debugfs,
+        trace_point::read_sys_fs_trace_point_id,
+        utils::find_tracefs_path,
+        Link, ProgramData,
     },
-    sys::{perf_event_open_probe, perf_event_open_trace_point, SyscallError},
+    sys::{perf_event_open_probe, perf_event_open_trace_point},
     util::KernelVersion,
 };
 
@@ -112,7 +115,7 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     fn_name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<T::Id, ProgramError> {
+) -> Result<T::Id, LinkError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
@@ -127,22 +130,10 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     program_data.links.insert(T::from(link))
 }
 
-pub(crate) fn detach_debug_fs(event: ProbeEvent) -> Result<(), ProgramError> {
-    use ProbeKind::*;
-
+pub(crate) fn detach_debug_fs(event: ProbeEvent) -> Result<(), LinkError> {
     let tracefs = find_tracefs_path()?;
 
-    let ProbeEvent {
-        kind,
-        event_alias: _,
-    } = &event;
-    let kind = *kind;
-    let result = delete_probe_event(tracefs, event);
-
-    result.map_err(|(filename, io_error)| match kind {
-        KProbe | KRetProbe => KProbeError::FileError { filename, io_error }.into(),
-        UProbe | URetProbe => UProbeError::FileError { filename, io_error }.into(),
-    })
+    delete_probe_event(tracefs, event).map_err(Into::into)
 }
 
 fn create_as_probe(
@@ -150,35 +141,21 @@ fn create_as_probe(
     fn_name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<crate::MockableFd, ProgramError> {
+) -> Result<crate::MockableFd, LinkError> {
     use ProbeKind::*;
 
     let perf_ty = match kind {
-        KProbe | KRetProbe => read_sys_fs_perf_type(kind.pmu())
-            .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
-        UProbe | URetProbe => read_sys_fs_perf_type(kind.pmu())
-            .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
+        KProbe | KRetProbe => read_sys_fs_perf_type(kind.pmu())?,
+        UProbe | URetProbe => read_sys_fs_perf_type(kind.pmu())?,
     };
 
     let ret_bit = match kind {
-        KRetProbe => Some(
-            read_sys_fs_perf_ret_probe(kind.pmu())
-                .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
-        ),
-        URetProbe => Some(
-            read_sys_fs_perf_ret_probe(kind.pmu())
-                .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
-        ),
+        KRetProbe => Some(read_sys_fs_perf_ret_probe(kind.pmu())?),
+        URetProbe => Some(read_sys_fs_perf_ret_probe(kind.pmu())?),
         _ => None,
     };
 
-    perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid).map_err(|(_code, io_error)| {
-        SyscallError {
-            call: "perf_event_open",
-            io_error,
-        }
-        .into()
-    })
+    perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid).map_err(Into::into)
 }
 
 fn create_as_trace_point(
@@ -186,24 +163,19 @@ fn create_as_trace_point(
     name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<(crate::MockableFd, OsString), ProgramError> {
+) -> Result<(crate::MockableFd, OsString), LinkError> {
     use ProbeKind::*;
 
     let tracefs = find_tracefs_path()?;
 
     let event_alias = match kind {
-        KProbe | KRetProbe => create_probe_event(tracefs, kind, name, offset)
-            .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
-        UProbe | URetProbe => create_probe_event(tracefs, kind, name, offset)
-            .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
+        KProbe | KRetProbe => create_probe_event(tracefs, kind, name, offset)?,
+        UProbe | URetProbe => create_probe_event(tracefs, kind, name, offset)?,
     };
 
     let category = format!("{}s", kind.pmu());
     let tpid = read_sys_fs_trace_point_id(tracefs, &category, event_alias.as_ref())?;
-    let fd = perf_event_open_trace_point(tpid, pid).map_err(|(_code, io_error)| SyscallError {
-        call: "perf_event_open",
-        io_error,
-    })?;
+    let fd = perf_event_open_trace_point(tpid, pid)?;
 
     Ok((fd, event_alias))
 }

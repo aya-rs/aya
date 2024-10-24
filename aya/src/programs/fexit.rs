@@ -1,11 +1,12 @@
 //! Fexit programs.
 
 use crate::{
+    errors::{LinkError, ProgramError},
     generated::{bpf_attach_type::BPF_TRACE_FEXIT, bpf_prog_type::BPF_PROG_TYPE_TRACING},
     obj::btf::{Btf, BtfKind},
     programs::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
-        ProgramData, ProgramError,
+        ProgramData,
     },
 };
 
@@ -64,14 +65,14 @@ impl FExit {
     /// Attaches the program.
     ///
     /// The returned value can be used to detach, see [FExit::detach].
-    pub fn attach(&mut self) -> Result<FExitLinkId, ProgramError> {
+    pub fn attach(&mut self) -> Result<FExitLinkId, LinkError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
 
     /// Detaches the program.
     ///
     /// See [FExit::attach].
-    pub fn detach(&mut self, link_id: FExitLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: FExitLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -79,7 +80,7 @@ impl FExit {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: FExitLinkId) -> Result<FExitLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: FExitLinkId) -> Result<FExitLink, LinkError> {
         self.data.take_link(link_id)
     }
 }

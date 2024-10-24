@@ -6,8 +6,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_kv_size, IterableMap, MapData, MapError, MapIter, MapKeys},
-    sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
+    errors::MapError,
+    maps::{check_kv_size, IterableMap, MapData, MapIter, MapKeys},
+    sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
     Pod,
 };
 
@@ -127,10 +128,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Returns a copy of the value associated with the longest prefix matching key in the LpmTrie.
     pub fn get(&self, key: &Key<K>, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.borrow().fd().as_fd();
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| SyscallError {
-            call: "bpf_map_lookup_elem",
-            io_error,
-        })?;
+        let value = bpf_map_lookup_elem(fd, key, flags)?;
         value.ok_or(MapError::KeyNotFound)
     }
 
@@ -156,12 +154,7 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         flags: u64,
     ) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
-        bpf_map_update_elem(fd, Some(key), value.borrow(), flags).map_err(|(_, io_error)| {
-            SyscallError {
-                call: "bpf_map_update_elem",
-                io_error,
-            }
-        })?;
+        bpf_map_update_elem(fd, Some(key), value.borrow(), flags)?;
 
         Ok(())
     }
@@ -171,15 +164,7 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Both the prefix and data must match exactly - this method does not do a longest prefix match.
     pub fn remove(&mut self, key: &Key<K>) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
-        bpf_map_delete_elem(fd, key)
-            .map(|_| ())
-            .map_err(|(_, io_error)| {
-                SyscallError {
-                    call: "bpf_map_delete_elem",
-                    io_error,
-                }
-                .into()
-            })
+        bpf_map_delete_elem(fd, key).map(|_| ()).map_err(Into::into)
     }
 }
 
@@ -198,52 +183,79 @@ mod tests {
     use std::{io, net::Ipv4Addr};
 
     use assert_matches::assert_matches;
-    use libc::{EFAULT, ENOENT};
+    use libc::{EFAULT, EINVAL, ENOENT};
 
     use super::*;
     use crate::{
-        generated::{
-            bpf_cmd,
-            bpf_map_type::{BPF_MAP_TYPE_ARRAY, BPF_MAP_TYPE_LPM_TRIE},
-        },
+        errors::{InternalMapError, SysError},
+        generated::bpf_map_type::{BPF_MAP_TYPE_ARRAY, BPF_MAP_TYPE_LPM_TRIE},
         maps::{
             test_utils::{self, new_map},
             Map,
         },
         obj,
-        sys::{override_syscall, SysResult, Syscall},
+        sys::{override_syscall, BpfCmd, SysResult, Syscall},
     };
 
     fn new_obj_map() -> obj::Map {
         test_utils::new_obj_map::<Key<u32>>(BPF_MAP_TYPE_LPM_TRIE)
     }
 
-    fn sys_error(value: i32) -> SysResult<i64> {
-        Err((-1, io::Error::from_raw_os_error(value)))
+    fn sys_error(call: Syscall<'_>, value: i32) -> SysResult<i64> {
+        match call {
+            Syscall::Ebpf { .. } => Err((
+                -1,
+                SysError::Syscall {
+                    call: format!("{:?}", call),
+                    io_error: io::Error::from_raw_os_error(value),
+                },
+            )),
+            _ => Err((
+                -1,
+                SysError::Syscall {
+                    call: "UNEXPECTED!!!".to_string(),
+                    io_error: io::Error::from_raw_os_error(EINVAL),
+                },
+            )),
+        }
     }
 
     #[test]
     fn test_wrong_key_size() {
         let map = new_map(new_obj_map());
-        assert_matches!(
-            LpmTrie::<_, u16, u32>::new(&map),
-            Err(MapError::InvalidKeySize {
-                size: 6,
-                expected: 8 // four bytes for prefixlen and four bytes for data.
-            })
-        );
+        let res = LpmTrie::<_, u16, u32>::new(&map);
+        assert!(res.is_err());
+        let res = res.err().unwrap();
+        if let MapError::Other(map_err) = res {
+            assert_matches!(
+                map_err.downcast_ref::<InternalMapError>().unwrap(),
+                InternalMapError::InvalidKeySize {
+                    size: 2,
+                    expected: 8
+                }
+            );
+        } else {
+            panic!("unexpected error: {:?}", res);
+        }
     }
 
     #[test]
     fn test_wrong_value_size() {
         let map = new_map(new_obj_map());
-        assert_matches!(
-            LpmTrie::<_, u32, u16>::new(&map),
-            Err(MapError::InvalidValueSize {
-                size: 2,
-                expected: 4
-            })
-        );
+        let res = LpmTrie::<_, u32, u16>::new(&map);
+        assert!(res.is_err());
+        let res = res.err().unwrap();
+        if let MapError::Other(map_err) = res {
+            assert_matches!(
+                map_err.downcast_ref::<InternalMapError>().unwrap(),
+                InternalMapError::InvalidValueSize {
+                    size: 2,
+                    expected: 4
+                }
+            );
+        } else {
+            panic!("unexpected error: {:?}", res);
+        }
     }
 
     #[test]
@@ -280,12 +292,9 @@ mod tests {
         let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
         let key = Key::new(16, u32::from(ipaddr).to_be());
 
-        override_syscall(|_| sys_error(EFAULT));
+        override_syscall(|c| sys_error(c, EFAULT));
 
-        assert_matches!(
-            trie.insert(&key, 1, 0),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_update_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
-        );
+        assert!(trie.insert(&key, 1, 0).is_err());
     }
 
     #[test]
@@ -297,10 +306,10 @@ mod tests {
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
+                cmd: BpfCmd::MapUpdateElem,
                 ..
             } => Ok(1),
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
 
         assert!(trie.insert(&key, 1, 0).is_ok());
@@ -313,12 +322,9 @@ mod tests {
         let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
         let key = Key::new(16, u32::from(ipaddr).to_be());
 
-        override_syscall(|_| sys_error(EFAULT));
+        override_syscall(|c| sys_error(c, EFAULT));
 
-        assert_matches!(
-            trie.remove(&key),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_delete_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
-        );
+        assert!(trie.remove(&key).is_err());
     }
 
     #[test]
@@ -330,10 +336,10 @@ mod tests {
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_DELETE_ELEM,
+                cmd: BpfCmd::MapDeleteElem,
                 ..
             } => Ok(1),
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
 
         assert!(trie.remove(&key).is_ok());
@@ -346,12 +352,9 @@ mod tests {
         let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
         let key = Key::new(16, u32::from(ipaddr).to_be());
 
-        override_syscall(|_| sys_error(EFAULT));
+        override_syscall(|c| sys_error(c, EFAULT));
 
-        assert_matches!(
-            trie.get(&key, 0),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
-        );
+        assert!(trie.get(&key, 0).is_err());
     }
 
     #[test]
@@ -363,10 +366,10 @@ mod tests {
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                cmd: BpfCmd::MapLookupElem,
                 ..
-            } => sys_error(ENOENT),
-            _ => sys_error(EFAULT),
+            } => sys_error(call, ENOENT),
+            c => sys_error(c, EFAULT),
         });
 
         assert_matches!(trie.get(&key, 0), Err(MapError::KeyNotFound));

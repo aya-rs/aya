@@ -11,8 +11,16 @@ thread_local! {
 }
 
 #[cfg(test)]
-unsafe fn test_syscall(_call: Syscall<'_>) -> SysResult<i64> {
-    Err((-1, io::Error::from_raw_os_error(libc::EINVAL)))
+unsafe fn test_syscall(call: Syscall<'_>) -> SysResult<i64> {
+    use crate::errors::SysError;
+
+    Err((
+        -1,
+        SysError::Syscall {
+            call: format!("{:?}", call),
+            io_error: io::Error::from_raw_os_error(libc::EINVAL),
+        },
+    ))
 }
 
 #[cfg(test)]

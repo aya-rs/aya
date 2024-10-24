@@ -10,28 +10,25 @@ use std::{
 };
 
 use crate::{
+    errors::LinkError,
     programs::{FdLink, Link, ProgramData, ProgramError},
-    sys::{bpf_raw_tracepoint_open, SyscallError},
+    sys::bpf_raw_tracepoint_open,
 };
 
 /// Attaches the program to a raw tracepoint.
 pub(crate) fn attach_raw_tracepoint<T: Link + From<FdLink>>(
     program_data: &mut ProgramData<T>,
     tp_name: Option<&CStr>,
-) -> Result<T::Id, ProgramError> {
+) -> Result<T::Id, LinkError> {
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let pfd =
-        bpf_raw_tracepoint_open(tp_name, prog_fd).map_err(|(_code, io_error)| SyscallError {
-            call: "bpf_raw_tracepoint_open",
-            io_error,
-        })?;
+    let pfd = bpf_raw_tracepoint_open(tp_name, prog_fd)?;
 
     program_data.links.insert(FdLink::new(pfd).into())
 }
 
 /// Find tracefs filesystem path.
-pub(crate) fn find_tracefs_path() -> Result<&'static Path, ProgramError> {
+pub(crate) fn find_tracefs_path() -> Result<&'static Path, LinkError> {
     static TRACE_FS: LazyLock<Option<&'static Path>> = LazyLock::new(|| {
         [
             Path::new("/sys/kernel/tracing"),

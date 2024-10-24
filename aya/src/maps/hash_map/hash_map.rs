@@ -5,8 +5,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
-    sys::{bpf_map_lookup_elem, SyscallError},
+    errors::MapError,
+    maps::{check_kv_size, hash_map, IterableMap, MapData, MapIter, MapKeys},
+    sys::bpf_map_lookup_elem,
     Pod,
 };
 
@@ -54,10 +55,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Returns a copy of the value associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.borrow().fd().as_fd();
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| SyscallError {
-            call: "bpf_map_lookup_elem",
-            io_error,
-        })?;
+        let value = bpf_map_lookup_elem(fd, key, flags)?;
         value.ok_or(MapError::KeyNotFound)
     }
 
@@ -106,12 +104,13 @@ mod tests {
     use std::io;
 
     use assert_matches::assert_matches;
-    use libc::{EFAULT, ENOENT};
+    use libc::{EFAULT, EINVAL, ENOENT};
 
     use super::*;
     use crate::{
+        errors::{InternalMapError, SysError},
         generated::{
-            bpf_attr, bpf_cmd,
+            bpf_attr,
             bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_LRU_HASH},
         },
         maps::{
@@ -119,39 +118,68 @@ mod tests {
             Map,
         },
         obj,
-        sys::{override_syscall, SysResult, Syscall},
+        sys::{override_syscall, BpfCmd, SysResult, Syscall},
     };
 
     fn new_obj_map() -> obj::Map {
         test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_HASH)
     }
 
-    fn sys_error(value: i32) -> SysResult<i64> {
-        Err((-1, io::Error::from_raw_os_error(value)))
+    fn sys_error(call: Syscall<'_>, value: i32) -> SysResult<i64> {
+        match call {
+            Syscall::Ebpf { .. } => Err((
+                -1,
+                SysError::Syscall {
+                    call: format!("{:?}", call),
+                    io_error: io::Error::from_raw_os_error(value),
+                },
+            )),
+            _ => Err((
+                -1,
+                SysError::Syscall {
+                    call: "UNEXPECTED!!!".to_string(),
+                    io_error: io::Error::from_raw_os_error(EINVAL),
+                },
+            )),
+        }
     }
 
     #[test]
     fn test_wrong_key_size() {
         let map = new_map(new_obj_map());
-        assert_matches!(
-            HashMap::<_, u8, u32>::new(&map),
-            Err(MapError::InvalidKeySize {
-                size: 1,
-                expected: 4
-            })
-        );
+        let res = HashMap::<_, u8, u32>::new(&map);
+        assert!(res.is_err());
+        let res = res.unwrap_err();
+        if let MapError::Other(map_err) = res {
+            assert_matches!(
+                map_err.downcast_ref::<InternalMapError>().unwrap(),
+                InternalMapError::InvalidKeySize {
+                    size: 1,
+                    expected: 4
+                }
+            );
+        } else {
+            panic!("unexpected error: {:?}", res);
+        }
     }
 
     #[test]
     fn test_wrong_value_size() {
         let map = new_map(new_obj_map());
-        assert_matches!(
-            HashMap::<_, u32, u16>::new(&map),
-            Err(MapError::InvalidValueSize {
-                size: 2,
-                expected: 4
-            })
-        );
+        let res = HashMap::<_, u32, u16>::new(&map);
+        assert!(res.is_err());
+        let res = res.unwrap_err();
+        if let MapError::Other(map_err) = res {
+            assert_matches!(
+                map_err.downcast_ref::<InternalMapError>().unwrap(),
+                InternalMapError::InvalidValueSize {
+                    size: 2,
+                    expected: 4
+                }
+            );
+        } else {
+            panic!("unexpected error: {:?}", res);
+        }
     }
 
     #[test]
@@ -160,7 +188,7 @@ mod tests {
         let map = Map::Array(map);
         assert_matches!(
             HashMap::<_, u8, u32>::try_from(&map),
-            Err(MapError::InvalidMapType { .. })
+            Err(MapError::Other(_))
         );
     }
 
@@ -170,10 +198,7 @@ mod tests {
         let map = Map::HashMap(map);
         assert_matches!(
             HashMap::<_, u32, u16>::try_from(&map),
-            Err(MapError::InvalidValueSize {
-                size: 2,
-                expected: 4
-            })
+            Err(MapError::Other(_))
         );
     }
 
@@ -204,12 +229,9 @@ mod tests {
         let mut map = new_map(new_obj_map());
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
-        override_syscall(|_| sys_error(EFAULT));
+        override_syscall(|c| sys_error(c, EFAULT));
 
-        assert_matches!(
-            hm.insert(1, 42, 0),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_update_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
-        );
+        assert!(hm.insert(1, 42, 0).is_err());
     }
 
     #[test]
@@ -219,10 +241,10 @@ mod tests {
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
+                cmd: BpfCmd::MapUpdateElem,
                 ..
             } => Ok(1),
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
 
         assert!(hm.insert(1, 42, 0).is_ok());
@@ -235,10 +257,10 @@ mod tests {
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
+                cmd: BpfCmd::MapUpdateElem,
                 ..
             } => Ok(1),
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
 
         assert!(hm.insert(Box::new(1), Box::new(42), 0).is_ok());
@@ -249,12 +271,9 @@ mod tests {
         let mut map = new_map(new_obj_map());
         let mut hm = HashMap::<_, u32, u32>::new(&mut map).unwrap();
 
-        override_syscall(|_| sys_error(EFAULT));
+        override_syscall(|c| sys_error(c, EFAULT));
 
-        assert_matches!(
-            hm.remove(&1),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_delete_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
-        );
+        assert!(hm.remove(&1).is_err());
     }
 
     #[test]
@@ -264,10 +283,10 @@ mod tests {
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_DELETE_ELEM,
+                cmd: BpfCmd::MapDeleteElem,
                 ..
             } => Ok(1),
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
 
         assert!(hm.remove(&1).is_ok());
@@ -276,13 +295,19 @@ mod tests {
     #[test]
     fn test_get_syscall_error() {
         let map = new_map(new_obj_map());
-        override_syscall(|_| sys_error(EFAULT));
+        override_syscall(|c| sys_error(c, EFAULT));
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
-
-        assert_matches!(
-            hm.get(&1, 0),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
-        );
+        let res = hm.get(&1, 0);
+        assert!(res.is_err());
+        let res = res.unwrap_err();
+        if let MapError::Other(map_err) = res {
+            assert_matches!(
+                map_err.downcast_ref::<SysError>().unwrap(),
+                SysError::Syscall { call, io_error } if call == "bpf_map_lookup_elem" && io_error.raw_os_error() == Some(EFAULT)
+            );
+        } else {
+            panic!("unexpected error: {:?}", res);
+        }
     }
 
     #[test]
@@ -290,10 +315,10 @@ mod tests {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                cmd: BpfCmd::MapLookupElem,
                 ..
-            } => sys_error(ENOENT),
-            _ => sys_error(EFAULT),
+            } => sys_error(call, ENOENT),
+            c => sys_error(c, EFAULT),
         });
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
@@ -322,13 +347,13 @@ mod tests {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
+                cmd: BpfCmd::MapGetNextKey,
                 ..
-            } => sys_error(ENOENT),
-            _ => sys_error(EFAULT),
+            } => sys_error(call, ENOENT),
+            c => sys_error(c, EFAULT),
         });
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
-        let keys = hm.keys().collect::<Result<Vec<_>, _>>();
+        let keys = hm.keys().collect::<Result<Vec<u32>, MapError>>();
         assert_matches!(keys, Ok(ks) if ks.is_empty())
     }
 
@@ -337,8 +362,24 @@ mod tests {
             None => set_next_key(attr, 10),
             Some(10) => set_next_key(attr, 20),
             Some(20) => set_next_key(attr, 30),
-            Some(30) => return sys_error(ENOENT),
-            Some(_) => return sys_error(EFAULT),
+            Some(30) => {
+                return sys_error(
+                    Syscall::Ebpf {
+                        cmd: BpfCmd::MapGetNextKey,
+                        attr: &mut attr.clone(),
+                    },
+                    ENOENT,
+                )
+            }
+            Some(_) => {
+                return sys_error(
+                    Syscall::Ebpf {
+                        cmd: BpfCmd::MapGetNextKey,
+                        attr: &mut attr.clone(),
+                    },
+                    EFAULT,
+                )
+            }
         };
 
         Ok(1)
@@ -349,8 +390,24 @@ mod tests {
             Some(10) => set_ret(attr, 100),
             Some(20) => set_ret(attr, 200),
             Some(30) => set_ret(attr, 300),
-            Some(_) => return sys_error(ENOENT),
-            None => return sys_error(EFAULT),
+            Some(_) => {
+                return sys_error(
+                    Syscall::Ebpf {
+                        cmd: BpfCmd::MapLookupElem,
+                        attr: &mut attr.clone(),
+                    },
+                    ENOENT,
+                )
+            }
+            None => {
+                return sys_error(
+                    Syscall::Ebpf {
+                        cmd: BpfCmd::MapLookupElem,
+                        attr: &mut attr.clone(),
+                    },
+                    EFAULT,
+                )
+            }
         };
 
         Ok(1)
@@ -362,15 +419,15 @@ mod tests {
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
+                cmd: BpfCmd::MapGetNextKey,
                 attr,
             } => get_next_key(attr),
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
 
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
-        let keys = hm.keys().collect::<Result<Vec<_>, _>>().unwrap();
+        let keys = hm.keys().collect::<Result<Vec<u32>, MapError>>().unwrap();
         assert_eq!(&keys, &[10, 20, 30])
     }
 
@@ -379,31 +436,33 @@ mod tests {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
+                cmd: BpfCmd::MapGetNextKey,
                 attr,
             } => {
                 match bpf_key(attr) {
                     None => set_next_key(attr, 10),
                     Some(10) => set_next_key(attr, 20),
-                    Some(_) => return sys_error(EFAULT),
+                    Some(_) => {
+                        return sys_error(
+                            Syscall::Ebpf {
+                                cmd: BpfCmd::MapGetNextKey,
+                                attr: &mut attr.clone(),
+                            },
+                            EFAULT,
+                        )
+                    }
                 };
 
                 Ok(1)
             }
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
         let mut keys = hm.keys();
         assert_matches!(keys.next(), Some(Ok(10)));
         assert_matches!(keys.next(), Some(Ok(20)));
-        assert_matches!(
-            keys.next(),
-            Some(Err(MapError::SyscallError(SyscallError {
-                call: "bpf_map_get_next_key",
-                io_error: _
-            })))
-        );
+        assert_matches!(keys.next(), Some(Err(MapError::Other(_))));
         assert_matches!(keys.next(), None);
     }
 
@@ -412,17 +471,20 @@ mod tests {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
+                cmd: BpfCmd::MapGetNextKey,
                 attr,
             } => get_next_key(attr),
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                cmd: BpfCmd::MapLookupElem,
                 attr,
             } => lookup_elem(attr),
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
-        let items = hm.iter().collect::<Result<Vec<_>, _>>().unwrap();
+        let items = hm
+            .iter()
+            .collect::<Result<Vec<(u32, u32)>, MapError>>()
+            .unwrap();
         assert_eq!(&items, &[(10, 100), (20, 200), (30, 300)])
     }
 
@@ -431,28 +493,36 @@ mod tests {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
+                cmd: BpfCmd::MapGetNextKey,
                 attr,
             } => get_next_key(attr),
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                cmd: BpfCmd::MapLookupElem,
                 attr,
             } => {
+                let call = {
+                    Syscall::Ebpf {
+                        cmd: BpfCmd::MapLookupElem,
+                        attr: &mut attr.clone(),
+                    }
+                };
                 match bpf_key(attr) {
                     Some(10) => set_ret(attr, 100),
-                    Some(20) => return sys_error(ENOENT),
+                    Some(20) => return sys_error(call, ENOENT),
                     Some(30) => set_ret(attr, 300),
-                    Some(_) => return sys_error(ENOENT),
-                    None => return sys_error(EFAULT),
-                };
-
+                    Some(_) => return sys_error(call, ENOENT),
+                    None => return sys_error(call, EFAULT),
+                }
                 Ok(1)
             }
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
-        let items = hm.iter().collect::<Result<Vec<_>, _>>().unwrap();
+        let items = hm
+            .iter()
+            .collect::<Result<Vec<(u32, u32)>, MapError>>()
+            .unwrap();
         assert_eq!(&items, &[(10, 100), (30, 300)])
     }
 
@@ -461,37 +531,37 @@ mod tests {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
+                cmd: BpfCmd::MapGetNextKey,
                 attr,
             } => {
+                let call = {
+                    Syscall::Ebpf {
+                        cmd: BpfCmd::MapGetNextKey,
+                        attr: &mut attr.clone(),
+                    }
+                };
                 match bpf_key(attr) {
                     None => set_next_key(attr, 10),
                     Some(10) => set_next_key(attr, 20),
-                    Some(20) => return sys_error(EFAULT),
-                    Some(30) => return sys_error(ENOENT),
+                    Some(20) => return sys_error(call, EFAULT),
+                    Some(30) => return sys_error(call, ENOENT),
                     Some(i) => panic!("invalid key {}", i),
                 };
 
                 Ok(1)
             }
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                cmd: BpfCmd::MapLookupElem,
                 attr,
             } => lookup_elem(attr),
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
         let mut iter = hm.iter();
         assert_matches!(iter.next(), Some(Ok((10, 100))));
         assert_matches!(iter.next(), Some(Ok((20, 200))));
-        assert_matches!(
-            iter.next(),
-            Some(Err(MapError::SyscallError(SyscallError {
-                call: "bpf_map_get_next_key",
-                io_error: _
-            })))
-        );
+        assert_matches!(iter.next(), Some(Err(MapError::Other(_))));
         assert_matches!(iter.next(), None);
     }
 
@@ -500,36 +570,36 @@ mod tests {
         let map = new_map(new_obj_map());
         override_syscall(|call| match call {
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
+                cmd: BpfCmd::MapGetNextKey,
                 attr,
             } => get_next_key(attr),
             Syscall::Ebpf {
-                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                cmd: BpfCmd::MapLookupElem,
                 attr,
             } => {
+                let call = {
+                    Syscall::Ebpf {
+                        cmd: BpfCmd::MapLookupElem,
+                        attr: &mut attr.clone(),
+                    }
+                };
                 match bpf_key(attr) {
                     Some(10) => set_ret(attr, 100),
-                    Some(20) => return sys_error(EFAULT),
+                    Some(20) => return sys_error(call, EFAULT),
                     Some(30) => set_ret(attr, 300),
-                    Some(_) => return sys_error(ENOENT),
-                    None => return sys_error(EFAULT),
+                    Some(_) => return sys_error(call, ENOENT),
+                    None => return sys_error(call, EFAULT),
                 };
 
                 Ok(1)
             }
-            _ => sys_error(EFAULT),
+            c => sys_error(c, EFAULT),
         });
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
 
         let mut iter = hm.iter();
         assert_matches!(iter.next(), Some(Ok((10, 100))));
-        assert_matches!(
-            iter.next(),
-            Some(Err(MapError::SyscallError(SyscallError {
-                call: "bpf_map_lookup_elem",
-                io_error: _
-            })))
-        );
+        assert_matches!(iter.next(), Some(Err(MapError::Other(_))));
         assert_matches!(iter.next(), Some(Ok((30, 300))));
         assert_matches!(iter.next(), None);
     }

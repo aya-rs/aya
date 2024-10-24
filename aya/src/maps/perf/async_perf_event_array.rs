@@ -13,9 +13,12 @@ use bytes::BytesMut;
 #[cfg(feature = "async_tokio")]
 use tokio::io::unix::AsyncFd;
 
-use crate::maps::{
-    perf::{Events, PerfBufferError, PerfEventArray, PerfEventArrayBuffer},
-    MapData, MapError, PinError,
+use crate::{
+    errors::{MapError, PerfBufferError},
+    maps::{
+        perf::{Events, PerfEventArray, PerfEventArrayBuffer},
+        MapData,
+    },
 };
 
 /// A `Future` based map that can be used to receive events from eBPF programs using the linux
@@ -113,7 +116,7 @@ impl<T: BorrowMut<MapData>> AsyncPerfEventArray<T> {
     ///
     /// When a map is pinned it will remain loaded until the corresponding file
     /// is deleted. All parent directories in the given `path` must already exist.
-    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
+    pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), MapError> {
         self.perf_map.pin(path)
     }
 }

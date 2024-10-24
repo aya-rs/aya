@@ -81,7 +81,6 @@ use info::impl_info;
 pub use info::{loaded_programs, ProgramInfo, ProgramType};
 use libc::ENOSPC;
 use tc::SchedClassifierLink;
-use thiserror::Error;
 
 // re-export the main items needed to load and attach
 pub use crate::programs::{
@@ -91,10 +90,10 @@ pub use crate::programs::{
     cgroup_sock_addr::{CgroupSockAddr, CgroupSockAddrAttachType},
     cgroup_sockopt::{CgroupSockopt, CgroupSockoptAttachType},
     cgroup_sysctl::CgroupSysctl,
-    extension::{Extension, ExtensionError},
+    extension::Extension,
     fentry::FEntry,
     fexit::FExit,
-    kprobe::{KProbe, KProbeError},
+    kprobe::KProbe,
     links::{CgroupAttachMode, Link, LinkOrder},
     lirc_mode2::LircMode2,
     lsm::Lsm,
@@ -105,119 +104,26 @@ pub use crate::programs::{
     sk_msg::SkMsg,
     sk_skb::{SkSkb, SkSkbKind},
     sock_ops::SockOps,
-    socket_filter::{SocketFilter, SocketFilterError},
-    tc::{SchedClassifier, TcAttachType, TcError},
+    socket_filter::SocketFilter,
+    tc::{SchedClassifier, TcAttachType},
     tp_btf::BtfTracePoint,
-    trace_point::{TracePoint, TracePointError},
-    uprobe::{UProbe, UProbeError},
-    xdp::{Xdp, XdpError, XdpFlags},
+    trace_point::TracePoint,
+    uprobe::UProbe,
+    xdp::{Xdp, XdpFlags},
 };
 use crate::{
+    errors::{LinkError, ProgramError, SysError},
     generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
-    maps::MapError,
-    obj::{self, btf::BtfError, VerifierLog},
-    pin::PinError,
+    obj::{self},
     programs::{links::*, perf_attach::*},
     sys::{
         bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
         bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids,
-        retry_with_verifier_logs, EbpfLoadProgramAttrs, ProgQueryTarget, SyscallError,
+        retry_with_verifier_logs, EbpfLoadProgramAttrs, ProgQueryTarget,
     },
     util::KernelVersion,
     VerifierLogLevel,
 };
-
-/// Error type returned when working with programs.
-#[derive(Debug, Error)]
-pub enum ProgramError {
-    /// The program is already loaded.
-    #[error("the program is already loaded")]
-    AlreadyLoaded,
-
-    /// The program is not loaded.
-    #[error("the program is not loaded")]
-    NotLoaded,
-
-    /// The program is already attached.
-    #[error("the program was already attached")]
-    AlreadyAttached,
-
-    /// The program is not attached.
-    #[error("the program is not attached")]
-    NotAttached,
-
-    /// Loading the program failed.
-    #[error("the BPF_PROG_LOAD syscall failed. Verifier output: {verifier_log}")]
-    LoadError {
-        /// The [`io::Error`] returned by the `BPF_PROG_LOAD` syscall.
-        #[source]
-        io_error: io::Error,
-        /// The error log produced by the kernel verifier.
-        verifier_log: VerifierLog,
-    },
-
-    /// A syscall failed.
-    #[error(transparent)]
-    SyscallError(#[from] SyscallError),
-
-    /// The network interface does not exist.
-    #[error("unknown network interface {name}")]
-    UnknownInterface {
-        /// interface name
-        name: String,
-    },
-
-    /// The program is not of the expected type.
-    #[error("unexpected program type")]
-    UnexpectedProgramType,
-
-    /// A map error occurred while loading or attaching a program.
-    #[error(transparent)]
-    MapError(#[from] MapError),
-
-    /// An error occurred while working with a [`KProbe`].
-    #[error(transparent)]
-    KProbeError(#[from] KProbeError),
-
-    /// An error occurred while working with an [`UProbe`].
-    #[error(transparent)]
-    UProbeError(#[from] UProbeError),
-
-    /// An error occurred while working with a [`TracePoint`].
-    #[error(transparent)]
-    TracePointError(#[from] TracePointError),
-
-    /// An error occurred while working with a [`SocketFilter`].
-    #[error(transparent)]
-    SocketFilterError(#[from] SocketFilterError),
-
-    /// An error occurred while working with an [`Xdp`] program.
-    #[error(transparent)]
-    XdpError(#[from] XdpError),
-
-    /// An error occurred while working with a TC program.
-    #[error(transparent)]
-    TcError(#[from] TcError),
-
-    /// An error occurred while working with an [`Extension`] program.
-    #[error(transparent)]
-    ExtensionError(#[from] ExtensionError),
-
-    /// An error occurred while working with BTF.
-    #[error(transparent)]
-    Btf(#[from] BtfError),
-
-    /// The program is not attached.
-    #[error("the program name `{name}` is invalid")]
-    InvalidName {
-        /// program name
-        name: String,
-    },
-
-    /// An error occurred while working with IO.
-    #[error(transparent)]
-    IOError(#[from] io::Error),
-}
 
 /// A [`Program`] file descriptor.
 #[derive(Debug)]
@@ -334,7 +240,7 @@ impl Program {
     }
 
     /// Pin the program to the provided path
-    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
         match self {
             Self::KProbe(p) => p.pin(path),
             Self::UProbe(p) => p.pin(path),
@@ -538,10 +444,7 @@ impl<T: Link> ProgramData<T> {
 
         // TODO: avoid this unwrap by adding a new error variant.
         let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
-            call: "bpf_obj_get",
-            io_error,
-        })?;
+        let fd = bpf_get_object(&path_string)?;
 
         let info = ProgramInfo::new_from_fd(fd.as_fd())?;
         let name = info.name_as_str().map(|s| s.to_string());
@@ -554,7 +457,7 @@ impl<T: Link> ProgramData<T> {
         self.fd.as_ref().ok_or(ProgramError::NotLoaded)
     }
 
-    pub(crate) fn take_link(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
+    pub(crate) fn take_link(&mut self, link_id: T::Id) -> Result<T, LinkError> {
         self.links.forget(link_id)
     }
 }
@@ -567,26 +470,16 @@ fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError
         .map(|ProgramFd { .. }| ())
 }
 
-fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Result<(), PinError> {
+fn pin_program<T: Link, P: AsRef<Path>>(
+    data: &ProgramData<T>,
+    path: P,
+) -> Result<(), ProgramError> {
     use std::os::unix::ffi::OsStrExt as _;
 
-    let fd = data.fd.as_ref().ok_or(PinError::NoFd {
-        name: data
-            .name
-            .as_deref()
-            .unwrap_or("<unknown program>")
-            .to_string(),
-    })?;
+    let fd = data.fd.as_ref().ok_or(ProgramError::NotLoaded)?;
     let path = path.as_ref();
-    let path_string =
-        CString::new(path.as_os_str().as_bytes()).map_err(|error| PinError::InvalidPinPath {
-            path: path.into(),
-            error,
-        })?;
-    bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
-        call: "BPF_OBJ_PIN",
-        io_error,
-    })?;
+    let path_string = CString::new(path.as_os_str().as_bytes())?;
+    bpf_pin_object(fd.as_fd(), &path_string)?;
     Ok(())
 }
 
@@ -640,8 +533,7 @@ fn load_program<T: Link>(
         if name.len() > 15 {
             name.truncate(15);
         }
-        let prog_name = CString::new(name.clone())
-            .map_err(|_| ProgramError::InvalidName { name: name.clone() })?;
+        let prog_name = CString::new(name.clone())?;
         Some(prog_name)
     } else {
         None
@@ -674,8 +566,8 @@ fn load_program<T: Link>(
             *fd = Some(ProgramFd(prog_fd));
             Ok(())
         }
-        Err((_, io_error)) => Err(ProgramError::LoadError {
-            io_error,
+        Err((_, source)) => Err(ProgramError::LoadError {
+            source,
             verifier_log,
         }),
     }
@@ -707,16 +599,14 @@ pub(crate) fn query(
                 prog_ids.resize(prog_cnt as usize, 0);
                 return Ok((revision, prog_ids));
             }
-            Err((_, io_error)) => {
-                if retries == 0 && io_error.raw_os_error() == Some(ENOSPC) {
-                    prog_ids.resize(prog_cnt as usize, 0);
-                    retries += 1;
-                } else {
-                    return Err(SyscallError {
-                        call: "bpf_prog_query",
-                        io_error,
+            Err((_, e)) => {
+                if let SysError::Syscall { call: _, io_error } = e {
+                    if retries == 0 && io_error.raw_os_error() == Some(ENOSPC) {
+                        prog_ids.resize(prog_cnt as usize, 0);
+                        retries += 1;
                     }
-                    .into());
+                } else {
+                    return Err(e.into());
                 }
             }
         }
@@ -874,7 +764,7 @@ macro_rules! impl_program_pin{
                 /// Aya has unloaded the program.
                 /// To remove the program, the file on the BPF filesystem must be removed.
                 /// Any directories in the the path provided should have been created by the caller.
-                pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+                pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ProgramError> {
                     self.data.path = Some(path.as_ref().to_path_buf());
                     pin_program(&self.data, path)
                 }

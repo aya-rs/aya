@@ -6,6 +6,7 @@ pub use crate::generated::{
     perf_hw_cache_id, perf_hw_cache_op_id, perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids,
 };
 use crate::{
+    errors::LinkError,
     generated::{
         bpf_link_type,
         bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT,
@@ -16,11 +17,11 @@ use crate::{
     },
     programs::{
         links::define_link_wrapper,
-        load_program, perf_attach,
-        perf_attach::{PerfLinkIdInner, PerfLinkInner},
-        FdLink, LinkError, ProgramData, ProgramError,
+        load_program,
+        perf_attach::{perf_attach, PerfLinkIdInner, PerfLinkInner},
+        FdLink, ProgramData, ProgramError,
     },
-    sys::{bpf_link_get_info_by_fd, perf_event_open, SyscallError},
+    sys::{bpf_link_get_info_by_fd, perf_event_open},
 };
 
 /// The type of perf event
@@ -150,7 +151,7 @@ impl PerfEvent {
         scope: PerfEventScope,
         sample_policy: SamplePolicy,
         inherit: bool,
-    ) -> Result<PerfEventLinkId, ProgramError> {
+    ) -> Result<PerfEventLinkId, LinkError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let (sample_period, sample_frequency) = match sample_policy {
@@ -174,11 +175,7 @@ impl PerfEvent {
             false,
             inherit,
             0,
-        )
-        .map_err(|(_code, io_error)| SyscallError {
-            call: "perf_event_open",
-            io_error,
-        })?;
+        )?;
 
         let link = perf_attach(prog_fd, fd)?;
         self.data.links.insert(PerfEventLink::new(link))
@@ -187,7 +184,7 @@ impl PerfEvent {
     /// Detaches the program.
     ///
     /// See [PerfEvent::attach].
-    pub fn detach(&mut self, link_id: PerfEventLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: PerfEventLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -195,7 +192,7 @@ impl PerfEvent {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: PerfEventLinkId) -> Result<PerfEventLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: PerfEventLinkId) -> Result<PerfEventLink, LinkError> {
         self.data.take_link(link_id)
     }
 }

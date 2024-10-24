@@ -8,11 +8,11 @@ use std::{
 
 use aya_obj::generated::bpf_devmap_val;
 
-use super::XdpMapError;
 use crate::{
-    maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
+    errors::MapError,
+    maps::{check_bounds, check_kv_size, IterableMap, MapData},
     programs::ProgramFd,
-    sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
+    sys::{bpf_map_lookup_elem, bpf_map_update_elem},
     Pod, FEATURES,
 };
 
@@ -93,12 +93,7 @@ impl<T: Borrow<MapData>> DevMap<T> {
                 })
             })
         };
-        value
-            .map_err(|(_, io_error)| SyscallError {
-                call: "bpf_map_lookup_elem",
-                io_error,
-            })?
-            .ok_or(MapError::KeyNotFound)
+        value?.ok_or(MapError::KeyNotFound)
     }
 
     /// An iterator over the elements of the array.
@@ -124,7 +119,7 @@ impl<T: BorrowMut<MapData>> DevMap<T> {
     /// # Errors
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
-    /// if `bpf_map_update_elem` fails, [`MapError::ProgIdNotSupported`] if the kernel does not
+    /// if `bpf_map_update_elem` fails, [`MapError::ChainedProgramsNotSupported`] if the kernel does not
     /// support chained programs and one is provided.
     pub fn set(
         &mut self,
@@ -132,7 +127,7 @@ impl<T: BorrowMut<MapData>> DevMap<T> {
         target_if_index: u32,
         program: Option<&ProgramFd>,
         flags: u64,
-    ) -> Result<(), XdpMapError> {
+    ) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd().as_fd();
@@ -149,17 +144,12 @@ impl<T: BorrowMut<MapData>> DevMap<T> {
             bpf_map_update_elem(fd, Some(&index), &value, flags)
         } else {
             if program.is_some() {
-                return Err(XdpMapError::ChainedProgramNotSupported);
+                return Err(MapError::ChainedProgramNotSupported);
             }
             bpf_map_update_elem(fd, Some(&index), &target_if_index, flags)
         };
 
-        res.map_err(|(_, io_error)| {
-            MapError::from(SyscallError {
-                call: "bpf_map_update_elem",
-                io_error,
-            })
-        })?;
+        res?;
         Ok(())
     }
 }

@@ -3,25 +3,15 @@
 use std::os::fd::{AsFd as _, BorrowedFd};
 
 use object::Endianness;
-use thiserror::Error;
 
 use crate::{
+    errors::{EbpfInternalError, InternalLinkError, LinkError, ProgramError},
     generated::{bpf_attach_type::BPF_CGROUP_INET_INGRESS, bpf_prog_type::BPF_PROG_TYPE_EXT},
     obj::btf::BtfKind,
-    programs::{
-        define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd,
-    },
-    sys::{self, bpf_link_create, LinkTarget, SyscallError},
+    programs::{define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramFd},
+    sys::{self, bpf_link_create, LinkTarget},
     Btf,
 };
-
-/// The type returned when loading or attaching an [`Extension`] fails.
-#[derive(Debug, Error)]
-pub enum ExtensionError {
-    /// Target BPF program does not have BTF loaded to the kernel.
-    #[error("target BPF program does not have BTF loaded to the kernel")]
-    NoBTF,
-}
 
 /// A program used to extend existing BPF programs.
 ///
@@ -86,16 +76,19 @@ impl Extension {
     ///
     /// The returned value can be used to detach the extension and restore the
     /// original function, see [Extension::detach].
-    pub fn attach(&mut self) -> Result<ExtensionLinkId, ProgramError> {
+    pub fn attach(&mut self) -> Result<ExtensionLinkId, LinkError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let target_fd = self
             .data
             .attach_prog_fd
             .as_ref()
-            .ok_or(ProgramError::NotLoaded)?;
+            .ok_or(InternalLinkError::TargetProgramNotLoaded)?;
         let target_fd = target_fd.as_fd();
-        let btf_id = self.data.attach_btf_id.ok_or(ProgramError::NotLoaded)?;
+        let btf_id = self
+            .data
+            .attach_btf_id
+            .ok_or(InternalLinkError::TargetNoBtf)?;
         // the attach type must be set as 0, which is bpf_attach_type::BPF_CGROUP_INET_INGRESS
         let link_fd = bpf_link_create(
             prog_fd,
@@ -104,11 +97,7 @@ impl Extension {
             Some(btf_id),
             0,
             None,
-        )
-        .map_err(|(_, io_error)| SyscallError {
-            call: "bpf_link_create",
-            io_error,
-        })?;
+        )?;
         self.data
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))
@@ -129,7 +118,7 @@ impl Extension {
         &mut self,
         program: &ProgramFd,
         func_name: &str,
-    ) -> Result<ExtensionLinkId, ProgramError> {
+    ) -> Result<ExtensionLinkId, LinkError> {
         let target_fd = program.as_fd();
         let (_, btf_id) = get_btf_info(target_fd, func_name)?;
         let prog_fd = self.fd()?;
@@ -142,11 +131,7 @@ impl Extension {
             Some(btf_id),
             0,
             None,
-        )
-        .map_err(|(_, io_error)| SyscallError {
-            call: "bpf_link_create",
-            io_error,
-        })?;
+        )?;
         self.data
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))
@@ -156,7 +141,7 @@ impl Extension {
     ///
     /// Detaching restores the original code overridden by the extension program.
     /// See [Extension::attach].
-    pub fn detach(&mut self, link_id: ExtensionLinkId) -> Result<(), ProgramError> {
+    pub fn detach(&mut self, link_id: ExtensionLinkId) -> Result<(), LinkError> {
         self.data.links.remove(link_id)
     }
 
@@ -164,7 +149,7 @@ impl Extension {
     ///
     /// The link will be detached on `Drop` and the caller is now responsible
     /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: ExtensionLinkId) -> Result<ExtensionLink, ProgramError> {
+    pub fn take_link(&mut self, link_id: ExtensionLinkId) -> Result<ExtensionLink, LinkError> {
         self.data.take_link(link_id)
     }
 }
@@ -180,7 +165,7 @@ fn get_btf_info(
 
     // btf_id refers to the ID of the program btf that was loaded with bpf(BPF_BTF_LOAD)
     if info.btf_id == 0 {
-        return Err(ProgramError::ExtensionError(ExtensionError::NoBTF));
+        return Err(EbpfInternalError::NoBTF.into());
     }
 
     // the bpf fd of the BTF object
@@ -200,11 +185,9 @@ fn get_btf_info(
         break;
     }
 
-    let btf = Btf::parse(&buf, Endianness::default()).map_err(ProgramError::Btf)?;
+    let btf = Btf::parse(&buf, Endianness::default())?;
 
-    let btf_id = btf
-        .id_by_type_name_kind(func_name, BtfKind::Func)
-        .map_err(ProgramError::Btf)?;
+    let btf_id = btf.id_by_type_name_kind(func_name, BtfKind::Func)?;
 
     Ok((btf_fd, btf_id))
 }
