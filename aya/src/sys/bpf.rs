@@ -683,7 +683,10 @@ pub(crate) fn bpf_load_btf(
 }
 
 // SAFETY: only use for bpf_cmd that return a new file descriptor on success.
-unsafe fn fd_sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
+pub(super) unsafe fn fd_sys_bpf(
+    cmd: bpf_cmd,
+    attr: &mut bpf_attr,
+) -> io::Result<crate::MockableFd> {
     let fd = sys_bpf(cmd, attr)?;
     let fd = fd.try_into().map_err(|std::num::TryFromIntError { .. }| {
         io::Error::new(

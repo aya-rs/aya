@@ -1,17 +1,21 @@
 //! Probes and identifies available eBPF features supported by the host kernel.
 
-use std::io::ErrorKind;
+use std::{io::ErrorKind, mem, os::fd::AsRawFd};
 
 use aya_obj::{
     btf::{Btf, BtfError, BtfKind},
-    generated::{bpf_attach_type, BPF_F_SLEEPABLE},
+    generated::{
+        bpf_attach_type, bpf_attr, bpf_cmd, bpf_map_type, BPF_F_MMAPABLE, BPF_F_NO_PREALLOC,
+        BPF_F_SLEEPABLE,
+    },
 };
-use libc::{E2BIG, EINVAL};
+use libc::{E2BIG, EBADF, EINVAL};
 
-use super::{bpf_prog_load, with_trivial_prog, SyscallError};
+use super::{bpf_prog_load, fd_sys_bpf, with_trivial_prog, SyscallError};
 use crate::{
+    maps::MapType,
     programs::{ProgramError, ProgramType},
-    util::KernelVersion,
+    util::{page_size, KernelVersion},
 };
 
 /// Whether the host kernel supports the [`ProgramType`].
@@ -75,6 +79,150 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
             Ok(false)
         }
         _ => Err(error),
+    }
+}
+
+/// Whether the host kernel supports the [`MapType`].
+///
+/// # Examples
+///
+/// ```no_run
+/// # use aya::{
+/// #     maps::MapType,
+/// #     sys::feature_probe::is_map_supported,
+/// # };
+/// #
+/// match is_map_supported(MapType::HashOfMaps) {
+///     Ok(true) => println!("hash_of_maps supported :)"),
+///     Ok(false) => println!("hash_of_maps not supported :("),
+///     Err(err) => println!("Uh oh! Unexpected error: {:?}", err),
+/// }
+/// ```
+///
+/// # Errors
+///
+/// Returns [`SyscallError`] if kernel probing fails with an unexpected error.
+///
+/// Note that certain errors are expected and handled internally; only
+/// unanticipated failures during probing will result in this error.
+pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
+    if map_type == MapType::Unspecified {
+        return Ok(false);
+    }
+
+    // SAFETY: all-zero byte-pattern valid for `bpf_attr`
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    // SAFETY: union access
+    let u = unsafe { &mut attr.__bindgen_anon_1 };
+
+    // To pass `map_alloc_check`/`map_alloc`
+    let key_size = match map_type {
+        MapType::LpmTrie | MapType::CgroupStorage | MapType::PerCpuCgroupStorage => 16,
+        MapType::Queue
+        | MapType::Stack
+        | MapType::RingBuf
+        | MapType::BloomFilter
+        | MapType::UserRingBuf
+        | MapType::Arena => 0,
+        _ => 4,
+    };
+    let value_size = match map_type {
+        MapType::StackTrace | MapType::LpmTrie => 8,
+        MapType::InodeStorage => {
+            // Intentionally trigger `E2BIG` from
+            // `bpf_local_storage_map_alloc_check()`.
+            u32::MAX
+        }
+        MapType::RingBuf | MapType::UserRingBuf | MapType::Arena => 0,
+        _ => 4,
+    };
+    let max_entries = match map_type {
+        MapType::CgroupStorage
+        | MapType::PerCpuCgroupStorage
+        | MapType::SkStorage
+        | MapType::InodeStorage
+        | MapType::TaskStorage
+        | MapType::CgrpStorage => 0,
+        MapType::RingBuf | MapType::UserRingBuf => page_size() as u32,
+        _ => 1,
+    };
+
+    // Ensure that fd doesn't get dropped due to scoping.
+    let inner_map_fd;
+    match map_type {
+        MapType::LpmTrie => u.map_flags = BPF_F_NO_PREALLOC,
+        MapType::SkStorage
+        | MapType::InodeStorage
+        | MapType::TaskStorage
+        | MapType::CgrpStorage => {
+            u.map_flags = BPF_F_NO_PREALLOC;
+            // Intentionally trigger `EBADF` from `btf_get_by_fd()`.
+            u.btf_fd = u32::MAX;
+            u.btf_key_type_id = 1;
+            u.btf_value_type_id = 1;
+        }
+        MapType::ArrayOfMaps | MapType::HashOfMaps => {
+            // SAFETY: all-zero byte-pattern valid for `bpf_attr`
+            let mut attr_map = unsafe { mem::zeroed::<bpf_attr>() };
+            // SAFETY: union access
+            let u_map = unsafe { &mut attr_map.__bindgen_anon_1 };
+            u_map.map_type = bpf_map_type::BPF_MAP_TYPE_HASH as u32;
+            u_map.key_size = 1;
+            u_map.value_size = 1;
+            u_map.max_entries = 1;
+            // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
+            inner_map_fd = unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr_map) }.map_err(
+                |io_error| SyscallError {
+                    call: "bpf_map_create",
+                    io_error,
+                },
+            )?;
+
+            u.inner_map_fd = inner_map_fd.as_raw_fd() as u32;
+        }
+        MapType::StructOps => u.btf_vmlinux_value_type_id = 1,
+        MapType::Arena => u.map_flags = BPF_F_MMAPABLE,
+        _ => {}
+    }
+
+    u.map_type = map_type as u32;
+    u.key_size = key_size;
+    u.value_size = value_size;
+    u.max_entries = max_entries;
+
+    // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
+    let io_error = match unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) } {
+        Ok(_) => return Ok(true),
+        Err(io_error) => io_error,
+    };
+    match io_error.raw_os_error() {
+        Some(EINVAL) => Ok(false),
+        Some(E2BIG) if map_type == MapType::InodeStorage => Ok(true),
+        Some(E2BIG)
+            if matches!(
+                map_type,
+                MapType::SkStorage
+                    | MapType::StructOps
+                    | MapType::TaskStorage
+                    | MapType::CgrpStorage
+            ) =>
+        {
+            Ok(false)
+        }
+        Some(EBADF)
+            if matches!(
+                map_type,
+                MapType::SkStorage | MapType::TaskStorage | MapType::CgrpStorage
+            ) =>
+        {
+            Ok(true)
+        }
+        // `ENOTSUPP` from `bpf_struct_ops_map_alloc()` for struct_ops.
+        Some(524) if map_type == MapType::StructOps => Ok(true),
+        _ => Err(SyscallError {
+            call: "bpf_map_create",
+            io_error,
+        }),
     }
 }
 
