@@ -25,7 +25,7 @@ use aya_obj::{
 use libc::{ENOENT, ENOSPC};
 
 use crate::{
-    Btf, FEATURES, Pod, VerifierLogLevel,
+    Btf, Pod, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
     programs::{ProgramType, links::LinkRef},
     sys::{Syscall, SyscallError, syscall},
@@ -593,7 +593,7 @@ pub(crate) fn bpf_prog_get_info_by_fd(
     // An `E2BIG` error can occur on kernels below v4.15 when handing over a large struct where the
     // extra space is not all-zero bytes.
     bpf_obj_get_info_by_fd(fd, |info: &mut bpf_prog_info| {
-        if FEATURES.prog_info_map_ids() {
+        if !map_ids.is_empty() {
             info.nr_map_ids = map_ids.len() as _;
             info.map_ids = map_ids.as_mut_ptr() as _;
         }
@@ -805,34 +805,6 @@ where
     }
 
     op(&mut attr)
-}
-
-/// Tests whether `nr_map_ids` & `map_ids` fields in `bpf_prog_info` is available.
-pub(crate) fn is_info_map_ids_supported() -> bool {
-    with_trivial_prog(ProgramType::TracePoint, |attr| {
-        let prog_fd = match bpf_prog_load(attr) {
-            Ok(fd) => fd,
-            Err(_) => return false,
-        };
-        bpf_obj_get_info_by_fd(prog_fd.as_fd(), |info: &mut bpf_prog_info| {
-            info.nr_map_ids = 1
-        })
-        .is_ok()
-    })
-}
-
-/// Tests whether `gpl_compatible` field in `bpf_prog_info` is available.
-pub(crate) fn is_info_gpl_compatible_supported() -> bool {
-    with_trivial_prog(ProgramType::TracePoint, |attr| {
-        let prog_fd = match bpf_prog_load(attr) {
-            Ok(fd) => fd,
-            Err(_) => return false,
-        };
-        if let Ok::<bpf_prog_info, _>(info) = bpf_obj_get_info_by_fd(prog_fd.as_fd(), |_| {}) {
-            return info.gpl_compatible() != 0;
-        }
-        false
-    })
 }
 
 pub(crate) fn is_probe_read_kernel_supported() -> bool {
@@ -1144,7 +1116,7 @@ fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<i64> {
     })
 }
 
-fn unit_sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<()> {
+pub(super) fn unit_sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<()> {
     sys_bpf(cmd, attr).map(|code| assert_eq!(code, 0))
 }
 
