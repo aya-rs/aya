@@ -29,7 +29,7 @@ use crate::{
     programs::links::LinkRef,
     sys::{syscall, Syscall, SyscallError},
     util::KernelVersion,
-    Btf, Pod, VerifierLogLevel, FEATURES,
+    Btf, Pod, VerifierLogLevel,
 };
 
 pub(crate) fn bpf_create_iter(link_fd: BorrowedFd<'_>) -> io::Result<crate::MockableFd> {
@@ -595,7 +595,7 @@ pub(crate) fn bpf_prog_get_info_by_fd(
     // An `E2BIG` error can occur on kernels below v4.15 when handing over a large struct where the
     // extra space is not all-zero bytes.
     bpf_obj_get_info_by_fd(fd, |info: &mut bpf_prog_info| {
-        if FEATURES.prog_info_map_ids() {
+        if !map_ids.is_empty() {
             info.nr_map_ids = map_ids.len() as _;
             info.map_ids = map_ids.as_mut_ptr() as _;
         }
@@ -751,34 +751,6 @@ where
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
 
     op(&mut attr)
-}
-
-/// Tests whether `nr_map_ids` & `map_ids` fields in `bpf_prog_info` is available.
-pub(crate) fn is_info_map_ids_supported() -> bool {
-    with_trivial_prog(|attr| {
-        let prog_fd = match bpf_prog_load(attr) {
-            Ok(fd) => fd,
-            Err(_) => return false,
-        };
-        bpf_obj_get_info_by_fd(prog_fd.as_fd(), |info: &mut bpf_prog_info| {
-            info.nr_map_ids = 1
-        })
-        .is_ok()
-    })
-}
-
-/// Tests whether `gpl_compatible` field in `bpf_prog_info` is available.
-pub(crate) fn is_info_gpl_compatible_supported() -> bool {
-    with_trivial_prog(|attr| {
-        let prog_fd = match bpf_prog_load(attr) {
-            Ok(fd) => fd,
-            Err(_) => return false,
-        };
-        if let Ok::<bpf_prog_info, _>(info) = bpf_obj_get_info_by_fd(prog_fd.as_fd(), |_| {}) {
-            return info.gpl_compatible() != 0;
-        }
-        false
-    })
 }
 
 pub(crate) fn is_probe_read_kernel_supported() -> bool {
@@ -1083,7 +1055,7 @@ pub(super) fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd
     unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) }
 }
 
-fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<c_long> {
+pub(super) fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<c_long> {
     syscall(Syscall::Ebpf { cmd, attr }).map_err(|(code, io_error)| {
         assert_eq!(code, -1);
         io_error
