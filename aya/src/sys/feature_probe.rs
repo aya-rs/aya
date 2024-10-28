@@ -5,17 +5,18 @@ use std::{io::ErrorKind, mem, os::fd::AsRawFd};
 use aya_obj::{
     btf::{Btf, BtfError, BtfKind},
     generated::{
-        bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn, bpf_map_type, BPF_F_MMAPABLE,
+        bpf_attach_type, bpf_attr, bpf_cmd, bpf_insn, bpf_map_type, bpf_prog_info, BPF_F_MMAPABLE,
         BPF_F_NO_PREALLOC, BPF_F_SLEEPABLE,
     },
 };
 use libc::{E2BIG, EBADF, EINVAL};
 
-use super::{bpf_prog_load, fd_sys_bpf, SyscallError};
+use super::{bpf_prog_load, fd_sys_bpf, sys_bpf, SyscallError};
 use crate::{
     maps::MapType,
     programs::{ProgramError, ProgramType},
     util::{page_size, KernelVersion},
+    MockableFd,
 };
 
 const RETURN_ZERO_INSNS: &[bpf_insn] = &[
@@ -232,6 +233,26 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
     }
 }
 
+/// Whether `nr_map_ids` & `map_ids` fields in `bpf_prog_info` are supported.
+pub(crate) fn is_prog_info_map_ids_supported() -> Result<bool, ProgramError> {
+    let fd = create_minimal_program(ProgramType::SocketFilter, &mut [])?;
+    // SAFETY: all-zero byte-pattern valid for `bpf_prog_info`
+    let mut info = unsafe { mem::zeroed::<bpf_prog_info>() };
+    info.nr_map_ids = 1;
+
+    probe_bpf_info(fd, info).map_err(ProgramError::from)
+}
+
+/// Tests whether `bpf_prog_info.gpl_compatible` field is supported.
+pub(crate) fn is_prog_info_license_supported() -> Result<bool, ProgramError> {
+    let fd = create_minimal_program(ProgramType::SocketFilter, &mut [])?;
+    // SAFETY: all-zero byte-pattern valid for `bpf_prog_info`
+    let mut info = unsafe { mem::zeroed::<bpf_prog_info>() };
+    info.set_gpl_compatible(1);
+
+    probe_bpf_info(fd, info).map_err(ProgramError::from)
+}
+
 /// Create a minimal program with the specified type.
 /// Types not created for `Extension` and `StructOps`.
 fn create_minimal_program(
@@ -289,4 +310,26 @@ fn create_minimal_program(
             io_error,
         })
     })
+}
+
+/// Probes program and map info.
+fn probe_bpf_info<T>(fd: MockableFd, info: T) -> Result<bool, SyscallError> {
+    // SAFETY: all-zero byte-pattern valid for `bpf_attr`
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    attr.info.bpf_fd = fd.as_raw_fd() as u32;
+    attr.info.info_len = mem::size_of_val(&info) as u32;
+    attr.info.info = &info as *const _ as u64;
+
+    let io_error = match sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
+        Ok(_) => return Ok(true),
+        Err((_, io_error)) => io_error,
+    };
+    match io_error.raw_os_error() {
+        // `E2BIG` from `bpf_check_uarg_tail_zero()`
+        Some(E2BIG) => Ok(false),
+        _ => Err(SyscallError {
+            call: "bpf_obj_get_info_by_fd",
+            io_error,
+        }),
+    }
 }
