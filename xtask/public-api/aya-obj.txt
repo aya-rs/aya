@@ -7726,8 +7726,6 @@ pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
 pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
 pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
 pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
-pub fn aya_obj::Features::prog_info_gpl_compatible(&self) -> bool
-pub fn aya_obj::Features::prog_info_map_ids(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features
@@ -8588,8 +8586,6 @@ pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
 pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
 pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
 pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
-pub fn aya_obj::Features::prog_info_gpl_compatible(&self) -> bool
-pub fn aya_obj::Features::prog_info_map_ids(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features
