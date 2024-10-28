@@ -4,6 +4,7 @@ use std::{
     ffi::CString,
     os::fd::{AsFd as _, BorrowedFd},
     path::Path,
+    sync::OnceLock,
     time::{Duration, SystemTime},
 };
 
@@ -16,7 +17,9 @@ use super::{
 use crate::{
     FEATURES,
     sys::{
-        SyscallError, bpf_get_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, iter_prog_ids,
+        SyscallError, bpf_get_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
+        feature_probe::{is_prog_info_license_supported, is_prog_info_map_ids_supported},
+        iter_prog_ids,
     },
     util::bytes_of_bpf_name,
 };
@@ -108,13 +111,15 @@ impl ProgramInfo {
     ///
     /// Introduced in kernel v4.15.
     pub fn map_ids(&self) -> Result<Option<Vec<u32>>, ProgramError> {
-        if FEATURES.prog_info_map_ids() {
-            let mut map_ids = vec![0u32; self.0.nr_map_ids as usize];
-            bpf_prog_get_info_by_fd(self.fd()?.as_fd(), &mut map_ids)?;
-            Ok(Some(map_ids))
-        } else {
-            Ok(None)
-        }
+        static CACHE: OnceLock<bool> = OnceLock::new();
+        CACHE
+            .get_or_init(|| matches!(is_prog_info_map_ids_supported(), Ok(true)))
+            .then(|| {
+                let mut map_ids = vec![0u32; self.0.nr_map_ids as usize];
+                bpf_prog_get_info_by_fd(self.fd()?.as_fd(), &mut map_ids)?;
+                Ok(map_ids)
+            })
+            .transpose()
     }
 
     /// The name of the program as was provided when it was load. This is limited to 16 bytes.
@@ -140,8 +145,9 @@ impl ProgramInfo {
     ///
     /// Introduced in kernel v4.18.
     pub fn gpl_compatible(&self) -> Option<bool> {
-        FEATURES
-            .prog_info_gpl_compatible()
+        static CACHE: OnceLock<bool> = OnceLock::new();
+        CACHE
+            .get_or_init(|| matches!(is_prog_info_license_supported(), Ok(true)))
             .then_some(self.0.gpl_compatible() != 0)
     }
 
