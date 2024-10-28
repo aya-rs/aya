@@ -1,6 +1,12 @@
 //! Test feature probing against kernel version.
 
-use aya::{Btf, programs::ProgramType, sys::is_program_supported, util::KernelVersion};
+use aya::{
+    Btf,
+    maps::MapType,
+    programs::ProgramType,
+    sys::{is_map_supported, is_program_supported},
+    util::KernelVersion,
+};
 use procfs::kernel_config;
 
 use crate::utils::kernel_assert;
@@ -129,4 +135,93 @@ fn probe_supported_programs() {
 
     kern_version = KernelVersion::new(6, 4, 0);
     kernel_assert!(is_supported!(ProgramType::Netfilter), kern_version);
+}
+
+#[test]
+fn probe_supported_maps() {
+    let mut kern_version: KernelVersion;
+    macro_rules! is_supported {
+        ($map_type:expr) => {
+            is_map_supported($map_type).unwrap()
+        };
+    }
+
+    kern_version = KernelVersion::new(3, 19, 0);
+    kernel_assert!(is_supported!(MapType::Hash), kern_version);
+    kernel_assert!(is_supported!(MapType::Array), kern_version);
+
+    kern_version = KernelVersion::new(4, 2, 0);
+    kernel_assert!(is_supported!(MapType::ProgramArray), kern_version);
+
+    kern_version = KernelVersion::new(4, 3, 0);
+    kernel_assert!(is_supported!(MapType::PerfEventArray), kern_version);
+
+    kern_version = KernelVersion::new(4, 6, 0);
+    kernel_assert!(is_supported!(MapType::PerCpuHash), kern_version);
+    kernel_assert!(is_supported!(MapType::PerCpuArray), kern_version);
+    kernel_assert!(is_supported!(MapType::StackTrace), kern_version);
+
+    kern_version = KernelVersion::new(4, 8, 0);
+    kernel_assert!(is_supported!(MapType::CgroupArray), kern_version);
+
+    kern_version = KernelVersion::new(4, 10, 0);
+    kernel_assert!(is_supported!(MapType::LruHash), kern_version);
+    kernel_assert!(is_supported!(MapType::LruPerCpuHash), kern_version);
+
+    kern_version = KernelVersion::new(4, 11, 0);
+    kernel_assert!(is_supported!(MapType::LpmTrie), kern_version);
+
+    kern_version = KernelVersion::new(4, 12, 0);
+    kernel_assert!(is_supported!(MapType::ArrayOfMaps), kern_version);
+    kernel_assert!(is_supported!(MapType::HashOfMaps), kern_version);
+
+    kern_version = KernelVersion::new(4, 14, 0);
+    kernel_assert!(is_supported!(MapType::DevMap), kern_version);
+    kernel_assert!(is_supported!(MapType::SockMap), kern_version);
+
+    kern_version = KernelVersion::new(4, 15, 0);
+    kernel_assert!(is_supported!(MapType::CpuMap), kern_version);
+
+    kern_version = KernelVersion::new(4, 18, 0);
+    kernel_assert!(is_supported!(MapType::XskMap), kern_version);
+    kernel_assert!(is_supported!(MapType::SockHash), kern_version);
+
+    kern_version = KernelVersion::new(4, 19, 0);
+    kernel_assert!(is_supported!(MapType::CgroupStorage), kern_version);
+    kernel_assert!(is_supported!(MapType::ReuseportSockArray), kern_version);
+
+    kern_version = KernelVersion::new(4, 20, 0);
+    kernel_assert!(is_supported!(MapType::PerCpuCgroupStorage), kern_version);
+    kernel_assert!(is_supported!(MapType::Queue), kern_version);
+    kernel_assert!(is_supported!(MapType::Stack), kern_version);
+
+    kern_version = KernelVersion::new(5, 2, 0);
+    kernel_assert!(is_supported!(MapType::SkStorage), kern_version);
+
+    kern_version = KernelVersion::new(5, 4, 0);
+    kernel_assert!(is_supported!(MapType::DevMapHash), kern_version);
+
+    kern_version = KernelVersion::new(5, 6, 0);
+    kernel_assert!(is_supported!(MapType::StructOps), kern_version);
+
+    kern_version = KernelVersion::new(5, 8, 0);
+    kernel_assert!(is_supported!(MapType::RingBuf), kern_version);
+
+    kern_version = KernelVersion::new(5, 10, 0);
+    kernel_assert!(is_supported!(MapType::InodeStorage), kern_version); // Requires `CONFIG_BPF_LSM=y`
+
+    kern_version = KernelVersion::new(5, 11, 0);
+    kernel_assert!(is_supported!(MapType::TaskStorage), kern_version);
+
+    kern_version = KernelVersion::new(5, 16, 0);
+    kernel_assert!(is_supported!(MapType::BloomFilter), kern_version);
+
+    kern_version = KernelVersion::new(6, 1, 0);
+    kernel_assert!(is_supported!(MapType::UserRingBuf), kern_version);
+
+    kern_version = KernelVersion::new(6, 2, 0);
+    kernel_assert!(is_supported!(MapType::CgrpStorage), kern_version);
+
+    kern_version = KernelVersion::new(6, 9, 0);
+    kernel_assert!(is_supported!(MapType::Arena), kern_version);
 }

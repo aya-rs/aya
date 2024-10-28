@@ -10076,6 +10076,7 @@ pub fn aya::sys::SyscallError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::sys::SyscallError
 pub fn aya::sys::SyscallError::from(t: T) -> T
 pub fn aya::sys::enable_stats(stats_type: aya::sys::Stats) -> core::result::Result<std::os::fd::owned::OwnedFd, aya::sys::SyscallError>
+pub fn aya::sys::is_map_supported(map_type: aya::maps::MapType) -> core::result::Result<bool, aya::sys::SyscallError>
 pub fn aya::sys::is_program_supported(program_type: aya::programs::ProgramType) -> core::result::Result<bool, aya::programs::ProgramError>
 pub mod aya::util
 pub struct aya::util::KernelVersion
