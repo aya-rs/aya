@@ -8,6 +8,7 @@ use std::{
 };
 
 use aya_obj::generated::{bpf_prog_info, bpf_prog_type};
+use once_cell::race::OnceBool;
 
 use super::{
     ProgramError, ProgramFd,
@@ -16,7 +17,9 @@ use super::{
 use crate::{
     FEATURES,
     sys::{
-        SyscallError, bpf_get_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, iter_prog_ids,
+        SyscallError, bpf_get_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
+        feature_probe::{is_prog_info_license_supported, is_prog_info_map_ids_supported},
+        iter_prog_ids,
     },
     util::bytes_of_bpf_name,
 };
@@ -108,10 +111,15 @@ impl ProgramInfo {
     ///
     /// Introduced in kernel v4.15.
     pub fn map_ids(&self) -> Result<Option<Vec<u32>>, ProgramError> {
-        if FEATURES.prog_info_map_ids() {
+        if self.0.nr_map_ids > 0 {
             let mut map_ids = vec![0u32; self.0.nr_map_ids as usize];
             bpf_prog_get_info_by_fd(self.fd()?.as_fd(), &mut map_ids)?;
-            Ok(Some(map_ids))
+            return Ok(Some(map_ids));
+        }
+
+        static CACHE: OnceBool = OnceBool::new();
+        if CACHE.get_or_init(|| matches!(is_prog_info_map_ids_supported(), Ok(true))) {
+            Ok(Some(vec![]))
         } else {
             Ok(None)
         }
@@ -140,9 +148,16 @@ impl ProgramInfo {
     ///
     /// Introduced in kernel v4.18.
     pub fn gpl_compatible(&self) -> Option<bool> {
-        FEATURES
-            .prog_info_gpl_compatible()
-            .then_some(self.0.gpl_compatible() != 0)
+        if self.0.gpl_compatible() != 0 {
+            return Some(true);
+        }
+
+        static CACHE: OnceBool = OnceBool::new();
+        if CACHE.get_or_init(|| matches!(is_prog_info_license_supported(), Ok(true))) {
+            Some(false)
+        } else {
+            None
+        }
     }
 
     /// The BTF ID for the program.
