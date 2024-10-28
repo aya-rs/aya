@@ -7,8 +7,6 @@ use aya::{maps::MapType, programs::ProgramType, sys::feature_probe::*, util::Ker
 
 use super::load::RETRY_DURATION;
 
-use super::load::RETRY_DURATION;
-
 // TODO: Enable certain CONFIG_* options when compiling the image for VM tests.
 #[test]
 fn probe_supported_programs() {
