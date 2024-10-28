@@ -4,11 +4,13 @@ use std::{mem, os::fd::AsRawFd as _};
 
 use aya_obj::{
     btf::{Btf, BtfKind},
-    generated::{BPF_F_MMAPABLE, BPF_F_NO_PREALLOC, bpf_attr, bpf_cmd, bpf_map_type},
+    generated::{
+        BPF_F_MMAPABLE, BPF_F_NO_PREALLOC, bpf_attr, bpf_cmd, bpf_map_type, bpf_prog_info,
+    },
 };
 use libc::{E2BIG, EBADF, EINVAL};
 
-use super::{SyscallError, bpf_prog_load, fd_sys_bpf, with_trivial_prog};
+use super::{SyscallError, bpf_prog_load, fd_sys_bpf, unit_sys_bpf, with_trivial_prog};
 use crate::{
     MockableFd,
     maps::MapType,
@@ -26,7 +28,7 @@ use crate::{
 /// match is_program_supported(ProgramType::Xdp) {
 ///     Ok(true) => println!("XDP supported :)"),
 ///     Ok(false) => println!("XDP not supported :("),
-///     Err(err) => println!("Uh oh! Unexpected error: {:?}", err),
+///     Err(err) => println!("Uh oh! Unexpected error while probing: {:?}", err),
 /// }
 /// ```
 ///
@@ -153,7 +155,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
 /// match is_map_supported(MapType::HashOfMaps) {
 ///     Ok(true) => println!("hash_of_maps supported :)"),
 ///     Ok(false) => println!("hash_of_maps not supported :("),
-///     Err(err) => println!("Uh oh! Unexpected error: {:?}", err),
+///     Err(err) => println!("Uh oh! Unexpected error while probing: {:?}", err),
 /// }
 /// ```
 ///
@@ -324,6 +326,62 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
         Some(524) if map_type == MapType::StructOps => Ok(true),
         _ => Err(SyscallError {
             call: "bpf_map_create",
+            io_error,
+        }),
+    }
+}
+
+/// Whether `nr_map_ids` & `map_ids` fields in `bpf_prog_info` are supported.
+pub(crate) fn is_prog_info_map_ids_supported() -> Result<bool, ProgramError> {
+    let fd = with_trivial_prog(ProgramType::SocketFilter, |attr| {
+        bpf_prog_load(attr).map_err(|io_error| {
+            ProgramError::SyscallError(SyscallError {
+                call: "bpf_prog_load",
+                io_error,
+            })
+        })
+    })?;
+    // SAFETY: all-zero byte-pattern valid for `bpf_prog_info`
+    let mut info = unsafe { mem::zeroed::<bpf_prog_info>() };
+    info.nr_map_ids = 1;
+
+    probe_bpf_info(fd, info).map_err(ProgramError::from)
+}
+
+/// Tests whether `bpf_prog_info.gpl_compatible` field is supported.
+pub(crate) fn is_prog_info_license_supported() -> Result<bool, ProgramError> {
+    let fd = with_trivial_prog(ProgramType::SocketFilter, |attr| {
+        bpf_prog_load(attr).map_err(|io_error| {
+            ProgramError::SyscallError(SyscallError {
+                call: "bpf_prog_load",
+                io_error,
+            })
+        })
+    })?;
+    // SAFETY: all-zero byte-pattern valid for `bpf_prog_info`
+    let mut info = unsafe { mem::zeroed::<bpf_prog_info>() };
+    info.set_gpl_compatible(1);
+
+    probe_bpf_info(fd, info).map_err(ProgramError::from)
+}
+
+/// Probes program and map info.
+fn probe_bpf_info<T>(fd: MockableFd, info: T) -> Result<bool, SyscallError> {
+    // SAFETY: all-zero byte-pattern valid for `bpf_attr`
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    attr.info.bpf_fd = fd.as_raw_fd() as u32;
+    attr.info.info_len = mem::size_of_val(&info) as u32;
+    attr.info.info = &info as *const _ as u64;
+
+    let io_error = match unit_sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
+        Ok(()) => return Ok(true),
+        Err(io_error) => io_error,
+    };
+    match io_error.raw_os_error() {
+        // `E2BIG` from `bpf_check_uarg_tail_zero()`
+        Some(E2BIG) => Ok(false),
+        _ => Err(SyscallError {
+            call: "bpf_obj_get_info_by_fd",
             io_error,
         }),
     }
