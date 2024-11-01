@@ -5,7 +5,378 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.13.1 (2024-11-01)
+
+### Chore
+
+ - <csr-id-e575712c596d03b93f75d160e3d95241eb895d39/> Add comments in `*_wrong_map` tests
+ - <csr-id-70ac91dc1e6f209a701cd868db215763d65efa73/> Rename bpf -> ebpf
+ - <csr-id-481b73b6d8dd9a796d891bba137400c2a43a0afe/> Fix unused_qualifications lints
+   This was failing the docs build.
+
+### Documentation
+
+ - <csr-id-f1773d5af43f5f29b100572e65a60d58f2ce7fac/> fix typo
+ - <csr-id-57a69fe9d28e858562a429bacd9a0a7700b96726/> Use `Ebpf` instead of `Bpf`
+
+### New Features
+
+ - <csr-id-5478cac008471bdb80aa30733e4456b70ec1a5bd/> Implement TCX
+   This commit adds the initial support for TCX
+   bpf links. This is a new, multi-program, attachment
+   type allows for the caller to specify where
+   they would like to be attached relative to other
+   programs at the attachment point using the LinkOrder
+   type.
+ - <csr-id-110a76cb9a1b2ab5c5ad3b6c0828a4ae670e67a0/> Provide a deprecated `BpfError` alias
+ - <csr-id-8c79b71bd5699a686f33360520aa95c1a2895fa5/> Rename Bpf to Ebpf
+   And BpfLoader to EbpfLoader.
+   This also adds type aliases to preserve the use of the old names, making
+   updating to a new Aya release less of a burden. These aliases are marked
+   as deprecated since we'll likely remove them in a later release.
+
+### Bug Fixes
+
+ - <csr-id-ca0c32d1076af81349a52235a4b6fb3937a697b3/> Fill bss maps with zeros
+   The loader should fill bss maps with zeros according to the size of the
+   ELF section.
+   Failure to do so yields weird verifier messages as follows:
+   
+   ```
+   cannot access ptr member ops with moff 0 in struct bpf_map with off 0 size 4
+   ```
+   
+   Reference to this in the cilium/ebpf code is here [1].
+   I could not find a reference in libbpf.
+ - <csr-id-3d57d358e40591acf23dfde740697fbfff026410/> Fix PerfEventArray resize logic
+   There was a logic bug in the previously merged patch where we
+   set the correctly calculated max_entries size with the original.
+   
+   To fix this and prevent regressions a unit test was added.
+   This highlighted that the original map definition needs to be
+   mutated in order for the max_entries change to be properly applied.
+   
+   As such, this resize logic moved out of aya::sys into aya::maps
+ - <csr-id-25d986a26d9c88cd499a8b795054d583f01476b2/> Set PerfEventArray max_entries to nCPUs
+   Both libbpf and cilium/ebpf have will set the max_entries of a
+   BPF_MAP_TYPE_PERF_EVENT_ARRAY to the number of online CPUs if
+   it was omitted at map definition time. This adds that same
+   logic to Aya.
+ - <csr-id-38d8e32baa5a4538de9daa6fae634aea6372573c/> fix panic when creating map on custom ubuntu kernel
+ - <csr-id-5e13283f59b0c3b4cb47de1e31d8d0960e80b4cc/> fix rustdocs-args ordering in taplo to -D warnings
+   This fixes the current rustdoc build error by correcting the ordering of
+   `rustdoc-args` to `-D warnings`. Additionally, this also removes the
+   `recorder_arrays` field (defaults to false) so that the order is not
+   modified, which is what caused the error in the first place.
+
+### Other
+
+ - <csr-id-c44f8b0f5bddd820a4a98cff293126c0146b827a/> use FdLink in SockOps programs
+ - <csr-id-02d1db5fc043fb7af90c14d13de6419ec5b9bcb5/> remove unwrap and NonZero* in info
+   Addresses the feedback from #1007:
+   - remove panic from `unwrap` and `expect`
+   - Option<NonZero*> => Option<int> with `0` mapping to `None`
+ - <csr-id-fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41/> revamp MapInfo be more friendly with older kernels
+   Adds detection for whether a field is available in `MapInfo`:
+   - For `map_type()`, we treturn new enum `MapType` instead of the integer
+     representation.
+   - For fields that can't be zero, we return `Option<NonZero*>` type.
+   - For `name_as_str()`, it now uses the feature probe `bpf_name()` to
+     detect if field is available.
+     Although the feature probe checks for program name, it can also be
+     used for map name since they were both introduced in the same commit.
+ - <csr-id-88f5ac31142f1657b41b1ee0f217dcd9125b210a/> revamp ProgramInfo be more friendly with older kernels
+   Purpose of this commit is to add detections for whether a field is
+   available in `ProgramInfo`.
+   - For `program_type()`, we return the new enum `ProgramType` instead of
+     the integer representation.
+   - For fields that we know cannot be zero, we return `Option<NonZero*>`
+     type.
+   - For `name_as_str()`, it now also uses the feature probe `bpf_name()`
+     to detect if field is available or not.
+   - Two additional feature probes are added for the fields:
+     - `prog_info_map_ids()` probe -> `map_ids()` field
+     - `prog_info_gpl_compatible()` probe -> `gpl_compatible()` field
+   
+   With the `prog_info_map_ids()` probe, the previous implementation that
+   I had for `bpf_prog_get_info_by_fd()` is shortened to use the probe
+   instead of having to make 2 potential syscalls.
+   
+   The `test_loaded_at()` test is also moved into info tests since it is
+   better related to the info tests.
+ - <csr-id-1634fa7188e40ed75da53517f1fdb7396c348c34/> add conversion u32 to enum type for prog, link, & attach type
+   Add conversion from u32 to program type, link type, and attach type.
+   Additionally, remove duplicate match statement for u32 conversion to
+   `BPF_MAP_TYPE_BLOOM_FILTER` & `BPF_MAP_TYPE_CGRP_STORAGE`.
+   
+   New error `InvalidTypeBinding<T>` is created to represent when a
+   parsed/received value binding to a type is invalid.
+   This is used in the new conversions added here, and also replaces
+   `InvalidMapTypeError` in `TryFrom` for `bpf_map_type`.
+ - <csr-id-cb8e47880082ccfcd75b02209b686e15426e9b6a/> improve integration tests for info API
+   Improves the existing integraiton tests for `loaded_programs()` and
+   `loaded_maps()` in consideration for older kernels:
+     - Opt for `SocketFilter` program in tests since XDP requires v4.8 and
+       fragments requires v5.18.
+     - For assertion tests, first perform the assertion, if the assertion
+       fails, then it checks the host kernel version to see if it is above
+       the minimum version requirement. If not, then continue with test,
+       otherwise fail.
+       For assertions that are skipped, they're logged in stderr which can
+       be observed with `-- --nocapture`.
+   
+   This also fixes the `bpf_prog_get_info_by_fd()` call for kernels below
+   v4.15. If calling syscall  on kernels below v4.15, it can produce an
+   `E2BIG` error  because `check_uarg_tail_zero()` expects the entire
+   struct to all-zero bytes (which is caused from the map info).
+   
+   Instead, we first attempt the syscall with the map info filled, if it
+   returns `E2BIG`, then perform syscall again with empty closure.
+   
+   Also adds doc for which version a kernel feature was introduced for
+   better  awareness.
+   
+   The tests have been verified kernel versions:
+     - 4.13.0
+     - 4.15.0
+     - 6.1.0
+ - <csr-id-cd1db86fd490b3c0f03229bd8999a2e67ccecfc4/> adjust bpf programs for big endian
+   In aya/src/sys/bpf.rs, there are several simple bpf programs written as
+   byte arrays. These need to be adjusted to account for big endian.
+ - <csr-id-a25f501ecebaceaacdd1212fac34f528b51ad0fd/> expose run_time_ns and run_cnt fields in ProgramInfo
+   Added functions to expose `run_time_ns` & `run_cnt` statistics from
+   ProgramInfo/bpf_prog_info.
+ - <csr-id-fa6af6a20439cccd8ab961f83dce545fb5884dd4/> add BPF_ENABLE_STATS syscall function
+   Add bpf syscall function for BPF_ENABLE_STATS to enable stats tracking
+   for benchmarking purposes.
+   
+   Additionally, move `#[cfg(test)]` annotation around the `Drop` trait
+   instead. Having separate functions causes some complications when
+   needing ownership/moving of the inner value `OwnedFd` when `Drop` is
+   manually implemented.
+ - <csr-id-d413e2f285643cbeb665fd3c517e2c9d93d45825/> :programs::uprobe: fix bad variable name
+   The variable fn_name was very much *not* the fn_name, but rather the
+   object file path.
+ - <csr-id-462514ed4c4c06e9618d029a57708c7fa14ab748/> adjust symbol lookup tests for object crate alignment requirements
+   The object::File::parse API requires parameter to be aligned with 8 bytes.
+   Adjusted the Vec in the tests with miri to meet this requirement.
+ - <csr-id-e6e1bfeb58ac392637061640365b057182ee1b39/> add symbol lookup in associated debug files
+   This change enhances the logic for symbol lookup in uprobe or uretprobe.
+   If the symbol is not found in the original binary, the search continues
+   in the debug file associated through the debuglink section. Before
+   searching the symbol table, it compares the build IDs of the two files.
+   The symbol lookup will only be terminated if both build IDs exist and do
+   not match. This modification does not affect the existing symbol lookup
+   logic.
+ - <csr-id-b06ff402780b80862933791831c578e4c339fc96/> Generate new bindings
+ - <csr-id-a4e68ebdbf0e0b591509f36316d12d9689d23f89/> include license in crate workspace
+   This PR includes the licenses files in the crate workspace subdirectory.
+   Without this, they won't be showing on crates.io and would be giving out
+   errors on tooling such as rust2rpm.
+ - <csr-id-e38eac6352ccb5c2b44d621161a27898744ea397/> appease new nightly clippy lints
+   ```
+     error: unnecessary qualification
+        --> aya/src/maps/ring_buf.rs:434:22
+         |
+     434 |                 ptr: ptr::NonNull::new(ptr).ok_or(
+         |                      ^^^^^^^^^^^^^^^^^
+         |
+     note: the lint level is defined here
+        --> aya/src/lib.rs:72:5
+         |
+     72  |     unused_qualifications,
+         |     ^^^^^^^^^^^^^^^^^^^^^
+     help: remove the unnecessary path segments
+         |
+     434 -                 ptr: ptr::NonNull::new(ptr).ok_or(
+     434 +                 ptr: NonNull::new(ptr).ok_or(
+         |
+   
+     error: unnecessary qualification
+        --> aya/src/maps/mod.rs:225:21
+         |
+     225 |     let mut limit = std::mem::MaybeUninit::<rlimit>::uninit();
+         |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         |
+     help: remove the unnecessary path segments
+         |
+     225 -     let mut limit = std::mem::MaybeUninit::<rlimit>::uninit();
+     225 +     let mut limit = mem::MaybeUninit::<rlimit>::uninit();
+         |
+   
+     error: unnecessary qualification
+        --> aya/src/programs/mod.rs:614:9
+         |
+     614 |         crate::obj::Program {
+         |         ^^^^^^^^^^^^^^^^^^^
+         |
+     help: remove the unnecessary path segments
+         |
+     614 -         crate::obj::Program {
+     614 +         obj::Program {
+         |
+   
+     error: unnecessary qualification
+        --> aya/src/util.rs:373:14
+         |
+     373 |     unsafe { std::slice::from_raw_parts(bpf_name.as_ptr() as
+         *const _, length) }
+         |              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+         |
+     help: remove the unnecessary path segments
+         |
+     373 -     unsafe { std::slice::from_raw_parts(bpf_name.as_ptr() as
+         *const _, length) }
+     373 +     unsafe { slice::from_raw_parts(bpf_name.as_ptr() as *const _,
+         length) }
+         |
+   
+     error: unnecessary qualification
+         --> aya/src/maps/mod.rs:1130:47
+          |
+     1130 |                     .copy_from_slice(unsafe {
+          std::mem::transmute(TEST_NAME) });
+          |                                               ^^^^^^^^^^^^^^^^^^^
+          |
+     note: the lint level is defined here
+         --> aya/src/lib.rs:72:5
+          |
+     72   |     unused_qualifications,
+          |     ^^^^^^^^^^^^^^^^^^^^^
+     help: remove the unnecessary path segments
+          |
+     1130 -                     .copy_from_slice(unsafe {
+          std::mem::transmute(TEST_NAME) });
+     1130 +                     .copy_from_slice(unsafe {
+          mem::transmute(TEST_NAME) });
+          |
+   ```
+
+### Performance
+
+ - <csr-id-d05110fd86f9b317d47ffb7cf5c00e588635d4cd/> cache `nr_cpus` in a thread_local
+
+### Test
+
+ - <csr-id-eef7346fb2231f8741410381198015cceeebfac9/> adjust test byte arrays for big endian
+   Adding support for s390x (big endian architecture) and found that some
+   of the unit tests have structures and files implemented as byte arrays.
+   They are all coded as little endian and need a bug endian version to
+   work properly.
+
+### New Features (BREAKING)
+
+ - <csr-id-fd48c55466a23953ce7a4912306e1acf059b498b/> Rename BpfRelocationError -> EbpfRelocationError
+ - <csr-id-cf3e2ca677c81224368fb2838ebc5b10ee98419a/> Rename BpfSectionKind to EbpfSectionKind
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 69 commits contributed to the release over the course of 241 calendar days.
+ - 247 days passed between releases.
+ - 32 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release aya-obj v0.2.1 ([`c6a34ca`](https://github.com/aya-rs/aya/commit/c6a34cade195d682e1eece5b71e3ab48e48f3cda))
+    - Merge pull request #1073 from dave-tucker/reloc-bug ([`b2ac9fe`](https://github.com/aya-rs/aya/commit/b2ac9fe85db6c25d0b8155a75a2df96a80a19811))
+    - Fill bss maps with zeros ([`ca0c32d`](https://github.com/aya-rs/aya/commit/ca0c32d1076af81349a52235a4b6fb3937a697b3))
+    - Release aya-obj v0.2.0, aya v0.13.0, safety bump aya v0.13.0 ([`c169b72`](https://github.com/aya-rs/aya/commit/c169b727e6b8f8c2dda57f54b8c77f8b551025c6))
+    - Implement TCX ([`5478cac`](https://github.com/aya-rs/aya/commit/5478cac008471bdb80aa30733e4456b70ec1a5bd))
+    - Cache `nr_cpus` in a thread_local ([`d05110f`](https://github.com/aya-rs/aya/commit/d05110fd86f9b317d47ffb7cf5c00e588635d4cd))
+    - Clarify `Arc` usage ([`afd777b`](https://github.com/aya-rs/aya/commit/afd777b705312b7bafec2a116041a2318d3aa70f))
+    - Replace `Arc` with `&'static` ([`e992c28`](https://github.com/aya-rs/aya/commit/e992c280cbae7af7e484767a0b79314b14a4de84))
+    - Avoid intermediate allocations in parse_cpu_ranges ([`0e86757`](https://github.com/aya-rs/aya/commit/0e867572ff8e009bbcd1a63037b4ab5b80e35549))
+    - Reduce duplication in `{nr,possible}_cpus` ([`f3b2744`](https://github.com/aya-rs/aya/commit/f3b27440725a0eb2f1615c92cb0047e3b1548d66))
+    - Replace `lazy_static` with `std::sync::LazyLock` ([`2b299d4`](https://github.com/aya-rs/aya/commit/2b299d4fba1ddda70c2e8af324f999cb23683559))
+    - Appease clippy ([`0f16363`](https://github.com/aya-rs/aya/commit/0f163633e3d73c59f857880c967c27e9f52e8610))
+    - Merge pull request #1023 from l2dy/fdlink/sockops ([`2cd3576`](https://github.com/aya-rs/aya/commit/2cd35769dce05b46a4dd07381c990c6acd4cfe0d))
+    - Use FdLink in SockOps programs ([`c44f8b0`](https://github.com/aya-rs/aya/commit/c44f8b0f5bddd820a4a98cff293126c0146b827a))
+    - Remove unwrap and NonZero* in info ([`02d1db5`](https://github.com/aya-rs/aya/commit/02d1db5fc043fb7af90c14d13de6419ec5b9bcb5))
+    - Merge pull request #985 from reyzell/main ([`40f3032`](https://github.com/aya-rs/aya/commit/40f303205f7a800877fe3f9a4fb1893141741e13))
+    - Add the option to support multiple and overrideable programs per cgroup ([`f790685`](https://github.com/aya-rs/aya/commit/f790685d759cbd97cb09ad48d87cdece28fbe579))
+    - Merge pull request #1007 from tyrone-wu/aya/info-api ([`15eb935`](https://github.com/aya-rs/aya/commit/15eb935bce6d41fb67189c48ce582b074544e0ed))
+    - Revamp MapInfo be more friendly with older kernels ([`fbb0930`](https://github.com/aya-rs/aya/commit/fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41))
+    - Revamp ProgramInfo be more friendly with older kernels ([`88f5ac3`](https://github.com/aya-rs/aya/commit/88f5ac31142f1657b41b1ee0f217dcd9125b210a))
+    - Add conversion u32 to enum type for prog, link, & attach type ([`1634fa7`](https://github.com/aya-rs/aya/commit/1634fa7188e40ed75da53517f1fdb7396c348c34))
+    - Improve integration tests for info API ([`cb8e478`](https://github.com/aya-rs/aya/commit/cb8e47880082ccfcd75b02209b686e15426e9b6a))
+    - Merge pull request #959 from tyrone-wu/aya/program_info_stats ([`ab000ad`](https://github.com/aya-rs/aya/commit/ab000ad7c3b0715c3cdd9798bd08fc834b114f1a))
+    - Merge pull request #974 from Billy99/billy99-arch-ppc64-s390x ([`ab5e688`](https://github.com/aya-rs/aya/commit/ab5e688fd49fcfb402ad47d51cb445437fbd8cb7))
+    - Adjust bpf programs for big endian ([`cd1db86`](https://github.com/aya-rs/aya/commit/cd1db86fd490b3c0f03229bd8999a2e67ccecfc4))
+    - Adjust test byte arrays for big endian ([`eef7346`](https://github.com/aya-rs/aya/commit/eef7346fb2231f8741410381198015cceeebfac9))
+    - Simplify doctest ([`4362020`](https://github.com/aya-rs/aya/commit/43620206918facbf003d8b878ae28c5b07955167))
+    - Appease nightly clippy ([`bce3c4f`](https://github.com/aya-rs/aya/commit/bce3c4fb1d0cd6e8f9f64420c59e02a42c96b2c8))
+    - Expose run_time_ns and run_cnt fields in ProgramInfo ([`a25f501`](https://github.com/aya-rs/aya/commit/a25f501ecebaceaacdd1212fac34f528b51ad0fd))
+    - Add BPF_ENABLE_STATS syscall function ([`fa6af6a`](https://github.com/aya-rs/aya/commit/fa6af6a20439cccd8ab961f83dce545fb5884dd4))
+    - Fix PerfEventArray resize logic ([`3d57d35`](https://github.com/aya-rs/aya/commit/3d57d358e40591acf23dfde740697fbfff026410))
+    - Add comments in `*_wrong_map` tests ([`e575712`](https://github.com/aya-rs/aya/commit/e575712c596d03b93f75d160e3d95241eb895d39))
+    - Set PerfEventArray max_entries to nCPUs ([`25d986a`](https://github.com/aya-rs/aya/commit/25d986a26d9c88cd499a8b795054d583f01476b2))
+    - Use MockableFd everywhere ([`e12fcf4`](https://github.com/aya-rs/aya/commit/e12fcf46cb1e0856a8105ed43fda184fa4648713))
+    - Merge pull request #991 from l2dy/typo-1 ([`2cd9858`](https://github.com/aya-rs/aya/commit/2cd9858ea9381232acaffcb5a08bc74e90a8863e))
+    - Fix typo ([`f1773d5`](https://github.com/aya-rs/aya/commit/f1773d5af43f5f29b100572e65a60d58f2ce7fac))
+    - Merge pull request #983 from ajwerner/fix-variable-name ([`d5414bf`](https://github.com/aya-rs/aya/commit/d5414bf10c80ae8cef757f0cdf06bfdd38746daa))
+    - :programs::uprobe: fix bad variable name ([`d413e2f`](https://github.com/aya-rs/aya/commit/d413e2f285643cbeb665fd3c517e2c9d93d45825))
+    - Fix panic when creating map on custom ubuntu kernel ([`38d8e32`](https://github.com/aya-rs/aya/commit/38d8e32baa5a4538de9daa6fae634aea6372573c))
+    - Appease clippy ([`78acd74`](https://github.com/aya-rs/aya/commit/78acd74badb6aa2463f89fbdf713325dad75dc9e))
+    - Don't deny unused_qualifications ([`781914f`](https://github.com/aya-rs/aya/commit/781914f058ef805bd0780ff72a2a66c63255bc07))
+    - Fix rustdocs-args ordering in taplo to -D warnings ([`5e13283`](https://github.com/aya-rs/aya/commit/5e13283f59b0c3b4cb47de1e31d8d0960e80b4cc))
+    - Remove deny(pointer_structural_match) ([`4e843a3`](https://github.com/aya-rs/aya/commit/4e843a35237c2de49d17621dccb4a2a35bb4030c))
+    - Merge pull request #938 from swananan/enhance_urpobe_symbol_lookup ([`bde4b5f`](https://github.com/aya-rs/aya/commit/bde4b5f86b12a3e4ac2f99898edb1b564fe9dd7e))
+    - Fix clippy ([`c7898c5`](https://github.com/aya-rs/aya/commit/c7898c596f2f74f29570101d0f71f35b0ab4104b))
+    - Adjust symbol lookup tests for object crate alignment requirements ([`462514e`](https://github.com/aya-rs/aya/commit/462514ed4c4c06e9618d029a57708c7fa14ab748))
+    - Add symbol lookup in associated debug files ([`e6e1bfe`](https://github.com/aya-rs/aya/commit/e6e1bfeb58ac392637061640365b057182ee1b39))
+    - Merge pull request #928 from seanyoung/io-error ([`d0e9b95`](https://github.com/aya-rs/aya/commit/d0e9b95aa5edc6c056687caeb950e1ce44b18d66))
+    - S/MiriSafeFd/MockableFd/ ([`a11b61e`](https://github.com/aya-rs/aya/commit/a11b61ebfde8713c35b6f2a760e470d3586803a7))
+    - Remove miri ignores ([`cb6d3bd`](https://github.com/aya-rs/aya/commit/cb6d3bd75d162e4928fdf4daa7f515e1ad85ae85))
+    - Document miri skip reasons ([`35962a4`](https://github.com/aya-rs/aya/commit/35962a4794484aa3b37dadc98a70a659fd107b75))
+    - Avoid crashing under Miri ([`7a7d168`](https://github.com/aya-rs/aya/commit/7a7d16885a89af8c10a52e5aba0927784d42f551))
+    - Deduplicate test helpers ([`7e1666f`](https://github.com/aya-rs/aya/commit/7e1666fb83e5c2b270cb24becb84adebbe29be1a))
+    - Reduce duplication ([`58e154e`](https://github.com/aya-rs/aya/commit/58e154e1bc4846a6a2afcb8397aa599cfb7ea6fd))
+    - Expose io_error in SyscallError ([`a6c45f6`](https://github.com/aya-rs/aya/commit/a6c45f61c77c4bbec4409debb8447cd606f0db5d))
+    - Appease clippy ([`09442c2`](https://github.com/aya-rs/aya/commit/09442c2cbe9513365dfc1df8d4f7cf6f808a67ed))
+    - Generate new bindings ([`b06ff40`](https://github.com/aya-rs/aya/commit/b06ff402780b80862933791831c578e4c339fc96))
+    - Appease clippy ([`0a32dac`](https://github.com/aya-rs/aya/commit/0a32dacd2fd2f225f4a3709ac4ea2838a9937378))
+    - Merge pull request #528 from dave-tucker/rename-all-the-things ([`63d8d4d`](https://github.com/aya-rs/aya/commit/63d8d4d34bdbbee149047dc0a5e9c2b191f3b32d))
+    - Include license in crate workspace ([`a4e68eb`](https://github.com/aya-rs/aya/commit/a4e68ebdbf0e0b591509f36316d12d9689d23f89))
+    - Use `Ebpf` instead of `Bpf` ([`57a69fe`](https://github.com/aya-rs/aya/commit/57a69fe9d28e858562a429bacd9a0a7700b96726))
+    - Provide a deprecated `BpfError` alias ([`110a76c`](https://github.com/aya-rs/aya/commit/110a76cb9a1b2ab5c5ad3b6c0828a4ae670e67a0))
+    - Rename Bpf to Ebpf ([`8c79b71`](https://github.com/aya-rs/aya/commit/8c79b71bd5699a686f33360520aa95c1a2895fa5))
+    - Rename BpfRelocationError -> EbpfRelocationError ([`fd48c55`](https://github.com/aya-rs/aya/commit/fd48c55466a23953ce7a4912306e1acf059b498b))
+    - Rename BpfSectionKind to EbpfSectionKind ([`cf3e2ca`](https://github.com/aya-rs/aya/commit/cf3e2ca677c81224368fb2838ebc5b10ee98419a))
+    - Rename bpf -> ebpf ([`70ac91d`](https://github.com/aya-rs/aya/commit/70ac91dc1e6f209a701cd868db215763d65efa73))
+    - Fix unused_qualifications lints ([`481b73b`](https://github.com/aya-rs/aya/commit/481b73b6d8dd9a796d891bba137400c2a43a0afe))
+    - Add `CgroupDevice::query` ([`542306d`](https://github.com/aya-rs/aya/commit/542306d295e51ac1ec117ce453544f201875af3d))
+    - Appease new nightly clippy lints ([`e38eac6`](https://github.com/aya-rs/aya/commit/e38eac6352ccb5c2b44d621161a27898744ea397))
+</details>
+
 ## 0.13.0 (2024-10-09)
+
+<csr-id-e575712c596d03b93f75d160e3d95241eb895d39/>
+<csr-id-70ac91dc1e6f209a701cd868db215763d65efa73/>
+<csr-id-481b73b6d8dd9a796d891bba137400c2a43a0afe/>
+<csr-id-c44f8b0f5bddd820a4a98cff293126c0146b827a/>
+<csr-id-02d1db5fc043fb7af90c14d13de6419ec5b9bcb5/>
+<csr-id-fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41/>
+<csr-id-88f5ac31142f1657b41b1ee0f217dcd9125b210a/>
+<csr-id-1634fa7188e40ed75da53517f1fdb7396c348c34/>
+<csr-id-cb8e47880082ccfcd75b02209b686e15426e9b6a/>
+<csr-id-cd1db86fd490b3c0f03229bd8999a2e67ccecfc4/>
+<csr-id-a25f501ecebaceaacdd1212fac34f528b51ad0fd/>
+<csr-id-fa6af6a20439cccd8ab961f83dce545fb5884dd4/>
+<csr-id-d413e2f285643cbeb665fd3c517e2c9d93d45825/>
+<csr-id-462514ed4c4c06e9618d029a57708c7fa14ab748/>
+<csr-id-e6e1bfeb58ac392637061640365b057182ee1b39/>
+<csr-id-b06ff402780b80862933791831c578e4c339fc96/>
+<csr-id-a4e68ebdbf0e0b591509f36316d12d9689d23f89/>
+<csr-id-e38eac6352ccb5c2b44d621161a27898744ea397/>
+<csr-id-eef7346fb2231f8741410381198015cceeebfac9/>
 
 ### Chore
 
@@ -257,89 +628,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - <csr-id-fd48c55466a23953ce7a4912306e1acf059b498b/> Rename BpfRelocationError -> EbpfRelocationError
  - <csr-id-cf3e2ca677c81224368fb2838ebc5b10ee98419a/> Rename BpfSectionKind to EbpfSectionKind
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 65 commits contributed to the release.
- - 223 days passed between releases.
- - 31 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' were seen in commit messages
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - Implement TCX ([`5478cac`](https://github.com/aya-rs/aya/commit/5478cac008471bdb80aa30733e4456b70ec1a5bd))
-    - Cache `nr_cpus` in a thread_local ([`d05110f`](https://github.com/aya-rs/aya/commit/d05110fd86f9b317d47ffb7cf5c00e588635d4cd))
-    - Clarify `Arc` usage ([`afd777b`](https://github.com/aya-rs/aya/commit/afd777b705312b7bafec2a116041a2318d3aa70f))
-    - Replace `Arc` with `&'static` ([`e992c28`](https://github.com/aya-rs/aya/commit/e992c280cbae7af7e484767a0b79314b14a4de84))
-    - Avoid intermediate allocations in parse_cpu_ranges ([`0e86757`](https://github.com/aya-rs/aya/commit/0e867572ff8e009bbcd1a63037b4ab5b80e35549))
-    - Reduce duplication in `{nr,possible}_cpus` ([`f3b2744`](https://github.com/aya-rs/aya/commit/f3b27440725a0eb2f1615c92cb0047e3b1548d66))
-    - Replace `lazy_static` with `std::sync::LazyLock` ([`2b299d4`](https://github.com/aya-rs/aya/commit/2b299d4fba1ddda70c2e8af324f999cb23683559))
-    - Appease clippy ([`0f16363`](https://github.com/aya-rs/aya/commit/0f163633e3d73c59f857880c967c27e9f52e8610))
-    - Merge pull request #1023 from l2dy/fdlink/sockops ([`2cd3576`](https://github.com/aya-rs/aya/commit/2cd35769dce05b46a4dd07381c990c6acd4cfe0d))
-    - Use FdLink in SockOps programs ([`c44f8b0`](https://github.com/aya-rs/aya/commit/c44f8b0f5bddd820a4a98cff293126c0146b827a))
-    - Remove unwrap and NonZero* in info ([`02d1db5`](https://github.com/aya-rs/aya/commit/02d1db5fc043fb7af90c14d13de6419ec5b9bcb5))
-    - Merge pull request #985 from reyzell/main ([`40f3032`](https://github.com/aya-rs/aya/commit/40f303205f7a800877fe3f9a4fb1893141741e13))
-    - Add the option to support multiple and overrideable programs per cgroup ([`f790685`](https://github.com/aya-rs/aya/commit/f790685d759cbd97cb09ad48d87cdece28fbe579))
-    - Merge pull request #1007 from tyrone-wu/aya/info-api ([`15eb935`](https://github.com/aya-rs/aya/commit/15eb935bce6d41fb67189c48ce582b074544e0ed))
-    - Revamp MapInfo be more friendly with older kernels ([`fbb0930`](https://github.com/aya-rs/aya/commit/fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41))
-    - Revamp ProgramInfo be more friendly with older kernels ([`88f5ac3`](https://github.com/aya-rs/aya/commit/88f5ac31142f1657b41b1ee0f217dcd9125b210a))
-    - Add conversion u32 to enum type for prog, link, & attach type ([`1634fa7`](https://github.com/aya-rs/aya/commit/1634fa7188e40ed75da53517f1fdb7396c348c34))
-    - Improve integration tests for info API ([`cb8e478`](https://github.com/aya-rs/aya/commit/cb8e47880082ccfcd75b02209b686e15426e9b6a))
-    - Merge pull request #959 from tyrone-wu/aya/program_info_stats ([`ab000ad`](https://github.com/aya-rs/aya/commit/ab000ad7c3b0715c3cdd9798bd08fc834b114f1a))
-    - Merge pull request #974 from Billy99/billy99-arch-ppc64-s390x ([`ab5e688`](https://github.com/aya-rs/aya/commit/ab5e688fd49fcfb402ad47d51cb445437fbd8cb7))
-    - Adjust bpf programs for big endian ([`cd1db86`](https://github.com/aya-rs/aya/commit/cd1db86fd490b3c0f03229bd8999a2e67ccecfc4))
-    - Adjust test byte arrays for big endian ([`eef7346`](https://github.com/aya-rs/aya/commit/eef7346fb2231f8741410381198015cceeebfac9))
-    - Simplify doctest ([`4362020`](https://github.com/aya-rs/aya/commit/43620206918facbf003d8b878ae28c5b07955167))
-    - Appease nightly clippy ([`bce3c4f`](https://github.com/aya-rs/aya/commit/bce3c4fb1d0cd6e8f9f64420c59e02a42c96b2c8))
-    - Expose run_time_ns and run_cnt fields in ProgramInfo ([`a25f501`](https://github.com/aya-rs/aya/commit/a25f501ecebaceaacdd1212fac34f528b51ad0fd))
-    - Add BPF_ENABLE_STATS syscall function ([`fa6af6a`](https://github.com/aya-rs/aya/commit/fa6af6a20439cccd8ab961f83dce545fb5884dd4))
-    - Fix PerfEventArray resize logic ([`3d57d35`](https://github.com/aya-rs/aya/commit/3d57d358e40591acf23dfde740697fbfff026410))
-    - Add comments in `*_wrong_map` tests ([`e575712`](https://github.com/aya-rs/aya/commit/e575712c596d03b93f75d160e3d95241eb895d39))
-    - Set PerfEventArray max_entries to nCPUs ([`25d986a`](https://github.com/aya-rs/aya/commit/25d986a26d9c88cd499a8b795054d583f01476b2))
-    - Use MockableFd everywhere ([`e12fcf4`](https://github.com/aya-rs/aya/commit/e12fcf46cb1e0856a8105ed43fda184fa4648713))
-    - Merge pull request #991 from l2dy/typo-1 ([`2cd9858`](https://github.com/aya-rs/aya/commit/2cd9858ea9381232acaffcb5a08bc74e90a8863e))
-    - Fix typo ([`f1773d5`](https://github.com/aya-rs/aya/commit/f1773d5af43f5f29b100572e65a60d58f2ce7fac))
-    - Merge pull request #983 from ajwerner/fix-variable-name ([`d5414bf`](https://github.com/aya-rs/aya/commit/d5414bf10c80ae8cef757f0cdf06bfdd38746daa))
-    - :programs::uprobe: fix bad variable name ([`d413e2f`](https://github.com/aya-rs/aya/commit/d413e2f285643cbeb665fd3c517e2c9d93d45825))
-    - Fix panic when creating map on custom ubuntu kernel ([`38d8e32`](https://github.com/aya-rs/aya/commit/38d8e32baa5a4538de9daa6fae634aea6372573c))
-    - Appease clippy ([`78acd74`](https://github.com/aya-rs/aya/commit/78acd74badb6aa2463f89fbdf713325dad75dc9e))
-    - Don't deny unused_qualifications ([`781914f`](https://github.com/aya-rs/aya/commit/781914f058ef805bd0780ff72a2a66c63255bc07))
-    - Fix rustdocs-args ordering in taplo to -D warnings ([`5e13283`](https://github.com/aya-rs/aya/commit/5e13283f59b0c3b4cb47de1e31d8d0960e80b4cc))
-    - Remove deny(pointer_structural_match) ([`4e843a3`](https://github.com/aya-rs/aya/commit/4e843a35237c2de49d17621dccb4a2a35bb4030c))
-    - Merge pull request #938 from swananan/enhance_urpobe_symbol_lookup ([`bde4b5f`](https://github.com/aya-rs/aya/commit/bde4b5f86b12a3e4ac2f99898edb1b564fe9dd7e))
-    - Fix clippy ([`c7898c5`](https://github.com/aya-rs/aya/commit/c7898c596f2f74f29570101d0f71f35b0ab4104b))
-    - Adjust symbol lookup tests for object crate alignment requirements ([`462514e`](https://github.com/aya-rs/aya/commit/462514ed4c4c06e9618d029a57708c7fa14ab748))
-    - Add symbol lookup in associated debug files ([`e6e1bfe`](https://github.com/aya-rs/aya/commit/e6e1bfeb58ac392637061640365b057182ee1b39))
-    - Merge pull request #928 from seanyoung/io-error ([`d0e9b95`](https://github.com/aya-rs/aya/commit/d0e9b95aa5edc6c056687caeb950e1ce44b18d66))
-    - S/MiriSafeFd/MockableFd/ ([`a11b61e`](https://github.com/aya-rs/aya/commit/a11b61ebfde8713c35b6f2a760e470d3586803a7))
-    - Remove miri ignores ([`cb6d3bd`](https://github.com/aya-rs/aya/commit/cb6d3bd75d162e4928fdf4daa7f515e1ad85ae85))
-    - Document miri skip reasons ([`35962a4`](https://github.com/aya-rs/aya/commit/35962a4794484aa3b37dadc98a70a659fd107b75))
-    - Avoid crashing under Miri ([`7a7d168`](https://github.com/aya-rs/aya/commit/7a7d16885a89af8c10a52e5aba0927784d42f551))
-    - Deduplicate test helpers ([`7e1666f`](https://github.com/aya-rs/aya/commit/7e1666fb83e5c2b270cb24becb84adebbe29be1a))
-    - Reduce duplication ([`58e154e`](https://github.com/aya-rs/aya/commit/58e154e1bc4846a6a2afcb8397aa599cfb7ea6fd))
-    - Expose io_error in SyscallError ([`a6c45f6`](https://github.com/aya-rs/aya/commit/a6c45f61c77c4bbec4409debb8447cd606f0db5d))
-    - Appease clippy ([`09442c2`](https://github.com/aya-rs/aya/commit/09442c2cbe9513365dfc1df8d4f7cf6f808a67ed))
-    - Generate new bindings ([`b06ff40`](https://github.com/aya-rs/aya/commit/b06ff402780b80862933791831c578e4c339fc96))
-    - Appease clippy ([`0a32dac`](https://github.com/aya-rs/aya/commit/0a32dacd2fd2f225f4a3709ac4ea2838a9937378))
-    - Merge pull request #528 from dave-tucker/rename-all-the-things ([`63d8d4d`](https://github.com/aya-rs/aya/commit/63d8d4d34bdbbee149047dc0a5e9c2b191f3b32d))
-    - Include license in crate workspace ([`a4e68eb`](https://github.com/aya-rs/aya/commit/a4e68ebdbf0e0b591509f36316d12d9689d23f89))
-    - Use `Ebpf` instead of `Bpf` ([`57a69fe`](https://github.com/aya-rs/aya/commit/57a69fe9d28e858562a429bacd9a0a7700b96726))
-    - Provide a deprecated `BpfError` alias ([`110a76c`](https://github.com/aya-rs/aya/commit/110a76cb9a1b2ab5c5ad3b6c0828a4ae670e67a0))
-    - Rename Bpf to Ebpf ([`8c79b71`](https://github.com/aya-rs/aya/commit/8c79b71bd5699a686f33360520aa95c1a2895fa5))
-    - Rename BpfRelocationError -> EbpfRelocationError ([`fd48c55`](https://github.com/aya-rs/aya/commit/fd48c55466a23953ce7a4912306e1acf059b498b))
-    - Rename BpfSectionKind to EbpfSectionKind ([`cf3e2ca`](https://github.com/aya-rs/aya/commit/cf3e2ca677c81224368fb2838ebc5b10ee98419a))
-    - Rename bpf -> ebpf ([`70ac91d`](https://github.com/aya-rs/aya/commit/70ac91dc1e6f209a701cd868db215763d65efa73))
-    - Fix unused_qualifications lints ([`481b73b`](https://github.com/aya-rs/aya/commit/481b73b6d8dd9a796d891bba137400c2a43a0afe))
-    - Add `CgroupDevice::query` ([`542306d`](https://github.com/aya-rs/aya/commit/542306d295e51ac1ec117ce453544f201875af3d))
-    - Appease new nightly clippy lints ([`e38eac6`](https://github.com/aya-rs/aya/commit/e38eac6352ccb5c2b44d621161a27898744ea397))
-</details>
 
 ## 0.12.0 (2024-02-28)
 
@@ -1713,7 +2001,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 45 commits contributed to the release.
+ - 45 commits contributed to the release over the course of 57 calendar days.
  - 79 days passed between releases.
  - 13 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#256](https://github.com/aya-rs/aya/issues/256), [#264](https://github.com/aya-rs/aya/issues/264), [#268](https://github.com/aya-rs/aya/issues/268)
@@ -2704,7 +2992,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 121 commits contributed to the release.
+ - 121 commits contributed to the release over the course of 110 calendar days.
  - 102 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
