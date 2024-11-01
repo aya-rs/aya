@@ -1,9 +1,8 @@
 use std::{
-    env::consts::{ARCH, OS},
     ffi::OsString,
     fmt::Write as _,
     fs::{copy, create_dir_all, OpenOptions},
-    io::{BufRead as _, BufReader, ErrorKind, Write as _},
+    io::{BufRead as _, BufReader, Write as _},
     path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
     sync::{Arc, Mutex},
@@ -358,28 +357,8 @@ pub fn run(opts: Options) -> Result<()> {
                 if let Some(cpu) = cpu {
                     qemu.args(["-cpu", cpu]);
                 }
-                if guest_arch == ARCH {
-                    match OS {
-                        "linux" => {
-                            const KVM: &str = "/dev/kvm";
-                            match OpenOptions::new().read(true).write(true).open(KVM) {
-                                Ok(_file) => {
-                                    qemu.args(["-accel", "kvm"]);
-                                }
-                                Err(error) => match error.kind() {
-                                    ErrorKind::NotFound | ErrorKind::PermissionDenied => {}
-                                    _kind => {
-                                        return Err(error)
-                                            .with_context(|| format!("failed to open {KVM}"));
-                                    }
-                                },
-                            }
-                        }
-                        "macos" => {
-                            qemu.args(["-accel", "hvf"]);
-                        }
-                        os => bail!("unsupported OS: {os}"),
-                    }
+                for accel in ["kvm", "hvf", "tcg"] {
+                    qemu.args(["-accel", accel]);
                 }
                 let console = OsString::from(console);
                 let mut kernel_args = std::iter::once(("console", &console))
