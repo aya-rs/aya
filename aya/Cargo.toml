@@ -15,7 +15,7 @@ edition.workspace = true
 [dependencies]
 assert_matches = { workspace = true }
 async-io = { workspace = true, optional = true }
-aya-obj = { path = "../aya-obj", version = "^0.2.0", features = ["std"] }
+aya-obj = { path = "../aya-obj", version = "^0.2.1", features = ["std"] }
 bitflags = { workspace = true }
 bytes = { workspace = true }
 libc = { workspace = true }
