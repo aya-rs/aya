@@ -128,6 +128,7 @@ fn run() -> anyhow::Result<()> {
             let path = entry.path();
             let status = std::process::Command::new(&path)
                 .args(&args)
+                .env("RUST_LOG", "debug")
                 .status()
                 .with_context(|| format!("failed to execute {}", path.display()))?;
 

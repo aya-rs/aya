@@ -5,6 +5,7 @@ use alloc::{
     collections::BTreeMap,
     ffi::CString,
     string::{String, ToString},
+    vec,
     vec::Vec,
 };
 use core::{ffi::CStr, mem, ptr, slice::from_raw_parts_mut, str::FromStr};
@@ -1193,7 +1194,7 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
 // bytes and are relocated based on their section index.
 fn parse_data_map_section(section: &Section) -> Result<Map, ParseError> {
     let (def, data) = match section.kind {
-        EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata => {
+        EbpfSectionKind::Data | EbpfSectionKind::Rodata => {
             let def = bpf_map_def {
                 map_type: BPF_MAP_TYPE_ARRAY as u32,
                 key_size: mem::size_of::<u32>() as u32,
@@ -1209,6 +1210,17 @@ fn parse_data_map_section(section: &Section) -> Result<Map, ParseError> {
                 ..Default::default()
             };
             (def, section.data.to_vec())
+        }
+        EbpfSectionKind::Bss => {
+            let def = bpf_map_def {
+                map_type: BPF_MAP_TYPE_ARRAY as u32,
+                key_size: mem::size_of::<u32>() as u32,
+                value_size: section.size as u32,
+                max_entries: 1,
+                map_flags: 0,
+                ..Default::default()
+            };
+            (def, vec![0; section.size as usize])
         }
         _ => unreachable!(),
     };

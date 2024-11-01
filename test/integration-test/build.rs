@@ -71,6 +71,7 @@ fn main() {
         ("multimap-btf.bpf.c", false),
         ("reloc.bpf.c", true),
         ("text_64_64_reloc.c", false),
+        ("variables_reloc.bpf.c", false),
     ];
 
     if build_integration_bpf {
