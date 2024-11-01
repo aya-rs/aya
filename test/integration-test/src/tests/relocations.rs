@@ -1,4 +1,8 @@
-use aya::{programs::UProbe, util::KernelVersion, Ebpf};
+use aya::{
+    programs::{UProbe, Xdp},
+    util::KernelVersion,
+    Ebpf,
+};
 use test_log::test;
 
 #[test]
@@ -31,6 +35,17 @@ fn text_64_64_reloc() {
 
     assert_eq!(m.get(&0, 0).unwrap(), 2);
     assert_eq!(m.get(&1, 0).unwrap(), 3);
+}
+
+#[test]
+fn variables_reloc() {
+    let mut bpf = Ebpf::load(crate::VARIABLES_RELOC).unwrap();
+    let prog: &mut Xdp = bpf
+        .program_mut("variables_reloc")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
 }
 
 fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
