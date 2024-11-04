@@ -288,6 +288,9 @@ pub enum ProgramSection {
         attach_type: CgroupSockAttachType,
     },
     CgroupDevice,
+    Iter {
+        sleepable: bool,
+    },
 }
 
 impl FromStr for ProgramSection {
@@ -439,6 +442,8 @@ impl FromStr for ProgramSection {
             "fexit.s" => FExit { sleepable: true },
             "freplace" => Extension,
             "sk_lookup" => SkLookup,
+            "iter" => Iter { sleepable: false },
+            "iter.s" => Iter { sleepable: true },
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),

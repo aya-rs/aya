@@ -14,6 +14,7 @@ edition.workspace = true
 
 [dependencies]
 assert_matches = { workspace = true }
+async-fs = { workspace = true, optional = true }
 async-io = { workspace = true, optional = true }
 aya-obj = { path = "../aya-obj", version = "^0.2.1", features = ["std"] }
 bitflags = { workspace = true }
@@ -30,8 +31,8 @@ tempfile = { workspace = true }
 
 [features]
 default = []
-async_tokio = ["tokio/net"]
-async_std = ["dep:async-io"]
+async_tokio = ["tokio/fs", "tokio/io-util", "tokio/net"]
+async_std = ["dep:async-fs", "dep:async-io"]
 
 [package.metadata.docs.rs]
 all-features = true

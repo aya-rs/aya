@@ -7190,6 +7190,8 @@ pub aya_obj::obj::ProgramSection::FEntry
 pub aya_obj::obj::ProgramSection::FEntry::sleepable: bool
 pub aya_obj::obj::ProgramSection::FExit
 pub aya_obj::obj::ProgramSection::FExit::sleepable: bool
+pub aya_obj::obj::ProgramSection::Iter
+pub aya_obj::obj::ProgramSection::Iter::sleepable: bool
 pub aya_obj::obj::ProgramSection::KProbe
 pub aya_obj::obj::ProgramSection::KRetProbe
 pub aya_obj::obj::ProgramSection::LircMode2
@@ -8050,6 +8052,8 @@ pub aya_obj::ProgramSection::FEntry
 pub aya_obj::ProgramSection::FEntry::sleepable: bool
 pub aya_obj::ProgramSection::FExit
 pub aya_obj::ProgramSection::FExit::sleepable: bool
+pub aya_obj::ProgramSection::Iter
+pub aya_obj::ProgramSection::Iter::sleepable: bool
 pub aya_obj::ProgramSection::KProbe
 pub aya_obj::ProgramSection::KRetProbe
 pub aya_obj::ProgramSection::LircMode2

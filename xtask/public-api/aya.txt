@@ -3632,6 +3632,157 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::fexit::FExitLinkId where T
 pub fn aya::programs::fexit::FExitLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLinkId::from(t: T) -> T
+pub mod aya::programs::iter
+pub struct aya::programs::iter::Iter
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::attach(&mut self) -> core::result::Result<aya::programs::iter::IterLinkId, aya::programs::ProgramError>
+pub fn aya::programs::iter::Iter::detach(&mut self, link_id: aya::programs::iter::IterLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::iter::Iter::load(&mut self, iter_type: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::iter::Iter::take_link(&mut self, link_id: aya::programs::iter::IterLinkId) -> core::result::Result<aya::programs::iter::IterLink, aya::programs::ProgramError>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::iter::Iter::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::iter::Iter
+pub type &'a aya::programs::iter::Iter::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::iter::Iter::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::iter::Iter, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::iter::Iter
+pub type &'a mut aya::programs::iter::Iter::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::iter::Iter::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::iter::Iter, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::iter::Iter
+impl core::marker::Send for aya::programs::iter::Iter
+impl core::marker::Sync for aya::programs::iter::Iter
+impl core::marker::Unpin for aya::programs::iter::Iter
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::Iter
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::Iter
+impl<T, U> core::convert::Into<U> for aya::programs::iter::Iter where U: core::convert::From<T>
+pub fn aya::programs::iter::Iter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::iter::Iter where U: core::convert::Into<T>
+pub type aya::programs::iter::Iter::Error = core::convert::Infallible
+pub fn aya::programs::iter::Iter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::iter::Iter where U: core::convert::TryFrom<T>
+pub type aya::programs::iter::Iter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::iter::Iter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::iter::Iter where T: 'static + core::marker::Sized
+pub fn aya::programs::iter::Iter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::iter::Iter where T: core::marker::Sized
+pub fn aya::programs::iter::Iter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::iter::Iter where T: core::marker::Sized
+pub fn aya::programs::iter::Iter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::from(t: T) -> T
+pub struct aya::programs::iter::IterFd
+impl core::fmt::Debug for aya::programs::iter::IterFd
+pub fn aya::programs::iter::IterFd::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl std::os::fd::owned::AsFd for aya::programs::iter::IterFd
+pub fn aya::programs::iter::IterFd::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
+impl core::marker::Freeze for aya::programs::iter::IterFd
+impl core::marker::Send for aya::programs::iter::IterFd
+impl core::marker::Sync for aya::programs::iter::IterFd
+impl core::marker::Unpin for aya::programs::iter::IterFd
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::IterFd
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::IterFd
+impl<T, U> core::convert::Into<U> for aya::programs::iter::IterFd where U: core::convert::From<T>
+pub fn aya::programs::iter::IterFd::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::iter::IterFd where U: core::convert::Into<T>
+pub type aya::programs::iter::IterFd::Error = core::convert::Infallible
+pub fn aya::programs::iter::IterFd::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::iter::IterFd where U: core::convert::TryFrom<T>
+pub type aya::programs::iter::IterFd::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::iter::IterFd::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::iter::IterFd where T: 'static + core::marker::Sized
+pub fn aya::programs::iter::IterFd::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::iter::IterFd where T: core::marker::Sized
+pub fn aya::programs::iter::IterFd::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::iter::IterFd where T: core::marker::Sized
+pub fn aya::programs::iter::IterFd::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::iter::IterFd
+pub fn aya::programs::iter::IterFd::from(t: T) -> T
+pub struct aya::programs::iter::IterLink(_)
+impl aya::programs::iter::IterLink
+pub fn aya::programs::iter::IterLink::into_async_io_file(self) -> core::result::Result<async_fs::File, aya::programs::links::LinkError>
+pub fn aya::programs::iter::IterLink::into_file(self) -> core::result::Result<std::fs::File, aya::programs::links::LinkError>
+pub fn aya::programs::iter::IterLink::into_tokio_file(self) -> core::result::Result<tokio::fs::file::File, aya::programs::links::LinkError>
+impl aya::programs::links::Link for aya::programs::iter::IterLink
+pub type aya::programs::iter::IterLink::Id = aya::programs::iter::IterLinkId
+pub fn aya::programs::iter::IterLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::iter::IterLink::id(&self) -> Self::Id
+impl core::convert::TryFrom<aya::programs::iter::IterLink> for aya::programs::links::FdLink
+pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::links::FdLink::try_from(value: aya::programs::iter::IterLink) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::iter::IterLink
+pub type aya::programs::iter::IterLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::iter::IterLink::try_from(fd_link: aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
+impl core::fmt::Debug for aya::programs::iter::IterLink
+pub fn aya::programs::iter::IterLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::iter::IterLink
+pub fn aya::programs::iter::IterLink::drop(&mut self)
+impl core::marker::Freeze for aya::programs::iter::IterLink
+impl core::marker::Send for aya::programs::iter::IterLink
+impl core::marker::Sync for aya::programs::iter::IterLink
+impl core::marker::Unpin for aya::programs::iter::IterLink
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::IterLink
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::IterLink
+impl<T, U> core::convert::Into<U> for aya::programs::iter::IterLink where U: core::convert::From<T>
+pub fn aya::programs::iter::IterLink::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::iter::IterLink where U: core::convert::Into<T>
+pub type aya::programs::iter::IterLink::Error = core::convert::Infallible
+pub fn aya::programs::iter::IterLink::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::iter::IterLink where U: core::convert::TryFrom<T>
+pub type aya::programs::iter::IterLink::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::iter::IterLink::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::iter::IterLink where T: 'static + core::marker::Sized
+pub fn aya::programs::iter::IterLink::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::iter::IterLink where T: core::marker::Sized
+pub fn aya::programs::iter::IterLink::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::iter::IterLink where T: core::marker::Sized
+pub fn aya::programs::iter::IterLink::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::iter::IterLink
+pub fn aya::programs::iter::IterLink::from(t: T) -> T
+pub struct aya::programs::iter::IterLinkId(_)
+impl core::cmp::Eq for aya::programs::iter::IterLinkId
+impl core::cmp::PartialEq for aya::programs::iter::IterLinkId
+pub fn aya::programs::iter::IterLinkId::eq(&self, other: &aya::programs::iter::IterLinkId) -> bool
+impl core::fmt::Debug for aya::programs::iter::IterLinkId
+pub fn aya::programs::iter::IterLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::iter::IterLinkId
+pub fn aya::programs::iter::IterLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for aya::programs::iter::IterLinkId
+impl core::marker::Freeze for aya::programs::iter::IterLinkId
+impl core::marker::Send for aya::programs::iter::IterLinkId
+impl core::marker::Sync for aya::programs::iter::IterLinkId
+impl core::marker::Unpin for aya::programs::iter::IterLinkId
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::IterLinkId
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::IterLinkId
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::iter::IterLinkId where Q: core::cmp::Eq + core::marker::Sized, K: core::borrow::Borrow<Q> + core::marker::Sized
+pub fn aya::programs::iter::IterLinkId::equivalent(&self, key: &K) -> bool
+impl<T, U> core::convert::Into<U> for aya::programs::iter::IterLinkId where U: core::convert::From<T>
+pub fn aya::programs::iter::IterLinkId::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::iter::IterLinkId where U: core::convert::Into<T>
+pub type aya::programs::iter::IterLinkId::Error = core::convert::Infallible
+pub fn aya::programs::iter::IterLinkId::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::iter::IterLinkId where U: core::convert::TryFrom<T>
+pub type aya::programs::iter::IterLinkId::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::iter::IterLinkId::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::iter::IterLinkId where T: 'static + core::marker::Sized
+pub fn aya::programs::iter::IterLinkId::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::iter::IterLinkId where T: core::marker::Sized
+pub fn aya::programs::iter::IterLinkId::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::iter::IterLinkId where T: core::marker::Sized
+pub fn aya::programs::iter::IterLinkId::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::iter::IterLinkId
+pub fn aya::programs::iter::IterLinkId::from(t: T) -> T
 pub mod aya::programs::kprobe
 pub enum aya::programs::kprobe::KProbeError
 pub aya::programs::kprobe::KProbeError::FileError
@@ -3902,9 +4053,15 @@ impl core::convert::From<aya::programs::sk_lookup::SkLookupLink> for aya::progra
 pub fn aya::programs::links::FdLink::from(w: aya::programs::sk_lookup::SkLookupLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::tp_btf::BtfTracePointLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::tp_btf::BtfTracePointLink) -> aya::programs::links::FdLink
+impl core::convert::TryFrom<aya::programs::iter::IterLink> for aya::programs::links::FdLink
+pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::links::FdLink::try_from(value: aya::programs::iter::IterLink) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::programs::kprobe::KProbeLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::kprobe::KProbeLink) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::iter::IterLink
+pub type aya::programs::iter::IterLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::iter::IterLink::try_from(fd_link: aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::kprobe::KProbeLink
 pub type aya::programs::kprobe::KProbeLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::kprobe::KProbeLink::try_from(fd_link: aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
@@ -4174,6 +4331,10 @@ impl aya::programs::links::Link for aya::programs::fexit::FExitLink
 pub type aya::programs::fexit::FExitLink::Id = aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::fexit::FExitLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::iter::IterLink
+pub type aya::programs::iter::IterLink::Id = aya::programs::iter::IterLinkId
+pub fn aya::programs::iter::IterLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::iter::IterLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::kprobe::KProbeLink
 pub type aya::programs::kprobe::KProbeLink::Id = aya::programs::kprobe::KProbeLinkId
 pub fn aya::programs::kprobe::KProbeLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -6818,6 +6979,7 @@ pub aya::programs::Program::CgroupSysctl(aya::programs::cgroup_sysctl::CgroupSys
 pub aya::programs::Program::Extension(aya::programs::extension::Extension)
 pub aya::programs::Program::FEntry(aya::programs::fentry::FEntry)
 pub aya::programs::Program::FExit(aya::programs::fexit::FExit)
+pub aya::programs::Program::Iter(aya::programs::iter::Iter)
 pub aya::programs::Program::KProbe(aya::programs::kprobe::KProbe)
 pub aya::programs::Program::LircMode2(aya::programs::lirc_mode2::LircMode2)
 pub aya::programs::Program::Lsm(aya::programs::lsm::Lsm)
@@ -6867,6 +7029,9 @@ pub fn &'a aya::programs::fentry::FEntry::try_from(program: &'a aya::programs::P
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::fexit::FExit
 pub type &'a aya::programs::fexit::FExit::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::fexit::FExit::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::fexit::FExit, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::iter::Iter
+pub type &'a aya::programs::iter::Iter::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::iter::Iter::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::iter::Iter, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::kprobe::KProbe
 pub type &'a aya::programs::kprobe::KProbe::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::kprobe::KProbe::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::kprobe::KProbe, aya::programs::ProgramError>
@@ -6939,6 +7104,9 @@ pub fn &'a mut aya::programs::fentry::FEntry::try_from(program: &'a mut aya::pro
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::fexit::FExit
 pub type &'a mut aya::programs::fexit::FExit::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::fexit::FExit::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::fexit::FExit, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::iter::Iter
+pub type &'a mut aya::programs::iter::Iter::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::iter::Iter::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::iter::Iter, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::kprobe::KProbe
 pub type &'a mut aya::programs::kprobe::KProbe::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::kprobe::KProbe::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::kprobe::KProbe, aya::programs::ProgramError>
@@ -7949,6 +8117,55 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::fexit::FExit where T: core
 pub fn aya::programs::fexit::FExit::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::from(t: T) -> T
+pub struct aya::programs::Iter
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::attach(&mut self) -> core::result::Result<aya::programs::iter::IterLinkId, aya::programs::ProgramError>
+pub fn aya::programs::iter::Iter::detach(&mut self, link_id: aya::programs::iter::IterLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::iter::Iter::load(&mut self, iter_type: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::iter::Iter::take_link(&mut self, link_id: aya::programs::iter::IterLinkId) -> core::result::Result<aya::programs::iter::IterLink, aya::programs::ProgramError>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::iter::Iter::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::iter::Iter
+pub type &'a aya::programs::iter::Iter::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::iter::Iter::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::iter::Iter, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::iter::Iter
+pub type &'a mut aya::programs::iter::Iter::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::iter::Iter::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::iter::Iter, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::iter::Iter
+impl core::marker::Send for aya::programs::iter::Iter
+impl core::marker::Sync for aya::programs::iter::Iter
+impl core::marker::Unpin for aya::programs::iter::Iter
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::Iter
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::Iter
+impl<T, U> core::convert::Into<U> for aya::programs::iter::Iter where U: core::convert::From<T>
+pub fn aya::programs::iter::Iter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::iter::Iter where U: core::convert::Into<T>
+pub type aya::programs::iter::Iter::Error = core::convert::Infallible
+pub fn aya::programs::iter::Iter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::iter::Iter where U: core::convert::TryFrom<T>
+pub type aya::programs::iter::Iter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::iter::Iter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::iter::Iter where T: 'static + core::marker::Sized
+pub fn aya::programs::iter::Iter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::iter::Iter where T: core::marker::Sized
+pub fn aya::programs::iter::Iter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::iter::Iter where T: core::marker::Sized
+pub fn aya::programs::iter::Iter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::from(t: T) -> T
 pub struct aya::programs::KProbe
 impl aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::attach<T: core::convert::AsRef<std::ffi::os_str::OsStr>>(&mut self, fn_name: T, offset: u64) -> core::result::Result<aya::programs::kprobe::KProbeLinkId, aya::programs::ProgramError>
@@ -8927,6 +9144,10 @@ impl aya::programs::links::Link for aya::programs::fexit::FExitLink
 pub type aya::programs::fexit::FExitLink::Id = aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::fexit::FExitLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::iter::IterLink
+pub type aya::programs::iter::IterLink::Id = aya::programs::iter::IterLinkId
+pub fn aya::programs::iter::IterLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::iter::IterLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::kprobe::KProbeLink
 pub type aya::programs::kprobe::KProbeLink::Id = aya::programs::kprobe::KProbeLinkId
 pub fn aya::programs::kprobe::KProbeLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>

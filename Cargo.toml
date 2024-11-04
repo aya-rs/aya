@@ -56,7 +56,8 @@ edition = "2021"
 [workspace.dependencies]
 anyhow = { version = "1", default-features = false }
 assert_matches = { version = "1.5.0", default-features = false }
-async-io = { version = "2.0", default-features = false }
+async-fs = { version = "2.1", default-features = false }
+async-io = { version = "2.4", default-features = false }
 bindgen = { version = "0.70", default-features = false }
 bitflags = { version = "2.2.1", default-features = false }
 bytes = { version = "1", default-features = false }

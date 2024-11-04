@@ -36,6 +36,16 @@ use crate::{
     Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN, FEATURES,
 };
 
+pub(crate) fn bpf_create_iter(link_fd: BorrowedFd<'_>) -> SysResult<crate::MockableFd> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    let u = unsafe { &mut attr.iter_create };
+    u.link_fd = link_fd.as_raw_fd() as u32;
+
+    // SAFETY: BPF_ITER_CREATE returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_ITER_CREATE, &mut attr) }
+}
+
 pub(crate) fn bpf_create_map(
     name: &CStr,
     def: &obj::Map,
@@ -377,6 +387,7 @@ pub(crate) fn bpf_map_freeze(fd: BorrowedFd<'_>) -> SysResult<i64> {
 pub(crate) enum LinkTarget<'f> {
     Fd(BorrowedFd<'f>),
     IfIndex(u32),
+    Iter,
 }
 
 // since kernel 5.7
@@ -398,6 +409,13 @@ pub(crate) fn bpf_link_create(
         }
         LinkTarget::IfIndex(ifindex) => {
             attr.link_create.__bindgen_anon_2.target_ifindex = ifindex;
+        }
+        // When attaching to the iterator program, there is no target FD.
+        // We need to set it to 0.
+        //
+        // https://elixir.bootlin.com/linux/v6.11.8/source/tools/lib/bpf/libbpf.c#L12790
+        LinkTarget::Iter => {
+            attr.link_create.__bindgen_anon_2.target_fd = 0;
         }
     };
     attr.link_create.attach_type = attach_type as u32;
