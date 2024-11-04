@@ -2,6 +2,7 @@ mod bpf_probe_read;
 mod btf_relocations;
 mod elf;
 mod info;
+mod iter;
 mod load;
 mod log;
 mod rbpf;

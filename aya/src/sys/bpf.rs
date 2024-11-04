@@ -36,6 +36,16 @@ use crate::{
     Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN, FEATURES,
 };
 
+pub(crate) fn bpf_create_iter(link_fd: BorrowedFd<'_>) -> SysResult<crate::MockableFd> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    let u = unsafe { &mut attr.iter_create };
+    u.link_fd = link_fd.as_raw_fd() as u32;
+
+    // SAFETY: BPF_ITER_CREATE returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_ITER_CREATE, &mut attr) }
+}
+
 pub(crate) fn bpf_create_map(
     name: &CStr,
     def: &obj::Map,
@@ -377,6 +387,7 @@ pub(crate) fn bpf_map_freeze(fd: BorrowedFd<'_>) -> SysResult<i64> {
 pub(crate) enum LinkTarget<'f> {
     Fd(BorrowedFd<'f>),
     IfIndex(u32),
+    Iter,
 }
 
 // since kernel 5.7
@@ -399,6 +410,11 @@ pub(crate) fn bpf_link_create(
         LinkTarget::IfIndex(ifindex) => {
             attr.link_create.__bindgen_anon_2.target_ifindex = ifindex;
         }
+        // When attaching to an iterator program, no target FD is needed. In
+        // fact, the kernel explicitly rejects non-zero target FDs for
+        // iterators:
+        // https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/bpf_iter.c#L517-L518
+        LinkTarget::Iter => {}
     };
     attr.link_create.attach_type = attach_type as u32;
 

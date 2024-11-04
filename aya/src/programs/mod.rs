@@ -51,6 +51,7 @@ pub mod cgroup_sysctl;
 pub mod extension;
 pub mod fentry;
 pub mod fexit;
+pub mod iter;
 pub mod kprobe;
 pub mod links;
 pub mod lirc_mode2;
@@ -94,6 +95,7 @@ pub use crate::programs::{
     extension::{Extension, ExtensionError},
     fentry::FEntry,
     fexit::FExit,
+    iter::Iter,
     kprobe::{KProbe, KProbeError},
     links::{CgroupAttachMode, Link, LinkOrder},
     lirc_mode2::LircMode2,
@@ -303,6 +305,8 @@ pub enum Program {
     CgroupSock(CgroupSock),
     /// A [`CgroupDevice`] program
     CgroupDevice(CgroupDevice),
+    /// An [`Iter`] program
+    Iter(Iter),
 }
 
 impl Program {
@@ -324,7 +328,18 @@ impl Program {
             Self::PerfEvent(_) => ProgramType::PerfEvent,
             Self::RawTracePoint(_) => ProgramType::RawTracePoint,
             Self::Lsm(_) => ProgramType::Lsm,
-            Self::BtfTracePoint(_) | Self::FEntry(_) | Self::FExit(_) => ProgramType::Tracing,
+            // The following program types are a subset of `TRACING` programs:
+            //
+            // - `BPF_TRACE_RAW_TP` (`BtfTracePoint`)
+            // - `BTF_TRACE_FENTRY` (`FEntry`)
+            // - `BPF_MODIFY_RETURN` (not supported yet in Aya)
+            // - `BPF_TRACE_FEXIT` (`FExit`)
+            // - `BPF_TRACE_ITER` (`Iter`)
+            //
+            // https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/syscall.c#L3935-L3940
+            Self::BtfTracePoint(_) | Self::FEntry(_) | Self::FExit(_) | Self::Iter(_) => {
+                ProgramType::Tracing
+            }
             Self::Extension(_) => ProgramType::Extension,
             Self::CgroupSockAddr(_) => ProgramType::CgroupSockAddr,
             Self::SkLookup(_) => ProgramType::SkLookup,
@@ -360,6 +375,7 @@ impl Program {
             Self::SkLookup(p) => p.pin(path),
             Self::CgroupSock(p) => p.pin(path),
             Self::CgroupDevice(p) => p.pin(path),
+            Self::Iter(p) => p.pin(path),
         }
     }
 
@@ -390,6 +406,7 @@ impl Program {
             Self::SkLookup(mut p) => p.unload(),
             Self::CgroupSock(mut p) => p.unload(),
             Self::CgroupDevice(mut p) => p.unload(),
+            Self::Iter(mut p) => p.unload(),
         }
     }
 
@@ -422,6 +439,7 @@ impl Program {
             Self::SkLookup(p) => p.fd(),
             Self::CgroupSock(p) => p.fd(),
             Self::CgroupDevice(p) => p.fd(),
+            Self::Iter(p) => p.fd(),
         }
     }
 
@@ -455,6 +473,7 @@ impl Program {
             Self::SkLookup(p) => p.info(),
             Self::CgroupSock(p) => p.info(),
             Self::CgroupDevice(p) => p.info(),
+            Self::Iter(p) => p.info(),
         }
     }
 }
@@ -771,6 +790,7 @@ impl_program_unload!(
     SockOps,
     CgroupSock,
     CgroupDevice,
+    Iter,
 );
 
 macro_rules! impl_fd {
@@ -811,6 +831,7 @@ impl_fd!(
     SockOps,
     CgroupSock,
     CgroupDevice,
+    Iter,
 );
 
 /// Trait implemented by the [`Program`] types which support the kernel's
@@ -916,6 +937,7 @@ impl_program_pin!(
     SockOps,
     CgroupSock,
     CgroupDevice,
+    Iter,
 );
 
 macro_rules! impl_from_pin {
@@ -954,6 +976,7 @@ impl_from_pin!(
     SkLookup,
     SockOps,
     CgroupDevice,
+    Iter,
 );
 
 macro_rules! impl_try_from_program {
@@ -1009,6 +1032,7 @@ impl_try_from_program!(
     SkLookup,
     CgroupSock,
     CgroupDevice,
+    Iter,
 );
 
 impl_info!(
@@ -1036,6 +1060,7 @@ impl_info!(
     SockOps,
     CgroupSock,
     CgroupDevice,
+    Iter,
 );
 
 // TODO(https://github.com/aya-rs/aya/issues/645): this API is currently used in tests. Stabilize

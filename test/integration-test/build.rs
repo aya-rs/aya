@@ -67,6 +67,7 @@ fn main() {
 
     const C_BPF: &[(&str, bool)] = &[
         ("ext.bpf.c", false),
+        ("iter.bpf.c", true),
         ("main.bpf.c", false),
         ("multimap-btf.bpf.c", false),
         ("reloc.bpf.c", true),
