@@ -213,7 +213,7 @@ jobs:
         run: |
           set -euxo pipefail
           sudo apt update
-          sudo apt -y install gcc-multilib qemu-system-{arm,x86}
+          sudo apt -y install gcc-multilib lynx qemu-system-{arm,x86}
           echo /usr/lib/llvm-15/bin >> $GITHUB_PATH
 
       - name: Install prerequisites
@@ -229,8 +229,7 @@ jobs:
           # https://github.com/actions/setup-python/issues/577
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
           | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
-          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 \
-          brew install dpkg gnu-tar llvm pkg-config qemu
+          brew install --formula dpkg gnu-tar llvm lynx pkg-config qemu
           echo $(brew --prefix)/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
           echo $(brew --prefix)/opt/llvm/bin >> $GITHUB_PATH
 
@@ -252,12 +251,12 @@ jobs:
           # Get the partial SHA from Rust nightly.
           rustc_sha=$(rustc +nightly --version | grep -oE '[a-f0-9]{7,40}')
           # Get the full SHA from GitHub.
-          rustc_sha=$(curl -s https://api.github.com/repos/rust-lang/rust/commits/$rustc_sha \
+          rustc_sha=$(curl -sfSL https://api.github.com/repos/rust-lang/rust/commits/$rustc_sha \
             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
             --header 'content-type: application/json' \
             | jq -r '.sha')
           mkdir -p /tmp/rustc-llvm
-          wget -q -O - https://ci-artifacts.rust-lang.org/rustc-builds/$rustc_sha/rust-dev-nightly-${{ matrix.target }}.tar.xz | \
+          curl -sfSL https://ci-artifacts.rust-lang.org/rustc-builds/$rustc_sha/rust-dev-nightly-${{ matrix.target }}.tar.xz | \
             tar -xJ --strip-components 2 -C /tmp/rustc-llvm
           echo /tmp/rustc-llvm/bin >> $GITHUB_PATH
 
@@ -270,29 +269,13 @@ jobs:
 
       - name: Download debian kernels
         if: runner.arch == 'ARM64'
-        run: |
-          set -euxo pipefail
-          mkdir -p test/.tmp/debian-kernels/arm64
-          # NB: a 4.19 kernel image for arm64 was not available.
-          # TODO: enable tests on kernels before 6.0.
-          # linux-image-5.10.0-23-cloud-arm64-unsigned_5.10.179-3_arm64.deb \
-          printf '%s\0' \
-            linux-image-6.1.0-22-cloud-arm64-unsigned_6.1.94-1_arm64.deb \
-            linux-image-6.10.9-cloud-arm64-unsigned_6.10.9-1_arm64.deb \
-          | xargs -0 -t -P0 -I {} wget -nd -nv -P test/.tmp/debian-kernels/arm64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
+        # TODO: enable tests on kernels before 6.0.
+        run: .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/arm64 arm64 6.1 6.10
 
       - name: Download debian kernels
         if: runner.arch == 'X64'
-        run: |
-          set -euxo pipefail
-          mkdir -p test/.tmp/debian-kernels/amd64
-          # TODO: enable tests on kernels before 6.0.
-          # linux-image-4.19.0-21-cloud-amd64-unsigned_4.19.249-2_amd64.deb \
-          # linux-image-5.10.0-23-cloud-amd64-unsigned_5.10.179-3_amd64.deb \
-          printf '%s\0' \
-            linux-image-6.1.0-22-cloud-amd64-unsigned_6.1.94-1_amd64.deb \
-            linux-image-6.10.9-cloud-amd64-unsigned_6.10.9-1_amd64.deb \
-          | xargs -0 -t -P0 -I {} wget -nd -nv -P test/.tmp/debian-kernels/amd64 ftp://ftp.us.debian.org/debian/pool/main/l/linux/{}
+        # TODO: enable tests on kernels before 6.0.
+        run: .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/amd64 amd64 6.1 6.10
 
       - name: Extract debian kernels
         run: |
