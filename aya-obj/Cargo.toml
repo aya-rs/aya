@@ -13,7 +13,6 @@ edition.workspace = true
 
 [dependencies]
 bytes = { workspace = true }
-core-error = { workspace = true, default-features = true }
 hashbrown = { workspace = true, default-features = true }
 log = { workspace = true }
 object = { workspace = true, features = ["elf", "read_core"] }
@@ -24,4 +23,4 @@ assert_matches = { workspace = true }
 rbpf = { workspace = true }
 
 [features]
-std = []
+std = ["thiserror/std"]
