@@ -3,8 +3,6 @@
 use alloc::vec::Vec;
 use core::mem;
 
-#[cfg(not(feature = "std"))]
-use crate::std;
 use crate::{EbpfSectionKind, InvalidTypeBinding};
 
 impl TryFrom<u32> for crate::generated::bpf_map_type {

@@ -17,8 +17,6 @@ use object::{
     SymbolKind,
 };
 
-#[cfg(not(feature = "std"))]
-use crate::std;
 use crate::{
     btf::{
         Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,

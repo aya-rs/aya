@@ -11,8 +11,6 @@ use bytes::BufMut;
 use log::debug;
 use object::{Endianness, SectionIndex};
 
-#[cfg(not(feature = "std"))]
-use crate::std;
 use crate::{
     btf::{
         info::{FuncSecInfo, LineSecInfo},
@@ -282,7 +280,7 @@ impl Btf {
 
     /// Adds a string to BTF metadata, returning an offset
     pub fn add_string(&mut self, name: &str) -> u32 {
-        let str = name.bytes().chain(std::iter::once(0));
+        let str = name.bytes().chain(core::iter::once(0));
         let name_offset = self.strings.len();
         self.strings.extend(str);
         self.header.str_len = self.strings.len() as u32;
@@ -532,7 +530,7 @@ impl Btf {
                         name_offset = self.add_string(&fixed_name);
                     }
 
-                    let entries = std::mem::take(&mut d.entries);
+                    let entries = core::mem::take(&mut d.entries);
 
                     let members = entries
                         .iter()
@@ -788,7 +786,7 @@ impl BtfExt {
             pub hdr_len: u32,
         }
 
-        if data.len() < std::mem::size_of::<MinimalHeader>() {
+        if data.len() < core::mem::size_of::<MinimalHeader>() {
             return Err(BtfError::InvalidHeader);
         }
 
@@ -809,18 +807,18 @@ impl BtfExt {
             // forwards compatibility: if newer headers are bigger
             // than the pre-generated btf_ext_header we should only
             // read up to btf_ext_header
-            let len_to_read = len_to_read.min(std::mem::size_of::<btf_ext_header>());
+            let len_to_read = len_to_read.min(core::mem::size_of::<btf_ext_header>());
 
             // now create our full-fledge header; but start with it
             // zeroed out so unavailable fields stay as zero on older
             // BTF.ext sections
-            let mut header = std::mem::MaybeUninit::<btf_ext_header>::zeroed();
+            let mut header = core::mem::MaybeUninit::<btf_ext_header>::zeroed();
             // Safety: we have checked that len_to_read is less than
             // size_of::<btf_ext_header> and less than
             // data.len(). Additionally, we know that the header has
             // been initialized so it's safe to call for assume_init.
             unsafe {
-                std::ptr::copy(data.as_ptr(), header.as_mut_ptr() as *mut u8, len_to_read);
+                core::ptr::copy(data.as_ptr(), header.as_mut_ptr() as *mut u8, len_to_read);
                 header.assume_init()
             }
         };

@@ -6,8 +6,6 @@ use core::mem;
 use log::debug;
 use object::{SectionIndex, SymbolKind};
 
-#[cfg(not(feature = "std"))]
-use crate::std;
 use crate::{
     generated::{
         bpf_insn, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
@@ -18,6 +16,11 @@ use crate::{
     util::{HashMap, HashSet},
     EbpfSectionKind,
 };
+
+#[cfg(feature = "std")]
+type RawFd = std::os::fd::RawFd;
+#[cfg(not(feature = "std"))]
+type RawFd = core::ffi::c_int;
 
 pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
 
@@ -104,7 +107,7 @@ pub(crate) struct Symbol {
 
 impl Object {
     /// Relocates the map references
-    pub fn relocate_maps<'a, I: Iterator<Item = (&'a str, std::os::fd::RawFd, &'a Map)>>(
+    pub fn relocate_maps<'a, I: Iterator<Item = (&'a str, RawFd, &'a Map)>>(
         &mut self,
         maps: I,
         text_sections: &HashSet<usize>,
@@ -179,8 +182,8 @@ impl Object {
 fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     fun: &mut Function,
     relocations: I,
-    maps_by_section: &HashMap<usize, (&str, std::os::fd::RawFd, &Map)>,
-    maps_by_symbol: &HashMap<usize, (&str, std::os::fd::RawFd, &Map)>,
+    maps_by_section: &HashMap<usize, (&str, RawFd, &Map)>,
+    maps_by_symbol: &HashMap<usize, (&str, RawFd, &Map)>,
     symbol_table: &HashMap<usize, Symbol>,
     text_sections: &HashSet<usize>,
 ) -> Result<(), RelocationError> {

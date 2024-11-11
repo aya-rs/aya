@@ -10,8 +10,6 @@ use core::{mem, ops::Bound::Included, ptr};
 
 use object::SectionIndex;
 
-#[cfg(not(feature = "std"))]
-use crate::std;
 use crate::{
     btf::{
         fields_are_compatible, types_are_compatible, Array, Btf, BtfError, BtfMember, BtfType,
