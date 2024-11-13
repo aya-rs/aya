@@ -646,6 +646,8 @@ impl<'a> core::marker::Sync for aya::maps::ring_buf::RingBufItem<'a>
 impl<'a> core::marker::Unpin for aya::maps::ring_buf::RingBufItem<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ring_buf::RingBufItem<'a>
 impl<'a> !core::panic::unwind_safe::UnwindSafe for aya::maps::ring_buf::RingBufItem<'a>
+impl<P, T> core::ops::deref::Receiver for aya::maps::ring_buf::RingBufItem<'a> where P: core::ops::deref::Deref<Target = T> + core::marker::Sized, T: core::marker::Sized
+pub type aya::maps::ring_buf::RingBufItem<'a>::Target = T
 impl<T, U> core::convert::Into<U> for aya::maps::ring_buf::RingBufItem<'a> where U: core::convert::From<T>
 pub fn aya::maps::ring_buf::RingBufItem<'a>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::ring_buf::RingBufItem<'a> where U: core::convert::Into<T>
@@ -2073,6 +2075,8 @@ impl<T> core::marker::Sync for aya::maps::PerCpuValues<T> where T: core::marker:
 impl<T> core::marker::Unpin for aya::maps::PerCpuValues<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuValues<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuValues<T> where T: core::panic::unwind_safe::UnwindSafe
+impl<P, T> core::ops::deref::Receiver for aya::maps::PerCpuValues<T> where P: core::ops::deref::Deref<Target = T> + core::marker::Sized, T: core::marker::Sized
+pub type aya::maps::PerCpuValues<T>::Target = T
 impl<T, U> core::convert::Into<U> for aya::maps::PerCpuValues<T> where U: core::convert::From<T>
 pub fn aya::maps::PerCpuValues<T>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::maps::PerCpuValues<T> where U: core::convert::Into<T>
