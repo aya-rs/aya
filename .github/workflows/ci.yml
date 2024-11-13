@@ -48,8 +48,16 @@ jobs:
       - name: Run clippy
         run: cargo hack clippy --all-targets --feature-powerset --workspace -- --deny warnings
 
-      - name: Check public API
-        run: cargo xtask public-api
+      - run: cargo xtask public-api
+        if: github.event_name == 'pull_request'
+
+      - run: cargo xtask public-api --bless
+        if: github.event_name != 'pull_request' && github.repository_owner == 'aya-rs'
+
+      - uses: peter-evans/create-pull-request@v7
+        if: github.event_name != 'pull_request' && github.repository_owner == 'aya-rs'
+        with:
+          commit-message: "public-api: regenerate"
 
       - name: Run miri
         run: |
