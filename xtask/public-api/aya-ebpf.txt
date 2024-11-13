@@ -507,6 +507,8 @@ impl<T> core::marker::Sync for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T
 impl<T> core::marker::Unpin for aya_ebpf::maps::ring_buf::RingBufEntry<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> !core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::ring_buf::RingBufEntry<T>
+impl<P, T> core::ops::deref::Receiver for aya_ebpf::maps::ring_buf::RingBufEntry<T> where P: core::ops::deref::Deref<Target = T> + core::marker::Sized, T: core::marker::Sized
+pub type aya_ebpf::maps::ring_buf::RingBufEntry<T>::Target = T
 impl<T, U> core::convert::Into<U> for aya_ebpf::maps::ring_buf::RingBufEntry<T> where U: core::convert::From<T>
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya_ebpf::maps::ring_buf::RingBufEntry<T> where U: core::convert::Into<T>
