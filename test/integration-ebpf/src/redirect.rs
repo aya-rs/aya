@@ -29,7 +29,9 @@ pub fn redirect_sock(ctx: XdpContext) -> u32 {
     let queue_id = ctx.rx_queue_index();
     if SOCKS.get(queue_id) == Some(queue_id) {
         // Queue ID matches, redirect to AF_XDP socket.
-        SOCKS.redirect(0, 0).unwrap_or(xdp_action::XDP_ABORTED)
+        SOCKS
+            .redirect(queue_id, 0)
+            .unwrap_or(xdp_action::XDP_ABORTED)
     } else {
         // Queue ID did not match, pass packet to kernel network stack.
         xdp_action::XDP_PASS
