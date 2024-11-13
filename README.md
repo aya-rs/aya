@@ -3,7 +3,7 @@
 [![Crates.io][crates-badge]][crates-url]
 ![License][license-badge]
 [![Build status][build-badge]][build-url]
-[![Book][book-badge]][book-url]
+[![Book][book-badge]][book-url] [![Gurubase][gurubase-badge]][gurubase-url]
 
 [crates-badge]: https://img.shields.io/crates/v/aya.svg?style=for-the-badge&logo=rust
 [crates-url]: https://crates.io/crates/aya
@@ -12,6 +12,8 @@
 [build-url]: https://github.com/aya-rs/aya/actions/workflows/ci.yml
 [book-badge]: https://img.shields.io/badge/read%20the-book-9cf.svg?style=for-the-badge&logo=mdbook
 [book-url]: https://aya-rs.dev/book
+[gurubase-badge]: https://img.shields.io/badge/Gurubase-Ask%20Aya%20Guru-006BFF?style=for-the-badge
+[gurubase-url]: https://gurubase.io/g/aya
 
 ## API Documentation
 
