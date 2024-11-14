@@ -3,7 +3,8 @@
 [![Crates.io][crates-badge]][crates-url]
 ![License][license-badge]
 [![Build status][build-badge]][build-url]
-[![Book][book-badge]][book-url] [![Gurubase][gurubase-badge]][gurubase-url]
+[![Book][book-badge]][book-url]
+[![Gurubase][gurubase-badge]][gurubase-url]
 
 [crates-badge]: https://img.shields.io/crates/v/aya.svg?style=for-the-badge&logo=rust
 [crates-url]: https://crates.io/crates/aya
