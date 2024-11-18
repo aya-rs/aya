@@ -1362,7 +1362,8 @@ pub aya::maps::MapError::ProgIdNotSupported
 pub aya::maps::MapError::ProgramNotLoaded
 pub aya::maps::MapError::SyscallError(aya::sys::SyscallError)
 pub aya::maps::MapError::Unsupported
-pub aya::maps::MapError::Unsupported::map_type: u32
+pub aya::maps::MapError::Unsupported::map_type: aya_obj::generated::linux_bindings_x86_64::bpf_map_type
+pub aya::maps::MapError::Unsupported::name: alloc::string::String
 impl core::convert::From<aya::maps::MapError> for aya::EbpfError
 pub fn aya::EbpfError::from(source: aya::maps::MapError) -> Self
 impl core::convert::From<aya::maps::MapError> for aya::maps::xdp::XdpMapError
