@@ -51,11 +51,11 @@ pub fn aya_ebpf::helpers::PrintkArg::try_from(value: U) -> core::result::Result<
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::helpers::PrintkArg where U: core::convert::TryFrom<T>
 pub type aya_ebpf::helpers::PrintkArg::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::helpers::PrintkArg::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::helpers::PrintkArg where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::helpers::PrintkArg where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::helpers::PrintkArg::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::helpers::PrintkArg where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::helpers::PrintkArg where T: ?core::marker::Sized
 pub fn aya_ebpf::helpers::PrintkArg::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::helpers::PrintkArg where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::helpers::PrintkArg where T: ?core::marker::Sized
 pub fn aya_ebpf::helpers::PrintkArg::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya_ebpf::helpers::PrintkArg where T: core::clone::Clone
 pub unsafe fn aya_ebpf::helpers::PrintkArg::clone_to_uninit(&self, dst: *mut u8)
@@ -99,11 +99,11 @@ pub fn aya_ebpf::maps::array::Array<T>::try_from(value: U) -> core::result::Resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::array::Array<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::array::Array<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::array::Array<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::array::Array<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::array::Array<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::array::Array<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::array::Array<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::array::Array<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::array::Array<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::array::Array<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::array::Array<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::array::Array<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::array::Array<T>
 pub fn aya_ebpf::maps::array::Array<T>::from(t: T) -> T
@@ -128,11 +128,11 @@ pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::try_from(value: U) -> core:
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::bloom_filter::BloomFilter<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T>
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::from(t: T) -> T
@@ -160,11 +160,11 @@ pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::try_from(value: U) -> core::resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::HashMap<K, V> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::hash_map::HashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::hash_map::HashMap<K, V> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::hash_map::HashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::HashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::HashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::HashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::HashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::HashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::from(t: T) -> T
@@ -191,11 +191,11 @@ pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::try_from(value: U) -> core::r
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::hash_map::LruHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::from(t: T) -> T
@@ -222,11 +222,11 @@ pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::try_from(value: U) -> c
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::from(t: T) -> T
@@ -253,11 +253,11 @@ pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::try_from(value: U) -> core
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::from(t: T) -> T
@@ -281,11 +281,11 @@ pub fn aya_ebpf::maps::lpm_trie::Key<K>::try_from(value: U) -> core::result::Res
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::lpm_trie::Key<K> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::lpm_trie::Key<K>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::lpm_trie::Key<K>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::lpm_trie::Key<K> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::lpm_trie::Key<K> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::lpm_trie::Key<K>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::lpm_trie::Key<K> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::lpm_trie::Key<K> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::lpm_trie::Key<K>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::lpm_trie::Key<K> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::lpm_trie::Key<K> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::lpm_trie::Key<K>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::lpm_trie::Key<K>
 pub fn aya_ebpf::maps::lpm_trie::Key<K>::from(t: T) -> T
@@ -310,11 +310,11 @@ pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::try_from(value: U) -> core::resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::from(t: T) -> T
@@ -340,11 +340,11 @@ pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::try_from(value: U) -> core
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::from(t: T) -> T
@@ -369,11 +369,11 @@ pub fn aya_ebpf::maps::PerfEventArray<T>::try_from(value: U) -> core::result::Re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::PerfEventArray<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::PerfEventArray<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::PerfEventArray<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::PerfEventArray<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::PerfEventArray<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventArray<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::PerfEventArray<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::PerfEventArray<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventArray<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::PerfEventArray<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::PerfEventArray<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventArray<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::PerfEventArray<T>
 pub fn aya_ebpf::maps::PerfEventArray<T>::from(t: T) -> T
@@ -397,11 +397,11 @@ pub fn aya_ebpf::maps::PerfEventByteArray::try_from(value: U) -> core::result::R
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::PerfEventByteArray where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::PerfEventByteArray::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::PerfEventByteArray::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::PerfEventByteArray where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::PerfEventByteArray where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventByteArray::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::PerfEventByteArray where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::PerfEventByteArray where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventByteArray::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::PerfEventByteArray where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::PerfEventByteArray where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventByteArray::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::PerfEventByteArray
 pub fn aya_ebpf::maps::PerfEventByteArray::from(t: T) -> T
@@ -425,11 +425,11 @@ pub fn aya_ebpf::maps::program_array::ProgramArray::try_from(value: U) -> core::
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::program_array::ProgramArray where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::program_array::ProgramArray::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::program_array::ProgramArray::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::program_array::ProgramArray where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::program_array::ProgramArray where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::program_array::ProgramArray::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::program_array::ProgramArray where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::program_array::ProgramArray where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::program_array::ProgramArray::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::program_array::ProgramArray where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::program_array::ProgramArray where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::program_array::ProgramArray::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::program_array::ProgramArray
 pub fn aya_ebpf::maps::program_array::ProgramArray::from(t: T) -> T
@@ -454,18 +454,18 @@ pub fn aya_ebpf::maps::queue::Queue<T>::try_from(value: U) -> core::result::Resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::queue::Queue<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::queue::Queue<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::queue::Queue<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::queue::Queue<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::queue::Queue<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::queue::Queue<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::queue::Queue<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::queue::Queue<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::queue::Queue<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::queue::Queue<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::queue::Queue<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::queue::Queue<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::queue::Queue<T>
 pub fn aya_ebpf::maps::queue::Queue<T>::from(t: T) -> T
 pub mod aya_ebpf::maps::ring_buf
 #[repr(transparent)] pub struct aya_ebpf::maps::ring_buf::RingBuf
 impl aya_ebpf::maps::ring_buf::RingBuf
-pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
 pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where const_assert::Assert<{ _ }>: const_assert::IsTrue
@@ -484,11 +484,11 @@ pub fn aya_ebpf::maps::ring_buf::RingBuf::try_from(value: U) -> core::result::Re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::ring_buf::RingBuf where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::ring_buf::RingBuf::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::ring_buf::RingBuf::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::ring_buf::RingBuf where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::ring_buf::RingBuf where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::ring_buf::RingBuf::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::ring_buf::RingBuf where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::ring_buf::RingBuf where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::ring_buf::RingBuf::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::ring_buf::RingBuf where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::ring_buf::RingBuf where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::ring_buf::RingBuf::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::from(t: T) -> T
@@ -507,7 +507,7 @@ impl<T> core::marker::Sync for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T
 impl<T> core::marker::Unpin for aya_ebpf::maps::ring_buf::RingBufEntry<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> !core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::ring_buf::RingBufEntry<T>
-impl<P, T> core::ops::deref::Receiver for aya_ebpf::maps::ring_buf::RingBufEntry<T> where P: core::ops::deref::Deref<Target = T> + core::marker::Sized, T: core::marker::Sized
+impl<P, T> core::ops::deref::Receiver for aya_ebpf::maps::ring_buf::RingBufEntry<T> where P: core::ops::deref::Deref<Target = T> + ?core::marker::Sized, T: ?core::marker::Sized
 pub type aya_ebpf::maps::ring_buf::RingBufEntry<T>::Target = T
 impl<T, U> core::convert::Into<U> for aya_ebpf::maps::ring_buf::RingBufEntry<T> where U: core::convert::From<T>
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::into(self) -> U
@@ -517,11 +517,11 @@ pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::try_from(value: U) -> core::re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::ring_buf::RingBufEntry<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::ring_buf::RingBufEntry<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::ring_buf::RingBufEntry<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::ring_buf::RingBufEntry<T>
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::from(t: T) -> T
@@ -548,11 +548,11 @@ pub fn aya_ebpf::maps::sock_hash::SockHash<K>::try_from(value: U) -> core::resul
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::sock_hash::SockHash<K> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::sock_hash::SockHash<K>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::sock_hash::SockHash<K> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::sock_hash::SockHash<K> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_hash::SockHash<K> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_hash::SockHash<K> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::sock_hash::SockHash<K> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::sock_hash::SockHash<K> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::sock_hash::SockHash<K>
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::from(t: T) -> T
@@ -579,11 +579,11 @@ pub fn aya_ebpf::maps::sock_map::SockMap::try_from(value: U) -> core::result::Re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::sock_map::SockMap where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::sock_map::SockMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::sock_map::SockMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::sock_map::SockMap where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::sock_map::SockMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_map::SockMap::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_map::SockMap where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_map::SockMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_map::SockMap::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::sock_map::SockMap where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::sock_map::SockMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_map::SockMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::sock_map::SockMap
 pub fn aya_ebpf::maps::sock_map::SockMap::from(t: T) -> T
@@ -608,11 +608,11 @@ pub fn aya_ebpf::maps::stack::Stack<T>::try_from(value: U) -> core::result::Resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::stack::Stack<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::stack::Stack<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::stack::Stack<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::stack::Stack<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::stack::Stack<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::stack::Stack<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack::Stack<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::stack::Stack<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::stack::Stack<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::stack::Stack<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::stack::Stack<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::from(t: T) -> T
@@ -636,11 +636,11 @@ pub fn aya_ebpf::maps::stack_trace::StackTrace::try_from(value: U) -> core::resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::stack_trace::StackTrace where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::stack_trace::StackTrace::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::stack_trace::StackTrace::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::stack_trace::StackTrace where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::stack_trace::StackTrace where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::stack_trace::StackTrace::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack_trace::StackTrace where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack_trace::StackTrace where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::stack_trace::StackTrace::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::stack_trace::StackTrace where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::stack_trace::StackTrace where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::stack_trace::StackTrace::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::stack_trace::StackTrace
 pub fn aya_ebpf::maps::stack_trace::StackTrace::from(t: T) -> T
@@ -664,11 +664,11 @@ pub fn aya_ebpf::maps::CpuMap::try_from(value: U) -> core::result::Result<T, <T 
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::CpuMap where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::CpuMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::CpuMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::CpuMap where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::CpuMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::CpuMap::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::CpuMap where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::CpuMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::CpuMap::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::CpuMap where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::CpuMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::CpuMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::CpuMap
 pub fn aya_ebpf::maps::CpuMap::from(t: T) -> T
@@ -692,11 +692,11 @@ pub fn aya_ebpf::maps::DevMap::try_from(value: U) -> core::result::Result<T, <T 
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::DevMap where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::DevMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::DevMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::DevMap where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::DevMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMap::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMap where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMap::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMap where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::from(t: T) -> T
@@ -720,11 +720,11 @@ pub fn aya_ebpf::maps::DevMapHash::try_from(value: U) -> core::result::Result<T,
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::DevMapHash where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::DevMapHash::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::DevMapHash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::DevMapHash where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::DevMapHash where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMapHash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMapHash where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMapHash where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMapHash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMapHash where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMapHash where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMapHash::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::DevMapHash
 pub fn aya_ebpf::maps::DevMapHash::from(t: T) -> T
@@ -748,11 +748,11 @@ pub fn aya_ebpf::maps::XskMap::try_from(value: U) -> core::result::Result<T, <T 
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::XskMap where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::XskMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::XskMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::XskMap where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::XskMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::XskMap::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::XskMap where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::XskMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::XskMap::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::XskMap where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::XskMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::XskMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::XskMap
 pub fn aya_ebpf::maps::XskMap::from(t: T) -> T
@@ -777,11 +777,11 @@ pub fn aya_ebpf::maps::array::Array<T>::try_from(value: U) -> core::result::Resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::array::Array<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::array::Array<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::array::Array<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::array::Array<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::array::Array<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::array::Array<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::array::Array<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::array::Array<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::array::Array<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::array::Array<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::array::Array<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::array::Array<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::array::Array<T>
 pub fn aya_ebpf::maps::array::Array<T>::from(t: T) -> T
@@ -805,11 +805,11 @@ pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::try_from(value: U) -> core:
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::bloom_filter::BloomFilter<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T>
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::from(t: T) -> T
@@ -832,11 +832,11 @@ pub fn aya_ebpf::maps::CpuMap::try_from(value: U) -> core::result::Result<T, <T 
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::CpuMap where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::CpuMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::CpuMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::CpuMap where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::CpuMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::CpuMap::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::CpuMap where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::CpuMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::CpuMap::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::CpuMap where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::CpuMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::CpuMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::CpuMap
 pub fn aya_ebpf::maps::CpuMap::from(t: T) -> T
@@ -860,11 +860,11 @@ pub fn aya_ebpf::maps::DevMap::try_from(value: U) -> core::result::Result<T, <T 
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::DevMap where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::DevMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::DevMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::DevMap where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::DevMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMap::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMap where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMap::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMap where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::from(t: T) -> T
@@ -888,11 +888,11 @@ pub fn aya_ebpf::maps::DevMapHash::try_from(value: U) -> core::result::Result<T,
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::DevMapHash where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::DevMapHash::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::DevMapHash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::DevMapHash where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::DevMapHash where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMapHash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMapHash where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMapHash where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMapHash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMapHash where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMapHash where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMapHash::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::DevMapHash
 pub fn aya_ebpf::maps::DevMapHash::from(t: T) -> T
@@ -919,11 +919,11 @@ pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::try_from(value: U) -> core::resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::HashMap<K, V> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::hash_map::HashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::hash_map::HashMap<K, V> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::hash_map::HashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::HashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::HashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::HashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::HashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::HashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::from(t: T) -> T
@@ -948,11 +948,11 @@ pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::try_from(value: U) -> core::resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::from(t: T) -> T
@@ -979,11 +979,11 @@ pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::try_from(value: U) -> core::r
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::hash_map::LruHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::from(t: T) -> T
@@ -1010,11 +1010,11 @@ pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::try_from(value: U) -> c
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::from(t: T) -> T
@@ -1039,11 +1039,11 @@ pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::try_from(value: U) -> core
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::from(t: T) -> T
@@ -1070,11 +1070,11 @@ pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::try_from(value: U) -> core
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::from(t: T) -> T
@@ -1098,11 +1098,11 @@ pub fn aya_ebpf::maps::PerfEventArray<T>::try_from(value: U) -> core::result::Re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::PerfEventArray<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::PerfEventArray<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::PerfEventArray<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::PerfEventArray<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::PerfEventArray<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventArray<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::PerfEventArray<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::PerfEventArray<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventArray<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::PerfEventArray<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::PerfEventArray<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventArray<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::PerfEventArray<T>
 pub fn aya_ebpf::maps::PerfEventArray<T>::from(t: T) -> T
@@ -1126,11 +1126,11 @@ pub fn aya_ebpf::maps::PerfEventByteArray::try_from(value: U) -> core::result::R
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::PerfEventByteArray where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::PerfEventByteArray::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::PerfEventByteArray::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::PerfEventByteArray where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::PerfEventByteArray where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventByteArray::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::PerfEventByteArray where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::PerfEventByteArray where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventByteArray::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::PerfEventByteArray where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::PerfEventByteArray where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::PerfEventByteArray::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::PerfEventByteArray
 pub fn aya_ebpf::maps::PerfEventByteArray::from(t: T) -> T
@@ -1153,11 +1153,11 @@ pub fn aya_ebpf::maps::program_array::ProgramArray::try_from(value: U) -> core::
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::program_array::ProgramArray where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::program_array::ProgramArray::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::program_array::ProgramArray::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::program_array::ProgramArray where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::program_array::ProgramArray where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::program_array::ProgramArray::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::program_array::ProgramArray where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::program_array::ProgramArray where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::program_array::ProgramArray::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::program_array::ProgramArray where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::program_array::ProgramArray where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::program_array::ProgramArray::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::program_array::ProgramArray
 pub fn aya_ebpf::maps::program_array::ProgramArray::from(t: T) -> T
@@ -1181,17 +1181,17 @@ pub fn aya_ebpf::maps::queue::Queue<T>::try_from(value: U) -> core::result::Resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::queue::Queue<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::queue::Queue<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::queue::Queue<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::queue::Queue<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::queue::Queue<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::queue::Queue<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::queue::Queue<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::queue::Queue<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::queue::Queue<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::queue::Queue<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::queue::Queue<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::queue::Queue<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::queue::Queue<T>
 pub fn aya_ebpf::maps::queue::Queue<T>::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::RingBuf
 impl aya_ebpf::maps::ring_buf::RingBuf
-pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
 pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where const_assert::Assert<{ _ }>: const_assert::IsTrue
@@ -1210,11 +1210,11 @@ pub fn aya_ebpf::maps::ring_buf::RingBuf::try_from(value: U) -> core::result::Re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::ring_buf::RingBuf where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::ring_buf::RingBuf::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::ring_buf::RingBuf::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::ring_buf::RingBuf where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::ring_buf::RingBuf where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::ring_buf::RingBuf::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::ring_buf::RingBuf where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::ring_buf::RingBuf where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::ring_buf::RingBuf::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::ring_buf::RingBuf where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::ring_buf::RingBuf where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::ring_buf::RingBuf::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::from(t: T) -> T
@@ -1240,11 +1240,11 @@ pub fn aya_ebpf::maps::sock_hash::SockHash<K>::try_from(value: U) -> core::resul
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::sock_hash::SockHash<K> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::sock_hash::SockHash<K>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::sock_hash::SockHash<K> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::sock_hash::SockHash<K> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_hash::SockHash<K> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_hash::SockHash<K> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::sock_hash::SockHash<K> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::sock_hash::SockHash<K> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::sock_hash::SockHash<K>
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::from(t: T) -> T
@@ -1270,11 +1270,11 @@ pub fn aya_ebpf::maps::sock_map::SockMap::try_from(value: U) -> core::result::Re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::sock_map::SockMap where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::sock_map::SockMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::sock_map::SockMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::sock_map::SockMap where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::sock_map::SockMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_map::SockMap::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_map::SockMap where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_map::SockMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_map::SockMap::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::sock_map::SockMap where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::sock_map::SockMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_map::SockMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::sock_map::SockMap
 pub fn aya_ebpf::maps::sock_map::SockMap::from(t: T) -> T
@@ -1298,11 +1298,11 @@ pub fn aya_ebpf::maps::stack::Stack<T>::try_from(value: U) -> core::result::Resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::stack::Stack<T> where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::stack::Stack<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::stack::Stack<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::stack::Stack<T> where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::stack::Stack<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::stack::Stack<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack::Stack<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::stack::Stack<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::stack::Stack<T> where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::stack::Stack<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::stack::Stack<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::from(t: T) -> T
@@ -1325,11 +1325,11 @@ pub fn aya_ebpf::maps::stack_trace::StackTrace::try_from(value: U) -> core::resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::stack_trace::StackTrace where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::stack_trace::StackTrace::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::stack_trace::StackTrace::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::stack_trace::StackTrace where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::stack_trace::StackTrace where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::stack_trace::StackTrace::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack_trace::StackTrace where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack_trace::StackTrace where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::stack_trace::StackTrace::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::stack_trace::StackTrace where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::stack_trace::StackTrace where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::stack_trace::StackTrace::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::stack_trace::StackTrace
 pub fn aya_ebpf::maps::stack_trace::StackTrace::from(t: T) -> T
@@ -1353,11 +1353,11 @@ pub fn aya_ebpf::maps::XskMap::try_from(value: U) -> core::result::Result<T, <T 
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::XskMap where U: core::convert::TryFrom<T>
 pub type aya_ebpf::maps::XskMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::XskMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::maps::XskMap where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::maps::XskMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::XskMap::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::XskMap where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::XskMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::XskMap::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::XskMap where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::XskMap where T: ?core::marker::Sized
 pub fn aya_ebpf::maps::XskMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::XskMap
 pub fn aya_ebpf::maps::XskMap::from(t: T) -> T
@@ -1383,11 +1383,11 @@ pub fn aya_ebpf::programs::device::DeviceContext::try_from(value: U) -> core::re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::device::DeviceContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::device::DeviceContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::device::DeviceContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::device::DeviceContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::device::DeviceContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::device::DeviceContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::device::DeviceContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::device::DeviceContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::device::DeviceContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::device::DeviceContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::device::DeviceContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::device::DeviceContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::device::DeviceContext
 pub fn aya_ebpf::programs::device::DeviceContext::from(t: T) -> T
@@ -1412,11 +1412,11 @@ pub fn aya_ebpf::programs::fentry::FEntryContext::try_from(value: U) -> core::re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::fentry::FEntryContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::fentry::FEntryContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::fentry::FEntryContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::fentry::FEntryContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::fentry::FEntryContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::fentry::FEntryContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::fentry::FEntryContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::fentry::FEntryContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::fentry::FEntryContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::fentry::FEntryContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::fentry::FEntryContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::fentry::FEntryContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::from(t: T) -> T
@@ -1441,11 +1441,11 @@ pub fn aya_ebpf::programs::fexit::FExitContext::try_from(value: U) -> core::resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::fexit::FExitContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::fexit::FExitContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::fexit::FExitContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::fexit::FExitContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::fexit::FExitContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::fexit::FExitContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::fexit::FExitContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::fexit::FExitContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::fexit::FExitContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::fexit::FExitContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::fexit::FExitContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::fexit::FExitContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::from(t: T) -> T
@@ -1470,11 +1470,11 @@ pub fn aya_ebpf::programs::lsm::LsmContext::try_from(value: U) -> core::result::
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::lsm::LsmContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::lsm::LsmContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::lsm::LsmContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::lsm::LsmContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::lsm::LsmContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::lsm::LsmContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::lsm::LsmContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::lsm::LsmContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::lsm::LsmContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::lsm::LsmContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::lsm::LsmContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::lsm::LsmContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::from(t: T) -> T
@@ -1498,11 +1498,11 @@ pub fn aya_ebpf::programs::perf_event::PerfEventContext::try_from(value: U) -> c
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::perf_event::PerfEventContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::perf_event::PerfEventContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::perf_event::PerfEventContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::perf_event::PerfEventContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::perf_event::PerfEventContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::perf_event::PerfEventContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::perf_event::PerfEventContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::perf_event::PerfEventContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::perf_event::PerfEventContext
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::from(t: T) -> T
@@ -1528,11 +1528,11 @@ pub fn aya_ebpf::programs::probe::ProbeContext::try_from(value: U) -> core::resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::probe::ProbeContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::probe::ProbeContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::probe::ProbeContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::probe::ProbeContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::probe::ProbeContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::probe::ProbeContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::probe::ProbeContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::probe::ProbeContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::probe::ProbeContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::probe::ProbeContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::probe::ProbeContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::probe::ProbeContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::from(t: T) -> T
@@ -1556,11 +1556,11 @@ pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::try_from(value:
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::raw_tracepoint::RawTracePointContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::from(t: T) -> T
@@ -1586,11 +1586,11 @@ pub fn aya_ebpf::programs::retprobe::RetProbeContext::try_from(value: U) -> core
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::retprobe::RetProbeContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::retprobe::RetProbeContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::retprobe::RetProbeContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::retprobe::RetProbeContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::retprobe::RetProbeContext
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::from(t: T) -> T
@@ -1636,11 +1636,11 @@ pub fn aya_ebpf::programs::sk_buff::SkBuff::try_from(value: U) -> core::result::
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sk_buff::SkBuff where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sk_buff::SkBuff::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sk_buff::SkBuff::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sk_buff::SkBuff where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sk_buff::SkBuff where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_buff::SkBuff::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_buff::SkBuff where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_buff::SkBuff where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_buff::SkBuff::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_buff::SkBuff where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_buff::SkBuff where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_buff::SkBuff::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sk_buff::SkBuff
 pub fn aya_ebpf::programs::sk_buff::SkBuff::from(t: T) -> T
@@ -1678,11 +1678,11 @@ pub fn aya_ebpf::programs::sk_buff::SkBuffContext::try_from(value: U) -> core::r
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sk_buff::SkBuffContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sk_buff::SkBuffContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sk_buff::SkBuffContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sk_buff::SkBuffContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_buff::SkBuffContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_buff::SkBuffContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_buff::SkBuffContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_buff::SkBuffContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::from(t: T) -> T
@@ -1707,11 +1707,11 @@ pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::try_from(value: U) -> cor
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sk_lookup::SkLookupContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sk_lookup::SkLookupContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sk_lookup::SkLookupContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sk_lookup::SkLookupContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_lookup::SkLookupContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_lookup::SkLookupContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_lookup::SkLookupContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_lookup::SkLookupContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sk_lookup::SkLookupContext
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::from(t: T) -> T
@@ -1741,11 +1741,11 @@ pub fn aya_ebpf::programs::sk_msg::SkMsgContext::try_from(value: U) -> core::res
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sk_msg::SkMsgContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sk_msg::SkMsgContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sk_msg::SkMsgContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sk_msg::SkMsgContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_msg::SkMsgContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_msg::SkMsgContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_msg::SkMsgContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_msg::SkMsgContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::from(t: T) -> T
@@ -1770,11 +1770,11 @@ pub fn aya_ebpf::programs::sock::SockContext::try_from(value: U) -> core::result
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sock::SockContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sock::SockContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sock::SockContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sock::SockContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sock::SockContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sock::SockContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock::SockContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock::SockContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock::SockContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock::SockContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock::SockContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock::SockContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sock::SockContext
 pub fn aya_ebpf::programs::sock::SockContext::from(t: T) -> T
@@ -1799,11 +1799,11 @@ pub fn aya_ebpf::programs::sock_addr::SockAddrContext::try_from(value: U) -> cor
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sock_addr::SockAddrContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sock_addr::SockAddrContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sock_addr::SockAddrContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sock_addr::SockAddrContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock_addr::SockAddrContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock_addr::SockAddrContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock_addr::SockAddrContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock_addr::SockAddrContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sock_addr::SockAddrContext
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::from(t: T) -> T
@@ -1840,11 +1840,11 @@ pub fn aya_ebpf::programs::sock_ops::SockOpsContext::try_from(value: U) -> core:
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sock_ops::SockOpsContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sock_ops::SockOpsContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sock_ops::SockOpsContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sock_ops::SockOpsContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock_ops::SockOpsContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock_ops::SockOpsContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock_ops::SockOpsContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock_ops::SockOpsContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::from(t: T) -> T
@@ -1869,11 +1869,11 @@ pub fn aya_ebpf::programs::sockopt::SockoptContext::try_from(value: U) -> core::
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sockopt::SockoptContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sockopt::SockoptContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sockopt::SockoptContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sockopt::SockoptContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sockopt::SockoptContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sockopt::SockoptContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sockopt::SockoptContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sockopt::SockoptContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sockopt::SockoptContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sockopt::SockoptContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sockopt::SockoptContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sockopt::SockoptContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::from(t: T) -> T
@@ -1898,11 +1898,11 @@ pub fn aya_ebpf::programs::sysctl::SysctlContext::try_from(value: U) -> core::re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sysctl::SysctlContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sysctl::SysctlContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sysctl::SysctlContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sysctl::SysctlContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sysctl::SysctlContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sysctl::SysctlContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sysctl::SysctlContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sysctl::SysctlContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sysctl::SysctlContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sysctl::SysctlContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sysctl::SysctlContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sysctl::SysctlContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sysctl::SysctlContext
 pub fn aya_ebpf::programs::sysctl::SysctlContext::from(t: T) -> T
@@ -1944,11 +1944,11 @@ pub fn aya_ebpf::programs::tc::TcContext::try_from(value: U) -> core::result::Re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::tc::TcContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::tc::TcContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::tc::TcContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::tc::TcContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::tc::TcContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::tc::TcContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tc::TcContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tc::TcContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tc::TcContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tc::TcContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tc::TcContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tc::TcContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::tc::TcContext
 pub fn aya_ebpf::programs::tc::TcContext::from(t: T) -> T
@@ -1973,11 +1973,11 @@ pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::try_from(value: U) -> c
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::tp_btf::BtfTracePointContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::tp_btf::BtfTracePointContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::from(t: T) -> T
@@ -2002,11 +2002,11 @@ pub fn aya_ebpf::programs::tracepoint::TracePointContext::try_from(value: U) -> 
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::tracepoint::TracePointContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::tracepoint::TracePointContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::tracepoint::TracePointContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::tracepoint::TracePointContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tracepoint::TracePointContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tracepoint::TracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tracepoint::TracePointContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tracepoint::TracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::tracepoint::TracePointContext
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::from(t: T) -> T
@@ -2035,11 +2035,11 @@ pub fn aya_ebpf::programs::xdp::XdpContext::try_from(value: U) -> core::result::
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::xdp::XdpContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::xdp::XdpContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::xdp::XdpContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::xdp::XdpContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::xdp::XdpContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::xdp::XdpContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::xdp::XdpContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::xdp::XdpContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::xdp::XdpContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::xdp::XdpContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::xdp::XdpContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::xdp::XdpContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
@@ -2063,11 +2063,11 @@ pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::try_from(value: U) -> c
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::tp_btf::BtfTracePointContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::tp_btf::BtfTracePointContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tp_btf::BtfTracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::from(t: T) -> T
@@ -2091,11 +2091,11 @@ pub fn aya_ebpf::programs::device::DeviceContext::try_from(value: U) -> core::re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::device::DeviceContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::device::DeviceContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::device::DeviceContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::device::DeviceContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::device::DeviceContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::device::DeviceContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::device::DeviceContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::device::DeviceContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::device::DeviceContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::device::DeviceContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::device::DeviceContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::device::DeviceContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::device::DeviceContext
 pub fn aya_ebpf::programs::device::DeviceContext::from(t: T) -> T
@@ -2119,11 +2119,11 @@ pub fn aya_ebpf::programs::fentry::FEntryContext::try_from(value: U) -> core::re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::fentry::FEntryContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::fentry::FEntryContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::fentry::FEntryContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::fentry::FEntryContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::fentry::FEntryContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::fentry::FEntryContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::fentry::FEntryContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::fentry::FEntryContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::fentry::FEntryContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::fentry::FEntryContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::fentry::FEntryContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::fentry::FEntryContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::from(t: T) -> T
@@ -2147,11 +2147,11 @@ pub fn aya_ebpf::programs::fexit::FExitContext::try_from(value: U) -> core::resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::fexit::FExitContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::fexit::FExitContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::fexit::FExitContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::fexit::FExitContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::fexit::FExitContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::fexit::FExitContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::fexit::FExitContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::fexit::FExitContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::fexit::FExitContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::fexit::FExitContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::fexit::FExitContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::fexit::FExitContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::from(t: T) -> T
@@ -2175,11 +2175,11 @@ pub fn aya_ebpf::programs::lsm::LsmContext::try_from(value: U) -> core::result::
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::lsm::LsmContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::lsm::LsmContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::lsm::LsmContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::lsm::LsmContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::lsm::LsmContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::lsm::LsmContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::lsm::LsmContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::lsm::LsmContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::lsm::LsmContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::lsm::LsmContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::lsm::LsmContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::lsm::LsmContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::from(t: T) -> T
@@ -2202,11 +2202,11 @@ pub fn aya_ebpf::programs::perf_event::PerfEventContext::try_from(value: U) -> c
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::perf_event::PerfEventContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::perf_event::PerfEventContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::perf_event::PerfEventContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::perf_event::PerfEventContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::perf_event::PerfEventContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::perf_event::PerfEventContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::perf_event::PerfEventContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::perf_event::PerfEventContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::perf_event::PerfEventContext
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::from(t: T) -> T
@@ -2231,11 +2231,11 @@ pub fn aya_ebpf::programs::probe::ProbeContext::try_from(value: U) -> core::resu
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::probe::ProbeContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::probe::ProbeContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::probe::ProbeContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::probe::ProbeContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::probe::ProbeContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::probe::ProbeContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::probe::ProbeContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::probe::ProbeContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::probe::ProbeContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::probe::ProbeContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::probe::ProbeContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::probe::ProbeContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::from(t: T) -> T
@@ -2258,11 +2258,11 @@ pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::try_from(value:
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::raw_tracepoint::RawTracePointContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::from(t: T) -> T
@@ -2287,11 +2287,11 @@ pub fn aya_ebpf::programs::retprobe::RetProbeContext::try_from(value: U) -> core
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::retprobe::RetProbeContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::retprobe::RetProbeContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::retprobe::RetProbeContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::retprobe::RetProbeContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::retprobe::RetProbeContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::retprobe::RetProbeContext
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::from(t: T) -> T
@@ -2329,11 +2329,11 @@ pub fn aya_ebpf::programs::sk_buff::SkBuffContext::try_from(value: U) -> core::r
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sk_buff::SkBuffContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sk_buff::SkBuffContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sk_buff::SkBuffContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sk_buff::SkBuffContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_buff::SkBuffContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_buff::SkBuffContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_buff::SkBuffContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_buff::SkBuffContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::from(t: T) -> T
@@ -2357,11 +2357,11 @@ pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::try_from(value: U) -> cor
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sk_lookup::SkLookupContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sk_lookup::SkLookupContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sk_lookup::SkLookupContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sk_lookup::SkLookupContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_lookup::SkLookupContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_lookup::SkLookupContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_lookup::SkLookupContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_lookup::SkLookupContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sk_lookup::SkLookupContext
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::from(t: T) -> T
@@ -2390,11 +2390,11 @@ pub fn aya_ebpf::programs::sk_msg::SkMsgContext::try_from(value: U) -> core::res
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sk_msg::SkMsgContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sk_msg::SkMsgContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sk_msg::SkMsgContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sk_msg::SkMsgContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_msg::SkMsgContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sk_msg::SkMsgContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_msg::SkMsgContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sk_msg::SkMsgContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::from(t: T) -> T
@@ -2418,11 +2418,11 @@ pub fn aya_ebpf::programs::sock_addr::SockAddrContext::try_from(value: U) -> cor
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sock_addr::SockAddrContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sock_addr::SockAddrContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sock_addr::SockAddrContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sock_addr::SockAddrContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock_addr::SockAddrContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock_addr::SockAddrContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock_addr::SockAddrContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock_addr::SockAddrContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sock_addr::SockAddrContext
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::from(t: T) -> T
@@ -2446,11 +2446,11 @@ pub fn aya_ebpf::programs::sock::SockContext::try_from(value: U) -> core::result
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sock::SockContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sock::SockContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sock::SockContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sock::SockContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sock::SockContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sock::SockContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock::SockContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock::SockContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock::SockContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock::SockContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock::SockContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock::SockContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sock::SockContext
 pub fn aya_ebpf::programs::sock::SockContext::from(t: T) -> T
@@ -2486,11 +2486,11 @@ pub fn aya_ebpf::programs::sock_ops::SockOpsContext::try_from(value: U) -> core:
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sock_ops::SockOpsContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sock_ops::SockOpsContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sock_ops::SockOpsContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sock_ops::SockOpsContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock_ops::SockOpsContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sock_ops::SockOpsContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock_ops::SockOpsContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sock_ops::SockOpsContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::from(t: T) -> T
@@ -2514,11 +2514,11 @@ pub fn aya_ebpf::programs::sockopt::SockoptContext::try_from(value: U) -> core::
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sockopt::SockoptContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sockopt::SockoptContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sockopt::SockoptContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sockopt::SockoptContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sockopt::SockoptContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sockopt::SockoptContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sockopt::SockoptContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sockopt::SockoptContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sockopt::SockoptContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sockopt::SockoptContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sockopt::SockoptContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sockopt::SockoptContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::from(t: T) -> T
@@ -2542,11 +2542,11 @@ pub fn aya_ebpf::programs::sysctl::SysctlContext::try_from(value: U) -> core::re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::sysctl::SysctlContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::sysctl::SysctlContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::sysctl::SysctlContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::sysctl::SysctlContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::sysctl::SysctlContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::sysctl::SysctlContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sysctl::SysctlContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::sysctl::SysctlContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sysctl::SysctlContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sysctl::SysctlContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sysctl::SysctlContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::sysctl::SysctlContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sysctl::SysctlContext
 pub fn aya_ebpf::programs::sysctl::SysctlContext::from(t: T) -> T
@@ -2587,11 +2587,11 @@ pub fn aya_ebpf::programs::tc::TcContext::try_from(value: U) -> core::result::Re
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::tc::TcContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::tc::TcContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::tc::TcContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::tc::TcContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::tc::TcContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::tc::TcContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tc::TcContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tc::TcContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tc::TcContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tc::TcContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tc::TcContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tc::TcContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::tc::TcContext
 pub fn aya_ebpf::programs::tc::TcContext::from(t: T) -> T
@@ -2615,11 +2615,11 @@ pub fn aya_ebpf::programs::tracepoint::TracePointContext::try_from(value: U) -> 
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::tracepoint::TracePointContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::tracepoint::TracePointContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::tracepoint::TracePointContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::tracepoint::TracePointContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tracepoint::TracePointContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::tracepoint::TracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tracepoint::TracePointContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::tracepoint::TracePointContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::tracepoint::TracePointContext
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::from(t: T) -> T
@@ -2647,11 +2647,11 @@ pub fn aya_ebpf::programs::xdp::XdpContext::try_from(value: U) -> core::result::
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::xdp::XdpContext where U: core::convert::TryFrom<T>
 pub type aya_ebpf::programs::xdp::XdpContext::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::programs::xdp::XdpContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::programs::xdp::XdpContext where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::programs::xdp::XdpContext where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::programs::xdp::XdpContext::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::xdp::XdpContext where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::xdp::XdpContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::xdp::XdpContext::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::xdp::XdpContext where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::xdp::XdpContext where T: ?core::marker::Sized
 pub fn aya_ebpf::programs::xdp::XdpContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
@@ -2676,11 +2676,11 @@ pub fn aya_ebpf::PtRegs::try_from(value: U) -> core::result::Result<T, <T as cor
 impl<T, U> core::convert::TryInto<U> for aya_ebpf::PtRegs where U: core::convert::TryFrom<T>
 pub type aya_ebpf::PtRegs::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::PtRegs::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_ebpf::PtRegs where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_ebpf::PtRegs where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::PtRegs::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_ebpf::PtRegs where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_ebpf::PtRegs where T: ?core::marker::Sized
 pub fn aya_ebpf::PtRegs::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_ebpf::PtRegs where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::PtRegs where T: ?core::marker::Sized
 pub fn aya_ebpf::PtRegs::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::PtRegs
 pub fn aya_ebpf::PtRegs::from(t: T) -> T

@@ -42,11 +42,11 @@ pub fn aya_log_common::Argument::try_from(value: U) -> core::result::Result<T, <
 impl<T, U> core::convert::TryInto<U> for aya_log_common::Argument where U: core::convert::TryFrom<T>
 pub type aya_log_common::Argument::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_log_common::Argument::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_log_common::Argument where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_log_common::Argument where T: 'static + ?core::marker::Sized
 pub fn aya_log_common::Argument::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_log_common::Argument where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_log_common::Argument where T: ?core::marker::Sized
 pub fn aya_log_common::Argument::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_log_common::Argument where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_log_common::Argument where T: ?core::marker::Sized
 pub fn aya_log_common::Argument::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya_log_common::Argument where T: core::clone::Clone
 pub unsafe fn aya_log_common::Argument::clone_to_uninit(&self, dst: *mut u8)
@@ -86,11 +86,11 @@ pub fn aya_log_common::DisplayHint::try_from(value: U) -> core::result::Result<T
 impl<T, U> core::convert::TryInto<U> for aya_log_common::DisplayHint where U: core::convert::TryFrom<T>
 pub type aya_log_common::DisplayHint::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_log_common::DisplayHint::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_log_common::DisplayHint where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_log_common::DisplayHint where T: 'static + ?core::marker::Sized
 pub fn aya_log_common::DisplayHint::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_log_common::DisplayHint where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_log_common::DisplayHint where T: ?core::marker::Sized
 pub fn aya_log_common::DisplayHint::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_log_common::DisplayHint where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_log_common::DisplayHint where T: ?core::marker::Sized
 pub fn aya_log_common::DisplayHint::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya_log_common::DisplayHint where T: core::clone::Clone
 pub unsafe fn aya_log_common::DisplayHint::clone_to_uninit(&self, dst: *mut u8)
@@ -129,11 +129,11 @@ pub fn aya_log_common::Level::try_from(value: U) -> core::result::Result<T, <T a
 impl<T, U> core::convert::TryInto<U> for aya_log_common::Level where U: core::convert::TryFrom<T>
 pub type aya_log_common::Level::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_log_common::Level::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_log_common::Level where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_log_common::Level where T: 'static + ?core::marker::Sized
 pub fn aya_log_common::Level::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_log_common::Level where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_log_common::Level where T: ?core::marker::Sized
 pub fn aya_log_common::Level::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_log_common::Level where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_log_common::Level where T: ?core::marker::Sized
 pub fn aya_log_common::Level::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya_log_common::Level where T: core::clone::Clone
 pub unsafe fn aya_log_common::Level::clone_to_uninit(&self, dst: *mut u8)
@@ -167,11 +167,11 @@ pub fn aya_log_common::RecordField::try_from(value: U) -> core::result::Result<T
 impl<T, U> core::convert::TryInto<U> for aya_log_common::RecordField where U: core::convert::TryFrom<T>
 pub type aya_log_common::RecordField::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_log_common::RecordField::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_log_common::RecordField where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_log_common::RecordField where T: 'static + ?core::marker::Sized
 pub fn aya_log_common::RecordField::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_log_common::RecordField where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_log_common::RecordField where T: ?core::marker::Sized
 pub fn aya_log_common::RecordField::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_log_common::RecordField where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_log_common::RecordField where T: ?core::marker::Sized
 pub fn aya_log_common::RecordField::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya_log_common::RecordField where T: core::clone::Clone
 pub unsafe fn aya_log_common::RecordField::clone_to_uninit(&self, dst: *mut u8)
