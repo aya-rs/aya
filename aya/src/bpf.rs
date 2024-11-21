@@ -30,10 +30,11 @@ use crate::{
         Object, ParseError, ProgramSection,
     },
     programs::{
-        BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
-        CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent,
-        ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkLookup,
-        SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        trace_point::TracePointAttachInfo, BtfTracePoint, CgroupDevice, CgroupSkb,
+        CgroupSkbAttachType, CgroupSock, CgroupSockAddr, CgroupSockopt, CgroupSysctl, Extension,
+        FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent, ProbeKind, Program, ProgramData,
+        ProgramError, RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps,
+        SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -417,7 +418,10 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::KProbe
                                 | ProgramSection::UProbe { sleepable: _ }
                                 | ProgramSection::URetProbe { sleepable: _ }
-                                | ProgramSection::TracePoint
+                                | ProgramSection::TracePoint {
+                                    category: _,
+                                    name: _,
+                                }
                                 | ProgramSection::SocketFilter
                                 | ProgramSection::Xdp {
                                     frags: _,
@@ -572,9 +576,19 @@ impl<'a> EbpfLoader<'a> {
                                 kind: ProbeKind::URetProbe,
                             })
                         }
-                        ProgramSection::TracePoint => Program::TracePoint(TracePoint {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                        }),
+                        ProgramSection::TracePoint { category, name } => {
+                            let expected_attach_info = match (category, name) {
+                                (Some(category), Some(name)) => Some(TracePointAttachInfo {
+                                    category: category.clone(),
+                                    name: name.clone(),
+                                }),
+                                _ => None,
+                            };
+                            Program::TracePoint(TracePoint {
+                                data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                                expected_attach_info,
+                            })
+                        }
                         ProgramSection::SocketFilter => Program::SocketFilter(SocketFilter {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),

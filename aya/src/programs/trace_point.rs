@@ -12,6 +12,7 @@ use crate::{
         FdLink, LinkError, ProgramData, ProgramError,
     },
     sys::{bpf_link_get_info_by_fd, perf_event_open_trace_point, SyscallError},
+    VerifierLogLevel,
 };
 
 /// The type returned when attaching a [`TracePoint`] fails.
@@ -26,6 +27,15 @@ pub enum TracePointError {
         #[source]
         io_error: io::Error,
     },
+}
+
+/// Defines where to attach trace point
+#[derive(Debug)]
+pub struct TracePointAttachInfo {
+    /// Category of trace point
+    pub category: String,
+    /// Name of trace point
+    pub name: String,
 }
 
 /// A program that can be attached at a pre-defined kernel trace point.
@@ -53,6 +63,7 @@ pub enum TracePointError {
 #[doc(alias = "BPF_PROG_TYPE_TRACEPOINT")]
 pub struct TracePoint {
     pub(crate) data: ProgramData<TracePointLink>,
+    pub(crate) expected_attach_info: Option<TracePointAttachInfo>,
 }
 
 impl TracePoint {
@@ -82,6 +93,18 @@ impl TracePoint {
         self.data.links.insert(TracePointLink::new(link))
     }
 
+    /// Returns the attach info of the trace point
+    pub fn auto_attach(&mut self) -> Result<TracePointLinkId, ProgramError> {
+        let attach_info = self
+            .expected_attach_info
+            .as_ref()
+            .ok_or(ProgramError::CannotAutoAttach)?;
+        let category = attach_info.category.clone();
+        let name = attach_info.name.clone();
+
+        self.attach(&category, &name)
+    }
+
     /// Detaches from a trace point.
     ///
     /// See [TracePoint::attach].
@@ -95,6 +118,20 @@ impl TracePoint {
     /// for managing its lifetime.
     pub fn take_link(&mut self, link_id: TracePointLinkId) -> Result<TracePointLink, ProgramError> {
         self.data.take_link(link_id)
+    }
+
+    /// Creates a program from a pinned entry on a bpffs.
+    ///
+    /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
+    ///
+    /// On drop, any managed links are detached and the program is unloaded. This will not result in
+    /// the program being unloaded from the kernel if it is still pinned.
+    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
+        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        Ok(Self {
+            data,
+            expected_attach_info: None,
+        })
     }
 }
 
