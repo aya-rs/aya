@@ -195,10 +195,14 @@ pub enum MapError {
     ProgIdNotSupported,
 
     /// Unsupported Map type
-    #[error("Unsupported map type found {map_type}")]
+    #[error(
+        "type of {name} ({map_type:?}) is unsupported; see `EbpfLoader::allow_unsupported_maps`"
+    )]
     Unsupported {
+        /// Map name
+        name: String,
         /// The map type
-        map_type: u32,
+        map_type: bpf_map_type,
     },
 }
 

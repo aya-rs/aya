@@ -695,23 +695,17 @@ impl<'a> EbpfLoader<'a> {
             .collect();
         let maps = maps
             .drain()
-            .map(parse_map)
+            .map(|data| parse_map(data, *allow_unsupported_maps))
             .collect::<Result<HashMap<String, Map>, EbpfError>>()?;
-
-        if !*allow_unsupported_maps {
-            maps.iter().try_for_each(|(_, x)| match x {
-                Map::Unsupported(map) => Err(EbpfError::MapError(MapError::Unsupported {
-                    map_type: map.obj().map_type(),
-                })),
-                _ => Ok(()),
-            })?;
-        };
 
         Ok(Ebpf { maps, programs })
     }
 }
 
-fn parse_map(data: (String, MapData)) -> Result<(String, Map), EbpfError> {
+fn parse_map(
+    data: (String, MapData),
+    allow_unsupported_maps: bool,
+) -> Result<(String, Map), EbpfError> {
     let (name, map) = data;
     let map_type = bpf_map_type::try_from(map.obj().map_type()).map_err(MapError::from)?;
     let map = match map_type {
@@ -735,9 +729,15 @@ fn parse_map(data: (String, MapData)) -> Result<(String, Map), EbpfError> {
         BPF_MAP_TYPE_DEVMAP => Map::DevMap(map),
         BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
-        m => {
-            warn!("The map {name} is of type {:#?} which is currently unsupported in Aya, use `allow_unsupported_maps()` to load it anyways", m);
-            Map::Unsupported(map)
+        m_type => {
+            if allow_unsupported_maps {
+                Map::Unsupported(map)
+            } else {
+                return Err(EbpfError::MapError(MapError::Unsupported {
+                    name,
+                    map_type: m_type,
+                }));
+            }
         }
     };
 

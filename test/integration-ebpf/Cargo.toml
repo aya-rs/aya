@@ -18,12 +18,20 @@ which = { workspace = true }
 xtask = { path = "../../xtask" }
 
 [[bin]]
+name = "bpf_probe_read"
+path = "src/bpf_probe_read.rs"
+
+[[bin]]
 name = "log"
 path = "src/log.rs"
 
 [[bin]]
 name = "map_test"
 path = "src/map_test.rs"
+
+[[bin]]
+name = "memmove_test"
+path = "src/memmove_test.rs"
 
 [[bin]]
 name = "name_test"
@@ -34,41 +42,37 @@ name = "pass"
 path = "src/pass.rs"
 
 [[bin]]
-name = "test"
-path = "src/test.rs"
-
-[[bin]]
-name = "tcx"
-path = "src/tcx.rs"
+name = "redirect"
+path = "src/redirect.rs"
 
 [[bin]]
 name = "relocations"
 path = "src/relocations.rs"
 
 [[bin]]
-name = "bpf_probe_read"
-path = "src/bpf_probe_read.rs"
+name = "ring_buf"
+path = "src/ring_buf.rs"
+
+[[bin]]
+name = "simple_prog"
+path = "src/simple_prog.rs"
+
+[[bin]]
+name = "strncmp"
+path = "src/strncmp.rs"
+
+[[bin]]
+name = "tcx"
+path = "src/tcx.rs"
+
+[[bin]]
+name = "test"
+path = "src/test.rs"
 
 [[bin]]
 name = "two_progs"
 path = "src/two_progs.rs"
 
 [[bin]]
-name = "redirect"
-path = "src/redirect.rs"
-
-[[bin]]
 name = "xdp_sec"
 path = "src/xdp_sec.rs"
-
-[[bin]]
-name = "ring_buf"
-path = "src/ring_buf.rs"
-
-[[bin]]
-name = "memmove_test"
-path = "src/memmove_test.rs"
-
-[[bin]]
-name = "simple_prog"
-path = "src/simple_prog.rs"
