@@ -82,10 +82,11 @@ impl SkLookup {
             .insert(SkLookupLink::new(FdLink::new(link_fd)))
     }
 
-    /// Takes ownership of the link referenced by the provided link_id.
+    /// Takes ownership of the link referenced by the provided `link_id`.
     ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
+    /// The caller takes the responsibility of managing the lifetime of the
+    /// link. When the returned [`SkLookupLink`] is dropped, the link is
+    /// detached.
     pub fn take_link(&mut self, link_id: SkLookupLinkId) -> Result<SkLookupLink, ProgramError> {
         self.data.take_link(link_id)
     }
