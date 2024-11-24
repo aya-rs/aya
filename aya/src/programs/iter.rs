@@ -82,21 +82,6 @@ impl Iter {
             .links
             .insert(IterLink::new(PerfLinkInner::FdLink(FdLink::new(link_fd))))
     }
-
-    /// Detaches the program.
-    ///
-    /// See [`Self::attach`].
-    pub fn detach(&mut self, link_id: IterLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`IterLink`] is dropped, the link is detached.
-    pub fn take_link(&mut self, link_id: IterLinkId) -> Result<IterLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
 }
 
 /// An iterator descriptor.
@@ -142,7 +127,8 @@ define_link_wrapper!(
     /// The type returned by [`Iter::attach`]. Can be passed to [`Iter::detach`].
     IterLinkId,
     PerfLinkInner,
-    PerfLinkIdInner
+    PerfLinkIdInner,
+    Iter,
 );
 
 impl IterLink {

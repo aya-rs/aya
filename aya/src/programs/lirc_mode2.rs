@@ -84,17 +84,17 @@ impl LircMode2 {
 
     /// Detaches the program.
     ///
-    /// See [LircMode2::attach].
+    /// See [`Self::attach`].
     pub fn detach(&mut self, link_id: LircLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
 
     /// Takes ownership of the link referenced by the provided `link_id`.
     ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`LircLink`] is dropped, the link is detached.
+    /// The caller takes the responsibility of managing the lifetime of the link. When the returned
+    /// [`LircLink`] is dropped, the link is detached.
     pub fn take_link(&mut self, link_id: LircLinkId) -> Result<LircLink, ProgramError> {
-        self.data.take_link(link_id)
+        self.data.links.forget(link_id)
     }
 
     /// Queries the lirc device for attached programs.

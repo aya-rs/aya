@@ -67,22 +67,6 @@ impl FEntry {
     pub fn attach(&mut self) -> Result<FEntryLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
-
-    /// Detaches the program.
-    ///
-    /// See [FEntry::attach].
-    pub fn detach(&mut self, link_id: FEntryLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`FEntryLink`] is dropped, the link is
-    /// detached.
-    pub fn take_link(&mut self, link_id: FEntryLinkId) -> Result<FEntryLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
 }
 
 define_link_wrapper!(
@@ -91,5 +75,6 @@ define_link_wrapper!(
     /// The type returned by [FEntry::attach]. Can be passed to [FEntry::detach].
     FEntryLinkId,
     FdLink,
-    FdLinkId
+    FdLinkId,
+    FEntry,
 );

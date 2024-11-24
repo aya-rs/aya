@@ -81,22 +81,6 @@ impl KProbe {
         attach(&mut self.data, self.kind, fn_name.as_ref(), offset, None)
     }
 
-    /// Detaches the program.
-    ///
-    /// See [KProbe::attach].
-    pub fn detach(&mut self, link_id: KProbeLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`KProbeLink`] is dropped, the link is
-    /// detached.
-    pub fn take_link(&mut self, link_id: KProbeLinkId) -> Result<KProbeLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
-
     /// Creates a program from a pinned entry on a bpffs.
     ///
     /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
@@ -115,7 +99,8 @@ define_link_wrapper!(
     /// The type returned by [KProbe::attach]. Can be passed to [KProbe::detach].
     KProbeLinkId,
     PerfLinkInner,
-    PerfLinkIdInner
+    PerfLinkIdInner,
+    KProbe,
 );
 
 /// The type returned when attaching a [`KProbe`] fails.

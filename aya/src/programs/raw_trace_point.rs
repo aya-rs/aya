@@ -52,25 +52,6 @@ impl RawTracePoint {
         let tp_name_c = CString::new(tp_name).unwrap();
         attach_raw_tracepoint(&mut self.data, Some(&tp_name_c))
     }
-
-    /// Detaches from a tracepoint.
-    ///
-    /// See [RawTracePoint::attach].
-    pub fn detach(&mut self, link_id: RawTracePointLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`RawTracePointLink`] is dropped, the link is
-    /// detached.
-    pub fn take_link(
-        &mut self,
-        link_id: RawTracePointLinkId,
-    ) -> Result<RawTracePointLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
 }
 
 define_link_wrapper!(
@@ -79,5 +60,6 @@ define_link_wrapper!(
     /// The type returned by [RawTracePoint::attach]. Can be passed to [RawTracePoint::detach].
     RawTracePointLinkId,
     FdLink,
-    FdLinkId
+    FdLinkId,
+    RawTracePoint,
 );

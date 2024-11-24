@@ -99,25 +99,6 @@ impl CgroupDevice {
         }
     }
 
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`CgroupDeviceLink`] is dropped, the link is
-    /// detached.
-    pub fn take_link(
-        &mut self,
-        link_id: CgroupDeviceLinkId,
-    ) -> Result<CgroupDeviceLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
-
-    /// Detaches the program
-    ///
-    /// See [CgroupDevice::attach].
-    pub fn detach(&mut self, link_id: CgroupDeviceLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
     /// Queries the cgroup for attached programs.
     pub fn query<T: AsFd>(target_fd: T) -> Result<Vec<CgroupDeviceLink>, ProgramError> {
         let target_fd = target_fd.as_fd();
@@ -179,5 +160,6 @@ define_link_wrapper!(
     /// The type returned by [CgroupDevice::attach]. Can be passed to [CgroupDevice::detach].
     CgroupDeviceLinkId,
     CgroupDeviceLinkInner,
-    CgroupDeviceLinkIdInner
+    CgroupDeviceLinkIdInner,
+    CgroupDevice,
 );
