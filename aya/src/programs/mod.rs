@@ -572,10 +572,6 @@ impl<T: Link> ProgramData<T> {
     fn fd(&self) -> Result<&ProgramFd, ProgramError> {
         self.fd.as_ref().ok_or(ProgramError::NotLoaded)
     }
-
-    pub(crate) fn take_link(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
-        self.links.forget(link_id)
-    }
 }
 
 fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError> {

@@ -71,25 +71,6 @@ impl BtfTracePoint {
     pub fn attach(&mut self) -> Result<BtfTracePointLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
-
-    /// Detaches the program.
-    ///
-    /// See [BtfTracePoint::attach].
-    pub fn detach(&mut self, link_id: BtfTracePointLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`BtfTracePointLink`] is dropped, the link is
-    /// detached.
-    pub fn take_link(
-        &mut self,
-        link_id: BtfTracePointLinkId,
-    ) -> Result<BtfTracePointLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
 }
 
 define_link_wrapper!(
@@ -98,5 +79,6 @@ define_link_wrapper!(
     /// The type returned by [BtfTracePoint::attach]. Can be passed to [BtfTracePoint::detach].
     BtfTracePointLinkId,
     FdLink,
-    FdLinkId
+    FdLinkId,
+    BtfTracePoint,
 );

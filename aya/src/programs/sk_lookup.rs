@@ -81,22 +81,6 @@ impl SkLookup {
             .links
             .insert(SkLookupLink::new(FdLink::new(link_fd)))
     }
-
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`SkLookupLink`] is dropped, the link is
-    /// detached.
-    pub fn take_link(&mut self, link_id: SkLookupLinkId) -> Result<SkLookupLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
-
-    /// Detaches the program.
-    ///
-    /// See [SkLookup::attach].
-    pub fn detach(&mut self, link_id: SkLookupLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
 }
 
 define_link_wrapper!(
@@ -105,5 +89,6 @@ define_link_wrapper!(
     /// The type returned by [SkLookup::attach]. Can be passed to [SkLookup::detach].
     SkLookupLinkId,
     FdLink,
-    FdLinkId
+    FdLinkId,
+    SkLookup,
 );

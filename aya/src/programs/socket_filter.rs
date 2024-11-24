@@ -100,21 +100,20 @@ impl SocketFilter {
 
     /// Detaches the program.
     ///
-    /// See [SocketFilter::attach].
+    /// See [`Self::attach``].
     pub fn detach(&mut self, link_id: SocketFilterLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
 
     /// Takes ownership of the link referenced by the provided `link_id`.
     ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`SocketFilterLink`] is dropped, the link is
-    /// detached.
+    /// The caller takes the responsibility of managing the lifetime of the link. When the returned
+    /// [`SocketFilterLink`] is dropped, the link is detached.
     pub fn take_link(
         &mut self,
         link_id: SocketFilterLinkId,
     ) -> Result<SocketFilterLink, ProgramError> {
-        self.data.take_link(link_id)
+        self.data.links.forget(link_id)
     }
 }
 
