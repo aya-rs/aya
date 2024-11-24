@@ -322,7 +322,7 @@ impl Link for ProgAttachLink {
 }
 
 macro_rules! define_link_wrapper {
-    (#[$doc1:meta] $wrapper:ident, #[$doc2:meta] $wrapper_id:ident, $base:ident, $base_id:ident) => {
+    (#[$doc1:meta] $wrapper:ident, #[$doc2:meta] $wrapper_id:ident, $base:ident, $base_id:ident, $program:ident,) => {
         #[$doc2]
         #[derive(Debug, Hash, Eq, PartialEq)]
         pub struct $wrapper_id($base_id);
@@ -379,6 +379,24 @@ macro_rules! define_link_wrapper {
         impl From<$wrapper> for $base {
             fn from(mut w: $wrapper) -> $base {
                 w.0.take().unwrap()
+            }
+        }
+
+        impl $program {
+            /// Detaches the program.
+            ///
+            /// See [`Self::attach`].
+            pub fn detach(&mut self, link_id: $wrapper_id) -> Result<(), ProgramError> {
+                self.data.links.remove(link_id)
+            }
+
+            /// Takes ownership of the link referenced by the provided `link_id`.
+            ///
+            /// The caller takes the responsibility of managing the lifetime of the
+            /// link. When the returned [`$wrapper_id`] is dropped, the link is
+            /// detached.
+            pub fn take_link(&mut self, link_id: $wrapper_id) -> Result<$wrapper, ProgramError> {
+                self.data.take_link(link_id)
             }
         }
     };

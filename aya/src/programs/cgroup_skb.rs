@@ -125,22 +125,6 @@ impl CgroupSkb {
         }
     }
 
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`CgroupSkbLink`] is dropped, the link is
-    /// detached.
-    pub fn take_link(&mut self, link_id: CgroupSkbLinkId) -> Result<CgroupSkbLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
-
-    /// Detaches the program.
-    ///
-    /// See [CgroupSkb::attach].
-    pub fn detach(&mut self, link_id: CgroupSkbLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
     /// Creates a program from a pinned entry on a bpffs.
     ///
     /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
@@ -195,7 +179,8 @@ define_link_wrapper!(
     /// The type returned by [CgroupSkb::attach]. Can be passed to [CgroupSkb::detach].
     CgroupSkbLinkId,
     CgroupSkbLinkInner,
-    CgroupSkbLinkIdInner
+    CgroupSkbLinkIdInner,
+    CgroupSkb,
 );
 
 /// Defines where to attach a [`CgroupSkb`] program.

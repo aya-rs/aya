@@ -100,7 +100,7 @@ impl SocketFilter {
 
     /// Detaches the program.
     ///
-    /// See [SocketFilter::attach].
+    /// See [`Self::attach``].
     pub fn detach(&mut self, link_id: SocketFilterLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }

@@ -151,23 +151,6 @@ impl Extension {
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))
     }
-
-    /// Detaches the extension.
-    ///
-    /// Detaching restores the original code overridden by the extension program.
-    /// See [Extension::attach].
-    pub fn detach(&mut self, link_id: ExtensionLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`ExtensionLink`] is dropped, the link is
-    /// detached.
-    pub fn take_link(&mut self, link_id: ExtensionLinkId) -> Result<ExtensionLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
 }
 
 /// Retrieves the FD of the BTF object for the provided `prog_fd` and the BTF ID of the function
@@ -216,5 +199,6 @@ define_link_wrapper!(
     /// The type returned by [Extension::attach]. Can be passed to [Extension::detach].
     ExtensionLinkId,
     FdLink,
-    FdLinkId
+    FdLinkId,
+    Extension,
 );

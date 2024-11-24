@@ -190,21 +190,6 @@ impl Xdp {
         Ok(Self { data, attach_type })
     }
 
-    /// Detaches the program.
-    ///
-    /// See [Xdp::attach].
-    pub fn detach(&mut self, link_id: XdpLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`XdpLink`] is dropped, the link is detached.
-    pub fn take_link(&mut self, link_id: XdpLinkId) -> Result<XdpLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
-
     /// Atomically replaces the program referenced by the provided link.
     ///
     /// Ownership of the link will transfer to this program.
@@ -343,5 +328,6 @@ define_link_wrapper!(
     /// The type returned by [Xdp::attach]. Can be passed to [Xdp::detach].
     XdpLinkId,
     XdpLinkInner,
-    XdpLinkIdInner
+    XdpLinkIdInner,
+    Xdp,
 );

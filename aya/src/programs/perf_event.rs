@@ -183,22 +183,6 @@ impl PerfEvent {
         let link = perf_attach(prog_fd, fd)?;
         self.data.links.insert(PerfEventLink::new(link))
     }
-
-    /// Detaches the program.
-    ///
-    /// See [PerfEvent::attach].
-    pub fn detach(&mut self, link_id: PerfEventLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`PerfEventLink`] is dropped, the link is
-    /// detached.
-    pub fn take_link(&mut self, link_id: PerfEventLinkId) -> Result<PerfEventLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
 }
 
 impl TryFrom<PerfEventLink> for FdLink {
@@ -231,5 +215,6 @@ define_link_wrapper!(
     /// The type returned by [PerfEvent::attach]. Can be passed to [PerfEvent::detach].
     PerfEventLinkId,
     PerfLinkInner,
-    PerfLinkIdInner
+    PerfLinkIdInner,
+    PerfEvent,
 );

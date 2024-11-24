@@ -97,25 +97,6 @@ impl CgroupSysctl {
                 )))
         }
     }
-
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the
-    /// link. When the returned [`CgroupSysctlLink`] is dropped, the link is
-    /// detached.
-    pub fn take_link(
-        &mut self,
-        link_id: CgroupSysctlLinkId,
-    ) -> Result<CgroupSysctlLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
-
-    /// Detaches the program.
-    ///
-    /// See [CgroupSysctl::attach].
-    pub fn detach(&mut self, link_id: CgroupSysctlLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
@@ -154,5 +135,6 @@ define_link_wrapper!(
     /// The type returned by [CgroupSysctl::attach]. Can be passed to [CgroupSysctl::detach].
     CgroupSysctlLinkId,
     CgroupSysctlLinkInner,
-    CgroupSysctlLinkIdInner
+    CgroupSysctlLinkIdInner,
+    CgroupSysctl,
 );
