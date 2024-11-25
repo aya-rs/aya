@@ -18,7 +18,8 @@ use crate::{
     },
     obj::programs::XdpAttachType,
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, LinkError, ProgramData, ProgramError,
+        define_link_wrapper, id_as_key, load_program, FdLink, Link, LinkError, ProgramData,
+        ProgramError,
     },
     sys::{
         bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, netlink_set_xdp_fd, LinkTarget,
@@ -246,11 +247,14 @@ pub(crate) struct NlLink {
     flags: XdpFlags,
 }
 
+#[derive(Debug, Hash, Eq, PartialEq)]
+pub(crate) struct NlLinkId(i32, RawFd);
+
 impl Link for NlLink {
-    type Id = (i32, RawFd);
+    type Id = NlLinkId;
 
     fn id(&self) -> Self::Id {
-        (self.if_index, self.prog_fd)
+        NlLinkId(self.if_index, self.prog_fd)
     }
 
     fn detach(self) -> Result<(), ProgramError> {
@@ -265,6 +269,8 @@ impl Link for NlLink {
         Ok(())
     }
 }
+
+id_as_key!(NlLink, NlLinkId);
 
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub(crate) enum XdpLinkIdInner {
@@ -295,6 +301,8 @@ impl Link for XdpLinkInner {
         }
     }
 }
+
+id_as_key!(XdpLinkInner, XdpLinkIdInner);
 
 impl TryFrom<XdpLink> for FdLink {
     type Error = LinkError;

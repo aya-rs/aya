@@ -4,8 +4,8 @@ use std::os::fd::AsFd;
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS},
     programs::{
-        define_link_wrapper, load_program, CgroupAttachMode, FdLink, Link, ProgAttachLink,
-        ProgramData, ProgramError,
+        define_link_wrapper, id_as_key, load_program, CgroupAttachMode, FdLink, Link,
+        ProgAttachLink, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, LinkTarget, SyscallError},
     util::KernelVersion,
@@ -122,6 +122,8 @@ impl Link for SockOpsLinkInner {
         }
     }
 }
+
+id_as_key!(SockOpsLinkInner, SockOpsLinkIdInner);
 
 define_link_wrapper!(
     /// The link used by [SockOps] programs.

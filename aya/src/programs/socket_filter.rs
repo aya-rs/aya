@@ -9,7 +9,7 @@ use thiserror::Error;
 
 use crate::{
     generated::{bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF},
-    programs::{load_program, Link, ProgramData, ProgramError},
+    programs::{id_as_key, load_program, Link, ProgramData, ProgramError},
 };
 
 /// The type returned when attaching a [`SocketFilter`] fails.
@@ -148,3 +148,5 @@ impl Link for SocketFilterLink {
         Ok(())
     }
 }
+
+id_as_key!(SocketFilterLink, SocketFilterLinkId);
