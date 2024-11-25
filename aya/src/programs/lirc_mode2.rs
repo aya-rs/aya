@@ -4,8 +4,8 @@ use std::os::fd::{AsFd, AsRawFd as _, RawFd};
 use crate::{
     generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
     programs::{
-        load_program, query, CgroupAttachMode, Link, ProgramData, ProgramError, ProgramFd,
-        ProgramInfo,
+        id_as_key, load_program, query, CgroupAttachMode, Link, ProgramData, ProgramError,
+        ProgramFd, ProgramInfo,
     },
     sys::{bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id, ProgQueryTarget},
 };
@@ -153,3 +153,5 @@ impl Link for LircLink {
             .map_err(Into::into)
     }
 }
+
+id_as_key!(LircLink, LircLinkId);

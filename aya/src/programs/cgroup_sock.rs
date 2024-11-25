@@ -7,8 +7,8 @@ pub use aya_obj::programs::CgroupSockAttachType;
 use crate::{
     generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK,
     programs::{
-        define_link_wrapper, load_program, CgroupAttachMode, FdLink, Link, ProgAttachLink,
-        ProgramData, ProgramError,
+        define_link_wrapper, id_as_key, load_program, CgroupAttachMode, FdLink, Link,
+        ProgAttachLink, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, LinkTarget, SyscallError},
     util::KernelVersion,
@@ -147,6 +147,8 @@ impl Link for CgroupSockLinkInner {
         }
     }
 }
+
+id_as_key!(CgroupSockLinkInner, CgroupSockLinkIdInner);
 
 define_link_wrapper!(
     /// The link used by [CgroupSock] programs.

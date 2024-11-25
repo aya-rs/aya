@@ -1,12 +1,12 @@
 //! Program links.
 use std::{
-    collections::{hash_map::Entry, HashMap},
     ffi::CString,
     io,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
     path::{Path, PathBuf},
 };
 
+use hashbrown::hash_set::{Entry, HashSet};
 use thiserror::Error;
 
 use crate::{
@@ -20,9 +20,9 @@ use crate::{
 };
 
 /// A Link.
-pub trait Link: std::fmt::Debug + 'static {
+pub trait Link: std::fmt::Debug + Eq + std::hash::Hash + 'static {
     /// Unique Id
-    type Id: std::fmt::Debug + std::hash::Hash + Eq + PartialEq;
+    type Id: std::fmt::Debug + Eq + std::hash::Hash + hashbrown::Equivalent<Self>;
 
     /// Returns the link id
     fn id(&self) -> Self::Id;
@@ -56,48 +56,50 @@ impl From<CgroupAttachMode> for u32 {
 }
 
 #[derive(Debug)]
-pub(crate) struct LinkMap<T: Link> {
-    links: HashMap<T::Id, T>,
+pub(crate) struct Links<T: Link> {
+    links: HashSet<T>,
 }
 
-impl<T: Link> LinkMap<T> {
+impl<T> Links<T>
+where
+    T: Eq + std::hash::Hash + Link,
+    T::Id: hashbrown::Equivalent<T> + Eq + std::hash::Hash,
+{
     pub(crate) fn new() -> Self {
         Self {
-            links: HashMap::new(),
+            links: Default::default(),
         }
     }
 
     pub(crate) fn insert(&mut self, link: T) -> Result<T::Id, ProgramError> {
-        let id = link.id();
-
-        match self.links.entry(link.id()) {
-            Entry::Occupied(_) => return Err(ProgramError::AlreadyAttached),
-            Entry::Vacant(e) => e.insert(link),
-        };
-
-        Ok(id)
+        match self.links.entry(link) {
+            Entry::Occupied(_entry) => Err(ProgramError::AlreadyAttached),
+            Entry::Vacant(entry) => Ok(entry.insert().get().id()),
+        }
     }
 
     pub(crate) fn remove(&mut self, link_id: T::Id) -> Result<(), ProgramError> {
         self.links
-            .remove(&link_id)
+            .take(&link_id)
             .ok_or(ProgramError::NotAttached)?
             .detach()
     }
 
+    pub(crate) fn forget(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
+        self.links.take(&link_id).ok_or(ProgramError::NotAttached)
+    }
+}
+
+impl<T: Link> Links<T> {
     pub(crate) fn remove_all(&mut self) -> Result<(), ProgramError> {
-        for (_, link) in self.links.drain() {
+        for link in self.links.drain() {
             link.detach()?;
         }
         Ok(())
     }
-
-    pub(crate) fn forget(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
-        self.links.remove(&link_id).ok_or(ProgramError::NotAttached)
-    }
 }
 
-impl<T: Link> Drop for LinkMap<T> {
+impl<T: Link> Drop for Links<T> {
     fn drop(&mut self) {
         let _ = self.remove_all();
     }
@@ -205,6 +207,8 @@ impl Link for FdLink {
         Ok(())
     }
 }
+
+id_as_key!(FdLink, FdLinkId);
 
 impl From<PinnedLink> for FdLink {
     fn from(p: PinnedLink) -> Self {
@@ -321,6 +325,40 @@ impl Link for ProgAttachLink {
     }
 }
 
+id_as_key!(ProgAttachLink, ProgAttachLinkId);
+
+macro_rules! id_as_key {
+    ($wrapper:ident, $wrapper_id:ident) => {
+        impl PartialEq for $wrapper {
+            fn eq(&self, other: &Self) -> bool {
+                use $crate::programs::links::Link as _;
+
+                self.id() == other.id()
+            }
+        }
+
+        impl Eq for $wrapper {}
+
+        impl std::hash::Hash for $wrapper {
+            fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                use $crate::programs::links::Link as _;
+
+                self.id().hash(state)
+            }
+        }
+
+        impl hashbrown::Equivalent<$wrapper> for $wrapper_id {
+            fn equivalent(&self, key: &$wrapper) -> bool {
+                use $crate::programs::links::Link as _;
+
+                *self == key.id()
+            }
+        }
+    };
+}
+
+pub(crate) use id_as_key;
+
 macro_rules! define_link_wrapper {
     (#[$doc1:meta] $wrapper:ident, #[$doc2:meta] $wrapper_id:ident, $base:ident, $base_id:ident, $program:ident,) => {
         #[$doc2]
@@ -350,7 +388,7 @@ macro_rules! define_link_wrapper {
 
         impl Drop for $wrapper {
             fn drop(&mut self) {
-                use crate::programs::links::Link;
+                use $crate::programs::links::Link as _;
 
                 if let Some(base) = self.0.take() {
                     let _ = base.detach();
@@ -369,6 +407,8 @@ macro_rules! define_link_wrapper {
                 self.0.take().unwrap().detach()
             }
         }
+
+        $crate::programs::links::id_as_key!($wrapper, $wrapper_id);
 
         impl From<$base> for $wrapper {
             fn from(b: $base) -> $wrapper {
@@ -540,7 +580,7 @@ mod tests {
     use assert_matches::assert_matches;
     use tempfile::tempdir;
 
-    use super::{FdLink, Link, LinkMap};
+    use super::{FdLink, Link, Links};
     use crate::{
         generated::{BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE},
         programs::{CgroupAttachMode, ProgramError},
@@ -578,9 +618,11 @@ mod tests {
         }
     }
 
+    id_as_key!(TestLink, TestLinkId);
+
     #[test]
     fn test_link_map() {
-        let mut links = LinkMap::new();
+        let mut links = Links::new();
         let l1 = TestLink::new(1, 2);
         let l1_detached = Rc::clone(&l1.detached);
         let l2 = TestLink::new(1, 3);
@@ -603,7 +645,7 @@ mod tests {
 
     #[test]
     fn test_already_attached() {
-        let mut links = LinkMap::new();
+        let mut links = Links::new();
 
         links.insert(TestLink::new(1, 2)).unwrap();
         assert_matches!(
@@ -614,7 +656,7 @@ mod tests {
 
     #[test]
     fn test_not_attached() {
-        let mut links = LinkMap::new();
+        let mut links = Links::new();
 
         let l1 = TestLink::new(1, 2);
         let l1_id1 = l1.id();
@@ -632,7 +674,7 @@ mod tests {
         let l2_detached = Rc::clone(&l2.detached);
 
         {
-            let mut links = LinkMap::new();
+            let mut links = Links::new();
             let id1 = links.insert(l1).unwrap();
             links.insert(l2).unwrap();
             // manually remove one link
@@ -653,7 +695,7 @@ mod tests {
         let l2_detached = Rc::clone(&l2.detached);
 
         let owned_l1 = {
-            let mut links = LinkMap::new();
+            let mut links = Links::new();
             let id1 = links.insert(l1).unwrap();
             links.insert(l2).unwrap();
             // manually forget one link
