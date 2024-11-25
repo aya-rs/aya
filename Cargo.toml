@@ -60,7 +60,7 @@ async-io = { version = "2.0", default-features = false }
 bindgen = { version = "0.70", default-features = false }
 bitflags = { version = "2.2.1", default-features = false }
 bytes = { version = "1", default-features = false }
-cargo_metadata = { version = "0.18.0", default-features = false }
+cargo_metadata = { version = "0.19.0", default-features = false }
 clap = { version = "4", default-features = false }
 const-assert = { version = "1.0.1", default-features = false }
 dialoguer = { version = "0.11", default-features = false }
@@ -82,7 +82,7 @@ object = { version = "0.36", default-features = false }
 once_cell = { version = "1.20.1", default-features = false }
 proc-macro-error = { version = "1.0", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
-public-api = { version = "0.41.0", default-features = false }
+public-api = { version = "0.42.0", default-features = false }
 quote = { version = "1", default-features = false }
 rand = { version = "0.8", default-features = false }
 rbpf = { version = "0.3.0", default-features = false }
