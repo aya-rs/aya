@@ -469,7 +469,7 @@ impl aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
-pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where const_assert::Assert<{ _ }>: const_assert::IsTrue
+pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where Assert<{ _ }>: IsTrue
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl core::marker::Sync for aya_ebpf::maps::ring_buf::RingBuf
 impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
@@ -1195,7 +1195,7 @@ impl aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
-pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where const_assert::Assert<{ _ }>: const_assert::IsTrue
+pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where Assert<{ _ }>: IsTrue
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl core::marker::Sync for aya_ebpf::maps::ring_buf::RingBuf
 impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
