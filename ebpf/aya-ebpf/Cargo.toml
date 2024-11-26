@@ -12,14 +12,6 @@ edition.workspace = true
 aya-ebpf-cty = { version = "^0.2.2", path = "../aya-ebpf-cty" }
 aya-ebpf-macros = { version = "^0.1.1", path = "../../aya-ebpf-macros" }
 aya-ebpf-bindings = { version = "^0.1.1", path = "../aya-ebpf-bindings" }
-const-assert = { workspace = true, optional = true }
 
 [build-dependencies]
 rustversion = { workspace = true }
-
-[features]
-default = []
-# TODO(https://github.com/rust-lang/rust/issues/76560): Always utilize the
-# logic gated behind this feature. This is not currently possible because the
-# underlying `const_generic_exprs` language feature is still incomplete.
-const_assert = ["const-assert"]
