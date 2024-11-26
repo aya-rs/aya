@@ -22,10 +22,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
-          components: rustfmt, clippy, miri, rust-src
+          components: clippy,miri,rustfmt,rust-src
+
+      # Installed *after* nightly so it is the default.
+      - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
 
@@ -43,7 +45,7 @@ jobs:
         run: taplo fmt --check
 
       - name: Check formatting
-        run: cargo fmt --all -- --check
+        run: cargo +nightly fmt --all -- --check
 
       - name: Run clippy
         run: ./clippy.sh
@@ -62,7 +64,7 @@ jobs:
       - name: Run miri
         run: |
           set -euxo pipefail
-          cargo hack miri test --all-targets --feature-powerset \
+          cargo +nightly hack miri test --all-targets --feature-powerset \
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
@@ -85,9 +87,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
 
@@ -149,10 +149,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
           components: rust-src
+
+      # Installed *after* nightly so it is the default.
+      - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
 
@@ -165,7 +167,7 @@ jobs:
           CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.bpf_target_arch }}
         run: |
           set -euxo pipefail
-          cargo hack build \
+          cargo +nightly hack build \
             --target ${{ matrix.target }} \
             -Z build-std=core \
             --package aya-ebpf \
@@ -239,10 +241,13 @@ jobs:
           echo $(brew --prefix)/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
           echo $(brew --prefix)/opt/llvm/bin >> $GITHUB_PATH
 
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
           components: rust-src
+
+      # Installed *after* nightly so it is the default.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
       - uses: Swatinem/rust-cache@v2
