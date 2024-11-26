@@ -113,6 +113,13 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         "bpf_cgroup_iter_order",
         // NETFILTER
         "nf_inet_hooks",
+        // XDP
+        "xdp_mmap_offsets",
+        "xdp_desc",
+        "xdp_ring_offset",
+        "xdp_statistics",
+        "xdp_umem_reg",
+        "sockaddr_xdp",
     ];
 
     let vars = [
@@ -167,6 +174,24 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         "BPF_RINGBUF_.*",
         // NETFILTER
         "NFPROTO_.*",
+        // XDP
+        "XDP_MMAP_OFFSETS",
+        "XDP_UMEM_REG",
+        "XDP_UMEM_FILL_RING",
+        "XDP_UMEM_COMPLETION_RING",
+        "XDP_UMEM_PGOFF_FILL_RING",
+        "XDP_RX_RING",
+        "XDP_STATISTICS",
+        "XDP_TX_RING",
+        "XDP_UMEM_COMPLETION_RING",
+        "XDP_UMEM_FILL_RING",
+        "XDP_UMEM_PGOFF_COMPLETION_RING",
+        "XDP_PGOFF_RX_RING",
+        "XDP_PGOFF_TX_RING",
+        "XDP_SHARED_UMEM",
+        "XDP_COPY",
+        "XDP_ZEROCOPY",
+        "XDP_USE_NEED_WAKEUP",
     ];
 
     let dir = PathBuf::from("aya-obj");

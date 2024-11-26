@@ -162,6 +162,21 @@ pub const XDP_FLAGS_HW_MODE: u32 = 8;
 pub const XDP_FLAGS_REPLACE: u32 = 16;
 pub const XDP_FLAGS_MODES: u32 = 14;
 pub const XDP_FLAGS_MASK: u32 = 31;
+pub const XDP_SHARED_UMEM: u32 = 1;
+pub const XDP_COPY: u32 = 2;
+pub const XDP_ZEROCOPY: u32 = 4;
+pub const XDP_USE_NEED_WAKEUP: u32 = 8;
+pub const XDP_MMAP_OFFSETS: u32 = 1;
+pub const XDP_RX_RING: u32 = 2;
+pub const XDP_TX_RING: u32 = 3;
+pub const XDP_UMEM_REG: u32 = 4;
+pub const XDP_UMEM_FILL_RING: u32 = 5;
+pub const XDP_UMEM_COMPLETION_RING: u32 = 6;
+pub const XDP_STATISTICS: u32 = 7;
+pub const XDP_PGOFF_RX_RING: u32 = 0;
+pub const XDP_PGOFF_TX_RING: u32 = 2147483648;
+pub const XDP_UMEM_PGOFF_FILL_RING: u64 = 4294967296;
+pub const XDP_UMEM_PGOFF_COMPLETION_RING: u64 = 6442450944;
 pub const PERF_MAX_STACK_DEPTH: u32 = 127;
 pub const PERF_MAX_CONTEXTS_PER_STACK: u32 = 8;
 pub const PERF_FLAG_FD_NO_GROUP: u32 = 1;
@@ -1423,6 +1438,61 @@ pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_92 = 7;
 pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_92 = 8;
 pub const __IFLA_XDP_MAX: _bindgen_ty_92 = 9;
 pub type _bindgen_ty_92 = ::core::ffi::c_uint;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct sockaddr_xdp {
+    pub sxdp_family: __u16,
+    pub sxdp_flags: __u16,
+    pub sxdp_ifindex: __u32,
+    pub sxdp_queue_id: __u32,
+    pub sxdp_shared_umem_fd: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct xdp_ring_offset {
+    pub producer: __u64,
+    pub consumer: __u64,
+    pub desc: __u64,
+    pub flags: __u64,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct xdp_mmap_offsets {
+    pub rx: xdp_ring_offset,
+    pub tx: xdp_ring_offset,
+    pub fr: xdp_ring_offset,
+    pub cr: xdp_ring_offset,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct xdp_umem_reg {
+    pub addr: __u64,
+    pub len: __u64,
+    pub chunk_size: __u32,
+    pub headroom: __u32,
+    pub flags: __u32,
+    pub tx_metadata_len: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct xdp_statistics {
+    pub rx_dropped: __u64,
+    pub rx_invalid_descs: __u64,
+    pub tx_invalid_descs: __u64,
+    pub rx_ring_full: __u64,
+    pub rx_fill_ring_empty_descs: __u64,
+    pub tx_ring_empty_descs: __u64,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct xdp_desc {
+    pub addr: __u64,
+    pub len: __u32,
+    pub options: __u32,
+}
+impl nf_inet_hooks {
+    pub const NF_INET_INGRESS: nf_inet_hooks = nf_inet_hooks::NF_INET_NUMHOOKS;
+}
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum nf_inet_hooks {
@@ -2448,23 +2518,25 @@ pub struct tcmsg {
     pub tcm_parent: __u32,
     pub tcm_info: __u32,
 }
-pub const TCA_UNSPEC: _bindgen_ty_172 = 0;
-pub const TCA_KIND: _bindgen_ty_172 = 1;
-pub const TCA_OPTIONS: _bindgen_ty_172 = 2;
-pub const TCA_STATS: _bindgen_ty_172 = 3;
-pub const TCA_XSTATS: _bindgen_ty_172 = 4;
-pub const TCA_RATE: _bindgen_ty_172 = 5;
-pub const TCA_FCNT: _bindgen_ty_172 = 6;
-pub const TCA_STATS2: _bindgen_ty_172 = 7;
-pub const TCA_STAB: _bindgen_ty_172 = 8;
-pub const TCA_PAD: _bindgen_ty_172 = 9;
-pub const TCA_DUMP_INVISIBLE: _bindgen_ty_172 = 10;
-pub const TCA_CHAIN: _bindgen_ty_172 = 11;
-pub const TCA_HW_OFFLOAD: _bindgen_ty_172 = 12;
-pub const TCA_INGRESS_BLOCK: _bindgen_ty_172 = 13;
-pub const TCA_EGRESS_BLOCK: _bindgen_ty_172 = 14;
-pub const __TCA_MAX: _bindgen_ty_172 = 15;
-pub type _bindgen_ty_172 = ::core::ffi::c_uint;
+pub const TCA_UNSPEC: _bindgen_ty_174 = 0;
+pub const TCA_KIND: _bindgen_ty_174 = 1;
+pub const TCA_OPTIONS: _bindgen_ty_174 = 2;
+pub const TCA_STATS: _bindgen_ty_174 = 3;
+pub const TCA_XSTATS: _bindgen_ty_174 = 4;
+pub const TCA_RATE: _bindgen_ty_174 = 5;
+pub const TCA_FCNT: _bindgen_ty_174 = 6;
+pub const TCA_STATS2: _bindgen_ty_174 = 7;
+pub const TCA_STAB: _bindgen_ty_174 = 8;
+pub const TCA_PAD: _bindgen_ty_174 = 9;
+pub const TCA_DUMP_INVISIBLE: _bindgen_ty_174 = 10;
+pub const TCA_CHAIN: _bindgen_ty_174 = 11;
+pub const TCA_HW_OFFLOAD: _bindgen_ty_174 = 12;
+pub const TCA_INGRESS_BLOCK: _bindgen_ty_174 = 13;
+pub const TCA_EGRESS_BLOCK: _bindgen_ty_174 = 14;
+pub const TCA_DUMP_FLAGS: _bindgen_ty_174 = 15;
+pub const TCA_EXT_WARN_MSG: _bindgen_ty_174 = 16;
+pub const __TCA_MAX: _bindgen_ty_174 = 17;
+pub type _bindgen_ty_174 = ::core::ffi::c_uint;
 pub const AYA_PERF_EVENT_IOC_ENABLE: ::core::ffi::c_int = 9216;
 pub const AYA_PERF_EVENT_IOC_DISABLE: ::core::ffi::c_int = 9217;
 pub const AYA_PERF_EVENT_IOC_SET_BPF: ::core::ffi::c_int = 1074013192;
