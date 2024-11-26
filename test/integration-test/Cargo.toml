@@ -35,10 +35,6 @@ cargo_metadata = { workspace = true }
 # script to build this, but we want to teach cargo about the dependecy so that cache invalidation
 # works properly.
 #
-# Note also that https://github.com/rust-lang/cargo/issues/10593 occurs when `target = ...` is added
-# to an artifact dependency; it seems possible to work around that by setting `resolver = "1"` in
-# Cargo.toml in the workspace root.
-#
 # Finally note that *any* usage of `artifact = ...` in *any* Cargo.toml in the workspace breaks
 # workflows with stable cargo; stable cargo outright refuses to load manifests that use unstable
 # features.
