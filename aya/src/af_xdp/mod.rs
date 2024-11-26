@@ -4,12 +4,12 @@
 //! for access to all four rings, binding to a specific `(ifname, queue_id)`, and for creating the
 //! memory mapping to interact with all these queues directly.
 //!
-//! Please see https://docs.kernel.org/networking/af_xdp.html for a detailed explanation of AF_XDP.
+//! Please see <https://docs.kernel.org/networking/af_xdp.html> for a detailed explanation of AF_XDP.
 //!
 //! The entrypoint to the module is an instance of [`XdpSocketBuilder`], or for power users
-//! the more low-level [`crate::Umem`].
+//! the more low-level [`crate::af_xdp::Umem`].
 //!
-//! This module builds upon the `xdpilone` crate (https://crates.io/crates/xdpilone), with
+//! This module builds upon the `xdpilone` crate (<https://crates.io/crates/xdpilone>), with
 //! some (optional) abstractions on top.
 
 use std::{borrow::Cow, ffi::NulError, io::Error};
@@ -32,7 +32,7 @@ pub enum XskError {
         /// The errno
         errno: i32,
     },
-    /// Error creating a [`CString`]
+    /// Error creating a [`std::ffi::CString`]
     #[error("nul error")]
     NulError(#[from] NulError),
 
@@ -57,7 +57,7 @@ pub enum AllocationError {
 }
 
 impl<'a> XskError {
-    /// Create an error from the latest [`errno`].
+    /// Create an error from the latest `errno`.
     pub fn last_os_error() -> Self {
         Self::Errno {
             errno: Error::last_os_error().raw_os_error().unwrap_or(-1),
