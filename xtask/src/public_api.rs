@@ -56,16 +56,13 @@ pub fn public_api(options: Options, metadata: Metadata) -> Result<()> {
                 if matches!(publish, Some(publish) if publish.is_empty()) {
                     Ok(())
                 } else {
-                    let target = target.as_ref().and_then(|target| {
-                        let proc_macro = targets.iter().any(|Target { kind, .. }| {
-                            kind.iter().any(|kind| kind == "proc-macro")
-                        });
-                        (!proc_macro).then_some(target)
-                    });
+                    let target = (!targets.iter().any(Target::is_proc_macro))
+                        .then(|| target.clone())
+                        .flatten();
                     let diff = check_package_api(
                         &name,
                         toolchain,
-                        target.cloned(),
+                        target,
                         bless,
                         workspace_root.as_std_path(),
                     )
