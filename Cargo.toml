@@ -70,10 +70,7 @@ epoll = { version = "4.3.3", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 hashbrown = { version = "0.15.0", default-features = false }
 indoc = { version = "2.0", default-features = false }
-# libc 0.2.164 and 0.2.165 are affected by
-# https://github.com/rust-lang/libc/issues/4149.
-# Pin the last working version until a proper fix is released.
-libc = { version = "=0.2.163", default-features = false }
+libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
 netns-rs = { version = "0.1", default-features = false }
 nix = { version = "0.29.0", default-features = false }
