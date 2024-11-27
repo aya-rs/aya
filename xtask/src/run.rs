@@ -54,12 +54,60 @@ pub fn build<F>(target: Option<&str>, f: F) -> Result<Vec<(String, PathBuf)>>
 where
     F: FnOnce(&mut Command) -> &mut Command,
 {
-    // Always use rust-lld and -Zbuild-std in case we're cross-compiling.
     let mut cmd = Command::new("cargo");
     cmd.args(["build", "--message-format=json"]);
     if let Some(target) = target {
-        let config = format!("target.{target}.linker = \"rust-lld\"");
-        cmd.args(["--target", target, "--config", &config]);
+        cmd.args(["--target", target]);
+        // During a cross build, it's important to pick the correct linker.
+        //
+        // On Linux, C compiler driver should be always used as the linker.
+        // The C compiler eventually ends up calling the linker binary (e.g.
+        // ld, lld), but before doing that, it figures out the appropiate
+        // linker flags, which include the system library paths. Calling linker
+        // binaries directly results in them not being able to find system
+        // libraries (like libc or runtime library), which can manifest in
+        // errors like `unable to find library -lgcc_s`.
+        //
+        // The issue was discussed with the Rust maintainers[0] and the
+        // consensus is to always use `-C linker` to specify the C compiler
+        /// (e.g. `-C linker=gcc`, `-C linker=clang`). Choice of a specific
+        // linker (like ldd or mold) can be done with `-C link-arg=-fuse-ld=`.
+        //
+        // However, the same doesn't hold true for macOS. Cross toolchains for
+        // Linux targets on macOS hosts, provided by rustup, are self-contained,
+        // come with libc, runtime library and don't depend on any system
+        // libraries. Therefore, direct usage of rust-lld through
+        // `-C linker=rust-lld` works fine, because rust-lld is able to find
+        // libc and runtime in rustup's toolchain.
+        //
+        // Using system-wide compiler (clang) on macOS would take the opposite
+        // effect than on Linux. The system compiler would be the one not being
+        // able to find the Linux-compatible libc and runtime
+        //
+        // To sum it up, this is the way of determining the linker we follow:
+        //
+        // - On Linux, use a C compiler for the cross target.
+        // - On macOS, use rust-lld directly.
+        //
+        // The first point is already covered by the configuration in
+        // `.cargo/config.toml`, which uses cross GCC compilers as linkers for
+        // popular non-x86_64 targets (e.g. aarch64-linux-musl-gcc). People
+        // who want to use a different compiler (e.g. clang), can overwrite
+        // RUSTFLAGS. Set of flags like `-C linker=clang
+        // -C link-arg=--target=aarch64-unknown-linux-musl
+        // -C link-arg=-fuse-ld=lld` should result in the build which uses only
+        // LLVM and has no dependency on GCC. mold can be used with
+        // `-C link-arg=-fuse-ld=mold`
+        //
+        // To cover the macOS case, we explicitly set the linker to rust-lld,
+        // ignoring the default configuration from `.cargo/config.toml`.
+        //
+        // [0] https://github.com/rust-lang/rust/issues/130062
+        #[cfg(target_os = "macos")]
+        {
+            let config = format!("target.{target}.linker = \"rust-lld\"");
+            cmd.args(["--config", &config]);
+        }
     }
     f(&mut cmd);
 
