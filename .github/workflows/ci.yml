@@ -74,7 +74,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch:
+        bpf_target_arch:
           - x86_64-unknown-linux-gnu
           - aarch64-unknown-linux-gnu
           - armv7-unknown-linux-gnueabi
@@ -88,15 +88,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          targets: ${{ matrix.arch }}
 
       - uses: Swatinem/rust-cache@v2
 
       - uses: taiki-e/install-action@cargo-hack
-
-      - uses: taiki-e/setup-cross-toolchain-action@v1
-        with:
-          target: ${{ matrix.arch }}
 
       - name: Build
         run: |
@@ -139,7 +134,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch:
+        bpf_target_arch:
           - x86_64
           - aarch64
           - arm
@@ -167,7 +162,7 @@ jobs:
       - uses: taiki-e/install-action@cargo-hack
       - name: Build
         env:
-          CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.arch }}
+          CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.bpf_target_arch }}
         run: |
           set -euxo pipefail
           cargo hack build --package aya-ebpf --package aya-log-ebpf \
@@ -177,7 +172,7 @@ jobs:
 
       - name: Test
         env:
-          CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.arch }}
+          CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.bpf_target_arch }}
           RUST_BACKTRACE: full
         run: |
           set -euxo pipefail
