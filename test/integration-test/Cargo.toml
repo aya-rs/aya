@@ -29,7 +29,7 @@ tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
 xdpilone = { workspace = true }
 
 [build-dependencies]
-cargo_metadata = { workspace = true }
+aya-build = { path = "../../aya-build" }
 # TODO(https://github.com/rust-lang/cargo/issues/12375): this should be an artifact dependency, but
 # it's not possible to tell cargo to use `-Z build-std` to build it. We cargo-in-cargo in the build
 # script to build this, but we want to teach cargo about the dependecy so that cache invalidation
