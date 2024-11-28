@@ -1,0 +1,3 @@
+pub mod aya_build
+pub use aya_build::cargo_metadata
+pub fn aya_build::build_ebpf(packages: impl core::iter::traits::collect::IntoIterator<Item = cargo_metadata::Package>) -> anyhow::Result<()>
