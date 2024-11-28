@@ -56,15 +56,6 @@ fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
     let out_dir = PathBuf::from(out_dir);
 
-    let endian = env::var_os("CARGO_CFG_TARGET_ENDIAN").unwrap();
-    let target = if endian == "big" {
-        "bpfeb"
-    } else if endian == "little" {
-        "bpfel"
-    } else {
-        panic!("unsupported endian={:?}", endian)
-    };
-
     const C_BPF: &[(&str, bool)] = &[
         ("ext.bpf.c", false),
         ("iter.bpf.c", true),
@@ -76,6 +67,15 @@ fn main() {
     ];
 
     if build_integration_bpf {
+        let endian = env::var_os("CARGO_CFG_TARGET_ENDIAN").unwrap();
+        let target = if endian == "big" {
+            "bpfeb"
+        } else if endian == "little" {
+            "bpfel"
+        } else {
+            panic!("unsupported endian={:?}", endian)
+        };
+
         let libbpf_dir = manifest_dir
             .parent()
             .unwrap()
