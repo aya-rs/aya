@@ -7,8 +7,7 @@ use aya_ebpf::{
     maps::Array,
     programs::ProbeContext,
 };
-
-const RESULT_BUF_LEN: usize = 1024;
+use integration_common::bpf_probe_read::{TestResult, RESULT_BUF_LEN};
 
 fn read_str_bytes(
     fun: unsafe fn(*const u8, &mut [u8]) -> Result<&[u8], i64>,
@@ -30,9 +29,8 @@ fn read_str_bytes(
     };
     *len = None;
 
-    // len comes from ctx.arg(1) so it's dynamic and the verifier
-    // doesn't see any bounds. We do len.min(RESULT_BUF_LEN) here to
-    // ensure that the verifier can see the upper bound, or you get:
+    // len comes from ctx.arg(1) so it's dynamic and the verifier doesn't see any bounds. We slice
+    // here to ensure that the verifier can see the upper bound, or you get:
     //
     // 18: (79) r7 = *(u64 *)(r7 +8)         ; R7_w=scalar()
     // [snip]
@@ -45,12 +43,6 @@ fn read_str_bytes(
     };
 
     *len = Some(unsafe { fun(iptr, buf) }.map(<[_]>::len));
-}
-
-#[repr(C)]
-struct TestResult {
-    buf: [u8; RESULT_BUF_LEN],
-    len: Option<Result<usize, i64>>,
 }
 
 #[map]

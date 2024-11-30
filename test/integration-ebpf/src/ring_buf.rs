@@ -6,16 +6,10 @@ use aya_ebpf::{
     maps::{PerCpuArray, RingBuf},
     programs::ProbeContext,
 };
+use integration_common::ring_buf::Registers;
 
 #[map]
 static RING_BUF: RingBuf = RingBuf::with_byte_size(0, 0);
-
-// This structure's definition is duplicated in userspace.
-#[repr(C)]
-struct Registers {
-    dropped: u64,
-    rejected: u64,
-}
 
 // Use a PerCpuArray to store the registers so that we can update the values from multiple CPUs
 // without needing synchronization. Atomics exist [1], but aren't exposed.

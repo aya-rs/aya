@@ -1,16 +1,6 @@
 use aya::{maps::Array, programs::UProbe, Ebpf};
+use integration_common::bpf_probe_read::{TestResult, RESULT_BUF_LEN};
 use test_log::test;
-
-const RESULT_BUF_LEN: usize = 1024;
-
-#[derive(Copy, Clone)]
-#[repr(C)]
-struct TestResult {
-    buf: [u8; RESULT_BUF_LEN],
-    len: Option<Result<usize, i64>>,
-}
-
-unsafe impl aya::Pod for TestResult {}
 
 #[test]
 fn bpf_probe_read_user_str_bytes() {

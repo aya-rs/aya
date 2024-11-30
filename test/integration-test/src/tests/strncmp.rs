@@ -8,12 +8,7 @@ use aya::{
     programs::UProbe,
     Ebpf,
 };
-
-#[derive(Copy, Clone)]
-#[repr(C)]
-struct TestResult(Ordering);
-
-unsafe impl aya::Pod for TestResult {}
+use integration_common::strncmp::TestResult;
 
 #[test]
 fn bpf_strncmp() {

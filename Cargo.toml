@@ -7,6 +7,7 @@ members = [
     "aya-obj",
     "aya-tool",
     "init",
+    "test/integration-common",
     "test/integration-test",
     "xtask",
 
@@ -31,6 +32,7 @@ default-members = [
     "aya-obj",
     "aya-tool",
     "init",
+    "test/integration-common",
     # test/integration-test is omitted; including it in this list causes `cargo test` to run its
     # tests, and that doesn't work unless they've been built with `cargo xtask`.
     "xtask",

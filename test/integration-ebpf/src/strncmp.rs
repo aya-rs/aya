@@ -1,8 +1,6 @@
 #![no_std]
 #![no_main]
 
-use core::cmp::Ordering;
-
 use aya_ebpf::{
     cty::c_long,
     helpers::{bpf_probe_read_user_str_bytes, bpf_strncmp},
@@ -10,9 +8,7 @@ use aya_ebpf::{
     maps::Array,
     programs::ProbeContext,
 };
-
-#[repr(C)]
-struct TestResult(Ordering);
+use integration_common::strncmp::TestResult;
 
 #[map]
 static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
