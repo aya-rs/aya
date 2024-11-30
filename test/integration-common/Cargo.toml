@@ -1,0 +1,15 @@
+[package]
+name = "integration-common"
+version = "0.1.0"
+publish = false
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
+
+[dependencies]
+aya = { path = "../../aya", optional = true }
+
+[features]
+user = ["aya"]

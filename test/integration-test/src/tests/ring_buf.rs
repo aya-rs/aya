@@ -13,41 +13,16 @@ use assert_matches::assert_matches;
 use aya::{
     maps::{array::PerCpuArray, ring_buf::RingBuf, MapData},
     programs::UProbe,
-    Ebpf, EbpfLoader, Pod,
+    Ebpf, EbpfLoader,
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
+use integration_common::ring_buf::Registers;
 use rand::Rng as _;
 use test_log::test;
 use tokio::{
     io::unix::AsyncFd,
     time::{sleep, Duration},
 };
-
-// This structure's definition is duplicated in the probe.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Default)]
-struct Registers {
-    dropped: u64,
-    rejected: u64,
-}
-
-impl std::ops::Add for Registers {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self::Output {
-        Self {
-            dropped: self.dropped + rhs.dropped,
-            rejected: self.rejected + rhs.rejected,
-        }
-    }
-}
-
-impl<'a> std::iter::Sum<&'a Registers> for Registers {
-    fn sum<I: Iterator<Item = &'a Registers>>(iter: I) -> Self {
-        iter.fold(Default::default(), |a, b| a + *b)
-    }
-}
-
-unsafe impl Pod for Registers {}
 
 struct RingBufTest {
     _bpf: Ebpf,
