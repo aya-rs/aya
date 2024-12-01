@@ -1,6 +1,6 @@
 [package]
 name = "aya-build"
-version = "0.1.0"
+version = "0.1.1"
 description = "Build-time support for aya projects"
 authors.workspace = true
 license.workspace = true
@@ -9,5 +9,5 @@ homepage.workspace = true
 edition.workspace = true
 
 [dependencies]
-anyhow = { workspace = true }
+anyhow = { workspace = true, default-features = true }
 cargo_metadata = { workspace = true }
