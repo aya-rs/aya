@@ -136,6 +136,7 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>) -> Result<()> {
 
         match stderr.join().map_err(std::panic::resume_unwind) {
             Ok(()) => {}
+            Err(err) => match err {},
         }
 
         for (name, binary) in executables {
