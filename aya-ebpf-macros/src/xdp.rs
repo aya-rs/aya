@@ -1,6 +1,7 @@
 use proc_macro2::TokenStream;
+use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{Error, ItemFn, Result};
+use syn::{spanned::Spanned as _, ItemFn};
 
 use crate::args::{err_on_unknown_args, pop_bool_arg, pop_string_arg, Args};
 
@@ -17,8 +18,9 @@ pub(crate) enum XdpMap {
 }
 
 impl Xdp {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Xdp> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
         let item = syn::parse2(item)?;
+        let span = attrs.span();
         let mut args: Args = syn::parse2(attrs)?;
 
         let frags = pop_bool_arg(&mut args, "frags");
@@ -26,39 +28,42 @@ impl Xdp {
             Some("cpumap") => Some(XdpMap::CpuMap),
             Some("devmap") => Some(XdpMap::DevMap),
             Some(name) => {
-                return Err(Error::new_spanned(
-                    "map",
-                    format!("Invalid value. Expected 'cpumap' or 'devmap', found '{name}'"),
-                ))
+                return Err(span.error(format!(
+                    "Invalid value. Expected 'cpumap' or 'devmap', found '{name}'"
+                )))
             }
             None => None,
         };
 
         err_on_unknown_args(&args)?;
-        Ok(Xdp { item, frags, map })
+        Ok(Self { item, frags, map })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let mut section_name = vec![if self.frags { "xdp.frags" } else { "xdp" }];
-        match self.map {
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self { item, frags, map } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let mut section_name = vec![if *frags { "xdp.frags" } else { "xdp" }];
+        match map {
             Some(XdpMap::CpuMap) => section_name.push("cpumap"),
             Some(XdpMap::DevMap) => section_name.push("devmap"),
             None => (),
         };
         let section_name = section_name.join("/");
-
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
-        Ok(quote! {
+        let fn_name = &sig.ident;
+        quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
+            #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
                 return #fn_name(::aya_ebpf::programs::XdpContext::new(ctx));
 
                 #item
             }
-        })
+        }
     }
 }
 
@@ -79,7 +84,7 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp"]
@@ -105,7 +110,7 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp.frags"]
@@ -131,7 +136,7 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp/cpumap"]
@@ -157,7 +162,7 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp/devmap"]
@@ -197,7 +202,7 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp.frags/cpumap"]
@@ -223,7 +228,7 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "xdp.frags/devmap"]

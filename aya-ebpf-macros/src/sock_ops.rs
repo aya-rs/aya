@@ -1,34 +1,39 @@
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
+use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{ItemFn, Result};
+use syn::{spanned::Spanned as _, ItemFn};
 
 pub(crate) struct SockOps {
     item: ItemFn,
 }
 
 impl SockOps {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
         if !attrs.is_empty() {
-            abort!(attrs, "unexpected attribute")
+            return Err(attrs.span().error("unexpected attribute"));
         }
         let item = syn::parse2(item)?;
-        Ok(SockOps { item })
+        Ok(Self { item })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
-        Ok(quote! {
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self { item } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let fn_name = &sig.ident;
+        quote! {
             #[no_mangle]
             #[link_section = "sockops"]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sock_ops) -> u32 {
+            #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sock_ops) -> u32 {
                 return #fn_name(::aya_ebpf::programs::SockOpsContext::new(ctx));
 
                 #item
             }
-        })
+        }
     }
 }
 
@@ -49,7 +54,7 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "sockops"]

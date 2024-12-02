@@ -18,28 +18,33 @@ impl BtfTracePoint {
         let function = pop_string_arg(&mut args, "function");
         err_on_unknown_args(&args)?;
 
-        Ok(BtfTracePoint { item, function })
+        Ok(Self { item, function })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_name: Cow<'_, _> = if let Some(function) = &self.function {
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self { item, function } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let section_name: Cow<'_, _> = if let Some(function) = function {
             format!("tp_btf/{}", function).into()
         } else {
             "tp_btf".into()
         };
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
-        Ok(quote! {
+        let fn_name = &sig.ident;
+        quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+            #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = #fn_name(::aya_ebpf::programs::BtfTracePointContext::new(ctx));
                 return 0;
 
                 #item
             }
-        })
+        }
     }
 }
 
@@ -60,7 +65,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote!(
             #[no_mangle]
             #[link_section = "tp_btf"]
@@ -87,7 +92,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote!(
             #[no_mangle]
             #[link_section = "tp_btf/some_func"]

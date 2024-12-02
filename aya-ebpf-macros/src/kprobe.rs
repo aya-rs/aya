@@ -1,8 +1,9 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
+use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{ItemFn, Result};
+use syn::{spanned::Spanned as _, ItemFn};
 
 use crate::args::{err_on_unknown_args, pop_string_arg};
 
@@ -31,14 +32,23 @@ pub(crate) struct KProbe {
 }
 
 impl KProbe {
-    pub(crate) fn parse(kind: KProbeKind, attrs: TokenStream, item: TokenStream) -> Result<KProbe> {
+    pub(crate) fn parse(
+        kind: KProbeKind,
+        attrs: TokenStream,
+        item: TokenStream,
+    ) -> Result<Self, Diagnostic> {
         let item = syn::parse2(item)?;
+        let span = attrs.span();
         let mut args = syn::parse2(attrs)?;
         let function = pop_string_arg(&mut args, "function");
-        let offset = pop_string_arg(&mut args, "offset").map(|v| v.parse::<u64>().unwrap());
+        let offset = pop_string_arg(&mut args, "offset")
+            .as_deref()
+            .map(str::parse)
+            .transpose()
+            .map_err(|err| span.error(format!("failed to parse `offset` argument: {}", err)))?;
         err_on_unknown_args(&args)?;
 
-        Ok(KProbe {
+        Ok(Self {
             kind,
             item,
             function,
@@ -46,39 +56,42 @@ impl KProbe {
         })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_name: Cow<'_, _> = if self.function.is_some() && self.offset.is_some() {
-            format!(
-                "{}/{}+{}",
-                self.kind,
-                self.function.as_ref().unwrap(),
-                self.offset.unwrap()
-            )
-            .into()
-        } else if self.function.is_some() {
-            format!("{}/{}", self.kind, self.function.as_ref().unwrap()).into()
-        } else {
-            format!("{}", self.kind).into()
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self {
+            kind,
+            function,
+            offset,
+            item,
+        } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let section_name: Cow<'_, _> = match function {
+            None => self.kind.to_string().into(),
+            Some(function) => match offset {
+                None => format!("{kind}/{function}").into(),
+                Some(offset) => format!("{kind}/{function}+{offset}").into(),
+            },
         };
-
         let probe_type = if section_name.as_ref().starts_with("kprobe") {
             quote! { ProbeContext }
         } else {
             quote! { RetProbeContext }
         };
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
-        Ok(quote! {
+        let fn_name = &sig.ident;
+        quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
+            #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                 let _ = #fn_name(::aya_ebpf::programs::#probe_type::new(ctx));
                 return 0;
 
                 #item
             }
-        })
+        }
     }
 }
 
@@ -101,7 +114,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            kprobe.expand().unwrap().to_string(),
+            kprobe.expand().to_string(),
             quote! {
                 #[no_mangle]
                 #[link_section = "kprobe"]
@@ -133,7 +146,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            kprobe.expand().unwrap().to_string(),
+            kprobe.expand().to_string(),
             quote! {
                 #[no_mangle]
                 #[link_section = "kprobe/fib_lookup"]
@@ -166,7 +179,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            kprobe.expand().unwrap().to_string(),
+            kprobe.expand().to_string(),
             quote! {
                 #[no_mangle]
                 #[link_section = "kprobe/fib_lookup+10"]
@@ -196,7 +209,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            kprobe.expand().unwrap().to_string(),
+            kprobe.expand().to_string(),
             quote! {
                 #[no_mangle]
                 #[link_section = "kretprobe"]

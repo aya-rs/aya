@@ -1,46 +1,50 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
+use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{Ident, ItemFn, Result};
+use syn::{spanned::Spanned as _, Ident, ItemFn};
 
 pub(crate) struct CgroupSockopt {
     item: ItemFn,
-    attach_type: String,
+    attach_type: Ident,
 }
 
 impl CgroupSockopt {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<CgroupSockopt> {
+    pub(crate) fn parse(
+        attrs: TokenStream,
+        item: TokenStream,
+    ) -> Result<CgroupSockopt, Diagnostic> {
         if attrs.is_empty() {
-            abort!(attrs, "expected attach type");
+            return Err(attrs.span().error("missing attach type"));
         }
         let item = syn::parse2(item)?;
         let attach_type: Ident = syn::parse2(attrs)?;
-        match attach_type.to_string().as_str() {
-            "getsockopt" | "setsockopt" => (),
-            _ => abort!(attach_type, "invalid attach type"),
+        if attach_type != "getsockopt" && attach_type != "setsockopt" {
+            return Err(attach_type.span().error("invalid attach type"));
         }
-        Ok(CgroupSockopt {
-            item,
-            attach_type: attach_type.to_string(),
-        })
+        Ok(Self { item, attach_type })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_name: Cow<'_, _> = format!("cgroup/{}", self.attach_type).into();
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
-        Ok(quote! {
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self { item, attach_type } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let section_name: Cow<'_, _> = format!("cgroup/{attach_type}").into();
+        let fn_name = &sig.ident;
+        quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sockopt) -> i32 {
+            #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sockopt) -> i32 {
                 return #fn_name(::aya_ebpf::programs::SockoptContext::new(ctx));
 
                 #item
             }
-        })
+        }
     }
 }
 
@@ -61,7 +65,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote!(
             #[no_mangle]
             #[link_section = "cgroup/getsockopt"]
@@ -87,7 +91,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote!(
             #[no_mangle]
             #[link_section = "cgroup/setsockopt"]

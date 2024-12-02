@@ -1,48 +1,52 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
+use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{Ident, ItemFn, Result};
+use syn::{Ident, ItemFn};
 
 pub(crate) struct CgroupSkb {
     item: ItemFn,
-    attach_type: Option<String>,
+    attach_type: Option<Ident>,
 }
 
 impl CgroupSkb {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<CgroupSkb> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
         let item: ItemFn = syn::parse2(item)?;
-        let mut attach_type = None;
-        if !attrs.is_empty() {
+        let attach_type = if attrs.is_empty() {
+            None
+        } else {
             let ident: Ident = syn::parse2(attrs)?;
-            match ident.to_string().as_str() {
-                "ingress" | "egress" => (),
-                _ => abort!(ident, "invalid attach type"),
+            if ident != "ingress" && ident != "egress" {
+                return Err(ident.span().error("invalid attach type"));
             }
-            attach_type = Some(ident.to_string());
-        }
-        Ok(CgroupSkb { item, attach_type })
+            Some(ident)
+        };
+        Ok(Self { item, attach_type })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_name: Cow<'_, _> = if self.attach_type.is_some() {
-            format!("cgroup_skb/{}", self.attach_type.as_ref().unwrap()).into()
-        } else {
-            "cgroup/skb".into()
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self { item, attach_type } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let section_name: Cow<'_, _> = match attach_type {
+            Some(attach_type) => format!("cgroup_skb/{attach_type}").into(),
+            None => "cgroup/skb".into(),
         };
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
-        Ok(quote! {
+        let fn_name = &sig.ident;
+        quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+            #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
                 return #fn_name(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 #item
             }
-        })
+        }
     }
 }
 
@@ -63,7 +67,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup/skb"]
@@ -89,7 +93,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup_skb/egress"]
@@ -115,7 +119,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup_skb/ingress"]
@@ -141,7 +145,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup_skb/egress"]
@@ -167,7 +171,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup_skb/egress"]
@@ -193,7 +197,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "cgroup_skb/egress"]

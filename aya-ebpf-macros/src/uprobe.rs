@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
+use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{ItemFn, Result};
+use syn::{spanned::Spanned as _, ItemFn};
 
 use crate::args::{err_on_unknown_args, pop_bool_arg, pop_string_arg};
 
@@ -34,15 +34,24 @@ pub(crate) struct UProbe {
 }
 
 impl UProbe {
-    pub(crate) fn parse(kind: UProbeKind, attrs: TokenStream, item: TokenStream) -> Result<UProbe> {
+    pub(crate) fn parse(
+        kind: UProbeKind,
+        attrs: TokenStream,
+        item: TokenStream,
+    ) -> Result<Self, Diagnostic> {
         let item = syn::parse2(item)?;
+        let span = attrs.span();
         let mut args = syn::parse2(attrs)?;
         let path = pop_string_arg(&mut args, "path");
         let function = pop_string_arg(&mut args, "function");
-        let offset = pop_string_arg(&mut args, "offset").map(|v| v.parse::<u64>().unwrap());
+        let offset = pop_string_arg(&mut args, "offset")
+            .as_deref()
+            .map(str::parse)
+            .transpose()
+            .map_err(|err| span.error(format!("failed to parse `offset` argument: {}", err)))?;
         let sleepable = pop_bool_arg(&mut args, "sleepable");
         err_on_unknown_args(&args)?;
-        Ok(UProbe {
+        Ok(Self {
             kind,
             item,
             path,
@@ -52,39 +61,38 @@ impl UProbe {
         })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let prefix = if self.sleepable {
-            format!("{}.s", self.kind)
-        } else {
-            format!("{}", self.kind)
-        };
-        let section_name: Cow<'_, _> = if self.path.is_some() && self.offset.is_some() {
-            if self.function.is_none() {
-                abort!(self.item.sig.ident, "expected `function` attribute");
+    pub(crate) fn expand(&self) -> Result<TokenStream, Diagnostic> {
+        let Self {
+            kind,
+            path,
+            function,
+            offset,
+            item,
+            sleepable,
+        } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let mut prefix = kind.to_string();
+        if *sleepable {
+            prefix.push_str(".s");
+        }
+        let section_name: Cow<'_, _> = match path {
+            None => prefix.into(),
+            Some(path) => {
+                let path = path.strip_prefix("/").unwrap_or(path);
+                // TODO: check this in parse instead.
+                let function = function
+                    .as_deref()
+                    .ok_or(item.sig.span().error("expected `function` attribute"))?;
+                match offset {
+                    None => format!("{prefix}/{path}:{function}").into(),
+                    Some(offset) => format!("{prefix}/{path}:{function}+{offset}",).into(),
+                }
             }
-            let mut path = self.path.as_ref().unwrap().clone();
-            if path.starts_with('/') {
-                path.remove(0);
-            }
-            format!(
-                "{}/{}:{}+{}",
-                prefix,
-                path,
-                self.function.as_ref().unwrap(),
-                self.offset.unwrap()
-            )
-            .into()
-        } else if self.path.is_some() {
-            if self.function.is_none() {
-                abort!(self.item.sig.ident, "expected `function` attribute");
-            }
-            let mut path = self.path.as_ref().unwrap().clone();
-            if path.starts_with('/') {
-                path.remove(0);
-            }
-            format!("{}/{}:{}", prefix, path, self.function.as_ref().unwrap()).into()
-        } else {
-            prefix.to_string().into()
         };
 
         let probe_type = if section_name.as_ref().starts_with("uprobe") {
@@ -92,13 +100,11 @@ impl UProbe {
         } else {
             quote! { RetProbeContext }
         };
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
+        let fn_name = &sig.ident;
         Ok(quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
+            #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                 let _ = #fn_name(::aya_ebpf::programs::#probe_type::new(ctx));
                 return 0;
 

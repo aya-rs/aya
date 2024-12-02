@@ -12,33 +12,38 @@ pub(crate) struct RawTracePoint {
 }
 
 impl RawTracePoint {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<RawTracePoint> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
         let item = syn::parse2(item)?;
         let mut args = syn::parse2(attrs)?;
         let tracepoint = pop_string_arg(&mut args, "tracepoint");
         err_on_unknown_args(&args)?;
-        Ok(RawTracePoint { item, tracepoint })
+        Ok(Self { item, tracepoint })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_name: Cow<'_, _> = if let Some(tracepoint) = &self.tracepoint {
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self { item, tracepoint } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let section_name: Cow<'_, _> = if let Some(tracepoint) = tracepoint {
             format!("raw_tp/{}", tracepoint).into()
         } else {
             "raw_tp".into()
         };
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
-        Ok(quote! {
+        let fn_name = &sig.ident;
+        quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
+            #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                 let _ = #fn_name(::aya_ebpf::programs::RawTracePointContext::new(ctx));
                 return 0;
 
                 #item
             }
-        })
+        }
     }
 }
 
@@ -59,7 +64,7 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "raw_tp/sys_enter"]
