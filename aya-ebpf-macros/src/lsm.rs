@@ -13,41 +13,50 @@ pub(crate) struct Lsm {
 }
 
 impl Lsm {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Lsm> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
         let item = syn::parse2(item)?;
         let mut args = syn::parse2(attrs)?;
         let hook = pop_string_arg(&mut args, "hook");
         let sleepable = pop_bool_arg(&mut args, "sleepable");
         err_on_unknown_args(&args)?;
-        Ok(Lsm {
+        Ok(Self {
             item,
             hook,
             sleepable,
         })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_prefix = if self.sleepable { "lsm.s" } else { "lsm" };
-        let section_name: Cow<'_, _> = if let Some(hook) = &self.hook {
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self {
+            item,
+            hook,
+            sleepable,
+        } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let section_prefix = if *sleepable { "lsm.s" } else { "lsm" };
+        let section_name: Cow<'_, _> = if let Some(hook) = hook {
             format!("{}/{}", section_prefix, hook).into()
         } else {
             section_prefix.into()
         };
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
         // LSM probes need to return an integer corresponding to the correct
         // policy decision. Therefore we do not simply default to a return value
         // of 0 as in other program types.
-        Ok(quote! {
+        let fn_name = &sig.ident;
+        quote! {
             #[no_mangle]
             #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+            #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
                 return #fn_name(::aya_ebpf::programs::LsmContext::new(ctx));
 
                 #item
             }
-        })
+        }
     }
 }
 
@@ -71,7 +80,7 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "lsm.s/bprm_committed_creds"]
@@ -99,7 +108,7 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
             #[link_section = "lsm/bprm_committed_creds"]

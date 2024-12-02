@@ -15,18 +15,18 @@ impl Map {
         let item: ItemStatic = syn::parse2(item)?;
         let mut args = syn::parse2(attrs)?;
         let name = name_arg(&mut args).unwrap_or_else(|| item.ident.to_string());
-        Ok(Map { item, name })
+        Ok(Self { item, name })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_name: Cow<'_, _> = "maps".to_string().into();
+    pub(crate) fn expand(&self) -> TokenStream {
+        let section_name: Cow<'_, _> = "maps".into();
         let name = &self.name;
         let item = &self.item;
-        Ok(quote! {
+        quote! {
             #[link_section = #section_name]
             #[export_name = #name]
             #item
-        })
+        }
     }
 }
 
@@ -45,7 +45,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = map.expand().unwrap();
+        let expanded = map.expand();
         let expected = quote!(
             #[link_section = "maps"]
             #[export_name = "foo"]
@@ -63,7 +63,7 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = map.expand().unwrap();
+        let expanded = map.expand();
         let expected = quote!(
             #[link_section = "maps"]
             #[export_name = "BAR"]
