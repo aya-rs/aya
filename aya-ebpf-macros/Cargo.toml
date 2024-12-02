@@ -16,6 +16,3 @@ proc-macro2 = { workspace = true }
 proc-macro-error = { workspace = true }
 quote = { workspace = true }
 syn = { workspace = true, default-features = true, features = ["full"] }
-
-[dev-dependencies]
-aya-ebpf = { path = "../ebpf/aya-ebpf", version = "^0.1.1", default-features = false }
