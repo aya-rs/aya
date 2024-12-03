@@ -14,6 +14,19 @@ pub mod bpf_probe_read {
     unsafe impl aya::Pod for TestResult {}
 }
 
+pub mod raw_tracepoint {
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    pub struct SysEnterEvent {
+        pub common_type: u16,
+        pub common_flags: u8,
+        _padding: u8, // Padding must be explicit to ensure zero-initialization.
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for SysEnterEvent {}
+}
+
 pub mod ring_buf {
     // This structure's definition is duplicated in the probe.
     #[repr(C)]
