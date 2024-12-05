@@ -11,10 +11,7 @@ use std::{
 };
 
 use aya_obj::{
-    btf::{BtfFeatures, BtfRelocationError},
-    generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS},
-    relocation::EbpfRelocationError,
-    EbpfSectionKind, Features,
+    btf::{BtfFeatures, BtfRelocationError}, generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS}, relocation::EbpfRelocationError, EbpfSectionKind, Features
 };
 use log::{debug, warn};
 use thiserror::Error;
@@ -30,10 +27,14 @@ use crate::{
         Object, ParseError, ProgramSection,
     },
     programs::{
+<<<<<<< HEAD
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, Iter, KProbe, LircMode2, Lsm,
         PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier,
         SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+=======
+        BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr, CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, KProbe, LircMode2, Lsm, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp
+>>>>>>> bcb9baa (lsm_cgroup program type support for aya)
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -409,9 +410,14 @@ impl<'a> EbpfLoader<'a> {
                                 ProgramSection::Extension
                                 | ProgramSection::FEntry { sleepable: _ }
                                 | ProgramSection::FExit { sleepable: _ }
+<<<<<<< HEAD
                                 | ProgramSection::Lsm { sleepable: _ }
                                 | ProgramSection::BtfTracePoint
                                 | ProgramSection::Iter { sleepable: _ } => {
+=======
+                                | ProgramSection::Lsm { sleepable: _, attach_type: _ }
+                                | ProgramSection::BtfTracePoint => {
+>>>>>>> bcb9baa (lsm_cgroup program type support for aya)
                                     return Err(EbpfError::BtfError(err))
                                 }
                                 ProgramSection::KRetProbe
@@ -647,13 +653,18 @@ impl<'a> EbpfLoader<'a> {
                         ProgramSection::RawTracePoint => Program::RawTracePoint(RawTracePoint {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
-                        ProgramSection::Lsm { sleepable } => {
+                        ProgramSection::Lsm { sleepable , attach_type} => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
+
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
-                            Program::Lsm(Lsm { data })
+
+                            Program::Lsm(Lsm { 
+                                data,
+                                attach_type: *attach_type,
+                            })  
                         }
                         ProgramSection::BtfTracePoint => Program::BtfTracePoint(BtfTracePoint {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
