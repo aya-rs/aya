@@ -1,7 +1,7 @@
+use std::net::UdpSocket;
+
 use aya::{
-    programs::{Extension, TracePoint, Xdp, XdpFlags},
-    util::KernelVersion,
-    Ebpf, EbpfLoader,
+    maps::Array, programs::{Extension, TracePoint, Xdp, XdpFlags}, util::KernelVersion, Ebpf, EbpfLoader
 };
 use test_log::test;
 
@@ -68,4 +68,28 @@ fn extension() {
     drop_
         .load(pass.fd().unwrap().try_clone().unwrap(), "xdp_pass")
         .unwrap();
+}
+
+#[test]
+fn map_set() {
+    let _netns = NetNsGuard::new();
+
+    let mut bpf = Ebpf::load(crate::MAP_TEST).unwrap();
+    let dispatcher: &mut Xdp = bpf
+        .program_mut("foo_map_insert")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    dispatcher.load().unwrap();
+    dispatcher.attach("lo", XdpFlags::default()).unwrap();
+    let map: Array<&aya::maps::MapData, u32> = Array::try_from(bpf.map("FOO").unwrap()).unwrap();
+
+    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+    socket.connect("127.0.0.1:12345").unwrap();
+    socket.send(&[0; 1]).unwrap();
+    if let Ok(val) = map.get(&0, 0) {
+        assert_eq!(val, 1234);
+    } else {
+        panic!("Key not found");
+    }
 }
