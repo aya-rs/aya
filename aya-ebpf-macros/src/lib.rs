@@ -485,8 +485,8 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// }
 ///
 /// unsafe fn try_filename_lookup(ctx: FEntryContext) -> Result<i32, i32> {
-///     let _f: *const filename = ctx.arg(1);
-///     let _p: *const path = ctx.arg(3);
+///     let _f: *const filename = ctx.arg(1).ok_or(-1)?;
+///     let _p: *const path = ctx.arg(3).ok_or(-1)?;
 ///
 ///     Ok(0)
 /// }
@@ -527,8 +527,8 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// }
 ///
 /// unsafe fn try_filename_lookup(ctx: FExitContext) -> Result<i32, i32> {
-///     let _f: *const filename = ctx.arg(1);
-///     let _p: *const path = ctx.arg(3);
+///     let _f: *const filename = ctx.arg(1).ok_or(-1)?;
+///     let _p: *const path = ctx.arg(3).ok_or(-1)?;
 ///
 ///     Ok(0)
 /// }
