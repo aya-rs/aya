@@ -10,9 +10,10 @@ use std::{
 };
 
 use anyhow::{anyhow, bail, Context as _, Result};
+use base64::engine::Engine as _;
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
-use xtask::{exec, Errors, AYA_BUILD_INTEGRATION_BPF};
+use xtask::{Errors, AYA_BUILD_INTEGRATION_BPF};
 
 #[derive(Parser)]
 enum Environment {
@@ -24,6 +25,12 @@ enum Environment {
     },
     /// Runs the integration tests in a VM.
     VM {
+        /// The Github API token to use if network requests to Github are made.
+        ///
+        /// This may be required if Github rate limits are exceeded.
+        #[clap(long)]
+        github_api_token: Option<String>,
+
         /// The kernel images to use.
         ///
         /// You can download some images with:
@@ -167,7 +174,10 @@ pub fn run(opts: Options) -> Result<()> {
                 Err(anyhow!("failures:\n{}", failures))
             }
         }
-        Environment::VM { kernel_image } => {
+        Environment::VM {
+            github_api_token,
+            kernel_image,
+        } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
             //
             // We need tools to build the initramfs; we use gen_init_cpio from the Linux repository,
@@ -192,37 +202,56 @@ pub fn run(opts: Options) -> Result<()> {
                 .try_exists()
                 .context("failed to check existence of gen_init_cpio")?
             {
-                let mut curl = Command::new("curl");
-                curl.args([
-                    "-sfSL",
-                    "https://raw.githubusercontent.com/torvalds/linux/master/usr/gen_init_cpio.c",
-                ]);
-                let mut curl_child = curl
-                    .stdout(Stdio::piped())
-                    .spawn()
-                    .with_context(|| format!("failed to spawn {curl:?}"))?;
-                let Child { stdout, .. } = &mut curl_child;
-                let curl_stdout = stdout.take().unwrap();
+                let client = octorust::Client::new(
+                    String::from("aya-xtask-integration-test-run"),
+                    github_api_token.map(octorust::auth::Credentials::Token),
+                )?;
+                let octorust::Response {
+                    status: _,
+                    headers: _,
+                    body: octorust::types::ContentFile { mut content, .. },
+                } = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .unwrap()
+                    .block_on(client.repos().get_content_file(
+                        "torvalds",
+                        "linux",
+                        "usr/gen_init_cpio.c",
+                        "master",
+                    ))
+                    .context("failed to download gen_init_cpio.c")?;
+                // Github very helpfully wraps their base64 at 10 columns /s.
+                content.retain(|c| !c.is_whitespace());
+                let content = base64::engine::general_purpose::STANDARD
+                    .decode(content)
+                    .context("failed to decode gen_init_cpio.c")?;
 
                 let mut clang = Command::new("clang");
-                let clang = exec(
-                    clang
-                        .args(["-g", "-O2", "-x", "c", "-", "-o"])
-                        .arg(&gen_init_cpio)
-                        .stdin(curl_stdout),
-                );
+                clang
+                    .args(["-g", "-O2", "-x", "c", "-", "-o"])
+                    .arg(&gen_init_cpio);
+                let mut child = clang
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .with_context(|| format!("failed to spawn {clang:?}"))?;
 
-                let output = curl_child
+                let Child { stdin, .. } = &mut child;
+                let mut stdin = stdin.take().unwrap();
+                stdin
+                    .write_all(&content)
+                    .with_context(|| format!("failed to write to {clang:?} stdin"))?;
+                std::mem::drop(stdin); // Send EOF.
+
+                let output = child
                     .wait_with_output()
-                    .with_context(|| format!("failed to wait for {curl:?}"))?;
+                    .with_context(|| format!("failed to wait for {clang:?}"))?;
                 let Output { status, .. } = &output;
                 if status.code() != Some(0) {
-                    bail!("{curl:?} failed: {output:?}")
+                    bail!("{clang:?} failed: {output:?}")
                 }
-
-                // Check the result of clang *after* checking curl; in case the download failed,
-                // only curl's output will be useful.
-                clang?;
             }
 
             let mut errors = Vec::new();
