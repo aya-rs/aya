@@ -24,6 +24,10 @@ enum Environment {
     },
     /// Runs the integration tests in a VM.
     VM {
+        /// The Github API token to use if network requests to Github are made.
+        #[clap(long)]
+        github_api_token: Option<String>,
+
         /// The kernel images to use.
         ///
         /// You can download some images with:
@@ -167,7 +171,10 @@ pub fn run(opts: Options) -> Result<()> {
                 Err(anyhow!("failures:\n{}", failures))
             }
         }
-        Environment::VM { kernel_image } => {
+        Environment::VM {
+            github_api_token,
+            kernel_image,
+        } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
             //
             // We need tools to build the initramfs; we use gen_init_cpio from the Linux repository,
@@ -193,6 +200,10 @@ pub fn run(opts: Options) -> Result<()> {
                 .context("failed to check existence of gen_init_cpio")?
             {
                 let mut curl = Command::new("curl");
+                if let Some(github_api_token) = github_api_token {
+                    curl.arg("--header")
+                        .arg(format!("authorization: Bearer {github_api_token}"));
+                }
                 curl.args([
                     "-sfSL",
                     "https://raw.githubusercontent.com/torvalds/linux/master/usr/gen_init_cpio.c",
