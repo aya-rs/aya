@@ -3,7 +3,7 @@ use std::{
     fmt::Write as _,
     fs::{copy, create_dir_all, OpenOptions},
     io::{BufRead as _, BufReader, Write as _},
-    path::{Path, PathBuf},
+    path::PathBuf,
     process::{Child, ChildStdin, Command, Output, Stdio},
     sync::{Arc, Mutex},
     thread,
@@ -25,6 +25,10 @@ enum Environment {
     },
     /// Runs the integration tests in a VM.
     VM {
+        /// The cache directory in which to store intermediate artifacts.
+        #[clap(long)]
+        cache_dir: PathBuf,
+
         /// The Github API token to use if network requests to Github are made.
         ///
         /// This may be required if Github rate limits are exceeded.
@@ -175,6 +179,7 @@ pub fn run(opts: Options) -> Result<()> {
             }
         }
         Environment::VM {
+            cache_dir,
             github_api_token,
             kernel_image,
         } => {
@@ -195,13 +200,13 @@ pub fn run(opts: Options) -> Result<()> {
             // We consume the output of QEMU, looking for the output of our init program. This is
             // the only way to distinguish success from failure. We batch up the errors across all
             // VM images and report to the user. The end.
-            let cache_dir = Path::new("test/.tmp");
-            create_dir_all(cache_dir).context("failed to create cache dir")?;
+            create_dir_all(&cache_dir).context("failed to create cache dir")?;
             let gen_init_cpio = cache_dir.join("gen_init_cpio");
             if !gen_init_cpio
                 .try_exists()
                 .context("failed to check existence of gen_init_cpio")?
             {
+                // TODO(https://github.com/oxidecomputer/third-party-api-clients/issues/96): Use ETag-based caching.
                 let client = octorust::Client::new(
                     String::from("aya-xtask-integration-test-run"),
                     github_api_token.map(octorust::auth::Credentials::Token),
