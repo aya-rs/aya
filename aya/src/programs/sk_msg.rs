@@ -2,8 +2,11 @@
 
 use std::os::fd::AsFd as _;
 
+use aya_obj::generated::{
+    bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG,
+};
+
 use crate::{
-    generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
     maps::sock::SockMapFd,
     programs::{
         define_link_wrapper, load_program, CgroupAttachMode, ProgAttachLink, ProgAttachLinkId,

@@ -1,9 +1,10 @@
 //! Programmable socket lookup.
 use std::os::fd::AsFd;
 
+use aya_obj::generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP};
+
 use super::links::FdLink;
 use crate::{
-    generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP},
     programs::{define_link_wrapper, load_program, FdLinkId, ProgramData, ProgramError},
     sys::{bpf_link_create, LinkTarget, SyscallError},
 };
