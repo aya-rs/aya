@@ -5,6 +5,7 @@ use std::{
 };
 
 pub mod bindgen;
+pub mod btf;
 pub mod generate;
 pub mod rustfmt;
 
