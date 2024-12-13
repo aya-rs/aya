@@ -57,6 +57,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
             "user_pt_regs",
             "user_regs_struct",
             "xdp_action",
+            "xdp_umem_reg",
             "tcx_action_base",
         ];
         let vars = ["BPF_.*", "bpf_.*", "TC_ACT_.*", "SOL_SOCKET", "SO_.*"];
