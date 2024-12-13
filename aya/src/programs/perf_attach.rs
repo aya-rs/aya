@@ -4,6 +4,7 @@ use std::os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd};
 use crate::{
     generated::bpf_attach_type::BPF_PERF_EVENT,
     programs::{
+        id_as_key,
         probe::{detach_debug_fs, ProbeEvent},
         FdLink, Link, ProgramError,
     },
@@ -41,6 +42,8 @@ impl Link for PerfLinkInner {
     }
 }
 
+id_as_key!(PerfLinkInner, PerfLinkIdInner);
+
 /// The identifer of a PerfLink.
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct PerfLinkId(RawFd);
@@ -69,6 +72,8 @@ impl Link for PerfLink {
         Ok(())
     }
 }
+
+id_as_key!(PerfLink, PerfLinkId);
 
 pub(crate) fn perf_attach(
     prog_fd: BorrowedFd<'_>,
