@@ -226,7 +226,9 @@ jobs:
 
       - name: Install prerequisites
         if: runner.os == 'macOS'
-        # The xargs shipped on macOS always exits 0 with -P0, so we need GNU findutils.
+        # The curl shipped on macOS doesn't contain
+        # https://github.com/curl/curl/commit/85efbb92b8e6679705e122cee45ce76c56414a3e which is
+        # needed for proper handling of `--etag-{compare,save}`.
         #
         # The tar shipped on macOS doesn't support --wildcards, so we need GNU tar.
         #
@@ -237,9 +239,10 @@ jobs:
           # https://github.com/actions/setup-python/issues/577
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
           | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
-          brew install --formula dpkg gnu-tar llvm lynx pkg-config qemu
-          echo $(brew --prefix)/opt/gnu-tar/libexec/gnubin >> $GITHUB_PATH
-          echo $(brew --prefix)/opt/llvm/bin >> $GITHUB_PATH
+          brew install --formula curl dpkg gnu-tar llvm lynx pkg-config qemu
+          echo $(brew --prefix curl)/bin >> $GITHUB_PATH
+          echo $(brew --prefix gnu-tar)/libexec/gnubin >> $GITHUB_PATH
+          echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
 
       - uses: dtolnay/rust-toolchain@nightly
         with:
@@ -278,6 +281,12 @@ jobs:
         # Do this on all system (not just macOS) to avoid relying on rustc-provided libLLVM.so.
         run: cargo install --force bpf-linker --git https://github.com/aya-rs/bpf-linker.git --no-default-features
 
+      - name: Cache test cache
+        uses: actions/cache@v4
+        with:
+          path: test/.tmp
+          key: ${{ runner.arch }}-${{ runner.os }}-test-cache
+
       - name: Download debian kernels
         if: runner.arch == 'ARM64'
         # TODO: enable tests on kernels before 6.0.
@@ -302,7 +311,7 @@ jobs:
         run: |
           set -euxo pipefail
           find test/.tmp -name 'vmlinuz-*' -print0 | xargs -t -0 \
-            cargo xtask integration-test vm --github-api-token ${{ secrets.GITHUB_TOKEN }}
+            cargo xtask integration-test vm --cache-dir test/.tmp --github-api-token ${{ secrets.GITHUB_TOKEN }}
 
   # Provides a single status check for the entire build workflow.
   # This is used for merge automation, like Mergify, since GH actions
