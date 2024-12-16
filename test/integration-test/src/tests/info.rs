@@ -224,7 +224,7 @@ fn list_loaded_maps() {
     }
 
     // Load a program with maps.
-    let mut bpf: Ebpf = Ebpf::load(crate::MAP_TEST).unwrap();
+    let mut bpf: Ebpf = Ebpf::load(crate::MAP_INFO).unwrap();
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
 
@@ -282,7 +282,7 @@ fn test_map_info() {
         return;
     }
 
-    let mut bpf: Ebpf = Ebpf::load(crate::MAP_TEST).unwrap();
+    let mut bpf: Ebpf = Ebpf::load(crate::MAP_INFO).unwrap();
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
 

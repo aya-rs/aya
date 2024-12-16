@@ -1,0 +1,5 @@
+[target.bpfeb-unknown-none]
+rustflags = "-C debuginfo=2 -C link-arg=--btf"
+
+[target.bpfel-unknown-none]
+rustflags = "-C debuginfo=2 -C link-arg=--btf"
