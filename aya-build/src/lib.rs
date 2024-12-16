@@ -38,6 +38,7 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>) -> Result<()> {
 
     let arch =
         env::var_os("CARGO_CFG_TARGET_ARCH").ok_or(anyhow!("CARGO_CFG_TARGET_ARCH not set"))?;
+    let path = env::var_os("PATH").ok_or(anyhow!("PATH not set"))?;
 
     let target = format!("{target}-unknown-none");
 
@@ -58,26 +59,28 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>) -> Result<()> {
         println!("cargo:rerun-if-changed={dir}");
 
         let mut cmd = Command::new("cargo");
-        cmd.args([
-            "+nightly",
-            "build",
-            "--package",
-            &name,
-            "-Z",
-            "build-std=core",
-            "--bins",
-            "--message-format=json",
-            "--release",
-            "--target",
-            &target,
-        ]);
-
-        cmd.env("CARGO_CFG_BPF_TARGET_ARCH", &arch);
+        cmd.current_dir(dir)
+            .args([
+                "+nightly",
+                "build",
+                "-Z",
+                "build-std=core",
+                "--bins",
+                "--message-format=json",
+                "--release",
+                "--target",
+                &target,
+            ])
+            .env_clear()
+            .env("CARGO_CFG_BPF_TARGET_ARCH", &arch)
+            // FIXME: Try to find which exact environment variable triggers the
+            // strip of debug info.
+            .env("PATH", &path);
 
         // Workaround to make sure that the correct toolchain is used.
-        for key in ["RUSTC", "RUSTC_WORKSPACE_WRAPPER"] {
-            cmd.env_remove(key);
-        }
+        // for key in ["RUSTC", "RUSTC_WORKSPACE_WRAPPER"] {
+        //     cmd.env_remove(key);
+        // }
 
         // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
         let target_dir = out_dir.join(name);
