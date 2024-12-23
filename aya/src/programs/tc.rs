@@ -17,8 +17,8 @@ use crate::{
         TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     },
     programs::{
-        define_link_wrapper, load_program, query, Link, LinkError, LinkOrder, ProgramData,
-        ProgramError,
+        define_link_wrapper, id_as_key, load_program, query, Link, LinkError, LinkOrder,
+        ProgramData, ProgramError,
     },
     sys::{
         bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, bpf_prog_get_fd_by_id,
@@ -399,6 +399,8 @@ impl Link for NlLink {
     }
 }
 
+id_as_key!(NlLink, NlLinkId);
+
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub(crate) enum TcLinkIdInner {
     FdLinkId(<FdLink as Link>::Id),
@@ -428,6 +430,8 @@ impl Link for TcLinkInner {
         }
     }
 }
+
+id_as_key!(TcLinkInner, TcLinkIdInner);
 
 impl<'a> TryFrom<&'a SchedClassifierLink> for &'a FdLink {
     type Error = LinkError;
