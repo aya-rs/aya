@@ -1,12 +1,11 @@
 //! Raw tracepoints.
 use std::ffi::CString;
 
-use crate::{
-    generated::bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT,
-    programs::{
-        define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
-        ProgramData, ProgramError,
-    },
+use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT;
+
+use crate::programs::{
+    define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId, ProgramData,
+    ProgramError,
 };
 
 /// A program that can be attached at a pre-defined kernel trace point.

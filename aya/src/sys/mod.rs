@@ -1,6 +1,7 @@
 //! A collection of system calls for performing eBPF related operations.
 
 mod bpf;
+pub mod feature_probe;
 mod netlink;
 mod perf_event;
 
@@ -13,6 +14,7 @@ use std::{
     os::fd::{AsRawFd as _, BorrowedFd, OwnedFd},
 };
 
+use aya_obj::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
@@ -22,8 +24,6 @@ pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
 pub(crate) use perf_event::*;
 use thiserror::Error;
-
-use crate::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 
 pub(crate) type SysResult<T> = Result<T, (i64, io::Error)>;
 
@@ -152,9 +152,9 @@ pub enum Stats {
     RunTime,
 }
 
-impl From<Stats> for crate::generated::bpf_stats_type {
+impl From<Stats> for aya_obj::generated::bpf_stats_type {
     fn from(value: Stats) -> Self {
-        use crate::generated::bpf_stats_type::*;
+        use aya_obj::generated::bpf_stats_type::*;
 
         match value {
             Stats::RunTime => BPF_STATS_RUN_TIME,
