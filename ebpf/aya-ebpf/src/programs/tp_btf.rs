@@ -25,22 +25,22 @@ impl BtfTracePointContext {
     /// ```no_run
     /// # #![allow(dead_code)]
     /// # use aya_ebpf::{programs::BtfTracePointContext, cty::{c_int, c_ulong, c_char}};
-    /// unsafe fn try_tp_btf_sched_process_fork(ctx: BtfTracePointContext) -> Result<u32, u32> {
+    /// unsafe fn try_tp_btf_sched_process_fork(ctx: BtfTracePointContext) -> Result<(), i32> {
     ///     // Grab arguments
-    ///     let parent_comm: *const c_char = ctx.arg(0);
-    ///     let parent_pid: c_int = ctx.arg(1);
-    ///     let child_comm: *const c_char = ctx.arg(2);
-    ///     let child_pid: c_int = ctx.arg(3);
+    ///     let parent_comm: *const c_char = ctx.arg(0).ok_or(-1)?;
+    ///     let parent_pid: c_int = ctx.arg(1).ok_or(-1)?;
+    ///     let child_comm: *const c_char = ctx.arg(2).ok_or(-1)?;
+    ///     let child_pid: c_int = ctx.arg(3).ok_or(-1)?;
     ///
     ///     // You can then do stuff with parent_pidm parent_comm, child_pid, and
     ///     // child_comm down here.
     ///
-    ///     Ok(0)
+    ///     Ok(())
     /// }
     /// ```
     ///
     /// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
-    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> T {
+    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> Option<T> {
         T::from_argument(self.ctx as *const _, n)
     }
 }
