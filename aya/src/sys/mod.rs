@@ -93,10 +93,6 @@ fn syscall(call: Syscall<'_>) -> SysResult<i64> {
     #[cfg(test)]
     return TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
 
-    // The type of integer taken by `ioctl` is different in glibc (i64) and
-    // musl (i32). musl builds would complain about useless conversion.
-    // `libc::ioctl` returns i32 on x86_64 while `libc::syscall` returns i64.
-    #[allow(clippy::useless_conversion)]
     #[cfg_attr(test, allow(unreachable_code))]
     {
         let ret = unsafe {
@@ -112,7 +108,13 @@ fn syscall(call: Syscall<'_>) -> SysResult<i64> {
                     flags,
                 } => libc::syscall(SYS_perf_event_open, &attr, pid, cpu, group, flags),
                 Syscall::PerfEventIoctl { fd, request, arg } => {
-                    let ret = libc::ioctl(fd.as_raw_fd(), request.try_into().unwrap(), arg);
+                    // The type of integer taken by `ioctl` is different in glibc (i64) and
+                    // musl (i32). musl builds would complain about useless conversion.
+                    #[allow(clippy::useless_conversion)]
+                    let request = request.try_into().unwrap();
+                    let ret = libc::ioctl(fd.as_raw_fd(), request, arg);
+                    // `libc::ioctl` returns i32 on x86_64 while `libc::syscall` returns i64.
+                    #[allow(clippy::useless_conversion)]
                     ret.into()
                 }
             }

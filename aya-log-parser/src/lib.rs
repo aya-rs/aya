@@ -1,6 +1,3 @@
-// We implement our own formatter here and we pass literal strings on purpose.
-#![allow(clippy::literal_string_with_formatting_args)]
-
 use std::str;
 
 use aya_log_common::DisplayHint;
@@ -133,6 +130,9 @@ pub fn parse(format_string: &str) -> Result<Vec<Fragment>, String> {
 mod test {
     use super::*;
 
+    // TODO(https://github.com/rust-lang/rust-clippy/issues/13885): narrow this to just the specific
+    // strings when that doesn't trip the lint.
+    #[allow(clippy::literal_string_with_formatting_args)]
     #[test]
     fn test_parse() {
         assert_eq!(
