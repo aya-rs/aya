@@ -8,7 +8,7 @@ mod perf_event;
 mod fake;
 
 use std::{
-    ffi::{c_int, c_void},
+    ffi::{c_int, c_long, c_void},
     io, mem,
     os::fd::{AsRawFd as _, BorrowedFd, OwnedFd},
 };
@@ -16,7 +16,7 @@ use std::{
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
-use libc::{pid_t, SYS_bpf, SYS_perf_event_open};
+use libc::{pid_t, SYS_bpf, SYS_ioctl, SYS_perf_event_open};
 #[doc(hidden)]
 pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
@@ -25,7 +25,7 @@ use thiserror::Error;
 
 use crate::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 
-pub(crate) type SysResult<T> = Result<T, (i64, io::Error)>;
+pub(crate) type SysResult<T> = Result<T, (c_long, io::Error)>;
 
 pub(crate) enum Syscall<'a> {
     Ebpf {
@@ -89,7 +89,7 @@ impl std::fmt::Debug for Syscall<'_> {
     }
 }
 
-fn syscall(call: Syscall<'_>) -> SysResult<i64> {
+fn syscall(call: Syscall<'_>) -> SysResult<c_long> {
     #[cfg(test)]
     return TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
 
@@ -108,22 +108,13 @@ fn syscall(call: Syscall<'_>) -> SysResult<i64> {
                     flags,
                 } => libc::syscall(SYS_perf_event_open, &attr, pid, cpu, group, flags),
                 Syscall::PerfEventIoctl { fd, request, arg } => {
-                    // The type of integer taken by `ioctl` is different in glibc (i64) and
-                    // musl (i32). musl builds would complain about useless conversion.
-                    #[allow(clippy::useless_conversion)]
-                    let request = request.try_into().unwrap();
-                    let ret = libc::ioctl(fd.as_raw_fd(), request, arg);
-                    // `libc::ioctl` returns i32 on x86_64 while `libc::syscall` returns i64.
-                    #[allow(clippy::useless_conversion)]
-                    ret.into()
+                    libc::syscall(SYS_ioctl, fd.as_raw_fd(), request, arg)
                 }
             }
         };
 
-        // `libc::syscall` returns i32 on armv7.
-        #[allow(clippy::useless_conversion)]
-        match ret.into() {
-            ret @ 0.. => Ok(ret),
+        match ret {
+            0.. => Ok(ret),
             ret => Err((ret, io::Error::last_os_error())),
         }
     }
