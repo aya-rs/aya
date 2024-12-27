@@ -2,11 +2,11 @@
 use std::{
     borrow::Cow,
     error::Error,
-    ffi::{CStr, OsStr, OsString},
+    ffi::{c_char, CStr, OsStr, OsString},
     fs,
     io::{self, BufRead, Cursor, Read},
     mem,
-    os::{fd::AsFd as _, raw::c_char, unix::ffi::OsStrExt},
+    os::{fd::AsFd as _, unix::ffi::OsStrExt},
     path::{Path, PathBuf},
     sync::LazyLock,
 };

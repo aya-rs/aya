@@ -1,5 +1,5 @@
 use std::{
-    ffi::{c_int, CString, OsStr},
+    ffi::{c_int, c_long, CString, OsStr},
     io, mem,
     os::fd::{BorrowedFd, FromRawFd as _},
 };
@@ -104,7 +104,11 @@ pub(crate) fn perf_event_open_trace_point(
     perf_event_sys(attr, pid, cpu, PERF_FLAG_FD_CLOEXEC)
 }
 
-pub(crate) fn perf_event_ioctl(fd: BorrowedFd<'_>, request: c_int, arg: c_int) -> SysResult<i64> {
+pub(crate) fn perf_event_ioctl(
+    fd: BorrowedFd<'_>,
+    request: c_int,
+    arg: c_int,
+) -> SysResult<c_long> {
     let call = Syscall::PerfEventIoctl { fd, request, arg };
     #[cfg(not(test))]
     return syscall(call);
