@@ -55,39 +55,27 @@ fn push_literal(frag: &mut Vec<Fragment>, unescaped_literal: &str) -> Result<(),
     Ok(())
 }
 
-/// Parses the display hint (e.g. the `ipv4` in `{:ipv4}`).
-fn parse_display_hint(s: &str) -> Result<DisplayHint, String> {
-    Ok(match s {
-        "p" | "x" => DisplayHint::LowerHex,
-        "X" => DisplayHint::UpperHex,
-        "i" => DisplayHint::Ip,
-        "mac" => DisplayHint::LowerMac,
-        "MAC" => DisplayHint::UpperMac,
-        _ => return Err(format!("unknown display hint: {s:?}")),
-    })
-}
-
 /// Parse `Param` from the given `&str` which can specify an optional format
 /// like `:x` or `:ipv4` (without curly braces, which are parsed by the `parse`
 /// function).
-fn parse_param(mut input: &str) -> Result<Parameter, String> {
-    const HINT_PREFIX: &str = ":";
-
-    // Then, optional hint
-    let mut hint = DisplayHint::Default;
-
-    if input.starts_with(HINT_PREFIX) {
-        // skip the prefix
-        input = &input[HINT_PREFIX.len()..];
-        if input.is_empty() {
-            return Err("malformed format string (missing display hint after ':')".into());
+fn parse_param(input: &str) -> Result<Parameter, String> {
+    let hint = match input.strip_prefix(":") {
+        Some(input) => match input {
+            "" => return Err("malformed format string (missing display hint after ':')".into()),
+            "p" | "x" => DisplayHint::LowerHex,
+            "X" => DisplayHint::UpperHex,
+            "i" => DisplayHint::Ip,
+            "mac" => DisplayHint::LowerMac,
+            "MAC" => DisplayHint::UpperMac,
+            input => return Err(format!("unknown display hint: {input:?}")),
+        },
+        None => {
+            if !input.is_empty() {
+                return Err(format!("unexpected content {input:?} in format string"));
+            }
+            DisplayHint::Default
         }
-
-        hint = parse_display_hint(input)?;
-    } else if !input.is_empty() {
-        return Err(format!("unexpected content {input:?} in format string"));
-    }
-
+    };
     Ok(Parameter { hint })
 }
 
