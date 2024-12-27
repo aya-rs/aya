@@ -1012,10 +1012,10 @@ mod test_utils {
 
 #[cfg(test)]
 mod tests {
-    use std::os::fd::AsRawFd as _;
+    use std::{ffi::c_char, os::fd::AsRawFd as _};
 
     use assert_matches::assert_matches;
-    use libc::{c_char, EFAULT};
+    use libc::EFAULT;
 
     fn new_obj_map() -> obj::Map {
         test_utils::new_obj_map::<u32>(crate::generated::bpf_map_type::BPF_MAP_TYPE_HASH)
