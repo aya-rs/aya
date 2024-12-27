@@ -63,7 +63,7 @@ pub struct LpmTrie<T, K, V> {
 /// let ipaddr = Ipv4Addr::new(8,8,8,8);
 /// let key =  Key::new(16, u32::from(ipaddr).to_be());
 /// ```
-#[repr(packed)]
+#[repr(C, packed)]
 pub struct Key<K: Pod> {
     prefix_len: u32,
     data: K,

@@ -51,7 +51,7 @@ impl<T> PerfEventArray<T> {
     }
 
     pub fn output_at_index<C: EbpfContext>(&self, ctx: &C, index: u32, data: &T, flags: u32) {
-        let flags = u64::from(flags) << 32 | u64::from(index);
+        let flags = (u64::from(flags) << 32) | u64::from(index);
         unsafe {
             bpf_perf_event_output(
                 ctx.as_ptr(),

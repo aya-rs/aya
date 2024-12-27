@@ -1,3 +1,6 @@
+// We implement our own formatter here and we pass literal strings on purpose.
+#![allow(clippy::literal_string_with_formatting_args)]
+
 use std::str;
 
 use aya_log_common::DisplayHint;

@@ -264,7 +264,7 @@ pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::borrow_mut(&mut self) -> &mu
 impl<T> core::convert::From<T> for aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::from(t: T) -> T
 pub mod aya::maps::lpm_trie
-#[repr(packed)] pub struct aya::maps::lpm_trie::Key<K: aya::Pod>
+#[repr(C, packed)] pub struct aya::maps::lpm_trie::Key<K: aya::Pod>
 impl<K: aya::Pod> aya::maps::lpm_trie::Key<K>
 pub fn aya::maps::lpm_trie::Key<K>::data(&self) -> K
 pub fn aya::maps::lpm_trie::Key<K>::new(prefix_len: u32, data: K) -> Self
