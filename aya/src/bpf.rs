@@ -1,11 +1,9 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
+    ffi::c_int,
     fs, io,
-    os::{
-        fd::{AsFd as _, AsRawFd as _},
-        raw::c_int,
-    },
+    os::fd::{AsFd as _, AsRawFd as _},
     path::{Path, PathBuf},
     sync::{Arc, LazyLock},
 };
