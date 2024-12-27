@@ -263,7 +263,7 @@ pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::borrow_mut(&mut self) -> &
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::from(t: T) -> T
 pub mod aya_ebpf::maps::lpm_trie
-#[repr(packed)] pub struct aya_ebpf::maps::lpm_trie::Key<K>
+#[repr(C, packed)] pub struct aya_ebpf::maps::lpm_trie::Key<K>
 pub aya_ebpf::maps::lpm_trie::Key::data: K
 pub aya_ebpf::maps::lpm_trie::Key::prefix_len: u32
 impl<K> aya_ebpf::maps::lpm_trie::Key<K>

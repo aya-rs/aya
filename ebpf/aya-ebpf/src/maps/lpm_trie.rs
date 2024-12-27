@@ -18,7 +18,7 @@ pub struct LpmTrie<K, V> {
 
 unsafe impl<K: Sync, V: Sync> Sync for LpmTrie<K, V> {}
 
-#[repr(packed)]
+#[repr(C, packed)]
 pub struct Key<K> {
     /// Represents the number of bits matched against.
     pub prefix_len: u32,

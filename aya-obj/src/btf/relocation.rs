@@ -1068,7 +1068,7 @@ impl ComputedRelocation {
                     }
                     BtfType::Enum64(en) => {
                         let variant = &en.variants[accessor.index];
-                        (variant.value_high as u64) << 32 | variant.value_low as u64
+                        ((variant.value_high as u64) << 32) | variant.value_low as u64
                     }
                     // candidate selection ensures that rel_kind == local_kind == target_kind
                     _ => unreachable!(),
