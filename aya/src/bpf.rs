@@ -373,6 +373,10 @@ impl<'a> EbpfLoader<'a> {
 
     /// Loads eBPF bytecode from a buffer.
     ///
+    /// The buffer needs to be 4-bytes aligned. If you are bundling the bytecode statically
+    /// into your binary, it is recommended that you do so using
+    /// [`include_bytes_aligned`](crate::include_bytes_aligned).
+    ///
     /// # Examples
     ///
     /// ```no_run
@@ -895,6 +899,10 @@ impl Ebpf {
     /// Parses the object code contained in `data` and initializes the
     /// [maps](crate::maps) defined in it. If the kernel supports [BTF](Btf)
     /// debug info, it is automatically loaded from `/sys/kernel/btf/vmlinux`.
+    ///
+    /// The buffer needs to be 4-bytes aligned. If you are bundling the bytecode statically
+    /// into your binary, it is recommended that you do so using
+    /// [`include_bytes_aligned`](crate::include_bytes_aligned).
     ///
     /// For more loading options, see [EbpfLoader].
     ///
