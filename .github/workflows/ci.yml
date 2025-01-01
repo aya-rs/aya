@@ -39,7 +39,7 @@ jobs:
         run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
 
       - name: Check Markdown
-        uses: DavidAnson/markdownlint-cli2-action@v18
+        uses: DavidAnson/markdownlint-cli2-action@v19
 
       - name: Check TOML formatting
         run: taplo fmt --check
