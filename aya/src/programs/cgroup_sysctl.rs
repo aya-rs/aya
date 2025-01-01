@@ -5,8 +5,8 @@ use std::{hash::Hash, os::fd::AsFd};
 use crate::{
     generated::{bpf_attach_type::BPF_CGROUP_SYSCTL, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL},
     programs::{
-        define_link_wrapper, load_program, CgroupAttachMode, FdLink, Link, ProgAttachLink,
-        ProgramData, ProgramError,
+        define_link_wrapper, id_as_key, load_program, CgroupAttachMode, FdLink, Link,
+        ProgAttachLink, ProgramData, ProgramError,
     },
     sys::{bpf_link_create, LinkTarget, SyscallError},
     util::KernelVersion,
@@ -128,6 +128,8 @@ impl Link for CgroupSysctlLinkInner {
         }
     }
 }
+
+id_as_key!(CgroupSysctlLinkInner, CgroupSysctlLinkIdInner);
 
 define_link_wrapper!(
     /// The link used by [CgroupSysctl] programs.

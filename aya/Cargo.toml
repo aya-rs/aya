@@ -18,6 +18,7 @@ async-io = { workspace = true, optional = true }
 aya-obj = { path = "../aya-obj", version = "^0.2.1", features = ["std"] }
 bitflags = { workspace = true }
 bytes = { workspace = true }
+hashbrown = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }
 object = { workspace = true, features = ["elf", "read_core", "std", "write"] }
