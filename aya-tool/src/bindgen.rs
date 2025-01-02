@@ -6,6 +6,7 @@ fn common_builder() -> Builder {
         .layout_tests(false)
         .generate_comments(false)
         .prepend_enum_name(false)
+        .clang_macro_fallback()
 }
 
 pub fn user_builder() -> Builder {
