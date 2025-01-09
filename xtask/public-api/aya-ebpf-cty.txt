@@ -1,5 +1,5 @@
 pub mod aya_ebpf_cty
-pub type aya_ebpf_cty::c_char = aya_ebpf_cty::c_schar
+pub type aya_ebpf_cty::c_char = aya_ebpf_cty::c_uchar
 pub type aya_ebpf_cty::c_double = f64
 pub type aya_ebpf_cty::c_float = f32
 pub type aya_ebpf_cty::c_int = i32
