@@ -18,7 +18,7 @@ use crate::programs::{
 ///
 /// LSM probes require a kernel compiled with `CONFIG_BPF_LSM=y` and `CONFIG_DEBUG_INFO_BTF=y`.
 /// In order for the probes to fire, you also need the BPF LSM to be enabled through your
-/// kernel's boot paramters (like `lsm=lockdown,yama,bpf`).
+/// kernel's boot parameters (like `lsm=lockdown,yama,bpf`).
 ///
 /// # Minimum kernel version
 ///

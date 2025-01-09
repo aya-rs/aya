@@ -258,6 +258,7 @@ pub enum ProgramSection {
     Lsm {
         sleepable: bool,
     },
+    LsmCgroup,
     BtfTracePoint,
     FEntry {
         sleepable: bool,
@@ -418,6 +419,7 @@ impl FromStr for ProgramSection {
             "raw_tp" | "raw_tracepoint" => Self::RawTracePoint,
             "lsm" => Self::Lsm { sleepable: false },
             "lsm.s" => Self::Lsm { sleepable: true },
+            "lsm_cgroup" => Self::LsmCgroup,
             "fentry" => Self::FEntry { sleepable: false },
             "fentry.s" => Self::FEntry { sleepable: true },
             "fexit" => Self::FExit { sleepable: false },
@@ -2208,10 +2210,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::Lsm {
-                    sleepable: false,
-                    ..
-                },
+                section: ProgramSection::Lsm { sleepable: false },
                 ..
             })
         );
@@ -2238,6 +2237,29 @@ mod tests {
                     sleepable: true,
                     ..
                 },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_lsm_cgroup() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "lsm_cgroup/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::LsmCgroup,
                 ..
             })
         );
