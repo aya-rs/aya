@@ -4,43 +4,34 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_bool_arg, pop_string_arg};
+use crate::args::{err_on_unknown_args, pop_string_arg};
 
-pub(crate) struct Lsm {
+pub(crate) struct LsmCgroup {
     item: ItemFn,
     hook: Option<String>,
-    sleepable: bool,
 }
 
-impl Lsm {
+impl LsmCgroup {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
         let item = syn::parse2(item)?;
         let mut args = syn::parse2(attrs)?;
         let hook = pop_string_arg(&mut args, "hook");
-        let sleepable = pop_bool_arg(&mut args, "sleepable");
         err_on_unknown_args(&args)?;
-        Ok(Self {
-            item,
-            hook,
-            sleepable,
-        })
+
+        Ok(Self { item, hook })
     }
 
     pub(crate) fn expand(&self) -> TokenStream {
-        let Self {
-            item,
-            hook,
-            sleepable,
-        } = self;
+        let Self { item, hook } = self;
         let ItemFn {
             attrs: _,
             vis,
             sig,
             block: _,
         } = item;
-        let section_prefix = if *sleepable { "lsm.s" } else { "lsm" };
-        let section_name: Cow<'_, _> = if let Some(hook) = hook {
-            format!("{}/{}", section_prefix, hook).into()
+        let section_prefix = "lsm_cgroup";
+        let section_name: Cow<'_, _> = if let Some(name) = hook {
+            format!("{}/{}", section_prefix, name).into()
         } else {
             section_prefix.into()
         };
@@ -67,11 +58,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_lsm_sleepable() {
-        let prog = Lsm::parse(
+    fn test_lsm_cgroup() {
+        let prog = LsmCgroup::parse(
             parse_quote! {
-                sleepable,
-                hook = "bprm_committed_creds"
+                hook = "bprm_committed_creds",
             },
             parse_quote! {
                 fn bprm_committed_creds(ctx: &mut ::aya_ebpf::programs::LsmContext) -> i32 {
@@ -83,35 +73,7 @@ mod tests {
         let expanded = prog.expand();
         let expected = quote! {
             #[no_mangle]
-            #[link_section = "lsm.s/bprm_committed_creds"]
-            fn bprm_committed_creds(ctx: *mut ::core::ffi::c_void) -> i32 {
-                return bprm_committed_creds(::aya_ebpf::programs::LsmContext::new(ctx));
-
-                fn bprm_committed_creds(ctx: &mut ::aya_ebpf::programs::LsmContext) -> i32 {
-                    0
-                }
-            }
-        };
-        assert_eq!(expected.to_string(), expanded.to_string());
-    }
-
-    #[test]
-    fn test_lsm() {
-        let prog = Lsm::parse(
-            parse_quote! {
-                hook = "bprm_committed_creds"
-            },
-            parse_quote! {
-                fn bprm_committed_creds(ctx: &mut ::aya_ebpf::programs::LsmContext) -> i32 {
-                    0
-                }
-            },
-        )
-        .unwrap();
-        let expanded = prog.expand();
-        let expected = quote! {
-            #[no_mangle]
-            #[link_section = "lsm/bprm_committed_creds"]
+            #[link_section = "lsm_cgroup/bprm_committed_creds"]
             fn bprm_committed_creds(ctx: *mut ::core::ffi::c_void) -> i32 {
                 return bprm_committed_creds(::aya_ebpf::programs::LsmContext::new(ctx));
 
