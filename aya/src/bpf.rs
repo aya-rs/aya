@@ -30,8 +30,9 @@ use crate::{
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, Iter, KProbe, LircMode2, Lsm,
-        PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier,
-        SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
+        SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
+        UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -411,7 +412,11 @@ impl<'a> EbpfLoader<'a> {
                                 ProgramSection::Extension
                                 | ProgramSection::FEntry { sleepable: _ }
                                 | ProgramSection::FExit { sleepable: _ }
-                                | ProgramSection::Lsm { sleepable: _ }
+                                | ProgramSection::Lsm {
+                                    sleepable: _,
+                                    attach_type: _,
+                                }
+                                | ProgramSection::LsmCgroup { attach_type: _ }
                                 | ProgramSection::BtfTracePoint
                                 | ProgramSection::Iter { sleepable: _ } => {
                                     return Err(EbpfError::BtfError(err))
@@ -649,13 +654,25 @@ impl<'a> EbpfLoader<'a> {
                         ProgramSection::RawTracePoint => Program::RawTracePoint(RawTracePoint {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
-                        ProgramSection::Lsm { sleepable } => {
+                        ProgramSection::Lsm {
+                            sleepable,
+                            attach_type,
+                        } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
-                            Program::Lsm(Lsm { data })
+                            Program::Lsm(Lsm {
+                                data,
+                                attach_type: *attach_type,
+                            })
+                        }
+                        ProgramSection::LsmCgroup { attach_type } => {
+                            Program::LsmCgroup(LsmCgroup {
+                                data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                                attach_type: *attach_type,
+                            })
                         }
                         ProgramSection::BtfTracePoint => Program::BtfTracePoint(BtfTracePoint {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),

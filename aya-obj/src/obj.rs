@@ -27,7 +27,8 @@ use crate::{
     },
     maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, PinningType, MINIMUM_MAP_SIZE},
     programs::{
-        CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType, XdpAttachType,
+        CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType, LsmAttachType,
+        XdpAttachType,
     },
     relocation::*,
     util::HashMap,
@@ -274,6 +275,10 @@ pub enum ProgramSection {
     RawTracePoint,
     Lsm {
         sleepable: bool,
+        attach_type: LsmAttachType,
+    },
+    LsmCgroup {
+        attach_type: LsmAttachType,
     },
     BtfTracePoint,
     FEntry {
@@ -434,8 +439,17 @@ impl FromStr for ProgramSection {
             "lirc_mode2" => LircMode2,
             "perf_event" => PerfEvent,
             "raw_tp" | "raw_tracepoint" => RawTracePoint,
-            "lsm" => Lsm { sleepable: false },
-            "lsm.s" => Lsm { sleepable: true },
+            "lsm" => Lsm {
+                sleepable: false,
+                attach_type: LsmAttachType::Mac,
+            },
+            "lsm.s" => Lsm {
+                sleepable: true,
+                attach_type: LsmAttachType::Mac,
+            },
+            "lsm_cgroup" => LsmCgroup {
+                attach_type: LsmAttachType::Cgroup,
+            },
             "fentry" => FEntry { sleepable: false },
             "fentry.s" => FEntry { sleepable: true },
             "fexit" => FExit { sleepable: false },
@@ -2190,7 +2204,7 @@ mod tests {
             Some(Program {
                 section: ProgramSection::Lsm {
                     sleepable: false,
-                    ..
+                    attach_type: LsmAttachType::Mac
                 },
                 ..
             })
@@ -2217,6 +2231,31 @@ mod tests {
                 section: ProgramSection::Lsm {
                     sleepable: true,
                     ..
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_lsm_cgroup() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "lsm_cgroup/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::LsmCgroup {
+                    attach_type: LsmAttachType::Cgroup,
                 },
                 ..
             })
