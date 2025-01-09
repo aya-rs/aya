@@ -6173,27 +6173,6 @@ pub unsafe fn aya_ebpf_bindings::bindings::path::clone_to_uninit(&self, dst: *mu
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::path
 pub fn aya_ebpf_bindings::bindings::path::from(t: T) -> T
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::pt_regs
-pub aya_ebpf_bindings::bindings::pt_regs::cs: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::eflags: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::orig_rax: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::r10: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::r11: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::r12: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::r13: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::r14: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::r15: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::r8: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::r9: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::rax: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::rbp: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::rbx: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::rcx: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::rdi: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::rdx: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::rip: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::rsi: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::rsp: aya_ebpf_cty::od::c_ulong
-pub aya_ebpf_bindings::bindings::pt_regs::ss: aya_ebpf_cty::od::c_ulong
 impl core::clone::Clone for aya_ebpf_bindings::bindings::pt_regs
 pub fn aya_ebpf_bindings::bindings::pt_regs::clone(&self) -> aya_ebpf_bindings::bindings::pt_regs
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::pt_regs
@@ -6631,6 +6610,40 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::unix_sock wh
 pub unsafe fn aya_ebpf_bindings::bindings::unix_sock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::unix_sock
 pub fn aya_ebpf_bindings::bindings::unix_sock::from(t: T) -> T
+#[repr(C)] pub struct aya_ebpf_bindings::bindings::user_pt_regs
+pub aya_ebpf_bindings::bindings::user_pt_regs::pc: aya_ebpf_bindings::bindings::__u64
+pub aya_ebpf_bindings::bindings::user_pt_regs::pstate: aya_ebpf_bindings::bindings::__u64
+pub aya_ebpf_bindings::bindings::user_pt_regs::regs: [aya_ebpf_bindings::bindings::__u64; 31]
+pub aya_ebpf_bindings::bindings::user_pt_regs::sp: aya_ebpf_bindings::bindings::__u64
+impl core::clone::Clone for aya_ebpf_bindings::bindings::user_pt_regs
+pub fn aya_ebpf_bindings::bindings::user_pt_regs::clone(&self) -> aya_ebpf_bindings::bindings::user_pt_regs
+impl core::fmt::Debug for aya_ebpf_bindings::bindings::user_pt_regs
+pub fn aya_ebpf_bindings::bindings::user_pt_regs::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf_bindings::bindings::user_pt_regs
+impl core::marker::Freeze for aya_ebpf_bindings::bindings::user_pt_regs
+impl core::marker::Send for aya_ebpf_bindings::bindings::user_pt_regs
+impl core::marker::Sync for aya_ebpf_bindings::bindings::user_pt_regs
+impl core::marker::Unpin for aya_ebpf_bindings::bindings::user_pt_regs
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::user_pt_regs
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::user_pt_regs
+impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::user_pt_regs where U: core::convert::From<T>
+pub fn aya_ebpf_bindings::bindings::user_pt_regs::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf_bindings::bindings::user_pt_regs where U: core::convert::Into<T>
+pub type aya_ebpf_bindings::bindings::user_pt_regs::Error = core::convert::Infallible
+pub fn aya_ebpf_bindings::bindings::user_pt_regs::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf_bindings::bindings::user_pt_regs where U: core::convert::TryFrom<T>
+pub type aya_ebpf_bindings::bindings::user_pt_regs::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf_bindings::bindings::user_pt_regs::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf_bindings::bindings::user_pt_regs where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf_bindings::bindings::user_pt_regs::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf_bindings::bindings::user_pt_regs where T: ?core::marker::Sized
+pub fn aya_ebpf_bindings::bindings::user_pt_regs::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf_bindings::bindings::user_pt_regs where T: ?core::marker::Sized
+pub fn aya_ebpf_bindings::bindings::user_pt_regs::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::user_pt_regs where T: core::clone::Clone
+pub unsafe fn aya_ebpf_bindings::bindings::user_pt_regs::clone_to_uninit(&self, dst: *mut u8)
+impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::user_pt_regs
+pub fn aya_ebpf_bindings::bindings::user_pt_regs::from(t: T) -> T
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::xdp_md
 pub aya_ebpf_bindings::bindings::xdp_md::data: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::xdp_md::data_end: aya_ebpf_bindings::bindings::__u32
