@@ -8616,6 +8616,7 @@ pub aya_obj::obj::ProgramSection::KRetProbe
 pub aya_obj::obj::ProgramSection::LircMode2
 pub aya_obj::obj::ProgramSection::Lsm
 pub aya_obj::obj::ProgramSection::Lsm::sleepable: bool
+pub aya_obj::obj::ProgramSection::LsmCgroup
 pub aya_obj::obj::ProgramSection::PerfEvent
 pub aya_obj::obj::ProgramSection::RawTracePoint
 pub aya_obj::obj::ProgramSection::SchedClassifier
@@ -9479,6 +9480,7 @@ pub aya_obj::ProgramSection::KRetProbe
 pub aya_obj::ProgramSection::LircMode2
 pub aya_obj::ProgramSection::Lsm
 pub aya_obj::ProgramSection::Lsm::sleepable: bool
+pub aya_obj::ProgramSection::LsmCgroup
 pub aya_obj::ProgramSection::PerfEvent
 pub aya_obj::ProgramSection::RawTracePoint
 pub aya_obj::ProgramSection::SchedClassifier
