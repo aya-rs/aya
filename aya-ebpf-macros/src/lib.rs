@@ -14,6 +14,7 @@ mod fexit;
 mod flow_dissector;
 mod kprobe;
 mod lsm;
+mod lsm_cgroup;
 mod map;
 mod perf_event;
 mod raw_tracepoint;
@@ -40,6 +41,7 @@ use fexit::FExit;
 use flow_dissector::FlowDissector;
 use kprobe::{KProbe, KProbeKind};
 use lsm::Lsm;
+use lsm_cgroup::LsmCgroup;
 use map::Map;
 use perf_event::PerfEvent;
 use proc_macro::TokenStream;
@@ -335,6 +337,49 @@ pub fn raw_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn lsm(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match Lsm::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
+}
+
+/// Marks a function as an LSM program that can be attached to cgroups.
+/// This program will only trigger for workloads in the attached cgroups.
+/// Used to implement security policy and audit logging.
+///
+/// The hook name is the first and only argument to the macro.
+///
+/// LSM probes can be attached to the kernel's security hooks to implement mandatory
+/// access control policy and security auditing.
+///
+/// LSM probes require a kernel compiled with `CONFIG_BPF_LSM=y` and `CONFIG_DEBUG_INFO_BTF=y`.
+/// In order for the probes to fire, you also need the BPF LSM to be enabled through your
+/// kernel's boot paramters (like `lsm=lockdown,yama,bpf`).
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.0.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_ebpf::{macros::lsm_cgroup, programs::LsmContext};
+///
+/// #[lsm_cgroup(hook = "file_open")]
+/// pub fn file_open(ctx: LsmContext) -> i32 {
+///     match unsafe { try_file_open(ctx) } {
+///         Ok(ret) => ret,
+///         Err(ret) => ret,
+///     }
+/// }
+///
+/// unsafe fn try_file_open(_ctx: LsmContext) -> Result<i32, i32> {
+///     Err(0)
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn lsm_cgroup(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match LsmCgroup::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
         Err(err) => err.into_compile_error(),
     }

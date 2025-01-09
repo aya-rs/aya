@@ -527,6 +527,8 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 //
                 // Heed the advice and boot with noapic. We don't know why this happens.
                 kernel_args.push(" noapic");
+                // We need to enable LSM bpf to be able to run LSM integration tests.
+                kernel_args.push(" lsm=lockdown,capability,bpf");
                 qemu.args(["-no-reboot", "-nographic", "-m", "1024M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
