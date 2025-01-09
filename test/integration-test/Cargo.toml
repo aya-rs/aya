@@ -26,8 +26,10 @@ rand = { workspace = true, features = ["thread_rng"] }
 rbpf = { workspace = true }
 test-case = { workspace = true }
 test-log = { workspace = true, features = ["log"] }
+tempfile = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
 xdpilone = { workspace = true }
+
 
 [build-dependencies]
 anyhow = { workspace = true }
