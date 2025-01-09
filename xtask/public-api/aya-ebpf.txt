@@ -469,7 +469,7 @@ impl aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
-pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where aya_ebpf::maps::ring_buf::const_assert::Assert<{ _ }>: aya_ebpf::maps::ring_buf::const_assert::IsTrue
+pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where Assert<{ _ }>: IsTrue
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl core::marker::Sync for aya_ebpf::maps::ring_buf::RingBuf
 impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
@@ -533,7 +533,7 @@ pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::pinned(max_entries: u32, fl
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, key: &mut K, flags: u64) -> i64
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_sk_lookup(&mut self, ctx: &aya_ebpf::programs::sk_lookup::SkLookupContext, key: impl core::borrow::Borrow<K>, flags: u64) -> core::result::Result<(), u32>
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_skb(&self, ctx: &aya_ebpf::programs::sk_buff::SkBuffContext, key: &mut K, flags: u64) -> i64
-pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: &mut K, sk_ops: &mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: &mut K, sk_ops: &mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K> !core::marker::Freeze for aya_ebpf::maps::sock_hash::SockHash<K>
@@ -564,7 +564,7 @@ pub const fn aya_ebpf::maps::sock_map::SockMap::pinned(max_entries: u32, flags: 
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, index: u32, flags: u64) -> i64
 pub fn aya_ebpf::maps::sock_map::SockMap::redirect_sk_lookup(&mut self, ctx: &aya_ebpf::programs::sk_lookup::SkLookupContext, index: u32, flags: u64) -> core::result::Result<(), u32>
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, ctx: &aya_ebpf::programs::sk_buff::SkBuffContext, index: u32, flags: u64) -> i64
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
+pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_map::SockMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_map::SockMap
 impl core::marker::Sync for aya_ebpf::maps::sock_map::SockMap
 impl !core::marker::Freeze for aya_ebpf::maps::sock_map::SockMap
@@ -675,7 +675,7 @@ impl<T> core::convert::From<T> for aya_ebpf::maps::CpuMap
 pub fn aya_ebpf::maps::CpuMap::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::xdp::DevMap
 impl aya_ebpf::maps::DevMap
-pub fn aya_ebpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
+pub fn aya_ebpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<DevMapValue>
 pub const fn aya_ebpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
@@ -703,7 +703,7 @@ impl<T> core::convert::From<T> for aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::xdp::DevMapHash
 impl aya_ebpf::maps::DevMapHash
-pub fn aya_ebpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
+pub fn aya_ebpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<DevMapValue>
 pub const fn aya_ebpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
 pub fn aya_ebpf::maps::DevMapHash::redirect(&self, key: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMapHash::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
@@ -843,7 +843,7 @@ impl<T> core::convert::From<T> for aya_ebpf::maps::CpuMap
 pub fn aya_ebpf::maps::CpuMap::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::DevMap
 impl aya_ebpf::maps::DevMap
-pub fn aya_ebpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
+pub fn aya_ebpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<DevMapValue>
 pub const fn aya_ebpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
@@ -871,7 +871,7 @@ impl<T> core::convert::From<T> for aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::DevMapHash
 impl aya_ebpf::maps::DevMapHash
-pub fn aya_ebpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
+pub fn aya_ebpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<DevMapValue>
 pub const fn aya_ebpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
 pub fn aya_ebpf::maps::DevMapHash::redirect(&self, key: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMapHash::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
@@ -1195,7 +1195,7 @@ impl aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
-pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where aya_ebpf::maps::ring_buf::const_assert::Assert<{ _ }>: aya_ebpf::maps::ring_buf::const_assert::IsTrue
+pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where Assert<{ _ }>: IsTrue
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl core::marker::Sync for aya_ebpf::maps::ring_buf::RingBuf
 impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
@@ -1225,7 +1225,7 @@ pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::pinned(max_entries: u32, fl
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, key: &mut K, flags: u64) -> i64
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_sk_lookup(&mut self, ctx: &aya_ebpf::programs::sk_lookup::SkLookupContext, key: impl core::borrow::Borrow<K>, flags: u64) -> core::result::Result<(), u32>
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_skb(&self, ctx: &aya_ebpf::programs::sk_buff::SkBuffContext, key: &mut K, flags: u64) -> i64
-pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: &mut K, sk_ops: &mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: &mut K, sk_ops: &mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K> !core::marker::Freeze for aya_ebpf::maps::sock_hash::SockHash<K>
@@ -1255,7 +1255,7 @@ pub const fn aya_ebpf::maps::sock_map::SockMap::pinned(max_entries: u32, flags: 
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, index: u32, flags: u64) -> i64
 pub fn aya_ebpf::maps::sock_map::SockMap::redirect_sk_lookup(&mut self, ctx: &aya_ebpf::programs::sk_lookup::SkLookupContext, index: u32, flags: u64) -> core::result::Result<(), u32>
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, ctx: &aya_ebpf::programs::sk_buff::SkBuffContext, index: u32, flags: u64) -> i64
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
+pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_map::SockMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_map::SockMap
 impl core::marker::Sync for aya_ebpf::maps::sock_map::SockMap
 impl !core::marker::Freeze for aya_ebpf::maps::sock_map::SockMap
@@ -1365,9 +1365,9 @@ pub fn aya_ebpf::maps::XskMap::from(t: T) -> T
 pub mod aya_ebpf::programs
 pub mod aya_ebpf::programs::device
 pub struct aya_ebpf::programs::device::DeviceContext
-pub aya_ebpf::programs::device::DeviceContext::device: *mut aya_ebpf_bindings::x86_64::bindings::bpf_cgroup_dev_ctx
+pub aya_ebpf::programs::device::DeviceContext::device: *mut aya_ebpf_bindings::aarch64::bindings::bpf_cgroup_dev_ctx
 impl aya_ebpf::programs::device::DeviceContext
-pub fn aya_ebpf::programs::device::DeviceContext::new(device: *mut aya_ebpf_bindings::x86_64::bindings::bpf_cgroup_dev_ctx) -> aya_ebpf::programs::device::DeviceContext
+pub fn aya_ebpf::programs::device::DeviceContext::new(device: *mut aya_ebpf_bindings::aarch64::bindings::bpf_cgroup_dev_ctx) -> aya_ebpf::programs::device::DeviceContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::device::DeviceContext
 pub fn aya_ebpf::programs::device::DeviceContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::device::DeviceContext
@@ -1395,7 +1395,7 @@ pub fn aya_ebpf::programs::device::DeviceContext::from(t: T) -> T
 pub mod aya_ebpf::programs::fentry
 pub struct aya_ebpf::programs::fentry::FEntryContext
 impl aya_ebpf::programs::fentry::FEntryContext
-pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::fentry::FEntryContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fentry::FEntryContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1424,7 +1424,7 @@ pub fn aya_ebpf::programs::fentry::FEntryContext::from(t: T) -> T
 pub mod aya_ebpf::programs::fexit
 pub struct aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::programs::fexit::FExitContext
-pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::fexit::FExitContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1453,7 +1453,7 @@ pub fn aya_ebpf::programs::fexit::FExitContext::from(t: T) -> T
 pub mod aya_ebpf::programs::lsm
 pub struct aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::programs::lsm::LsmContext
-pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::lsm::LsmContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1509,9 +1509,9 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::perf_event::PerfEventCont
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::from(t: T) -> T
 pub mod aya_ebpf::programs::probe
 pub struct aya_ebpf::programs::probe::ProbeContext
-pub aya_ebpf::programs::probe::ProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
+pub aya_ebpf::programs::probe::ProbeContext::regs: *mut aya_ebpf_bindings::aarch64::bindings::user_pt_regs
 impl aya_ebpf::programs::probe::ProbeContext
-pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: aya_ebpf::args::FromPtRegs>(&self, n: usize) -> core::option::Option<T>
+pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: FromPtRegs>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::probe::ProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::probe::ProbeContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1540,7 +1540,7 @@ pub fn aya_ebpf::programs::probe::ProbeContext::from(t: T) -> T
 pub mod aya_ebpf::programs::raw_tracepoint
 pub struct aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl aya_ebpf::programs::raw_tracepoint::RawTracePointContext
-pub unsafe fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::arg<T: aya_ebpf::args::FromRawTracepointArgs>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::arg<T: FromRawTracepointArgs>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1568,10 +1568,10 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::raw_tracepoint::RawTraceP
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::from(t: T) -> T
 pub mod aya_ebpf::programs::retprobe
 pub struct aya_ebpf::programs::retprobe::RetProbeContext
-pub aya_ebpf::programs::retprobe::RetProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
+pub aya_ebpf::programs::retprobe::RetProbeContext::regs: *mut aya_ebpf_bindings::aarch64::bindings::user_pt_regs
 impl aya_ebpf::programs::retprobe::RetProbeContext
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::retprobe::RetProbeContext
-pub fn aya_ebpf::programs::retprobe::RetProbeContext::ret<T: aya_ebpf::args::FromPtRegs>(&self) -> core::option::Option<T>
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::retprobe::RetProbeContext
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::retprobe::RetProbeContext
@@ -1598,7 +1598,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::retprobe::RetProbeContext
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::from(t: T) -> T
 pub mod aya_ebpf::programs::sk_buff
 pub struct aya_ebpf::programs::sk_buff::SkBuff
-pub aya_ebpf::programs::sk_buff::SkBuff::skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff
+pub aya_ebpf::programs::sk_buff::SkBuff::skb: *mut aya_ebpf_bindings::aarch64::bindings::__sk_buff
 impl aya_ebpf::programs::sk_buff::SkBuff
 pub fn aya_ebpf::programs::sk_buff::SkBuff::adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::cb(&self) -> &[u32]
@@ -1616,7 +1616,7 @@ pub fn aya_ebpf::programs::sk_buff::SkBuff::load_bytes(&self, offset: usize, dst
 pub fn aya_ebpf::programs::sk_buff::SkBuff::local_ipv4(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::local_ipv6(&self) -> &[u32; 4]
 pub fn aya_ebpf::programs::sk_buff::SkBuff::local_port(&self) -> u32
-pub fn aya_ebpf::programs::sk_buff::SkBuff::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::sk_buff::SkBuff
+pub fn aya_ebpf::programs::sk_buff::SkBuff::new(skb: *mut aya_ebpf_bindings::aarch64::bindings::__sk_buff) -> aya_ebpf::programs::sk_buff::SkBuff
 pub fn aya_ebpf::programs::sk_buff::SkBuff::protocol(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::pull_data(&self, len: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::remote_ipv4(&self) -> u32
@@ -1660,7 +1660,7 @@ pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l4_csum_replace(&self, offset
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::len(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load<T>(&self, offset: usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::sk_buff::SkBuffContext
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::new(skb: *mut aya_ebpf_bindings::aarch64::bindings::__sk_buff) -> aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::pull_data(&self, len: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::set_mark(&mut self, mark: u32)
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
@@ -1690,9 +1690,9 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::from(t: T) -> T
 pub mod aya_ebpf::programs::sk_lookup
 pub struct aya_ebpf::programs::sk_lookup::SkLookupContext
-pub aya_ebpf::programs::sk_lookup::SkLookupContext::lookup: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sk_lookup
+pub aya_ebpf::programs::sk_lookup::SkLookupContext::lookup: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sk_lookup
 impl aya_ebpf::programs::sk_lookup::SkLookupContext
-pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::new(lookup: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sk_lookup) -> aya_ebpf::programs::sk_lookup::SkLookupContext
+pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::new(lookup: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sk_lookup) -> aya_ebpf::programs::sk_lookup::SkLookupContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_lookup::SkLookupContext
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sk_lookup::SkLookupContext
@@ -1719,11 +1719,11 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::sk_lookup::SkLookupContex
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::from(t: T) -> T
 pub mod aya_ebpf::programs::sk_msg
 pub struct aya_ebpf::programs::sk_msg::SkMsgContext
-pub aya_ebpf::programs::sk_msg::SkMsgContext::msg: *mut aya_ebpf_bindings::x86_64::bindings::sk_msg_md
+pub aya_ebpf::programs::sk_msg::SkMsgContext::msg: *mut aya_ebpf_bindings::aarch64::bindings::sk_msg_md
 impl aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data(&self) -> usize
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data_end(&self) -> usize
-pub fn aya_ebpf::programs::sk_msg::SkMsgContext::new(msg: *mut aya_ebpf_bindings::x86_64::bindings::sk_msg_md) -> aya_ebpf::programs::sk_msg::SkMsgContext
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::new(msg: *mut aya_ebpf_bindings::aarch64::bindings::sk_msg_md) -> aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::pop_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i64>
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::push_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i64>
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::size(&self) -> u32
@@ -1753,9 +1753,9 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::from(t: T) -> T
 pub mod aya_ebpf::programs::sock
 pub struct aya_ebpf::programs::sock::SockContext
-pub aya_ebpf::programs::sock::SockContext::sock: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock
+pub aya_ebpf::programs::sock::SockContext::sock: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock
 impl aya_ebpf::programs::sock::SockContext
-pub fn aya_ebpf::programs::sock::SockContext::new(sock: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> aya_ebpf::programs::sock::SockContext
+pub fn aya_ebpf::programs::sock::SockContext::new(sock: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock) -> aya_ebpf::programs::sock::SockContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock::SockContext
 pub fn aya_ebpf::programs::sock::SockContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sock::SockContext
@@ -1782,9 +1782,9 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::sock::SockContext
 pub fn aya_ebpf::programs::sock::SockContext::from(t: T) -> T
 pub mod aya_ebpf::programs::sock_addr
 pub struct aya_ebpf::programs::sock_addr::SockAddrContext
-pub aya_ebpf::programs::sock_addr::SockAddrContext::sock_addr: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_addr
+pub aya_ebpf::programs::sock_addr::SockAddrContext::sock_addr: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_addr
 impl aya_ebpf::programs::sock_addr::SockAddrContext
-pub fn aya_ebpf::programs::sock_addr::SockAddrContext::new(sock_addr: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_addr) -> aya_ebpf::programs::sock_addr::SockAddrContext
+pub fn aya_ebpf::programs::sock_addr::SockAddrContext::new(sock_addr: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_addr) -> aya_ebpf::programs::sock_addr::SockAddrContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock_addr::SockAddrContext
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sock_addr::SockAddrContext
@@ -1811,7 +1811,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::sock_addr::SockAddrContex
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::from(t: T) -> T
 pub mod aya_ebpf::programs::sock_ops
 pub struct aya_ebpf::programs::sock_ops::SockOpsContext
-pub aya_ebpf::programs::sock_ops::SockOpsContext::ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops
+pub aya_ebpf::programs::sock_ops::SockOpsContext::ops: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_ops
 impl aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::arg(&self, n: usize) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::cb_flags(&self) -> u32
@@ -1819,7 +1819,7 @@ pub fn aya_ebpf::programs::sock_ops::SockOpsContext::family(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::local_ip4(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::local_ip6(&self) -> [u32; 4]
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::local_port(&self) -> u32
-pub fn aya_ebpf::programs::sock_ops::SockOpsContext::new(ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops) -> aya_ebpf::programs::sock_ops::SockOpsContext
+pub fn aya_ebpf::programs::sock_ops::SockOpsContext::new(ops: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_ops) -> aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::op(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip4(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip6(&self) -> [u32; 4]
@@ -1852,9 +1852,9 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::from(t: T) -> T
 pub mod aya_ebpf::programs::sockopt
 pub struct aya_ebpf::programs::sockopt::SockoptContext
-pub aya_ebpf::programs::sockopt::SockoptContext::sockopt: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sockopt
+pub aya_ebpf::programs::sockopt::SockoptContext::sockopt: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sockopt
 impl aya_ebpf::programs::sockopt::SockoptContext
-pub fn aya_ebpf::programs::sockopt::SockoptContext::new(sockopt: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sockopt) -> aya_ebpf::programs::sockopt::SockoptContext
+pub fn aya_ebpf::programs::sockopt::SockoptContext::new(sockopt: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sockopt) -> aya_ebpf::programs::sockopt::SockoptContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sockopt::SockoptContext
@@ -1881,9 +1881,9 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::from(t: T) -> T
 pub mod aya_ebpf::programs::sysctl
 pub struct aya_ebpf::programs::sysctl::SysctlContext
-pub aya_ebpf::programs::sysctl::SysctlContext::sysctl: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sysctl
+pub aya_ebpf::programs::sysctl::SysctlContext::sysctl: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sysctl
 impl aya_ebpf::programs::sysctl::SysctlContext
-pub fn aya_ebpf::programs::sysctl::SysctlContext::new(sysctl: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sysctl) -> aya_ebpf::programs::sysctl::SysctlContext
+pub fn aya_ebpf::programs::sysctl::SysctlContext::new(sysctl: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sysctl) -> aya_ebpf::programs::sysctl::SysctlContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sysctl::SysctlContext
 pub fn aya_ebpf::programs::sysctl::SysctlContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sysctl::SysctlContext
@@ -1926,7 +1926,7 @@ pub fn aya_ebpf::programs::tc::TcContext::l4_csum_replace(&self, offset: usize, 
 pub fn aya_ebpf::programs::tc::TcContext::len(&self) -> u32
 pub fn aya_ebpf::programs::tc::TcContext::load<T>(&self, offset: usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::tc::TcContext
+pub fn aya_ebpf::programs::tc::TcContext::new(skb: *mut aya_ebpf_bindings::aarch64::bindings::__sk_buff) -> aya_ebpf::programs::tc::TcContext
 pub fn aya_ebpf::programs::tc::TcContext::pull_data(&self, len: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::set_mark(&mut self, mark: u32)
 pub fn aya_ebpf::programs::tc::TcContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
@@ -1957,7 +1957,7 @@ pub fn aya_ebpf::programs::tc::TcContext::from(t: T) -> T
 pub mod aya_ebpf::programs::tp_btf
 pub struct aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl aya_ebpf::programs::tp_btf::BtfTracePointContext
-pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2014,13 +2014,13 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::tracepoint::TracePointCon
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::from(t: T) -> T
 pub mod aya_ebpf::programs::xdp
 pub struct aya_ebpf::programs::xdp::XdpContext
-pub aya_ebpf::programs::xdp::XdpContext::ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md
+pub aya_ebpf::programs::xdp::XdpContext::ctx: *mut aya_ebpf_bindings::aarch64::bindings::xdp_md
 impl aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::data(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata_end(&self) -> usize
-pub fn aya_ebpf::programs::xdp::XdpContext::new(ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md) -> aya_ebpf::programs::xdp::XdpContext
+pub fn aya_ebpf::programs::xdp::XdpContext::new(ctx: *mut aya_ebpf_bindings::aarch64::bindings::xdp_md) -> aya_ebpf::programs::xdp::XdpContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::xdp::XdpContext
@@ -2047,7 +2047,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
 pub struct aya_ebpf::programs::BtfTracePointContext
 impl aya_ebpf::programs::tp_btf::BtfTracePointContext
-pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2074,9 +2074,9 @@ pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::borrow_mut(&mut self) -
 impl<T> core::convert::From<T> for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::from(t: T) -> T
 pub struct aya_ebpf::programs::DeviceContext
-pub aya_ebpf::programs::DeviceContext::device: *mut aya_ebpf_bindings::x86_64::bindings::bpf_cgroup_dev_ctx
+pub aya_ebpf::programs::DeviceContext::device: *mut aya_ebpf_bindings::aarch64::bindings::bpf_cgroup_dev_ctx
 impl aya_ebpf::programs::device::DeviceContext
-pub fn aya_ebpf::programs::device::DeviceContext::new(device: *mut aya_ebpf_bindings::x86_64::bindings::bpf_cgroup_dev_ctx) -> aya_ebpf::programs::device::DeviceContext
+pub fn aya_ebpf::programs::device::DeviceContext::new(device: *mut aya_ebpf_bindings::aarch64::bindings::bpf_cgroup_dev_ctx) -> aya_ebpf::programs::device::DeviceContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::device::DeviceContext
 pub fn aya_ebpf::programs::device::DeviceContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::device::DeviceContext
@@ -2103,7 +2103,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::device::DeviceContext
 pub fn aya_ebpf::programs::device::DeviceContext::from(t: T) -> T
 pub struct aya_ebpf::programs::FEntryContext
 impl aya_ebpf::programs::fentry::FEntryContext
-pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::fentry::FEntryContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fentry::FEntryContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2131,7 +2131,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::from(t: T) -> T
 pub struct aya_ebpf::programs::FExitContext
 impl aya_ebpf::programs::fexit::FExitContext
-pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::fexit::FExitContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2159,7 +2159,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::from(t: T) -> T
 pub struct aya_ebpf::programs::LsmContext
 impl aya_ebpf::programs::lsm::LsmContext
-pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::lsm::LsmContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2213,9 +2213,9 @@ pub fn aya_ebpf::programs::perf_event::PerfEventContext::borrow_mut(&mut self) -
 impl<T> core::convert::From<T> for aya_ebpf::programs::perf_event::PerfEventContext
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::from(t: T) -> T
 pub struct aya_ebpf::programs::ProbeContext
-pub aya_ebpf::programs::ProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
+pub aya_ebpf::programs::ProbeContext::regs: *mut aya_ebpf_bindings::aarch64::bindings::user_pt_regs
 impl aya_ebpf::programs::probe::ProbeContext
-pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: aya_ebpf::args::FromPtRegs>(&self, n: usize) -> core::option::Option<T>
+pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: FromPtRegs>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::probe::ProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::probe::ProbeContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2243,7 +2243,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::from(t: T) -> T
 pub struct aya_ebpf::programs::RawTracePointContext
 impl aya_ebpf::programs::raw_tracepoint::RawTracePointContext
-pub unsafe fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::arg<T: aya_ebpf::args::FromRawTracepointArgs>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::arg<T: FromRawTracepointArgs>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2270,10 +2270,10 @@ pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::borrow_mut(&mut
 impl<T> core::convert::From<T> for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::from(t: T) -> T
 pub struct aya_ebpf::programs::RetProbeContext
-pub aya_ebpf::programs::RetProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
+pub aya_ebpf::programs::RetProbeContext::regs: *mut aya_ebpf_bindings::aarch64::bindings::user_pt_regs
 impl aya_ebpf::programs::retprobe::RetProbeContext
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::retprobe::RetProbeContext
-pub fn aya_ebpf::programs::retprobe::RetProbeContext::ret<T: aya_ebpf::args::FromPtRegs>(&self) -> core::option::Option<T>
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::retprobe::RetProbeContext
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::retprobe::RetProbeContext
@@ -2312,7 +2312,7 @@ pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l4_csum_replace(&self, offset
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::len(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load<T>(&self, offset: usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::sk_buff::SkBuffContext
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::new(skb: *mut aya_ebpf_bindings::aarch64::bindings::__sk_buff) -> aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::pull_data(&self, len: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::set_mark(&mut self, mark: u32)
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
@@ -2341,9 +2341,9 @@ pub fn aya_ebpf::programs::sk_buff::SkBuffContext::borrow_mut(&mut self) -> &mut
 impl<T> core::convert::From<T> for aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::from(t: T) -> T
 pub struct aya_ebpf::programs::SkLookupContext
-pub aya_ebpf::programs::SkLookupContext::lookup: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sk_lookup
+pub aya_ebpf::programs::SkLookupContext::lookup: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sk_lookup
 impl aya_ebpf::programs::sk_lookup::SkLookupContext
-pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::new(lookup: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sk_lookup) -> aya_ebpf::programs::sk_lookup::SkLookupContext
+pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::new(lookup: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sk_lookup) -> aya_ebpf::programs::sk_lookup::SkLookupContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_lookup::SkLookupContext
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sk_lookup::SkLookupContext
@@ -2369,11 +2369,11 @@ pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::borrow_mut(&mut self) -> 
 impl<T> core::convert::From<T> for aya_ebpf::programs::sk_lookup::SkLookupContext
 pub fn aya_ebpf::programs::sk_lookup::SkLookupContext::from(t: T) -> T
 pub struct aya_ebpf::programs::SkMsgContext
-pub aya_ebpf::programs::SkMsgContext::msg: *mut aya_ebpf_bindings::x86_64::bindings::sk_msg_md
+pub aya_ebpf::programs::SkMsgContext::msg: *mut aya_ebpf_bindings::aarch64::bindings::sk_msg_md
 impl aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data(&self) -> usize
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data_end(&self) -> usize
-pub fn aya_ebpf::programs::sk_msg::SkMsgContext::new(msg: *mut aya_ebpf_bindings::x86_64::bindings::sk_msg_md) -> aya_ebpf::programs::sk_msg::SkMsgContext
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::new(msg: *mut aya_ebpf_bindings::aarch64::bindings::sk_msg_md) -> aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::pop_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i64>
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::push_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i64>
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::size(&self) -> u32
@@ -2402,9 +2402,9 @@ pub fn aya_ebpf::programs::sk_msg::SkMsgContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::from(t: T) -> T
 pub struct aya_ebpf::programs::SockAddrContext
-pub aya_ebpf::programs::SockAddrContext::sock_addr: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_addr
+pub aya_ebpf::programs::SockAddrContext::sock_addr: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_addr
 impl aya_ebpf::programs::sock_addr::SockAddrContext
-pub fn aya_ebpf::programs::sock_addr::SockAddrContext::new(sock_addr: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_addr) -> aya_ebpf::programs::sock_addr::SockAddrContext
+pub fn aya_ebpf::programs::sock_addr::SockAddrContext::new(sock_addr: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_addr) -> aya_ebpf::programs::sock_addr::SockAddrContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock_addr::SockAddrContext
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sock_addr::SockAddrContext
@@ -2430,9 +2430,9 @@ pub fn aya_ebpf::programs::sock_addr::SockAddrContext::borrow_mut(&mut self) -> 
 impl<T> core::convert::From<T> for aya_ebpf::programs::sock_addr::SockAddrContext
 pub fn aya_ebpf::programs::sock_addr::SockAddrContext::from(t: T) -> T
 pub struct aya_ebpf::programs::SockContext
-pub aya_ebpf::programs::SockContext::sock: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock
+pub aya_ebpf::programs::SockContext::sock: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock
 impl aya_ebpf::programs::sock::SockContext
-pub fn aya_ebpf::programs::sock::SockContext::new(sock: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> aya_ebpf::programs::sock::SockContext
+pub fn aya_ebpf::programs::sock::SockContext::new(sock: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock) -> aya_ebpf::programs::sock::SockContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock::SockContext
 pub fn aya_ebpf::programs::sock::SockContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sock::SockContext
@@ -2458,7 +2458,7 @@ pub fn aya_ebpf::programs::sock::SockContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sock::SockContext
 pub fn aya_ebpf::programs::sock::SockContext::from(t: T) -> T
 pub struct aya_ebpf::programs::SockOpsContext
-pub aya_ebpf::programs::SockOpsContext::ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops
+pub aya_ebpf::programs::SockOpsContext::ops: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_ops
 impl aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::arg(&self, n: usize) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::cb_flags(&self) -> u32
@@ -2466,7 +2466,7 @@ pub fn aya_ebpf::programs::sock_ops::SockOpsContext::family(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::local_ip4(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::local_ip6(&self) -> [u32; 4]
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::local_port(&self) -> u32
-pub fn aya_ebpf::programs::sock_ops::SockOpsContext::new(ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops) -> aya_ebpf::programs::sock_ops::SockOpsContext
+pub fn aya_ebpf::programs::sock_ops::SockOpsContext::new(ops: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sock_ops) -> aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::op(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip4(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip6(&self) -> [u32; 4]
@@ -2498,9 +2498,9 @@ pub fn aya_ebpf::programs::sock_ops::SockOpsContext::borrow_mut(&mut self) -> &m
 impl<T> core::convert::From<T> for aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::from(t: T) -> T
 pub struct aya_ebpf::programs::SockoptContext
-pub aya_ebpf::programs::SockoptContext::sockopt: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sockopt
+pub aya_ebpf::programs::SockoptContext::sockopt: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sockopt
 impl aya_ebpf::programs::sockopt::SockoptContext
-pub fn aya_ebpf::programs::sockopt::SockoptContext::new(sockopt: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sockopt) -> aya_ebpf::programs::sockopt::SockoptContext
+pub fn aya_ebpf::programs::sockopt::SockoptContext::new(sockopt: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sockopt) -> aya_ebpf::programs::sockopt::SockoptContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sockopt::SockoptContext
@@ -2526,9 +2526,9 @@ pub fn aya_ebpf::programs::sockopt::SockoptContext::borrow_mut(&mut self) -> &mu
 impl<T> core::convert::From<T> for aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::from(t: T) -> T
 pub struct aya_ebpf::programs::SysctlContext
-pub aya_ebpf::programs::SysctlContext::sysctl: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sysctl
+pub aya_ebpf::programs::SysctlContext::sysctl: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sysctl
 impl aya_ebpf::programs::sysctl::SysctlContext
-pub fn aya_ebpf::programs::sysctl::SysctlContext::new(sysctl: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sysctl) -> aya_ebpf::programs::sysctl::SysctlContext
+pub fn aya_ebpf::programs::sysctl::SysctlContext::new(sysctl: *mut aya_ebpf_bindings::aarch64::bindings::bpf_sysctl) -> aya_ebpf::programs::sysctl::SysctlContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sysctl::SysctlContext
 pub fn aya_ebpf::programs::sysctl::SysctlContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sysctl::SysctlContext
@@ -2570,7 +2570,7 @@ pub fn aya_ebpf::programs::tc::TcContext::l4_csum_replace(&self, offset: usize, 
 pub fn aya_ebpf::programs::tc::TcContext::len(&self) -> u32
 pub fn aya_ebpf::programs::tc::TcContext::load<T>(&self, offset: usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::tc::TcContext
+pub fn aya_ebpf::programs::tc::TcContext::new(skb: *mut aya_ebpf_bindings::aarch64::bindings::__sk_buff) -> aya_ebpf::programs::tc::TcContext
 pub fn aya_ebpf::programs::tc::TcContext::pull_data(&self, len: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::set_mark(&mut self, mark: u32)
 pub fn aya_ebpf::programs::tc::TcContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
@@ -2627,13 +2627,13 @@ pub fn aya_ebpf::programs::tracepoint::TracePointContext::borrow_mut(&mut self) 
 impl<T> core::convert::From<T> for aya_ebpf::programs::tracepoint::TracePointContext
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::from(t: T) -> T
 pub struct aya_ebpf::programs::XdpContext
-pub aya_ebpf::programs::XdpContext::ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md
+pub aya_ebpf::programs::XdpContext::ctx: *mut aya_ebpf_bindings::aarch64::bindings::xdp_md
 impl aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::data(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata_end(&self) -> usize
-pub fn aya_ebpf::programs::xdp::XdpContext::new(ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md) -> aya_ebpf::programs::xdp::XdpContext
+pub fn aya_ebpf::programs::xdp::XdpContext::new(ctx: *mut aya_ebpf_bindings::aarch64::bindings::xdp_md) -> aya_ebpf::programs::xdp::XdpContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::xdp::XdpContext
@@ -2661,10 +2661,10 @@ pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
 pub macro aya_ebpf::bpf_printk!
 pub struct aya_ebpf::PtRegs
 impl aya_ebpf::PtRegs
-pub fn aya_ebpf::PtRegs::arg<T: aya_ebpf::args::FromPtRegs>(&self, n: usize) -> core::option::Option<T>
-pub fn aya_ebpf::PtRegs::as_ptr(&self) -> *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
-pub fn aya_ebpf::PtRegs::new(regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs) -> Self
-pub fn aya_ebpf::PtRegs::ret<T: aya_ebpf::args::FromPtRegs>(&self) -> core::option::Option<T>
+pub fn aya_ebpf::PtRegs::arg<T: FromPtRegs>(&self, n: usize) -> core::option::Option<T>
+pub fn aya_ebpf::PtRegs::as_ptr(&self) -> *mut aya_ebpf_bindings::aarch64::bindings::user_pt_regs
+pub fn aya_ebpf::PtRegs::new(regs: *mut aya_ebpf_bindings::aarch64::bindings::user_pt_regs) -> Self
+pub fn aya_ebpf::PtRegs::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
 impl core::marker::Freeze for aya_ebpf::PtRegs
 impl !core::marker::Send for aya_ebpf::PtRegs
 impl !core::marker::Sync for aya_ebpf::PtRegs
@@ -2689,8 +2689,8 @@ impl<T> core::convert::From<T> for aya_ebpf::PtRegs
 pub fn aya_ebpf::PtRegs::from(t: T) -> T
 pub struct aya_ebpf::RawTracepointArgs
 impl aya_ebpf::RawTracepointArgs
-pub unsafe fn aya_ebpf::RawTracepointArgs::arg<T: aya_ebpf::args::FromRawTracepointArgs>(&self, n: usize) -> *const T
-pub fn aya_ebpf::RawTracepointArgs::new(args: *mut aya_ebpf_bindings::x86_64::bindings::bpf_raw_tracepoint_args) -> Self
+pub unsafe fn aya_ebpf::RawTracepointArgs::arg<T: FromRawTracepointArgs>(&self, n: usize) -> *const T
+pub fn aya_ebpf::RawTracepointArgs::new(args: *mut aya_ebpf_bindings::aarch64::bindings::bpf_raw_tracepoint_args) -> Self
 impl core::marker::Freeze for aya_ebpf::RawTracepointArgs
 impl !core::marker::Send for aya_ebpf::RawTracepointArgs
 impl !core::marker::Sync for aya_ebpf::RawTracepointArgs
