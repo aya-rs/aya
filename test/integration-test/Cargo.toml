@@ -28,6 +28,7 @@ test-case = { workspace = true }
 test-log = { workspace = true, features = ["log"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
 xdpilone = { workspace = true }
+scopeguard = { version = "1.2.0" }
 
 [build-dependencies]
 anyhow = { workspace = true }
