@@ -2,9 +2,7 @@
 #![no_main]
 
 use aya_ebpf::{
-    bindings::xdp_action,
-    macros::{kprobe, kretprobe, tracepoint, uprobe, uretprobe, xdp},
-    programs::{ProbeContext, RetProbeContext, TracePointContext, XdpContext},
+    bindings::xdp_action, helpers::{bpf_get_current_cgroup_id, bpf_get_current_pid_tgid}, macros::{kprobe, kretprobe, lsm, tracepoint, uprobe, uretprobe, xdp}, programs::{LsmContext, ProbeContext, RetProbeContext, TracePointContext, XdpContext}
 };
 
 #[xdp]
@@ -41,6 +39,11 @@ pub fn test_uprobe(_ctx: ProbeContext) -> u32 {
 
 #[uretprobe]
 pub fn test_uretprobe(_ctx: RetProbeContext) -> u32 {
+    0
+}
+
+#[lsm(hook="socket_bind", cgroup)]
+pub fn test_lsmcgroup(_ctx: LsmContext) -> i32 {
     0
 }
 

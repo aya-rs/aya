@@ -1,12 +1,16 @@
 //! LSM probes.
 
+use std::os::fd::AsFd;
+
+use aya_obj::programs::LsmAttachType;
+
 use crate::{
-    generated::{bpf_attach_type::BPF_LSM_MAC, bpf_prog_type::BPF_PROG_TYPE_LSM},
+    generated::bpf_prog_type::BPF_PROG_TYPE_LSM,
     obj::btf::{Btf, BtfKind},
     programs::{
         define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
         ProgramData, ProgramError,
-    },
+    }, sys::{bpf_link_create, LinkTarget, SyscallError},
 };
 
 /// A program that attaches to Linux LSM hooks. Used to implement security policy and
@@ -24,7 +28,7 @@ use crate::{
 /// The minimum kernel version required to use this feature is 5.7.
 ///
 /// # Examples
-///
+/// LSM with MAC attachment type
 /// ```no_run
 /// # #[derive(thiserror::Error, Debug)]
 /// # enum LsmError {
@@ -44,12 +48,36 @@ use crate::{
 /// program.attach()?;
 /// # Ok::<(), LsmError>(())
 /// ```
+/// 
+/// LSM with cgroup attachment type
+/// ```no_run
+/// # #[derive(thiserror::Error, Debug)]
+/// # enum LsmError {
+/// #     #[error(transparent)]
+/// #     BtfError(#[from] aya::BtfError),
+/// #     #[error(transparent)]
+/// #     Program(#[from] aya::programs::ProgramError),
+/// #     #[error(transparent)]
+/// #     Ebpf(#[from] aya::EbpfError),
+/// # }
+/// # let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
+/// use aya::{Ebpf, programs::Lsm, BtfError, Btf};
+///
+/// let btf = Btf::from_sys_fs()?;
+/// let file = File::open("/sys/fs/cgroup/unified")?;
+/// let program: &mut Lsm = bpf.program_mut("lsm_prog").unwrap().try_into()?;
+/// program.load("security_bprm_exec", &btf)?;
+/// program.attach(Some(file))?;
+/// # Ok::<(), LsmError>(())
+/// ```
+/// 
 ///
 /// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_LSM")]
 pub struct Lsm {
     pub(crate) data: ProgramData<LsmLink>,
+    pub(crate) attach_type: LsmAttachType,
 }
 
 impl Lsm {
@@ -60,7 +88,7 @@ impl Lsm {
     /// * `lsm_hook_name` - full name of the LSM hook that the program should
     ///   be attached to
     pub fn load(&mut self, lsm_hook_name: &str, btf: &Btf) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_LSM_MAC);
+        self.data.expected_attach_type = Some(self.attach_type.into());
         let type_name = format!("bpf_lsm_{lsm_hook_name}");
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
@@ -70,10 +98,46 @@ impl Lsm {
     /// Attaches the program.
     ///
     /// The returned value can be used to detach, see [Lsm::detach].
-    pub fn attach(&mut self) -> Result<LsmLinkId, ProgramError> {
-        attach_raw_tracepoint(&mut self.data, None)
+    pub fn attach<T: AsFd>(&mut self, cgroup: Option<T>) -> Result<LsmLinkId, ProgramError> {
+        match self.attach_type{
+            LsmAttachType::Cgroup => {
+                if let Some(cgroup) = cgroup{
+                    let prog_fd = self.fd()?;
+                    let prog_fd = prog_fd.as_fd();
+                    let cgroup_fd = cgroup.as_fd();
+                    let attach_type = self.data.expected_attach_type.unwrap();
+                    let btf_id = self.data.attach_btf_id;
+            
+                    let link_fd = bpf_link_create(
+                        prog_fd,
+                        LinkTarget::Fd(cgroup_fd),
+                        attach_type,
+                        btf_id,
+                        0,
+                        None,
+                    )
+                    .map_err(|(_, io_error)| SyscallError {
+                        call: "bpf_link_create",
+                        io_error,
+                    })?;
+            
+                    self.data
+                        .links
+                        .insert(LsmLink::new(FdLink::new(
+                            link_fd,
+                        )))
+                }else {
+                    return Err(ProgramError::UnexpectedProgramType);
+                }
+            },
+            LsmAttachType::Mac => {
+                attach_raw_tracepoint(&mut self.data, None)
+            }
+        }
+       
     }
 }
+
 
 define_link_wrapper!(
     /// The link used by [Lsm] programs.

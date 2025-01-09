@@ -13,3 +13,4 @@ mod smoke;
 mod strncmp;
 mod tcx;
 mod xdp;
+mod lsm;
