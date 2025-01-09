@@ -30,8 +30,9 @@ use crate::{
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, Iter, KProbe, LircMode2, Lsm,
-        PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier,
-        SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
+        SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
+        UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -412,6 +413,7 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::FEntry { sleepable: _ }
                                 | ProgramSection::FExit { sleepable: _ }
                                 | ProgramSection::Lsm { sleepable: _ }
+                                | ProgramSection::LsmCgroup
                                 | ProgramSection::BtfTracePoint
                                 | ProgramSection::Iter { sleepable: _ } => {
                                     return Err(EbpfError::BtfError(err))
@@ -649,7 +651,7 @@ impl<'a> EbpfLoader<'a> {
                         ProgramSection::RawTracePoint => Program::RawTracePoint(RawTracePoint {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
-                        ProgramSection::Lsm { sleepable } => {
+                        ProgramSection::Lsm { sleepable , .. } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
@@ -657,6 +659,9 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::Lsm(Lsm { data })
                         }
+                        ProgramSection::LsmCgroup  => Program::LsmCgroup(LsmCgroup {
+                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level)
+                        }),
                         ProgramSection::BtfTracePoint => Program::BtfTracePoint(BtfTracePoint {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),

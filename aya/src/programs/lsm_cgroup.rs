@@ -1,14 +1,15 @@
 //! LSM probes.
+
+use std::os::fd::AsFd;
+
 use crate::{
-    generated::{bpf_prog_type::BPF_PROG_TYPE_LSM, bpf_attach_type::BPF_LSM_MAC},
+    generated::{bpf_prog_type::BPF_PROG_TYPE_LSM, bpf_attach_type::BPF_LSM_CGROUP},
     obj::btf::{Btf, BtfKind},
-    programs::{
-        define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
-        ProgramData, ProgramError,
-    },
+    programs::{define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError},
+    sys::{bpf_link_create, BpfLinkCreateArgs, LinkTarget, SyscallError},
 };
 
-/// A program that attaches to Linux LSM hooks. Used to implement security policy and
+/// A program that attaches to Linux LSM hooks with per-cgroup attachment type. Used to implement security policy and
 /// audit logging.
 ///
 /// LSM probes can be attached to the kernel's [security hooks][1] to implement mandatory
@@ -20,10 +21,10 @@ use crate::{
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 5.7.
+/// The minimum kernel version required to use this feature is 6.0.
 ///
 /// # Examples
-/// ## LSM with MAC attachment type
+///
 /// ```no_run
 /// # #[derive(thiserror::Error, Debug)]
 /// # enum LsmError {
@@ -35,23 +36,25 @@ use crate::{
 /// #     Ebpf(#[from] aya::EbpfError),
 /// # }
 /// # let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
-/// use aya::{Ebpf, programs::Lsm, BtfError, Btf};
+/// use aya::{Ebpf, programs::LsmCgroup, BtfError, Btf};
+/// use std::fs::File;
 ///
 /// let btf = Btf::from_sys_fs()?;
-/// let program: &mut Lsm = bpf.program_mut("lsm_prog").unwrap().try_into()?;
+/// let file = File::open("/sys/fs/cgroup/unified")?;
+/// let program: &mut LsmCgroup = bpf.program_mut("lsm_prog").unwrap().try_into()?;
 /// program.load("security_bprm_exec", &btf)?;
-/// program.attach()?;
+/// program.attach(file)?;
 /// # Ok::<(), LsmError>(())
 /// ```
 ///
 /// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_LSM")]
-pub struct Lsm {
+pub struct LsmCgroup {
     pub(crate) data: ProgramData<LsmLink>,
 }
 
-impl Lsm {
+impl LsmCgroup {
     /// Loads the program inside the kernel.
     ///
     /// # Arguments
@@ -59,7 +62,7 @@ impl Lsm {
     /// * `lsm_hook_name` - full name of the LSM hook that the program should
     ///   be attached to
     pub fn load(&mut self, lsm_hook_name: &str, btf: &Btf) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_LSM_MAC);
+        self.data.expected_attach_type = Some(BPF_LSM_CGROUP);
         let type_name = format!("bpf_lsm_{lsm_hook_name}");
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
@@ -68,18 +71,35 @@ impl Lsm {
 
     /// Attaches the program.
     ///
-    /// The returned value can be used to detach, see [Lsm::detach].
-    pub fn attach(&mut self) -> Result<LsmLinkId, ProgramError> {
-        attach_raw_tracepoint(&mut self.data, None)
+    /// The returned value can be used to detach, see [LsmCgroup::detach].
+    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<LsmLinkId, ProgramError> {
+        let prog_fd = self.fd()?;
+        let prog_fd = prog_fd.as_fd();
+        let cgroup_fd = cgroup.as_fd();
+        let attach_type = self.data.expected_attach_type.unwrap();
+        let btf_id = self.data.attach_btf_id.ok_or(ProgramError::NotLoaded)?;
+        let link_fd = bpf_link_create(
+            prog_fd,
+            LinkTarget::Fd(cgroup_fd),
+            attach_type,
+            0,
+            Some(BpfLinkCreateArgs::TargetBtfId(btf_id)),
+        )
+        .map_err(|(_, io_error)| SyscallError {
+            call: "bpf_link_create",
+            io_error,
+        })?;
+
+        self.data.links.insert(LsmLink::new(FdLink::new(link_fd)))
     }
 }
 
 define_link_wrapper!(
-    /// The link used by [Lsm] programs.
+    /// The link used by [LsmCgroup] programs.
     LsmLink,
-    /// The type returned by [Lsm::attach]. Can be passed to [Lsm::detach].
+    /// The type returned by [LsmCgroup::attach]. Can be passed to [LsmCgroup::detach].
     LsmLinkId,
     FdLink,
     FdLinkId,
-    Lsm,
+    LsmCgroup,
 );
