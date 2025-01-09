@@ -4,7 +4,9 @@
 
 use aya_ebpf::{
     bindings::{bpf_ret_code, xdp_action},
-    macros::{flow_dissector, kprobe, kretprobe, lsm, tracepoint, uprobe, uretprobe, xdp},
+    macros::{
+        flow_dissector, kprobe, kretprobe, lsm, lsm_cgroup, tracepoint, uprobe, uretprobe, xdp,
+    },
     programs::{
         FlowDissectorContext, LsmContext, ProbeContext, RetProbeContext, TracePointContext,
         XdpContext,
@@ -53,4 +55,9 @@ fn test_flow(_ctx: FlowDissectorContext) -> u32 {
 #[lsm(hook = "socket_bind")]
 fn test_lsm(_ctx: LsmContext) -> i32 {
     -1 // Disallow.
+}
+
+#[lsm_cgroup(hook = "socket_bind")]
+fn test_lsm_cgroup(_ctx: LsmContext) -> i32 {
+    0 // Disallow.
 }

@@ -1,9 +1,11 @@
 use assert_matches::assert_matches;
 use aya::{
     Btf, Ebpf,
-    programs::{Lsm, ProgramError, ProgramType},
+    programs::{Lsm, LsmCgroup, ProgramError, ProgramType},
     sys::{SyscallError, is_program_supported},
 };
+
+use crate::utils::Cgroup;
 
 macro_rules! expect_permission_denied {
     ($result:expr) => {
@@ -41,6 +43,53 @@ fn lsm() {
         }
         result.unwrap()
     };
+
+    expect_permission_denied!(std::net::TcpListener::bind("127.0.0.1:0"));
+
+    prog.detach(link_id).unwrap();
+
+    assert_matches!(std::net::TcpListener::bind("127.0.0.1:0"), Ok(_));
+}
+
+#[test]
+fn lsm_cgroup() {
+    let mut bpf: Ebpf = Ebpf::load(crate::TEST).unwrap();
+    let prog = bpf.program_mut("test_lsm_cgroup").unwrap();
+    let prog: &mut LsmCgroup = prog.try_into().unwrap();
+    let btf = Btf::from_sys_fs().expect("could not get btf from sys");
+    prog.load("socket_bind", &btf).unwrap();
+
+    assert_matches!(std::net::TcpListener::bind("127.0.0.1:0"), Ok(_));
+
+    let pid = std::process::id();
+    let root = Cgroup::root();
+    let cgroup = root.create_child("aya-test-lsm-cgroup");
+
+    let link_id = {
+        let result = prog.attach(cgroup.fd());
+
+        if !is_program_supported(ProgramType::Lsm).unwrap() {
+            assert_matches!(result, Err(ProgramError::SyscallError(SyscallError { call, io_error })) => {
+                assert_eq!(call, "bpf_link_create");
+                assert_eq!(io_error.raw_os_error(), Some(524));
+            });
+            eprintln!("skipping test - LSM programs not supported");
+            return;
+        }
+        result.unwrap()
+    };
+
+    let cgroup = cgroup.into_cgroup();
+
+    cgroup.write_pid(pid);
+
+    expect_permission_denied!(std::net::TcpListener::bind("127.0.0.1:0"));
+
+    root.write_pid(pid);
+
+    assert_matches!(std::net::TcpListener::bind("127.0.0.1:0"), Ok(_));
+
+    cgroup.write_pid(pid);
 
     expect_permission_denied!(std::net::TcpListener::bind("127.0.0.1:0"));
 
