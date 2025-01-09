@@ -24,10 +24,12 @@ netns-rs = { workspace = true }
 object = { workspace = true, features = ["elf", "read_core", "std"] }
 rand = { workspace = true, features = ["thread_rng"] }
 rbpf = { workspace = true }
+scopeguard = { workspace = true }
 test-case = { workspace = true }
 test-log = { workspace = true, features = ["log"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
 xdpilone = { workspace = true }
+
 
 [build-dependencies]
 anyhow = { workspace = true }
