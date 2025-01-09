@@ -413,6 +413,8 @@ pub fn run(opts: Options) -> Result<()> {
                 //
                 // Heed the advice and boot with noapic. We don't know why this happens.
                 kernel_args.push(" noapic");
+                // Enable lsm
+                kernel_args.push(" lsm=lockdown,capability,bpf");
                 qemu.args(["-no-reboot", "-nographic", "-m", "512M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
