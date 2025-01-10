@@ -79,7 +79,6 @@ impl CgroupSockopt {
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
                 attach_type,
-                None,
                 mode.into(),
                 None,
             )

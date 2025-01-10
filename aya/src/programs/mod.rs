@@ -219,6 +219,10 @@ pub enum ProgramError {
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
+
+    /// Providing an attach cookie is not supported.
+    #[error("providing an attach cookie is not supported")]
+    AttachCookieNotSupported,
 }
 
 /// A [`Program`] file descriptor.

@@ -1034,7 +1034,7 @@ impl Ebpf {
     ///
     /// let program: &mut UProbe = bpf.program_mut("SSL_read").unwrap().try_into()?;
     /// program.load()?;
-    /// program.attach(Some("SSL_read"), 0, "libssl", None)?;
+    /// program.attach("SSL_read", "libssl", None, None)?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn program_mut(&mut self, name: &str) -> Option<&mut Program> {

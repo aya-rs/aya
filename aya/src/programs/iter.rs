@@ -72,11 +72,12 @@ impl Iter {
     pub fn attach(&mut self) -> Result<IterLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let link_fd = bpf_link_create(prog_fd, LinkTarget::Iter, BPF_TRACE_ITER, None, 0, None)
-            .map_err(|(_, io_error)| SyscallError {
+        let link_fd = bpf_link_create(prog_fd, LinkTarget::Iter, BPF_TRACE_ITER, 0, None).map_err(
+            |(_, io_error)| SyscallError {
                 call: "bpf_link_create",
                 io_error,
-            })?;
+            },
+        )?;
 
         self.data
             .links
