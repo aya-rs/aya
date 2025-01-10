@@ -390,14 +390,22 @@ pub(crate) enum LinkTarget<'f> {
     Iter,
 }
 
+// Models https://github.com/torvalds/linux/blob/2144da25/include/uapi/linux/bpf.h#L1724-L1782.
+pub(crate) enum BpfLinkCreateArgs<'a> {
+    TargetBtfId(u32),
+    // since kernel 5.15
+    PerfEvent { bpf_cookie: u64 },
+    // since kernel 6.6
+    Tcx(&'a LinkRef),
+}
+
 // since kernel 5.7
 pub(crate) fn bpf_link_create(
     prog_fd: BorrowedFd<'_>,
     target: LinkTarget<'_>,
     attach_type: bpf_attach_type,
-    btf_id: Option<u32>,
     flags: u32,
-    link_ref: Option<&LinkRef>,
+    args: Option<BpfLinkCreateArgs<'_>>,
 ) -> SysResult<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -417,31 +425,34 @@ pub(crate) fn bpf_link_create(
         LinkTarget::Iter => {}
     };
     attr.link_create.attach_type = attach_type as u32;
-
-    if let Some(btf_id) = btf_id {
-        attr.link_create.__bindgen_anon_3.target_btf_id = btf_id;
-    }
-
     attr.link_create.flags = flags;
 
-    // since kernel 6.6
-    match link_ref {
-        Some(LinkRef::Fd(fd)) => {
-            attr.link_create
-                .__bindgen_anon_3
-                .tcx
-                .__bindgen_anon_1
-                .relative_fd = fd.to_owned() as u32;
+    if let Some(args) = args {
+        match args {
+            BpfLinkCreateArgs::TargetBtfId(btf_id) => {
+                attr.link_create.__bindgen_anon_3.target_btf_id = btf_id;
+            }
+            BpfLinkCreateArgs::PerfEvent { bpf_cookie } => {
+                attr.link_create.__bindgen_anon_3.perf_event.bpf_cookie = bpf_cookie;
+            }
+            BpfLinkCreateArgs::Tcx(link_ref) => match link_ref {
+                LinkRef::Fd(fd) => {
+                    attr.link_create
+                        .__bindgen_anon_3
+                        .tcx
+                        .__bindgen_anon_1
+                        .relative_fd = fd.to_owned() as u32;
+                }
+                LinkRef::Id(id) => {
+                    attr.link_create
+                        .__bindgen_anon_3
+                        .tcx
+                        .__bindgen_anon_1
+                        .relative_id = id.to_owned();
+                }
+            },
         }
-        Some(LinkRef::Id(id)) => {
-            attr.link_create
-                .__bindgen_anon_3
-                .tcx
-                .__bindgen_anon_1
-                .relative_id = id.to_owned();
-        }
-        None => {}
-    };
+    }
 
     // SAFETY: BPF_LINK_CREATE returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }
@@ -877,10 +888,17 @@ pub(crate) fn is_perf_link_supported() -> bool {
 
     if let Ok(fd) = bpf_prog_load(&mut attr) {
         let fd = fd.as_fd();
+        // Uses an invalid target FD so we get EBADF if supported.
+        let link = bpf_link_create(
+            fd,
+            LinkTarget::IfIndex(u32::MAX),
+            bpf_attach_type::BPF_PERF_EVENT,
+            0,
+            None,
+        );
+        // Returns EINVAL if unsupported. EBADF if supported.
         matches!(
-            // Uses an invalid target FD so we get EBADF if supported.
-            bpf_link_create(fd, LinkTarget::IfIndex(u32::MAX), bpf_attach_type::BPF_PERF_EVENT, None, 0, None),
-            // Returns EINVAL if unsupported. EBADF if supported.
+            link,
             Err((_, e)) if e.raw_os_error() == Some(libc::EBADF),
         )
     } else {

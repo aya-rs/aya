@@ -74,7 +74,6 @@ impl CgroupSysctl {
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
                 BPF_CGROUP_SYSCTL,
-                None,
                 mode.into(),
                 None,
             )

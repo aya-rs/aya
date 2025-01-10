@@ -219,6 +219,10 @@ pub enum ProgramError {
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
+
+    /// Providing a bpf cookie for perf event links is not supported.
+    #[error("providing a bpf cookie for perf event links is not supported")]
+    PerfEventCookieNotSupported,
 }
 
 /// A [`Program`] file descriptor.

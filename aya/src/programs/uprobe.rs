@@ -48,6 +48,23 @@ pub struct UProbe {
     pub(crate) kind: ProbeKind,
 }
 
+/// The location of in the target object file to which the uprobe is attached.
+pub enum UProbeAttachLocation<'a> {
+    /// The location of the target function in the target object file.
+    Symbol(&'a str),
+    /// The location of the target function in the target object file, offset by
+    /// the given number of bytes.
+    SymbolOffset(&'a str, u64),
+    /// The offset in the target object file, in bytes.
+    AbsoluteOffset(u64),
+}
+
+impl<'a> From<&'a str> for UProbeAttachLocation<'a> {
+    fn from(s: &'a str) -> Self {
+        Self::Symbol(s)
+    }
+}
+
 impl UProbe {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
@@ -64,37 +81,46 @@ impl UProbe {
     ///
     /// Attaches the uprobe to the function `fn_name` defined in the `target`.
     /// If `offset` is non-zero, it is added to the address of the target
-    /// function. If `pid` is not `None`, the program executes only when the target
-    /// function is executed by the given `pid`.
+    /// function. If `pid` is not `None`, the program executes only when the
+    /// target function is executed by the given `pid`.
     ///
     /// The `target` argument can be an absolute path to a binary or library, or
     /// a library name (eg: `"libc"`).
     ///
-    /// If the program is an `uprobe`, it is attached to the *start* address of the target
-    /// function.  Instead if the program is a `uretprobe`, it is attached to the return address of
-    /// the target function.
+    /// If the program is an `uprobe`, it is attached to the *start* address of
+    /// the target function.  Instead if the program is a `uretprobe`, it is
+    /// attached to the return address of the target function.
     ///
     /// The returned value can be used to detach, see [UProbe::detach].
-    pub fn attach<T: AsRef<Path>>(
+    ///
+    /// The cookie is supported since kernel 5.15, and it is made available to
+    /// the eBPF program via the `bpf_get_attach_cookie()` helper.
+    pub fn attach<'a, T: AsRef<Path>, Loc: Into<UProbeAttachLocation<'a>>>(
         &mut self,
-        fn_name: Option<&str>,
-        offset: u64,
+        location: Loc,
         target: T,
         pid: Option<pid_t>,
+        cookie: Option<u64>,
     ) -> Result<UProbeLinkId, ProgramError> {
         let path = resolve_attach_path(target.as_ref(), pid)?;
-
-        let sym_offset = if let Some(fn_name) = fn_name {
-            resolve_symbol(&path, fn_name).map_err(|error| UProbeError::SymbolError {
-                symbol: fn_name.to_string(),
-                error: Box::new(error),
-            })?
+        let (symbol, offset) = match location.into() {
+            UProbeAttachLocation::Symbol(s) => (Some(s), 0),
+            UProbeAttachLocation::SymbolOffset(s, offset) => (Some(s), offset),
+            UProbeAttachLocation::AbsoluteOffset(offset) => (None, offset),
+        };
+        let offset = if let Some(symbol) = symbol {
+            let symbol_offset =
+                resolve_symbol(&path, symbol).map_err(|error| UProbeError::SymbolError {
+                    symbol: symbol.to_string(),
+                    error: Box::new(error),
+                })?;
+            symbol_offset + offset
         } else {
-            0
+            offset
         };
 
         let path = path.as_os_str();
-        attach(&mut self.data, self.kind, path, sym_offset + offset, pid)
+        attach(&mut self.data, self.kind, path, offset, pid, cookie)
     }
 
     /// Creates a program from a pinned entry on a bpffs.
