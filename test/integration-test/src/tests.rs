@@ -12,4 +12,5 @@ mod ring_buf;
 mod smoke;
 mod strncmp;
 mod tcx;
+mod uprobe_cookie;
 mod xdp;

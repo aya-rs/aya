@@ -180,7 +180,7 @@ impl PerfEvent {
             io_error,
         })?;
 
-        let link = perf_attach(prog_fd, fd)?;
+        let link = perf_attach(prog_fd, fd, None /* cookie */)?;
         self.data.links.insert(PerfEventLink::new(link))
     }
 }

@@ -78,7 +78,14 @@ impl KProbe {
         fn_name: T,
         offset: u64,
     ) -> Result<KProbeLinkId, ProgramError> {
-        attach(&mut self.data, self.kind, fn_name.as_ref(), offset, None)
+        attach(
+            &mut self.data,
+            self.kind,
+            fn_name.as_ref(),
+            offset,
+            None, // pid
+            None, // cookie
+        )
     }
 
     /// Creates a program from a pinned entry on a bpffs.

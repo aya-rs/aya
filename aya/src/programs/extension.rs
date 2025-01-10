@@ -11,7 +11,7 @@ use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd,
     },
-    sys::{self, bpf_link_create, LinkTarget, SyscallError},
+    sys::{self, bpf_link_create, BpfLinkCreateArgs, LinkTarget, SyscallError},
     Btf,
 };
 
@@ -101,9 +101,8 @@ impl Extension {
             prog_fd,
             LinkTarget::Fd(target_fd),
             BPF_CGROUP_INET_INGRESS,
-            Some(btf_id),
             0,
-            None,
+            Some(BpfLinkCreateArgs::TargetBtfId(btf_id)),
         )
         .map_err(|(_, io_error)| SyscallError {
             call: "bpf_link_create",
@@ -139,9 +138,8 @@ impl Extension {
             prog_fd,
             LinkTarget::Fd(target_fd),
             BPF_CGROUP_INET_INGRESS,
-            Some(btf_id),
             0,
-            None,
+            Some(BpfLinkCreateArgs::TargetBtfId(btf_id)),
         )
         .map_err(|(_, io_error)| SyscallError {
             call: "bpf_link_create",

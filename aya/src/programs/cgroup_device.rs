@@ -75,7 +75,6 @@ impl CgroupDevice {
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
                 BPF_CGROUP_DEVICE,
-                None,
                 mode.into(),
                 None,
             )

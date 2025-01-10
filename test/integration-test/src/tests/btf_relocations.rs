@@ -48,9 +48,9 @@ fn relocation_tests(
     program.load().unwrap();
     program
         .attach(
-            Some("trigger_btf_relocations_program"),
-            0,
+            "trigger_btf_relocations_program",
             "/proc/self/exe",
+            None,
             None,
         )
         .unwrap();
