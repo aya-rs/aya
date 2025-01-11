@@ -279,7 +279,7 @@ fn proc_maps_libs(pid: pid_t) -> Result<Vec<(OsString, PathBuf)>, io::Error> {
                 }
                 break;
             }
-            let path = line.split(|b| b.is_ascii_whitespace()).last()?;
+            let path = line.split(|b| b.is_ascii_whitespace()).next_back()?;
             let path = Path::new(OsStr::from_bytes(path));
             path.is_absolute()
                 .then(|| {
