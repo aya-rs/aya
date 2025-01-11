@@ -23,7 +23,7 @@ use crate::{
     sys::{
         bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, bpf_prog_get_fd_by_id,
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
-        netlink_qdisc_detach, LinkTarget, ProgQueryTarget, SyscallError,
+        netlink_qdisc_detach, BpfLinkCreateArgs, LinkTarget, ProgQueryTarget, SyscallError,
     },
     util::{ifindex_from_ifname, tc_handler_make, KernelVersion},
     VerifierLogLevel,
@@ -297,9 +297,8 @@ impl SchedClassifier {
                     prog_fd,
                     LinkTarget::IfIndex(if_index),
                     attach_type.tcx_attach_type()?,
-                    None,
                     options.flags.bits(),
-                    Some(&options.link_ref),
+                    Some(BpfLinkCreateArgs::Tcx(&options.link_ref)),
                 )
                 .map_err(|(_, io_error)| SyscallError {
                     call: "bpf_mprog_attach",

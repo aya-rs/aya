@@ -112,17 +112,21 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     fn_name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
+    cookie: Option<u64>,
 ) -> Result<T::Id, ProgramError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
     let link = if KernelVersion::current().unwrap() < KernelVersion::new(4, 17, 0) {
+        if cookie.is_some() {
+            return Err(ProgramError::AttachCookieNotSupported);
+        }
         let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
         perf_attach_debugfs(prog_fd, fd, ProbeEvent { kind, event_alias })
     } else {
         let fd = create_as_probe(kind, fn_name, offset, pid)?;
-        perf_attach(prog_fd, fd)
+        perf_attach(prog_fd, fd, cookie)
     }?;
     program_data.links.insert(T::from(link))
 }

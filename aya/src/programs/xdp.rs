@@ -148,7 +148,6 @@ impl Xdp {
                 prog_fd,
                 LinkTarget::IfIndex(if_index),
                 attach_type,
-                None,
                 flags.bits(),
                 None,
             )

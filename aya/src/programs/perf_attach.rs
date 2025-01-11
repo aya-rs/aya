@@ -7,7 +7,10 @@ use crate::{
         probe::{detach_debug_fs, ProbeEvent},
         FdLink, Link, ProgramError,
     },
-    sys::{bpf_link_create, perf_event_ioctl, LinkTarget, SysResult, SyscallError},
+    sys::{
+        bpf_link_create, is_bpf_cookie_supported, perf_event_ioctl, BpfLinkCreateArgs, LinkTarget,
+        SysResult, SyscallError,
+    },
     FEATURES, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE, PERF_EVENT_IOC_SET_BPF,
 };
 
@@ -73,15 +76,18 @@ impl Link for PerfLink {
 pub(crate) fn perf_attach(
     prog_fd: BorrowedFd<'_>,
     fd: crate::MockableFd,
+    cookie: Option<u64>,
 ) -> Result<PerfLinkInner, ProgramError> {
+    if cookie.is_some() && (!is_bpf_cookie_supported() || !FEATURES.bpf_perf_link()) {
+        return Err(ProgramError::AttachCookieNotSupported);
+    }
     if FEATURES.bpf_perf_link() {
         let link_fd = bpf_link_create(
             prog_fd,
             LinkTarget::Fd(fd.as_fd()),
             BPF_PERF_EVENT,
-            None,
             0,
-            None,
+            cookie.map(|bpf_cookie| BpfLinkCreateArgs::PerfEvent { bpf_cookie }),
         )
         .map_err(|(_, io_error)| SyscallError {
             call: "bpf_link_create",

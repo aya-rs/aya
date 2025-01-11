@@ -42,7 +42,7 @@ fn multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach(Some("trigger_bpf_program"), 0, "/proc/self/exe", None)
+    prog.attach("trigger_bpf_program", "/proc/self/exe", None, None)
         .unwrap();
 
     trigger_bpf_program();
@@ -92,7 +92,7 @@ fn pin_lifecycle_multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach(Some("trigger_bpf_program"), 0, "/proc/self/exe", None)
+    prog.attach("trigger_bpf_program", "/proc/self/exe", None, None)
         .unwrap();
 
     trigger_bpf_program();
@@ -288,7 +288,7 @@ fn basic_uprobe() {
     prog.load().unwrap();
     assert_loaded("test_uprobe");
     let link = prog
-        .attach(Some("uprobe_function"), 0, "/proc/self/exe", None)
+        .attach("uprobe_function", "/proc/self/exe", None, None)
         .unwrap();
 
     {
@@ -301,7 +301,7 @@ fn basic_uprobe() {
     prog.load().unwrap();
 
     assert_loaded("test_uprobe");
-    prog.attach(Some("uprobe_function"), 0, "/proc/self/exe", None)
+    prog.attach("uprobe_function", "/proc/self/exe", None, None)
         .unwrap();
 
     assert_loaded("test_uprobe");
@@ -548,7 +548,7 @@ fn pin_lifecycle_uprobe() {
     {
         let mut prog = UProbe::from_pin(FIRST_PIN_PATH, aya::programs::ProbeKind::UProbe).unwrap();
         let link_id = prog
-            .attach(Some("uprobe_function"), 0, "/proc/self/exe", None)
+            .attach("uprobe_function", "/proc/self/exe", None, None)
             .unwrap();
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();

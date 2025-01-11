@@ -63,7 +63,7 @@ async fn log() {
 
     let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach(Some("trigger_ebpf_program"), 0, "/proc/self/exe", None)
+    prog.attach("trigger_ebpf_program", "/proc/self/exe", None, None)
         .unwrap();
 
     // Call the function that the uprobe is attached to, so it starts logging.

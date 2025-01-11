@@ -57,9 +57,9 @@ impl RingBufTest {
             .unwrap();
         prog.load().unwrap();
         prog.attach(
-            Some("ring_buf_trigger_ebpf_program"),
-            0,
+            "ring_buf_trigger_ebpf_program",
             "/proc/self/exe",
+            None,
             None,
         )
         .unwrap();
