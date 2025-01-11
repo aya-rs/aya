@@ -967,7 +967,6 @@ impl_from_pin!(
     CgroupSysctl,
     LircMode2,
     PerfEvent,
-    Lsm,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
