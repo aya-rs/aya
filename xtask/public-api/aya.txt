@@ -2581,16 +2581,25 @@ impl aya::programs::links::Link for aya::programs::cgroup_device::CgroupDeviceLi
 pub type aya::programs::cgroup_device::CgroupDeviceLink::Id = aya::programs::cgroup_device::CgroupDeviceLinkId
 pub fn aya::programs::cgroup_device::CgroupDeviceLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_device::CgroupDeviceLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::cgroup_device::CgroupDeviceLink
+impl core::cmp::PartialEq for aya::programs::cgroup_device::CgroupDeviceLink
+pub fn aya::programs::cgroup_device::CgroupDeviceLink::eq(&self, other: &Self) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_device::CgroupDeviceLink
 pub fn aya::programs::cgroup_device::CgroupDeviceLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::cgroup_device::CgroupDeviceLink
+pub fn aya::programs::cgroup_device::CgroupDeviceLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::cgroup_device::CgroupDeviceLink
 pub fn aya::programs::cgroup_device::CgroupDeviceLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::cgroup_device::CgroupDeviceLink> for aya::programs::cgroup_device::CgroupDeviceLinkId
+pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::equivalent(&self, key: &aya::programs::cgroup_device::CgroupDeviceLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::marker::Send for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::marker::Sync for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::marker::Unpin for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_device::CgroupDeviceLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_device::CgroupDeviceLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::cgroup_device::CgroupDeviceLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_device::CgroupDeviceLink where U: core::convert::From<T>
 pub fn aya::programs::cgroup_device::CgroupDeviceLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::cgroup_device::CgroupDeviceLink where U: core::convert::Into<T>
@@ -2616,6 +2625,8 @@ pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::fmt(&self, f: &mut core
 impl core::hash::Hash for aya::programs::cgroup_device::CgroupDeviceLinkId
 pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_device::CgroupDeviceLinkId
+impl equivalent::Equivalent<aya::programs::cgroup_device::CgroupDeviceLink> for aya::programs::cgroup_device::CgroupDeviceLinkId
+pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::equivalent(&self, key: &aya::programs::cgroup_device::CgroupDeviceLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl core::marker::Send for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl core::marker::Sync for aya::programs::cgroup_device::CgroupDeviceLinkId
@@ -2732,16 +2743,25 @@ impl aya::programs::links::Link for aya::programs::cgroup_skb::CgroupSkbLink
 pub type aya::programs::cgroup_skb::CgroupSkbLink::Id = aya::programs::cgroup_skb::CgroupSkbLinkId
 pub fn aya::programs::cgroup_skb::CgroupSkbLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_skb::CgroupSkbLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::cgroup_skb::CgroupSkbLink
+impl core::cmp::PartialEq for aya::programs::cgroup_skb::CgroupSkbLink
+pub fn aya::programs::cgroup_skb::CgroupSkbLink::eq(&self, other: &Self) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkbLink
 pub fn aya::programs::cgroup_skb::CgroupSkbLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::cgroup_skb::CgroupSkbLink
+pub fn aya::programs::cgroup_skb::CgroupSkbLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::cgroup_skb::CgroupSkbLink
 pub fn aya::programs::cgroup_skb::CgroupSkbLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::cgroup_skb::CgroupSkbLink> for aya::programs::cgroup_skb::CgroupSkbLinkId
+pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::equivalent(&self, key: &aya::programs::cgroup_skb::CgroupSkbLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupSkbLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_skb::CgroupSkbLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::cgroup_skb::CgroupSkbLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_skb::CgroupSkbLink where U: core::convert::From<T>
 pub fn aya::programs::cgroup_skb::CgroupSkbLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::cgroup_skb::CgroupSkbLink where U: core::convert::Into<T>
@@ -2767,6 +2787,8 @@ pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::fmt(&self, f: &mut core::fmt:
 impl core::hash::Hash for aya::programs::cgroup_skb::CgroupSkbLinkId
 pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_skb::CgroupSkbLinkId
+impl equivalent::Equivalent<aya::programs::cgroup_skb::CgroupSkbLink> for aya::programs::cgroup_skb::CgroupSkbLinkId
+pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::equivalent(&self, key: &aya::programs::cgroup_skb::CgroupSkbLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkbLinkId
@@ -2847,16 +2869,25 @@ impl aya::programs::links::Link for aya::programs::cgroup_sock::CgroupSockLink
 pub type aya::programs::cgroup_sock::CgroupSockLink::Id = aya::programs::cgroup_sock::CgroupSockLinkId
 pub fn aya::programs::cgroup_sock::CgroupSockLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock::CgroupSockLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::cgroup_sock::CgroupSockLink
+impl core::cmp::PartialEq for aya::programs::cgroup_sock::CgroupSockLink
+pub fn aya::programs::cgroup_sock::CgroupSockLink::eq(&self, other: &Self) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sock::CgroupSockLink
 pub fn aya::programs::cgroup_sock::CgroupSockLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::cgroup_sock::CgroupSockLink
+pub fn aya::programs::cgroup_sock::CgroupSockLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::cgroup_sock::CgroupSockLink
 pub fn aya::programs::cgroup_sock::CgroupSockLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::cgroup_sock::CgroupSockLink> for aya::programs::cgroup_sock::CgroupSockLinkId
+pub fn aya::programs::cgroup_sock::CgroupSockLinkId::equivalent(&self, key: &aya::programs::cgroup_sock::CgroupSockLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_sock::CgroupSockLink
 impl core::marker::Send for aya::programs::cgroup_sock::CgroupSockLink
 impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSockLink
 impl core::marker::Unpin for aya::programs::cgroup_sock::CgroupSockLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock::CgroupSockLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock::CgroupSockLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sock::CgroupSockLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::cgroup_sock::CgroupSockLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sock::CgroupSockLink where U: core::convert::From<T>
 pub fn aya::programs::cgroup_sock::CgroupSockLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::cgroup_sock::CgroupSockLink where U: core::convert::Into<T>
@@ -2882,6 +2913,8 @@ pub fn aya::programs::cgroup_sock::CgroupSockLinkId::fmt(&self, f: &mut core::fm
 impl core::hash::Hash for aya::programs::cgroup_sock::CgroupSockLinkId
 pub fn aya::programs::cgroup_sock::CgroupSockLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_sock::CgroupSockLinkId
+impl equivalent::Equivalent<aya::programs::cgroup_sock::CgroupSockLink> for aya::programs::cgroup_sock::CgroupSockLinkId
+pub fn aya::programs::cgroup_sock::CgroupSockLinkId::equivalent(&self, key: &aya::programs::cgroup_sock::CgroupSockLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::marker::Send for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSockLinkId
@@ -2962,16 +2995,25 @@ impl aya::programs::links::Link for aya::programs::cgroup_sock_addr::CgroupSockA
 pub type aya::programs::cgroup_sock_addr::CgroupSockAddrLink::Id = aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
+impl core::cmp::PartialEq for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::eq(&self, other: &Self) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::cgroup_sock_addr::CgroupSockAddrLink> for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::equivalent(&self, key: &aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl core::marker::Unpin for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sock_addr::CgroupSockAddrLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sock_addr::CgroupSockAddrLink where U: core::convert::From<T>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::cgroup_sock_addr::CgroupSockAddrLink where U: core::convert::Into<T>
@@ -2997,6 +3039,8 @@ pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::fmt(&self, f: &mut
 impl core::hash::Hash for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
+impl equivalent::Equivalent<aya::programs::cgroup_sock_addr::CgroupSockAddrLink> for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::equivalent(&self, key: &aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
@@ -3077,16 +3121,25 @@ impl aya::programs::links::Link for aya::programs::cgroup_sockopt::CgroupSockopt
 pub type aya::programs::cgroup_sockopt::CgroupSockoptLink::Id = aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::cgroup_sockopt::CgroupSockoptLink
+impl core::cmp::PartialEq for aya::programs::cgroup_sockopt::CgroupSockoptLink
+pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::eq(&self, other: &Self) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sockopt::CgroupSockoptLink
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::cgroup_sockopt::CgroupSockoptLink
+pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::cgroup_sockopt::CgroupSockoptLink
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::cgroup_sockopt::CgroupSockoptLink> for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
+pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::equivalent(&self, key: &aya::programs::cgroup_sockopt::CgroupSockoptLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::marker::Unpin for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sockopt::CgroupSockoptLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sockopt::CgroupSockoptLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sockopt::CgroupSockoptLink where U: core::convert::From<T>
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::cgroup_sockopt::CgroupSockoptLink where U: core::convert::Into<T>
@@ -3112,6 +3165,8 @@ pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::fmt(&self, f: &mut co
 impl core::hash::Hash for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
+impl equivalent::Equivalent<aya::programs::cgroup_sockopt::CgroupSockoptLink> for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
+pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::equivalent(&self, key: &aya::programs::cgroup_sockopt::CgroupSockoptLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
@@ -3192,16 +3247,25 @@ impl aya::programs::links::Link for aya::programs::cgroup_sysctl::CgroupSysctlLi
 pub type aya::programs::cgroup_sysctl::CgroupSysctlLink::Id = aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::cgroup_sysctl::CgroupSysctlLink
+impl core::cmp::PartialEq for aya::programs::cgroup_sysctl::CgroupSysctlLink
+pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::eq(&self, other: &Self) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sysctl::CgroupSysctlLink
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::cgroup_sysctl::CgroupSysctlLink
+pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::cgroup_sysctl::CgroupSysctlLink
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::cgroup_sysctl::CgroupSysctlLink> for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
+pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::equivalent(&self, key: &aya::programs::cgroup_sysctl::CgroupSysctlLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::marker::Unpin for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctlLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sysctl::CgroupSysctlLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sysctl::CgroupSysctlLink where U: core::convert::From<T>
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::cgroup_sysctl::CgroupSysctlLink where U: core::convert::Into<T>
@@ -3227,6 +3291,8 @@ pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::fmt(&self, f: &mut core
 impl core::hash::Hash for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
+impl equivalent::Equivalent<aya::programs::cgroup_sysctl::CgroupSysctlLink> for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
+pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::equivalent(&self, key: &aya::programs::cgroup_sysctl::CgroupSysctlLink) -> bool
 impl core::marker::Freeze for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
@@ -3341,20 +3407,29 @@ impl aya::programs::links::Link for aya::programs::extension::ExtensionLink
 pub type aya::programs::extension::ExtensionLink::Id = aya::programs::extension::ExtensionLinkId
 pub fn aya::programs::extension::ExtensionLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::extension::ExtensionLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::extension::ExtensionLink
+impl core::cmp::PartialEq for aya::programs::extension::ExtensionLink
+pub fn aya::programs::extension::ExtensionLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::extension::ExtensionLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::extension::ExtensionLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::extension::ExtensionLink
 pub fn aya::programs::extension::ExtensionLink::from(b: aya::programs::links::FdLink) -> aya::programs::extension::ExtensionLink
 impl core::fmt::Debug for aya::programs::extension::ExtensionLink
 pub fn aya::programs::extension::ExtensionLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::extension::ExtensionLink
+pub fn aya::programs::extension::ExtensionLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::extension::ExtensionLink
 pub fn aya::programs::extension::ExtensionLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::extension::ExtensionLink> for aya::programs::extension::ExtensionLinkId
+pub fn aya::programs::extension::ExtensionLinkId::equivalent(&self, key: &aya::programs::extension::ExtensionLink) -> bool
 impl core::marker::Freeze for aya::programs::extension::ExtensionLink
 impl core::marker::Send for aya::programs::extension::ExtensionLink
 impl core::marker::Sync for aya::programs::extension::ExtensionLink
 impl core::marker::Unpin for aya::programs::extension::ExtensionLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::extension::ExtensionLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::extension::ExtensionLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::extension::ExtensionLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::extension::ExtensionLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::extension::ExtensionLink where U: core::convert::From<T>
 pub fn aya::programs::extension::ExtensionLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::extension::ExtensionLink where U: core::convert::Into<T>
@@ -3380,6 +3455,8 @@ pub fn aya::programs::extension::ExtensionLinkId::fmt(&self, f: &mut core::fmt::
 impl core::hash::Hash for aya::programs::extension::ExtensionLinkId
 pub fn aya::programs::extension::ExtensionLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::extension::ExtensionLinkId
+impl equivalent::Equivalent<aya::programs::extension::ExtensionLink> for aya::programs::extension::ExtensionLinkId
+pub fn aya::programs::extension::ExtensionLinkId::equivalent(&self, key: &aya::programs::extension::ExtensionLink) -> bool
 impl core::marker::Freeze for aya::programs::extension::ExtensionLinkId
 impl core::marker::Send for aya::programs::extension::ExtensionLinkId
 impl core::marker::Sync for aya::programs::extension::ExtensionLinkId
@@ -3460,20 +3537,29 @@ impl aya::programs::links::Link for aya::programs::fentry::FEntryLink
 pub type aya::programs::fentry::FEntryLink::Id = aya::programs::fentry::FEntryLinkId
 pub fn aya::programs::fentry::FEntryLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::fentry::FEntryLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::fentry::FEntryLink
+impl core::cmp::PartialEq for aya::programs::fentry::FEntryLink
+pub fn aya::programs::fentry::FEntryLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::fentry::FEntryLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::fentry::FEntryLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fentry::FEntryLink
 pub fn aya::programs::fentry::FEntryLink::from(b: aya::programs::links::FdLink) -> aya::programs::fentry::FEntryLink
 impl core::fmt::Debug for aya::programs::fentry::FEntryLink
 pub fn aya::programs::fentry::FEntryLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::fentry::FEntryLink
+pub fn aya::programs::fentry::FEntryLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::fentry::FEntryLink
 pub fn aya::programs::fentry::FEntryLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::fentry::FEntryLink> for aya::programs::fentry::FEntryLinkId
+pub fn aya::programs::fentry::FEntryLinkId::equivalent(&self, key: &aya::programs::fentry::FEntryLink) -> bool
 impl core::marker::Freeze for aya::programs::fentry::FEntryLink
 impl core::marker::Send for aya::programs::fentry::FEntryLink
 impl core::marker::Sync for aya::programs::fentry::FEntryLink
 impl core::marker::Unpin for aya::programs::fentry::FEntryLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fentry::FEntryLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fentry::FEntryLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::fentry::FEntryLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::fentry::FEntryLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::fentry::FEntryLink where U: core::convert::From<T>
 pub fn aya::programs::fentry::FEntryLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::fentry::FEntryLink where U: core::convert::Into<T>
@@ -3499,6 +3585,8 @@ pub fn aya::programs::fentry::FEntryLinkId::fmt(&self, f: &mut core::fmt::Format
 impl core::hash::Hash for aya::programs::fentry::FEntryLinkId
 pub fn aya::programs::fentry::FEntryLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::fentry::FEntryLinkId
+impl equivalent::Equivalent<aya::programs::fentry::FEntryLink> for aya::programs::fentry::FEntryLinkId
+pub fn aya::programs::fentry::FEntryLinkId::equivalent(&self, key: &aya::programs::fentry::FEntryLink) -> bool
 impl core::marker::Freeze for aya::programs::fentry::FEntryLinkId
 impl core::marker::Send for aya::programs::fentry::FEntryLinkId
 impl core::marker::Sync for aya::programs::fentry::FEntryLinkId
@@ -3579,20 +3667,29 @@ impl aya::programs::links::Link for aya::programs::fexit::FExitLink
 pub type aya::programs::fexit::FExitLink::Id = aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::fexit::FExitLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::fexit::FExitLink
+impl core::cmp::PartialEq for aya::programs::fexit::FExitLink
+pub fn aya::programs::fexit::FExitLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::fexit::FExitLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::fexit::FExitLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fexit::FExitLink
 pub fn aya::programs::fexit::FExitLink::from(b: aya::programs::links::FdLink) -> aya::programs::fexit::FExitLink
 impl core::fmt::Debug for aya::programs::fexit::FExitLink
 pub fn aya::programs::fexit::FExitLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::fexit::FExitLink
+pub fn aya::programs::fexit::FExitLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::fexit::FExitLink
 pub fn aya::programs::fexit::FExitLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::fexit::FExitLink> for aya::programs::fexit::FExitLinkId
+pub fn aya::programs::fexit::FExitLinkId::equivalent(&self, key: &aya::programs::fexit::FExitLink) -> bool
 impl core::marker::Freeze for aya::programs::fexit::FExitLink
 impl core::marker::Send for aya::programs::fexit::FExitLink
 impl core::marker::Sync for aya::programs::fexit::FExitLink
 impl core::marker::Unpin for aya::programs::fexit::FExitLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fexit::FExitLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fexit::FExitLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::fexit::FExitLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::fexit::FExitLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::fexit::FExitLink where U: core::convert::From<T>
 pub fn aya::programs::fexit::FExitLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::fexit::FExitLink where U: core::convert::Into<T>
@@ -3618,6 +3715,8 @@ pub fn aya::programs::fexit::FExitLinkId::fmt(&self, f: &mut core::fmt::Formatte
 impl core::hash::Hash for aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::fexit::FExitLinkId
+impl equivalent::Equivalent<aya::programs::fexit::FExitLink> for aya::programs::fexit::FExitLinkId
+pub fn aya::programs::fexit::FExitLinkId::equivalent(&self, key: &aya::programs::fexit::FExitLink) -> bool
 impl core::marker::Freeze for aya::programs::fexit::FExitLinkId
 impl core::marker::Send for aya::programs::fexit::FExitLinkId
 impl core::marker::Sync for aya::programs::fexit::FExitLinkId
@@ -3727,6 +3826,9 @@ impl aya::programs::links::Link for aya::programs::iter::IterLink
 pub type aya::programs::iter::IterLink::Id = aya::programs::iter::IterLinkId
 pub fn aya::programs::iter::IterLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::iter::IterLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::iter::IterLink
+impl core::cmp::PartialEq for aya::programs::iter::IterLink
+pub fn aya::programs::iter::IterLink::eq(&self, other: &Self) -> bool
 impl core::convert::TryFrom<aya::programs::iter::IterLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::iter::IterLink) -> core::result::Result<Self, Self::Error>
@@ -3735,14 +3837,20 @@ pub type aya::programs::iter::IterLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::iter::IterLink::try_from(fd_link: aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::iter::IterLink
 pub fn aya::programs::iter::IterLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::iter::IterLink
+pub fn aya::programs::iter::IterLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::iter::IterLink
 pub fn aya::programs::iter::IterLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::iter::IterLink> for aya::programs::iter::IterLinkId
+pub fn aya::programs::iter::IterLinkId::equivalent(&self, key: &aya::programs::iter::IterLink) -> bool
 impl core::marker::Freeze for aya::programs::iter::IterLink
 impl core::marker::Send for aya::programs::iter::IterLink
 impl core::marker::Sync for aya::programs::iter::IterLink
 impl core::marker::Unpin for aya::programs::iter::IterLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::IterLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::IterLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::iter::IterLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::iter::IterLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::iter::IterLink where U: core::convert::From<T>
 pub fn aya::programs::iter::IterLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::iter::IterLink where U: core::convert::Into<T>
@@ -3768,6 +3876,8 @@ pub fn aya::programs::iter::IterLinkId::fmt(&self, f: &mut core::fmt::Formatter<
 impl core::hash::Hash for aya::programs::iter::IterLinkId
 pub fn aya::programs::iter::IterLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::iter::IterLinkId
+impl equivalent::Equivalent<aya::programs::iter::IterLink> for aya::programs::iter::IterLinkId
+pub fn aya::programs::iter::IterLinkId::equivalent(&self, key: &aya::programs::iter::IterLink) -> bool
 impl core::marker::Freeze for aya::programs::iter::IterLinkId
 impl core::marker::Send for aya::programs::iter::IterLinkId
 impl core::marker::Sync for aya::programs::iter::IterLinkId
@@ -3884,6 +3994,9 @@ impl aya::programs::links::Link for aya::programs::kprobe::KProbeLink
 pub type aya::programs::kprobe::KProbeLink::Id = aya::programs::kprobe::KProbeLinkId
 pub fn aya::programs::kprobe::KProbeLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::kprobe::KProbeLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::kprobe::KProbeLink
+impl core::cmp::PartialEq for aya::programs::kprobe::KProbeLink
+pub fn aya::programs::kprobe::KProbeLink::eq(&self, other: &Self) -> bool
 impl core::convert::TryFrom<aya::programs::kprobe::KProbeLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::kprobe::KProbeLink) -> core::result::Result<Self, Self::Error>
@@ -3892,14 +4005,20 @@ pub type aya::programs::kprobe::KProbeLink::Error = aya::programs::links::LinkEr
 pub fn aya::programs::kprobe::KProbeLink::try_from(fd_link: aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::kprobe::KProbeLink
 pub fn aya::programs::kprobe::KProbeLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::kprobe::KProbeLink
+pub fn aya::programs::kprobe::KProbeLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::kprobe::KProbeLink
 pub fn aya::programs::kprobe::KProbeLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::kprobe::KProbeLink> for aya::programs::kprobe::KProbeLinkId
+pub fn aya::programs::kprobe::KProbeLinkId::equivalent(&self, key: &aya::programs::kprobe::KProbeLink) -> bool
 impl core::marker::Freeze for aya::programs::kprobe::KProbeLink
 impl core::marker::Send for aya::programs::kprobe::KProbeLink
 impl core::marker::Sync for aya::programs::kprobe::KProbeLink
 impl core::marker::Unpin for aya::programs::kprobe::KProbeLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbeLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::kprobe::KProbeLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::kprobe::KProbeLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::kprobe::KProbeLink where U: core::convert::From<T>
 pub fn aya::programs::kprobe::KProbeLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::kprobe::KProbeLink where U: core::convert::Into<T>
@@ -3925,6 +4044,8 @@ pub fn aya::programs::kprobe::KProbeLinkId::fmt(&self, f: &mut core::fmt::Format
 impl core::hash::Hash for aya::programs::kprobe::KProbeLinkId
 pub fn aya::programs::kprobe::KProbeLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::kprobe::KProbeLinkId
+impl equivalent::Equivalent<aya::programs::kprobe::KProbeLink> for aya::programs::kprobe::KProbeLinkId
+pub fn aya::programs::kprobe::KProbeLinkId::equivalent(&self, key: &aya::programs::kprobe::KProbeLink) -> bool
 impl core::marker::Freeze for aya::programs::kprobe::KProbeLinkId
 impl core::marker::Send for aya::programs::kprobe::KProbeLinkId
 impl core::marker::Sync for aya::programs::kprobe::KProbeLinkId
@@ -4033,6 +4154,9 @@ impl aya::programs::links::Link for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Id = aya::programs::links::FdLinkId
 pub fn aya::programs::links::FdLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::links::FdLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::links::FdLink
+impl core::cmp::PartialEq for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::extension::ExtensionLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::extension::ExtensionLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::fentry::FEntryLink> for aya::programs::links::FdLink
@@ -4107,6 +4231,10 @@ pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::xdp::XdpLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
+impl equivalent::Equivalent<aya::programs::links::FdLink> for aya::programs::links::FdLinkId
+pub fn aya::programs::links::FdLinkId::equivalent(&self, key: &aya::programs::links::FdLink) -> bool
 impl<'a> core::convert::TryFrom<&'a aya::programs::tc::SchedClassifierLink> for &'a aya::programs::links::FdLink
 pub type &'a aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn &'a aya::programs::links::FdLink::try_from(value: &'a aya::programs::tc::SchedClassifierLink) -> core::result::Result<Self, Self::Error>
@@ -4116,6 +4244,8 @@ impl core::marker::Sync for aya::programs::links::FdLink
 impl core::marker::Unpin for aya::programs::links::FdLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::FdLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::FdLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::links::FdLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::links::FdLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::links::FdLink where U: core::convert::From<T>
 pub fn aya::programs::links::FdLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::links::FdLink where U: core::convert::Into<T>
@@ -4141,6 +4271,8 @@ pub fn aya::programs::links::FdLinkId::fmt(&self, f: &mut core::fmt::Formatter<'
 impl core::hash::Hash for aya::programs::links::FdLinkId
 pub fn aya::programs::links::FdLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::links::FdLinkId
+impl equivalent::Equivalent<aya::programs::links::FdLink> for aya::programs::links::FdLinkId
+pub fn aya::programs::links::FdLinkId::equivalent(&self, key: &aya::programs::links::FdLink) -> bool
 impl core::marker::Freeze for aya::programs::links::FdLinkId
 impl core::marker::Send for aya::programs::links::FdLinkId
 impl core::marker::Sync for aya::programs::links::FdLinkId
@@ -4236,6 +4368,9 @@ impl aya::programs::links::Link for aya::programs::links::ProgAttachLink
 pub type aya::programs::links::ProgAttachLink::Id = aya::programs::links::ProgAttachLinkId
 pub fn aya::programs::links::ProgAttachLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::links::ProgAttachLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::links::ProgAttachLink
+impl core::cmp::PartialEq for aya::programs::links::ProgAttachLink
+pub fn aya::programs::links::ProgAttachLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_msg::SkMsgLink
 pub fn aya::programs::sk_msg::SkMsgLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sk_msg::SkMsgLink
 impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_skb::SkSkbLink
@@ -4246,12 +4381,18 @@ impl core::convert::From<aya::programs::sk_skb::SkSkbLink> for aya::programs::li
 pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sk_skb::SkSkbLink) -> aya::programs::links::ProgAttachLink
 impl core::fmt::Debug for aya::programs::links::ProgAttachLink
 pub fn aya::programs::links::ProgAttachLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::links::ProgAttachLink
+pub fn aya::programs::links::ProgAttachLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
+impl equivalent::Equivalent<aya::programs::links::ProgAttachLink> for aya::programs::links::ProgAttachLinkId
+pub fn aya::programs::links::ProgAttachLinkId::equivalent(&self, key: &aya::programs::links::ProgAttachLink) -> bool
 impl core::marker::Freeze for aya::programs::links::ProgAttachLink
 impl core::marker::Send for aya::programs::links::ProgAttachLink
 impl core::marker::Sync for aya::programs::links::ProgAttachLink
 impl core::marker::Unpin for aya::programs::links::ProgAttachLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::ProgAttachLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::ProgAttachLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::links::ProgAttachLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::links::ProgAttachLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::links::ProgAttachLink where U: core::convert::From<T>
 pub fn aya::programs::links::ProgAttachLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::links::ProgAttachLink where U: core::convert::Into<T>
@@ -4277,6 +4418,8 @@ pub fn aya::programs::links::ProgAttachLinkId::fmt(&self, f: &mut core::fmt::For
 impl core::hash::Hash for aya::programs::links::ProgAttachLinkId
 pub fn aya::programs::links::ProgAttachLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::links::ProgAttachLinkId
+impl equivalent::Equivalent<aya::programs::links::ProgAttachLink> for aya::programs::links::ProgAttachLinkId
+pub fn aya::programs::links::ProgAttachLinkId::equivalent(&self, key: &aya::programs::links::ProgAttachLink) -> bool
 impl core::marker::Freeze for aya::programs::links::ProgAttachLinkId
 impl core::marker::Send for aya::programs::links::ProgAttachLinkId
 impl core::marker::Sync for aya::programs::links::ProgAttachLinkId
@@ -4301,8 +4444,8 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::links::ProgAttachLinkId wh
 pub fn aya::programs::links::ProgAttachLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::links::ProgAttachLinkId
 pub fn aya::programs::links::ProgAttachLinkId::from(t: T) -> T
-pub trait aya::programs::links::Link: core::fmt::Debug + 'static
-pub type aya::programs::links::Link::Id: core::fmt::Debug + core::hash::Hash + core::cmp::Eq + core::cmp::PartialEq
+pub trait aya::programs::links::Link: core::fmt::Debug + core::cmp::Eq + core::hash::Hash + 'static
+pub type aya::programs::links::Link::Id: core::fmt::Debug + core::cmp::Eq + core::hash::Hash + equivalent::Equivalent<Self>
 pub fn aya::programs::links::Link::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::links::Link::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::cgroup_device::CgroupDeviceLink
@@ -4425,14 +4568,23 @@ impl aya::programs::links::Link for aya::programs::lirc_mode2::LircLink
 pub type aya::programs::lirc_mode2::LircLink::Id = aya::programs::lirc_mode2::LircLinkId
 pub fn aya::programs::lirc_mode2::LircLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::lirc_mode2::LircLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::lirc_mode2::LircLink
+impl core::cmp::PartialEq for aya::programs::lirc_mode2::LircLink
+pub fn aya::programs::lirc_mode2::LircLink::eq(&self, other: &Self) -> bool
 impl core::fmt::Debug for aya::programs::lirc_mode2::LircLink
 pub fn aya::programs::lirc_mode2::LircLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::lirc_mode2::LircLink
+pub fn aya::programs::lirc_mode2::LircLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
+impl equivalent::Equivalent<aya::programs::lirc_mode2::LircLink> for aya::programs::lirc_mode2::LircLinkId
+pub fn aya::programs::lirc_mode2::LircLinkId::equivalent(&self, key: &aya::programs::lirc_mode2::LircLink) -> bool
 impl core::marker::Freeze for aya::programs::lirc_mode2::LircLink
 impl core::marker::Send for aya::programs::lirc_mode2::LircLink
 impl core::marker::Sync for aya::programs::lirc_mode2::LircLink
 impl core::marker::Unpin for aya::programs::lirc_mode2::LircLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lirc_mode2::LircLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lirc_mode2::LircLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::lirc_mode2::LircLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::lirc_mode2::LircLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::lirc_mode2::LircLink where U: core::convert::From<T>
 pub fn aya::programs::lirc_mode2::LircLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::lirc_mode2::LircLink where U: core::convert::Into<T>
@@ -4458,6 +4610,8 @@ pub fn aya::programs::lirc_mode2::LircLinkId::fmt(&self, f: &mut core::fmt::Form
 impl core::hash::Hash for aya::programs::lirc_mode2::LircLinkId
 pub fn aya::programs::lirc_mode2::LircLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::lirc_mode2::LircLinkId
+impl equivalent::Equivalent<aya::programs::lirc_mode2::LircLink> for aya::programs::lirc_mode2::LircLinkId
+pub fn aya::programs::lirc_mode2::LircLinkId::equivalent(&self, key: &aya::programs::lirc_mode2::LircLink) -> bool
 impl core::marker::Freeze for aya::programs::lirc_mode2::LircLinkId
 impl core::marker::Send for aya::programs::lirc_mode2::LircLinkId
 impl core::marker::Sync for aya::programs::lirc_mode2::LircLinkId
@@ -4588,20 +4742,29 @@ impl aya::programs::links::Link for aya::programs::lsm::LsmLink
 pub type aya::programs::lsm::LsmLink::Id = aya::programs::lsm::LsmLinkId
 pub fn aya::programs::lsm::LsmLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::lsm::LsmLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::lsm::LsmLink
+impl core::cmp::PartialEq for aya::programs::lsm::LsmLink
+pub fn aya::programs::lsm::LsmLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::lsm::LsmLink
 pub fn aya::programs::lsm::LsmLink::from(b: aya::programs::links::FdLink) -> aya::programs::lsm::LsmLink
 impl core::convert::From<aya::programs::lsm::LsmLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::lsm::LsmLink) -> aya::programs::links::FdLink
 impl core::fmt::Debug for aya::programs::lsm::LsmLink
 pub fn aya::programs::lsm::LsmLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::lsm::LsmLink
+pub fn aya::programs::lsm::LsmLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::lsm::LsmLink
 pub fn aya::programs::lsm::LsmLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::lsm::LsmLink> for aya::programs::lsm::LsmLinkId
+pub fn aya::programs::lsm::LsmLinkId::equivalent(&self, key: &aya::programs::lsm::LsmLink) -> bool
 impl core::marker::Freeze for aya::programs::lsm::LsmLink
 impl core::marker::Send for aya::programs::lsm::LsmLink
 impl core::marker::Sync for aya::programs::lsm::LsmLink
 impl core::marker::Unpin for aya::programs::lsm::LsmLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm::LsmLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm::LsmLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::lsm::LsmLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::lsm::LsmLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::lsm::LsmLink where U: core::convert::From<T>
 pub fn aya::programs::lsm::LsmLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::lsm::LsmLink where U: core::convert::Into<T>
@@ -4627,6 +4790,8 @@ pub fn aya::programs::lsm::LsmLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_
 impl core::hash::Hash for aya::programs::lsm::LsmLinkId
 pub fn aya::programs::lsm::LsmLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::lsm::LsmLinkId
+impl equivalent::Equivalent<aya::programs::lsm::LsmLink> for aya::programs::lsm::LsmLinkId
+pub fn aya::programs::lsm::LsmLinkId::equivalent(&self, key: &aya::programs::lsm::LsmLink) -> bool
 impl core::marker::Freeze for aya::programs::lsm::LsmLinkId
 impl core::marker::Send for aya::programs::lsm::LsmLinkId
 impl core::marker::Sync for aya::programs::lsm::LsmLinkId
@@ -4657,14 +4822,23 @@ impl aya::programs::links::Link for aya::programs::perf_attach::PerfLink
 pub type aya::programs::perf_attach::PerfLink::Id = aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::perf_attach::PerfLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::perf_attach::PerfLink
+impl core::cmp::PartialEq for aya::programs::perf_attach::PerfLink
+pub fn aya::programs::perf_attach::PerfLink::eq(&self, other: &Self) -> bool
 impl core::fmt::Debug for aya::programs::perf_attach::PerfLink
 pub fn aya::programs::perf_attach::PerfLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::perf_attach::PerfLink
+pub fn aya::programs::perf_attach::PerfLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
+impl equivalent::Equivalent<aya::programs::perf_attach::PerfLink> for aya::programs::perf_attach::PerfLinkId
+pub fn aya::programs::perf_attach::PerfLinkId::equivalent(&self, key: &aya::programs::perf_attach::PerfLink) -> bool
 impl core::marker::Freeze for aya::programs::perf_attach::PerfLink
 impl core::marker::Send for aya::programs::perf_attach::PerfLink
 impl core::marker::Sync for aya::programs::perf_attach::PerfLink
 impl core::marker::Unpin for aya::programs::perf_attach::PerfLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_attach::PerfLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_attach::PerfLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::perf_attach::PerfLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::perf_attach::PerfLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::perf_attach::PerfLink where U: core::convert::From<T>
 pub fn aya::programs::perf_attach::PerfLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_attach::PerfLink where U: core::convert::Into<T>
@@ -4690,6 +4864,8 @@ pub fn aya::programs::perf_attach::PerfLinkId::fmt(&self, f: &mut core::fmt::For
 impl core::hash::Hash for aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::perf_attach::PerfLinkId
+impl equivalent::Equivalent<aya::programs::perf_attach::PerfLink> for aya::programs::perf_attach::PerfLinkId
+pub fn aya::programs::perf_attach::PerfLinkId::equivalent(&self, key: &aya::programs::perf_attach::PerfLink) -> bool
 impl core::marker::Freeze for aya::programs::perf_attach::PerfLinkId
 impl core::marker::Send for aya::programs::perf_attach::PerfLinkId
 impl core::marker::Sync for aya::programs::perf_attach::PerfLinkId
@@ -4892,6 +5068,9 @@ impl aya::programs::links::Link for aya::programs::perf_event::PerfEventLink
 pub type aya::programs::perf_event::PerfEventLink::Id = aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEventLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::perf_event::PerfEventLink
+impl core::cmp::PartialEq for aya::programs::perf_event::PerfEventLink
+pub fn aya::programs::perf_event::PerfEventLink::eq(&self, other: &Self) -> bool
 impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::perf_event::PerfEventLink
 pub type aya::programs::perf_event::PerfEventLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::perf_event::PerfEventLink::try_from(fd_link: aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
@@ -4900,14 +5079,20 @@ pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::perf_event::PerfEventLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::perf_event::PerfEventLink
 pub fn aya::programs::perf_event::PerfEventLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::perf_event::PerfEventLink
+pub fn aya::programs::perf_event::PerfEventLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::perf_event::PerfEventLink
 pub fn aya::programs::perf_event::PerfEventLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::perf_event::PerfEventLink> for aya::programs::perf_event::PerfEventLinkId
+pub fn aya::programs::perf_event::PerfEventLinkId::equivalent(&self, key: &aya::programs::perf_event::PerfEventLink) -> bool
 impl core::marker::Freeze for aya::programs::perf_event::PerfEventLink
 impl core::marker::Send for aya::programs::perf_event::PerfEventLink
 impl core::marker::Sync for aya::programs::perf_event::PerfEventLink
 impl core::marker::Unpin for aya::programs::perf_event::PerfEventLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEventLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::perf_event::PerfEventLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::perf_event::PerfEventLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfEventLink where U: core::convert::From<T>
 pub fn aya::programs::perf_event::PerfEventLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_event::PerfEventLink where U: core::convert::Into<T>
@@ -4933,6 +5118,8 @@ pub fn aya::programs::perf_event::PerfEventLinkId::fmt(&self, f: &mut core::fmt:
 impl core::hash::Hash for aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::perf_event::PerfEventLinkId
+impl equivalent::Equivalent<aya::programs::perf_event::PerfEventLink> for aya::programs::perf_event::PerfEventLinkId
+pub fn aya::programs::perf_event::PerfEventLinkId::equivalent(&self, key: &aya::programs::perf_event::PerfEventLink) -> bool
 impl core::marker::Freeze for aya::programs::perf_event::PerfEventLinkId
 impl core::marker::Send for aya::programs::perf_event::PerfEventLinkId
 impl core::marker::Sync for aya::programs::perf_event::PerfEventLinkId
@@ -5013,20 +5200,29 @@ impl aya::programs::links::Link for aya::programs::raw_trace_point::RawTracePoin
 pub type aya::programs::raw_trace_point::RawTracePointLink::Id = aya::programs::raw_trace_point::RawTracePointLinkId
 pub fn aya::programs::raw_trace_point::RawTracePointLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::raw_trace_point::RawTracePointLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::raw_trace_point::RawTracePointLink
+impl core::cmp::PartialEq for aya::programs::raw_trace_point::RawTracePointLink
+pub fn aya::programs::raw_trace_point::RawTracePointLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::raw_trace_point::RawTracePointLink
 pub fn aya::programs::raw_trace_point::RawTracePointLink::from(b: aya::programs::links::FdLink) -> aya::programs::raw_trace_point::RawTracePointLink
 impl core::convert::From<aya::programs::raw_trace_point::RawTracePointLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::raw_trace_point::RawTracePointLink) -> aya::programs::links::FdLink
 impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePointLink
 pub fn aya::programs::raw_trace_point::RawTracePointLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::raw_trace_point::RawTracePointLink
+pub fn aya::programs::raw_trace_point::RawTracePointLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::raw_trace_point::RawTracePointLink
 pub fn aya::programs::raw_trace_point::RawTracePointLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::raw_trace_point::RawTracePointLink> for aya::programs::raw_trace_point::RawTracePointLinkId
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::equivalent(&self, key: &aya::programs::raw_trace_point::RawTracePointLink) -> bool
 impl core::marker::Freeze for aya::programs::raw_trace_point::RawTracePointLink
 impl core::marker::Send for aya::programs::raw_trace_point::RawTracePointLink
 impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePointLink
 impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePointLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePointLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePointLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::raw_trace_point::RawTracePointLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::raw_trace_point::RawTracePointLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::raw_trace_point::RawTracePointLink where U: core::convert::From<T>
 pub fn aya::programs::raw_trace_point::RawTracePointLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::raw_trace_point::RawTracePointLink where U: core::convert::Into<T>
@@ -5052,6 +5248,8 @@ pub fn aya::programs::raw_trace_point::RawTracePointLinkId::fmt(&self, f: &mut c
 impl core::hash::Hash for aya::programs::raw_trace_point::RawTracePointLinkId
 pub fn aya::programs::raw_trace_point::RawTracePointLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::raw_trace_point::RawTracePointLinkId
+impl equivalent::Equivalent<aya::programs::raw_trace_point::RawTracePointLink> for aya::programs::raw_trace_point::RawTracePointLinkId
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::equivalent(&self, key: &aya::programs::raw_trace_point::RawTracePointLink) -> bool
 impl core::marker::Freeze for aya::programs::raw_trace_point::RawTracePointLinkId
 impl core::marker::Send for aya::programs::raw_trace_point::RawTracePointLinkId
 impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePointLinkId
@@ -5132,20 +5330,29 @@ impl aya::programs::links::Link for aya::programs::sk_lookup::SkLookupLink
 pub type aya::programs::sk_lookup::SkLookupLink::Id = aya::programs::sk_lookup::SkLookupLinkId
 pub fn aya::programs::sk_lookup::SkLookupLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sk_lookup::SkLookupLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::sk_lookup::SkLookupLink
+impl core::cmp::PartialEq for aya::programs::sk_lookup::SkLookupLink
+pub fn aya::programs::sk_lookup::SkLookupLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::sk_lookup::SkLookupLink
 pub fn aya::programs::sk_lookup::SkLookupLink::from(b: aya::programs::links::FdLink) -> aya::programs::sk_lookup::SkLookupLink
 impl core::convert::From<aya::programs::sk_lookup::SkLookupLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::sk_lookup::SkLookupLink) -> aya::programs::links::FdLink
 impl core::fmt::Debug for aya::programs::sk_lookup::SkLookupLink
 pub fn aya::programs::sk_lookup::SkLookupLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::sk_lookup::SkLookupLink
+pub fn aya::programs::sk_lookup::SkLookupLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::sk_lookup::SkLookupLink
 pub fn aya::programs::sk_lookup::SkLookupLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::sk_lookup::SkLookupLink> for aya::programs::sk_lookup::SkLookupLinkId
+pub fn aya::programs::sk_lookup::SkLookupLinkId::equivalent(&self, key: &aya::programs::sk_lookup::SkLookupLink) -> bool
 impl core::marker::Freeze for aya::programs::sk_lookup::SkLookupLink
 impl core::marker::Send for aya::programs::sk_lookup::SkLookupLink
 impl core::marker::Sync for aya::programs::sk_lookup::SkLookupLink
 impl core::marker::Unpin for aya::programs::sk_lookup::SkLookupLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_lookup::SkLookupLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_lookup::SkLookupLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_lookup::SkLookupLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::sk_lookup::SkLookupLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::sk_lookup::SkLookupLink where U: core::convert::From<T>
 pub fn aya::programs::sk_lookup::SkLookupLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_lookup::SkLookupLink where U: core::convert::Into<T>
@@ -5171,6 +5378,8 @@ pub fn aya::programs::sk_lookup::SkLookupLinkId::fmt(&self, f: &mut core::fmt::F
 impl core::hash::Hash for aya::programs::sk_lookup::SkLookupLinkId
 pub fn aya::programs::sk_lookup::SkLookupLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::sk_lookup::SkLookupLinkId
+impl equivalent::Equivalent<aya::programs::sk_lookup::SkLookupLink> for aya::programs::sk_lookup::SkLookupLinkId
+pub fn aya::programs::sk_lookup::SkLookupLinkId::equivalent(&self, key: &aya::programs::sk_lookup::SkLookupLink) -> bool
 impl core::marker::Freeze for aya::programs::sk_lookup::SkLookupLinkId
 impl core::marker::Send for aya::programs::sk_lookup::SkLookupLinkId
 impl core::marker::Sync for aya::programs::sk_lookup::SkLookupLinkId
@@ -5251,20 +5460,29 @@ impl aya::programs::links::Link for aya::programs::sk_msg::SkMsgLink
 pub type aya::programs::sk_msg::SkMsgLink::Id = aya::programs::sk_msg::SkMsgLinkId
 pub fn aya::programs::sk_msg::SkMsgLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sk_msg::SkMsgLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::sk_msg::SkMsgLink
+impl core::cmp::PartialEq for aya::programs::sk_msg::SkMsgLink
+pub fn aya::programs::sk_msg::SkMsgLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_msg::SkMsgLink
 pub fn aya::programs::sk_msg::SkMsgLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sk_msg::SkMsgLink
 impl core::convert::From<aya::programs::sk_msg::SkMsgLink> for aya::programs::links::ProgAttachLink
 pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sk_msg::SkMsgLink) -> aya::programs::links::ProgAttachLink
 impl core::fmt::Debug for aya::programs::sk_msg::SkMsgLink
 pub fn aya::programs::sk_msg::SkMsgLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::sk_msg::SkMsgLink
+pub fn aya::programs::sk_msg::SkMsgLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::sk_msg::SkMsgLink
 pub fn aya::programs::sk_msg::SkMsgLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::sk_msg::SkMsgLink> for aya::programs::sk_msg::SkMsgLinkId
+pub fn aya::programs::sk_msg::SkMsgLinkId::equivalent(&self, key: &aya::programs::sk_msg::SkMsgLink) -> bool
 impl core::marker::Freeze for aya::programs::sk_msg::SkMsgLink
 impl core::marker::Send for aya::programs::sk_msg::SkMsgLink
 impl core::marker::Sync for aya::programs::sk_msg::SkMsgLink
 impl core::marker::Unpin for aya::programs::sk_msg::SkMsgLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsgLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsgLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_msg::SkMsgLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::sk_msg::SkMsgLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::sk_msg::SkMsgLink where U: core::convert::From<T>
 pub fn aya::programs::sk_msg::SkMsgLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_msg::SkMsgLink where U: core::convert::Into<T>
@@ -5290,6 +5508,8 @@ pub fn aya::programs::sk_msg::SkMsgLinkId::fmt(&self, f: &mut core::fmt::Formatt
 impl core::hash::Hash for aya::programs::sk_msg::SkMsgLinkId
 pub fn aya::programs::sk_msg::SkMsgLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::sk_msg::SkMsgLinkId
+impl equivalent::Equivalent<aya::programs::sk_msg::SkMsgLink> for aya::programs::sk_msg::SkMsgLinkId
+pub fn aya::programs::sk_msg::SkMsgLinkId::equivalent(&self, key: &aya::programs::sk_msg::SkMsgLink) -> bool
 impl core::marker::Freeze for aya::programs::sk_msg::SkMsgLinkId
 impl core::marker::Send for aya::programs::sk_msg::SkMsgLinkId
 impl core::marker::Sync for aya::programs::sk_msg::SkMsgLinkId
@@ -5405,20 +5625,29 @@ impl aya::programs::links::Link for aya::programs::sk_skb::SkSkbLink
 pub type aya::programs::sk_skb::SkSkbLink::Id = aya::programs::sk_skb::SkSkbLinkId
 pub fn aya::programs::sk_skb::SkSkbLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sk_skb::SkSkbLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::sk_skb::SkSkbLink
+impl core::cmp::PartialEq for aya::programs::sk_skb::SkSkbLink
+pub fn aya::programs::sk_skb::SkSkbLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_skb::SkSkbLink
 pub fn aya::programs::sk_skb::SkSkbLink::from(b: aya::programs::links::ProgAttachLink) -> aya::programs::sk_skb::SkSkbLink
 impl core::convert::From<aya::programs::sk_skb::SkSkbLink> for aya::programs::links::ProgAttachLink
 pub fn aya::programs::links::ProgAttachLink::from(w: aya::programs::sk_skb::SkSkbLink) -> aya::programs::links::ProgAttachLink
 impl core::fmt::Debug for aya::programs::sk_skb::SkSkbLink
 pub fn aya::programs::sk_skb::SkSkbLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::sk_skb::SkSkbLink
+pub fn aya::programs::sk_skb::SkSkbLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::sk_skb::SkSkbLink
 pub fn aya::programs::sk_skb::SkSkbLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::sk_skb::SkSkbLink> for aya::programs::sk_skb::SkSkbLinkId
+pub fn aya::programs::sk_skb::SkSkbLinkId::equivalent(&self, key: &aya::programs::sk_skb::SkSkbLink) -> bool
 impl core::marker::Freeze for aya::programs::sk_skb::SkSkbLink
 impl core::marker::Send for aya::programs::sk_skb::SkSkbLink
 impl core::marker::Sync for aya::programs::sk_skb::SkSkbLink
 impl core::marker::Unpin for aya::programs::sk_skb::SkSkbLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkbLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_skb::SkSkbLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::sk_skb::SkSkbLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkbLink where U: core::convert::From<T>
 pub fn aya::programs::sk_skb::SkSkbLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::sk_skb::SkSkbLink where U: core::convert::Into<T>
@@ -5444,6 +5673,8 @@ pub fn aya::programs::sk_skb::SkSkbLinkId::fmt(&self, f: &mut core::fmt::Formatt
 impl core::hash::Hash for aya::programs::sk_skb::SkSkbLinkId
 pub fn aya::programs::sk_skb::SkSkbLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::sk_skb::SkSkbLinkId
+impl equivalent::Equivalent<aya::programs::sk_skb::SkSkbLink> for aya::programs::sk_skb::SkSkbLinkId
+pub fn aya::programs::sk_skb::SkSkbLinkId::equivalent(&self, key: &aya::programs::sk_skb::SkSkbLink) -> bool
 impl core::marker::Freeze for aya::programs::sk_skb::SkSkbLinkId
 impl core::marker::Send for aya::programs::sk_skb::SkSkbLinkId
 impl core::marker::Sync for aya::programs::sk_skb::SkSkbLinkId
@@ -5524,16 +5755,25 @@ impl aya::programs::links::Link for aya::programs::sock_ops::SockOpsLink
 pub type aya::programs::sock_ops::SockOpsLink::Id = aya::programs::sock_ops::SockOpsLinkId
 pub fn aya::programs::sock_ops::SockOpsLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sock_ops::SockOpsLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::sock_ops::SockOpsLink
+impl core::cmp::PartialEq for aya::programs::sock_ops::SockOpsLink
+pub fn aya::programs::sock_ops::SockOpsLink::eq(&self, other: &Self) -> bool
 impl core::fmt::Debug for aya::programs::sock_ops::SockOpsLink
 pub fn aya::programs::sock_ops::SockOpsLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::sock_ops::SockOpsLink
+pub fn aya::programs::sock_ops::SockOpsLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::sock_ops::SockOpsLink
 pub fn aya::programs::sock_ops::SockOpsLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::sock_ops::SockOpsLink> for aya::programs::sock_ops::SockOpsLinkId
+pub fn aya::programs::sock_ops::SockOpsLinkId::equivalent(&self, key: &aya::programs::sock_ops::SockOpsLink) -> bool
 impl core::marker::Freeze for aya::programs::sock_ops::SockOpsLink
 impl core::marker::Send for aya::programs::sock_ops::SockOpsLink
 impl core::marker::Sync for aya::programs::sock_ops::SockOpsLink
 impl core::marker::Unpin for aya::programs::sock_ops::SockOpsLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOpsLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOpsLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::sock_ops::SockOpsLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::sock_ops::SockOpsLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::sock_ops::SockOpsLink where U: core::convert::From<T>
 pub fn aya::programs::sock_ops::SockOpsLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::sock_ops::SockOpsLink where U: core::convert::Into<T>
@@ -5559,6 +5799,8 @@ pub fn aya::programs::sock_ops::SockOpsLinkId::fmt(&self, f: &mut core::fmt::For
 impl core::hash::Hash for aya::programs::sock_ops::SockOpsLinkId
 pub fn aya::programs::sock_ops::SockOpsLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::sock_ops::SockOpsLinkId
+impl equivalent::Equivalent<aya::programs::sock_ops::SockOpsLink> for aya::programs::sock_ops::SockOpsLinkId
+pub fn aya::programs::sock_ops::SockOpsLinkId::equivalent(&self, key: &aya::programs::sock_ops::SockOpsLink) -> bool
 impl core::marker::Freeze for aya::programs::sock_ops::SockOpsLinkId
 impl core::marker::Send for aya::programs::sock_ops::SockOpsLinkId
 impl core::marker::Sync for aya::programs::sock_ops::SockOpsLinkId
@@ -5673,14 +5915,23 @@ impl aya::programs::links::Link for aya::programs::socket_filter::SocketFilterLi
 pub type aya::programs::socket_filter::SocketFilterLink::Id = aya::programs::socket_filter::SocketFilterLinkId
 pub fn aya::programs::socket_filter::SocketFilterLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::socket_filter::SocketFilterLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::socket_filter::SocketFilterLink
+impl core::cmp::PartialEq for aya::programs::socket_filter::SocketFilterLink
+pub fn aya::programs::socket_filter::SocketFilterLink::eq(&self, other: &Self) -> bool
 impl core::fmt::Debug for aya::programs::socket_filter::SocketFilterLink
 pub fn aya::programs::socket_filter::SocketFilterLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::socket_filter::SocketFilterLink
+pub fn aya::programs::socket_filter::SocketFilterLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
+impl equivalent::Equivalent<aya::programs::socket_filter::SocketFilterLink> for aya::programs::socket_filter::SocketFilterLinkId
+pub fn aya::programs::socket_filter::SocketFilterLinkId::equivalent(&self, key: &aya::programs::socket_filter::SocketFilterLink) -> bool
 impl core::marker::Freeze for aya::programs::socket_filter::SocketFilterLink
 impl core::marker::Send for aya::programs::socket_filter::SocketFilterLink
 impl core::marker::Sync for aya::programs::socket_filter::SocketFilterLink
 impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::socket_filter::SocketFilterLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::socket_filter::SocketFilterLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilterLink where U: core::convert::From<T>
 pub fn aya::programs::socket_filter::SocketFilterLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::socket_filter::SocketFilterLink where U: core::convert::Into<T>
@@ -5706,6 +5957,8 @@ pub fn aya::programs::socket_filter::SocketFilterLinkId::fmt(&self, f: &mut core
 impl core::hash::Hash for aya::programs::socket_filter::SocketFilterLinkId
 pub fn aya::programs::socket_filter::SocketFilterLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::socket_filter::SocketFilterLinkId
+impl equivalent::Equivalent<aya::programs::socket_filter::SocketFilterLink> for aya::programs::socket_filter::SocketFilterLinkId
+pub fn aya::programs::socket_filter::SocketFilterLinkId::equivalent(&self, key: &aya::programs::socket_filter::SocketFilterLink) -> bool
 impl core::marker::Freeze for aya::programs::socket_filter::SocketFilterLinkId
 impl core::marker::Send for aya::programs::socket_filter::SocketFilterLinkId
 impl core::marker::Sync for aya::programs::socket_filter::SocketFilterLinkId
@@ -5944,6 +6197,9 @@ impl aya::programs::links::Link for aya::programs::tc::SchedClassifierLink
 pub type aya::programs::tc::SchedClassifierLink::Id = aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::tc::SchedClassifierLink
+impl core::cmp::PartialEq for aya::programs::tc::SchedClassifierLink
+pub fn aya::programs::tc::SchedClassifierLink::eq(&self, other: &Self) -> bool
 impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::tc::SchedClassifierLink
 pub type aya::programs::tc::SchedClassifierLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::tc::SchedClassifierLink::try_from(fd_link: aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
@@ -5952,8 +6208,12 @@ pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::tc::SchedClassifierLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::tc::SchedClassifierLink
 pub fn aya::programs::tc::SchedClassifierLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::tc::SchedClassifierLink
+pub fn aya::programs::tc::SchedClassifierLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::tc::SchedClassifierLink
 pub fn aya::programs::tc::SchedClassifierLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::tc::SchedClassifierLink> for aya::programs::tc::SchedClassifierLinkId
+pub fn aya::programs::tc::SchedClassifierLinkId::equivalent(&self, key: &aya::programs::tc::SchedClassifierLink) -> bool
 impl<'a> core::convert::TryFrom<&'a aya::programs::tc::SchedClassifierLink> for &'a aya::programs::links::FdLink
 pub type &'a aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn &'a aya::programs::links::FdLink::try_from(value: &'a aya::programs::tc::SchedClassifierLink) -> core::result::Result<Self, Self::Error>
@@ -5963,6 +6223,8 @@ impl core::marker::Sync for aya::programs::tc::SchedClassifierLink
 impl core::marker::Unpin for aya::programs::tc::SchedClassifierLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::SchedClassifierLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifierLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::tc::SchedClassifierLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::tc::SchedClassifierLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::tc::SchedClassifierLink where U: core::convert::From<T>
 pub fn aya::programs::tc::SchedClassifierLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::tc::SchedClassifierLink where U: core::convert::Into<T>
@@ -5988,6 +6250,8 @@ pub fn aya::programs::tc::SchedClassifierLinkId::fmt(&self, f: &mut core::fmt::F
 impl core::hash::Hash for aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::tc::SchedClassifierLinkId
+impl equivalent::Equivalent<aya::programs::tc::SchedClassifierLink> for aya::programs::tc::SchedClassifierLinkId
+pub fn aya::programs::tc::SchedClassifierLinkId::equivalent(&self, key: &aya::programs::tc::SchedClassifierLink) -> bool
 impl core::marker::Freeze for aya::programs::tc::SchedClassifierLinkId
 impl core::marker::Send for aya::programs::tc::SchedClassifierLinkId
 impl core::marker::Sync for aya::programs::tc::SchedClassifierLinkId
@@ -6070,20 +6334,29 @@ impl aya::programs::links::Link for aya::programs::tp_btf::BtfTracePointLink
 pub type aya::programs::tp_btf::BtfTracePointLink::Id = aya::programs::tp_btf::BtfTracePointLinkId
 pub fn aya::programs::tp_btf::BtfTracePointLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tp_btf::BtfTracePointLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::tp_btf::BtfTracePointLink
+impl core::cmp::PartialEq for aya::programs::tp_btf::BtfTracePointLink
+pub fn aya::programs::tp_btf::BtfTracePointLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::tp_btf::BtfTracePointLink
 pub fn aya::programs::tp_btf::BtfTracePointLink::from(b: aya::programs::links::FdLink) -> aya::programs::tp_btf::BtfTracePointLink
 impl core::convert::From<aya::programs::tp_btf::BtfTracePointLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::tp_btf::BtfTracePointLink) -> aya::programs::links::FdLink
 impl core::fmt::Debug for aya::programs::tp_btf::BtfTracePointLink
 pub fn aya::programs::tp_btf::BtfTracePointLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::tp_btf::BtfTracePointLink
+pub fn aya::programs::tp_btf::BtfTracePointLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::tp_btf::BtfTracePointLink
 pub fn aya::programs::tp_btf::BtfTracePointLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::tp_btf::BtfTracePointLink> for aya::programs::tp_btf::BtfTracePointLinkId
+pub fn aya::programs::tp_btf::BtfTracePointLinkId::equivalent(&self, key: &aya::programs::tp_btf::BtfTracePointLink) -> bool
 impl core::marker::Freeze for aya::programs::tp_btf::BtfTracePointLink
 impl core::marker::Send for aya::programs::tp_btf::BtfTracePointLink
 impl core::marker::Sync for aya::programs::tp_btf::BtfTracePointLink
 impl core::marker::Unpin for aya::programs::tp_btf::BtfTracePointLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tp_btf::BtfTracePointLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tp_btf::BtfTracePointLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::tp_btf::BtfTracePointLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::tp_btf::BtfTracePointLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::tp_btf::BtfTracePointLink where U: core::convert::From<T>
 pub fn aya::programs::tp_btf::BtfTracePointLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::tp_btf::BtfTracePointLink where U: core::convert::Into<T>
@@ -6109,6 +6382,8 @@ pub fn aya::programs::tp_btf::BtfTracePointLinkId::fmt(&self, f: &mut core::fmt:
 impl core::hash::Hash for aya::programs::tp_btf::BtfTracePointLinkId
 pub fn aya::programs::tp_btf::BtfTracePointLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::tp_btf::BtfTracePointLinkId
+impl equivalent::Equivalent<aya::programs::tp_btf::BtfTracePointLink> for aya::programs::tp_btf::BtfTracePointLinkId
+pub fn aya::programs::tp_btf::BtfTracePointLinkId::equivalent(&self, key: &aya::programs::tp_btf::BtfTracePointLink) -> bool
 impl core::marker::Freeze for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::marker::Send for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::marker::Sync for aya::programs::tp_btf::BtfTracePointLinkId
@@ -6225,6 +6500,9 @@ impl aya::programs::links::Link for aya::programs::trace_point::TracePointLink
 pub type aya::programs::trace_point::TracePointLink::Id = aya::programs::trace_point::TracePointLinkId
 pub fn aya::programs::trace_point::TracePointLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::trace_point::TracePointLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::trace_point::TracePointLink
+impl core::cmp::PartialEq for aya::programs::trace_point::TracePointLink
+pub fn aya::programs::trace_point::TracePointLink::eq(&self, other: &Self) -> bool
 impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::trace_point::TracePointLink
 pub type aya::programs::trace_point::TracePointLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::trace_point::TracePointLink::try_from(fd_link: aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
@@ -6233,14 +6511,20 @@ pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::trace_point::TracePointLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::trace_point::TracePointLink
 pub fn aya::programs::trace_point::TracePointLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::trace_point::TracePointLink
+pub fn aya::programs::trace_point::TracePointLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::trace_point::TracePointLink
 pub fn aya::programs::trace_point::TracePointLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::trace_point::TracePointLink> for aya::programs::trace_point::TracePointLinkId
+pub fn aya::programs::trace_point::TracePointLinkId::equivalent(&self, key: &aya::programs::trace_point::TracePointLink) -> bool
 impl core::marker::Freeze for aya::programs::trace_point::TracePointLink
 impl core::marker::Send for aya::programs::trace_point::TracePointLink
 impl core::marker::Sync for aya::programs::trace_point::TracePointLink
 impl core::marker::Unpin for aya::programs::trace_point::TracePointLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePointLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePointLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::trace_point::TracePointLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::trace_point::TracePointLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::trace_point::TracePointLink where U: core::convert::From<T>
 pub fn aya::programs::trace_point::TracePointLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::trace_point::TracePointLink where U: core::convert::Into<T>
@@ -6266,6 +6550,8 @@ pub fn aya::programs::trace_point::TracePointLinkId::fmt(&self, f: &mut core::fm
 impl core::hash::Hash for aya::programs::trace_point::TracePointLinkId
 pub fn aya::programs::trace_point::TracePointLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::trace_point::TracePointLinkId
+impl equivalent::Equivalent<aya::programs::trace_point::TracePointLink> for aya::programs::trace_point::TracePointLinkId
+pub fn aya::programs::trace_point::TracePointLinkId::equivalent(&self, key: &aya::programs::trace_point::TracePointLink) -> bool
 impl core::marker::Freeze for aya::programs::trace_point::TracePointLinkId
 impl core::marker::Send for aya::programs::trace_point::TracePointLinkId
 impl core::marker::Sync for aya::programs::trace_point::TracePointLinkId
@@ -6419,6 +6705,9 @@ impl aya::programs::links::Link for aya::programs::uprobe::UProbeLink
 pub type aya::programs::uprobe::UProbeLink::Id = aya::programs::uprobe::UProbeLinkId
 pub fn aya::programs::uprobe::UProbeLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbeLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::uprobe::UProbeLink
+impl core::cmp::PartialEq for aya::programs::uprobe::UProbeLink
+pub fn aya::programs::uprobe::UProbeLink::eq(&self, other: &Self) -> bool
 impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::uprobe::UProbeLink
 pub type aya::programs::uprobe::UProbeLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::uprobe::UProbeLink::try_from(fd_link: aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
@@ -6427,14 +6716,20 @@ pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::uprobe::UProbeLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::uprobe::UProbeLink
 pub fn aya::programs::uprobe::UProbeLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::uprobe::UProbeLink
+pub fn aya::programs::uprobe::UProbeLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::uprobe::UProbeLink
 pub fn aya::programs::uprobe::UProbeLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::uprobe::UProbeLink> for aya::programs::uprobe::UProbeLinkId
+pub fn aya::programs::uprobe::UProbeLinkId::equivalent(&self, key: &aya::programs::uprobe::UProbeLink) -> bool
 impl core::marker::Freeze for aya::programs::uprobe::UProbeLink
 impl core::marker::Send for aya::programs::uprobe::UProbeLink
 impl core::marker::Sync for aya::programs::uprobe::UProbeLink
 impl core::marker::Unpin for aya::programs::uprobe::UProbeLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::uprobe::UProbeLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::uprobe::UProbeLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::uprobe::UProbeLink where U: core::convert::From<T>
 pub fn aya::programs::uprobe::UProbeLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::uprobe::UProbeLink where U: core::convert::Into<T>
@@ -6460,6 +6755,8 @@ pub fn aya::programs::uprobe::UProbeLinkId::fmt(&self, f: &mut core::fmt::Format
 impl core::hash::Hash for aya::programs::uprobe::UProbeLinkId
 pub fn aya::programs::uprobe::UProbeLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::uprobe::UProbeLinkId
+impl equivalent::Equivalent<aya::programs::uprobe::UProbeLink> for aya::programs::uprobe::UProbeLinkId
+pub fn aya::programs::uprobe::UProbeLinkId::equivalent(&self, key: &aya::programs::uprobe::UProbeLink) -> bool
 impl core::marker::Freeze for aya::programs::uprobe::UProbeLinkId
 impl core::marker::Send for aya::programs::uprobe::UProbeLinkId
 impl core::marker::Sync for aya::programs::uprobe::UProbeLinkId
@@ -6689,6 +6986,9 @@ impl aya::programs::links::Link for aya::programs::xdp::XdpLink
 pub type aya::programs::xdp::XdpLink::Id = aya::programs::xdp::XdpLinkId
 pub fn aya::programs::xdp::XdpLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::xdp::XdpLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::xdp::XdpLink
+impl core::cmp::PartialEq for aya::programs::xdp::XdpLink
+pub fn aya::programs::xdp::XdpLink::eq(&self, other: &Self) -> bool
 impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::xdp::XdpLink
 pub type aya::programs::xdp::XdpLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::xdp::XdpLink::try_from(fd_link: aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
@@ -6697,14 +6997,20 @@ pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::xdp::XdpLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::xdp::XdpLink
 pub fn aya::programs::xdp::XdpLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::xdp::XdpLink
+pub fn aya::programs::xdp::XdpLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
 impl core::ops::drop::Drop for aya::programs::xdp::XdpLink
 pub fn aya::programs::xdp::XdpLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::xdp::XdpLink> for aya::programs::xdp::XdpLinkId
+pub fn aya::programs::xdp::XdpLinkId::equivalent(&self, key: &aya::programs::xdp::XdpLink) -> bool
 impl core::marker::Freeze for aya::programs::xdp::XdpLink
 impl core::marker::Send for aya::programs::xdp::XdpLink
 impl core::marker::Sync for aya::programs::xdp::XdpLink
 impl core::marker::Unpin for aya::programs::xdp::XdpLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::xdp::XdpLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::xdp::XdpLink::equivalent(&self, key: &K) -> bool
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::XdpLink where U: core::convert::From<T>
 pub fn aya::programs::xdp::XdpLink::into(self) -> U
 impl<T, U> core::convert::TryFrom<U> for aya::programs::xdp::XdpLink where U: core::convert::Into<T>
@@ -6730,6 +7036,8 @@ pub fn aya::programs::xdp::XdpLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_
 impl core::hash::Hash for aya::programs::xdp::XdpLinkId
 pub fn aya::programs::xdp::XdpLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::xdp::XdpLinkId
+impl equivalent::Equivalent<aya::programs::xdp::XdpLink> for aya::programs::xdp::XdpLinkId
+pub fn aya::programs::xdp::XdpLinkId::equivalent(&self, key: &aya::programs::xdp::XdpLink) -> bool
 impl core::marker::Freeze for aya::programs::xdp::XdpLinkId
 impl core::marker::Send for aya::programs::xdp::XdpLinkId
 impl core::marker::Sync for aya::programs::xdp::XdpLinkId
@@ -9180,8 +9488,8 @@ impl<T> core::clone::CloneToUninit for aya::programs::xdp::XdpFlags where T: cor
 pub unsafe fn aya::programs::xdp::XdpFlags::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::from(t: T) -> T
-pub trait aya::programs::Link: core::fmt::Debug + 'static
-pub type aya::programs::Link::Id: core::fmt::Debug + core::hash::Hash + core::cmp::Eq + core::cmp::PartialEq
+pub trait aya::programs::Link: core::fmt::Debug + core::cmp::Eq + core::hash::Hash + 'static
+pub type aya::programs::Link::Id: core::fmt::Debug + core::cmp::Eq + core::hash::Hash + equivalent::Equivalent<Self>
 pub fn aya::programs::Link::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::Link::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::cgroup_device::CgroupDeviceLink
