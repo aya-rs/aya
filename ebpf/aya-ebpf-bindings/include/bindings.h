@@ -5,7 +5,8 @@ typedef __u32 __bitwise __wsum;
 
 #include "bpf_helpers.h"
 #include <linux/bpf.h>
-// needed for TC_ACT_*
+#include <linux/if_xdp.h>
+//  needed for TC_ACT_*
 #include <linux/pkt_cls.h>
 #include <linux/ptrace.h>
 #include <sys/socket.h>

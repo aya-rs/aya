@@ -280,11 +280,15 @@ pub const SO_TIMESTAMPING_NEW: u32 = 65;
 pub const SO_RCVTIMEO_NEW: u32 = 66;
 pub const SO_SNDTIMEO_NEW: u32 = 67;
 pub const SO_DETACH_REUSEPORT_BPF: u32 = 68;
-pub const SO_TIMESTAMP: u32 = 29;
-pub const SO_TIMESTAMPNS: u32 = 35;
-pub const SO_TIMESTAMPING: u32 = 37;
-pub const SO_RCVTIMEO: u32 = 20;
-pub const SO_SNDTIMEO: u32 = 21;
+pub const SO_PREFER_BUSY_POLL: u32 = 69;
+pub const SO_BUSY_POLL_BUDGET: u32 = 70;
+pub const SO_NETNS_COOKIE: u32 = 71;
+pub const SO_BUF_LOCK: u32 = 72;
+pub const SO_RESERVE_MEM: u32 = 73;
+pub const SO_TXREHASH: u32 = 74;
+pub const SO_RCVMARK: u32 = 75;
+pub const SO_PASSPIDFD: u32 = 76;
+pub const SO_PEERPIDFD: u32 = 77;
 pub type __u8 = ::aya_ebpf_cty::c_uchar;
 pub type __s16 = ::aya_ebpf_cty::c_short;
 pub type __u16 = ::aya_ebpf_cty::c_ushort;
@@ -303,11 +307,6 @@ pub struct bpf_perf_event_data {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct linux_binprm {
-    _unused: [u8; 0],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct pt_regs {
     _unused: [u8; 0],
 }
 #[repr(C)]
@@ -2747,11 +2746,38 @@ pub struct bpf_iter_num {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct user_pt_regs {
-    pub regs: [__u64; 31usize],
-    pub sp: __u64,
-    pub pc: __u64,
-    pub pstate: __u64,
+pub struct xdp_umem_reg {
+    pub addr: __u64,
+    pub len: __u64,
+    pub chunk_size: __u32,
+    pub headroom: __u32,
+    pub flags: __u32,
+    pub tx_metadata_len: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct pt_regs {
+    pub r15: ::aya_ebpf_cty::c_ulong,
+    pub r14: ::aya_ebpf_cty::c_ulong,
+    pub r13: ::aya_ebpf_cty::c_ulong,
+    pub r12: ::aya_ebpf_cty::c_ulong,
+    pub rbp: ::aya_ebpf_cty::c_ulong,
+    pub rbx: ::aya_ebpf_cty::c_ulong,
+    pub r11: ::aya_ebpf_cty::c_ulong,
+    pub r10: ::aya_ebpf_cty::c_ulong,
+    pub r9: ::aya_ebpf_cty::c_ulong,
+    pub r8: ::aya_ebpf_cty::c_ulong,
+    pub rax: ::aya_ebpf_cty::c_ulong,
+    pub rcx: ::aya_ebpf_cty::c_ulong,
+    pub rdx: ::aya_ebpf_cty::c_ulong,
+    pub rsi: ::aya_ebpf_cty::c_ulong,
+    pub rdi: ::aya_ebpf_cty::c_ulong,
+    pub orig_rax: ::aya_ebpf_cty::c_ulong,
+    pub rip: ::aya_ebpf_cty::c_ulong,
+    pub cs: ::aya_ebpf_cty::c_ulong,
+    pub eflags: ::aya_ebpf_cty::c_ulong,
+    pub rsp: ::aya_ebpf_cty::c_ulong,
+    pub ss: ::aya_ebpf_cty::c_ulong,
 }
 pub type sa_family_t = ::aya_ebpf_cty::c_ushort;
 #[repr(C)]
