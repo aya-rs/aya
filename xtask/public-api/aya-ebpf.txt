@@ -469,7 +469,7 @@ impl aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
-pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where Assert<{ _ }>: IsTrue
+pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where aya_ebpf::maps::ring_buf::const_assert::Assert<{ _ }>: aya_ebpf::maps::ring_buf::const_assert::IsTrue
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl core::marker::Sync for aya_ebpf::maps::ring_buf::RingBuf
 impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
@@ -675,7 +675,7 @@ impl<T> core::convert::From<T> for aya_ebpf::maps::CpuMap
 pub fn aya_ebpf::maps::CpuMap::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::xdp::DevMap
 impl aya_ebpf::maps::DevMap
-pub fn aya_ebpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<DevMapValue>
+pub fn aya_ebpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
 pub const fn aya_ebpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
@@ -703,7 +703,7 @@ impl<T> core::convert::From<T> for aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::xdp::DevMapHash
 impl aya_ebpf::maps::DevMapHash
-pub fn aya_ebpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<DevMapValue>
+pub fn aya_ebpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
 pub const fn aya_ebpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
 pub fn aya_ebpf::maps::DevMapHash::redirect(&self, key: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMapHash::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
@@ -843,7 +843,7 @@ impl<T> core::convert::From<T> for aya_ebpf::maps::CpuMap
 pub fn aya_ebpf::maps::CpuMap::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::DevMap
 impl aya_ebpf::maps::DevMap
-pub fn aya_ebpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<DevMapValue>
+pub fn aya_ebpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
 pub const fn aya_ebpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMap::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
@@ -871,7 +871,7 @@ impl<T> core::convert::From<T> for aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::DevMapHash
 impl aya_ebpf::maps::DevMapHash
-pub fn aya_ebpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<DevMapValue>
+pub fn aya_ebpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
 pub const fn aya_ebpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
 pub fn aya_ebpf::maps::DevMapHash::redirect(&self, key: u32, flags: u64) -> core::result::Result<u32, u32>
 pub const fn aya_ebpf::maps::DevMapHash::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
@@ -1195,7 +1195,7 @@ impl aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
-pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where Assert<{ _ }>: IsTrue
+pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where aya_ebpf::maps::ring_buf::const_assert::Assert<{ _ }>: aya_ebpf::maps::ring_buf::const_assert::IsTrue
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl core::marker::Sync for aya_ebpf::maps::ring_buf::RingBuf
 impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
@@ -1395,7 +1395,7 @@ pub fn aya_ebpf::programs::device::DeviceContext::from(t: T) -> T
 pub mod aya_ebpf::programs::fentry
 pub struct aya_ebpf::programs::fentry::FEntryContext
 impl aya_ebpf::programs::fentry::FEntryContext
-pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::fentry::FEntryContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fentry::FEntryContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1424,7 +1424,7 @@ pub fn aya_ebpf::programs::fentry::FEntryContext::from(t: T) -> T
 pub mod aya_ebpf::programs::fexit
 pub struct aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::programs::fexit::FExitContext
-pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::fexit::FExitContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1453,7 +1453,7 @@ pub fn aya_ebpf::programs::fexit::FExitContext::from(t: T) -> T
 pub mod aya_ebpf::programs::lsm
 pub struct aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::programs::lsm::LsmContext
-pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::lsm::LsmContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1511,7 +1511,7 @@ pub mod aya_ebpf::programs::probe
 pub struct aya_ebpf::programs::probe::ProbeContext
 pub aya_ebpf::programs::probe::ProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
 impl aya_ebpf::programs::probe::ProbeContext
-pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: FromPtRegs>(&self, n: usize) -> core::option::Option<T>
+pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: aya_ebpf::args::FromPtRegs>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::probe::ProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::probe::ProbeContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1540,7 +1540,7 @@ pub fn aya_ebpf::programs::probe::ProbeContext::from(t: T) -> T
 pub mod aya_ebpf::programs::raw_tracepoint
 pub struct aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl aya_ebpf::programs::raw_tracepoint::RawTracePointContext
-pub unsafe fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::arg<T: FromRawTracepointArgs>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::arg<T: aya_ebpf::args::FromRawTracepointArgs>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1571,7 +1571,7 @@ pub struct aya_ebpf::programs::retprobe::RetProbeContext
 pub aya_ebpf::programs::retprobe::RetProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
 impl aya_ebpf::programs::retprobe::RetProbeContext
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::retprobe::RetProbeContext
-pub fn aya_ebpf::programs::retprobe::RetProbeContext::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::ret<T: aya_ebpf::args::FromPtRegs>(&self) -> core::option::Option<T>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::retprobe::RetProbeContext
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::retprobe::RetProbeContext
@@ -1957,7 +1957,7 @@ pub fn aya_ebpf::programs::tc::TcContext::from(t: T) -> T
 pub mod aya_ebpf::programs::tp_btf
 pub struct aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl aya_ebpf::programs::tp_btf::BtfTracePointContext
-pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2047,7 +2047,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
 pub struct aya_ebpf::programs::BtfTracePointContext
 impl aya_ebpf::programs::tp_btf::BtfTracePointContext
-pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2103,7 +2103,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::device::DeviceContext
 pub fn aya_ebpf::programs::device::DeviceContext::from(t: T) -> T
 pub struct aya_ebpf::programs::FEntryContext
 impl aya_ebpf::programs::fentry::FEntryContext
-pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fentry::FEntryContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::fentry::FEntryContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fentry::FEntryContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2131,7 +2131,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::from(t: T) -> T
 pub struct aya_ebpf::programs::FExitContext
 impl aya_ebpf::programs::fexit::FExitContext
-pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::fexit::FExitContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::fexit::FExitContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2159,7 +2159,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::from(t: T) -> T
 pub struct aya_ebpf::programs::LsmContext
 impl aya_ebpf::programs::lsm::LsmContext
-pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: FromBtfArgument>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::lsm::LsmContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2215,7 +2215,7 @@ pub fn aya_ebpf::programs::perf_event::PerfEventContext::from(t: T) -> T
 pub struct aya_ebpf::programs::ProbeContext
 pub aya_ebpf::programs::ProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
 impl aya_ebpf::programs::probe::ProbeContext
-pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: FromPtRegs>(&self, n: usize) -> core::option::Option<T>
+pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: aya_ebpf::args::FromPtRegs>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::programs::probe::ProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::probe::ProbeContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2243,7 +2243,7 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::from(t: T) -> T
 pub struct aya_ebpf::programs::RawTracePointContext
 impl aya_ebpf::programs::raw_tracepoint::RawTracePointContext
-pub unsafe fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::arg<T: FromRawTracepointArgs>(&self, n: usize) -> T
+pub unsafe fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::arg<T: aya_ebpf::args::FromRawTracepointArgs>(&self, n: usize) -> T
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2273,7 +2273,7 @@ pub struct aya_ebpf::programs::RetProbeContext
 pub aya_ebpf::programs::RetProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
 impl aya_ebpf::programs::retprobe::RetProbeContext
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::new(ctx: *mut core::ffi::c_void) -> aya_ebpf::programs::retprobe::RetProbeContext
-pub fn aya_ebpf::programs::retprobe::RetProbeContext::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::ret<T: aya_ebpf::args::FromPtRegs>(&self) -> core::option::Option<T>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::retprobe::RetProbeContext
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::retprobe::RetProbeContext
@@ -2661,10 +2661,10 @@ pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
 pub macro aya_ebpf::bpf_printk!
 pub struct aya_ebpf::PtRegs
 impl aya_ebpf::PtRegs
-pub fn aya_ebpf::PtRegs::arg<T: FromPtRegs>(&self, n: usize) -> core::option::Option<T>
+pub fn aya_ebpf::PtRegs::arg<T: aya_ebpf::args::FromPtRegs>(&self, n: usize) -> core::option::Option<T>
 pub fn aya_ebpf::PtRegs::as_ptr(&self) -> *mut aya_ebpf_bindings::x86_64::bindings::pt_regs
 pub fn aya_ebpf::PtRegs::new(regs: *mut aya_ebpf_bindings::x86_64::bindings::pt_regs) -> Self
-pub fn aya_ebpf::PtRegs::ret<T: FromPtRegs>(&self) -> core::option::Option<T>
+pub fn aya_ebpf::PtRegs::ret<T: aya_ebpf::args::FromPtRegs>(&self) -> core::option::Option<T>
 impl core::marker::Freeze for aya_ebpf::PtRegs
 impl !core::marker::Send for aya_ebpf::PtRegs
 impl !core::marker::Sync for aya_ebpf::PtRegs
@@ -2689,7 +2689,7 @@ impl<T> core::convert::From<T> for aya_ebpf::PtRegs
 pub fn aya_ebpf::PtRegs::from(t: T) -> T
 pub struct aya_ebpf::RawTracepointArgs
 impl aya_ebpf::RawTracepointArgs
-pub unsafe fn aya_ebpf::RawTracepointArgs::arg<T: FromRawTracepointArgs>(&self, n: usize) -> *const T
+pub unsafe fn aya_ebpf::RawTracepointArgs::arg<T: aya_ebpf::args::FromRawTracepointArgs>(&self, n: usize) -> *const T
 pub fn aya_ebpf::RawTracepointArgs::new(args: *mut aya_ebpf_bindings::x86_64::bindings::bpf_raw_tracepoint_args) -> Self
 impl core::marker::Freeze for aya_ebpf::RawTracepointArgs
 impl !core::marker::Send for aya_ebpf::RawTracepointArgs
