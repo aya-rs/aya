@@ -97,6 +97,10 @@ impl CgroupDevice {
                 )))
         }
     }
+    
+    pub fn auto_attach(&self) -> Result<CgroupDeviceLinkId, ProgramError> {
+        todo!();
+    }
 
     /// Queries the cgroup for attached programs.
     pub fn query<T: AsFd>(target_fd: T) -> Result<Vec<CgroupDeviceLink>, ProgramError> {

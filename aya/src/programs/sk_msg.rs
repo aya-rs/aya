@@ -89,6 +89,10 @@ impl SkMsg {
 
         self.data.links.insert(SkMsgLink::new(link))
     }
+    
+    pub fn auto_attach(&self) -> Result<SkMsgLinkId, ProgramError>{
+        todo!();
+    }
 }
 
 define_link_wrapper!(

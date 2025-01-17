@@ -67,6 +67,10 @@ impl FEntry {
     pub fn attach(&mut self) -> Result<FEntryLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
+    
+    pub fn auto_attach(&self) -> Result<FEntryLinkId, ProgramError>{
+        todo!();
+    }
 }
 
 define_link_wrapper!(

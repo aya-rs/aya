@@ -74,6 +74,10 @@ impl SkLookup {
             .links
             .insert(SkLookupLink::new(FdLink::new(link_fd)))
     }
+    
+    pub fn auto_attach(&self)  -> Result<SkLookupLinkId, ProgramError>{
+        todo!();
+    }
 }
 
 define_link_wrapper!(

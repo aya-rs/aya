@@ -183,6 +183,10 @@ impl PerfEvent {
         let link = perf_attach(prog_fd, fd, None /* cookie */)?;
         self.data.links.insert(PerfEventLink::new(link))
     }
+    
+    pub fn auto_attach(&self) -> Result<PerfEventLinkId, ProgramError> {
+        todo!();
+    }
 }
 
 impl TryFrom<PerfEventLink> for FdLink {
