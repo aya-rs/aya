@@ -2018,6 +2018,7 @@ pub aya_ebpf::programs::xdp::XdpContext::ctx: *mut aya_ebpf_bindings::x86_64::bi
 impl aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::data(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::data_end(&self) -> usize
+pub fn aya_ebpf::programs::xdp::XdpContext::ingress_ifindex(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata_end(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::new(ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md) -> aya_ebpf::programs::xdp::XdpContext
@@ -2631,6 +2632,7 @@ pub aya_ebpf::programs::XdpContext::ctx: *mut aya_ebpf_bindings::x86_64::binding
 impl aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::data(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::data_end(&self) -> usize
+pub fn aya_ebpf::programs::xdp::XdpContext::ingress_ifindex(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::metadata_end(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::new(ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md) -> aya_ebpf::programs::xdp::XdpContext
