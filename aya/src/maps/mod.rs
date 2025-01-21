@@ -305,7 +305,8 @@ impl MapFd {
         Self { fd }
     }
 
-    fn try_clone(&self) -> io::Result<Self> {
+    /// Creates a new instance that shares the same underlying file description as [`self`].
+    pub fn try_clone(&self) -> io::Result<Self> {
         let Self { fd } = self;
         let fd = fd.try_clone()?;
         Ok(Self { fd })
