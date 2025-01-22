@@ -163,9 +163,10 @@ fn main() -> Result<()> {
                 let mut output = OsString::new();
                 output.push(".BTF=");
                 output.push(dst);
+                let objcopy_exec = env::var_os("OBJCOPY").unwrap_or("llvm-objcopy".into());
                 exec(
                     // NB: objcopy doesn't support reading from stdin, so we have to use llvm-objcopy.
-                    Command::new("llvm-objcopy")
+                    Command::new(objcopy_exec)
                         .arg("--dump-section")
                         .arg(output)
                         .arg("-")
