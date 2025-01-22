@@ -165,7 +165,7 @@ fn main() -> Result<()> {
                 output.push(dst);
                 exec(
                     // NB: objcopy doesn't support reading from stdin, so we have to use llvm-objcopy.
-                    Command::new("llvm-objcopy")
+                    Command::new(env::var_os("LLVM_OBJCOPY").unwrap_or("llvm-objcopy".into()))
                         .arg("--dump-section")
                         .arg(output)
                         .arg("-")
