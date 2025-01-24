@@ -1,11 +1,24 @@
 use aya::{
-    programs::{Extension, TracePoint, Xdp, XdpFlags},
+    is_program_type_supported,
+    programs::{Extension, ProgramType, TracePoint, Xdp, XdpFlags},
     util::KernelVersion,
     Ebpf, EbpfLoader,
 };
 use test_log::test;
 
 use crate::utils::NetNsGuard;
+
+#[test]
+fn progam_is_supported() {
+    // All of these program types have been supported for a long time and are
+    // used in our tests without any special checks.
+
+    assert!(is_program_type_supported(ProgramType::Xdp).unwrap());
+    assert!(is_program_type_supported(ProgramType::TracePoint).unwrap());
+    // Kprobe and uprobe are the same program type
+    assert!(is_program_type_supported(ProgramType::KProbe).unwrap());
+    assert!(is_program_type_supported(ProgramType::SchedClassifier).unwrap());
+}
 
 #[test]
 fn xdp() {
