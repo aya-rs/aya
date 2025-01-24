@@ -8,7 +8,7 @@ use std::{
 };
 
 use assert_matches::assert_matches;
-use libc::{ENOENT, ENOSPC};
+use libc::{E2BIG, EINVAL, ENOENT, ENOSPC};
 use obj::{
     btf::{BtfEnum64, Enum64},
     generated::bpf_stats_type,
@@ -736,6 +736,56 @@ pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<crate::MockableFd, Syscall
     })
 }
 
+// This program is to test the availability of eBPF features.
+// It is a simple program that returns immediately and should always pass the
+// verifier regardless of the program type.
+// The fields conforming an encoded basic instruction are stored in the following order:
+//   opcode:8 src_reg:4 dst_reg:4 offset:16 imm:32   - In little-endian BPF.
+//   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
+// Multi-byte fields ('imm' and 'offset') are stored using endian order.
+// https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
+const TEST_PROG: &[u8] = &[
+    0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
+    0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
+];
+
+pub(crate) fn is_prog_type_supported(kind: bpf_prog_type) -> Result<bool, SyscallError> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.__bindgen_anon_3 };
+    u.prog_type = kind as u32;
+    let mut name: [c_char; 16] = [0; 16];
+    let cstring = CString::new("aya_prog_check").unwrap();
+    let name_bytes = cstring.to_bytes();
+    let len = cmp::min(name.len(), name_bytes.len());
+    name[..len].copy_from_slice(unsafe {
+        slice::from_raw_parts(name_bytes.as_ptr() as *const c_char, len)
+    });
+    u.prog_name = name;
+
+    let gpl = b"GPL\0";
+    u.license = gpl.as_ptr() as u64;
+
+    let insns = copy_instructions(TEST_PROG).unwrap();
+    u.insn_cnt = insns.len() as u32;
+    u.insns = insns.as_ptr() as u64;
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
+
+    let res = bpf_prog_load(&mut attr);
+    match res {
+        Ok(_) => Ok(true),
+        Err((_, e)) => {
+            if e.raw_os_error() == Some(EINVAL) || e.raw_os_error() == Some(E2BIG) {
+                Ok(false)
+            } else {
+                Err(SyscallError {
+                    call: "bpf_prog_load",
+                    io_error: e,
+                })
+            }
+        }
+    }
+}
+
 pub(crate) fn is_prog_name_supported() -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
@@ -748,20 +798,10 @@ pub(crate) fn is_prog_name_supported() -> bool {
     });
     u.prog_name = name;
 
-    // The fields conforming an encoded basic instruction are stored in the following order:
-    //   opcode:8 src_reg:4 dst_reg:4 offset:16 imm:32   - In little-endian BPF.
-    //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
-    // Multi-byte fields ('imm' and 'offset') are stored using endian order.
-    // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
-    let prog: &[u8] = &[
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
-        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
-    ];
-
     let gpl = b"GPL\0";
     u.license = gpl.as_ptr() as u64;
 
-    let insns = copy_instructions(prog).unwrap();
+    let insns = copy_instructions(TEST_PROG).unwrap();
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
@@ -776,11 +816,7 @@ pub(crate) fn is_info_map_ids_supported() -> bool {
 
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
 
-    let prog: &[u8] = &[
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
-        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
-    ];
-    let insns = copy_instructions(prog).unwrap();
+    let insns = copy_instructions(TEST_PROG).unwrap();
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
 
@@ -804,11 +840,7 @@ pub(crate) fn is_info_gpl_compatible_supported() -> bool {
 
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
 
-    let prog: &[u8] = &[
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
-        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
-    ];
-    let insns = copy_instructions(prog).unwrap();
+    let insns = copy_instructions(TEST_PROG).unwrap();
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
 
@@ -868,20 +900,10 @@ pub(crate) fn is_perf_link_supported() -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
-    // The fields conforming an encoded basic instruction are stored in the following order:
-    //   opcode:8 src_reg:4 dst_reg:4 offset:16 imm:32   - In little-endian BPF.
-    //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
-    // Multi-byte fields ('imm' and 'offset') are stored using endian order.
-    // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
-    let prog: &[u8] = &[
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
-        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
-    ];
-
     let gpl = b"GPL\0";
     u.license = gpl.as_ptr() as u64;
 
-    let insns = copy_instructions(prog).unwrap();
+    let insns = copy_instructions(TEST_PROG).unwrap();
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;

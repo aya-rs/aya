@@ -30,8 +30,9 @@ use crate::{
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, Iter, KProbe, LircMode2, Lsm,
-        PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier,
-        SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        PerfEvent, ProbeKind, Program, ProgramData, ProgramError, ProgramType, RawTracePoint,
+        SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
+        UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -39,7 +40,8 @@ use crate::{
         is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
         is_btf_supported, is_btf_type_tag_supported, is_info_gpl_compatible_supported,
         is_info_map_ids_supported, is_perf_link_supported, is_probe_read_kernel_supported,
-        is_prog_id_supported, is_prog_name_supported, retry_with_verifier_logs,
+        is_prog_id_supported, is_prog_name_supported, is_prog_type_supported,
+        retry_with_verifier_logs,
     },
     util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
@@ -103,6 +105,26 @@ fn detect_features() -> Features {
 /// Returns a reference to the detected BPF features.
 pub fn features() -> &'static Features {
     &FEATURES
+}
+
+/// Returns whether a program type is supported by the running kernel.
+///
+/// # Errors
+///
+/// Returns an error if an unexpected error occurs while checking the program
+/// type support.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya::{is_program_type_supported, programs::ProgramType};
+///
+/// let supported = is_program_type_supported(ProgramType::Xdp)?;
+/// # Ok::<(), aya::EbpfError>(())
+/// ```
+pub fn is_program_type_supported(program_type: ProgramType) -> Result<bool, EbpfError> {
+    is_prog_type_supported(program_type.into())
+        .map_err(|e| EbpfError::ProgramError(ProgramError::from(e)))
 }
 
 /// Builder style API for advanced loading of eBPF programs.

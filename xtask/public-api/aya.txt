@@ -7651,6 +7651,8 @@ impl core::clone::Clone for aya::programs::ProgramType
 pub fn aya::programs::ProgramType::clone(&self) -> aya::programs::ProgramType
 impl core::cmp::PartialEq for aya::programs::ProgramType
 pub fn aya::programs::ProgramType::eq(&self, other: &aya::programs::ProgramType) -> bool
+impl core::convert::From<aya::programs::ProgramType> for aya_obj::generated::linux_bindings_x86_64::bpf_prog_type
+pub fn aya_obj::generated::linux_bindings_x86_64::bpf_prog_type::from(value: aya::programs::ProgramType) -> Self
 impl core::convert::TryFrom<aya_obj::generated::linux_bindings_x86_64::bpf_prog_type> for aya::programs::ProgramType
 pub type aya::programs::ProgramType::Error = aya::programs::ProgramError
 pub fn aya::programs::ProgramType::try_from(prog_type: aya_obj::generated::linux_bindings_x86_64::bpf_prog_type) -> core::result::Result<Self, Self::Error>
@@ -10034,6 +10036,7 @@ impl aya::Pod for u8
 impl<K: aya::Pod> aya::Pod for aya::maps::lpm_trie::Key<K>
 impl<T: aya::Pod, const N: usize> aya::Pod for [T; N]
 pub fn aya::features() -> &'static aya_obj::obj::Features
+pub fn aya::is_program_type_supported(program_type: aya::programs::ProgramType) -> core::result::Result<bool, aya::EbpfError>
 pub type aya::Bpf = aya::Ebpf
 pub type aya::BpfError = aya::EbpfError
 pub type aya::BpfLoader<'a> = aya::EbpfLoader<'a>
