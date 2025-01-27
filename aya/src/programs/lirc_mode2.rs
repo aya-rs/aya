@@ -81,6 +81,10 @@ impl LircMode2 {
 
         self.data.links.insert(LircLink::new(prog_fd, lircdev_fd))
     }
+    
+    pub fn auto_attach(&self) -> Result<LircLinkId, ProgramError> {
+        todo!();
+    }
 
     /// Detaches the program.
     ///

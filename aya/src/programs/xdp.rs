@@ -117,6 +117,10 @@ impl Xdp {
         }
         self.attach_to_if_index(if_index, flags)
     }
+    
+    pub fn auto_attach(&self)-> Result<XdpLinkId, ProgramError> {
+        todo!();
+    }
 
     /// Attaches the program to the given interface index.
     ///

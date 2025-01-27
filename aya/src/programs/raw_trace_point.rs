@@ -52,6 +52,10 @@ impl RawTracePoint {
         let tp_name_c = CString::new(tp_name).unwrap();
         attach_raw_tracepoint(&mut self.data, Some(&tp_name_c))
     }
+    
+    pub fn auto_attach(&self) -> Result<RawTracePointLinkId, ProgramError>  {
+        todo!();
+    }
 }
 
 define_link_wrapper!(

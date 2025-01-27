@@ -83,6 +83,10 @@ impl Iter {
             .links
             .insert(IterLink::new(PerfLinkInner::FdLink(FdLink::new(link_fd))))
     }
+    
+    pub fn auto_attach(&self) -> Result<IterLinkId, ProgramError>{
+        todo!();
+    }
 }
 
 /// An iterator descriptor.

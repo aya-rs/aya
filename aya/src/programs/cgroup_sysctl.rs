@@ -96,6 +96,10 @@ impl CgroupSysctl {
                 )))
         }
     }
+    
+    pub fn auto_attach(&self) -> Result<CgroupSysctlLinkId, ProgramError>{
+        todo!();
+    }
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]

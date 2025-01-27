@@ -67,6 +67,10 @@ impl FExit {
     pub fn attach(&mut self) -> Result<FExitLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
+    
+    pub fn auto_attach(&self)-> Result<FExitLinkId, ProgramError>  {
+        todo!();
+    }
 }
 
 define_link_wrapper!(
