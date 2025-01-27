@@ -77,6 +77,7 @@
     allow(unused_crate_dependencies)
 )]
 
+pub mod af_xdp;
 mod bpf;
 pub mod maps;
 pub mod pin;
