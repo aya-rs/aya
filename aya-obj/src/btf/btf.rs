@@ -44,6 +44,11 @@ pub enum BtfError {
     #[error("error parsing BTF header")]
     InvalidHeader,
 
+    /// Invalid ELF data
+    #[cfg(feature = "std")]
+    #[error("error parsing ELF")]
+    Elf,
+
     /// invalid BTF type info segment
     #[error("invalid BTF type info segment")]
     InvalidTypeInfo,
@@ -274,7 +279,8 @@ impl Btf {
         self.types.types.len() < 2
     }
 
-    pub(crate) fn types(&self) -> impl Iterator<Item = &BtfType> {
+    /// Iterates over the BTF types.
+    pub fn types(&self) -> impl Iterator<Item = &BtfType> {
         self.types.types.iter()
     }
 
@@ -305,7 +311,7 @@ impl Btf {
 
     /// Loads BTF metadata from the given `path`.
     #[cfg(feature = "std")]
-    pub fn parse_file<P: AsRef<std::path::Path>>(
+    pub(crate) fn parse_file<P: AsRef<std::path::Path>>(
         path: P,
         endianness: Endianness,
     ) -> Result<Btf, BtfError> {
@@ -318,6 +324,26 @@ impl Btf {
             })?,
             endianness,
         )
+    }
+
+    /// Loads BTF metadata from an ELF section.
+    #[cfg(feature = "std")]
+    pub fn parse_elf_file<P: AsRef<std::path::Path>>(
+        path: P,
+        endianness: Endianness,
+    ) -> Result<Btf, BtfError> {
+        use object::{Object, ObjectSection};
+        let path = path.as_ref();
+        let bin_data = std::fs::read(path).map_err(|e| BtfError::FileError {
+            path: path.to_owned(),
+            error: e,
+        })?;
+        let obj_file = object::File::parse(&*bin_data).map_err(|_| BtfError::Elf)?;
+        let section = obj_file
+            .section_by_name(".BTF")
+            .ok_or_else(|| BtfError::InvalidHeader)?;
+        let data = section.data().map_err(|_| BtfError::InvalidHeader)?;
+        Btf::parse(data, endianness)
     }
 
     /// Parses BTF from binary data of the given endianness
@@ -372,7 +398,8 @@ impl Btf {
         Ok(types)
     }
 
-    pub(crate) fn string_at(&self, offset: u32) -> Result<Cow<'_, str>, BtfError> {
+    /// Returns the string at the given offset within the BTF metadata.
+    pub fn string_at(&self, offset: u32) -> Result<Cow<'_, str>, BtfError> {
         let btf_header {
             hdr_len,
             mut str_off,
@@ -398,7 +425,8 @@ impl Btf {
         Ok(s.to_string_lossy())
     }
 
-    pub(crate) fn type_by_id(&self, type_id: u32) -> Result<&BtfType, BtfError> {
+    /// Returns the BtfType at the given type id.
+    pub fn type_by_id(&self, type_id: u32) -> Result<&BtfType, BtfError> {
         self.types.type_by_id(type_id)
     }
 
