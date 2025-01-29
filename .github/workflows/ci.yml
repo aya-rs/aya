@@ -199,9 +199,12 @@ jobs:
             #
             # [1] https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#limitations-for-arm64-macos-runners
             os: macos-13
+
+          # We don't use ubuntu-latest because we care about the apt packages available.
           - target: x86_64-unknown-linux-gnu
-            # We don't use ubuntu-latest because we care about the apt packages available.
             os: ubuntu-22.04
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04-arm
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -213,15 +216,13 @@ jobs:
         # ubuntu-22.04 comes with clang 13-15[0]; support for signed and 64bit
         # enum values was added in clang 15[1] which isn't in `$PATH`.
         #
-        # gcc-multilib provides at least <asm/types.h> which is referenced by libbpf.
-        #
         # [0] https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md
         #
         # [1] https://github.com/llvm/llvm-project/commit/dc1c43d
         run: |
           set -euxo pipefail
           sudo apt update
-          sudo apt -y install gcc-multilib lynx qemu-system-{arm,x86}
+          sudo apt -y install lynx qemu-system-{arm,x86}
           echo /usr/lib/llvm-15/bin >> $GITHUB_PATH
 
       - name: Install prerequisites
