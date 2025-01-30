@@ -1702,7 +1702,7 @@ mod tests {
         assert_matches!(prog_foo, Program {
             license,
             kernel_version: None,
-            section: ProgramSection::KProbe { .. },
+            section: ProgramSection::KProbe,
             ..
         } => assert_eq!(license.to_str().unwrap(), "GPL"));
 
@@ -1766,7 +1766,7 @@ mod tests {
         assert_matches!(prog_foo, Program {
             license,
             kernel_version: None,
-            section: ProgramSection::KProbe { .. },
+            section: ProgramSection::KProbe,
             ..
         } => assert_eq!(license.to_str().unwrap(), "GPL"));
         assert_matches!(
@@ -1784,7 +1784,7 @@ mod tests {
         assert_matches!(prog_bar, Program {
             license,
             kernel_version: None,
-            section: ProgramSection::KProbe { .. },
+            section: ProgramSection::KProbe ,
             ..
         } => assert_eq!(license.to_str().unwrap(), "GPL"));
         assert_matches!(
@@ -1916,7 +1916,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::KProbe { .. },
+                section: ProgramSection::KProbe,
                 ..
             })
         );
@@ -2038,7 +2038,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::TracePoint { .. },
+                section: ProgramSection::TracePoint,
                 ..
             })
         );
@@ -2055,7 +2055,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("bar"),
             Some(Program {
-                section: ProgramSection::TracePoint { .. },
+                section: ProgramSection::TracePoint,
                 ..
             })
         );
@@ -2078,7 +2078,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::SocketFilter { .. },
+                section: ProgramSection::SocketFilter,
                 ..
             })
         );
@@ -2148,7 +2148,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::RawTracePoint { .. },
+                section: ProgramSection::RawTracePoint,
                 ..
             })
         );
@@ -2165,7 +2165,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("bar"),
             Some(Program {
-                section: ProgramSection::RawTracePoint { .. },
+                section: ProgramSection::RawTracePoint,
                 ..
             })
         );
@@ -2240,7 +2240,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::BtfTracePoint { .. },
+                section: ProgramSection::BtfTracePoint,
                 ..
             })
         );
@@ -2263,7 +2263,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("stream_parser"),
             Some(Program {
-                section: ProgramSection::SkSkbStreamParser { .. },
+                section: ProgramSection::SkSkbStreamParser,
                 ..
             })
         );
@@ -2286,7 +2286,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("my_parser"),
             Some(Program {
-                section: ProgramSection::SkSkbStreamParser { .. },
+                section: ProgramSection::SkSkbStreamParser,
                 ..
             })
         );
@@ -2407,7 +2407,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("ingress"),
             Some(Program {
-                section: ProgramSection::CgroupSkbIngress { .. },
+                section: ProgramSection::CgroupSkbIngress,
                 ..
             })
         );
@@ -2430,7 +2430,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::CgroupSkbIngress { .. },
+                section: ProgramSection::CgroupSkbIngress,
                 ..
             })
         );
@@ -2453,7 +2453,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("skb"),
             Some(Program {
-                section: ProgramSection::CgroupSkb { .. },
+                section: ProgramSection::CgroupSkb,
                 ..
             })
         );
@@ -2476,7 +2476,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::CgroupSkb { .. },
+                section: ProgramSection::CgroupSkb,
                 ..
             })
         );
