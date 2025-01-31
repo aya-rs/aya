@@ -271,30 +271,32 @@ pub const TC_ACT_EXT_VAL_MASK: u32 = 268435455;
 pub const TC_ACT_JUMP: u32 = 268435456;
 pub const TC_ACT_GOTO_CHAIN: u32 = 536870912;
 pub const TC_ACT_EXT_OPCODE_MAX: u32 = 536870912;
-pub const SO_RCVLOWAT: u32 = 16;
-pub const SO_SNDLOWAT: u32 = 17;
-pub const SO_RCVTIMEO_OLD: u32 = 18;
-pub const SO_SNDTIMEO_OLD: u32 = 19;
-pub const SO_PASSCRED: u32 = 20;
-pub const SO_PEERCRED: u32 = 21;
-pub const SOL_SOCKET: u32 = 1;
+pub const SOL_SOCKET: u32 = 65535;
 pub const SO_DEBUG: u32 = 1;
-pub const SO_REUSEADDR: u32 = 2;
-pub const SO_TYPE: u32 = 3;
-pub const SO_ERROR: u32 = 4;
-pub const SO_DONTROUTE: u32 = 5;
-pub const SO_BROADCAST: u32 = 6;
-pub const SO_SNDBUF: u32 = 7;
-pub const SO_RCVBUF: u32 = 8;
-pub const SO_SNDBUFFORCE: u32 = 32;
-pub const SO_RCVBUFFORCE: u32 = 33;
-pub const SO_KEEPALIVE: u32 = 9;
-pub const SO_OOBINLINE: u32 = 10;
+pub const SO_REUSEADDR: u32 = 4;
+pub const SO_KEEPALIVE: u32 = 8;
+pub const SO_DONTROUTE: u32 = 16;
+pub const SO_BROADCAST: u32 = 32;
+pub const SO_LINGER: u32 = 128;
+pub const SO_OOBINLINE: u32 = 256;
+pub const SO_REUSEPORT: u32 = 512;
+pub const SO_TYPE: u32 = 4104;
+pub const SO_STYLE: u32 = 4104;
+pub const SO_ERROR: u32 = 4103;
+pub const SO_SNDBUF: u32 = 4097;
+pub const SO_RCVBUF: u32 = 4098;
+pub const SO_SNDLOWAT: u32 = 4099;
+pub const SO_RCVLOWAT: u32 = 4100;
+pub const SO_SNDTIMEO_OLD: u32 = 4101;
+pub const SO_RCVTIMEO_OLD: u32 = 4102;
+pub const SO_ACCEPTCONN: u32 = 4105;
+pub const SO_PROTOCOL: u32 = 4136;
+pub const SO_DOMAIN: u32 = 4137;
 pub const SO_NO_CHECK: u32 = 11;
 pub const SO_PRIORITY: u32 = 12;
-pub const SO_LINGER: u32 = 13;
 pub const SO_BSDCOMPAT: u32 = 14;
-pub const SO_REUSEPORT: u32 = 15;
+pub const SO_PASSCRED: u32 = 17;
+pub const SO_PEERCRED: u32 = 18;
 pub const SO_SECURITY_AUTHENTICATION: u32 = 22;
 pub const SO_SECURITY_ENCRYPTION_TRANSPORT: u32 = 23;
 pub const SO_SECURITY_ENCRYPTION_NETWORK: u32 = 24;
@@ -303,12 +305,11 @@ pub const SO_ATTACH_FILTER: u32 = 26;
 pub const SO_DETACH_FILTER: u32 = 27;
 pub const SO_GET_FILTER: u32 = 26;
 pub const SO_PEERNAME: u32 = 28;
-pub const SO_ACCEPTCONN: u32 = 30;
-pub const SO_PEERSEC: u32 = 31;
+pub const SO_PEERSEC: u32 = 30;
+pub const SO_SNDBUFFORCE: u32 = 31;
+pub const SO_RCVBUFFORCE: u32 = 33;
 pub const SO_PASSSEC: u32 = 34;
 pub const SO_MARK: u32 = 36;
-pub const SO_PROTOCOL: u32 = 38;
-pub const SO_DOMAIN: u32 = 39;
 pub const SO_RXQ_OVFL: u32 = 40;
 pub const SO_WIFI_STATUS: u32 = 41;
 pub const SO_PEEK_OFF: u32 = 42;
@@ -343,15 +344,15 @@ pub const SO_DETACH_REUSEPORT_BPF: u32 = 68;
 pub const SO_TIMESTAMP: u32 = 29;
 pub const SO_TIMESTAMPNS: u32 = 35;
 pub const SO_TIMESTAMPING: u32 = 37;
-pub const SO_RCVTIMEO: u32 = 18;
-pub const SO_SNDTIMEO: u32 = 19;
+pub const SO_RCVTIMEO: u32 = 4102;
+pub const SO_SNDTIMEO: u32 = 4101;
 pub type __u8 = ::aya_ebpf_cty::c_uchar;
 pub type __s16 = ::aya_ebpf_cty::c_short;
 pub type __u16 = ::aya_ebpf_cty::c_ushort;
 pub type __s32 = ::aya_ebpf_cty::c_int;
 pub type __u32 = ::aya_ebpf_cty::c_uint;
-pub type __s64 = ::aya_ebpf_cty::c_long;
-pub type __u64 = ::aya_ebpf_cty::c_ulong;
+pub type __s64 = ::aya_ebpf_cty::c_longlong;
+pub type __u64 = ::aya_ebpf_cty::c_ulonglong;
 pub type __be16 = __u16;
 pub type __be32 = __u32;
 pub type __wsum = __u32;
@@ -1535,7 +1536,7 @@ pub type _bindgen_ty_13 = ::aya_ebpf_cty::c_uint;
 pub const BPF_F_INDEX_MASK: _bindgen_ty_14 = 4294967295;
 pub const BPF_F_CURRENT_CPU: _bindgen_ty_14 = 4294967295;
 pub const BPF_F_CTXLEN_MASK: _bindgen_ty_14 = 4503595332403200;
-pub type _bindgen_ty_14 = ::aya_ebpf_cty::c_ulong;
+pub type _bindgen_ty_14 = ::aya_ebpf_cty::c_ulonglong;
 pub const BPF_F_CURRENT_NETNS: _bindgen_ty_15 = -1;
 pub type _bindgen_ty_15 = ::aya_ebpf_cty::c_int;
 pub const BPF_CSUM_LEVEL_QUERY: _bindgen_ty_16 = 0;
@@ -1645,6 +1646,7 @@ pub struct __sk_buff {
     pub hwtstamp: __u64,
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union __sk_buff__bindgen_ty_1 {
     pub flow_keys: *mut bpf_flow_keys,
@@ -1659,6 +1661,7 @@ impl __sk_buff__bindgen_ty_1 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union __sk_buff__bindgen_ty_2 {
     pub sk: *mut bpf_sock,
@@ -1890,6 +1893,7 @@ pub struct sk_msg_md {
     pub __bindgen_anon_3: sk_msg_md__bindgen_ty_3,
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_msg_md__bindgen_ty_1 {
     pub data: *mut ::aya_ebpf_cty::c_void,
@@ -1904,6 +1908,7 @@ impl sk_msg_md__bindgen_ty_1 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_msg_md__bindgen_ty_2 {
     pub data_end: *mut ::aya_ebpf_cty::c_void,
@@ -1918,6 +1923,7 @@ impl sk_msg_md__bindgen_ty_2 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_msg_md__bindgen_ty_3 {
     pub sk: *mut bpf_sock,
@@ -1945,6 +1951,7 @@ pub struct sk_reuseport_md {
     pub __bindgen_anon_4: sk_reuseport_md__bindgen_ty_4,
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_1 {
     pub data: *mut ::aya_ebpf_cty::c_void,
@@ -1959,6 +1966,7 @@ impl sk_reuseport_md__bindgen_ty_1 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_2 {
     pub data_end: *mut ::aya_ebpf_cty::c_void,
@@ -1973,6 +1981,7 @@ impl sk_reuseport_md__bindgen_ty_2 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_3 {
     pub sk: *mut bpf_sock,
@@ -1987,6 +1996,7 @@ impl sk_reuseport_md__bindgen_ty_3 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_4 {
     pub migrating_sk: *mut bpf_sock,
@@ -2342,6 +2352,7 @@ pub struct bpf_sock_addr {
     pub __bindgen_anon_1: bpf_sock_addr__bindgen_ty_1,
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sock_addr__bindgen_ty_1 {
     pub sk: *mut bpf_sock,
@@ -2408,6 +2419,7 @@ pub union bpf_sock_ops__bindgen_ty_1 {
     pub replylong: [__u32; 4usize],
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sock_ops__bindgen_ty_2 {
     pub sk: *mut bpf_sock,
@@ -2422,6 +2434,7 @@ impl bpf_sock_ops__bindgen_ty_2 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sock_ops__bindgen_ty_3 {
     pub skb_data: *mut ::aya_ebpf_cty::c_void,
@@ -2436,6 +2449,7 @@ impl bpf_sock_ops__bindgen_ty_3 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sock_ops__bindgen_ty_4 {
     pub skb_data_end: *mut ::aya_ebpf_cty::c_void,
@@ -2737,6 +2751,7 @@ pub struct bpf_sockopt {
     pub retval: __s32,
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sockopt__bindgen_ty_1 {
     pub sk: *mut bpf_sock,
@@ -2751,6 +2766,7 @@ impl bpf_sockopt__bindgen_ty_1 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sockopt__bindgen_ty_2 {
     pub optval: *mut ::aya_ebpf_cty::c_void,
@@ -2765,6 +2781,7 @@ impl bpf_sockopt__bindgen_ty_2 {
     }
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sockopt__bindgen_ty_3 {
     pub optval_end: *mut ::aya_ebpf_cty::c_void,
@@ -2807,6 +2824,7 @@ pub union bpf_sk_lookup__bindgen_ty_1 {
     pub cookie: __u64,
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub union bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1 {
     pub sk: *mut bpf_sock,
@@ -2869,19 +2887,13 @@ pub struct bpf_iter_num {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct pt_regs {
-    pub gpr: [::aya_ebpf_cty::c_ulong; 32usize],
-    pub nip: ::aya_ebpf_cty::c_ulong,
-    pub msr: ::aya_ebpf_cty::c_ulong,
-    pub orig_gpr3: ::aya_ebpf_cty::c_ulong,
-    pub ctr: ::aya_ebpf_cty::c_ulong,
-    pub link: ::aya_ebpf_cty::c_ulong,
-    pub xer: ::aya_ebpf_cty::c_ulong,
-    pub ccr: ::aya_ebpf_cty::c_ulong,
-    pub softe: ::aya_ebpf_cty::c_ulong,
-    pub trap: ::aya_ebpf_cty::c_ulong,
-    pub dar: ::aya_ebpf_cty::c_ulong,
-    pub dsisr: ::aya_ebpf_cty::c_ulong,
-    pub result: ::aya_ebpf_cty::c_ulong,
+    pub regs: [__u64; 32usize],
+    pub lo: __u64,
+    pub hi: __u64,
+    pub cp0_epc: __u64,
+    pub cp0_badvaddr: __u64,
+    pub cp0_status: __u64,
+    pub cp0_cause: __u64,
 }
 pub type sa_family_t = ::aya_ebpf_cty::c_ushort;
 #[repr(C)]
