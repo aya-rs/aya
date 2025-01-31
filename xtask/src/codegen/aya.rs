@@ -216,6 +216,10 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         for x in &vars {
             bindgen = bindgen
                 .allowlist_var(x)
+                // BPF_F_LINK is defined twice. Once in an anonymous enum
+                // which bindgen will constify, and once via #define macro
+                // which generates a duplicate const.
+                .blocklist_var("BPF_F_LINK")
                 .constified_enum("BPF_F_.*")
                 .constified_enum("BTF_KIND_.*")
                 .constified_enum("BTF_VAR_.*")
