@@ -44,7 +44,7 @@ default-members = [
 
     # ebpf crates are omitted; they must be built with:
     # --target bpfe{b,l}-unknown-none
-    # CARGO_CFG_BPF_TARGET_ARCH={x86_64,aarch64,arm,riscv64,powerpc64,s390x}
+    # CARGO_CFG_BPF_TARGET_ARCH={x86_64,aarch64,arm,riscv64,powerpc64,s390x,mips}
 ]
 
 [workspace.package]

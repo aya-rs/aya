@@ -20,11 +20,16 @@ mod powerpc64;
 #[cfg(bpf_target_arch = "s390x")]
 mod s390x;
 
+#[cfg(bpf_target_arch = "mips")]
+mod mips;
+
 mod gen {
     #[cfg(bpf_target_arch = "aarch64")]
     pub use super::aarch64::*;
     #[cfg(bpf_target_arch = "arm")]
     pub use super::armv7::*;
+    #[cfg(bpf_target_arch = "mips")]
+    pub use super::mips::*;
     #[cfg(bpf_target_arch = "powerpc64")]
     pub use super::powerpc64::*;
     #[cfg(bpf_target_arch = "riscv64")]

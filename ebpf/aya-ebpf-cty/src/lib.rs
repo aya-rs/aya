@@ -33,6 +33,9 @@ mod ad {
     #[cfg(bpf_target_arch = "s390x")]
     pub type c_char = super::c_uchar;
 
+    #[cfg(bpf_target_arch = "mips")]
+    pub type c_char = super::c_uchar;
+
     #[cfg(bpf_target_arch = "x86_64")]
     pub type c_char = super::c_schar;
 }

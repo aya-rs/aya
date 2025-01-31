@@ -15,3 +15,6 @@ linker = "powerpc64le-linux-gnu-gcc"
 
 [target.s390x-unknown-linux-gnu]
 linker = "s390x-linux-gnu-gcc"
+
+[target.mips-unknown-linux-gnu]
+linker = "mips-linux-gnu-gcc"

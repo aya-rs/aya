@@ -3,7 +3,8 @@ use core::ffi::c_void;
 #[cfg(any(
     bpf_target_arch = "x86_64",
     bpf_target_arch = "arm",
-    bpf_target_arch = "powerpc64"
+    bpf_target_arch = "powerpc64",
+    bpf_target_arch = "mips"
 ))]
 use crate::bindings::pt_regs;
 // aarch64 uses user_pt_regs instead of pt_regs
