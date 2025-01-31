@@ -82,6 +82,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         "bpf_devmap_val",
         "bpf_stats_type",
         "bpf_perf_event_type",
+        "bpf_task_fd_type",
         // BTF
         "btf_header",
         "btf_ext_info",
