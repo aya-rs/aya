@@ -36,6 +36,10 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
             .clang_args(&["-I", &*libbpf_dir.join("include/uapi").to_string_lossy()])
             .clang_args(&["-I", &*libbpf_dir.join("include").to_string_lossy()])
             .clang_args(&["-I", &*libbpf_dir.join("src").to_string_lossy()])
+            // BPF_F_LINK is defined twice. Once in an anonymous enum
+            // which bindgen will constify, and once via #define macro
+            // which generates a duplicate const.
+            .blocklist_var("BPF_F_LINK")
             // open aya-ebpf-bindings/.../bindings.rs and look for mod
             // _bindgen, those are anonymous enums
             .constified_enum("BPF_F_.*")
