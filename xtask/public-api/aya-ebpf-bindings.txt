@@ -2264,6 +2264,10 @@ pub fn aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4::from(t: T) ->
 impl<Storage> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::convert::AsRef<[u8]> + core::convert::AsMut<[u8]>
 pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::get(&self, bit_offset: usize, bit_width: u8) -> u64
 pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::get_bit(&self, index: usize) -> bool
+pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_get(this: *const Self, bit_offset: usize, bit_width: u8) -> u64
+pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_get_bit(this: *const Self, index: usize) -> bool
+pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_set(this: *mut Self, bit_offset: usize, bit_width: u8, val: u64)
+pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_set_bit(this: *mut Self, index: usize, val: bool)
 pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::set(&mut self, bit_offset: usize, bit_width: u8, val: u64)
 pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::set_bit(&mut self, index: usize, val: bool)
 impl<Storage> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
@@ -3841,10 +3845,14 @@ pub aya_ebpf_bindings::bindings::bpf_insn::imm: aya_ebpf_bindings::bindings::__s
 pub aya_ebpf_bindings::bindings::bpf_insn::off: aya_ebpf_bindings::bindings::__s16
 impl aya_ebpf_bindings::bindings::bpf_insn
 pub fn aya_ebpf_bindings::bindings::bpf_insn::dst_reg(&self) -> aya_ebpf_bindings::bindings::__u8
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::dst_reg_raw(this: *const Self) -> aya_ebpf_bindings::bindings::__u8
 pub fn aya_ebpf_bindings::bindings::bpf_insn::new_bitfield_1(dst_reg: aya_ebpf_bindings::bindings::__u8, src_reg: aya_ebpf_bindings::bindings::__u8) -> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 1]>
 pub fn aya_ebpf_bindings::bindings::bpf_insn::set_dst_reg(&mut self, val: aya_ebpf_bindings::bindings::__u8)
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::set_dst_reg_raw(this: *mut Self, val: aya_ebpf_bindings::bindings::__u8)
 pub fn aya_ebpf_bindings::bindings::bpf_insn::set_src_reg(&mut self, val: aya_ebpf_bindings::bindings::__u8)
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::set_src_reg_raw(this: *mut Self, val: aya_ebpf_bindings::bindings::__u8)
 pub fn aya_ebpf_bindings::bindings::bpf_insn::src_reg(&self) -> aya_ebpf_bindings::bindings::__u8
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::src_reg_raw(this: *const Self) -> aya_ebpf_bindings::bindings::__u8
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_insn
 pub fn aya_ebpf_bindings::bindings::bpf_insn::clone(&self) -> aya_ebpf_bindings::bindings::bpf_insn
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_insn
@@ -5100,8 +5108,10 @@ pub aya_ebpf_bindings::bindings::bpf_prog_info::xlated_prog_insns: aya_ebpf_bind
 pub aya_ebpf_bindings::bindings::bpf_prog_info::xlated_prog_len: aya_ebpf_bindings::bindings::__u32
 impl aya_ebpf_bindings::bindings::bpf_prog_info
 pub fn aya_ebpf_bindings::bindings::bpf_prog_info::gpl_compatible(&self) -> aya_ebpf_bindings::bindings::__u32
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_prog_info::gpl_compatible_raw(this: *const Self) -> aya_ebpf_bindings::bindings::__u32
 pub fn aya_ebpf_bindings::bindings::bpf_prog_info::new_bitfield_1(gpl_compatible: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
 pub fn aya_ebpf_bindings::bindings::bpf_prog_info::set_gpl_compatible(&mut self, val: aya_ebpf_bindings::bindings::__u32)
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_prog_info::set_gpl_compatible_raw(this: *mut Self, val: aya_ebpf_bindings::bindings::__u32)
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_prog_info
 pub fn aya_ebpf_bindings::bindings::bpf_prog_info::clone(&self) -> aya_ebpf_bindings::bindings::bpf_prog_info
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_prog_info
@@ -6976,7 +6986,10 @@ pub const aya_ebpf_bindings::bindings::SO_TXTIME: u32
 pub const aya_ebpf_bindings::bindings::SO_TYPE: u32
 pub const aya_ebpf_bindings::bindings::SO_WIFI_STATUS: u32
 pub const aya_ebpf_bindings::bindings::SO_ZEROCOPY: u32
+pub const aya_ebpf_bindings::bindings::TC_ACT_EXT_OPCODE_MAX: u32
 pub const aya_ebpf_bindings::bindings::TC_ACT_EXT_VAL_MASK: i32
+pub const aya_ebpf_bindings::bindings::TC_ACT_GOTO_CHAIN: u32
+pub const aya_ebpf_bindings::bindings::TC_ACT_JUMP: u32
 pub const aya_ebpf_bindings::bindings::TC_ACT_OK: i32
 pub const aya_ebpf_bindings::bindings::TC_ACT_PIPE: i32
 pub const aya_ebpf_bindings::bindings::TC_ACT_QUEUED: i32

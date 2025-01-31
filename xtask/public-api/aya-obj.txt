@@ -1925,6 +1925,52 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_stats_type where 
 pub unsafe fn aya_obj::generated::bpf_stats_type::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_stats_type
 pub fn aya_obj::generated::bpf_stats_type::from(t: T) -> T
+#[repr(u32)] pub enum aya_obj::generated::bpf_task_fd_type
+pub aya_obj::generated::bpf_task_fd_type::BPF_FD_TYPE_KPROBE = 2
+pub aya_obj::generated::bpf_task_fd_type::BPF_FD_TYPE_KRETPROBE = 3
+pub aya_obj::generated::bpf_task_fd_type::BPF_FD_TYPE_RAW_TRACEPOINT = 0
+pub aya_obj::generated::bpf_task_fd_type::BPF_FD_TYPE_TRACEPOINT = 1
+pub aya_obj::generated::bpf_task_fd_type::BPF_FD_TYPE_UPROBE = 4
+pub aya_obj::generated::bpf_task_fd_type::BPF_FD_TYPE_URETPROBE = 5
+impl core::clone::Clone for aya_obj::generated::bpf_task_fd_type
+pub fn aya_obj::generated::bpf_task_fd_type::clone(&self) -> aya_obj::generated::bpf_task_fd_type
+impl core::cmp::Eq for aya_obj::generated::bpf_task_fd_type
+impl core::cmp::PartialEq for aya_obj::generated::bpf_task_fd_type
+pub fn aya_obj::generated::bpf_task_fd_type::eq(&self, other: &aya_obj::generated::bpf_task_fd_type) -> bool
+impl core::fmt::Debug for aya_obj::generated::bpf_task_fd_type
+pub fn aya_obj::generated::bpf_task_fd_type::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya_obj::generated::bpf_task_fd_type
+pub fn aya_obj::generated::bpf_task_fd_type::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya_obj::generated::bpf_task_fd_type
+impl core::marker::StructuralPartialEq for aya_obj::generated::bpf_task_fd_type
+impl core::marker::Freeze for aya_obj::generated::bpf_task_fd_type
+impl core::marker::Send for aya_obj::generated::bpf_task_fd_type
+impl core::marker::Sync for aya_obj::generated::bpf_task_fd_type
+impl core::marker::Unpin for aya_obj::generated::bpf_task_fd_type
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_task_fd_type
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_task_fd_type
+impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_task_fd_type where U: core::convert::From<T>
+pub fn aya_obj::generated::bpf_task_fd_type::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::bpf_task_fd_type where U: core::convert::Into<T>
+pub type aya_obj::generated::bpf_task_fd_type::Error = core::convert::Infallible
+pub fn aya_obj::generated::bpf_task_fd_type::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::bpf_task_fd_type where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::bpf_task_fd_type::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::bpf_task_fd_type::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::bpf_task_fd_type where T: core::clone::Clone
+pub type aya_obj::generated::bpf_task_fd_type::Owned = T
+pub fn aya_obj::generated::bpf_task_fd_type::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::bpf_task_fd_type::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::bpf_task_fd_type where T: 'static + ?core::marker::Sized
+pub fn aya_obj::generated::bpf_task_fd_type::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::bpf_task_fd_type where T: ?core::marker::Sized
+pub fn aya_obj::generated::bpf_task_fd_type::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_task_fd_type where T: ?core::marker::Sized
+pub fn aya_obj::generated::bpf_task_fd_type::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_task_fd_type where T: core::clone::Clone
+pub unsafe fn aya_obj::generated::bpf_task_fd_type::clone_to_uninit(&self, dst: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::generated::bpf_task_fd_type
+pub fn aya_obj::generated::bpf_task_fd_type::from(t: T) -> T
 #[repr(u32)] pub enum aya_obj::generated::btf_func_linkage
 pub aya_obj::generated::btf_func_linkage::BTF_FUNC_EXTERN = 2
 pub aya_obj::generated::btf_func_linkage::BTF_FUNC_GLOBAL = 1
@@ -3394,6 +3440,10 @@ pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1::from(t: T) -> T
 impl<Storage> aya_obj::generated::__BindgenBitfieldUnit<Storage> where Storage: core::convert::AsRef<[u8]> + core::convert::AsMut<[u8]>
 pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::get(&self, bit_offset: usize, bit_width: u8) -> u64
 pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::get_bit(&self, index: usize) -> bool
+pub unsafe fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::raw_get(this: *const Self, bit_offset: usize, bit_width: u8) -> u64
+pub unsafe fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::raw_get_bit(this: *const Self, index: usize) -> bool
+pub unsafe fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::raw_set(this: *mut Self, bit_offset: usize, bit_width: u8, val: u64)
+pub unsafe fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::raw_set_bit(this: *mut Self, index: usize, val: bool)
 pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::set(&mut self, bit_offset: usize, bit_width: u8, val: u64)
 pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::set_bit(&mut self, index: usize, val: bool)
 impl<Storage> aya_obj::generated::__BindgenBitfieldUnit<Storage>
@@ -4768,10 +4818,14 @@ pub aya_obj::generated::bpf_insn::imm: aya_obj::generated::__s32
 pub aya_obj::generated::bpf_insn::off: aya_obj::generated::__s16
 impl aya_obj::generated::bpf_insn
 pub fn aya_obj::generated::bpf_insn::dst_reg(&self) -> aya_obj::generated::__u8
+pub unsafe fn aya_obj::generated::bpf_insn::dst_reg_raw(this: *const Self) -> aya_obj::generated::__u8
 pub fn aya_obj::generated::bpf_insn::new_bitfield_1(dst_reg: aya_obj::generated::__u8, src_reg: aya_obj::generated::__u8) -> aya_obj::generated::__BindgenBitfieldUnit<[u8; 1]>
 pub fn aya_obj::generated::bpf_insn::set_dst_reg(&mut self, val: aya_obj::generated::__u8)
+pub unsafe fn aya_obj::generated::bpf_insn::set_dst_reg_raw(this: *mut Self, val: aya_obj::generated::__u8)
 pub fn aya_obj::generated::bpf_insn::set_src_reg(&mut self, val: aya_obj::generated::__u8)
+pub unsafe fn aya_obj::generated::bpf_insn::set_src_reg_raw(this: *mut Self, val: aya_obj::generated::__u8)
 pub fn aya_obj::generated::bpf_insn::src_reg(&self) -> aya_obj::generated::__u8
+pub unsafe fn aya_obj::generated::bpf_insn::src_reg_raw(this: *const Self) -> aya_obj::generated::__u8
 impl core::clone::Clone for aya_obj::generated::bpf_insn
 pub fn aya_obj::generated::bpf_insn::clone(&self) -> aya_obj::generated::bpf_insn
 impl core::fmt::Debug for aya_obj::generated::bpf_insn
@@ -5745,8 +5799,10 @@ pub aya_obj::generated::bpf_prog_info::xlated_prog_insns: aya_obj::generated::__
 pub aya_obj::generated::bpf_prog_info::xlated_prog_len: aya_obj::generated::__u32
 impl aya_obj::generated::bpf_prog_info
 pub fn aya_obj::generated::bpf_prog_info::gpl_compatible(&self) -> aya_obj::generated::__u32
+pub unsafe fn aya_obj::generated::bpf_prog_info::gpl_compatible_raw(this: *const Self) -> aya_obj::generated::__u32
 pub fn aya_obj::generated::bpf_prog_info::new_bitfield_1(gpl_compatible: aya_obj::generated::__u32) -> aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
 pub fn aya_obj::generated::bpf_prog_info::set_gpl_compatible(&mut self, val: aya_obj::generated::__u32)
+pub unsafe fn aya_obj::generated::bpf_prog_info::set_gpl_compatible_raw(this: *mut Self, val: aya_obj::generated::__u32)
 impl core::clone::Clone for aya_obj::generated::bpf_prog_info
 pub fn aya_obj::generated::bpf_prog_info::clone(&self) -> aya_obj::generated::bpf_prog_info
 impl core::fmt::Debug for aya_obj::generated::bpf_prog_info
@@ -6221,82 +6277,158 @@ pub aya_obj::generated::perf_event_attr::size: aya_obj::generated::__u32
 pub aya_obj::generated::perf_event_attr::type_: aya_obj::generated::__u32
 impl aya_obj::generated::perf_event_attr
 pub fn aya_obj::generated::perf_event_attr::__reserved_1(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::__reserved_1_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::aux_output(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::aux_output_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::bpf_event(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::bpf_event_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::build_id(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::build_id_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::cgroup(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::cgroup_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::comm(&self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::comm_exec(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::comm_exec_raw(this: *const Self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::comm_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::context_switch(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::context_switch_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::disabled(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::disabled_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::enable_on_exec(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::enable_on_exec_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::exclude_callchain_kernel(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::exclude_callchain_kernel_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::exclude_callchain_user(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::exclude_callchain_user_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::exclude_guest(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::exclude_guest_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::exclude_host(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::exclude_host_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::exclude_hv(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::exclude_hv_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::exclude_idle(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::exclude_idle_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::exclude_kernel(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::exclude_kernel_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::exclude_user(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::exclude_user_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::exclusive(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::exclusive_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::freq(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::freq_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::inherit(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::inherit_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::inherit_stat(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::inherit_stat_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::inherit_thread(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::inherit_thread_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::ksymbol(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::ksymbol_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::mmap(&self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::mmap2(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::mmap2_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::mmap_data(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::mmap_data_raw(this: *const Self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::mmap_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::namespaces(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::namespaces_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::new_bitfield_1(disabled: aya_obj::generated::__u64, inherit: aya_obj::generated::__u64, pinned: aya_obj::generated::__u64, exclusive: aya_obj::generated::__u64, exclude_user: aya_obj::generated::__u64, exclude_kernel: aya_obj::generated::__u64, exclude_hv: aya_obj::generated::__u64, exclude_idle: aya_obj::generated::__u64, mmap: aya_obj::generated::__u64, comm: aya_obj::generated::__u64, freq: aya_obj::generated::__u64, inherit_stat: aya_obj::generated::__u64, enable_on_exec: aya_obj::generated::__u64, task: aya_obj::generated::__u64, watermark: aya_obj::generated::__u64, precise_ip: aya_obj::generated::__u64, mmap_data: aya_obj::generated::__u64, sample_id_all: aya_obj::generated::__u64, exclude_host: aya_obj::generated::__u64, exclude_guest: aya_obj::generated::__u64, exclude_callchain_kernel: aya_obj::generated::__u64, exclude_callchain_user: aya_obj::generated::__u64, mmap2: aya_obj::generated::__u64, comm_exec: aya_obj::generated::__u64, use_clockid: aya_obj::generated::__u64, context_switch: aya_obj::generated::__u64, write_backward: aya_obj::generated::__u64, namespaces: aya_obj::generated::__u64, ksymbol: aya_obj::generated::__u64, bpf_event: aya_obj::generated::__u64, aux_output: aya_obj::generated::__u64, cgroup: aya_obj::generated::__u64, text_poke: aya_obj::generated::__u64, build_id: aya_obj::generated::__u64, inherit_thread: aya_obj::generated::__u64, remove_on_exec: aya_obj::generated::__u64, sigtrap: aya_obj::generated::__u64, __reserved_1: aya_obj::generated::__u64) -> aya_obj::generated::__BindgenBitfieldUnit<[u8; 8]>
 pub fn aya_obj::generated::perf_event_attr::pinned(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::pinned_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::precise_ip(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::precise_ip_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::remove_on_exec(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::remove_on_exec_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::sample_id_all(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::sample_id_all_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::set___reserved_1(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set___reserved_1_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_aux_output(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_aux_output_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_bpf_event(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_bpf_event_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_build_id(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_build_id_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_cgroup(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_cgroup_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_comm(&mut self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_comm_exec(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_comm_exec_raw(this: *mut Self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_comm_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_context_switch(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_context_switch_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_disabled(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_disabled_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_enable_on_exec(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_enable_on_exec_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_exclude_callchain_kernel(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_exclude_callchain_kernel_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_exclude_callchain_user(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_exclude_callchain_user_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_exclude_guest(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_exclude_guest_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_exclude_host(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_exclude_host_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_exclude_hv(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_exclude_hv_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_exclude_idle(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_exclude_idle_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_exclude_kernel(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_exclude_kernel_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_exclude_user(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_exclude_user_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_exclusive(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_exclusive_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_freq(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_freq_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_inherit(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_inherit_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_inherit_stat(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_inherit_stat_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_inherit_thread(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_inherit_thread_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_ksymbol(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_ksymbol_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_mmap(&mut self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_mmap2(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_mmap2_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_mmap_data(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_mmap_data_raw(this: *mut Self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_mmap_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_namespaces(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_namespaces_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_pinned(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_pinned_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_precise_ip(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_precise_ip_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_remove_on_exec(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_remove_on_exec_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_sample_id_all(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_sample_id_all_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_sigtrap(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_sigtrap_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_task(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_task_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_text_poke(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_text_poke_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_use_clockid(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_use_clockid_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_watermark(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_watermark_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::set_write_backward(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_attr::set_write_backward_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_attr::sigtrap(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::sigtrap_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::task(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::task_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::text_poke(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::text_poke_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::use_clockid(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::use_clockid_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::watermark(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::watermark_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_attr::write_backward(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_attr::write_backward_raw(this: *const Self) -> aya_obj::generated::__u64
 impl core::clone::Clone for aya_obj::generated::perf_event_attr
 pub fn aya_obj::generated::perf_event_attr::clone(&self) -> aya_obj::generated::perf_event_attr
 impl core::marker::Copy for aya_obj::generated::perf_event_attr
@@ -6428,20 +6560,34 @@ pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::_bitfi
 pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::_bitfield_align_1: [u64; 0]
 impl aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_____res(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_____res_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_bit0(&self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_bit0_is_deprecated(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_bit0_is_deprecated_raw(this: *const Self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_bit0_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_user_rdpmc(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_user_rdpmc_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_user_time(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_user_time_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_user_time_short(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_user_time_short_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_user_time_zero(&self) -> aya_obj::generated::__u64
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_user_time_zero_raw(this: *const Self) -> aya_obj::generated::__u64
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::new_bitfield_1(cap_bit0: aya_obj::generated::__u64, cap_bit0_is_deprecated: aya_obj::generated::__u64, cap_user_rdpmc: aya_obj::generated::__u64, cap_user_time: aya_obj::generated::__u64, cap_user_time_zero: aya_obj::generated::__u64, cap_user_time_short: aya_obj::generated::__u64, cap_____res: aya_obj::generated::__u64) -> aya_obj::generated::__BindgenBitfieldUnit<[u8; 8]>
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_____res(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_____res_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_bit0(&mut self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_bit0_is_deprecated(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_bit0_is_deprecated_raw(this: *mut Self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_bit0_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_user_rdpmc(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_user_rdpmc_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_user_time(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_user_time_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_user_time_short(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_user_time_short_raw(this: *mut Self, val: aya_obj::generated::__u64)
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_user_time_zero(&mut self, val: aya_obj::generated::__u64)
+pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::set_cap_user_time_zero_raw(this: *mut Self, val: aya_obj::generated::__u64)
 impl core::clone::Clone for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::clone(&self) -> aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 impl core::fmt::Debug for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
@@ -6671,6 +6817,18 @@ pub const aya_obj::generated::NFPROTO_NUMPROTO: aya_obj::generated::_bindgen_ty_
 pub const aya_obj::generated::NFPROTO_UNSPEC: aya_obj::generated::_bindgen_ty_99
 pub const aya_obj::generated::NLMSG_ALIGNTO: u32
 pub const aya_obj::generated::NR_BTF_KINDS: aya_obj::generated::_bindgen_ty_42
+pub const aya_obj::generated::PERF_EVENT_IOC_DISABLE: u32
+pub const aya_obj::generated::PERF_EVENT_IOC_ENABLE: u32
+pub const aya_obj::generated::PERF_EVENT_IOC_ID: u32
+pub const aya_obj::generated::PERF_EVENT_IOC_MODIFY_ATTRIBUTES: u32
+pub const aya_obj::generated::PERF_EVENT_IOC_PAUSE_OUTPUT: u32
+pub const aya_obj::generated::PERF_EVENT_IOC_PERIOD: u32
+pub const aya_obj::generated::PERF_EVENT_IOC_QUERY_BPF: u32
+pub const aya_obj::generated::PERF_EVENT_IOC_REFRESH: u32
+pub const aya_obj::generated::PERF_EVENT_IOC_RESET: u32
+pub const aya_obj::generated::PERF_EVENT_IOC_SET_BPF: u32
+pub const aya_obj::generated::PERF_EVENT_IOC_SET_FILTER: u32
+pub const aya_obj::generated::PERF_EVENT_IOC_SET_OUTPUT: u32
 pub const aya_obj::generated::PERF_FLAG_FD_CLOEXEC: u32
 pub const aya_obj::generated::PERF_FLAG_FD_NO_GROUP: u32
 pub const aya_obj::generated::PERF_FLAG_FD_OUTPUT: u32

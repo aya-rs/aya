@@ -14,10 +14,7 @@ where
     Storage: AsRef<[u8]> + AsMut<[u8]>,
 {
     #[inline]
-    pub fn get_bit(&self, index: usize) -> bool {
-        debug_assert!(index / 8 < self.storage.as_ref().len());
-        let byte_index = index / 8;
-        let byte = self.storage.as_ref()[byte_index];
+    fn extract_bit(byte: u8, index: usize) -> bool {
         let bit_index = if cfg!(target_endian = "big") {
             7 - (index % 8)
         } else {
@@ -27,10 +24,21 @@ where
         byte & mask == mask
     }
     #[inline]
-    pub fn set_bit(&mut self, index: usize, val: bool) {
+    pub fn get_bit(&self, index: usize) -> bool {
         debug_assert!(index / 8 < self.storage.as_ref().len());
         let byte_index = index / 8;
-        let byte = &mut self.storage.as_mut()[byte_index];
+        let byte = self.storage.as_ref()[byte_index];
+        Self::extract_bit(byte, index)
+    }
+    #[inline]
+    pub unsafe fn raw_get_bit(this: *const Self, index: usize) -> bool {
+        debug_assert!(index / 8 < core::mem::size_of::<Storage>());
+        let byte_index = index / 8;
+        let byte = *(core::ptr::addr_of!((*this).storage) as *const u8).offset(byte_index as isize);
+        Self::extract_bit(byte, index)
+    }
+    #[inline]
+    fn change_bit(byte: u8, index: usize, val: bool) -> u8 {
         let bit_index = if cfg!(target_endian = "big") {
             7 - (index % 8)
         } else {
@@ -38,10 +46,25 @@ where
         };
         let mask = 1 << bit_index;
         if val {
-            *byte |= mask;
+            byte | mask
         } else {
-            *byte &= !mask;
+            byte & !mask
         }
+    }
+    #[inline]
+    pub fn set_bit(&mut self, index: usize, val: bool) {
+        debug_assert!(index / 8 < self.storage.as_ref().len());
+        let byte_index = index / 8;
+        let byte = &mut self.storage.as_mut()[byte_index];
+        *byte = Self::change_bit(*byte, index, val);
+    }
+    #[inline]
+    pub unsafe fn raw_set_bit(this: *mut Self, index: usize, val: bool) {
+        debug_assert!(index / 8 < core::mem::size_of::<Storage>());
+        let byte_index = index / 8;
+        let byte =
+            (core::ptr::addr_of_mut!((*this).storage) as *mut u8).offset(byte_index as isize);
+        *byte = Self::change_bit(*byte, index, val);
     }
     #[inline]
     pub fn get(&self, bit_offset: usize, bit_width: u8) -> u64 {
@@ -51,6 +74,24 @@ where
         let mut val = 0;
         for i in 0..(bit_width as usize) {
             if self.get_bit(i + bit_offset) {
+                let index = if cfg!(target_endian = "big") {
+                    bit_width as usize - 1 - i
+                } else {
+                    i
+                };
+                val |= 1 << index;
+            }
+        }
+        val
+    }
+    #[inline]
+    pub unsafe fn raw_get(this: *const Self, bit_offset: usize, bit_width: u8) -> u64 {
+        debug_assert!(bit_width <= 64);
+        debug_assert!(bit_offset / 8 < core::mem::size_of::<Storage>());
+        debug_assert!((bit_offset + (bit_width as usize)) / 8 <= core::mem::size_of::<Storage>());
+        let mut val = 0;
+        for i in 0..(bit_width as usize) {
+            if Self::raw_get_bit(this, i + bit_offset) {
                 let index = if cfg!(target_endian = "big") {
                     bit_width as usize - 1 - i
                 } else {
@@ -75,6 +116,22 @@ where
                 i
             };
             self.set_bit(index + bit_offset, val_bit_is_set);
+        }
+    }
+    #[inline]
+    pub unsafe fn raw_set(this: *mut Self, bit_offset: usize, bit_width: u8, val: u64) {
+        debug_assert!(bit_width <= 64);
+        debug_assert!(bit_offset / 8 < core::mem::size_of::<Storage>());
+        debug_assert!((bit_offset + (bit_width as usize)) / 8 <= core::mem::size_of::<Storage>());
+        for i in 0..(bit_width as usize) {
+            let mask = 1 << i;
+            let val_bit_is_set = val & mask == mask;
+            let index = if cfg!(target_endian = "big") {
+                bit_width as usize - 1 - i
+            } else {
+                i
+            };
+            Self::raw_set_bit(this, index + bit_offset, val_bit_is_set);
         }
     }
 }
@@ -211,6 +268,9 @@ pub const TC_ACT_REDIRECT: u32 = 7;
 pub const TC_ACT_TRAP: u32 = 8;
 pub const TC_ACT_VALUE_MAX: u32 = 8;
 pub const TC_ACT_EXT_VAL_MASK: u32 = 268435455;
+pub const TC_ACT_JUMP: u32 = 268435456;
+pub const TC_ACT_GOTO_CHAIN: u32 = 536870912;
+pub const TC_ACT_EXT_OPCODE_MAX: u32 = 536870912;
 pub const SOL_SOCKET: u32 = 1;
 pub const SO_DEBUG: u32 = 1;
 pub const SO_REUSEADDR: u32 = 2;
@@ -434,6 +494,28 @@ impl bpf_insn {
         }
     }
     #[inline]
+    pub unsafe fn dst_reg_raw(this: *const Self) -> __u8 {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                0usize,
+                4u8,
+            ) as u8)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_dst_reg_raw(this: *mut Self, val: __u8) {
+        unsafe {
+            let val: u8 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                0usize,
+                4u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn src_reg(&self) -> __u8 {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(4usize, 4u8) as u8) }
     }
@@ -442,6 +524,28 @@ impl bpf_insn {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
             self._bitfield_1.set(4usize, 4u8, val as u64)
+        }
+    }
+    #[inline]
+    pub unsafe fn src_reg_raw(this: *const Self) -> __u8 {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                4usize,
+                4u8,
+            ) as u8)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_src_reg_raw(this: *mut Self, val: __u8) {
+        unsafe {
+            let val: u8 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                4usize,
+                4u8,
+                val as u64,
+            )
         }
     }
     #[inline]
@@ -1957,6 +2061,28 @@ impl bpf_prog_info {
         }
     }
     #[inline]
+    pub unsafe fn gpl_compatible_raw(this: *const Self) -> __u32 {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 4usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                0usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_gpl_compatible_raw(this: *mut Self, val: __u32) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                0usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn new_bitfield_1(gpl_compatible: __u32) -> __BindgenBitfieldUnit<[u8; 4usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
         __bindgen_bitfield_unit.set(0usize, 1u8, {
@@ -2805,6 +2931,28 @@ impl per_cr_bits {
         }
     }
     #[inline]
+    pub unsafe fn em_branching_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 8usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                32usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_em_branching_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 8usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                32usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn em_instruction_fetch(&self) -> ::aya_ebpf_cty::c_uint {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(33usize, 1u8) as u32) }
     }
@@ -2813,6 +2961,28 @@ impl per_cr_bits {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
             self._bitfield_1.set(33usize, 1u8, val as u64)
+        }
+    }
+    #[inline]
+    pub unsafe fn em_instruction_fetch_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 8usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                33usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_em_instruction_fetch_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 8usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                33usize,
+                1u8,
+                val as u64,
+            )
         }
     }
     #[inline]
@@ -2827,6 +2997,28 @@ impl per_cr_bits {
         }
     }
     #[inline]
+    pub unsafe fn em_storage_alteration_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 8usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                34usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_em_storage_alteration_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 8usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                34usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn em_gpr_alt_unused(&self) -> ::aya_ebpf_cty::c_uint {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(35usize, 1u8) as u32) }
     }
@@ -2835,6 +3027,28 @@ impl per_cr_bits {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
             self._bitfield_1.set(35usize, 1u8, val as u64)
+        }
+    }
+    #[inline]
+    pub unsafe fn em_gpr_alt_unused_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 8usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                35usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_em_gpr_alt_unused_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 8usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                35usize,
+                1u8,
+                val as u64,
+            )
         }
     }
     #[inline]
@@ -2849,6 +3063,28 @@ impl per_cr_bits {
         }
     }
     #[inline]
+    pub unsafe fn em_store_real_address_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 8usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                36usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_em_store_real_address_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 8usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                36usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn branch_addr_ctl(&self) -> ::aya_ebpf_cty::c_uint {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(40usize, 1u8) as u32) }
     }
@@ -2860,6 +3096,28 @@ impl per_cr_bits {
         }
     }
     #[inline]
+    pub unsafe fn branch_addr_ctl_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 8usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                40usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_branch_addr_ctl_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 8usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                40usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn storage_alt_space_ctl(&self) -> ::aya_ebpf_cty::c_uint {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(42usize, 1u8) as u32) }
     }
@@ -2868,6 +3126,28 @@ impl per_cr_bits {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
             self._bitfield_1.set(42usize, 1u8, val as u64)
+        }
+    }
+    #[inline]
+    pub unsafe fn storage_alt_space_ctl_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 8usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                42usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_storage_alt_space_ctl_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 8usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                42usize,
+                1u8,
+                val as u64,
+            )
         }
     }
     #[inline]
@@ -2945,6 +3225,28 @@ impl per_lowcore_bits {
         }
     }
     #[inline]
+    pub unsafe fn perc_branching_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                0usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_perc_branching_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                0usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn perc_instruction_fetch(&self) -> ::aya_ebpf_cty::c_uint {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(1usize, 1u8) as u32) }
     }
@@ -2953,6 +3255,28 @@ impl per_lowcore_bits {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
             self._bitfield_1.set(1usize, 1u8, val as u64)
+        }
+    }
+    #[inline]
+    pub unsafe fn perc_instruction_fetch_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                1usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_perc_instruction_fetch_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                1usize,
+                1u8,
+                val as u64,
+            )
         }
     }
     #[inline]
@@ -2967,6 +3291,28 @@ impl per_lowcore_bits {
         }
     }
     #[inline]
+    pub unsafe fn perc_storage_alteration_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                2usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_perc_storage_alteration_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                2usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn perc_gpr_alt_unused(&self) -> ::aya_ebpf_cty::c_uint {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(3usize, 1u8) as u32) }
     }
@@ -2975,6 +3321,28 @@ impl per_lowcore_bits {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
             self._bitfield_1.set(3usize, 1u8, val as u64)
+        }
+    }
+    #[inline]
+    pub unsafe fn perc_gpr_alt_unused_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                3usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_perc_gpr_alt_unused_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                3usize,
+                1u8,
+                val as u64,
+            )
         }
     }
     #[inline]
@@ -2989,6 +3357,28 @@ impl per_lowcore_bits {
         }
     }
     #[inline]
+    pub unsafe fn perc_store_real_address_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                4usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_perc_store_real_address_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                4usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn atmid_psw_bit_31(&self) -> ::aya_ebpf_cty::c_uint {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(8usize, 1u8) as u32) }
     }
@@ -2997,6 +3387,28 @@ impl per_lowcore_bits {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
             self._bitfield_1.set(8usize, 1u8, val as u64)
+        }
+    }
+    #[inline]
+    pub unsafe fn atmid_psw_bit_31_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                8usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_atmid_psw_bit_31_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                8usize,
+                1u8,
+                val as u64,
+            )
         }
     }
     #[inline]
@@ -3011,6 +3423,28 @@ impl per_lowcore_bits {
         }
     }
     #[inline]
+    pub unsafe fn atmid_validity_bit_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                9usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_atmid_validity_bit_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                9usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn atmid_psw_bit_32(&self) -> ::aya_ebpf_cty::c_uint {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(10usize, 1u8) as u32) }
     }
@@ -3019,6 +3453,28 @@ impl per_lowcore_bits {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
             self._bitfield_1.set(10usize, 1u8, val as u64)
+        }
+    }
+    #[inline]
+    pub unsafe fn atmid_psw_bit_32_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                10usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_atmid_psw_bit_32_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                10usize,
+                1u8,
+                val as u64,
+            )
         }
     }
     #[inline]
@@ -3033,6 +3489,28 @@ impl per_lowcore_bits {
         }
     }
     #[inline]
+    pub unsafe fn atmid_psw_bit_5_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                11usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_atmid_psw_bit_5_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                11usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn atmid_psw_bit_16(&self) -> ::aya_ebpf_cty::c_uint {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(12usize, 1u8) as u32) }
     }
@@ -3041,6 +3519,28 @@ impl per_lowcore_bits {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
             self._bitfield_1.set(12usize, 1u8, val as u64)
+        }
+    }
+    #[inline]
+    pub unsafe fn atmid_psw_bit_16_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                12usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_atmid_psw_bit_16_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                12usize,
+                1u8,
+                val as u64,
+            )
         }
     }
     #[inline]
@@ -3055,6 +3555,28 @@ impl per_lowcore_bits {
         }
     }
     #[inline]
+    pub unsafe fn atmid_psw_bit_17_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                13usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_atmid_psw_bit_17_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                13usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn si(&self) -> ::aya_ebpf_cty::c_uint {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(14usize, 2u8) as u32) }
     }
@@ -3063,6 +3585,28 @@ impl per_lowcore_bits {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
             self._bitfield_1.set(14usize, 2u8, val as u64)
+        }
+    }
+    #[inline]
+    pub unsafe fn si_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 2usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                14usize,
+                2u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_si_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 2usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                14usize,
+                2u8,
+                val as u64,
+            )
         }
     }
     #[inline]
@@ -3146,6 +3690,28 @@ impl per_lowcore_bits {
         }
     }
     #[inline]
+    pub unsafe fn access_id_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_2),
+                4usize,
+                4u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_access_id_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_2),
+                4usize,
+                4u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn new_bitfield_2(
         access_id: ::aya_ebpf_cty::c_uint,
     ) -> __BindgenBitfieldUnit<[u8; 1usize]> {
@@ -3192,6 +3758,28 @@ impl per_struct {
         }
     }
     #[inline]
+    pub unsafe fn single_step_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 4usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                0usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_single_step_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                0usize,
+                1u8,
+                val as u64,
+            )
+        }
+    }
+    #[inline]
     pub fn instruction_fetch(&self) -> ::aya_ebpf_cty::c_uint {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(1usize, 1u8) as u32) }
     }
@@ -3200,6 +3788,28 @@ impl per_struct {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
             self._bitfield_1.set(1usize, 1u8, val as u64)
+        }
+    }
+    #[inline]
+    pub unsafe fn instruction_fetch_raw(this: *const Self) -> ::aya_ebpf_cty::c_uint {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 4usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                1usize,
+                1u8,
+            ) as u32)
+        }
+    }
+    #[inline]
+    pub unsafe fn set_instruction_fetch_raw(this: *mut Self, val: ::aya_ebpf_cty::c_uint) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_set(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                1usize,
+                1u8,
+                val as u64,
+            )
         }
     }
     #[inline]
