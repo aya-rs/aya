@@ -630,6 +630,25 @@ fn test_ofmaps_rust() {
     assert_eq!(m.get(&0, 0).unwrap(), 24);
 }
 
+#[test]
+fn test_prog_array() {
+    let mut bpf = EbpfLoader::new().load(crate::PROG_ARRAY).unwrap();
+    let prog: &mut UProbe = bpf
+        .program_mut("prog_array_test")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+    prog.attach("trigger_mim_test_program", "/proc/self/exe", None, None)
+        .unwrap();
+
+    assert_loaded("mim_test_array");
+
+    // prog test run
+
+    assert_eq!(m.get(&0, 0).unwrap(), 24);
+}
+
 #[no_mangle]
 #[inline(never)]
 pub extern "C" fn trigger_mim_test_program() {
