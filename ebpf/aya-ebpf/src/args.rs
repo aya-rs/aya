@@ -1,7 +1,8 @@
 #[cfg(any(
     bpf_target_arch = "x86_64",
     bpf_target_arch = "arm",
-    bpf_target_arch = "powerpc64"
+    bpf_target_arch = "powerpc64",
+    bpf_target_arch = "mips",
 ))]
 use crate::bindings::pt_regs;
 // aarch64 uses user_pt_regs instead of pt_regs
@@ -203,6 +204,22 @@ impl<T> FromPtRegs for *const T {
     }
 }
 
+#[cfg(bpf_target_arch = "mips")]
+impl<T> FromPtRegs for *const T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        // Assume N64 ABI like libbpf does.
+        if n <= 7 {
+            unsafe { bpf_probe_read(&ctx.regs[n + 4]).map(|v| v as *const _).ok() }
+        } else {
+            None
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.regs[31]).map(|v| v as *const _).ok() }
+    }
+}
+
 #[cfg(bpf_target_arch = "x86_64")]
 impl<T> FromPtRegs for *mut T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
@@ -300,6 +317,22 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
         unsafe { bpf_probe_read(&ctx.gprs[2]).map(|v| v as *mut _).ok() }
+    }
+}
+
+#[cfg(bpf_target_arch = "mips")]
+impl<T> FromPtRegs for *mut T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        // Assume N64 ABI like libbpf does.
+        if n <= 7 {
+            unsafe { bpf_probe_read(&ctx.regs[n + 4]).map(|v| v as *mut _).ok() }
+        } else {
+            None
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.regs[31]).map(|v| v as *mut _).ok() }
     }
 }
 
@@ -403,6 +436,21 @@ macro_rules! impl_from_pt_regs {
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
                 Some(ctx.gprs[2] as *const $type as _)
+            }
+        }
+
+        #[cfg(bpf_target_arch = "mips")]
+        impl FromPtRegs for $type {
+            fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+                if n <= 7 {
+                    Some(ctx.regs[n + 4] as *const $type as _)
+                } else {
+                    None
+                }
+            }
+
+            fn from_retval(ctx: &pt_regs) -> Option<Self> {
+                Some(ctx.regs[31] as *const $type as _)
             }
         }
     };
