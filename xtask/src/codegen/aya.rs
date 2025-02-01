@@ -111,6 +111,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         // NETLINK
         "ifinfomsg",
         "tcmsg",
+        "nlmsgerr_attrs",
         // ITER
         "bpf_cgroup_iter_order",
         // NETFILTER
