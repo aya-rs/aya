@@ -1557,6 +1557,18 @@ pub struct btf_var_secinfo {
 pub struct btf_decl_tag {
     pub component_idx: __s32,
 }
+impl nlmsgerr_attrs {
+    pub const NLMSGERR_ATTR_MAX: nlmsgerr_attrs = nlmsgerr_attrs::NLMSGERR_ATTR_COOKIE;
+}
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum nlmsgerr_attrs {
+    NLMSGERR_ATTR_UNUSED = 0,
+    NLMSGERR_ATTR_MSG = 1,
+    NLMSGERR_ATTR_OFFS = 2,
+    NLMSGERR_ATTR_COOKIE = 3,
+    __NLMSGERR_ATTR_MAX = 4,
+}
 pub const IFLA_XDP_UNSPEC: _bindgen_ty_92 = 0;
 pub const IFLA_XDP_FD: _bindgen_ty_92 = 1;
 pub const IFLA_XDP_ATTACHED: _bindgen_ty_92 = 2;

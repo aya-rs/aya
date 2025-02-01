@@ -2060,6 +2060,53 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::nf_inet_hooks where T
 pub unsafe fn aya_obj::generated::nf_inet_hooks::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::nf_inet_hooks
 pub fn aya_obj::generated::nf_inet_hooks::from(t: T) -> T
+#[repr(u32)] pub enum aya_obj::generated::nlmsgerr_attrs
+pub aya_obj::generated::nlmsgerr_attrs::NLMSGERR_ATTR_COOKIE = 3
+pub aya_obj::generated::nlmsgerr_attrs::NLMSGERR_ATTR_MSG = 1
+pub aya_obj::generated::nlmsgerr_attrs::NLMSGERR_ATTR_OFFS = 2
+pub aya_obj::generated::nlmsgerr_attrs::NLMSGERR_ATTR_UNUSED = 0
+pub aya_obj::generated::nlmsgerr_attrs::__NLMSGERR_ATTR_MAX = 4
+impl aya_obj::generated::nlmsgerr_attrs
+pub const aya_obj::generated::nlmsgerr_attrs::NLMSGERR_ATTR_MAX: aya_obj::generated::nlmsgerr_attrs
+impl core::clone::Clone for aya_obj::generated::nlmsgerr_attrs
+pub fn aya_obj::generated::nlmsgerr_attrs::clone(&self) -> aya_obj::generated::nlmsgerr_attrs
+impl core::cmp::Eq for aya_obj::generated::nlmsgerr_attrs
+impl core::cmp::PartialEq for aya_obj::generated::nlmsgerr_attrs
+pub fn aya_obj::generated::nlmsgerr_attrs::eq(&self, other: &aya_obj::generated::nlmsgerr_attrs) -> bool
+impl core::fmt::Debug for aya_obj::generated::nlmsgerr_attrs
+pub fn aya_obj::generated::nlmsgerr_attrs::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya_obj::generated::nlmsgerr_attrs
+pub fn aya_obj::generated::nlmsgerr_attrs::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya_obj::generated::nlmsgerr_attrs
+impl core::marker::StructuralPartialEq for aya_obj::generated::nlmsgerr_attrs
+impl core::marker::Freeze for aya_obj::generated::nlmsgerr_attrs
+impl core::marker::Send for aya_obj::generated::nlmsgerr_attrs
+impl core::marker::Sync for aya_obj::generated::nlmsgerr_attrs
+impl core::marker::Unpin for aya_obj::generated::nlmsgerr_attrs
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::nlmsgerr_attrs
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::nlmsgerr_attrs
+impl<T, U> core::convert::Into<U> for aya_obj::generated::nlmsgerr_attrs where U: core::convert::From<T>
+pub fn aya_obj::generated::nlmsgerr_attrs::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::generated::nlmsgerr_attrs where U: core::convert::Into<T>
+pub type aya_obj::generated::nlmsgerr_attrs::Error = core::convert::Infallible
+pub fn aya_obj::generated::nlmsgerr_attrs::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::generated::nlmsgerr_attrs where U: core::convert::TryFrom<T>
+pub type aya_obj::generated::nlmsgerr_attrs::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::generated::nlmsgerr_attrs::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::generated::nlmsgerr_attrs where T: core::clone::Clone
+pub type aya_obj::generated::nlmsgerr_attrs::Owned = T
+pub fn aya_obj::generated::nlmsgerr_attrs::clone_into(&self, target: &mut T)
+pub fn aya_obj::generated::nlmsgerr_attrs::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::generated::nlmsgerr_attrs where T: 'static + ?core::marker::Sized
+pub fn aya_obj::generated::nlmsgerr_attrs::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::generated::nlmsgerr_attrs where T: ?core::marker::Sized
+pub fn aya_obj::generated::nlmsgerr_attrs::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::nlmsgerr_attrs where T: ?core::marker::Sized
+pub fn aya_obj::generated::nlmsgerr_attrs::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::generated::nlmsgerr_attrs where T: core::clone::Clone
+pub unsafe fn aya_obj::generated::nlmsgerr_attrs::clone_to_uninit(&self, dst: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::generated::nlmsgerr_attrs
+pub fn aya_obj::generated::nlmsgerr_attrs::from(t: T) -> T
 #[repr(u32)] pub enum aya_obj::generated::perf_event_sample_format
 pub aya_obj::generated::perf_event_sample_format::PERF_SAMPLE_ADDR = 8
 pub aya_obj::generated::perf_event_sample_format::PERF_SAMPLE_AUX = 1048576
