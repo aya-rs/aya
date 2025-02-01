@@ -39,14 +39,22 @@ jobs:
         run: |
           git diff --quiet || echo "COMMIT_CHANGES=1" >> $GITHUB_ENV
 
+      - name: Bless public API changes
+        if: env.COMMIT_CHANGES == 1
+        run: |
+          cargo xtask public-api --bless
+
       - name: Commit Changes
         id: commit
         if: env.COMMIT_CHANGES == 1
         uses: devops-infra/action-commit-push@master
         with:
           github_token: "${{ secrets.CRABBY_GITHUB_TOKEN }}"
-          commit_prefix: "[codegen] Update libbpf to ${{ env.LIBBPF_SHA }}"
-          commit_message: "Update libbpf to ${{ env.LIBBPF_SHA }}"
+          commit_message: |
+            chore(aya-obj, aya-ebpf-bindings): Regenerate bindings
+
+            libbpf commit: ${{ env.LIBBPF_SHA }}
+
           target_branch: codegen
           force: true
 
