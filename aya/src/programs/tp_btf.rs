@@ -71,6 +71,17 @@ impl BtfTracePoint {
     pub fn attach(&mut self) -> Result<BtfTracePointLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
+
+    pub fn auto_attach(&mut self, btf: &Btf) -> Result<BtfTracePointLinkId, ProgramError> {
+        let tp = match &self.data.section().ok_or(ProgramError::CannotAutoAttach)? {
+            aya_obj::ProgramSection::BtfTracePoint { trace_point } => {
+                trace_point.clone().ok_or(ProgramError::CannotAutoAttach)?
+            }
+            _ => Err(ProgramError::CannotAutoAttach)?,
+        };
+        self.load(&tp, btf)?;
+        self.attach()
+    }
 }
 
 define_link_wrapper!(

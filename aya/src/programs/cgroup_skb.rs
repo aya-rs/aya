@@ -123,6 +123,10 @@ impl CgroupSkb {
                 .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(link)))
         }
     }
+    
+    pub fn auto_attach(&self) -> Result<CgroupSkbLinkId, ProgramError> {
+        todo!();
+    }
 
     /// Creates a program from a pinned entry on a bpffs.
     ///

@@ -101,6 +101,10 @@ impl CgroupSockopt {
                 )))
         }
     }
+    
+    pub fn auto_attach(&self)-> Result<CgroupSockoptLinkId, ProgramError> {
+        todo!();
+    }
 
     /// Creates a program from a pinned entry on a bpffs.
     ///

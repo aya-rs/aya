@@ -248,7 +248,10 @@ pub enum ProgramSection {
     URetProbe {
         sleepable: bool,
     },
-    TracePoint,
+    TracePoint {
+        category: Option<String>,
+        name: Option<String>,
+    },
     SocketFilter,
     Xdp {
         frags: bool,
@@ -275,7 +278,9 @@ pub enum ProgramSection {
     Lsm {
         sleepable: bool,
     },
-    BtfTracePoint,
+    BtfTracePoint {
+        trace_point: Option<String>,
+    },
     FEntry {
         sleepable: bool,
     },
@@ -331,8 +336,14 @@ impl FromStr for ProgramSection {
                     }
                 },
             },
-            "tp_btf" => BtfTracePoint,
-            "tracepoint" | "tp" => TracePoint,
+            "tp_btf" => BtfTracePoint {
+                trace_point: pieces.next().map(|s| s.to_string()),
+            },
+            "tracepoint" | "tp" => {
+                let category = pieces.next().map(|s| s.to_string());
+                let name = pieces.next().map(|s| s.to_string());
+                TracePoint { category, name }
+            }
             "socket" => SocketFilter,
             "sk_msg" => SkMsg,
             "sk_skb" => {
@@ -2029,7 +2040,7 @@ mod tests {
         assert_matches!(
             obj.parse_section(fake_section(
                 EbpfSectionKind::Program,
-                "tracepoint/foo",
+                "tracepoint/cat/name",
                 bytes_of(&fake_ins()),
                 None
             )),

@@ -197,6 +197,10 @@ impl SchedClassifier {
             )
         }
     }
+    
+    pub fn auto_attach(&self) -> Result<SchedClassifierLinkId, ProgramError>{
+        todo!();
+    }
 
     /// Attaches the program to the given `interface` with options defined in [`TcAttachOptions`].
     ///

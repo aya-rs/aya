@@ -78,9 +78,11 @@ use std::{
     sync::Arc,
 };
 
+use aya_obj::{btf::Btf, ProgramSection};
 use info::impl_info;
 pub use info::{loaded_programs, ProgramInfo, ProgramType};
 use libc::ENOSPC;
+use object::Section;
 use tc::SchedClassifierLink;
 use thiserror::Error;
 
@@ -148,6 +150,10 @@ pub enum ProgramError {
     /// The program is not attached.
     #[error("the program is not attached")]
     NotAttached,
+
+    /// The program cannot be auto attached.
+    #[error("the program cannot be auto attached")]
+    CannotAutoAttach,
 
     /// Loading the program failed.
     #[error("the BPF_PROG_LOAD syscall failed. Verifier output: {verifier_log}")]
@@ -485,10 +491,91 @@ impl Program {
             Self::Iter(p) => p.info(),
         }
     }
+
+    pub fn auto_attach(&mut self, btf: Option<&Btf>) -> Result<(), ProgramError> {
+        match self {
+            Self::KProbe(p) => {
+                p.auto_attach()?;
+            }
+            Self::UProbe(p) => {
+                p.auto_attach()?;
+            }
+            Self::TracePoint(p) => {
+                p.auto_attach()?;
+            }
+            Self::SocketFilter(p) => {
+                p.auto_attach()?;
+            }
+            Self::Xdp(p) => {
+                p.auto_attach()?;
+            }
+            Self::SkMsg(p) => {
+                p.auto_attach()?;
+            }
+            Self::SkSkb(p) => {
+                p.auto_attach()?;
+            }
+            Self::SockOps(p) => {
+                p.auto_attach()?;
+            }
+            Self::SchedClassifier(p) => {
+                p.auto_attach()?;
+            }
+            Self::CgroupSkb(p) => {
+                p.auto_attach()?;
+            }
+            Self::CgroupSysctl(p) => {
+                p.auto_attach()?;
+            }
+            Self::CgroupSockopt(p) => {
+                p.auto_attach()?;
+            }
+            Self::LircMode2(p) => {
+                p.auto_attach()?;
+            }
+            Self::PerfEvent(p) => {
+                p.auto_attach()?;
+            }
+            Self::RawTracePoint(p) => {
+                p.auto_attach()?;
+            }
+            Self::Lsm(p) => {
+                p.auto_attach()?;
+            }
+            Self::BtfTracePoint(p) => {
+                p.auto_attach(btf.ok_or(ProgramError::CannotAutoAttach)?)?;
+            }
+            Self::FEntry(p) => {
+                p.auto_attach()?;
+            }
+            Self::FExit(p) => {
+                p.auto_attach()?;
+            }
+            Self::Extension(p) => {
+                p.auto_attach()?;
+            }
+            Self::CgroupSockAddr(p) => {
+                p.auto_attach()?;
+            }
+            Self::SkLookup(p) => {
+                p.auto_attach()?;
+            }
+            Self::CgroupSock(p) => {
+                p.auto_attach()?;
+            }
+            Self::CgroupDevice(p) => {
+                p.auto_attach()?;
+            }
+            Self::Iter(p) => {
+                p.auto_attach()?;
+            }
+        };
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
-pub(crate) struct ProgramData<T: Link> {
+pub(crate) struct ProgramData<T: Link + Eq> {
     pub(crate) name: Option<String>,
     pub(crate) obj: Option<(obj::Program, obj::Function)>,
     pub(crate) fd: Option<ProgramFd>,
@@ -503,7 +590,7 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) flags: u32,
 }
 
-impl<T: Link> ProgramData<T> {
+impl<T: Link + Eq> ProgramData<T> {
     pub(crate) fn new(
         name: Option<String>,
         obj: (obj::Program, obj::Function),
@@ -575,15 +662,19 @@ impl<T: Link> ProgramData<T> {
         let name = info.name_as_str().map(|s| s.to_string());
         Self::from_bpf_prog_info(name, fd, path.as_ref(), info.0, verifier_log_level)
     }
+
+    fn section(&self) -> Option<&ProgramSection> {
+        Some(&self.obj.as_ref()?.0.section)
+    }
 }
 
-impl<T: Link> ProgramData<T> {
+impl<T: Link + Eq> ProgramData<T> {
     fn fd(&self) -> Result<&ProgramFd, ProgramError> {
         self.fd.as_ref().ok_or(ProgramError::NotLoaded)
     }
 }
 
-fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError> {
+fn unload_program<T: Link + Eq>(data: &mut ProgramData<T>) -> Result<(), ProgramError> {
     data.links.remove_all()?;
     data.fd
         .take()
@@ -591,7 +682,10 @@ fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError
         .map(|ProgramFd { .. }| ())
 }
 
-fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Result<(), PinError> {
+fn pin_program<T: Link + Eq, P: AsRef<Path>>(
+    data: &ProgramData<T>,
+    path: P,
+) -> Result<(), PinError> {
     use std::os::unix::ffi::OsStrExt as _;
 
     let fd = data.fd.as_ref().ok_or(PinError::NoFd {
@@ -614,7 +708,7 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
     Ok(())
 }
 
-fn load_program<T: Link>(
+fn load_program<T: Link + Eq>(
     prog_type: bpf_prog_type,
     data: &mut ProgramData<T>,
 ) -> Result<(), ProgramError> {
@@ -966,7 +1060,6 @@ macro_rules! impl_from_pin {
 
 // Use impl_from_pin if the program doesn't require additional data
 impl_from_pin!(
-    TracePoint,
     SocketFilter,
     SkMsg,
     CgroupSysctl,

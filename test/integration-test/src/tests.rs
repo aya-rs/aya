@@ -5,6 +5,7 @@ mod info;
 mod iter;
 mod load;
 mod log;
+mod probe_auto_attach;
 mod raw_tracepoint;
 mod rbpf;
 mod relocations;

@@ -66,6 +66,7 @@ fn main() -> Result<()> {
         ("iter.bpf.c", true),
         ("main.bpf.c", false),
         ("multimap-btf.bpf.c", false),
+        ("probe_auto_attach.bpf.c", false),
         ("reloc.bpf.c", true),
         ("text_64_64_reloc.c", false),
         ("variables_reloc.bpf.c", false),

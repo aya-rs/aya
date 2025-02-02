@@ -91,6 +91,10 @@ impl SockOps {
                 .insert(SockOpsLink::new(SockOpsLinkInner::ProgAttach(link)))
         }
     }
+    
+    pub fn auto_attach(&self) -> Result<SockOpsLinkId, ProgramError> {
+        todo!();
+    }
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]

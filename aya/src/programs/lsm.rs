@@ -73,6 +73,10 @@ impl Lsm {
     pub fn attach(&mut self) -> Result<LsmLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
+    
+    pub fn auto_attach(&self)-> Result<LsmLinkId, ProgramError>  {
+        todo!();
+    }
 }
 
 define_link_wrapper!(
