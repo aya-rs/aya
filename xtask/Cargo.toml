@@ -31,4 +31,5 @@ rustup-toolchain = { workspace = true }
 syn = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt"] }
+walkdir = { workspace = true }
 which = { workspace = true }
