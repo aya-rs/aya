@@ -475,6 +475,46 @@ pub enum ProgramType {
     Netfilter = bpf_prog_type::BPF_PROG_TYPE_NETFILTER as isize,
 }
 
+impl From<ProgramType> for bpf_prog_type {
+    fn from(value: ProgramType) -> Self {
+        match value {
+            ProgramType::Unspecified => Self::BPF_PROG_TYPE_UNSPEC,
+            ProgramType::SocketFilter => Self::BPF_PROG_TYPE_SOCKET_FILTER,
+            ProgramType::KProbe => Self::BPF_PROG_TYPE_KPROBE,
+            ProgramType::SchedClassifier => Self::BPF_PROG_TYPE_SCHED_CLS,
+            ProgramType::SchedAction => Self::BPF_PROG_TYPE_SCHED_ACT,
+            ProgramType::TracePoint => Self::BPF_PROG_TYPE_TRACEPOINT,
+            ProgramType::Xdp => Self::BPF_PROG_TYPE_XDP,
+            ProgramType::PerfEvent => Self::BPF_PROG_TYPE_PERF_EVENT,
+            ProgramType::CgroupSkb => Self::BPF_PROG_TYPE_CGROUP_SKB,
+            ProgramType::CgroupSock => Self::BPF_PROG_TYPE_CGROUP_SOCK,
+            ProgramType::LwtInput => Self::BPF_PROG_TYPE_LWT_IN,
+            ProgramType::LwtOutput => Self::BPF_PROG_TYPE_LWT_OUT,
+            ProgramType::LwtXmit => Self::BPF_PROG_TYPE_LWT_XMIT,
+            ProgramType::SockOps => Self::BPF_PROG_TYPE_SOCK_OPS,
+            ProgramType::SkSkb => Self::BPF_PROG_TYPE_SK_SKB,
+            ProgramType::CgroupDevice => Self::BPF_PROG_TYPE_CGROUP_DEVICE,
+            ProgramType::SkMsg => Self::BPF_PROG_TYPE_SK_MSG,
+            ProgramType::RawTracePoint => Self::BPF_PROG_TYPE_RAW_TRACEPOINT,
+            ProgramType::CgroupSockAddr => Self::BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
+            ProgramType::LwtSeg6local => Self::BPF_PROG_TYPE_LWT_SEG6LOCAL,
+            ProgramType::LircMode2 => Self::BPF_PROG_TYPE_LIRC_MODE2,
+            ProgramType::SkReuseport => Self::BPF_PROG_TYPE_SK_REUSEPORT,
+            ProgramType::FlowDissector => Self::BPF_PROG_TYPE_FLOW_DISSECTOR,
+            ProgramType::CgroupSysctl => Self::BPF_PROG_TYPE_CGROUP_SYSCTL,
+            ProgramType::RawTracePointWritable => Self::BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE,
+            ProgramType::CgroupSockopt => Self::BPF_PROG_TYPE_CGROUP_SOCKOPT,
+            ProgramType::Tracing => Self::BPF_PROG_TYPE_TRACING,
+            ProgramType::StructOps => Self::BPF_PROG_TYPE_STRUCT_OPS,
+            ProgramType::Extension => Self::BPF_PROG_TYPE_EXT,
+            ProgramType::Lsm => Self::BPF_PROG_TYPE_LSM,
+            ProgramType::SkLookup => Self::BPF_PROG_TYPE_SK_LOOKUP,
+            ProgramType::Syscall => Self::BPF_PROG_TYPE_SYSCALL,
+            ProgramType::Netfilter => Self::BPF_PROG_TYPE_NETFILTER,
+        }
+    }
+}
+
 impl TryFrom<bpf_prog_type> for ProgramType {
     type Error = ProgramError;
 
