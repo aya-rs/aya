@@ -63,8 +63,12 @@ jobs:
         uses: devops-infra/action-pull-request@master
         with:
           github_token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
-          body: "**Automated pull request**<br><br>Update libbpf to ${{ env.LIBBPF_SHA }}"
-          title: Update libbpf to ${{ env.LIBBPF_SHA }}
+          body: |
+            **Automated pull request**
+
+            libbpf commit: ${{ env.LIBBPF_SHA }}
+
+          title: "chore(aya-obj, aya-ebpf-bindings): Regenerate bindings"
           source_branch: codegen
           target_branch: main
           get_diff: true
