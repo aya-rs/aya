@@ -3,7 +3,7 @@ use std::{
     fmt::Write as _,
     fs::{copy, create_dir_all, OpenOptions},
     io::{BufRead as _, BufReader, Write as _},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
     sync::{Arc, Mutex},
     thread,
@@ -46,7 +46,7 @@ enum Environment {
         ///
         /// find . -name '*.deb' -print0 \
         /// | xargs -0 -I {} sh -c "dpkg --fsys-tarfile {} \
-        ///   | tar --wildcards --extract '*vmlinuz*' --file -"
+        ///   | tar --wildcards --extract '*vmlinuz*' '**/modules/*' --file -"
         #[clap(required = true)]
         kernel_image: Vec<PathBuf>,
     },
@@ -298,21 +298,38 @@ pub fn run(opts: Options) -> Result<()> {
 
                 let target = format!("{guest_arch}-unknown-linux-musl");
 
-                // Build our init program. The contract is that it will run anything it finds in /bin.
-                let init = build(Some(&target), |cmd| {
-                    cmd.args(["--package", "init", "--profile", "release"])
+                // Our mininal test linux distro contains:
+                // - 'init' which runs all binaries in /bin
+                // - 'modprobe' which is able to load kernel modules
+                let distro_binaries = build(Some(&target), |cmd| {
+                    cmd.args(["--package", "test-distro", "--profile", "release"])
                 })
-                .context("building init program failed")?;
+                .context("building test-distro program failed")?;
 
-                let init = match &*init {
-                    [(name, init)] => {
-                        if name != "init" {
-                            bail!("expected init program to be named init, found {name}")
-                        }
-                        init
-                    }
-                    init => bail!("expected exactly one init program, found {init:?}"),
-                };
+                let init = distro_binaries
+                    .iter()
+                    .find(|(name, _)| name == "init")
+                    .map(|(_, path)| path)
+                    .ok_or_else(|| anyhow!("init not found"))?;
+
+                let modprobe = distro_binaries
+                    .iter()
+                    .find(|(name, _)| name == "modprobe")
+                    .map(|(_, path)| path)
+                    .ok_or_else(|| anyhow!("modprobe not found"))?;
+
+                let version = kernel_image
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .ok_or_else(|| anyhow!("kernel_image file_name failed"))?;
+                let version = version.trim_start_matches("vmlinuz-");
+                let modules_dir = kernel_image
+                    .parent()
+                    .expect("unable to get parent directory from kernel_image")
+                    .join("../usr/lib/modules/")
+                    .join(version)
+                    .canonicalize()
+                    .with_context(|| format!("failed to canonicalize {version}"))?;
 
                 let binaries = binaries(Some(&target))?;
 
@@ -337,23 +354,31 @@ pub fn run(opts: Options) -> Result<()> {
                 let Child { stdin, .. } = &mut gen_init_cpio_child;
                 let mut stdin = stdin.take().unwrap();
 
-                use std::os::unix::ffi::OsStrExt as _;
-
                 // Send input into gen_init_cpio which looks something like
                 //
-                // file /init    path-to-init 0755 0 0
-                // dir  /bin                  0755 0 0
-                // file /bin/foo path-to-foo  0755 0 0
-                // file /bin/bar path-to-bar  0755 0 0
+                // file /init    path-to-init 755 0 0
+                // dir  /bin                  755 0 0
+                // file /bin/foo path-to-foo  755 0 0
+                // file /bin/bar path-to-bar  755 0 0
 
-                for bytes in [
-                    "file /init ".as_bytes(),
-                    init.as_os_str().as_bytes(),
-                    " 0755 0 0\n".as_bytes(),
-                    "dir /bin 0755 0 0\n".as_bytes(),
-                ] {
-                    stdin.write_all(bytes).expect("write");
-                }
+                let mut input = vec![];
+
+                writeln!(input, "file /init {} 755 0 0", init.to_string_lossy()).expect("write");
+                writeln!(input, "dir /bin 755 0 0").expect("write");
+                writeln!(input, "dir /sbin 755 0 0").expect("write");
+                writeln!(input, "dir /usr 755 0 0").expect("write");
+                writeln!(input, "dir /usr/sbin 755 0 0").expect("write");
+                writeln!(input, "dir /usr/bin 755 0 0").expect("write");
+                writeln!(
+                    input,
+                    "file /sbin/modprobe {} 755 0 0",
+                    modprobe.to_string_lossy()
+                )
+                .expect("write");
+                writeln!(input, "dir /lib 755 0 0").expect("write");
+                writeln!(input, "dir /lib/modules 755 0 0").expect("write");
+                cpioify_dir(&modules_dir, "/lib/modules", &mut input)
+                    .context("cpioify_dir failed")?;
 
                 for (profile, binaries) in binaries {
                     for (name, binary) in binaries {
@@ -362,17 +387,17 @@ pub fn run(opts: Options) -> Result<()> {
                         copy(&binary, &path).with_context(|| {
                             format!("copy({}, {}) failed", binary.display(), path.display())
                         })?;
-                        for bytes in [
-                            "file /bin/".as_bytes(),
-                            name.as_bytes(),
-                            " ".as_bytes(),
-                            path.as_os_str().as_bytes(),
-                            " 0755 0 0\n".as_bytes(),
-                        ] {
-                            stdin.write_all(bytes).expect("write");
-                        }
+                        writeln!(
+                            input,
+                            "file /bin/{} {} 755 0 0",
+                            name,
+                            path.to_string_lossy()
+                        )
+                        .expect("write");
                     }
                 }
+
+                stdin.write_all(&input).expect("write");
                 // Must explicitly close to signal EOF.
                 drop(stdin);
 
@@ -413,6 +438,7 @@ pub fn run(opts: Options) -> Result<()> {
                 //
                 // Heed the advice and boot with noapic. We don't know why this happens.
                 kernel_args.push(" noapic");
+                kernel_args.push(" init=/sbin/init");
                 qemu.args(["-no-reboot", "-nographic", "-m", "512M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
@@ -525,4 +551,31 @@ pub fn run(opts: Options) -> Result<()> {
             }
         }
     }
+}
+
+fn cpioify_dir(dir: &Path, base: &str, input: &mut Vec<u8>) -> Result<()> {
+    for entry in std::fs::read_dir(dir).context("read_dir failed")? {
+        let entry = entry.context("read_dir failed")?;
+        let path = entry.path();
+        let metadata = entry.metadata().context("metadata failed")?;
+        let file_type = metadata.file_type();
+        let file_name = path
+            .file_name()
+            .ok_or_else(|| anyhow!("file_name failed"))?;
+        let file_name = file_name.to_str().ok_or_else(|| anyhow!("to_str failed"))?;
+        if file_type.is_dir() {
+            writeln!(input, "dir {}/{} 755 0 0", base, file_name).expect("write");
+            cpioify_dir(&path, format!("{}/{}", base, file_name).as_str(), input)?;
+        } else if file_type.is_file() {
+            writeln!(
+                input,
+                "file {}/{} {} 644 0 0",
+                base,
+                file_name,
+                path.to_string_lossy(),
+            )
+            .expect("write");
+        }
+    }
+    Ok(())
 }
