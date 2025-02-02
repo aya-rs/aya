@@ -1,11 +1,24 @@
 use aya::{
     Ebpf, EbpfLoader,
-    programs::{Extension, TracePoint, Xdp, XdpFlags},
+    programs::{Extension, TracePoint, Xdp, XdpFlags, tc},
     util::KernelVersion,
 };
 use test_log::test;
 
 use crate::utils::NetNsGuard;
+
+#[test]
+fn modprobe() {
+    // This very simple looking test is actually quite complex.
+    // The call to tc::qdisc_add_clsact() causes the linux kernel to call into
+    // `__request_module()`, which via the usermodehelper calls out into the
+    // `/sbin/modprobe` to load the required kernel module.
+    // In order for this test to pass, all of that machinery must work
+    // correctly within the test environment.
+    let _netns = NetNsGuard::new();
+
+    tc::qdisc_add_clsact("lo").unwrap();
+}
 
 #[test]
 fn xdp() {

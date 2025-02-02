@@ -3,7 +3,8 @@ use std::{
     fmt::Write as _,
     fs::{OpenOptions, copy, create_dir_all},
     io::{BufRead as _, BufReader, Write as _},
-    path::PathBuf,
+    ops::Deref as _,
+    path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
     sync::{Arc, Mutex},
     thread,
@@ -13,6 +14,7 @@ use anyhow::{Context as _, Result, anyhow, bail};
 use base64::engine::Engine as _;
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
+use walkdir::WalkDir;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
 
 #[derive(Parser)]
@@ -35,21 +37,46 @@ enum Environment {
         #[clap(long)]
         github_api_token: Option<String>,
 
-        /// The kernel images to use.
+        /// The kernel image and modules to use.
+        ///
+        /// Format: </path/to/image/vmlinuz>:</path/to/lib/modules>
         ///
         /// You can download some images with:
         ///
         /// wget --accept-regex '.*/linux-image-[0-9\.-]+-cloud-.*-unsigned*' \
-        ///   --recursive ftp://ftp.us.debian.org/debian/pool/main/l/linux/
+        ///   --recursive http://ftp.us.debian.org/debian/pool/main/l/linux/
         ///
-        /// You can then extract them with:
+        /// You can then extract the images and kernel modules with:
         ///
         /// find . -name '*.deb' -print0 \
         /// | xargs -0 -I {} sh -c "dpkg --fsys-tarfile {} \
-        ///   | tar --wildcards --extract '*vmlinuz*' --file -"
-        #[clap(required = true)]
-        kernel_image: Vec<PathBuf>,
+        ///   | tar --wildcards --extract '**/boot/*' '**/modules/*' --file -"
+        ///
+        /// `**/boot/*` is used to extract the kernel image and config.
+        ///
+        /// `**/modules/*` is used to extract the kernel modules.
+        ///
+        /// Modules are required since not all parts of the kernel we want to
+        /// test are built-in.
+        #[clap(required = true, value_parser=parse_image_and_modules)]
+        image_and_modules: Vec<(PathBuf, PathBuf)>,
     },
+}
+
+pub(crate) fn parse_image_and_modules(s: &str) -> Result<(PathBuf, PathBuf), std::io::Error> {
+    let mut parts = s.split(':');
+    let image = parts
+        .next()
+        .ok_or(std::io::ErrorKind::InvalidInput)
+        .map(PathBuf::from)?;
+    let modules = parts
+        .next()
+        .ok_or(std::io::ErrorKind::InvalidInput)
+        .map(PathBuf::from)?;
+    if parts.next().is_some() {
+        return Err(std::io::ErrorKind::InvalidInput.into());
+    }
+    Ok((image, modules))
 }
 
 #[derive(Parser)]
@@ -69,8 +96,7 @@ where
     let mut cmd = Command::new("cargo");
     cmd.args(["build", "--message-format=json"]);
     if let Some(target) = target {
-        let config = format!("target.{target}.linker = \"rust-lld\"");
-        cmd.args(["--target", target, "--config", &config]);
+        cmd.args(["--target", target]);
     }
     f(&mut cmd);
 
@@ -181,7 +207,7 @@ pub fn run(opts: Options) -> Result<()> {
         Environment::VM {
             cache_dir,
             github_api_token,
-            kernel_image,
+            image_and_modules,
         } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
             //
@@ -200,6 +226,7 @@ pub fn run(opts: Options) -> Result<()> {
             // We consume the output of QEMU, looking for the output of our init program. This is
             // the only way to distinguish success from failure. We batch up the errors across all
             // VM images and report to the user. The end.
+
             create_dir_all(&cache_dir).context("failed to create cache dir")?;
             let gen_init_cpio = cache_dir.join("gen_init_cpio");
             if !gen_init_cpio
@@ -260,7 +287,7 @@ pub fn run(opts: Options) -> Result<()> {
             }
 
             let mut errors = Vec::new();
-            for kernel_image in kernel_image {
+            for (kernel_image, modules_dir) in image_and_modules {
                 // Guess the guest architecture.
                 let mut cmd = Command::new("file");
                 let output = cmd
@@ -298,21 +325,10 @@ pub fn run(opts: Options) -> Result<()> {
 
                 let target = format!("{guest_arch}-unknown-linux-musl");
 
-                // Build our init program. The contract is that it will run anything it finds in /bin.
-                let init = build(Some(&target), |cmd| {
-                    cmd.args(["--package", "init", "--profile", "release"])
+                let test_distro: Vec<(String, PathBuf)> = build(Some(&target), |cmd| {
+                    cmd.args(["--package", "test-distro", "--profile", "release"])
                 })
-                .context("building init program failed")?;
-
-                let init = match &*init {
-                    [(name, init)] => {
-                        if name != "init" {
-                            bail!("expected init program to be named init, found {name}")
-                        }
-                        init
-                    }
-                    init => bail!("expected exactly one init program, found {init:?}"),
-                };
+                .context("building test-distro package failed")?;
 
                 let binaries = binaries(Some(&target))?;
 
@@ -335,24 +351,92 @@ pub fn run(opts: Options) -> Result<()> {
                     .spawn()
                     .with_context(|| format!("failed to spawn {gen_init_cpio:?}"))?;
                 let Child { stdin, .. } = &mut gen_init_cpio_child;
-                let mut stdin = stdin.take().unwrap();
-
+                let stdin = Arc::new(stdin.take().unwrap());
                 use std::os::unix::ffi::OsStrExt as _;
 
-                // Send input into gen_init_cpio which looks something like
+                // Send input into gen_init_cpio for directories
                 //
-                // file /init    path-to-init 0755 0 0
-                // dir  /bin                  0755 0 0
-                // file /bin/foo path-to-foo  0755 0 0
-                // file /bin/bar path-to-bar  0755 0 0
+                // dir  /bin                  755 0 0
+                let write_dir = |out_path: &Path| {
+                    for bytes in [
+                        "dir ".as_bytes(),
+                        out_path.as_os_str().as_bytes(),
+                        " ".as_bytes(),
+                        "755 0 0\n".as_bytes(),
+                    ] {
+                        stdin.deref().write_all(bytes).expect("write");
+                    }
+                };
 
-                for bytes in [
-                    "file /init ".as_bytes(),
-                    init.as_os_str().as_bytes(),
-                    " 0755 0 0\n".as_bytes(),
-                    "dir /bin 0755 0 0\n".as_bytes(),
-                ] {
-                    stdin.write_all(bytes).expect("write");
+                // Send input into gen_init_cpio for files
+                //
+                // file /init    path-to-init 755 0 0
+                let write_file = |out_path: &Path, in_path: &Path, mode: &str| {
+                    for bytes in [
+                        "file ".as_bytes(),
+                        out_path.as_os_str().as_bytes(),
+                        " ".as_bytes(),
+                        in_path.as_os_str().as_bytes(),
+                        " ".as_bytes(),
+                        mode.as_bytes(),
+                        "\n".as_bytes(),
+                    ] {
+                        stdin.deref().write_all(bytes).expect("write");
+                    }
+                };
+
+                write_dir(Path::new("/bin"));
+                write_dir(Path::new("/sbin"));
+                write_dir(Path::new("/lib"));
+                write_dir(Path::new("/lib/modules"));
+
+                test_distro.iter().for_each(|(name, path)| {
+                    if name == "init" {
+                        write_file(Path::new("/init"), path, "755 0 0");
+                    } else {
+                        write_file(&Path::new("/sbin").join(name), path, "755 0 0");
+                    }
+                });
+
+                // At this point we need to make a slight detour!
+                // Preparing the `modules.alias` file inside the VM as part of
+                // `/init` is slow. It's faster to prepare it here.
+                Command::new("cargo")
+                    .args([
+                        "run",
+                        "--package",
+                        "test-distro",
+                        "--bin",
+                        "depmod",
+                        "--release",
+                        "--",
+                        "-b",
+                    ])
+                    .arg(&modules_dir)
+                    .status()
+                    .context("failed to run depmod")?;
+
+                // Now our modules.alias file is built, we can recursively
+                // walk the modules directory and add all the files to the
+                // initramfs.
+                for entry in WalkDir::new(&modules_dir) {
+                    let entry = entry.context("read_dir failed")?;
+                    let path = entry.path();
+                    let metadata = entry.metadata().context("metadata failed")?;
+                    let out_path = Path::new("/lib/modules").join(
+                        path.strip_prefix(&modules_dir).with_context(|| {
+                            format!(
+                                "strip prefix {} failed for {}",
+                                path.display(),
+                                modules_dir.display()
+                            )
+                        })?,
+                    );
+                    if metadata.file_type().is_dir() {
+                        write_dir(&out_path);
+                    } else if metadata.file_type().is_file() {
+                        write_file(&out_path, path, "644 0 0");
+                    }
                 }
 
                 for (profile, binaries) in binaries {
@@ -362,17 +446,11 @@ pub fn run(opts: Options) -> Result<()> {
                         copy(&binary, &path).with_context(|| {
                             format!("copy({}, {}) failed", binary.display(), path.display())
                         })?;
-                        for bytes in [
-                            "file /bin/".as_bytes(),
-                            name.as_bytes(),
-                            " ".as_bytes(),
-                            path.as_os_str().as_bytes(),
-                            " 0755 0 0\n".as_bytes(),
-                        ] {
-                            stdin.write_all(bytes).expect("write");
-                        }
+                        let out_path = Path::new("/bin").join(&name);
+                        write_file(&out_path, &path, "755 0 0");
                     }
                 }
+
                 // Must explicitly close to signal EOF.
                 drop(stdin);
 
