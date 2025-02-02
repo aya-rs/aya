@@ -7,7 +7,7 @@ members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
-    "init",
+    "test-distro",
     "test/integration-common",
     "test/integration-test",
     "xtask",
@@ -33,7 +33,7 @@ default-members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
-    "init",
+    "test-distro",
     "test/integration-common",
     # test/integration-test is omitted; including it in this list causes `cargo test` to run its
     # tests, and that doesn't work unless they've been built with `cargo xtask`.
@@ -74,6 +74,7 @@ diff = { version = "0.1.13", default-features = false }
 env_logger = { version = "0.11", default-features = false }
 epoll = { version = "4.3.3", default-features = false }
 futures = { version = "0.3.28", default-features = false }
+glob = { version = "0.3.0", default-features = false }
 hashbrown = { version = "0.15.0", default-features = false }
 indoc = { version = "2.0", default-features = false }
 libc = { version = "0.2.105", default-features = false }
@@ -101,8 +102,10 @@ test-log = { version = "0.2.13", default-features = false }
 testing_logger = { version = "0.1.1", default-features = false }
 thiserror = { version = "2.0.3", default-features = false }
 tokio = { version = "1.24.0", default-features = false }
+walkdir = { version = "2", default-features = false }
 which = { version = "7.0.0", default-features = false }
 xdpilone = { version = "1.0.5", default-features = false }
+xz2 = { version = "0.1.7", default-features = false }
 
 [workspace.lints.rust]
 unused-extern-crates = "warn"
