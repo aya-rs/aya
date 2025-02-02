@@ -58,6 +58,17 @@ fn run() -> anyhow::Result<()> {
             target_mode: Some(RXRXRX),
         },
         Mount {
+            source: "dev",
+            target: "/dev",
+            fstype: "devtmpfs",
+            flags: nix::mount::MsFlags::empty()
+                | nix::mount::MsFlags::MS_NOSUID
+                | nix::mount::MsFlags::MS_NOEXEC
+                | nix::mount::MsFlags::MS_RELATIME,
+            data: None,
+            target_mode: None,
+        },
+        Mount {
             source: "sysfs",
             target: "/sys",
             fstype: "sysfs",
@@ -128,7 +139,6 @@ fn run() -> anyhow::Result<()> {
             let path = entry.path();
             let status = std::process::Command::new(&path)
                 .args(&args)
-                .env("RUST_LOG", "debug")
                 .status()
                 .with_context(|| format!("failed to execute {}", path.display()))?;
 

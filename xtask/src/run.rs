@@ -3,16 +3,17 @@ use std::{
     fmt::Write as _,
     fs::{copy, create_dir_all, OpenOptions},
     io::{BufRead as _, BufReader, Write as _},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
     sync::{Arc, Mutex},
     thread,
 };
 
-use anyhow::{anyhow, bail, Context as _, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use base64::engine::Engine as _;
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
+use walkdir::WalkDir;
 use xtask::{Errors, AYA_BUILD_INTEGRATION_BPF};
 
 #[derive(Parser)]
@@ -40,15 +41,27 @@ enum Environment {
         /// You can download some images with:
         ///
         /// wget --accept-regex '.*/linux-image-[0-9\.-]+-cloud-.*-unsigned*' \
-        ///   --recursive ftp://ftp.us.debian.org/debian/pool/main/l/linux/
+        ///   --recursive http://ftp.us.debian.org/debian/pool/main/l/linux/
         ///
         /// You can then extract them with:
         ///
         /// find . -name '*.deb' -print0 \
         /// | xargs -0 -I {} sh -c "dpkg --fsys-tarfile {} \
-        ///   | tar --wildcards --extract '*vmlinuz*' --file -"
-        #[clap(required = true)]
-        kernel_image: Vec<PathBuf>,
+        ///   | tar --wildcards --extract '**/boot/*' '**/modules/*' --file -"
+        ///
+        /// `**/boot/*` is used to extract the kernel image and config.
+        /// `**/modules/*` is used to extract the kernel modules.
+        /// Modules are required since not all parts of the kernel we want to
+        /// test are built-in. See `grep "=m" boot/config-6.10.9-cloud-amd64`.
+        #[clap(short, long, required = true)]
+        image: Vec<PathBuf>,
+
+        /// The location of the kernel modules for the selected kernel image(s)
+        ///
+        /// These are found either in `lib/modules/` or `usr/lib/modules/` at
+        /// the location where you extracted the kernel image.
+        #[clap(short, long, required = true)]
+        modules: Vec<PathBuf>,
     },
 }
 
@@ -69,8 +82,7 @@ where
     let mut cmd = Command::new("cargo");
     cmd.args(["build", "--message-format=json"]);
     if let Some(target) = target {
-        let config = format!("target.{target}.linker = \"rust-lld\"");
-        cmd.args(["--target", target, "--config", &config]);
+        cmd.args(["--target", target]);
     }
     f(&mut cmd);
 
@@ -181,7 +193,8 @@ pub fn run(opts: Options) -> Result<()> {
         Environment::VM {
             cache_dir,
             github_api_token,
-            kernel_image,
+            image,
+            modules,
         } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
             //
@@ -200,6 +213,13 @@ pub fn run(opts: Options) -> Result<()> {
             // We consume the output of QEMU, looking for the output of our init program. This is
             // the only way to distinguish success from failure. We batch up the errors across all
             // VM images and report to the user. The end.
+
+            anyhow::ensure!(
+                image.len() == modules.len(),
+                "{} images, {} modules provided. arguments should match",
+                image.len(),
+                modules.len(),
+            );
             create_dir_all(&cache_dir).context("failed to create cache dir")?;
             let gen_init_cpio = cache_dir.join("gen_init_cpio");
             if !gen_init_cpio
@@ -260,12 +280,13 @@ pub fn run(opts: Options) -> Result<()> {
             }
 
             let mut errors = Vec::new();
-            for kernel_image in kernel_image {
+
+            for (kernel_image, modules_dir) in image.iter().zip(modules.iter()) {
                 // Guess the guest architecture.
                 let mut cmd = Command::new("file");
                 let output = cmd
                     .arg("--brief")
-                    .arg(&kernel_image)
+                    .arg(kernel_image)
                     .output()
                     .with_context(|| format!("failed to run {cmd:?}"))?;
                 let Output { status, .. } = &output;
@@ -298,21 +319,12 @@ pub fn run(opts: Options) -> Result<()> {
 
                 let target = format!("{guest_arch}-unknown-linux-musl");
 
-                // Build our init program. The contract is that it will run anything it finds in /bin.
-                let init = build(Some(&target), |cmd| {
-                    cmd.args(["--package", "init", "--profile", "release"])
+                let test_distro: Vec<(String, PathBuf)> = build(Some(&target), |cmd| {
+                    cmd.args(["--package", "test-distro", "--profile", "release"])
                 })
-                .context("building init program failed")?;
-
-                let init = match &*init {
-                    [(name, init)] => {
-                        if name != "init" {
-                            bail!("expected init program to be named init, found {name}")
-                        }
-                        init
-                    }
-                    init => bail!("expected exactly one init program, found {init:?}"),
-                };
+                .context("building test-distro program failed")?
+                .into_iter()
+                .collect();
 
                 let binaries = binaries(Some(&target))?;
 
@@ -337,22 +349,94 @@ pub fn run(opts: Options) -> Result<()> {
                 let Child { stdin, .. } = &mut gen_init_cpio_child;
                 let mut stdin = stdin.take().unwrap();
 
-                use std::os::unix::ffi::OsStrExt as _;
+                macro_rules! writeln_stdin {
+                    ($($arg:tt)*) => {
+                        writeln!(stdin, $($arg)*).expect("write")
+                    }
+                }
 
                 // Send input into gen_init_cpio which looks something like
                 //
-                // file /init    path-to-init 0755 0 0
-                // dir  /bin                  0755 0 0
-                // file /bin/foo path-to-foo  0755 0 0
-                // file /bin/bar path-to-bar  0755 0 0
+                // file /init    path-to-init 755 0 0
+                // dir  /bin                  755 0 0
+                // file /bin/foo path-to-foo  755 0 0
+                // file /bin/bar path-to-bar  755 0 0
+                writeln_stdin!("dir /bin 755 0 0");
+                writeln_stdin!("dir /sbin 755 0 0");
+                writeln_stdin!("dir /lib 755 0 0");
+                writeln_stdin!("dir /lib/modules 755 0 0");
 
-                for bytes in [
-                    "file /init ".as_bytes(),
-                    init.as_os_str().as_bytes(),
-                    " 0755 0 0\n".as_bytes(),
-                    "dir /bin 0755 0 0\n".as_bytes(),
-                ] {
-                    stdin.write_all(bytes).expect("write");
+                test_distro.iter().for_each(|(name, path)| {
+                    if name == "init" {
+                        writeln_stdin!(
+                            "file /init {} 755 0 0",
+                            &path.to_str().expect("path to str")
+                        );
+                    } else {
+                        let out_path = Path::new("/sbin").join(name);
+                        writeln_stdin!(
+                            "file {} {} 755 0 0",
+                            out_path.to_str().expect("path to str"),
+                            &path.to_str().expect("path to str")
+                        );
+                    }
+                });
+
+                // At this point we need to make a slight detour!
+                // Preparing the `modules.alias` file inside the VM as part of
+                // `/init` is slow. It's faster to prepare it here, and it can
+                // also be reused later.
+                if !(modules_dir.join("modules.alias").exists()) {
+                    Command::new("cargo")
+                        .args([
+                            "run",
+                            "--package",
+                            "test-distro",
+                            "--bin",
+                            "depmod",
+                            "--release",
+                            "--",
+                            "-b",
+                            modules_dir.to_str().expect("path to str"),
+                        ])
+                        .status()
+                        .context("failed to run depmod")?;
+                }
+
+                // Now our modules.alias file is built, we can recursively
+                // walk the modules directory and add all the files to the
+                // initramfs.
+                for entry in WalkDir::new(modules_dir) {
+                    let entry = entry.context("read_dir failed")?;
+                    let path = entry.path();
+                    let metadata = entry.metadata().context("metadata failed")?;
+                    if metadata.file_type().is_dir() {
+                        let out_path = Path::new("/lib/modules").join(
+                            path.strip_prefix(modules_dir).with_context(|| {
+                                format!(
+                                    "strip prefix {} failed for {}",
+                                    path.display(),
+                                    modules_dir.display()
+                                )
+                            })?,
+                        );
+                        writeln_stdin!("dir {} 755 0 0", out_path.to_str().expect("path to str"))
+                    } else if metadata.file_type().is_file() {
+                        let out_path = Path::new("/lib/modules").join(
+                            path.strip_prefix(modules_dir).with_context(|| {
+                                format!(
+                                    "strip prefix {} failed for {}",
+                                    path.display(),
+                                    modules_dir.display()
+                                )
+                            })?,
+                        );
+                        writeln_stdin!(
+                            "file {} {} 644 0 0",
+                            out_path.to_str().expect("path to str"),
+                            path.to_str().expect("path to str")
+                        )
+                    }
                 }
 
                 for (profile, binaries) in binaries {
@@ -362,17 +446,15 @@ pub fn run(opts: Options) -> Result<()> {
                         copy(&binary, &path).with_context(|| {
                             format!("copy({}, {}) failed", binary.display(), path.display())
                         })?;
-                        for bytes in [
-                            "file /bin/".as_bytes(),
-                            name.as_bytes(),
-                            " ".as_bytes(),
-                            path.as_os_str().as_bytes(),
-                            " 0755 0 0\n".as_bytes(),
-                        ] {
-                            stdin.write_all(bytes).expect("write");
-                        }
+                        let out_path = Path::new("/bin").join(&name);
+                        writeln_stdin!(
+                            "file {} {} 755 0 0",
+                            out_path.to_str().expect("path to str"),
+                            path.to_str().expect("path to str")
+                        );
                     }
                 }
+
                 // Must explicitly close to signal EOF.
                 drop(stdin);
 
@@ -413,11 +495,12 @@ pub fn run(opts: Options) -> Result<()> {
                 //
                 // Heed the advice and boot with noapic. We don't know why this happens.
                 kernel_args.push(" noapic");
+                kernel_args.push(" init=/sbin/init");
                 qemu.args(["-no-reboot", "-nographic", "-m", "512M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
                     .arg("-kernel")
-                    .arg(&kernel_image)
+                    .arg(kernel_image)
                     .arg("-initrd")
                     .arg(&initrd_image);
                 let mut qemu_child = qemu
