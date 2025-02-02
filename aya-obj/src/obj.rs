@@ -4,6 +4,7 @@ use alloc::{
     borrow::ToOwned,
     collections::BTreeMap,
     ffi::CString,
+    format,
     string::{String, ToString},
     vec,
     vec::Vec,
@@ -20,10 +21,12 @@ use object::{
 use crate::{
     btf::{
         Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
+        Struct,
     },
     generated::{
-        bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL, BPF_F_RDONLY_PROG,
-        BPF_JMP, BPF_K,
+        bpf_insn, bpf_map_info,
+        bpf_map_type::{BPF_MAP_TYPE_ARRAY, *},
+        BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K,
     },
     maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, PinningType, MINIMUM_MAP_SIZE},
     programs::{
@@ -675,7 +678,7 @@ impl Object {
         ))
     }
 
-    fn parse_text_section(&mut self, section: Section) -> Result<(), ParseError> {
+    fn parse_text_section(&mut self, section: &Section) -> Result<(), ParseError> {
         let mut symbols_by_address = HashMap::new();
 
         for sym in self.symbol_table.values() {
@@ -710,7 +713,7 @@ impl Object {
             }
 
             let (func_info, line_info, func_info_rec_size, line_info_rec_size) =
-                get_func_and_line_info(self.btf_ext.as_ref(), sym, &section, offset, false);
+                get_func_and_line_info(self.btf_ext.as_ref(), sym, section, offset, false);
 
             self.functions.insert(
                 (section.index.0, sym.address),
@@ -730,17 +733,6 @@ impl Object {
             );
 
             offset += sym.size as usize;
-        }
-
-        if !section.relocations.is_empty() {
-            self.relocations.insert(
-                section.index,
-                section
-                    .relocations
-                    .into_iter()
-                    .map(|rel| (rel.offset, rel))
-                    .collect(),
-            );
         }
 
         Ok(())
@@ -773,7 +765,7 @@ impl Object {
                 if type_name == section.name {
                     // each btf_var_secinfo contains a map
                     for info in &datasec.entries {
-                        let (map_name, def) = parse_btf_map_def(btf, info)?;
+                        let (map_name, def, inner_def) = parse_btf_map_from_datasec(btf, info)?;
                         let symbol_index =
                             maps.get(&map_name)
                                 .ok_or_else(|| ParseError::SymbolNotFound {
@@ -783,9 +775,11 @@ impl Object {
                             map_name,
                             Map::Btf(BtfMap {
                                 def,
+                                inner_def,
                                 section_index: section.index.0,
                                 symbol_index: *symbol_index,
                                 data: Vec::new(),
+                                initial_slots: BTreeMap::new(),
                             }),
                         );
                     }
@@ -825,7 +819,9 @@ impl Object {
                     section_kind: section.kind,
                     symbol_index: Some(sym.index),
                     def,
+                    inner_def: None,
                     data: Vec::new(),
+                    initial_slots: BTreeMap::new(),
                 }),
             );
             have_symbols = true;
@@ -847,7 +843,7 @@ impl Object {
                 self.maps
                     .insert(section.name.to_string(), parse_data_map_section(&section)?);
             }
-            EbpfSectionKind::Text => self.parse_text_section(section)?,
+            EbpfSectionKind::Text => self.parse_text_section(&section)?,
             EbpfSectionKind::Btf => self.parse_btf(&section)?,
             EbpfSectionKind::BtfExt => self.parse_btf_ext(&section)?,
             EbpfSectionKind::BtfMaps => self.parse_btf_maps(&section)?,
@@ -875,20 +871,19 @@ impl Object {
             }
             EbpfSectionKind::Program => {
                 self.parse_programs(&section)?;
-                if !section.relocations.is_empty() {
-                    self.relocations.insert(
-                        section.index,
-                        section
-                            .relocations
-                            .into_iter()
-                            .map(|rel| (rel.offset, rel))
-                            .collect(),
-                    );
-                }
             }
             EbpfSectionKind::Undefined | EbpfSectionKind::License | EbpfSectionKind::Version => {}
         }
-
+        if !section.relocations.is_empty() {
+            self.relocations.insert(
+                section.index,
+                section
+                    .relocations
+                    .into_iter()
+                    .map(|rel| (rel.offset, rel))
+                    .collect(),
+            );
+        }
         Ok(())
     }
 
@@ -1233,7 +1228,9 @@ fn parse_data_map_section(section: &Section) -> Result<Map, ParseError> {
         // Data maps don't require symbols to be relocated
         symbol_index: None,
         def,
+        inner_def: None,
         data,
+        initial_slots: BTreeMap::new(),
     }))
 }
 
@@ -1257,7 +1254,10 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     }
 }
 
-fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDef), BtfError> {
+fn parse_btf_map_from_datasec(
+    btf: &Btf,
+    info: &DataSecEntry,
+) -> Result<(String, BtfMapDef, Option<BtfMapDef>), BtfError> {
     let ty = match btf.type_by_id(info.btf_type)? {
         BtfType::Var(var) => var,
         other => {
@@ -1267,9 +1267,6 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         }
     };
     let map_name = btf.string_at(ty.name_offset)?;
-    let mut map_def = BtfMapDef::default();
-
-    // Safety: union
     let root_type = btf.resolve_type(ty.btf_type)?;
     let s = match btf.type_by_id(root_type)? {
         BtfType::Struct(s) => s,
@@ -1279,7 +1276,17 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             })
         }
     };
+    let (outer, inner) = parse_btf_map_def(btf, s, false)?;
+    Ok((map_name.to_string(), outer, inner))
+}
 
+fn parse_btf_map_def(
+    btf: &Btf,
+    s: &Struct,
+    inner: bool,
+) -> Result<(BtfMapDef, Option<BtfMapDef>), BtfError> {
+    let mut map_def = BtfMapDef::default();
+    let mut inner_map_def = None;
     for m in &s.members {
         match btf.string_at(m.name_offset)?.as_ref() {
             "type" => {
@@ -1311,6 +1318,57 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
                     });
                 }
             }
+            "values" => {
+                if map_def.map_type != BPF_MAP_TYPE_PROG_ARRAY as u32
+                    && map_def.map_type != BPF_MAP_TYPE_ARRAY_OF_MAPS as u32
+                    && map_def.map_type != BPF_MAP_TYPE_HASH_OF_MAPS as u32
+                {
+                    return Err(BtfError::BtfError(
+                        "should be map-in-map or prog-array".to_string(),
+                    ));
+                }
+                if inner {
+                    return Err(BtfError::BtfError(
+                        "nested map-in-map is not supported".to_string(),
+                    ));
+                }
+                if map_def.value_size != 0 && map_def.value_size != 4 {
+                    return Err(BtfError::BtfError(format!(
+                        "conflicting value size. expected 4, got {}",
+                        map_def.value_size
+                    )));
+                }
+                map_def.value_size = 4;
+                if let BtfType::Array(arr) = btf.type_by_id(m.btf_type)? {
+                    let resolved_t = btf.resolve_type(arr.array.element_type)?;
+                    if let BtfType::Ptr(pty) = btf.type_by_id(resolved_t)? {
+                        let resolved_t = btf.resolve_type(pty.btf_type)?;
+                        if map_def.map_type == BPF_MAP_TYPE_PROG_ARRAY as u32 {
+                            // Just verify that the type is a function proto
+                            if let BtfType::FuncProto(_) = btf.type_by_id(resolved_t)? {
+                                // noop
+                            } else {
+                                return Err(BtfError::BtfError(
+                                    "should be a function proto".to_string(),
+                                ));
+                            }
+                        };
+                        if map_def.map_type == BPF_MAP_TYPE_ARRAY_OF_MAPS as u32
+                            || map_def.map_type == BPF_MAP_TYPE_HASH_OF_MAPS as u32
+                        {
+                            if let BtfType::Struct(def) = btf.type_by_id(resolved_t)? {
+                                inner_map_def = Some(parse_btf_map_def(btf, def, true)?.0);
+                            } else {
+                                return Err(BtfError::BtfError(
+                                    "map-in-map inner def is not a struct".to_string(),
+                                ));
+                            }
+                        }
+                    }
+                } else {
+                    return Err(BtfError::BtfError("map values is not an array".to_string()));
+                }
+            }
             "value_size" => {
                 map_def.value_size = get_map_field(btf, m.btf_type)?;
             }
@@ -1333,7 +1391,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             }
         }
     }
-    Ok((map_name.to_string(), map_def))
+    Ok((map_def, inner_map_def))
 }
 
 /// Parses a [bpf_map_info] into a [Map].
@@ -1350,9 +1408,11 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 btf_key_type_id: info.btf_key_type_id,
                 btf_value_type_id: info.btf_value_type_id,
             },
+            inner_def: None,
             section_index: 0,
             symbol_index: 0,
             data: Vec::new(),
+            initial_slots: BTreeMap::new(),
         })
     } else {
         Map::Legacy(LegacyMap {
@@ -1365,10 +1425,12 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 pinning: pinned,
                 id: info.id,
             },
+            inner_def: None,
             section_index: 0,
             symbol_index: None,
             section_kind: EbpfSectionKind::Undefined,
             data: Vec::new(),
+            initial_slots: BTreeMap::new(),
         })
     }
 }
@@ -1623,7 +1685,9 @@ mod tests {
                     id: 0,
                     pinning: PinningType::None,
                 },
+                inner_def: None,
                 data,
+                initial_slots: _,
             })) if data == map_data && value_size == map_data.len() as u32
         )
     }
@@ -2601,10 +2665,12 @@ mod tests {
                     id: 1,
                     pinning: PinningType::None,
                 },
+                inner_def: None,
                 section_index: 1,
                 section_kind: EbpfSectionKind::Rodata,
                 symbol_index: Some(1),
                 data: vec![0, 0, 0],
+                initial_slots: BTreeMap::new(),
             }),
         );
         obj.symbol_table.insert(

@@ -1,15 +1,16 @@
 //! Program relocation handling.
 
-use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
+use alloc::{borrow::ToOwned, collections::BTreeMap, format, string::String};
 use core::mem;
 
 use log::debug;
 use object::{SectionIndex, SymbolKind};
 
 use crate::{
+    btf::{Btf, BtfType},
     generated::{
-        bpf_insn, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
-        BPF_PSEUDO_MAP_VALUE,
+        bpf_insn, bpf_map_type, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC,
+        BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE,
     },
     maps::Map,
     obj::{Function, Object},
@@ -23,8 +24,9 @@ type RawFd = std::os::fd::RawFd;
 type RawFd = core::ffi::c_int;
 
 pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
+pub(crate) const BPF_PTR_SZ: usize = 8;
 
-/// The error type returned by [`Object::relocate_maps`] and [`Object::relocate_calls`]
+/// The error type returned by [`Object::relocate_map_references`] and [`Object::relocate_calls`]
 #[derive(thiserror::Error, Debug)]
 #[error("error relocating `{function}`")]
 pub struct EbpfRelocationError {
@@ -38,6 +40,10 @@ pub struct EbpfRelocationError {
 /// Relocation failures
 #[derive(Debug, thiserror::Error)]
 pub enum RelocationError {
+    /// Relocation error
+    #[error("relocation error: {0}")]
+    Error(String),
+
     /// Unknown symbol
     #[error("unknown symbol, index `{index}`")]
     UnknownSymbol {
@@ -106,6 +112,33 @@ pub(crate) struct Symbol {
 }
 
 impl Object {
+    /// Handles BTF .maps section relocations
+    pub fn relocate_btf_maps<'a, I: Iterator<Item = (&'a str, RawFd, &'a mut Map)>>(
+        &mut self,
+        maps: I,
+    ) -> Result<(), EbpfRelocationError> {
+        if let Some((btf_maps_section, _)) = self.section_infos.get(".maps") {
+            let mut maps_by_name = maps
+                .filter(|(_, _, map)| map.section_index() == btf_maps_section.0)
+                .map(|(name, fd, map)| (name, (fd, map)))
+                .collect();
+
+            if let Some(relocations) = self.relocations.get(btf_maps_section) {
+                relocate_btf_maps(
+                    self.btf.as_ref(),
+                    relocations.values(),
+                    &mut maps_by_name,
+                    &self.symbol_table,
+                )
+                .map_err(|error| EbpfRelocationError {
+                    function: String::from(".maps"),
+                    error,
+                })?;
+            }
+        }
+        Ok(())
+    }
+
     /// Relocates the map references
     pub fn relocate_maps<'a, I: Iterator<Item = (&'a str, RawFd, &'a Map)>>(
         &mut self,
@@ -123,7 +156,7 @@ impl Object {
 
         for function in self.functions.values_mut() {
             if let Some(relocations) = self.relocations.get(&function.section_index) {
-                relocate_maps(
+                relocate_map_references(
                     function,
                     relocations.values(),
                     &maps_by_section,
@@ -179,7 +212,7 @@ impl Object {
     }
 }
 
-fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
+fn relocate_map_references<'a, I: Iterator<Item = &'a Relocation>>(
     fun: &mut Function,
     relocations: I,
     maps_by_section: &HashMap<usize, (&str, RawFd, &Map)>,
@@ -208,7 +241,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
         }
         let ins_index = ins_offset / INS_SIZE;
 
-        // a map relocation points to the ELF section that contains the map
+        // a map relocation points to the ELF section  that contains the map
         let sym = symbol_table
             .get(&rel.symbol_index)
             .ok_or(RelocationError::UnknownSymbol {
@@ -270,6 +303,185 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
         instructions[ins_index].imm = *fd;
     }
 
+    Ok(())
+}
+
+fn relocate_btf_maps<'a, I: Iterator<Item = &'a Relocation>>(
+    btf: Option<&Btf>,
+    relocations: I,
+    maps_by_name: &mut HashMap<&str, (RawFd, &mut Map)>,
+    symbol_table: &HashMap<usize, Symbol>,
+) -> Result<(), RelocationError> {
+    let btf = btf.ok_or(RelocationError::Error(String::from(
+        "BTF relocations require BTF information",
+    )))?;
+    for (i, rel) in relocations.enumerate() {
+        let target = symbol_table
+            .get(&rel.symbol_index)
+            .ok_or(RelocationError::UnknownSymbol {
+                index: rel.symbol_index,
+            })?;
+
+        let target_name = target.name.as_ref().unwrap();
+
+        debug!(".maps relocation #{i}: {}", target_name);
+        let maps_section = btf
+            .types()
+            .find(|t| {
+                if let BtfType::DataSec(ds) = t {
+                    if let Ok(name) = btf.string_at(ds.name_offset) {
+                        name == ".maps"
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            })
+            .ok_or(RelocationError::Error(String::from("no .maps found")))?;
+
+        let maps_section = if let BtfType::DataSec(ds) = maps_section {
+            ds
+        } else {
+            return Err(RelocationError::Error(String::from("no .maps found")));
+        };
+
+        // find the outer map
+        let (outer_map_name, (_, map)) = maps_by_name
+            .iter_mut()
+            .find(|(map_name, _)| {
+                if let Some(vi) = maps_section.entries.iter().find(|entry| {
+                    if let Ok(BtfType::Var(v)) = btf.type_by_id(entry.btf_type) {
+                        if let Ok(name) = btf.string_at(v.name_offset) {
+                            name == **map_name
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                }) {
+                    vi.offset as u64 <= rel.offset
+                        && (rel.offset + BPF_PTR_SZ as u64 <= (vi.offset as u64 + vi.size as u64))
+                } else {
+                    false
+                }
+            })
+            .ok_or(RelocationError::Error(String::from(
+                "no outer map found for BTF relocation",
+            )))?;
+
+        let outer_map_name = *outer_map_name;
+        debug!(
+            ".maps relocation #{i}: found outer map {outer_map_name} for inner map {target_name}",
+        );
+
+        let is_prog_array = map.map_type() == bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY as u32;
+        let is_map_in_map = map.map_type() == bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS as u32
+            || map.map_type() == bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS as u32;
+
+        let targ_fd = if is_map_in_map {
+            // the target map is the map that matches the name of the symbol
+            if let Some((fd, _)) = maps_by_name.get(&target_name.as_str()) {
+                *fd
+            } else {
+                return Err(RelocationError::Error(format!(
+                    "can't find map called {}",
+                    target_name
+                )));
+            }
+        } else if is_prog_array {
+            todo!("BPF_MAP_TYPE_PROG_ARRAY BTF relocation")
+        } else {
+            return Err(RelocationError::Error(format!(
+                "unsupported map type for BTF relocation: {}",
+                map.map_type()
+            )));
+        };
+
+        let (_, map) = maps_by_name.get_mut(&outer_map_name).unwrap();
+
+        // get array index in the outer map
+        let outer_map_datasec = maps_section
+            .entries
+            .iter()
+            .find(|entry| {
+                if let Ok(BtfType::Var(v)) = btf.type_by_id(entry.btf_type) {
+                    if let Ok(name) = btf.string_at(v.name_offset) {
+                        name == *outer_map_name
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            })
+            .ok_or(RelocationError::Error(format!(
+                "can't find map datasec for map name {}",
+                target_name
+            )))?;
+
+        if let BtfType::Var(var) = btf
+            .type_by_id(outer_map_datasec.btf_type)
+            .map_err(|e| RelocationError::Error(format!("btf lookup error: {}", e)))?
+        {
+            let resolved_ty = btf
+                .resolve_type(var.btf_type)
+                .map_err(|e| RelocationError::Error(format!("btf lookup error: {}", e)))?;
+            if let BtfType::Struct(s) = btf
+                .type_by_id(resolved_ty)
+                .map_err(|e| RelocationError::Error(format!("btf lookup error: {}", e)))?
+            {
+                let last_member = s.members.last().ok_or(RelocationError::Error(format!(
+                    "no members in struct for BTF relocation: {}",
+                    target_name
+                )))?;
+
+                let member_name = btf
+                    .string_at(last_member.name_offset)
+                    .map_err(|e| RelocationError::Error(format!("btf lookup error: {}", e)))?;
+
+                if member_name != "values" {
+                    return Err(RelocationError::Error(format!(
+                        "unexpected member name for BTF relocation: {}",
+                        member_name
+                    )));
+                }
+
+                let member_offset = s.member_bit_offset(last_member) / 8;
+                if rel.offset - (outer_map_datasec.offset as u64) < (member_offset as u64) {
+                    return Err(RelocationError::Error(format!(
+                        "unexpected member offset for BTF relocation: {}",
+                        member_offset
+                    )));
+                }
+
+                let member_offset =
+                    rel.offset - (outer_map_datasec.offset as u64) - member_offset as u64;
+
+                if (member_offset % BPF_PTR_SZ as u64) != 0 {
+                    return Err(RelocationError::Error(format!(
+                        "unexpected member offset for BTF relocation: {}",
+                        member_offset
+                    )));
+                }
+
+                let member_index = member_offset as usize / BPF_PTR_SZ;
+                debug!(".maps relocation #{i}: setting {target_name} to index {member_index} of outer map {outer_map_name}");
+                if !map.set_initial_map_fd(member_index, targ_fd) {
+                    return Err(RelocationError::Error(format!(
+                        "can't set map fd for BTF relocation: {}",
+                        target_name
+                    )));
+                };
+            } else {
+                return Err(RelocationError::Error(format!(
+                    "unexpected BTF type for BTF relocation: {}",
+                    resolved_ty
+                )));
+            }
+        }
+    }
     Ok(())
 }
 
@@ -368,7 +580,7 @@ impl<'a> FunctionLinker<'a> {
                 })
                 .filter(|(_rel, sym)| {
                     // only consider text relocations, data relocations are
-                    // relocated in relocate_maps()
+                    // relocated in relocate_map_references()
                     sym.kind == SymbolKind::Text
                         || sym
                             .section_index
@@ -524,19 +736,23 @@ mod test {
     fn fake_legacy_map(symbol_index: usize) -> Map {
         Map::Legacy(LegacyMap {
             def: Default::default(),
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Undefined,
             symbol_index: Some(symbol_index),
             data: Vec::new(),
+            initial_slots: BTreeMap::new(),
         })
     }
 
     fn fake_btf_map(symbol_index: usize) -> Map {
         Map::Btf(BtfMap {
             def: Default::default(),
+            inner_def: None,
             section_index: 0,
             symbol_index,
             data: Vec::new(),
+            initial_slots: BTreeMap::new(),
         })
     }
 
@@ -576,7 +792,7 @@ mod test {
         let map = fake_legacy_map(1);
         let maps_by_symbol = HashMap::from([(1, ("test_map", 1, &map))]);
 
-        relocate_maps(
+        relocate_map_references(
             &mut fun,
             relocations.iter(),
             &maps_by_section,
@@ -632,7 +848,7 @@ mod test {
             (2, ("test_map_2", 2, &map_2)),
         ]);
 
-        relocate_maps(
+        relocate_map_references(
             &mut fun,
             relocations.iter(),
             &maps_by_section,
@@ -671,7 +887,7 @@ mod test {
         let map = fake_btf_map(1);
         let maps_by_symbol = HashMap::from([(1, ("test_map", 1, &map))]);
 
-        relocate_maps(
+        relocate_map_references(
             &mut fun,
             relocations.iter(),
             &maps_by_section,
@@ -727,7 +943,7 @@ mod test {
             (2, ("test_map_2", 2, &map_2)),
         ]);
 
-        relocate_maps(
+        relocate_map_references(
             &mut fun,
             relocations.iter(),
             &maps_by_section,

@@ -5,7 +5,7 @@ use aya_ebpf_cty::c_void;
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER},
     helpers::{bpf_map_peek_elem, bpf_map_push_elem},
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
 };
 
 #[repr(transparent)]
@@ -13,6 +13,9 @@ pub struct BloomFilter<T> {
     def: bpf_map_def,
     _t: PhantomData<T>,
 }
+
+unsafe impl<T: Sync> Sync for BloomFilter<T> {}
+unsafe impl<T> InnerMap for BloomFilter<T> {}
 
 impl<T> BloomFilter<T> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> BloomFilter<T> {

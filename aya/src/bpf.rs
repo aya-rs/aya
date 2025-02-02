@@ -30,16 +30,18 @@ use crate::{
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, Iter, KProbe, LircMode2, Lsm,
-        PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint, SchedClassifier,
-        SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
+        PerfEvent, ProbeKind, Program, ProgramData, ProgramError, ProgramType, RawTracePoint,
+        SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
+        UProbe, Xdp,
     },
     sys::{
-        bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
+        bpf_load_btf, bpf_map_update_elem, is_bpf_cookie_supported, is_bpf_global_data_supported,
         is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_enum64_supported,
         is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
         is_btf_supported, is_btf_type_tag_supported, is_info_gpl_compatible_supported,
         is_info_map_ids_supported, is_perf_link_supported, is_probe_read_kernel_supported,
-        is_prog_id_supported, is_prog_name_supported, retry_with_verifier_logs,
+        is_prog_id_supported, is_prog_name_supported, is_prog_type_supported,
+        retry_with_verifier_logs, SyscallError,
     },
     util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
@@ -105,6 +107,26 @@ pub fn features() -> &'static Features {
     &FEATURES
 }
 
+/// Returns whether a program type is supported by the running kernel.
+///
+/// # Errors
+///
+/// Returns an error if an unexpected error occurs while checking the program
+/// type support.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya::{ProgramType, is_program_type_supported};
+///
+/// let supported = is_program_type_supported(ProgramType::Xdp)?;
+/// # Ok::<(), aya::EbpfError>(())
+/// ```
+pub fn is_program_type_supported(program_type: ProgramType) -> Result<bool, EbpfError> {
+    is_prog_type_supported(program_type.into())
+        .map_err(|e| EbpfError::ProgramError(ProgramError::from(e)))
+}
+
 /// Builder style API for advanced loading of eBPF programs.
 ///
 /// Loading eBPF code involves a few steps, including loading maps and applying
@@ -135,6 +157,7 @@ pub struct EbpfLoader<'a> {
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
+    map_in_maps: HashMap<&'a str, (&'a str, Option<&'a [&'a str]>)>,
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -173,6 +196,7 @@ impl<'a> EbpfLoader<'a> {
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
             allow_unsupported_maps: false,
+            map_in_maps: HashMap::new(),
         }
     }
 
@@ -371,6 +395,28 @@ impl<'a> EbpfLoader<'a> {
         })?)
     }
 
+    /// Marks the map with the provided name as a map-in-map.
+    ///
+    /// This is only required for older C-based eBPF programs that use
+    /// `bpf_map_def` style map definitions, or when working with aya-ebpf
+    /// map-in-maps.
+    ///
+    /// The eBPF Verifier needs to know the inner type of a map-in-map before
+    /// it can be used. This method allows you to specify the name of an inner
+    /// map to be used as a reference type.
+    ///
+    /// # Example
+    pub fn map_in_map(
+        &mut self,
+        name: &'a str,
+        inner: &'a str,
+        initial_values: Option<&'a [&'a str]>,
+    ) -> &mut Self {
+        self.map_in_maps
+            .insert(name.as_ref(), (inner, initial_values));
+        self
+    }
+
     /// Loads eBPF bytecode from a buffer.
     ///
     /// The buffer needs to be 4-bytes aligned. If you are bundling the bytecode statically
@@ -396,6 +442,7 @@ impl<'a> EbpfLoader<'a> {
             extensions,
             verifier_log_level,
             allow_unsupported_maps,
+            map_in_maps: _,
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
@@ -462,7 +509,30 @@ impl<'a> EbpfLoader<'a> {
             obj.relocate_btf(btf)?;
         }
         let mut maps = HashMap::new();
-        for (name, mut obj) in obj.maps.drain() {
+        // To support map-in-maps, we need to guarantee that any map that could
+        // be used as a "template" for the inner dimensions of a map-in-map has
+        // been processed first.
+
+        let map_in_maps_keys = obj
+            .maps
+            .iter()
+            .filter_map(|(name, obj)| {
+                if obj.map_type() == BPF_MAP_TYPE_HASH_OF_MAPS as u32
+                    || obj.map_type() == BPF_MAP_TYPE_ARRAY_OF_MAPS as u32
+                {
+                    Some(name.clone())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let map_in_maps = map_in_maps_keys
+            .iter()
+            .map(|key| obj.maps.remove_entry(key).unwrap())
+            .collect::<HashMap<_, _>>();
+
+        for (name, mut obj) in obj.maps.drain().chain(map_in_maps) {
             if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
                 (FEATURES.bpf_global_data(), obj.section_kind())
             {
@@ -491,6 +561,24 @@ impl<'a> EbpfLoader<'a> {
                 Ok(BPF_MAP_TYPE_DEVMAP | BPF_MAP_TYPE_DEVMAP_HASH) => {
                     obj.set_value_size(if FEATURES.devmap_prog_id() { 8 } else { 4 })
                 }
+                Ok(BPF_MAP_TYPE_HASH_OF_MAPS | BPF_MAP_TYPE_ARRAY_OF_MAPS) => {
+                    if obj.inner().is_none() {
+                        let (inner_name, _) =
+                            self.map_in_maps
+                                .get(name.as_str())
+                                .ok_or(EbpfError::MapError(MapError::Error(format!(
+                                    "inner map {name} not found for map-in-map config"
+                                ))))?;
+
+                        let inner_map: &MapData =
+                            maps.get(&**inner_name)
+                                .ok_or(EbpfError::MapError(MapError::Error(format!(
+                                    "inner map {name} is not a valid map"
+                                ))))?;
+
+                        obj.set_legacy_inner(inner_map.obj());
+                    }
+                }
                 _ => (),
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
@@ -516,11 +604,68 @@ impl<'a> EbpfLoader<'a> {
             .map(|(section_index, _)| *section_index)
             .collect();
 
+        obj.relocate_btf_maps(
+            maps.iter_mut()
+                .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj_mut())),
+        )?;
         obj.relocate_maps(
             maps.iter()
                 .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
         )?;
+
+        // Attach Map-in-Maps
+        for (name, (_, initial_values)) in self.map_in_maps.iter() {
+            debug!("setting initial map fds for map-in-map {}", name);
+            if initial_values.is_none() {
+                continue;
+            }
+            let outer_map = maps
+                .get(&**name)
+                .ok_or(EbpfError::MapError(MapError::Error(
+                    "map not found for map-in-map".to_string(),
+                )))?;
+
+            for (i, inner_name) in initial_values.as_ref().unwrap().iter().enumerate() {
+                debug!("finding inner map {inner_name} for map-in-map {name}");
+                let inner_map =
+                    maps.get(&**inner_name)
+                        .ok_or(EbpfError::MapError(MapError::Error(format!(
+                            "inner map {inner_name} not found for map-in-map"
+                        ))))?;
+                let key = Some(i as u32);
+                let value = inner_map.fd().as_fd().as_raw_fd();
+                bpf_map_update_elem(outer_map.fd().as_fd(), key.as_ref(), &value, 0).map_err(
+                    |(_, io_error)| {
+                        EbpfError::MapError(MapError::SyscallError(SyscallError {
+                            call: "bpf_map_update_elem",
+                            io_error,
+                        }))
+                    },
+                )?;
+            }
+        }
+
+        for (name, map) in maps.iter_mut() {
+            if !map.obj().initial_map_fds().is_empty()
+                && map.obj().map_type() != BPF_MAP_TYPE_HASH_OF_MAPS as u32
+            {
+                debug!("setting initial map fds for map {}", name);
+                for (i, fd) in map.obj().initial_map_fds().iter() {
+                    debug!("setting initial map value for map {name}: key: #{i} value: {fd}");
+                    let key = Some(*i as u32); // TODO: What if this is a hashmap?
+                    bpf_map_update_elem(map.fd().as_fd(), key.as_ref(), fd, 0).map_err(
+                        |(_, io_error)| {
+                            EbpfError::MapError(MapError::SyscallError(SyscallError {
+                                call: "bpf_map_update_elem",
+                                io_error,
+                            }))
+                        },
+                    )?;
+                }
+            }
+        }
+
         obj.relocate_calls(&text_sections)?;
         obj.sanitize_functions(&FEATURES);
 
@@ -740,6 +885,8 @@ fn parse_map(
         BPF_MAP_TYPE_DEVMAP => Map::DevMap(map),
         BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
+        BPF_MAP_TYPE_ARRAY_OF_MAPS => Map::ArrayOfMaps(map),
+        BPF_MAP_TYPE_HASH_OF_MAPS => Map::HashOfMaps(map),
         m_type => {
             if allow_unsupported_maps {
                 Map::Unsupported(map)

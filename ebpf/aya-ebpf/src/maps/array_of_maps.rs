@@ -3,27 +3,26 @@ use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
 use aya_ebpf_cty::c_void;
 
 use crate::{
-    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_ARRAY},
+    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS},
     helpers::bpf_map_lookup_elem,
     maps::{InnerMap, PinningType},
 };
 
 #[repr(transparent)]
-pub struct Array<T> {
+pub struct ArrayOfMaps<T: InnerMap> {
     def: UnsafeCell<bpf_map_def>,
     _t: PhantomData<T>,
 }
 
-unsafe impl<T: Sync> Sync for Array<T> {}
-unsafe impl<T> InnerMap for Array<T> {}
+unsafe impl<T: InnerMap> Sync for ArrayOfMaps<T> {}
 
-impl<T> Array<T> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Array<T> {
-        Array {
+impl<T: InnerMap> ArrayOfMaps<T> {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> ArrayOfMaps<T> {
+        ArrayOfMaps {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_ARRAY,
+                type_: BPF_MAP_TYPE_ARRAY_OF_MAPS,
                 key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<T>() as u32,
+                value_size: mem::size_of::<u32>() as u32,
                 max_entries,
                 map_flags: flags,
                 id: 0,
@@ -33,12 +32,12 @@ impl<T> Array<T> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> Array<T> {
-        Array {
+    pub const fn pinned(max_entries: u32, flags: u32) -> ArrayOfMaps<T> {
+        ArrayOfMaps {
             def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_ARRAY,
+                type_: BPF_MAP_TYPE_ARRAY_OF_MAPS,
                 key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<T>() as u32,
+                value_size: mem::size_of::<u32>() as u32,
                 max_entries,
                 map_flags: flags,
                 id: 0,
@@ -52,16 +51,6 @@ impl<T> Array<T> {
     pub fn get(&self, index: u32) -> Option<&T> {
         // FIXME: alignment
         unsafe { self.lookup(index).map(|p| p.as_ref()) }
-    }
-
-    #[inline(always)]
-    pub fn get_ptr(&self, index: u32) -> Option<*const T> {
-        unsafe { self.lookup(index).map(|p| p.as_ptr() as *const T) }
-    }
-
-    #[inline(always)]
-    pub fn get_ptr_mut(&self, index: u32) -> Option<*mut T> {
-        unsafe { self.lookup(index).map(|p| p.as_ptr()) }
     }
 
     #[inline(always)]

@@ -8,7 +8,7 @@ use aya_ebpf_cty::{c_long, c_void};
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_HASH},
     helpers::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
 };
 
 #[repr(transparent)]
@@ -19,6 +19,7 @@ pub struct HashMap<K, V> {
 }
 
 unsafe impl<K: Sync, V: Sync> Sync for HashMap<K, V> {}
+unsafe impl<K: Sync, V: Sync> InnerMap for HashMap<K, V> {}
 
 impl<K, V> HashMap<K, V> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> HashMap<K, V> {
@@ -54,7 +55,7 @@ impl<K, V> HashMap<K, V> {
     /// corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
-        get(self.def.get(), key)
+        unsafe { get(self.def.get(), key) }
     }
 
     /// Retrieve the value associate with `key` from the map.
@@ -93,6 +94,7 @@ pub struct LruHashMap<K, V> {
 }
 
 unsafe impl<K: Sync, V: Sync> Sync for LruHashMap<K, V> {}
+unsafe impl<K: Sync, V: Sync> InnerMap for LruHashMap<K, V> {}
 
 impl<K, V> LruHashMap<K, V> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> LruHashMap<K, V> {
@@ -128,7 +130,7 @@ impl<K, V> LruHashMap<K, V> {
     /// corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
-        get(self.def.get(), key)
+        unsafe { get(self.def.get(), key) }
     }
 
     /// Retrieve the value associate with `key` from the map.
@@ -167,6 +169,7 @@ pub struct PerCpuHashMap<K, V> {
 }
 
 unsafe impl<K, V> Sync for PerCpuHashMap<K, V> {}
+unsafe impl<K: Sync, V: Sync> InnerMap for PerCpuHashMap<K, V> {}
 
 impl<K, V> PerCpuHashMap<K, V> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> PerCpuHashMap<K, V> {
@@ -202,7 +205,7 @@ impl<K, V> PerCpuHashMap<K, V> {
     /// corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
-        get(self.def.get(), key)
+        unsafe { get(self.def.get(), key) }
     }
 
     /// Retrieve the value associate with `key` from the map.
@@ -241,6 +244,7 @@ pub struct LruPerCpuHashMap<K, V> {
 }
 
 unsafe impl<K, V> Sync for LruPerCpuHashMap<K, V> {}
+unsafe impl<K: Sync, V: Sync> InnerMap for LruPerCpuHashMap<K, V> {}
 
 impl<K, V> LruPerCpuHashMap<K, V> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> LruPerCpuHashMap<K, V> {
@@ -276,7 +280,7 @@ impl<K, V> LruPerCpuHashMap<K, V> {
     /// corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
-        get(self.def.get(), key)
+        unsafe { get(self.def.get(), key) }
     }
 
     /// Retrieve the value associate with `key` from the map.
@@ -335,7 +339,7 @@ fn get_ptr<K, V>(def: *mut bpf_map_def, key: &K) -> Option<*const V> {
 
 #[inline]
 unsafe fn get<'a, K, V>(def: *mut bpf_map_def, key: &K) -> Option<&'a V> {
-    get_ptr(def, key).map(|p| &*p)
+    get_ptr(def, key).map(|p| unsafe { &*p })
 }
 
 #[inline]

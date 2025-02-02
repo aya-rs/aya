@@ -155,6 +155,10 @@ pub enum BtfError {
     /// unable to get symbol name
     #[error("Unable to get symbol name")]
     InvalidSymbolName,
+
+    /// an error occurred while parsing a the BTF data
+    #[error("BTF error: {0}")]
+    BtfError(String),
 }
 
 /// Available BTF features
@@ -591,14 +595,6 @@ impl Btf {
                         for e in entries.iter_mut() {
                             if let BtfType::Var(var) = types.type_by_id(e.btf_type)? {
                                 let var_name = self.string_at(var.name_offset)?;
-                                if var.linkage == VarLinkage::Static {
-                                    debug!(
-                                        "{} {}: VAR {}: fixup not required",
-                                        kind, name, var_name
-                                    );
-                                    continue;
-                                }
-
                                 let offset = match symbol_offsets.get(var_name.as_ref()) {
                                     Some(offset) => offset,
                                     None => {
@@ -612,6 +608,14 @@ impl Btf {
                                     "{} {}: VAR {}: fixup offset {}",
                                     kind, name, var_name, offset
                                 );
+
+                                if var.linkage == VarLinkage::Static {
+                                    debug!(
+                                        "{} {}: VAR {}: linkage fixup not required",
+                                        kind, name, var_name
+                                    );
+                                    continue;
+                                }
                             } else {
                                 return Err(BtfError::InvalidDatasec);
                             }

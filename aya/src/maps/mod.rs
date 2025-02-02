@@ -80,6 +80,7 @@ pub mod bloom_filter;
 pub mod hash_map;
 mod info;
 pub mod lpm_trie;
+pub mod of_maps;
 pub mod perf;
 pub mod queue;
 pub mod ring_buf;
@@ -93,6 +94,7 @@ pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use info::{loaded_maps, MapInfo, MapType};
 pub use lpm_trie::LpmTrie;
+pub use of_maps::{Array as ArrayOfMaps, HashMap as HashMapOfMaps};
 #[cfg(any(feature = "async_tokio", feature = "async_std"))]
 #[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std"))))]
 pub use perf::AsyncPerfEventArray;
@@ -107,6 +109,10 @@ pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 #[derive(Error, Debug)]
 /// Errors occuring from working with Maps
 pub enum MapError {
+    /// A map error
+    #[error("{0}")]
+    Error(String),
+
     /// Invalid map type encontered
     #[error("invalid map type {map_type}")]
     InvalidMapType {
@@ -277,6 +283,8 @@ fn maybe_warn_rlimit() {
 pub enum Map {
     /// An [`Array`] map.
     Array(MapData),
+    /// An [`ArrayOfMaps`] map.
+    ArrayOfMaps(MapData),
     /// A [`BloomFilter`] map.
     BloomFilter(MapData),
     /// A [`CpuMap`] map.
@@ -287,6 +295,8 @@ pub enum Map {
     DevMapHash(MapData),
     /// A [`HashMap`] map.
     HashMap(MapData),
+    /// A [`HashOfMaps`] map.
+    HashOfMaps(MapData),
     /// A [`LpmTrie`] map.
     LpmTrie(MapData),
     /// A [`HashMap`] map that uses a LRU eviction policy.
@@ -324,10 +334,12 @@ impl Map {
     fn map_type(&self) -> u32 {
         match self {
             Self::Array(map) => map.obj.map_type(),
+            Self::ArrayOfMaps(map) => map.obj.map_type(),
             Self::BloomFilter(map) => map.obj.map_type(),
             Self::CpuMap(map) => map.obj.map_type(),
             Self::DevMap(map) => map.obj.map_type(),
             Self::DevMapHash(map) => map.obj.map_type(),
+            Self::HashOfMaps(map) => map.obj.map_type(),
             Self::HashMap(map) => map.obj.map_type(),
             Self::LpmTrie(map) => map.obj.map_type(),
             Self::LruHashMap(map) => map.obj.map_type(),
@@ -354,10 +366,12 @@ impl Map {
     pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         match self {
             Self::Array(map) => map.pin(path),
+            Self::ArrayOfMaps(map) => map.pin(path),
             Self::BloomFilter(map) => map.pin(path),
             Self::CpuMap(map) => map.pin(path),
             Self::DevMap(map) => map.pin(path),
             Self::DevMapHash(map) => map.pin(path),
+            Self::HashOfMaps(map) => map.pin(path),
             Self::HashMap(map) => map.pin(path),
             Self::LpmTrie(map) => map.pin(path),
             Self::LruHashMap(map) => map.pin(path),
@@ -412,6 +426,7 @@ impl_map_pin!(() {
     DevMap,
     DevMapHash,
     XskMap,
+    ArrayOfMaps,
 });
 
 impl_map_pin!((V) {
@@ -421,6 +436,7 @@ impl_map_pin!((V) {
     BloomFilter,
     Queue,
     Stack,
+    HashMapOfMaps,
 });
 
 impl_map_pin!((K, V) {
@@ -488,6 +504,7 @@ impl_try_from_map!(() {
     SockMap,
     StackTraceMap,
     XskMap,
+    ArrayOfMaps,
 });
 
 #[cfg(any(feature = "async_tokio", feature = "async_std"))]
@@ -503,6 +520,7 @@ impl_try_from_map!((V) {
     Queue,
     SockHash,
     Stack,
+    HashMapOfMaps from HashMap,
 });
 
 impl_try_from_map!((K, V) {
@@ -583,6 +601,7 @@ impl MapData {
         let kernel_version = KernelVersion::current().unwrap();
         #[cfg(test)]
         let kernel_version = KernelVersion::new(0xff, 0xff, 0xff);
+
         let fd =
             bpf_create_map(&c_name, &obj, btf_fd, kernel_version).map_err(|(code, io_error)| {
                 if kernel_version < KernelVersion::new(5, 11, 0) {
@@ -755,6 +774,11 @@ impl MapData {
     }
 
     pub(crate) fn obj(&self) -> &obj::Map {
+        let Self { obj, fd: _ } = self;
+        obj
+    }
+
+    pub(crate) fn obj_mut(&mut self) -> &mut obj::Map {
         let Self { obj, fd: _ } = self;
         obj
     }
@@ -955,6 +979,8 @@ impl<T: Pod> Deref for PerCpuValues<T> {
 
 #[cfg(test)]
 mod test_utils {
+    use std::collections::BTreeMap;
+
     use crate::{
         bpf_map_def,
         generated::{bpf_cmd, bpf_map_type},
@@ -983,10 +1009,12 @@ mod test_utils {
                 max_entries: 1024,
                 ..Default::default()
             },
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
             symbol_index: None,
+            initial_slots: BTreeMap::new(),
         })
     }
 
@@ -1002,10 +1030,12 @@ mod test_utils {
                 max_entries,
                 ..Default::default()
             },
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
             symbol_index: None,
+            initial_slots: BTreeMap::new(),
         })
     }
 }

@@ -3,7 +3,7 @@ use core::{cell::UnsafeCell, mem};
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_STACK_TRACE},
     helpers::bpf_get_stackid,
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
     EbpfContext,
 };
 
@@ -13,6 +13,7 @@ pub struct StackTrace {
 }
 
 unsafe impl Sync for StackTrace {}
+unsafe impl InnerMap for StackTrace {}
 
 const PERF_MAX_STACK_DEPTH: u32 = 127;
 

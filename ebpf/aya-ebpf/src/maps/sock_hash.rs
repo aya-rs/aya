@@ -8,7 +8,7 @@ use crate::{
         bpf_map_lookup_elem, bpf_msg_redirect_hash, bpf_sk_assign, bpf_sk_redirect_hash,
         bpf_sk_release, bpf_sock_hash_update,
     },
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
     programs::{SkBuffContext, SkLookupContext, SkMsgContext},
     EbpfContext,
 };
@@ -20,6 +20,7 @@ pub struct SockHash<K> {
 }
 
 unsafe impl<K: Sync> Sync for SockHash<K> {}
+unsafe impl<K> InnerMap for SockHash<K> {}
 
 impl<K> SockHash<K> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> SockHash<K> {
