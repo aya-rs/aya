@@ -1,0 +1,38 @@
+[package]
+name = "test-distro"
+publish = false
+version = "0.1.0"
+
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "init"
+path = "src/init.rs"
+
+[[bin]]
+name = "modprobe"
+path = "src/modprobe.rs"
+
+[[bin]]
+name = "depmod"
+path = "src/depmod.rs"
+
+[dependencies]
+anyhow = { workspace = true, features = ["std"] }
+clap = { workspace = true, default-features = true, features = ["derive"] }
+glob = { workspace = true }
+nix = { workspace = true, features = [
+    "user",
+    "fs",
+    "mount",
+    "reboot",
+    "kmod",
+    "feature",
+] }
+object = { workspace = true, features = ["elf", "read_core", "std"] }
+walkdir = { workspace = true }
+xz2 = { workspace = true }

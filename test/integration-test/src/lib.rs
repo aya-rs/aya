@@ -32,7 +32,6 @@ pub const TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/test")
 pub const TWO_PROGS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/two_progs"));
 pub const XDP_SEC: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/xdp_sec"));
 pub const UPROBE_COOKIE: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/uprobe_cookie"));
-
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
