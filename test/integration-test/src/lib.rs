@@ -16,15 +16,19 @@ pub const VARIABLES_RELOC: &[u8] =
 pub const BPF_PROBE_READ: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/bpf_probe_read"));
 pub const LOG: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/log"));
-pub const MAP_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/map_test"));
+pub const MAP_INFO: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/map_info"));
+pub const MAPS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/maps"));
+pub const MAPS_BTF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/maps_btf"));
 pub const MEMMOVE_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/memmove_test"));
 pub const NAME_TEST: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/name_test"));
 pub const PASS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/pass"));
 pub const RAW_TRACEPOINT: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/raw_tracepoint"));
 pub const REDIRECT: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/redirect"));
+pub const REDIRECT_BTF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/redirect_btf"));
 pub const RELOCATIONS: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/relocations"));
 pub const RING_BUF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ring_buf"));
+pub const RING_BUF_BTF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ring_buf_btf"));
 pub const SIMPLE_PROG: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/simple_prog"));
 pub const STRNCMP: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/strncmp"));
 pub const TCX: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/tcx"));
