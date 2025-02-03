@@ -730,13 +730,23 @@ pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<crate::MockableFd, Syscall
 }
 
 pub(crate) fn is_prog_name_supported() -> bool {
+    with_trivial_prog(|attr| {
+        let u = unsafe { &mut attr.__bindgen_anon_3 };
+        let name = c"aya_name_check";
+        let name_bytes = name.to_bytes();
+        let len = cmp::min(name_bytes.len(), u.prog_name.len());
+        u.prog_name[..len]
+            .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
+        bpf_prog_load(attr).is_ok()
+    })
+}
+
+fn with_trivial_prog<T, F>(op: F) -> T
+where
+    F: FnOnce(&mut bpf_attr) -> T,
+{
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
-    let name = c"aya_name_check";
-    let name_bytes = name.to_bytes();
-    let len = cmp::min(name_bytes.len(), u.prog_name.len());
-    u.prog_name[..len]
-        .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
 
     // The fields conforming an encoded basic instruction are stored in the following order:
     //   opcode:8 src_reg:4 dst_reg:4 offset:16 imm:32   - In little-endian BPF.
@@ -748,71 +758,43 @@ pub(crate) fn is_prog_name_supported() -> bool {
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
 
-    let gpl = b"GPL\0";
+    let gpl = c"GPL";
     u.license = gpl.as_ptr() as u64;
 
     let insns = copy_instructions(prog).unwrap();
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
-    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
+    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
 
-    bpf_prog_load(&mut attr).is_ok()
+    op(&mut attr)
 }
 
 /// Tests whether `nr_map_ids` & `map_ids` fields in `bpf_prog_info` is available.
 pub(crate) fn is_info_map_ids_supported() -> bool {
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_3 };
-
-    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
-
-    let prog: &[u8] = &[
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
-        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
-    ];
-    let insns = copy_instructions(prog).unwrap();
-    u.insn_cnt = insns.len() as u32;
-    u.insns = insns.as_ptr() as u64;
-
-    let gpl = b"GPL\0";
-    u.license = gpl.as_ptr() as u64;
-
-    let prog_fd = match bpf_prog_load(&mut attr) {
-        Ok(fd) => fd,
-        Err(_) => return false,
-    };
-    bpf_obj_get_info_by_fd(prog_fd.as_fd(), |info: &mut bpf_prog_info| {
-        info.nr_map_ids = 1
+    with_trivial_prog(|attr| {
+        let prog_fd = match bpf_prog_load(attr) {
+            Ok(fd) => fd,
+            Err(_) => return false,
+        };
+        bpf_obj_get_info_by_fd(prog_fd.as_fd(), |info: &mut bpf_prog_info| {
+            info.nr_map_ids = 1
+        })
+        .is_ok()
     })
-    .is_ok()
 }
 
 /// Tests whether `gpl_compatible` field in `bpf_prog_info` is available.
 pub(crate) fn is_info_gpl_compatible_supported() -> bool {
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_3 };
-
-    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
-
-    let prog: &[u8] = &[
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
-        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
-    ];
-    let insns = copy_instructions(prog).unwrap();
-    u.insn_cnt = insns.len() as u32;
-    u.insns = insns.as_ptr() as u64;
-
-    let gpl = b"GPL\0";
-    u.license = gpl.as_ptr() as u64;
-
-    let prog_fd = match bpf_prog_load(&mut attr) {
-        Ok(fd) => fd,
-        Err(_) => return false,
-    };
-    if let Ok::<bpf_prog_info, _>(info) = bpf_obj_get_info_by_fd(prog_fd.as_fd(), |_| {}) {
-        return info.gpl_compatible() != 0;
-    }
-    false
+    with_trivial_prog(|attr| {
+        let prog_fd = match bpf_prog_load(attr) {
+            Ok(fd) => fd,
+            Err(_) => return false,
+        };
+        if let Ok::<bpf_prog_info, _>(info) = bpf_obj_get_info_by_fd(prog_fd.as_fd(), |_| {}) {
+            return info.gpl_compatible() != 0;
+        }
+        false
+    })
 }
 
 pub(crate) fn is_probe_read_kernel_supported() -> bool {
@@ -843,7 +825,7 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
 
-    let gpl = b"GPL\0";
+    let gpl = c"GPL";
     u.license = gpl.as_ptr() as u64;
 
     let insns = copy_instructions(prog).unwrap();
@@ -855,42 +837,23 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
 }
 
 pub(crate) fn is_perf_link_supported() -> bool {
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_3 };
-
-    // The fields conforming an encoded basic instruction are stored in the following order:
-    //   opcode:8 src_reg:4 dst_reg:4 offset:16 imm:32   - In little-endian BPF.
-    //   opcode:8 dst_reg:4 src_reg:4 offset:16 imm:32   - In big-endian BPF.
-    // Multi-byte fields ('imm' and 'offset') are stored using endian order.
-    // https://www.kernel.org/doc/html/v6.4-rc7/bpf/instruction-set.html#instruction-encoding
-    let prog: &[u8] = &[
-        0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov64 r0 = 0
-        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
-    ];
-
-    let gpl = b"GPL\0";
-    u.license = gpl.as_ptr() as u64;
-
-    let insns = copy_instructions(prog).unwrap();
-    u.insn_cnt = insns.len() as u32;
-    u.insns = insns.as_ptr() as u64;
-    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
-
-    if let Ok(fd) = bpf_prog_load(&mut attr) {
-        let fd = fd.as_fd();
-        // Uses an invalid target FD so we get EBADF if supported.
-        let link = bpf_link_create(
-            fd,
-            LinkTarget::IfIndex(u32::MAX),
-            bpf_attach_type::BPF_PERF_EVENT,
-            0,
-            None,
-        );
-        // Returns EINVAL if unsupported. EBADF if supported.
-        matches!(link, Err((_, e)) if e.raw_os_error() == Some(libc::EBADF))
-    } else {
-        false
-    }
+    with_trivial_prog(|attr| {
+        if let Ok(fd) = bpf_prog_load(attr) {
+            let fd = fd.as_fd();
+            // Uses an invalid target FD so we get EBADF if supported.
+            let link = bpf_link_create(
+                fd,
+                LinkTarget::IfIndex(u32::MAX),
+                bpf_attach_type::BPF_PERF_EVENT,
+                0,
+                None,
+            );
+            // Returns EINVAL if unsupported. EBADF if supported.
+            matches!(link, Err((_, e)) if e.raw_os_error() == Some(libc::EBADF))
+        } else {
+            false
+        }
+    })
 }
 
 pub(crate) fn is_bpf_global_data_supported() -> bool {
@@ -942,7 +905,7 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
     if let Ok(map) = map {
         insns[0].imm = map.fd().as_fd().as_raw_fd();
 
-        let gpl = b"GPL\0";
+        let gpl = c"GPL";
         u.license = gpl.as_ptr() as u64;
         u.insn_cnt = insns.len() as u32;
         u.insns = insns.as_ptr() as u64;
@@ -974,7 +937,7 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
         0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // exit
     ];
 
-    let gpl = b"GPL\0";
+    let gpl = c"GPL";
     u.license = gpl.as_ptr() as u64;
 
     let insns = copy_instructions(prog).unwrap();
