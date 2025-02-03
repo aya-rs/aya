@@ -4,12 +4,15 @@ use std::{
     os::fd::{AsFd, BorrowedFd},
 };
 
-use crate::{
+use aya_obj::{
+    btf::{Btf, BtfKind},
     generated::{
         bpf_attach_type::BPF_TRACE_ITER, bpf_link_type::BPF_LINK_TYPE_ITER,
         bpf_prog_type::BPF_PROG_TYPE_TRACING,
     },
-    obj::btf::{Btf, BtfKind},
+};
+
+use crate::{
     programs::{
         define_link_wrapper, load_program, FdLink, LinkError, PerfLinkIdInner, PerfLinkInner,
         ProgramData, ProgramError,

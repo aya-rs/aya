@@ -12,12 +12,10 @@ use std::{
     str::{FromStr, Utf8Error},
 };
 
+use aya_obj::generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK};
 use libc::{if_nametoindex, sysconf, uname, utsname, _SC_PAGESIZE};
 
-use crate::{
-    generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK},
-    Pod,
-};
+use crate::Pod;
 
 /// Represents a kernel version, in major.minor.release version.
 // Adapted from https://docs.rs/procfs/latest/procfs/sys/kernel/struct.Version.html.

@@ -9,24 +9,20 @@ use std::{
 };
 
 use aya_obj::{
-    btf::{BtfFeatures, BtfRelocationError},
-    generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS},
+    btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
+    generated::{
+        bpf_map_type::{self, *},
+        AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE, AYA_PERF_EVENT_IOC_SET_BPF,
+        BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS,
+    },
     relocation::EbpfRelocationError,
-    EbpfSectionKind, Features,
+    EbpfSectionKind, Features, Object, ParseError, ProgramSection,
 };
 use log::{debug, warn};
 use thiserror::Error;
 
 use crate::{
-    generated::{
-        bpf_map_type::{self, *},
-        AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE, AYA_PERF_EVENT_IOC_SET_BPF,
-    },
     maps::{Map, MapData, MapError},
-    obj::{
-        btf::{Btf, BtfError},
-        Object, ParseError, ProgramSection,
-    },
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, Iter, KProbe, LircMode2, Lsm,
@@ -801,7 +797,7 @@ fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::generated::bpf_map_type::*;
+    use aya_obj::generated::bpf_map_type::*;
 
     const PAGE_SIZE: u32 = 4096;
     const NUM_CPUS: u32 = 4;

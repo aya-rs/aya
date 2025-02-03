@@ -2,8 +2,11 @@
 
 use std::os::fd::AsFd;
 
+use aya_obj::generated::{
+    bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE,
+};
+
 use crate::{
-    generated::{bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE},
     programs::{
         bpf_prog_get_fd_by_id, define_link_wrapper, id_as_key, load_program, query,
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramFd,

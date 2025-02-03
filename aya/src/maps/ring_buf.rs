@@ -17,10 +17,10 @@ use std::{
     sync::atomic::{AtomicU32, AtomicUsize, Ordering},
 };
 
+use aya_obj::generated::{BPF_RINGBUF_BUSY_BIT, BPF_RINGBUF_DISCARD_BIT, BPF_RINGBUF_HDR_SZ};
 use libc::{munmap, off_t, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
 
 use crate::{
-    generated::{BPF_RINGBUF_BUSY_BIT, BPF_RINGBUF_DISCARD_BIT, BPF_RINGBUF_HDR_SZ},
     maps::{MapData, MapError},
     sys::{mmap, SyscallError},
     util::page_size,

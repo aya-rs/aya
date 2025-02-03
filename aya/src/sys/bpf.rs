@@ -8,28 +8,24 @@ use std::{
 };
 
 use assert_matches::assert_matches;
-use libc::{ENOENT, ENOSPC};
-use obj::{
-    btf::{BtfEnum64, Enum64},
-    generated::bpf_stats_type,
+use aya_obj::{
+    btf::{
+        BtfEnum64, BtfParam, BtfType, DataSec, DataSecEntry, DeclTag, Enum64, Float, Func,
+        FuncLinkage, FuncProto, FuncSecInfo, Int, IntEncoding, LineSecInfo, Ptr, TypeTag, Var,
+        VarLinkage,
+    },
+    copy_instructions,
+    generated::{
+        bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info,
+        bpf_map_type, bpf_prog_info, bpf_prog_type, bpf_stats_type, BPF_F_REPLACE,
+    },
     maps::{bpf_map_def, LegacyMap},
     EbpfSectionKind, VerifierLog,
 };
+use libc::{ENOENT, ENOSPC};
 
 use crate::{
-    generated::{
-        bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info,
-        bpf_map_type, bpf_prog_info, bpf_prog_type, BPF_F_REPLACE,
-    },
     maps::{MapData, PerCpuValues},
-    obj::{
-        self,
-        btf::{
-            BtfParam, BtfType, DataSec, DataSecEntry, DeclTag, Float, Func, FuncLinkage, FuncProto,
-            FuncSecInfo, Int, IntEncoding, LineSecInfo, Ptr, TypeTag, Var, VarLinkage,
-        },
-        copy_instructions,
-    },
     programs::links::LinkRef,
     sys::{syscall, SysResult, Syscall, SyscallError},
     util::KernelVersion,
@@ -48,7 +44,7 @@ pub(crate) fn bpf_create_iter(link_fd: BorrowedFd<'_>) -> SysResult<crate::Mocka
 
 pub(crate) fn bpf_create_map(
     name: &CStr,
-    def: &obj::Map,
+    def: &aya_obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
     kernel_version: KernelVersion,
 ) -> SysResult<crate::MockableFd> {
@@ -61,7 +57,7 @@ pub(crate) fn bpf_create_map(
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
 
-    if let obj::Map::Btf(m) = def {
+    if let aya_obj::Map::Btf(m) = def {
         use bpf_map_type::*;
 
         // Mimic https://github.com/libbpf/libbpf/issues/355
@@ -932,7 +928,7 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
     let mut insns = copy_instructions(prog).unwrap();
 
     let map = MapData::create(
-        obj::Map::Legacy(LegacyMap {
+        aya_obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: bpf_map_type::BPF_MAP_TYPE_ARRAY as u32,
                 key_size: 4,
