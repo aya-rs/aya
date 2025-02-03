@@ -30,9 +30,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
             .header(&*dir.join("include/bindings.h").to_string_lossy())
-            // aya-tool uses aya_ebpf::cty. We can't use that here since aya-bpf
-            // depends on aya-ebpf-bindings so it would create a circular dep.
-            .ctypes_prefix("::aya_ebpf_cty")
+            .use_core()
             .clang_args(&["-I", &*libbpf_dir.join("include/uapi").to_string_lossy()])
             .clang_args(&["-I", &*libbpf_dir.join("include").to_string_lossy()])
             .clang_args(&["-I", &*libbpf_dir.join("src").to_string_lossy()])

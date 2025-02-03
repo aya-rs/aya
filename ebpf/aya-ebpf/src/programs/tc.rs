@@ -1,4 +1,4 @@
-use aya_ebpf_cty::{c_long, c_void};
+use core::ffi::{c_long, c_void};
 
 use crate::{bindings::__sk_buff, programs::sk_buff::SkBuff, EbpfContext};
 

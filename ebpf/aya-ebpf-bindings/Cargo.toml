@@ -7,6 +7,3 @@ license.workspace = true
 repository.workspace = true
 homepage.workspace = true
 edition.workspace = true
-
-[dependencies]
-aya-ebpf-cty = { version = "^0.2.2", path = "../aya-ebpf-cty" }

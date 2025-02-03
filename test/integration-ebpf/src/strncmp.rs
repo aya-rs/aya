@@ -1,8 +1,8 @@
 #![no_std]
 #![no_main]
+use core::ffi::c_long;
 
 use aya_ebpf::{
-    cty::c_long,
     helpers::{bpf_probe_read_user_str_bytes, bpf_strncmp},
     macros::{map, uprobe},
     maps::Array,

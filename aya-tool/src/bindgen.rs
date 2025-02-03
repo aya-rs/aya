@@ -17,7 +17,7 @@ pub fn user_builder() -> Builder {
 
 pub fn bpf_builder() -> Builder {
     common_builder()
-        .ctypes_prefix("::aya_ebpf::cty")
+        .use_core()
         .clang_arg("-Wno-unknown-attributes")
         .default_enum_style(EnumVariation::ModuleConsts)
 }

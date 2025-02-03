@@ -1,6 +1,5 @@
 pub mod aya_ebpf
 pub use aya_ebpf::bindings
-pub use aya_ebpf::cty
 pub use aya_ebpf::macros
 pub mod aya_ebpf::helpers
 pub use aya_ebpf::helpers::gen
@@ -61,21 +60,21 @@ impl<T> core::clone::CloneToUninit for aya_ebpf::helpers::PrintkArg where T: cor
 pub unsafe fn aya_ebpf::helpers::PrintkArg::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf::helpers::PrintkArg
 pub fn aya_ebpf::helpers::PrintkArg::from(t: T) -> T
-pub fn aya_ebpf::helpers::bpf_get_current_comm() -> core::result::Result<[u8; 16], aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::helpers::bpf_get_current_comm() -> core::result::Result<[u8; 16], core::ffi::c_long>
 pub fn aya_ebpf::helpers::bpf_get_current_pid_tgid() -> u64
 pub fn aya_ebpf::helpers::bpf_get_current_uid_gid() -> u64
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read<T>(src: *const T) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel<T>(src: *const T) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_str_bytes(src: *const u8, dest: &mut [u8]) -> core::result::Result<&[u8], aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user<T>(src: *const T) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_str_bytes(src: *const u8, dest: &mut [u8]) -> core::result::Result<&[u8], aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read<T>(src: *const T) -> core::result::Result<T, core::ffi::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), core::ffi::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel<T>(src: *const T) -> core::result::Result<T, core::ffi::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), core::ffi::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, core::ffi::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_str_bytes(src: *const u8, dest: &mut [u8]) -> core::result::Result<&[u8], core::ffi::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, core::ffi::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user<T>(src: *const T) -> core::result::Result<T, core::ffi::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), core::ffi::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, core::ffi::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_str_bytes(src: *const u8, dest: &mut [u8]) -> core::result::Result<&[u8], core::ffi::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::helpers::bpf_strncmp<const N: usize>(s1: &[u8; N], s2: &core::ffi::c_str::CStr) -> core::cmp::Ordering
 pub mod aya_ebpf::maps
 pub mod aya_ebpf::maps::array
@@ -143,9 +142,9 @@ impl<K, V> aya_ebpf::maps::hash_map::HashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::HashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::get_ptr_mut(&self, key: &K) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::HashMap<K, V>
-pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::HashMap<K, V>
@@ -174,9 +173,9 @@ impl<K, V> aya_ebpf::maps::hash_map::LruHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get_ptr_mut(&self, key: &K) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruHashMap<K, V>
-pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruHashMap<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::LruHashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruHashMap<K, V>
@@ -205,9 +204,9 @@ impl<K, V> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get_ptr_mut(&self, key: &K) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
-pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
@@ -236,9 +235,9 @@ impl<K, V> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get_ptr_mut(&self, key: &K) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
-pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
@@ -293,9 +292,9 @@ pub fn aya_ebpf::maps::lpm_trie::Key<K>::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K, V> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::get(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>) -> core::option::Option<&V>
-pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::insert(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::insert(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>, value: &V, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
-pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::remove(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::remove(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
@@ -410,7 +409,7 @@ pub mod aya_ebpf::maps::program_array
 #[repr(transparent)] pub struct aya_ebpf::maps::program_array::ProgramArray
 impl aya_ebpf::maps::program_array::ProgramArray
 pub const fn aya_ebpf::maps::program_array::ProgramArray::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::program_array::ProgramArray
-pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<never, aya_ebpf_cty::od::c_long>
+pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<never, core::ffi::c_long>
 pub const fn aya_ebpf::maps::program_array::ProgramArray::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Sync for aya_ebpf::maps::program_array::ProgramArray
 impl !core::marker::Freeze for aya_ebpf::maps::program_array::ProgramArray
@@ -902,9 +901,9 @@ impl<K, V> aya_ebpf::maps::hash_map::HashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::HashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::get_ptr_mut(&self, key: &K) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::HashMap<K, V>
-pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::HashMap<K, V>
@@ -931,9 +930,9 @@ pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::LpmTrie<K, V>
 impl<K, V> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::get(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>) -> core::option::Option<&V>
-pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::insert(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::insert(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>, value: &V, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
-pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::remove(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::remove(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
@@ -962,9 +961,9 @@ impl<K, V> aya_ebpf::maps::hash_map::LruHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get_ptr_mut(&self, key: &K) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruHashMap<K, V>
-pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruHashMap<K, V>
 impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::LruHashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruHashMap<K, V>
@@ -993,9 +992,9 @@ impl<K, V> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get_ptr_mut(&self, key: &K) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
-pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
@@ -1053,9 +1052,9 @@ impl<K, V> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get_ptr_mut(&self, key: &K) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::insert(&self, key: &K, value: &V, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
-pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: &K) -> core::result::Result<(), core::ffi::c_long>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
@@ -1138,7 +1137,7 @@ pub fn aya_ebpf::maps::PerfEventByteArray::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::ProgramArray
 impl aya_ebpf::maps::program_array::ProgramArray
 pub const fn aya_ebpf::maps::program_array::ProgramArray::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::program_array::ProgramArray
-pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<never, aya_ebpf_cty::od::c_long>
+pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<never, core::ffi::c_long>
 pub const fn aya_ebpf::maps::program_array::ProgramArray::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Sync for aya_ebpf::maps::program_array::ProgramArray
 impl !core::marker::Freeze for aya_ebpf::maps::program_array::ProgramArray
@@ -1600,30 +1599,30 @@ pub mod aya_ebpf::programs::sk_buff
 pub struct aya_ebpf::programs::sk_buff::SkBuff
 pub aya_ebpf::programs::sk_buff::SkBuff::skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff
 impl aya_ebpf::programs::sk_buff::SkBuff
-pub fn aya_ebpf::programs::sk_buff::SkBuff::adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuff::adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::cb(&self) -> &[u32]
 pub fn aya_ebpf::programs::sk_buff::SkBuff::cb_mut(&mut self) -> &mut [u32]
-pub fn aya_ebpf::programs::sk_buff::SkBuff::change_proto(&self, proto: u16, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuff::change_type(&self, ty: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuff::clone_redirect(&self, if_index: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuff::change_proto(&self, proto: u16, flags: u64) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuff::change_type(&self, ty: u32) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuff::clone_redirect(&self, if_index: u32, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::family(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::get_socket_uid(&self) -> u32
-pub fn aya_ebpf::programs::sk_buff::SkBuff::l3_csum_replace(&self, offset: usize, from: u64, to: u64, size: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuff::l4_csum_replace(&self, offset: usize, from: u64, to: u64, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuff::l3_csum_replace(&self, offset: usize, from: u64, to: u64, size: u64) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuff::l4_csum_replace(&self, offset: usize, from: u64, to: u64, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::len(&self) -> u32
-pub fn aya_ebpf::programs::sk_buff::SkBuff::load<T>(&self, offset: usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuff::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuff::load<T>(&self, offset: usize) -> core::result::Result<T, core::ffi::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuff::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::local_ipv4(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::local_ipv6(&self) -> &[u32; 4]
 pub fn aya_ebpf::programs::sk_buff::SkBuff::local_port(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::sk_buff::SkBuff
 pub fn aya_ebpf::programs::sk_buff::SkBuff::protocol(&self) -> u32
-pub fn aya_ebpf::programs::sk_buff::SkBuff::pull_data(&self, len: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuff::pull_data(&self, len: u32) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::remote_ipv4(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::remote_ipv6(&self) -> &[u32; 4]
 pub fn aya_ebpf::programs::sk_buff::SkBuff::remote_port(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::set_mark(&mut self, mark: u32)
-pub fn aya_ebpf::programs::sk_buff::SkBuff::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuff::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 impl core::marker::Freeze for aya_ebpf::programs::sk_buff::SkBuff
 impl !core::marker::Send for aya_ebpf::programs::sk_buff::SkBuff
 impl !core::marker::Sync for aya_ebpf::programs::sk_buff::SkBuff
@@ -1649,21 +1648,21 @@ pub fn aya_ebpf::programs::sk_buff::SkBuff::from(t: T) -> T
 pub struct aya_ebpf::programs::sk_buff::SkBuffContext
 pub aya_ebpf::programs::sk_buff::SkBuffContext::skb: aya_ebpf::programs::sk_buff::SkBuff
 impl aya_ebpf::programs::sk_buff::SkBuffContext
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb(&self) -> &[u32]
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb_mut(&mut self) -> &mut [u32]
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::change_type(&self, ty: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::clone_redirect(&self, if_index: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::change_type(&self, ty: u32) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::clone_redirect(&self, if_index: u32, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::get_socket_uid(&self) -> u32
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l3_csum_replace(&self, offset: usize, from: u64, to: u64, size: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l4_csum_replace(&self, offset: usize, from: u64, to: u64, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l3_csum_replace(&self, offset: usize, from: u64, to: u64, size: u64) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l4_csum_replace(&self, offset: usize, from: u64, to: u64, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::len(&self) -> u32
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load<T>(&self, offset: usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load<T>(&self, offset: usize) -> core::result::Result<T, core::ffi::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::sk_buff::SkBuffContext
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::pull_data(&self, len: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::pull_data(&self, len: u32) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::set_mark(&mut self, mark: u32)
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sk_buff::SkBuffContext
@@ -1912,26 +1911,26 @@ pub mod aya_ebpf::programs::tc
 pub struct aya_ebpf::programs::tc::TcContext
 pub aya_ebpf::programs::tc::TcContext::skb: aya_ebpf::programs::sk_buff::SkBuff
 impl aya_ebpf::programs::tc::TcContext
-pub fn aya_ebpf::programs::tc::TcContext::adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::cb(&self) -> &[u32]
 pub fn aya_ebpf::programs::tc::TcContext::cb_mut(&mut self) -> &mut [u32]
-pub fn aya_ebpf::programs::tc::TcContext::change_proto(&self, proto: u16, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::change_type(&self, ty: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::clone_redirect(&self, if_index: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::change_proto(&self, proto: u16, flags: u64) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::change_type(&self, ty: u32) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::clone_redirect(&self, if_index: u32, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::data(&self) -> usize
 pub fn aya_ebpf::programs::tc::TcContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::tc::TcContext::get_socket_uid(&self) -> u32
-pub fn aya_ebpf::programs::tc::TcContext::l3_csum_replace(&self, offset: usize, from: u64, to: u64, size: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::l4_csum_replace(&self, offset: usize, from: u64, to: u64, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::l3_csum_replace(&self, offset: usize, from: u64, to: u64, size: u64) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::l4_csum_replace(&self, offset: usize, from: u64, to: u64, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::len(&self) -> u32
-pub fn aya_ebpf::programs::tc::TcContext::load<T>(&self, offset: usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::load<T>(&self, offset: usize) -> core::result::Result<T, core::ffi::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, core::ffi::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::tc::TcContext
-pub fn aya_ebpf::programs::tc::TcContext::pull_data(&self, len: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::pull_data(&self, len: u32) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::set_mark(&mut self, mark: u32)
-pub fn aya_ebpf::programs::tc::TcContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tc::TcContext
-pub fn aya_ebpf::programs::tc::TcContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
+pub fn aya_ebpf::programs::tc::TcContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::tc::TcContext
 impl !core::marker::Send for aya_ebpf::programs::tc::TcContext
 impl !core::marker::Sync for aya_ebpf::programs::tc::TcContext
@@ -2301,21 +2300,21 @@ pub fn aya_ebpf::programs::retprobe::RetProbeContext::from(t: T) -> T
 pub struct aya_ebpf::programs::SkBuffContext
 pub aya_ebpf::programs::SkBuffContext::skb: aya_ebpf::programs::sk_buff::SkBuff
 impl aya_ebpf::programs::sk_buff::SkBuffContext
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb(&self) -> &[u32]
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb_mut(&mut self) -> &mut [u32]
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::change_type(&self, ty: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::clone_redirect(&self, if_index: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::change_type(&self, ty: u32) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::clone_redirect(&self, if_index: u32, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::get_socket_uid(&self) -> u32
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l3_csum_replace(&self, offset: usize, from: u64, to: u64, size: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l4_csum_replace(&self, offset: usize, from: u64, to: u64, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l3_csum_replace(&self, offset: usize, from: u64, to: u64, size: u64) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l4_csum_replace(&self, offset: usize, from: u64, to: u64, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::len(&self) -> u32
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load<T>(&self, offset: usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load<T>(&self, offset: usize) -> core::result::Result<T, core::ffi::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::sk_buff::SkBuffContext
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::pull_data(&self, len: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::pull_data(&self, len: u32) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::set_mark(&mut self, mark: u32)
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::sk_buff::SkBuffContext
@@ -2556,26 +2555,26 @@ pub fn aya_ebpf::programs::sysctl::SysctlContext::from(t: T) -> T
 pub struct aya_ebpf::programs::TcContext
 pub aya_ebpf::programs::TcContext::skb: aya_ebpf::programs::sk_buff::SkBuff
 impl aya_ebpf::programs::tc::TcContext
-pub fn aya_ebpf::programs::tc::TcContext::adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::cb(&self) -> &[u32]
 pub fn aya_ebpf::programs::tc::TcContext::cb_mut(&mut self) -> &mut [u32]
-pub fn aya_ebpf::programs::tc::TcContext::change_proto(&self, proto: u16, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::change_type(&self, ty: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::clone_redirect(&self, if_index: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::change_proto(&self, proto: u16, flags: u64) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::change_type(&self, ty: u32) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::clone_redirect(&self, if_index: u32, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::data(&self) -> usize
 pub fn aya_ebpf::programs::tc::TcContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::tc::TcContext::get_socket_uid(&self) -> u32
-pub fn aya_ebpf::programs::tc::TcContext::l3_csum_replace(&self, offset: usize, from: u64, to: u64, size: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::l4_csum_replace(&self, offset: usize, from: u64, to: u64, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::l3_csum_replace(&self, offset: usize, from: u64, to: u64, size: u64) -> core::result::Result<(), core::ffi::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::l4_csum_replace(&self, offset: usize, from: u64, to: u64, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::len(&self) -> u32
-pub fn aya_ebpf::programs::tc::TcContext::load<T>(&self, offset: usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::load<T>(&self, offset: usize) -> core::result::Result<T, core::ffi::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, core::ffi::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::tc::TcContext
-pub fn aya_ebpf::programs::tc::TcContext::pull_data(&self, len: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::pull_data(&self, len: u32) -> core::result::Result<(), core::ffi::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::set_mark(&mut self, mark: u32)
-pub fn aya_ebpf::programs::tc::TcContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::store<T>(&mut self, offset: usize, v: &T, flags: u64) -> core::result::Result<(), core::ffi::c_long>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tc::TcContext
-pub fn aya_ebpf::programs::tc::TcContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
+pub fn aya_ebpf::programs::tc::TcContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::tc::TcContext
 impl !core::marker::Send for aya_ebpf::programs::tc::TcContext
 impl !core::marker::Sync for aya_ebpf::programs::tc::TcContext
@@ -2716,7 +2715,7 @@ pub fn aya_ebpf::RawTracepointArgs::from(t: T) -> T
 pub const aya_ebpf::TASK_COMM_LEN: usize
 pub trait aya_ebpf::EbpfContext
 pub fn aya_ebpf::EbpfContext::as_ptr(&self) -> *mut core::ffi::c_void
-pub fn aya_ebpf::EbpfContext::command(&self) -> core::result::Result<[u8; 16], aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::EbpfContext::command(&self) -> core::result::Result<[u8; 16], core::ffi::c_long>
 pub fn aya_ebpf::EbpfContext::gid(&self) -> u32
 pub fn aya_ebpf::EbpfContext::pid(&self) -> u32
 pub fn aya_ebpf::EbpfContext::tgid(&self) -> u32
@@ -2754,7 +2753,7 @@ pub fn aya_ebpf::programs::sockopt::SockoptContext::as_ptr(&self) -> *mut core::
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sysctl::SysctlContext
 pub fn aya_ebpf::programs::sysctl::SysctlContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tc::TcContext
-pub fn aya_ebpf::programs::tc::TcContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
+pub fn aya_ebpf::programs::tc::TcContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tracepoint::TracePointContext
@@ -2764,4 +2763,4 @@ pub fn aya_ebpf::programs::xdp::XdpContext::as_ptr(&self) -> *mut core::ffi::c_v
 pub fn aya_ebpf::check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool
 #[no_mangle] pub unsafe c fn aya_ebpf::memcpy(dest: *mut u8, src: *mut u8, n: usize)
 #[no_mangle] pub unsafe c fn aya_ebpf::memmove(dest: *mut u8, src: *mut u8, n: usize)
-#[no_mangle] pub unsafe c fn aya_ebpf::memset(s: *mut u8, c: aya_ebpf_cty::ad::c_int, n: usize)
+#[no_mangle] pub unsafe c fn aya_ebpf::memset(s: *mut u8, c: core::ffi::c_int, n: usize)

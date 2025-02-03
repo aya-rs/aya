@@ -33,7 +33,8 @@ impl ProbeContext {
     /// ```no_run
     /// # #![allow(non_camel_case_types)]
     /// # #![allow(dead_code)]
-    /// # use aya_ebpf::{programs::ProbeContext, cty::c_int, helpers::bpf_probe_read};
+    /// # use core::ffi::c_int;
+    /// # use aya_ebpf::{programs::ProbeContext, helpers::bpf_probe_read};
     /// # type pid_t = c_int;
     /// # struct task_struct {
     /// #     pid: pid_t,

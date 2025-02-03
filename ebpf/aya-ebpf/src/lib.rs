@@ -23,12 +23,9 @@ pub use args::{PtRegs, RawTracepointArgs};
 pub mod helpers;
 pub mod maps;
 pub mod programs;
+use core::ffi::{c_int, c_long, c_void};
 
-use core::ffi::c_void;
-
-pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
-use cty::{c_int, c_long};
 use helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid};
 
 pub const TASK_COMM_LEN: usize = 16;

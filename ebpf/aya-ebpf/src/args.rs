@@ -1,3 +1,5 @@
+use core::ffi::c_void;
+
 #[cfg(any(
     bpf_target_arch = "x86_64",
     bpf_target_arch = "arm",
@@ -11,7 +13,7 @@ use crate::bindings::user_pt_regs as pt_regs;
 // riscv64 uses user_regs_struct instead of pt_regs
 #[cfg(bpf_target_arch = "riscv64")]
 use crate::bindings::user_regs_struct as pt_regs;
-use crate::{bindings::bpf_raw_tracepoint_args, cty::c_void, helpers::bpf_probe_read};
+use crate::{bindings::bpf_raw_tracepoint_args, helpers::bpf_probe_read};
 
 /// A trait that indicates a valid type for an argument which can be coerced from a BTF
 /// context.

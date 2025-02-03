@@ -1,5 +1,5 @@
 use core::{
-    ffi::c_void,
+    ffi::{c_long, c_void},
     mem::{self, MaybeUninit},
 };
 
@@ -8,7 +8,6 @@ use aya_ebpf_bindings::helpers::{
     bpf_skb_adjust_room, bpf_skb_change_proto, bpf_skb_change_type, bpf_skb_load_bytes,
     bpf_skb_pull_data, bpf_skb_store_bytes,
 };
-use aya_ebpf_cty::c_long;
 
 use crate::{bindings::__sk_buff, EbpfContext};
 
