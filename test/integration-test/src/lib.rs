@@ -8,6 +8,8 @@ pub const MULTIMAP_BTF: &[u8] =
 pub const RELOC_BPF: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/reloc.bpf.o"));
 pub const RELOC_BTF: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/reloc.bpf.target.o"));
+pub const TASK_STORAGE: &[u8] =
+    include_bytes_aligned!(concat!(env!("OUT_DIR"), "/task_storage.bpf.o"));
 pub const TEXT_64_64_RELOC: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/text_64_64_reloc.o"));
 pub const VARIABLES_RELOC: &[u8] =
