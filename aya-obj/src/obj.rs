@@ -22,8 +22,8 @@ use crate::{
         Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
     },
     generated::{
-        bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL, BPF_F_RDONLY_PROG,
-        BPF_JMP, BPF_K,
+        bpf_func_id::*, bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL,
+        BPF_F_RDONLY_PROG, BPF_JMP, BPF_K,
     },
     maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, PinningType, MINIMUM_MAP_SIZE},
     programs::{
@@ -908,13 +908,6 @@ fn insn_is_helper_call(ins: &bpf_insn) -> bool {
     klass == BPF_JMP && op == BPF_CALL && src == BPF_K && ins.src_reg() == 0 && ins.dst_reg() == 0
 }
 
-const BPF_FUNC_PROBE_READ: i32 = 4;
-const BPF_FUNC_PROBE_READ_STR: i32 = 45;
-const BPF_FUNC_PROBE_READ_USER: i32 = 112;
-const BPF_FUNC_PROBE_READ_KERNEL: i32 = 113;
-const BPF_FUNC_PROBE_READ_USER_STR: i32 = 114;
-const BPF_FUNC_PROBE_READ_KERNEL_STR: i32 = 115;
-
 impl Function {
     fn sanitize(&mut self, features: &Features) {
         for inst in &mut self.instructions {
@@ -922,18 +915,23 @@ impl Function {
                 continue;
             }
 
-            match inst.imm {
-                BPF_FUNC_PROBE_READ_USER | BPF_FUNC_PROBE_READ_KERNEL
-                    if !features.bpf_probe_read_kernel =>
-                {
-                    inst.imm = BPF_FUNC_PROBE_READ;
+            if !features.bpf_probe_read_kernel {
+                const BPF_FUNC_PROBE_READ_KERNEL: i32 = BPF_FUNC_probe_read_kernel as i32;
+                const BPF_FUNC_PROBE_READ_USER: i32 = BPF_FUNC_probe_read_user as i32;
+                const BPF_FUNC_PROBE_READ: i32 = BPF_FUNC_probe_read as i32;
+                const BPF_FUNC_PROBE_READ_KERNEL_STR: i32 = BPF_FUNC_probe_read_kernel_str as i32;
+                const BPF_FUNC_PROBE_READ_USER_STR: i32 = BPF_FUNC_probe_read_user_str as i32;
+                const BPF_FUNC_PROBE_READ_STR: i32 = BPF_FUNC_probe_read_str as i32;
+
+                match inst.imm {
+                    BPF_FUNC_PROBE_READ_KERNEL | BPF_FUNC_PROBE_READ_USER => {
+                        inst.imm = BPF_FUNC_PROBE_READ;
+                    }
+                    BPF_FUNC_PROBE_READ_KERNEL_STR | BPF_FUNC_PROBE_READ_USER_STR => {
+                        inst.imm = BPF_FUNC_PROBE_READ_STR;
+                    }
+                    _ => {}
                 }
-                BPF_FUNC_PROBE_READ_USER_STR | BPF_FUNC_PROBE_READ_KERNEL_STR
-                    if !features.bpf_probe_read_kernel =>
-                {
-                    inst.imm = BPF_FUNC_PROBE_READ_STR;
-                }
-                _ => {}
             }
         }
     }
