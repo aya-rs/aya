@@ -138,8 +138,6 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
         "PERF_FLAG_.*",
         "PERF_EVENT_.*",
         "PERF_MAX_.*",
-        // see linux_wrapper.h, these are to workaround the IOC macros
-        "AYA_PERF_EVENT_.*",
         // NETLINK
         "NLMSG_ALIGNTO",
         "IFLA_XDP_FD",

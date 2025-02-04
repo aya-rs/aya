@@ -1,7 +1,6 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    ffi::c_int,
     fs, io,
     os::fd::{AsFd as _, AsRawFd as _},
     path::{Path, PathBuf},
@@ -12,7 +11,6 @@ use aya_obj::{
     btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
     generated::{
         bpf_map_type::{self, *},
-        AYA_PERF_EVENT_IOC_DISABLE, AYA_PERF_EVENT_IOC_ENABLE, AYA_PERF_EVENT_IOC_SET_BPF,
         BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS,
     },
     relocation::EbpfRelocationError,
@@ -39,10 +37,6 @@ use crate::{
     },
     util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
-
-pub(crate) const PERF_EVENT_IOC_ENABLE: c_int = AYA_PERF_EVENT_IOC_ENABLE;
-pub(crate) const PERF_EVENT_IOC_DISABLE: c_int = AYA_PERF_EVENT_IOC_DISABLE;
-pub(crate) const PERF_EVENT_IOC_SET_BPF: c_int = AYA_PERF_EVENT_IOC_SET_BPF;
 
 /// Marker trait for types that can safely be converted to and from byte slices.
 pub unsafe trait Pod: Copy + 'static {}

@@ -9,15 +9,13 @@ use std::{
 use aya_obj::generated::{
     perf_event_header, perf_event_mmap_page,
     perf_event_type::{PERF_RECORD_LOST, PERF_RECORD_SAMPLE},
+    PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
 use bytes::BytesMut;
 use libc::{munmap, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
-use crate::{
-    sys::{mmap, perf_event_ioctl, perf_event_open_bpf, SysResult},
-    PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
-};
+use crate::sys::{mmap, perf_event_ioctl, perf_event_open_bpf, SysResult};
 
 /// Perf buffer error.
 #[derive(Error, Debug)]

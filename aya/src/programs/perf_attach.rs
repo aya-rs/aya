@@ -1,7 +1,10 @@
 //! Perf attach links.
 use std::os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd};
 
-use aya_obj::generated::bpf_attach_type::BPF_PERF_EVENT;
+use aya_obj::generated::{
+    bpf_attach_type::BPF_PERF_EVENT, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
+    PERF_EVENT_IOC_SET_BPF,
+};
 
 use crate::{
     programs::{
@@ -13,7 +16,7 @@ use crate::{
         bpf_link_create, is_bpf_cookie_supported, perf_event_ioctl, BpfLinkCreateArgs, LinkTarget,
         SysResult, SyscallError,
     },
-    FEATURES, PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE, PERF_EVENT_IOC_SET_BPF,
+    FEATURES,
 };
 
 #[derive(Debug, Hash, Eq, PartialEq)]
