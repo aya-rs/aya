@@ -40,7 +40,7 @@ pub(crate) enum Syscall<'a> {
     },
     PerfEventIoctl {
         fd: BorrowedFd<'a>,
-        request: c_int,
+        request: u32,
         arg: c_int,
     },
 }
