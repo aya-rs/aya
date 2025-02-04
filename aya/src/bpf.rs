@@ -40,8 +40,6 @@ use crate::{
     util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
 
-pub(crate) const BPF_OBJ_NAME_LEN: usize = 16;
-
 pub(crate) const PERF_EVENT_IOC_ENABLE: c_int = AYA_PERF_EVENT_IOC_ENABLE;
 pub(crate) const PERF_EVENT_IOC_DISABLE: c_int = AYA_PERF_EVENT_IOC_DISABLE;
 pub(crate) const PERF_EVENT_IOC_SET_BPF: c_int = AYA_PERF_EVENT_IOC_SET_BPF;

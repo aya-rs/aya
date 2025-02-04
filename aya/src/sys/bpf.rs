@@ -4,7 +4,6 @@ use std::{
     io, iter,
     mem::{self, MaybeUninit},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, RawFd},
-    slice,
 };
 
 use assert_matches::assert_matches;
@@ -29,7 +28,7 @@ use crate::{
     programs::links::LinkRef,
     sys::{syscall, SysResult, Syscall, SyscallError},
     util::KernelVersion,
-    Btf, Pod, VerifierLogLevel, BPF_OBJ_NAME_LEN, FEATURES,
+    Btf, Pod, VerifierLogLevel, FEATURES,
 };
 
 pub(crate) fn bpf_create_iter(link_fd: BorrowedFd<'_>) -> SysResult<crate::MockableFd> {
@@ -95,9 +94,10 @@ pub(crate) fn bpf_create_map(
     // older kernels for compatibility
     if kernel_version >= KernelVersion::new(4, 15, 0) {
         // u.map_name is 16 bytes max and must be NULL terminated
-        let name_len = cmp::min(name.to_bytes().len(), BPF_OBJ_NAME_LEN - 1);
-        u.map_name[..name_len]
-            .copy_from_slice(unsafe { slice::from_raw_parts(name.as_ptr(), name_len) });
+        let name_bytes = name.to_bytes_with_nul();
+        let len = cmp::min(name_bytes.len(), u.map_name.len());
+        u.map_name[..len]
+            .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
     }
 
     // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
@@ -148,14 +148,11 @@ pub(crate) fn bpf_load_program(
 
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
-    if let Some(prog_name) = &aya_attr.name {
-        let mut name: [c_char; 16] = [0; 16];
-        let name_bytes = prog_name.to_bytes();
-        let len = cmp::min(name.len(), name_bytes.len());
-        name[..len].copy_from_slice(unsafe {
-            slice::from_raw_parts(name_bytes.as_ptr() as *const c_char, len)
-        });
-        u.prog_name = name;
+    if let Some(name) = &aya_attr.name {
+        let name_bytes = name.to_bytes();
+        let len = cmp::min(name_bytes.len(), u.prog_name.len());
+        u.prog_name[..len]
+            .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
     }
 
     u.prog_flags = aya_attr.flags;
@@ -735,14 +732,11 @@ pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<crate::MockableFd, Syscall
 pub(crate) fn is_prog_name_supported() -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
-    let mut name: [c_char; 16] = [0; 16];
-    let cstring = CString::new("aya_name_check").unwrap();
-    let name_bytes = cstring.to_bytes();
-    let len = cmp::min(name.len(), name_bytes.len());
-    name[..len].copy_from_slice(unsafe {
-        slice::from_raw_parts(name_bytes.as_ptr() as *const c_char, len)
-    });
-    u.prog_name = name;
+    let name = c"aya_name_check";
+    let name_bytes = name.to_bytes();
+    let len = cmp::min(name_bytes.len(), u.prog_name.len());
+    u.prog_name[..len]
+        .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
 
     // The fields conforming an encoded basic instruction are stored in the following order:
     //   opcode:8 src_reg:4 dst_reg:4 offset:16 imm:32   - In little-endian BPF.
