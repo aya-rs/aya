@@ -1,4 +1,3 @@
-#include <asm-generic/socket.h>
 #include <linux/bpf.h>
 #include <linux/btf.h>
 #include <linux/if_link.h>
@@ -7,3 +6,4 @@
 #include <linux/pkt_cls.h>
 #include <linux/pkt_sched.h>
 #include <linux/rtnetlink.h>
+#include <sys/socket.h>
