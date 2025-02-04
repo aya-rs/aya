@@ -4,6 +4,7 @@ mod helpers;
 
 use std::path::{Path, PathBuf};
 
+use anyhow::{Context as _, Result};
 use clap::Parser;
 
 const SUPPORTED_ARCHS: &[Architecture] = &[
@@ -92,34 +93,38 @@ pub struct SysrootOptions {
 
 #[derive(Parser)]
 pub struct Options {
-    #[command(flatten)]
+    #[clap(flatten)]
     sysroot_options: SysrootOptions,
 
-    #[command(subcommand)]
-    command: Option<Command>,
+    #[clap(subcommand)]
+    command: Option<Target>,
 }
 
 #[derive(clap::Subcommand)]
-enum Command {
+enum Target {
     #[command(name = "aya")]
     Aya,
     #[command(name = "aya-ebpf-bindings")]
     AyaEbpfBindings,
 }
 
-pub fn codegen(opts: Options, libbpf_dir: &Path) -> Result<(), anyhow::Error> {
+pub fn codegen(opts: Options, libbpf_dir: &Path) -> Result<()> {
     let Options {
         sysroot_options,
         command,
     } = opts;
+
     match command {
         Some(command) => match command {
-            Command::Aya => aya::codegen(&sysroot_options, libbpf_dir),
-            Command::AyaEbpfBindings => aya_ebpf_bindings::codegen(&sysroot_options, libbpf_dir),
+            Target::Aya => aya::codegen(&sysroot_options, libbpf_dir).context("aya"),
+            Target::AyaEbpfBindings => aya_ebpf_bindings::codegen(&sysroot_options, libbpf_dir)
+                .context("aya_ebpf_bindings"),
         },
         None => {
-            aya::codegen(&sysroot_options, libbpf_dir)?;
+            aya::codegen(&sysroot_options, libbpf_dir).context("aya")?;
             aya_ebpf_bindings::codegen(&sysroot_options, libbpf_dir)
+                .context("aya_ebpf_bindings")?;
+            Ok(())
         }
     }
 }

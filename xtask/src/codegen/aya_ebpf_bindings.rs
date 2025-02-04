@@ -1,20 +1,25 @@
 use std::{
+    ffi::OsString,
     fs::create_dir_all,
     path::{Path, PathBuf},
+    process::Command,
 };
 
-use anyhow::anyhow;
+use anyhow::{Context as _, Result};
 use aya_tool::{bindgen, write_to_file_fmt};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{parse_str, Item};
 
-use crate::codegen::{
-    helpers::{expand_helpers, extract_helpers},
-    Architecture, SysrootOptions,
+use crate::{
+    codegen::{
+        helpers::{expand_helpers, extract_helpers},
+        Architecture, SysrootOptions,
+    },
+    exec,
 };
 
-pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::Error> {
+pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
     let SysrootOptions {
         x86_64_sysroot,
         aarch64_sysroot,
@@ -25,17 +30,35 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
         mips_sysroot,
     } = opts;
 
+    let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
+    let libbpf_headers_dir = tmp_dir.path().join("libbpf_headers");
+
+    let mut includedir = OsString::new();
+    includedir.push("INCLUDEDIR=");
+    includedir.push(&libbpf_headers_dir);
+
+    exec(
+        Command::new("make")
+            .arg("-C")
+            .arg(libbpf_dir.join("src"))
+            .arg(includedir)
+            .arg("install_headers"),
+    )?;
+
     let dir = PathBuf::from("ebpf/aya-ebpf-bindings");
 
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
             .header(dir.join("include/bindings.h").to_str().unwrap())
+            .clang_args(["-I", libbpf_dir.join("include/uapi").to_str().unwrap()])
+            .clang_args(["-I", libbpf_dir.join("include").to_str().unwrap()])
+            .clang_args(["-I", libbpf_headers_dir.to_str().unwrap()])
             // aya-tool uses aya_ebpf::cty. We can't use that here since aya-bpf
             // depends on aya-ebpf-bindings so it would create a circular dep.
             .ctypes_prefix("::aya_ebpf_cty")
-            .clang_args(["-I", libbpf_dir.join("include/uapi").to_str().unwrap()])
-            .clang_args(["-I", libbpf_dir.join("include").to_str().unwrap()])
-            .clang_args(["-I", libbpf_dir.join("src").to_str().unwrap()])
+            // we define our own version which is compatible with both libbpf
+            // and iproute2.
+            .blocklist_type("bpf_map_def")
             // BPF_F_LINK is defined twice. Once in an anonymous enum
             // which bindgen will constify, and once via #define macro
             // which generates a duplicate const.
@@ -69,10 +92,6 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
         for x in &types {
             bindgen = bindgen.allowlist_type(x);
         }
-
-        // we define our own version which is compatible with both libbpf and
-        // iproute2
-        bindgen = bindgen.blocklist_type("bpf_map_def");
 
         for x in &vars {
             bindgen = bindgen.allowlist_var(x);
@@ -110,10 +129,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
         };
         bindgen = bindgen.clang_args(["-I", sysroot.to_str().unwrap()]);
 
-        let bindings = bindgen
-            .generate()
-            .map_err(|op| anyhow!("bindgen failed - {op}"))?
-            .to_string();
+        let bindings = bindgen.generate().context("bindgen failed")?.to_string();
 
         let mut tree = parse_str::<syn::File>(&bindings).unwrap();
 
