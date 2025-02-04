@@ -29,13 +29,13 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
 
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
-            .header(&*dir.join("include/bindings.h").to_string_lossy())
+            .header(dir.join("include/bindings.h").to_str().unwrap())
             // aya-tool uses aya_ebpf::cty. We can't use that here since aya-bpf
             // depends on aya-ebpf-bindings so it would create a circular dep.
             .ctypes_prefix("::aya_ebpf_cty")
-            .clang_args(&["-I", &*libbpf_dir.join("include/uapi").to_string_lossy()])
-            .clang_args(&["-I", &*libbpf_dir.join("include").to_string_lossy()])
-            .clang_args(&["-I", &*libbpf_dir.join("src").to_string_lossy()])
+            .clang_args(["-I", libbpf_dir.join("include/uapi").to_str().unwrap()])
+            .clang_args(["-I", libbpf_dir.join("include").to_str().unwrap()])
+            .clang_args(["-I", libbpf_dir.join("src").to_str().unwrap()])
             // BPF_F_LINK is defined twice. Once in an anonymous enum
             // which bindgen will constify, and once via #define macro
             // which generates a duplicate const.
@@ -95,7 +95,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
             Architecture::S390X => "s390x-unknown-linux-gnu",
             Architecture::Mips => "mips-unknown-linux-gnu",
         };
-        bindgen = bindgen.clang_args(&["-target", target]);
+        bindgen = bindgen.clang_args(["-target", target]);
 
         // Set the sysroot. This is needed to ensure that the correct arch
         // specific headers are imported.
@@ -108,7 +108,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyhow::E
             Architecture::S390X => s390x_sysroot,
             Architecture::Mips => mips_sysroot,
         };
-        bindgen = bindgen.clang_args(&["-I", &*sysroot.to_string_lossy()]);
+        bindgen = bindgen.clang_args(["-I", sysroot.to_str().unwrap()]);
 
         let bindings = bindgen
             .generate()

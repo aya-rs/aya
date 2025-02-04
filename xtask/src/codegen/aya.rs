@@ -15,23 +15,9 @@ fn codegen_internal_btf_bindings(libbpf_dir: &Path) -> Result<(), anyhow::Error>
     let generated = dir.join("src/generated");
 
     let mut bindgen = bindgen::user_builder()
-        .clang_arg(format!(
-            "-I{}",
-            libbpf_dir
-                .join("include/uapi")
-                .canonicalize()
-                .unwrap()
-                .to_string_lossy()
-        ))
-        .clang_arg(format!(
-            "-I{}",
-            libbpf_dir
-                .join("include")
-                .canonicalize()
-                .unwrap()
-                .to_string_lossy()
-        ))
-        .header(libbpf_dir.join("src/libbpf_internal.h").to_string_lossy())
+        .clang_args(["-I", libbpf_dir.join("include/uapi").to_str().unwrap()])
+        .clang_args(["-I", libbpf_dir.join("include").to_str().unwrap()])
+        .header(libbpf_dir.join("src/libbpf_internal.h").to_str().unwrap())
         .constified_enum_module("bpf_core_relo_kind");
 
     let types = ["bpf_core_relo", "btf_ext_header"];
@@ -177,9 +163,9 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
 
     let builder = || {
         bindgen::user_builder()
-            .header(dir.join("include/linux_wrapper.h").to_string_lossy())
-            .clang_args(&["-I", &*libbpf_dir.join("include/uapi").to_string_lossy()])
-            .clang_args(&["-I", &*libbpf_dir.join("include").to_string_lossy()])
+            .header(dir.join("include/linux_wrapper.h").to_str().unwrap())
+            .clang_args(["-I", libbpf_dir.join("include/uapi").to_str().unwrap()])
+            .clang_args(["-I", libbpf_dir.join("include").to_str().unwrap()])
     };
 
     for arch in Architecture::supported() {
@@ -209,7 +195,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<(), anyh
             Architecture::S390X => s390x_sysroot,
             Architecture::Mips => mips_sysroot,
         };
-        bindgen = bindgen.clang_args(&["-I", &*sysroot.to_string_lossy()]);
+        bindgen = bindgen.clang_args(["-I", sysroot.to_str().unwrap()]);
 
         for x in &types {
             bindgen = bindgen.allowlist_type(x);
