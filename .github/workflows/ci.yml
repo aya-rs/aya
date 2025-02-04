@@ -59,7 +59,11 @@ jobs:
       - uses: peter-evans/create-pull-request@v7
         if: github.event_name != 'pull_request' && github.repository_owner == 'aya-rs'
         with:
-          commit-message: "public-api: regenerate"
+          branch: create-pull-request/public-api
+          commit-message: 'public-api: regenerate'
+          title: 'public-api: regenerate'
+          body: |
+            **Automated changes**
 
       - name: Run miri
         run: |

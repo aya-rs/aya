@@ -14,61 +14,35 @@ jobs:
       - name: update libbpf
         working-directory: xtask/libbpf
         run: |
-          set -e
+          set -euxo pipefail
           git fetch origin
           git checkout origin/HEAD
           echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
 
       - name: Install headers
         run: |
+          set -euxo pipefail
           sudo apt -y update
           sudo apt -y install libelf-dev libc6-dev libc6-dev-{arm64,armel,riscv64,ppc64el,s390x,mips}-cross
 
-      - name: Run codegen
-        run: |
-          cargo xtask codegen
+      - run: cargo xtask codegen
+      - run: cargo xtask public-api --bless
 
-      - name: Check for changes
-        run: |
-          git diff --quiet || echo "COMMIT_CHANGES=1" >> $GITHUB_ENV
-
-      - name: Bless public API changes
-        if: env.COMMIT_CHANGES == 1
-        run: |
-          cargo xtask public-api --bless
-
-      - name: Commit Changes
-        id: commit
-        if: env.COMMIT_CHANGES == 1
-        uses: devops-infra/action-commit-push@master
+      - uses: peter-evans/create-pull-request@v7
         with:
-          github_token: "${{ secrets.CRABBY_GITHUB_TOKEN }}"
-          commit_message: |
-            chore(aya-obj, aya-ebpf-bindings): Regenerate bindings
+          branch: create-pull-request/codegen
+          commit-message: |
+            aya-obj, aya-ebpf-bindings: regenerate
 
             libbpf commit: ${{ env.LIBBPF_SHA }}
-
-          target_branch: codegen
-          force: true
-
-      - name: Create pull request
-        if: steps.commit.outputs.files_changed != ''
-        uses: devops-infra/action-pull-request@master
-        with:
-          github_token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
+          title: 'aya-obj, aya-ebpf-bindings: regenerate'
           body: |
-            **Automated pull request**
+            **Automated changes**
 
             libbpf commit: ${{ env.LIBBPF_SHA }}
-
-          title: "chore(aya-obj, aya-ebpf-bindings): Regenerate bindings"
-          source_branch: codegen
-          target_branch: main
-          get_diff: true
