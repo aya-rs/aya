@@ -1386,7 +1386,7 @@ pub const aya_obj::generated::bpf_core_relo_kind::BPF_CORE_TYPE_ID_LOCAL: aya_ob
 pub const aya_obj::generated::bpf_core_relo_kind::BPF_CORE_TYPE_ID_TARGET: aya_obj::generated::bpf_core_relo_kind::Type
 pub const aya_obj::generated::bpf_core_relo_kind::BPF_CORE_TYPE_MATCHES: aya_obj::generated::bpf_core_relo_kind::Type
 pub const aya_obj::generated::bpf_core_relo_kind::BPF_CORE_TYPE_SIZE: aya_obj::generated::bpf_core_relo_kind::Type
-pub type aya_obj::generated::bpf_core_relo_kind::Type = core::ffi::c_uint
+pub type aya_obj::generated::bpf_core_relo_kind::Type = core::ffi::primitives::c_uint
 #[repr(u32)] pub enum aya_obj::generated::bpf_attach_type
 pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_DEVICE = 6
 pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_GETSOCKOPT = 21
@@ -3313,7 +3313,7 @@ pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1::clone_to
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1::from(t: T) -> T
 #[repr(C)] pub union aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
-pub aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::fd: core::ffi::c_int
+pub aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::fd: core::ffi::primitives::c_int
 pub aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::id: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 pub fn aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
@@ -3347,7 +3347,7 @@ pub unsafe fn aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::clone_to_uninit(
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 pub fn aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::from(t: T) -> T
 #[repr(C)] pub union aya_obj::generated::bpf_devmap_val__bindgen_ty_1
-pub aya_obj::generated::bpf_devmap_val__bindgen_ty_1::fd: core::ffi::c_int
+pub aya_obj::generated::bpf_devmap_val__bindgen_ty_1::fd: core::ffi::primitives::c_int
 pub aya_obj::generated::bpf_devmap_val__bindgen_ty_1::id: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 pub fn aya_obj::generated::bpf_devmap_val__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_devmap_val__bindgen_ty_1
@@ -3836,7 +3836,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_1::key_size: aya_obj::generated::__
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_extra: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_ifindex: aya_obj::generated::__u32
-pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_name: [core::ffi::c_char; 16]
+pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_name: [core::ffi::primitives::c_char; 16]
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_token_fd: aya_obj::generated::__s32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::map_type: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::max_entries: aya_obj::generated::__u32
@@ -4696,7 +4696,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_4::log_true_size: aya_obj::generate
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_btf_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_ifindex: aya_obj::generated::__u32
-pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_name: [core::ffi::c_char; 16]
+pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_name: [core::ffi::primitives::c_char; 16]
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_token_fd: aya_obj::generated::__s32
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::prog_type: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_4
@@ -4969,10 +4969,10 @@ pub unsafe fn aya_obj::generated::bpf_btf_info::clone_to_uninit(&self, dst: *mut
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_btf_info
 pub fn aya_obj::generated::bpf_btf_info::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::bpf_core_relo
-pub aya_obj::generated::bpf_core_relo::access_str_off: core::ffi::c_uint
-pub aya_obj::generated::bpf_core_relo::insn_off: core::ffi::c_uint
+pub aya_obj::generated::bpf_core_relo::access_str_off: core::ffi::primitives::c_uint
+pub aya_obj::generated::bpf_core_relo::insn_off: core::ffi::primitives::c_uint
 pub aya_obj::generated::bpf_core_relo::kind: aya_obj::generated::bpf_core_relo_kind::Type
-pub aya_obj::generated::bpf_core_relo::type_id: core::ffi::c_uint
+pub aya_obj::generated::bpf_core_relo::type_id: core::ffi::primitives::c_uint
 impl core::clone::Clone for aya_obj::generated::bpf_core_relo
 pub fn aya_obj::generated::bpf_core_relo::clone(&self) -> aya_obj::generated::bpf_core_relo
 impl core::fmt::Debug for aya_obj::generated::bpf_core_relo
@@ -6019,7 +6019,7 @@ pub aya_obj::generated::bpf_map_info::key_size: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_map_info::map_extra: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_map_info::map_flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_map_info::max_entries: aya_obj::generated::__u32
-pub aya_obj::generated::bpf_map_info::name: [core::ffi::c_char; 16]
+pub aya_obj::generated::bpf_map_info::name: [core::ffi::primitives::c_char; 16]
 pub aya_obj::generated::bpf_map_info::netns_dev: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_map_info::netns_ino: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_map_info::type_: aya_obj::generated::__u32
@@ -6078,7 +6078,7 @@ pub aya_obj::generated::bpf_prog_info::line_info: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_prog_info::line_info_rec_size: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_prog_info::load_time: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_prog_info::map_ids: aya_obj::generated::__u64
-pub aya_obj::generated::bpf_prog_info::name: [core::ffi::c_char; 16]
+pub aya_obj::generated::bpf_prog_info::name: [core::ffi::primitives::c_char; 16]
 pub aya_obj::generated::bpf_prog_info::netns_dev: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_prog_info::netns_ino: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_prog_info::nr_func_info: aya_obj::generated::__u32
@@ -6245,16 +6245,16 @@ pub unsafe fn aya_obj::generated::btf_enum::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_enum
 pub fn aya_obj::generated::btf_enum::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::btf_ext_header
-pub aya_obj::generated::btf_ext_header::core_relo_len: core::ffi::c_uint
-pub aya_obj::generated::btf_ext_header::core_relo_off: core::ffi::c_uint
-pub aya_obj::generated::btf_ext_header::flags: core::ffi::c_uchar
-pub aya_obj::generated::btf_ext_header::func_info_len: core::ffi::c_uint
-pub aya_obj::generated::btf_ext_header::func_info_off: core::ffi::c_uint
-pub aya_obj::generated::btf_ext_header::hdr_len: core::ffi::c_uint
-pub aya_obj::generated::btf_ext_header::line_info_len: core::ffi::c_uint
-pub aya_obj::generated::btf_ext_header::line_info_off: core::ffi::c_uint
-pub aya_obj::generated::btf_ext_header::magic: core::ffi::c_ushort
-pub aya_obj::generated::btf_ext_header::version: core::ffi::c_uchar
+pub aya_obj::generated::btf_ext_header::core_relo_len: core::ffi::primitives::c_uint
+pub aya_obj::generated::btf_ext_header::core_relo_off: core::ffi::primitives::c_uint
+pub aya_obj::generated::btf_ext_header::flags: core::ffi::primitives::c_uchar
+pub aya_obj::generated::btf_ext_header::func_info_len: core::ffi::primitives::c_uint
+pub aya_obj::generated::btf_ext_header::func_info_off: core::ffi::primitives::c_uint
+pub aya_obj::generated::btf_ext_header::hdr_len: core::ffi::primitives::c_uint
+pub aya_obj::generated::btf_ext_header::line_info_len: core::ffi::primitives::c_uint
+pub aya_obj::generated::btf_ext_header::line_info_off: core::ffi::primitives::c_uint
+pub aya_obj::generated::btf_ext_header::magic: core::ffi::primitives::c_ushort
+pub aya_obj::generated::btf_ext_header::version: core::ffi::primitives::c_uchar
 impl core::clone::Clone for aya_obj::generated::btf_ext_header
 pub fn aya_obj::generated::btf_ext_header::clone(&self) -> aya_obj::generated::btf_ext_header
 impl core::fmt::Debug for aya_obj::generated::btf_ext_header
@@ -6511,12 +6511,12 @@ pub unsafe fn aya_obj::generated::btf_var_secinfo::clone_to_uninit(&self, dst: *
 impl<T> core::convert::From<T> for aya_obj::generated::btf_var_secinfo
 pub fn aya_obj::generated::btf_var_secinfo::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::ifinfomsg
-pub aya_obj::generated::ifinfomsg::__ifi_pad: core::ffi::c_uchar
-pub aya_obj::generated::ifinfomsg::ifi_change: core::ffi::c_uint
-pub aya_obj::generated::ifinfomsg::ifi_family: core::ffi::c_uchar
-pub aya_obj::generated::ifinfomsg::ifi_flags: core::ffi::c_uint
-pub aya_obj::generated::ifinfomsg::ifi_index: core::ffi::c_int
-pub aya_obj::generated::ifinfomsg::ifi_type: core::ffi::c_ushort
+pub aya_obj::generated::ifinfomsg::__ifi_pad: core::ffi::primitives::c_uchar
+pub aya_obj::generated::ifinfomsg::ifi_change: core::ffi::primitives::c_uint
+pub aya_obj::generated::ifinfomsg::ifi_family: core::ffi::primitives::c_uchar
+pub aya_obj::generated::ifinfomsg::ifi_flags: core::ffi::primitives::c_uint
+pub aya_obj::generated::ifinfomsg::ifi_index: core::ffi::primitives::c_int
+pub aya_obj::generated::ifinfomsg::ifi_type: core::ffi::primitives::c_ushort
 impl core::clone::Clone for aya_obj::generated::ifinfomsg
 pub fn aya_obj::generated::ifinfomsg::clone(&self) -> aya_obj::generated::ifinfomsg
 impl core::fmt::Debug for aya_obj::generated::ifinfomsg
@@ -6922,11 +6922,11 @@ pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::generated::tcmsg
-pub aya_obj::generated::tcmsg::tcm__pad1: core::ffi::c_uchar
-pub aya_obj::generated::tcmsg::tcm__pad2: core::ffi::c_ushort
-pub aya_obj::generated::tcmsg::tcm_family: core::ffi::c_uchar
+pub aya_obj::generated::tcmsg::tcm__pad1: core::ffi::primitives::c_uchar
+pub aya_obj::generated::tcmsg::tcm__pad2: core::ffi::primitives::c_ushort
+pub aya_obj::generated::tcmsg::tcm_family: core::ffi::primitives::c_uchar
 pub aya_obj::generated::tcmsg::tcm_handle: aya_obj::generated::__u32
-pub aya_obj::generated::tcmsg::tcm_ifindex: core::ffi::c_int
+pub aya_obj::generated::tcmsg::tcm_ifindex: core::ffi::primitives::c_int
 pub aya_obj::generated::tcmsg::tcm_info: aya_obj::generated::__u32
 pub aya_obj::generated::tcmsg::tcm_parent: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::tcmsg
@@ -6962,9 +6962,9 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::tcmsg where T: core::
 pub unsafe fn aya_obj::generated::tcmsg::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::tcmsg
 pub fn aya_obj::generated::tcmsg::from(t: T) -> T
-pub const aya_obj::generated::AYA_PERF_EVENT_IOC_DISABLE: core::ffi::c_int
-pub const aya_obj::generated::AYA_PERF_EVENT_IOC_ENABLE: core::ffi::c_int
-pub const aya_obj::generated::AYA_PERF_EVENT_IOC_SET_BPF: core::ffi::c_int
+pub const aya_obj::generated::AYA_PERF_EVENT_IOC_DISABLE: core::ffi::primitives::c_int
+pub const aya_obj::generated::AYA_PERF_EVENT_IOC_ENABLE: core::ffi::primitives::c_int
+pub const aya_obj::generated::AYA_PERF_EVENT_IOC_SET_BPF: core::ffi::primitives::c_int
 pub const aya_obj::generated::BPF_ALU: u32
 pub const aya_obj::generated::BPF_ALU64: u32
 pub const aya_obj::generated::BPF_ANY: aya_obj::generated::_bindgen_ty_4
@@ -7190,40 +7190,40 @@ pub const aya_obj::generated::XDP_FLAGS_UPDATE_IF_NOEXIST: u32
 pub const aya_obj::generated::__IFLA_XDP_MAX: aya_obj::generated::_bindgen_ty_92
 pub const aya_obj::generated::__TCA_BPF_MAX: aya_obj::generated::_bindgen_ty_154
 pub const aya_obj::generated::__TCA_MAX: aya_obj::generated::_bindgen_ty_172
-pub type aya_obj::generated::__s16 = core::ffi::c_short
-pub type aya_obj::generated::__s32 = core::ffi::c_int
-pub type aya_obj::generated::__s64 = core::ffi::c_longlong
-pub type aya_obj::generated::__u16 = core::ffi::c_ushort
-pub type aya_obj::generated::__u32 = core::ffi::c_uint
-pub type aya_obj::generated::__u64 = core::ffi::c_ulonglong
-pub type aya_obj::generated::__u8 = core::ffi::c_uchar
-pub type aya_obj::generated::_bindgen_ty_10 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_11 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_12 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_13 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_14 = core::ffi::c_ulong
-pub type aya_obj::generated::_bindgen_ty_15 = core::ffi::c_int
-pub type aya_obj::generated::_bindgen_ty_154 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_17 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_172 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_19 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_2 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_21 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_24 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_26 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_27 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_3 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_4 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_41 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_42 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_43 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_5 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_6 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_7 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_8 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_9 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_92 = core::ffi::c_uint
-pub type aya_obj::generated::_bindgen_ty_99 = core::ffi::c_uint
+pub type aya_obj::generated::__s16 = core::ffi::primitives::c_short
+pub type aya_obj::generated::__s32 = core::ffi::primitives::c_int
+pub type aya_obj::generated::__s64 = core::ffi::primitives::c_longlong
+pub type aya_obj::generated::__u16 = core::ffi::primitives::c_ushort
+pub type aya_obj::generated::__u32 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::__u64 = core::ffi::primitives::c_ulonglong
+pub type aya_obj::generated::__u8 = core::ffi::primitives::c_uchar
+pub type aya_obj::generated::_bindgen_ty_10 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_11 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_12 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_13 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_14 = core::ffi::primitives::c_ulong
+pub type aya_obj::generated::_bindgen_ty_15 = core::ffi::primitives::c_int
+pub type aya_obj::generated::_bindgen_ty_154 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_17 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_172 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_19 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_2 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_21 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_24 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_26 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_27 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_3 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_4 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_41 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_42 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_43 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_5 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_6 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_7 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_8 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_9 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_92 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_99 = core::ffi::primitives::c_uint
 pub mod aya_obj::links
 pub mod aya_obj::maps
 pub enum aya_obj::maps::Map
