@@ -11,14 +11,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: update libbpf
-        working-directory: xtask/libbpf
-        run: |
-          set -euxo pipefail
-          git fetch origin
-          git checkout origin/HEAD
-          echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: rustfmt, clippy
@@ -33,6 +25,9 @@ jobs:
 
       - run: cargo xtask codegen
       - run: cargo xtask public-api --bless
+
+      - run: echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+        working-directory: xtask/libbpf
 
       - uses: peter-evans/create-pull-request@v7
         with:
