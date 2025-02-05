@@ -167,8 +167,6 @@ impl<T> ::core::fmt::Debug for __IncompleteArrayField<T> {
         fmt.write_str("__IncompleteArrayField")
     }
 }
-pub const SO_ATTACH_BPF: u32 = 50;
-pub const SO_DETACH_BPF: u32 = 27;
 pub const BPF_LD: u32 = 0;
 pub const BPF_LDX: u32 = 1;
 pub const BPF_ST: u32 = 2;
@@ -253,6 +251,8 @@ pub const TC_H_MIN_PRIORITY: u32 = 65504;
 pub const TC_H_MIN_INGRESS: u32 = 65522;
 pub const TC_H_MIN_EGRESS: u32 = 65523;
 pub const TCA_BPF_FLAG_ACT_DIRECT: u32 = 1;
+pub const SO_ATTACH_BPF: u32 = 50;
+pub const SO_DETACH_BPF: u32 = 27;
 pub type __u8 = ::core::ffi::c_uchar;
 pub type __s16 = ::core::ffi::c_short;
 pub type __u16 = ::core::ffi::c_ushort;
@@ -3835,6 +3835,3 @@ pub const TCA_INGRESS_BLOCK: _bindgen_ty_172 = 13;
 pub const TCA_EGRESS_BLOCK: _bindgen_ty_172 = 14;
 pub const __TCA_MAX: _bindgen_ty_172 = 15;
 pub type _bindgen_ty_172 = ::core::ffi::c_uint;
-pub const AYA_PERF_EVENT_IOC_ENABLE: ::core::ffi::c_int = 536880128;
-pub const AYA_PERF_EVENT_IOC_DISABLE: ::core::ffi::c_int = 536880129;
-pub const AYA_PERF_EVENT_IOC_SET_BPF: ::core::ffi::c_int = -2147212280;

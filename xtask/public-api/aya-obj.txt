@@ -6962,9 +6962,6 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::tcmsg where T: core::
 pub unsafe fn aya_obj::generated::tcmsg::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::tcmsg
 pub fn aya_obj::generated::tcmsg::from(t: T) -> T
-pub const aya_obj::generated::AYA_PERF_EVENT_IOC_DISABLE: core::ffi::primitives::c_int
-pub const aya_obj::generated::AYA_PERF_EVENT_IOC_ENABLE: core::ffi::primitives::c_int
-pub const aya_obj::generated::AYA_PERF_EVENT_IOC_SET_BPF: core::ffi::primitives::c_int
 pub const aya_obj::generated::BPF_ALU: u32
 pub const aya_obj::generated::BPF_ALU64: u32
 pub const aya_obj::generated::BPF_ANY: aya_obj::generated::_bindgen_ty_4
