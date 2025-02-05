@@ -77,8 +77,8 @@ struct WithData(RingBufTest, Vec<u64>);
 impl WithData {
     fn new(n: usize) -> Self {
         Self(RingBufTest::new(), {
-            let mut rng = rand::thread_rng();
-            std::iter::repeat_with(|| rng.gen()).take(n).collect()
+            let mut rng = rand::rng();
+            std::iter::repeat_with(|| rng.random()).take(n).collect()
         })
     }
 }
@@ -270,13 +270,17 @@ async fn ring_buf_async_no_drop() {
     ) = WithData::new(RING_BUF_MAX_ENTRIES * 3);
 
     let writer = {
-        let data = data.to_owned();
+        let mut rng = rand::rng();
+        let data: Vec<_> = data
+            .iter()
+            .copied()
+            .map(|value| (value, Duration::from_nanos(rng.random_range(0..10))))
+            .collect();
         tokio::spawn(async move {
-            for value in data {
+            for (value, duration) in data {
                 // Sleep a tad so we feel confident that the consumer will keep up
                 // and no messages will be dropped.
-                let dur = Duration::from_nanos(rand::thread_rng().gen_range(0..10));
-                sleep(dur).await;
+                sleep(duration).await;
                 ring_buf_trigger_ebpf_program(value);
             }
         })
