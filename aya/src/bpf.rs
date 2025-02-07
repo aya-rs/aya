@@ -154,7 +154,7 @@ impl<'a> EbpfLoader<'a> {
     /// Creates a new loader instance.
     pub fn new() -> Self {
         Self {
-            btf: Btf::from_sys_fs().ok().map(Cow::Owned),
+            btf: None,
             map_pin_path: None,
             globals: HashMap::new(),
             max_entries: HashMap::new(),
