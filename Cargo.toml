@@ -87,7 +87,7 @@ proc-macro2 = { version = "1", default-features = false }
 proc-macro2-diagnostics = { version = "0.10.1", default-features = false }
 public-api = { version = "0.44.0", default-features = false }
 quote = { version = "1", default-features = false }
-rand = { version = "0.8", default-features = false }
+rand = { version = "0.9", default-features = false }
 rbpf = { version = "0.3.0", default-features = false }
 rustdoc-json = { version = "0.9.0", default-features = false }
 rustup-toolchain = { version = "0.1.5", default-features = false }
@@ -105,3 +105,7 @@ xdpilone = { version = "1.0.5", default-features = false }
 [profile.release.package.integration-ebpf]
 debug = 2
 codegen-units = 1
+
+[patch.crates-io]
+# TODO: Remove when https://github.com/rust-random/getrandom/commit/b75db5cede302bc9734f5bf2b9048a6e05c7f11e appears in a release.
+getrandom = { git = "https://github.com/rust-random/getrandom.git#b75db5cede302bc9734f5bf2b9048a6e05c7f11e" }
