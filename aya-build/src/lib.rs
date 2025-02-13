@@ -58,24 +58,26 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>) -> Result<()> {
         println!("cargo:rerun-if-changed={dir}");
 
         let mut cmd = Command::new("cargo");
-        cmd.args([
-            "+nightly",
-            "build",
-            "--package",
-            &name,
-            "-Z",
-            "build-std=core",
-            "--bins",
-            "--message-format=json",
-            "--release",
-            "--target",
-            &target,
-        ]);
-
-        cmd.env("CARGO_CFG_BPF_TARGET_ARCH", &arch);
+        cmd.current_dir(dir)
+            .args([
+                "+nightly",
+                "build",
+                "-Z",
+                "build-std=core",
+                "--bins",
+                "--message-format=json",
+                "--release",
+                "--target",
+                &target,
+            ])
+            .env("CARGO_CFG_BPF_TARGET_ARCH", &arch);
 
         // Workaround to make sure that the correct toolchain is used.
-        for key in ["RUSTC", "RUSTC_WORKSPACE_WRAPPER"] {
+        for key in [
+            "CARGO_ENCODED_RUSTFLAGS",
+            "RUSTC",
+            "RUSTC_WORKSPACE_WRAPPER",
+        ] {
             cmd.env_remove(key);
         }
 

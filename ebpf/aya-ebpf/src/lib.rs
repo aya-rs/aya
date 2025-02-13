@@ -20,6 +20,8 @@ pub use aya_ebpf_bindings::bindings;
 
 mod args;
 pub use args::{PtRegs, RawTracepointArgs};
+#[cfg(feature = "btf-maps")]
+pub mod btf_maps;
 pub mod helpers;
 pub mod maps;
 pub mod programs;
