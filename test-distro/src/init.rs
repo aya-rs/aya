@@ -58,6 +58,14 @@ fn run() -> anyhow::Result<()> {
             target_mode: Some(RXRXRX),
         },
         Mount {
+            source: "dev",
+            target: "/dev",
+            fstype: "devtmpfs",
+            flags: nix::mount::MsFlags::empty(),
+            data: None,
+            target_mode: None,
+        },
+        Mount {
             source: "sysfs",
             target: "/sys",
             fstype: "sysfs",
