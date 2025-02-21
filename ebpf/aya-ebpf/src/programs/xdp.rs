@@ -21,6 +21,12 @@ impl XdpContext {
         unsafe { (*self.ctx).data_end as usize }
     }
 
+    /// Return the interface of the index as determined by the OS.
+    #[inline]
+    pub fn ingress_ifindex(&self) -> usize {
+        unsafe { (*self.ctx).ingress_ifindex as usize }
+    }
+
     /// Return the raw address of the XdpContext metadata.
     #[inline(always)]
     pub fn metadata(&self) -> usize {
