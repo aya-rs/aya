@@ -10,19 +10,21 @@ mod fake;
 use std::{
     ffi::{c_int, c_long, c_void},
     io, mem,
-    os::fd::{AsRawFd as _, BorrowedFd, OwnedFd},
+    os::fd::{AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd},
 };
 
 use aya_obj::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
-use libc::{pid_t, SYS_bpf, SYS_ioctl, SYS_perf_event_open};
+use libc::{pid_t, SYS_bpf, SYS_ioctl, SYS_perf_event_open, SYS_pidfd_open};
 #[doc(hidden)]
 pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
 pub(crate) use perf_event::*;
 use thiserror::Error;
+
+use crate::MockableFd;
 
 pub(crate) type SysResult<T> = Result<T, (c_long, io::Error)>;
 
@@ -42,6 +44,10 @@ pub(crate) enum Syscall<'a> {
         fd: BorrowedFd<'a>,
         request: u32,
         arg: c_int,
+    },
+    PidfdOpen {
+        pid: pid_t,
+        flags: u32,
     },
 }
 
@@ -84,6 +90,11 @@ impl std::fmt::Debug for Syscall<'_> {
                 .field("request", request)
                 .field("arg", arg)
                 .finish(),
+            Self::PidfdOpen { pid, flags } => f
+                .debug_struct("Syscall::PidfdOpen")
+                .field("pid", pid)
+                .field("flags", flags)
+                .finish(),
         }
     }
 }
@@ -109,6 +120,7 @@ fn syscall(call: Syscall<'_>) -> SysResult<c_long> {
                 Syscall::PerfEventIoctl { fd, request, arg } => {
                     libc::syscall(SYS_ioctl, fd.as_raw_fd(), request, arg)
                 }
+                Syscall::PidfdOpen { pid, flags } => libc::syscall(SYS_pidfd_open, pid, flags),
             }
         };
 
@@ -184,4 +196,36 @@ impl From<Stats> for aya_obj::generated::bpf_stats_type {
 #[doc(alias = "BPF_ENABLE_STATS")]
 pub fn enable_stats(stats_type: Stats) -> Result<OwnedFd, SyscallError> {
     bpf_enable_stats(stats_type.into()).map(|fd| fd.into_inner())
+}
+
+/// A file descriptor of a process.
+///
+/// A similar type is provided by the Rust standard library as
+/// [`std::os::linux::process`] as a nigtly-only experimental API. We are
+/// planning to migrate to it once it stabilizes.
+pub(crate) struct PidFd(MockableFd);
+
+impl PidFd {
+    pub(crate) fn open(pid: u32, flags: u32) -> SysResult<Self> {
+        let pid_fd = pidfd_open(pid, flags)? as RawFd;
+        let pid_fd = unsafe { MockableFd::from_raw_fd(pid_fd) };
+        Ok(Self(pid_fd))
+    }
+}
+
+impl AsRawFd for PidFd {
+    fn as_raw_fd(&self) -> RawFd {
+        self.0.as_raw_fd()
+    }
+}
+
+fn pidfd_open(pid: u32, flags: u32) -> SysResult<i64> {
+    let call = Syscall::PidfdOpen {
+        pid: pid as pid_t,
+        flags,
+    };
+    #[cfg(not(test))]
+    return crate::sys::syscall(call);
+    #[cfg(test)]
+    return crate::sys::TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
 }
