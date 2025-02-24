@@ -728,6 +728,7 @@ fn parse_map(
         BPF_MAP_TYPE_DEVMAP => Map::DevMap(map),
         BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
+        BPF_MAP_TYPE_TASK_STORAGE => Map::TaskStorage(map),
         m_type => {
             if allow_unsupported_maps {
                 Map::Unsupported(map)
