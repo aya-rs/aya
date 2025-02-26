@@ -1,5 +1,5 @@
 pub mod aya_log_common
-#[repr(u8)] pub enum aya_log_common::Argument
+pub enum aya_log_common::Argument
 pub aya_log_common::Argument::ArrU16Len8
 pub aya_log_common::Argument::ArrU8Len16
 pub aya_log_common::Argument::ArrU8Len4
@@ -52,7 +52,7 @@ impl<T> core::clone::CloneToUninit for aya_log_common::Argument where T: core::c
 pub unsafe fn aya_log_common::Argument::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_log_common::Argument
 pub fn aya_log_common::Argument::from(t: T) -> T
-#[repr(u8)] pub enum aya_log_common::DisplayHint
+pub enum aya_log_common::DisplayHint
 pub aya_log_common::DisplayHint::Default = 1
 pub aya_log_common::DisplayHint::Ip
 pub aya_log_common::DisplayHint::LowerHex
@@ -96,7 +96,7 @@ impl<T> core::clone::CloneToUninit for aya_log_common::DisplayHint where T: core
 pub unsafe fn aya_log_common::DisplayHint::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::from(t: T) -> T
-#[repr(u8)] pub enum aya_log_common::Level
+pub enum aya_log_common::Level
 pub aya_log_common::Level::Debug
 pub aya_log_common::Level::Error = 1
 pub aya_log_common::Level::Info
@@ -139,7 +139,7 @@ impl<T> core::clone::CloneToUninit for aya_log_common::Level where T: core::clon
 pub unsafe fn aya_log_common::Level::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_log_common::Level
 pub fn aya_log_common::Level::from(t: T) -> T
-#[repr(u8)] pub enum aya_log_common::RecordField
+pub enum aya_log_common::RecordField
 pub aya_log_common::RecordField::File
 pub aya_log_common::RecordField::Level
 pub aya_log_common::RecordField::Line

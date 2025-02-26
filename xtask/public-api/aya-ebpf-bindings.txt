@@ -516,7 +516,7 @@ pub const aya_ebpf_bindings::bindings::xdp_action::XDP_PASS: aya_ebpf_bindings::
 pub const aya_ebpf_bindings::bindings::xdp_action::XDP_REDIRECT: aya_ebpf_bindings::bindings::xdp_action::Type
 pub const aya_ebpf_bindings::bindings::xdp_action::XDP_TX: aya_ebpf_bindings::bindings::xdp_action::Type
 pub type aya_ebpf_bindings::bindings::xdp_action::Type = aya_ebpf_cty::ad::c_uint
-#[repr(C)] pub union aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1::flow_keys: *mut aya_ebpf_bindings::bindings::bpf_flow_keys
@@ -549,7 +549,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::__sk_buff__b
 pub unsafe fn aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2::sk: *mut aya_ebpf_bindings::bindings::bpf_sock
@@ -582,7 +582,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::__sk_buff__b
 pub unsafe fn aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr
+pub union aya_ebpf_bindings::bindings::bpf_attr
 pub aya_ebpf_bindings::bindings::bpf_attr::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_attr::__bindgen_anon_3: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
@@ -630,7 +630,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr whe
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr
 pub fn aya_ebpf_bindings::bindings::bpf_attr::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1::target_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1::target_ifindex: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1
@@ -660,7 +660,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2::count: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2::prog_cnt: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2
@@ -690,7 +690,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1::map_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1::prog_fd: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1
@@ -720,7 +720,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2::target_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2::target_ifindex: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
@@ -750,7 +750,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3::kprobe_multi: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3::netfilter: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
@@ -787,7 +787,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::relative_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::relative_id: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
@@ -817,7 +817,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::relative_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::relative_id: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
@@ -847,7 +847,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1::new_map_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1::new_prog_fd: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
@@ -877,7 +877,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2::old_map_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2::old_prog_fd: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
@@ -907,7 +907,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1::next_key: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1::value: aya_ebpf_bindings::bindings::__u64
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1
@@ -937,7 +937,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1::attach_btf_obj_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1::attach_prog_fd: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1
@@ -967,7 +967,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1::target_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1::target_ifindex: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1
@@ -997,7 +997,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2::relative_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2::relative_id: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2
@@ -1027,7 +1027,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1::btf_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1::link_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1::map_id: aya_ebpf_bindings::bindings::__u32
@@ -1060,7 +1060,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1::fd: aya_ebpf_cty::ad::c_int
 pub aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1::id: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1
@@ -1090,7 +1090,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_cpumap_v
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1::fd: aya_ebpf_cty::ad::c_int
 pub aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1::id: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1
@@ -1120,7 +1120,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_devmap_v
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1::mtu_result: aya_ebpf_bindings::bindings::__u16
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1::tot_len: aya_ebpf_bindings::bindings::__u16
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1
@@ -1150,7 +1150,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_fib_look
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2::flowinfo: aya_ebpf_bindings::bindings::__be32
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2::rt_metric: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2::tos: aya_ebpf_bindings::bindings::__u8
@@ -1181,7 +1181,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_fib_look
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3
+pub union aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3::ipv4_src: aya_ebpf_bindings::bindings::__be32
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3::ipv6_src: [aya_ebpf_bindings::bindings::__u32; 4]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3
@@ -1211,7 +1211,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_fib_look
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4
+pub union aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4::ipv4_dst: aya_ebpf_bindings::bindings::__be32
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4::ipv6_dst: [aya_ebpf_bindings::bindings::__u32; 4]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4
@@ -1241,7 +1241,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_fib_look
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4
 pub fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5
+pub union aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5::tbid: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5
@@ -1271,7 +1271,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_fib_look
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5
 pub fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1
@@ -1301,7 +1301,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_flow_key
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_iter_link_info
+pub union aya_ebpf_bindings::bindings::bpf_iter_link_info
 pub aya_ebpf_bindings::bindings::bpf_iter_link_info::cgroup: aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_iter_link_info::map: aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_iter_link_info::task: aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
@@ -1332,7 +1332,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_iter_lin
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_iter_link_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_iter_link_info
 pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1::cgroup: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1::iter: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1::kprobe_multi: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
@@ -1373,7 +1373,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::event: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::kprobe: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::tracepoint: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
@@ -1405,7 +1405,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1::map: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
@@ -1434,7 +1434,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2::cgroup: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2::task: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
@@ -1464,7 +1464,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1::hdr: aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 pub aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1::prefixlen: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1
@@ -1494,7 +1494,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_lpm_trie
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1::ipv4_nh: aya_ebpf_bindings::bindings::__be32
 pub aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1::ipv6_nh: [aya_ebpf_bindings::bindings::__u32; 4]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1
@@ -1524,7 +1524,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_redir_ne
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1::cookie: aya_ebpf_bindings::bindings::__u64
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1
@@ -1554,7 +1554,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sk_looku
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1::sk: *mut aya_ebpf_bindings::bindings::bpf_sock
@@ -1587,7 +1587,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sk_looku
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1::sk: *mut aya_ebpf_bindings::bindings::bpf_sock
@@ -1620,7 +1620,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock_add
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1::args: [aya_ebpf_bindings::bindings::__u32; 4]
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1::reply: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1::replylong: [aya_ebpf_bindings::bindings::__u32; 4]
@@ -1651,7 +1651,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock_ops
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2::sk: *mut aya_ebpf_bindings::bindings::bpf_sock
@@ -1684,7 +1684,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock_ops
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3
+pub union aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3::skb_data: *mut aya_ebpf_cty::c_void
@@ -1717,7 +1717,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock_ops
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4
+pub union aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4::skb_data_end: *mut aya_ebpf_cty::c_void
@@ -1750,7 +1750,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock_ops
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4
 pub fn aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1::ipv4: aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1::ipv6: aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1
@@ -1780,7 +1780,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock_tup
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1::sk: *mut aya_ebpf_bindings::bindings::bpf_sock
@@ -1813,7 +1813,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sockopt_
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2::optval: *mut aya_ebpf_cty::c_void
@@ -1846,7 +1846,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sockopt_
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3
+pub union aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3::optval_end: *mut aya_ebpf_cty::c_void
@@ -1879,7 +1879,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sockopt_
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1::ip: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1::offset: aya_ebpf_bindings::bindings::__u64
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1
@@ -1909,7 +1909,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_stack_bu
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1::remote_ipv4: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1::remote_ipv6: [aya_ebpf_bindings::bindings::__u32; 4]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
@@ -1939,7 +1939,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_tunnel_k
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2::tunnel_ext: aya_ebpf_bindings::bindings::__u16
 pub aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2::tunnel_flags: aya_ebpf_bindings::bindings::__be16
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
@@ -1969,7 +1969,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_tunnel_k
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3
+pub union aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3::local_ipv4: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3::local_ipv6: [aya_ebpf_bindings::bindings::__u32; 4]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3
@@ -1999,7 +1999,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_tunnel_k
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1::remote_ipv4: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1::remote_ipv6: [aya_ebpf_bindings::bindings::__u32; 4]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1
@@ -2029,7 +2029,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_xfrm_sta
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1::data: *mut aya_ebpf_cty::c_void
@@ -2062,7 +2062,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::sk_msg_md__b
 pub unsafe fn aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2::data_end: *mut aya_ebpf_cty::c_void
@@ -2095,7 +2095,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::sk_msg_md__b
 pub unsafe fn aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3
+pub union aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3::sk: *mut aya_ebpf_bindings::bindings::bpf_sock
@@ -2128,7 +2128,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::sk_msg_md__b
 pub unsafe fn aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1
+pub union aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1::data: *mut aya_ebpf_cty::c_void
@@ -2161,7 +2161,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::sk_reuseport
 pub unsafe fn aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2
+pub union aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2::data_end: *mut aya_ebpf_cty::c_void
@@ -2194,7 +2194,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::sk_reuseport
 pub unsafe fn aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3
+pub union aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3::sk: *mut aya_ebpf_bindings::bindings::bpf_sock
@@ -2227,7 +2227,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::sk_reuseport
 pub unsafe fn aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub union aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4
+pub union aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4::migrating_sk: *mut aya_ebpf_bindings::bindings::bpf_sock
@@ -2260,7 +2260,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::sk_reuseport
 pub unsafe fn aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4
 pub fn aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
+pub struct aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 impl<Storage> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::convert::AsRef<[u8]> + core::convert::AsMut<[u8]>
 pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::get(&self, bit_offset: usize, bit_width: u8) -> u64
 pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::get_bit(&self, index: usize) -> bool
@@ -2313,7 +2313,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::__BindgenBit
 pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::__IncompleteArrayField<T>(_, _)
+pub struct aya_ebpf_bindings::bindings::__IncompleteArrayField<T>(_, _)
 impl<T> aya_ebpf_bindings::bindings::__IncompleteArrayField<T>
 pub fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::as_mut_ptr(&mut self) -> *mut T
 pub unsafe fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::as_mut_slice(&mut self, len: usize) -> &mut [T]
@@ -2346,7 +2346,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf_bindings::bindings::__Incomplete
 pub fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::__IncompleteArrayField<T>
 pub fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::__sk_buff
+pub struct aya_ebpf_bindings::bindings::__sk_buff
 pub aya_ebpf_bindings::bindings::__sk_buff::__bindgen_anon_1: aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::__sk_buff::__bindgen_anon_2: aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::__sk_buff::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 3]>
@@ -2412,7 +2412,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::__sk_buff wh
 pub unsafe fn aya_ebpf_bindings::bindings::__sk_buff::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::__sk_buff
 pub fn aya_ebpf_bindings::bindings::__sk_buff::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::btf_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::btf_key_type_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::btf_value_type_id: aya_ebpf_bindings::bindings::__u32
@@ -2458,7 +2458,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
@@ -2500,7 +2500,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11::cookie: aya_ebpf_bindings::bindings::__u64
@@ -2537,7 +2537,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12::btf: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12::btf_flags: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12::btf_log_buf: aya_ebpf_bindings::bindings::__u64
@@ -2575,7 +2575,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13::buf: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13::buf_len: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13::fd: aya_ebpf_bindings::bindings::__u32
@@ -2614,7 +2614,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14::__bindgen_anon_3: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3
@@ -2647,7 +2647,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::iter_info: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::iter_info_len: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
@@ -2679,7 +2679,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::bpf_cookie: aya_ebpf_bindings::bindings::__u64
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
@@ -2710,7 +2710,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::addrs: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::cnt: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::cookies: aya_ebpf_bindings::bindings::__u64
@@ -2745,7 +2745,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::cookie: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::target_btf_id: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
@@ -2777,7 +2777,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::flags: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::hooknum: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::pf: aya_ebpf_bindings::bindings::__u32
@@ -2811,7 +2811,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::expected_revision: aya_ebpf_bindings::bindings::__u64
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
@@ -2841,7 +2841,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::cnt: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::cookies: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::flags: aya_ebpf_bindings::bindings::__u32
@@ -2878,7 +2878,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::expected_revision: aya_ebpf_bindings::bindings::__u64
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
@@ -2908,7 +2908,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15::flags: aya_ebpf_bindings::bindings::__u32
@@ -2940,7 +2940,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16::link_fd: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
@@ -2971,7 +2971,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17::type_: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
@@ -3002,7 +3002,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18::flags: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18::link_fd: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
@@ -3034,7 +3034,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19::flags: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19::map_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19::prog_fd: aya_ebpf_bindings::bindings::__u32
@@ -3067,7 +3067,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2::flags: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2::key: aya_ebpf_bindings::bindings::__u64
@@ -3099,7 +3099,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20::bpffs_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20::flags: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
@@ -3131,7 +3131,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3::count: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3::elem_flags: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3::flags: aya_ebpf_bindings::bindings::__u64
@@ -3169,7 +3169,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::attach_btf_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::core_relo_cnt: aya_ebpf_bindings::bindings::__u32
@@ -3224,7 +3224,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5::bpf_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5::file_flags: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5::path_fd: aya_ebpf_bindings::bindings::__s32
@@ -3258,7 +3258,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6::attach_bpf_fd: aya_ebpf_bindings::bindings::__u32
@@ -3293,7 +3293,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7::batch_size: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7::cpu: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7::ctx_in: aya_ebpf_bindings::bindings::__u64
@@ -3338,7 +3338,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8::next_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8::open_flags: aya_ebpf_bindings::bindings::__u32
@@ -3369,7 +3369,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
+pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9::bpf_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9::info: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9::info_len: aya_ebpf_bindings::bindings::__u32
@@ -3402,7 +3402,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_attr__bi
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_btf_info
+pub struct aya_ebpf_bindings::bindings::bpf_btf_info
 pub aya_ebpf_bindings::bindings::bpf_btf_info::btf: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_btf_info::btf_size: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_btf_info::id: aya_ebpf_bindings::bindings::__u32
@@ -3438,7 +3438,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_btf_info
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_btf_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_btf_info
 pub fn aya_ebpf_bindings::bindings::bpf_btf_info::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
+pub struct aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 pub aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx::access_type: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx::major: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx::minor: aya_ebpf_bindings::bindings::__u32
@@ -3471,7 +3471,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_cgroup_d
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 pub fn aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
+pub struct aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
 pub aya_ebpf_bindings::bindings::bpf_cgroup_storage_key::attach_type: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_cgroup_storage_key::cgroup_inode_id: aya_ebpf_bindings::bindings::__u64
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
@@ -3503,7 +3503,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_cgroup_s
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_cgroup_storage_key::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
 pub fn aya_ebpf_bindings::bindings::bpf_cgroup_storage_key::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_core_relo
+pub struct aya_ebpf_bindings::bindings::bpf_core_relo
 pub aya_ebpf_bindings::bindings::bpf_core_relo::access_str_off: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_core_relo::insn_off: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_core_relo::kind: aya_ebpf_bindings::bindings::bpf_core_relo_kind::Type
@@ -3537,7 +3537,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_core_rel
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_core_relo::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_core_relo
 pub fn aya_ebpf_bindings::bindings::bpf_core_relo::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_cpumap_val
+pub struct aya_ebpf_bindings::bindings::bpf_cpumap_val
 pub aya_ebpf_bindings::bindings::bpf_cpumap_val::bpf_prog: aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_cpumap_val::qsize: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_cpumap_val
@@ -3567,7 +3567,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_cpumap_v
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_cpumap_val::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_cpumap_val
 pub fn aya_ebpf_bindings::bindings::bpf_cpumap_val::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_devmap_val
+pub struct aya_ebpf_bindings::bindings::bpf_devmap_val
 pub aya_ebpf_bindings::bindings::bpf_devmap_val::bpf_prog: aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_devmap_val::ifindex: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_devmap_val
@@ -3597,7 +3597,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_devmap_v
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_devmap_val::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_devmap_val
 pub fn aya_ebpf_bindings::bindings::bpf_devmap_val::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_dynptr
+pub struct aya_ebpf_bindings::bindings::bpf_dynptr
 pub aya_ebpf_bindings::bindings::bpf_dynptr::__opaque: [aya_ebpf_bindings::bindings::__u64; 2]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_dynptr
 pub fn aya_ebpf_bindings::bindings::bpf_dynptr::clone(&self) -> aya_ebpf_bindings::bindings::bpf_dynptr
@@ -3628,7 +3628,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_dynptr w
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_dynptr::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_dynptr
 pub fn aya_ebpf_bindings::bindings::bpf_dynptr::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_fib_lookup
+pub struct aya_ebpf_bindings::bindings::bpf_fib_lookup
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup::__bindgen_anon_3: aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3
@@ -3668,7 +3668,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_fib_look
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_fib_lookup::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_fib_lookup
 pub fn aya_ebpf_bindings::bindings::bpf_fib_lookup::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
+pub struct aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1::h_vlan_TCI: aya_ebpf_bindings::bindings::__be16
 pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1::h_vlan_proto: aya_ebpf_bindings::bindings::__be16
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
@@ -3700,7 +3700,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_fib_look
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_flow_keys
+pub struct aya_ebpf_bindings::bindings::bpf_flow_keys
 pub aya_ebpf_bindings::bindings::bpf_flow_keys::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_flow_keys::addr_proto: aya_ebpf_bindings::bindings::__u16
 pub aya_ebpf_bindings::bindings::bpf_flow_keys::dport: aya_ebpf_bindings::bindings::__be16
@@ -3741,7 +3741,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_flow_key
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_flow_keys::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_flow_keys
 pub fn aya_ebpf_bindings::bindings::bpf_flow_keys::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
+pub struct aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1::ipv4_dst: aya_ebpf_bindings::bindings::__be32
 pub aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1::ipv4_src: aya_ebpf_bindings::bindings::__be32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
@@ -3773,7 +3773,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_flow_key
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
+pub struct aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2::ipv6_dst: [aya_ebpf_bindings::bindings::__u32; 4]
 pub aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2::ipv6_src: [aya_ebpf_bindings::bindings::__u32; 4]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
@@ -3805,7 +3805,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_flow_key
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_func_info
+pub struct aya_ebpf_bindings::bindings::bpf_func_info
 pub aya_ebpf_bindings::bindings::bpf_func_info::insn_off: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_func_info::type_id: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_func_info
@@ -3837,7 +3837,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_func_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_func_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_func_info
 pub fn aya_ebpf_bindings::bindings::bpf_func_info::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_insn
+pub struct aya_ebpf_bindings::bindings::bpf_insn
 pub aya_ebpf_bindings::bindings::bpf_insn::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 1]>
 pub aya_ebpf_bindings::bindings::bpf_insn::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_insn::code: aya_ebpf_bindings::bindings::__u8
@@ -3882,7 +3882,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_insn whe
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_insn
 pub fn aya_ebpf_bindings::bindings::bpf_insn::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
+pub struct aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1::map_fd: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
@@ -3913,7 +3913,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_iter_lin
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
+pub struct aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2::cgroup_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2::cgroup_id: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2::order: aya_ebpf_bindings::bindings::bpf_cgroup_iter_order::Type
@@ -3946,7 +3946,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_iter_lin
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
+pub struct aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3::pid: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3::pid_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3::tid: aya_ebpf_bindings::bindings::__u32
@@ -3979,7 +3979,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_iter_lin
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_iter_num
+pub struct aya_ebpf_bindings::bindings::bpf_iter_num
 pub aya_ebpf_bindings::bindings::bpf_iter_num::__opaque: [aya_ebpf_bindings::bindings::__u64; 1]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_iter_num
 pub fn aya_ebpf_bindings::bindings::bpf_iter_num::clone(&self) -> aya_ebpf_bindings::bindings::bpf_iter_num
@@ -4010,7 +4010,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_iter_num
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_iter_num::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_iter_num
 pub fn aya_ebpf_bindings::bindings::bpf_iter_num::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_line_info
+pub struct aya_ebpf_bindings::bindings::bpf_line_info
 pub aya_ebpf_bindings::bindings::bpf_line_info::file_name_off: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_line_info::insn_off: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_line_info::line_col: aya_ebpf_bindings::bindings::__u32
@@ -4044,7 +4044,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_line_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_line_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_line_info
 pub fn aya_ebpf_bindings::bindings::bpf_line_info::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info
+pub struct aya_ebpf_bindings::bindings::bpf_link_info
 pub aya_ebpf_bindings::bindings::bpf_link_info::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_link_info::id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info::prog_id: aya_ebpf_bindings::bindings::__u32
@@ -4076,7 +4076,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info
 pub fn aya_ebpf_bindings::bindings::bpf_link_info::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::tp_name: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::tp_name_len: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
@@ -4108,7 +4108,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10::cookies: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10::count: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10::flags: aya_ebpf_bindings::bindings::__u32
@@ -4146,7 +4146,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11::_bitfield_align_1: [u8; 0]
@@ -4180,7 +4180,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::cookie: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::file_name: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::name_len: aya_ebpf_bindings::bindings::__u32
@@ -4214,7 +4214,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::addr: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::cookie: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::func_name: aya_ebpf_bindings::bindings::__u64
@@ -4250,7 +4250,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::cookie: aya_ebpf_bindings::bindings::__u64
@@ -4287,7 +4287,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::config: aya_ebpf_bindings::bindings::__u64
@@ -4324,7 +4324,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12::attach_type: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12::ifindex: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
@@ -4356,7 +4356,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13::attach_type: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13::ifindex: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
@@ -4388,7 +4388,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::attach_type: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::target_btf_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::target_obj_id: aya_ebpf_bindings::bindings::__u32
@@ -4421,7 +4421,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3::attach_type: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3::cgroup_id: aya_ebpf_bindings::bindings::__u64
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
@@ -4453,7 +4453,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4::target_name: aya_ebpf_bindings::bindings::__u64
@@ -4485,7 +4485,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::map_id: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
@@ -4516,7 +4516,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::cgroup_id: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::order: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
@@ -4548,7 +4548,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::pid: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::tid: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
@@ -4580,7 +4580,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5::attach_type: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5::netns_ino: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
@@ -4612,7 +4612,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6::ifindex: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
@@ -4643,7 +4643,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7::map_id: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
@@ -4674,7 +4674,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8::flags: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8::hooknum: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8::pf: aya_ebpf_bindings::bindings::__u32
@@ -4708,7 +4708,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9::addrs: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9::cookies: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9::count: aya_ebpf_bindings::bindings::__u32
@@ -4743,7 +4743,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_link_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_list_head
+pub struct aya_ebpf_bindings::bindings::bpf_list_head
 pub aya_ebpf_bindings::bindings::bpf_list_head::__opaque: [aya_ebpf_bindings::bindings::__u64; 2]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_list_head
 pub fn aya_ebpf_bindings::bindings::bpf_list_head::clone(&self) -> aya_ebpf_bindings::bindings::bpf_list_head
@@ -4774,7 +4774,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_list_hea
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_list_head::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_list_head
 pub fn aya_ebpf_bindings::bindings::bpf_list_head::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_list_node
+pub struct aya_ebpf_bindings::bindings::bpf_list_node
 pub aya_ebpf_bindings::bindings::bpf_list_node::__opaque: [aya_ebpf_bindings::bindings::__u64; 3]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_list_node
 pub fn aya_ebpf_bindings::bindings::bpf_list_node::clone(&self) -> aya_ebpf_bindings::bindings::bpf_list_node
@@ -4805,7 +4805,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_list_nod
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_list_node::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_list_node
 pub fn aya_ebpf_bindings::bindings::bpf_list_node::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_lpm_trie_key
+pub struct aya_ebpf_bindings::bindings::bpf_lpm_trie_key
 pub aya_ebpf_bindings::bindings::bpf_lpm_trie_key::data: aya_ebpf_bindings::bindings::__IncompleteArrayField<aya_ebpf_bindings::bindings::__u8>
 pub aya_ebpf_bindings::bindings::bpf_lpm_trie_key::prefixlen: aya_ebpf_bindings::bindings::__u32
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
@@ -4832,7 +4832,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf_bindings::bindings::bpf_lpm_trie
 pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
 pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
+pub struct aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 pub aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr::prefixlen: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr::clone(&self) -> aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
@@ -4863,7 +4863,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_lpm_trie
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8
+pub struct aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8
 pub aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8::data: aya_ebpf_bindings::bindings::__IncompleteArrayField<aya_ebpf_bindings::bindings::__u8>
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8
@@ -4888,7 +4888,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf_bindings::bindings::bpf_lpm_trie
 pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8
 pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_map_def
+pub struct aya_ebpf_bindings::bindings::bpf_map_def
 pub aya_ebpf_bindings::bindings::bpf_map_def::id: aya_ebpf_cty::ad::c_uint
 pub aya_ebpf_bindings::bindings::bpf_map_def::key_size: aya_ebpf_cty::ad::c_uint
 pub aya_ebpf_bindings::bindings::bpf_map_def::map_flags: aya_ebpf_cty::ad::c_uint
@@ -4925,7 +4925,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_map_def 
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_map_def::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_map_def
 pub fn aya_ebpf_bindings::bindings::bpf_map_def::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_map_info
+pub struct aya_ebpf_bindings::bindings::bpf_map_info
 pub aya_ebpf_bindings::bindings::bpf_map_info::btf_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_map_info::btf_key_type_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_map_info::btf_value_type_id: aya_ebpf_bindings::bindings::__u32
@@ -4971,7 +4971,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_map_info
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_map_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_map_info
 pub fn aya_ebpf_bindings::bindings::bpf_map_info::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_perf_event_data
+pub struct aya_ebpf_bindings::bindings::bpf_perf_event_data
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_perf_event_data
 pub fn aya_ebpf_bindings::bindings::bpf_perf_event_data::clone(&self) -> aya_ebpf_bindings::bindings::bpf_perf_event_data
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_perf_event_data
@@ -5001,7 +5001,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_perf_eve
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_perf_event_data::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_perf_event_data
 pub fn aya_ebpf_bindings::bindings::bpf_perf_event_data::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_perf_event_value
+pub struct aya_ebpf_bindings::bindings::bpf_perf_event_value
 pub aya_ebpf_bindings::bindings::bpf_perf_event_value::counter: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_perf_event_value::enabled: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_perf_event_value::running: aya_ebpf_bindings::bindings::__u64
@@ -5034,7 +5034,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_perf_eve
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_perf_event_value::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_perf_event_value
 pub fn aya_ebpf_bindings::bindings::bpf_perf_event_value::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_pidns_info
+pub struct aya_ebpf_bindings::bindings::bpf_pidns_info
 pub aya_ebpf_bindings::bindings::bpf_pidns_info::pid: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_pidns_info::tgid: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_pidns_info
@@ -5066,7 +5066,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_pidns_in
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_pidns_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_pidns_info
 pub fn aya_ebpf_bindings::bindings::bpf_pidns_info::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_prog_info
+pub struct aya_ebpf_bindings::bindings::bpf_prog_info
 pub aya_ebpf_bindings::bindings::bpf_prog_info::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
 pub aya_ebpf_bindings::bindings::bpf_prog_info::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_prog_info::attach_btf_id: aya_ebpf_bindings::bindings::__u32
@@ -5141,7 +5141,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_prog_inf
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_prog_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_prog_info
 pub fn aya_ebpf_bindings::bindings::bpf_prog_info::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
+pub struct aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
 pub aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args::args: aya_ebpf_bindings::bindings::__IncompleteArrayField<aya_ebpf_bindings::bindings::__u64>
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
 pub fn aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -5167,7 +5167,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf_bindings::bindings::bpf_raw_trac
 pub fn aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
 pub fn aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_rb_node
+pub struct aya_ebpf_bindings::bindings::bpf_rb_node
 pub aya_ebpf_bindings::bindings::bpf_rb_node::__opaque: [aya_ebpf_bindings::bindings::__u64; 4]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_rb_node
 pub fn aya_ebpf_bindings::bindings::bpf_rb_node::clone(&self) -> aya_ebpf_bindings::bindings::bpf_rb_node
@@ -5198,7 +5198,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_rb_node 
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_rb_node::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_rb_node
 pub fn aya_ebpf_bindings::bindings::bpf_rb_node::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_rb_root
+pub struct aya_ebpf_bindings::bindings::bpf_rb_root
 pub aya_ebpf_bindings::bindings::bpf_rb_root::__opaque: [aya_ebpf_bindings::bindings::__u64; 2]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_rb_root
 pub fn aya_ebpf_bindings::bindings::bpf_rb_root::clone(&self) -> aya_ebpf_bindings::bindings::bpf_rb_root
@@ -5229,7 +5229,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_rb_root 
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_rb_root::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_rb_root
 pub fn aya_ebpf_bindings::bindings::bpf_rb_root::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_redir_neigh
+pub struct aya_ebpf_bindings::bindings::bpf_redir_neigh
 pub aya_ebpf_bindings::bindings::bpf_redir_neigh::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_redir_neigh::nh_family: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_redir_neigh
@@ -5259,7 +5259,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_redir_ne
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_redir_neigh::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_redir_neigh
 pub fn aya_ebpf_bindings::bindings::bpf_redir_neigh::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_refcount
+pub struct aya_ebpf_bindings::bindings::bpf_refcount
 pub aya_ebpf_bindings::bindings::bpf_refcount::__opaque: [aya_ebpf_bindings::bindings::__u32; 1]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_refcount
 pub fn aya_ebpf_bindings::bindings::bpf_refcount::clone(&self) -> aya_ebpf_bindings::bindings::bpf_refcount
@@ -5290,7 +5290,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_refcount
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_refcount::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_refcount
 pub fn aya_ebpf_bindings::bindings::bpf_refcount::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_sk_lookup
+pub struct aya_ebpf_bindings::bindings::bpf_sk_lookup
 pub aya_ebpf_bindings::bindings::bpf_sk_lookup::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sk_lookup::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 2]>
 pub aya_ebpf_bindings::bindings::bpf_sk_lookup::_bitfield_align_1: [u8; 0]
@@ -5332,7 +5332,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sk_looku
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sk_lookup::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sk_lookup
 pub fn aya_ebpf_bindings::bindings::bpf_sk_lookup::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_sock
+pub struct aya_ebpf_bindings::bindings::bpf_sock
 pub aya_ebpf_bindings::bindings::bpf_sock::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 2]>
 pub aya_ebpf_bindings::bindings::bpf_sock::_bitfield_align_1: [u8; 0]
 pub aya_ebpf_bindings::bindings::bpf_sock::bound_dev_if: aya_ebpf_bindings::bindings::__u32
@@ -5380,7 +5380,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock whe
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock
 pub fn aya_ebpf_bindings::bindings::bpf_sock::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_sock_addr
+pub struct aya_ebpf_bindings::bindings::bpf_sock_addr
 pub aya_ebpf_bindings::bindings::bpf_sock_addr::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sock_addr::family: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_sock_addr::msg_src_ip4: aya_ebpf_bindings::bindings::__u32
@@ -5418,7 +5418,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock_add
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock_addr::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock_addr
 pub fn aya_ebpf_bindings::bindings::bpf_sock_addr::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_sock_ops
+pub struct aya_ebpf_bindings::bindings::bpf_sock_ops
 pub aya_ebpf_bindings::bindings::bpf_sock_ops::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sock_ops::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_sock_ops::__bindgen_anon_3: aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3
@@ -5487,7 +5487,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock_ops
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock_ops::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock_ops
 pub fn aya_ebpf_bindings::bindings::bpf_sock_ops::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_sock_tuple
+pub struct aya_ebpf_bindings::bindings::bpf_sock_tuple
 pub aya_ebpf_bindings::bindings::bpf_sock_tuple::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_sock_tuple
 pub fn aya_ebpf_bindings::bindings::bpf_sock_tuple::clone(&self) -> aya_ebpf_bindings::bindings::bpf_sock_tuple
@@ -5516,7 +5516,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock_tup
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock_tuple::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock_tuple
 pub fn aya_ebpf_bindings::bindings::bpf_sock_tuple::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
+pub struct aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1::daddr: aya_ebpf_bindings::bindings::__be32
 pub aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1::dport: aya_ebpf_bindings::bindings::__be16
 pub aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1::saddr: aya_ebpf_bindings::bindings::__be32
@@ -5550,7 +5550,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock_tup
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
+pub struct aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2::daddr: [aya_ebpf_bindings::bindings::__be32; 4]
 pub aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2::dport: aya_ebpf_bindings::bindings::__be16
 pub aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2::saddr: [aya_ebpf_bindings::bindings::__be32; 4]
@@ -5584,7 +5584,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sock_tup
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_sockopt
+pub struct aya_ebpf_bindings::bindings::bpf_sockopt
 pub aya_ebpf_bindings::bindings::bpf_sockopt::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_sockopt::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_sockopt::__bindgen_anon_3: aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3
@@ -5619,7 +5619,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sockopt 
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sockopt::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sockopt
 pub fn aya_ebpf_bindings::bindings::bpf_sockopt::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_spin_lock
+pub struct aya_ebpf_bindings::bindings::bpf_spin_lock
 pub aya_ebpf_bindings::bindings::bpf_spin_lock::val: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_spin_lock
 pub fn aya_ebpf_bindings::bindings::bpf_spin_lock::clone(&self) -> aya_ebpf_bindings::bindings::bpf_spin_lock
@@ -5650,7 +5650,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_spin_loc
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_spin_lock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_spin_lock
 pub fn aya_ebpf_bindings::bindings::bpf_spin_lock::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_stack_build_id
+pub struct aya_ebpf_bindings::bindings::bpf_stack_build_id
 pub aya_ebpf_bindings::bindings::bpf_stack_build_id::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_stack_build_id::build_id: [aya_ebpf_cty::c_uchar; 20]
 pub aya_ebpf_bindings::bindings::bpf_stack_build_id::status: aya_ebpf_bindings::bindings::__s32
@@ -5681,7 +5681,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_stack_bu
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_stack_build_id::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_stack_build_id
 pub fn aya_ebpf_bindings::bindings::bpf_stack_build_id::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_sysctl
+pub struct aya_ebpf_bindings::bindings::bpf_sysctl
 pub aya_ebpf_bindings::bindings::bpf_sysctl::file_pos: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_sysctl::write: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_sysctl
@@ -5713,7 +5713,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_sysctl w
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_sysctl::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_sysctl
 pub fn aya_ebpf_bindings::bindings::bpf_sysctl::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_tcp_sock
+pub struct aya_ebpf_bindings::bindings::bpf_tcp_sock
 pub aya_ebpf_bindings::bindings::bpf_tcp_sock::bytes_acked: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_tcp_sock::bytes_received: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_tcp_sock::data_segs_in: aya_ebpf_bindings::bindings::__u32
@@ -5769,7 +5769,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_tcp_sock
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_tcp_sock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_tcp_sock
 pub fn aya_ebpf_bindings::bindings::bpf_tcp_sock::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_timer
+pub struct aya_ebpf_bindings::bindings::bpf_timer
 pub aya_ebpf_bindings::bindings::bpf_timer::__opaque: [aya_ebpf_bindings::bindings::__u64; 2]
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_timer
 pub fn aya_ebpf_bindings::bindings::bpf_timer::clone(&self) -> aya_ebpf_bindings::bindings::bpf_timer
@@ -5800,7 +5800,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_timer wh
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_timer::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_timer
 pub fn aya_ebpf_bindings::bindings::bpf_timer::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_tunnel_key
+pub struct aya_ebpf_bindings::bindings::bpf_tunnel_key
 pub aya_ebpf_bindings::bindings::bpf_tunnel_key::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_tunnel_key::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::bpf_tunnel_key::__bindgen_anon_3: aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3
@@ -5835,7 +5835,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_tunnel_k
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_tunnel_key::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_tunnel_key
 pub fn aya_ebpf_bindings::bindings::bpf_tunnel_key::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_xdp_sock
+pub struct aya_ebpf_bindings::bindings::bpf_xdp_sock
 pub aya_ebpf_bindings::bindings::bpf_xdp_sock::queue_id: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_xdp_sock
 pub fn aya_ebpf_bindings::bindings::bpf_xdp_sock::clone(&self) -> aya_ebpf_bindings::bindings::bpf_xdp_sock
@@ -5866,7 +5866,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_xdp_sock
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_xdp_sock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_xdp_sock
 pub fn aya_ebpf_bindings::bindings::bpf_xdp_sock::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_xfrm_state
+pub struct aya_ebpf_bindings::bindings::bpf_xfrm_state
 pub aya_ebpf_bindings::bindings::bpf_xfrm_state::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_xfrm_state::ext: aya_ebpf_bindings::bindings::__u16
 pub aya_ebpf_bindings::bindings::bpf_xfrm_state::family: aya_ebpf_bindings::bindings::__u16
@@ -5899,7 +5899,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_xfrm_sta
 pub unsafe fn aya_ebpf_bindings::bindings::bpf_xfrm_state::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_xfrm_state
 pub fn aya_ebpf_bindings::bindings::bpf_xfrm_state::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::btf_ptr
+pub struct aya_ebpf_bindings::bindings::btf_ptr
 pub aya_ebpf_bindings::bindings::btf_ptr::flags: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::btf_ptr::ptr: *mut aya_ebpf_cty::c_void
 pub aya_ebpf_bindings::bindings::btf_ptr::type_id: aya_ebpf_bindings::bindings::__u32
@@ -5932,7 +5932,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::btf_ptr wher
 pub unsafe fn aya_ebpf_bindings::bindings::btf_ptr::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::btf_ptr
 pub fn aya_ebpf_bindings::bindings::btf_ptr::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::cgroup
+pub struct aya_ebpf_bindings::bindings::cgroup
 impl core::clone::Clone for aya_ebpf_bindings::bindings::cgroup
 pub fn aya_ebpf_bindings::bindings::cgroup::clone(&self) -> aya_ebpf_bindings::bindings::cgroup
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::cgroup
@@ -5962,7 +5962,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::cgroup where
 pub unsafe fn aya_ebpf_bindings::bindings::cgroup::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::cgroup
 pub fn aya_ebpf_bindings::bindings::cgroup::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::file
+pub struct aya_ebpf_bindings::bindings::file
 impl core::clone::Clone for aya_ebpf_bindings::bindings::file
 pub fn aya_ebpf_bindings::bindings::file::clone(&self) -> aya_ebpf_bindings::bindings::file
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::file
@@ -5992,7 +5992,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::file where T
 pub unsafe fn aya_ebpf_bindings::bindings::file::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::file
 pub fn aya_ebpf_bindings::bindings::file::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::inode
+pub struct aya_ebpf_bindings::bindings::inode
 impl core::clone::Clone for aya_ebpf_bindings::bindings::inode
 pub fn aya_ebpf_bindings::bindings::inode::clone(&self) -> aya_ebpf_bindings::bindings::inode
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::inode
@@ -6022,7 +6022,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::inode where 
 pub unsafe fn aya_ebpf_bindings::bindings::inode::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::inode
 pub fn aya_ebpf_bindings::bindings::inode::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::iphdr
+pub struct aya_ebpf_bindings::bindings::iphdr
 impl core::clone::Clone for aya_ebpf_bindings::bindings::iphdr
 pub fn aya_ebpf_bindings::bindings::iphdr::clone(&self) -> aya_ebpf_bindings::bindings::iphdr
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::iphdr
@@ -6052,7 +6052,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::iphdr where 
 pub unsafe fn aya_ebpf_bindings::bindings::iphdr::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::iphdr
 pub fn aya_ebpf_bindings::bindings::iphdr::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::ipv6hdr
+pub struct aya_ebpf_bindings::bindings::ipv6hdr
 impl core::clone::Clone for aya_ebpf_bindings::bindings::ipv6hdr
 pub fn aya_ebpf_bindings::bindings::ipv6hdr::clone(&self) -> aya_ebpf_bindings::bindings::ipv6hdr
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::ipv6hdr
@@ -6082,7 +6082,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::ipv6hdr wher
 pub unsafe fn aya_ebpf_bindings::bindings::ipv6hdr::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::ipv6hdr
 pub fn aya_ebpf_bindings::bindings::ipv6hdr::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::linux_binprm
+pub struct aya_ebpf_bindings::bindings::linux_binprm
 impl core::clone::Clone for aya_ebpf_bindings::bindings::linux_binprm
 pub fn aya_ebpf_bindings::bindings::linux_binprm::clone(&self) -> aya_ebpf_bindings::bindings::linux_binprm
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::linux_binprm
@@ -6112,7 +6112,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::linux_binprm
 pub unsafe fn aya_ebpf_bindings::bindings::linux_binprm::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::linux_binprm
 pub fn aya_ebpf_bindings::bindings::linux_binprm::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::mptcp_sock
+pub struct aya_ebpf_bindings::bindings::mptcp_sock
 impl core::clone::Clone for aya_ebpf_bindings::bindings::mptcp_sock
 pub fn aya_ebpf_bindings::bindings::mptcp_sock::clone(&self) -> aya_ebpf_bindings::bindings::mptcp_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::mptcp_sock
@@ -6142,7 +6142,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::mptcp_sock w
 pub unsafe fn aya_ebpf_bindings::bindings::mptcp_sock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::mptcp_sock
 pub fn aya_ebpf_bindings::bindings::mptcp_sock::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::path
+pub struct aya_ebpf_bindings::bindings::path
 impl core::clone::Clone for aya_ebpf_bindings::bindings::path
 pub fn aya_ebpf_bindings::bindings::path::clone(&self) -> aya_ebpf_bindings::bindings::path
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::path
@@ -6172,7 +6172,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::path where T
 pub unsafe fn aya_ebpf_bindings::bindings::path::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::path
 pub fn aya_ebpf_bindings::bindings::path::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::pt_regs
+pub struct aya_ebpf_bindings::bindings::pt_regs
 pub aya_ebpf_bindings::bindings::pt_regs::cs: aya_ebpf_cty::od::c_ulong
 pub aya_ebpf_bindings::bindings::pt_regs::eflags: aya_ebpf_cty::od::c_ulong
 pub aya_ebpf_bindings::bindings::pt_regs::orig_rax: aya_ebpf_cty::od::c_ulong
@@ -6223,7 +6223,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::pt_regs wher
 pub unsafe fn aya_ebpf_bindings::bindings::pt_regs::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::pt_regs
 pub fn aya_ebpf_bindings::bindings::pt_regs::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::seq_file
+pub struct aya_ebpf_bindings::bindings::seq_file
 impl core::clone::Clone for aya_ebpf_bindings::bindings::seq_file
 pub fn aya_ebpf_bindings::bindings::seq_file::clone(&self) -> aya_ebpf_bindings::bindings::seq_file
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::seq_file
@@ -6253,7 +6253,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::seq_file whe
 pub unsafe fn aya_ebpf_bindings::bindings::seq_file::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::seq_file
 pub fn aya_ebpf_bindings::bindings::seq_file::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::sk_msg_md
+pub struct aya_ebpf_bindings::bindings::sk_msg_md
 pub aya_ebpf_bindings::bindings::sk_msg_md::__bindgen_anon_1: aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::sk_msg_md::__bindgen_anon_2: aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::sk_msg_md::__bindgen_anon_3: aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3
@@ -6292,7 +6292,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::sk_msg_md wh
 pub unsafe fn aya_ebpf_bindings::bindings::sk_msg_md::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::sk_msg_md
 pub fn aya_ebpf_bindings::bindings::sk_msg_md::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::sk_reuseport_md
+pub struct aya_ebpf_bindings::bindings::sk_reuseport_md
 pub aya_ebpf_bindings::bindings::sk_reuseport_md::__bindgen_anon_1: aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::sk_reuseport_md::__bindgen_anon_2: aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2
 pub aya_ebpf_bindings::bindings::sk_reuseport_md::__bindgen_anon_3: aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3
@@ -6329,7 +6329,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::sk_reuseport
 pub unsafe fn aya_ebpf_bindings::bindings::sk_reuseport_md::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::sk_reuseport_md
 pub fn aya_ebpf_bindings::bindings::sk_reuseport_md::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::sockaddr
+pub struct aya_ebpf_bindings::bindings::sockaddr
 pub aya_ebpf_bindings::bindings::sockaddr::sa_data: [aya_ebpf_cty::ad::c_char; 14]
 pub aya_ebpf_bindings::bindings::sockaddr::sa_family: aya_ebpf_bindings::bindings::sa_family_t
 impl core::clone::Clone for aya_ebpf_bindings::bindings::sockaddr
@@ -6361,7 +6361,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::sockaddr whe
 pub unsafe fn aya_ebpf_bindings::bindings::sockaddr::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::sockaddr
 pub fn aya_ebpf_bindings::bindings::sockaddr::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::socket
+pub struct aya_ebpf_bindings::bindings::socket
 impl core::clone::Clone for aya_ebpf_bindings::bindings::socket
 pub fn aya_ebpf_bindings::bindings::socket::clone(&self) -> aya_ebpf_bindings::bindings::socket
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::socket
@@ -6391,7 +6391,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::socket where
 pub unsafe fn aya_ebpf_bindings::bindings::socket::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::socket
 pub fn aya_ebpf_bindings::bindings::socket::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::task_struct
+pub struct aya_ebpf_bindings::bindings::task_struct
 impl core::clone::Clone for aya_ebpf_bindings::bindings::task_struct
 pub fn aya_ebpf_bindings::bindings::task_struct::clone(&self) -> aya_ebpf_bindings::bindings::task_struct
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::task_struct
@@ -6421,7 +6421,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::task_struct 
 pub unsafe fn aya_ebpf_bindings::bindings::task_struct::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::task_struct
 pub fn aya_ebpf_bindings::bindings::task_struct::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::tcp6_sock
+pub struct aya_ebpf_bindings::bindings::tcp6_sock
 impl core::clone::Clone for aya_ebpf_bindings::bindings::tcp6_sock
 pub fn aya_ebpf_bindings::bindings::tcp6_sock::clone(&self) -> aya_ebpf_bindings::bindings::tcp6_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::tcp6_sock
@@ -6451,7 +6451,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::tcp6_sock wh
 pub unsafe fn aya_ebpf_bindings::bindings::tcp6_sock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::tcp6_sock
 pub fn aya_ebpf_bindings::bindings::tcp6_sock::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::tcp_request_sock
+pub struct aya_ebpf_bindings::bindings::tcp_request_sock
 impl core::clone::Clone for aya_ebpf_bindings::bindings::tcp_request_sock
 pub fn aya_ebpf_bindings::bindings::tcp_request_sock::clone(&self) -> aya_ebpf_bindings::bindings::tcp_request_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::tcp_request_sock
@@ -6481,7 +6481,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::tcp_request_
 pub unsafe fn aya_ebpf_bindings::bindings::tcp_request_sock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::tcp_request_sock
 pub fn aya_ebpf_bindings::bindings::tcp_request_sock::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::tcp_sock
+pub struct aya_ebpf_bindings::bindings::tcp_sock
 impl core::clone::Clone for aya_ebpf_bindings::bindings::tcp_sock
 pub fn aya_ebpf_bindings::bindings::tcp_sock::clone(&self) -> aya_ebpf_bindings::bindings::tcp_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::tcp_sock
@@ -6511,7 +6511,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::tcp_sock whe
 pub unsafe fn aya_ebpf_bindings::bindings::tcp_sock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::tcp_sock
 pub fn aya_ebpf_bindings::bindings::tcp_sock::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::tcp_timewait_sock
+pub struct aya_ebpf_bindings::bindings::tcp_timewait_sock
 impl core::clone::Clone for aya_ebpf_bindings::bindings::tcp_timewait_sock
 pub fn aya_ebpf_bindings::bindings::tcp_timewait_sock::clone(&self) -> aya_ebpf_bindings::bindings::tcp_timewait_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::tcp_timewait_sock
@@ -6541,7 +6541,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::tcp_timewait
 pub unsafe fn aya_ebpf_bindings::bindings::tcp_timewait_sock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::tcp_timewait_sock
 pub fn aya_ebpf_bindings::bindings::tcp_timewait_sock::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::tcphdr
+pub struct aya_ebpf_bindings::bindings::tcphdr
 impl core::clone::Clone for aya_ebpf_bindings::bindings::tcphdr
 pub fn aya_ebpf_bindings::bindings::tcphdr::clone(&self) -> aya_ebpf_bindings::bindings::tcphdr
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::tcphdr
@@ -6571,7 +6571,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::tcphdr where
 pub unsafe fn aya_ebpf_bindings::bindings::tcphdr::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::tcphdr
 pub fn aya_ebpf_bindings::bindings::tcphdr::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::udp6_sock
+pub struct aya_ebpf_bindings::bindings::udp6_sock
 impl core::clone::Clone for aya_ebpf_bindings::bindings::udp6_sock
 pub fn aya_ebpf_bindings::bindings::udp6_sock::clone(&self) -> aya_ebpf_bindings::bindings::udp6_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::udp6_sock
@@ -6601,7 +6601,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::udp6_sock wh
 pub unsafe fn aya_ebpf_bindings::bindings::udp6_sock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::udp6_sock
 pub fn aya_ebpf_bindings::bindings::udp6_sock::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::unix_sock
+pub struct aya_ebpf_bindings::bindings::unix_sock
 impl core::clone::Clone for aya_ebpf_bindings::bindings::unix_sock
 pub fn aya_ebpf_bindings::bindings::unix_sock::clone(&self) -> aya_ebpf_bindings::bindings::unix_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::unix_sock
@@ -6631,7 +6631,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::unix_sock wh
 pub unsafe fn aya_ebpf_bindings::bindings::unix_sock::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::unix_sock
 pub fn aya_ebpf_bindings::bindings::unix_sock::from(t: T) -> T
-#[repr(C)] pub struct aya_ebpf_bindings::bindings::xdp_md
+pub struct aya_ebpf_bindings::bindings::xdp_md
 pub aya_ebpf_bindings::bindings::xdp_md::data: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::xdp_md::data_end: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::xdp_md::data_meta: aya_ebpf_bindings::bindings::__u32
