@@ -249,7 +249,7 @@ pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
 ) -> SysResult<Option<PerCpuValues<V>>> {
     let mut mem = PerCpuValues::<V>::alloc_kernel_mem().map_err(|io_error| (-1, io_error))?;
     match bpf_map_lookup_elem_ptr(fd, Some(key), mem.as_mut_ptr(), flags) {
-        Ok(_) => Ok(Some(unsafe { PerCpuValues::from_kernel_mem(mem) })),
+        Ok(v) => Ok(v.map(|_| unsafe { PerCpuValues::from_kernel_mem(mem) })),
         Err((_, io_error)) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
         Err(e) => Err(e),
     }
