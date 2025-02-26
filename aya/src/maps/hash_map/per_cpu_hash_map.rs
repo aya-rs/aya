@@ -151,12 +151,23 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, PerCpuValues<V>>
 
 #[cfg(test)]
 mod tests {
+    use std::{ffi::c_long, io};
+
+    use assert_matches::assert_matches;
     use aya_obj::generated::bpf_map_type::{
         BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH,
     };
+    use libc::ENOENT;
 
     use super::*;
-    use crate::maps::{test_utils, Map};
+    use crate::{
+        maps::{test_utils, Map},
+        sys::{override_syscall, SysResult},
+    };
+
+    fn sys_error(value: i32) -> SysResult<c_long> {
+        Err((-1, io::Error::from_raw_os_error(value)))
+    }
 
     #[test]
     fn test_try_from_ok() {
@@ -173,5 +184,17 @@ mod tests {
         assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok());
         let map = Map::PerCpuLruHashMap(map_data());
         assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok())
+    }
+    #[test]
+    #[cfg_attr(miri, ignore = "`open` not available when isolation is enabled")]
+    fn test_get_not_found() {
+        let map_data =
+            || test_utils::new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_LRU_PERCPU_HASH));
+        let map = Map::PerCpuHashMap(map_data());
+        let map = PerCpuHashMap::<_, u32, u32>::try_from(&map).unwrap();
+
+        override_syscall(|_| sys_error(ENOENT));
+
+        assert_matches!(map.get(&1, 0), Err(MapError::KeyNotFound));
     }
 }
