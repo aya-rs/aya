@@ -246,7 +246,7 @@ impl Object {
                 target_btf,
                 &mut candidates_cache,
             ) {
-                Ok(_) => {}
+                Ok(()) => {}
                 Err(error) => {
                     return Err(BtfRelocationError {
                         section: section_name.to_string(),

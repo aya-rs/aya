@@ -63,8 +63,7 @@ use crate::maps::{
 ///
 ///     // process each perf buffer in a separate task
 ///     task::spawn(async move {
-///         let mut buffers = (0..10)
-///             .map(|_| BytesMut::with_capacity(1024))
+///         let mut buffers = std::iter::repeat_n(BytesMut::with_capacity(1024), 10)
 ///             .collect::<Vec<_>>();
 ///
 ///         loop {

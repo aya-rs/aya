@@ -344,7 +344,7 @@ impl LdSoCache {
         // Check for new format
         let mut buf = [0u8; LD_SO_CACHE_HEADER_NEW.len()];
         cursor.read_exact(&mut buf)?;
-        let header = std::str::from_utf8(&buf).map_err(|_| {
+        let header = std::str::from_utf8(&buf).map_err(|std::str::Utf8Error { .. }| {
             io::Error::new(io::ErrorKind::InvalidData, "invalid ld.so.cache header")
         })?;
 
@@ -355,7 +355,7 @@ impl LdSoCache {
             cursor.set_position(0);
             let mut buf = [0u8; LD_SO_CACHE_HEADER_OLD.len()];
             cursor.read_exact(&mut buf)?;
-            let header = std::str::from_utf8(&buf).map_err(|_| {
+            let header = std::str::from_utf8(&buf).map_err(|std::str::Utf8Error { .. }| {
                 io::Error::new(io::ErrorKind::InvalidData, "invalid ld.so.cache header")
             })?;
 

@@ -558,7 +558,8 @@ impl MapData {
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
-        let c_name = CString::new(name).map_err(|_| MapError::InvalidName { name: name.into() })?;
+        let c_name = CString::new(name)
+            .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
 
         // BPF_MAP_TYPE_PERF_EVENT_ARRAY's max_entries should not exceed the number of
         // CPUs.

@@ -176,7 +176,7 @@ impl TcContext {
     /// fn try_classifier(ctx: TcContext) -> Result<i32, i32> {
     ///     let len = ETH_HLEN + IP_HLEN + UDP_HLEN;
     ///     match ctx.pull_data(len as u32) {
-    ///         Ok(_) => return Ok(0),
+    ///         Ok(()) => return Ok(0),
     ///         Err(ret) => return Err(ret as i32),
     ///     }
     /// }

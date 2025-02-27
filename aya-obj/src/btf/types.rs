@@ -1451,7 +1451,7 @@ pub(crate) fn types_are_compatible(
         return Ok(false);
     }
 
-    for _ in 0..MAX_RESOLVE_DEPTH {
+    for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
         local_id = local_btf.resolve_type(local_id)?;
         target_id = target_btf.resolve_type(target_id)?;
         let local_ty = local_btf.type_by_id(local_id)?;
@@ -1520,7 +1520,7 @@ pub(crate) fn fields_are_compatible(
     target_btf: &Btf,
     mut target_id: u32,
 ) -> Result<bool, BtfError> {
-    for _ in 0..MAX_RESOLVE_DEPTH {
+    for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
         local_id = local_btf.resolve_type(local_id)?;
         target_id = target_btf.resolve_type(target_id)?;
         let local_ty = local_btf.type_by_id(local_id)?;
