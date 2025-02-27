@@ -634,11 +634,11 @@ mod tests {
         assert_eq!(*l1_detached.borrow(), 0);
         assert_eq!(*l2_detached.borrow(), 0);
 
-        assert!(links.remove(id1).is_ok());
+        links.remove(id1).unwrap();
         assert_eq!(*l1_detached.borrow(), 1);
         assert_eq!(*l2_detached.borrow(), 0);
 
-        assert!(links.remove(id2).is_ok());
+        links.remove(id2).unwrap();
         assert_eq!(*l1_detached.borrow(), 1);
         assert_eq!(*l2_detached.borrow(), 1);
     }
@@ -678,7 +678,7 @@ mod tests {
             let id1 = links.insert(l1).unwrap();
             links.insert(l2).unwrap();
             // manually remove one link
-            assert!(links.remove(id1).is_ok());
+            links.remove(id1).unwrap();
             assert_eq!(*l1_detached.borrow(), 1);
             assert_eq!(*l2_detached.borrow(), 0);
         }
@@ -710,7 +710,7 @@ mod tests {
         assert_eq!(*l2_detached.borrow(), 1);
 
         // manually detach l1
-        assert!(owned_l1.detach().is_ok());
+        owned_l1.detach().unwrap();
         assert_eq!(*l1_detached.borrow(), 1);
         assert_eq!(*l2_detached.borrow(), 1);
     }

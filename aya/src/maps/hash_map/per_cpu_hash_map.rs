@@ -174,16 +174,16 @@ mod tests {
         let map = Map::PerCpuHashMap(test_utils::new_map(test_utils::new_obj_map::<u32>(
             BPF_MAP_TYPE_PERCPU_HASH,
         )));
-        assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok())
+        let _: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
     }
     #[test]
     fn test_try_from_ok_lru() {
         let map_data =
             || test_utils::new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_LRU_PERCPU_HASH));
         let map = Map::PerCpuHashMap(map_data());
-        assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok());
+        let _: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
         let map = Map::PerCpuLruHashMap(map_data());
-        assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok())
+        let _: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
     }
     #[test]
     fn test_get_not_found() {

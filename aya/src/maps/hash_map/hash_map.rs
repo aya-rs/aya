@@ -179,23 +179,23 @@ mod tests {
     #[test]
     fn test_new_ok() {
         let map = new_map(new_obj_map());
-        assert!(HashMap::<_, u32, u32>::new(&map).is_ok());
+        let _: HashMap<_, u32, u32> = HashMap::new(&map).unwrap();
     }
 
     #[test]
     fn test_try_from_ok() {
         let map = new_map(new_obj_map());
         let map = Map::HashMap(map);
-        assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
+        let _: HashMap<_, u32, u32> = map.try_into().unwrap();
     }
 
     #[test]
     fn test_try_from_ok_lru() {
         let map_data = || new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_LRU_HASH));
         let map = Map::HashMap(map_data());
-        assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok());
+        let _: HashMap<_, u32, u32> = map.try_into().unwrap();
         let map = Map::LruHashMap(map_data());
-        assert!(HashMap::<_, u32, u32>::try_from(&map).is_ok())
+        let _: HashMap<_, u32, u32> = map.try_into().unwrap();
     }
 
     #[test]
@@ -224,7 +224,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert!(hm.insert(1, 42, 0).is_ok());
+        assert_matches!(hm.insert(1, 42, 0), Ok(()));
     }
 
     #[test]
@@ -240,7 +240,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert!(hm.insert(Box::new(1), Box::new(42), 0).is_ok());
+        assert_matches!(hm.insert(Box::new(1), Box::new(42), 0), Ok(()));
     }
 
     #[test]
@@ -269,7 +269,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert!(hm.remove(&1).is_ok());
+        assert_matches!(hm.remove(&1), Ok(()));
     }
 
     #[test]

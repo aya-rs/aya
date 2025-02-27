@@ -20,15 +20,17 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
+/// # use assert_matches::assert_matches;
 /// # let mut bpf = aya::Ebpf::load(&[])?;
+/// use aya::maps::MapError;
 /// use aya::maps::bloom_filter::BloomFilter;
 ///
 /// let mut bloom_filter = BloomFilter::try_from(bpf.map_mut("BLOOM_FILTER").unwrap())?;
 ///
 /// bloom_filter.insert(1, 0)?;
 ///
-/// assert!(bloom_filter.contains(&1, 0).is_ok());
-/// assert!(bloom_filter.contains(&2, 0).is_err());
+/// assert_matches!(bloom_filter.contains(&1, 0), Ok(()));
+/// assert_matches!(bloom_filter.contains(&2, 0), Err(MapError::ElementNotFound));
 ///
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
@@ -131,7 +133,7 @@ mod tests {
     fn test_new_ok() {
         let map = new_map(new_obj_map());
 
-        assert!(BloomFilter::<_, u32>::new(&map).is_ok());
+        let _: BloomFilter<_, u32> = BloomFilter::new(&map).unwrap();
     }
 
     #[test]
@@ -139,7 +141,7 @@ mod tests {
         let map = new_map(new_obj_map());
 
         let map = Map::BloomFilter(map);
-        assert!(BloomFilter::<_, u32>::try_from(&map).is_ok())
+        let _: BloomFilter<_, u32> = map.try_into().unwrap();
     }
 
     #[test]
@@ -168,7 +170,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert!(bloom_filter.insert(0, 42).is_ok());
+        assert_matches!(bloom_filter.insert(0, 42), Ok(()));
     }
 
     #[test]

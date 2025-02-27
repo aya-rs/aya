@@ -441,9 +441,9 @@ mod tests {
             parse_cpu_ranges("0-5,6,7").unwrap(),
             (0..=7).collect::<Vec<_>>()
         );
-        assert!(parse_cpu_ranges("").is_err());
-        assert!(parse_cpu_ranges("0-1,2-").is_err());
-        assert!(parse_cpu_ranges("foo").is_err());
+        assert_matches!(parse_cpu_ranges(""), Err(_));
+        assert_matches!(parse_cpu_ranges("0-1,2-"), Err(_));
+        assert_matches!(parse_cpu_ranges("foo"), Err(_));
     }
 
     #[test]

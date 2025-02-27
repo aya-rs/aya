@@ -716,7 +716,7 @@ mod tests {
         let align_bytes = aligned_slice(&mut debug_bytes);
         let debug_obj = object::File::parse(&*align_bytes).expect("got debug obj");
 
-        assert!(verify_build_ids(&main_obj, &debug_obj, "symbol_name").is_ok());
+        verify_build_ids(&main_obj, &debug_obj, "symbol_name").unwrap();
     }
 
     #[test]
