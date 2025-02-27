@@ -2,12 +2,9 @@ name: aya-ci
 
 on:
   push:
-    branches:
-      - main
+    branches-ignore: 'create-pull-request/**'
 
   pull_request:
-    branches:
-      - main
 
   schedule:
     - cron: 00 4 * * *

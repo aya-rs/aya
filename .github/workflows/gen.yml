@@ -2,8 +2,7 @@ name: codegen
 
 on:
   push:
-    branches:
-      - main
+    branches-ignore: 'create-pull-request/**'
 
   schedule:
     - cron: 00 4 * * *
