@@ -23,7 +23,7 @@ use crate::{
     Object,
 };
 
-pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
+pub(crate) const MAX_RESOLVE_DEPTH: usize = 32;
 pub(crate) const MAX_SPEC_LEN: usize = 64;
 
 /// The error type returned when `BTF` operations fail.
@@ -434,7 +434,7 @@ impl Btf {
     pub(crate) fn type_size(&self, root_type_id: u32) -> Result<usize, BtfError> {
         let mut type_id = root_type_id;
         let mut n_elems = 1;
-        for _ in 0..MAX_RESOLVE_DEPTH {
+        for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
             let ty = self.types.type_by_id(type_id)?;
             let size = match ty {
                 BtfType::Array(Array { array, .. }) => {
@@ -1054,7 +1054,7 @@ impl BtfTypes {
 
     pub(crate) fn resolve_type(&self, root_type_id: u32) -> Result<u32, BtfError> {
         let mut type_id = root_type_id;
-        for _ in 0..MAX_RESOLVE_DEPTH {
+        for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
             let ty = self.type_by_id(type_id)?;
 
             use BtfType::*;

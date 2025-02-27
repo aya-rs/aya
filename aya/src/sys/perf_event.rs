@@ -127,7 +127,7 @@ fn perf_event_sys(
         flags,
     })?;
 
-    let fd = fd.try_into().map_err(|_| {
+    let fd = fd.try_into().map_err(|std::num::TryFromIntError { .. }| {
         (
             fd,
             io::Error::new(

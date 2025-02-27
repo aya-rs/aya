@@ -143,7 +143,7 @@ fn test_loaded_at() {
     // timestamp to continuously jump around, so we add some retries. If the test is ever correct,
     // we know that the value returned by loaded_at() was reasonable relative to SystemTime::now().
     let mut failures = Vec::new();
-    for _ in 0..5 {
+    for () in std::iter::repeat_n((), 5) {
         let t1 = SystemTime::now();
         prog.load().unwrap();
 

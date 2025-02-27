@@ -202,5 +202,5 @@ fn sysctl<T: FromStr>(key: &str) -> Result<T, io::Error> {
     let val = fs::read_to_string(Path::new("/proc/sys").join(key))?;
     val.trim()
         .parse::<T>()
-        .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, val))
+        .map_err(|_: T::Err| io::Error::new(io::ErrorKind::InvalidData, val))
 }

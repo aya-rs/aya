@@ -468,12 +468,12 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
     let mut line = None;
     let mut num_args = None;
 
-    for _ in 0..LOG_FIELDS {
+    for () in std::iter::repeat_n((), LOG_FIELDS) {
         let (RecordFieldWrapper(tag), value, rest) = try_read(buf)?;
 
         match tag {
             RecordField::Target => {
-                target = Some(str::from_utf8(value).map_err(|_| ())?);
+                target = Some(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
             }
             RecordField::Level => {
                 level = Some({
@@ -488,16 +488,24 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
                 })
             }
             RecordField::Module => {
-                module = Some(str::from_utf8(value).map_err(|_| ())?);
+                module = Some(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
             }
             RecordField::File => {
-                file = Some(str::from_utf8(value).map_err(|_| ())?);
+                file = Some(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
             }
             RecordField::Line => {
-                line = Some(u32::from_ne_bytes(value.try_into().map_err(|_| ())?));
+                line = Some(u32::from_ne_bytes(
+                    value
+                        .try_into()
+                        .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                ));
             }
             RecordField::NumArgs => {
-                num_args = Some(usize::from_ne_bytes(value.try_into().map_err(|_| ())?));
+                num_args = Some(usize::from_ne_bytes(
+                    value
+                        .try_into()
+                        .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                ));
             }
         }
 
@@ -506,7 +514,7 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
 
     let mut full_log_msg = String::new();
     let mut last_hint: Option<DisplayHintWrapper> = None;
-    for _ in 0..num_args.ok_or(())? {
+    for () in std::iter::repeat_n((), num_args.ok_or(())?) {
         let (ArgumentWrapper(tag), value, rest) = try_read(buf)?;
 
         match tag {
@@ -515,100 +523,160 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
             }
             Argument::I8 => {
                 full_log_msg.push_str(
-                    &i8::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &i8::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::I16 => {
                 full_log_msg.push_str(
-                    &i16::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &i16::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::I32 => {
                 full_log_msg.push_str(
-                    &i32::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &i32::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::I64 => {
                 full_log_msg.push_str(
-                    &i64::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &i64::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::Isize => {
                 full_log_msg.push_str(
-                    &isize::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &isize::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::U8 => {
                 full_log_msg.push_str(
-                    &u8::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &u8::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::U16 => {
                 full_log_msg.push_str(
-                    &u16::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &u16::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::U32 => {
                 full_log_msg.push_str(
-                    &u32::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &u32::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::U64 => {
                 full_log_msg.push_str(
-                    &u64::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &u64::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::Usize => {
                 full_log_msg.push_str(
-                    &usize::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &usize::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::F32 => {
                 full_log_msg.push_str(
-                    &f32::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &f32::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::F64 => {
                 full_log_msg.push_str(
-                    &f64::from_ne_bytes(value.try_into().map_err(|_| ())?)
-                        .format(last_hint.take())?,
+                    &f64::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
                 );
             }
             Argument::Ipv4Addr => {
-                let value: [u8; 4] = value.try_into().map_err(|_| ())?;
+                let value: [u8; 4] = value
+                    .try_into()
+                    .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 let value = Ipv4Addr::from(value);
                 full_log_msg.push_str(&value.format(last_hint.take())?)
             }
             Argument::Ipv6Addr => {
-                let value: [u8; 16] = value.try_into().map_err(|_| ())?;
+                let value: [u8; 16] = value
+                    .try_into()
+                    .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 let value = Ipv6Addr::from(value);
                 full_log_msg.push_str(&value.format(last_hint.take())?)
             }
             Argument::ArrU8Len4 => {
-                let value: [u8; 4] = value.try_into().map_err(|_| ())?;
+                let value: [u8; 4] = value
+                    .try_into()
+                    .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             Argument::ArrU8Len6 => {
-                let value: [u8; 6] = value.try_into().map_err(|_| ())?;
+                let value: [u8; 6] = value
+                    .try_into()
+                    .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             Argument::ArrU8Len16 => {
-                let value: [u8; 16] = value.try_into().map_err(|_| ())?;
+                let value: [u8; 16] = value
+                    .try_into()
+                    .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             Argument::ArrU16Len8 => {
-                let data: [u8; 16] = value.try_into().map_err(|_| ())?;
+                let data: [u8; 16] = value
+                    .try_into()
+                    .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 let mut value: [u16; 8] = Default::default();
                 for (i, s) in data.chunks_exact(2).enumerate() {
                     value[i] = ((s[1] as u16) << 8) | s[0] as u16;

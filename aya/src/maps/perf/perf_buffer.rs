@@ -473,9 +473,7 @@ mod tests {
         fake_mmap(&mut mmapped_buf);
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
-        let mut out_bufs = (0..3)
-            .map(|_| BytesMut::with_capacity(4))
-            .collect::<Vec<_>>();
+        let mut out_bufs = std::iter::repeat_n(BytesMut::with_capacity(4), 3).collect::<Vec<_>>();
 
         let events = buf.read_events(&mut out_bufs).unwrap();
         assert_eq!(events, Events { lost: 0, read: 2 });

@@ -220,7 +220,7 @@ fn lookup<K: Pod, V: Pod>(
     u.flags = flags;
 
     match unit_sys_bpf(cmd, &mut attr) {
-        Ok(_) => Ok(Some(unsafe { value.assume_init() })),
+        Ok(()) => Ok(Some(unsafe { value.assume_init() })),
         Err(io_error) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
         Err(e) => Err(e),
     }
@@ -272,7 +272,7 @@ pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
     u.flags = flags;
 
     match unit_sys_bpf(bpf_cmd::BPF_MAP_LOOKUP_ELEM, &mut attr) {
-        Ok(_) => Ok(Some(())),
+        Ok(()) => Ok(Some(())),
         Err(io_error) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
         Err(e) => Err(e),
     }
@@ -364,7 +364,7 @@ pub(crate) fn bpf_map_get_next_key<K: Pod>(
     u.__bindgen_anon_1.next_key = &mut next_key as *mut _ as u64;
 
     match unit_sys_bpf(bpf_cmd::BPF_MAP_GET_NEXT_KEY, &mut attr) {
-        Ok(_) => Ok(Some(unsafe { next_key.assume_init() })),
+        Ok(()) => Ok(Some(unsafe { next_key.assume_init() })),
         Err(io_error) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
         Err(e) => Err(e),
     }

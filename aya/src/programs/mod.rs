@@ -667,8 +667,9 @@ fn load_program<T: Link>(
         if name.len() > 15 {
             name.truncate(15);
         }
-        let prog_name = CString::new(name.clone())
-            .map_err(|_| ProgramError::InvalidName { name: name.clone() })?;
+        let prog_name = CString::new(name.clone()).map_err(|std::ffi::NulError { .. }| {
+            ProgramError::InvalidName { name: name.clone() }
+        })?;
         Some(prog_name)
     } else {
         None
@@ -730,7 +731,7 @@ pub(crate) fn query(
             &mut prog_cnt,
             &mut revision,
         ) {
-            Ok(_) => {
+            Ok(()) => {
                 prog_ids.resize(prog_cnt as usize, 0);
                 return Ok((revision, prog_ids));
             }
