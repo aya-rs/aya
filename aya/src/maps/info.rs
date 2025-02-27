@@ -121,7 +121,7 @@ impl MapInfo {
 
         // TODO: avoid this unwrap by adding a new error variant.
         let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
+        let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
         })?;

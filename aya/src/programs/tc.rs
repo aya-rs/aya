@@ -232,7 +232,7 @@ impl SchedClassifier {
                 let fd = link.fd;
                 let link_fd = fd.as_fd();
 
-                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|(_, io_error)| {
+                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|io_error| {
                     SyscallError {
                         call: "bpf_link_update",
                         io_error,
@@ -304,7 +304,7 @@ impl SchedClassifier {
                     options.flags.bits(),
                     Some(BpfLinkCreateArgs::Tcx(&options.link_ref)),
                 )
-                .map_err(|(_, io_error)| SyscallError {
+                .map_err(|io_error| SyscallError {
                     call: "bpf_mprog_attach",
                     io_error,
                 })?;

@@ -76,7 +76,7 @@ impl Iter {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let link_fd = bpf_link_create(prog_fd, LinkTarget::Iter, BPF_TRACE_ITER, 0, None).map_err(
-            |(_, io_error)| SyscallError {
+            |io_error| SyscallError {
                 call: "bpf_link_create",
                 io_error,
             },
@@ -140,10 +140,10 @@ impl IterLink {
     /// outputs of the iterator program.
     pub fn into_file(self) -> Result<File, LinkError> {
         if let PerfLinkInner::FdLink(fd) = self.into_inner() {
-            let fd = bpf_create_iter(fd.fd.as_fd()).map_err(|(_, error)| {
+            let fd = bpf_create_iter(fd.fd.as_fd()).map_err(|io_error| {
                 LinkError::SyscallError(SyscallError {
                     call: "bpf_iter_create",
-                    io_error: error,
+                    io_error,
                 })
             })?;
             Ok(fd.into_inner().into())

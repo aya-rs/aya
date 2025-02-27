@@ -21,11 +21,10 @@ pub(crate) fn attach_raw_tracepoint<T: Link + From<FdLink>>(
 ) -> Result<T::Id, ProgramError> {
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let pfd =
-        bpf_raw_tracepoint_open(tp_name, prog_fd).map_err(|(_code, io_error)| SyscallError {
-            call: "bpf_raw_tracepoint_open",
-            io_error,
-        })?;
+    let pfd = bpf_raw_tracepoint_open(tp_name, prog_fd).map_err(|io_error| SyscallError {
+        call: "bpf_raw_tracepoint_open",
+        io_error,
+    })?;
 
     program_data.links.insert(FdLink::new(pfd).into())
 }

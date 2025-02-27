@@ -80,7 +80,7 @@ impl CgroupSysctl {
                 mode.into(),
                 None,
             )
-            .map_err(|(_, io_error)| SyscallError {
+            .map_err(|io_error| SyscallError {
                 call: "bpf_link_create",
                 io_error,
             })?;

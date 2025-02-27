@@ -70,12 +70,11 @@ impl<T: BorrowMut<MapData>> XskMap<T> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd().as_fd();
-        bpf_map_update_elem(fd, Some(&index), &socket_fd.as_raw_fd(), flags).map_err(
-            |(_, io_error)| SyscallError {
+        bpf_map_update_elem(fd, Some(&index), &socket_fd.as_raw_fd(), flags)
+            .map_err(|io_error| SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
-            },
-        )?;
-        Ok(())
+            })
+            .map_err(Into::into)
     }
 }

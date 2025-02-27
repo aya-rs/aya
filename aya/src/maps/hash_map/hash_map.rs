@@ -54,7 +54,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Returns a copy of the value associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.borrow().fd().as_fd();
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|(_, io_error)| SyscallError {
+        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|io_error| SyscallError {
             call: "bpf_map_lookup_elem",
             io_error,
         })?;
@@ -220,7 +220,7 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
                 ..
-            } => Ok(1),
+            } => Ok(0),
             _ => sys_error(EFAULT),
         });
 
@@ -236,7 +236,7 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
                 ..
-            } => Ok(1),
+            } => Ok(0),
             _ => sys_error(EFAULT),
         });
 
@@ -265,7 +265,7 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_DELETE_ELEM,
                 ..
-            } => Ok(1),
+            } => Ok(0),
             _ => sys_error(EFAULT),
         });
 
@@ -306,14 +306,16 @@ mod tests {
         }
     }
 
-    fn set_next_key<T: Copy>(attr: &bpf_attr, next: T) {
+    fn set_next_key<T: Copy>(attr: &bpf_attr, next: T) -> SysResult<c_long> {
         let key = unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.next_key } as *const T as *mut T;
         unsafe { *key = next };
+        Ok(0)
     }
 
-    fn set_ret<T: Copy>(attr: &bpf_attr, ret: T) {
+    fn set_ret<T: Copy>(attr: &bpf_attr, ret: T) -> SysResult<c_long> {
         let value = unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.value } as *const T as *mut T;
         unsafe { *value = ret };
+        Ok(0)
     }
 
     #[test]
@@ -336,11 +338,9 @@ mod tests {
             None => set_next_key(attr, 10),
             Some(10) => set_next_key(attr, 20),
             Some(20) => set_next_key(attr, 30),
-            Some(30) => return sys_error(ENOENT),
-            Some(_) => return sys_error(EFAULT),
-        };
-
-        Ok(1)
+            Some(30) => sys_error(ENOENT),
+            Some(_) => sys_error(EFAULT),
+        }
     }
 
     fn lookup_elem(attr: &bpf_attr) -> SysResult<c_long> {
@@ -348,11 +348,9 @@ mod tests {
             Some(10) => set_ret(attr, 100),
             Some(20) => set_ret(attr, 200),
             Some(30) => set_ret(attr, 300),
-            Some(_) => return sys_error(ENOENT),
-            None => return sys_error(EFAULT),
-        };
-
-        Ok(1)
+            Some(_) => sys_error(ENOENT),
+            None => sys_error(EFAULT),
+        }
     }
 
     #[test]
@@ -380,15 +378,11 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
-            } => {
-                match bpf_key(attr) {
-                    None => set_next_key(attr, 10),
-                    Some(10) => set_next_key(attr, 20),
-                    Some(_) => return sys_error(EFAULT),
-                };
-
-                Ok(1)
-            }
+            } => match bpf_key(attr) {
+                None => set_next_key(attr, 10),
+                Some(10) => set_next_key(attr, 20),
+                Some(_) => sys_error(EFAULT),
+            },
             _ => sys_error(EFAULT),
         });
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
@@ -436,17 +430,13 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 attr,
-            } => {
-                match bpf_key(attr) {
-                    Some(10) => set_ret(attr, 100),
-                    Some(20) => return sys_error(ENOENT),
-                    Some(30) => set_ret(attr, 300),
-                    Some(_) => return sys_error(ENOENT),
-                    None => return sys_error(EFAULT),
-                };
-
-                Ok(1)
-            }
+            } => match bpf_key(attr) {
+                Some(10) => set_ret(attr, 100),
+                Some(20) => sys_error(ENOENT),
+                Some(30) => set_ret(attr, 300),
+                Some(_) => sys_error(ENOENT),
+                None => sys_error(EFAULT),
+            },
             _ => sys_error(EFAULT),
         });
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();
@@ -462,17 +452,13 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
                 attr,
-            } => {
-                match bpf_key(attr) {
-                    None => set_next_key(attr, 10),
-                    Some(10) => set_next_key(attr, 20),
-                    Some(20) => return sys_error(EFAULT),
-                    Some(30) => return sys_error(ENOENT),
-                    Some(i) => panic!("invalid key {}", i),
-                };
-
-                Ok(1)
-            }
+            } => match bpf_key(attr) {
+                None => set_next_key(attr, 10),
+                Some(10) => set_next_key(attr, 20),
+                Some(20) => sys_error(EFAULT),
+                Some(30) => sys_error(ENOENT),
+                Some(i) => panic!("invalid key {}", i),
+            },
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 attr,
@@ -505,17 +491,13 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
                 attr,
-            } => {
-                match bpf_key(attr) {
-                    Some(10) => set_ret(attr, 100),
-                    Some(20) => return sys_error(EFAULT),
-                    Some(30) => set_ret(attr, 300),
-                    Some(_) => return sys_error(ENOENT),
-                    None => return sys_error(EFAULT),
-                };
-
-                Ok(1)
-            }
+            } => match bpf_key(attr) {
+                Some(10) => set_ret(attr, 100),
+                Some(20) => sys_error(EFAULT),
+                Some(30) => set_ret(attr, 300),
+                Some(_) => sys_error(ENOENT),
+                None => sys_error(EFAULT),
+            },
             _ => sys_error(EFAULT),
         });
         let hm = HashMap::<_, u32, u32>::new(&map).unwrap();

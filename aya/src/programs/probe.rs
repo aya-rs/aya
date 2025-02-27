@@ -176,13 +176,12 @@ fn create_as_probe(
         _ => None,
     };
 
-    perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid).map_err(|(_code, io_error)| {
-        SyscallError {
+    perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid)
+        .map_err(|(_code, io_error)| SyscallError {
             call: "perf_event_open",
             io_error,
-        }
-        .into()
-    })
+        })
+        .map_err(Into::into)
 }
 
 fn create_as_trace_point(

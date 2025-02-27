@@ -106,7 +106,7 @@ impl Extension {
             0,
             Some(BpfLinkCreateArgs::TargetBtfId(btf_id)),
         )
-        .map_err(|(_, io_error)| SyscallError {
+        .map_err(|io_error| SyscallError {
             call: "bpf_link_create",
             io_error,
         })?;
@@ -143,7 +143,7 @@ impl Extension {
             0,
             Some(BpfLinkCreateArgs::TargetBtfId(btf_id)),
         )
-        .map_err(|(_, io_error)| SyscallError {
+        .map_err(|io_error| SyscallError {
             call: "bpf_link_create",
             io_error,
         })?;

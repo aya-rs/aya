@@ -98,7 +98,7 @@ pub(crate) fn perf_attach(
             0,
             cookie.map(|bpf_cookie| BpfLinkCreateArgs::PerfEvent { bpf_cookie }),
         )
-        .map_err(|(_, io_error)| SyscallError {
+        .map_err(|io_error| SyscallError {
             call: "bpf_link_create",
             io_error,
         })?;

@@ -49,7 +49,7 @@
 //! implement the [Pod] trait.
 use std::{
     borrow::Borrow,
-    ffi::{c_long, CString},
+    ffi::CString,
     fmt, io,
     marker::PhantomData,
     mem,
@@ -123,12 +123,10 @@ pub enum MapError {
     },
 
     /// Failed to create map
-    #[error("failed to create map `{name}` with code {code}")]
+    #[error("failed to create map `{name}`")]
     CreateError {
         /// Map name
         name: String,
-        /// Error code
-        code: c_long,
         #[source]
         /// Original io::Error
         io_error: io::Error,
@@ -584,18 +582,16 @@ impl MapData {
         let kernel_version = KernelVersion::current().unwrap();
         #[cfg(test)]
         let kernel_version = KernelVersion::new(0xff, 0xff, 0xff);
-        let fd =
-            bpf_create_map(&c_name, &obj, btf_fd, kernel_version).map_err(|(code, io_error)| {
-                if kernel_version < KernelVersion::new(5, 11, 0) {
-                    maybe_warn_rlimit();
-                }
+        let fd = bpf_create_map(&c_name, &obj, btf_fd, kernel_version).map_err(|io_error| {
+            if kernel_version < KernelVersion::new(5, 11, 0) {
+                maybe_warn_rlimit();
+            }
 
-                MapError::CreateError {
-                    name: name.into(),
-                    code,
-                    io_error,
-                }
-            })?;
+            MapError::CreateError {
+                name: name.into(),
+                io_error,
+            }
+        })?;
         Ok(Self {
             obj,
             fd: MapFd::from_fd(fd),
@@ -621,7 +617,7 @@ impl MapData {
                 });
             }
         };
-        match bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
+        match bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
         }) {
@@ -644,7 +640,7 @@ impl MapData {
         let Self { obj, fd } = self;
         if !obj.data().is_empty() {
             bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
-                .map_err(|(_, io_error)| SyscallError {
+                .map_err(|io_error| SyscallError {
                     call: "bpf_map_update_elem",
                     io_error,
                 })
@@ -652,7 +648,7 @@ impl MapData {
         }
         if obj.section_kind() == EbpfSectionKind::Rodata {
             bpf_map_freeze(fd.as_fd())
-                .map_err(|(_, io_error)| SyscallError {
+                .map_err(|io_error| SyscallError {
                     call: "bpf_map_freeze",
                     io_error,
                 })
@@ -675,7 +671,7 @@ impl MapData {
                 },
             })?;
 
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
+        let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
         })?;
@@ -742,7 +738,7 @@ impl MapData {
                 error,
             }
         })?;
-        bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
+        bpf_pin_object(fd.as_fd(), &path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_PIN",
             io_error,
         })?;
@@ -801,11 +797,10 @@ impl<K: Pod> Iterator for MapKeys<'_, K> {
         }
 
         let fd = self.map.fd().as_fd();
-        let key =
-            bpf_map_get_next_key(fd, self.key.as_ref()).map_err(|(_, io_error)| SyscallError {
-                call: "bpf_map_get_next_key",
-                io_error,
-            });
+        let key = bpf_map_get_next_key(fd, self.key.as_ref()).map_err(|io_error| SyscallError {
+            call: "bpf_map_get_next_key",
+            io_error,
+        });
         match key {
             Err(err) => {
                 self.err = true;
@@ -1305,13 +1300,12 @@ mod tests {
 
     #[test]
     fn test_create_failed() {
-        override_syscall(|_| Err((-42, io::Error::from_raw_os_error(EFAULT))));
+        override_syscall(|_| Err((-1, io::Error::from_raw_os_error(EFAULT))));
 
         assert_matches!(
             MapData::create(new_obj_map(), "foo", None),
-            Err(MapError::CreateError { name, code, io_error }) => {
+            Err(MapError::CreateError { name, io_error }) => {
                 assert_eq!(name, "foo");
-                assert_eq!(code, -42);
                 assert_eq!(io_error.raw_os_error(), Some(EFAULT));
             }
         );

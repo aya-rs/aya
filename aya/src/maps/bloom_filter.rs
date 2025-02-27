@@ -56,13 +56,15 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
 
-        bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags)
-            .map_err(|(_, io_error)| SyscallError {
+        match bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags).map_err(
+            |io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
-            })?
-            .ok_or(MapError::ElementNotFound)?;
-        Ok(())
+            },
+        )? {
+            None => Err(MapError::ElementNotFound),
+            Some(()) => Ok(()),
+        }
     }
 }
 
@@ -70,11 +72,12 @@ impl<T: BorrowMut<MapData>, V: Pod> BloomFilter<T, V> {
     /// Inserts a value into the map.
     pub fn insert(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow_mut().fd().as_fd();
-        bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| SyscallError {
-            call: "bpf_map_push_elem",
-            io_error,
-        })?;
-        Ok(())
+        bpf_map_push_elem(fd, value.borrow(), flags)
+            .map_err(|io_error| SyscallError {
+                call: "bpf_map_push_elem",
+                io_error,
+            })
+            .map_err(Into::into)
     }
 }
 
@@ -166,7 +169,7 @@ mod tests {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
                 ..
-            } => Ok(1),
+            } => Ok(0),
             _ => sys_error(EFAULT),
         });
 
