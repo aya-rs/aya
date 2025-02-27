@@ -260,7 +260,7 @@ mod tests {
     fn test_new_ok() {
         let map = new_map(new_obj_map());
 
-        assert!(LpmTrie::<_, u32, u32>::new(&map).is_ok());
+        let _: LpmTrie<_, u32, u32> = LpmTrie::new(&map).unwrap();
     }
 
     #[test]
@@ -268,7 +268,7 @@ mod tests {
         let map = new_map(new_obj_map());
 
         let map = Map::LpmTrie(map);
-        assert!(LpmTrie::<_, u32, u32>::try_from(&map).is_ok())
+        let _: LpmTrie<_, u32, u32> = map.try_into().unwrap();
     }
 
     #[test]
@@ -301,7 +301,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert!(trie.insert(&key, 1, 0).is_ok());
+        assert_matches!(trie.insert(&key, 1, 0), Ok(()));
     }
 
     #[test]
@@ -334,7 +334,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert!(trie.remove(&key).is_ok());
+        assert_matches!(trie.remove(&key), Ok(()));
     }
 
     #[test]

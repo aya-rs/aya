@@ -11,5 +11,8 @@ edition.workspace = true
 [dependencies]
 aya-log-common = { path = "../aya-log-common", version = "^0.1.14", default-features = false }
 
+[dev-dependencies]
+assert_matches = { workspace = true }
+
 [lib]
 path = "src/lib.rs"

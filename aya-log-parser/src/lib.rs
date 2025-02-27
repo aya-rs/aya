@@ -128,11 +128,10 @@ pub fn parse(format_string: &str) -> Result<Vec<Fragment>, String> {
 
 #[cfg(test)]
 mod test {
+    use assert_matches::assert_matches;
+
     use super::*;
 
-    // TODO(https://github.com/rust-lang/rust-clippy/issues/13885): narrow this to just the specific
-    // strings when that doesn't trip the lint.
-    #[allow(clippy::literal_string_with_formatting_args)]
     #[test]
     fn test_parse() {
         assert_eq!(
@@ -160,9 +159,9 @@ mod test {
                 }),
             ])
         );
-        assert!(parse("foo {:}").is_err());
-        assert!(parse("foo { bar").is_err());
-        assert!(parse("foo } bar").is_err());
-        assert!(parse("foo { bar }").is_err());
+        assert_matches!(parse("foo {:}"), Err(_));
+        assert_matches!(parse("foo { bar"), Err(_));
+        assert_matches!(parse("foo } bar"), Err(_));
+        assert_matches!(parse("foo { bar }"), Err(_));
     }
 }
