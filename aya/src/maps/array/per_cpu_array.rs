@@ -83,12 +83,11 @@ impl<T: Borrow<MapData>, V: Pod> PerCpuArray<T, V> {
         check_bounds(data, *index)?;
         let fd = data.fd().as_fd();
 
-        let value = bpf_map_lookup_elem_per_cpu(fd, index, flags).map_err(|(_, io_error)| {
-            SyscallError {
+        let value =
+            bpf_map_lookup_elem_per_cpu(fd, index, flags).map_err(|io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
-            }
-        })?;
+            })?;
         value.ok_or(MapError::KeyNotFound)
     }
 
@@ -111,7 +110,7 @@ impl<T: BorrowMut<MapData>, V: Pod> PerCpuArray<T, V> {
         check_bounds(data, index)?;
         let fd = data.fd().as_fd();
 
-        bpf_map_update_elem_per_cpu(fd, &index, &values, flags).map_err(|(_, io_error)| {
+        bpf_map_update_elem_per_cpu(fd, &index, &values, flags).map_err(|io_error| {
             SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,

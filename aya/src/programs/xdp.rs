@@ -149,7 +149,7 @@ impl Xdp {
                 flags.bits(),
                 None,
             )
-            .map_err(|(_, io_error)| SyscallError {
+            .map_err(|io_error| SyscallError {
                 call: "bpf_link_create",
                 io_error,
             })?;
@@ -196,7 +196,7 @@ impl Xdp {
         match link.into_inner() {
             XdpLinkInner::FdLink(fd_link) => {
                 let link_fd = fd_link.fd;
-                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|(_, io_error)| {
+                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|io_error| {
                     SyscallError {
                         call: "bpf_link_update",
                         io_error,

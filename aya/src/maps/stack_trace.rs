@@ -113,7 +113,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
 
         let mut frames = vec![0; self.max_stack_depth];
         bpf_map_lookup_elem_ptr(fd, Some(stack_id), frames.as_mut_ptr(), flags)
-            .map_err(|(_, io_error)| SyscallError {
+            .map_err(|io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?
@@ -168,14 +168,11 @@ impl<T: BorrowMut<MapData>> StackTraceMap<T> {
     pub fn remove(&mut self, stack_id: &u32) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
         bpf_map_delete_elem(fd, stack_id)
-            .map(|_| ())
-            .map_err(|(_, io_error)| {
-                SyscallError {
-                    call: "bpf_map_delete_elem",
-                    io_error,
-                }
-                .into()
+            .map_err(|io_error| SyscallError {
+                call: "bpf_map_delete_elem",
+                io_error,
             })
+            .map_err(Into::into)
     }
 }
 

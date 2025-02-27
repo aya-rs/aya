@@ -64,7 +64,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     pub fn get(&self, key: &K, flags: u64) -> Result<PerCpuValues<V>, MapError> {
         let fd = self.inner.borrow().fd().as_fd();
         let values =
-            bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|(_, io_error)| SyscallError {
+            bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?;
@@ -121,14 +121,12 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
         flags: u64,
     ) -> Result<(), MapError> {
         let fd = self.inner.borrow_mut().fd().as_fd();
-        bpf_map_update_elem_per_cpu(fd, key.borrow(), &values, flags).map_err(
-            |(_, io_error)| SyscallError {
+        bpf_map_update_elem_per_cpu(fd, key.borrow(), &values, flags)
+            .map_err(|io_error| SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
-            },
-        )?;
-
-        Ok(())
+            })
+            .map_err(Into::into)
     }
 
     /// Removes a key from the map.

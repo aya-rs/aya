@@ -103,7 +103,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
             })
         };
         value
-            .map_err(|(_, io_error)| SyscallError {
+            .map_err(|io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?
@@ -163,13 +163,13 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
             bpf_map_update_elem(fd, Some(&cpu_index), &queue_size, flags)
         };
 
-        res.map_err(|(_, io_error)| {
+        res.map_err(|io_error| {
             MapError::from(SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
             })
-        })?;
-        Ok(())
+        })
+        .map_err(Into::into)
     }
 }
 

@@ -63,12 +63,13 @@ impl<T: BorrowMut<MapData>, V: Pod> Queue<T, V> {
     pub fn pop(&mut self, flags: u64) -> Result<V, MapError> {
         let fd = self.inner.borrow().fd().as_fd();
 
-        let value = bpf_map_lookup_and_delete_elem::<u32, _>(fd, None, flags).map_err(
-            |(_, io_error)| SyscallError {
-                call: "bpf_map_lookup_and_delete_elem",
-                io_error,
-            },
-        )?;
+        let value =
+            bpf_map_lookup_and_delete_elem::<u32, _>(fd, None, flags).map_err(|io_error| {
+                SyscallError {
+                    call: "bpf_map_lookup_and_delete_elem",
+                    io_error,
+                }
+            })?;
         value.ok_or(MapError::ElementNotFound)
     }
 
@@ -79,10 +80,11 @@ impl<T: BorrowMut<MapData>, V: Pod> Queue<T, V> {
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
     pub fn push(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
-        bpf_map_push_elem(fd, value.borrow(), flags).map_err(|(_, io_error)| SyscallError {
-            call: "bpf_map_push_elem",
-            io_error,
-        })?;
-        Ok(())
+        bpf_map_push_elem(fd, value.borrow(), flags)
+            .map_err(|io_error| SyscallError {
+                call: "bpf_map_push_elem",
+                io_error,
+            })
+            .map_err(Into::into)
     }
 }

@@ -84,7 +84,7 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
             })
         };
         value
-            .map_err(|(_, io_error)| SyscallError {
+            .map_err(|io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?

@@ -569,7 +569,7 @@ impl<T: Link> ProgramData<T> {
 
         // TODO: avoid this unwrap by adding a new error variant.
         let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
+        let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "bpf_obj_get",
             io_error,
         })?;
@@ -610,7 +610,7 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
             path: path.into(),
             error,
         })?;
-    bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
+    bpf_pin_object(fd.as_fd(), &path_string).map_err(|io_error| SyscallError {
         call: "BPF_OBJ_PIN",
         io_error,
     })?;
@@ -701,7 +701,7 @@ fn load_program<T: Link>(
             *fd = Some(ProgramFd(prog_fd));
             Ok(())
         }
-        Err((_, io_error)) => Err(ProgramError::LoadError {
+        Err(io_error) => Err(ProgramError::LoadError {
             io_error,
             verifier_log,
         }),
@@ -734,7 +734,7 @@ pub(crate) fn query(
                 prog_ids.resize(prog_cnt as usize, 0);
                 return Ok((revision, prog_ids));
             }
-            Err((_, io_error)) => {
+            Err(io_error) => {
                 if retries == 0 && io_error.raw_os_error() == Some(ENOSPC) {
                     prog_ids.resize(prog_cnt as usize, 0);
                     retries += 1;

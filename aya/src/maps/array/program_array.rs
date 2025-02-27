@@ -78,13 +78,12 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
         let prog_fd = program.as_fd();
         let prog_fd = prog_fd.as_raw_fd();
 
-        bpf_map_update_elem(fd, Some(&index), &prog_fd, flags).map_err(|(_, io_error)| {
-            SyscallError {
+        bpf_map_update_elem(fd, Some(&index), &prog_fd, flags)
+            .map_err(|io_error| SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
-            }
-        })?;
-        Ok(())
+            })
+            .map_err(Into::into)
     }
 
     /// Clears the value at index in the jump table.
@@ -97,13 +96,10 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
         let fd = data.fd().as_fd();
 
         bpf_map_delete_elem(fd, index)
-            .map(|_| ())
-            .map_err(|(_, io_error)| {
-                SyscallError {
-                    call: "bpf_map_delete_elem",
-                    io_error,
-                }
-                .into()
+            .map_err(|io_error| SyscallError {
+                call: "bpf_map_delete_elem",
+                io_error,
             })
+            .map_err(Into::into)
     }
 }
