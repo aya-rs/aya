@@ -13,7 +13,7 @@ use aya_obj::generated::{
 };
 use libc::pid_t;
 
-use super::{syscall, SysResult, Syscall};
+use super::{syscall, PerfEventIoctlRequest, Syscall};
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn perf_event_open(
@@ -104,8 +104,18 @@ pub(crate) fn perf_event_open_trace_point(
     perf_event_sys(attr, pid, cpu, PERF_FLAG_FD_CLOEXEC)
 }
 
-pub(crate) fn perf_event_ioctl(fd: BorrowedFd<'_>, request: u32, arg: c_int) -> SysResult {
-    syscall(Syscall::PerfEventIoctl { fd, request, arg })
+pub(crate) fn perf_event_ioctl(
+    fd: BorrowedFd<'_>,
+    request: PerfEventIoctlRequest<'_>,
+) -> io::Result<()> {
+    syscall(Syscall::PerfEventIoctl { fd, request })
+        .map(|code| {
+            assert_eq!(code, 0);
+        })
+        .map_err(|(code, io_error)| {
+            assert_eq!(code, -1);
+            io_error
+        })
 }
 
 fn perf_event_sys(
