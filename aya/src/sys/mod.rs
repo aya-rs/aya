@@ -24,7 +24,7 @@ pub(crate) use netlink::*;
 pub(crate) use perf_event::*;
 use thiserror::Error;
 
-pub(crate) type SysResult<T> = Result<T, (c_long, io::Error)>;
+pub(crate) type SysResult = Result<c_long, (c_long, io::Error)>;
 
 pub(crate) enum Syscall<'a> {
     Ebpf {
@@ -88,7 +88,7 @@ impl std::fmt::Debug for Syscall<'_> {
     }
 }
 
-fn syscall(call: Syscall<'_>) -> SysResult<c_long> {
+fn syscall(call: Syscall<'_>) -> SysResult {
     #[cfg(test)]
     return TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
 

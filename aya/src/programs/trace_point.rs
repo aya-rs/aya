@@ -76,11 +76,10 @@ impl TracePoint {
         let prog_fd = prog_fd.as_fd();
         let tracefs = find_tracefs_path()?;
         let id = read_sys_fs_trace_point_id(tracefs, category, name.as_ref())?;
-        let fd =
-            perf_event_open_trace_point(id, None).map_err(|(_code, io_error)| SyscallError {
-                call: "perf_event_open_trace_point",
-                io_error,
-            })?;
+        let fd = perf_event_open_trace_point(id, None).map_err(|io_error| SyscallError {
+            call: "perf_event_open_trace_point",
+            io_error,
+        })?;
 
         let link = perf_attach(prog_fd, fd, None /* cookie */)?;
         self.data.links.insert(TracePointLink::new(link))

@@ -71,7 +71,7 @@ impl Link for PerfLink {
 
     fn detach(self) -> Result<(), ProgramError> {
         let Self { perf_fd, event } = self;
-        let _: SysResult<_> = perf_event_ioctl(perf_fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
+        let _: SysResult = perf_event_ioctl(perf_fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
         if let Some(event) = event {
             let _: Result<_, _> = detach_debug_fs(event);
         }
