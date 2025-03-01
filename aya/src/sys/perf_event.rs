@@ -1,5 +1,5 @@
 use std::{
-    ffi::{c_int, c_long, CString, OsStr},
+    ffi::{c_int, CString, OsStr},
     io, mem,
     os::fd::{BorrowedFd, FromRawFd as _},
 };
@@ -26,7 +26,7 @@ pub(crate) fn perf_event_open(
     wakeup: bool,
     inherit: bool,
     flags: u32,
-) -> SysResult<crate::MockableFd> {
+) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     attr.config = config;
@@ -46,7 +46,7 @@ pub(crate) fn perf_event_open(
     perf_event_sys(attr, pid, cpu, flags)
 }
 
-pub(crate) fn perf_event_open_bpf(cpu: c_int) -> SysResult<crate::MockableFd> {
+pub(crate) fn perf_event_open_bpf(cpu: c_int) -> io::Result<crate::MockableFd> {
     perf_event_open(
         PERF_TYPE_SOFTWARE as u32,
         PERF_COUNT_SW_BPF_OUTPUT as u64,
@@ -66,7 +66,7 @@ pub(crate) fn perf_event_open_probe(
     name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
-) -> SysResult<crate::MockableFd> {
+) -> io::Result<crate::MockableFd> {
     use std::os::unix::ffi::OsStrExt as _;
 
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
@@ -91,7 +91,7 @@ pub(crate) fn perf_event_open_probe(
 pub(crate) fn perf_event_open_trace_point(
     id: u32,
     pid: Option<pid_t>,
-) -> SysResult<crate::MockableFd> {
+) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     attr.size = mem::size_of::<perf_event_attr>() as u32;
@@ -104,7 +104,7 @@ pub(crate) fn perf_event_open_trace_point(
     perf_event_sys(attr, pid, cpu, PERF_FLAG_FD_CLOEXEC)
 }
 
-pub(crate) fn perf_event_ioctl(fd: BorrowedFd<'_>, request: u32, arg: c_int) -> SysResult<c_long> {
+pub(crate) fn perf_event_ioctl(fd: BorrowedFd<'_>, request: u32, arg: c_int) -> SysResult {
     let call = Syscall::PerfEventIoctl { fd, request, arg };
     #[cfg(not(test))]
     return syscall(call);
@@ -118,22 +118,23 @@ fn perf_event_sys(
     pid: pid_t,
     cpu: i32,
     flags: u32,
-) -> SysResult<crate::MockableFd> {
+) -> io::Result<crate::MockableFd> {
     let fd = syscall(Syscall::PerfEventOpen {
         attr,
         pid,
         cpu,
         group: -1,
         flags,
+    })
+    .map_err(|(code, io_error)| {
+        assert_eq!(code, -1);
+        io_error
     })?;
 
     let fd = fd.try_into().map_err(|std::num::TryFromIntError { .. }| {
-        (
-            fd,
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("perf_event_open: invalid fd returned: {fd}"),
-            ),
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("perf_event_open: invalid fd returned: {fd}"),
         )
     })?;
 

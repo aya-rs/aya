@@ -177,7 +177,7 @@ fn create_as_probe(
     };
 
     perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid)
-        .map_err(|(_code, io_error)| SyscallError {
+        .map_err(|io_error| SyscallError {
             call: "perf_event_open",
             io_error,
         })
@@ -203,7 +203,7 @@ fn create_as_trace_point(
 
     let category = format!("{}s", kind.pmu());
     let tpid = read_sys_fs_trace_point_id(tracefs, &category, event_alias.as_ref())?;
-    let fd = perf_event_open_trace_point(tpid, pid).map_err(|(_code, io_error)| SyscallError {
+    let fd = perf_event_open_trace_point(tpid, pid).map_err(|io_error| SyscallError {
         call: "perf_event_open",
         io_error,
     })?;

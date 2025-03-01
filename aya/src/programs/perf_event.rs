@@ -176,7 +176,7 @@ impl PerfEvent {
             inherit,
             0,
         )
-        .map_err(|(_code, io_error)| SyscallError {
+        .map_err(|io_error| SyscallError {
             call: "perf_event_open",
             io_error,
         })?;

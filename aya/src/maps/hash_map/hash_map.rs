@@ -103,7 +103,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> 
 
 #[cfg(test)]
 mod tests {
-    use std::{ffi::c_long, io};
+    use std::io;
 
     use assert_matches::assert_matches;
     use aya_obj::generated::{
@@ -125,7 +125,7 @@ mod tests {
         test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_HASH)
     }
 
-    fn sys_error(value: i32) -> SysResult<c_long> {
+    fn sys_error(value: i32) -> SysResult {
         Err((-1, io::Error::from_raw_os_error(value)))
     }
 
@@ -306,13 +306,13 @@ mod tests {
         }
     }
 
-    fn set_next_key<T: Copy>(attr: &bpf_attr, next: T) -> SysResult<c_long> {
+    fn set_next_key<T: Copy>(attr: &bpf_attr, next: T) -> SysResult {
         let key = unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.next_key } as *const T as *mut T;
         unsafe { *key = next };
         Ok(0)
     }
 
-    fn set_ret<T: Copy>(attr: &bpf_attr, ret: T) -> SysResult<c_long> {
+    fn set_ret<T: Copy>(attr: &bpf_attr, ret: T) -> SysResult {
         let value = unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.value } as *const T as *mut T;
         unsafe { *value = ret };
         Ok(0)
@@ -333,7 +333,7 @@ mod tests {
         assert_matches!(keys, Ok(ks) if ks.is_empty())
     }
 
-    fn get_next_key(attr: &bpf_attr) -> SysResult<c_long> {
+    fn get_next_key(attr: &bpf_attr) -> SysResult {
         match bpf_key(attr) {
             None => set_next_key(attr, 10),
             Some(10) => set_next_key(attr, 20),
@@ -343,7 +343,7 @@ mod tests {
         }
     }
 
-    fn lookup_elem(attr: &bpf_attr) -> SysResult<c_long> {
+    fn lookup_elem(attr: &bpf_attr) -> SysResult {
         match bpf_key(attr) {
             Some(10) => set_ret(attr, 100),
             Some(20) => set_ret(attr, 200),

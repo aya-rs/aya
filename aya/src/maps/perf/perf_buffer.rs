@@ -102,7 +102,7 @@ impl PerfBuffer {
         }
 
         let fd = perf_event_open_bpf(cpu_id as i32)
-            .map_err(|(_, io_error)| PerfBufferError::OpenError { io_error })?;
+            .map_err(|io_error| PerfBufferError::OpenError { io_error })?;
         let size = page_size * page_count;
         let mmap = MMap::new(
             fd.as_fd(),
@@ -260,7 +260,7 @@ impl AsFd for PerfBuffer {
 
 impl Drop for PerfBuffer {
     fn drop(&mut self) {
-        let _: SysResult<_> = perf_event_ioctl(self.fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
+        let _: SysResult = perf_event_ioctl(self.fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
     }
 }
 

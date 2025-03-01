@@ -149,7 +149,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, PerCpuValues<V>>
 
 #[cfg(test)]
 mod tests {
-    use std::{ffi::c_long, io};
+    use std::io;
 
     use assert_matches::assert_matches;
     use aya_obj::generated::bpf_map_type::{
@@ -163,7 +163,7 @@ mod tests {
         sys::{override_syscall, SysResult},
     };
 
-    fn sys_error(value: i32) -> SysResult<c_long> {
+    fn sys_error(value: i32) -> SysResult {
         Err((-1, io::Error::from_raw_os_error(value)))
     }
 
