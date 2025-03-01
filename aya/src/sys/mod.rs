@@ -9,15 +9,14 @@ mod fake;
 
 use std::{
     ffi::{c_int, c_long, c_void},
-    io, mem,
-    os::fd::{AsRawFd as _, BorrowedFd, OwnedFd},
+    io,
+    os::fd::{BorrowedFd, OwnedFd},
 };
 
 use aya_obj::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
-use libc::{pid_t, SYS_bpf, SYS_ioctl, SYS_perf_event_open};
 #[doc(hidden)]
 pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
@@ -26,6 +25,15 @@ use thiserror::Error;
 
 pub(crate) type SysResult = Result<c_long, (c_long, io::Error)>;
 
+#[cfg_attr(test, expect(dead_code))]
+#[derive(Debug)]
+pub(crate) enum PerfEventIoctlRequest<'a> {
+    Enable,
+    Disable,
+    SetBpf(BorrowedFd<'a>),
+}
+
+#[cfg_attr(test, expect(dead_code))]
 pub(crate) enum Syscall<'a> {
     Ebpf {
         cmd: bpf_cmd,
@@ -33,15 +41,14 @@ pub(crate) enum Syscall<'a> {
     },
     PerfEventOpen {
         attr: perf_event_attr,
-        pid: pid_t,
+        pid: libc::pid_t,
         cpu: i32,
         group: i32,
         flags: u32,
     },
     PerfEventIoctl {
         fd: BorrowedFd<'a>,
-        request: u32,
-        arg: c_int,
+        request: PerfEventIoctlRequest<'a>,
     },
 }
 
@@ -78,11 +85,10 @@ impl std::fmt::Debug for Syscall<'_> {
                 .field("group", group)
                 .field("flags", flags)
                 .finish(),
-            Self::PerfEventIoctl { fd, request, arg } => f
+            Self::PerfEventIoctl { fd, request } => f
                 .debug_struct("Syscall::PerfEventIoctl")
                 .field("fd", fd)
                 .field("request", request)
-                .field("arg", arg)
                 .finish(),
         }
     }
@@ -90,14 +96,16 @@ impl std::fmt::Debug for Syscall<'_> {
 
 fn syscall(call: Syscall<'_>) -> SysResult {
     #[cfg(test)]
-    return TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
+    {
+        TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) })
+    }
 
-    #[cfg_attr(test, allow(unreachable_code))]
+    #[cfg(not(test))]
     {
         let ret = unsafe {
             match call {
                 Syscall::Ebpf { cmd, attr } => {
-                    libc::syscall(SYS_bpf, cmd, attr, mem::size_of::<bpf_attr>())
+                    libc::syscall(libc::SYS_bpf, cmd, attr, std::mem::size_of::<bpf_attr>())
                 }
                 Syscall::PerfEventOpen {
                     attr,
@@ -105,9 +113,29 @@ fn syscall(call: Syscall<'_>) -> SysResult {
                     cpu,
                     group,
                     flags,
-                } => libc::syscall(SYS_perf_event_open, &attr, pid, cpu, group, flags),
-                Syscall::PerfEventIoctl { fd, request, arg } => {
-                    libc::syscall(SYS_ioctl, fd.as_raw_fd(), request, arg)
+                } => libc::syscall(libc::SYS_perf_event_open, &attr, pid, cpu, group, flags),
+                Syscall::PerfEventIoctl { fd, request } => {
+                    use std::os::fd::AsRawFd as _;
+
+                    let fd = fd.as_raw_fd();
+                    match request {
+                        PerfEventIoctlRequest::Enable => libc::syscall(
+                            libc::SYS_ioctl,
+                            fd,
+                            aya_obj::generated::PERF_EVENT_IOC_ENABLE,
+                        ),
+                        PerfEventIoctlRequest::Disable => libc::syscall(
+                            libc::SYS_ioctl,
+                            fd,
+                            aya_obj::generated::PERF_EVENT_IOC_DISABLE,
+                        ),
+                        PerfEventIoctlRequest::SetBpf(bpf_fd) => libc::syscall(
+                            libc::SYS_ioctl,
+                            fd,
+                            aya_obj::generated::PERF_EVENT_IOC_SET_BPF,
+                            bpf_fd.as_raw_fd(),
+                        ),
+                    }
                 }
             }
         };
@@ -128,11 +156,17 @@ pub(crate) unsafe fn mmap(
     fd: BorrowedFd<'_>,
     offset: libc::off_t,
 ) -> *mut c_void {
-    #[cfg(not(test))]
-    return libc::mmap(addr, len, prot, flags, fd.as_raw_fd(), offset);
-
     #[cfg(test)]
-    TEST_MMAP_RET.with(|ret| *ret.borrow())
+    {
+        TEST_MMAP_RET.with(|ret| *ret.borrow())
+    }
+
+    #[cfg(not(test))]
+    {
+        use std::os::fd::AsRawFd as _;
+
+        libc::mmap(addr, len, prot, flags, fd.as_raw_fd(), offset)
+    }
 }
 
 #[cfg_attr(test, allow(unused_variables))]

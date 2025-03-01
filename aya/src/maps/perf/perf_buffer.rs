@@ -8,7 +8,6 @@ use std::{
 use aya_obj::generated::{
     perf_event_header, perf_event_mmap_page,
     perf_event_type::{PERF_RECORD_LOST, PERF_RECORD_SAMPLE},
-    PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
 use bytes::BytesMut;
 use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
@@ -16,7 +15,7 @@ use thiserror::Error;
 
 use crate::{
     maps::MMap,
-    sys::{perf_event_ioctl, perf_event_open_bpf, SysResult, SyscallError},
+    sys::{perf_event_ioctl, perf_event_open_bpf, PerfEventIoctlRequest, SyscallError},
 };
 
 /// Perf buffer error.
@@ -120,8 +119,8 @@ impl PerfBuffer {
             fd,
         };
 
-        perf_event_ioctl(perf_buf.fd.as_fd(), PERF_EVENT_IOC_ENABLE, 0)
-            .map_err(|(_, io_error)| PerfBufferError::PerfEventEnableError { io_error })?;
+        perf_event_ioctl(perf_buf.fd.as_fd(), PerfEventIoctlRequest::Enable)
+            .map_err(|io_error| PerfBufferError::PerfEventEnableError { io_error })?;
 
         Ok(perf_buf)
     }
@@ -260,7 +259,7 @@ impl AsFd for PerfBuffer {
 
 impl Drop for PerfBuffer {
     fn drop(&mut self) {
-        let _: SysResult = perf_event_ioctl(self.fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
+        let _: io::Result<()> = perf_event_ioctl(self.fd.as_fd(), PerfEventIoctlRequest::Disable);
     }
 }
 
@@ -289,9 +288,8 @@ mod tests {
     fn fake_mmap(buf: &mut MMappedBuf) {
         let buf: *mut _ = buf;
         override_syscall(|call| match call {
-            Syscall::PerfEventOpen { .. } | Syscall::PerfEventIoctl { .. } => {
-                Ok(crate::MockableFd::mock_signed_fd().into())
-            }
+            Syscall::PerfEventOpen { .. } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            Syscall::PerfEventIoctl { .. } => Ok(0),
             call => panic!("unexpected syscall: {:?}", call),
         });
         TEST_MMAP_RET.with(|ret| *ret.borrow_mut() = buf.cast());
