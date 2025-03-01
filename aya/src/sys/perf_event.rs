@@ -105,12 +105,7 @@ pub(crate) fn perf_event_open_trace_point(
 }
 
 pub(crate) fn perf_event_ioctl(fd: BorrowedFd<'_>, request: u32, arg: c_int) -> SysResult {
-    let call = Syscall::PerfEventIoctl { fd, request, arg };
-    #[cfg(not(test))]
-    return syscall(call);
-
-    #[cfg(test)]
-    return crate::sys::TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
+    syscall(Syscall::PerfEventIoctl { fd, request, arg })
 }
 
 fn perf_event_sys(
