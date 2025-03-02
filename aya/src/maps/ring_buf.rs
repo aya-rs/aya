@@ -6,23 +6,18 @@
 
 use std::{
     borrow::Borrow,
-    ffi::{c_int, c_void},
     fmt::{self, Debug, Formatter},
-    io, mem,
+    mem,
     ops::Deref,
     os::fd::{AsFd as _, AsRawFd, BorrowedFd, RawFd},
-    ptr,
-    ptr::NonNull,
-    slice,
     sync::atomic::{AtomicU32, AtomicUsize, Ordering},
 };
 
 use aya_obj::generated::{BPF_RINGBUF_BUSY_BIT, BPF_RINGBUF_DISCARD_BIT, BPF_RINGBUF_HDR_SZ};
-use libc::{munmap, off_t, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
+use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
 
 use crate::{
-    maps::{MapData, MapError},
-    sys::{mmap, SyscallError},
+    maps::{MMap, MapData, MapError},
     util::page_size,
 };
 
@@ -401,60 +396,5 @@ impl ProducerData {
                 }
             }
         }
-    }
-}
-
-// MMap corresponds to a memory-mapped region.
-//
-// The data is unmapped in Drop.
-struct MMap {
-    ptr: NonNull<c_void>,
-    len: usize,
-}
-
-// Needed because NonNull<T> is !Send and !Sync out of caution that the data
-// might be aliased unsafely.
-unsafe impl Send for MMap {}
-unsafe impl Sync for MMap {}
-
-impl MMap {
-    fn new(
-        fd: BorrowedFd<'_>,
-        len: usize,
-        prot: c_int,
-        flags: c_int,
-        offset: off_t,
-    ) -> Result<Self, MapError> {
-        match unsafe { mmap(ptr::null_mut(), len, prot, flags, fd, offset) } {
-            MAP_FAILED => Err(MapError::SyscallError(SyscallError {
-                call: "mmap",
-                io_error: io::Error::last_os_error(),
-            })),
-            ptr => Ok(Self {
-                ptr: NonNull::new(ptr).ok_or(
-                    // This should never happen, but to be paranoid, and so we never need to talk
-                    // about a null pointer, we check it anyway.
-                    MapError::SyscallError(SyscallError {
-                        call: "mmap",
-                        io_error: io::Error::other("mmap returned null pointer"),
-                    }),
-                )?,
-                len,
-            }),
-        }
-    }
-}
-
-impl AsRef<[u8]> for MMap {
-    fn as_ref(&self) -> &[u8] {
-        let Self { ptr, len } = self;
-        unsafe { slice::from_raw_parts(ptr.as_ptr().cast(), *len) }
-    }
-}
-
-impl Drop for MMap {
-    fn drop(&mut self) {
-        let Self { ptr, len } = *self;
-        unsafe { munmap(ptr.as_ptr(), len) };
     }
 }

@@ -1,9 +1,8 @@
 use std::{
-    ffi::c_void,
     io, mem,
     os::fd::{AsFd, BorrowedFd},
     ptr, slice,
-    sync::atomic::{self, AtomicPtr, Ordering},
+    sync::atomic::{self, Ordering},
 };
 
 use aya_obj::generated::{
@@ -12,10 +11,13 @@ use aya_obj::generated::{
     PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
 };
 use bytes::BytesMut;
-use libc::{munmap, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
+use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
-use crate::sys::{mmap, perf_event_ioctl, perf_event_open_bpf, SysResult};
+use crate::{
+    maps::MMap,
+    sys::{perf_event_ioctl, perf_event_open_bpf, SysResult, SyscallError},
+};
 
 /// Perf buffer error.
 #[derive(Error, Debug)]
@@ -81,9 +83,9 @@ pub struct Events {
     pub lost: usize,
 }
 
-#[derive(Debug)]
+#[cfg_attr(test, derive(Debug))]
 pub(crate) struct PerfBuffer {
-    buf: AtomicPtr<perf_event_mmap_page>,
+    mmap: MMap,
     size: usize,
     page_size: usize,
     fd: crate::MockableFd,
@@ -102,24 +104,17 @@ impl PerfBuffer {
         let fd = perf_event_open_bpf(cpu_id as i32)
             .map_err(|(_, io_error)| PerfBufferError::OpenError { io_error })?;
         let size = page_size * page_count;
-        let buf = unsafe {
-            mmap(
-                ptr::null_mut(),
-                size + page_size,
-                PROT_READ | PROT_WRITE,
-                MAP_SHARED,
-                fd.as_fd(),
-                0,
-            )
-        };
-        if buf == MAP_FAILED {
-            return Err(PerfBufferError::MMapError {
-                io_error: io::Error::last_os_error(),
-            });
-        }
+        let mmap = MMap::new(
+            fd.as_fd(),
+            size + page_size,
+            PROT_READ | PROT_WRITE,
+            MAP_SHARED,
+            0,
+        )
+        .map_err(|SyscallError { call: _, io_error }| PerfBufferError::MMapError { io_error })?;
 
         let perf_buf = Self {
-            buf: AtomicPtr::new(buf as *mut perf_event_mmap_page),
+            mmap,
             size,
             page_size,
             fd,
@@ -131,8 +126,12 @@ impl PerfBuffer {
         Ok(perf_buf)
     }
 
+    fn buf(&self) -> ptr::NonNull<perf_event_mmap_page> {
+        self.mmap.ptr.cast()
+    }
+
     pub(crate) fn readable(&self) -> bool {
-        let header = self.buf.load(Ordering::SeqCst);
+        let header = self.buf().as_ptr();
         let head = unsafe { (*header).data_head } as usize;
         let tail = unsafe { (*header).data_tail } as usize;
         head != tail
@@ -145,7 +144,7 @@ impl PerfBuffer {
         if buffers.is_empty() {
             return Err(PerfBufferError::NoBuffers);
         }
-        let header = self.buf.load(Ordering::SeqCst);
+        let header = self.buf().as_ptr();
         let base = header as usize + self.page_size;
 
         let mut events = Events { read: 0, lost: 0 };
@@ -265,13 +264,7 @@ impl AsFd for PerfBuffer {
 
 impl Drop for PerfBuffer {
     fn drop(&mut self) {
-        unsafe {
-            let _: SysResult<_> = perf_event_ioctl(self.fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
-            munmap(
-                self.buf.load(Ordering::SeqCst) as *mut c_void,
-                self.size + self.page_size,
-            );
-        }
+        let _: SysResult<_> = perf_event_ioctl(self.fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
     }
 }
 

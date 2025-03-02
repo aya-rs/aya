@@ -135,6 +135,15 @@ pub(crate) unsafe fn mmap(
     TEST_MMAP_RET.with(|ret| *ret.borrow())
 }
 
+#[cfg_attr(test, allow(unused_variables))]
+pub(crate) unsafe fn munmap(addr: *mut c_void, len: usize) -> c_int {
+    #[cfg(not(test))]
+    return libc::munmap(addr, len);
+
+    #[cfg(test)]
+    0
+}
+
 /// The type of eBPF statistic to enable.
 #[non_exhaustive]
 #[doc(alias = "bpf_stats_type")]
