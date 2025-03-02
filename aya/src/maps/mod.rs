@@ -1083,7 +1083,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(miri, ignore = "nr_cpus() opens a file on procfs that upsets miri")]
     fn test_create_perf_event_array() {
         override_syscall(|call| match call {
             Syscall::Ebpf {
