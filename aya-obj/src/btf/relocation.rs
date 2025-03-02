@@ -1207,13 +1207,12 @@ impl ComputedRelocation {
                 BtfType::Int(i) => value.value = i.encoding() as u64 & IntEncoding::Signed as u64,
                 _ => (),
             },
-            #[cfg(target_endian = "little")]
             FieldLShift64 => {
-                value.value = 64 - (bit_off + bit_size - byte_off * 8) as u64;
-            }
-            #[cfg(target_endian = "big")]
-            FieldLShift64 => {
-                value.value = ((8 - byte_size) * 8 + (bit_off - byte_off * 8)) as u64;
+                value.value = if cfg!(target_endian = "little") {
+                    64 - (bit_off + bit_size - byte_off * 8) as u64
+                } else {
+                    ((8 - byte_size) * 8 + (bit_off - byte_off * 8)) as u64
+                }
             }
             FieldRShift64 => {
                 value.value = 64 - bit_size as u64;
