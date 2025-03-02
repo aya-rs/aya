@@ -1591,7 +1591,7 @@ mod tests {
             pinning: PinningType::ByName,
         };
         let mut buf = [0u8; 128];
-        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, def) };
+        unsafe { ptr::write_unaligned(buf.as_mut_ptr().cast(), def) };
 
         assert_eq!(parse_map_def("foo", &buf).unwrap(), def);
     }
