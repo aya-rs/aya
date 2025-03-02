@@ -1803,6 +1803,9 @@ pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_92 = 7;
 pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_92 = 8;
 pub const __IFLA_XDP_MAX: _bindgen_ty_92 = 9;
 pub type _bindgen_ty_92 = ::core::ffi::c_uint;
+impl nf_inet_hooks {
+    pub const NF_INET_INGRESS: nf_inet_hooks = nf_inet_hooks::NF_INET_NUMHOOKS;
+}
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum nf_inet_hooks {
@@ -3818,20 +3821,22 @@ pub struct tcmsg {
     pub tcm_parent: __u32,
     pub tcm_info: __u32,
 }
-pub const TCA_UNSPEC: _bindgen_ty_172 = 0;
-pub const TCA_KIND: _bindgen_ty_172 = 1;
-pub const TCA_OPTIONS: _bindgen_ty_172 = 2;
-pub const TCA_STATS: _bindgen_ty_172 = 3;
-pub const TCA_XSTATS: _bindgen_ty_172 = 4;
-pub const TCA_RATE: _bindgen_ty_172 = 5;
-pub const TCA_FCNT: _bindgen_ty_172 = 6;
-pub const TCA_STATS2: _bindgen_ty_172 = 7;
-pub const TCA_STAB: _bindgen_ty_172 = 8;
-pub const TCA_PAD: _bindgen_ty_172 = 9;
-pub const TCA_DUMP_INVISIBLE: _bindgen_ty_172 = 10;
-pub const TCA_CHAIN: _bindgen_ty_172 = 11;
-pub const TCA_HW_OFFLOAD: _bindgen_ty_172 = 12;
-pub const TCA_INGRESS_BLOCK: _bindgen_ty_172 = 13;
-pub const TCA_EGRESS_BLOCK: _bindgen_ty_172 = 14;
-pub const __TCA_MAX: _bindgen_ty_172 = 15;
-pub type _bindgen_ty_172 = ::core::ffi::c_uint;
+pub const TCA_UNSPEC: _bindgen_ty_174 = 0;
+pub const TCA_KIND: _bindgen_ty_174 = 1;
+pub const TCA_OPTIONS: _bindgen_ty_174 = 2;
+pub const TCA_STATS: _bindgen_ty_174 = 3;
+pub const TCA_XSTATS: _bindgen_ty_174 = 4;
+pub const TCA_RATE: _bindgen_ty_174 = 5;
+pub const TCA_FCNT: _bindgen_ty_174 = 6;
+pub const TCA_STATS2: _bindgen_ty_174 = 7;
+pub const TCA_STAB: _bindgen_ty_174 = 8;
+pub const TCA_PAD: _bindgen_ty_174 = 9;
+pub const TCA_DUMP_INVISIBLE: _bindgen_ty_174 = 10;
+pub const TCA_CHAIN: _bindgen_ty_174 = 11;
+pub const TCA_HW_OFFLOAD: _bindgen_ty_174 = 12;
+pub const TCA_INGRESS_BLOCK: _bindgen_ty_174 = 13;
+pub const TCA_EGRESS_BLOCK: _bindgen_ty_174 = 14;
+pub const TCA_DUMP_FLAGS: _bindgen_ty_174 = 15;
+pub const TCA_EXT_WARN_MSG: _bindgen_ty_174 = 16;
+pub const __TCA_MAX: _bindgen_ty_174 = 17;
+pub type _bindgen_ty_174 = ::core::ffi::c_uint;
