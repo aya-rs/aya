@@ -1199,10 +1199,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) }` is trying to retag from <wildcard> for Unique permission, but no exposed tags have suitable permission in the borrow stack for this location"
-    )]
     fn test_name() {
         const TEST_NAME: &str = "foo";
 
@@ -1219,10 +1215,15 @@ mod tests {
                     unsafe { attr.info.info_len },
                     mem::size_of::<bpf_map_info>() as u32
                 );
-                let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
-                map_info.name[..TEST_NAME.len()].copy_from_slice(unsafe {
-                    mem::transmute::<&[u8], &[c_char]>(TEST_NAME.as_bytes())
-                });
+                unsafe {
+                    let name_bytes = mem::transmute::<&[u8], &[c_char]>(TEST_NAME.as_bytes());
+                    let map_info = attr.info.info as *mut bpf_map_info;
+                    map_info.write({
+                        let mut map_info = map_info.read();
+                        map_info.name[..name_bytes.len()].copy_from_slice(name_bytes);
+                        map_info
+                    })
+                }
                 Ok(0)
             }
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
@@ -1233,10 +1234,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) }` is trying to retag from <wildcard> for Unique permission, but no exposed tags have suitable permission in the borrow stack for this location"
-    )]
     fn test_loaded_maps() {
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -1261,12 +1258,19 @@ mod tests {
                 cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
                 attr,
             } => {
-                let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
-                map_info.id = unsafe { attr.info.bpf_fd } - crate::MockableFd::mock_unsigned_fd();
-                map_info.key_size = 32;
-                map_info.value_size = 64;
-                map_info.map_flags = 1234;
-                map_info.max_entries = 99;
+                unsafe {
+                    let info = attr.info;
+                    let map_info = info.info as *mut bpf_map_info;
+                    map_info.write({
+                        let mut map_info = map_info.read();
+                        map_info.id = info.bpf_fd - crate::MockableFd::mock_unsigned_fd();
+                        map_info.key_size = 32;
+                        map_info.value_size = 64;
+                        map_info.map_flags = 1234;
+                        map_info.max_entries = 99;
+                        map_info
+                    });
+                }
                 Ok(0)
             }
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
