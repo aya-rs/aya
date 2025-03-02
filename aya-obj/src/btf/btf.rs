@@ -1808,11 +1808,13 @@ mod tests {
         Btf::parse(&raw, Endianness::default()).unwrap();
     }
 
-    // Not possible to emulate file system file "/sys/kernel/btf/vmlinux" as big endian, so skip
     #[test]
     #[cfg(feature = "std")]
     #[cfg_attr(miri, ignore = "`open` not available when isolation is enabled")]
-    #[cfg(target_endian = "little")]
+    #[cfg_attr(
+        target_endian = "big",
+        ignore = "Not possible to emulate \"/sys/kernel/btf/vmlinux\" as big endian"
+    )]
     fn test_read_btf_from_sys_fs() {
         let btf = Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default()).unwrap();
         let task_struct_id = btf
