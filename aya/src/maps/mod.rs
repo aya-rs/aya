@@ -934,10 +934,10 @@ impl<T: Pod> PerCpuValues<T> {
 
     pub(crate) fn build_kernel_mem(&self) -> Result<PerCpuKernelMem, io::Error> {
         let mut mem = Self::alloc_kernel_mem()?;
-        let mem_ptr = mem.as_mut_ptr() as usize;
+        let mem_ptr = mem.as_mut_ptr();
         let value_size = (mem::size_of::<T>() + 7) & !7;
-        for i in 0..self.values.len() {
-            unsafe { ptr::write_unaligned((mem_ptr + i * value_size) as *mut _, self.values[i]) };
+        for (i, value) in self.values.iter().enumerate() {
+            unsafe { ptr::write_unaligned(mem_ptr.byte_add(i * value_size).cast(), *value) };
         }
 
         Ok(mem)
