@@ -118,7 +118,6 @@ mod tests {
 
     #[test]
     fn test_try_from_wrong_map() {
-        // Use any map type here other than BPF_MAP_TYPE_PERF_EVENT_ARRAY as it will trip miri
         let map = new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_ARRAY));
         let map = Map::Array(map);
 
