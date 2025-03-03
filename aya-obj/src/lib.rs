@@ -66,13 +66,14 @@
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(clippy::all, missing_docs)]
-#![allow(clippy::missing_safety_doc, clippy::len_without_is_empty)]
+#![expect(clippy::len_without_is_empty)]
 
 extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
 pub mod btf;
+#[expect(clippy::all, missing_docs, non_camel_case_types, non_snake_case)]
 pub mod generated;
 pub mod links;
 pub mod maps;

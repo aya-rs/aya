@@ -21,7 +21,7 @@ impl SkBuff {
         SkBuff { skb }
     }
 
-    #[allow(clippy::len_without_is_empty)]
+    #[expect(clippy::len_without_is_empty)]
     #[inline]
     pub fn len(&self) -> u32 {
         unsafe { (*self.skb).len }
@@ -270,7 +270,7 @@ impl SkBuffContext {
         SkBuffContext { skb }
     }
 
-    #[allow(clippy::len_without_is_empty)]
+    #[expect(clippy::len_without_is_empty)]
     #[inline]
     pub fn len(&self) -> u32 {
         self.skb.len()
@@ -316,11 +316,11 @@ impl SkBuffContext {
     /// use core::mem;
     ///
     /// use aya_ebpf::{bindings::TC_ACT_PIPE, macros::map, maps::PerCpuArray, programs::SkBuffContext};
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct ethhdr {};
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct iphdr {};
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct tcphdr {};
     ///
     /// const ETH_HDR_LEN: usize = mem::size_of::<ethhdr>();
@@ -405,11 +405,11 @@ impl SkBuffContext {
     ///
     /// ```no_run
     /// use aya_ebpf::programs::SkBuffContext;
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct ethhdr {};
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct iphdr {};
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct udphdr {};
     ///
     /// const ETH_HLEN: usize = core::mem::size_of::<ethhdr>();

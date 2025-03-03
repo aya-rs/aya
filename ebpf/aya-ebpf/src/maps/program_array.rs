@@ -14,7 +14,7 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # #![allow(dead_code)]
+/// # #![expect(dead_code)]
 /// use aya_ebpf::{macros::map, maps::ProgramArray, cty::c_long};
 /// # use aya_ebpf::{programs::LsmContext};
 ///

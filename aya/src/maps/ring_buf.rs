@@ -121,7 +121,7 @@ impl<T> RingBuf<T> {
     // lifetime of the iterator in the returned `RingBufItem`. If the Iterator::Item leveraged GATs,
     // one could imagine an implementation of `Iterator` that would work. GATs are stabilized in
     // Rust 1.65, but there's not yet a trait that the community seems to have standardized around.
-    #[allow(clippy::should_implement_trait)]
+    #[expect(clippy::should_implement_trait)]
     pub fn next(&mut self) -> Option<RingBufItem<'_>> {
         let Self {
             consumer, producer, ..

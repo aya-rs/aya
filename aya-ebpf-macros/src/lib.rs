@@ -471,7 +471,7 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// # #![allow(non_camel_case_types)]
+/// # #![expect(non_camel_case_types)]
 /// use aya_ebpf::{macros::fentry, programs::FEntryContext};
 /// # type filename = u32;
 /// # type path = u32;
@@ -513,7 +513,7 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// # #![allow(non_camel_case_types)]
+/// # #![expect(non_camel_case_types)]
 /// use aya_ebpf::{macros::fexit, programs::FExitContext};
 /// # type filename = u32;
 /// # type path = u32;

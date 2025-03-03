@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use alloc::{string::ToString, vec, vec::Vec};
 use core::{fmt::Display, mem, ptr};
@@ -1133,7 +1133,6 @@ unsafe fn read_array<T>(data: &[u8], len: usize) -> Result<Vec<T>, BtfError> {
 }
 
 impl BtfType {
-    #[allow(unused_unsafe)]
     pub(crate) unsafe fn read(data: &[u8], endianness: Endianness) -> Result<BtfType, BtfError> {
         let ty = unsafe { read_array::<u32>(data, 3)? };
         let data = &data[mem::size_of::<u32>() * 3..];
