@@ -16,7 +16,9 @@ impl BtfTracePointContext {
     /// You can use the tplist tool provided by bcc to get a list of tracepoints and their
     /// arguments. TODO: document this better, possibly add a tplist alternative to aya.
     ///
-    /// SAFETY: This function is deeply unsafe, as we are reading raw pointers into kernel memory.
+    /// # Safety
+    ///
+    /// This function is deeply unsafe, as we are reading raw pointers into kernel memory.
     /// In particular, the value of `n` must not exceed the number of function arguments.
     /// Luckily, the BPF verifier will catch this for us.
     ///

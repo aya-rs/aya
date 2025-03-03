@@ -45,6 +45,7 @@ impl StackTrace {
         }
     }
 
+    #[expect(clippy::missing_safety_doc)]
     pub unsafe fn get_stackid<C: EbpfContext>(&self, ctx: &C, flags: u64) -> Result<i64, i64> {
         let ret = bpf_get_stackid(ctx.as_ptr(), self.def.get() as *mut _, flags);
         if ret < 0 {

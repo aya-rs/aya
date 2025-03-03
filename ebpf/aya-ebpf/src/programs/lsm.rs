@@ -22,7 +22,9 @@ impl LsmContext {
     /// this code path, or 0 if this is the first LSM program to be called. This phony
     /// argument is always last in the argument list.
     ///
-    /// SAFETY: This function is deeply unsafe, as we are reading raw pointers into kernel memory.
+    /// # Safety
+    ///
+    /// This function is deeply unsafe, as we are reading raw pointers into kernel memory.
     /// In particular, the value of `n` must not exceed the number of function arguments.
     /// Luckily, the BPF verifier will catch this for us.
     ///

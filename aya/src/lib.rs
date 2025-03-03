@@ -71,7 +71,6 @@
     //unused_qualifications, https://github.com/rust-lang/rust/commit/9ccc7b7 added size_of to the prelude, but we need to continue to qualify it so that we build on older compilers.
     //unused_results,
 )]
-#![expect(clippy::missing_safety_doc, clippy::len_without_is_empty)]
 #![cfg_attr(
     all(feature = "async_tokio", feature = "async_std"),
     expect(unused_crate_dependencies)
