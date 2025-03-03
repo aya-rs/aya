@@ -6416,7 +6416,7 @@ pub fn aya::programs::tp_btf::BtfTracePointLinkId::from(t: T) -> T
 pub mod aya::programs::trace_point
 pub enum aya::programs::trace_point::TracePointError
 pub aya::programs::trace_point::TracePointError::FileError
-pub aya::programs::trace_point::TracePointError::FileError::filename: alloc::string::String
+pub aya::programs::trace_point::TracePointError::FileError::filename: std::path::PathBuf
 pub aya::programs::trace_point::TracePointError::FileError::io_error: std::io::error::Error
 impl core::convert::From<aya::programs::trace_point::TracePointError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::trace_point::TracePointError) -> Self
@@ -7887,7 +7887,7 @@ impl<T> core::convert::From<T> for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::from(t: T) -> T
 pub enum aya::programs::TracePointError
 pub aya::programs::TracePointError::FileError
-pub aya::programs::TracePointError::FileError::filename: alloc::string::String
+pub aya::programs::TracePointError::FileError::filename: std::path::PathBuf
 pub aya::programs::TracePointError::FileError::io_error: std::io::error::Error
 impl core::convert::From<aya::programs::trace_point::TracePointError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::trace_point::TracePointError) -> Self

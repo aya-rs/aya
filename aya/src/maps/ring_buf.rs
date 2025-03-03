@@ -436,10 +436,7 @@ impl MMap {
                     // about a null pointer, we check it anyway.
                     MapError::SyscallError(SyscallError {
                         call: "mmap",
-                        io_error: io::Error::new(
-                            io::ErrorKind::Other,
-                            "mmap returned null pointer",
-                        ),
+                        io_error: io::Error::other("mmap returned null pointer"),
                     }),
                 )?,
                 len,

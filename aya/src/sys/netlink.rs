@@ -212,10 +212,9 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         None => {
             // if sock.recv() succeeds we should never get here unless there's a
             // bug in the kernel
-            return Err(NetlinkError(NetlinkErrorInternal::IoError(io::Error::new(
-                io::ErrorKind::Other,
-                "no RTM_NEWTFILTER reply received, this is a bug.",
-            ))));
+            return Err(NetlinkError(NetlinkErrorInternal::IoError(
+                io::Error::other("no RTM_NEWTFILTER reply received, this is a bug."),
+            )));
         }
     };
 
@@ -495,28 +494,24 @@ struct NetlinkMessage {
 impl NetlinkMessage {
     fn read(buf: &[u8]) -> Result<Self, io::Error> {
         if mem::size_of::<nlmsghdr>() > buf.len() {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "buffer smaller than nlmsghdr",
-            ));
+            return Err(io::Error::other("buffer smaller than nlmsghdr"));
         }
 
         // Safety: nlmsghdr is POD so read is safe
         let header = unsafe { ptr::read_unaligned(buf.as_ptr() as *const nlmsghdr) };
         let msg_len = header.nlmsg_len as usize;
         if msg_len < mem::size_of::<nlmsghdr>() || msg_len > buf.len() {
-            return Err(io::Error::new(io::ErrorKind::Other, "invalid nlmsg_len"));
+            return Err(io::Error::other("invalid nlmsg_len"));
         }
 
         let data_offset = align_to(mem::size_of::<nlmsghdr>(), NLMSG_ALIGNTO as usize);
         if data_offset >= buf.len() {
-            return Err(io::Error::new(io::ErrorKind::Other, "need more data"));
+            return Err(io::Error::other("need more data"));
         }
 
         let (rest, error) = if header.nlmsg_type == NLMSG_ERROR as u16 {
             if data_offset + mem::size_of::<nlmsgerr>() > buf.len() {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
+                return Err(io::Error::other(
                     "NLMSG_ERROR but not enough space for nlmsgerr",
                 ));
             }
@@ -625,7 +620,7 @@ fn write_attr_header(buf: &mut [u8], offset: usize, attr: nlattr) -> Result<usiz
 fn write_bytes(buf: &mut [u8], offset: usize, value: &[u8]) -> Result<usize, io::Error> {
     let align_len = align_to(value.len(), NLA_ALIGNTO as usize);
     if offset + align_len > buf.len() {
-        return Err(io::Error::new(io::ErrorKind::Other, "no space left"));
+        return Err(io::Error::other("no space left"));
     }
 
     buf[offset..offset + value.len()].copy_from_slice(value);
@@ -706,8 +701,8 @@ pub(crate) enum NlAttrError {
 }
 
 impl From<NlAttrError> for io::Error {
-    fn from(e: NlAttrError) -> Self {
-        Self::new(io::ErrorKind::Other, e)
+    fn from(err: NlAttrError) -> Self {
+        Self::other(err)
     }
 }
 
