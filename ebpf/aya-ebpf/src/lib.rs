@@ -24,12 +24,15 @@ pub mod helpers;
 pub mod maps;
 pub mod programs;
 
-use core::ffi::c_void;
+use core::{ffi::c_void, ptr::NonNull};
 
 pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
 use cty::{c_int, c_long};
-use helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid};
+use helpers::{
+    bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid, bpf_map_delete_elem,
+    bpf_map_lookup_elem, bpf_map_update_elem,
+};
 
 pub const TASK_COMM_LEN: usize = 16;
 
@@ -124,4 +127,34 @@ pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
         let _ = upper;
         unimplemented!()
     }
+}
+
+#[inline]
+fn insert<K, V>(
+    def: *mut bindings::bpf_map_def,
+    key: &K,
+    value: &V,
+    flags: u64,
+) -> Result<(), c_long> {
+    let key: *const _ = key;
+    let value: *const _ = value;
+    match unsafe { bpf_map_update_elem(def.cast(), key.cast(), value.cast(), flags) } {
+        0 => Ok(()),
+        ret => Err(ret),
+    }
+}
+
+#[inline]
+fn remove<K>(def: *mut bindings::bpf_map_def, key: &K) -> Result<(), c_long> {
+    let key: *const _ = key;
+    match unsafe { bpf_map_delete_elem(def.cast(), key.cast()) } {
+        0 => Ok(()),
+        ret => Err(ret),
+    }
+}
+
+#[inline]
+fn lookup<K, V>(def: *mut bindings::bpf_map_def, key: &K) -> Option<NonNull<V>> {
+    let key: *const _ = key;
+    NonNull::new(unsafe { bpf_map_lookup_elem(def.cast(), key.cast()) }.cast())
 }
