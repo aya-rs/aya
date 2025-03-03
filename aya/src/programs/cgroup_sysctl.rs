@@ -72,7 +72,7 @@ impl CgroupSysctl {
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
 
-        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
+        if KernelVersion::at_least(5, 7, 0) {
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),

@@ -181,9 +181,7 @@ impl SchedClassifier {
         interface: &str,
         attach_type: TcAttachType,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
-        if !matches!(attach_type, TcAttachType::Custom(_))
-            && KernelVersion::current().unwrap() >= KernelVersion::new(6, 6, 0)
-        {
+        if !matches!(attach_type, TcAttachType::Custom(_)) && KernelVersion::at_least(6, 6, 0) {
             self.attach_with_options(
                 interface,
                 attach_type,

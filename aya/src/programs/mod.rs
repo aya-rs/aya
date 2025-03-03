@@ -659,8 +659,11 @@ fn load_program<T: Link>(
         },
     ) = obj;
 
-    let target_kernel_version =
-        kernel_version.unwrap_or_else(|| KernelVersion::current().unwrap().code());
+    let target_kernel_version = kernel_version.unwrap_or_else(|| {
+        KernelVersion::current()
+            .map(KernelVersion::code)
+            .unwrap_or(0)
+    });
 
     let prog_name = if let Some(name) = name.as_deref() {
         let prog_name = CString::new(name).map_err(|err @ std::ffi::NulError { .. }| {

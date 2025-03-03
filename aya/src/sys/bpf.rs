@@ -46,7 +46,6 @@ pub(crate) fn bpf_create_map(
     name: &CStr,
     def: &aya_obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
-    kernel_version: KernelVersion,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -93,7 +92,7 @@ pub(crate) fn bpf_create_map(
     // https://github.com/torvalds/linux/commit/ad5b177bd73f5107d97c36f56395c4281fb6f089
     // The map name was added as a parameter in kernel 4.15+ so we skip adding it on
     // older kernels for compatibility
-    if kernel_version >= KernelVersion::new(4, 15, 0) {
+    if KernelVersion::at_least(4, 15, 0) {
         // u.map_name is 16 bytes max and must be NULL terminated
         let name_bytes = name.to_bytes_with_nul();
         let len = cmp::min(name_bytes.len(), u.map_name.len());

@@ -133,7 +133,7 @@ impl Xdp {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
 
-        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 9, 0) {
+        if KernelVersion::at_least(5, 9, 0) {
             // Unwrap safety: the function starts with `self.fd()?` that will succeed if and only
             // if the program has been loaded, i.e. there is an fd. We get one by:
             // - Using `Xdp::from_pin` that sets `expected_attach_type`
@@ -255,7 +255,7 @@ impl Link for NlLink {
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        let flags = if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
+        let flags = if KernelVersion::at_least(5, 7, 0) {
             self.flags.bits() | XDP_FLAGS_REPLACE
         } else {
             self.flags.bits()

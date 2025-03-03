@@ -14,6 +14,7 @@ use std::{
 
 use aya_obj::generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK};
 use libc::{if_nametoindex, sysconf, uname, utsname, _SC_PAGESIZE};
+use log::warn;
 
 use crate::Pod;
 
@@ -48,7 +49,35 @@ impl KernelVersion {
 
     /// Returns the kernel version of the currently running kernel.
     pub fn current() -> Result<Self, impl Error> {
-        Self::get_kernel_version()
+        thread_local! {
+            // TODO(https://github.com/rust-lang/rust/issues/109737): Use
+            // `std::cell::OnceCell` when `get_or_try_init` is stabilized.
+            static CACHE: once_cell::unsync::OnceCell<KernelVersion> = const { once_cell::unsync::OnceCell::new() };
+        }
+        CACHE.with(|cell| {
+            // TODO(https://github.com/rust-lang/rust/issues/109737): Replace `once_cell` with
+            // `std::cell::OnceCell`.
+            cell.get_or_try_init(|| {
+                // error: unsupported operation: `open` not available when isolation is enabled
+                if cfg!(miri) {
+                    Ok(Self::new(0xff, 0xff, 0xff))
+                } else {
+                    Self::get_kernel_version()
+                }
+            })
+            .copied()
+        })
+    }
+
+    /// Returns true iff the current kernel version is greater than or equal to the given version.
+    pub(crate) fn at_least(major: u8, minor: u8, patch: u16) -> bool {
+        match Self::current() {
+            Ok(current) => current >= Self::new(major, minor, patch),
+            Err(error) => {
+                warn!("failed to get current kernel version: {error}");
+                false
+            }
+        }
     }
 
     /// The equivalent of LINUX_VERSION_CODE.
