@@ -66,7 +66,6 @@
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(clippy::all, missing_docs)]
-#![expect(clippy::len_without_is_empty)]
 
 extern crate alloc;
 #[cfg(feature = "std")]

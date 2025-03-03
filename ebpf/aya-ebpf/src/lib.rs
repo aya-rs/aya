@@ -11,7 +11,6 @@
 #![cfg_attr(unstable, expect(incomplete_features), feature(generic_const_exprs))]
 #![cfg_attr(unstable, feature(never_type))]
 #![cfg_attr(target_arch = "bpf", feature(asm_experimental_arch))]
-#![expect(clippy::missing_safety_doc)]
 #![deny(warnings)]
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 #![no_std]
@@ -20,6 +19,7 @@ pub use aya_ebpf_bindings::bindings;
 
 mod args;
 pub use args::{PtRegs, RawTracepointArgs};
+#[expect(clippy::missing_safety_doc)]
 pub mod helpers;
 pub mod maps;
 pub mod programs;
@@ -62,6 +62,7 @@ pub trait EbpfContext {
 }
 
 #[no_mangle]
+#[expect(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
     #[expect(clippy::cast_sign_loss)]
     let b = c as u8;
@@ -71,11 +72,13 @@ pub unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
 }
 
 #[no_mangle]
+#[expect(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *mut u8, n: usize) {
     copy_forward(dest, src, n);
 }
 
 #[no_mangle]
+#[expect(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn memmove(dest: *mut u8, src: *mut u8, n: usize) {
     let delta = (dest as usize).wrapping_sub(src as usize);
     if delta >= n {

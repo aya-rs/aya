@@ -49,10 +49,12 @@ impl<K, V> HashMap<K, V> {
     }
 
     /// Retrieve the value associate with `key` from the map.
-    /// This function is unsafe. Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not
-    /// make guarantee on the atomicity of `insert` or `remove`, and any element removed from the
-    /// map might get aliased by another element in the map, causing garbage to be read, or
-    /// corruption in case of writes.
+    ///
+    /// # Safety
+    ///
+    /// Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not guarantee the atomicity
+    /// of `insert` or `remove`, and any element removed from the map might get aliased by another
+    /// element in the map, causing garbage to be read, or corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
         get(self.def.get(), key)
@@ -123,10 +125,12 @@ impl<K, V> LruHashMap<K, V> {
     }
 
     /// Retrieve the value associate with `key` from the map.
-    /// This function is unsafe. Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not
-    /// make guarantee on the atomicity of `insert` or `remove`, and any element removed from the
-    /// map might get aliased by another element in the map, causing garbage to be read, or
-    /// corruption in case of writes.
+    ///
+    /// # Safety
+    ///
+    /// Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not guarantee the atomicity
+    /// of `insert` or `remove`, and any element removed from the map might get aliased by another
+    /// element in the map, causing garbage to be read, or corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
         get(self.def.get(), key)
@@ -197,10 +201,12 @@ impl<K, V> PerCpuHashMap<K, V> {
     }
 
     /// Retrieve the value associate with `key` from the map.
-    /// This function is unsafe. Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not
-    /// make guarantee on the atomicity of `insert` or `remove`, and any element removed from the
-    /// map might get aliased by another element in the map, causing garbage to be read, or
-    /// corruption in case of writes.
+    ///
+    /// # Safety
+    ///
+    /// Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not guarantee the atomicity
+    /// of `insert` or `remove`, and any element removed from the map might get aliased by another
+    /// element in the map, causing garbage to be read, or corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
         get(self.def.get(), key)
@@ -271,10 +277,12 @@ impl<K, V> LruPerCpuHashMap<K, V> {
     }
 
     /// Retrieve the value associate with `key` from the map.
-    /// This function is unsafe. Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not
-    /// make guarantee on the atomicity of `insert` or `remove`, and any element removed from the
-    /// map might get aliased by another element in the map, causing garbage to be read, or
-    /// corruption in case of writes.
+    ///
+    /// # Safety
+    ///
+    /// Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not guarantee the atomicity
+    /// of `insert` or `remove`, and any element removed from the map might get aliased by another
+    /// element in the map, causing garbage to be read, or corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
         get(self.def.get(), key)
