@@ -1,12 +1,13 @@
-use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
+use core::{cell::UnsafeCell, marker::PhantomData, mem};
 
 use aya_ebpf_bindings::bindings::BPF_F_NO_PREALLOC;
-use aya_ebpf_cty::{c_long, c_void};
+use aya_ebpf_cty::c_long;
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_LPM_TRIE},
-    helpers::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
+    insert, lookup,
     maps::PinningType,
+    remove,
 };
 
 #[repr(transparent)]
@@ -63,33 +64,17 @@ impl<K, V> LpmTrie<K, V> {
 
     #[inline]
     pub fn get(&self, key: &Key<K>) -> Option<&V> {
-        unsafe {
-            let value =
-                bpf_map_lookup_elem(self.def.get() as *mut _, key as *const _ as *const c_void);
-            // FIXME: alignment
-            NonNull::new(value as *mut V).map(|p| p.as_ref())
-        }
+        lookup(self.def.get(), key).map(|p| unsafe { p.as_ref() })
     }
 
     #[inline]
     pub fn insert(&self, key: &Key<K>, value: &V, flags: u64) -> Result<(), c_long> {
-        let ret = unsafe {
-            bpf_map_update_elem(
-                self.def.get() as *mut _,
-                key as *const _ as *const _,
-                value as *const _ as *const _,
-                flags,
-            )
-        };
-        (ret == 0).then_some(()).ok_or(ret)
+        insert(self.def.get(), key, value, flags)
     }
 
     #[inline]
     pub fn remove(&self, key: &Key<K>) -> Result<(), c_long> {
-        let ret = unsafe {
-            bpf_map_delete_elem(self.def.get() as *mut _, key as *const _ as *const c_void)
-        };
-        (ret == 0).then_some(()).ok_or(ret)
+        remove(self.def.get(), key)
     }
 }
 

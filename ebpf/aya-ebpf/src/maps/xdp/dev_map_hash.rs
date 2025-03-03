@@ -1,12 +1,11 @@
-use core::{cell::UnsafeCell, mem, num::NonZeroU32, ptr::NonNull};
+use core::{cell::UnsafeCell, mem, num::NonZeroU32};
 
 use aya_ebpf_bindings::bindings::bpf_devmap_val;
-use aya_ebpf_cty::c_void;
 
 use super::{dev_map::DevMapValue, try_redirect_map};
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH},
-    helpers::bpf_map_lookup_elem,
+    lookup,
     maps::PinningType,
 };
 
@@ -108,16 +107,14 @@ impl DevMapHash {
     /// ```
     #[inline(always)]
     pub fn get(&self, key: u32) -> Option<DevMapValue> {
-        unsafe {
-            let value =
-                bpf_map_lookup_elem(self.def.get() as *mut _, &key as *const _ as *const c_void);
-            NonNull::new(value as *mut bpf_devmap_val).map(|p| DevMapValue {
-                if_index: p.as_ref().ifindex,
-                // SAFETY: map writes use fd, map reads use id.
-                // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6136
-                prog_id: NonZeroU32::new(p.as_ref().bpf_prog.id),
-            })
-        }
+        let value = lookup(self.def.get(), &key)?;
+        let value: &bpf_devmap_val = unsafe { value.as_ref() };
+        Some(DevMapValue {
+            if_index: value.ifindex,
+            // SAFETY: map writes use fd, map reads use id.
+            // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6136
+            prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
+        })
     }
 
     /// Redirects the current packet on the interface at `key`.
