@@ -55,7 +55,8 @@ pub(crate) fn find_tracefs_path() -> Result<&'static Path, ProgramError> {
 
     TRACE_FS
         .as_deref()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "tracefs not found").into())
+        .ok_or_else(|| io::Error::other("tracefs not found"))
+        .map_err(Into::into)
 }
 
 /// The time at which the system is booted.

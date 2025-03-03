@@ -1,6 +1,6 @@
 use std::{
     io::{self, Write},
-    process::{Command, Stdio},
+    process::{Command, Output, Stdio},
 };
 
 pub fn format(code: &str) -> Result<String, io::Error> {
@@ -11,15 +11,16 @@ pub fn format(code: &str) -> Result<String, io::Error> {
     let stdin = child.stdin.as_mut().unwrap();
     stdin.write_all(code.as_bytes())?;
 
-    let output = child.wait_with_output()?;
-    if !output.status.success() {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!(
-                "rustfmt failed with exit code: {}",
-                output.status.code().unwrap()
-            ),
-        ));
+    let Output {
+        status,
+        stdout,
+        stderr,
+    } = child.wait_with_output()?;
+    if !status.success() {
+        let stderr = String::from_utf8(stderr).unwrap();
+        return Err(io::Error::other(format!(
+            "rustfmt failed: {status:?}\n{stderr}"
+        )));
     }
-    Ok(String::from_utf8(output.stdout).unwrap())
+    Ok(String::from_utf8(stdout).unwrap())
 }

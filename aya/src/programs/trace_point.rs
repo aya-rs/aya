@@ -1,5 +1,9 @@
 //! Tracepoint programs.
-use std::{fs, io, os::fd::AsFd as _, path::Path};
+use std::{
+    fs, io,
+    os::fd::AsFd as _,
+    path::{Path, PathBuf},
+};
 
 use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT};
 use thiserror::Error;
@@ -21,7 +25,7 @@ pub enum TracePointError {
     #[error("`{filename}`")]
     FileError {
         /// The file name
-        filename: String,
+        filename: PathBuf,
         /// The [`io::Error`] returned from the file operation
         #[source]
         io_error: io::Error,
@@ -122,19 +126,21 @@ pub(crate) fn read_sys_fs_trace_point_id(
     category: &str,
     name: &Path,
 ) -> Result<u32, TracePointError> {
-    let file = tracefs.join("events").join(category).join(name).join("id");
+    let filename = tracefs.join("events").join(category).join(name).join("id");
 
-    let id = fs::read_to_string(&file).map_err(|io_error| TracePointError::FileError {
-        filename: file.display().to_string(),
-        io_error,
-    })?;
-    let id = id
-        .trim()
-        .parse::<u32>()
-        .map_err(|error| TracePointError::FileError {
-            filename: file.display().to_string(),
-            io_error: io::Error::new(io::ErrorKind::Other, error),
-        })?;
+    let id = match fs::read_to_string(&filename) {
+        Ok(id) => id,
+        Err(io_error) => return Err(TracePointError::FileError { filename, io_error }),
+    };
+    let id = match id.trim().parse::<u32>() {
+        Ok(id) => id,
+        Err(error) => {
+            return Err(TracePointError::FileError {
+                filename,
+                io_error: io::Error::other(error),
+            })
+        }
+    };
 
     Ok(id)
 }
