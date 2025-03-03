@@ -8,11 +8,11 @@
 use std::{fs, panic, path::Path, time::SystemTime};
 
 use aya::{
-    maps::{loaded_maps, Array, HashMap, IterableMap as _, MapError, MapType},
-    programs::{loaded_programs, ProgramError, ProgramType, SocketFilter, TracePoint},
+    Ebpf,
+    maps::{Array, HashMap, IterableMap as _, MapError, MapType, loaded_maps},
+    programs::{ProgramError, ProgramType, SocketFilter, TracePoint, loaded_programs},
     sys::enable_stats,
     util::KernelVersion,
-    Ebpf,
 };
 use libc::EINVAL;
 
@@ -151,7 +151,9 @@ fn test_loaded_at() {
         let loaded_at = match prog.info().unwrap().loaded_at() {
             Some(time) => time,
             None => {
-                eprintln!("ignoring test completely as `load_time` field of `bpf_prog_info` is not available on the host");
+                eprintln!(
+                    "ignoring test completely as `load_time` field of `bpf_prog_info` is not available on the host"
+                );
                 return;
             }
         };

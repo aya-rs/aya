@@ -3,12 +3,12 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use aya::{programs::UProbe, Ebpf};
+use aya::{Ebpf, programs::UProbe};
 use aya_log::EbpfLogger;
 use log::{Level, Log, Record};
 use test_log::test;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub extern "C" fn trigger_ebpf_program() {
     core::hint::black_box(trigger_ebpf_program);

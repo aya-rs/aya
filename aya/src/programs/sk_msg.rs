@@ -9,8 +9,8 @@ use aya_obj::generated::{
 use crate::{
     maps::sock::SockMapFd,
     programs::{
-        define_link_wrapper, load_program, CgroupAttachMode, ProgAttachLink, ProgAttachLinkId,
-        ProgramData, ProgramError,
+        CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError,
+        define_link_wrapper, load_program,
     },
 };
 

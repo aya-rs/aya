@@ -1,9 +1,9 @@
 use proc_macro2::TokenStream;
-use quote::{quote, TokenStreamExt};
+use quote::{TokenStreamExt, quote};
 use syn::{
-    punctuated::Punctuated, AngleBracketedGenericArguments, BareFnArg, ForeignItem,
-    ForeignItemStatic, GenericArgument, Ident, Item, Path, PathArguments, ReturnType, Token, Type,
-    TypeBareFn, TypePath,
+    AngleBracketedGenericArguments, BareFnArg, ForeignItem, ForeignItemStatic, GenericArgument,
+    Ident, Item, Path, PathArguments, ReturnType, Token, Type, TypeBareFn, TypePath,
+    punctuated::Punctuated,
 };
 
 pub fn extract_helpers(items: &[Item]) -> (Vec<usize>, Vec<Helper<'_>>) {

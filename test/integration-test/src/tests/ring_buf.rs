@@ -2,8 +2,8 @@ use std::{
     mem,
     os::fd::AsRawFd as _,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc,
+        atomic::{AtomicBool, Ordering},
     },
     thread,
 };
@@ -11,9 +11,9 @@ use std::{
 use anyhow::Context as _;
 use assert_matches::assert_matches;
 use aya::{
-    maps::{array::PerCpuArray, ring_buf::RingBuf, MapData},
-    programs::UProbe,
     Ebpf, EbpfLoader,
+    maps::{MapData, array::PerCpuArray, ring_buf::RingBuf},
+    programs::UProbe,
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
 use integration_common::ring_buf::Registers;
@@ -21,7 +21,7 @@ use rand::Rng as _;
 use test_log::test;
 use tokio::{
     io::unix::AsyncFd,
-    time::{sleep, Duration},
+    time::{Duration, sleep},
 };
 
 struct RingBufTest {
@@ -141,7 +141,7 @@ fn ring_buf(n: usize) {
     assert_eq!(rejected, expected_rejected);
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub extern "C" fn ring_buf_trigger_ebpf_program(arg: u64) {
     std::hint::black_box(arg);
@@ -179,8 +179,8 @@ async fn ring_buf_async_with_drops() {
         }
     };
     use futures::future::{
-        select,
         Either::{Left, Right},
+        select,
     };
     let writer = futures::future::try_join_all(data.chunks(8).map(ToOwned::to_owned).map(|v| {
         tokio::spawn(async {

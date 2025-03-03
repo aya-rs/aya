@@ -5,12 +5,12 @@ use std::{
 };
 
 use crate::{
-    maps::{
-        check_kv_size, hash_map, sock::SockMapFd, IterableMap, MapData, MapError, MapFd, MapIter,
-        MapKeys,
-    },
-    sys::{bpf_map_lookup_elem, SyscallError},
     Pod,
+    maps::{
+        IterableMap, MapData, MapError, MapFd, MapIter, MapKeys, check_kv_size, hash_map,
+        sock::SockMapFd,
+    },
+    sys::{SyscallError, bpf_map_lookup_elem},
 };
 
 /// A hash map of TCP or UDP sockets.

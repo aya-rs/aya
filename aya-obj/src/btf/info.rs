@@ -6,7 +6,7 @@ use object::Endianness;
 use crate::{
     generated::{bpf_func_info, bpf_line_info},
     relocation::INS_SIZE,
-    util::{bytes_of, HashMap},
+    util::{HashMap, bytes_of},
 };
 
 /* The func_info subsection layout:

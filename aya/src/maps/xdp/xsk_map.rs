@@ -6,8 +6,8 @@ use std::{
 };
 
 use crate::{
-    maps::{check_bounds, check_kv_size, MapData, MapError},
-    sys::{bpf_map_update_elem, SyscallError},
+    maps::{MapData, MapError, check_bounds, check_kv_size},
+    sys::{SyscallError, bpf_map_update_elem},
 };
 
 /// An array of AF_XDP sockets.

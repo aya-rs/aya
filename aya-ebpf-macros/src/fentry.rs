@@ -46,8 +46,8 @@ impl FEntry {
         };
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = #fn_name(::aya_ebpf::programs::FEntryContext::new(ctx));
                 return 0;
@@ -77,8 +77,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "fentry"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "fentry")]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = sys_clone(::aya_ebpf::programs::FEntryContext::new(ctx));
                 return 0;
@@ -106,8 +106,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "fentry/sys_clone"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "fentry/sys_clone")]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = sys_clone(::aya_ebpf::programs::FEntryContext::new(ctx));
                 return 0;
@@ -135,8 +135,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "fentry.s"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "fentry.s")]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = sys_clone(::aya_ebpf::programs::FEntryContext::new(ctx));
                 return 0;

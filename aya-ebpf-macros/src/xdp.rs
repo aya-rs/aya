@@ -1,9 +1,9 @@
 use proc_macro2::TokenStream;
 use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{spanned::Spanned as _, ItemFn};
+use syn::{ItemFn, spanned::Spanned as _};
 
-use crate::args::{err_on_unknown_args, pop_bool_arg, pop_string_arg, Args};
+use crate::args::{Args, err_on_unknown_args, pop_bool_arg, pop_string_arg};
 
 pub(crate) struct Xdp {
     item: ItemFn,
@@ -30,7 +30,7 @@ impl Xdp {
             Some(name) => {
                 return Err(span.error(format!(
                     "Invalid value. Expected 'cpumap' or 'devmap', found '{name}'"
-                )))
+                )));
             }
             None => None,
         };
@@ -56,8 +56,8 @@ impl Xdp {
         let section_name = section_name.join("/");
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
                 return #fn_name(::aya_ebpf::programs::XdpContext::new(ctx));
 
@@ -86,8 +86,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "xdp"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "xdp")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
                 return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 
@@ -112,8 +112,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "xdp.frags"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "xdp.frags")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
                 return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 
@@ -138,8 +138,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "xdp/cpumap"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "xdp/cpumap")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
                 return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 
@@ -164,8 +164,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "xdp/devmap"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "xdp/devmap")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
                 return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 
@@ -204,8 +204,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "xdp.frags/cpumap"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "xdp.frags/cpumap")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
                 return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 
@@ -230,8 +230,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "xdp.frags/devmap"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "xdp.frags/devmap")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::xdp_md) -> u32 {
                 return prog(::aya_ebpf::programs::XdpContext::new(ctx));
 

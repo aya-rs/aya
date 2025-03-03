@@ -1,6 +1,6 @@
 use std::io::BufRead;
 
-use aya::{programs::Iter, Btf, Ebpf};
+use aya::{Btf, Ebpf, programs::Iter};
 use test_log::test;
 
 #[test]

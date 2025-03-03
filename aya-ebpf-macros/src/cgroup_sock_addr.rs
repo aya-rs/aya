@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use proc_macro2::TokenStream;
 use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{spanned::Spanned as _, Ident, ItemFn};
+use syn::{Ident, ItemFn, spanned::Spanned as _};
 
 pub(crate) struct CgroupSockAddr {
     item: ItemFn,
@@ -46,8 +46,8 @@ impl CgroupSockAddr {
         let section_name: Cow<'_, _> = format!("cgroup/{attach_type}").into();
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return #fn_name(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -76,8 +76,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/connect4"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/connect4")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -102,8 +102,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/connect6"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/connect6")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -128,8 +128,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/bind4"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/bind4")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -154,8 +154,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/bind6"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/bind6")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -180,8 +180,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/getpeername4"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/getpeername4")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -206,8 +206,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/getpeername6"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/getpeername6")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -232,8 +232,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/getsockname4"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/getsockname4")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -258,8 +258,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/getsockname6"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/getsockname6")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -284,8 +284,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/sendmsg4"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/sendmsg4")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -310,8 +310,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/sendmsg6"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/sendmsg6")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -336,8 +336,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/recvmsg4"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/recvmsg4")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 
@@ -362,8 +362,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/recvmsg6"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/recvmsg6")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock_addr) -> i32 {
                 return foo(::aya_ebpf::programs::SockAddrContext::new(ctx));
 

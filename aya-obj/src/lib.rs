@@ -72,7 +72,13 @@ extern crate alloc;
 extern crate std;
 
 pub mod btf;
-#[expect(clippy::all, missing_docs, non_camel_case_types, non_snake_case)]
+#[expect(
+    clippy::all,
+    missing_docs,
+    non_camel_case_types,
+    non_snake_case,
+    unsafe_op_in_unsafe_fn
+)]
 pub mod generated;
 pub mod links;
 pub mod maps;

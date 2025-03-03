@@ -10,11 +10,11 @@ use object::Endianness;
 use thiserror::Error;
 
 use crate::{
-    programs::{
-        define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd,
-    },
-    sys::{self, bpf_link_create, BpfLinkCreateArgs, LinkTarget, SyscallError},
     Btf,
+    programs::{
+        FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd, define_link_wrapper, load_program,
+    },
+    sys::{self, BpfLinkCreateArgs, LinkTarget, SyscallError, bpf_link_create},
 };
 
 /// The type returned when loading or attaching an [`Extension`] fails.

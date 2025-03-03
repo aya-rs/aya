@@ -13,8 +13,8 @@ use bytes::BytesMut;
 
 use crate::{
     maps::{
-        perf::{Events, PerfBuffer, PerfBufferError},
         MapData, MapError, PinError,
+        perf::{Events, PerfBuffer, PerfBufferError},
     },
     sys::bpf_map_update_elem,
     util::page_size,

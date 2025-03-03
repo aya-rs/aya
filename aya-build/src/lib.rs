@@ -5,7 +5,7 @@ use std::{
     process::{Child, Command, Stdio},
 };
 
-use anyhow::{anyhow, Context as _, Result};
+use anyhow::{Context as _, Result, anyhow};
 // Re-export `cargo_metadata` to having to encode the version downstream and risk mismatches.
 pub use cargo_metadata;
 use cargo_metadata::{Artifact, CompilerMessage, Message, Package, Target};

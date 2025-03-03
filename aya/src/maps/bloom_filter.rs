@@ -6,9 +6,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_v_size, MapData, MapError},
-    sys::{bpf_map_lookup_elem_ptr, bpf_map_push_elem, SyscallError},
     Pod,
+    maps::{MapData, MapError, check_v_size},
+    sys::{SyscallError, bpf_map_lookup_elem_ptr, bpf_map_push_elem},
 };
 
 /// A Bloom Filter.
@@ -95,10 +95,10 @@ mod tests {
     use super::*;
     use crate::{
         maps::{
-            test_utils::{self, new_map},
             Map,
+            test_utils::{self, new_map},
         },
-        sys::{override_syscall, SysResult, Syscall},
+        sys::{SysResult, Syscall, override_syscall},
     };
 
     fn new_obj_map() -> aya_obj::Map {

@@ -5,9 +5,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
-    sys::{bpf_map_lookup_elem, SyscallError},
     Pod,
+    maps::{IterableMap, MapData, MapError, MapIter, MapKeys, check_kv_size, hash_map},
+    sys::{SyscallError, bpf_map_lookup_elem},
 };
 
 /// A hash map that can be shared between eBPF programs and user space.
@@ -115,10 +115,10 @@ mod tests {
     use super::*;
     use crate::{
         maps::{
-            test_utils::{self, new_map},
             Map,
+            test_utils::{self, new_map},
         },
-        sys::{override_syscall, SysResult, Syscall},
+        sys::{SysResult, Syscall, override_syscall},
     };
 
     fn new_obj_map() -> aya_obj::Map {

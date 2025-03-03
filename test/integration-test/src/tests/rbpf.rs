@@ -2,7 +2,7 @@ use core::{mem::size_of, ptr::null_mut, slice::from_raw_parts};
 use std::collections::HashMap;
 
 use assert_matches::assert_matches;
-use aya_obj::{generated::bpf_insn, programs::XdpAttachType, Object, ProgramSection};
+use aya_obj::{Object, ProgramSection, generated::bpf_insn, programs::XdpAttachType};
 use test_log::test;
 
 #[test]

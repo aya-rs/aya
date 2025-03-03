@@ -1,6 +1,6 @@
 use std::{path::PathBuf, process::exit};
 
-use aya_tool::generate::{generate, InputFile};
+use aya_tool::generate::{InputFile, generate};
 use clap::Parser;
 
 #[derive(Parser)]

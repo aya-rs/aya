@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use proc_macro2::TokenStream;
 use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{spanned::Spanned as _, ItemFn};
+use syn::{ItemFn, spanned::Spanned as _};
 
 use crate::args::{err_on_unknown_args, pop_string_arg};
 
@@ -82,8 +82,8 @@ impl KProbe {
         };
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                 let _ = #fn_name(::aya_ebpf::programs::#probe_type::new(ctx));
                 return 0;
@@ -115,8 +115,8 @@ mod tests {
         assert_eq!(
             kprobe.expand().to_string(),
             quote! {
-                #[no_mangle]
-                #[link_section = "kprobe"]
+                #[unsafe(no_mangle)]
+                #[unsafe(link_section = "kprobe")]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                     let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
@@ -147,8 +147,8 @@ mod tests {
         assert_eq!(
             kprobe.expand().to_string(),
             quote! {
-                #[no_mangle]
-                #[link_section = "kprobe/fib_lookup"]
+                #[unsafe(no_mangle)]
+                #[unsafe(link_section = "kprobe/fib_lookup")]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                     let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
@@ -180,8 +180,8 @@ mod tests {
         assert_eq!(
             kprobe.expand().to_string(),
             quote! {
-                #[no_mangle]
-                #[link_section = "kprobe/fib_lookup+10"]
+                #[unsafe(no_mangle)]
+                #[unsafe(link_section = "kprobe/fib_lookup+10")]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                     let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
@@ -210,8 +210,8 @@ mod tests {
         assert_eq!(
             kprobe.expand().to_string(),
             quote! {
-                #[no_mangle]
-                #[link_section = "kretprobe"]
+                #[unsafe(no_mangle)]
+                #[unsafe(link_section = "kretprobe")]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                     let _ = foo(::aya_ebpf::programs::RetProbeContext::new(ctx));
                     return 0;

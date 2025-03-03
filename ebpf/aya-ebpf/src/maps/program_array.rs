@@ -3,10 +3,10 @@ use core::{cell::UnsafeCell, hint::unreachable_unchecked, mem};
 use aya_ebpf_cty::c_long;
 
 use crate::{
+    EbpfContext,
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY},
     helpers::bpf_tail_call,
     maps::PinningType,
-    EbpfContext,
 };
 
 /// A BPF map that stores an array of program indices for tail calling.
@@ -82,11 +82,11 @@ impl ProgramArray {
     /// On failure, a negative error is returned, wrapped in `Err()`.
     #[cfg(not(unstable))]
     pub unsafe fn tail_call<C: EbpfContext>(&self, ctx: &C, index: u32) -> Result<(), c_long> {
-        let res = bpf_tail_call(ctx.as_ptr(), self.def.get() as *mut _, index);
+        let res = unsafe { bpf_tail_call(ctx.as_ptr(), self.def.get().cast(), index) };
         if res != 0 {
             Err(res)
         } else {
-            unreachable_unchecked()
+            unsafe { unreachable_unchecked() }
         }
     }
 
@@ -105,11 +105,11 @@ impl ProgramArray {
     /// On failure, a negative error is returned, wrapped in `Err()`.
     #[cfg(unstable)]
     pub unsafe fn tail_call<C: EbpfContext>(&self, ctx: &C, index: u32) -> Result<!, c_long> {
-        let res = bpf_tail_call(ctx.as_ptr(), self.def.get() as *mut _, index);
+        let res = unsafe { bpf_tail_call(ctx.as_ptr(), self.def.get().cast(), index) };
         if res != 0 {
             Err(res)
         } else {
-            unreachable_unchecked()
+            unsafe { unreachable_unchecked() }
         }
     }
 }

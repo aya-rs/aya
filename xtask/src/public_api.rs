@@ -1,15 +1,15 @@
 use std::{
     fmt::Write as _,
-    fs::{read_to_string, File},
+    fs::{File, read_to_string},
     io::Write as _,
     path::Path,
 };
 
-use anyhow::{bail, Context as _, Result};
+use anyhow::{Context as _, Result, bail};
 use cargo_metadata::{Metadata, Package, Target};
 use clap::Parser;
-use dialoguer::{theme::ColorfulTheme, Confirm};
-use diff::{lines, Result as Diff};
+use dialoguer::{Confirm, theme::ColorfulTheme};
+use diff::{Result as Diff, lines};
 use xtask::Errors;
 
 #[derive(Debug, Parser)]

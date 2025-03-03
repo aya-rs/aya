@@ -8,13 +8,13 @@ use std::{
 };
 
 use aya_obj::{
+    EbpfSectionKind, Features, Object, ParseError, ProgramSection,
     btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
     generated::{
-        bpf_map_type::{self, *},
         BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS,
+        bpf_map_type::{self, *},
     },
     relocation::EbpfRelocationError,
-    EbpfSectionKind, Features, Object, ParseError, ProgramSection,
 };
 use log::{debug, warn};
 use thiserror::Error;
@@ -55,7 +55,7 @@ unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64, u128, i128);
 // It only makes sense that an array of POD types is itself POD
 unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 
-pub use aya_obj::maps::{bpf_map_def, PinningType};
+pub use aya_obj::maps::{PinningType, bpf_map_def};
 
 pub(crate) static FEATURES: LazyLock<Features> = LazyLock::new(detect_features);
 
@@ -239,17 +239,17 @@ impl<'a> EbpfLoader<'a> {
     /// From Rust eBPF, a global variable can be defined as follows:
     ///
     /// ```no_run
-    /// #[no_mangle]
+    /// #[unsafe(no_mangle)]
     /// static VERSION: i32 = 0;
     /// ```
     ///
     /// Then it can be accessed using `core::ptr::read_volatile`:
     ///
     /// ```no_run
-    /// # #[no_mangle]
+    /// # #[unsafe(no_mangle)]
     /// # static VERSION: i32 = 0;
-    /// # unsafe fn try_test() {
-    /// let version = core::ptr::read_volatile(&VERSION);
+    /// # fn try_test() {
+    /// let version = unsafe { core::ptr::read_volatile(&VERSION) };
     /// # }
     /// ```
     ///
@@ -403,7 +403,7 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::Lsm { sleepable: _ }
                                 | ProgramSection::BtfTracePoint
                                 | ProgramSection::Iter { sleepable: _ } => {
-                                    return Err(EbpfError::BtfError(err))
+                                    return Err(EbpfError::BtfError(err));
                                 }
                                 ProgramSection::KRetProbe
                                 | ProgramSection::KProbe
@@ -778,11 +778,7 @@ fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
     fn div_ceil(n: u32, rhs: u32) -> u32 {
         let d = n / rhs;
         let r = n % rhs;
-        if r > 0 && rhs > 0 {
-            d + 1
-        } else {
-            d
-        }
+        if r > 0 && rhs > 0 { d + 1 } else { d }
     }
     let pages_needed = div_ceil(byte_size, page_size);
     page_size * pages_needed.next_power_of_two()

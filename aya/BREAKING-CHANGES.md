@@ -8,6 +8,9 @@ history and changelog. We also tag PRs on github with a [breaking change] label.
 
 ## Summary
 
+- [v0.13.0](#v0130)
+  - MSRV has been bumped to 1.85.0.
+
 - [v0.12.0](#v0120)
   - In `aya::Bpf::programs`, `name` uses the function name from the ELF file.
   - Maps API has been reworked.
@@ -16,6 +19,15 @@ history and changelog. We also tag PRs on github with a [breaking change] label.
   - MSRV has been bumped to 1.66.0.
   - BTF types have moved to the `aya-obj` crate.
   - `aya::PerfEvent::attach` and `detach` signatures have changed.
+
+## v0.13.0
+
+### MSRV has been bumped to 1.85.0
+
+The minimum supported Rust version has been bumped to 1.85.0. This is due to
+the move to edition 2024 which was first available in this version.
+
+To migrate you will need to ensure that you are using rustc 1.85.0 or later.
 
 ## v0.12.0
 

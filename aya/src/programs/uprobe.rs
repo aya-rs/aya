@@ -2,7 +2,7 @@
 use std::{
     borrow::Cow,
     error::Error,
-    ffi::{c_char, CStr, OsStr, OsString},
+    ffi::{CStr, OsStr, OsString, c_char},
     fs,
     io::{self, BufRead, Cursor, Read},
     mem,
@@ -17,14 +17,13 @@ use object::{Object, ObjectSection, ObjectSymbol, Symbol};
 use thiserror::Error;
 
 use crate::{
+    VerifierLogLevel,
     programs::{
-        define_link_wrapper, load_program,
+        FdLink, LinkError, ProgramData, ProgramError, define_link_wrapper, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
-        probe::{attach, OsStringExt as _, ProbeKind},
-        FdLink, LinkError, ProgramData, ProgramError,
+        probe::{OsStringExt as _, ProbeKind, attach},
     },
     sys::bpf_link_get_info_by_fd,
-    VerifierLogLevel,
 };
 
 const LD_SO_CACHE_FILE: &str = "/etc/ld.so.cache";
@@ -569,7 +568,7 @@ fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> 
 #[cfg(test)]
 mod tests {
 
-    use object::{write::SectionKind, Architecture, BinaryFormat, Endianness};
+    use object::{Architecture, BinaryFormat, Endianness, write::SectionKind};
 
     use super::*;
 

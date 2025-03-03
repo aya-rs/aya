@@ -10,15 +10,15 @@ use std::{
 use aya_obj::generated::{bpf_prog_info, bpf_prog_type};
 
 use super::{
-    utils::{boot_time, get_fdinfo},
     ProgramError, ProgramFd,
+    utils::{boot_time, get_fdinfo},
 };
 use crate::{
+    FEATURES,
     sys::{
-        bpf_get_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, iter_prog_ids, SyscallError,
+        SyscallError, bpf_get_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd, iter_prog_ids,
     },
     util::bytes_of_bpf_name,
-    FEATURES,
 };
 
 /// Provides metadata information about a loaded eBPF program.

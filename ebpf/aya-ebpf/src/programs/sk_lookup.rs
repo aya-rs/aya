@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{bindings::bpf_sk_lookup, EbpfContext};
+use crate::{EbpfContext, bindings::bpf_sk_lookup};
 
 pub struct SkLookupContext {
     pub lookup: *mut bpf_sk_lookup,

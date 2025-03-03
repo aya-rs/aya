@@ -49,8 +49,8 @@ impl Lsm {
         // of 0 as in other program types.
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
                 return #fn_name(::aya_ebpf::programs::LsmContext::new(ctx));
 
@@ -82,8 +82,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "lsm.s/bprm_committed_creds"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "lsm.s/bprm_committed_creds")]
             fn bprm_committed_creds(ctx: *mut ::core::ffi::c_void) -> i32 {
                 return bprm_committed_creds(::aya_ebpf::programs::LsmContext::new(ctx));
 
@@ -110,8 +110,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "lsm/bprm_committed_creds"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "lsm/bprm_committed_creds")]
             fn bprm_committed_creds(ctx: *mut ::core::ffi::c_void) -> i32 {
                 return bprm_committed_creds(::aya_ebpf::programs::LsmContext::new(ctx));
 
