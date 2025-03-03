@@ -8,12 +8,12 @@ use std::{
 
 use aya_obj::generated::bpf_devmap_val;
 
-use super::{dev_map::DevMapValue, XdpMapError};
+use super::{XdpMapError, dev_map::DevMapValue};
 use crate::{
-    maps::{check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
-    programs::ProgramFd,
-    sys::{bpf_map_lookup_elem, SyscallError},
     FEATURES,
+    maps::{IterableMap, MapData, MapError, MapIter, MapKeys, check_kv_size, hash_map},
+    programs::ProgramFd,
+    sys::{SyscallError, bpf_map_lookup_elem},
 };
 
 /// An hashmap of network devices.

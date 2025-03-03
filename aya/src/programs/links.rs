@@ -7,8 +7,8 @@ use std::{
 };
 
 use aya_obj::generated::{
-    bpf_attach_type, BPF_F_AFTER, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE, BPF_F_BEFORE, BPF_F_ID,
-    BPF_F_LINK, BPF_F_REPLACE,
+    BPF_F_AFTER, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE, BPF_F_BEFORE, BPF_F_ID, BPF_F_LINK,
+    BPF_F_REPLACE, bpf_attach_type,
 };
 use hashbrown::hash_set::{Entry, HashSet};
 use thiserror::Error;
@@ -16,7 +16,7 @@ use thiserror::Error;
 use crate::{
     pin::PinError,
     programs::{MultiProgLink, MultiProgram, ProgramError, ProgramFd, ProgramId},
-    sys::{bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach, SyscallError},
+    sys::{SyscallError, bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach},
 };
 
 /// A Link.

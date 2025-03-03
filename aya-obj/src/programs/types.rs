@@ -1,8 +1,8 @@
 //! Program type bindings.
 
 use crate::{
-    generated::bpf_prog_type::{self, *},
     InvalidTypeBinding,
+    generated::bpf_prog_type::{self, *},
 };
 
 impl TryFrom<u32> for bpf_prog_type {

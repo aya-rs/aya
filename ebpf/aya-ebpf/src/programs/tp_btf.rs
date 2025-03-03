@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{args::FromBtfArgument, EbpfContext};
+use crate::{EbpfContext, args::FromBtfArgument};
 
 pub struct BtfTracePointContext {
     ctx: *mut c_void,
@@ -43,7 +43,7 @@ impl BtfTracePointContext {
     ///
     /// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
     pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> T {
-        T::from_argument(self.ctx as *const _, n)
+        unsafe { T::from_argument(self.ctx.cast(), n) }
     }
 }
 

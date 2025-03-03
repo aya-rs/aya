@@ -7,17 +7,16 @@ use std::{
 };
 
 use aya_obj::generated::{
-    ifinfomsg, nlmsgerr_attrs::NLMSGERR_ATTR_MSG, tcmsg, IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD,
-    IFLA_XDP_FLAGS, NLMSG_ALIGNTO, TCA_BPF_FD, TCA_BPF_FLAGS, TCA_BPF_FLAG_ACT_DIRECT,
-    TCA_BPF_NAME, TCA_KIND, TCA_OPTIONS, TC_H_CLSACT, TC_H_INGRESS, TC_H_MAJ_MASK, TC_H_UNSPEC,
-    XDP_FLAGS_REPLACE,
+    IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS, NLMSG_ALIGNTO, TC_H_CLSACT, TC_H_INGRESS,
+    TC_H_MAJ_MASK, TC_H_UNSPEC, TCA_BPF_FD, TCA_BPF_FLAG_ACT_DIRECT, TCA_BPF_FLAGS, TCA_BPF_NAME,
+    TCA_KIND, TCA_OPTIONS, XDP_FLAGS_REPLACE, ifinfomsg, nlmsgerr_attrs::NLMSGERR_ATTR_MSG, tcmsg,
 };
 use libc::{
-    getsockname, nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl, socket,
     AF_NETLINK, AF_UNSPEC, ETH_P_ALL, IFF_UP, IFLA_XDP, NETLINK_CAP_ACK, NETLINK_EXT_ACK,
-    NETLINK_ROUTE, NLA_ALIGNTO, NLA_F_NESTED, NLA_TYPE_MASK, NLMSG_DONE, NLMSG_ERROR, NLM_F_ACK,
-    NLM_F_CREATE, NLM_F_DUMP, NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI, NLM_F_REQUEST, RTM_DELTFILTER,
-    RTM_GETTFILTER, RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK, SOCK_RAW, SOL_NETLINK,
+    NETLINK_ROUTE, NLA_ALIGNTO, NLA_F_NESTED, NLA_TYPE_MASK, NLM_F_ACK, NLM_F_CREATE, NLM_F_DUMP,
+    NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI, NLM_F_REQUEST, NLMSG_DONE, NLMSG_ERROR, RTM_DELTFILTER,
+    RTM_GETTFILTER, RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK, SOCK_RAW, SOL_NETLINK, getsockname,
+    nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl, socket,
 };
 use thiserror::Error;
 
@@ -58,7 +57,7 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     let sock = NetlinkSocket::open()?;
 
     // Safety: Request is POD so this is safe
-    let mut req = mem::zeroed::<Request>();
+    let mut req = unsafe { mem::zeroed::<Request>() };
 
     let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<ifinfomsg>();
     req.header = nlmsghdr {
@@ -72,7 +71,7 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     req.if_info.ifi_index = if_index;
 
     // write the attrs
-    let attrs_buf = request_attributes(&mut req, nlmsg_len);
+    let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
     let mut attrs = NestedAttrs::new(attrs_buf, IFLA_XDP);
     attrs
         .write_attr(
@@ -109,7 +108,7 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
 pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
-    let mut req = mem::zeroed::<TcRequest>();
+    let mut req = unsafe { mem::zeroed::<TcRequest>() };
 
     let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>();
     req.header = nlmsghdr {
@@ -126,7 +125,7 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), Netli
     req.tc_info.tcm_info = 0;
 
     // add the TCA_KIND attribute
-    let attrs_buf = request_attributes(&mut req, nlmsg_len);
+    let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
     let attr_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"clsact\0")
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     req.header.nlmsg_len += align_to(attr_len, NLA_ALIGNTO as usize) as u32;
@@ -147,7 +146,8 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     create: bool,
 ) -> Result<(u16, u32), NetlinkError> {
     let sock = NetlinkSocket::open()?;
-    let mut req = mem::zeroed::<TcRequest>();
+
+    let mut req = unsafe { mem::zeroed::<TcRequest>() };
 
     let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>();
     // When create=true, we're creating a new attachment so we must set NLM_F_CREATE. Then we also
@@ -176,7 +176,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     req.tc_info.tcm_parent = attach_type.tc_parent();
     req.tc_info.tcm_info = tc_handler_make((priority as u32) << 16, htons(ETH_P_ALL as u16) as u32);
 
-    let attrs_buf = request_attributes(&mut req, nlmsg_len);
+    let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
 
     // add TCA_KIND
     let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"bpf\0")
@@ -203,12 +203,12 @@ pub(crate) unsafe fn netlink_qdisc_attach(
 
     // find the RTM_NEWTFILTER reply and read the tcm_info and tcm_handle fields
     // which we'll need to detach
-    let tc_msg = match sock
+    let tc_msg: tcmsg = match sock
         .recv()?
         .iter()
         .find(|reply| reply.header.nlmsg_type == RTM_NEWTFILTER)
     {
-        Some(reply) => ptr::read_unaligned(reply.data.as_ptr() as *const tcmsg),
+        Some(reply) => unsafe { ptr::read_unaligned(reply.data.as_ptr().cast()) },
         None => {
             // if sock.recv() succeeds we should never get here unless there's a
             // bug in the kernel
@@ -229,7 +229,8 @@ pub(crate) unsafe fn netlink_qdisc_detach(
     handle: u32,
 ) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
-    let mut req = mem::zeroed::<TcRequest>();
+
+    let mut req = unsafe { mem::zeroed::<TcRequest>() };
 
     req.header = nlmsghdr {
         nlmsg_len: (mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>()) as u32,
@@ -258,7 +259,7 @@ pub(crate) unsafe fn netlink_find_filter_with_name(
     attach_type: TcAttachType,
     name: &CStr,
 ) -> Result<Vec<(u16, u32)>, NetlinkError> {
-    let mut req = mem::zeroed::<TcRequest>();
+    let mut req = unsafe { mem::zeroed::<TcRequest>() };
 
     let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>();
     req.header = nlmsghdr {
@@ -282,7 +283,7 @@ pub(crate) unsafe fn netlink_find_filter_with_name(
             continue;
         }
 
-        let tc_msg = ptr::read_unaligned(msg.data.as_ptr() as *const tcmsg);
+        let tc_msg: tcmsg = unsafe { ptr::read_unaligned(msg.data.as_ptr().cast()) };
         let priority = (tc_msg.tcm_info >> 16) as u16;
         let attrs = parse_attrs(&msg.data[mem::size_of::<tcmsg>()..])
             .map_err(|e| NetlinkError(NetlinkErrorInternal::NlAttrError(e)))?;
@@ -308,7 +309,7 @@ pub unsafe fn netlink_set_link_up(if_index: i32) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
     // Safety: Request is POD so this is safe
-    let mut req = mem::zeroed::<Request>();
+    let mut req = unsafe { mem::zeroed::<Request>() };
 
     let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<ifinfomsg>();
     req.header = nlmsghdr {
@@ -709,11 +710,11 @@ impl From<NlAttrError> for io::Error {
 unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
     let req: *mut _ = req;
     let req: *mut u8 = req.cast();
-    let attrs_addr = req.add(msg_len);
+    let attrs_addr = unsafe { req.add(msg_len) };
     let align_offset = attrs_addr.align_offset(NLMSG_ALIGNTO as usize);
-    let attrs_addr = attrs_addr.add(align_offset);
+    let attrs_addr = unsafe { attrs_addr.add(align_offset) };
     let len = mem::size_of::<T>() - msg_len - align_offset;
-    slice::from_raw_parts_mut(attrs_addr, len)
+    unsafe { slice::from_raw_parts_mut(attrs_addr, len) }
 }
 
 fn bytes_of<T>(val: &T) -> &[u8] {

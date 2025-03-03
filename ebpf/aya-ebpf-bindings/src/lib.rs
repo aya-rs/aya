@@ -3,7 +3,8 @@
     dead_code,
     non_camel_case_types,
     non_snake_case,
-    non_upper_case_globals
+    non_upper_case_globals,
+    unsafe_op_in_unsafe_fn
 )]
 #![deny(warnings)]
 #![no_std]
@@ -29,7 +30,7 @@ mod s390x;
 #[cfg(bpf_target_arch = "mips")]
 mod mips;
 
-mod gen {
+mod generated {
     #[cfg(bpf_target_arch = "aarch64")]
     pub use super::aarch64::*;
     #[cfg(bpf_target_arch = "arm")]
@@ -45,21 +46,21 @@ mod gen {
     #[cfg(bpf_target_arch = "x86_64")]
     pub use super::x86_64::*;
 }
-pub use gen::helpers;
+pub use generated::helpers;
 
 pub mod bindings {
-    pub use crate::gen::bindings::*;
+    pub use crate::generated::bindings::*;
 
-    pub const TC_ACT_OK: i32 = crate::gen::bindings::TC_ACT_OK as i32;
-    pub const TC_ACT_RECLASSIFY: i32 = crate::gen::bindings::TC_ACT_RECLASSIFY as i32;
-    pub const TC_ACT_SHOT: i32 = crate::gen::bindings::TC_ACT_SHOT as i32;
-    pub const TC_ACT_PIPE: i32 = crate::gen::bindings::TC_ACT_PIPE as i32;
-    pub const TC_ACT_STOLEN: i32 = crate::gen::bindings::TC_ACT_STOLEN as i32;
-    pub const TC_ACT_QUEUED: i32 = crate::gen::bindings::TC_ACT_QUEUED as i32;
-    pub const TC_ACT_REPEAT: i32 = crate::gen::bindings::TC_ACT_REPEAT as i32;
-    pub const TC_ACT_REDIRECT: i32 = crate::gen::bindings::TC_ACT_REDIRECT as i32;
-    pub const TC_ACT_TRAP: i32 = crate::gen::bindings::TC_ACT_TRAP as i32;
-    pub const TC_ACT_VALUE_MAX: i32 = crate::gen::bindings::TC_ACT_VALUE_MAX as i32;
+    pub const TC_ACT_OK: i32 = crate::generated::bindings::TC_ACT_OK as i32;
+    pub const TC_ACT_RECLASSIFY: i32 = crate::generated::bindings::TC_ACT_RECLASSIFY as i32;
+    pub const TC_ACT_SHOT: i32 = crate::generated::bindings::TC_ACT_SHOT as i32;
+    pub const TC_ACT_PIPE: i32 = crate::generated::bindings::TC_ACT_PIPE as i32;
+    pub const TC_ACT_STOLEN: i32 = crate::generated::bindings::TC_ACT_STOLEN as i32;
+    pub const TC_ACT_QUEUED: i32 = crate::generated::bindings::TC_ACT_QUEUED as i32;
+    pub const TC_ACT_REPEAT: i32 = crate::generated::bindings::TC_ACT_REPEAT as i32;
+    pub const TC_ACT_REDIRECT: i32 = crate::generated::bindings::TC_ACT_REDIRECT as i32;
+    pub const TC_ACT_TRAP: i32 = crate::generated::bindings::TC_ACT_TRAP as i32;
+    pub const TC_ACT_VALUE_MAX: i32 = crate::generated::bindings::TC_ACT_VALUE_MAX as i32;
     pub const TC_ACT_EXT_VAL_MASK: i32 = 268435455;
 
     #[repr(C)]

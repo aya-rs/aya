@@ -79,12 +79,12 @@ use std::{
 };
 
 use aya_obj::{
+    VerifierLog,
     btf::BtfError,
     generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
-    VerifierLog,
 };
 use info::impl_info;
-pub use info::{loaded_programs, ProgramInfo, ProgramType};
+pub use info::{ProgramInfo, ProgramType, loaded_programs};
 use libc::ENOSPC;
 use tc::SchedClassifierLink;
 use thiserror::Error;
@@ -120,17 +120,17 @@ pub use crate::programs::{
     xdp::{Xdp, XdpError, XdpFlags},
 };
 use crate::{
+    VerifierLogLevel,
     maps::MapError,
     pin::PinError,
     programs::{links::*, perf_attach::*},
     sys::{
-        bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
-        bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids,
-        retry_with_verifier_logs, EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget,
-        SyscallError,
+        EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
+        bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd, bpf_load_program,
+        bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids,
+        retry_with_verifier_logs,
     },
     util::KernelVersion,
-    VerifierLogLevel,
 };
 
 /// Error type returned when working with programs.

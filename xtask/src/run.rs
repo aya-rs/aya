@@ -1,7 +1,7 @@
 use std::{
     ffi::OsString,
     fmt::Write as _,
-    fs::{copy, create_dir_all, OpenOptions},
+    fs::{OpenOptions, copy, create_dir_all},
     io::{BufRead as _, BufReader, Write as _},
     path::PathBuf,
     process::{Child, ChildStdin, Command, Output, Stdio},
@@ -9,11 +9,11 @@ use std::{
     thread,
 };
 
-use anyhow::{anyhow, bail, Context as _, Result};
+use anyhow::{Context as _, Result, anyhow, bail};
 use base64::engine::Engine as _;
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
-use xtask::{Errors, AYA_BUILD_INTEGRATION_BPF};
+use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
 
 #[derive(Parser)]
 enum Environment {

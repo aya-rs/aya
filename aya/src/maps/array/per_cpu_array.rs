@@ -5,9 +5,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError, PerCpuValues},
-    sys::{bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu, SyscallError},
     Pod,
+    maps::{IterableMap, MapData, MapError, PerCpuValues, check_bounds, check_kv_size},
+    sys::{SyscallError, bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu},
 };
 
 /// A per-CPU fixed-size array.

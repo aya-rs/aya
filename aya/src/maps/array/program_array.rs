@@ -6,9 +6,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_bounds, check_kv_size, MapData, MapError, MapKeys},
+    maps::{MapData, MapError, MapKeys, check_bounds, check_kv_size},
     programs::ProgramFd,
-    sys::{bpf_map_delete_elem, bpf_map_update_elem, SyscallError},
+    sys::{SyscallError, bpf_map_delete_elem, bpf_map_update_elem},
 };
 
 /// An array of eBPF program file descriptors used as a jump table.

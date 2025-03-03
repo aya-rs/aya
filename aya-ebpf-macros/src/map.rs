@@ -23,8 +23,8 @@ impl Map {
         let name = &self.name;
         let item = &self.item;
         quote! {
-            #[link_section = #section_name]
-            #[export_name = #name]
+            #[unsafe(link_section = #section_name)]
+            #[unsafe(export_name = #name)]
             #item
         }
     }
@@ -47,8 +47,8 @@ mod tests {
         .unwrap();
         let expanded = map.expand();
         let expected = quote!(
-            #[link_section = "maps"]
-            #[export_name = "foo"]
+            #[unsafe(link_section = "maps")]
+            #[unsafe(export_name = "foo")]
             static BAR: HashMap<&'static str, u32> = HashMap::new();
         );
         assert_eq!(expected.to_string(), expanded.to_string());
@@ -65,8 +65,8 @@ mod tests {
         .unwrap();
         let expanded = map.expand();
         let expected = quote!(
-            #[link_section = "maps"]
-            #[export_name = "BAR"]
+            #[unsafe(link_section = "maps")]
+            #[unsafe(export_name = "BAR")]
             static BAR: HashMap<&'static str, u32> = HashMap::new();
         );
         assert_eq!(expected.to_string(), expanded.to_string());

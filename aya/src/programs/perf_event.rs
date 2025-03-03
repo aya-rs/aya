@@ -16,12 +16,12 @@ pub use aya_obj::generated::{
 
 use crate::{
     programs::{
+        FdLink, LinkError, ProgramData, ProgramError,
         links::define_link_wrapper,
         load_program, perf_attach,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
-        FdLink, LinkError, ProgramData, ProgramError,
     },
-    sys::{bpf_link_get_info_by_fd, perf_event_open, SyscallError},
+    sys::{SyscallError, bpf_link_get_info_by_fd, perf_event_open},
 };
 
 /// The type of perf event

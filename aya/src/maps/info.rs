@@ -10,11 +10,11 @@ use aya_obj::generated::{bpf_map_info, bpf_map_type};
 
 use super::{MapError, MapFd};
 use crate::{
+    FEATURES,
     sys::{
-        bpf_get_object, bpf_map_get_fd_by_id, bpf_map_get_info_by_fd, iter_map_ids, SyscallError,
+        SyscallError, bpf_get_object, bpf_map_get_fd_by_id, bpf_map_get_info_by_fd, iter_map_ids,
     },
     util::bytes_of_bpf_name,
-    FEATURES,
 };
 
 /// Provides Provides metadata information about a loaded eBPF map.
@@ -394,7 +394,7 @@ impl TryFrom<bpf_map_type> for MapType {
             __MAX_BPF_MAP_TYPE => {
                 return Err(MapError::InvalidMapType {
                     map_type: map_type as u32,
-                })
+                });
             }
         })
     }

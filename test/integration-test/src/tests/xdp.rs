@@ -1,9 +1,9 @@
 use std::{net::UdpSocket, num::NonZeroU32, time::Duration};
 
 use aya::{
+    Ebpf,
     maps::{Array, CpuMap, XskMap},
     programs::{Xdp, XdpFlags},
-    Ebpf,
 };
 use object::{Object, ObjectSection, ObjectSymbol, SymbolSection};
 use test_log::test;

@@ -6,9 +6,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_kv_size, IterableMap, MapData, MapError, MapIter, MapKeys},
-    sys::{bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
     Pod,
+    maps::{IterableMap, MapData, MapError, MapIter, MapKeys, check_kv_size},
+    sys::{SyscallError, bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
 /// A Longest Prefix Match Trie.
@@ -202,10 +202,10 @@ mod tests {
     use super::*;
     use crate::{
         maps::{
-            test_utils::{self, new_map},
             Map,
+            test_utils::{self, new_map},
         },
-        sys::{override_syscall, SysResult, Syscall},
+        sys::{SysResult, Syscall, override_syscall},
     };
 
     fn new_obj_map() -> aya_obj::Map {

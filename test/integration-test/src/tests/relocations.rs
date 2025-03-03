@@ -1,7 +1,7 @@
 use aya::{
+    Ebpf,
     programs::{UProbe, Xdp},
     util::KernelVersion,
-    Ebpf,
 };
 use test_log::test;
 
@@ -21,7 +21,9 @@ fn relocations() {
 fn text_64_64_reloc() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 13, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, support for bpf_for_each_map_elem was added in 5.13.0; see https://github.com/torvalds/linux/commit/69c087b");
+        eprintln!(
+            "skipping test on kernel {kernel_version:?}, support for bpf_for_each_map_elem was added in 5.13.0; see https://github.com/torvalds/linux/commit/69c087b"
+        );
         return;
     }
 
@@ -60,7 +62,7 @@ fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
     bpf
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub extern "C" fn trigger_relocations_program() {
     core::hint::black_box(trigger_relocations_program);

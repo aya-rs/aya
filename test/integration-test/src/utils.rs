@@ -8,7 +8,7 @@ use std::{
 
 use aya::netlink_set_link_up;
 use libc::if_nametoindex;
-use netns_rs::{get_from_current_thread, NetNs};
+use netns_rs::{NetNs, get_from_current_thread};
 
 pub struct NetNsGuard {
     name: String,

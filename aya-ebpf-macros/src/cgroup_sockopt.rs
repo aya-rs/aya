@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use proc_macro2::TokenStream;
 use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{spanned::Spanned as _, Ident, ItemFn};
+use syn::{Ident, ItemFn, spanned::Spanned as _};
 
 pub(crate) struct CgroupSockopt {
     item: ItemFn,
@@ -37,8 +37,8 @@ impl CgroupSockopt {
         let section_name: Cow<'_, _> = format!("cgroup/{attach_type}").into();
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sockopt) -> i32 {
                 return #fn_name(::aya_ebpf::programs::SockoptContext::new(ctx));
 
@@ -67,8 +67,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote!(
-            #[no_mangle]
-            #[link_section = "cgroup/getsockopt"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/getsockopt")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sockopt) -> i32 {
                 return foo(::aya_ebpf::programs::SockoptContext::new(ctx));
 
@@ -93,8 +93,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote!(
-            #[no_mangle]
-            #[link_section = "cgroup/setsockopt"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/setsockopt")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sockopt) -> i32 {
                 return foo(::aya_ebpf::programs::SockoptContext::new(ctx));
 

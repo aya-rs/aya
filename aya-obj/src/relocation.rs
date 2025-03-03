@@ -7,14 +7,14 @@ use log::debug;
 use object::{SectionIndex, SymbolKind};
 
 use crate::{
+    EbpfSectionKind,
     generated::{
-        bpf_insn, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
-        BPF_PSEUDO_MAP_VALUE,
+        BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
+        BPF_PSEUDO_MAP_VALUE, bpf_insn,
     },
     maps::Map,
     obj::{Function, Object},
     util::{HashMap, HashSet},
-    EbpfSectionKind,
 };
 
 #[cfg(feature = "std")]
@@ -67,7 +67,9 @@ pub enum RelocationError {
     },
 
     /// Unknown function
-    #[error("program at section {section_index} and address {address:#x} was not found while relocating")]
+    #[error(
+        "program at section {section_index} and address {address:#x} was not found while relocating"
+    )]
     UnknownProgram {
         /// The function section index
         section_index: usize,

@@ -5,11 +5,11 @@ description = "An eBPF library with a focus on developer experience and operabil
 keywords = ["bpf", "ebpf", "kernel", "linux"]
 readme = "README.md"
 documentation = "https://docs.rs/aya"
-rust-version = "1.80.0"
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
+rust-version.workspace = true
 edition.workspace = true
 
 [dependencies]

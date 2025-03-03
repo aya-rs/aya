@@ -7,27 +7,27 @@ use std::{
 };
 
 use aya_obj::generated::{
+    TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
     bpf_attach_type::{self, BPF_TCX_EGRESS, BPF_TCX_INGRESS},
     bpf_link_type,
     bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS,
-    TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
 };
 use thiserror::Error;
 
 use super::{FdLink, ProgramInfo};
 use crate::{
+    VerifierLogLevel,
     programs::{
-        define_link_wrapper, id_as_key, load_program, query, Link, LinkError, LinkOrder,
-        ProgramData, ProgramError,
+        Link, LinkError, LinkOrder, ProgramData, ProgramError, define_link_wrapper, id_as_key,
+        load_program, query,
     },
     sys::{
+        BpfLinkCreateArgs, LinkTarget, NetlinkError, ProgQueryTarget, SyscallError,
         bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, bpf_prog_get_fd_by_id,
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
-        netlink_qdisc_detach, BpfLinkCreateArgs, LinkTarget, NetlinkError, ProgQueryTarget,
-        SyscallError,
+        netlink_qdisc_detach,
     },
-    util::{ifindex_from_ifname, tc_handler_make, KernelVersion},
-    VerifierLogLevel,
+    util::{KernelVersion, ifindex_from_ifname, tc_handler_make},
 };
 
 /// Traffic control attach type.
@@ -103,7 +103,9 @@ pub enum TcError {
     #[error("the clsact qdisc is already attached")]
     AlreadyAttached,
     /// tcx links can only be attached to ingress or egress, custom attachment is not supported.
-    #[error("tcx links can only be attached to ingress or egress, custom attachment: {0} is not supported")]
+    #[error(
+        "tcx links can only be attached to ingress or egress, custom attachment: {0} is not supported"
+    )]
     InvalidTcxAttach(u32),
     /// operation not supported for programs loaded via tcx.
     #[error("operation not supported for programs loaded via tcx")]

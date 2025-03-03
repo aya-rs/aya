@@ -15,7 +15,7 @@ use thiserror::Error;
 
 use crate::{
     maps::MMap,
-    sys::{perf_event_ioctl, perf_event_open_bpf, PerfEventIoctlRequest, SyscallError},
+    sys::{PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open_bpf},
 };
 
 /// Perf buffer error.
@@ -270,7 +270,7 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
-    use crate::sys::{override_syscall, Syscall, TEST_MMAP_RET};
+    use crate::sys::{Syscall, TEST_MMAP_RET, override_syscall};
 
     #[repr(C)]
     #[derive(Debug)]

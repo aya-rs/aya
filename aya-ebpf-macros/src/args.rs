@@ -1,7 +1,7 @@
 use syn::{
+    Error, Ident, LitStr, Result, Token,
     parse::{Parse, ParseStream},
     punctuated::{Pair, Punctuated},
-    Error, Ident, LitStr, Result, Token,
 };
 
 pub(crate) struct NameValue {

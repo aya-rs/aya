@@ -54,10 +54,6 @@
     missing_docs,
     non_ascii_idents,
     noop_method_call,
-    rust_2021_incompatible_closure_captures,
-    rust_2021_incompatible_or_patterns,
-    rust_2021_prefixes_incompatible_syntax,
-    rust_2021_prelude_collisions,
     single_use_lifetimes,
     trivial_numeric_casts,
     unreachable_pub,
@@ -176,7 +172,7 @@ impl AsRawFd for MockableFd {
 
 impl FromRawFd for MockableFd {
     unsafe fn from_raw_fd(fd: RawFd) -> Self {
-        let fd = OwnedFd::from_raw_fd(fd);
+        let fd = unsafe { OwnedFd::from_raw_fd(fd) };
         Self::from_fd(fd)
     }
 }

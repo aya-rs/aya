@@ -6,13 +6,13 @@ use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCKOPT;
 pub use aya_obj::programs::CgroupSockoptAttachType;
 
 use crate::{
-    programs::{
-        define_link_wrapper, id_as_key, load_program, CgroupAttachMode, FdLink, Link,
-        ProgAttachLink, ProgramData, ProgramError,
-    },
-    sys::{bpf_link_create, LinkTarget, SyscallError},
-    util::KernelVersion,
     VerifierLogLevel,
+    programs::{
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
+        define_link_wrapper, id_as_key, load_program,
+    },
+    sys::{LinkTarget, SyscallError, bpf_link_create},
+    util::KernelVersion,
 };
 
 /// A program that can be used to get or set options on sockets.

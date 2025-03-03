@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{bindings::xdp_md, EbpfContext};
+use crate::{EbpfContext, bindings::xdp_md};
 
 pub struct XdpContext {
     pub ctx: *mut xdp_md,

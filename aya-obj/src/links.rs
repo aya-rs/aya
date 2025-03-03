@@ -1,8 +1,8 @@
 //! Link type bindings.
 
 use crate::{
-    generated::{bpf_attach_type, bpf_link_type},
     InvalidTypeBinding,
+    generated::{bpf_attach_type, bpf_link_type},
 };
 
 impl TryFrom<u32> for bpf_link_type {

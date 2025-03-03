@@ -2,11 +2,10 @@
 #![no_main]
 
 use aya_ebpf::{
-    helpers,
+    EbpfContext, helpers,
     macros::{map, uprobe},
     maps::RingBuf,
     programs::ProbeContext,
-    EbpfContext,
 };
 
 #[map]

@@ -39,8 +39,8 @@ impl CgroupSkb {
         };
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
                 return #fn_name(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
@@ -69,8 +69,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/skb"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/skb")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
                 return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
@@ -95,8 +95,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup_skb/egress"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup_skb/egress")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
                 return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
@@ -121,8 +121,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup_skb/ingress"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup_skb/ingress")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
                 return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
@@ -147,8 +147,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup_skb/egress"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup_skb/egress")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
                 return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
@@ -173,8 +173,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup_skb/egress"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup_skb/egress")]
             pub fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
                 return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
@@ -199,8 +199,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup_skb/egress"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup_skb/egress")]
             pub(crate) fn foo(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
                 return foo(::aya_ebpf::programs::SkBuffContext::new(ctx));
 

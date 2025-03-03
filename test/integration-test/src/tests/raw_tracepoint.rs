@@ -1,4 +1,4 @@
-use aya::{maps::Array, programs::RawTracePoint, Ebpf};
+use aya::{Ebpf, maps::Array, programs::RawTracePoint};
 use integration_common::raw_tracepoint::SysEnterEvent;
 
 fn get_event(bpf: &mut Ebpf) -> SysEnterEvent {

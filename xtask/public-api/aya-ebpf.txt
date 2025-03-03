@@ -3,7 +3,7 @@ pub use aya_ebpf::bindings
 pub use aya_ebpf::cty
 pub use aya_ebpf::macros
 pub mod aya_ebpf::helpers
-pub use aya_ebpf::helpers::gen
+pub use aya_ebpf::helpers::generated
 pub macro aya_ebpf::helpers::bpf_printk!
 #[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::helpers::PrintkArg(_)
 impl aya_ebpf::helpers::PrintkArg
@@ -2695,7 +2695,7 @@ impl<T> core::convert::From<T> for aya_ebpf::PtRegs
 pub fn aya_ebpf::PtRegs::from(t: T) -> T
 pub struct aya_ebpf::RawTracepointArgs
 impl aya_ebpf::RawTracepointArgs
-pub unsafe fn aya_ebpf::RawTracepointArgs::arg<T: aya_ebpf::args::FromRawTracepointArgs>(&self, n: usize) -> *const T
+pub unsafe fn aya_ebpf::RawTracepointArgs::arg<T: aya_ebpf::args::FromRawTracepointArgs>(&self, n: usize) -> T
 pub fn aya_ebpf::RawTracepointArgs::new(args: *mut aya_ebpf_bindings::x86_64::bindings::bpf_raw_tracepoint_args) -> Self
 impl core::marker::Freeze for aya_ebpf::RawTracepointArgs
 impl !core::marker::Send for aya_ebpf::RawTracepointArgs

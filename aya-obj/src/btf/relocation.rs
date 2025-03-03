@@ -11,16 +11,16 @@ use core::{mem, ops::Bound::Included, ptr};
 use object::SectionIndex;
 
 use crate::{
+    Function, Object,
     btf::{
-        fields_are_compatible, types_are_compatible, Array, Btf, BtfError, BtfMember, BtfType,
-        IntEncoding, Struct, Union, MAX_SPEC_LEN,
+        Array, Btf, BtfError, BtfMember, BtfType, IntEncoding, MAX_SPEC_LEN, Struct, Union,
+        fields_are_compatible, types_are_compatible,
     },
     generated::{
-        bpf_core_relo, bpf_core_relo_kind::*, bpf_insn, BPF_ALU, BPF_ALU64, BPF_B, BPF_CALL,
-        BPF_DW, BPF_H, BPF_JMP, BPF_K, BPF_LD, BPF_LDX, BPF_ST, BPF_STX, BPF_W, BTF_INT_SIGNED,
+        BPF_ALU, BPF_ALU64, BPF_B, BPF_CALL, BPF_DW, BPF_H, BPF_JMP, BPF_K, BPF_LD, BPF_LDX,
+        BPF_ST, BPF_STX, BPF_W, BTF_INT_SIGNED, bpf_core_relo, bpf_core_relo_kind::*, bpf_insn,
     },
     util::HashMap,
-    Function, Object,
 };
 
 /// The error type returned by [`Object::relocate_btf`].
@@ -58,7 +58,9 @@ enum RelocationError {
     },
 
     /// Invalid instruction index referenced by relocation
-    #[error("invalid instruction index #{index} referenced by relocation #{relocation_number}, the program contains {num_instructions} instructions")]
+    #[error(
+        "invalid instruction index #{index} referenced by relocation #{relocation_number}, the program contains {num_instructions} instructions"
+    )]
     InvalidInstructionIndex {
         /// The invalid instruction index
         index: usize,
@@ -69,7 +71,9 @@ enum RelocationError {
     },
 
     /// Multiple candidate target types found with different memory layouts
-    #[error("error relocating {type_name}, multiple candidate target types found with different memory layouts: {candidates:?}")]
+    #[error(
+        "error relocating {type_name}, multiple candidate target types found with different memory layouts: {candidates:?}"
+    )]
     ConflictingCandidates {
         /// The type name
         type_name: String,
@@ -127,7 +131,9 @@ enum RelocationError {
         error: Cow<'static, str>,
     },
 
-    #[error("applying relocation `{kind:?}` missing target BTF info for type `{type_id}` at instruction #{ins_index}")]
+    #[error(
+        "applying relocation `{kind:?}` missing target BTF info for type `{type_id}` at instruction #{ins_index}"
+    )]
     MissingTargetDefinition {
         kind: RelocationKind,
         type_id: u32,
@@ -250,7 +256,7 @@ impl Object {
                     return Err(BtfRelocationError {
                         section: section_name.to_string(),
                         error,
-                    })
+                    });
                 }
             }
         }
@@ -748,7 +754,7 @@ impl<'a> AccessSpec<'a> {
                         relocation_kind: format!("{:?}", relocation.kind),
                         type_kind: format!("{:?}", ty.kind()),
                         error: "enum relocation on non-enum type",
-                    })
+                    });
                 }
             },
 
@@ -1003,7 +1009,7 @@ impl ComputedRelocation {
                                     target.size,
                                 )
                                 .into(),
-                            })
+                            });
                         }
                     }
 
@@ -1017,7 +1023,7 @@ impl ComputedRelocation {
                                 relocation_number: rel.number,
                                 index: ins_index,
                                 error: format!("invalid target size {size}").into(),
-                            })
+                            });
                         }
                     } as u8;
                     ins.code = ins.code & 0xE0 | size | ins.code & 0x07;
@@ -1040,7 +1046,7 @@ impl ComputedRelocation {
                     relocation_number: rel.number,
                     index: ins_index,
                     error: format!("invalid instruction class {class:x}").into(),
-                })
+                });
             }
         };
 

@@ -10,10 +10,10 @@ use aya_obj::generated::bpf_devmap_val;
 
 use super::XdpMapError;
 use crate::{
-    maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
+    FEATURES, Pod,
+    maps::{IterableMap, MapData, MapError, check_bounds, check_kv_size},
     programs::ProgramFd,
-    sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
-    Pod, FEATURES,
+    sys::{SyscallError, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
 /// An array of network devices.

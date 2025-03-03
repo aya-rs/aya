@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{spanned::Spanned as _, ItemFn};
+use syn::{ItemFn, spanned::Spanned as _};
 
 pub(crate) struct SockOps {
     item: ItemFn,
@@ -26,8 +26,8 @@ impl SockOps {
         } = item;
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = "sockops"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "sockops")]
             #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sock_ops) -> u32 {
                 return #fn_name(::aya_ebpf::programs::SockOpsContext::new(ctx));
 
@@ -56,8 +56,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "sockops"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "sockops")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::bpf_sock_ops) -> u32 {
                 return prog(::aya_ebpf::programs::SockOpsContext::new(ctx));
 

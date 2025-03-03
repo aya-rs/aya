@@ -11,7 +11,7 @@ use std::{
 
 use crate::{
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys},
-    sys::{bpf_map_delete_elem, bpf_map_lookup_elem_ptr, SyscallError},
+    sys::{SyscallError, bpf_map_delete_elem, bpf_map_lookup_elem_ptr},
 };
 
 /// A hash map of kernel or user space stack traces.
