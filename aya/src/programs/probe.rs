@@ -118,7 +118,7 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let link = if KernelVersion::current().unwrap() < KernelVersion::new(4, 17, 0) {
+    let link = if !KernelVersion::at_least(4, 17, 0) {
         if cookie.is_some() {
             return Err(ProgramError::AttachCookieNotSupported);
         }

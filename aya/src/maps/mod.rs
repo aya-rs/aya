@@ -579,12 +579,8 @@ impl MapData {
             }
         };
 
-        #[cfg(not(test))]
-        let kernel_version = KernelVersion::current().unwrap();
-        #[cfg(test)]
-        let kernel_version = KernelVersion::new(0xff, 0xff, 0xff);
-        let fd = bpf_create_map(&c_name, &obj, btf_fd, kernel_version).map_err(|io_error| {
-            if kernel_version < KernelVersion::new(5, 11, 0) {
+        let fd = bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| {
+            if !KernelVersion::at_least(5, 11, 0) {
                 maybe_warn_rlimit();
             }
 
