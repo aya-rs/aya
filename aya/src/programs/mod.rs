@@ -662,13 +662,11 @@ fn load_program<T: Link>(
     let target_kernel_version =
         kernel_version.unwrap_or_else(|| KernelVersion::current().unwrap().code());
 
-    let prog_name = if let Some(name) = name {
-        let mut name = name.clone();
-        if name.len() > 15 {
-            name.truncate(15);
-        }
-        let prog_name = CString::new(name.clone()).map_err(|std::ffi::NulError { .. }| {
-            ProgramError::InvalidName { name: name.clone() }
+    let prog_name = if let Some(name) = name.as_deref() {
+        let prog_name = CString::new(name).map_err(|err @ std::ffi::NulError { .. }| {
+            let name = err.into_vec();
+            let name = unsafe { String::from_utf8_unchecked(name) };
+            ProgramError::InvalidName { name }
         })?;
         Some(prog_name)
     } else {
