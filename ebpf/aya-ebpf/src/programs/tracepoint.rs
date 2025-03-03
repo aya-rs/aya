@@ -11,6 +11,7 @@ impl TracePointContext {
         TracePointContext { ctx }
     }
 
+    #[expect(clippy::missing_safety_doc)]
     pub unsafe fn read_at<T>(&self, offset: usize) -> Result<T, i64> {
         bpf_probe_read(self.ctx.add(offset) as *const T)
     }

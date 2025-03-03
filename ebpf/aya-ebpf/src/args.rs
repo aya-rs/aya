@@ -18,13 +18,17 @@ use crate::{bindings::bpf_raw_tracepoint_args, cty::c_void, helpers::bpf_probe_r
 ///
 /// Users should not implement this trait.
 ///
-/// SAFETY: This trait is _only_ safe to implement on primitive types that can fit into
+/// # Safety
+///
+/// This trait is _only_ safe to implement on primitive types that can fit into
 /// a `u64`. For example, integers and raw pointers may be coerced from a BTF context.
 pub unsafe trait FromBtfArgument: Sized {
     /// Coerces a `T` from the `n`th argument from a BTF context where `n` starts
     /// at 0 and increases by 1 for each successive argument.
     ///
-    /// SAFETY: This function is deeply unsafe, as we are reading raw pointers into kernel
+    /// # Safety
+    ///
+    /// This function is deeply unsafe, as we are reading raw pointers into kernel
     /// memory. In particular, the value of `n` must not exceed the number of function
     /// arguments. Moreover, `ctx` must be a valid pointer to a BTF context, and `T` must
     /// be the right type for the given argument.
@@ -482,7 +486,7 @@ impl RawTracepointArgs {
 
     /// Returns the n-th argument of the raw tracepoint.
     ///
-    /// ## Safety
+    /// # Safety
     ///
     /// This method is unsafe because it performs raw pointer conversion and makes assumptions
     /// about the structure of the `bpf_raw_tracepoint_args` type. The tracepoint arguments are
@@ -508,10 +512,11 @@ impl RawTracepointArgs {
     }
 }
 
+#[expect(clippy::missing_safety_doc)]
 pub unsafe trait FromRawTracepointArgs: Sized {
     /// Returns the n-th argument of the raw tracepoint.
     ///
-    /// ## Safety
+    /// # Safety
     ///
     /// This method is unsafe because it performs raw pointer conversion and makes assumptions
     /// about the structure of the `bpf_raw_tracepoint_args` type. The tracepoint arguments are

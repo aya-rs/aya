@@ -13,6 +13,7 @@ impl RawTracePointContext {
         }
     }
 
+    #[expect(clippy::missing_safety_doc)]
     pub unsafe fn arg<T: FromRawTracepointArgs>(&self, n: usize) -> T {
         T::from_argument(&*self.ctx, n)
     }

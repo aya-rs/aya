@@ -70,6 +70,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
     /// Returns the number of elements in the array.
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
+    #[expect(clippy::len_without_is_empty)]
     pub fn len(&self) -> u32 {
         self.inner.borrow().obj.max_entries()
     }

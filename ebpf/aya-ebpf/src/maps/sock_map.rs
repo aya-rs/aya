@@ -49,6 +49,7 @@ impl SockMap {
         }
     }
 
+    #[expect(clippy::missing_safety_doc)]
     pub unsafe fn update(
         &self,
         mut index: u32,
@@ -68,6 +69,7 @@ impl SockMap {
         }
     }
 
+    #[expect(clippy::missing_safety_doc)]
     pub unsafe fn redirect_msg(&self, ctx: &SkMsgContext, index: u32, flags: u64) -> i64 {
         bpf_msg_redirect_map(
             ctx.as_ptr() as *mut _,
@@ -77,6 +79,7 @@ impl SockMap {
         )
     }
 
+    #[expect(clippy::missing_safety_doc)]
     pub unsafe fn redirect_skb(&self, ctx: &SkBuffContext, index: u32, flags: u64) -> i64 {
         bpf_sk_redirect_map(
             ctx.as_ptr() as *mut _,

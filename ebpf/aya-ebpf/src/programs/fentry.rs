@@ -31,6 +31,7 @@ impl FEntryContext {
     ///     Ok(0)
     /// }
     /// ```
+    #[expect(clippy::missing_safety_doc)]
     pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> T {
         T::from_argument(self.ctx as *const _, n)
     }

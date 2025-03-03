@@ -261,6 +261,7 @@ impl ProgramId {
     ///  
     /// This method is unsafe since it doesn't check that the given `id` is a
     /// valid program id.
+    #[expect(clippy::missing_safety_doc)]
     pub unsafe fn new(id: u32) -> Self {
         Self(id)
     }

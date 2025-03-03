@@ -39,6 +39,7 @@ use crate::{
 };
 
 /// Marker trait for types that can safely be converted to and from byte slices.
+#[expect(clippy::missing_safety_doc)]
 pub unsafe trait Pod: Copy + 'static {}
 
 macro_rules! unsafe_impl_pod {
