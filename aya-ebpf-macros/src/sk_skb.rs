@@ -5,7 +5,6 @@ use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{spanned::Spanned as _, ItemFn};
 
-#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Copy, Clone)]
 pub(crate) enum SkSkbKind {
     StreamVerdict,

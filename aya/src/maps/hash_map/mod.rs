@@ -7,7 +7,7 @@ use crate::{
     Pod,
 };
 
-#[allow(clippy::module_inception)]
+#[expect(clippy::module_inception)]
 mod hash_map;
 mod per_cpu_hash_map;
 

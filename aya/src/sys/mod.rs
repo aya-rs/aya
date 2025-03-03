@@ -147,7 +147,7 @@ fn syscall(call: Syscall<'_>) -> SysResult {
     }
 }
 
-#[cfg_attr(test, allow(unused_variables))]
+#[cfg_attr(test, expect(unused_variables))]
 pub(crate) unsafe fn mmap(
     addr: *mut c_void,
     len: usize,
@@ -169,7 +169,7 @@ pub(crate) unsafe fn mmap(
     }
 }
 
-#[cfg_attr(test, allow(unused_variables))]
+#[cfg_attr(test, expect(unused_variables))]
 pub(crate) unsafe fn munmap(addr: *mut c_void, len: usize) -> c_int {
     #[cfg(not(test))]
     return libc::munmap(addr, len);

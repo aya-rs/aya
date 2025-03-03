@@ -53,7 +53,6 @@ pub enum SamplePolicy {
 
 /// The scope of a PerfEvent
 #[derive(Debug, Clone)]
-#[allow(clippy::enum_variant_names)]
 pub enum PerfEventScope {
     /// Calling process, any cpu
     CallingProcessAnyCpu,
