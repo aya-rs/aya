@@ -35,8 +35,8 @@ impl RawTracePoint {
         };
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                 let _ = #fn_name(::aya_ebpf::programs::RawTracePointContext::new(ctx));
                 return 0;
@@ -66,8 +66,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "raw_tp/sys_enter"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "raw_tp/sys_enter")]
             fn prog(ctx: *mut ::core::ffi::c_void) -> u32 {
                 let _ = prog(::aya_ebpf::programs::RawTracePointContext::new(ctx));
                 return 0;

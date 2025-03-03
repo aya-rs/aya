@@ -10,14 +10,13 @@ use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE};
 use thiserror::Error;
 
 use crate::{
+    VerifierLogLevel,
     programs::{
-        define_link_wrapper, load_program,
+        FdLink, LinkError, ProgramData, ProgramError, define_link_wrapper, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
-        probe::{attach, ProbeKind},
-        FdLink, LinkError, ProgramData, ProgramError,
+        probe::{ProbeKind, attach},
     },
     sys::bpf_link_get_info_by_fd,
-    VerifierLogLevel,
 };
 
 /// A kernel probe.

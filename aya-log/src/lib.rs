@@ -60,19 +60,19 @@ use std::{
 const MAP_NAME: &str = "AYA_LOGS";
 
 use aya::{
-    maps::{
-        perf::{AsyncPerfEventArray, Events, PerfBufferError},
-        Map, MapData, MapError, MapInfo,
-    },
-    programs::{loaded_programs, ProgramError},
-    util::online_cpus,
     Ebpf, Pod,
+    maps::{
+        Map, MapData, MapError, MapInfo,
+        perf::{AsyncPerfEventArray, Events, PerfBufferError},
+    },
+    programs::{ProgramError, loaded_programs},
+    util::online_cpus,
 };
 use aya_log_common::{
-    Argument, DisplayHint, Level, LogValueLength, RecordField, LOG_BUF_CAPACITY, LOG_FIELDS,
+    Argument, DisplayHint, LOG_BUF_CAPACITY, LOG_FIELDS, Level, LogValueLength, RecordField,
 };
 use bytes::BytesMut;
-use log::{error, Log, Record};
+use log::{Log, Record, error};
 use thiserror::Error;
 
 #[expect(dead_code)] // TODO(https://github.com/rust-lang/rust/issues/120770): Remove when false positive is fixed.
@@ -736,8 +736,8 @@ fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
 mod test {
     use std::net::IpAddr;
 
-    use aya_log_common::{write_record_header, WriteToBuf};
-    use log::{logger, Level};
+    use aya_log_common::{WriteToBuf, write_record_header};
+    use log::{Level, logger};
 
     use super::*;
 

@@ -19,7 +19,7 @@ pub use aya_ebpf_bindings::bindings;
 
 mod args;
 pub use args::{PtRegs, RawTracepointArgs};
-#[expect(clippy::missing_safety_doc)]
+#[expect(clippy::missing_safety_doc, unsafe_op_in_unsafe_fn)]
 pub mod helpers;
 pub mod maps;
 pub mod programs;
@@ -58,8 +58,8 @@ pub trait EbpfContext {
     }
 }
 
-#[no_mangle]
-#[expect(clippy::missing_safety_doc)]
+#[unsafe(no_mangle)]
+#[expect(clippy::missing_safety_doc, unsafe_op_in_unsafe_fn)]
 pub unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
     #[expect(clippy::cast_sign_loss)]
     let b = c as u8;
@@ -68,14 +68,14 @@ pub unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
     }
 }
 
-#[no_mangle]
-#[expect(clippy::missing_safety_doc)]
+#[unsafe(no_mangle)]
+#[expect(clippy::missing_safety_doc, unsafe_op_in_unsafe_fn)]
 pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *mut u8, n: usize) {
     copy_forward(dest, src, n);
 }
 
-#[no_mangle]
-#[expect(clippy::missing_safety_doc)]
+#[unsafe(no_mangle)]
+#[expect(clippy::missing_safety_doc, unsafe_op_in_unsafe_fn)]
 pub unsafe extern "C" fn memmove(dest: *mut u8, src: *mut u8, n: usize) {
     let delta = (dest as usize).wrapping_sub(src as usize);
     if delta >= n {
@@ -88,6 +88,7 @@ pub unsafe extern "C" fn memmove(dest: *mut u8, src: *mut u8, n: usize) {
 }
 
 #[inline(always)]
+#[expect(unsafe_op_in_unsafe_fn)]
 unsafe fn copy_forward(dest: *mut u8, src: *mut u8, n: usize) {
     for i in 0..n {
         *dest.add(i) = *src.add(i);
@@ -95,6 +96,7 @@ unsafe fn copy_forward(dest: *mut u8, src: *mut u8, n: usize) {
 }
 
 #[inline(always)]
+#[expect(unsafe_op_in_unsafe_fn)]
 unsafe fn copy_backward(dest: *mut u8, src: *mut u8, n: usize) {
     for i in (0..n).rev() {
         *dest.add(i) = *src.add(i);

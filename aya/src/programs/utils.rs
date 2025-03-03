@@ -11,7 +11,7 @@ use std::{
 
 use crate::{
     programs::{FdLink, Link, ProgramData, ProgramError},
-    sys::{bpf_raw_tracepoint_open, SyscallError},
+    sys::{SyscallError, bpf_raw_tracepoint_open},
 };
 
 /// Attaches the program to a raw tracepoint.

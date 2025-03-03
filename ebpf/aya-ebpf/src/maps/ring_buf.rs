@@ -155,11 +155,7 @@ impl RingBuf {
                 flags,
             )
         };
-        if ret < 0 {
-            Err(ret)
-        } else {
-            Ok(())
-        }
+        if ret < 0 { Err(ret) } else { Ok(()) }
     }
 
     /// Query various information about the ring buffer.

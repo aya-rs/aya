@@ -1,19 +1,18 @@
 use std::{
-    ffi::{c_int, CString, OsStr},
+    ffi::{CString, OsStr, c_int},
     io, mem,
     os::fd::{BorrowedFd, FromRawFd as _},
 };
 
 use aya_obj::generated::{
-    perf_event_attr,
+    PERF_FLAG_FD_CLOEXEC, perf_event_attr,
     perf_event_sample_format::PERF_SAMPLE_RAW,
     perf_sw_ids::PERF_COUNT_SW_BPF_OUTPUT,
     perf_type_id::{PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT},
-    PERF_FLAG_FD_CLOEXEC,
 };
 use libc::pid_t;
 
-use super::{syscall, PerfEventIoctlRequest, Syscall};
+use super::{PerfEventIoctlRequest, Syscall, syscall};
 
 #[expect(clippy::too_many_arguments)]
 pub(crate) fn perf_event_open(

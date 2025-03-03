@@ -6,13 +6,13 @@ use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK;
 pub use aya_obj::programs::CgroupSockAttachType;
 
 use crate::{
-    programs::{
-        define_link_wrapper, id_as_key, load_program, CgroupAttachMode, FdLink, Link,
-        ProgAttachLink, ProgramData, ProgramError,
-    },
-    sys::{bpf_link_create, LinkTarget, SyscallError},
-    util::KernelVersion,
     VerifierLogLevel,
+    programs::{
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
+        define_link_wrapper, id_as_key, load_program,
+    },
+    sys::{LinkTarget, SyscallError, bpf_link_create},
+    util::KernelVersion,
 };
 
 /// A program that is called on socket creation, bind and release.

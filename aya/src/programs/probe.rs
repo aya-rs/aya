@@ -13,11 +13,11 @@ use libc::pid_t;
 
 use crate::{
     programs::{
-        kprobe::KProbeError, perf_attach, perf_attach::PerfLinkInner, perf_attach_debugfs,
-        trace_point::read_sys_fs_trace_point_id, uprobe::UProbeError, utils::find_tracefs_path,
-        Link, ProgramData, ProgramError,
+        Link, ProgramData, ProgramError, kprobe::KProbeError, perf_attach,
+        perf_attach::PerfLinkInner, perf_attach_debugfs, trace_point::read_sys_fs_trace_point_id,
+        uprobe::UProbeError, utils::find_tracefs_path,
     },
-    sys::{perf_event_open_probe, perf_event_open_trace_point, SyscallError},
+    sys::{SyscallError, perf_event_open_probe, perf_event_open_trace_point},
     util::KernelVersion,
 };
 

@@ -1,4 +1,4 @@
-use aya::{maps::ring_buf::RingBuf, programs::UProbe, EbpfLoader};
+use aya::{EbpfLoader, maps::ring_buf::RingBuf, programs::UProbe};
 use test_log::test;
 
 #[test]
@@ -50,13 +50,13 @@ fn test_uprobe_cookie() {
     assert_eq!(seen, EXP);
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub extern "C" fn uprobe_cookie_trigger_ebpf_program_a(arg: u64) {
     std::hint::black_box(arg);
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub extern "C" fn uprobe_cookie_trigger_ebpf_program_b(arg: u32) {
     std::hint::black_box(arg);

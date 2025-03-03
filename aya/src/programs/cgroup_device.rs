@@ -8,10 +8,10 @@ use aya_obj::generated::{
 
 use crate::{
     programs::{
-        bpf_prog_get_fd_by_id, define_link_wrapper, id_as_key, load_program, query,
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramFd,
+        bpf_prog_get_fd_by_id, define_link_wrapper, id_as_key, load_program, query,
     },
-    sys::{bpf_link_create, LinkTarget, ProgQueryTarget, SyscallError},
+    sys::{LinkTarget, ProgQueryTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
 };
 

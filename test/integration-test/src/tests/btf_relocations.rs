@@ -1,4 +1,4 @@
-use aya::{maps::Array, programs::UProbe, util::KernelVersion, Btf, EbpfLoader, Endianness};
+use aya::{Btf, EbpfLoader, Endianness, maps::Array, programs::UProbe, util::KernelVersion};
 use test_case::test_case;
 
 #[test_case("enum_signed_32", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7AAAAAAAi32 as u64)]
@@ -32,7 +32,9 @@ fn relocation_tests(
     if let Some((required_kernel_version, commit)) = required_kernel_version {
         let current_kernel_version = KernelVersion::current().unwrap();
         if current_kernel_version < required_kernel_version {
-            eprintln!("skipping test on kernel {current_kernel_version:?}, support for {program} was added in {required_kernel_version:?}; see {commit}");
+            eprintln!(
+                "skipping test on kernel {current_kernel_version:?}, support for {program} was added in {required_kernel_version:?}; see {commit}"
+            );
             return;
         }
     }
@@ -62,7 +64,7 @@ fn relocation_tests(
     assert_eq!(output_map.get(&key, 0).unwrap(), expected)
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub extern "C" fn trigger_btf_relocations_program() {
     core::hint::black_box(trigger_btf_relocations_program);

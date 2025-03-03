@@ -1,6 +1,6 @@
 use aya_ebpf_cty::{c_long, c_void};
 
-use crate::{bindings::__sk_buff, programs::sk_buff::SkBuff, EbpfContext};
+use crate::{EbpfContext, bindings::__sk_buff, programs::sk_buff::SkBuff};
 
 pub struct TcContext {
     pub skb: SkBuff,
@@ -65,6 +65,7 @@ impl TcContext {
     /// Read into a `PerCpuArray`.
     ///
     /// ```no_run
+    /// # #![expect(static_mut_refs)]
     /// use core::mem;
     ///
     /// use aya_ebpf::{bindings::TC_ACT_PIPE, macros::map, maps::PerCpuArray, programs::TcContext};

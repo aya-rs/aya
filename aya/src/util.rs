@@ -13,7 +13,7 @@ use std::{
 };
 
 use aya_obj::generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK};
-use libc::{if_nametoindex, sysconf, uname, utsname, _SC_PAGESIZE};
+use libc::{_SC_PAGESIZE, if_nametoindex, sysconf, uname, utsname};
 
 use crate::Pod;
 
@@ -378,8 +378,8 @@ pub(crate) fn page_size() -> usize {
 
 // bytes_of converts a <T> to a byte slice
 pub(crate) unsafe fn bytes_of<T: Pod>(val: &T) -> &[u8] {
-    let size = mem::size_of::<T>();
-    slice::from_raw_parts(slice::from_ref(val).as_ptr().cast(), size)
+    let ptr: *const _ = val;
+    unsafe { slice::from_raw_parts(ptr.cast(), mem::size_of_val(val)) }
 }
 
 pub(crate) fn bytes_of_slice<T: Pod>(val: &[T]) -> &[u8] {

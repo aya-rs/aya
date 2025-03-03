@@ -6,9 +6,9 @@ use std::{
     process::{Child, Command, Output, Stdio},
 };
 
-use anyhow::{anyhow, Context as _, Ok, Result};
+use anyhow::{Context as _, Ok, Result, anyhow};
 use aya_build::cargo_metadata::{Metadata, MetadataCommand, Package, Target, TargetKind};
-use xtask::{exec, AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR};
+use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec};
 
 /// This file, along with the xtask crate, allows analysis tools such as `cargo check`, `cargo
 /// clippy`, and even `cargo build` to work as users expect. Prior to this file's existence, this

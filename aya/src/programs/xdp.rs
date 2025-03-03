@@ -9,8 +9,8 @@ use std::{
 
 use aya_obj::{
     generated::{
-        bpf_link_type, bpf_prog_type, XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE,
-        XDP_FLAGS_SKB_MODE, XDP_FLAGS_UPDATE_IF_NOEXIST,
+        XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE,
+        XDP_FLAGS_UPDATE_IF_NOEXIST, bpf_link_type, bpf_prog_type,
     },
     programs::XdpAttachType,
 };
@@ -18,16 +18,16 @@ use libc::if_nametoindex;
 use thiserror::Error;
 
 use crate::{
+    VerifierLogLevel,
     programs::{
-        define_link_wrapper, id_as_key, load_program, FdLink, Link, LinkError, ProgramData,
-        ProgramError,
+        FdLink, Link, LinkError, ProgramData, ProgramError, define_link_wrapper, id_as_key,
+        load_program,
     },
     sys::{
-        bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, netlink_set_xdp_fd, LinkTarget,
-        NetlinkError, SyscallError,
+        LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_get_info_by_fd,
+        bpf_link_update, netlink_set_xdp_fd,
     },
     util::KernelVersion,
-    VerifierLogLevel,
 };
 
 /// An error that occurred while working with an XDP program.

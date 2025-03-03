@@ -39,7 +39,8 @@ unsafe impl<T> FromBtfArgument for *const T {
     unsafe fn from_argument(ctx: *const c_void, n: usize) -> *const T {
         // BTF arguments are exposed as an array of `usize` where `usize` can
         // either be treated as a pointer or a primitive type
-        *(ctx as *const usize).add(n) as _
+        let ctx: *const usize = ctx.cast();
+        (unsafe { *ctx.add(n) }) as _
     }
 }
 
@@ -50,7 +51,8 @@ macro_rules! unsafe_impl_from_btf_argument {
             unsafe fn from_argument(ctx: *const c_void, n: usize) -> Self {
                 // BTF arguments are exposed as an array of `usize` where `usize` can
                 // either be treated as a pointer or a primitive type
-                *(ctx as *const usize).add(n) as _
+                let ctx: *const usize = ctx.cast();
+                (unsafe { *ctx.add(n) }) as _
             }
         }
     };
@@ -507,8 +509,8 @@ impl RawTracepointArgs {
     ///
     /// The caller is responsible for ensuring they have accurate knowledge of the arguments
     /// and their respective types for the accessed tracepoint context.
-    pub unsafe fn arg<T: FromRawTracepointArgs>(&self, n: usize) -> *const T {
-        &T::from_argument(&*self.args, n)
+    pub unsafe fn arg<T: FromRawTracepointArgs>(&self, n: usize) -> T {
+        unsafe { T::from_argument(&*self.args, n) }
     }
 }
 
@@ -554,7 +556,7 @@ unsafe impl<T> FromRawTracepointArgs for *const T {
         // We don't know how many arguments are there for the given tracepoint,
         // so we just assume that the slice has at least n elements. The whole
         // assumntion and implementation is unsafe.
-        ctx.args.as_slice(n + 1)[n] as *const _
+        (unsafe { ctx.args.as_slice(n + 1) })[n] as _
     }
 }
 
@@ -562,7 +564,7 @@ macro_rules! unsafe_impl_from_raw_tracepoint_args {
     ($type:ident) => {
         unsafe impl FromRawTracepointArgs for $type {
             unsafe fn from_argument(ctx: &bpf_raw_tracepoint_args, n: usize) -> Self {
-                ctx.args.as_slice(n + 1)[n] as _
+                (unsafe { ctx.args.as_slice(n + 1) })[n] as _
             }
         }
     };

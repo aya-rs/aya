@@ -1,11 +1,11 @@
 use aya_log_common::DisplayHint;
-use aya_log_parser::{parse, Fragment};
+use aya_log_parser::{Fragment, parse};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{
+    Error, Expr, LitStr, Result, Token,
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
-    Error, Expr, LitStr, Result, Token,
 };
 
 pub(crate) struct LogArgs {

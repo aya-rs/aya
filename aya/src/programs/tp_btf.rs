@@ -6,8 +6,8 @@ use aya_obj::{
 };
 
 use crate::programs::{
-    define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId, ProgramData,
-    ProgramError,
+    FdLink, FdLinkId, ProgramData, ProgramError, define_link_wrapper, load_program,
+    utils::attach_raw_tracepoint,
 };
 
 /// Marks a function as a [BTF-enabled raw tracepoint][1] eBPF program that can be attached at

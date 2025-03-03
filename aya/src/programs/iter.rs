@@ -14,10 +14,10 @@ use aya_obj::{
 
 use crate::{
     programs::{
-        define_link_wrapper, load_program, FdLink, LinkError, PerfLinkIdInner, PerfLinkInner,
-        ProgramData, ProgramError,
+        FdLink, LinkError, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError,
+        define_link_wrapper, load_program,
     },
-    sys::{bpf_create_iter, bpf_link_create, bpf_link_get_info_by_fd, LinkTarget, SyscallError},
+    sys::{LinkTarget, SyscallError, bpf_create_iter, bpf_link_create, bpf_link_get_info_by_fd},
 };
 
 /// A BPF iterator which allows to dump data from the kernel-space into the

@@ -312,11 +312,11 @@ impl ProducerData {
     }
 
     fn next<'a>(&'a mut self, consumer: &'a mut ConsumerPos) -> Option<RingBufItem<'a>> {
-        let Self {
+        let &mut Self {
             ref mmap,
-            data_offset,
-            pos_cache,
-            mask,
+            ref mut data_offset,
+            ref mut pos_cache,
+            ref mut mask,
         } = self;
         let pos = unsafe { mmap.ptr.cast().as_ref() };
         let mmap_data = mmap.as_ref();

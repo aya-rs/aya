@@ -4,7 +4,7 @@
 use core::mem;
 
 use aya_ebpf::{
-    bindings::{xdp_action, BPF_F_NO_PREALLOC},
+    bindings::{BPF_F_NO_PREALLOC, xdp_action},
     macros::{map, xdp},
     maps::HashMap,
     programs::XdpContext,

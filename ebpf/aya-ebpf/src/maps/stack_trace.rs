@@ -1,10 +1,10 @@
 use core::{cell::UnsafeCell, mem};
 
 use crate::{
+    EbpfContext,
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_STACK_TRACE},
     helpers::bpf_get_stackid,
     maps::PinningType,
-    EbpfContext,
 };
 
 #[repr(transparent)]
@@ -47,11 +47,7 @@ impl StackTrace {
 
     #[expect(clippy::missing_safety_doc)]
     pub unsafe fn get_stackid<C: EbpfContext>(&self, ctx: &C, flags: u64) -> Result<i64, i64> {
-        let ret = bpf_get_stackid(ctx.as_ptr(), self.def.get() as *mut _, flags);
-        if ret < 0 {
-            Err(ret)
-        } else {
-            Ok(ret)
-        }
+        let ret = unsafe { bpf_get_stackid(ctx.as_ptr(), self.def.get().cast(), flags) };
+        if ret < 0 { Err(ret) } else { Ok(ret) }
     }
 }

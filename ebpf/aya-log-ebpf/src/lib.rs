@@ -4,7 +4,7 @@
 #[cfg(target_arch = "bpf")]
 use aya_ebpf::macros::map;
 use aya_ebpf::maps::{PerCpuArray, PerfEventByteArray};
-pub use aya_log_common::{write_record_header, Level, WriteToBuf, LOG_BUF_CAPACITY};
+pub use aya_log_common::{LOG_BUF_CAPACITY, Level, WriteToBuf, write_record_header};
 pub use aya_log_ebpf_macros::{debug, error, info, log, trace, warn};
 
 #[doc(hidden)]
@@ -32,8 +32,8 @@ pub static mut AYA_LOGS: PerfEventByteArray = PerfEventByteArray::new(0);
 #[doc(hidden)]
 pub mod macro_support {
     pub use aya_log_common::{
-        DefaultFormatter, DisplayHint, IpFormatter, Level, LowerHexFormatter, LowerMacFormatter,
-        UpperHexFormatter, UpperMacFormatter, LOG_BUF_CAPACITY,
+        DefaultFormatter, DisplayHint, IpFormatter, LOG_BUF_CAPACITY, Level, LowerHexFormatter,
+        LowerMacFormatter, UpperHexFormatter, UpperMacFormatter,
     };
     pub use aya_log_ebpf_macros::log;
 }

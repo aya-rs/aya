@@ -7,16 +7,15 @@ use std::{
 use aya_obj::generated::bpf_attach_type::BPF_PERF_EVENT;
 
 use crate::{
+    FEATURES,
     programs::{
-        id_as_key,
-        probe::{detach_debug_fs, ProbeEvent},
-        FdLink, Link, ProgramError,
+        FdLink, Link, ProgramError, id_as_key,
+        probe::{ProbeEvent, detach_debug_fs},
     },
     sys::{
-        bpf_link_create, is_bpf_cookie_supported, perf_event_ioctl, BpfLinkCreateArgs, LinkTarget,
-        PerfEventIoctlRequest, SyscallError,
+        BpfLinkCreateArgs, LinkTarget, PerfEventIoctlRequest, SyscallError, bpf_link_create,
+        is_bpf_cookie_supported, perf_event_ioctl,
     },
-    FEATURES,
 };
 
 #[derive(Debug, Hash, Eq, PartialEq)]

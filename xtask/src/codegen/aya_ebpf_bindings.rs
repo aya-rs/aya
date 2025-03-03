@@ -9,12 +9,12 @@ use anyhow::{Context as _, Result};
 use aya_tool::{bindgen, write_to_file_fmt};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::{parse_str, Item};
+use syn::{Item, parse_str};
 
 use crate::{
     codegen::{
-        helpers::{expand_helpers, extract_helpers},
         Architecture, SysrootOptions,
+        helpers::{expand_helpers, extract_helpers},
     },
     exec,
 };

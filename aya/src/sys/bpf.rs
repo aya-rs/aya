@@ -1,6 +1,6 @@
 use std::{
     cmp,
-    ffi::{c_char, c_long, CStr, CString},
+    ffi::{CStr, CString, c_char, c_long},
     io, iter,
     mem::{self, MaybeUninit},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, RawFd},
@@ -8,28 +8,28 @@ use std::{
 
 use assert_matches::assert_matches;
 use aya_obj::{
+    EbpfSectionKind, VerifierLog,
     btf::{
         BtfEnum64, BtfParam, BtfType, DataSec, DataSecEntry, DeclTag, Enum64, Float, Func,
         FuncLinkage, FuncProto, FuncSecInfo, Int, IntEncoding, LineSecInfo, Ptr, TypeTag, Var,
         VarLinkage,
     },
     generated::{
-        bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_func_id::*, bpf_insn, bpf_link_info,
-        bpf_map_info, bpf_map_type, bpf_prog_info, bpf_prog_type, bpf_stats_type, BPF_ALU64,
-        BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_MEM,
-        BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_SUB, BPF_X,
+        BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_IMM, BPF_JMP, BPF_K, BPF_LD,
+        BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_SUB, BPF_X, bpf_attach_type, bpf_attr,
+        bpf_btf_info, bpf_cmd, bpf_func_id::*, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type,
+        bpf_prog_info, bpf_prog_type, bpf_stats_type,
     },
-    maps::{bpf_map_def, LegacyMap},
-    EbpfSectionKind, VerifierLog,
+    maps::{LegacyMap, bpf_map_def},
 };
 use libc::{ENOENT, ENOSPC};
 
 use crate::{
+    Btf, FEATURES, Pod, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
     programs::links::LinkRef,
-    sys::{syscall, Syscall, SyscallError},
+    sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
-    Btf, Pod, VerifierLogLevel, FEATURES,
 };
 
 pub(crate) fn bpf_create_iter(link_fd: BorrowedFd<'_>) -> io::Result<crate::MockableFd> {
@@ -691,7 +691,7 @@ unsafe fn fd_sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<crate::Moc
             format!("{cmd:?}: invalid fd returned: {fd}"),
         )
     })?;
-    Ok(crate::MockableFd::from_raw_fd(fd))
+    Ok(unsafe { crate::MockableFd::from_raw_fd(fd) })
 }
 
 pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<crate::MockableFd, SyscallError> {

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use proc_macro2::TokenStream;
 use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{spanned::Spanned as _, ItemFn};
+use syn::{ItemFn, spanned::Spanned as _};
 
 use crate::args::{err_on_unknown_args, pop_bool_arg, pop_string_arg};
 
@@ -101,8 +101,8 @@ impl UProbe {
         };
         let fn_name = &sig.ident;
         Ok(quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                 let _ = #fn_name(::aya_ebpf::programs::#probe_type::new(ctx));
                 return 0;
@@ -134,8 +134,8 @@ mod tests {
         assert_eq!(
             uprobe.expand().unwrap().to_string(),
             quote! {
-                #[no_mangle]
-                #[link_section = "uprobe"]
+                #[unsafe(no_mangle)]
+                #[unsafe(link_section = "uprobe")]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                     let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
@@ -164,8 +164,8 @@ mod tests {
         assert_eq!(
             uprobe.expand().unwrap().to_string(),
             quote! {
-                #[no_mangle]
-                #[link_section = "uprobe.s"]
+                #[unsafe(no_mangle)]
+                #[unsafe(link_section = "uprobe.s")]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                     let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
@@ -197,8 +197,8 @@ mod tests {
         assert_eq!(
             uprobe.expand().unwrap().to_string(),
             quote! {
-                #[no_mangle]
-                #[link_section = "uprobe/self/proc/exe:trigger_uprobe"]
+                #[unsafe(no_mangle)]
+                #[unsafe(link_section = "uprobe/self/proc/exe:trigger_uprobe")]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                     let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
@@ -229,8 +229,8 @@ mod tests {
         assert_eq!(
             uprobe.expand().unwrap().to_string(),
             quote! {
-                #[no_mangle]
-                #[link_section = "uprobe/self/proc/exe:foo+123"]
+                #[unsafe(no_mangle)]
+                #[unsafe(link_section = "uprobe/self/proc/exe:foo+123")]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                     let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
                     return 0;
@@ -259,8 +259,8 @@ mod tests {
         assert_eq!(
             uprobe.expand().unwrap().to_string(),
             quote! {
-                #[no_mangle]
-                #[link_section = "uretprobe"]
+                #[unsafe(no_mangle)]
+                #[unsafe(link_section = "uretprobe")]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                     let _ = foo(::aya_ebpf::programs::RetProbeContext::new(ctx));
                     return 0;

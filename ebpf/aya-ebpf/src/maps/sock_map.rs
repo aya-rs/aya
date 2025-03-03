@@ -3,6 +3,7 @@ use core::{cell::UnsafeCell, mem};
 use aya_ebpf_cty::c_void;
 
 use crate::{
+    EbpfContext,
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKMAP, bpf_sock_ops},
     helpers::{
         bpf_map_lookup_elem, bpf_msg_redirect_map, bpf_sk_assign, bpf_sk_redirect_map,
@@ -10,7 +11,6 @@ use crate::{
     },
     maps::PinningType,
     programs::{SkBuffContext, SkLookupContext, SkMsgContext},
-    EbpfContext,
 };
 
 #[repr(transparent)]
@@ -56,37 +56,20 @@ impl SockMap {
         sk_ops: *mut bpf_sock_ops,
         flags: u64,
     ) -> Result<(), i64> {
-        let ret = bpf_sock_map_update(
-            sk_ops,
-            self.def.get() as *mut _,
-            &mut index as *mut _ as *mut c_void,
-            flags,
-        );
-        if ret == 0 {
-            Ok(())
-        } else {
-            Err(ret)
-        }
+        let index: *mut _ = &mut index;
+        let ret =
+            unsafe { bpf_sock_map_update(sk_ops, self.def.get().cast(), index.cast(), flags) };
+        if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     #[expect(clippy::missing_safety_doc)]
     pub unsafe fn redirect_msg(&self, ctx: &SkMsgContext, index: u32, flags: u64) -> i64 {
-        bpf_msg_redirect_map(
-            ctx.as_ptr() as *mut _,
-            self.def.get() as *mut _,
-            index,
-            flags,
-        )
+        unsafe { bpf_msg_redirect_map(ctx.as_ptr().cast(), self.def.get().cast(), index, flags) }
     }
 
     #[expect(clippy::missing_safety_doc)]
     pub unsafe fn redirect_skb(&self, ctx: &SkBuffContext, index: u32, flags: u64) -> i64 {
-        bpf_sk_redirect_map(
-            ctx.as_ptr() as *mut _,
-            self.def.get() as *mut _,
-            index,
-            flags,
-        )
+        unsafe { bpf_sk_redirect_map(ctx.as_ptr().cast(), self.def.get().cast(), index, flags) }
     }
 
     pub fn redirect_sk_lookup(

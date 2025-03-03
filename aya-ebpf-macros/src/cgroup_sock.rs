@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use proc_macro2::TokenStream;
 use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{spanned::Spanned as _, Ident, ItemFn};
+use syn::{Ident, ItemFn, spanned::Spanned as _};
 
 pub(crate) struct CgroupSock {
     item: ItemFn,
@@ -38,8 +38,8 @@ impl CgroupSock {
         let section_name: Cow<'_, _> = format!("cgroup/{attach_type}").into();
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::bpf_sock) -> i32 {
                 return #fn_name(::aya_ebpf::programs::SockContext::new(ctx));
 
@@ -68,8 +68,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/post_bind4"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/post_bind4")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock) -> i32 {
                 return foo(::aya_ebpf::programs::SockContext::new(ctx));
 
@@ -94,8 +94,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/post_bind6"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/post_bind6")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock) -> i32 {
                 return foo(::aya_ebpf::programs::SockContext::new(ctx));
 
@@ -119,8 +119,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/sock_create"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/sock_create")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock) -> i32 {
                 return foo(::aya_ebpf::programs::SockContext::new(ctx));
 
@@ -144,8 +144,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "cgroup/sock_release"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "cgroup/sock_release")]
             fn foo(ctx: *mut ::aya_ebpf::bindings::bpf_sock) -> i32 {
                 return foo(::aya_ebpf::programs::SockContext::new(ctx));
 

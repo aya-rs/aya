@@ -59,21 +59,21 @@ use std::{
     ptr,
 };
 
-use aya_obj::{generated::bpf_map_type, parse_map_info, EbpfSectionKind, InvalidTypeBinding};
+use aya_obj::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type, parse_map_info};
 use libc::{
-    c_int, c_void, getrlimit, off_t, rlim_t, rlimit, MAP_FAILED, RLIMIT_MEMLOCK, RLIM_INFINITY,
+    MAP_FAILED, RLIM_INFINITY, RLIMIT_MEMLOCK, c_int, c_void, getrlimit, off_t, rlim_t, rlimit,
 };
 use log::warn;
 use thiserror::Error;
 
 use crate::{
+    PinningType, Pod,
     pin::PinError,
     sys::{
-        bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id, bpf_map_get_next_key,
-        bpf_map_update_elem_ptr, bpf_pin_object, mmap, munmap, SyscallError,
+        SyscallError, bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
+        bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object, mmap, munmap,
     },
-    util::{nr_cpus, KernelVersion},
-    PinningType, Pod,
+    util::{KernelVersion, nr_cpus},
 };
 
 pub mod array;
@@ -92,7 +92,7 @@ pub mod xdp;
 pub use array::{Array, PerCpuArray, ProgramArray};
 pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
-pub use info::{loaded_maps, MapInfo, MapType};
+pub use info::{MapInfo, MapType, loaded_maps};
 pub use lpm_trie::LpmTrie;
 #[cfg(any(feature = "async_tokio", feature = "async_std"))]
 #[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std"))))]
@@ -916,13 +916,12 @@ impl<T: Pod> PerCpuValues<T> {
     }
 
     pub(crate) unsafe fn from_kernel_mem(mem: PerCpuKernelMem) -> Self {
-        let mem_ptr = mem.bytes.as_ptr() as usize;
-        let value_size = (mem::size_of::<T>() + 7) & !7;
+        let stride = (mem::size_of::<T>() + 7) & !7;
         let mut values = Vec::new();
         let mut offset = 0;
         while offset < mem.bytes.len() {
-            values.push(ptr::read_unaligned((mem_ptr + offset) as *const _));
-            offset += value_size;
+            values.push(unsafe { ptr::read_unaligned(mem.bytes.as_ptr().add(offset).cast()) });
+            offset += stride;
         }
 
         Self {
@@ -1009,15 +1008,15 @@ impl Drop for MMap {
 #[cfg(test)]
 mod test_utils {
     use aya_obj::{
+        EbpfSectionKind,
         generated::{bpf_cmd, bpf_map_type},
         maps::LegacyMap,
-        EbpfSectionKind,
     };
 
     use crate::{
         bpf_map_def,
         maps::MapData,
-        sys::{override_syscall, Syscall},
+        sys::{Syscall, override_syscall},
     };
 
     pub(super) fn new_map(obj: aya_obj::Map) -> MapData {
@@ -1076,7 +1075,7 @@ mod tests {
     use libc::EFAULT;
 
     use super::*;
-    use crate::sys::{override_syscall, Syscall};
+    use crate::sys::{Syscall, override_syscall};
 
     fn new_obj_map() -> aya_obj::Map {
         test_utils::new_obj_map::<u32>(bpf_map_type::BPF_MAP_TYPE_HASH)
