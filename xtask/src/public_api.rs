@@ -80,7 +80,7 @@ pub fn public_api(options: Options, metadata: Metadata) -> Result<()> {
         .filter_map(|result| {
             // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this allowance
             // when the lint behaves more sensibly.
-            #[allow(clippy::manual_ok_err)]
+            #[expect(clippy::manual_ok_err)]
             match result {
                 Ok(()) => None,
                 Err(err) => Some(err),

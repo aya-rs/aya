@@ -104,7 +104,7 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>) -> Result<()> {
         let stdout = BufReader::new(stdout);
         let mut executables = Vec::new();
         for message in Message::parse_stream(stdout) {
-            #[allow(clippy::collapsible_match)]
+            #[expect(clippy::collapsible_match)]
             match message.expect("valid JSON") {
                 Message::CompilerArtifact(Artifact {
                     executable,

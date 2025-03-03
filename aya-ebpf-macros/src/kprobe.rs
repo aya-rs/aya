@@ -7,7 +7,6 @@ use syn::{spanned::Spanned as _, ItemFn};
 
 use crate::args::{err_on_unknown_args, pop_string_arg};
 
-#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Copy, Clone)]
 pub(crate) enum KProbeKind {
     KProbe,

@@ -16,8 +16,8 @@ impl FEntryContext {
     /// # Examples
     ///
     /// ```no_run
-    /// # #![allow(non_camel_case_types)]
-    /// # #![allow(dead_code)]
+    /// # #![expect(non_camel_case_types)]
+    /// # #![expect(dead_code)]
     /// # use aya_ebpf::{cty::c_int, programs::FEntryContext};
     /// # type pid_t = c_int;
     /// # struct task_struct {

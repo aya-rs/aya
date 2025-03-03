@@ -107,7 +107,6 @@ impl TryFrom<u32> for PinningType {
 }
 
 /// Map definition in legacy BPF map declaration style
-#[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub struct bpf_map_def {

@@ -194,7 +194,6 @@ pub(crate) struct Relocation {
 }
 
 impl Relocation {
-    #[allow(unused_unsafe)]
     pub(crate) unsafe fn parse(data: &[u8], number: usize) -> Result<Relocation, BtfError> {
         if mem::size_of::<bpf_core_relo>() > data.len() {
             return Err(BtfError::InvalidRelocationInfo);
@@ -1189,7 +1188,6 @@ impl ComputedRelocation {
             type_id: None,
         };
 
-        #[allow(clippy::wildcard_in_or_patterns)]
         match rel.kind {
             FieldByteOffset => {
                 value.value = byte_off as u64;

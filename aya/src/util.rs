@@ -298,7 +298,7 @@ fn parse_kernel_symbols(reader: impl BufRead) -> Result<BTreeMap<u64, String>, i
                 let name = parts.next()?;
                 // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this
                 // allowance when the lint behaves more sensibly.
-                #[allow(clippy::manual_ok_err)]
+                #[expect(clippy::manual_ok_err)]
                 let addr = match u64::from_str_radix(addr, 16) {
                     Ok(addr) => Some(addr),
                     Err(ParseIntError { .. }) => None,

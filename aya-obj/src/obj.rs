@@ -37,7 +37,6 @@ const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
 
 /// Features implements BPF and BTF feature detection
 #[derive(Default, Debug)]
-#[allow(missing_docs)]
 pub struct Features {
     bpf_name: bool,
     bpf_probe_read_kernel: bool,
@@ -53,7 +52,7 @@ pub struct Features {
 
 impl Features {
     #[doc(hidden)]
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         bpf_name: bool,
         bpf_probe_read_kernel: bool,
@@ -238,7 +237,7 @@ pub struct Function {
 /// - `fmod_ret+`, `fmod_ret.s+`
 /// - `iter+`, `iter.s+`
 #[derive(Debug, Clone)]
-#[allow(missing_docs)]
+#[expect(missing_docs)]
 pub enum ProgramSection {
     KRetProbe,
     KProbe,
@@ -939,7 +938,7 @@ impl Function {
 
 /// Errors caught during parsing the object file
 #[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
+#[expect(missing_docs)]
 pub enum ParseError {
     #[error("error parsing ELF data")]
     ElfError(object::read::Error),

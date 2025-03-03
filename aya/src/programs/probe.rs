@@ -62,7 +62,7 @@ pub(crate) fn lines(bytes: &[u8]) -> impl Iterator<Item = &OsStr> {
 
 pub(crate) trait OsStringExt {
     fn starts_with(&self, needle: &OsStr) -> bool;
-    #[allow(dead_code)] // Would be odd to have the others without this one.
+    #[expect(dead_code)] // Would be odd to have the others without this one.
     fn ends_with(&self, needle: &OsStr) -> bool;
     fn strip_prefix(&self, prefix: &OsStr) -> Option<&OsStr>;
     fn strip_suffix(&self, suffix: &OsStr) -> Option<&OsStr>;

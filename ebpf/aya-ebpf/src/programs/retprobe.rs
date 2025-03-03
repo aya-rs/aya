@@ -31,7 +31,7 @@ impl RetProbeContext {
     /// # Examples
     ///
     /// ```no_run
-    /// # #![allow(dead_code)]
+    /// # #![expect(dead_code)]
     /// # use aya_ebpf::{programs::RetProbeContext, cty::c_int};
     /// unsafe fn try_kretprobe_try_to_wake_up(ctx: RetProbeContext) -> Result<u32, u32> {
     ///     let retval: c_int = ctx.ret().ok_or(1u32)?;

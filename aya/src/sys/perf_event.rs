@@ -15,7 +15,7 @@ use libc::pid_t;
 
 use super::{syscall, PerfEventIoctlRequest, Syscall};
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 pub(crate) fn perf_event_open(
     perf_type: u32,
     config: u64,

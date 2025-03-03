@@ -167,7 +167,7 @@ pub enum DisplayHint {
 pub(crate) fn write(tag: u8, value: &[u8], buf: &mut [u8]) -> Option<NonZeroUsize> {
     // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this allowance when the
     // lint behaves more sensibly.
-    #[allow(clippy::manual_ok_err)]
+    #[expect(clippy::manual_ok_err)]
     let wire_len: LogValueLength = match value.len().try_into() {
         Ok(wire_len) => Some(wire_len),
         Err(TryFromIntError { .. }) => None,
