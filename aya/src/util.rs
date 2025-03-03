@@ -201,6 +201,8 @@ pub fn nr_cpus() -> Result<usize, (&'static str, io::Error)> {
         static CACHE: once_cell::unsync::OnceCell<usize> = const { once_cell::unsync::OnceCell::new() };
     }
     CACHE.with(|cell| {
+        // TODO(https://github.com/rust-lang/rust/issues/109737): Replace `once_cell` with
+        // `std::cell::OnceCell`.
         cell.get_or_try_init(|| {
             // error: unsupported operation: `open` not available when isolation is enabled
             if cfg!(miri) {
