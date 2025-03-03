@@ -151,7 +151,7 @@ pub(crate) fn bpf_load_program(
 
     if let Some(name) = &aya_attr.name {
         let name_bytes = name.to_bytes();
-        let len = cmp::min(name_bytes.len(), u.prog_name.len());
+        let len = cmp::min(name_bytes.len(), u.prog_name.len() - 1); // Ensure NULL termination.
         u.prog_name[..len]
             .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
     }
@@ -712,7 +712,7 @@ pub(crate) fn is_prog_name_supported() -> bool {
         let u = unsafe { &mut attr.__bindgen_anon_3 };
         let name = c"aya_name_check";
         let name_bytes = name.to_bytes();
-        let len = cmp::min(name_bytes.len(), u.prog_name.len());
+        let len = cmp::min(name_bytes.len(), u.prog_name.len() - 1); // Ensure NULL termination.
         u.prog_name[..len]
             .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
         bpf_prog_load(attr).is_ok()
