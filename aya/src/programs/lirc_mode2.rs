@@ -7,10 +7,10 @@ use aya_obj::generated::{
 
 use crate::{
     programs::{
-        id_as_key, load_program, query, CgroupAttachMode, Link, ProgramData, ProgramError,
-        ProgramFd, ProgramInfo,
+        CgroupAttachMode, Link, ProgramData, ProgramError, ProgramFd, ProgramInfo, id_as_key,
+        load_program, query,
     },
-    sys::{bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id, ProgQueryTarget},
+    sys::{ProgQueryTarget, bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
 };
 
 /// A program used to decode IR into key events for a lirc device.

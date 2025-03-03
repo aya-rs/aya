@@ -6,9 +6,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_kv_size, MapData, MapError},
-    sys::{bpf_map_lookup_and_delete_elem, bpf_map_update_elem, SyscallError},
     Pod,
+    maps::{MapData, MapError, check_kv_size},
+    sys::{SyscallError, bpf_map_lookup_and_delete_elem, bpf_map_update_elem},
 };
 
 /// A LIFO stack.

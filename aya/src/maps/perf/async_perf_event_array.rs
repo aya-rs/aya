@@ -14,8 +14,8 @@ use bytes::BytesMut;
 use tokio::io::unix::AsyncFd;
 
 use crate::maps::{
-    perf::{Events, PerfBufferError, PerfEventArray, PerfEventArrayBuffer},
     MapData, MapError, PinError,
+    perf::{Events, PerfBufferError, PerfEventArray, PerfEventArrayBuffer},
 };
 
 /// A `Future` based map that can be used to receive events from eBPF programs using the linux

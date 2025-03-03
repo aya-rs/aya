@@ -15,9 +15,9 @@ use core::{
     mem::{self, MaybeUninit},
 };
 
-pub use aya_ebpf_bindings::helpers as gen;
+pub use aya_ebpf_bindings::helpers as generated;
 #[doc(hidden)]
-pub use gen::*;
+pub use generated::*;
 
 use crate::{
     check_bounds_signed,
@@ -52,7 +52,7 @@ use crate::{
 #[inline]
 pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
     let mut v: MaybeUninit<T> = MaybeUninit::uninit();
-    let ret = gen::bpf_probe_read(
+    let ret = generated::bpf_probe_read(
         v.as_mut_ptr() as *mut c_void,
         mem::size_of::<T>() as u32,
         src as *const c_void,
@@ -88,16 +88,12 @@ pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
 /// On failure, this function returns a negative value wrapped in an `Err`.
 #[inline]
 pub unsafe fn bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c_long> {
-    let ret = gen::bpf_probe_read(
+    let ret = generated::bpf_probe_read(
         dst.as_mut_ptr() as *mut c_void,
         dst.len() as u32,
         src as *const c_void,
     );
-    if ret == 0 {
-        Ok(())
-    } else {
-        Err(ret)
-    }
+    if ret == 0 { Ok(()) } else { Err(ret) }
 }
 
 /// Read bytes stored at the _user space_ pointer `src` and store them as a `T`.
@@ -125,7 +121,7 @@ pub unsafe fn bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c
 #[inline]
 pub unsafe fn bpf_probe_read_user<T>(src: *const T) -> Result<T, c_long> {
     let mut v: MaybeUninit<T> = MaybeUninit::uninit();
-    let ret = gen::bpf_probe_read_user(
+    let ret = generated::bpf_probe_read_user(
         v.as_mut_ptr() as *mut c_void,
         mem::size_of::<T>() as u32,
         src as *const c_void,
@@ -159,16 +155,12 @@ pub unsafe fn bpf_probe_read_user<T>(src: *const T) -> Result<T, c_long> {
 /// On failure, this function returns a negative value wrapped in an `Err`.
 #[inline]
 pub unsafe fn bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c_long> {
-    let ret = gen::bpf_probe_read_user(
+    let ret = generated::bpf_probe_read_user(
         dst.as_mut_ptr() as *mut c_void,
         dst.len() as u32,
         src as *const c_void,
     );
-    if ret == 0 {
-        Ok(())
-    } else {
-        Err(ret)
-    }
+    if ret == 0 { Ok(()) } else { Err(ret) }
 }
 
 /// Read bytes stored at the _kernel space_ pointer `src` and store them as a `T`.
@@ -196,7 +188,7 @@ pub unsafe fn bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> Result<
 #[inline]
 pub unsafe fn bpf_probe_read_kernel<T>(src: *const T) -> Result<T, c_long> {
     let mut v: MaybeUninit<T> = MaybeUninit::uninit();
-    let ret = gen::bpf_probe_read_kernel(
+    let ret = generated::bpf_probe_read_kernel(
         v.as_mut_ptr() as *mut c_void,
         mem::size_of::<T>() as u32,
         src as *const c_void,
@@ -230,16 +222,12 @@ pub unsafe fn bpf_probe_read_kernel<T>(src: *const T) -> Result<T, c_long> {
 /// On failure, this function returns a negative value wrapped in an `Err`.
 #[inline]
 pub unsafe fn bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c_long> {
-    let ret = gen::bpf_probe_read_kernel(
+    let ret = generated::bpf_probe_read_kernel(
         dst.as_mut_ptr() as *mut c_void,
         dst.len() as u32,
         src as *const c_void,
     );
-    if ret == 0 {
-        Ok(())
-    } else {
-        Err(ret)
-    }
+    if ret == 0 { Ok(()) } else { Err(ret) }
 }
 
 /// Read a null-terminated string stored at `src` into `dest`.
@@ -273,7 +261,7 @@ pub unsafe fn bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> Resul
 )]
 #[inline]
 pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usize, c_long> {
-    let len = gen::bpf_probe_read_str(
+    let len = generated::bpf_probe_read_str(
         dest.as_mut_ptr() as *mut c_void,
         dest.len() as u32,
         src as *const c_void,
@@ -309,7 +297,7 @@ pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usiz
 #[deprecated(note = "Use `bpf_probe_read_user_str_bytes` instead")]
 #[inline]
 pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result<usize, c_long> {
-    let len = gen::bpf_probe_read_user_str(
+    let len = generated::bpf_probe_read_user_str(
         dest.as_mut_ptr() as *mut c_void,
         dest.len() as u32,
         src as *const c_void,
@@ -356,7 +344,7 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 /// }
 ///
 /// #[map]
-/// pub static mut BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
+/// pub static BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
 ///
 /// # fn try_test() -> Result<(), c_long> {
 /// # let user_ptr: *const u8 = 0 as _;
@@ -375,7 +363,6 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 /// [core::str::from_utf8_unchecked]:
 ///
 /// ```no_run
-/// # #![expect(dead_code)]
 /// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_user_str_bytes};
 /// # use aya_ebpf::{macros::map, maps::PerCpuArray};
 /// # #[repr(C)]
@@ -383,7 +370,7 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 /// #     pub buf: [u8; 4096],
 /// # }
 /// # #[map]
-/// # pub static mut BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
+/// # pub static BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
 /// # fn try_test() -> Result<(), c_long> {
 /// # let user_ptr: *const u8 = 0 as _;
 /// # let buf = unsafe {
@@ -407,7 +394,7 @@ pub unsafe fn bpf_probe_read_user_str_bytes(
     src: *const u8,
     dest: &mut [u8],
 ) -> Result<&[u8], c_long> {
-    let len = gen::bpf_probe_read_user_str(
+    let len = generated::bpf_probe_read_user_str(
         dest.as_mut_ptr() as *mut c_void,
         dest.len() as u32,
         src as *const c_void,
@@ -459,7 +446,7 @@ fn read_str_bytes(len: i64, dest: &[u8]) -> Result<&[u8], c_long> {
 #[deprecated(note = "Use bpf_probe_read_kernel_str_bytes instead")]
 #[inline]
 pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Result<usize, c_long> {
-    let len = gen::bpf_probe_read_kernel_str(
+    let len = generated::bpf_probe_read_kernel_str(
         dest.as_mut_ptr() as *mut c_void,
         dest.len() as u32,
         src as *const c_void,
@@ -497,7 +484,6 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 /// With a `PerCpuArray` (with size defined by us):
 ///
 /// ```no_run
-/// # #![expect(dead_code)]
 /// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
 /// use aya_ebpf::{macros::map, maps::PerCpuArray};
 ///
@@ -507,7 +493,7 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 /// }
 ///
 /// #[map]
-/// pub static mut BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
+/// pub static BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
 ///
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const u8 = 0 as _;
@@ -526,7 +512,6 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 /// [core::str::from_utf8_unchecked]:
 ///
 /// ```no_run
-/// # #![expect(dead_code)]
 /// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
 /// # use aya_ebpf::{macros::map, maps::PerCpuArray};
 /// # #[repr(C)]
@@ -534,7 +519,7 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 /// #     pub buf: [u8; 4096],
 /// # }
 /// # #[map]
-/// # pub static mut BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
+/// # pub static BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
 /// # fn try_test() -> Result<(), c_long> {
 /// # let kernel_ptr: *const u8 = 0 as _;
 /// # let buf = unsafe {
@@ -558,7 +543,7 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
     src: *const u8,
     dest: &mut [u8],
 ) -> Result<&[u8], c_long> {
-    let len = gen::bpf_probe_read_kernel_str(
+    let len = generated::bpf_probe_read_kernel_str(
         dest.as_mut_ptr() as *mut c_void,
         dest.len() as u32,
         src as *const c_void,
@@ -593,16 +578,12 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
 /// On failure, this function returns a negative value wrapped in an `Err`.
 #[inline]
 pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), c_long> {
-    let ret = gen::bpf_probe_write_user(
+    let ret = generated::bpf_probe_write_user(
         dst as *mut c_void,
         src as *const c_void,
         mem::size_of::<T>() as u32,
     );
-    if ret == 0 {
-        Ok(())
-    } else {
-        Err(ret)
-    }
+    if ret == 0 { Ok(()) } else { Err(ret) }
 }
 
 /// Read the `comm` field associated with the current task struct
@@ -624,12 +605,8 @@ pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), 
 #[inline]
 pub fn bpf_get_current_comm() -> Result<[u8; 16], c_long> {
     let mut comm: [u8; 16usize] = [0; 16];
-    let ret = unsafe { gen::bpf_get_current_comm(&mut comm as *mut _ as *mut c_void, 16u32) };
-    if ret == 0 {
-        Ok(comm)
-    } else {
-        Err(ret)
-    }
+    let ret = unsafe { generated::bpf_get_current_comm(&mut comm as *mut _ as *mut c_void, 16u32) };
+    if ret == 0 { Ok(comm) } else { Err(ret) }
 }
 
 /// Read the process id and thread group id associated with the current task struct as
@@ -657,7 +634,7 @@ pub fn bpf_get_current_comm() -> Result<[u8; 16], c_long> {
 /// ```
 #[inline]
 pub fn bpf_get_current_pid_tgid() -> u64 {
-    unsafe { gen::bpf_get_current_pid_tgid() }
+    unsafe { generated::bpf_get_current_pid_tgid() }
 }
 
 /// Read the user id and group id associated with the current task struct as
@@ -680,7 +657,7 @@ pub fn bpf_get_current_pid_tgid() -> u64 {
 /// ```
 #[inline]
 pub fn bpf_get_current_uid_gid() -> u64 {
-    unsafe { gen::bpf_get_current_uid_gid() }
+    unsafe { generated::bpf_get_current_uid_gid() }
 }
 
 /// Prints a debug message to the BPF debugging pipe.
@@ -839,7 +816,9 @@ pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
         1 => printk(fmt_ptr, fmt_size, args[0]),
         2 => printk(fmt_ptr, fmt_size, args[0], args[1]),
         3 => printk(fmt_ptr, fmt_size, args[0], args[1], args[2]),
-        _ => gen::bpf_trace_vprintk(fmt_ptr, fmt_size, args.as_ptr() as _, (NUM_ARGS * 8) as _),
+        _ => {
+            generated::bpf_trace_vprintk(fmt_ptr, fmt_size, args.as_ptr() as _, (NUM_ARGS * 8) as _)
+        }
     }
 }
 
@@ -860,5 +839,6 @@ pub fn bpf_strncmp<const N: usize>(s1: &[u8; N], s2: &CStr) -> Ordering {
     //
     // NB: s1's size must be known at compile time to appease the verifier. This is also the typical
     // usage of strncmp in C programs.
-    unsafe { gen::bpf_strncmp(s1.as_ptr() as *const _, N as u32, s2.as_ptr() as *const _) }.cmp(&0)
+    unsafe { generated::bpf_strncmp(s1.as_ptr() as *const _, N as u32, s2.as_ptr() as *const _) }
+        .cmp(&0)
 }

@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{bindings::bpf_cgroup_dev_ctx, EbpfContext};
+use crate::{EbpfContext, bindings::bpf_cgroup_dev_ctx};
 
 pub struct DeviceContext {
     pub device: *mut bpf_cgroup_dev_ctx,

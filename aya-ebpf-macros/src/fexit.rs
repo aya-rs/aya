@@ -46,8 +46,8 @@ impl FExit {
         };
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = #fn_name(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;
@@ -77,8 +77,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "fexit"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "fexit")]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = sys_clone(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;
@@ -106,8 +106,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "fexit/sys_clone"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "fexit/sys_clone")]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = sys_clone(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;
@@ -135,8 +135,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "fexit.s/sys_clone"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "fexit.s/sys_clone")]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = sys_clone(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;

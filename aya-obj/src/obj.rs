@@ -12,9 +12,9 @@ use core::{ffi::CStr, mem, ptr, slice::from_raw_parts_mut, str::FromStr};
 
 use log::debug;
 use object::{
-    read::{Object as ElfObject, ObjectSection, Section as ObjSection},
     Endianness, ObjectSymbol, ObjectSymbolTable, RelocationTarget, SectionIndex, SectionKind,
     SymbolKind,
+    read::{Object as ElfObject, ObjectSection, Section as ObjSection},
 };
 
 use crate::{
@@ -22,10 +22,10 @@ use crate::{
         Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
     },
     generated::{
-        bpf_func_id::*, bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL,
-        BPF_F_RDONLY_PROG, BPF_JMP, BPF_K,
+        BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id::*, bpf_insn, bpf_map_info,
+        bpf_map_type::BPF_MAP_TYPE_ARRAY,
     },
-    maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, PinningType, MINIMUM_MAP_SIZE},
+    maps::{BtfMap, BtfMapDef, LegacyMap, MINIMUM_MAP_SIZE, Map, PinningType, bpf_map_def},
     programs::{
         CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType, XdpAttachType,
     },
@@ -326,7 +326,7 @@ impl FromStr for ProgramSection {
                     Some(_) => {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
-                        })
+                        });
                     }
                 },
             },
@@ -342,7 +342,7 @@ impl FromStr for ProgramSection {
                     _ => {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
-                        })
+                        });
                     }
                 }
             }
@@ -356,7 +356,7 @@ impl FromStr for ProgramSection {
                     _ => {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
-                        })
+                        });
                     }
                 }
             }
@@ -446,7 +446,7 @@ impl FromStr for ProgramSection {
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),
-                })
+                });
             }
         })
     }
@@ -1150,7 +1150,7 @@ fn parse_version(data: &[u8], endianness: object::Endianness) -> Result<Option<u
         _ => {
             return Err(ParseError::InvalidKernelVersion {
                 data: data.to_vec(),
-            })
+            });
         }
     };
 
@@ -1175,7 +1175,7 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
         other => {
             return Err(BtfError::UnexpectedBtfType {
                 type_id: other.btf_type().unwrap_or(0),
-            })
+            });
         }
     };
     // Safety: union
@@ -1184,7 +1184,7 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
         other => {
             return Err(BtfError::UnexpectedBtfType {
                 type_id: other.btf_type().unwrap_or(0),
-            })
+            });
         }
     };
     Ok(arr.len)
@@ -1260,7 +1260,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         other => {
             return Err(BtfError::UnexpectedBtfType {
                 type_id: other.btf_type().unwrap_or(0),
-            })
+            });
         }
     };
     let map_name = btf.string_at(ty.name_offset)?;
@@ -1273,7 +1273,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         other => {
             return Err(BtfError::UnexpectedBtfType {
                 type_id: other.btf_type().unwrap_or(0),
-            })
+            });
         }
     };
 

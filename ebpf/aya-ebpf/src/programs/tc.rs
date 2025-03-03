@@ -1,6 +1,6 @@
 use aya_ebpf_cty::{c_long, c_void};
 
-use crate::{bindings::__sk_buff, programs::sk_buff::SkBuff, EbpfContext};
+use crate::{EbpfContext, bindings::__sk_buff, programs::sk_buff::SkBuff};
 
 pub struct TcContext {
     pub skb: SkBuff,
@@ -85,7 +85,7 @@ impl TcContext {
     /// }
     ///
     /// #[map]
-    /// pub static mut BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
+    /// pub static BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
     ///
     /// fn try_classifier(ctx: TcContext) -> Result<i32, i32> {
     ///     let buf = unsafe {

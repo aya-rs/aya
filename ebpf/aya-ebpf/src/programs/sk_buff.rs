@@ -10,7 +10,7 @@ use aya_ebpf_bindings::helpers::{
 };
 use aya_ebpf_cty::c_long;
 
-use crate::{bindings::__sk_buff, EbpfContext};
+use crate::{EbpfContext, bindings::__sk_buff};
 
 pub struct SkBuff {
     pub skb: *mut __sk_buff,
@@ -99,11 +99,7 @@ impl SkBuff {
                 len_u32,
             )
         };
-        if ret == 0 {
-            Ok(len)
-        } else {
-            Err(ret)
-        }
+        if ret == 0 { Ok(len) } else { Err(ret) }
     }
 
     #[inline]
@@ -116,11 +112,7 @@ impl SkBuff {
                 mem::size_of::<T>() as u32,
                 flags,
             );
-            if ret == 0 {
-                Ok(())
-            } else {
-                Err(ret)
-            }
+            if ret == 0 { Ok(()) } else { Err(ret) }
         }
     }
 
@@ -134,11 +126,7 @@ impl SkBuff {
     ) -> Result<(), c_long> {
         unsafe {
             let ret = bpf_l3_csum_replace(self.skb as *mut _, offset as u32, from, to, size);
-            if ret == 0 {
-                Ok(())
-            } else {
-                Err(ret)
-            }
+            if ret == 0 { Ok(()) } else { Err(ret) }
         }
     }
 
@@ -152,52 +140,32 @@ impl SkBuff {
     ) -> Result<(), c_long> {
         unsafe {
             let ret = bpf_l4_csum_replace(self.skb as *mut _, offset as u32, from, to, flags);
-            if ret == 0 {
-                Ok(())
-            } else {
-                Err(ret)
-            }
+            if ret == 0 { Ok(()) } else { Err(ret) }
         }
     }
 
     #[inline]
     pub fn adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> Result<(), c_long> {
         let ret = unsafe { bpf_skb_adjust_room(self.as_ptr() as *mut _, len_diff, mode, flags) };
-        if ret == 0 {
-            Ok(())
-        } else {
-            Err(ret)
-        }
+        if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     #[inline]
     pub fn clone_redirect(&self, if_index: u32, flags: u64) -> Result<(), c_long> {
         let ret = unsafe { bpf_clone_redirect(self.as_ptr() as *mut _, if_index, flags) };
-        if ret == 0 {
-            Ok(())
-        } else {
-            Err(ret)
-        }
+        if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     #[inline]
     pub fn change_proto(&self, proto: u16, flags: u64) -> Result<(), c_long> {
         let ret = unsafe { bpf_skb_change_proto(self.as_ptr() as *mut _, proto, flags) };
-        if ret == 0 {
-            Ok(())
-        } else {
-            Err(ret)
-        }
+        if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     #[inline]
     pub fn change_type(&self, ty: u32) -> Result<(), c_long> {
         let ret = unsafe { bpf_skb_change_type(self.as_ptr() as *mut _, ty) };
-        if ret == 0 {
-            Ok(())
-        } else {
-            Err(ret)
-        }
+        if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     /// Pulls in non-linear data in case the skb is non-linear.
@@ -208,11 +176,7 @@ impl SkBuff {
     #[inline(always)]
     pub fn pull_data(&self, len: u32) -> Result<(), c_long> {
         let ret = unsafe { bpf_skb_pull_data(self.as_ptr() as *mut _, len) };
-        if ret == 0 {
-            Ok(())
-        } else {
-            Err(ret)
-        }
+        if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     pub(crate) fn as_ptr(&self) -> *mut c_void {
@@ -333,7 +297,7 @@ impl SkBuffContext {
     /// }
     ///
     /// #[map]
-    /// pub static mut BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
+    /// pub static BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
     ///
     /// fn try_cgroup_skb(ctx: SkBuffContext) -> Result<i32, i32> {
     ///     let buf = unsafe {

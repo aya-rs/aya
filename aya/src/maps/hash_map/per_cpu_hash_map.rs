@@ -6,11 +6,11 @@ use std::{
 };
 
 use crate::{
-    maps::{
-        check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys, PerCpuValues,
-    },
-    sys::{bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu, SyscallError},
     Pod,
+    maps::{
+        IterableMap, MapData, MapError, MapIter, MapKeys, PerCpuValues, check_kv_size, hash_map,
+    },
+    sys::{SyscallError, bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu},
 };
 
 /// Similar to [`HashMap`](crate::maps::HashMap) but each CPU holds a separate value for a given key. Typically used to
@@ -159,8 +159,8 @@ mod tests {
 
     use super::*;
     use crate::{
-        maps::{test_utils, Map},
-        sys::{override_syscall, SysResult},
+        maps::{Map, test_utils},
+        sys::{SysResult, override_syscall},
     };
 
     fn sys_error(value: i32) -> SysResult {

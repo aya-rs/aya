@@ -1,11 +1,11 @@
 use aya_log_common::DisplayHint;
-use aya_log_parser::{parse, Fragment};
+use aya_log_parser::{Fragment, parse};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{
+    Error, Expr, LitStr, Result, Token,
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
-    Error, Expr, LitStr, Result, Token,
 };
 
 pub(crate) struct LogArgs {
@@ -146,7 +146,7 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
     let slice = Ident::new("slice", Span::mixed_site());
     let record = Ident::new("record", Span::mixed_site());
     Ok(quote! {
-        match unsafe { &mut ::aya_log_ebpf::AYA_LOG_BUF }.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
+        match ::aya_log_ebpf::AYA_LOG_BUF.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
             None => {},
             Some(::aya_log_ebpf::LogBuf { buf }) => {
                 let _: Option<()> = (|| {
@@ -166,7 +166,7 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
                         #size += #len.get();
                     )*
                     let #record = buf.get(..#size)?;
-                    unsafe { &mut ::aya_log_ebpf::AYA_LOGS }.output(#ctx, #record, 0);
+                    ::aya_log_ebpf::AYA_LOGS.output(#ctx, #record, 0);
                     Some(())
                 })();
             }

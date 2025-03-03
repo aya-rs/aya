@@ -10,12 +10,11 @@ use thiserror::Error;
 
 use crate::{
     programs::{
-        define_link_wrapper, load_program,
-        perf_attach::{perf_attach, PerfLinkIdInner, PerfLinkInner},
+        FdLink, LinkError, ProgramData, ProgramError, define_link_wrapper, load_program,
+        perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
         utils::find_tracefs_path,
-        FdLink, LinkError, ProgramData, ProgramError,
     },
-    sys::{bpf_link_get_info_by_fd, perf_event_open_trace_point, SyscallError},
+    sys::{SyscallError, bpf_link_get_info_by_fd, perf_event_open_trace_point},
 };
 
 /// The type returned when attaching a [`TracePoint`] fails.
@@ -137,7 +136,7 @@ pub(crate) fn read_sys_fs_trace_point_id(
             return Err(TracePointError::FileError {
                 filename,
                 io_error: io::Error::other(error),
-            })
+            });
         }
     };
 

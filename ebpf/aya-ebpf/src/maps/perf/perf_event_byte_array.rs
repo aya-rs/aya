@@ -1,10 +1,10 @@
 use core::{cell::UnsafeCell, mem};
 
 use crate::{
-    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY, BPF_F_CURRENT_CPU},
+    EbpfContext,
+    bindings::{BPF_F_CURRENT_CPU, bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY},
     helpers::bpf_perf_event_output,
     maps::PinningType,
-    EbpfContext,
 };
 
 #[repr(transparent)]

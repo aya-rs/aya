@@ -2,9 +2,9 @@
 use std::os::fd::AsFd as _;
 
 use crate::{
-    maps::MapError,
-    sys::{bpf_map_delete_elem, bpf_map_update_elem, SyscallError},
     Pod,
+    maps::MapError,
+    sys::{SyscallError, bpf_map_delete_elem, bpf_map_update_elem},
 };
 
 #[expect(clippy::module_inception)]

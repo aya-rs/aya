@@ -1,7 +1,7 @@
 use aya::{
-    programs::{tc::TcAttachOptions, LinkOrder, ProgramId, SchedClassifier, TcAttachType},
-    util::KernelVersion,
     Ebpf,
+    programs::{LinkOrder, ProgramId, SchedClassifier, TcAttachType, tc::TcAttachOptions},
+    util::KernelVersion,
 };
 use test_log::test;
 

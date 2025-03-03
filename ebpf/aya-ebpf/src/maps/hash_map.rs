@@ -57,7 +57,7 @@ impl<K, V> HashMap<K, V> {
     /// element in the map, causing garbage to be read, or corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
-        get(self.def.get(), key)
+        unsafe { get(self.def.get(), key) }
     }
 
     /// Retrieve the value associate with `key` from the map.
@@ -133,7 +133,7 @@ impl<K, V> LruHashMap<K, V> {
     /// element in the map, causing garbage to be read, or corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
-        get(self.def.get(), key)
+        unsafe { get(self.def.get(), key) }
     }
 
     /// Retrieve the value associate with `key` from the map.
@@ -209,7 +209,7 @@ impl<K, V> PerCpuHashMap<K, V> {
     /// element in the map, causing garbage to be read, or corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
-        get(self.def.get(), key)
+        unsafe { get(self.def.get(), key) }
     }
 
     /// Retrieve the value associate with `key` from the map.
@@ -285,7 +285,7 @@ impl<K, V> LruPerCpuHashMap<K, V> {
     /// element in the map, causing garbage to be read, or corruption in case of writes.
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
-        get(self.def.get(), key)
+        unsafe { get(self.def.get(), key) }
     }
 
     /// Retrieve the value associate with `key` from the map.
@@ -340,5 +340,5 @@ fn get_ptr<K, V>(def: *mut bpf_map_def, key: &K) -> Option<*const V> {
 
 #[inline]
 unsafe fn get<'a, K, V>(def: *mut bpf_map_def, key: &K) -> Option<&'a V> {
-    get_ptr(def, key).map(|p| &*p)
+    get_ptr(def, key).map(|p| unsafe { &*p })
 }

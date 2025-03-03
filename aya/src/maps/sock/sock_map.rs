@@ -6,8 +6,8 @@ use std::{
 };
 
 use crate::{
-    maps::{check_bounds, check_kv_size, sock::SockMapFd, MapData, MapError, MapFd, MapKeys},
-    sys::{bpf_map_delete_elem, bpf_map_update_elem, SyscallError},
+    maps::{MapData, MapError, MapFd, MapKeys, check_bounds, check_kv_size, sock::SockMapFd},
+    sys::{SyscallError, bpf_map_delete_elem, bpf_map_update_elem},
 };
 
 /// An array of TCP or UDP sockets.

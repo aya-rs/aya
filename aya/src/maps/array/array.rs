@@ -5,9 +5,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
-    sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
     Pod,
+    maps::{IterableMap, MapData, MapError, check_bounds, check_kv_size},
+    sys::{SyscallError, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
 /// A fixed-size array.

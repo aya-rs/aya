@@ -165,17 +165,21 @@ pub(crate) unsafe fn mmap(
     {
         use std::os::fd::AsRawFd as _;
 
-        libc::mmap(addr, len, prot, flags, fd.as_raw_fd(), offset)
+        unsafe { libc::mmap(addr, len, prot, flags, fd.as_raw_fd(), offset) }
     }
 }
 
 #[cfg_attr(test, expect(unused_variables))]
 pub(crate) unsafe fn munmap(addr: *mut c_void, len: usize) -> c_int {
-    #[cfg(not(test))]
-    return libc::munmap(addr, len);
-
     #[cfg(test)]
-    0
+    {
+        0
+    }
+
+    #[cfg(not(test))]
+    {
+        unsafe { libc::munmap(addr, len) }
+    }
 }
 
 /// The type of eBPF statistic to enable.

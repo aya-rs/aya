@@ -1,13 +1,14 @@
 use std::{convert::TryInto as _, fs::remove_file, path::Path, thread, time::Duration};
 
 use aya::{
+    Ebpf,
     maps::Array,
     programs::{
+        KProbe, TracePoint, UProbe, Xdp, XdpFlags,
         links::{FdLink, PinnedLink},
-        loaded_links, loaded_programs, KProbe, TracePoint, UProbe, Xdp, XdpFlags,
+        loaded_links, loaded_programs,
     },
     util::KernelVersion,
-    Ebpf,
 };
 use aya_obj::programs::XdpAttachType;
 use test_log::test;
@@ -121,7 +122,7 @@ fn pin_lifecycle_multiple_btf_maps() {
     remove_file(map_pin_by_name_path).unwrap();
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub extern "C" fn trigger_bpf_program() {
     core::hint::black_box(trigger_bpf_program);
@@ -345,7 +346,9 @@ fn pin_link() {
 fn pin_lifecycle() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 18, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb");
+        eprintln!(
+            "skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb"
+        );
         return;
     }
 
@@ -514,7 +517,7 @@ fn pin_lifecycle_kprobe() {
     assert_unloaded("test_kprobe");
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 extern "C" fn uprobe_function() {
     core::hint::black_box(uprobe_function);

@@ -1117,7 +1117,7 @@ unsafe fn read<T>(data: &[u8]) -> Result<T, BtfError> {
         return Err(BtfError::InvalidTypeInfo);
     }
 
-    Ok(ptr::read_unaligned::<T>(data.as_ptr() as *const T))
+    Ok(unsafe { ptr::read_unaligned(data.as_ptr().cast()) })
 }
 
 unsafe fn read_array<T>(data: &[u8], len: usize) -> Result<Vec<T>, BtfError> {
@@ -1127,7 +1127,7 @@ unsafe fn read_array<T>(data: &[u8], len: usize) -> Result<Vec<T>, BtfError> {
     let data = &data[0..mem::size_of::<T>() * len];
     let r = data
         .chunks(mem::size_of::<T>())
-        .map(|chunk| ptr::read_unaligned(chunk.as_ptr() as *const T))
+        .map(|chunk| unsafe { ptr::read_unaligned(chunk.as_ptr().cast()) })
         .collect();
     Ok(r)
 }

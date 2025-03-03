@@ -8,7 +8,7 @@ use std::process::Command;
 use anyhow::{Context as _, Result};
 use cargo_metadata::{Metadata, MetadataCommand};
 use clap::Parser;
-use xtask::{exec, LIBBPF_DIR};
+use xtask::{LIBBPF_DIR, exec};
 
 #[derive(Parser)]
 pub struct XtaskOptions {

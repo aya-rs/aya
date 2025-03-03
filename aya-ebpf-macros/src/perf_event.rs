@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{spanned::Spanned as _, ItemFn};
+use syn::{ItemFn, spanned::Spanned as _};
 
 pub(crate) struct PerfEvent {
     item: ItemFn,
@@ -26,8 +26,8 @@ impl PerfEvent {
         } = item;
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = "perf_event"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "perf_event")]
             #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                let _ = #fn_name(::aya_ebpf::programs::PerfEventContext::new(ctx));
                return 0;
@@ -57,8 +57,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "perf_event"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "perf_event")]
             fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                let _ = foo(::aya_ebpf::programs::PerfEventContext::new(ctx));
                return 0;

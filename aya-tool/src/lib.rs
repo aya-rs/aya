@@ -1,5 +1,5 @@
 use std::{
-    fs::{create_dir_all, File},
+    fs::{File, create_dir_all},
     io::{self, Write},
     path::Path,
 };
@@ -8,7 +8,7 @@ pub mod bindgen;
 pub mod generate;
 pub mod rustfmt;
 
-pub use generate::{generate, InputFile};
+pub use generate::{InputFile, generate};
 
 pub fn write_to_file<T: AsRef<Path>>(path: T, code: &str) -> Result<(), io::Error> {
     // Create parent directories if they don't exist already

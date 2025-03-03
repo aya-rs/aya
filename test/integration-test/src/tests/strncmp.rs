@@ -1,12 +1,12 @@
 use std::{
     cmp::Ordering,
-    ffi::{c_char, CStr},
+    ffi::{CStr, c_char},
 };
 
 use aya::{
+    Ebpf,
     maps::{Array, MapData},
     programs::UProbe,
-    Ebpf,
 };
 use integration_common::strncmp::TestResult;
 
@@ -43,7 +43,7 @@ fn do_bpf_strncmp(array: &Array<&MapData, TestResult>, s1: &CStr) -> Ordering {
     ord
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub extern "C" fn trigger_bpf_strncmp(s1: *const c_char) {
     core::hint::black_box(s1);

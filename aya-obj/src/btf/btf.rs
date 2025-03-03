@@ -12,15 +12,15 @@ use log::debug;
 use object::{Endianness, SectionIndex};
 
 use crate::{
+    Object,
     btf::{
-        info::{FuncSecInfo, LineSecInfo},
-        relocation::Relocation,
         Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
         IntEncoding, LineInfo, Struct, Typedef, Union, VarLinkage,
+        info::{FuncSecInfo, LineSecInfo},
+        relocation::Relocation,
     },
     generated::{btf_ext_header, btf_header},
-    util::{bytes_of, HashMap},
-    Object,
+    util::{HashMap, bytes_of},
 };
 
 pub(crate) const MAX_RESOLVE_DEPTH: usize = 32;
@@ -734,7 +734,7 @@ impl Object {
         &mut self,
         features: &BtfFeatures,
     ) -> Result<Option<&Btf>, BtfError> {
-        if let Some(ref mut obj_btf) = &mut self.btf {
+        if let Some(obj_btf) = &mut self.btf {
             if obj_btf.is_empty() {
                 return Ok(None);
             }
@@ -752,8 +752,8 @@ impl Object {
 }
 
 unsafe fn read_btf_header(data: &[u8]) -> btf_header {
-    // safety: btf_header is POD so read_unaligned is safe
-    ptr::read_unaligned(data.as_ptr() as *const btf_header)
+    // Safety: Btf_header is POD so read_unaligned is safe
+    unsafe { ptr::read_unaligned(data.as_ptr().cast()) }
 }
 
 /// Data in the `.BTF.ext` section

@@ -1,5 +1,5 @@
-use aya::{maps::Array, programs::UProbe, Ebpf};
-use integration_common::bpf_probe_read::{TestResult, RESULT_BUF_LEN};
+use aya::{Ebpf, maps::Array, programs::UProbe};
+use integration_common::bpf_probe_read::{RESULT_BUF_LEN, TestResult};
 use test_log::test;
 
 #[test]
@@ -106,13 +106,13 @@ fn load_and_attach_uprobe(prog_name: &str, func_name: &str, bytes: &[u8]) -> Ebp
     bpf
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub extern "C" fn trigger_bpf_probe_read_user(string: *const u8, len: usize) {
     core::hint::black_box((string, len));
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
 pub extern "C" fn trigger_bpf_probe_read_kernel(len: usize) {
     core::hint::black_box(len);

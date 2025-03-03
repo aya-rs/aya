@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use proc_macro2::TokenStream;
 use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{spanned::Spanned as _, ItemFn};
+use syn::{ItemFn, spanned::Spanned as _};
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) enum SkSkbKind {
@@ -50,8 +50,8 @@ impl SkSkb {
         let section_name: Cow<'_, _> = format!("sk_skb/{kind}").into();
         let fn_name = &sig.ident;
         quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
                 return #fn_name(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
@@ -81,8 +81,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "sk_skb/stream_parser"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "sk_skb/stream_parser")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
                 return prog(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
@@ -108,8 +108,8 @@ mod tests {
         .unwrap();
         let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "sk_skb/stream_verdict"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "sk_skb/stream_verdict")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
                 return prog(::aya_ebpf::programs::SkBuffContext::new(ctx));
 

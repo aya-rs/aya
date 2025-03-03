@@ -13,7 +13,7 @@ use crate::bindings::user_pt_regs as pt_regs;
 // riscv64 uses user_regs_struct instead of pt_regs
 #[cfg(bpf_target_arch = "riscv64")]
 use crate::bindings::user_regs_struct as pt_regs;
-use crate::{args::FromPtRegs, EbpfContext};
+use crate::{EbpfContext, args::FromPtRegs};
 
 pub struct RetProbeContext {
     pub regs: *mut pt_regs,
