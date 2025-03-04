@@ -28,6 +28,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
         powerpc64_sysroot,
         s390x_sysroot,
         mips_sysroot,
+        loongarch64_sysroot,
     } = opts;
 
     let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
@@ -113,6 +114,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             Architecture::PowerPC64 => "powerpc64le-unknown-linux-gnu",
             Architecture::S390X => "s390x-unknown-linux-gnu",
             Architecture::Mips => "mips-unknown-linux-gnu",
+            Architecture::LoongArch64 => "loongarch64-unknown-linux-gnu",
         };
         bindgen = bindgen.clang_args(["-target", target]);
 
@@ -126,6 +128,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             Architecture::PowerPC64 => powerpc64_sysroot,
             Architecture::S390X => s390x_sysroot,
             Architecture::Mips => mips_sysroot,
+            Architecture::LoongArch64 => loongarch64_sysroot,
         };
         bindgen = bindgen.clang_args(["-I", sysroot.to_str().unwrap()]);
 

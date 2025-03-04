@@ -28,7 +28,7 @@ jobs:
         run: |
           set -euxo pipefail
           sudo apt -y update
-          sudo apt -y install libelf-dev libc6-dev libc6-dev-{arm64,armel,riscv64,ppc64el,s390x,mips}-cross
+          sudo apt -y install libelf-dev libc6-dev libc6-dev-{arm64,armel,loong64,riscv64,ppc64el,s390x,mips}-cross
 
       - run: cargo xtask codegen
       - run: cargo xtask public-api --bless

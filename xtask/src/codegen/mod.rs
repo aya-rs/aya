@@ -15,6 +15,7 @@ const SUPPORTED_ARCHS: &[Architecture] = &[
     Architecture::RISCV64,
     Architecture::PowerPC64,
     Architecture::S390X,
+    Architecture::LoongArch64,
 ];
 
 #[derive(Debug, Copy, Clone)]
@@ -26,6 +27,7 @@ pub enum Architecture {
     PowerPC64,
     S390X,
     Mips,
+    LoongArch64,
 }
 
 impl Architecture {
@@ -46,6 +48,7 @@ impl std::str::FromStr for Architecture {
             "riscv64" => Architecture::RISCV64,
             "powerpc64" => Architecture::PowerPC64,
             "s390x" => Architecture::S390X,
+            "loongarch64" => Architecture::LoongArch64,
             _ => return Err("invalid architecture"),
         })
     }
@@ -61,6 +64,7 @@ impl std::fmt::Display for Architecture {
             Architecture::RISCV64 => "riscv64",
             Architecture::PowerPC64 => "powerpc64",
             Architecture::S390X => "s390x",
+            Architecture::LoongArch64 => "loongarch64",
         })
     }
 }
@@ -89,6 +93,9 @@ pub struct SysrootOptions {
 
     #[arg(long, default_value = "/usr/mips-linux-gnu/include", action)]
     mips_sysroot: PathBuf,
+
+    #[arg(long, default_value = "/usr/loongarch64-linux-gnu/include", action)]
+    loongarch64_sysroot: PathBuf,
 }
 
 #[derive(Parser)]
