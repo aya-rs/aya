@@ -10,7 +10,10 @@ use std::{fs, panic, path::Path, time::SystemTime};
 use aya::{
     maps::{loaded_maps, Array, HashMap, IterableMap as _, MapError, MapType},
     programs::{loaded_programs, ProgramError, ProgramType, SocketFilter, TracePoint},
-    sys::enable_stats,
+    sys::{
+        enable_stats,
+        feature_probe::{is_map_supported, is_program_supported},
+    },
     util::KernelVersion,
     Ebpf,
 };
@@ -23,7 +26,11 @@ const BPF_STATS_ENABLED: &str = "/proc/sys/kernel/bpf_stats_enabled";
 
 #[test]
 fn test_loaded_programs() {
-    // Load a program.
+    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
+        eprintln!("skipping test - socket_filter program not supported");
+        return;
+    }
+
     // Since we are only testing the programs for their metadata, there is no need to "attach" them.
     let mut bpf = Ebpf::load(crate::SIMPLE_PROG).unwrap();
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
@@ -40,9 +47,7 @@ fn test_loaded_programs() {
                 .raw_os_error()
                 .is_some_and(|errno| errno == EINVAL)
             {
-                eprintln!(
-                    "ignoring test completely as `loaded_programs()` is not available on the host"
-                );
+                eprintln!("skipping test - `loaded_programs()` not supported");
                 return;
             }
         }
@@ -59,6 +64,11 @@ fn test_loaded_programs() {
 
 #[test]
 fn test_program_info() {
+    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
+        eprintln!("skipping test - socket_filter program not supported");
+        return;
+    }
+
     // Kernels below v4.15 have been observed to have `bpf_jit_enable` disabled by default.
     let previously_enabled = is_sysctl_enabled(BPF_JIT_ENABLE);
     // Restore to previous state when panic occurs.
@@ -136,6 +146,11 @@ fn test_program_info() {
 
 #[test]
 fn test_loaded_at() {
+    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
+        eprintln!("skipping test - socket_filter program not supported");
+        return;
+    }
+
     let mut bpf: Ebpf = Ebpf::load(crate::SIMPLE_PROG).unwrap();
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
 
@@ -151,7 +166,7 @@ fn test_loaded_at() {
         let loaded_at = match prog.info().unwrap().loaded_at() {
             Some(time) => time,
             None => {
-                eprintln!("ignoring test completely as `load_time` field of `bpf_prog_info` is not available on the host");
+                eprintln!("skipping test - `bpf_prog_info.load_time` field not supported");
                 return;
             }
         };
@@ -180,11 +195,12 @@ fn test_loaded_at() {
 
 #[test]
 fn test_prog_stats() {
-    // Test depends on whether trace point exists.
+    if !is_program_supported(ProgramType::TracePoint).unwrap() {
+        eprintln!("skipping test - tracepoint program not supported");
+        return;
+    }
     if !Path::new("/sys/kernel/debug/tracing/events/syscalls/sys_enter_bpf").exists() {
-        eprintln!(
-            "ignoring test completely as `syscalls/sys_enter_bpf` is not available on the host"
-        );
+        eprintln!("skipping test - `syscalls/sys_enter_bpf` not available");
         return;
     }
 
@@ -202,7 +218,7 @@ fn test_prog_stats() {
     let stats_enabled =
         stats_fd.is_some() || previously_enabled || enable_sysctl_param(BPF_STATS_ENABLED);
     if !stats_enabled {
-        eprintln!("ignoring test completely as bpf stats could not be enabled on the host");
+        eprintln!("skipping test - bpf stats could not be enabled");
         return;
     }
 
@@ -226,6 +242,17 @@ fn test_prog_stats() {
 
 #[test]
 fn list_loaded_maps() {
+    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
+        eprintln!("skipping test - socket_filter program not supported");
+        return;
+    } else if !is_map_supported(MapType::Hash).unwrap() {
+        eprintln!("skipping test - hash map not supported");
+        return;
+    } else if !is_map_supported(MapType::Array).unwrap() {
+        eprintln!("skipping test - array map not supported");
+        return;
+    }
+
     // Load a program with maps.
     let mut bpf: Ebpf = Ebpf::load(crate::MAP_TEST).unwrap();
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
@@ -240,9 +267,7 @@ fn list_loaded_maps() {
                 .raw_os_error()
                 .is_some_and(|errno| errno == EINVAL)
             {
-                eprintln!(
-                    "ignoring test completely as `loaded_maps()` is not available on the host"
-                );
+                eprintln!("skipping test - `loaded_maps()` not supported");
                 return;
             }
         }
@@ -280,6 +305,17 @@ fn list_loaded_maps() {
 
 #[test]
 fn test_map_info() {
+    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
+        eprintln!("skipping test - socket_filter program not supported");
+        return;
+    } else if !is_map_supported(MapType::Hash).unwrap() {
+        eprintln!("skipping test - hash map not supported");
+        return;
+    } else if !is_map_supported(MapType::Array).unwrap() {
+        eprintln!("skipping test - array map not supported");
+        return;
+    }
+
     let mut bpf: Ebpf = Ebpf::load(crate::MAP_TEST).unwrap();
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
