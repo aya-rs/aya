@@ -11,7 +11,6 @@
 #![cfg_attr(unstable, expect(incomplete_features), feature(generic_const_exprs))]
 #![cfg_attr(unstable, feature(never_type))]
 #![cfg_attr(target_arch = "bpf", feature(asm_experimental_arch))]
-#![deny(warnings)]
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 #![no_std]
 
