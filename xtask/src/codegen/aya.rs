@@ -1,7 +1,10 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fs::create_dir_all,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{Context as _, Result};
-use aya_tool::{bindgen, write_to_file};
+use aya_tool::bindgen;
 
 use crate::codegen::{Architecture, SysrootOptions};
 
@@ -26,10 +29,10 @@ fn codegen_internal_btf_bindings(libbpf_dir: &Path) -> Result<()> {
         bindgen = bindgen.allowlist_type(x);
     }
 
-    let bindings = bindgen.generate().context("bindgen failed")?.to_string();
+    let bindings = bindgen.generate().context("bindgen failed")?;
 
     // write the bindings, with the original helpers removed
-    write_to_file(generated.join("btf_internal_bindings.rs"), &bindings)?;
+    bindings.write_to_file(generated.join("btf_internal_bindings.rs"))?;
 
     Ok(())
 }
@@ -47,6 +50,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
     } = opts;
     let dir = PathBuf::from("aya-obj");
     let generated = dir.join("src/generated");
+    create_dir_all(&generated)?;
 
     let builder = || {
         let mut bindgen = bindgen::user_builder()
@@ -223,13 +227,10 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
         };
         bindgen = bindgen.clang_args(["-I", sysroot.to_str().unwrap()]);
 
-        let bindings = bindgen.generate().context("bindgen failed")?.to_string();
+        let bindings = bindgen.generate().context("bindgen failed")?;
 
         // write the bindings, with the original helpers removed
-        write_to_file(
-            generated.join(format!("linux_bindings_{arch}.rs")),
-            &bindings.to_string(),
-        )?;
+        bindings.write_to_file(generated.join(format!("linux_bindings_{arch}.rs")))?;
     }
 
     Ok(())

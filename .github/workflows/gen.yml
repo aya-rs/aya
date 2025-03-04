@@ -31,8 +31,9 @@ jobs:
           sudo apt -y install libelf-dev libc6-dev libc6-dev-{arm64,armel,loong64,riscv64,ppc64el,s390x,mips}-cross
 
       - run: cargo xtask codegen
-      - run: cargo xtask public-api --bless
+      # aya-ebpf-bindings aren't emitted directly from bindgen and so aren't formatted.
       - run: cargo fmt --all
+      - run: cargo xtask public-api --bless
 
       - id: libbpf
         working-directory: xtask/libbpf

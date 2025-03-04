@@ -1,12 +1,12 @@
 use std::{
     ffi::OsString,
-    fs::create_dir_all,
+    fs::{File, create_dir_all},
     path::{Path, PathBuf},
     process::Command,
 };
 
 use anyhow::{Context as _, Result};
-use aya_tool::{bindgen, write_to_file};
+use aya_tool::bindgen;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{Item, parse_str};
@@ -132,7 +132,8 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
         };
         bindgen = bindgen.clang_args(["-I", sysroot.to_str().unwrap()]);
 
-        let bindings = bindgen.generate().context("bindgen failed")?.to_string();
+        let bindings = bindgen.generate().context("bindgen failed")?;
+        let bindings = bindings.to_string();
 
         let mut tree = parse_str::<syn::File>(&bindings).unwrap();
 
@@ -143,21 +144,26 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
         }
 
         let generated = dir.join("src").join(arch.to_string());
-        if !generated.exists() {
-            create_dir_all(&generated)?;
-        }
+        create_dir_all(&generated)?;
 
         // write the bindings, with the original helpers removed
-        write_to_file(
-            generated.join("bindings.rs"),
-            &tree.to_token_stream().to_string(),
-        )?;
-
+        //
         // write the new helpers as expanded by expand_helpers()
-        write_to_file(
-            generated.join("helpers.rs"),
-            &format!("use super::bindings::*; {helpers}"),
-        )?;
+        for (path, code) in [
+            (
+                generated.join("bindings.rs"),
+                &tree.to_token_stream().to_string(),
+            ),
+            (
+                generated.join("helpers.rs"),
+                &format!("use super::bindings::*; {helpers}"),
+            ),
+        ] {
+            use std::io::Write as _;
+
+            let mut file = File::create(path)?;
+            file.write_all(code.as_bytes())?;
+        }
     }
 
     Ok(())
