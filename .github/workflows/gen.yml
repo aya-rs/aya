@@ -34,8 +34,9 @@ jobs:
       - run: cargo xtask public-api --bless
       - run: cargo fmt --all
 
-      - run: echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+      - id: libbpf
         working-directory: xtask/libbpf
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - uses: peter-evans/create-pull-request@v7
         with:
@@ -43,9 +44,9 @@ jobs:
           commit-message: |
             aya-obj, aya-ebpf-bindings: regenerate
 
-            libbpf commit: ${{ env.LIBBPF_SHA }}
+            libbpf commit: ${{ steps.libbpf.outputs.sha }}
           title: 'aya-obj, aya-ebpf-bindings: regenerate'
           body: |
             **Automated changes**
 
-            libbpf commit: ${{ env.LIBBPF_SHA }}
+            libbpf commit: ${{ steps.libbpf.outputs.sha}}
