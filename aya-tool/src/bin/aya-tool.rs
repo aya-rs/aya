@@ -1,5 +1,6 @@
 use std::{path::PathBuf, process::exit};
 
+use aya_tool::btf::print_btf;
 use aya_tool::generate::{generate, InputFile};
 use clap::Parser;
 
@@ -22,6 +23,12 @@ enum Command {
         names: Vec<String>,
         #[clap(last = true, action)]
         bindgen_args: Vec<String>,
+    },
+    /// Pretty print an ELF file's BTF
+    #[clap(name = "print-btf", action)]
+    PrintBtf {
+        /// The ELF file to print BTF for
+        target: PathBuf,
     },
 }
 
@@ -47,6 +54,9 @@ fn try_main() -> Result<(), anyhow::Error> {
                 generate(InputFile::Btf(btf), &names, &bindgen_args)?
             };
             println!("{bindings}");
+        }
+        Command::PrintBtf { target } => {
+            print_btf(target)?;
         }
     };
 

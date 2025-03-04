@@ -10,8 +10,10 @@ homepage.workspace = true
 edition.workspace = true
 
 [dependencies]
+aya-obj = { version = "0.1.0", path = "../aya-obj", features = ["std"] }
 bindgen = { workspace = true, default-features = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
 anyhow = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 tempfile = { workspace = true }
+object = { workspace = true }
