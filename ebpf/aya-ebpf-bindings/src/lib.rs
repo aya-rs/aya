@@ -1,40 +1,60 @@
 #![expect(
     clippy::all,
-    dead_code,
     non_camel_case_types,
     non_snake_case,
     non_upper_case_globals,
     unsafe_op_in_unsafe_fn
 )]
-#![deny(warnings)]
 #![no_std]
 
-#[cfg(bpf_target_arch = "x86_64")]
-mod x86_64;
-
-#[cfg(bpf_target_arch = "arm")]
-mod armv7;
-
 #[cfg(bpf_target_arch = "aarch64")]
-mod aarch64;
-
-#[cfg(bpf_target_arch = "riscv64")]
-mod riscv64;
-
-#[cfg(bpf_target_arch = "powerpc64")]
-mod powerpc64;
-
-#[cfg(bpf_target_arch = "s390x")]
-mod s390x;
-
+mod aarch64 {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "arm")]
+mod armv7 {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "loongarch64")]
+mod loongarch64 {
+    pub mod bindings;
+    pub mod helpers;
+}
 #[cfg(bpf_target_arch = "mips")]
-mod mips;
+mod mips {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "powerpc64")]
+mod powerpc64 {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "riscv64")]
+mod riscv64 {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "s390x")]
+mod s390x {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "x86_64")]
+mod x86_64 {
+    pub mod bindings;
+    pub mod helpers;
+}
 
 mod generated {
     #[cfg(bpf_target_arch = "aarch64")]
     pub use super::aarch64::*;
     #[cfg(bpf_target_arch = "arm")]
     pub use super::armv7::*;
+    #[cfg(bpf_target_arch = "loongarch64")]
+    pub use super::loongarch64::*;
     #[cfg(bpf_target_arch = "mips")]
     pub use super::mips::*;
     #[cfg(bpf_target_arch = "powerpc64")]
@@ -46,6 +66,7 @@ mod generated {
     #[cfg(bpf_target_arch = "x86_64")]
     pub use super::x86_64::*;
 }
+
 pub use generated::helpers;
 
 pub mod bindings {
@@ -61,7 +82,7 @@ pub mod bindings {
     pub const TC_ACT_REDIRECT: i32 = crate::generated::bindings::TC_ACT_REDIRECT as i32;
     pub const TC_ACT_TRAP: i32 = crate::generated::bindings::TC_ACT_TRAP as i32;
     pub const TC_ACT_VALUE_MAX: i32 = crate::generated::bindings::TC_ACT_VALUE_MAX as i32;
-    pub const TC_ACT_EXT_VAL_MASK: i32 = 268435455;
+    pub const TC_ACT_EXT_VAL_MASK: i32 = crate::generated::bindings::TC_ACT_EXT_VAL_MASK as i32;
 
     #[repr(C)]
     #[derive(Debug, Copy, Clone)]
