@@ -72,13 +72,13 @@ jobs:
       fail-fast: false
       matrix:
         bpf_target_arch:
-          - x86_64-unknown-linux-gnu
           - aarch64-unknown-linux-gnu
           - armv7-unknown-linux-gnueabi
-          - riscv64gc-unknown-linux-gnu
-          - powerpc64le-unknown-linux-gnu
-          - s390x-unknown-linux-gnu
           - mips-unknown-linux-gnu
+          - powerpc64le-unknown-linux-gnu
+          - riscv64gc-unknown-linux-gnu
+          - s390x-unknown-linux-gnu
+          - x86_64-unknown-linux-gnu
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -131,13 +131,13 @@ jobs:
       fail-fast: false
       matrix:
         bpf_target_arch:
-          - x86_64
           - aarch64
           - arm
-          - riscv64
-          - powerpc64
-          - s390x
           - mips
+          - powerpc64
+          - riscv64
+          - s390x
+          - x86_64
         target:
           - bpfel-unknown-none
           - bpfeb-unknown-none

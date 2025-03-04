@@ -21,14 +21,14 @@ use crate::{
 
 pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
     let SysrootOptions {
-        x86_64_sysroot,
         aarch64_sysroot,
         armv7_sysroot,
-        riscv64_sysroot,
-        powerpc64_sysroot,
-        s390x_sysroot,
-        mips_sysroot,
         loongarch64_sysroot,
+        mips_sysroot,
+        powerpc64_sysroot,
+        riscv64_sysroot,
+        s390x_sysroot,
+        x86_64_sysroot,
     } = opts;
 
     let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
@@ -107,28 +107,28 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
         // Set target triple. This will set the right flags (which you can see
         // running clang -target=X  -E - -dM </dev/null)
         let target = match arch {
-            Architecture::X86_64 => "x86_64-unknown-linux-gnu",
-            Architecture::ARMv7 => "armv7-unknown-linux-gnu",
             Architecture::AArch64 => "aarch64-unknown-linux-gnu",
-            Architecture::RISCV64 => "riscv64-unknown-linux-gnu",
-            Architecture::PowerPC64 => "powerpc64le-unknown-linux-gnu",
-            Architecture::S390X => "s390x-unknown-linux-gnu",
-            Architecture::Mips => "mips-unknown-linux-gnu",
+            Architecture::ARMv7 => "armv7-unknown-linux-gnu",
             Architecture::LoongArch64 => "loongarch64-unknown-linux-gnu",
+            Architecture::Mips => "mips-unknown-linux-gnu",
+            Architecture::PowerPC64 => "powerpc64le-unknown-linux-gnu",
+            Architecture::RISCV64 => "riscv64-unknown-linux-gnu",
+            Architecture::S390X => "s390x-unknown-linux-gnu",
+            Architecture::X86_64 => "x86_64-unknown-linux-gnu",
         };
         bindgen = bindgen.clang_args(["-target", target]);
 
         // Set the sysroot. This is needed to ensure that the correct arch
         // specific headers are imported.
         let sysroot = match arch {
-            Architecture::X86_64 => x86_64_sysroot,
-            Architecture::ARMv7 => armv7_sysroot,
             Architecture::AArch64 => aarch64_sysroot,
-            Architecture::RISCV64 => riscv64_sysroot,
-            Architecture::PowerPC64 => powerpc64_sysroot,
-            Architecture::S390X => s390x_sysroot,
-            Architecture::Mips => mips_sysroot,
+            Architecture::ARMv7 => armv7_sysroot,
             Architecture::LoongArch64 => loongarch64_sysroot,
+            Architecture::Mips => mips_sysroot,
+            Architecture::PowerPC64 => powerpc64_sysroot,
+            Architecture::RISCV64 => riscv64_sysroot,
+            Architecture::S390X => s390x_sysroot,
+            Architecture::X86_64 => x86_64_sysroot,
         };
         bindgen = bindgen.clang_args(["-I", sysroot.to_str().unwrap()]);
 
