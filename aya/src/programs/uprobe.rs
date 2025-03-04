@@ -1,12 +1,11 @@
 //! User space probes.
 use std::{
-    borrow::Cow,
     error::Error,
     ffi::{CStr, OsStr, OsString, c_char},
     fs,
-    io::{self, BufRead, Cursor, Read},
+    io::{self, BufRead as _, Cursor, Read as _},
     mem,
-    os::{fd::AsFd as _, unix::ffi::OsStrExt},
+    os::{fd::AsFd as _, unix::ffi::OsStrExt as _},
     path::{Path, PathBuf},
     sync::LazyLock,
 };
@@ -108,7 +107,8 @@ impl UProbe {
         pid: Option<pid_t>,
         cookie: Option<u64>,
     ) -> Result<UProbeLinkId, ProgramError> {
-        let path = resolve_attach_path(target.as_ref(), pid)?;
+        let proc_map = pid.map(ProcMap::new).transpose()?;
+        let path = resolve_attach_path(target.as_ref(), proc_map.as_ref())?;
         let (symbol, offset) = match location.into() {
             UProbeAttachLocation::Symbol(s) => (Some(s), 0),
             UProbeAttachLocation::SymbolOffset(s, offset) => (Some(s), offset),
@@ -116,7 +116,7 @@ impl UProbe {
         };
         let offset = if let Some(symbol) = symbol {
             let symbol_offset =
-                resolve_symbol(&path, symbol).map_err(|error| UProbeError::SymbolError {
+                resolve_symbol(path, symbol).map_err(|error| UProbeError::SymbolError {
                     symbol: symbol.to_string(),
                     error: Box::new(error),
                 })?;
@@ -141,31 +141,30 @@ impl UProbe {
     }
 }
 
-fn resolve_attach_path(target: &Path, pid: Option<pid_t>) -> Result<Cow<'_, Path>, UProbeError> {
-    // Look up the path for the target. If it there is a pid, and the target is a library name
-    // that is in the process's memory map, use the path of that library. Otherwise, use the target as-is.
-    pid.and_then(|pid| {
-        find_lib_in_proc_maps(pid, target)
-            .map_err(|io_error| UProbeError::FileError {
-                filename: Path::new("/proc").join(pid.to_string()).join("maps"),
-                io_error,
-            })
-            .map(|v| v.map(Cow::Owned))
-            .transpose()
-    })
-    .or_else(|| target.is_absolute().then(|| Ok(Cow::Borrowed(target))))
-    .or_else(|| {
-        LD_SO_CACHE
-            .as_ref()
-            .map_err(|io_error| UProbeError::InvalidLdSoCache { io_error })
-            .map(|cache| cache.resolve(target).map(Cow::Borrowed))
-            .transpose()
-    })
-    .unwrap_or_else(|| {
-        Err(UProbeError::InvalidTarget {
-            path: target.to_owned(),
+fn resolve_attach_path<'a, 'b, 'c>(
+    target: &'a Path,
+    proc_map: Option<&'b ProcMap>,
+) -> Result<&'c Path, UProbeError>
+where
+    'a: 'c,
+    'b: 'c,
+{
+    proc_map
+        .and_then(|proc_map| proc_map.find_lib(target))
+        .map(Ok)
+        .or_else(|| target.is_absolute().then(|| Ok(target)))
+        .or_else(|| {
+            LD_SO_CACHE
+                .as_ref()
+                .map_err(|io_error| UProbeError::InvalidLdSoCache { io_error })
+                .map(|cache| cache.resolve(target))
+                .transpose()
         })
-    })
+        .unwrap_or_else(|| {
+            Err(UProbeError::InvalidTarget {
+                path: target.to_owned(),
+            })
+        })
 }
 
 // Only run this test on linux with glibc because only in that configuration do we know that we'll
@@ -179,10 +178,11 @@ fn resolve_attach_path(target: &Path, pid: Option<pid_t>) -> Result<Cow<'_, Path
 fn test_resolve_attach_path() {
     // Look up the current process's pid.
     let pid = std::process::id().try_into().unwrap();
+    let proc_map = ProcMap::new(pid).unwrap();
 
     // Now let's resolve the path to libc. It should exist in the current process's memory map and
     // then in the ld.so.cache.
-    let libc_path = resolve_attach_path("libc".as_ref(), Some(pid)).unwrap();
+    let libc_path = resolve_attach_path("libc".as_ref(), Some(&proc_map)).unwrap();
     let libc_path = libc_path.to_str().unwrap();
 
     // Make sure we got a path that contains libc.
@@ -262,47 +262,46 @@ pub enum UProbeError {
     },
 }
 
-fn proc_maps_libs(pid: pid_t) -> Result<Vec<(OsString, PathBuf)>, io::Error> {
-    use std::os::unix::ffi::OsStrExt as _;
-
-    let maps_file = format!("/proc/{pid}/maps");
-    let data = fs::read(maps_file)?;
-
-    let libs = data
-        .split(|b| b == &b'\n')
-        .filter_map(|mut line| {
-            while let [stripped @ .., c] = line {
-                if c.is_ascii_whitespace() {
-                    line = stripped;
-                    continue;
-                }
-                break;
-            }
-            let path = line.split(|b| b.is_ascii_whitespace()).next_back()?;
-            let path = Path::new(OsStr::from_bytes(path));
-            path.is_absolute()
-                .then(|| {
-                    path.file_name()
-                        .map(|file_name| (file_name.to_owned(), path.to_owned()))
-                })
-                .flatten()
-        })
-        .collect();
-    Ok(libs)
+struct ProcMap {
+    data: Vec<u8>,
 }
 
-fn find_lib_in_proc_maps(pid: pid_t, lib: &Path) -> Result<Option<PathBuf>, io::Error> {
-    let libs = proc_maps_libs(pid)?;
+impl ProcMap {
+    fn new(pid: pid_t) -> Result<Self, UProbeError> {
+        let filename = PathBuf::from(format!("/proc/{pid}/maps"));
+        let data = fs::read(&filename)
+            .map_err(|io_error| UProbeError::FileError { filename, io_error })?;
+        Ok(Self { data })
+    }
 
-    let lib = lib.as_os_str();
-    let lib = lib.strip_suffix(OsStr::new(".so")).unwrap_or(lib);
+    fn libs(&self) -> impl Iterator<Item = (&OsStr, &Path)> {
+        let Self { data } = self;
 
-    Ok(libs.into_iter().find_map(|(file_name, path)| {
-        file_name.strip_prefix(lib).and_then(|suffix| {
-            (suffix.starts_with(OsStr::new(".so")) || suffix.starts_with(OsStr::new("-")))
-                .then_some(path)
+        data.split(|&b| b == b'\n').filter_map(|line| {
+            line.split(|b| b.is_ascii_whitespace())
+                .filter(|p| !p.is_empty())
+                .next_back()
+                .and_then(|path| {
+                    let path = Path::new(OsStr::from_bytes(path));
+                    path.is_absolute()
+                        .then_some(())
+                        .and_then(|()| path.file_name())
+                        .map(|file_name| (file_name, path))
+                })
         })
-    }))
+    }
+
+    fn find_lib(&self, lib: &Path) -> Option<&Path> {
+        let lib = lib.as_os_str();
+        let lib = lib.strip_suffix(OsStr::new(".so")).unwrap_or(lib);
+
+        self.libs().find_map(|(file_name, path)| {
+            file_name.strip_prefix(lib).and_then(|suffix| {
+                (suffix.starts_with(OsStr::new(".so")) || suffix.starts_with(OsStr::new("-")))
+                    .then_some(path)
+            })
+        })
+    }
 }
 
 #[derive(Debug)]
