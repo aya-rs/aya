@@ -25,9 +25,6 @@ pub enum Error {
     #[error("{stderr}\nbindgen failed with exit code {code}")]
     BindgenExit { code: i32, stderr: String },
 
-    #[error("rustfmt failed")]
-    Rustfmt(#[source] io::Error),
-
     #[error("error reading header file")]
     ReadHeaderFile(#[source] io::Error),
 }

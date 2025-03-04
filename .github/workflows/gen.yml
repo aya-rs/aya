@@ -32,6 +32,7 @@ jobs:
 
       - run: cargo xtask codegen
       - run: cargo xtask public-api --bless
+      - run: cargo fmt --all
 
       - run: echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
         working-directory: xtask/libbpf
