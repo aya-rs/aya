@@ -1,6 +1,6 @@
 use std::{
     cmp,
-    ffi::{CStr, CString, c_char, c_long},
+    ffi::{CStr, CString, c_char},
     io, iter,
     mem::{self, MaybeUninit},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, RawFd},
@@ -1079,7 +1079,7 @@ fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
     unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) }
 }
 
-fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<c_long> {
+fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<i64> {
     syscall(Syscall::Ebpf { cmd, attr }).map_err(|(code, io_error)| {
         assert_eq!(code, -1);
         io_error

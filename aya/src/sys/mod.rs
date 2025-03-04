@@ -8,7 +8,7 @@ mod perf_event;
 mod fake;
 
 use std::{
-    ffi::{c_int, c_long, c_void},
+    ffi::{c_int, c_void},
     io,
     os::fd::{BorrowedFd, OwnedFd},
 };
@@ -23,7 +23,7 @@ pub(crate) use netlink::*;
 pub(crate) use perf_event::*;
 use thiserror::Error;
 
-pub(crate) type SysResult = Result<c_long, (c_long, io::Error)>;
+pub(crate) type SysResult = Result<i64, (i64, io::Error)>;
 
 #[cfg_attr(test, expect(dead_code))]
 #[derive(Debug)]
@@ -139,6 +139,9 @@ fn syscall(call: Syscall<'_>) -> SysResult {
                 }
             }
         };
+        // c_long is i32 on armv7.
+        #[allow(clippy::useless_conversion)]
+        let ret: i64 = ret.into();
 
         match ret {
             0.. => Ok(ret),
