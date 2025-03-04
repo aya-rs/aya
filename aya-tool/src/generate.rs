@@ -9,8 +9,6 @@ use std::{
 use tempfile::tempdir;
 use thiserror::Error;
 
-use crate::bindgen;
-
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("error executing bpftool")]
@@ -44,7 +42,7 @@ pub fn generate<T: AsRef<str>>(
         .map(|s| s.as_ref().into())
         .collect::<Vec<_>>();
 
-    let mut bindgen = bindgen::bpf_builder();
+    let mut bindgen = crate::bindgen::bpf_builder();
     let (additional_flags, ctypes_prefix) = extract_ctypes_prefix(&additional_flags);
 
     if let Some(prefix) = ctypes_prefix {
