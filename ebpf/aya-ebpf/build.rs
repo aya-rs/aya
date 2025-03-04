@@ -13,9 +13,20 @@ fn main() {
         }
         println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
     }
-    println!(
-        "cargo::rustc-check-cfg=cfg(bpf_target_arch, values(\"x86_64\",\"arm\",\"aarch64\",\"riscv64\",\"powerpc64\",\"s390x\",\"mips\"))"
-    );
+    print!("cargo::rustc-check-cfg=cfg(bpf_target_arch, values(");
+    for arch in [
+        "aarch64",
+        "arm",
+        "loongarch64",
+        "mips",
+        "powerpc64",
+        "riscv64",
+        "s390x",
+        "x86_64",
+    ] {
+        print!("\"{arch}\",");
+    }
+    println!("))");
     println!("cargo::rustc-check-cfg=cfg(unstable)");
 }
 
