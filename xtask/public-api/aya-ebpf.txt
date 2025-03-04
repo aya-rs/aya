@@ -2018,6 +2018,9 @@ pub mod aya_ebpf::programs::xdp
 pub struct aya_ebpf::programs::xdp::XdpContext
 pub aya_ebpf::programs::xdp::XdpContext::ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md
 impl aya_ebpf::programs::xdp::XdpContext
+pub fn aya_ebpf::programs::xdp::XdpContext::adjust_head(&mut self, delta: aya_ebpf_cty::ad::c_int) -> core::result::Result<(), ()>
+pub fn aya_ebpf::programs::xdp::XdpContext::adjust_metadata(&mut self, delta: aya_ebpf_cty::ad::c_int) -> core::result::Result<(), ()>
+pub fn aya_ebpf::programs::xdp::XdpContext::adjust_tail(&mut self, delta: aya_ebpf_cty::ad::c_int) -> core::result::Result<(), ()>
 pub fn aya_ebpf::programs::xdp::XdpContext::data(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::ingress_ifindex(&self) -> usize
@@ -2632,6 +2635,9 @@ pub fn aya_ebpf::programs::tracepoint::TracePointContext::from(t: T) -> T
 pub struct aya_ebpf::programs::XdpContext
 pub aya_ebpf::programs::XdpContext::ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md
 impl aya_ebpf::programs::xdp::XdpContext
+pub fn aya_ebpf::programs::xdp::XdpContext::adjust_head(&mut self, delta: aya_ebpf_cty::ad::c_int) -> core::result::Result<(), ()>
+pub fn aya_ebpf::programs::xdp::XdpContext::adjust_metadata(&mut self, delta: aya_ebpf_cty::ad::c_int) -> core::result::Result<(), ()>
+pub fn aya_ebpf::programs::xdp::XdpContext::adjust_tail(&mut self, delta: aya_ebpf_cty::ad::c_int) -> core::result::Result<(), ()>
 pub fn aya_ebpf::programs::xdp::XdpContext::data(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::xdp::XdpContext::ingress_ifindex(&self) -> usize

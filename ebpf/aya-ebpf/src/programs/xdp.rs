@@ -1,6 +1,10 @@
 use core::ffi::c_void;
 
-use crate::{bindings::xdp_md, EbpfContext};
+use crate::{
+    bindings::xdp_md,
+    helpers::{bpf_xdp_adjust_head, bpf_xdp_adjust_meta, bpf_xdp_adjust_tail},
+    EbpfContext,
+};
 
 pub struct XdpContext {
     pub ctx: *mut xdp_md,
@@ -37,6 +41,42 @@ impl XdpContext {
     #[inline(always)]
     pub fn metadata_end(&self) -> usize {
         self.data()
+    }
+
+    /// Adjusts the head of the Packet by given 'delta' (both positive and negative values are
+    /// possible.)
+    #[inline(always)]
+    pub fn adjust_head(&mut self, delta: crate::cty::c_int) -> Result<(), ()> {
+        unsafe {
+            match bpf_xdp_adjust_head(self.ctx, delta) {
+                0 => Ok(()),
+                _ => Err(()),
+            }
+        }
+    }
+
+    /// Adjusts the tail of the Packet by given 'delta' (both positive and negative values are
+    /// possible.)
+    #[inline(always)]
+    pub fn adjust_tail(&mut self, delta: crate::cty::c_int) -> Result<(), ()> {
+        unsafe {
+            match bpf_xdp_adjust_tail(self.ctx, delta) {
+                0 => Ok(()),
+                _ => Err(()),
+            }
+        }
+    }
+
+    /// Adjusts the tail of the Packet by given 'delta' (both positive and negative values are
+    /// possible.)
+    #[inline(always)]
+    pub fn adjust_metadata(&mut self, delta: crate::cty::c_int) -> Result<(), ()> {
+        unsafe {
+            match bpf_xdp_adjust_meta(self.ctx, delta) {
+                0 => Ok(()),
+                _ => Err(()),
+            }
+        }
     }
 }
 
