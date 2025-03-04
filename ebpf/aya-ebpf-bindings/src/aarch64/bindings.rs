@@ -45,7 +45,11 @@ where
             index % 8
         };
         let mask = 1 << bit_index;
-        if val { byte | mask } else { byte & !mask }
+        if val {
+            byte | mask
+        } else {
+            byte & !mask
+        }
     }
     #[inline]
     pub fn set_bit(&mut self, index: usize, val: bool) {
