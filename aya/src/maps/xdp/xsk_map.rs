@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     maps::{check_bounds, check_kv_size, MapData, MapError},
-    sys::{bpf_map_update_elem, SyscallError},
+    sys::{bpf_map_delete_elem, bpf_map_update_elem, SyscallError},
 };
 
 /// An array of AF_XDP sockets.
@@ -76,5 +76,24 @@ impl<T: BorrowMut<MapData>> XskMap<T> {
                 io_error,
             })
             .map_err(Into::into)
+    }
+
+    /// Removes the `AF_XDP` socket stored at `index` from the map.
+    ///
+    /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
+    /// if `bpf_map_delete_elem` fails.
+    pub fn clear_index(&mut self, index: u32) -> Result<(), MapError> {
+        let data = self.inner.borrow_mut();
+        check_bounds(data, index)?;
+        let fd = data.fd().as_fd();
+        bpf_map_delete_elem(fd, &index)
+            .map(|_| ())
+            .map_err(|(_, io_error)| {
+                SyscallError {
+                    call: "bpf_map_delete_elem",
+                    io_error,
+                }
+                .into()
+            })
     }
 }
