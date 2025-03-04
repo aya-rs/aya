@@ -56,6 +56,7 @@ pub mod kprobe;
 pub mod links;
 pub mod lirc_mode2;
 pub mod lsm;
+pub mod lsm_cgroup;
 pub mod perf_attach;
 pub mod perf_event;
 pub mod raw_trace_point;
@@ -105,6 +106,7 @@ pub use crate::programs::{
     links::{CgroupAttachMode, Link, LinkOrder},
     lirc_mode2::LircMode2,
     lsm::Lsm,
+    lsm_cgroup::LsmCgroup,
     perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy},
     probe::ProbeKind,
     raw_trace_point::RawTracePoint,
@@ -304,6 +306,8 @@ pub enum Program {
     RawTracePoint(RawTracePoint),
     /// A [`Lsm`] program
     Lsm(Lsm),
+    /// A [`LsmCgroup`] program
+    LsmCgroup(LsmCgroup),
     /// A [`BtfTracePoint`] program
     BtfTracePoint(BtfTracePoint),
     /// A [`FEntry`] program
@@ -341,6 +345,7 @@ impl Program {
             Self::PerfEvent(_) => ProgramType::PerfEvent,
             Self::RawTracePoint(_) => ProgramType::RawTracePoint,
             Self::Lsm(_) => ProgramType::Lsm,
+            Self::LsmCgroup(_) => ProgramType::Lsm,
             // The following program types are a subset of `TRACING` programs:
             //
             // - `BPF_TRACE_RAW_TP` (`BtfTracePoint`)
@@ -380,6 +385,7 @@ impl Program {
             Self::PerfEvent(p) => p.pin(path),
             Self::RawTracePoint(p) => p.pin(path),
             Self::Lsm(p) => p.pin(path),
+            Self::LsmCgroup(p) => p.pin(path),
             Self::BtfTracePoint(p) => p.pin(path),
             Self::FEntry(p) => p.pin(path),
             Self::FExit(p) => p.pin(path),
@@ -411,6 +417,7 @@ impl Program {
             Self::PerfEvent(mut p) => p.unload(),
             Self::RawTracePoint(mut p) => p.unload(),
             Self::Lsm(mut p) => p.unload(),
+            Self::LsmCgroup(mut p) => p.unload(),
             Self::BtfTracePoint(mut p) => p.unload(),
             Self::FEntry(mut p) => p.unload(),
             Self::FExit(mut p) => p.unload(),
@@ -444,6 +451,7 @@ impl Program {
             Self::PerfEvent(p) => p.fd(),
             Self::RawTracePoint(p) => p.fd(),
             Self::Lsm(p) => p.fd(),
+            Self::LsmCgroup(p) => p.fd(),
             Self::BtfTracePoint(p) => p.fd(),
             Self::FEntry(p) => p.fd(),
             Self::FExit(p) => p.fd(),
@@ -478,6 +486,7 @@ impl Program {
             Self::PerfEvent(p) => p.info(),
             Self::RawTracePoint(p) => p.info(),
             Self::Lsm(p) => p.info(),
+            Self::LsmCgroup(p) => p.info(),
             Self::BtfTracePoint(p) => p.info(),
             Self::FEntry(p) => p.info(),
             Self::FExit(p) => p.info(),
@@ -791,6 +800,7 @@ impl_program_unload!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
@@ -832,6 +842,7 @@ impl_fd!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
@@ -938,6 +949,7 @@ impl_program_pin!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
@@ -977,8 +989,9 @@ impl_from_pin!(
     SkMsg,
     CgroupSysctl,
     LircMode2,
-    PerfEvent,
     Lsm,
+    LsmCgroup,
+    PerfEvent,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
@@ -1034,6 +1047,7 @@ impl_try_from_program!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
@@ -1061,6 +1075,7 @@ impl_info!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
