@@ -6,7 +6,7 @@ use std::{
 };
 
 use anyhow::{Context as _, Result};
-use aya_tool::{bindgen, write_to_file_fmt};
+use aya_tool::{bindgen, write_to_file};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{Item, parse_str};
@@ -148,13 +148,13 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
         }
 
         // write the bindings, with the original helpers removed
-        write_to_file_fmt(
+        write_to_file(
             generated.join("bindings.rs"),
             &tree.to_token_stream().to_string(),
         )?;
 
         // write the new helpers as expanded by expand_helpers()
-        write_to_file_fmt(
+        write_to_file(
             generated.join("helpers.rs"),
             &format!("use super::bindings::*; {helpers}"),
         )?;
