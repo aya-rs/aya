@@ -229,7 +229,7 @@ pub enum UProbeError {
     /// There was an error parsing `/etc/ld.so.cache`.
     #[error("error reading `{}` file", LD_SO_CACHE_FILE)]
     InvalidLdSoCache {
-        /// the original [`io::Error`]
+        /// the original [`io::Error`].
         #[source]
         io_error: &'static io::Error,
     },
@@ -237,16 +237,16 @@ pub enum UProbeError {
     /// The target program could not be found.
     #[error("could not resolve uprobe target `{path}`")]
     InvalidTarget {
-        /// path to target
+        /// path to target.
         path: PathBuf,
     },
 
     /// There was an error resolving the target symbol.
     #[error("error resolving symbol")]
     SymbolError {
-        /// symbol name
+        /// symbol name.
         symbol: String,
-        /// the original error
+        /// the original error.
         #[source]
         error: Box<dyn Error + Send + Sync>,
     },
