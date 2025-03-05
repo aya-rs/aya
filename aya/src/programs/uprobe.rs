@@ -415,9 +415,12 @@ impl LdSoCache {
     }
 
     fn resolve(&self, lib: &Path) -> Option<&Path> {
+        let Self { entries } = self;
+
         let lib = lib.as_os_str();
         let lib = lib.strip_suffix(OsStr::new(".so")).unwrap_or(lib);
-        self.entries
+
+        entries
             .iter()
             .find_map(|CacheEntry { key, value, _flags }| {
                 key.strip_prefix(lib).and_then(|suffix| {
