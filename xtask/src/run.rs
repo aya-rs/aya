@@ -10,7 +10,6 @@ use std::{
 };
 
 use anyhow::{Context as _, Result, anyhow, bail};
-use base64::engine::Engine as _;
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
@@ -28,12 +27,6 @@ enum Environment {
         /// The cache directory in which to store intermediate artifacts.
         #[clap(long)]
         cache_dir: PathBuf,
-
-        /// The Github API token to use if network requests to Github are made.
-        ///
-        /// This may be required if Github rate limits are exceeded.
-        #[clap(long)]
-        github_api_token: Option<String>,
 
         /// The kernel images to use.
         ///
@@ -180,7 +173,6 @@ pub fn run(opts: Options) -> Result<()> {
         }
         Environment::VM {
             cache_dir,
-            github_api_token,
             kernel_image,
         } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
@@ -206,31 +198,17 @@ pub fn run(opts: Options) -> Result<()> {
                 .try_exists()
                 .context("failed to check existence of gen_init_cpio")?
             {
-                // TODO(https://github.com/oxidecomputer/third-party-api-clients/issues/96): Use ETag-based caching.
-                let client = octorust::Client::new(
-                    String::from("aya-xtask-integration-test-run"),
-                    github_api_token.map(octorust::auth::Credentials::Token),
-                )?;
-                let octorust::Response {
-                    status: _,
-                    headers: _,
-                    body: octorust::types::ContentFile { mut content, .. },
-                } = tokio::runtime::Builder::new_current_thread()
+                let content = tokio::runtime::Builder::new_current_thread()
                     .enable_all()
                     .build()
                     .unwrap()
-                    .block_on(client.repos().get_content_file(
-                        "torvalds",
-                        "linux",
-                        "usr/gen_init_cpio.c",
-                        "master",
-                    ))
+                    .block_on(async {
+                        reqwest::get("https://github.com/torvalds/linux/raw/refs/heads/master/usr/gen_init_cpio.c")
+                        .await?
+                        .bytes()
+                        .await
+                    })
                     .context("failed to download gen_init_cpio.c")?;
-                // Github very helpfully wraps their base64 at 10 columns /s.
-                content.retain(|c| !c.is_whitespace());
-                let content = base64::engine::general_purpose::STANDARD
-                    .decode(content)
-                    .context("failed to decode gen_init_cpio.c")?;
 
                 let mut clang = Command::new("clang");
                 clang

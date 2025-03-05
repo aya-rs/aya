@@ -316,7 +316,7 @@ jobs:
         run: |
           set -euxo pipefail
           find test/.tmp -name 'vmlinuz-*' -print0 | xargs -t -0 \
-            cargo xtask integration-test vm --cache-dir test/.tmp --github-api-token ${{ secrets.GITHUB_TOKEN }}
+            cargo xtask integration-test vm --cache-dir test/.tmp
 
   # Provides a single status check for the entire build workflow.
   # This is used for merge automation, like Mergify, since GH actions

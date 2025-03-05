@@ -60,7 +60,6 @@ edition = "2024"
 # them to do that, but in the meantime we need to be careful.
 [workspace.dependencies]
 anyhow = { version = "1", default-features = false }
-base64 = { version = "0.22.1", default-features = false }
 assert_matches = { version = "1.5.0", default-features = false }
 async-io = { version = "2.0", default-features = false }
 bindgen = { version = "0.71", default-features = false }
@@ -82,7 +81,6 @@ netns-rs = { version = "0.1", default-features = false }
 nix = { version = "0.29.0", default-features = false }
 num_enum = { version = "0.7", default-features = false }
 object = { version = "0.36", default-features = false }
-octorust = { version = "0.9.0", default-features = false }
 once_cell = { version = "1.20.1", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
 proc-macro2-diagnostics = { version = "0.10.1", default-features = false }
@@ -90,6 +88,7 @@ public-api = { version = "0.44.0", default-features = false }
 quote = { version = "1", default-features = false }
 rand = { version = "0.9", default-features = false }
 rbpf = { version = "0.3.0", default-features = false }
+reqwest = { version = "0.12", default-features = false }
 rustdoc-json = { version = "0.9.0", default-features = false }
 rustup-toolchain = { version = "0.1.5", default-features = false }
 rustversion = { version = "1.0.0", default-features = false }

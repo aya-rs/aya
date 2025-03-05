@@ -12,16 +12,15 @@ edition.workspace = true
 [dependencies]
 anyhow = { workspace = true, features = ["std"] }
 aya-tool = { path = "../aya-tool", version = "0.1.0", default-features = false }
-base64 = { workspace = true, features = ["std"] }
 cargo_metadata = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 dialoguer = { workspace = true }
 diff = { workspace = true }
 indoc = { workspace = true }
-octorust = { workspace = true, features = ["rustls-tls"] }
 proc-macro2 = { workspace = true }
 public-api = { workspace = true }
 quote = { workspace = true }
+reqwest = { workspace = true, features = ["rustls-tls"] }
 rustdoc-json = { workspace = true }
 rustup-toolchain = { workspace = true }
 syn = { workspace = true }
