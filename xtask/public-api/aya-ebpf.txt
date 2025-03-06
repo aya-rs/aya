@@ -1452,6 +1452,37 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::fexit::FExitContext w
 pub fn aya_ebpf::programs::fexit::FExitContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::from(t: T) -> T
+pub mod aya_ebpf::programs::flow_dissector
+pub struct aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl aya_ebpf::programs::flow_dissector::FlowDissectorContext
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data(&self) -> usize
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data_end(&self) -> usize
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::flow_keys(&self) -> usize
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
+impl core::marker::Freeze for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl !core::marker::Send for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl !core::marker::Sync for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl core::marker::Unpin for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::flow_dissector::FlowDissectorContext where U: core::convert::From<T>
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::flow_dissector::FlowDissectorContext where U: core::convert::Into<T>
+pub type aya_ebpf::programs::flow_dissector::FlowDissectorContext::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::flow_dissector::FlowDissectorContext where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::flow_dissector::FlowDissectorContext::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::flow_dissector::FlowDissectorContext where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::flow_dissector::FlowDissectorContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::flow_dissector::FlowDissectorContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::from(t: T) -> T
 pub mod aya_ebpf::programs::lsm
 pub struct aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::programs::lsm::LsmContext
@@ -2161,6 +2192,36 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::fexit::FExitContext w
 pub fn aya_ebpf::programs::fexit::FExitContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::from(t: T) -> T
+pub struct aya_ebpf::programs::FlowDissectorContext
+impl aya_ebpf::programs::flow_dissector::FlowDissectorContext
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data(&self) -> usize
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data_end(&self) -> usize
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::flow_keys(&self) -> usize
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
+impl core::marker::Freeze for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl !core::marker::Send for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl !core::marker::Sync for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl core::marker::Unpin for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::flow_dissector::FlowDissectorContext where U: core::convert::From<T>
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::flow_dissector::FlowDissectorContext where U: core::convert::Into<T>
+pub type aya_ebpf::programs::flow_dissector::FlowDissectorContext::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::flow_dissector::FlowDissectorContext where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::flow_dissector::FlowDissectorContext::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::flow_dissector::FlowDissectorContext where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::flow_dissector::FlowDissectorContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::flow_dissector::FlowDissectorContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::from(t: T) -> T
 pub struct aya_ebpf::programs::LsmContext
 impl aya_ebpf::programs::lsm::LsmContext
 pub unsafe fn aya_ebpf::programs::lsm::LsmContext::arg<T: aya_ebpf::args::FromBtfArgument>(&self, n: usize) -> T
@@ -2733,6 +2794,8 @@ impl aya_ebpf::EbpfContext for aya_ebpf::programs::fentry::FEntryContext
 pub fn aya_ebpf::programs::fentry::FEntryContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::perf_event::PerfEventContext

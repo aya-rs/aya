@@ -3,8 +3,10 @@
 
 use aya_ebpf::{
     bindings::xdp_action,
-    macros::{kprobe, kretprobe, tracepoint, uprobe, uretprobe, xdp},
-    programs::{ProbeContext, RetProbeContext, TracePointContext, XdpContext},
+    macros::{flow_dissector, kprobe, kretprobe, tracepoint, uprobe, uretprobe, xdp},
+    programs::{
+        FlowDissectorContext, ProbeContext, RetProbeContext, TracePointContext, XdpContext,
+    },
 };
 
 #[xdp]
@@ -41,6 +43,11 @@ pub fn test_uprobe(_ctx: ProbeContext) -> u32 {
 
 #[uretprobe]
 pub fn test_uretprobe(_ctx: RetProbeContext) -> u32 {
+    0
+}
+
+#[flow_dissector]
+pub fn test_flow(_ctx: FlowDissectorContext) -> u32 {
     0
 }
 
