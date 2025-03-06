@@ -83,6 +83,7 @@ use aya_obj::{
     VerifierLog,
     btf::BtfError,
     generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
+    programs::XdpAttachType,
 };
 use info::impl_info;
 pub use info::{ProgramInfo, ProgramType, loaded_programs};
@@ -989,6 +990,212 @@ impl_from_pin!(
     SockOps,
     CgroupDevice,
     Iter,
+);
+
+macro_rules! impl_from_prog_info {
+    ($(($struct_name:ident, $prog_type:expr, $unsafe:ident $(, $var:ident, $var_ty:ty)?)),* $(,)?) => {
+        $(
+            impl_from_prog_info!($struct_name, $prog_type, $unsafe $(, $var, $var_ty)?);
+        )*
+    };
+    ($struct_name:ident, $prog_type:expr, false) => {
+        impl $struct_name {
+            /// Constructs an instance of a Program from a [`ProgramInfo`].
+            ///
+            /// This allows the caller to get a handle to an already loaded
+            /// program from the kernel without having to load it again.
+            ///
+            /// # Errors
+            ///
+            /// - If the program type reported by the kernel does not match
+            ///   that of the type you're converting to.
+            /// - If the file descriptor of the program cannot be cloned.
+            pub fn from_program_info(
+                name: Option<&'static str>,
+                info: ProgramInfo,
+            ) -> Result<Self, ProgramError> {
+                if info.program_type()? != $prog_type {
+                    return Err(ProgramError::UnexpectedProgramType {});
+                }
+                let ProgramInfo { 0: bpf_progam_info} = info;
+                let fd = info.fd()?;
+                let fd = fd.as_fd().try_clone_to_owned()?;
+
+                Ok(Self {
+                    data: ProgramData::from_bpf_prog_info(
+                        name.map(|n| Cow::Borrowed(n)),
+                        crate::MockableFd::from_fd(fd),
+                        Path::new(""),
+                        bpf_progam_info,
+                        VerifierLogLevel::default(),
+                    )?,
+                })
+            }
+        }
+    };
+    ($struct_name:ident, $prog_type:expr, true) => {
+        impl $struct_name {
+            /// Constructs an instance of a Program from a [`ProgramInfo`].
+            ///
+            /// This allows the caller to get a handle to an already loaded
+            /// program from the kernel without having to load it again.
+            ///
+            /// # Errors
+            ///
+            /// - If the program type reported by the kernel does not match
+            ///   that of the type you're converting to.
+            /// - If the file descriptor of the program cannot be cloned.
+            ///
+            /// # Safety
+            ///
+            /// We can't safely cast to `ProgramInfo` since we don't know the
+            /// concrete type of the program. It's up to the caller to ensure
+            /// that the program type matches the type you're converting to.
+            /// Otherwise, the behavior is undefined.
+            pub unsafe fn from_program_info(
+                name: Option<&'static str>,
+                info: ProgramInfo,
+            ) -> Result<Self, ProgramError> {
+                if info.program_type()? != $prog_type {
+                    return Err(ProgramError::UnexpectedProgramType {});
+                }
+                let ProgramInfo { 0: bpf_progam_info} = info;
+                let fd = info.fd()?;
+                let fd = fd.as_fd().try_clone_to_owned()?;
+
+                Ok(Self {
+                    data: ProgramData::from_bpf_prog_info(
+                        name.map(|n| Cow::Borrowed(n)),
+                        crate::MockableFd::from_fd(fd),
+                        Path::new(""),
+                        bpf_progam_info,
+                        VerifierLogLevel::default(),
+                    )?,
+                })
+            }
+        }
+    };
+    ($struct_name:ident, $prog_type:expr, false, $var:ident, $var_ty:ty) => {
+        impl $struct_name {
+            /// Constructs an instance of a Program from a [`ProgramInfo`].
+            ///
+            /// This allows the caller to get a handle to an already loaded
+            /// program from the kernel without having to load it again.
+            ///
+            /// # Errors
+            ///
+            /// - If the program type reported by the kernel does not match
+            ///   that of the type you're converting to.
+            /// - If the file descriptor of the program cannot be cloned.
+            pub fn from_program_info(
+                name: Option<&'static str>,
+                info: ProgramInfo,
+                $var: $var_ty,
+            ) -> Result<Self, ProgramError> {
+                if info.program_type()? != $prog_type {
+                    return Err(ProgramError::UnexpectedProgramType {});
+                }
+                let ProgramInfo { 0: bpf_progam_info} = info;
+                let fd = info.fd()?;
+                let fd = fd.as_fd().try_clone_to_owned()?;
+
+                Ok(Self {
+                    data: ProgramData::from_bpf_prog_info(
+                        name.map(|n| Cow::Borrowed(n)),
+                        crate::MockableFd::from_fd(fd),
+                        Path::new(""),
+                        bpf_progam_info,
+                        VerifierLogLevel::default(),
+                    )?,
+                    $var,
+                })
+            }
+        }
+    };
+    ($struct_name:ident, $prog_type:expr, true, $var:ident, $var_ty:ty) => {
+        impl $struct_name {
+            /// Constructs an instance of a Program from a [`ProgramInfo`].
+            ///
+            /// This allows the caller to get a handle to an already loaded
+            /// program from the kernel without having to load it again.
+            ///
+            /// # Errors
+            ///
+            /// - If the program type reported by the kernel does not match
+            ///   that of the type you're converting to.
+            /// - If the file descriptor of the program cannot be cloned.
+            ///
+            /// # Safety
+            ///
+            /// We can't safely cast to `ProgramInfo` since we don't know the
+            /// concrete type of the program. It's up to the caller to ensure
+            /// that the program type matches the type you're converting to.
+            /// Otherwise, the behavior is undefined.
+            pub unsafe fn from_program_info(
+                name: Option<&'static str>,
+                info: ProgramInfo,
+                $var: $var_ty,
+            ) -> Result<Self, ProgramError> {
+                if info.program_type()? != $prog_type {
+                    return Err(ProgramError::UnexpectedProgramType {});
+                }
+                let ProgramInfo { 0: bpf_progam_info} = info;
+                let fd = info.fd()?;
+                let fd = fd.as_fd().try_clone_to_owned()?;
+
+                Ok(Self {
+                    data: ProgramData::from_bpf_prog_info(
+                        name.map(|n| Cow::Borrowed(n)),
+                        crate::MockableFd::from_fd(fd),
+                        Path::new(""),
+                        bpf_progam_info,
+                        VerifierLogLevel::default(),
+                    )?,
+                    $var,
+                })
+            }
+        }
+    };
+}
+
+// Order of arguments is as follows:
+// - Program, bpf_prog_type, unsafe
+// - Program, bpf_prog_type, unsafe, additional variable, variable type
+impl_from_prog_info!(
+    (KProbe, ProgramType::KProbe, true, kind, ProbeKind),
+    (UProbe, ProgramType::KProbe, true, kind, ProbeKind),
+    (TracePoint, ProgramType::TracePoint, false),
+    (SocketFilter, ProgramType::SocketFilter, false),
+    (Xdp, ProgramType::Xdp, false, attach_type, XdpAttachType),
+    (SkMsg, ProgramType::SkMsg, false),
+    (SkSkb, ProgramType::SkSkb, false, kind, SkSkbKind),
+    (SockOps, ProgramType::SockOps, false),
+    (SchedClassifier, ProgramType::SchedClassifier, false),
+    (
+        CgroupSkb,
+        ProgramType::CgroupSkb,
+        false,
+        attach_type,
+        Option<CgroupSkbAttachType>
+    ),
+    (CgroupSysctl, ProgramType::CgroupSysctl, false),
+    (
+        CgroupSockopt,
+        ProgramType::CgroupSockopt,
+        false,
+        attach_type,
+        CgroupSockoptAttachType
+    ),
+    (LircMode2, ProgramType::LircMode2, false),
+    (PerfEvent, ProgramType::PerfEvent, false),
+    (Lsm, ProgramType::Lsm, false),
+    (RawTracePoint, ProgramType::RawTracePoint, false),
+    (BtfTracePoint, ProgramType::Tracing, true),
+    (FEntry, ProgramType::Tracing, true),
+    (FExit, ProgramType::Tracing, true),
+    (Extension, ProgramType::Extension, false),
+    (SkLookup, ProgramType::SkLookup, false),
+    (CgroupDevice, ProgramType::CgroupDevice, false),
 );
 
 macro_rules! impl_try_from_program {

@@ -57,18 +57,16 @@ use crate::{
 #[doc(alias = "BPF_PROG_TYPE_CGROUP_SKB")]
 pub struct CgroupSkb {
     pub(crate) data: ProgramData<CgroupSkbLink>,
-    pub(crate) expected_attach_type: Option<CgroupSkbAttachType>,
+    pub(crate) attach_type: Option<CgroupSkbAttachType>,
 }
 
 impl CgroupSkb {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type =
-            self.expected_attach_type
-                .map(|attach_type| match attach_type {
-                    CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
-                    CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
-                });
+        self.data.expected_attach_type = self.attach_type.map(|attach_type| match attach_type {
+            CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
+            CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
+        });
         load_program(BPF_PROG_TYPE_CGROUP_SKB, &mut self.data)
     }
 
@@ -79,7 +77,7 @@ impl CgroupSkb {
     /// method returns `None` for programs defined with the generic section
     /// `cgroup/skb`.
     pub fn expected_attach_type(&self) -> &Option<CgroupSkbAttachType> {
-        &self.expected_attach_type
+        &self.attach_type
     }
 
     /// Attaches the program to the given cgroup.
@@ -138,7 +136,7 @@ impl CgroupSkb {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self {
             data,
-            expected_attach_type: Some(expected_attach_type),
+            attach_type: Some(expected_attach_type),
         })
     }
 }
