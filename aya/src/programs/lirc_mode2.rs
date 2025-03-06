@@ -7,8 +7,8 @@ use aya_obj::generated::{
 
 use crate::{
     programs::{
-        CgroupAttachMode, Link, ProgramData, ProgramError, ProgramFd, ProgramInfo, id_as_key,
-        load_program, query,
+        CgroupAttachMode, Link, ProgramData, ProgramError, ProgramFd, ProgramInfo, ProgramType,
+        id_as_key, load_program, query,
     },
     sys::{ProgQueryTarget, bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
 };
@@ -56,6 +56,9 @@ pub struct LircMode2 {
 }
 
 impl LircMode2 {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::LircMode2;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_LIRC_MODE2, &mut self.data)

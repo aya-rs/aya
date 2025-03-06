@@ -18,7 +18,8 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, LinkError, ProgramData, ProgramError, define_link_wrapper, load_program,
+        FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{OsStringExt as _, ProbeKind, attach},
     },
@@ -71,6 +72,9 @@ impl From<u64> for UProbeAttachLocation<'static> {
 }
 
 impl UProbe {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::KProbe;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
