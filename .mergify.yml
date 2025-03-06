@@ -1,11 +1,4 @@
 pull_request_rules:
-  - name: automatic merge for Dependabot pull request that pass CI
-    conditions:
-      - author=dependabot[bot]
-    actions:
-      comment:
-        message: "@dependabot merge"
-
   # REVIEW MANAGEMENT
 
   - name: ask alessandrod to review public API changes
