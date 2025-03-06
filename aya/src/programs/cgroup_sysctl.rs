@@ -8,7 +8,7 @@ use aya_obj::generated::{
 
 use crate::{
     programs::{
-        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
         define_link_wrapper, id_as_key, load_program,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
@@ -55,6 +55,9 @@ pub struct CgroupSysctl {
 }
 
 impl CgroupSysctl {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::CgroupSysctl;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_CGROUP_SYSCTL, &mut self.data)

@@ -6,7 +6,7 @@ use aya_obj::{
 };
 
 use crate::programs::{
-    FdLink, FdLinkId, ProgramData, ProgramError, define_link_wrapper, load_program,
+    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
     utils::attach_raw_tracepoint,
 };
 
@@ -54,6 +54,9 @@ pub struct Lsm {
 }
 
 impl Lsm {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::Lsm;
+
     /// Loads the program inside the kernel.
     ///
     /// # Arguments

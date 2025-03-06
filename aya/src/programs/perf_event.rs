@@ -16,7 +16,7 @@ pub use aya_obj::generated::{
 
 use crate::{
     programs::{
-        FdLink, LinkError, ProgramData, ProgramError,
+        FdLink, LinkError, ProgramData, ProgramError, ProgramType,
         links::define_link_wrapper,
         load_program, perf_attach,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
@@ -127,6 +127,9 @@ pub struct PerfEvent {
 }
 
 impl PerfEvent {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::PerfEvent;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_PERF_EVENT, &mut self.data)

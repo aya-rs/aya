@@ -10,7 +10,7 @@ use aya_obj::generated::{
 use libc::{SOL_SOCKET, setsockopt};
 use thiserror::Error;
 
-use crate::programs::{Link, ProgramData, ProgramError, id_as_key, load_program};
+use crate::programs::{Link, ProgramData, ProgramError, ProgramType, id_as_key, load_program};
 
 /// The type returned when attaching a [`SocketFilter`] fails.
 #[derive(Debug, Error)]
@@ -64,6 +64,9 @@ pub struct SocketFilter {
 }
 
 impl SocketFilter {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SocketFilter;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SOCKET_FILTER, &mut self.data)
