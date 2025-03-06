@@ -12,6 +12,9 @@ homepage.workspace = true
 rust-version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 bytes = { workspace = true }
 hashbrown = { workspace = true, default-features = true }
