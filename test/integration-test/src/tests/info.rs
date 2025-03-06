@@ -55,6 +55,12 @@ fn test_loaded_programs() {
         programs.any(|prog| prog.id() == test_prog.id()),
         KernelVersion::new(4, 13, 0)
     );
+
+    for program in programs {
+        let mut p: SocketFilter =
+            SocketFilter::from_program_info(Some("simple_prog".to_string()), program).unwrap();
+        p.unload().unwrap();
+    }
 }
 
 #[test]

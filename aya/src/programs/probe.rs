@@ -24,7 +24,7 @@ use crate::{
 static PROBE_NAME_INDEX: AtomicUsize = AtomicUsize::new(0);
 
 /// Kind of probe program
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum ProbeKind {
     /// Kernel probe
     KProbe,

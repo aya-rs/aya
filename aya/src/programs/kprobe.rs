@@ -9,10 +9,12 @@ use std::{
 use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE};
 use thiserror::Error;
 
+use super::ProgramType;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, LinkError, ProgramData, ProgramError, define_link_wrapper, load_program,
+        FdLink, LinkError, ProgramData, ProgramError, ProgramInfo, define_link_wrapper,
+        load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{ProbeKind, attach},
     },
@@ -96,6 +98,62 @@ impl KProbe {
     pub fn from_pin<P: AsRef<Path>>(path: P, kind: ProbeKind) -> Result<Self, ProgramError> {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, kind })
+    }
+
+    /// Constructs an instance of [KProbe] from a [ProgramInfo].
+    ///
+    /// This allows you to get a handle to an already loaded program
+    /// from the kernel without having to load it again.
+    ///
+    /// # Safety
+    ///
+    /// The type of program in the [ProgramInfo] may not be of
+    /// [`ProgramType::KProbe`]. This function is unable to
+    /// check since the kernel doesn't expose this information.
+    /// The caller is responsible for ensuring that the program
+    /// type is correct (i.e they previously loaded it) otherwise
+    /// the behavior is undefined.
+    ///
+    /// # Errors
+    ///
+    /// - If the program type is not  [`ProgramType::KProbe`]
+    /// - If the file descriptor of the program cannot be cloned
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use aya::programs::loaded_programs;
+    /// # use aya::programs::{KProbe, ProbeKind, ProgramInfo, ProgramType};
+    ///
+    /// for program in loaded_programs() {
+    ///    let program = program?;
+    ///    if program.program_type()? == ProgramType::KProbe {
+    ///       let p = unsafe { KProbe::from_program_info(None, program, ProbeKind::KProbe)? };
+    ///       // do something with the program
+    ///     }
+    /// }
+    /// # Ok::<(), aya::programs::ProgramError>(())
+    /// ```
+    pub unsafe fn from_program_info(
+        name: Option<String>,
+        info: ProgramInfo,
+        kind: ProbeKind,
+    ) -> Result<Self, ProgramError> {
+        if info.program_type()? != ProgramType::KProbe {
+            return Err(ProgramError::UnexpectedProgramType {});
+        }
+        if kind != ProbeKind::KProbe && kind != ProbeKind::KRetProbe {
+            return Err(ProgramError::UnexpectedProgramType {});
+        }
+        Ok(Self {
+            data: ProgramData::from_bpf_prog_info(
+                name,
+                crate::MockableFd::from_fd(info.fd()?.as_fd().try_clone_to_owned()?),
+                Path::new(""),
+                info.0,
+                VerifierLogLevel::default(),
+            )?,
+            kind,
+        })
     }
 }
 

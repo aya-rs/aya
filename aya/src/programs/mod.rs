@@ -990,6 +990,157 @@ impl_from_pin!(
     Iter,
 );
 
+macro_rules! impl_from_prog_info {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl $struct_name {
+                /// Consructs a program from a [ProgramInfo].
+                ///
+                /// This allows you to get a handle to an already loaded program
+                /// from the kernel without having to load it again.
+                ///
+                /// # Errors
+                ///
+                /// - If the program type is not a match
+                /// - If the file descriptor of the program cannot be cloned
+                pub fn from_program_info(
+                    name: Option<String>,
+                    info: ProgramInfo,
+                ) -> Result<$struct_name, ProgramError> {
+                    if info.program_type()? != ProgramType::$struct_name {
+                        return Err(ProgramError::UnexpectedProgramType {});
+                    }
+                    Ok($struct_name {
+                        data: ProgramData::from_bpf_prog_info(
+                            name,
+                            crate::MockableFd::from_fd(info.fd()?.as_fd().try_clone_to_owned()?),
+                            Path::new(""),
+                            info.0,
+                            VerifierLogLevel::default(),
+                        )?,
+                    })
+                }
+            }
+        )+
+    }
+}
+
+macro_rules! impl_from_prog_info_attach_type {
+    ($($struct_name:ident, $attach_type:ty),+ $(,)?) => {
+        $(
+            impl $struct_name {
+
+                /// Consructs a program from a [ProgramInfo].
+                ///
+                /// This allows you to get a handle to an already loaded program
+                /// from the kernel without having to load it again.
+                ///
+                /// # Errors
+                ///
+                /// - If the program type is not a match
+                /// - If the file descriptor of the program cannot be cloned
+                pub fn from_program_info(
+                    name: Option<String>,
+                    info: ProgramInfo,
+                    attach_type: $attach_type,
+                ) -> Result<$struct_name, ProgramError> {
+                    if info.program_type()? != ProgramType::$struct_name {
+                        return Err(ProgramError::UnexpectedProgramType {});
+                    }
+                    Ok($struct_name {
+                        data: ProgramData::from_bpf_prog_info(
+                            name,
+                            crate::MockableFd::from_fd(info.fd()?.as_fd().try_clone_to_owned()?),
+                            Path::new(""),
+                            info.0,
+                            VerifierLogLevel::default(),
+                        )?,
+                        attach_type,
+                    })
+                }
+            }
+        )+
+    }
+}
+
+macro_rules! impl_from_prog_info_unsafe {
+    ($($struct_name:ident, $prog_type:expr),+ $(,)?) => {
+        $(
+            impl $struct_name {
+
+                /// Consructs a program from a [ProgramInfo].
+                ///
+                /// This allows you to get a handle to an already loaded program
+                /// from the kernel without having to load it again.
+                ///
+                /// # Errors
+                ///
+                /// - If the program type is not a match
+                /// - If the file descriptor of the program cannot be cloned
+                ///
+                /// # Safety
+                ///
+                /// The type of program in the [ProgramInfo] may be
+                /// ambiguous due to missing information in the kernel.
+                /// The caller is responsible for ensuring that the program
+                /// type is correct otherwise the behavior is undefined.
+                pub unsafe fn from_program_info(
+                    name: Option<String>,
+                    info: ProgramInfo,
+                ) -> Result<$struct_name, ProgramError> {
+                    if info.program_type()? != $prog_type {
+                        return Err(ProgramError::UnexpectedProgramType {});
+                    }
+                    Ok($struct_name {
+                        data: ProgramData::from_bpf_prog_info(
+                            name,
+                            crate::MockableFd::from_fd(info.fd()?.as_fd().try_clone_to_owned()?),
+                            Path::new(""),
+                            info.0,
+                            VerifierLogLevel::default(),
+                        )?,
+                    })
+                }
+            }
+        )+
+    }
+}
+
+impl_from_prog_info_unsafe!(
+    BtfTracePoint,
+    ProgramType::Tracing,
+    FEntry,
+    ProgramType::Tracing,
+    FExit,
+    ProgramType::Tracing,
+);
+
+impl_from_prog_info!(
+    CgroupDevice,
+    CgroupSysctl,
+    Extension,
+    LircMode2,
+    Lsm,
+    PerfEvent,
+    RawTracePoint,
+    SkLookup,
+    SkMsg,
+    SockOps,
+    SocketFilter,
+    SchedClassifier,
+);
+
+impl_from_prog_info_attach_type!(
+    CgroupSkb,
+    Option<CgroupSkbAttachType>,
+    CgroupSockAddr,
+    CgroupSockAddrAttachType,
+    CgroupSock,
+    CgroupSockAttachType,
+    CgroupSockopt,
+    CgroupSockoptAttachType,
+);
+
 macro_rules! impl_try_from_program {
     ($($ty:ident),+ $(,)?) => {
         $(

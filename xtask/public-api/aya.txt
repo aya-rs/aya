@@ -2539,6 +2539,8 @@ pub fn aya::programs::cgroup_device::CgroupDevice::fd(&self) -> core::result::Re
 impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
+pub fn aya::programs::cgroup_device::CgroupDevice::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
+impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -2701,6 +2703,8 @@ pub fn aya::programs::cgroup_skb::CgroupSkb::take_link(&mut self, link_id: aya::
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::cgroup_skb::CgroupSkb
+pub fn aya::programs::cgroup_skb::CgroupSkb::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, attach_type: core::option::Option<aya::programs::cgroup_skb::CgroupSkbAttachType>) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkb, aya::programs::ProgramError>
+impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -2826,6 +2830,8 @@ pub fn aya::programs::cgroup_sock::CgroupSock::detach(&mut self, link_id: aya::p
 pub fn aya::programs::cgroup_sock::CgroupSock::take_link(&mut self, link_id: aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock::CgroupSock
 pub fn aya::programs::cgroup_sock::CgroupSock::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::cgroup_sock::CgroupSock
+pub fn aya::programs::cgroup_sock::CgroupSock::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, attach_type: aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> core::result::Result<aya::programs::cgroup_sock::CgroupSock, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock::CgroupSock
 pub fn aya::programs::cgroup_sock::CgroupSock::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock::CgroupSock
@@ -2953,6 +2959,8 @@ pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::take_link(&mut self, lin
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, attach_type: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddr, aya::programs::ProgramError>
+impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -3079,6 +3087,8 @@ pub fn aya::programs::cgroup_sockopt::CgroupSockopt::take_link(&mut self, link_i
 impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
+pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, attach_type: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockopt, aya::programs::ProgramError>
+impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -3204,6 +3214,8 @@ impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::cgroup_sysctl::CgroupSysctl
+pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctl, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
@@ -3365,6 +3377,8 @@ pub fn aya::programs::extension::Extension::fd(&self) -> core::result::Result<&a
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
+pub fn aya::programs::extension::Extension::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::extension::Extension, aya::programs::ProgramError>
+impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -3495,6 +3509,8 @@ pub fn aya::programs::fentry::FEntry::fd(&self) -> core::result::Result<&aya::pr
 impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
+pub unsafe fn aya::programs::fentry::FEntry::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::fentry::FEntry, aya::programs::ProgramError>
+impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -3624,6 +3640,8 @@ impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::fexit::FExit
+pub unsafe fn aya::programs::fexit::FExit::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::fexit::FExit, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
@@ -3944,6 +3962,7 @@ pub struct aya::programs::kprobe::KProbe
 impl aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::attach<T: core::convert::AsRef<std::ffi::os_str::OsStr>>(&mut self, fn_name: T, offset: u64) -> core::result::Result<aya::programs::kprobe::KProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::kprobe::KProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
+pub unsafe fn aya::programs::kprobe::KProbe::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::kprobe::KProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::kprobe::KProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::kprobe::KProbe
@@ -4649,6 +4668,8 @@ pub fn aya::programs::lirc_mode2::LircMode2::fd(&self) -> core::result::Result<&
 impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::lirc_mode2::LircMode2
+pub fn aya::programs::lirc_mode2::LircMode2::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::lirc_mode2::LircMode2, aya::programs::ProgramError>
+impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -4699,6 +4720,8 @@ impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::lsm::Lsm
+pub fn aya::programs::lsm::Lsm::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::lsm::Lsm, aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
@@ -5026,6 +5049,8 @@ pub fn aya::programs::perf_event::PerfEvent::fd(&self) -> core::result::Result<&
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
+pub fn aya::programs::perf_event::PerfEvent::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::perf_event::PerfEvent, aya::programs::ProgramError>
+impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -5158,6 +5183,8 @@ pub fn aya::programs::raw_trace_point::RawTracePoint::fd(&self) -> core::result:
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::raw_trace_point::RawTracePoint, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -5288,6 +5315,8 @@ pub fn aya::programs::sk_lookup::SkLookup::fd(&self) -> core::result::Result<&ay
 impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::sk_lookup::SkLookup, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -5417,6 +5446,8 @@ impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::sk_msg::SkMsg, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
@@ -5713,6 +5744,8 @@ pub fn aya::programs::sock_ops::SockOps::fd(&self) -> core::result::Result<&aya:
 impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -5872,6 +5905,8 @@ impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::socket_filter::SocketFilter, aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
@@ -6151,6 +6186,8 @@ pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, link_id: aya::pr
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
+pub fn aya::programs::tc::SchedClassifier::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::tc::SchedClassifier, aya::programs::ProgramError>
+impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -6296,6 +6333,8 @@ impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::tp_btf::BtfTracePoint
+pub unsafe fn aya::programs::tp_btf::BtfTracePoint::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::tp_btf::BtfTracePoint, aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
@@ -6699,6 +6738,7 @@ pub struct aya::programs::uprobe::UProbe
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<libc::unix::pid_t>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
+pub unsafe fn aya::programs::uprobe::UProbe::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
@@ -7341,9 +7381,12 @@ pub aya::programs::ProbeKind::UProbe
 pub aya::programs::ProbeKind::URetProbe
 impl core::clone::Clone for aya::programs::ProbeKind
 pub fn aya::programs::ProbeKind::clone(&self) -> aya::programs::ProbeKind
+impl core::cmp::PartialEq for aya::programs::ProbeKind
+pub fn aya::programs::ProbeKind::eq(&self, other: &aya::programs::ProbeKind) -> bool
 impl core::fmt::Debug for aya::programs::ProbeKind
 pub fn aya::programs::ProbeKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::ProbeKind
+impl core::marker::StructuralPartialEq for aya::programs::ProbeKind
 impl core::marker::Freeze for aya::programs::ProbeKind
 impl core::marker::Send for aya::programs::ProbeKind
 impl core::marker::Sync for aya::programs::ProbeKind
@@ -8053,6 +8096,8 @@ pub fn aya::programs::tp_btf::BtfTracePoint::fd(&self) -> core::result::Result<&
 impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
+pub unsafe fn aya::programs::tp_btf::BtfTracePoint::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::tp_btf::BtfTracePoint, aya::programs::ProgramError>
+impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -8104,6 +8149,8 @@ pub fn aya::programs::cgroup_device::CgroupDevice::fd(&self) -> core::result::Re
 impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
+pub fn aya::programs::cgroup_device::CgroupDevice::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
+impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -8154,6 +8201,8 @@ pub fn aya::programs::cgroup_skb::CgroupSkb::take_link(&mut self, link_id: aya::
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::cgroup_skb::CgroupSkb
+pub fn aya::programs::cgroup_skb::CgroupSkb::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, attach_type: core::option::Option<aya::programs::cgroup_skb::CgroupSkbAttachType>) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkb, aya::programs::ProgramError>
+impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -8202,6 +8251,8 @@ pub fn aya::programs::cgroup_sock::CgroupSock::detach(&mut self, link_id: aya::p
 pub fn aya::programs::cgroup_sock::CgroupSock::take_link(&mut self, link_id: aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock::CgroupSock
 pub fn aya::programs::cgroup_sock::CgroupSock::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::cgroup_sock::CgroupSock
+pub fn aya::programs::cgroup_sock::CgroupSock::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, attach_type: aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> core::result::Result<aya::programs::cgroup_sock::CgroupSock, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock::CgroupSock
 pub fn aya::programs::cgroup_sock::CgroupSock::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock::CgroupSock
@@ -8252,6 +8303,8 @@ pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::take_link(&mut self, lin
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, attach_type: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddr, aya::programs::ProgramError>
+impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -8300,6 +8353,8 @@ pub fn aya::programs::cgroup_sockopt::CgroupSockopt::detach(&mut self, link_id: 
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::take_link(&mut self, link_id: aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::cgroup_sockopt::CgroupSockopt
+pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, attach_type: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockopt, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
@@ -8350,6 +8405,8 @@ impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::cgroup_sysctl::CgroupSysctl
+pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctl, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
@@ -8402,6 +8459,8 @@ pub fn aya::programs::extension::Extension::fd(&self) -> core::result::Result<&a
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
+pub fn aya::programs::extension::Extension::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::extension::Extension, aya::programs::ProgramError>
+impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -8452,6 +8511,8 @@ pub fn aya::programs::fentry::FEntry::fd(&self) -> core::result::Result<&aya::pr
 impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
+pub unsafe fn aya::programs::fentry::FEntry::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::fentry::FEntry, aya::programs::ProgramError>
+impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -8501,6 +8562,8 @@ impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::fexit::FExit
+pub unsafe fn aya::programs::fexit::FExit::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::fexit::FExit, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
@@ -8594,6 +8657,7 @@ pub struct aya::programs::KProbe
 impl aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::attach<T: core::convert::AsRef<std::ffi::os_str::OsStr>>(&mut self, fn_name: T, offset: u64) -> core::result::Result<aya::programs::kprobe::KProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::kprobe::KProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
+pub unsafe fn aya::programs::kprobe::KProbe::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::kprobe::KProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::kprobe::KProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::kprobe::KProbe
@@ -8688,6 +8752,8 @@ pub fn aya::programs::lirc_mode2::LircMode2::fd(&self) -> core::result::Result<&
 impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::lirc_mode2::LircMode2
+pub fn aya::programs::lirc_mode2::LircMode2::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::lirc_mode2::LircMode2, aya::programs::ProgramError>
+impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -8738,6 +8804,8 @@ pub fn aya::programs::lsm::Lsm::fd(&self) -> core::result::Result<&aya::programs
 impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
+pub fn aya::programs::lsm::Lsm::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::lsm::Lsm, aya::programs::ProgramError>
+impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -8787,6 +8855,8 @@ impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::perf_event::PerfEvent
+pub fn aya::programs::perf_event::PerfEvent::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::perf_event::PerfEvent, aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
@@ -8936,6 +9006,8 @@ pub fn aya::programs::raw_trace_point::RawTracePoint::fd(&self) -> core::result:
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::raw_trace_point::RawTracePoint, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -8987,6 +9059,8 @@ pub fn aya::programs::tc::SchedClassifier::detach(&mut self, link_id: aya::progr
 pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, link_id: aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<aya::programs::tc::SchedClassifierLink, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::tc::SchedClassifier
+pub fn aya::programs::tc::SchedClassifier::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::tc::SchedClassifier, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
@@ -9040,6 +9114,8 @@ pub fn aya::programs::sk_lookup::SkLookup::fd(&self) -> core::result::Result<&ay
 impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::sk_lookup::SkLookup, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -9089,6 +9165,8 @@ impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::sk_msg::SkMsg, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
@@ -9189,6 +9267,8 @@ pub fn aya::programs::sock_ops::SockOps::fd(&self) -> core::result::Result<&aya:
 impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -9237,6 +9317,8 @@ impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo) -> core::result::Result<aya::programs::socket_filter::SocketFilter, aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
@@ -9330,6 +9412,7 @@ pub struct aya::programs::UProbe
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<libc::unix::pid_t>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
+pub unsafe fn aya::programs::uprobe::UProbe::from_program_info(name: core::option::Option<alloc::string::String>, info: aya::programs::ProgramInfo, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
