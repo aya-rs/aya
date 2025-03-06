@@ -8,7 +8,7 @@ pub use aya_obj::programs::CgroupSockAttachType;
 use crate::{
     VerifierLogLevel,
     programs::{
-        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
         define_link_wrapper, id_as_key, load_program,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
@@ -58,6 +58,9 @@ pub struct CgroupSock {
 }
 
 impl CgroupSock {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::CgroupSock;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(self.attach_type.into());
