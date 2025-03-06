@@ -519,11 +519,7 @@ impl<'a> EbpfLoader<'a> {
             .map(|(name, prog_obj)| {
                 let function_obj = obj.functions.get(&prog_obj.function_key()).unwrap().clone();
 
-                let prog_name = if FEATURES.bpf_name() {
-                    Some(name.clone())
-                } else {
-                    None
-                };
+                let prog_name = FEATURES.bpf_name().then(|| name.clone().into());
                 let section = prog_obj.section.clone();
                 let obj = (prog_obj, function_obj);
 

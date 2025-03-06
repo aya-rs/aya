@@ -71,6 +71,7 @@ pub mod uprobe;
 pub mod xdp;
 
 use std::{
+    borrow::Cow,
     ffi::CString,
     io,
     os::fd::{AsFd, BorrowedFd},
@@ -493,7 +494,7 @@ impl Program {
 
 #[derive(Debug)]
 pub(crate) struct ProgramData<T: Link> {
-    pub(crate) name: Option<String>,
+    pub(crate) name: Option<Cow<'static, str>>,
     pub(crate) obj: Option<(aya_obj::Program, aya_obj::Function)>,
     pub(crate) fd: Option<ProgramFd>,
     pub(crate) links: Links<T>,
@@ -509,7 +510,7 @@ pub(crate) struct ProgramData<T: Link> {
 
 impl<T: Link> ProgramData<T> {
     pub(crate) fn new(
-        name: Option<String>,
+        name: Option<Cow<'static, str>>,
         obj: (aya_obj::Program, aya_obj::Function),
         btf_fd: Option<Arc<crate::MockableFd>>,
         verifier_log_level: VerifierLogLevel,
@@ -531,7 +532,7 @@ impl<T: Link> ProgramData<T> {
     }
 
     pub(crate) fn from_bpf_prog_info(
-        name: Option<String>,
+        name: Option<Cow<'static, str>>,
         fd: crate::MockableFd,
         path: &Path,
         info: bpf_prog_info,
@@ -576,7 +577,7 @@ impl<T: Link> ProgramData<T> {
         })?;
 
         let info = ProgramInfo::new_from_fd(fd.as_fd())?;
-        let name = info.name_as_str().map(|s| s.to_string());
+        let name = info.name_as_str().map(ToOwned::to_owned).map(Into::into);
         Self::from_bpf_prog_info(name, fd, path.as_ref(), info.0, verifier_log_level)
     }
 }
