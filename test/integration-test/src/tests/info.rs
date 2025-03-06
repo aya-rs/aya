@@ -10,7 +10,7 @@ use std::{fs, panic, path::Path, time::SystemTime};
 use aya::{
     Ebpf,
     maps::{Array, HashMap, IterableMap as _, MapError, MapType, loaded_maps},
-    programs::{ProgramError, ProgramType, SocketFilter, TracePoint, loaded_programs},
+    programs::{ProgramError, ProgramType, SocketFilter, TracePoint, UProbe, loaded_programs},
     sys::enable_stats,
     util::KernelVersion,
 };
@@ -25,8 +25,8 @@ const BPF_STATS_ENABLED: &str = "/proc/sys/kernel/bpf_stats_enabled";
 fn test_loaded_programs() {
     // Load a program.
     // Since we are only testing the programs for their metadata, there is no need to "attach" them.
-    let mut bpf = Ebpf::load(crate::SIMPLE_PROG).unwrap();
-    let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
+    let prog: &mut UProbe = bpf.program_mut("test_uprobe").unwrap().try_into().unwrap();
     prog.load().unwrap();
     let test_prog = prog.info().unwrap();
 
@@ -55,6 +55,25 @@ fn test_loaded_programs() {
         programs.any(|prog| prog.id() == test_prog.id()),
         KernelVersion::new(4, 13, 0)
     );
+
+    // Use loaded programs to find our test program and exercise `from_program_info()`.
+    let info = loaded_programs()
+        .filter_map(|prog| prog.ok())
+        .find(|prog| prog.id() == test_prog.id())
+        .unwrap();
+
+    let mut p: UProbe = unsafe {
+        UProbe::from_program_info(info, "test_uprobe".into(), aya::programs::ProbeKind::UProbe)
+            .unwrap()
+    };
+
+    // Ensure we can perform basic operations on the re-created program.
+    let res = p
+        .attach("uprobe_function", "/proc/self/exe", None, None)
+        .unwrap();
+
+    // Ensure the program can be detached
+    p.detach(res).unwrap();
 }
 
 #[test]
