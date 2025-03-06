@@ -9,6 +9,9 @@ homepage.workspace = true
 rust-version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 anyhow = { workspace = true, features = ["std"] }
 assert_matches = { workspace = true }

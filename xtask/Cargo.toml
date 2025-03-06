@@ -9,6 +9,9 @@ homepage.workspace = true
 rust-version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 anyhow = { workspace = true, features = ["std"] }
 aya-tool = { path = "../aya-tool", version = "0.1.0", default-features = false }

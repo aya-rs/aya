@@ -9,6 +9,9 @@ homepage.workspace = true
 rust-version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 aya-log-common = { path = "../aya-log-common", version = "^0.1.14", default-features = false }
 aya-log-parser = { path = "../aya-log-parser", version = "^0.1.13", default-features = false }

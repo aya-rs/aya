@@ -12,6 +12,9 @@ homepage.workspace = true
 rust-version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 assert_matches = { workspace = true }
 async-io = { workspace = true, optional = true }

@@ -10,6 +10,9 @@ homepage.workspace = true
 rust-version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 bindgen = { workspace = true, default-features = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }

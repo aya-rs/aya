@@ -12,6 +12,9 @@ homepage.workspace = true
 rust-version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 aya = { path = "../aya", version = "^0.13.1", features = ["async_tokio"] }
 aya-log-common = { path = "../aya-log-common", version = "^0.1.15", default-features = false }
