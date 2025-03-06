@@ -609,15 +609,15 @@ impl<'a> EbpfLoader<'a> {
                         }
                         ProgramSection::CgroupSkb => Program::CgroupSkb(CgroupSkb {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            expected_attach_type: None,
+                            attach_type: None,
                         }),
                         ProgramSection::CgroupSkbIngress => Program::CgroupSkb(CgroupSkb {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            expected_attach_type: Some(CgroupSkbAttachType::Ingress),
+                            attach_type: Some(CgroupSkbAttachType::Ingress),
                         }),
                         ProgramSection::CgroupSkbEgress => Program::CgroupSkb(CgroupSkb {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            expected_attach_type: Some(CgroupSkbAttachType::Egress),
+                            attach_type: Some(CgroupSkbAttachType::Egress),
                         }),
                         ProgramSection::CgroupSockAddr { attach_type, .. } => {
                             Program::CgroupSockAddr(CgroupSockAddr {

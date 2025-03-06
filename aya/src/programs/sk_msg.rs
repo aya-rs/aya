@@ -9,7 +9,7 @@ use aya_obj::generated::{
 use crate::{
     maps::sock::SockMapFd,
     programs::{
-        CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError,
+        CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError, ProgramType,
         define_link_wrapper, load_program,
     },
 };
@@ -72,6 +72,9 @@ pub struct SkMsg {
 }
 
 impl SkMsg {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SkLookup;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SK_MSG, &mut self.data)

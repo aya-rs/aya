@@ -83,6 +83,7 @@ use aya_obj::{
     VerifierLog,
     btf::BtfError,
     generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
+    programs::XdpAttachType,
 };
 use info::impl_info;
 pub use info::{ProgramInfo, ProgramType, loaded_programs};
@@ -989,6 +990,105 @@ impl_from_pin!(
     SockOps,
     CgroupDevice,
     Iter,
+);
+
+macro_rules! impl_from_prog_info{
+    (
+        $(#[$doc:meta])*
+        @safety
+            [$($safety:tt)?]
+        @rest
+            $struct_name:ident $($var:ident : $var_ty:ty)?
+    ) => {
+        impl $struct_name {
+            /// Constructs an instance of a [`Self`] from a [`ProgramInfo`].
+            ///
+            /// This allows the caller to get a handle to an already loaded
+            /// program from the kernel without having to load it again.
+            ///
+            /// # Errors
+            ///
+            /// - If the program type reported by the kernel does not match
+            ///   [`Self::PROGRAM_TYPE`].
+            /// - If the file descriptor of the program cannot be cloned.
+            $(#[$doc])*
+            pub $($safety)?
+            fn from_program_info(
+                info: ProgramInfo,
+                $($var: $var_ty,)?
+            ) -> Result<Self, ProgramError> {
+                if info.program_type()? != Self::PROGRAM_TYPE {
+                    return Err(ProgramError::UnexpectedProgramType {});
+                }
+                let ProgramInfo(bpf_progam_info) = info;
+                let fd = info.fd()?;
+                let fd = fd.as_fd().try_clone_to_owned()?;
+
+                Ok(Self {
+                    data: ProgramData::from_bpf_prog_info(
+                        None,
+                        crate::MockableFd::from_fd(fd),
+                        Path::new(""),
+                        bpf_progam_info,
+                        VerifierLogLevel::default(),
+                    )?,
+                    $($var,)?
+                })
+            }
+        }
+    };
+    (
+        unsafe $struct_name:ident $($var:ident : $var_ty:ty)? $(, $($rest:tt)*)?
+    ) => {
+        impl_from_prog_info! {
+            ///
+            /// # Safety
+            ///
+            /// The runtime type of this program, as used by the kernel, is
+            /// overloaded. We assert the program type matches the runtime type
+            /// but we're unable to perform further checks. Therefore, the caller
+            /// must ensure that the program type is correct or the behavior is
+            /// undefined.
+            @safety [unsafe]
+            @rest $struct_name $($var : $var_ty)?
+        }
+        $( impl_from_prog_info!($($rest)*); )?
+    };
+
+    (
+        $struct_name:ident $($var:ident : $var_ty:ty)? $(, $($rest:tt)*)?
+    ) => {
+        impl_from_prog_info! {
+            @safety []
+            @rest $struct_name $($var : $var_ty)?
+        }
+        $( impl_from_prog_info!($($rest)*); )?
+    };
+}
+
+impl_from_prog_info!(
+    unsafe KProbe kind : ProbeKind,
+    unsafe UProbe kind : ProbeKind,
+    TracePoint,
+    Xdp attach_type : XdpAttachType,
+    SkMsg,
+    SkSkb kind : SkSkbKind,
+    SockOps,
+    SchedClassifier,
+    CgroupSkb attach_type : Option<CgroupSkbAttachType>,
+    CgroupSysctl,
+    CgroupSockopt attach_type : CgroupSockoptAttachType,
+    LircMode2,
+    PerfEvent,
+    Lsm,
+    RawTracePoint,
+    unsafe BtfTracePoint,
+    unsafe FEntry,
+    unsafe FExit,
+    Extension,
+    SkLookup,
+    CgroupDevice,
+    Iter
 );
 
 macro_rules! impl_try_from_program {
