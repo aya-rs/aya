@@ -14,7 +14,7 @@ use aya_obj::{
 
 use crate::{
     programs::{
-        FdLink, LinkError, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError,
+        FdLink, LinkError, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError, ProgramType,
         define_link_wrapper, load_program,
     },
     sys::{LinkTarget, SyscallError, bpf_create_iter, bpf_link_create, bpf_link_get_info_by_fd},
@@ -60,6 +60,9 @@ pub struct Iter {
 }
 
 impl Iter {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::Tracing;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self, iter_type: &str, btf: &Btf) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_TRACE_ITER);

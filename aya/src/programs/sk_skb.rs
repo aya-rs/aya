@@ -11,7 +11,7 @@ use crate::{
     VerifierLogLevel,
     maps::sock::SockMapFd,
     programs::{
-        CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError,
+        CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError, ProgramType,
         define_link_wrapper, load_program,
     },
 };
@@ -74,6 +74,9 @@ pub struct SkSkb {
 }
 
 impl SkSkb {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SkSkb;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SK_SKB, &mut self.data)

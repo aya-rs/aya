@@ -5,7 +5,9 @@ use aya_obj::generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG
 
 use super::links::FdLink;
 use crate::{
-    programs::{FdLinkId, ProgramData, ProgramError, define_link_wrapper, load_program},
+    programs::{
+        FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
+    },
     sys::{LinkTarget, SyscallError, bpf_link_create},
 };
 
@@ -52,6 +54,9 @@ pub struct SkLookup {
 }
 
 impl SkLookup {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SkLookup;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_SK_LOOKUP);
