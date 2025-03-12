@@ -70,7 +70,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::btf::BtfError where T: ?core::ma
 pub fn aya_obj::btf::BtfError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::btf::BtfError
 pub fn aya_obj::btf::BtfError::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::btf::BtfKind
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::btf::BtfKind
 pub aya_obj::btf::BtfKind::Array = 3
 pub aya_obj::btf::BtfKind::Const = 10
 pub aya_obj::btf::BtfKind::DataSec = 15
@@ -190,7 +190,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::BtfType where T: core::clon
 pub unsafe fn aya_obj::btf::BtfType::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::BtfType
 pub fn aya_obj::btf::BtfType::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::btf::FuncLinkage
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::btf::FuncLinkage
 pub aya_obj::btf::FuncLinkage::Extern = 2
 pub aya_obj::btf::FuncLinkage::Global = 1
 pub aya_obj::btf::FuncLinkage::Static = 0
@@ -233,7 +233,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::FuncLinkage where T: core::
 pub unsafe fn aya_obj::btf::FuncLinkage::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::FuncLinkage
 pub fn aya_obj::btf::FuncLinkage::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::btf::IntEncoding
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::btf::IntEncoding
 pub aya_obj::btf::IntEncoding::Bool = 4
 pub aya_obj::btf::IntEncoding::Char = 2
 pub aya_obj::btf::IntEncoding::None
@@ -277,7 +277,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::IntEncoding where T: core::
 pub unsafe fn aya_obj::btf::IntEncoding::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::IntEncoding
 pub fn aya_obj::btf::IntEncoding::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::btf::VarLinkage
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::btf::VarLinkage
 pub aya_obj::btf::VarLinkage::Extern
 pub aya_obj::btf::VarLinkage::Global
 pub aya_obj::btf::VarLinkage::Static
@@ -320,7 +320,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::VarLinkage where T: core::c
 pub unsafe fn aya_obj::btf::VarLinkage::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::VarLinkage
 pub fn aya_obj::btf::VarLinkage::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Array
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Array
 impl core::clone::Clone for aya_obj::btf::Array
 pub fn aya_obj::btf::Array::clone(&self) -> aya_obj::btf::Array
 impl core::fmt::Debug for aya_obj::btf::Array
@@ -397,7 +397,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Btf where T: core::clone::C
 pub unsafe fn aya_obj::btf::Btf::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Btf
 pub fn aya_obj::btf::Btf::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::BtfEnum
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::BtfEnum
 pub aya_obj::btf::BtfEnum::name_offset: u32
 pub aya_obj::btf::BtfEnum::value: u32
 impl aya_obj::btf::BtfEnum
@@ -434,7 +434,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::BtfEnum where T: core::clon
 pub unsafe fn aya_obj::btf::BtfEnum::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::BtfEnum
 pub fn aya_obj::btf::BtfEnum::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::BtfEnum64
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::BtfEnum64
 impl aya_obj::btf::BtfEnum64
 pub fn aya_obj::btf::BtfEnum64::new(name_offset: u32, value: u64) -> Self
 impl core::clone::Clone for aya_obj::btf::BtfEnum64
@@ -538,7 +538,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::btf::BtfFeatures where T: ?core:
 pub fn aya_obj::btf::BtfFeatures::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::btf::BtfFeatures
 pub fn aya_obj::btf::BtfFeatures::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::BtfParam
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::BtfParam
 pub aya_obj::btf::BtfParam::btf_type: u32
 pub aya_obj::btf::BtfParam::name_offset: u32
 impl core::clone::Clone for aya_obj::btf::BtfParam
@@ -605,7 +605,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::btf::BtfRelocationError where T:
 pub fn aya_obj::btf::BtfRelocationError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::btf::BtfRelocationError
 pub fn aya_obj::btf::BtfRelocationError::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Const
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Const
 impl core::clone::Clone for aya_obj::btf::Const
 pub fn aya_obj::btf::Const::clone(&self) -> aya_obj::btf::Const
 impl core::fmt::Debug for aya_obj::btf::Const
@@ -638,7 +638,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Const where T: core::clone:
 pub unsafe fn aya_obj::btf::Const::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Const
 pub fn aya_obj::btf::Const::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::DataSec
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::DataSec
 impl aya_obj::btf::DataSec
 pub fn aya_obj::btf::DataSec::new(name_offset: u32, entries: alloc::vec::Vec<aya_obj::btf::DataSecEntry>, size: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::DataSec
@@ -673,7 +673,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::DataSec where T: core::clon
 pub unsafe fn aya_obj::btf::DataSec::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::DataSec
 pub fn aya_obj::btf::DataSec::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::DataSecEntry
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::DataSecEntry
 pub aya_obj::btf::DataSecEntry::btf_type: u32
 pub aya_obj::btf::DataSecEntry::offset: u32
 pub aya_obj::btf::DataSecEntry::size: u32
@@ -709,7 +709,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::DataSecEntry where T: core:
 pub unsafe fn aya_obj::btf::DataSecEntry::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::DataSecEntry
 pub fn aya_obj::btf::DataSecEntry::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::DeclTag
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::DeclTag
 impl aya_obj::btf::DeclTag
 pub fn aya_obj::btf::DeclTag::new(name_offset: u32, btf_type: u32, component_index: i32) -> Self
 impl core::clone::Clone for aya_obj::btf::DeclTag
@@ -744,7 +744,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::DeclTag where T: core::clon
 pub unsafe fn aya_obj::btf::DeclTag::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::DeclTag
 pub fn aya_obj::btf::DeclTag::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Enum
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Enum
 impl aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum>) -> Self
 impl core::clone::Clone for aya_obj::btf::Enum
@@ -779,7 +779,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Enum where T: core::clone::
 pub unsafe fn aya_obj::btf::Enum::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Enum64
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Enum64
 impl aya_obj::btf::Enum64
 pub fn aya_obj::btf::Enum64::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum64>) -> Self
 impl core::clone::Clone for aya_obj::btf::Enum64
@@ -814,7 +814,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Enum64 where T: core::clone
 pub unsafe fn aya_obj::btf::Enum64::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Enum64
 pub fn aya_obj::btf::Enum64::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Float
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Float
 impl aya_obj::btf::Float
 pub fn aya_obj::btf::Float::new(name_offset: u32, size: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::Float
@@ -849,7 +849,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Float where T: core::clone:
 pub unsafe fn aya_obj::btf::Float::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Float
 pub fn aya_obj::btf::Float::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Func
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Func
 impl aya_obj::btf::Func
 pub fn aya_obj::btf::Func::new(name_offset: u32, proto: u32, linkage: aya_obj::btf::FuncLinkage) -> Self
 impl core::clone::Clone for aya_obj::btf::Func
@@ -918,7 +918,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::FuncInfo where T: core::clo
 pub unsafe fn aya_obj::btf::FuncInfo::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::FuncInfo
 pub fn aya_obj::btf::FuncInfo::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::FuncProto
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::FuncProto
 impl aya_obj::btf::FuncProto
 pub fn aya_obj::btf::FuncProto::new(params: alloc::vec::Vec<aya_obj::btf::BtfParam>, return_type: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::FuncProto
@@ -993,7 +993,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::FuncSecInfo where T: core::
 pub unsafe fn aya_obj::btf::FuncSecInfo::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::FuncSecInfo
 pub fn aya_obj::btf::FuncSecInfo::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Fwd
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Fwd
 impl core::clone::Clone for aya_obj::btf::Fwd
 pub fn aya_obj::btf::Fwd::clone(&self) -> aya_obj::btf::Fwd
 impl core::fmt::Debug for aya_obj::btf::Fwd
@@ -1026,7 +1026,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Fwd where T: core::clone::C
 pub unsafe fn aya_obj::btf::Fwd::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Fwd
 pub fn aya_obj::btf::Fwd::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Int
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Int
 impl aya_obj::btf::Int
 pub fn aya_obj::btf::Int::new(name_offset: u32, size: u32, encoding: aya_obj::btf::IntEncoding, offset: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::Int
@@ -1101,7 +1101,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::LineSecInfo where T: core::
 pub unsafe fn aya_obj::btf::LineSecInfo::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::LineSecInfo
 pub fn aya_obj::btf::LineSecInfo::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Ptr
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Ptr
 impl aya_obj::btf::Ptr
 pub fn aya_obj::btf::Ptr::new(name_offset: u32, btf_type: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::Ptr
@@ -1169,7 +1169,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Restrict where T: core::clo
 pub unsafe fn aya_obj::btf::Restrict::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Restrict
 pub fn aya_obj::btf::Restrict::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Struct
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Struct
 impl core::clone::Clone for aya_obj::btf::Struct
 pub fn aya_obj::btf::Struct::clone(&self) -> aya_obj::btf::Struct
 impl core::fmt::Debug for aya_obj::btf::Struct
@@ -1202,7 +1202,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Struct where T: core::clone
 pub unsafe fn aya_obj::btf::Struct::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Struct
 pub fn aya_obj::btf::Struct::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::TypeTag
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::TypeTag
 impl aya_obj::btf::TypeTag
 pub fn aya_obj::btf::TypeTag::new(name_offset: u32, btf_type: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::TypeTag
@@ -1237,7 +1237,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::TypeTag where T: core::clon
 pub unsafe fn aya_obj::btf::TypeTag::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::TypeTag
 pub fn aya_obj::btf::TypeTag::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Typedef
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Typedef
 impl core::clone::Clone for aya_obj::btf::Typedef
 pub fn aya_obj::btf::Typedef::clone(&self) -> aya_obj::btf::Typedef
 impl core::fmt::Debug for aya_obj::btf::Typedef
@@ -1270,7 +1270,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Typedef where T: core::clon
 pub unsafe fn aya_obj::btf::Typedef::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Typedef
 pub fn aya_obj::btf::Typedef::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Union
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Union
 impl core::clone::Clone for aya_obj::btf::Union
 pub fn aya_obj::btf::Union::clone(&self) -> aya_obj::btf::Union
 impl core::fmt::Debug for aya_obj::btf::Union
@@ -1303,7 +1303,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Union where T: core::clone:
 pub unsafe fn aya_obj::btf::Union::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Union
 pub fn aya_obj::btf::Union::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Var
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Var
 impl aya_obj::btf::Var
 pub fn aya_obj::btf::Var::new(name_offset: u32, btf_type: u32, linkage: aya_obj::btf::VarLinkage) -> Self
 impl core::clone::Clone for aya_obj::btf::Var
@@ -1338,7 +1338,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Var where T: core::clone::C
 pub unsafe fn aya_obj::btf::Var::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Var
 pub fn aya_obj::btf::Var::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::btf::Volatile
+#[attr = Repr([ReprC])] pub struct aya_obj::btf::Volatile
 impl core::clone::Clone for aya_obj::btf::Volatile
 pub fn aya_obj::btf::Volatile::clone(&self) -> aya_obj::btf::Volatile
 impl core::fmt::Debug for aya_obj::btf::Volatile
@@ -1387,7 +1387,7 @@ pub const aya_obj::generated::bpf_core_relo_kind::BPF_CORE_TYPE_ID_TARGET: aya_o
 pub const aya_obj::generated::bpf_core_relo_kind::BPF_CORE_TYPE_MATCHES: aya_obj::generated::bpf_core_relo_kind::Type
 pub const aya_obj::generated::bpf_core_relo_kind::BPF_CORE_TYPE_SIZE: aya_obj::generated::bpf_core_relo_kind::Type
 pub type aya_obj::generated::bpf_core_relo_kind::Type = core::ffi::primitives::c_uint
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::bpf_attach_type
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::bpf_attach_type
 pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_DEVICE = 6
 pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_GETSOCKOPT = 21
 pub aya_obj::generated::bpf_attach_type::BPF_CGROUP_INET4_BIND = 8
@@ -1495,7 +1495,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attach_type where
 pub unsafe fn aya_obj::generated::bpf_attach_type::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::bpf_cgroup_iter_order
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::bpf_cgroup_iter_order
 pub aya_obj::generated::bpf_cgroup_iter_order::BPF_CGROUP_ITER_ANCESTORS_UP = 4
 pub aya_obj::generated::bpf_cgroup_iter_order::BPF_CGROUP_ITER_DESCENDANTS_POST = 3
 pub aya_obj::generated::bpf_cgroup_iter_order::BPF_CGROUP_ITER_DESCENDANTS_PRE = 2
@@ -1540,7 +1540,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_cgroup_iter_order
 pub unsafe fn aya_obj::generated::bpf_cgroup_iter_order::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_cgroup_iter_order
 pub fn aya_obj::generated::bpf_cgroup_iter_order::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::bpf_cmd
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::bpf_cmd
 pub aya_obj::generated::bpf_cmd::BPF_BTF_GET_FD_BY_ID = 19
 pub aya_obj::generated::bpf_cmd::BPF_BTF_GET_NEXT_ID = 23
 pub aya_obj::generated::bpf_cmd::BPF_BTF_LOAD = 18
@@ -1620,7 +1620,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_cmd where T: core
 pub unsafe fn aya_obj::generated::bpf_cmd::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_cmd
 pub fn aya_obj::generated::bpf_cmd::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::bpf_func_id
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::bpf_func_id
 pub aya_obj::generated::bpf_func_id::BPF_FUNC_bind = 64
 pub aya_obj::generated::bpf_func_id::BPF_FUNC_bprm_opts_set = 159
 pub aya_obj::generated::bpf_func_id::BPF_FUNC_btf_find_by_name_kind = 167
@@ -1873,7 +1873,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_func_id where T: 
 pub unsafe fn aya_obj::generated::bpf_func_id::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_func_id
 pub fn aya_obj::generated::bpf_func_id::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::bpf_link_type
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::bpf_link_type
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_CGROUP = 3
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_ITER = 4
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI = 8
@@ -1931,7 +1931,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_type where T
 pub unsafe fn aya_obj::generated::bpf_link_type::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::bpf_map_type
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::bpf_map_type
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARENA = 33
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY = 2
 pub aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS = 12
@@ -2013,7 +2013,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_map_type where T:
 pub unsafe fn aya_obj::generated::bpf_map_type::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_map_type
 pub fn aya_obj::generated::bpf_map_type::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::bpf_perf_event_type
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::bpf_perf_event_type
 pub aya_obj::generated::bpf_perf_event_type::BPF_PERF_EVENT_EVENT = 6
 pub aya_obj::generated::bpf_perf_event_type::BPF_PERF_EVENT_KPROBE = 3
 pub aya_obj::generated::bpf_perf_event_type::BPF_PERF_EVENT_KRETPROBE = 4
@@ -2060,7 +2060,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_perf_event_type w
 pub unsafe fn aya_obj::generated::bpf_perf_event_type::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_perf_event_type
 pub fn aya_obj::generated::bpf_perf_event_type::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::bpf_prog_type
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::bpf_prog_type
 pub aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE = 15
 pub aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB = 8
 pub aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK = 9
@@ -2137,7 +2137,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_prog_type where T
 pub unsafe fn aya_obj::generated::bpf_prog_type::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_prog_type
 pub fn aya_obj::generated::bpf_prog_type::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::bpf_stats_type
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::bpf_stats_type
 pub aya_obj::generated::bpf_stats_type::BPF_STATS_RUN_TIME = 0
 impl core::clone::Clone for aya_obj::generated::bpf_stats_type
 pub fn aya_obj::generated::bpf_stats_type::clone(&self) -> aya_obj::generated::bpf_stats_type
@@ -2178,7 +2178,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_stats_type where 
 pub unsafe fn aya_obj::generated::bpf_stats_type::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_stats_type
 pub fn aya_obj::generated::bpf_stats_type::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::bpf_task_fd_type
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::bpf_task_fd_type
 pub aya_obj::generated::bpf_task_fd_type::BPF_FD_TYPE_KPROBE = 2
 pub aya_obj::generated::bpf_task_fd_type::BPF_FD_TYPE_KRETPROBE = 3
 pub aya_obj::generated::bpf_task_fd_type::BPF_FD_TYPE_RAW_TRACEPOINT = 0
@@ -2224,7 +2224,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_task_fd_type wher
 pub unsafe fn aya_obj::generated::bpf_task_fd_type::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_task_fd_type
 pub fn aya_obj::generated::bpf_task_fd_type::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::btf_func_linkage
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::btf_func_linkage
 pub aya_obj::generated::btf_func_linkage::BTF_FUNC_EXTERN = 2
 pub aya_obj::generated::btf_func_linkage::BTF_FUNC_GLOBAL = 1
 pub aya_obj::generated::btf_func_linkage::BTF_FUNC_STATIC = 0
@@ -2267,7 +2267,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_func_linkage wher
 pub unsafe fn aya_obj::generated::btf_func_linkage::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_func_linkage
 pub fn aya_obj::generated::btf_func_linkage::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::nf_inet_hooks
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::nf_inet_hooks
 pub aya_obj::generated::nf_inet_hooks::NF_INET_FORWARD = 2
 pub aya_obj::generated::nf_inet_hooks::NF_INET_LOCAL_IN = 1
 pub aya_obj::generated::nf_inet_hooks::NF_INET_LOCAL_OUT = 3
@@ -2315,7 +2315,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::nf_inet_hooks where T
 pub unsafe fn aya_obj::generated::nf_inet_hooks::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::nf_inet_hooks
 pub fn aya_obj::generated::nf_inet_hooks::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::nlmsgerr_attrs
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::nlmsgerr_attrs
 pub aya_obj::generated::nlmsgerr_attrs::NLMSGERR_ATTR_COOKIE = 3
 pub aya_obj::generated::nlmsgerr_attrs::NLMSGERR_ATTR_MSG = 1
 pub aya_obj::generated::nlmsgerr_attrs::NLMSGERR_ATTR_OFFS = 2
@@ -2362,7 +2362,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::nlmsgerr_attrs where 
 pub unsafe fn aya_obj::generated::nlmsgerr_attrs::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::nlmsgerr_attrs
 pub fn aya_obj::generated::nlmsgerr_attrs::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::perf_event_sample_format
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::perf_event_sample_format
 pub aya_obj::generated::perf_event_sample_format::PERF_SAMPLE_ADDR = 8
 pub aya_obj::generated::perf_event_sample_format::PERF_SAMPLE_AUX = 1048576
 pub aya_obj::generated::perf_event_sample_format::PERF_SAMPLE_BRANCH_STACK = 2048
@@ -2428,7 +2428,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_event_sample_for
 pub unsafe fn aya_obj::generated::perf_event_sample_format::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_sample_format
 pub fn aya_obj::generated::perf_event_sample_format::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::perf_event_type
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::perf_event_type
 pub aya_obj::generated::perf_event_type::PERF_RECORD_AUX = 11
 pub aya_obj::generated::perf_event_type::PERF_RECORD_AUX_OUTPUT_HW_ID = 21
 pub aya_obj::generated::perf_event_type::PERF_RECORD_BPF_EVENT = 18
@@ -2490,7 +2490,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_event_type where
 pub unsafe fn aya_obj::generated::perf_event_type::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_type
 pub fn aya_obj::generated::perf_event_type::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::perf_hw_cache_id
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::perf_hw_cache_id
 pub aya_obj::generated::perf_hw_cache_id::PERF_COUNT_HW_CACHE_BPU = 5
 pub aya_obj::generated::perf_hw_cache_id::PERF_COUNT_HW_CACHE_DTLB = 3
 pub aya_obj::generated::perf_hw_cache_id::PERF_COUNT_HW_CACHE_ITLB = 4
@@ -2538,7 +2538,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_hw_cache_id wher
 pub unsafe fn aya_obj::generated::perf_hw_cache_id::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_hw_cache_id
 pub fn aya_obj::generated::perf_hw_cache_id::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::perf_hw_cache_op_id
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::perf_hw_cache_op_id
 pub aya_obj::generated::perf_hw_cache_op_id::PERF_COUNT_HW_CACHE_OP_MAX = 3
 pub aya_obj::generated::perf_hw_cache_op_id::PERF_COUNT_HW_CACHE_OP_PREFETCH = 2
 pub aya_obj::generated::perf_hw_cache_op_id::PERF_COUNT_HW_CACHE_OP_READ = 0
@@ -2582,7 +2582,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_hw_cache_op_id w
 pub unsafe fn aya_obj::generated::perf_hw_cache_op_id::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_hw_cache_op_id
 pub fn aya_obj::generated::perf_hw_cache_op_id::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::perf_hw_cache_op_result_id
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::perf_hw_cache_op_result_id
 pub aya_obj::generated::perf_hw_cache_op_result_id::PERF_COUNT_HW_CACHE_RESULT_ACCESS = 0
 pub aya_obj::generated::perf_hw_cache_op_result_id::PERF_COUNT_HW_CACHE_RESULT_MAX = 2
 pub aya_obj::generated::perf_hw_cache_op_result_id::PERF_COUNT_HW_CACHE_RESULT_MISS = 1
@@ -2625,7 +2625,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_hw_cache_op_resu
 pub unsafe fn aya_obj::generated::perf_hw_cache_op_result_id::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_hw_cache_op_result_id
 pub fn aya_obj::generated::perf_hw_cache_op_result_id::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::perf_hw_id
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::perf_hw_id
 pub aya_obj::generated::perf_hw_id::PERF_COUNT_HW_BRANCH_INSTRUCTIONS = 4
 pub aya_obj::generated::perf_hw_id::PERF_COUNT_HW_BRANCH_MISSES = 5
 pub aya_obj::generated::perf_hw_id::PERF_COUNT_HW_BUS_CYCLES = 6
@@ -2676,7 +2676,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_hw_id where T: c
 pub unsafe fn aya_obj::generated::perf_hw_id::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_hw_id
 pub fn aya_obj::generated::perf_hw_id::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::perf_sw_ids
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::perf_sw_ids
 pub aya_obj::generated::perf_sw_ids::PERF_COUNT_SW_ALIGNMENT_FAULTS = 7
 pub aya_obj::generated::perf_sw_ids::PERF_COUNT_SW_BPF_OUTPUT = 10
 pub aya_obj::generated::perf_sw_ids::PERF_COUNT_SW_CGROUP_SWITCHES = 11
@@ -2729,7 +2729,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_sw_ids where T: 
 pub unsafe fn aya_obj::generated::perf_sw_ids::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_sw_ids
 pub fn aya_obj::generated::perf_sw_ids::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::generated::perf_type_id
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::generated::perf_type_id
 pub aya_obj::generated::perf_type_id::PERF_TYPE_BREAKPOINT = 5
 pub aya_obj::generated::perf_type_id::PERF_TYPE_HARDWARE = 0
 pub aya_obj::generated::perf_type_id::PERF_TYPE_HW_CACHE = 3
@@ -2776,7 +2776,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_type_id where T:
 pub unsafe fn aya_obj::generated::perf_type_id::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_type_id
 pub fn aya_obj::generated::perf_type_id::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr
 pub aya_obj::generated::bpf_attr::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_1
 pub aya_obj::generated::bpf_attr::__bindgen_anon_2: aya_obj::generated::bpf_attr__bindgen_ty_2
 pub aya_obj::generated::bpf_attr::__bindgen_anon_3: aya_obj::generated::bpf_attr__bindgen_ty_4
@@ -2828,7 +2828,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr where T: cor
 pub unsafe fn aya_obj::generated::bpf_attr::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr
 pub fn aya_obj::generated::bpf_attr::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::target_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::target_ifindex: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
@@ -2862,7 +2862,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::count: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::prog_cnt: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
@@ -2896,7 +2896,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1::map_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1::prog_fd: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
@@ -2930,7 +2930,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2::target_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2::target_ifindex: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
@@ -2964,7 +2964,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::kprobe_multi: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::netfilter: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
@@ -3005,7 +3005,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::relative_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::relative_id: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
@@ -3039,7 +3039,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::relative_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::relative_id: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
@@ -3073,7 +3073,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1::new_map_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1::new_prog_fd: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
@@ -3107,7 +3107,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2::old_map_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2::old_prog_fd: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
@@ -3141,7 +3141,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1::next_key: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1::value: aya_obj::generated::__u64
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
@@ -3175,7 +3175,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1::attach_btf_obj_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1::attach_prog_fd: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
@@ -3209,7 +3209,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::target_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::target_ifindex: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
@@ -3243,7 +3243,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::relative_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::relative_id: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
@@ -3277,7 +3277,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1::btf_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1::link_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1::map_id: aya_obj::generated::__u32
@@ -3314,7 +3314,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 pub aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::fd: core::ffi::primitives::c_int
 pub aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::id: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
@@ -3348,7 +3348,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_cpumap_val__bindg
 pub unsafe fn aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 pub fn aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_devmap_val__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 pub aya_obj::generated::bpf_devmap_val__bindgen_ty_1::fd: core::ffi::primitives::c_int
 pub aya_obj::generated::bpf_devmap_val__bindgen_ty_1::id: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
@@ -3382,7 +3382,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_devmap_val__bindg
 pub unsafe fn aya_obj::generated::bpf_devmap_val__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 pub fn aya_obj::generated::bpf_devmap_val__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_link_info__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_link_info__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::cgroup: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::iter: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::kprobe_multi: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
@@ -3427,7 +3427,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::event: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::kprobe: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::tracepoint: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
@@ -3463,7 +3463,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1::map: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
@@ -3496,7 +3496,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
+#[attr = Repr([ReprC])] pub union aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2::cgroup: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2::task: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
@@ -3530,7 +3530,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::btf_type__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::btf_type__bindgen_ty_1
 pub aya_obj::generated::btf_type__bindgen_ty_1::size: aya_obj::generated::__u32
 pub aya_obj::generated::btf_type__bindgen_ty_1::type_: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::btf_type__bindgen_ty_1
@@ -3564,7 +3564,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_type__bindgen_ty_
 pub unsafe fn aya_obj::generated::btf_type__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_type__bindgen_ty_1
 pub fn aya_obj::generated::btf_type__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::perf_event_attr__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::perf_event_attr__bindgen_ty_1
 pub aya_obj::generated::perf_event_attr__bindgen_ty_1::sample_freq: aya_obj::generated::__u64
 pub aya_obj::generated::perf_event_attr__bindgen_ty_1::sample_period: aya_obj::generated::__u64
 impl core::clone::Clone for aya_obj::generated::perf_event_attr__bindgen_ty_1
@@ -3598,7 +3598,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_event_attr__bind
 pub unsafe fn aya_obj::generated::perf_event_attr__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_attr__bindgen_ty_1
 pub fn aya_obj::generated::perf_event_attr__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::perf_event_attr__bindgen_ty_2
+#[attr = Repr([ReprC])] pub union aya_obj::generated::perf_event_attr__bindgen_ty_2
 pub aya_obj::generated::perf_event_attr__bindgen_ty_2::wakeup_events: aya_obj::generated::__u32
 pub aya_obj::generated::perf_event_attr__bindgen_ty_2::wakeup_watermark: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::perf_event_attr__bindgen_ty_2
@@ -3632,7 +3632,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_event_attr__bind
 pub unsafe fn aya_obj::generated::perf_event_attr__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_attr__bindgen_ty_2
 pub fn aya_obj::generated::perf_event_attr__bindgen_ty_2::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::perf_event_attr__bindgen_ty_3
+#[attr = Repr([ReprC])] pub union aya_obj::generated::perf_event_attr__bindgen_ty_3
 pub aya_obj::generated::perf_event_attr__bindgen_ty_3::bp_addr: aya_obj::generated::__u64
 pub aya_obj::generated::perf_event_attr__bindgen_ty_3::config1: aya_obj::generated::__u64
 pub aya_obj::generated::perf_event_attr__bindgen_ty_3::kprobe_func: aya_obj::generated::__u64
@@ -3668,7 +3668,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_event_attr__bind
 pub unsafe fn aya_obj::generated::perf_event_attr__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_attr__bindgen_ty_3
 pub fn aya_obj::generated::perf_event_attr__bindgen_ty_3::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::perf_event_attr__bindgen_ty_4
+#[attr = Repr([ReprC])] pub union aya_obj::generated::perf_event_attr__bindgen_ty_4
 pub aya_obj::generated::perf_event_attr__bindgen_ty_4::bp_len: aya_obj::generated::__u64
 pub aya_obj::generated::perf_event_attr__bindgen_ty_4::config2: aya_obj::generated::__u64
 pub aya_obj::generated::perf_event_attr__bindgen_ty_4::kprobe_addr: aya_obj::generated::__u64
@@ -3704,7 +3704,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_event_attr__bind
 pub unsafe fn aya_obj::generated::perf_event_attr__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_attr__bindgen_ty_4
 pub fn aya_obj::generated::perf_event_attr__bindgen_ty_4::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub union aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
+#[attr = Repr([ReprC])] pub union aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1::__bindgen_anon_1: aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1::capabilities: aya_obj::generated::__u64
 impl core::clone::Clone for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
@@ -3738,7 +3738,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_event_mmap_page_
 pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::__BindgenBitfieldUnit<Storage>
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::__BindgenBitfieldUnit<Storage>
 impl<Storage> aya_obj::generated::__BindgenBitfieldUnit<Storage> where Storage: core::convert::AsRef<[u8]> + core::convert::AsMut<[u8]>
 pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::get(&self, bit_offset: usize, bit_width: u8) -> u64
 pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::get_bit(&self, index: usize) -> bool
@@ -3795,7 +3795,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::__BindgenBitfieldUnit
 pub unsafe fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::__BindgenBitfieldUnit<Storage>
 pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::__IncompleteArrayField<T>(_, _)
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::__IncompleteArrayField<T>(_, _)
 impl<T> aya_obj::generated::__IncompleteArrayField<T>
 pub fn aya_obj::generated::__IncompleteArrayField<T>::as_mut_ptr(&mut self) -> *mut T
 pub unsafe fn aya_obj::generated::__IncompleteArrayField<T>::as_mut_slice(&mut self, len: usize) -> &mut [T]
@@ -3828,7 +3828,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::__IncompleteArrayFiel
 pub fn aya_obj::generated::__IncompleteArrayField<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::__IncompleteArrayField<T>
 pub fn aya_obj::generated::__IncompleteArrayField<T>::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_1
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::btf_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::btf_key_type_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::btf_value_type_id: aya_obj::generated::__u32
@@ -3878,7 +3878,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_10
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_10
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::__bindgen_anon_2: aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
@@ -3924,7 +3924,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_10::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_10
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_10::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_11
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_11
 pub aya_obj::generated::bpf_attr__bindgen_ty_11::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
 pub aya_obj::generated::bpf_attr__bindgen_ty_11::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_attr__bindgen_ty_11::cookie: aya_obj::generated::__u64
@@ -3965,7 +3965,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_11::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_11
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_11::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_12
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_12
 pub aya_obj::generated::bpf_attr__bindgen_ty_12::btf: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_12::btf_flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_12::btf_log_buf: aya_obj::generated::__u64
@@ -4007,7 +4007,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_12::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_12
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_12::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_13
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_13
 pub aya_obj::generated::bpf_attr__bindgen_ty_13::buf: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_13::buf_len: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_13::fd: aya_obj::generated::__u32
@@ -4050,7 +4050,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_13::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_13
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_13::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14
 pub aya_obj::generated::bpf_attr__bindgen_ty_14::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_14::__bindgen_anon_2: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_14::__bindgen_anon_3: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
@@ -4087,7 +4087,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::iter_info: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::iter_info_len: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
@@ -4123,7 +4123,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::bpf_cookie: aya_obj::generated::__u64
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
@@ -4158,7 +4158,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::addrs: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::cnt: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::cookies: aya_obj::generated::__u64
@@ -4197,7 +4197,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::cookie: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::target_btf_id: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
@@ -4233,7 +4233,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::hooknum: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::pf: aya_obj::generated::__u32
@@ -4271,7 +4271,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::expected_revision: aya_obj::generated::__u64
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
@@ -4305,7 +4305,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::cnt: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::cookies: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::flags: aya_obj::generated::__u32
@@ -4346,7 +4346,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::expected_revision: aya_obj::generated::__u64
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
@@ -4380,7 +4380,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_15
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_15
 pub aya_obj::generated::bpf_attr__bindgen_ty_15::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_15::__bindgen_anon_2: aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_15::flags: aya_obj::generated::__u32
@@ -4416,7 +4416,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_15::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_15
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_15::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_16
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_16
 pub aya_obj::generated::bpf_attr__bindgen_ty_16::link_fd: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_16
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_16::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_16
@@ -4451,7 +4451,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_16::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_16
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_16::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_17
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_17
 pub aya_obj::generated::bpf_attr__bindgen_ty_17::type_: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_17
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_17::clone(&self) -> aya_obj::generated::bpf_attr__bindgen_ty_17
@@ -4486,7 +4486,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_17::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_17
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_17::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_18
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_18
 pub aya_obj::generated::bpf_attr__bindgen_ty_18::flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_18::link_fd: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_18
@@ -4522,7 +4522,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_18::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_18
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_18::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_19
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_19
 pub aya_obj::generated::bpf_attr__bindgen_ty_19::flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_19::map_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_19::prog_fd: aya_obj::generated::__u32
@@ -4559,7 +4559,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_19::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_19
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_19::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_2
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_2::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_2::flags: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_2::key: aya_obj::generated::__u64
@@ -4595,7 +4595,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_2::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_20
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_20
 pub aya_obj::generated::bpf_attr__bindgen_ty_20::bpffs_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_20::flags: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_20
@@ -4631,7 +4631,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_20::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_20
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_3
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_3
 pub aya_obj::generated::bpf_attr__bindgen_ty_3::count: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_3::elem_flags: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_3::flags: aya_obj::generated::__u64
@@ -4673,7 +4673,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_3
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_3::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_4
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_4
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::attach_btf_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_4::core_relo_cnt: aya_obj::generated::__u32
@@ -4732,7 +4732,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_4
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_4::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_5
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_5
 pub aya_obj::generated::bpf_attr__bindgen_ty_5::bpf_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_5::file_flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_5::path_fd: aya_obj::generated::__s32
@@ -4770,7 +4770,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_5::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_5
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_5::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_6
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_6
 pub aya_obj::generated::bpf_attr__bindgen_ty_6::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_6::__bindgen_anon_2: aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_6::attach_bpf_fd: aya_obj::generated::__u32
@@ -4809,7 +4809,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_6::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_6
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_6::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_7
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_7
 pub aya_obj::generated::bpf_attr__bindgen_ty_7::batch_size: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_7::cpu: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_7::ctx_in: aya_obj::generated::__u64
@@ -4858,7 +4858,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_7::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_7
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_7::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_8
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_8
 pub aya_obj::generated::bpf_attr__bindgen_ty_8::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_8::next_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_8::open_flags: aya_obj::generated::__u32
@@ -4893,7 +4893,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_8::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_8
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_8::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_attr__bindgen_ty_9
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_attr__bindgen_ty_9
 pub aya_obj::generated::bpf_attr__bindgen_ty_9::bpf_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_9::info: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_9::info_len: aya_obj::generated::__u32
@@ -4930,7 +4930,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_attr__bindgen_ty_
 pub unsafe fn aya_obj::generated::bpf_attr__bindgen_ty_9::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_attr__bindgen_ty_9
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_9::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_btf_info
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_btf_info
 pub aya_obj::generated::bpf_btf_info::btf: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_btf_info::btf_size: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_btf_info::id: aya_obj::generated::__u32
@@ -4970,7 +4970,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_btf_info where T:
 pub unsafe fn aya_obj::generated::bpf_btf_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_btf_info
 pub fn aya_obj::generated::bpf_btf_info::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_core_relo
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_core_relo
 pub aya_obj::generated::bpf_core_relo::access_str_off: core::ffi::primitives::c_uint
 pub aya_obj::generated::bpf_core_relo::insn_off: core::ffi::primitives::c_uint
 pub aya_obj::generated::bpf_core_relo::kind: aya_obj::generated::bpf_core_relo_kind::Type
@@ -5008,7 +5008,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_core_relo where T
 pub unsafe fn aya_obj::generated::bpf_core_relo::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_core_relo
 pub fn aya_obj::generated::bpf_core_relo::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_cpumap_val
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_cpumap_val
 pub aya_obj::generated::bpf_cpumap_val::bpf_prog: aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 pub aya_obj::generated::bpf_cpumap_val::qsize: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_cpumap_val
@@ -5042,7 +5042,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_cpumap_val where 
 pub unsafe fn aya_obj::generated::bpf_cpumap_val::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_cpumap_val
 pub fn aya_obj::generated::bpf_cpumap_val::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_devmap_val
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_devmap_val
 pub aya_obj::generated::bpf_devmap_val::bpf_prog: aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 pub aya_obj::generated::bpf_devmap_val::ifindex: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_devmap_val
@@ -5076,7 +5076,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_devmap_val where 
 pub unsafe fn aya_obj::generated::bpf_devmap_val::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_devmap_val
 pub fn aya_obj::generated::bpf_devmap_val::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_func_info
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_func_info
 pub aya_obj::generated::bpf_func_info::insn_off: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_func_info::type_id: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_func_info
@@ -5112,7 +5112,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_func_info where T
 pub unsafe fn aya_obj::generated::bpf_func_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_func_info
 pub fn aya_obj::generated::bpf_func_info::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_insn
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_insn
 pub aya_obj::generated::bpf_insn::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 1]>
 pub aya_obj::generated::bpf_insn::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_insn::code: aya_obj::generated::__u8
@@ -5161,7 +5161,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_insn where T: cor
 pub unsafe fn aya_obj::generated::bpf_insn::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_insn
 pub fn aya_obj::generated::bpf_insn::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_line_info
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_line_info
 pub aya_obj::generated::bpf_line_info::file_name_off: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_line_info::insn_off: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_line_info::line_col: aya_obj::generated::__u32
@@ -5199,7 +5199,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_line_info where T
 pub unsafe fn aya_obj::generated::bpf_line_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_line_info
 pub fn aya_obj::generated::bpf_line_info::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info
 pub aya_obj::generated::bpf_link_info::__bindgen_anon_1: aya_obj::generated::bpf_link_info__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info::id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info::prog_id: aya_obj::generated::__u32
@@ -5235,7 +5235,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info where T
 pub unsafe fn aya_obj::generated::bpf_link_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info
 pub fn aya_obj::generated::bpf_link_info::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1::tp_name: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1::tp_name_len: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
@@ -5271,7 +5271,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::cookies: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::count: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::flags: aya_obj::generated::__u32
@@ -5313,7 +5313,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::__bindgen_anon_1: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::_bitfield_align_1: [u8; 0]
@@ -5351,7 +5351,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::cookie: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::file_name: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::name_len: aya_obj::generated::__u32
@@ -5389,7 +5389,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::addr: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::cookie: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::func_name: aya_obj::generated::__u64
@@ -5429,7 +5429,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::cookie: aya_obj::generated::__u64
@@ -5470,7 +5470,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::config: aya_obj::generated::__u64
@@ -5511,7 +5511,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::attach_type: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::ifindex: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
@@ -5547,7 +5547,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::attach_type: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::ifindex: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
@@ -5583,7 +5583,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2::attach_type: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2::target_btf_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2::target_obj_id: aya_obj::generated::__u32
@@ -5620,7 +5620,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3::attach_type: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3::cgroup_id: aya_obj::generated::__u64
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
@@ -5656,7 +5656,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4::__bindgen_anon_1: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4::__bindgen_anon_2: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4::target_name: aya_obj::generated::__u64
@@ -5692,7 +5692,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::map_id: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
@@ -5727,7 +5727,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::cgroup_id: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::order: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
@@ -5763,7 +5763,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::pid: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::tid: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
@@ -5799,7 +5799,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5::attach_type: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5::netns_ino: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
@@ -5835,7 +5835,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6::ifindex: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
@@ -5870,7 +5870,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7::map_id: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
@@ -5905,7 +5905,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8::flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8::hooknum: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8::pf: aya_obj::generated::__u32
@@ -5943,7 +5943,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::addrs: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::cookies: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::count: aya_obj::generated::__u32
@@ -5982,7 +5982,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_link_info__bindge
 pub unsafe fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_lpm_trie_key
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_lpm_trie_key
 pub aya_obj::generated::bpf_lpm_trie_key::data: aya_obj::generated::__IncompleteArrayField<aya_obj::generated::__u8>
 pub aya_obj::generated::bpf_lpm_trie_key::prefixlen: aya_obj::generated::__u32
 impl core::fmt::Debug for aya_obj::generated::bpf_lpm_trie_key
@@ -6009,7 +6009,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::generated::bpf_lpm_trie_key wher
 pub fn aya_obj::generated::bpf_lpm_trie_key::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_lpm_trie_key
 pub fn aya_obj::generated::bpf_lpm_trie_key::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_map_info
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_map_info
 pub aya_obj::generated::bpf_map_info::btf_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_map_info::btf_key_type_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_map_info::btf_value_type_id: aya_obj::generated::__u32
@@ -6059,7 +6059,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_map_info where T:
 pub unsafe fn aya_obj::generated::bpf_map_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_map_info
 pub fn aya_obj::generated::bpf_map_info::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::bpf_prog_info
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::bpf_prog_info
 pub aya_obj::generated::bpf_prog_info::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
 pub aya_obj::generated::bpf_prog_info::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_prog_info::attach_btf_id: aya_obj::generated::__u32
@@ -6138,7 +6138,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::bpf_prog_info where T
 pub unsafe fn aya_obj::generated::bpf_prog_info::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::bpf_prog_info
 pub fn aya_obj::generated::bpf_prog_info::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::btf_array
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::btf_array
 pub aya_obj::generated::btf_array::index_type: aya_obj::generated::__u32
 pub aya_obj::generated::btf_array::nelems: aya_obj::generated::__u32
 pub aya_obj::generated::btf_array::type_: aya_obj::generated::__u32
@@ -6175,7 +6175,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_array where T: co
 pub unsafe fn aya_obj::generated::btf_array::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_array
 pub fn aya_obj::generated::btf_array::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::btf_decl_tag
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::btf_decl_tag
 pub aya_obj::generated::btf_decl_tag::component_idx: aya_obj::generated::__s32
 impl core::clone::Clone for aya_obj::generated::btf_decl_tag
 pub fn aya_obj::generated::btf_decl_tag::clone(&self) -> aya_obj::generated::btf_decl_tag
@@ -6210,7 +6210,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_decl_tag where T:
 pub unsafe fn aya_obj::generated::btf_decl_tag::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_decl_tag
 pub fn aya_obj::generated::btf_decl_tag::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::btf_enum
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::btf_enum
 pub aya_obj::generated::btf_enum::name_off: aya_obj::generated::__u32
 pub aya_obj::generated::btf_enum::val: aya_obj::generated::__s32
 impl core::clone::Clone for aya_obj::generated::btf_enum
@@ -6246,7 +6246,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_enum where T: cor
 pub unsafe fn aya_obj::generated::btf_enum::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_enum
 pub fn aya_obj::generated::btf_enum::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::btf_ext_header
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::btf_ext_header
 pub aya_obj::generated::btf_ext_header::core_relo_len: core::ffi::primitives::c_uint
 pub aya_obj::generated::btf_ext_header::core_relo_off: core::ffi::primitives::c_uint
 pub aya_obj::generated::btf_ext_header::flags: core::ffi::primitives::c_uchar
@@ -6290,7 +6290,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_ext_header where 
 pub unsafe fn aya_obj::generated::btf_ext_header::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_ext_header
 pub fn aya_obj::generated::btf_ext_header::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::btf_header
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::btf_header
 pub aya_obj::generated::btf_header::flags: aya_obj::generated::__u8
 pub aya_obj::generated::btf_header::hdr_len: aya_obj::generated::__u32
 pub aya_obj::generated::btf_header::magic: aya_obj::generated::__u16
@@ -6332,7 +6332,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_header where T: c
 pub unsafe fn aya_obj::generated::btf_header::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_header
 pub fn aya_obj::generated::btf_header::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::btf_member
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::btf_member
 pub aya_obj::generated::btf_member::name_off: aya_obj::generated::__u32
 pub aya_obj::generated::btf_member::offset: aya_obj::generated::__u32
 pub aya_obj::generated::btf_member::type_: aya_obj::generated::__u32
@@ -6369,7 +6369,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_member where T: c
 pub unsafe fn aya_obj::generated::btf_member::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_member
 pub fn aya_obj::generated::btf_member::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::btf_param
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::btf_param
 pub aya_obj::generated::btf_param::name_off: aya_obj::generated::__u32
 pub aya_obj::generated::btf_param::type_: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::btf_param
@@ -6405,7 +6405,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_param where T: co
 pub unsafe fn aya_obj::generated::btf_param::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_param
 pub fn aya_obj::generated::btf_param::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::btf_type
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::btf_type
 pub aya_obj::generated::btf_type::__bindgen_anon_1: aya_obj::generated::btf_type__bindgen_ty_1
 pub aya_obj::generated::btf_type::info: aya_obj::generated::__u32
 pub aya_obj::generated::btf_type::name_off: aya_obj::generated::__u32
@@ -6440,7 +6440,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_type where T: cor
 pub unsafe fn aya_obj::generated::btf_type::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_type
 pub fn aya_obj::generated::btf_type::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::btf_var
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::btf_var
 pub aya_obj::generated::btf_var::linkage: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::btf_var
 pub fn aya_obj::generated::btf_var::clone(&self) -> aya_obj::generated::btf_var
@@ -6475,7 +6475,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_var where T: core
 pub unsafe fn aya_obj::generated::btf_var::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_var
 pub fn aya_obj::generated::btf_var::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::btf_var_secinfo
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::btf_var_secinfo
 pub aya_obj::generated::btf_var_secinfo::offset: aya_obj::generated::__u32
 pub aya_obj::generated::btf_var_secinfo::size: aya_obj::generated::__u32
 pub aya_obj::generated::btf_var_secinfo::type_: aya_obj::generated::__u32
@@ -6512,7 +6512,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::btf_var_secinfo where
 pub unsafe fn aya_obj::generated::btf_var_secinfo::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::btf_var_secinfo
 pub fn aya_obj::generated::btf_var_secinfo::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::ifinfomsg
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::ifinfomsg
 pub aya_obj::generated::ifinfomsg::__ifi_pad: core::ffi::primitives::c_uchar
 pub aya_obj::generated::ifinfomsg::ifi_change: core::ffi::primitives::c_uint
 pub aya_obj::generated::ifinfomsg::ifi_family: core::ffi::primitives::c_uchar
@@ -6552,7 +6552,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::ifinfomsg where T: co
 pub unsafe fn aya_obj::generated::ifinfomsg::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::ifinfomsg
 pub fn aya_obj::generated::ifinfomsg::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::perf_event_attr
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::perf_event_attr
 pub aya_obj::generated::perf_event_attr::__bindgen_anon_1: aya_obj::generated::perf_event_attr__bindgen_ty_1
 pub aya_obj::generated::perf_event_attr::__bindgen_anon_2: aya_obj::generated::perf_event_attr__bindgen_ty_2
 pub aya_obj::generated::perf_event_attr::__bindgen_anon_3: aya_obj::generated::perf_event_attr__bindgen_ty_3
@@ -6762,7 +6762,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_event_attr where
 pub unsafe fn aya_obj::generated::perf_event_attr::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_attr
 pub fn aya_obj::generated::perf_event_attr::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::perf_event_header
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::perf_event_header
 pub aya_obj::generated::perf_event_header::misc: aya_obj::generated::__u16
 pub aya_obj::generated::perf_event_header::size: aya_obj::generated::__u16
 pub aya_obj::generated::perf_event_header::type_: aya_obj::generated::__u32
@@ -6799,7 +6799,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_event_header whe
 pub unsafe fn aya_obj::generated::perf_event_header::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_header
 pub fn aya_obj::generated::perf_event_header::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::perf_event_mmap_page
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::perf_event_mmap_page
 pub aya_obj::generated::perf_event_mmap_page::__bindgen_anon_1: aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 pub aya_obj::generated::perf_event_mmap_page::__reserved: [aya_obj::generated::__u8; 928]
 pub aya_obj::generated::perf_event_mmap_page::__reserved_1: aya_obj::generated::__u32
@@ -6857,7 +6857,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_event_mmap_page 
 pub unsafe fn aya_obj::generated::perf_event_mmap_page::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_mmap_page
 pub fn aya_obj::generated::perf_event_mmap_page::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 8]>
 pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::_bitfield_align_1: [u64; 0]
 impl aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
@@ -6923,7 +6923,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::generated::perf_event_mmap_page_
 pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::generated::tcmsg
+#[attr = Repr([ReprC])] pub struct aya_obj::generated::tcmsg
 pub aya_obj::generated::tcmsg::tcm__pad1: core::ffi::primitives::c_uchar
 pub aya_obj::generated::tcmsg::tcm__pad2: core::ffi::primitives::c_ushort
 pub aya_obj::generated::tcmsg::tcm_family: core::ffi::primitives::c_uchar
@@ -7308,7 +7308,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_obj::maps::PinningError where T: ?cor
 pub fn aya_obj::maps::PinningError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::maps::PinningError
 pub fn aya_obj::maps::PinningError::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya_obj::maps::PinningType
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya_obj::maps::PinningType
 pub aya_obj::maps::PinningType::ByName = 1
 pub aya_obj::maps::PinningType::None = 0
 impl core::clone::Clone for aya_obj::maps::PinningType
@@ -7467,7 +7467,7 @@ impl<T> core::clone::CloneToUninit for aya_obj::maps::LegacyMap where T: core::c
 pub unsafe fn aya_obj::maps::LegacyMap::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::maps::LegacyMap
 pub fn aya_obj::maps::LegacyMap::from(t: T) -> T
-#[attr="Repr([ReprC])")] pub struct aya_obj::maps::bpf_map_def
+#[attr = Repr([ReprC])] pub struct aya_obj::maps::bpf_map_def
 pub aya_obj::maps::bpf_map_def::id: u32
 pub aya_obj::maps::bpf_map_def::key_size: u32
 pub aya_obj::maps::bpf_map_def::map_flags: u32

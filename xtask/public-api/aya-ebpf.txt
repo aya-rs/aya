@@ -5,7 +5,7 @@ pub use aya_ebpf::macros
 pub mod aya_ebpf::helpers
 pub use aya_ebpf::helpers::generated
 pub macro aya_ebpf::helpers::bpf_printk!
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::helpers::PrintkArg(_)
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::helpers::PrintkArg(_)
 impl aya_ebpf::helpers::PrintkArg
 pub fn aya_ebpf::helpers::PrintkArg::from_raw(x: u64) -> Self
 impl core::clone::Clone for aya_ebpf::helpers::PrintkArg
@@ -79,7 +79,7 @@ pub unsafe fn aya_ebpf::helpers::bpf_probe_write_user<T>(dst: *mut T, src: *cons
 pub fn aya_ebpf::helpers::bpf_strncmp<const N: usize>(s1: &[u8; N], s2: &core::ffi::c_str::CStr) -> core::cmp::Ordering
 pub mod aya_ebpf::maps
 pub mod aya_ebpf::maps::array
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::array::Array<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::array::Array<T>
 impl<T> aya_ebpf::maps::array::Array<T>
 pub fn aya_ebpf::maps::array::Array<T>::get(&self, index: u32) -> core::option::Option<&T>
 pub fn aya_ebpf::maps::array::Array<T>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
@@ -110,7 +110,7 @@ pub fn aya_ebpf::maps::array::Array<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::array::Array<T>
 pub fn aya_ebpf::maps::array::Array<T>::from(t: T) -> T
 pub mod aya_ebpf::maps::bloom_filter
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::bloom_filter::BloomFilter<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::bloom_filter::BloomFilter<T>
 impl<T> aya_ebpf::maps::bloom_filter::BloomFilter<T>
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&mut self, value: &T) -> core::result::Result<(), i64>
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&mut self, value: &T, flags: u64) -> core::result::Result<(), i64>
@@ -139,7 +139,7 @@ pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::borrow_mut(&mut self) -> &m
 impl<T> core::convert::From<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T>
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::from(t: T) -> T
 pub mod aya_ebpf::maps::hash_map
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::hash_map::HashMap<K, V>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K, V> aya_ebpf::maps::hash_map::HashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::HashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
@@ -170,7 +170,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::HashMap<K, V> w
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::HashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::hash_map::LruHashMap<K, V>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::hash_map::LruHashMap<K, V>
 impl<K, V> aya_ebpf::maps::hash_map::LruHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
@@ -201,7 +201,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
@@ -232,7 +232,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMa
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
@@ -264,7 +264,7 @@ pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::borrow_mut(&mut self) -> &
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::from(t: T) -> T
 pub mod aya_ebpf::maps::lpm_trie
-#[attr="Repr([ReprC, ReprPacked(Align(1 bytes))])")] pub struct aya_ebpf::maps::lpm_trie::Key<K>
+#[attr = Repr([ReprC, ReprPacked(Align(1 bytes))])] pub struct aya_ebpf::maps::lpm_trie::Key<K>
 pub aya_ebpf::maps::lpm_trie::Key::data: K
 pub aya_ebpf::maps::lpm_trie::Key::prefix_len: u32
 impl<K> aya_ebpf::maps::lpm_trie::Key<K>
@@ -291,7 +291,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::lpm_trie::Key<K> where T:
 pub fn aya_ebpf::maps::lpm_trie::Key<K>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::lpm_trie::Key<K>
 pub fn aya_ebpf::maps::lpm_trie::Key<K>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K, V> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::get(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::insert(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
@@ -321,7 +321,7 @@ pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::from(t: T) -> T
 pub mod aya_ebpf::maps::per_cpu_array
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 impl<T> aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get(&self, index: u32) -> core::option::Option<&T>
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
@@ -351,7 +351,7 @@ pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::borrow_mut(&mut self) -> &
 impl<T> core::convert::From<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::from(t: T) -> T
 pub mod aya_ebpf::maps::perf
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::perf::PerfEventArray<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::perf::PerfEventArray<T>
 impl<T> aya_ebpf::maps::PerfEventArray<T>
 pub const fn aya_ebpf::maps::PerfEventArray<T>::new(flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
 pub fn aya_ebpf::maps::PerfEventArray<T>::output<C: aya_ebpf::EbpfContext>(&self, ctx: &C, data: &T, flags: u32)
@@ -379,7 +379,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::PerfEventArray<T> where T
 pub fn aya_ebpf::maps::PerfEventArray<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::PerfEventArray<T>
 pub fn aya_ebpf::maps::PerfEventArray<T>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::perf::PerfEventByteArray
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::perf::PerfEventByteArray
 impl aya_ebpf::maps::PerfEventByteArray
 pub const fn aya_ebpf::maps::PerfEventByteArray::new(flags: u32) -> aya_ebpf::maps::PerfEventByteArray
 pub fn aya_ebpf::maps::PerfEventByteArray::output<C: aya_ebpf::EbpfContext>(&self, ctx: &C, data: &[u8], flags: u32)
@@ -408,7 +408,7 @@ pub fn aya_ebpf::maps::PerfEventByteArray::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::PerfEventByteArray
 pub fn aya_ebpf::maps::PerfEventByteArray::from(t: T) -> T
 pub mod aya_ebpf::maps::program_array
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::program_array::ProgramArray
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::program_array::ProgramArray
 impl aya_ebpf::maps::program_array::ProgramArray
 pub const fn aya_ebpf::maps::program_array::ProgramArray::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::program_array::ProgramArray
 pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<never, aya_ebpf_cty::od::c_long>
@@ -436,7 +436,7 @@ pub fn aya_ebpf::maps::program_array::ProgramArray::borrow_mut(&mut self) -> &mu
 impl<T> core::convert::From<T> for aya_ebpf::maps::program_array::ProgramArray
 pub fn aya_ebpf::maps::program_array::ProgramArray::from(t: T) -> T
 pub mod aya_ebpf::maps::queue
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::queue::Queue<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::queue::Queue<T>
 impl<T> aya_ebpf::maps::queue::Queue<T>
 pub const fn aya_ebpf::maps::queue::Queue<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::queue::Queue<T>
 pub fn aya_ebpf::maps::queue::Queue<T>::pop(&self) -> core::option::Option<T>
@@ -465,7 +465,7 @@ pub fn aya_ebpf::maps::queue::Queue<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::queue::Queue<T>
 pub fn aya_ebpf::maps::queue::Queue<T>::from(t: T) -> T
 pub mod aya_ebpf::maps::ring_buf
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::ring_buf::RingBuf
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::ring_buf::RingBuf
 impl aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
@@ -528,7 +528,7 @@ pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::borrow_mut(&mut self) -> &mut 
 impl<T> core::convert::From<T> for aya_ebpf::maps::ring_buf::RingBufEntry<T>
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::from(t: T) -> T
 pub mod aya_ebpf::maps::sock_hash
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::sock_hash::SockHash<K>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K> aya_ebpf::maps::sock_hash::SockHash<K>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_hash::SockHash<K>
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, key: &mut K, flags: u64) -> i64
@@ -559,7 +559,7 @@ pub fn aya_ebpf::maps::sock_hash::SockHash<K>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::sock_hash::SockHash<K>
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::from(t: T) -> T
 pub mod aya_ebpf::maps::sock_map
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::sock_map::SockMap
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::sock_map::SockMap
 impl aya_ebpf::maps::sock_map::SockMap
 pub const fn aya_ebpf::maps::sock_map::SockMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_map::SockMap
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, index: u32, flags: u64) -> i64
@@ -590,7 +590,7 @@ pub fn aya_ebpf::maps::sock_map::SockMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::sock_map::SockMap
 pub fn aya_ebpf::maps::sock_map::SockMap::from(t: T) -> T
 pub mod aya_ebpf::maps::stack
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::stack::Stack<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::stack::Stack<T>
 impl<T> aya_ebpf::maps::stack::Stack<T>
 pub const fn aya_ebpf::maps::stack::Stack<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack::Stack<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::pop(&mut self) -> core::option::Option<T>
@@ -619,7 +619,7 @@ pub fn aya_ebpf::maps::stack::Stack<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::stack::Stack<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::from(t: T) -> T
 pub mod aya_ebpf::maps::stack_trace
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::stack_trace::StackTrace
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::stack_trace::StackTrace
 impl aya_ebpf::maps::stack_trace::StackTrace
 pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: &C, flags: u64) -> core::result::Result<i64, i64>
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack_trace::StackTrace
@@ -647,7 +647,7 @@ pub fn aya_ebpf::maps::stack_trace::StackTrace::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::stack_trace::StackTrace
 pub fn aya_ebpf::maps::stack_trace::StackTrace::from(t: T) -> T
 pub mod aya_ebpf::maps::xdp
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::xdp::CpuMap
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::xdp::CpuMap
 impl aya_ebpf::maps::CpuMap
 pub const fn aya_ebpf::maps::CpuMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::CpuMap
 pub fn aya_ebpf::maps::CpuMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
@@ -674,7 +674,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::CpuMap where T: ?core::ma
 pub fn aya_ebpf::maps::CpuMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::CpuMap
 pub fn aya_ebpf::maps::CpuMap::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::xdp::DevMap
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::xdp::DevMap
 impl aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
 pub const fn aya_ebpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
@@ -702,7 +702,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMap where T: ?core::ma
 pub fn aya_ebpf::maps::DevMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::xdp::DevMapHash
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::xdp::DevMapHash
 impl aya_ebpf::maps::DevMapHash
 pub fn aya_ebpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
 pub const fn aya_ebpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
@@ -730,7 +730,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMapHash where T: ?core
 pub fn aya_ebpf::maps::DevMapHash::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::DevMapHash
 pub fn aya_ebpf::maps::DevMapHash::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::xdp::XskMap
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::xdp::XskMap
 impl aya_ebpf::maps::XskMap
 pub fn aya_ebpf::maps::XskMap::get(&self, index: u32) -> core::option::Option<u32>
 pub const fn aya_ebpf::maps::XskMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::XskMap
@@ -758,7 +758,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::XskMap where T: ?core::ma
 pub fn aya_ebpf::maps::XskMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::XskMap
 pub fn aya_ebpf::maps::XskMap::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::Array<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::Array<T>
 impl<T> aya_ebpf::maps::array::Array<T>
 pub fn aya_ebpf::maps::array::Array<T>::get(&self, index: u32) -> core::option::Option<&T>
 pub fn aya_ebpf::maps::array::Array<T>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
@@ -788,7 +788,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::array::Array<T> where T: 
 pub fn aya_ebpf::maps::array::Array<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::array::Array<T>
 pub fn aya_ebpf::maps::array::Array<T>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::BloomFilter<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::BloomFilter<T>
 impl<T> aya_ebpf::maps::bloom_filter::BloomFilter<T>
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&mut self, value: &T) -> core::result::Result<(), i64>
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&mut self, value: &T, flags: u64) -> core::result::Result<(), i64>
@@ -816,7 +816,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::bloom_filter::BloomFilter
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T>
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::CpuMap
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::CpuMap
 impl aya_ebpf::maps::CpuMap
 pub const fn aya_ebpf::maps::CpuMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::CpuMap
 pub fn aya_ebpf::maps::CpuMap::redirect(&self, index: u32, flags: u64) -> core::result::Result<u32, u32>
@@ -843,7 +843,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::CpuMap where T: ?core::ma
 pub fn aya_ebpf::maps::CpuMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::CpuMap
 pub fn aya_ebpf::maps::CpuMap::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::DevMap
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::DevMap
 impl aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::get(&self, index: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
 pub const fn aya_ebpf::maps::DevMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMap
@@ -871,7 +871,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMap where T: ?core::ma
 pub fn aya_ebpf::maps::DevMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::DevMap
 pub fn aya_ebpf::maps::DevMap::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::DevMapHash
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::DevMapHash
 impl aya_ebpf::maps::DevMapHash
 pub fn aya_ebpf::maps::DevMapHash::get(&self, key: u32) -> core::option::Option<aya_ebpf::maps::xdp::dev_map::DevMapValue>
 pub const fn aya_ebpf::maps::DevMapHash::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::DevMapHash
@@ -899,7 +899,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::DevMapHash where T: ?core
 pub fn aya_ebpf::maps::DevMapHash::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::DevMapHash
 pub fn aya_ebpf::maps::DevMapHash::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::HashMap<K, V>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::HashMap<K, V>
 impl<K, V> aya_ebpf::maps::hash_map::HashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::HashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
@@ -930,7 +930,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::HashMap<K, V> w
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::HashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::LpmTrie<K, V>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::LpmTrie<K, V>
 impl<K, V> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::get(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::insert(&self, key: &aya_ebpf::maps::lpm_trie::Key<K>, value: &V, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
@@ -959,7 +959,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> w
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::LruHashMap<K, V>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::LruHashMap<K, V>
 impl<K, V> aya_ebpf::maps::hash_map::LruHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
@@ -990,7 +990,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::LruPerCpuHashMap<K, V>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::LruPerCpuHashMap<K, V>
 impl<K, V> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
@@ -1021,7 +1021,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMa
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::PerCpuArray<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::PerCpuArray<T>
 impl<T> aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get(&self, index: u32) -> core::option::Option<&T>
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
@@ -1050,7 +1050,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::per_cpu_array::PerCpuArra
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::PerCpuHashMap<K, V>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::PerCpuHashMap<K, V>
 impl<K, V> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get_ptr(&self, key: &K) -> core::option::Option<*const V>
@@ -1081,7 +1081,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::PerfEventArray<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::PerfEventArray<T>
 impl<T> aya_ebpf::maps::PerfEventArray<T>
 pub const fn aya_ebpf::maps::PerfEventArray<T>::new(flags: u32) -> aya_ebpf::maps::PerfEventArray<T>
 pub fn aya_ebpf::maps::PerfEventArray<T>::output<C: aya_ebpf::EbpfContext>(&self, ctx: &C, data: &T, flags: u32)
@@ -1109,7 +1109,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::PerfEventArray<T> where T
 pub fn aya_ebpf::maps::PerfEventArray<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::PerfEventArray<T>
 pub fn aya_ebpf::maps::PerfEventArray<T>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::PerfEventByteArray
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::PerfEventByteArray
 impl aya_ebpf::maps::PerfEventByteArray
 pub const fn aya_ebpf::maps::PerfEventByteArray::new(flags: u32) -> aya_ebpf::maps::PerfEventByteArray
 pub fn aya_ebpf::maps::PerfEventByteArray::output<C: aya_ebpf::EbpfContext>(&self, ctx: &C, data: &[u8], flags: u32)
@@ -1137,7 +1137,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::PerfEventByteArray where 
 pub fn aya_ebpf::maps::PerfEventByteArray::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::PerfEventByteArray
 pub fn aya_ebpf::maps::PerfEventByteArray::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::ProgramArray
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::ProgramArray
 impl aya_ebpf::maps::program_array::ProgramArray
 pub const fn aya_ebpf::maps::program_array::ProgramArray::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::program_array::ProgramArray
 pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<never, aya_ebpf_cty::od::c_long>
@@ -1164,7 +1164,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::program_array::ProgramArr
 pub fn aya_ebpf::maps::program_array::ProgramArray::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::program_array::ProgramArray
 pub fn aya_ebpf::maps::program_array::ProgramArray::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::Queue<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::Queue<T>
 impl<T> aya_ebpf::maps::queue::Queue<T>
 pub const fn aya_ebpf::maps::queue::Queue<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::queue::Queue<T>
 pub fn aya_ebpf::maps::queue::Queue<T>::pop(&self) -> core::option::Option<T>
@@ -1192,7 +1192,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::queue::Queue<T> where T: 
 pub fn aya_ebpf::maps::queue::Queue<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::queue::Queue<T>
 pub fn aya_ebpf::maps::queue::Queue<T>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::RingBuf
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::RingBuf
 impl aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
@@ -1221,7 +1221,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::ring_buf::RingBuf where T
 pub fn aya_ebpf::maps::ring_buf::RingBuf::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::SockHash<K>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::SockHash<K>
 impl<K> aya_ebpf::maps::sock_hash::SockHash<K>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_hash::SockHash<K>
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, key: &mut K, flags: u64) -> i64
@@ -1251,7 +1251,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::sock_hash::SockHash<K> wh
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::sock_hash::SockHash<K>
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::SockMap
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::SockMap
 impl aya_ebpf::maps::sock_map::SockMap
 pub const fn aya_ebpf::maps::sock_map::SockMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::sock_map::SockMap
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, index: u32, flags: u64) -> i64
@@ -1281,7 +1281,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::sock_map::SockMap where T
 pub fn aya_ebpf::maps::sock_map::SockMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::sock_map::SockMap
 pub fn aya_ebpf::maps::sock_map::SockMap::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::Stack<T>
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::Stack<T>
 impl<T> aya_ebpf::maps::stack::Stack<T>
 pub const fn aya_ebpf::maps::stack::Stack<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack::Stack<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::pop(&mut self) -> core::option::Option<T>
@@ -1309,7 +1309,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::stack::Stack<T> where T: 
 pub fn aya_ebpf::maps::stack::Stack<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::stack::Stack<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::StackTrace
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::StackTrace
 impl aya_ebpf::maps::stack_trace::StackTrace
 pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: &C, flags: u64) -> core::result::Result<i64, i64>
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack_trace::StackTrace
@@ -1336,7 +1336,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::stack_trace::StackTrace w
 pub fn aya_ebpf::maps::stack_trace::StackTrace::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::stack_trace::StackTrace
 pub fn aya_ebpf::maps::stack_trace::StackTrace::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya_ebpf::maps::XskMap
+#[attr = Repr([ReprTransparent])] pub struct aya_ebpf::maps::XskMap
 impl aya_ebpf::maps::XskMap
 pub fn aya_ebpf::maps::XskMap::get(&self, index: u32) -> core::option::Option<u32>
 pub const fn aya_ebpf::maps::XskMap::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::XskMap
