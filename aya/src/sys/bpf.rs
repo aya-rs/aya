@@ -93,9 +93,8 @@ pub(crate) fn bpf_create_map(
     // The map name was added as a parameter in kernel 4.15+ so we skip adding it on
     // older kernels for compatibility
     if KernelVersion::at_least(4, 15, 0) {
-        // u.map_name is 16 bytes max and must be NULL terminated
-        let name_bytes = name.to_bytes_with_nul();
-        let len = cmp::min(name_bytes.len(), u.map_name.len());
+        let name_bytes = name.to_bytes();
+        let len = cmp::min(name_bytes.len(), u.map_name.len() - 1); // Ensure NULL termination.
         u.map_name[..len]
             .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
     }
