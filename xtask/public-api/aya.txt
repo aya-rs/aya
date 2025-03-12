@@ -264,7 +264,7 @@ pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::borrow_mut(&mut self) -> &mu
 impl<T> core::convert::From<T> for aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::from(t: T) -> T
 pub mod aya::maps::lpm_trie
-#[attr="Repr([ReprC, ReprPacked(Align(1 bytes))])")] pub struct aya::maps::lpm_trie::Key<K: aya::Pod>
+#[attr = Repr([ReprC, ReprPacked(Align(1 bytes))])] pub struct aya::maps::lpm_trie::Key<K: aya::Pod>
 impl<K: aya::Pod> aya::maps::lpm_trie::Key<K>
 pub fn aya::maps::lpm_trie::Key<K>::data(&self) -> K
 pub fn aya::maps::lpm_trie::Key<K>::new(prefix_len: u32, data: K) -> Self
@@ -750,7 +750,7 @@ impl<T> core::borrow::BorrowMut<T> for aya::maps::SockMap<T> where T: ?core::mar
 pub fn aya::maps::SockMap<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::SockMap<T>
 pub fn aya::maps::SockMap<T>::from(t: T) -> T
-#[attr="Repr([ReprTransparent])")] pub struct aya::maps::sock::SockMapFd(_)
+#[attr = Repr([ReprTransparent])] pub struct aya::maps::sock::SockMapFd(_)
 impl aya::maps::sock::SockMapFd
 pub fn aya::maps::sock::SockMapFd::try_clone(&self) -> std::io::error::Result<Self>
 impl std::os::fd::owned::AsFd for aya::maps::sock::SockMapFd
@@ -4940,7 +4940,7 @@ impl<T> core::clone::CloneToUninit for aya::programs::perf_event::PerfEventScope
 pub unsafe fn aya::programs::perf_event::PerfEventScope::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::perf_event::PerfEventScope
 pub fn aya::programs::perf_event::PerfEventScope::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya::programs::perf_event::PerfTypeId
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya::programs::perf_event::PerfTypeId
 pub aya::programs::perf_event::PerfTypeId::Breakpoint = 5
 pub aya::programs::perf_event::PerfTypeId::Hardware = 0
 pub aya::programs::perf_event::PerfTypeId::HwCache = 3
@@ -7295,7 +7295,7 @@ impl<T> core::clone::CloneToUninit for aya::programs::perf_event::PerfEventScope
 pub unsafe fn aya::programs::perf_event::PerfEventScope::clone_to_uninit(&self, dst: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::perf_event::PerfEventScope
 pub fn aya::programs::perf_event::PerfEventScope::from(t: T) -> T
-#[attr="Repr([ReprInt(UnsignedInt(U32))])")] pub enum aya::programs::PerfTypeId
+#[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya::programs::PerfTypeId
 pub aya::programs::PerfTypeId::Breakpoint = 5
 pub aya::programs::PerfTypeId::Hardware = 0
 pub aya::programs::PerfTypeId::HwCache = 3
