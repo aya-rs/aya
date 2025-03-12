@@ -18,6 +18,11 @@ static FOO: Array<u32> = Array::<u32>::with_max_entries(10, 0);
 #[map(name = "BAR")]
 static BAZ: HashMap<u32, u8> = HashMap::<u32, u8>::with_max_entries(8, 0);
 
+// The limit of map names is 16 (including a NUL byte). Ensure that we are
+// able to create maps with names exceeding that limit by truncating them.
+#[map(name = "MAP_WITH_LOOOONG_NAAAAAAAAME")]
+static MAP_WITH_LOOOONG_NAAAAAAAAME: HashMap<u32, u8> = HashMap::<u32, u8>::with_max_entries(8, 0);
+
 // Introduced in kernel v3.19.
 #[socket_filter]
 pub fn simple_prog(_ctx: SkBuffContext) -> i64 {
