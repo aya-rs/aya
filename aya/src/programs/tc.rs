@@ -18,8 +18,8 @@ use super::{FdLink, ProgramInfo};
 use crate::{
     VerifierLogLevel,
     programs::{
-        Link, LinkError, LinkOrder, ProgramData, ProgramError, define_link_wrapper, id_as_key,
-        load_program, query,
+        Link, LinkError, LinkOrder, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        id_as_key, load_program, query,
     },
     sys::{
         BpfLinkCreateArgs, LinkTarget, NetlinkError, ProgQueryTarget, SyscallError,
@@ -156,6 +156,9 @@ pub struct NlOptions {
 }
 
 impl SchedClassifier {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SchedClassifier;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SCHED_CLS, &mut self.data)

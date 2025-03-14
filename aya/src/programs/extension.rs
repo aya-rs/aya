@@ -12,7 +12,8 @@ use thiserror::Error;
 use crate::{
     Btf,
     programs::{
-        FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd, define_link_wrapper, load_program,
+        FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd, ProgramType, define_link_wrapper,
+        load_program,
     },
     sys::{self, BpfLinkCreateArgs, LinkTarget, SyscallError, bpf_link_create},
 };
@@ -58,6 +59,9 @@ pub struct Extension {
 }
 
 impl Extension {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::Extension;
+
     /// Loads the extension inside the kernel.
     ///
     /// Prepares the code included in the extension to replace the code of the function
