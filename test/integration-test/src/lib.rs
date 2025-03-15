@@ -66,6 +66,7 @@ bpf_file!(
     XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
     PRINTK_TEST => "printk_test",
+    SOCKET_FILTER => "socket_filter",
 );
 
 #[cfg(test)]
