@@ -60,9 +60,9 @@ edition = "2024"
 # them to do that, but in the meantime we need to be careful.
 [workspace.dependencies]
 anyhow = { version = "1", default-features = false }
-base64 = { version = "0.22.1", default-features = false }
 assert_matches = { version = "1.5.0", default-features = false }
 async-io = { version = "2.0", default-features = false }
+base64 = { version = "0.22.1", default-features = false }
 bindgen = { version = "0.71", default-features = false }
 bitflags = { version = "2.2.1", default-features = false }
 bytes = { version = "1", default-features = false }
