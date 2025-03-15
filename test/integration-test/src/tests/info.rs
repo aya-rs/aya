@@ -36,11 +36,7 @@ fn test_loaded_programs() {
     if let Err(err) = programs.peek().unwrap() {
         if let ProgramError::SyscallError(err) = &err {
             // Skip entire test since feature not available
-            if err
-                .io_error
-                .raw_os_error()
-                .is_some_and(|errno| errno == EINVAL)
-            {
+            if err.io_error.raw_os_error() == Some(EINVAL) {
                 eprintln!(
                     "ignoring test completely as `loaded_programs()` is not available on the host"
                 );
@@ -102,10 +98,7 @@ fn test_program_info() {
         KernelVersion::new(4, 15, 0),
     );
     let maps = test_prog.map_ids().unwrap();
-    kernel_assert!(
-        maps.is_some_and(|ids| ids.is_empty()),
-        KernelVersion::new(4, 15, 0),
-    );
+    kernel_assert_eq!(maps, Some(Vec::new()), KernelVersion::new(4, 15, 0));
     kernel_assert_eq!(
         Some("simple_prog"),
         test_prog.name_as_str(),
@@ -238,11 +231,7 @@ fn list_loaded_maps() {
     let mut maps = loaded_maps().peekable();
     if let Err(err) = maps.peek().unwrap() {
         if let MapError::SyscallError(err) = &err {
-            if err
-                .io_error
-                .raw_os_error()
-                .is_some_and(|errno| errno == EINVAL)
-            {
+            if err.io_error.raw_os_error() == Some(EINVAL) {
                 eprintln!(
                     "ignoring test completely as `loaded_maps()` is not available on the host"
                 );
