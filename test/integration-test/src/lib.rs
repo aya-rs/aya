@@ -67,6 +67,7 @@ bpf_file!(
     UPROBE_COOKIE => "uprobe_cookie",
     PRINTK_TEST => "printk_test",
     PROG_ARRAY => "prog_array",
+    SOCKET_FILTER => "socket_filter",
 );
 
 #[cfg(test)]
