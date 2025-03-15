@@ -14,3 +14,4 @@ mod strncmp;
 mod tcx;
 mod uprobe_cookie;
 mod xdp;
+mod socket_filter;
