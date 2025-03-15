@@ -10,7 +10,7 @@ use aya_ebpf_bindings::helpers::{
 };
 use aya_ebpf_cty::c_long;
 
-use crate::{bindings::__sk_buff, check_bounds_signed, EbpfContext};
+use crate::{EbpfContext, bindings::__sk_buff, check_bounds_signed};
 
 pub struct SkBuff {
     pub skb: *mut __sk_buff,
