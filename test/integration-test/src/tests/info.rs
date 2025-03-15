@@ -1,5 +1,6 @@
 //! Tests the Info API.
-// TODO: Figure out a way to assert that field is truely not present.
+
+// TODO: Figure out a way to assert that field is truly not present.
 //       We can call `bpf_obj_get_info_by_fd()` and fill our target field with arbitrary data.
 //       `E2BIG` error from `bpf_check_uarg_tail_zero()` will detect if we're accessing fields that
 //       isn't supported on the kernel.
