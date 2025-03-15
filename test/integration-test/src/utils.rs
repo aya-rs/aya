@@ -71,59 +71,31 @@ impl Drop for NetNsGuard {
     }
 }
 
-/// Performs `assert!` macro. If the assertion fails and host kernel version
-/// is above feature version, then fail test.
+/// If the `KernelVersion::current >= $version`, `assert!($cond)`, else `assert!(!$cond)`.
 macro_rules! kernel_assert {
     ($cond:expr, $version:expr $(,)?) => {
-        let pass: bool = $cond;
-        if !pass {
-            let feat_version: aya::util::KernelVersion = $version;
-            let current = aya::util::KernelVersion::current().unwrap();
-            let cond_literal = stringify!($cond);
-            if current >= feat_version {
-                // Host kernel is expected to have the feat but does not
-                panic!(
-                    r#"  assertion `{cond_literal}` failed: expected host kernel v{current} to have v{feat_version} feature"#,
-                );
-            } else {
-                // Continue with tests since host is not expected to have feat
-                eprintln!(
-                    r#"ignoring assertion at {}:{}
-  assertion `{cond_literal}` failed: continuing since host kernel v{current} is not expected to have v{feat_version} feature"#,
-                    file!(), line!(),
-                );
-            }
+        let current = aya::util::KernelVersion::current().unwrap();
+        let required: aya::util::KernelVersion = $version;
+        if current >= required {
+            assert!($cond, "{current} >= {required}");
+        } else {
+            assert!(!$cond, "{current} < {required}");
         }
     };
 }
 
 pub(crate) use kernel_assert;
 
-/// Performs `assert_eq!` macro. If the assertion fails and host kernel version
-/// is above feature version, then fail test.
+/// If the `KernelVersion::current >= $version`, `assert_eq!($left, $right)`, else
+/// `assert_ne!($left, $right)`.
 macro_rules! kernel_assert_eq {
     ($left:expr, $right:expr, $version:expr $(,)?) => {
-        if $left != $right {
-            let feat_version: aya::util::KernelVersion = $version;
-            let current = aya::util::KernelVersion::current().unwrap();
-            if current >= feat_version {
-                // Host kernel is expected to have the feat but does not
-                panic!(
-                    r#"  assertion `left == right` failed: expected host kernel v{current} to have v{feat_version} feature
-    left: {:?}
-   right: {:?}"#,
-                    $left, $right,
-                );
-            } else {
-                // Continue with tests since host is not expected to have feat
-                eprintln!(
-                    r#"ignoring assertion at {}:{}
-  assertion `left == right` failed: continuing since host kernel v{current} is not expected to have v{feat_version} feature
-    left: {:?}
-   right: {:?}"#,
-                    file!(), line!(), $left, $right,
-                );
-            }
+        let current = aya::util::KernelVersion::current().unwrap();
+        let required: aya::util::KernelVersion = $version;
+        if current >= required {
+            assert_eq!($left, $right, "{current} >= {required}");
+        } else {
+            assert_ne!($left, $right, "{current} < {required}");
         }
     };
 }
