@@ -18,10 +18,10 @@ assert_matches = { workspace = true }
 aya = { path = "../../aya", version = "^0.13.1", default-features = false }
 aya-log = { path = "../../aya-log", version = "^0.2.1", default-features = false }
 aya-obj = { path = "../../aya-obj", version = "^0.2.1", default-features = false }
-integration-common = { path = "../integration-common", features = ["user"] }
 env_logger = { workspace = true }
 epoll = { workspace = true }
 futures = { workspace = true, features = ["std"] }
+integration-common = { path = "../integration-common", features = ["user"] }
 libc = { workspace = true }
 log = { workspace = true }
 netns-rs = { workspace = true }
