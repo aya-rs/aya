@@ -97,7 +97,6 @@ impl MapInfo {
     /// Introduced in kernel v4.15.
     pub fn name_as_str(&self) -> Option<&str> {
         let name = std::str::from_utf8(self.name()).ok()?;
-        // Char in program name was introduced in the same commit as map name
         (FEATURES.bpf_name() || !name.is_empty()).then_some(name)
     }
 
