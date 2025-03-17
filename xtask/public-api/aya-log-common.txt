@@ -49,7 +49,7 @@ pub fn aya_log_common::Argument::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya_log_common::Argument where T: ?core::marker::Sized
 pub fn aya_log_common::Argument::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya_log_common::Argument where T: core::clone::Clone
-pub unsafe fn aya_log_common::Argument::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya_log_common::Argument::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_log_common::Argument
 pub fn aya_log_common::Argument::from(t: T) -> T
 #[attr = Repr([ReprInt(UnsignedInt(U8))])] pub enum aya_log_common::DisplayHint
@@ -93,7 +93,7 @@ pub fn aya_log_common::DisplayHint::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya_log_common::DisplayHint where T: ?core::marker::Sized
 pub fn aya_log_common::DisplayHint::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya_log_common::DisplayHint where T: core::clone::Clone
-pub unsafe fn aya_log_common::DisplayHint::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya_log_common::DisplayHint::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::from(t: T) -> T
 #[attr = Repr([ReprInt(UnsignedInt(U8))])] pub enum aya_log_common::Level
@@ -136,7 +136,7 @@ pub fn aya_log_common::Level::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya_log_common::Level where T: ?core::marker::Sized
 pub fn aya_log_common::Level::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya_log_common::Level where T: core::clone::Clone
-pub unsafe fn aya_log_common::Level::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya_log_common::Level::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_log_common::Level
 pub fn aya_log_common::Level::from(t: T) -> T
 #[attr = Repr([ReprInt(UnsignedInt(U8))])] pub enum aya_log_common::RecordField
@@ -174,7 +174,7 @@ pub fn aya_log_common::RecordField::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya_log_common::RecordField where T: ?core::marker::Sized
 pub fn aya_log_common::RecordField::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya_log_common::RecordField where T: core::clone::Clone
-pub unsafe fn aya_log_common::RecordField::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya_log_common::RecordField::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_log_common::RecordField
 pub fn aya_log_common::RecordField::from(t: T) -> T
 pub const aya_log_common::LOG_BUF_CAPACITY: usize

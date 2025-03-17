@@ -58,7 +58,7 @@ pub fn aya_ebpf::helpers::PrintkArg::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya_ebpf::helpers::PrintkArg where T: ?core::marker::Sized
 pub fn aya_ebpf::helpers::PrintkArg::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya_ebpf::helpers::PrintkArg where T: core::clone::Clone
-pub unsafe fn aya_ebpf::helpers::PrintkArg::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya_ebpf::helpers::PrintkArg::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf::helpers::PrintkArg
 pub fn aya_ebpf::helpers::PrintkArg::from(t: T) -> T
 pub fn aya_ebpf::helpers::bpf_get_current_comm() -> core::result::Result<[u8; 16], aya_ebpf_cty::od::c_long>
