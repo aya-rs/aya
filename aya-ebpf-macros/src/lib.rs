@@ -544,9 +544,38 @@ pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Marks a function as an eBPF Flow Dissector program that can be attached to
-/// a network namespace.
+/// Marks a function as an eBPF Flow Dissector program.
 ///
+/// Flow dissector is a program type that parses metadata out of the packets.
+///
+/// BPF flow dissectors can be attached per network namespace. These programs
+/// are given a packet and expected to populate the fields of
+/// `FlowDissectorContext::flow_keys`. The return code of the BPF program is
+/// either [`BPF_OK`] to indicate successful dissection, [`BPF_DROP`] to
+/// indicate parsing error, or [`BPF_FLOW_DISSECTOR_CONTINUE`] to indicate that
+/// no custom dissection was performed, and fallback to standard dissector is
+/// requested.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.20.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_ebpf::{bindings::bpf_ret_code, macros::flow_dissector, programs::FlowDissectorContext};
+///
+/// #[flow_dissector]
+/// pub fn dissect(_ctx: FlowDissectorContext) -> u32 {
+///     // TODO: do something useful here.
+///     bpf_ret_code::BPF_FLOW_DISSECTOR_CONTINUE
+/// }
+/// ```
+///
+/// [`FlowDissectorContext::flow_keys`]: ../aya_ebpf/programs/flow_dissector/struct.FlowDissectorContext.html#method.flow_keys
+/// [`BPF_OK`]: ../aya_ebpf/bindings/bpf_ret_code/constant.bpf_ok
+/// [`BPF_DROP`]: ../aya_ebpf/bindings/bpf_ret_code/constant.bpf_drop
+/// [`BPF_FLOW_DISSECTOR_CONTINUE`]: ../aya_ebpf/bindings/bpf_ret_code/constant.bpf_flow_dissector_continue
 #[proc_macro_attribute]
 pub fn flow_dissector(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match FlowDissector::parse(attrs.into(), item.into()) {

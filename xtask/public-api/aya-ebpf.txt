@@ -1457,7 +1457,8 @@ pub struct aya_ebpf::programs::flow_dissector::FlowDissectorContext
 impl aya_ebpf::programs::flow_dissector::FlowDissectorContext
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data(&self) -> usize
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data_end(&self) -> usize
-pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::flow_keys(&self) -> usize
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::flow_keys(&mut self) -> &mut aya_ebpf_bindings::x86_64::bindings::bpf_flow_keys
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::flow_dissector::FlowDissectorContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::flow_dissector::FlowDissectorContext
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
@@ -2196,7 +2197,8 @@ pub struct aya_ebpf::programs::FlowDissectorContext
 impl aya_ebpf::programs::flow_dissector::FlowDissectorContext
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data(&self) -> usize
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data_end(&self) -> usize
-pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::flow_keys(&self) -> usize
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::flow_keys(&mut self) -> &mut aya_ebpf_bindings::x86_64::bindings::bpf_flow_keys
+pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::load_bytes(&self, offset: usize, dst: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::new(skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> aya_ebpf::programs::flow_dissector::FlowDissectorContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::flow_dissector::FlowDissectorContext
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void

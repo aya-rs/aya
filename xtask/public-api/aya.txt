@@ -3801,10 +3801,6 @@ pub fn aya::programs::flow_dissector::FlowDissectorLink::id(&self) -> Self::Id
 impl core::cmp::Eq for aya::programs::flow_dissector::FlowDissectorLink
 impl core::cmp::PartialEq for aya::programs::flow_dissector::FlowDissectorLink
 pub fn aya::programs::flow_dissector::FlowDissectorLink::eq(&self, other: &Self) -> bool
-impl core::convert::From<aya::programs::flow_dissector::FlowDissectorLink> for aya::programs::links::FdLink
-pub fn aya::programs::links::FdLink::from(w: aya::programs::flow_dissector::FlowDissectorLink) -> aya::programs::links::FdLink
-impl core::convert::From<aya::programs::links::FdLink> for aya::programs::flow_dissector::FlowDissectorLink
-pub fn aya::programs::flow_dissector::FlowDissectorLink::from(b: aya::programs::links::FdLink) -> aya::programs::flow_dissector::FlowDissectorLink
 impl core::fmt::Debug for aya::programs::flow_dissector::FlowDissectorLink
 pub fn aya::programs::flow_dissector::FlowDissectorLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::flow_dissector::FlowDissectorLink
@@ -4294,16 +4290,12 @@ impl core::convert::From<aya::programs::fentry::FEntryLink> for aya::programs::l
 pub fn aya::programs::links::FdLink::from(w: aya::programs::fentry::FEntryLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::fexit::FExitLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::fexit::FExitLink) -> aya::programs::links::FdLink
-impl core::convert::From<aya::programs::flow_dissector::FlowDissectorLink> for aya::programs::links::FdLink
-pub fn aya::programs::links::FdLink::from(w: aya::programs::flow_dissector::FlowDissectorLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::extension::ExtensionLink
 pub fn aya::programs::extension::ExtensionLink::from(b: aya::programs::links::FdLink) -> aya::programs::extension::ExtensionLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fentry::FEntryLink
 pub fn aya::programs::fentry::FEntryLink::from(b: aya::programs::links::FdLink) -> aya::programs::fentry::FEntryLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fexit::FExitLink
 pub fn aya::programs::fexit::FExitLink::from(b: aya::programs::links::FdLink) -> aya::programs::fexit::FExitLink
-impl core::convert::From<aya::programs::links::FdLink> for aya::programs::flow_dissector::FlowDissectorLink
-pub fn aya::programs::flow_dissector::FlowDissectorLink::from(b: aya::programs::links::FdLink) -> aya::programs::flow_dissector::FlowDissectorLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::lsm::LsmLink
 pub fn aya::programs::lsm::LsmLink::from(b: aya::programs::links::FdLink) -> aya::programs::lsm::LsmLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::raw_trace_point::RawTracePointLink
