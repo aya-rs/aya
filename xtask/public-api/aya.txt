@@ -301,7 +301,7 @@ pub fn aya::maps::lpm_trie::Key<K>::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::maps::lpm_trie::Key<K> where T: ?core::marker::Sized
 pub fn aya::maps::lpm_trie::Key<K>::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::maps::lpm_trie::Key<K> where T: core::clone::Clone
-pub unsafe fn aya::maps::lpm_trie::Key<K>::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::maps::lpm_trie::Key<K>::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::maps::lpm_trie::Key<K>
 pub fn aya::maps::lpm_trie::Key<K>::from(t: T) -> T
 pub struct aya::maps::lpm_trie::LpmTrie<T, K, V>
@@ -1477,7 +1477,7 @@ pub fn aya::maps::MapType::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::maps::MapType where T: ?core::marker::Sized
 pub fn aya::maps::MapType::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::maps::MapType where T: core::clone::Clone
-pub unsafe fn aya::maps::MapType::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::maps::MapType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::maps::MapType
 pub fn aya::maps::MapType::from(t: T) -> T
 pub struct aya::maps::Array<T, V: aya::Pod>
@@ -2686,7 +2686,7 @@ pub fn aya::programs::cgroup_skb::CgroupSkbAttachType::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::cgroup_skb::CgroupSkbAttachType where T: ?core::marker::Sized
 pub fn aya::programs::cgroup_skb::CgroupSkbAttachType::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::cgroup_skb::CgroupSkbAttachType where T: core::clone::Clone
-pub unsafe fn aya::programs::cgroup_skb::CgroupSkbAttachType::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::cgroup_skb::CgroupSkbAttachType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::cgroup_skb::CgroupSkbAttachType
 pub fn aya::programs::cgroup_skb::CgroupSkbAttachType::from(t: T) -> T
 pub struct aya::programs::cgroup_skb::CgroupSkb
@@ -4110,7 +4110,7 @@ pub fn aya::programs::links::CgroupAttachMode::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::links::CgroupAttachMode where T: ?core::marker::Sized
 pub fn aya::programs::links::CgroupAttachMode::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::links::CgroupAttachMode where T: core::clone::Clone
-pub unsafe fn aya::programs::links::CgroupAttachMode::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::links::CgroupAttachMode::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::links::CgroupAttachMode
 pub fn aya::programs::links::CgroupAttachMode::from(t: T) -> T
 pub enum aya::programs::links::LinkError
@@ -4937,7 +4937,7 @@ pub fn aya::programs::perf_event::PerfEventScope::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::PerfEventScope where T: ?core::marker::Sized
 pub fn aya::programs::perf_event::PerfEventScope::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::perf_event::PerfEventScope where T: core::clone::Clone
-pub unsafe fn aya::programs::perf_event::PerfEventScope::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::perf_event::PerfEventScope::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::perf_event::PerfEventScope
 pub fn aya::programs::perf_event::PerfEventScope::from(t: T) -> T
 #[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya::programs::perf_event::PerfTypeId
@@ -4976,7 +4976,7 @@ pub fn aya::programs::perf_event::PerfTypeId::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::PerfTypeId where T: ?core::marker::Sized
 pub fn aya::programs::perf_event::PerfTypeId::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::perf_event::PerfTypeId where T: core::clone::Clone
-pub unsafe fn aya::programs::perf_event::PerfTypeId::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::perf_event::PerfTypeId::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::perf_event::PerfTypeId
 pub fn aya::programs::perf_event::PerfTypeId::from(t: T) -> T
 pub enum aya::programs::perf_event::SamplePolicy
@@ -5011,7 +5011,7 @@ pub fn aya::programs::perf_event::SamplePolicy::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::SamplePolicy where T: ?core::marker::Sized
 pub fn aya::programs::perf_event::SamplePolicy::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::perf_event::SamplePolicy where T: core::clone::Clone
-pub unsafe fn aya::programs::perf_event::SamplePolicy::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::perf_event::SamplePolicy::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::perf_event::SamplePolicy
 pub fn aya::programs::perf_event::SamplePolicy::from(t: T) -> T
 pub struct aya::programs::perf_event::PerfEvent
@@ -5569,7 +5569,7 @@ pub fn aya::programs::sk_skb::SkSkbKind::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_skb::SkSkbKind where T: ?core::marker::Sized
 pub fn aya::programs::sk_skb::SkSkbKind::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::sk_skb::SkSkbKind where T: core::clone::Clone
-pub unsafe fn aya::programs::sk_skb::SkSkbKind::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::sk_skb::SkSkbKind::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::sk_skb::SkSkbKind
 pub fn aya::programs::sk_skb::SkSkbKind::from(t: T) -> T
 pub struct aya::programs::sk_skb::SkSkb
@@ -6054,7 +6054,7 @@ pub fn aya::programs::tc::TcAttachType::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::tc::TcAttachType where T: ?core::marker::Sized
 pub fn aya::programs::tc::TcAttachType::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::tc::TcAttachType where T: core::clone::Clone
-pub unsafe fn aya::programs::tc::TcAttachType::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::tc::TcAttachType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::from(t: T) -> T
 pub enum aya::programs::tc::TcError
@@ -7022,7 +7022,7 @@ pub fn aya::programs::xdp::XdpFlags::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::xdp::XdpFlags where T: ?core::marker::Sized
 pub fn aya::programs::xdp::XdpFlags::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::xdp::XdpFlags where T: core::clone::Clone
-pub unsafe fn aya::programs::xdp::XdpFlags::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::xdp::XdpFlags::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::from(t: T) -> T
 pub struct aya::programs::xdp::XdpLink(_)
@@ -7144,7 +7144,7 @@ pub fn aya::programs::links::CgroupAttachMode::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::links::CgroupAttachMode where T: ?core::marker::Sized
 pub fn aya::programs::links::CgroupAttachMode::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::links::CgroupAttachMode where T: core::clone::Clone
-pub unsafe fn aya::programs::links::CgroupAttachMode::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::links::CgroupAttachMode::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::links::CgroupAttachMode
 pub fn aya::programs::links::CgroupAttachMode::from(t: T) -> T
 pub enum aya::programs::CgroupSkbAttachType
@@ -7180,7 +7180,7 @@ pub fn aya::programs::cgroup_skb::CgroupSkbAttachType::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::cgroup_skb::CgroupSkbAttachType where T: ?core::marker::Sized
 pub fn aya::programs::cgroup_skb::CgroupSkbAttachType::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::cgroup_skb::CgroupSkbAttachType where T: core::clone::Clone
-pub unsafe fn aya::programs::cgroup_skb::CgroupSkbAttachType::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::cgroup_skb::CgroupSkbAttachType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::cgroup_skb::CgroupSkbAttachType
 pub fn aya::programs::cgroup_skb::CgroupSkbAttachType::from(t: T) -> T
 pub enum aya::programs::ExtensionError
@@ -7292,7 +7292,7 @@ pub fn aya::programs::perf_event::PerfEventScope::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::PerfEventScope where T: ?core::marker::Sized
 pub fn aya::programs::perf_event::PerfEventScope::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::perf_event::PerfEventScope where T: core::clone::Clone
-pub unsafe fn aya::programs::perf_event::PerfEventScope::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::perf_event::PerfEventScope::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::perf_event::PerfEventScope
 pub fn aya::programs::perf_event::PerfEventScope::from(t: T) -> T
 #[attr = Repr([ReprInt(UnsignedInt(U32))])] pub enum aya::programs::PerfTypeId
@@ -7331,7 +7331,7 @@ pub fn aya::programs::perf_event::PerfTypeId::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::PerfTypeId where T: ?core::marker::Sized
 pub fn aya::programs::perf_event::PerfTypeId::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::perf_event::PerfTypeId where T: core::clone::Clone
-pub unsafe fn aya::programs::perf_event::PerfTypeId::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::perf_event::PerfTypeId::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::perf_event::PerfTypeId
 pub fn aya::programs::perf_event::PerfTypeId::from(t: T) -> T
 pub enum aya::programs::ProbeKind
@@ -7369,7 +7369,7 @@ pub fn aya::programs::ProbeKind::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::ProbeKind where T: ?core::marker::Sized
 pub fn aya::programs::ProbeKind::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::ProbeKind where T: core::clone::Clone
-pub unsafe fn aya::programs::ProbeKind::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::ProbeKind::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::ProbeKind
 pub fn aya::programs::ProbeKind::from(t: T) -> T
 pub enum aya::programs::Program
@@ -7728,7 +7728,7 @@ pub fn aya::programs::ProgramType::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::ProgramType where T: ?core::marker::Sized
 pub fn aya::programs::ProgramType::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::ProgramType where T: core::clone::Clone
-pub unsafe fn aya::programs::ProgramType::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::ProgramType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::ProgramType
 pub fn aya::programs::ProgramType::from(t: T) -> T
 pub enum aya::programs::SamplePolicy
@@ -7763,7 +7763,7 @@ pub fn aya::programs::perf_event::SamplePolicy::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::SamplePolicy where T: ?core::marker::Sized
 pub fn aya::programs::perf_event::SamplePolicy::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::perf_event::SamplePolicy where T: core::clone::Clone
-pub unsafe fn aya::programs::perf_event::SamplePolicy::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::perf_event::SamplePolicy::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::perf_event::SamplePolicy
 pub fn aya::programs::perf_event::SamplePolicy::from(t: T) -> T
 pub enum aya::programs::SkSkbKind
@@ -7799,7 +7799,7 @@ pub fn aya::programs::sk_skb::SkSkbKind::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::sk_skb::SkSkbKind where T: ?core::marker::Sized
 pub fn aya::programs::sk_skb::SkSkbKind::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::sk_skb::SkSkbKind where T: core::clone::Clone
-pub unsafe fn aya::programs::sk_skb::SkSkbKind::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::sk_skb::SkSkbKind::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::sk_skb::SkSkbKind
 pub fn aya::programs::sk_skb::SkSkbKind::from(t: T) -> T
 pub enum aya::programs::SocketFilterError
@@ -7879,7 +7879,7 @@ pub fn aya::programs::tc::TcAttachType::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::tc::TcAttachType where T: ?core::marker::Sized
 pub fn aya::programs::tc::TcAttachType::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::tc::TcAttachType where T: core::clone::Clone
-pub unsafe fn aya::programs::tc::TcAttachType::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::tc::TcAttachType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::from(t: T) -> T
 pub enum aya::programs::TcError
@@ -9537,7 +9537,7 @@ pub fn aya::programs::xdp::XdpFlags::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::programs::xdp::XdpFlags where T: ?core::marker::Sized
 pub fn aya::programs::xdp::XdpFlags::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::programs::xdp::XdpFlags where T: core::clone::Clone
-pub unsafe fn aya::programs::xdp::XdpFlags::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::programs::xdp::XdpFlags::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::xdp::XdpFlags
 pub fn aya::programs::xdp::XdpFlags::from(t: T) -> T
 pub trait aya::programs::Link: core::fmt::Debug + core::cmp::Eq + core::hash::Hash + 'static
@@ -9700,7 +9700,7 @@ pub fn aya::sys::Stats::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::sys::Stats where T: ?core::marker::Sized
 pub fn aya::sys::Stats::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::sys::Stats where T: core::clone::Clone
-pub unsafe fn aya::sys::Stats::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::sys::Stats::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::sys::Stats
 pub fn aya::sys::Stats::from(t: T) -> T
 pub struct aya::sys::SyscallError
@@ -9793,7 +9793,7 @@ pub fn aya::util::KernelVersion::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::util::KernelVersion where T: ?core::marker::Sized
 pub fn aya::util::KernelVersion::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::util::KernelVersion where T: core::clone::Clone
-pub unsafe fn aya::util::KernelVersion::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::util::KernelVersion::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::from(t: T) -> T
 pub fn aya::util::kernel_symbols() -> core::result::Result<alloc::collections::btree::map::BTreeMap<u64, alloc::string::String>, std::io::error::Error>
@@ -10067,7 +10067,7 @@ pub fn aya::VerifierLogLevel::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya::VerifierLogLevel where T: ?core::marker::Sized
 pub fn aya::VerifierLogLevel::borrow_mut(&mut self) -> &mut T
 impl<T> core::clone::CloneToUninit for aya::VerifierLogLevel where T: core::clone::Clone
-pub unsafe fn aya::VerifierLogLevel::clone_to_uninit(&self, dst: *mut u8)
+pub unsafe fn aya::VerifierLogLevel::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::from(t: T) -> T
 pub unsafe trait aya::Pod: core::marker::Copy + 'static
