@@ -1,13 +1,14 @@
 [package]
 name = "integration-common"
-version = "0.1.0"
 publish = false
+version = "0.1.0"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
 rust-version.workspace = true
-edition.workspace = true
 
 [lints]
 workspace = true
