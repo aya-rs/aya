@@ -9,13 +9,18 @@ use aya_obj::generated::{
 use crate::{
     programs::{FdLink, FdLinkId, ProgramData, ProgramError, define_link_wrapper, load_program},
     sys::{LinkTarget, SyscallError, bpf_link_create},
+    util::KernelVersion,
 };
 
-/// A program that can be attached as a Flow Dissector routine
+/// Flow dissector is a program type that parses metadata out of the packets.
 ///
-/// ['FlowDissector'] programs operate on an __sk_buff.
-/// However, only the limited set of fields is allowed: data, data_end and flow_keys.
-/// flow_keys is struct bpf_flow_keys and contains flow dissector input and output arguments.
+/// BPF flow dissectors can be attached per network namespace. These programs
+/// are given a packet and expected to populate the fields of
+/// `FlowDissectorContext::flow_keys`. The return code of the BPF program is
+/// either [`BPF_OK`] to indicate successful dissection, [`BPF_DROP`] to
+/// indicate parsing error, or [`BPF_FLOW_DISSECTOR_CONTINUE`] to indicate that
+/// no custom dissection was performed, and fallback to standard dissector is
+/// requested.
 ///
 /// # Minimum kernel version
 ///
@@ -45,6 +50,11 @@ use crate::{
 /// program.attach(net_ns)?;
 /// # Ok::<(), Error>(())
 /// ```
+///
+/// [`FlowDissectorContext::flow_keys`]: aya_ebpf::programs::FlowDissectorContext::flow_keys
+/// [`BPF_OK`]: aya_ebpf::bindings::bpf_ret_code::BPF_OK
+/// [`BPF_DROP`]: aya_ebpf::bindings::bpf_ret_code::BPF_DROP
+/// [`BPF_FLOW_DISSECTOR_CONTINUE`]: aya_ebpf::bindings::bpf_ret_code::BPF_FLOW_DISSECTOR_CONTINUE
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_FLOW_DISSECTOR")]
 pub struct FlowDissector {
@@ -66,20 +76,24 @@ impl FlowDissector {
         let prog_fd = prog_fd.as_fd();
         let netns_fd = netns.as_fd();
 
-        let link_fd = bpf_link_create(
-            prog_fd,
-            LinkTarget::Fd(netns_fd),
-            BPF_FLOW_DISSECTOR,
-            0,
-            None,
-        )
-        .map_err(|io_error| SyscallError {
-            call: "bpf_link_create",
-            io_error,
-        })?;
-        self.data
-            .links
-            .insert(FlowDissectorLink::new(FdLink::new(link_fd)))
+        if KernelVersion::at_least(5, 7, 0) {
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(netns_fd),
+                BPF_FLOW_DISSECTOR,
+                0,
+                None,
+            )
+            .map_err(|io_error| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
+            self.data
+                .links
+                .insert(FlowDissectorLink::new(FdLink::new(link_fd)))
+        } else {
+            todo!("support attachment via BPF_PROG_ATTACH")
+        }
     }
 }
 

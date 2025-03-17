@@ -48,6 +48,8 @@ pub fn test_uretprobe(_ctx: RetProbeContext) -> u32 {
 
 #[flow_dissector]
 pub fn test_flow(_ctx: FlowDissectorContext) -> u32 {
+    // TODO: write an actual flow dissector. See tools/testing/selftests/bpf/progs/bpf_flow.c in the
+    // Linux kernel for inspiration.
     0
 }
 
