@@ -1,13 +1,13 @@
 [package]
-name = "xtask"
-version = "0.1.0"
-publish = false
 authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
-rust-version.workspace = true
 edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "xtask"
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+version = "0.1.0"
 
 [lints]
 workspace = true

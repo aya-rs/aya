@@ -1,13 +1,13 @@
 [package]
-name = "aya-ebpf-macros"
-version = "0.1.1"
-description = "Proc macros used by aya-ebpf"
 authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
-rust-version.workspace = true
+description = "Proc macros used by aya-ebpf"
 edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "aya-ebpf-macros"
+repository.workspace = true
+rust-version.workspace = true
+version = "0.1.1"
 
 [lints]
 workspace = true

@@ -1,12 +1,12 @@
 [package]
-name = "aya-ebpf-bindings"
-version = "0.1.1"
-description = "Bindings for Linux Kernel eBPF types and helpers"
 authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
+description = "Bindings for Linux Kernel eBPF types and helpers"
 edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "aya-ebpf-bindings"
+repository.workspace = true
+version = "0.1.1"
 
 [lints]
 workspace = true

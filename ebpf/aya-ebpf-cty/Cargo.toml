@@ -1,15 +1,15 @@
 [package]
+authors.workspace = true
 categories = ["embedded", "external-ffi-bindings", "no-std"]
 description = "Type aliases to C types like c_int for use with bindgen"
 documentation = "https://docs.rs/aya-bpf-cty"
-name = "aya-ebpf-cty"
-version = "0.2.2"
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
-rust-version.workspace = true
 edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "aya-ebpf-cty"
+repository.workspace = true
+rust-version.workspace = true
+version = "0.2.2"
 
 [lints]
 workspace = true

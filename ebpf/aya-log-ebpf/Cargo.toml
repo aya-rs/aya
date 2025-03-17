@@ -1,13 +1,13 @@
 [package]
-name = "aya-log-ebpf"
-version = "0.1.1"
-description = "Logging for eBPF programs"
 authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
-rust-version.workspace = true
+description = "Logging for eBPF programs"
 edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "aya-log-ebpf"
+repository.workspace = true
+rust-version.workspace = true
+version = "0.1.1"
 
 [lints]
 workspace = true

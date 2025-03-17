@@ -1,13 +1,13 @@
 [package]
-name = "aya-build"
-version = "0.1.2"
-description = "Build-time support for aya projects"
 authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
-rust-version.workspace = true
+description = "Build-time support for aya projects"
 edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "aya-build"
+repository.workspace = true
+rust-version.workspace = true
+version = "0.1.2"
 
 [lints]
 workspace = true

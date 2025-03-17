@@ -1,16 +1,16 @@
 [package]
-name = "aya"
-version = "0.13.1"
-description = "An eBPF library with a focus on developer experience and operability."
-keywords = ["bpf", "ebpf", "kernel", "linux"]
-readme = "README.md"
-documentation = "https://docs.rs/aya"
 authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
-rust-version.workspace = true
+description = "An eBPF library with a focus on developer experience and operability."
+documentation = "https://docs.rs/aya"
 edition.workspace = true
+homepage.workspace = true
+keywords = ["bpf", "ebpf", "kernel", "linux"]
+license.workspace = true
+name = "aya"
+readme = "README.md"
+repository.workspace = true
+rust-version.workspace = true
+version = "0.13.1"
 
 [lints]
 workspace = true
@@ -33,9 +33,9 @@ tokio = { workspace = true, features = ["rt"], optional = true }
 tempfile = { workspace = true }
 
 [features]
-default = []
-async_tokio = ["tokio/net"]
 async_std = ["dep:async-io"]
+async_tokio = ["tokio/net"]
+default = []
 
 [package.metadata.docs.rs]
 all-features = true
