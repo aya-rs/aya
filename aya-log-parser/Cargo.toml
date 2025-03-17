@@ -1,13 +1,14 @@
 [package]
+description = "A parser for the aya log format strings"
 name = "aya-log-parser"
 version = "0.1.13"
-description = "A parser for the aya log format strings"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
 rust-version.workspace = true
-edition.workspace = true
 
 [lints]
 workspace = true

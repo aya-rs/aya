@@ -2,3 +2,4 @@
 
 [rule.formatting]
 indent_string = "    "
+reorder_keys = true

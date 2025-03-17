@@ -1,16 +1,17 @@
 [package]
-name = "aya"
-version = "0.13.1"
 description = "An eBPF library with a focus on developer experience and operability."
-keywords = ["bpf", "ebpf", "kernel", "linux"]
-readme = "README.md"
 documentation = "https://docs.rs/aya"
+keywords = ["bpf", "ebpf", "kernel", "linux"]
+name = "aya"
+readme = "README.md"
+version = "0.13.1"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
 rust-version.workspace = true
-edition.workspace = true
 
 [lints]
 workspace = true
@@ -33,9 +34,9 @@ tokio = { workspace = true, features = ["rt"], optional = true }
 tempfile = { workspace = true }
 
 [features]
-default = []
-async_tokio = ["tokio/net"]
 async_std = ["dep:async-io"]
+async_tokio = ["tokio/net"]
+default = []
 
 [package.metadata.docs.rs]
 all-features = true

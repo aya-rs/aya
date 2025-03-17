@@ -1,2 +1,2 @@
-pre-release-commit-message = "{{crate_name}}: release version {{version}}"
 consolidate-commits = true
+pre-release-commit-message = "{{crate_name}}: release version {{version}}"

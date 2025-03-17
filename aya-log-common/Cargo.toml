@@ -1,15 +1,16 @@
 [package]
+description = "A logging library for eBPF programs."
+documentation = "https://docs.rs/aya-log"
+keywords = ["bpf", "ebpf", "log", "logging"]
 name = "aya-log-common"
 version = "0.1.15"
-description = "A logging library for eBPF programs."
-keywords = ["bpf", "ebpf", "log", "logging"]
-documentation = "https://docs.rs/aya-log"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
 rust-version.workspace = true
-edition.workspace = true
 
 [lints]
 workspace = true
