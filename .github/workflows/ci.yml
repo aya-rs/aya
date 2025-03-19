@@ -228,7 +228,7 @@ jobs:
         run: |
           set -euxo pipefail
           sudo apt update
-          sudo apt -y install lynx qemu-system-{arm,x86}
+          sudo apt -y install lynx qemu-system-{arm,x86} musl-tools
           echo /usr/lib/llvm-15/bin >> $GITHUB_PATH
 
       - name: Install prerequisites
@@ -240,6 +240,10 @@ jobs:
         # The tar shipped on macOS doesn't support --wildcards, so we need GNU tar.
         #
         # The clang shipped on macOS doesn't support BPF, so we need LLVM from brew.
+        #
+        # We need a musl C toolchain to compile our `test-distro` since some of
+        # our dependencies have build scripts that compile C code (i.e xz2).
+        # This is provided by `brew install filosottile/musl-cross/musl-cross`.
         run: |
           set -euxo pipefail
           brew update
@@ -250,6 +254,8 @@ jobs:
           echo $(brew --prefix curl)/bin >> $GITHUB_PATH
           echo $(brew --prefix gnu-tar)/libexec/gnubin >> $GITHUB_PATH
           echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
+          brew install filosottile/musl-cross/musl-cross
+          ln -s "$(brew --prefix musl-cross)/bin/x86_64-linux-musl-gcc" /usr/local/bin/musl-gcc
 
       - uses: dtolnay/rust-toolchain@nightly
         with:
@@ -302,21 +308,46 @@ jobs:
         # TODO: enable tests on kernels before 6.0.
         run: .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/amd64 amd64 6.1 6.10
 
+      - name: Cleanup stale kernels and modules
+        run: |
+          set -euxo pipefail
+          rm -rf test/.tmp/boot test/.tmp/lib
+
       - name: Extract debian kernels
         run: |
           set -euxo pipefail
+          # The wildcard '**/boot/*' extracts kernel images and config.
+          # The wildcard '**/modules/*' extracts kernel modules.
+          # Modules are required since not all parts of the kernel we want to
+          # test are built-in.
           find test/.tmp -name '*.deb' -print0 | xargs -t -0 -I {} \
-            sh -c "dpkg --fsys-tarfile {} | tar -C test/.tmp --wildcards --extract '*vmlinuz*' --file -"
+            sh -c "dpkg --fsys-tarfile {} | tar -C test/.tmp \
+              --wildcards --extract '**/boot/*' '**/modules/*' --file -"
 
       - name: Run local integration tests
         if: runner.os == 'Linux'
         run: cargo xtask integration-test local
 
       - name: Run virtualized integration tests
+        if: runner.os == 'Linux'
         run: |
           set -euxo pipefail
-          find test/.tmp -name 'vmlinuz-*' -print0 | xargs -t -0 \
-            cargo xtask integration-test vm --cache-dir test/.tmp --github-api-token ${{ secrets.GITHUB_TOKEN }}
+          ARGS=$(./.github/scripts/find_kernels.py)
+          cargo xtask integration-test vm --cache-dir test/.tmp \
+            --github-api-token ${{ secrets.GITHUB_TOKEN }} \
+            ${ARGS}
+
+      - name: Run virtualized integration tests
+        if: runner.os == 'macOS'
+        env:
+          # This sets the linker to the one installed by FiloSottile/musl-cross.
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: x86_64-linux-musl-gcc
+        run: |
+          set -euxo pipefail
+          ARGS=$(./.github/scripts/find_kernels.py)
+          cargo xtask integration-test vm --cache-dir test/.tmp \
+            --github-api-token ${{ secrets.GITHUB_TOKEN }} \
+            ${ARGS}
 
   # Provides a single status check for the entire build workflow.
   # This is used for merge automation, like Mergify, since GH actions
