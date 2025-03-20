@@ -2,9 +2,11 @@
 #![no_main]
 
 use aya_ebpf::{
-    bindings::xdp_action,
-    macros::{kprobe, kretprobe, tracepoint, uprobe, uretprobe, xdp},
-    programs::{ProbeContext, RetProbeContext, TracePointContext, XdpContext},
+    bindings::{bpf_ret_code, xdp_action},
+    macros::{flow_dissector, kprobe, kretprobe, tracepoint, uprobe, uretprobe, xdp},
+    programs::{
+        FlowDissectorContext, ProbeContext, RetProbeContext, TracePointContext, XdpContext,
+    },
 };
 
 #[xdp]
@@ -42,6 +44,13 @@ pub fn test_uprobe(_ctx: ProbeContext) -> u32 {
 #[uretprobe]
 pub fn test_uretprobe(_ctx: RetProbeContext) -> u32 {
     0
+}
+
+#[flow_dissector]
+pub fn test_flow(_ctx: FlowDissectorContext) -> u32 {
+    // TODO: write an actual flow dissector. See tools/testing/selftests/bpf/progs/bpf_flow.c in the
+    // Linux kernel for inspiration.
+    bpf_ret_code::BPF_FLOW_DISSECTOR_CONTINUE
 }
 
 #[cfg(not(test))]
