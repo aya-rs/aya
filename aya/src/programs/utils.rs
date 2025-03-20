@@ -2,7 +2,7 @@
 use std::{
     ffi::CStr,
     fs::File,
-    io::{self, BufRead, BufReader},
+    io::{self, BufRead as _, BufReader},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd},
     path::Path,
     sync::LazyLock,

@@ -5,7 +5,7 @@ use aya::{
     maps::{Array, CpuMap, XskMap},
     programs::{Xdp, XdpFlags},
 };
-use object::{Object, ObjectSection, ObjectSymbol, SymbolSection};
+use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use test_log::test;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 

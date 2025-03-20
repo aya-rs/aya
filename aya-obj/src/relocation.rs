@@ -1,6 +1,6 @@
 //! Program relocation handling.
 
-use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
+use alloc::{borrow::ToOwned as _, collections::BTreeMap, string::String};
 use core::mem;
 
 use log::debug;
@@ -502,7 +502,7 @@ fn insn_is_call(ins: &bpf_insn) -> bool {
 
 #[cfg(test)]
 mod test {
-    use alloc::{string::ToString, vec, vec::Vec};
+    use alloc::{string::ToString as _, vec, vec::Vec};
 
     use super::*;
     use crate::maps::{BtfMap, LegacyMap};

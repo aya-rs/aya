@@ -2,7 +2,7 @@ use std::{
     ffi::{OsStr, OsString},
     fmt::Write as _,
     fs::{self, OpenOptions},
-    io::{self, Write},
+    io::{self, Write as _},
     os::fd::AsFd as _,
     path::{Path, PathBuf},
     process,

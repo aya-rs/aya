@@ -3,7 +3,7 @@ use core::{borrow::Borrow, cell::UnsafeCell, marker::PhantomData, mem};
 use aya_ebpf_cty::c_void;
 
 use crate::{
-    EbpfContext,
+    EbpfContext as _,
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKHASH, bpf_sock_ops},
     helpers::{
         bpf_msg_redirect_hash, bpf_sk_assign, bpf_sk_redirect_hash, bpf_sk_release,

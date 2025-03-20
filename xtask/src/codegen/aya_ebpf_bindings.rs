@@ -8,7 +8,7 @@ use std::{
 use anyhow::{Context as _, Result};
 use aya_tool::bindgen;
 use proc_macro2::TokenStream;
-use quote::ToTokens;
+use quote::ToTokens as _;
 use syn::{Item, parse_str};
 
 use crate::{

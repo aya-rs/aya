@@ -736,7 +736,7 @@ fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
 mod test {
     use std::net::IpAddr;
 
-    use aya_log_common::{WriteToBuf, write_record_header};
+    use aya_log_common::{WriteToBuf as _, write_record_header};
     use log::{Level, logger};
 
     use super::*;

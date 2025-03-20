@@ -3,7 +3,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     num::NonZeroU32,
-    os::fd::{AsFd, AsRawFd},
+    os::fd::{AsFd as _, AsRawFd as _},
 };
 
 use aya_obj::generated::bpf_cpumap_val;

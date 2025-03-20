@@ -107,6 +107,9 @@ which = { version = "7.0.0", default-features = false }
 xdpilone = { version = "1.0.5", default-features = false }
 xz2 = { version = "0.1.7", default-features = false }
 
+[workspace.lints.clippy]
+unused_trait_names = "warn"
+
 [workspace.lints.rust]
 unused-extern-crates = "warn"
 

@@ -12,7 +12,7 @@ use std::{
 
 use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE};
 use libc::pid_t;
-use object::{Object, ObjectSection, ObjectSymbol, Symbol};
+use object::{Object as _, ObjectSection as _, ObjectSymbol as _, Symbol};
 use thiserror::Error;
 
 use crate::{

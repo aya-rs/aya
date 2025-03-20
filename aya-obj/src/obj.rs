@@ -1,10 +1,10 @@
 //! Object file loading, parsing, and relocation.
 
 use alloc::{
-    borrow::ToOwned,
+    borrow::ToOwned as _,
     collections::BTreeMap,
     ffi::CString,
-    string::{String, ToString},
+    string::{String, ToString as _},
     vec,
     vec::Vec,
 };
@@ -12,9 +12,9 @@ use core::{ffi::CStr, mem, ptr, slice::from_raw_parts_mut, str::FromStr};
 
 use log::debug;
 use object::{
-    Endianness, ObjectSymbol, ObjectSymbolTable, RelocationTarget, SectionIndex, SectionKind,
-    SymbolKind,
-    read::{Object as ElfObject, ObjectSection, Section as ObjSection},
+    Endianness, ObjectSymbol as _, ObjectSymbolTable as _, RelocationTarget, SectionIndex,
+    SectionKind, SymbolKind,
+    read::{Object as _, ObjectSection as _, Section as ObjSection},
 };
 
 use crate::{

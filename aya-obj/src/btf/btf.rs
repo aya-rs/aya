@@ -7,7 +7,7 @@ use alloc::{
 };
 use core::{ffi::CStr, mem, ptr};
 
-use bytes::BufMut;
+use bytes::BufMut as _;
 use log::debug;
 use object::{Endianness, SectionIndex};
 
@@ -308,7 +308,7 @@ impl Btf {
         path: P,
         endianness: Endianness,
     ) -> Result<Btf, BtfError> {
-        use std::{borrow::ToOwned, fs};
+        use std::{borrow::ToOwned as _, fs};
         let path = path.as_ref();
         Btf::parse(
             &fs::read(path).map_err(|error| BtfError::FileError {

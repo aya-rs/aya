@@ -1,4 +1,4 @@
-use std::io::BufRead;
+use std::io::BufRead as _;
 
 use aya::{Btf, Ebpf, programs::Iter};
 use test_log::test;
