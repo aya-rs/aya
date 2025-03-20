@@ -2,7 +2,7 @@ use alloc::{
     borrow::{Cow, ToOwned as _},
     collections::BTreeMap,
     format,
-    string::{String, ToString},
+    string::{String, ToString as _},
     vec,
     vec::Vec,
 };

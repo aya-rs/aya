@@ -1,7 +1,7 @@
 //! Socket filter programs.
 use std::{
     io, mem,
-    os::fd::{AsFd, AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd as _, RawFd},
 };
 
 use aya_obj::generated::{

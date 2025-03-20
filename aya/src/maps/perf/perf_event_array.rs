@@ -3,7 +3,7 @@
 //! [`perf`]: https://perf.wiki.kernel.org/index.php/Main_Page.
 use std::{
     borrow::{Borrow, BorrowMut},
-    ops::Deref,
+    ops::Deref as _,
     os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
     path::Path,
     sync::Arc,

@@ -1,4 +1,4 @@
-use object::{Object, ObjectSymbol};
+use object::{Object as _, ObjectSymbol as _};
 use test_log::test;
 
 #[test]

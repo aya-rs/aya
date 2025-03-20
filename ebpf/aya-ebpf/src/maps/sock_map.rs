@@ -1,7 +1,7 @@
 use core::{cell::UnsafeCell, mem};
 
 use crate::{
-    EbpfContext,
+    EbpfContext as _,
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_SOCKMAP, bpf_sock_ops},
     helpers::{
         bpf_msg_redirect_map, bpf_sk_assign, bpf_sk_redirect_map, bpf_sk_release,

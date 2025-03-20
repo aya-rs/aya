@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use quote::{TokenStreamExt, quote};
+use quote::{TokenStreamExt as _, quote};
 use syn::{
     AngleBracketedGenericArguments, BareFnArg, ForeignItem, ForeignItemStatic, GenericArgument,
     Ident, Item, Path, PathArguments, ReturnType, Token, Type, TypeBareFn, TypePath,

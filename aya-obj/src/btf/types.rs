@@ -1,6 +1,6 @@
 #![expect(missing_docs)]
 
-use alloc::{string::ToString, vec, vec::Vec};
+use alloc::{string::ToString as _, vec, vec::Vec};
 use core::{fmt::Display, mem, ptr};
 
 use object::Endianness;

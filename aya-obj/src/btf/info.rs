@@ -1,6 +1,6 @@
 use alloc::{string::String, vec, vec::Vec};
 
-use bytes::BufMut;
+use bytes::BufMut as _;
 use object::Endianness;
 
 use crate::{

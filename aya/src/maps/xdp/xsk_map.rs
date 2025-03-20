@@ -2,7 +2,7 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
-    os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
+    os::fd::{AsFd as _, AsRawFd, BorrowedFd, RawFd},
 };
 
 use crate::{

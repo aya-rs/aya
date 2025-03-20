@@ -1,6 +1,6 @@
 use std::{
     fs::{self, File},
-    io::{self, Write},
+    io::{self, Write as _},
     path::{Path, PathBuf},
     process::Command,
     str,
