@@ -8,7 +8,7 @@ use aya_obj::generated::{
 
 use crate::{
     programs::{
-        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
         define_link_wrapper, id_as_key, load_program,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
@@ -65,6 +65,9 @@ pub struct FlowDissector {
 }
 
 impl FlowDissector {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::FlowDissector;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_FLOW_DISSECTOR);

@@ -10,7 +10,8 @@ use thiserror::Error;
 
 use crate::{
     programs::{
-        FdLink, LinkError, ProgramData, ProgramError, define_link_wrapper, load_program,
+        FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
         utils::find_tracefs_path,
     },
@@ -59,6 +60,9 @@ pub struct TracePoint {
 }
 
 impl TracePoint {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::TracePoint;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_TRACEPOINT, &mut self.data)

@@ -20,8 +20,8 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, Link, LinkError, ProgramData, ProgramError, define_link_wrapper, id_as_key,
-        load_program,
+        FdLink, Link, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        id_as_key, load_program,
     },
     sys::{
         LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_get_info_by_fd,
@@ -84,6 +84,9 @@ pub struct Xdp {
 }
 
 impl Xdp {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::Xdp;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(self.attach_type.into());
