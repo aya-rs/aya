@@ -182,7 +182,7 @@ fn main() -> Result<()> {
             }
         }
 
-        aya_build::build_ebpf([integration_ebpf_package])?;
+        aya_build::build_ebpf([integration_ebpf_package], aya_build::Toolchain::default())?;
     } else {
         for (src, build_btf) in C_BPF {
             let dst = out_dir.join(src).with_extension("o");
