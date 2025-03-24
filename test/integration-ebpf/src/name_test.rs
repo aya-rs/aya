@@ -15,7 +15,7 @@ unsafe fn try_pass(_ctx: XdpContext) -> Result<u32, u32> {
     Ok(xdp_action::XDP_PASS)
 }
 
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

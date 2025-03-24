@@ -36,7 +36,7 @@ pub fn simple_prog(_ctx: SkBuffContext) -> i64 {
     0
 }
 
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

@@ -53,7 +53,7 @@ pub fn test_flow(_ctx: FlowDissectorContext) -> u32 {
     bpf_ret_code::BPF_FLOW_DISSECTOR_CONTINUE
 }
 
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

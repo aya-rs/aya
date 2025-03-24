@@ -19,7 +19,7 @@ probe!(xdp_devmap, (map = "devmap"));
 probe!(xdp_frags_cpumap, (frags, map = "cpumap"));
 probe!(xdp_frags_devmap, (frags, map = "devmap"));
 
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

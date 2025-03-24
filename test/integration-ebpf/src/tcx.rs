@@ -8,7 +8,7 @@ pub fn tcx_next(_ctx: TcContext) -> i32 {
     TCX_NEXT
 }
 
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

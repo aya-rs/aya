@@ -82,7 +82,7 @@ pub fn test_log(ctx: ProbeContext) {
     }
 }
 
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

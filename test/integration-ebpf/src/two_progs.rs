@@ -14,7 +14,7 @@ pub fn test_tracepoint_two(_ctx: TracePointContext) -> u32 {
     0
 }
 
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

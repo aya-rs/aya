@@ -72,7 +72,7 @@ pub fn test_bpf_probe_read_kernel_str_bytes(ctx: ProbeContext) {
     );
 }
 
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

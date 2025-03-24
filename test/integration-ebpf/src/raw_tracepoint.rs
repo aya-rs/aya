@@ -26,7 +26,7 @@ pub fn sys_enter(ctx: RawTracePointContext) -> i32 {
     0
 }
 
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

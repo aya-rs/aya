@@ -18,7 +18,7 @@ pub fn uprobe_cookie(ctx: ProbeContext) {
     let _res = RING_BUF.output(&cookie_bytes, 0);
 }
 
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}
