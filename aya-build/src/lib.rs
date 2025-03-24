@@ -22,7 +22,7 @@ use cargo_metadata::{Artifact, CompilerMessage, Message, Package, Target};
 /// prevent their use for the time being.
 ///
 /// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
-pub fn build_ebpf(packages: impl IntoIterator<Item = Package>) -> Result<()> {
+pub fn build_ebpf(packages: impl IntoIterator<Item = Package>, toolchain: Toolchain) -> Result<()> {
     let out_dir = env::var_os("OUT_DIR").ok_or(anyhow!("OUT_DIR not set"))?;
     let out_dir = PathBuf::from(out_dir);
 
@@ -57,9 +57,11 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>) -> Result<()> {
         // changes to the binaries too, which gets us the rest of the way.
         println!("cargo:rerun-if-changed={dir}");
 
-        let mut cmd = Command::new("cargo");
+        let mut cmd = Command::new("rustup");
         cmd.args([
-            "+nightly",
+            "run",
+            toolchain.as_str(),
+            "cargo",
             "build",
             "--package",
             &name,
@@ -146,4 +148,25 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>) -> Result<()> {
         }
     }
     Ok(())
+}
+
+/// The toolchain to use for building eBPF programs.
+#[derive(Default)]
+pub enum Toolchain<'a> {
+    /// The latest nightly toolchain i.e. `nightly`.
+    #[default]
+    Nightly,
+    /// A custom toolchain e.g. `nightly-2021-01-01`.
+    ///
+    /// The toolchain specifier is passed to `rustup run` and therefore should _not_ have a preceding `+`.
+    Custom(&'a str),
+}
+
+impl<'a> Toolchain<'a> {
+    fn as_str(&self) -> &'a str {
+        match self {
+            Toolchain::Nightly => "nightly",
+            Toolchain::Custom(toolchain) => toolchain,
+        }
+    }
 }
