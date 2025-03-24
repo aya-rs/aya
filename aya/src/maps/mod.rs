@@ -438,28 +438,30 @@ macro_rules! impl_try_from_map {
     // rather than the repeated idents used later because the macro language does not allow one
     // repetition to be pasted inside another.
     ($ty_param:tt {
-        $($ty:ident $(from $($variant:ident)|+)?),+ $(,)?
+        $($(#[$meta:meta])* $ty:ident $(from $($variant:ident)|+)?),+ $(,)?
     }) => {
-        $(impl_try_from_map!(<$ty_param> $ty $(from $($variant)|+)?);)+
+        $(impl_try_from_map!($(#[$meta])* <$ty_param> $ty $(from $($variant)|+)?);)+
     };
     // Add the "from $variant" using $ty as the default if it is missing.
-    (<$ty_param:tt> $ty:ident) => {
-        impl_try_from_map!(<$ty_param> $ty from $ty);
+    ($(#[$meta:meta])* <$ty_param:tt> $ty:ident) => {
+        impl_try_from_map!($(#[$meta])* <$ty_param> $ty from $ty);
     };
     // Dispatch for each of the lifetimes.
     (
-        <($($ty_param:ident),*)> $ty:ident from $($variant:ident)|+
+        $(#[$meta:meta])* <($($ty_param:ident),*)> $ty:ident from $($variant:ident)|+
     ) => {
-        impl_try_from_map!(<'a> ($($ty_param),*) $ty from $($variant)|+);
-        impl_try_from_map!(<'a mut> ($($ty_param),*) $ty from $($variant)|+);
-        impl_try_from_map!(<> ($($ty_param),*) $ty from $($variant)|+);
+        impl_try_from_map!($(#[$meta])* <'a> ($($ty_param),*) $ty from $($variant)|+);
+        impl_try_from_map!($(#[$meta])* <'a mut> ($($ty_param),*) $ty from $($variant)|+);
+        impl_try_from_map!($(#[$meta])* <> ($($ty_param),*) $ty from $($variant)|+);
     };
     // An individual impl.
     (
+        $(#[$meta:meta])*
         <$($l:lifetime $($m:ident)?)?>
         ($($ty_param:ident),*)
         $ty:ident from $($variant:ident)|+
     ) => {
+        $(#[$meta])*
         impl<$($l,)? $($ty_param: Pod),*> TryFrom<$(&$l $($m)?)? Map>
             for $ty<$(&$l $($m)?)? MapData, $($ty_param),*>
         {
@@ -487,11 +489,8 @@ impl_try_from_map!(() {
     SockMap,
     StackTraceMap,
     XskMap,
-});
-
-#[cfg(any(feature = "async_tokio", feature = "async_std"))]
-#[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std"))))]
-impl_try_from_map!(() {
+    #[cfg(any(feature = "async_tokio", feature = "async_std"))]
+    #[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std"))))]
     AsyncPerfEventArray from PerfEventArray,
 });
 
