@@ -2528,6 +2528,7 @@ pub use aya::programs::CgroupSockoptAttachType
 pub mod aya::programs::cgroup_device
 pub struct aya::programs::cgroup_device::CgroupDevice
 impl aya::programs::cgroup_device::CgroupDevice
+pub const aya::programs::cgroup_device::CgroupDevice::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_device::CgroupDevice::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_device::CgroupDevice::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_device::CgroupDevice::query<T: std::os::fd::owned::AsFd>(target_fd: T) -> core::result::Result<alloc::vec::Vec<aya::programs::cgroup_device::CgroupDeviceLink>, aya::programs::ProgramError>
@@ -2538,6 +2539,8 @@ impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::cgroup_device::CgroupDevice
+pub fn aya::programs::cgroup_device::CgroupDevice::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
@@ -2691,6 +2694,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_skb::CgroupSkbAttachTyp
 pub fn aya::programs::cgroup_skb::CgroupSkbAttachType::from(t: T) -> T
 pub struct aya::programs::cgroup_skb::CgroupSkb
 impl aya::programs::cgroup_skb::CgroupSkb
+pub const aya::programs::cgroup_skb::CgroupSkb::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_skb::CgroupSkb::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, attach_type: aya::programs::cgroup_skb::CgroupSkbAttachType, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_skb::CgroupSkb::expected_attach_type(&self) -> &core::option::Option<aya::programs::cgroup_skb::CgroupSkbAttachType>
 pub fn aya::programs::cgroup_skb::CgroupSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, expected_attach_type: aya::programs::cgroup_skb::CgroupSkbAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
@@ -2700,6 +2704,8 @@ pub fn aya::programs::cgroup_skb::CgroupSkb::detach(&mut self, link_id: aya::pro
 pub fn aya::programs::cgroup_skb::CgroupSkb::take_link(&mut self, link_id: aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::cgroup_skb::CgroupSkb
+pub fn aya::programs::cgroup_skb::CgroupSkb::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, attach_type: core::option::Option<aya::programs::cgroup_skb::CgroupSkbAttachType>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_skb::CgroupSkb
@@ -2818,6 +2824,7 @@ pub mod aya::programs::cgroup_sock
 pub use aya::programs::cgroup_sock::CgroupSockAttachType
 pub struct aya::programs::cgroup_sock::CgroupSock
 impl aya::programs::cgroup_sock::CgroupSock
+pub const aya::programs::cgroup_sock::CgroupSock::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sock::CgroupSock::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock::CgroupSock::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock::CgroupSock::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -2944,6 +2951,7 @@ pub mod aya::programs::cgroup_sock_addr
 pub use aya::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 pub struct aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
+pub const aya::programs::cgroup_sock_addr::CgroupSockAddr::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -3070,6 +3078,7 @@ pub mod aya::programs::cgroup_sockopt
 pub use aya::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub struct aya::programs::cgroup_sockopt::CgroupSockopt
 impl aya::programs::cgroup_sockopt::CgroupSockopt
+pub const aya::programs::cgroup_sockopt::CgroupSockopt::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -3078,6 +3087,8 @@ pub fn aya::programs::cgroup_sockopt::CgroupSockopt::detach(&mut self, link_id: 
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::take_link(&mut self, link_id: aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::cgroup_sockopt::CgroupSockopt
+pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, attach_type: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
@@ -3195,6 +3206,7 @@ pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::from(t: T) -> T
 pub mod aya::programs::cgroup_sysctl
 pub struct aya::programs::cgroup_sysctl::CgroupSysctl
 impl aya::programs::cgroup_sysctl::CgroupSysctl
+pub const aya::programs::cgroup_sysctl::CgroupSysctl::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
@@ -3204,6 +3216,8 @@ impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::cgroup_sysctl::CgroupSysctl
+pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
@@ -3354,6 +3368,7 @@ impl<T> core::convert::From<T> for aya::programs::extension::ExtensionError
 pub fn aya::programs::extension::ExtensionError::from(t: T) -> T
 pub struct aya::programs::extension::Extension
 impl aya::programs::extension::Extension
+pub const aya::programs::extension::Extension::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::extension::Extension::attach(&mut self) -> core::result::Result<aya::programs::extension::ExtensionLinkId, aya::programs::ProgramError>
 pub fn aya::programs::extension::Extension::attach_to_program(&mut self, program: &aya::programs::ProgramFd, func_name: &str) -> core::result::Result<aya::programs::extension::ExtensionLinkId, aya::programs::ProgramError>
 pub fn aya::programs::extension::Extension::load(&mut self, program: aya::programs::ProgramFd, func_name: &str) -> core::result::Result<(), aya::programs::ProgramError>
@@ -3364,6 +3379,8 @@ impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::extension::Extension
+pub fn aya::programs::extension::Extension::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
@@ -3485,6 +3502,7 @@ pub fn aya::programs::extension::ExtensionLinkId::from(t: T) -> T
 pub mod aya::programs::fentry
 pub struct aya::programs::fentry::FEntry
 impl aya::programs::fentry::FEntry
+pub const aya::programs::fentry::FEntry::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::fentry::FEntry::attach(&mut self) -> core::result::Result<aya::programs::fentry::FEntryLinkId, aya::programs::ProgramError>
 pub fn aya::programs::fentry::FEntry::load(&mut self, fn_name: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
@@ -3494,6 +3512,8 @@ impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::fentry::FEntry
+pub unsafe fn aya::programs::fentry::FEntry::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
@@ -3615,6 +3635,7 @@ pub fn aya::programs::fentry::FEntryLinkId::from(t: T) -> T
 pub mod aya::programs::fexit
 pub struct aya::programs::fexit::FExit
 impl aya::programs::fexit::FExit
+pub const aya::programs::fexit::FExit::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::fexit::FExit::attach(&mut self) -> core::result::Result<aya::programs::fexit::FExitLinkId, aya::programs::ProgramError>
 pub fn aya::programs::fexit::FExit::load(&mut self, fn_name: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
@@ -3624,6 +3645,8 @@ impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::fexit::FExit
+pub unsafe fn aya::programs::fexit::FExit::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
@@ -3745,6 +3768,7 @@ pub fn aya::programs::fexit::FExitLinkId::from(t: T) -> T
 pub mod aya::programs::flow_dissector
 pub struct aya::programs::flow_dissector::FlowDissector
 impl aya::programs::flow_dissector::FlowDissector
+pub const aya::programs::flow_dissector::FlowDissector::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::flow_dissector::FlowDissector::attach<T: std::os::fd::owned::AsFd>(&mut self, netns: T) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, aya::programs::ProgramError>
 pub fn aya::programs::flow_dissector::FlowDissector::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::flow_dissector::FlowDissector
@@ -3871,6 +3895,7 @@ pub fn aya::programs::flow_dissector::FlowDissectorLinkId::from(t: T) -> T
 pub mod aya::programs::iter
 pub struct aya::programs::iter::Iter
 impl aya::programs::iter::Iter
+pub const aya::programs::iter::Iter::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::iter::Iter::attach(&mut self) -> core::result::Result<aya::programs::iter::IterLinkId, aya::programs::ProgramError>
 pub fn aya::programs::iter::Iter::load(&mut self, iter_type: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::iter::Iter
@@ -3880,6 +3905,8 @@ impl aya::programs::iter::Iter
 pub fn aya::programs::iter::Iter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::iter::Iter
 pub fn aya::programs::iter::Iter::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::iter::Iter
 pub fn aya::programs::iter::Iter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::iter::Iter
@@ -4068,6 +4095,7 @@ impl<T> core::convert::From<T> for aya::programs::kprobe::KProbeError
 pub fn aya::programs::kprobe::KProbeError::from(t: T) -> T
 pub struct aya::programs::kprobe::KProbe
 impl aya::programs::kprobe::KProbe
+pub const aya::programs::kprobe::KProbe::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::kprobe::KProbe::attach<T: core::convert::AsRef<std::ffi::os_str::OsStr>>(&mut self, fn_name: T, offset: u64) -> core::result::Result<aya::programs::kprobe::KProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::kprobe::KProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::kprobe::KProbe::kind(&self) -> aya::programs::ProbeKind
@@ -4077,6 +4105,8 @@ pub fn aya::programs::kprobe::KProbe::detach(&mut self, link_id: aya::programs::
 pub fn aya::programs::kprobe::KProbe::take_link(&mut self, link_id: aya::programs::kprobe::KProbeLinkId) -> core::result::Result<aya::programs::kprobe::KProbeLink, aya::programs::ProgramError>
 impl aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::kprobe::KProbe
+pub unsafe fn aya::programs::kprobe::KProbe::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::kprobe::KProbe
@@ -4769,6 +4799,7 @@ impl<T> core::convert::From<T> for aya::programs::lirc_mode2::LircLinkId
 pub fn aya::programs::lirc_mode2::LircLinkId::from(t: T) -> T
 pub struct aya::programs::lirc_mode2::LircMode2
 impl aya::programs::lirc_mode2::LircMode2
+pub const aya::programs::lirc_mode2::LircMode2::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::lirc_mode2::LircMode2::attach<T: std::os::fd::owned::AsFd>(&mut self, lircdev: T) -> core::result::Result<aya::programs::lirc_mode2::LircLinkId, aya::programs::ProgramError>
 pub fn aya::programs::lirc_mode2::LircMode2::detach(&mut self, link_id: aya::programs::lirc_mode2::LircLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::lirc_mode2::LircMode2::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -4778,6 +4809,8 @@ impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::lirc_mode2::LircMode2
+pub fn aya::programs::lirc_mode2::LircMode2::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::lirc_mode2::LircMode2
@@ -4820,6 +4853,7 @@ pub fn aya::programs::lirc_mode2::LircMode2::from(t: T) -> T
 pub mod aya::programs::lsm
 pub struct aya::programs::lsm::Lsm
 impl aya::programs::lsm::Lsm
+pub const aya::programs::lsm::Lsm::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::lsm::Lsm::attach(&mut self) -> core::result::Result<aya::programs::lsm::LsmLinkId, aya::programs::ProgramError>
 pub fn aya::programs::lsm::Lsm::load(&mut self, lsm_hook_name: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
@@ -4829,6 +4863,8 @@ impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::lsm::Lsm
+pub fn aya::programs::lsm::Lsm::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
@@ -5146,6 +5182,7 @@ impl<T> core::convert::From<T> for aya::programs::perf_event::SamplePolicy
 pub fn aya::programs::perf_event::SamplePolicy::from(t: T) -> T
 pub struct aya::programs::perf_event::PerfEvent
 impl aya::programs::perf_event::PerfEvent
+pub const aya::programs::perf_event::PerfEvent::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::perf_event::PerfEvent::attach(&mut self, perf_type: aya::programs::perf_event::PerfTypeId, config: u64, scope: aya::programs::perf_event::PerfEventScope, sample_policy: aya::programs::perf_event::SamplePolicy, inherit: bool) -> core::result::Result<aya::programs::perf_event::PerfEventLinkId, aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEvent::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
@@ -5155,6 +5192,8 @@ impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::perf_event::PerfEvent
+pub fn aya::programs::perf_event::PerfEvent::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
@@ -5278,6 +5317,7 @@ pub fn aya::programs::perf_event::PerfEventLinkId::from(t: T) -> T
 pub mod aya::programs::raw_trace_point
 pub struct aya::programs::raw_trace_point::RawTracePoint
 impl aya::programs::raw_trace_point::RawTracePoint
+pub const aya::programs::raw_trace_point::RawTracePoint::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::raw_trace_point::RawTracePoint::attach(&mut self, tp_name: &str) -> core::result::Result<aya::programs::raw_trace_point::RawTracePointLinkId, aya::programs::ProgramError>
 pub fn aya::programs::raw_trace_point::RawTracePoint::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
@@ -5287,6 +5327,8 @@ impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
@@ -5408,6 +5450,7 @@ pub fn aya::programs::raw_trace_point::RawTracePointLinkId::from(t: T) -> T
 pub mod aya::programs::sk_lookup
 pub struct aya::programs::sk_lookup::SkLookup
 impl aya::programs::sk_lookup::SkLookup
+pub const aya::programs::sk_lookup::SkLookup::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::sk_lookup::SkLookup::attach<T: std::os::fd::owned::AsFd>(&mut self, netns: T) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sk_lookup::SkLookup::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
@@ -5417,6 +5460,8 @@ impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
@@ -5538,6 +5583,7 @@ pub fn aya::programs::sk_lookup::SkLookupLinkId::from(t: T) -> T
 pub mod aya::programs::sk_msg
 pub struct aya::programs::sk_msg::SkMsg
 impl aya::programs::sk_msg::SkMsg
+pub const aya::programs::sk_msg::SkMsg::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::sk_msg::SkMsg::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<aya::programs::sk_msg::SkMsgLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sk_msg::SkMsg::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
@@ -5547,6 +5593,8 @@ impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
@@ -5704,6 +5752,7 @@ impl<T> core::convert::From<T> for aya::programs::sk_skb::SkSkbKind
 pub fn aya::programs::sk_skb::SkSkbKind::from(t: T) -> T
 pub struct aya::programs::sk_skb::SkSkb
 impl aya::programs::sk_skb::SkSkb
+pub const aya::programs::sk_skb::SkSkb::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::sk_skb::SkSkb::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<aya::programs::sk_skb::SkSkbLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sk_skb::SkSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::sk_skb::SkSkbKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::sk_skb::SkSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -5712,6 +5761,8 @@ pub fn aya::programs::sk_skb::SkSkb::detach(&mut self, link_id: aya::programs::s
 pub fn aya::programs::sk_skb::SkSkb::take_link(&mut self, link_id: aya::programs::sk_skb::SkSkbLinkId) -> core::result::Result<aya::programs::sk_skb::SkSkbLink, aya::programs::ProgramError>
 impl aya::programs::sk_skb::SkSkb
 pub fn aya::programs::sk_skb::SkSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, kind: aya::programs::sk_skb::SkSkbKind) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sk_skb::SkSkb
 pub fn aya::programs::sk_skb::SkSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sk_skb::SkSkb
@@ -5833,6 +5884,7 @@ pub fn aya::programs::sk_skb::SkSkbLinkId::from(t: T) -> T
 pub mod aya::programs::sock_ops
 pub struct aya::programs::sock_ops::SockOps
 impl aya::programs::sock_ops::SockOps
+pub const aya::programs::sock_ops::SockOps::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::sock_ops::SockOps::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sock_ops::SockOps::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
@@ -5842,6 +5894,8 @@ impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
@@ -5994,6 +6048,7 @@ impl<T> core::convert::From<T> for aya::programs::socket_filter::SocketFilterErr
 pub fn aya::programs::socket_filter::SocketFilterError::from(t: T) -> T
 pub struct aya::programs::socket_filter::SocketFilter
 impl aya::programs::socket_filter::SocketFilter
+pub const aya::programs::socket_filter::SocketFilter::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::socket_filter::SocketFilter::attach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<aya::programs::socket_filter::SocketFilterLinkId, aya::programs::ProgramError>
 pub fn aya::programs::socket_filter::SocketFilter::detach(&mut self, link_id: aya::programs::socket_filter::SocketFilterLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::socket_filter::SocketFilter::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -6269,6 +6324,7 @@ impl<T> core::convert::From<T> for aya::programs::tc::NlOptions
 pub fn aya::programs::tc::NlOptions::from(t: T) -> T
 pub struct aya::programs::tc::SchedClassifier
 impl aya::programs::tc::SchedClassifier
+pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::tc::SchedClassifier::attach(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, link: aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType, options: aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
@@ -6280,6 +6336,8 @@ pub fn aya::programs::tc::SchedClassifier::detach(&mut self, link_id: aya::progr
 pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, link_id: aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<aya::programs::tc::SchedClassifierLink, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::tc::SchedClassifier
+pub fn aya::programs::tc::SchedClassifier::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
@@ -6417,6 +6475,7 @@ pub fn aya::programs::tc::qdisc_detach_program(if_name: &str, attach_type: aya::
 pub mod aya::programs::tp_btf
 pub struct aya::programs::tp_btf::BtfTracePoint
 impl aya::programs::tp_btf::BtfTracePoint
+pub const aya::programs::tp_btf::BtfTracePoint::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::tp_btf::BtfTracePoint::attach(&mut self) -> core::result::Result<aya::programs::tp_btf::BtfTracePointLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tp_btf::BtfTracePoint::load(&mut self, tracepoint: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
@@ -6426,6 +6485,8 @@ impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::tp_btf::BtfTracePoint
+pub unsafe fn aya::programs::tp_btf::BtfTracePoint::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
@@ -6583,6 +6644,7 @@ impl<T> core::convert::From<T> for aya::programs::trace_point::TracePointError
 pub fn aya::programs::trace_point::TracePointError::from(t: T) -> T
 pub struct aya::programs::trace_point::TracePoint
 impl aya::programs::trace_point::TracePoint
+pub const aya::programs::trace_point::TracePoint::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::trace_point::TracePoint::attach(&mut self, category: &str, name: &str) -> core::result::Result<aya::programs::trace_point::TracePointLinkId, aya::programs::ProgramError>
 pub fn aya::programs::trace_point::TracePoint::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::trace_point::TracePoint
@@ -6592,6 +6654,8 @@ impl aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::trace_point::TracePoint
+pub fn aya::programs::trace_point::TracePoint::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::trace_point::TracePoint
@@ -6827,6 +6891,7 @@ impl<T> core::convert::From<T> for aya::programs::uprobe::UProbeError
 pub fn aya::programs::uprobe::UProbeError::from(t: T) -> T
 pub struct aya::programs::uprobe::UProbe
 impl aya::programs::uprobe::UProbe
+pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<libc::unix::pid_t>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
@@ -6836,6 +6901,8 @@ pub fn aya::programs::uprobe::UProbe::detach(&mut self, link_id: aya::programs::
 pub fn aya::programs::uprobe::UProbe::take_link(&mut self, link_id: aya::programs::uprobe::UProbeLinkId) -> core::result::Result<aya::programs::uprobe::UProbeLink, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::uprobe::UProbe
+pub unsafe fn aya::programs::uprobe::UProbe::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
@@ -6993,6 +7060,7 @@ impl<T> core::convert::From<T> for aya::programs::xdp::XdpError
 pub fn aya::programs::xdp::XdpError::from(t: T) -> T
 pub struct aya::programs::xdp::Xdp
 impl aya::programs::xdp::Xdp
+pub const aya::programs::xdp::Xdp::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::xdp::Xdp::attach(&mut self, interface: &str, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, if_index: u32, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, link: aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
@@ -7003,6 +7071,8 @@ pub fn aya::programs::xdp::Xdp::detach(&mut self, link_id: aya::programs::xdp::X
 pub fn aya::programs::xdp::Xdp::take_link(&mut self, link_id: aya::programs::xdp::XdpLinkId) -> core::result::Result<aya::programs::xdp::XdpLink, aya::programs::ProgramError>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::xdp::Xdp
+pub fn aya::programs::xdp::Xdp::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, attach_type: aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::xdp::Xdp
@@ -8180,6 +8250,7 @@ impl<T> core::convert::From<T> for aya::programs::xdp::XdpError
 pub fn aya::programs::xdp::XdpError::from(t: T) -> T
 pub struct aya::programs::BtfTracePoint
 impl aya::programs::tp_btf::BtfTracePoint
+pub const aya::programs::tp_btf::BtfTracePoint::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::tp_btf::BtfTracePoint::attach(&mut self) -> core::result::Result<aya::programs::tp_btf::BtfTracePointLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tp_btf::BtfTracePoint::load(&mut self, tracepoint: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
@@ -8189,6 +8260,8 @@ impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::tp_btf::BtfTracePoint
+pub unsafe fn aya::programs::tp_btf::BtfTracePoint::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::tp_btf::BtfTracePoint
@@ -8230,6 +8303,7 @@ impl<T> core::convert::From<T> for aya::programs::tp_btf::BtfTracePoint
 pub fn aya::programs::tp_btf::BtfTracePoint::from(t: T) -> T
 pub struct aya::programs::CgroupDevice
 impl aya::programs::cgroup_device::CgroupDevice
+pub const aya::programs::cgroup_device::CgroupDevice::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_device::CgroupDevice::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_device::CgroupDevice::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_device::CgroupDevice::query<T: std::os::fd::owned::AsFd>(target_fd: T) -> core::result::Result<alloc::vec::Vec<aya::programs::cgroup_device::CgroupDeviceLink>, aya::programs::ProgramError>
@@ -8240,6 +8314,8 @@ impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::cgroup_device::CgroupDevice
+pub fn aya::programs::cgroup_device::CgroupDevice::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
@@ -8281,6 +8357,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::from(t: T) -> T
 pub struct aya::programs::CgroupSkb
 impl aya::programs::cgroup_skb::CgroupSkb
+pub const aya::programs::cgroup_skb::CgroupSkb::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_skb::CgroupSkb::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, attach_type: aya::programs::cgroup_skb::CgroupSkbAttachType, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_skb::CgroupSkb::expected_attach_type(&self) -> &core::option::Option<aya::programs::cgroup_skb::CgroupSkbAttachType>
 pub fn aya::programs::cgroup_skb::CgroupSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, expected_attach_type: aya::programs::cgroup_skb::CgroupSkbAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
@@ -8290,6 +8367,8 @@ pub fn aya::programs::cgroup_skb::CgroupSkb::detach(&mut self, link_id: aya::pro
 pub fn aya::programs::cgroup_skb::CgroupSkb::take_link(&mut self, link_id: aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::cgroup_skb::CgroupSkb
+pub fn aya::programs::cgroup_skb::CgroupSkb::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, attach_type: core::option::Option<aya::programs::cgroup_skb::CgroupSkbAttachType>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_skb::CgroupSkb
@@ -8331,6 +8410,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::from(t: T) -> T
 pub struct aya::programs::CgroupSock
 impl aya::programs::cgroup_sock::CgroupSock
+pub const aya::programs::cgroup_sock::CgroupSock::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sock::CgroupSock::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock::CgroupSock::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock::CgroupSock::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -8380,6 +8460,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_sock::CgroupSock
 pub fn aya::programs::cgroup_sock::CgroupSock::from(t: T) -> T
 pub struct aya::programs::CgroupSockAddr
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
+pub const aya::programs::cgroup_sock_addr::CgroupSockAddr::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -8429,6 +8510,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_sock_addr::CgroupSockAd
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from(t: T) -> T
 pub struct aya::programs::CgroupSockopt
 impl aya::programs::cgroup_sockopt::CgroupSockopt
+pub const aya::programs::cgroup_sockopt::CgroupSockopt::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -8437,6 +8519,8 @@ pub fn aya::programs::cgroup_sockopt::CgroupSockopt::detach(&mut self, link_id: 
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::take_link(&mut self, link_id: aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::cgroup_sockopt::CgroupSockopt
+pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, attach_type: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
@@ -8478,6 +8562,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from(t: T) -> T
 pub struct aya::programs::CgroupSysctl
 impl aya::programs::cgroup_sysctl::CgroupSysctl
+pub const aya::programs::cgroup_sysctl::CgroupSysctl::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
@@ -8487,6 +8572,8 @@ impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::cgroup_sysctl::CgroupSysctl
+pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
@@ -8528,6 +8615,7 @@ impl<T> core::convert::From<T> for aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from(t: T) -> T
 pub struct aya::programs::Extension
 impl aya::programs::extension::Extension
+pub const aya::programs::extension::Extension::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::extension::Extension::attach(&mut self) -> core::result::Result<aya::programs::extension::ExtensionLinkId, aya::programs::ProgramError>
 pub fn aya::programs::extension::Extension::attach_to_program(&mut self, program: &aya::programs::ProgramFd, func_name: &str) -> core::result::Result<aya::programs::extension::ExtensionLinkId, aya::programs::ProgramError>
 pub fn aya::programs::extension::Extension::load(&mut self, program: aya::programs::ProgramFd, func_name: &str) -> core::result::Result<(), aya::programs::ProgramError>
@@ -8538,6 +8626,8 @@ impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::extension::Extension
+pub fn aya::programs::extension::Extension::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::extension::Extension
@@ -8579,6 +8669,7 @@ impl<T> core::convert::From<T> for aya::programs::extension::Extension
 pub fn aya::programs::extension::Extension::from(t: T) -> T
 pub struct aya::programs::FEntry
 impl aya::programs::fentry::FEntry
+pub const aya::programs::fentry::FEntry::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::fentry::FEntry::attach(&mut self) -> core::result::Result<aya::programs::fentry::FEntryLinkId, aya::programs::ProgramError>
 pub fn aya::programs::fentry::FEntry::load(&mut self, fn_name: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
@@ -8588,6 +8679,8 @@ impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::fentry::FEntry
+pub unsafe fn aya::programs::fentry::FEntry::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::fentry::FEntry
@@ -8629,6 +8722,7 @@ impl<T> core::convert::From<T> for aya::programs::fentry::FEntry
 pub fn aya::programs::fentry::FEntry::from(t: T) -> T
 pub struct aya::programs::FExit
 impl aya::programs::fexit::FExit
+pub const aya::programs::fexit::FExit::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::fexit::FExit::attach(&mut self) -> core::result::Result<aya::programs::fexit::FExitLinkId, aya::programs::ProgramError>
 pub fn aya::programs::fexit::FExit::load(&mut self, fn_name: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
@@ -8638,6 +8732,8 @@ impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::fexit::FExit
+pub unsafe fn aya::programs::fexit::FExit::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::fexit::FExit
@@ -8679,6 +8775,7 @@ impl<T> core::convert::From<T> for aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::from(t: T) -> T
 pub struct aya::programs::FlowDissector
 impl aya::programs::flow_dissector::FlowDissector
+pub const aya::programs::flow_dissector::FlowDissector::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::flow_dissector::FlowDissector::attach<T: std::os::fd::owned::AsFd>(&mut self, netns: T) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, aya::programs::ProgramError>
 pub fn aya::programs::flow_dissector::FlowDissector::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::flow_dissector::FlowDissector
@@ -8729,6 +8826,7 @@ impl<T> core::convert::From<T> for aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::from(t: T) -> T
 pub struct aya::programs::Iter
 impl aya::programs::iter::Iter
+pub const aya::programs::iter::Iter::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::iter::Iter::attach(&mut self) -> core::result::Result<aya::programs::iter::IterLinkId, aya::programs::ProgramError>
 pub fn aya::programs::iter::Iter::load(&mut self, iter_type: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::iter::Iter
@@ -8738,6 +8836,8 @@ impl aya::programs::iter::Iter
 pub fn aya::programs::iter::Iter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::iter::Iter
 pub fn aya::programs::iter::Iter::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::iter::Iter
+pub fn aya::programs::iter::Iter::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::iter::Iter
 pub fn aya::programs::iter::Iter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::iter::Iter
@@ -8779,6 +8879,7 @@ impl<T> core::convert::From<T> for aya::programs::iter::Iter
 pub fn aya::programs::iter::Iter::from(t: T) -> T
 pub struct aya::programs::KProbe
 impl aya::programs::kprobe::KProbe
+pub const aya::programs::kprobe::KProbe::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::kprobe::KProbe::attach<T: core::convert::AsRef<std::ffi::os_str::OsStr>>(&mut self, fn_name: T, offset: u64) -> core::result::Result<aya::programs::kprobe::KProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::kprobe::KProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::kprobe::KProbe::kind(&self) -> aya::programs::ProbeKind
@@ -8788,6 +8889,8 @@ pub fn aya::programs::kprobe::KProbe::detach(&mut self, link_id: aya::programs::
 pub fn aya::programs::kprobe::KProbe::take_link(&mut self, link_id: aya::programs::kprobe::KProbeLinkId) -> core::result::Result<aya::programs::kprobe::KProbeLink, aya::programs::ProgramError>
 impl aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::kprobe::KProbe
+pub unsafe fn aya::programs::kprobe::KProbe::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::kprobe::KProbe
 pub fn aya::programs::kprobe::KProbe::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::kprobe::KProbe
@@ -8865,6 +8968,7 @@ impl<T> core::convert::From<T> for aya::programs::links::LinkOrder
 pub fn aya::programs::links::LinkOrder::from(t: T) -> T
 pub struct aya::programs::LircMode2
 impl aya::programs::lirc_mode2::LircMode2
+pub const aya::programs::lirc_mode2::LircMode2::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::lirc_mode2::LircMode2::attach<T: std::os::fd::owned::AsFd>(&mut self, lircdev: T) -> core::result::Result<aya::programs::lirc_mode2::LircLinkId, aya::programs::ProgramError>
 pub fn aya::programs::lirc_mode2::LircMode2::detach(&mut self, link_id: aya::programs::lirc_mode2::LircLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::lirc_mode2::LircMode2::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -8874,6 +8978,8 @@ impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::lirc_mode2::LircMode2
+pub fn aya::programs::lirc_mode2::LircMode2::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::lirc_mode2::LircMode2
@@ -8915,6 +9021,7 @@ impl<T> core::convert::From<T> for aya::programs::lirc_mode2::LircMode2
 pub fn aya::programs::lirc_mode2::LircMode2::from(t: T) -> T
 pub struct aya::programs::Lsm
 impl aya::programs::lsm::Lsm
+pub const aya::programs::lsm::Lsm::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::lsm::Lsm::attach(&mut self) -> core::result::Result<aya::programs::lsm::LsmLinkId, aya::programs::ProgramError>
 pub fn aya::programs::lsm::Lsm::load(&mut self, lsm_hook_name: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
@@ -8924,6 +9031,8 @@ impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::lsm::Lsm
+pub fn aya::programs::lsm::Lsm::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::lsm::Lsm
@@ -8965,6 +9074,7 @@ impl<T> core::convert::From<T> for aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::from(t: T) -> T
 pub struct aya::programs::PerfEvent
 impl aya::programs::perf_event::PerfEvent
+pub const aya::programs::perf_event::PerfEvent::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::perf_event::PerfEvent::attach(&mut self, perf_type: aya::programs::perf_event::PerfTypeId, config: u64, scope: aya::programs::perf_event::PerfEventScope, sample_policy: aya::programs::perf_event::SamplePolicy, inherit: bool) -> core::result::Result<aya::programs::perf_event::PerfEventLinkId, aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEvent::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
@@ -8974,6 +9084,8 @@ impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::perf_event::PerfEvent
+pub fn aya::programs::perf_event::PerfEvent::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
@@ -9113,6 +9225,7 @@ impl<T> core::convert::From<T> for aya::programs::ProgramInfo
 pub fn aya::programs::ProgramInfo::from(t: T) -> T
 pub struct aya::programs::RawTracePoint
 impl aya::programs::raw_trace_point::RawTracePoint
+pub const aya::programs::raw_trace_point::RawTracePoint::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::raw_trace_point::RawTracePoint::attach(&mut self, tp_name: &str) -> core::result::Result<aya::programs::raw_trace_point::RawTracePointLinkId, aya::programs::ProgramError>
 pub fn aya::programs::raw_trace_point::RawTracePoint::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
@@ -9122,6 +9235,8 @@ impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::raw_trace_point::RawTracePoint
+pub fn aya::programs::raw_trace_point::RawTracePoint::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::raw_trace_point::RawTracePoint
@@ -9163,6 +9278,7 @@ impl<T> core::convert::From<T> for aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::from(t: T) -> T
 pub struct aya::programs::SchedClassifier
 impl aya::programs::tc::SchedClassifier
+pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::tc::SchedClassifier::attach(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, link: aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType, options: aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
@@ -9174,6 +9290,8 @@ pub fn aya::programs::tc::SchedClassifier::detach(&mut self, link_id: aya::progr
 pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, link_id: aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<aya::programs::tc::SchedClassifierLink, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::tc::SchedClassifier
+pub fn aya::programs::tc::SchedClassifier::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
@@ -9217,6 +9335,7 @@ impl<T> core::convert::From<T> for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::from(t: T) -> T
 pub struct aya::programs::SkLookup
 impl aya::programs::sk_lookup::SkLookup
+pub const aya::programs::sk_lookup::SkLookup::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::sk_lookup::SkLookup::attach<T: std::os::fd::owned::AsFd>(&mut self, netns: T) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sk_lookup::SkLookup::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
@@ -9226,6 +9345,8 @@ impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
@@ -9267,6 +9388,7 @@ impl<T> core::convert::From<T> for aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::from(t: T) -> T
 pub struct aya::programs::SkMsg
 impl aya::programs::sk_msg::SkMsg
+pub const aya::programs::sk_msg::SkMsg::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::sk_msg::SkMsg::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<aya::programs::sk_msg::SkMsgLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sk_msg::SkMsg::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
@@ -9276,6 +9398,8 @@ impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_msg::SkMsg
+pub fn aya::programs::sk_msg::SkMsg::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sk_msg::SkMsg
@@ -9317,6 +9441,7 @@ impl<T> core::convert::From<T> for aya::programs::sk_msg::SkMsg
 pub fn aya::programs::sk_msg::SkMsg::from(t: T) -> T
 pub struct aya::programs::SkSkb
 impl aya::programs::sk_skb::SkSkb
+pub const aya::programs::sk_skb::SkSkb::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::sk_skb::SkSkb::attach(&mut self, map: &aya::maps::sock::SockMapFd) -> core::result::Result<aya::programs::sk_skb::SkSkbLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sk_skb::SkSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::sk_skb::SkSkbKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::sk_skb::SkSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -9325,6 +9450,8 @@ pub fn aya::programs::sk_skb::SkSkb::detach(&mut self, link_id: aya::programs::s
 pub fn aya::programs::sk_skb::SkSkb::take_link(&mut self, link_id: aya::programs::sk_skb::SkSkbLinkId) -> core::result::Result<aya::programs::sk_skb::SkSkbLink, aya::programs::ProgramError>
 impl aya::programs::sk_skb::SkSkb
 pub fn aya::programs::sk_skb::SkSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sk_skb::SkSkb
+pub fn aya::programs::sk_skb::SkSkb::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, kind: aya::programs::sk_skb::SkSkbKind) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sk_skb::SkSkb
 pub fn aya::programs::sk_skb::SkSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sk_skb::SkSkb
@@ -9366,6 +9493,7 @@ impl<T> core::convert::From<T> for aya::programs::sk_skb::SkSkb
 pub fn aya::programs::sk_skb::SkSkb::from(t: T) -> T
 pub struct aya::programs::SockOps
 impl aya::programs::sock_ops::SockOps
+pub const aya::programs::sock_ops::SockOps::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::sock_ops::SockOps::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T, mode: aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sock_ops::SockOps::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
@@ -9375,6 +9503,8 @@ impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
@@ -9416,6 +9546,7 @@ impl<T> core::convert::From<T> for aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::from(t: T) -> T
 pub struct aya::programs::SocketFilter
 impl aya::programs::socket_filter::SocketFilter
+pub const aya::programs::socket_filter::SocketFilter::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::socket_filter::SocketFilter::attach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<aya::programs::socket_filter::SocketFilterLinkId, aya::programs::ProgramError>
 pub fn aya::programs::socket_filter::SocketFilter::detach(&mut self, link_id: aya::programs::socket_filter::SocketFilterLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::socket_filter::SocketFilter::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -9465,6 +9596,7 @@ impl<T> core::convert::From<T> for aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::from(t: T) -> T
 pub struct aya::programs::TracePoint
 impl aya::programs::trace_point::TracePoint
+pub const aya::programs::trace_point::TracePoint::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::trace_point::TracePoint::attach(&mut self, category: &str, name: &str) -> core::result::Result<aya::programs::trace_point::TracePointLinkId, aya::programs::ProgramError>
 pub fn aya::programs::trace_point::TracePoint::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::trace_point::TracePoint
@@ -9474,6 +9606,8 @@ impl aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::trace_point::TracePoint
+pub fn aya::programs::trace_point::TracePoint::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::trace_point::TracePoint
@@ -9515,6 +9649,7 @@ impl<T> core::convert::From<T> for aya::programs::trace_point::TracePoint
 pub fn aya::programs::trace_point::TracePoint::from(t: T) -> T
 pub struct aya::programs::UProbe
 impl aya::programs::uprobe::UProbe
+pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<libc::unix::pid_t>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
@@ -9524,6 +9659,8 @@ pub fn aya::programs::uprobe::UProbe::detach(&mut self, link_id: aya::programs::
 pub fn aya::programs::uprobe::UProbe::take_link(&mut self, link_id: aya::programs::uprobe::UProbeLinkId) -> core::result::Result<aya::programs::uprobe::UProbeLink, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::uprobe::UProbe
+pub unsafe fn aya::programs::uprobe::UProbe::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
@@ -9565,6 +9702,7 @@ impl<T> core::convert::From<T> for aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::from(t: T) -> T
 pub struct aya::programs::Xdp
 impl aya::programs::xdp::Xdp
+pub const aya::programs::xdp::Xdp::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::xdp::Xdp::attach(&mut self, interface: &str, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, if_index: u32, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, link: aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
@@ -9575,6 +9713,8 @@ pub fn aya::programs::xdp::Xdp::detach(&mut self, link_id: aya::programs::xdp::X
 pub fn aya::programs::xdp::Xdp::take_link(&mut self, link_id: aya::programs::xdp::XdpLinkId) -> core::result::Result<aya::programs::xdp::XdpLink, aya::programs::ProgramError>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::xdp::Xdp
+pub fn aya::programs::xdp::Xdp::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, attach_type: aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::xdp::Xdp
