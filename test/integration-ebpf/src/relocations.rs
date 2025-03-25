@@ -1,5 +1,5 @@
-#![no_std]
-#![no_main]
+#![cfg_attr(target_arch = "bpf", no_std)]
+#![cfg_attr(target_arch = "bpf", no_main)]
 
 use core::hint;
 
@@ -43,4 +43,9 @@ fn set_result_backward(index: u32, value: u64) {
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}
+}
+
+#[cfg(not(target_arch = "bpf"))]
+fn main() {
+    panic!("This should only ever be called from its eBPF entrypoint")
 }

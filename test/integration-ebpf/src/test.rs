@@ -1,5 +1,5 @@
-#![no_std]
-#![no_main]
+#![cfg_attr(target_arch = "bpf", no_std)]
+#![cfg_attr(target_arch = "bpf", no_main)]
 
 use aya_ebpf::{
     bindings::{bpf_ret_code, xdp_action},
@@ -57,4 +57,9 @@ pub fn test_flow(_ctx: FlowDissectorContext) -> u32 {
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}
+}
+
+#[cfg(not(target_arch = "bpf"))]
+fn main() {
+    panic!("This should only ever be called from its eBPF entrypoint")
 }
