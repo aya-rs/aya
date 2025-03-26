@@ -136,6 +136,10 @@ pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
 #[macro_export]
 macro_rules! prelude {
     () => {
+        /// Defines our panic handler when compiling for eBPF.
+        ///
+        /// eBPF programs are not allowed to panic, meaning this handler won't actually ever be called.
+        /// Because we compile with `no_std`, we need to define one.
         #[cfg(target_arch = "bpf")]
         #[panic_handler]
         fn panic(_info: &core::panic::PanicInfo) -> ! {
