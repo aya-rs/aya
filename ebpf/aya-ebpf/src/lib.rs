@@ -143,7 +143,7 @@ macro_rules! panic_handler {
         /// Yet, as part of compiling for `no_std`, we need to define a panic handler.
         /// The eBPF verifier enforces that programs terminate and will thus reject unbounded loops.
         /// By using an endless loop within our panic handler, we can ensure that if this panic handler were somehow linked into the program, the eBPF verifier would reject it.
-        #[cfg(not(test))]
+        #[cfg(target_arch = "bpf")]
         #[panic_handler]
         fn panic(_info: &core::panic::PanicInfo) -> ! {
             loop {}
