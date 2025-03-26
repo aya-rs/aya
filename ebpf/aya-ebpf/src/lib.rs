@@ -144,7 +144,7 @@ macro_rules! prelude {
 
         #[cfg(not(target_arch = "bpf"))]
         fn main() {
-            panic!("This should only ever be called from its eBPF entrypoint")
+            panic!(r#"eBPF kernels are not designed to be executed in user-space. This main function is only a placeholder to allow the code to compile on the host system (i.e. on any system that is not `target_arch = "bpf"`). This works in tandem with the `no_main` attribute which is only applied when compiling for `target_arch = "bpf"`."#)
         }
     };
 }
