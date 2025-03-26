@@ -2,4 +2,4 @@
 
 set -eux
 
-cargo hack clippy "$@" --all-targets --feature-powerset --workspace -- --deny warnings
+cargo +nightly hack clippy "$@" --all-targets --feature-powerset --workspace -- --deny warnings
