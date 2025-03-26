@@ -72,8 +72,4 @@ pub fn test_bpf_probe_read_kernel_str_bytes(ctx: ProbeContext) {
     );
 }
 
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
+aya_ebpf::panic_handler!();

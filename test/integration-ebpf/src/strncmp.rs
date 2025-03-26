@@ -27,8 +27,4 @@ pub fn test_bpf_strncmp(ctx: ProbeContext) -> Result<(), c_long> {
     Ok(())
 }
 
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
+aya_ebpf::panic_handler!();

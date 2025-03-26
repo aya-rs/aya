@@ -26,8 +26,4 @@ pub fn sys_enter(ctx: RawTracePointContext) -> i32 {
     0
 }
 
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
+aya_ebpf::panic_handler!();

@@ -14,8 +14,4 @@ pub fn test_tracepoint_two(_ctx: TracePointContext) -> u32 {
     0
 }
 
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
+aya_ebpf::panic_handler!();
