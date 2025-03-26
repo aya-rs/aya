@@ -1,6 +1,6 @@
 #![cfg_attr(target_arch = "bpf", no_std)]
 #![cfg_attr(target_arch = "bpf", no_main)]
-aya_ebpf::prelude!();
+aya_ebpf::main_stub!();
 
 use aya_ebpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
 

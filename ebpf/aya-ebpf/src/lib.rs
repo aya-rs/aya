@@ -134,23 +134,25 @@ pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
 }
 
 #[macro_export]
-macro_rules! prelude {
+macro_rules! main_stub {
     () => {
-        /// Defines our panic handler when compiling for eBPF.
-        ///
-        /// eBPF programs are not allowed to panic, meaning this handler won't actually ever be called.
-        /// Because we compile with `no_std`, we need to define one.
-        #[cfg(target_arch = "bpf")]
-        #[panic_handler]
-        fn panic(_info: &core::panic::PanicInfo) -> ! {
-            loop {}
-        }
-
         #[cfg(not(target_arch = "bpf"))]
         fn main() {
             panic!(r#"eBPF kernels are not designed to be executed in user-space. This main function is only a placeholder to allow the code to compile on the host system (i.e. on any system that is not `target_arch = "bpf"`). This works in tandem with the `no_main` attribute which is only applied when compiling for `target_arch = "bpf"`."#)
         }
     };
+}
+
+/// Defines our panic handler when compiling for eBPF.
+///
+/// eBPF programs are not allowed to panic, meaning this handler won't actually ever be called.
+/// Because we compile with `no_std`, we need to define one.
+///
+/// Including the panic handler within `aya-ebpf` means every eBPF will automatically have this panic handler defined.
+#[cfg(target_arch = "bpf")]
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    loop {}
 }
 
 #[inline]
