@@ -10,7 +10,8 @@ use aya::{
 };
 use integration_common::strncmp::TestResult;
 
-#[test]
+#[cfg_attr(aya_integration_test, test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn bpf_strncmp() {
     let mut bpf = Ebpf::load(crate::STRNCMP).unwrap();
 

@@ -18,7 +18,6 @@ use aya::{
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
 use integration_common::ring_buf::Registers;
 use rand::Rng as _;
-use test_log::test;
 use tokio::{
     io::unix::AsyncFd,
     time::{Duration, sleep},
@@ -83,11 +82,12 @@ impl WithData {
     }
 }
 
-#[test_case::test_case(0; "write zero items")]
-#[test_case::test_case(1; "write one item")]
-#[test_case::test_case(RING_BUF_MAX_ENTRIES / 2; "write half the capacity items")]
-#[test_case::test_case(RING_BUF_MAX_ENTRIES - 1; "write one less than capacity items")]
-#[test_case::test_case(RING_BUF_MAX_ENTRIES * 8; "write more items than capacity")]
+#[cfg_attr(aya_integration_test, test_case::test_case(0; "write zero items"))]
+#[cfg_attr(aya_integration_test, test_case::test_case(1; "write one item"))]
+#[cfg_attr(aya_integration_test, test_case::test_case(RING_BUF_MAX_ENTRIES / 2; "write half the capacity items"))]
+#[cfg_attr(aya_integration_test, test_case::test_case(RING_BUF_MAX_ENTRIES - 1; "write one less than capacity items"))]
+#[cfg_attr(aya_integration_test, test_case::test_case(RING_BUF_MAX_ENTRIES * 8; "write more items than capacity"))]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn ring_buf(n: usize) {
     let WithData(
         RingBufTest {
@@ -151,7 +151,11 @@ pub extern "C" fn ring_buf_trigger_ebpf_program(arg: u64) {
 // to fill the ring_buf. We just ensure that the number of events we see is sane given
 // what the producer sees, and that the logic does not hang. This exercises interleaving
 // discards, successful commits, and drops due to the ring_buf being full.
-#[test(tokio::test(flavor = "multi_thread"))]
+#[cfg_attr(
+    aya_integration_test,
+    test_log::test(tokio::test(flavor = "multi_thread"))
+)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 async fn ring_buf_async_with_drops() {
     let WithData(
         RingBufTest {
@@ -258,7 +262,11 @@ async fn ring_buf_async_with_drops() {
     );
 }
 
-#[test(tokio::test(flavor = "multi_thread"))]
+#[cfg_attr(
+    aya_integration_test,
+    test_log::test(tokio::test(flavor = "multi_thread"))
+)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 async fn ring_buf_async_no_drop() {
     let WithData(
         RingBufTest {
@@ -326,7 +334,8 @@ async fn ring_buf_async_no_drop() {
 // This test reproduces a bug where the ring buffer would not be notified of new entries if the
 // state was not properly synchronized between the producer and consumer. This would result in the
 // consumer never being woken up and the test hanging.
-#[test]
+#[cfg_attr(aya_integration_test, test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn ring_buf_epoll_wakeup() {
     let RingBufTest {
         mut ring_buf,
@@ -360,7 +369,8 @@ fn ring_buf_epoll_wakeup() {
 }
 
 // This test is like the above test but uses tokio and AsyncFd instead of raw epoll.
-#[test(tokio::test)]
+#[cfg_attr(aya_integration_test, test_log::test(tokio::test))]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 async fn ring_buf_asyncfd_events() {
     let RingBufTest {
         ring_buf,

@@ -1,9 +1,9 @@
 use std::io::BufRead as _;
 
 use aya::{Btf, Ebpf, programs::Iter};
-use test_log::test;
 
-#[test]
+#[cfg_attr(aya_integration_test, test_log::test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn iter_task() {
     let mut ebpf = Ebpf::load(crate::ITER_TASK).unwrap();
     let btf = Btf::from_sys_fs().unwrap();

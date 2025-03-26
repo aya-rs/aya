@@ -6,7 +6,8 @@ fn get_event(bpf: &mut Ebpf) -> SysEnterEvent {
     map.get(&0, 0).unwrap()
 }
 
-#[test]
+#[cfg_attr(aya_integration_test, test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn raw_tracepoint() {
     let mut bpf = Ebpf::load(crate::RAW_TRACEPOINT).unwrap();
 

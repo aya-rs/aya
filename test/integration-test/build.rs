@@ -25,6 +25,7 @@ use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec};
 /// runtime because the stubs are inadequate for actually running the tests.
 fn main() -> Result<()> {
     println!("cargo:rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
+    println!("cargo::rustc-check-cfg=cfg(aya_integration_test)");
 
     // TODO(https://github.com/rust-lang/cargo/issues/4001): generalize this and move it to
     // aya-build if we can determine that we're in a check build.

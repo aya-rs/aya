@@ -1,28 +1,46 @@
 use aya::{Btf, EbpfLoader, Endianness, maps::Array, programs::UProbe, util::KernelVersion};
-use test_case::test_case;
 
-#[test_case("enum_signed_32", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7AAAAAAAi32 as u64)]
-#[test_case("enum_signed_32", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7BBBBBBBi32 as u64)]
-#[test_case("enum_signed_32_checked_variants", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7AAAAAAAi32 as u64)]
-#[test_case("enum_signed_32_checked_variants", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7BBBBBBBi32 as u64)]
-#[test_case("enum_signed_64", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xAAAAAAABBBBBBBBi64 as u64)]
-#[test_case("enum_signed_64", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xCCCCCCCDDDDDDDDi64 as u64)]
-#[test_case("enum_signed_64_checked_variants", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xAAAAAAABBBBBBBi64 as u64)]
-#[test_case("enum_signed_64_checked_variants", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xCCCCCCCDDDDDDDi64 as u64)]
-#[test_case("enum_unsigned_32", false, None, 0xAAAAAAAA)]
-#[test_case("enum_unsigned_32", true, None, 0xBBBBBBBB)]
-#[test_case("enum_unsigned_32_checked_variants", false, None, 0xAAAAAAAA)]
-#[test_case("enum_unsigned_32_checked_variants", true, None, 0xBBBBBBBB)]
-#[test_case("enum_unsigned_64", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xAAAAAAAABBBBBBBB)]
-#[test_case("enum_unsigned_64", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xCCCCCCCCDDDDDDDD)]
-#[test_case("enum_unsigned_64_checked_variants", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xAAAAAAAABBBBBBBB)]
-#[test_case("enum_unsigned_64_checked_variants", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xCCCCCCCCDDDDDDDD)]
-#[test_case("field", false, None, 2)]
-#[test_case("field", true, None, 1)]
-#[test_case("pointer", false, None, 42)]
-#[test_case("pointer", true, None, 21)]
-#[test_case("struct_flavors", false, None, 1)]
-#[test_case("struct_flavors", true, None, 2)]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_signed_32", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7AAAAAAAi32 as u64))]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_signed_32", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7BBBBBBBi32 as u64))]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_signed_32_checked_variants", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7AAAAAAAi32 as u64))]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_signed_32_checked_variants", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7BBBBBBBi32 as u64))]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_signed_64", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xAAAAAAABBBBBBBBi64 as u64))]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_signed_64", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xCCCCCCCDDDDDDDDi64 as u64))]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_signed_64_checked_variants", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xAAAAAAABBBBBBBi64 as u64))]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_signed_64_checked_variants", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xCCCCCCCDDDDDDDi64 as u64))]
+#[cfg_attr(
+    aya_integration_test,
+    test_case::test_case("enum_unsigned_32", false, None, 0xAAAAAAAA)
+)]
+#[cfg_attr(
+    aya_integration_test,
+    test_case::test_case("enum_unsigned_32", true, None, 0xBBBBBBBB)
+)]
+#[cfg_attr(
+    aya_integration_test,
+    test_case::test_case("enum_unsigned_32_checked_variants", false, None, 0xAAAAAAAA)
+)]
+#[cfg_attr(
+    aya_integration_test,
+    test_case::test_case("enum_unsigned_32_checked_variants", true, None, 0xBBBBBBBB)
+)]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_unsigned_64", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xAAAAAAAABBBBBBBB))]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_unsigned_64", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xCCCCCCCCDDDDDDDD))]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_unsigned_64_checked_variants", false, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xAAAAAAAABBBBBBBB))]
+#[cfg_attr(aya_integration_test, test_case::test_case("enum_unsigned_64_checked_variants", true, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xCCCCCCCCDDDDDDDD))]
+#[cfg_attr(aya_integration_test, test_case::test_case("field", false, None, 2))]
+#[cfg_attr(aya_integration_test, test_case::test_case("field", true, None, 1))]
+#[cfg_attr(aya_integration_test, test_case::test_case("pointer", false, None, 42))]
+#[cfg_attr(aya_integration_test, test_case::test_case("pointer", true, None, 21))]
+#[cfg_attr(
+    aya_integration_test,
+    test_case::test_case("struct_flavors", false, None, 1)
+)]
+#[cfg_attr(
+    aya_integration_test,
+    test_case::test_case("struct_flavors", true, None, 2)
+)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn relocation_tests(
     program: &str,
     with_relocations: bool,

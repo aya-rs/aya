@@ -1,7 +1,7 @@
 use aya::{EbpfLoader, maps::ring_buf::RingBuf, programs::UProbe};
-use test_log::test;
 
-#[test]
+#[cfg_attr(aya_integration_test, test_log::test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn test_uprobe_cookie() {
     const RING_BUF_BYTE_SIZE: u32 = 512; // arbitrary, but big enough
 

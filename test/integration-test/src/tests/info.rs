@@ -18,7 +18,8 @@ use libc::EINVAL;
 
 use crate::utils::{kernel_assert, kernel_assert_eq};
 
-#[test]
+#[cfg_attr(aya_integration_test, test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn test_loaded_programs() {
     // Load a program.
     // Since we are only testing the programs for their metadata, there is no need to "attach" them.
@@ -50,7 +51,8 @@ fn test_loaded_programs() {
     );
 }
 
-#[test]
+#[cfg_attr(aya_integration_test, test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn test_program_info() {
     // Kernels below v4.15 have been observed to have `bpf_jit_enable` disabled by default.
     let _guard = ensure_sysctl_enabled("/proc/sys/net/core/bpf_jit_enable");
@@ -108,7 +110,8 @@ fn test_program_info() {
     test_prog.fd().unwrap();
 }
 
-#[test]
+#[cfg_attr(aya_integration_test, test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn test_loaded_at() {
     let mut bpf: Ebpf = Ebpf::load(crate::SIMPLE_PROG).unwrap();
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
@@ -154,7 +157,8 @@ fn test_loaded_at() {
     }
 }
 
-#[test]
+#[cfg_attr(aya_integration_test, test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn test_prog_stats() {
     // Test depends on whether trace point exists.
     if !Path::new("/sys/kernel/debug/tracing/events/syscalls/sys_enter_bpf").exists() {
@@ -179,7 +183,8 @@ fn test_prog_stats() {
     kernel_assert!(test_prog.run_count() > 0, KernelVersion::new(5, 1, 0));
 }
 
-#[test]
+#[cfg_attr(aya_integration_test, test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn list_loaded_maps() {
     // Load a program with maps.
     let mut bpf: Ebpf = Ebpf::load(crate::MAP_TEST).unwrap();
@@ -229,7 +234,8 @@ fn list_loaded_maps() {
     );
 }
 
-#[test]
+#[cfg_attr(aya_integration_test, test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn test_map_info() {
     let mut bpf: Ebpf = Ebpf::load(crate::MAP_TEST).unwrap();
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();

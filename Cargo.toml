@@ -25,29 +25,6 @@ members = [
 
 resolver = "2"
 
-default-members = [
-    "aya",
-    "aya-build",
-    "aya-log",
-    "aya-log-common",
-    "aya-log-parser",
-    "aya-obj",
-    "aya-tool",
-    "test-distro",
-    "test/integration-common",
-    # test/integration-test is omitted; including it in this list causes `cargo test` to run its
-    # tests, and that doesn't work unless they've been built with `cargo xtask`.
-    "xtask",
-
-    "aya-ebpf-macros",
-    "aya-log-ebpf-macros",
-
-    "ebpf/aya-ebpf",
-    "ebpf/aya-ebpf-bindings",
-    "ebpf/aya-log-ebpf",
-    "test/integration-ebpf",
-]
-
 [workspace.package]
 authors = ["Aya Contributors"]
 edition = "2024"

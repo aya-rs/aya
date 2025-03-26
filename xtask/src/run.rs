@@ -155,13 +155,15 @@ pub fn run(opts: Options) -> Result<()> {
             .into_iter()
             .map(|profile| {
                 let binaries = build(target, |cmd| {
-                    cmd.env(AYA_BUILD_INTEGRATION_BPF, "true").args([
-                        "--package",
-                        "integration-test",
-                        "--tests",
-                        "--profile",
-                        profile,
-                    ])
+                    cmd.env(AYA_BUILD_INTEGRATION_BPF, "true")
+                        .env("RUSTFLAGS", "--cfg aya_integration_test")
+                        .args([
+                            "--package",
+                            "integration-test",
+                            "--tests",
+                            "--profile",
+                            profile,
+                        ])
                 })?;
                 anyhow::Ok((profile, binaries))
             })

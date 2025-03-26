@@ -3,11 +3,11 @@ use aya::{
     programs::{Extension, TracePoint, Xdp, XdpFlags, tc},
     util::KernelVersion,
 };
-use test_log::test;
 
 use crate::utils::NetNsGuard;
 
-#[test]
+#[cfg_attr(aya_integration_test, test_log::test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn modprobe() {
     // This very simple looking test is actually quite complex.
     // The call to tc::qdisc_add_clsact() causes the linux kernel to call into
@@ -20,7 +20,8 @@ fn modprobe() {
     tc::qdisc_add_clsact("lo").unwrap();
 }
 
-#[test]
+#[cfg_attr(aya_integration_test, test_log::test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn xdp() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 18, 0) {
@@ -38,7 +39,8 @@ fn xdp() {
     dispatcher.attach("lo", XdpFlags::default()).unwrap();
 }
 
-#[test]
+#[cfg_attr(aya_integration_test, test_log::test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn two_progs() {
     let mut bpf = Ebpf::load(crate::TWO_PROGS).unwrap();
 
@@ -60,7 +62,8 @@ fn two_progs() {
     prog_two.attach("sched", "sched_switch").unwrap();
 }
 
-#[test]
+#[cfg_attr(aya_integration_test, test_log::test)]
+#[cfg_attr(not(aya_integration_test), allow(dead_code))]
 fn extension() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 9, 0) {
