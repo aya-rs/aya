@@ -1,5 +1,6 @@
 #![cfg_attr(target_arch = "bpf", no_std)]
 #![cfg_attr(target_arch = "bpf", no_main)]
+aya_ebpf::prelude!();
 
 use core::hint;
 
@@ -37,15 +38,4 @@ fn set_result(index: u32, value: u64) {
 #[inline(never)]
 fn set_result_backward(index: u32, value: u64) {
     set_result(index, value);
-}
-
-#[cfg(target_arch = "bpf")]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
-
-#[cfg(not(target_arch = "bpf"))]
-fn main() {
-    panic!("This should only ever be called from its eBPF entrypoint")
 }

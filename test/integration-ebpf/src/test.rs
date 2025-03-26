@@ -1,5 +1,6 @@
 #![cfg_attr(target_arch = "bpf", no_std)]
 #![cfg_attr(target_arch = "bpf", no_main)]
+aya_ebpf::prelude!();
 
 use aya_ebpf::{
     bindings::{bpf_ret_code, xdp_action},
@@ -51,15 +52,4 @@ pub fn test_flow(_ctx: FlowDissectorContext) -> u32 {
     // TODO: write an actual flow dissector. See tools/testing/selftests/bpf/progs/bpf_flow.c in the
     // Linux kernel for inspiration.
     bpf_ret_code::BPF_FLOW_DISSECTOR_CONTINUE
-}
-
-#[cfg(target_arch = "bpf")]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
-
-#[cfg(not(target_arch = "bpf"))]
-fn main() {
-    panic!("This should only ever be called from its eBPF entrypoint")
 }

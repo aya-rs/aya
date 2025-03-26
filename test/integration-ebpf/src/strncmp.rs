@@ -1,5 +1,6 @@
 #![cfg_attr(target_arch = "bpf", no_std)]
 #![cfg_attr(target_arch = "bpf", no_main)]
+aya_ebpf::prelude!();
 
 use aya_ebpf::{
     cty::c_long,
@@ -25,15 +26,4 @@ pub fn test_bpf_strncmp(ctx: ProbeContext) -> Result<(), c_long> {
     *dst_res = bpf_strncmp(&b1, c"ff");
 
     Ok(())
-}
-
-#[cfg(target_arch = "bpf")]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
-
-#[cfg(not(target_arch = "bpf"))]
-fn main() {
-    panic!("This should only ever be called from its eBPF entrypoint")
 }

@@ -133,6 +133,22 @@ pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
     }
 }
 
+#[macro_export]
+macro_rules! prelude {
+    () => {
+        #[cfg(target_arch = "bpf")]
+        #[panic_handler]
+        fn panic(_info: &core::panic::PanicInfo) -> ! {
+            loop {}
+        }
+
+        #[cfg(not(target_arch = "bpf"))]
+        fn main() {
+            panic!("This should only ever be called from its eBPF entrypoint")
+        }
+    };
+}
+
 #[inline]
 fn insert<K, V>(
     def: *mut bindings::bpf_map_def,

@@ -2,6 +2,7 @@
 
 #![cfg_attr(target_arch = "bpf", no_std)]
 #![cfg_attr(target_arch = "bpf", no_main)]
+aya_ebpf::prelude!();
 
 use aya_ebpf::{macros::tracepoint, programs::TracePointContext};
 
@@ -12,15 +13,4 @@ pub fn test_tracepoint_one(_ctx: TracePointContext) -> u32 {
 #[tracepoint]
 pub fn test_tracepoint_two(_ctx: TracePointContext) -> u32 {
     0
-}
-
-#[cfg(target_arch = "bpf")]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
-
-#[cfg(not(target_arch = "bpf"))]
-fn main() {
-    panic!("This should only ever be called from its eBPF entrypoint")
 }

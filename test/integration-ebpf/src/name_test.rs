@@ -1,5 +1,6 @@
 #![cfg_attr(target_arch = "bpf", no_std)]
 #![cfg_attr(target_arch = "bpf", no_main)]
+aya_ebpf::prelude!();
 
 use aya_ebpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
 
@@ -13,15 +14,4 @@ pub fn ihaveaverylongname(ctx: XdpContext) -> u32 {
 
 unsafe fn try_pass(_ctx: XdpContext) -> Result<u32, u32> {
     Ok(xdp_action::XDP_PASS)
-}
-
-#[cfg(target_arch = "bpf")]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
-
-#[cfg(not(target_arch = "bpf"))]
-fn main() {
-    panic!("This should only ever be called from its eBPF entrypoint")
 }

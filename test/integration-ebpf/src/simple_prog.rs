@@ -3,6 +3,7 @@
 
 #![cfg_attr(target_arch = "bpf", no_std)]
 #![cfg_attr(target_arch = "bpf", no_main)]
+aya_ebpf::prelude!();
 
 use aya_ebpf::{macros::socket_filter, programs::SkBuffContext};
 
@@ -10,15 +11,4 @@ use aya_ebpf::{macros::socket_filter, programs::SkBuffContext};
 #[socket_filter]
 pub fn simple_prog(_ctx: SkBuffContext) -> i64 {
     0
-}
-
-#[cfg(target_arch = "bpf")]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
-
-#[cfg(not(target_arch = "bpf"))]
-fn main() {
-    panic!("This should only ever be called from its eBPF entrypoint")
 }
