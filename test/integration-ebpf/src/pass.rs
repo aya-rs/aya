@@ -1,5 +1,6 @@
-#![no_std]
-#![no_main]
+#![cfg_attr(target_arch = "bpf", no_std)]
+#![cfg_attr(target_arch = "bpf", no_main)]
+aya_ebpf::main_stub!();
 
 use aya_ebpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
 
@@ -17,8 +18,4 @@ unsafe fn try_pass(_ctx: XdpContext) -> Result<u32, u32> {
     Ok(xdp_action::XDP_PASS)
 }
 
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
+aya_ebpf::panic_handler!();

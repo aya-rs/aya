@@ -1,5 +1,6 @@
-#![no_std]
-#![no_main]
+#![cfg_attr(target_arch = "bpf", no_std)]
+#![cfg_attr(target_arch = "bpf", no_main)]
+aya_ebpf::main_stub!();
 
 use aya_ebpf::{
     EbpfContext as _, helpers,
@@ -18,8 +19,4 @@ pub fn uprobe_cookie(ctx: ProbeContext) {
     let _res = RING_BUF.output(&cookie_bytes, 0);
 }
 
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
+aya_ebpf::panic_handler!();

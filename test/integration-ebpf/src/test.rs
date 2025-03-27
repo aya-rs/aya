@@ -1,5 +1,6 @@
-#![no_std]
-#![no_main]
+#![cfg_attr(target_arch = "bpf", no_std)]
+#![cfg_attr(target_arch = "bpf", no_main)]
+aya_ebpf::main_stub!();
 
 use aya_ebpf::{
     bindings::{bpf_ret_code, xdp_action},
@@ -53,8 +54,4 @@ pub fn test_flow(_ctx: FlowDissectorContext) -> u32 {
     bpf_ret_code::BPF_FLOW_DISSECTOR_CONTINUE
 }
 
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
+aya_ebpf::panic_handler!();

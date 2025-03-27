@@ -133,6 +133,34 @@ pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
     }
 }
 
+#[macro_export]
+macro_rules! main_stub {
+    () => {
+        #[cfg(not(target_arch = "bpf"))]
+        fn main() {
+            panic!(r#"eBPF kernels are not designed to be executed in user-space. This main function is only a placeholder to allow the code to compile on the host system (i.e. on any system that is not `target_arch = "bpf"`). This works in tandem with the `no_main` attribute which is only applied when compiling for `target_arch = "bpf"`."#)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! panic_handler {
+    () => {
+        /// Defines the panic handler when compiling for eBPF.
+        ///
+        /// eBPF programs don't support the concept of a panic and therefore, compiling a program that includes panics should fail at link time.
+        ///
+        /// Yet, as part of compiling for `no_std`, we need to define a panic handler.
+        /// The eBPF verifier enforces that programs terminate and will thus reject unbounded loops.
+        /// By using an endless loop within our panic handler, we can ensure that if this panic handler were somehow linked into the program, the eBPF verifier would reject it.
+        #[cfg(target_arch = "bpf")]
+        #[panic_handler]
+        fn panic(_info: &core::panic::PanicInfo) -> ! {
+            loop {}
+        }
+    };
+}
+
 #[inline]
 fn insert<K, V>(
     def: *mut bindings::bpf_map_def,
