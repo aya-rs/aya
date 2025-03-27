@@ -8,6 +8,8 @@ use aya_ebpf::{
         FlowDissectorContext, ProbeContext, RetProbeContext, TracePointContext, XdpContext,
     },
 };
+#[cfg(not(test))]
+use panic_halt as _;
 
 #[xdp]
 pub fn pass(ctx: XdpContext) -> u32 {
@@ -51,10 +53,4 @@ pub fn test_flow(_ctx: FlowDissectorContext) -> u32 {
     // TODO: write an actual flow dissector. See tools/testing/selftests/bpf/progs/bpf_flow.c in the
     // Linux kernel for inspiration.
     bpf_ret_code::BPF_FLOW_DISSECTOR_CONTINUE
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }

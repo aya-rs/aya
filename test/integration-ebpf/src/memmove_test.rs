@@ -13,6 +13,8 @@ use network_types::{
     eth::{EthHdr, EtherType},
     ip::Ipv6Hdr,
 };
+#[cfg(not(test))]
+use panic_halt as _;
 
 #[inline(always)]
 fn ptr_at<T>(ctx: &XdpContext, offset: usize) -> Result<*const T, ()> {
@@ -52,10 +54,4 @@ fn try_do_dnat(ctx: XdpContext) -> Result<u32, ()> {
         }
     }
     Ok(xdp_action::XDP_PASS)
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }

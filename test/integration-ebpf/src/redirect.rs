@@ -7,6 +7,8 @@ use aya_ebpf::{
     maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
     programs::XdpContext,
 };
+#[cfg(not(test))]
+use panic_halt as _;
 
 #[map]
 static SOCKS: XskMap = XskMap::with_max_entries(1, 0);
@@ -73,10 +75,4 @@ fn inc_hit(index: u32) {
     if let Some(hit) = HITS.get_ptr_mut(index) {
         unsafe { *hit += 1 };
     }
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }

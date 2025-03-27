@@ -7,6 +7,8 @@ use aya_ebpf::{
     programs::RawTracePointContext,
 };
 use integration_common::raw_tracepoint::SysEnterEvent;
+#[cfg(not(test))]
+use panic_halt as _;
 
 #[map]
 static RESULT: Array<SysEnterEvent> = Array::with_max_entries(1, 0);
@@ -24,10 +26,4 @@ pub fn sys_enter(ctx: RawTracePointContext) -> i32 {
     }
 
     0
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }

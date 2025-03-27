@@ -2,6 +2,8 @@
 #![no_main]
 
 use aya_ebpf::{bindings::xdp_action::XDP_PASS, macros::xdp, programs::XdpContext};
+#[cfg(not(test))]
+use panic_halt as _;
 
 macro_rules! probe {
     ($name:ident, ($($arg:ident $(= $value:literal)?),*) ) => {
@@ -18,9 +20,3 @@ probe!(xdp_cpumap, (map = "cpumap"));
 probe!(xdp_devmap, (map = "devmap"));
 probe!(xdp_frags_cpumap, (frags, map = "cpumap"));
 probe!(xdp_frags_devmap, (frags, map = "devmap"));
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}

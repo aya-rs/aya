@@ -7,6 +7,8 @@ use aya_ebpf::{
     programs::ProbeContext,
 };
 use integration_common::ring_buf::Registers;
+#[cfg(not(test))]
+use panic_halt as _;
 
 #[map]
 static RING_BUF: RingBuf = RingBuf::with_byte_size(0, 0);
@@ -44,10 +46,4 @@ pub fn ring_buf_test(ctx: ProbeContext) {
         *rejected += 1;
         entry.discard(0);
     }
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }

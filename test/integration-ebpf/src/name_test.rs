@@ -2,6 +2,8 @@
 #![no_main]
 
 use aya_ebpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
+#[cfg(not(test))]
+use panic_halt as _;
 
 #[xdp]
 pub fn ihaveaverylongname(ctx: XdpContext) -> u32 {
@@ -13,10 +15,4 @@ pub fn ihaveaverylongname(ctx: XdpContext) -> u32 {
 
 unsafe fn try_pass(_ctx: XdpContext) -> Result<u32, u32> {
     Ok(xdp_action::XDP_PASS)
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }

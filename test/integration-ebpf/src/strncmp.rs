@@ -9,6 +9,8 @@ use aya_ebpf::{
     programs::ProbeContext,
 };
 use integration_common::strncmp::TestResult;
+#[cfg(not(test))]
+use panic_halt as _;
 
 #[map]
 static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
@@ -25,10 +27,4 @@ pub fn test_bpf_strncmp(ctx: ProbeContext) -> Result<(), c_long> {
     *dst_res = bpf_strncmp(&b1, c"ff");
 
     Ok(())
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }
