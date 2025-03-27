@@ -1,5 +1,6 @@
-#![no_std]
-#![no_main]
+#![cfg_attr(target_arch = "bpf", no_std)]
+#![cfg_attr(target_arch = "bpf", no_main)]
+aya_ebpf::main_stub!();
 
 use aya_ebpf::{
     helpers::{bpf_probe_read_kernel_str_bytes, bpf_probe_read_user_str_bytes},

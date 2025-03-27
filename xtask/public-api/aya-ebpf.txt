@@ -2728,6 +2728,7 @@ pub fn aya_ebpf::programs::xdp::XdpContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
 pub macro aya_ebpf::bpf_printk!
+pub macro aya_ebpf::main_stub!
 pub macro aya_ebpf::panic_handler!
 pub struct aya_ebpf::PtRegs
 impl aya_ebpf::PtRegs
