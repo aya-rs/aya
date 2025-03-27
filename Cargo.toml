@@ -7,6 +7,7 @@ members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
+    "ebpf-panic",
     "test-distro",
     "test/integration-common",
     "test/integration-test",
@@ -33,6 +34,7 @@ default-members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
+    "ebpf-panic",
     "test-distro",
     "test/integration-common",
     # test/integration-test is omitted; including it in this list causes `cargo test` to run its
