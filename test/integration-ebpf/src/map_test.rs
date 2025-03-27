@@ -9,6 +9,8 @@ use aya_ebpf::{
     maps::{Array, HashMap},
     programs::SkBuffContext,
 };
+#[cfg(not(test))]
+extern crate ebpf_panic;
 
 // Introduced in kernel v3.19.
 #[map]
@@ -34,10 +36,4 @@ pub fn simple_prog(_ctx: SkBuffContext) -> i64 {
     BAZ.get_ptr(&i);
 
     0
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }

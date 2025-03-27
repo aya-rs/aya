@@ -8,6 +8,8 @@ use aya_ebpf::{
     maps::Array,
     programs::ProbeContext,
 };
+#[cfg(not(test))]
+extern crate ebpf_panic;
 
 #[map]
 static RESULTS: Array<u64> = Array::with_max_entries(3, 0);
@@ -37,10 +39,4 @@ fn set_result(index: u32, value: u64) {
 #[inline(never)]
 fn set_result_backward(index: u32, value: u64) {
     set_result(index, value);
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }
