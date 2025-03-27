@@ -6,6 +6,8 @@ use aya_ebpf::{
     maps::Array,
     programs::RawTracePointContext,
 };
+#[cfg(not(test))]
+extern crate ebpf_panic;
 use integration_common::raw_tracepoint::SysEnterEvent;
 
 #[map]
@@ -24,10 +26,4 @@ pub fn sys_enter(ctx: RawTracePointContext) -> i32 {
     }
 
     0
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }
