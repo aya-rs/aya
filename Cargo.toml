@@ -44,9 +44,10 @@ default-members = [
     "aya-ebpf-macros",
     "aya-log-ebpf-macros",
 
-    # ebpf crates are omitted; they must be built with:
-    # --target bpfe{b,l}-unknown-none
-    # CARGO_CFG_BPF_TARGET_ARCH={x86_64,aarch64,arm,riscv64,powerpc64,s390x,mips}
+    "ebpf/aya-ebpf",
+    "ebpf/aya-ebpf-bindings",
+    "ebpf/aya-log-ebpf",
+    "test/integration-ebpf",
 ]
 
 [workspace.package]
