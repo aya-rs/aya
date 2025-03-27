@@ -5,15 +5,11 @@
 #![no_main]
 
 use aya_ebpf::{macros::socket_filter, programs::SkBuffContext};
+#[cfg(not(test))]
+extern crate ebpf_panic;
 
 // Introduced in kernel v3.19.
 #[socket_filter]
 pub fn simple_prog(_ctx: SkBuffContext) -> i64 {
     0
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }

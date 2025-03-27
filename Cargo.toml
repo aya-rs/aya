@@ -7,6 +7,7 @@ members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
+    "ebpf-panic",
     "test-distro",
     "test/integration-common",
     "test/integration-test",
@@ -33,6 +34,7 @@ default-members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
+    "ebpf-panic",
     "test-distro",
     "test/integration-common",
     # test/integration-test is omitted; including it in this list causes `cargo test` to run its
@@ -80,6 +82,7 @@ indoc = { version = "2.0", default-features = false }
 libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
 netns-rs = { version = "0.1", default-features = false }
+network-types = { version = "0.0.7", default-features = false }
 nix = { version = "0.29.0", default-features = false }
 num_enum = { version = "0.7", default-features = false }
 object = { version = "0.36", default-features = false }

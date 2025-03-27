@@ -9,6 +9,8 @@ use aya_ebpf::{
     maps::HashMap,
     programs::XdpContext,
 };
+#[cfg(not(test))]
+extern crate ebpf_panic;
 use network_types::{
     eth::{EthHdr, EtherType},
     ip::Ipv6Hdr,
@@ -52,10 +54,4 @@ fn try_do_dnat(ctx: XdpContext) -> Result<u32, ()> {
         }
     }
     Ok(xdp_action::XDP_PASS)
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }

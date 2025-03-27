@@ -5,6 +5,8 @@ use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use aya_ebpf::{macros::uprobe, programs::ProbeContext};
 use aya_log_ebpf::{debug, error, info, trace, warn};
+#[cfg(not(test))]
+extern crate ebpf_panic;
 
 #[uprobe]
 pub fn test_log(ctx: ProbeContext) {
@@ -80,10 +82,4 @@ pub fn test_log(ctx: ProbeContext) {
 
         debug!(&ctx, "{:x}", no_copy.consume());
     }
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }

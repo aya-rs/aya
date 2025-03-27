@@ -16,8 +16,9 @@ workspace = true
 [dependencies]
 aya-ebpf = { path = "../../ebpf/aya-ebpf" }
 aya-log-ebpf = { path = "../../ebpf/aya-log-ebpf" }
+ebpf-panic = { path = "../../ebpf-panic" }
 integration-common = { path = "../integration-common" }
-network-types = "0.0.7"
+network-types = { workspace = true }
 
 [build-dependencies]
 which = { workspace = true }
