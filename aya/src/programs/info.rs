@@ -113,7 +113,9 @@ impl ProgramInfo {
     pub fn map_ids(&self) -> Result<Option<Vec<u32>>, ProgramError> {
         static CACHE: OnceLock<bool> = OnceLock::new();
         CACHE
-            .get_or_init(|| matches!(is_prog_info_map_ids_supported(), Ok(true)))
+            .get_or_init(|| {
+                self.0.nr_map_ids > 0 || matches!(is_prog_info_map_ids_supported(), Ok(true))
+            })
             .then(|| {
                 let mut map_ids = vec![0u32; self.0.nr_map_ids as usize];
                 bpf_prog_get_info_by_fd(self.fd()?.as_fd(), &mut map_ids)?;
@@ -147,7 +149,9 @@ impl ProgramInfo {
     pub fn gpl_compatible(&self) -> Option<bool> {
         static CACHE: OnceLock<bool> = OnceLock::new();
         CACHE
-            .get_or_init(|| matches!(is_prog_info_license_supported(), Ok(true)))
+            .get_or_init(|| {
+                self.0.gpl_compatible() != 0 || matches!(is_prog_info_license_supported(), Ok(true))
+            })
             .then_some(self.0.gpl_compatible() != 0)
     }
 
