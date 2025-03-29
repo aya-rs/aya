@@ -16,13 +16,13 @@ use aya_obj::{
     },
     generated::{
         BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_IMM, BPF_JMP, BPF_K, BPF_LD,
-        BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_SUB, BPF_X, bpf_attach_type, bpf_attr,
+        BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X, bpf_attach_type, bpf_attr,
         bpf_btf_info, bpf_cmd, bpf_func_id::*, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type,
         bpf_prog_info, bpf_prog_type, bpf_stats_type,
     },
     maps::{LegacyMap, bpf_map_def},
 };
-use libc::{ENOENT, ENOSPC};
+use libc::{BPF_ADD, ENOENT, ENOSPC};
 
 use crate::{
     Btf, FEATURES, Pod, VerifierLogLevel,
@@ -781,13 +781,13 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
     let mov64_reg = (BPF_ALU64 | BPF_MOV | BPF_X) as _;
-    let sub64_imm = (BPF_ALU64 | BPF_SUB | BPF_K) as _;
+    let add64_imm = (BPF_ALU64 | BPF_ADD | BPF_K) as _;
     let mov64_imm = (BPF_ALU64 | BPF_MOV | BPF_K) as _;
     let call = (BPF_JMP | BPF_CALL) as _;
     let exit = (BPF_JMP | BPF_EXIT) as _;
     let insns = [
         new_insn(mov64_reg, 1, 10, 0, 0),
-        new_insn(sub64_imm, 1, 0, 0, 8),
+        new_insn(add64_imm, 1, 0, 0, -8),
         new_insn(mov64_imm, 2, 0, 0, 8),
         new_insn(mov64_imm, 3, 0, 0, 0),
         new_insn(call, 0, 0, 0, BPF_FUNC_probe_read_kernel as _),
