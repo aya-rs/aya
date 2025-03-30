@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{ffi::OsString, path::Path, process::Command};
 
 use anyhow::{Context as _, Result, bail};
 
@@ -12,6 +12,27 @@ pub fn exec(cmd: &mut Command) -> Result<()> {
     if status.code() != Some(0) {
         bail!("{cmd:?} failed: {status:?}")
     }
+    Ok(())
+}
+
+/// Installs the libbpf headers files from the `source_dir` to the
+/// `headers_dir`.
+pub fn install_libbpf_headers(
+    source_dir: impl AsRef<Path>,
+    headers_dir: impl AsRef<Path>,
+) -> Result<()> {
+    let mut includedir = OsString::new();
+    includedir.push("INCLUDEDIR=");
+    includedir.push(headers_dir.as_ref().as_os_str());
+
+    exec(
+        Command::new("make")
+            .arg("-C")
+            .arg(source_dir.as_ref().join("src"))
+            .arg(includedir)
+            .arg("install_headers"),
+    )?;
+
     Ok(())
 }
 
