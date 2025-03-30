@@ -8,7 +8,7 @@ use std::{
 
 use anyhow::{Context as _, Ok, Result, anyhow};
 use aya_build::cargo_metadata::{Metadata, MetadataCommand, Package, Target, TargetKind};
-use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec};
+use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec, install_libbpf_headers};
 
 /// This file, along with the xtask crate, allows analysis tools such as `cargo check`, `cargo
 /// clippy`, and even `cargo build` to work as users expect. Prior to this file's existence, this
@@ -86,18 +86,7 @@ fn main() -> Result<()> {
         println!("cargo:rerun-if-changed={libbpf_dir}");
 
         let libbpf_headers_dir = out_dir.join("libbpf_headers");
-
-        let mut includedir = OsString::new();
-        includedir.push("INCLUDEDIR=");
-        includedir.push(&libbpf_headers_dir);
-
-        exec(
-            Command::new("make")
-                .arg("-C")
-                .arg(libbpf_dir.join("src"))
-                .arg(includedir)
-                .arg("install_headers"),
-        )?;
+        install_libbpf_headers(&libbpf_dir, &libbpf_headers_dir)?;
 
         let bpf_dir = manifest_dir.join("bpf");
 
