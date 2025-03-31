@@ -169,19 +169,62 @@ pub const BPF_ST: u32 = 2;
 pub const BPF_STX: u32 = 3;
 pub const BPF_ALU: u32 = 4;
 pub const BPF_JMP: u32 = 5;
+pub const BPF_RET: u32 = 6;
+pub const BPF_MISC: u32 = 7;
 pub const BPF_W: u32 = 0;
 pub const BPF_H: u32 = 8;
 pub const BPF_B: u32 = 16;
 pub const BPF_IMM: u32 = 0;
+pub const BPF_ABS: u32 = 32;
+pub const BPF_IND: u32 = 64;
 pub const BPF_MEM: u32 = 96;
+pub const BPF_LEN: u32 = 128;
+pub const BPF_MSH: u32 = 160;
+pub const BPF_ADD: u32 = 0;
 pub const BPF_SUB: u32 = 16;
+pub const BPF_MUL: u32 = 32;
+pub const BPF_DIV: u32 = 48;
+pub const BPF_OR: u32 = 64;
+pub const BPF_AND: u32 = 80;
+pub const BPF_LSH: u32 = 96;
+pub const BPF_RSH: u32 = 112;
+pub const BPF_NEG: u32 = 128;
+pub const BPF_MOD: u32 = 144;
+pub const BPF_XOR: u32 = 160;
+pub const BPF_JA: u32 = 0;
+pub const BPF_JEQ: u32 = 16;
+pub const BPF_JGT: u32 = 32;
+pub const BPF_JGE: u32 = 48;
+pub const BPF_JSET: u32 = 64;
 pub const BPF_K: u32 = 0;
 pub const BPF_X: u32 = 8;
+pub const BPF_MAXINSNS: u32 = 4096;
+pub const BPF_JMP32: u32 = 6;
 pub const BPF_ALU64: u32 = 7;
 pub const BPF_DW: u32 = 24;
+pub const BPF_MEMSX: u32 = 128;
+pub const BPF_ATOMIC: u32 = 192;
+pub const BPF_XADD: u32 = 192;
 pub const BPF_MOV: u32 = 176;
+pub const BPF_ARSH: u32 = 192;
+pub const BPF_END: u32 = 208;
+pub const BPF_TO_LE: u32 = 0;
+pub const BPF_TO_BE: u32 = 8;
+pub const BPF_FROM_LE: u32 = 0;
+pub const BPF_FROM_BE: u32 = 8;
+pub const BPF_JNE: u32 = 80;
+pub const BPF_JLT: u32 = 160;
+pub const BPF_JLE: u32 = 176;
+pub const BPF_JSGT: u32 = 96;
+pub const BPF_JSGE: u32 = 112;
+pub const BPF_JSLT: u32 = 192;
+pub const BPF_JSLE: u32 = 208;
+pub const BPF_JCOND: u32 = 224;
 pub const BPF_CALL: u32 = 128;
 pub const BPF_EXIT: u32 = 144;
+pub const BPF_FETCH: u32 = 1;
+pub const BPF_XCHG: u32 = 225;
+pub const BPF_CMPXCHG: u32 = 241;
 pub const BPF_F_ALLOW_OVERRIDE: u32 = 1;
 pub const BPF_F_ALLOW_MULTI: u32 = 2;
 pub const BPF_F_REPLACE: u32 = 4;
@@ -208,6 +251,9 @@ pub const BPF_PSEUDO_KFUNC_CALL: u32 = 2;
 pub const BPF_F_QUERY_EFFECTIVE: u32 = 1;
 pub const BPF_F_TEST_RUN_ON_CPU: u32 = 1;
 pub const BPF_F_TEST_XDP_LIVE_FRAMES: u32 = 2;
+pub const BPF_BUILD_ID_SIZE: u32 = 20;
+pub const BPF_OBJ_NAME_LEN: u32 = 16;
+pub const BPF_TAG_SIZE: u32 = 8;
 pub const BTF_INT_SIGNED: u32 = 1;
 pub const BTF_INT_CHAR: u32 = 2;
 pub const BTF_INT_BOOL: u32 = 4;
@@ -256,6 +302,34 @@ pub type __s32 = ::core::ffi::c_int;
 pub type __u32 = ::core::ffi::c_uint;
 pub type __s64 = ::core::ffi::c_longlong;
 pub type __u64 = ::core::ffi::c_ulonglong;
+pub const BPF_REG_0: _bindgen_ty_1 = _bindgen_ty_1::BPF_REG_0;
+pub const BPF_REG_1: _bindgen_ty_1 = _bindgen_ty_1::BPF_REG_1;
+pub const BPF_REG_2: _bindgen_ty_1 = _bindgen_ty_1::BPF_REG_2;
+pub const BPF_REG_3: _bindgen_ty_1 = _bindgen_ty_1::BPF_REG_3;
+pub const BPF_REG_4: _bindgen_ty_1 = _bindgen_ty_1::BPF_REG_4;
+pub const BPF_REG_5: _bindgen_ty_1 = _bindgen_ty_1::BPF_REG_5;
+pub const BPF_REG_6: _bindgen_ty_1 = _bindgen_ty_1::BPF_REG_6;
+pub const BPF_REG_7: _bindgen_ty_1 = _bindgen_ty_1::BPF_REG_7;
+pub const BPF_REG_8: _bindgen_ty_1 = _bindgen_ty_1::BPF_REG_8;
+pub const BPF_REG_9: _bindgen_ty_1 = _bindgen_ty_1::BPF_REG_9;
+pub const BPF_REG_10: _bindgen_ty_1 = _bindgen_ty_1::BPF_REG_10;
+pub const __MAX_BPF_REG: _bindgen_ty_1 = _bindgen_ty_1::__MAX_BPF_REG;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_1 {
+    BPF_REG_0 = 0,
+    BPF_REG_1 = 1,
+    BPF_REG_2 = 2,
+    BPF_REG_3 = 3,
+    BPF_REG_4 = 4,
+    BPF_REG_5 = 5,
+    BPF_REG_6 = 6,
+    BPF_REG_7 = 7,
+    BPF_REG_8 = 8,
+    BPF_REG_9 = 9,
+    BPF_REG_10 = 10,
+    __MAX_BPF_REG = 11,
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct bpf_insn {
@@ -1273,6 +1347,18 @@ pub const BPF_F_CTXLEN_MASK: _bindgen_ty_14 = 4503595332403200;
 pub type _bindgen_ty_14 = ::core::ffi::c_ulonglong;
 pub const BPF_F_CURRENT_NETNS: _bindgen_ty_15 = -1;
 pub type _bindgen_ty_15 = ::core::ffi::c_int;
+pub const BPF_CSUM_LEVEL_QUERY: _bindgen_ty_16 = _bindgen_ty_16::BPF_CSUM_LEVEL_QUERY;
+pub const BPF_CSUM_LEVEL_INC: _bindgen_ty_16 = _bindgen_ty_16::BPF_CSUM_LEVEL_INC;
+pub const BPF_CSUM_LEVEL_DEC: _bindgen_ty_16 = _bindgen_ty_16::BPF_CSUM_LEVEL_DEC;
+pub const BPF_CSUM_LEVEL_RESET: _bindgen_ty_16 = _bindgen_ty_16::BPF_CSUM_LEVEL_RESET;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_16 {
+    BPF_CSUM_LEVEL_QUERY = 0,
+    BPF_CSUM_LEVEL_INC = 1,
+    BPF_CSUM_LEVEL_DEC = 2,
+    BPF_CSUM_LEVEL_RESET = 3,
+}
 pub const BPF_F_ADJ_ROOM_FIXED_GSO: _bindgen_ty_17 = 1;
 pub const BPF_F_ADJ_ROOM_ENCAP_L3_IPV4: _bindgen_ty_17 = 2;
 pub const BPF_F_ADJ_ROOM_ENCAP_L3_IPV6: _bindgen_ty_17 = 4;
@@ -1283,19 +1369,74 @@ pub const BPF_F_ADJ_ROOM_ENCAP_L2_ETH: _bindgen_ty_17 = 64;
 pub const BPF_F_ADJ_ROOM_DECAP_L3_IPV4: _bindgen_ty_17 = 128;
 pub const BPF_F_ADJ_ROOM_DECAP_L3_IPV6: _bindgen_ty_17 = 256;
 pub type _bindgen_ty_17 = ::core::ffi::c_uint;
+pub const BPF_ADJ_ROOM_ENCAP_L2_MASK: _bindgen_ty_18 = _bindgen_ty_18::BPF_ADJ_ROOM_ENCAP_L2_MASK;
+pub const BPF_ADJ_ROOM_ENCAP_L2_SHIFT: _bindgen_ty_18 = _bindgen_ty_18::BPF_ADJ_ROOM_ENCAP_L2_SHIFT;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_18 {
+    BPF_ADJ_ROOM_ENCAP_L2_MASK = 255,
+    BPF_ADJ_ROOM_ENCAP_L2_SHIFT = 56,
+}
 pub const BPF_F_SYSCTL_BASE_NAME: _bindgen_ty_19 = 1;
 pub type _bindgen_ty_19 = ::core::ffi::c_uint;
+pub const BPF_LOCAL_STORAGE_GET_F_CREATE: _bindgen_ty_20 =
+    _bindgen_ty_20::BPF_LOCAL_STORAGE_GET_F_CREATE;
+pub const BPF_SK_STORAGE_GET_F_CREATE: _bindgen_ty_20 =
+    _bindgen_ty_20::BPF_LOCAL_STORAGE_GET_F_CREATE;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_20 {
+    BPF_LOCAL_STORAGE_GET_F_CREATE = 1,
+}
 pub const BPF_F_GET_BRANCH_RECORDS_SIZE: _bindgen_ty_21 = 1;
 pub type _bindgen_ty_21 = ::core::ffi::c_uint;
+pub const BPF_RB_NO_WAKEUP: _bindgen_ty_22 = _bindgen_ty_22::BPF_RB_NO_WAKEUP;
+pub const BPF_RB_FORCE_WAKEUP: _bindgen_ty_22 = _bindgen_ty_22::BPF_RB_FORCE_WAKEUP;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_22 {
+    BPF_RB_NO_WAKEUP = 1,
+    BPF_RB_FORCE_WAKEUP = 2,
+}
+pub const BPF_RB_AVAIL_DATA: _bindgen_ty_23 = _bindgen_ty_23::BPF_RB_AVAIL_DATA;
+pub const BPF_RB_RING_SIZE: _bindgen_ty_23 = _bindgen_ty_23::BPF_RB_RING_SIZE;
+pub const BPF_RB_CONS_POS: _bindgen_ty_23 = _bindgen_ty_23::BPF_RB_CONS_POS;
+pub const BPF_RB_PROD_POS: _bindgen_ty_23 = _bindgen_ty_23::BPF_RB_PROD_POS;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_23 {
+    BPF_RB_AVAIL_DATA = 0,
+    BPF_RB_RING_SIZE = 1,
+    BPF_RB_CONS_POS = 2,
+    BPF_RB_PROD_POS = 3,
+}
 pub const BPF_RINGBUF_BUSY_BIT: _bindgen_ty_24 = 2147483648;
 pub const BPF_RINGBUF_DISCARD_BIT: _bindgen_ty_24 = 1073741824;
 pub const BPF_RINGBUF_HDR_SZ: _bindgen_ty_24 = 8;
 pub type _bindgen_ty_24 = ::core::ffi::c_uint;
+pub const BPF_SK_LOOKUP_F_REPLACE: _bindgen_ty_25 = _bindgen_ty_25::BPF_SK_LOOKUP_F_REPLACE;
+pub const BPF_SK_LOOKUP_F_NO_REUSEPORT: _bindgen_ty_25 =
+    _bindgen_ty_25::BPF_SK_LOOKUP_F_NO_REUSEPORT;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_25 {
+    BPF_SK_LOOKUP_F_REPLACE = 1,
+    BPF_SK_LOOKUP_F_NO_REUSEPORT = 2,
+}
 pub const BPF_F_BPRM_SECUREEXEC: _bindgen_ty_26 = 1;
 pub type _bindgen_ty_26 = ::core::ffi::c_uint;
 pub const BPF_F_BROADCAST: _bindgen_ty_27 = 8;
 pub const BPF_F_EXCLUDE_INGRESS: _bindgen_ty_27 = 16;
 pub type _bindgen_ty_27 = ::core::ffi::c_uint;
+pub const BPF_SKB_TSTAMP_UNSPEC: _bindgen_ty_28 = _bindgen_ty_28::BPF_SKB_TSTAMP_UNSPEC;
+pub const BPF_SKB_TSTAMP_DELIVERY_MONO: _bindgen_ty_28 =
+    _bindgen_ty_28::BPF_SKB_TSTAMP_DELIVERY_MONO;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_28 {
+    BPF_SKB_TSTAMP_UNSPEC = 0,
+    BPF_SKB_TSTAMP_DELIVERY_MONO = 1,
+}
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct bpf_devmap_val {
@@ -1647,6 +1788,178 @@ pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_13 {
     pub ifindex: __u32,
     pub attach_type: __u32,
 }
+pub const BPF_SOCK_OPS_RTO_CB_FLAG: _bindgen_ty_29 = _bindgen_ty_29::BPF_SOCK_OPS_RTO_CB_FLAG;
+pub const BPF_SOCK_OPS_RETRANS_CB_FLAG: _bindgen_ty_29 =
+    _bindgen_ty_29::BPF_SOCK_OPS_RETRANS_CB_FLAG;
+pub const BPF_SOCK_OPS_STATE_CB_FLAG: _bindgen_ty_29 = _bindgen_ty_29::BPF_SOCK_OPS_STATE_CB_FLAG;
+pub const BPF_SOCK_OPS_RTT_CB_FLAG: _bindgen_ty_29 = _bindgen_ty_29::BPF_SOCK_OPS_RTT_CB_FLAG;
+pub const BPF_SOCK_OPS_PARSE_ALL_HDR_OPT_CB_FLAG: _bindgen_ty_29 =
+    _bindgen_ty_29::BPF_SOCK_OPS_PARSE_ALL_HDR_OPT_CB_FLAG;
+pub const BPF_SOCK_OPS_PARSE_UNKNOWN_HDR_OPT_CB_FLAG: _bindgen_ty_29 =
+    _bindgen_ty_29::BPF_SOCK_OPS_PARSE_UNKNOWN_HDR_OPT_CB_FLAG;
+pub const BPF_SOCK_OPS_WRITE_HDR_OPT_CB_FLAG: _bindgen_ty_29 =
+    _bindgen_ty_29::BPF_SOCK_OPS_WRITE_HDR_OPT_CB_FLAG;
+pub const BPF_SOCK_OPS_ALL_CB_FLAGS: _bindgen_ty_29 = _bindgen_ty_29::BPF_SOCK_OPS_ALL_CB_FLAGS;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_29 {
+    BPF_SOCK_OPS_RTO_CB_FLAG = 1,
+    BPF_SOCK_OPS_RETRANS_CB_FLAG = 2,
+    BPF_SOCK_OPS_STATE_CB_FLAG = 4,
+    BPF_SOCK_OPS_RTT_CB_FLAG = 8,
+    BPF_SOCK_OPS_PARSE_ALL_HDR_OPT_CB_FLAG = 16,
+    BPF_SOCK_OPS_PARSE_UNKNOWN_HDR_OPT_CB_FLAG = 32,
+    BPF_SOCK_OPS_WRITE_HDR_OPT_CB_FLAG = 64,
+    BPF_SOCK_OPS_ALL_CB_FLAGS = 127,
+}
+pub const BPF_SOCK_OPS_VOID: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_VOID;
+pub const BPF_SOCK_OPS_TIMEOUT_INIT: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_TIMEOUT_INIT;
+pub const BPF_SOCK_OPS_RWND_INIT: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_RWND_INIT;
+pub const BPF_SOCK_OPS_TCP_CONNECT_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_TCP_CONNECT_CB;
+pub const BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB: _bindgen_ty_30 =
+    _bindgen_ty_30::BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB;
+pub const BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB: _bindgen_ty_30 =
+    _bindgen_ty_30::BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB;
+pub const BPF_SOCK_OPS_NEEDS_ECN: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_NEEDS_ECN;
+pub const BPF_SOCK_OPS_BASE_RTT: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_BASE_RTT;
+pub const BPF_SOCK_OPS_RTO_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_RTO_CB;
+pub const BPF_SOCK_OPS_RETRANS_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_RETRANS_CB;
+pub const BPF_SOCK_OPS_STATE_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_STATE_CB;
+pub const BPF_SOCK_OPS_TCP_LISTEN_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_TCP_LISTEN_CB;
+pub const BPF_SOCK_OPS_RTT_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_RTT_CB;
+pub const BPF_SOCK_OPS_PARSE_HDR_OPT_CB: _bindgen_ty_30 =
+    _bindgen_ty_30::BPF_SOCK_OPS_PARSE_HDR_OPT_CB;
+pub const BPF_SOCK_OPS_HDR_OPT_LEN_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_HDR_OPT_LEN_CB;
+pub const BPF_SOCK_OPS_WRITE_HDR_OPT_CB: _bindgen_ty_30 =
+    _bindgen_ty_30::BPF_SOCK_OPS_WRITE_HDR_OPT_CB;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_30 {
+    BPF_SOCK_OPS_VOID = 0,
+    BPF_SOCK_OPS_TIMEOUT_INIT = 1,
+    BPF_SOCK_OPS_RWND_INIT = 2,
+    BPF_SOCK_OPS_TCP_CONNECT_CB = 3,
+    BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB = 4,
+    BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB = 5,
+    BPF_SOCK_OPS_NEEDS_ECN = 6,
+    BPF_SOCK_OPS_BASE_RTT = 7,
+    BPF_SOCK_OPS_RTO_CB = 8,
+    BPF_SOCK_OPS_RETRANS_CB = 9,
+    BPF_SOCK_OPS_STATE_CB = 10,
+    BPF_SOCK_OPS_TCP_LISTEN_CB = 11,
+    BPF_SOCK_OPS_RTT_CB = 12,
+    BPF_SOCK_OPS_PARSE_HDR_OPT_CB = 13,
+    BPF_SOCK_OPS_HDR_OPT_LEN_CB = 14,
+    BPF_SOCK_OPS_WRITE_HDR_OPT_CB = 15,
+}
+pub const BPF_TCP_ESTABLISHED: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_ESTABLISHED;
+pub const BPF_TCP_SYN_SENT: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_SYN_SENT;
+pub const BPF_TCP_SYN_RECV: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_SYN_RECV;
+pub const BPF_TCP_FIN_WAIT1: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_FIN_WAIT1;
+pub const BPF_TCP_FIN_WAIT2: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_FIN_WAIT2;
+pub const BPF_TCP_TIME_WAIT: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_TIME_WAIT;
+pub const BPF_TCP_CLOSE: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_CLOSE;
+pub const BPF_TCP_CLOSE_WAIT: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_CLOSE_WAIT;
+pub const BPF_TCP_LAST_ACK: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_LAST_ACK;
+pub const BPF_TCP_LISTEN: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_LISTEN;
+pub const BPF_TCP_CLOSING: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_CLOSING;
+pub const BPF_TCP_NEW_SYN_RECV: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_NEW_SYN_RECV;
+pub const BPF_TCP_BOUND_INACTIVE: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_BOUND_INACTIVE;
+pub const BPF_TCP_MAX_STATES: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_MAX_STATES;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_31 {
+    BPF_TCP_ESTABLISHED = 1,
+    BPF_TCP_SYN_SENT = 2,
+    BPF_TCP_SYN_RECV = 3,
+    BPF_TCP_FIN_WAIT1 = 4,
+    BPF_TCP_FIN_WAIT2 = 5,
+    BPF_TCP_TIME_WAIT = 6,
+    BPF_TCP_CLOSE = 7,
+    BPF_TCP_CLOSE_WAIT = 8,
+    BPF_TCP_LAST_ACK = 9,
+    BPF_TCP_LISTEN = 10,
+    BPF_TCP_CLOSING = 11,
+    BPF_TCP_NEW_SYN_RECV = 12,
+    BPF_TCP_BOUND_INACTIVE = 13,
+    BPF_TCP_MAX_STATES = 14,
+}
+pub const BPF_LOAD_HDR_OPT_TCP_SYN: _bindgen_ty_33 = _bindgen_ty_33::BPF_LOAD_HDR_OPT_TCP_SYN;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_33 {
+    BPF_LOAD_HDR_OPT_TCP_SYN = 1,
+}
+pub const BPF_WRITE_HDR_TCP_CURRENT_MSS: _bindgen_ty_34 =
+    _bindgen_ty_34::BPF_WRITE_HDR_TCP_CURRENT_MSS;
+pub const BPF_WRITE_HDR_TCP_SYNACK_COOKIE: _bindgen_ty_34 =
+    _bindgen_ty_34::BPF_WRITE_HDR_TCP_SYNACK_COOKIE;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_34 {
+    BPF_WRITE_HDR_TCP_CURRENT_MSS = 1,
+    BPF_WRITE_HDR_TCP_SYNACK_COOKIE = 2,
+}
+pub const BPF_DEVCG_ACC_MKNOD: _bindgen_ty_35 = _bindgen_ty_35::BPF_DEVCG_ACC_MKNOD;
+pub const BPF_DEVCG_ACC_READ: _bindgen_ty_35 = _bindgen_ty_35::BPF_DEVCG_ACC_READ;
+pub const BPF_DEVCG_ACC_WRITE: _bindgen_ty_35 = _bindgen_ty_35::BPF_DEVCG_ACC_WRITE;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_35 {
+    BPF_DEVCG_ACC_MKNOD = 1,
+    BPF_DEVCG_ACC_READ = 2,
+    BPF_DEVCG_ACC_WRITE = 4,
+}
+pub const BPF_DEVCG_DEV_BLOCK: _bindgen_ty_36 = _bindgen_ty_36::BPF_DEVCG_DEV_BLOCK;
+pub const BPF_DEVCG_DEV_CHAR: _bindgen_ty_36 = _bindgen_ty_36::BPF_DEVCG_DEV_CHAR;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_36 {
+    BPF_DEVCG_DEV_BLOCK = 1,
+    BPF_DEVCG_DEV_CHAR = 2,
+}
+pub const BPF_FIB_LOOKUP_DIRECT: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_DIRECT;
+pub const BPF_FIB_LOOKUP_OUTPUT: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_OUTPUT;
+pub const BPF_FIB_LOOKUP_SKIP_NEIGH: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_SKIP_NEIGH;
+pub const BPF_FIB_LOOKUP_TBID: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_TBID;
+pub const BPF_FIB_LOOKUP_SRC: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_SRC;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_37 {
+    BPF_FIB_LOOKUP_DIRECT = 1,
+    BPF_FIB_LOOKUP_OUTPUT = 2,
+    BPF_FIB_LOOKUP_SKIP_NEIGH = 4,
+    BPF_FIB_LOOKUP_TBID = 8,
+    BPF_FIB_LOOKUP_SRC = 16,
+}
+pub const BPF_FIB_LKUP_RET_SUCCESS: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_SUCCESS;
+pub const BPF_FIB_LKUP_RET_BLACKHOLE: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_BLACKHOLE;
+pub const BPF_FIB_LKUP_RET_UNREACHABLE: _bindgen_ty_38 =
+    _bindgen_ty_38::BPF_FIB_LKUP_RET_UNREACHABLE;
+pub const BPF_FIB_LKUP_RET_PROHIBIT: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_PROHIBIT;
+pub const BPF_FIB_LKUP_RET_NOT_FWDED: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_NOT_FWDED;
+pub const BPF_FIB_LKUP_RET_FWD_DISABLED: _bindgen_ty_38 =
+    _bindgen_ty_38::BPF_FIB_LKUP_RET_FWD_DISABLED;
+pub const BPF_FIB_LKUP_RET_UNSUPP_LWT: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_UNSUPP_LWT;
+pub const BPF_FIB_LKUP_RET_NO_NEIGH: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_NO_NEIGH;
+pub const BPF_FIB_LKUP_RET_FRAG_NEEDED: _bindgen_ty_38 =
+    _bindgen_ty_38::BPF_FIB_LKUP_RET_FRAG_NEEDED;
+pub const BPF_FIB_LKUP_RET_NO_SRC_ADDR: _bindgen_ty_38 =
+    _bindgen_ty_38::BPF_FIB_LKUP_RET_NO_SRC_ADDR;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_38 {
+    BPF_FIB_LKUP_RET_SUCCESS = 0,
+    BPF_FIB_LKUP_RET_BLACKHOLE = 1,
+    BPF_FIB_LKUP_RET_UNREACHABLE = 2,
+    BPF_FIB_LKUP_RET_PROHIBIT = 3,
+    BPF_FIB_LKUP_RET_NOT_FWDED = 4,
+    BPF_FIB_LKUP_RET_FWD_DISABLED = 5,
+    BPF_FIB_LKUP_RET_UNSUPP_LWT = 6,
+    BPF_FIB_LKUP_RET_NO_NEIGH = 7,
+    BPF_FIB_LKUP_RET_FRAG_NEEDED = 8,
+    BPF_FIB_LKUP_RET_NO_SRC_ADDR = 9,
+}
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum bpf_task_fd_type {
@@ -1656,6 +1969,19 @@ pub enum bpf_task_fd_type {
     BPF_FD_TYPE_KRETPROBE = 3,
     BPF_FD_TYPE_UPROBE = 4,
     BPF_FD_TYPE_URETPROBE = 5,
+}
+pub const BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG: _bindgen_ty_39 =
+    _bindgen_ty_39::BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG;
+pub const BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL: _bindgen_ty_39 =
+    _bindgen_ty_39::BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL;
+pub const BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP: _bindgen_ty_39 =
+    _bindgen_ty_39::BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_39 {
+    BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG = 1,
+    BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL = 2,
+    BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP = 4,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
