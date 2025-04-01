@@ -2,7 +2,7 @@
 #![no_main]
 
 use aya_ebpf::{bindings::xdp_action::XDP_PASS, macros::xdp, programs::XdpContext};
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 
 macro_rules! probe {

@@ -2,7 +2,7 @@
 #![no_main]
 
 use aya_ebpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 
 #[xdp]

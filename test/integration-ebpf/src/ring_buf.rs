@@ -7,7 +7,7 @@ use aya_ebpf::{
     programs::ProbeContext,
 };
 use integration_common::ring_buf::Registers;
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 
 #[map]

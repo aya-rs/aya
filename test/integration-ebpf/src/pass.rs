@@ -2,7 +2,7 @@
 #![no_main]
 
 use aya_ebpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 
 // Note: the `frags` attribute causes this probe to be incompatible with kernel versions < 5.18.0.

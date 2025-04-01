@@ -5,7 +5,7 @@ use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use aya_ebpf::{macros::uprobe, programs::ProbeContext};
 use aya_log_ebpf::{debug, error, info, trace, warn};
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 
 #[uprobe]

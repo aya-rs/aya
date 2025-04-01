@@ -5,7 +5,7 @@
 #![no_main]
 
 use aya_ebpf::{macros::socket_filter, programs::SkBuffContext};
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 
 // Introduced in kernel v3.19.

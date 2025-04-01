@@ -6,7 +6,7 @@ use aya_ebpf::{
     maps::Array,
     programs::RawTracePointContext,
 };
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 use integration_common::raw_tracepoint::SysEnterEvent;
 

@@ -8,7 +8,7 @@ use aya_ebpf::{
         FlowDissectorContext, ProbeContext, RetProbeContext, TracePointContext, XdpContext,
     },
 };
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 
 #[xdp]

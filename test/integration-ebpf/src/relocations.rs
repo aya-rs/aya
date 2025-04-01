@@ -8,7 +8,7 @@ use aya_ebpf::{
     maps::Array,
     programs::ProbeContext,
 };
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 
 #[map]

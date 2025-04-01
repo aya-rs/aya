@@ -9,7 +9,7 @@ use aya_ebpf::{
     maps::{Array, HashMap},
     programs::SkBuffContext,
 };
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 
 // Introduced in kernel v3.19.

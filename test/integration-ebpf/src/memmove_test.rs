@@ -9,7 +9,7 @@ use aya_ebpf::{
     maps::HashMap,
     programs::XdpContext,
 };
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 use network_types::{
     eth::{EthHdr, EtherType},

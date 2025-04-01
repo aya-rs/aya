@@ -8,7 +8,7 @@ use aya_ebpf::{
     programs::ProbeContext,
 };
 use integration_common::bpf_probe_read::{RESULT_BUF_LEN, TestResult};
-#[cfg(not(test))]
+#[cfg(target_arch = "bpf")]
 extern crate ebpf_panic;
 
 fn read_str_bytes(
