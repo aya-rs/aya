@@ -11,7 +11,6 @@ use std::{
 };
 
 use anyhow::{Context as _, Result, anyhow, bail};
-use base64::engine::Engine as _;
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 use walkdir::WalkDir;
@@ -229,55 +228,69 @@ pub fn run(opts: Options) -> Result<()> {
 
             create_dir_all(&cache_dir).context("failed to create cache dir")?;
             let gen_init_cpio = cache_dir.join("gen_init_cpio");
-            if !gen_init_cpio
-                .try_exists()
-                .context("failed to check existence of gen_init_cpio")?
+            let etag_path = cache_dir.join("gen_init_cpio.etag");
             {
-                // TODO(https://github.com/oxidecomputer/third-party-api-clients/issues/96): Use ETag-based caching.
-                let client = octorust::Client::new(
-                    String::from("aya-xtask-integration-test-run"),
-                    github_api_token.map(octorust::auth::Credentials::Token),
-                )?;
-                let octorust::Response {
-                    status: _,
-                    headers: _,
-                    body: octorust::types::ContentFile { mut content, .. },
-                } = tokio::runtime::Builder::new_current_thread()
-                    .enable_all()
-                    .build()
-                    .unwrap()
-                    .block_on(client.repos().get_content_file(
-                        "torvalds",
-                        "linux",
-                        "usr/gen_init_cpio.c",
-                        "master",
-                    ))
-                    .context("failed to download gen_init_cpio.c")?;
-                // Github very helpfully wraps their base64 at 10 columns /s.
-                content.retain(|c| !c.is_whitespace());
-                let content = base64::engine::general_purpose::STANDARD
-                    .decode(content)
-                    .context("failed to decode gen_init_cpio.c")?;
+                let gen_init_cpio_exists = gen_init_cpio.try_exists().with_context(|| {
+                    format!("failed to check existence of {}", gen_init_cpio.display())
+                })?;
+                let etag_path_exists = etag_path.try_exists().with_context(|| {
+                    format!("failed to check existence of {}", etag_path.display())
+                })?;
+                if !gen_init_cpio_exists && etag_path_exists {
+                    println!(
+                        "cargo:warning=({}).exists()={} != ({})={} (mismatch)",
+                        gen_init_cpio.display(),
+                        gen_init_cpio_exists,
+                        etag_path.display(),
+                        etag_path_exists,
+                    )
+                }
+            }
 
+            let gen_init_cpio_source = {
+                drop(github_api_token); // Currently unused, but kept around in case we need it in the future.
+
+                let mut curl = Command::new("curl");
+                curl.args([
+                    "-sfSL",
+                    "https://raw.githubusercontent.com/torvalds/linux/master/usr/gen_init_cpio.c",
+                ]);
+                for arg in ["--etag-compare", "--etag-save"] {
+                    curl.arg(arg).arg(&etag_path);
+                }
+
+                let Output {
+                    status,
+                    stdout,
+                    stderr,
+                } = curl
+                    .output()
+                    .with_context(|| format!("failed to run {curl:?}"))?;
+                if status.code() != Some(0) {
+                    bail!("{curl:?} failed: stdout={stdout:?} stderr={stderr:?}")
+                }
+                stdout
+            };
+
+            if !gen_init_cpio_source.is_empty() {
                 let mut clang = Command::new("clang");
                 clang
                     .args(["-g", "-O2", "-x", "c", "-", "-o"])
-                    .arg(&gen_init_cpio);
-                let mut child = clang
-                    .stdin(Stdio::piped())
-                    .stdout(Stdio::piped())
-                    .stderr(Stdio::piped())
+                    .arg(&gen_init_cpio)
+                    .stdin(Stdio::piped());
+                let mut clang_child = clang
                     .spawn()
                     .with_context(|| format!("failed to spawn {clang:?}"))?;
 
-                let Child { stdin, .. } = &mut child;
+                let Child { stdin, .. } = &mut clang_child;
+
                 let mut stdin = stdin.take().unwrap();
                 stdin
-                    .write_all(&content)
+                    .write_all(&gen_init_cpio_source)
                     .with_context(|| format!("failed to write to {clang:?} stdin"))?;
-                std::mem::drop(stdin); // Send EOF.
+                drop(stdin); // Must explicitly close to signal EOF.
 
-                let output = child
+                let output = clang_child
                     .wait_with_output()
                     .with_context(|| format!("failed to wait for {clang:?}"))?;
                 let Output { status, .. } = &output;
