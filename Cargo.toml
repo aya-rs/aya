@@ -119,7 +119,3 @@ unused-extern-crates = "warn"
 [profile.release.package.integration-ebpf]
 codegen-units = 1
 debug = 2
-
-[patch.crates-io]
-# TODO: Remove when https://github.com/rust-random/getrandom/commit/b75db5cede302bc9734f5bf2b9048a6e05c7f11e appears in a release.
-getrandom = { git = "https://github.com/rust-random/getrandom.git", rev = "b75db5cede302bc9734f5bf2b9048a6e05c7f11e" }
