@@ -23,8 +23,11 @@ def main() -> None:
         module_dir = find_modules_directory('test/.tmp', image_name)
         modules.append(module_dir)
 
-    args = ' '.join(f"{image}:{module}" for image, module in zip(images, modules))
-    print(args)
+    for image, module in zip(images, modules):
+        sys.stdout.write(image)
+        sys.stdout.write(':')
+        sys.stdout.write(module)
+        sys.stdout.write('\0')
 
 if __name__ == "__main__":
     main()
