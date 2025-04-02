@@ -332,10 +332,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           set -euxo pipefail
-          ARGS=$(./.github/scripts/find_kernels.py)
+          .github/scripts/find_kernels.py | xargs -t -0 \
           cargo xtask integration-test vm --cache-dir test/.tmp \
             --github-api-token ${{ secrets.GITHUB_TOKEN }} \
-            ${ARGS}
 
       - name: Run virtualized integration tests
         if: runner.os == 'macOS'
@@ -344,10 +343,9 @@ jobs:
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: x86_64-linux-musl-gcc
         run: |
           set -euxo pipefail
-          ARGS=$(./.github/scripts/find_kernels.py)
+          .github/scripts/find_kernels.py | xargs -t -0 \
           cargo xtask integration-test vm --cache-dir test/.tmp \
             --github-api-token ${{ secrets.GITHUB_TOKEN }} \
-            ${ARGS}
 
   # Provides a single status check for the entire build workflow.
   # This is used for merge automation, like Mergify, since GH actions
