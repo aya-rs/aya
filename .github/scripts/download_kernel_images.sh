@@ -27,11 +27,6 @@ for VERSION in "${VERSIONS[@]}"; do
   FILES+=("$match")
 done
 
-# TODO(https://github.com/curl/curl/issues/15729): restore --parallel here if and when it properly
-# supports ETags.
-# TODO(https://github.com/curl/curl/issues/15730): restore --create-dirs when it works in the
-# presence of `--etag-save`.`
-#
 # Note: `--etag-{compare,save}` are not idempotent until curl 8.9.0 which included
 # https://github.com/curl/curl/commit/85efbb92b8e6679705e122cee45ce76c56414a3e. At the time of
 # writing our CI uses Ubuntu 22.04 which has curl 7.81.0 and the latest available is Ubuntu 24.04
