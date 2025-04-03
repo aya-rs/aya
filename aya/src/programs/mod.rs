@@ -57,6 +57,7 @@ pub mod kprobe;
 pub mod links;
 pub mod lirc_mode2;
 pub mod lsm;
+pub mod lsm_cgroup;
 pub mod perf_attach;
 pub mod perf_event;
 pub mod raw_trace_point;
@@ -109,6 +110,7 @@ pub use crate::programs::{
     links::{CgroupAttachMode, Link, LinkOrder},
     lirc_mode2::LircMode2,
     lsm::Lsm,
+    lsm_cgroup::LsmCgroup,
     perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy},
     probe::ProbeKind,
     raw_trace_point::RawTracePoint,
@@ -308,6 +310,8 @@ pub enum Program {
     RawTracePoint(RawTracePoint),
     /// A [`Lsm`] program
     Lsm(Lsm),
+    /// A [`LsmCgroup`] program
+    LsmCgroup(LsmCgroup),
     /// A [`BtfTracePoint`] program
     BtfTracePoint(BtfTracePoint),
     /// A [`FEntry`] program
@@ -332,32 +336,40 @@ impl Program {
     /// Returns the program type.
     pub fn prog_type(&self) -> ProgramType {
         match self {
-            Self::KProbe(_) => KProbe::PROGRAM_TYPE,
-            Self::UProbe(_) => UProbe::PROGRAM_TYPE,
-            Self::TracePoint(_) => TracePoint::PROGRAM_TYPE,
-            Self::SocketFilter(_) => SocketFilter::PROGRAM_TYPE,
-            Self::Xdp(_) => Xdp::PROGRAM_TYPE,
-            Self::SkMsg(_) => SkMsg::PROGRAM_TYPE,
-            Self::SkSkb(_) => SkSkb::PROGRAM_TYPE,
-            Self::SockOps(_) => SockOps::PROGRAM_TYPE,
-            Self::SchedClassifier(_) => SchedClassifier::PROGRAM_TYPE,
-            Self::CgroupSkb(_) => CgroupSkb::PROGRAM_TYPE,
-            Self::CgroupSysctl(_) => CgroupSysctl::PROGRAM_TYPE,
-            Self::CgroupSockopt(_) => CgroupSockopt::PROGRAM_TYPE,
-            Self::LircMode2(_) => LircMode2::PROGRAM_TYPE,
-            Self::PerfEvent(_) => PerfEvent::PROGRAM_TYPE,
-            Self::RawTracePoint(_) => RawTracePoint::PROGRAM_TYPE,
-            Self::Lsm(_) => Lsm::PROGRAM_TYPE,
-            Self::BtfTracePoint(_) => BtfTracePoint::PROGRAM_TYPE,
-            Self::FEntry(_) => FEntry::PROGRAM_TYPE,
-            Self::FExit(_) => FExit::PROGRAM_TYPE,
-            Self::Extension(_) => Extension::PROGRAM_TYPE,
-            Self::CgroupSockAddr(_) => CgroupSockAddr::PROGRAM_TYPE,
-            Self::SkLookup(_) => SkLookup::PROGRAM_TYPE,
-            Self::CgroupSock(_) => CgroupSock::PROGRAM_TYPE,
-            Self::CgroupDevice(_) => CgroupDevice::PROGRAM_TYPE,
-            Self::Iter(_) => Iter::PROGRAM_TYPE,
-            Self::FlowDissector(_) => FlowDissector::PROGRAM_TYPE,
+            Self::KProbe(_) | Self::UProbe(_) => ProgramType::KProbe,
+            Self::TracePoint(_) => ProgramType::TracePoint,
+            Self::SocketFilter(_) => ProgramType::SocketFilter,
+            Self::Xdp(_) => ProgramType::Xdp,
+            Self::SkMsg(_) => ProgramType::SkMsg,
+            Self::SkSkb(_) => ProgramType::SkSkb,
+            Self::SockOps(_) => ProgramType::SockOps,
+            Self::SchedClassifier(_) => ProgramType::SchedClassifier,
+            Self::CgroupSkb(_) => ProgramType::CgroupSkb,
+            Self::CgroupSysctl(_) => ProgramType::CgroupSysctl,
+            Self::CgroupSockopt(_) => ProgramType::CgroupSockopt,
+            Self::LircMode2(_) => ProgramType::LircMode2,
+            Self::PerfEvent(_) => ProgramType::PerfEvent,
+            Self::RawTracePoint(_) => ProgramType::RawTracePoint,
+            Self::Lsm(_) => ProgramType::Lsm,
+            Self::LsmCgroup(_) => ProgramType::Lsm,
+            // The following program types are a subset of `TRACING` programs:
+            //
+            // - `BPF_TRACE_RAW_TP` (`BtfTracePoint`)
+            // - `BTF_TRACE_FENTRY` (`FEntry`)
+            // - `BPF_MODIFY_RETURN` (not supported yet in Aya)
+            // - `BPF_TRACE_FEXIT` (`FExit`)
+            // - `BPF_TRACE_ITER` (`Iter`)
+            //
+            // https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/syscall.c#L3935-L3940
+            Self::BtfTracePoint(_) | Self::FEntry(_) | Self::FExit(_) | Self::Iter(_) => {
+                ProgramType::Tracing
+            }
+            Self::Extension(_) => ProgramType::Extension,
+            Self::CgroupSockAddr(_) => ProgramType::CgroupSockAddr,
+            Self::SkLookup(_) => ProgramType::SkLookup,
+            Self::CgroupSock(_) => ProgramType::CgroupSock,
+            Self::CgroupDevice(_) => ProgramType::CgroupDevice,
+            Self::FlowDissector(_) => ProgramType::FlowDissector,
         }
     }
 
@@ -380,6 +392,7 @@ impl Program {
             Self::PerfEvent(p) => p.pin(path),
             Self::RawTracePoint(p) => p.pin(path),
             Self::Lsm(p) => p.pin(path),
+            Self::LsmCgroup(p) => p.pin(path),
             Self::BtfTracePoint(p) => p.pin(path),
             Self::FEntry(p) => p.pin(path),
             Self::FExit(p) => p.pin(path),
@@ -412,6 +425,7 @@ impl Program {
             Self::PerfEvent(mut p) => p.unload(),
             Self::RawTracePoint(mut p) => p.unload(),
             Self::Lsm(mut p) => p.unload(),
+            Self::LsmCgroup(mut p) => p.unload(),
             Self::BtfTracePoint(mut p) => p.unload(),
             Self::FEntry(mut p) => p.unload(),
             Self::FExit(mut p) => p.unload(),
@@ -446,6 +460,7 @@ impl Program {
             Self::PerfEvent(p) => p.fd(),
             Self::RawTracePoint(p) => p.fd(),
             Self::Lsm(p) => p.fd(),
+            Self::LsmCgroup(p) => p.fd(),
             Self::BtfTracePoint(p) => p.fd(),
             Self::FEntry(p) => p.fd(),
             Self::FExit(p) => p.fd(),
@@ -481,6 +496,7 @@ impl Program {
             Self::PerfEvent(p) => p.info(),
             Self::RawTracePoint(p) => p.info(),
             Self::Lsm(p) => p.info(),
+            Self::LsmCgroup(p) => p.info(),
             Self::BtfTracePoint(p) => p.info(),
             Self::FEntry(p) => p.info(),
             Self::FExit(p) => p.info(),
@@ -795,6 +811,7 @@ impl_program_unload!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
@@ -837,6 +854,7 @@ impl_fd!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
@@ -944,6 +962,7 @@ impl_program_pin!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
@@ -984,8 +1003,9 @@ impl_from_pin!(
     SkMsg,
     CgroupSysctl,
     LircMode2,
-    PerfEvent,
     Lsm,
+    LsmCgroup,
+    PerfEvent,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
@@ -1150,6 +1170,7 @@ impl_try_from_program!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
@@ -1178,6 +1199,7 @@ impl_info!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
