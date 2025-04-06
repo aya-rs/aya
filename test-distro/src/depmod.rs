@@ -6,16 +6,15 @@
 
 use std::{
     fs::File,
-    io::{BufWriter, Read, Write as _},
+    io::{BufWriter, Write as _},
     path::PathBuf,
 };
 
 use anyhow::{Context as _, anyhow};
 use clap::Parser;
 use object::{Object, ObjectSection, ObjectSymbol, Section};
-use test_distro::resolve_modules_dir;
+use test_distro::{read_to_end, resolve_modules_dir};
 use walkdir::WalkDir;
-use xz2::read::XzDecoder;
 
 #[derive(Parser)]
 struct Args {
@@ -65,26 +64,12 @@ fn main() -> anyhow::Result<()> {
                 continue;
             };
 
-            let mut f =
-                File::open(path).with_context(|| format!("failed to open: {}", path.display()))?;
-            let stat = f
-                .metadata()
-                .with_context(|| format!("failed to get metadata for {}", path.display()))?;
+            let contents = read_to_end(path, compressed)
+                .with_context(|| format!("read_to_end({})", path.display()))?;
 
-            if compressed {
-                let mut decoder = XzDecoder::new(f);
-                // We don't know the size of the decompressed data, so we assume it's
-                // no more than twice the size of the compressed data.
-                let mut decompressed = Vec::with_capacity(stat.len() as usize * 2);
-                decoder.read_to_end(&mut decompressed)?;
-                read_aliases_from_module(&decompressed, module_name, &mut output)
-            } else {
-                let mut buf = Vec::with_capacity(stat.len() as usize);
-                f.read_to_end(&mut buf)
-                    .with_context(|| format!("failed to read: {}", path.display()))?;
-                read_aliases_from_module(&buf, module_name, &mut output)
-            }
-            .with_context(|| format!("failed to read aliases from module {}", path.display()))?;
+            read_aliases_from_module(&contents, module_name, &mut output).with_context(|| {
+                format!("failed to read aliases from module {}", path.display())
+            })?;
         }
     }
     Ok(())
