@@ -28,3 +28,30 @@ pub fn resolve_modules_dir() -> anyhow::Result<PathBuf> {
     );
     Ok(modules_dir)
 }
+
+pub fn read_to_end(path: &std::path::Path, compressed: bool) -> anyhow::Result<Vec<u8>> {
+    use std::io::Read as _;
+
+    let mut f = std::fs::File::open(path).context("open()")?;
+
+    let mut contents = Vec::new();
+
+    if compressed {
+        let stat = f.metadata().context("metadata()")?;
+        #[expect(clippy::manual_ok_err)]
+        let len = match usize::try_from(stat.len()) {
+            Ok(len) => Some(len),
+            Err(std::num::TryFromIntError { .. }) => None,
+        }
+        .and_then(|len| len.checked_mul(2))
+        .ok_or_else(|| anyhow::anyhow!("2 * {stat:?}.len() is too large to fit in a usize"))?;
+        contents.reserve(len);
+
+        xz2::read::XzDecoder::new(f).read_to_end(&mut contents)
+    } else {
+        f.read_to_end(&mut contents)
+    }
+    .context("read_to_end()")?;
+
+    Ok(contents)
+}
