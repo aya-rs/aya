@@ -41,36 +41,35 @@ fn main() -> anyhow::Result<()> {
     let mut output = BufWriter::new(&f);
     for entry in WalkDir::new(modules_dir) {
         let entry = entry.context("failed to read entry in walkdir")?;
-        if entry.file_type().is_file() {
-            let path = entry.path();
-
-            let module_name = path
-                .file_name()
-                .ok_or_else(|| anyhow!("{} does not have a file name", path.display()))?
-                .to_str()
-                .ok_or_else(|| anyhow!("{} is not valid utf-8", path.display()))?;
-
-            let (module_name, compressed) =
-                if let Some(module_name) = module_name.strip_suffix(".xz") {
-                    (module_name, true)
-                } else {
-                    (module_name, false)
-                };
-
-            let module_name = if let Some(module_name) = module_name.strip_suffix(".ko") {
-                module_name
-            } else {
-                // Not a kernel module
-                continue;
-            };
-
-            let contents = read_to_end(path, compressed)
-                .with_context(|| format!("read_to_end({})", path.display()))?;
-
-            read_aliases_from_module(&contents, module_name, &mut output).with_context(|| {
-                format!("failed to read aliases from module {}", path.display())
-            })?;
+        if !entry.file_type().is_file() {
+            continue;
         }
+        let path = entry.path();
+
+        let module_name = path
+            .file_name()
+            .ok_or_else(|| anyhow!("{} does not have a file name", path.display()))?
+            .to_str()
+            .ok_or_else(|| anyhow!("{} is not valid utf-8", path.display()))?;
+
+        let (module_name, compressed) = if let Some(module_name) = module_name.strip_suffix(".xz") {
+            (module_name, true)
+        } else {
+            (module_name, false)
+        };
+
+        let module_name = if let Some(module_name) = module_name.strip_suffix(".ko") {
+            module_name
+        } else {
+            // Not a kernel module
+            continue;
+        };
+
+        let contents = read_to_end(path, compressed)
+            .with_context(|| format!("read_to_end({})", path.display()))?;
+
+        read_aliases_from_module(&contents, module_name, &mut output)
+            .with_context(|| format!("failed to read aliases from module {}", path.display()))?;
     }
     Ok(())
 }
