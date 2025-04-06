@@ -35,4 +35,4 @@ nix = { workspace = true, features = [
 ] }
 object = { workspace = true, features = ["elf", "read_core", "std"] }
 walkdir = { workspace = true }
-xz2 = { workspace = true }
+xz2 = { workspace = true, optional = true } # Optional to allow building without a cross toolchain.
