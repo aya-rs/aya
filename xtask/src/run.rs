@@ -338,10 +338,11 @@ pub fn run(opts: Options) -> Result<()> {
 
                 let target = format!("{guest_arch}-unknown-linux-musl");
 
-                let test_distro: Vec<(String, PathBuf)> = build(Some(&target), |cmd| {
-                    cmd.args(["--package", "test-distro", "--profile", "release"])
-                })
-                .context("building test-distro package failed")?;
+                let test_distro_args =
+                    ["--package", "test-distro", "--release", "--features", "xz2"];
+                let test_distro: Vec<(String, PathBuf)> =
+                    build(Some(&target), |cmd| cmd.args(test_distro_args))
+                        .context("building test-distro package failed")?;
 
                 let binaries = binaries(Some(&target))?;
 
@@ -415,16 +416,9 @@ pub fn run(opts: Options) -> Result<()> {
                 // Preparing the `modules.alias` file inside the VM as part of
                 // `/init` is slow. It's faster to prepare it here.
                 Command::new("cargo")
-                    .args([
-                        "run",
-                        "--package",
-                        "test-distro",
-                        "--bin",
-                        "depmod",
-                        "--release",
-                        "--",
-                        "-b",
-                    ])
+                    .arg("run")
+                    .args(test_distro_args)
+                    .args(["--bin", "depmod", "--", "-b"])
                     .arg(&modules_dir)
                     .status()
                     .context("failed to run depmod")?;
