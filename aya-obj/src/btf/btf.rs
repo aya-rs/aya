@@ -14,7 +14,7 @@ use object::{Endianness, SectionIndex};
 use crate::{
     Object,
     btf::{
-        Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
+        Array, BtfEnum, BtfKind, BtfMember, BtfRebaseInfo, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
         IntEncoding, LineInfo, Struct, Typedef, Union, VarLinkage,
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
@@ -268,6 +268,34 @@ impl Btf {
         }
     }
 
+    /// Merges a base BTF and multiple split BTFs into a single BTF.
+    pub fn merge_split_btfs(base_btf: &Btf, split_btfs: &[Btf]) -> Btf {
+        // Create a Btf from all the btfs.
+        let mut out_btf = base_btf.clone();
+
+        let mut rebase_info = BtfRebaseInfo {
+            str_rebase_from: out_btf.strings.len() as u32,
+            types_rebase_from: out_btf.types.types.len() as u32,
+            str_new_offset: out_btf.strings.len() as u32,
+            types_new_offset: out_btf.types.types.len() as u32,
+        };
+        for btf in split_btfs {
+            rebase_info.str_new_offset = out_btf.strings.len() as u32;
+            rebase_info.types_new_offset = out_btf.types.types.len() as u32;
+            out_btf.strings.extend(&btf.strings);
+            out_btf.header.str_len = out_btf.strings.len() as u32;
+            // Skip over the Unknown type at offset 0, as this only exists in
+            // the "base" BTF, and not the "split" BTFs.
+            for ty in btf.types.types.iter().skip(1) {
+                out_btf.types.types.push(ty.rebase(&rebase_info));
+            }
+            out_btf.header.type_len += btf.header.type_len;
+            out_btf.header.str_off += btf.header.type_len;
+        }
+
+        out_btf
+    }
+
     pub(crate) fn is_empty(&self) -> bool {
         // the first one is awlays BtfType::Unknown
         self.types.types.len() < 2
@@ -296,10 +324,36 @@ impl Btf {
         type_id as u32
     }
 
-    /// Loads BTF metadata from `/sys/kernel/btf/vmlinux`.
+    /// Loads BTF metadata from `/sys/kernel/btf`.
     #[cfg(feature = "std")]
     pub fn from_sys_fs() -> Result<Btf, BtfError> {
-        Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
+        let base_btf = Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())?;
+        let mut split_btfs = vec![];
+        let dir_iter = std::fs::read_dir("/sys/kernel/btf")
+            .ok()
+            .into_iter()
+            .flatten()
+            .filter_map(|v| v.ok())
+            .filter(|v| v.file_name() != "vmlinux");
+        for entry in dir_iter {
+            match entry.file_type() {
+                Ok(v) if !v.is_file() => continue,
+                Err(_err) => continue,
+                Ok(_v) => (),
+            }
+            match Btf::parse_file(entry.path(), Endianness::default()) {
+                Ok(v) => split_btfs.push(v),
+                // Ignore errors - the goal is to enhance the base BTF with as
+                // many split BTFs we can.
+                Err(_err) => (),
+            }
+        }
+
+        if split_btfs.len() > 0 {
+            Ok(Self::merge_split_btfs(&base_btf, &split_btfs))
+        } else {
+            Ok(base_btf)
+        }
     }
 
     /// Loads BTF metadata from the given `path`.
