@@ -7,6 +7,45 @@ use object::Endianness;
 
 use crate::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH};
 
+#[derive(Debug)]
+pub(crate) struct BtfRebaseInfoField {
+    /// Index of the first offset to allow rebasing from.
+    ///
+    /// Offsets below this value are considered to be part of the "base BTF",
+    /// and as such should not be relocated.
+    pub rebase_from: u32,
+    /// The new starting offset.
+    pub new_offset: u32,
+}
+
+impl BtfRebaseInfoField {
+    fn rebase(&self, offset: u32) -> u32 {
+        let &Self {
+            rebase_from,
+            new_offset,
+        } = self;
+        match offset.checked_sub(rebase_from) {
+            None => offset,
+            Some(offset) => new_offset + offset,
+        }
+    }
+}
+
+pub(crate) struct BtfRebaseInfo {
+    pub strings: BtfRebaseInfoField,
+    pub types: BtfRebaseInfoField,
+}
+
+impl BtfRebaseInfo {
+    fn rebase_str(&self, str_offset: u32) -> u32 {
+        self.strings.rebase(str_offset)
+    }
+
+    fn rebase_type(&self, type_offset: u32) -> u32 {
+        self.types.rebase(type_offset)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum BtfType {
     Unknown,
@@ -51,6 +90,19 @@ impl Fwd {
     pub(crate) fn type_info_size(&self) -> usize {
         mem::size_of::<Self>()
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            _unused,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            _unused,
+        }
+    }
 }
 
 #[repr(C)]
@@ -82,6 +134,19 @@ impl Const {
             btf_type,
         }
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            btf_type,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            btf_type: rebase_info.rebase_type(btf_type),
+        }
+    }
 }
 
 #[repr(C)]
@@ -104,6 +169,19 @@ impl Volatile {
     pub(crate) fn type_info_size(&self) -> usize {
         mem::size_of::<Self>()
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            btf_type,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            btf_type: rebase_info.rebase_type(btf_type),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -124,6 +202,19 @@ impl Restrict {
 
     pub(crate) fn type_info_size(&self) -> usize {
         mem::size_of::<Self>()
+    }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            _info,
+            btf_type,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            _info,
+            btf_type: rebase_info.rebase_type(btf_type),
+        }
     }
 }
 
@@ -154,6 +245,19 @@ impl Ptr {
             name_offset,
             info,
             btf_type,
+        }
+    }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            btf_type,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            btf_type: rebase_info.rebase_type(btf_type),
         }
     }
 }
@@ -187,6 +291,19 @@ impl Typedef {
             btf_type,
         }
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            btf_type,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            btf_type: rebase_info.rebase_type(btf_type),
+        }
+    }
 }
 
 #[repr(C)]
@@ -213,6 +330,19 @@ impl Float {
         let info = (BtfKind::Float as u32) << 24;
         Self {
             name_offset,
+            info,
+            size,
+        }
+    }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            size,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
             info,
             size,
         }
@@ -276,6 +406,19 @@ impl Func {
     pub(crate) fn set_linkage(&mut self, linkage: FuncLinkage) {
         self.info = (self.info & 0xFFFF0000) | (linkage as u32) & 0xFFFF;
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            btf_type,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            btf_type: rebase_info.rebase_type(btf_type),
+        }
+    }
 }
 
 #[repr(C)]
@@ -305,6 +448,19 @@ impl TypeTag {
             name_offset,
             info,
             btf_type,
+        }
+    }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            btf_type,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            btf_type: rebase_info.rebase_type(btf_type),
         }
     }
 }
@@ -391,6 +547,21 @@ impl Int {
     pub(crate) fn bits(&self) -> u32 {
         self.data & 0x000000ff
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            size,
+            data,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            size,
+            data,
+        }
+    }
 }
 
 #[repr(C)]
@@ -403,6 +574,14 @@ pub struct BtfEnum {
 impl BtfEnum {
     pub fn new(name_offset: u32, value: u32) -> Self {
         Self { name_offset, value }
+    }
+
+    fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self { name_offset, value } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            value,
+        }
     }
 }
 
@@ -470,6 +649,21 @@ impl Enum {
             self.info &= !(1 << 31);
         }
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            size,
+            ref variants,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            size,
+            variants: variants.iter().map(|v| v.rebase(rebase_info)).collect(),
+        }
+    }
 }
 
 #[repr(C)]
@@ -486,6 +680,19 @@ impl BtfEnum64 {
             name_offset,
             value_low: value as u32,
             value_high: (value >> 32) as u32,
+        }
+    }
+
+    fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            value_low,
+            value_high,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            value_low,
+            value_high,
         }
     }
 }
@@ -562,6 +769,21 @@ impl Enum64 {
             variants,
         }
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            size,
+            ref variants,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            size,
+            variants: variants.iter().map(|v| v.rebase(rebase_info)).collect(),
+        }
+    }
 }
 
 #[repr(C)]
@@ -570,6 +792,21 @@ pub(crate) struct BtfMember {
     pub(crate) name_offset: u32,
     pub(crate) btf_type: u32,
     pub(crate) offset: u32,
+}
+
+impl BtfMember {
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            btf_type,
+            offset,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            btf_type: rebase_info.rebase_type(btf_type),
+            offset,
+        }
+    }
 }
 
 #[repr(C)]
@@ -648,6 +885,21 @@ impl Struct {
         let size = if k_flag { member.offset >> 24 } else { 0 };
 
         size as usize
+    }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            size,
+            ref members,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            size,
+            members: members.iter().map(|v| v.rebase(rebase_info)).collect(),
+        }
     }
 }
 
@@ -728,6 +980,21 @@ impl Union {
 
         size as usize
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            size,
+            ref members,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            size,
+            members: members.iter().map(|v| v.rebase(rebase_info)).collect(),
+        }
+    }
 }
 
 #[repr(C)]
@@ -736,6 +1003,21 @@ pub(crate) struct BtfArray {
     pub(crate) element_type: u32,
     pub(crate) index_type: u32,
     pub(crate) len: u32,
+}
+
+impl BtfArray {
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            element_type,
+            index_type,
+            len,
+        } = self;
+        Self {
+            element_type: rebase_info.rebase_type(element_type),
+            index_type: rebase_info.rebase_type(index_type),
+            len,
+        }
+    }
 }
 
 #[repr(C)]
@@ -786,6 +1068,21 @@ impl Array {
             },
         }
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            _unused,
+            ref array,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            _unused,
+            array: array.rebase(rebase_info),
+        }
+    }
 }
 
 #[repr(C)]
@@ -793,6 +1090,19 @@ impl Array {
 pub struct BtfParam {
     pub name_offset: u32,
     pub btf_type: u32,
+}
+
+impl BtfParam {
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            btf_type,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            btf_type: rebase_info.rebase_type(btf_type),
+        }
+    }
 }
 
 #[repr(C)]
@@ -845,6 +1155,21 @@ impl FuncProto {
             info,
             return_type,
             params,
+        }
+    }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            return_type,
+            ref params,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            return_type: rebase_info.rebase_type(return_type),
+            params: params.iter().map(|v| v.rebase(rebase_info)).collect(),
         }
     }
 }
@@ -912,6 +1237,21 @@ impl Var {
             linkage,
         }
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            btf_type,
+            ref linkage,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            btf_type: rebase_info.rebase_type(btf_type),
+            linkage: linkage.clone(),
+        }
+    }
 }
 
 #[repr(C)]
@@ -920,6 +1260,21 @@ pub struct DataSecEntry {
     pub btf_type: u32,
     pub offset: u32,
     pub size: u32,
+}
+
+impl DataSecEntry {
+    fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            btf_type,
+            offset,
+            size,
+        } = self;
+        Self {
+            btf_type: rebase_info.rebase_type(btf_type),
+            offset,
+            size,
+        }
+    }
 }
 
 #[repr(C)]
@@ -981,6 +1336,21 @@ impl DataSec {
             entries,
         }
     }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            size,
+            ref entries,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            size,
+            entries: entries.iter().map(|v| v.rebase(rebase_info)).collect(),
+        }
+    }
 }
 
 #[repr(C)]
@@ -1023,6 +1393,21 @@ impl DeclTag {
             name_offset,
             info,
             btf_type,
+            component_index,
+        }
+    }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        let &Self {
+            name_offset,
+            info,
+            btf_type,
+            component_index,
+        } = self;
+        Self {
+            name_offset: rebase_info.rebase_str(name_offset),
+            info,
+            btf_type: rebase_info.rebase_type(btf_type),
             component_index,
         }
     }
@@ -1424,6 +1809,31 @@ impl BtfType {
             (self.kind(), other.kind()),
             (BtfKind::Enum, BtfKind::Enum64) | (BtfKind::Enum64, BtfKind::Enum)
         )
+    }
+
+    pub(crate) fn rebase(&self, rebase_info: &BtfRebaseInfo) -> Self {
+        match self {
+            BtfType::Unknown => BtfType::Unknown,
+            BtfType::Fwd(t) => BtfType::Fwd(t.rebase(rebase_info)),
+            BtfType::Const(t) => BtfType::Const(t.rebase(rebase_info)),
+            BtfType::Volatile(t) => BtfType::Volatile(t.rebase(rebase_info)),
+            BtfType::Restrict(t) => BtfType::Restrict(t.rebase(rebase_info)),
+            BtfType::Ptr(t) => BtfType::Ptr(t.rebase(rebase_info)),
+            BtfType::Typedef(t) => BtfType::Typedef(t.rebase(rebase_info)),
+            BtfType::Func(t) => BtfType::Func(t.rebase(rebase_info)),
+            BtfType::Int(t) => BtfType::Int(t.rebase(rebase_info)),
+            BtfType::Float(t) => BtfType::Float(t.rebase(rebase_info)),
+            BtfType::Enum(t) => BtfType::Enum(t.rebase(rebase_info)),
+            BtfType::Enum64(t) => BtfType::Enum64(t.rebase(rebase_info)),
+            BtfType::Array(t) => BtfType::Array(t.rebase(rebase_info)),
+            BtfType::Struct(t) => BtfType::Struct(t.rebase(rebase_info)),
+            BtfType::Union(t) => BtfType::Union(t.rebase(rebase_info)),
+            BtfType::FuncProto(t) => BtfType::FuncProto(t.rebase(rebase_info)),
+            BtfType::Var(t) => BtfType::Var(t.rebase(rebase_info)),
+            BtfType::DataSec(t) => BtfType::DataSec(t.rebase(rebase_info)),
+            BtfType::DeclTag(t) => BtfType::DeclTag(t.rebase(rebase_info)),
+            BtfType::TypeTag(t) => BtfType::TypeTag(t.rebase(rebase_info)),
+        }
     }
 }
 
