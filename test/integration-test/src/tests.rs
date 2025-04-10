@@ -1,5 +1,6 @@
 mod bpf_probe_read;
 mod btf_relocations;
+mod btf_split;
 mod elf;
 mod info;
 mod iter;
