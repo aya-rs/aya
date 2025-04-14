@@ -10,7 +10,7 @@ use aya_ebpf_bindings::helpers::{
 };
 use aya_ebpf_cty::c_long;
 
-use crate::{EbpfContext, bindings::__sk_buff};
+use crate::{EbpfContext, bindings::__sk_buff, check_bounds_signed};
 
 pub struct SkBuff {
     pub skb: *mut __sk_buff,
@@ -88,8 +88,12 @@ impl SkBuff {
     #[inline(always)]
     pub fn load_bytes(&self, offset: usize, dst: &mut [u8]) -> Result<usize, c_long> {
         let len = usize::try_from(self.len()).map_err(|core::num::TryFromIntError { .. }| -1)?;
+        // 0 byte reads will trip the verifier. We need to ensure that the valid range of values for len is at least 1.
         let len = len.checked_sub(offset).ok_or(-1)?;
         let len = len.min(dst.len());
+        if !check_bounds_signed(len as i64, 1, dst.len() as i64) {
+            return Err(-1);
+        }
         let len_u32 = u32::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
         let ret = unsafe {
             bpf_skb_load_bytes(
