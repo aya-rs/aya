@@ -24,6 +24,7 @@ fn main() {
         .unwrap_or_default();
 
     if build_integration_bpf {
+        println!("cargo::rustc-link-arg=--btf");
         let bpf_linker = which("bpf-linker").unwrap();
         println!("cargo:rerun-if-changed={}", bpf_linker.to_str().unwrap());
     }
