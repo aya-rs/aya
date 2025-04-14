@@ -302,13 +302,11 @@ jobs:
 
       - name: Download debian kernels
         if: runner.arch == 'ARM64'
-        # TODO: enable tests on kernels before 6.0.
-        run: .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/arm64 arm64 6.1 6.12
+        run: .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/arm64 arm64 5.10 6.1 6.12
 
       - name: Download debian kernels
         if: runner.arch == 'X64'
-        # TODO: enable tests on kernels before 6.0.
-        run: .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/amd64 amd64 6.1 6.12
+        run: .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/amd64 amd64 5.10 6.1 6.12
 
       - name: Cleanup stale kernels and modules
         run: |
