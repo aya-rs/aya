@@ -75,6 +75,19 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>, toolchain: Toolch
         ]);
 
         cmd.env("CARGO_CFG_BPF_TARGET_ARCH", &arch);
+        cmd.env(
+            "CARGO_ENCODED_RUSTFLAGS",
+            ["debuginfo=2", "link-arg=--btf"]
+                .into_iter()
+                .flat_map(|flag| ["-C", flag])
+                .fold(String::new(), |mut acc, flag| {
+                    if !acc.is_empty() {
+                        acc.push('\x1f');
+                    }
+                    acc.push_str(flag);
+                    acc
+                }),
+        );
 
         // Workaround to make sure that the correct toolchain is used.
         for key in ["RUSTC", "RUSTC_WORKSPACE_WRAPPER"] {

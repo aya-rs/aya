@@ -114,7 +114,3 @@ unused_trait_names = "warn"
 
 [workspace.lints.rust]
 unused-extern-crates = "warn"
-
-[profile.release.package.integration-ebpf]
-codegen-units = 1
-debug = 2
