@@ -25,9 +25,9 @@ use aya_obj::{
 use libc::{ENOENT, ENOSPC};
 
 use crate::{
-    Btf, FEATURES, Pod, VerifierLogLevel,
+    Btf, Pod, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
-    programs::links::LinkRef,
+    programs::{ProgramType, links::LinkRef},
     sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
 };
@@ -593,7 +593,7 @@ pub(crate) fn bpf_prog_get_info_by_fd(
     // An `E2BIG` error can occur on kernels below v4.15 when handing over a large struct where the
     // extra space is not all-zero bytes.
     bpf_obj_get_info_by_fd(fd, |info: &mut bpf_prog_info| {
-        if FEATURES.prog_info_map_ids() {
+        if !map_ids.is_empty() {
             info.nr_map_ids = map_ids.len() as _;
             info.map_ids = map_ids.as_mut_ptr() as _;
         }
@@ -681,7 +681,10 @@ pub(crate) fn bpf_load_btf(
 }
 
 // SAFETY: only use for bpf_cmd that return a new file descriptor on success.
-unsafe fn fd_sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
+pub(super) unsafe fn fd_sys_bpf(
+    cmd: bpf_cmd,
+    attr: &mut bpf_attr,
+) -> io::Result<crate::MockableFd> {
     let fd = sys_bpf(cmd, attr)?;
     let fd = fd.try_into().map_err(|std::num::TryFromIntError { .. }| {
         io::Error::new(
@@ -706,7 +709,7 @@ pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<crate::MockableFd, Syscall
 }
 
 pub(crate) fn is_prog_name_supported() -> bool {
-    with_trivial_prog(|attr| {
+    with_trivial_prog(ProgramType::TracePoint, |attr| {
         let u = unsafe { &mut attr.__bindgen_anon_3 };
         let name = c"aya_name_check";
         let name_bytes = name.to_bytes();
@@ -727,7 +730,7 @@ fn new_insn(code: u8, dst_reg: u8, src_reg: u8, offset: i16, imm: i32) -> bpf_in
     insn
 }
 
-fn with_trivial_prog<T, F>(op: F) -> T
+pub(super) fn with_trivial_prog<T, F>(program_type: ProgramType, op: F) -> T
 where
     F: FnOnce(&mut bpf_attr) -> T,
 {
@@ -743,37 +746,66 @@ where
 
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
-    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
+
+    // `expected_attach_type` field was added in v4.17 https://elixir.bootlin.com/linux/v4.17/source/include/uapi/linux/bpf.h#L310.
+    let expected_attach_type = match program_type {
+        ProgramType::SkMsg => Some(bpf_attach_type::BPF_SK_MSG_VERDICT),
+        ProgramType::CgroupSockAddr => Some(bpf_attach_type::BPF_CGROUP_INET4_BIND),
+        ProgramType::LircMode2 => Some(bpf_attach_type::BPF_LIRC_MODE2),
+        ProgramType::SkReuseport => Some(bpf_attach_type::BPF_SK_REUSEPORT_SELECT),
+        ProgramType::FlowDissector => Some(bpf_attach_type::BPF_FLOW_DISSECTOR),
+        ProgramType::CgroupSysctl => Some(bpf_attach_type::BPF_CGROUP_SYSCTL),
+        ProgramType::CgroupSockopt => Some(bpf_attach_type::BPF_CGROUP_GETSOCKOPT),
+        ProgramType::Tracing => Some(bpf_attach_type::BPF_TRACE_FENTRY),
+        ProgramType::Lsm => Some(bpf_attach_type::BPF_LSM_MAC),
+        ProgramType::SkLookup => Some(bpf_attach_type::BPF_SK_LOOKUP),
+        ProgramType::Netfilter => Some(bpf_attach_type::BPF_NETFILTER),
+        // Program types below v4.17, or do not accept `expected_attach_type`, should leave the
+        // field unset.
+        //
+        // Types below v4.17:
+        ProgramType::Unspecified
+        | ProgramType::SocketFilter
+        | ProgramType::KProbe
+        | ProgramType::SchedClassifier
+        | ProgramType::SchedAction
+        | ProgramType::TracePoint
+        | ProgramType::Xdp
+        | ProgramType::PerfEvent
+        | ProgramType::CgroupSkb
+        | ProgramType::CgroupSock
+        | ProgramType::LwtInput
+        | ProgramType::LwtOutput
+        | ProgramType::LwtXmit
+        | ProgramType::SockOps
+        | ProgramType::SkSkb
+        | ProgramType::CgroupDevice
+        // Types that do not accept `expected_attach_type`:
+        | ProgramType::RawTracePoint
+        | ProgramType::LwtSeg6local
+        | ProgramType::RawTracePointWritable
+        | ProgramType::StructOps
+        | ProgramType::Extension
+        | ProgramType::Syscall => None,
+    };
+
+    match program_type {
+        ProgramType::KProbe => {
+            if let Ok(current_version) = KernelVersion::current() {
+                u.kern_version = current_version.code();
+            }
+        }
+        // syscall required to be sleepable: https://elixir.bootlin.com/linux/v5.14/source/kernel/bpf/verifier.c#L13240
+        ProgramType::Syscall => u.prog_flags = aya_obj::generated::BPF_F_SLEEPABLE,
+        _ => {}
+    }
+
+    u.prog_type = program_type as u32;
+    if let Some(expected_attach_type) = expected_attach_type {
+        u.expected_attach_type = expected_attach_type as u32;
+    }
 
     op(&mut attr)
-}
-
-/// Tests whether `nr_map_ids` & `map_ids` fields in `bpf_prog_info` is available.
-pub(crate) fn is_info_map_ids_supported() -> bool {
-    with_trivial_prog(|attr| {
-        let prog_fd = match bpf_prog_load(attr) {
-            Ok(fd) => fd,
-            Err(_) => return false,
-        };
-        bpf_obj_get_info_by_fd(prog_fd.as_fd(), |info: &mut bpf_prog_info| {
-            info.nr_map_ids = 1
-        })
-        .is_ok()
-    })
-}
-
-/// Tests whether `gpl_compatible` field in `bpf_prog_info` is available.
-pub(crate) fn is_info_gpl_compatible_supported() -> bool {
-    with_trivial_prog(|attr| {
-        let prog_fd = match bpf_prog_load(attr) {
-            Ok(fd) => fd,
-            Err(_) => return false,
-        };
-        if let Ok::<bpf_prog_info, _>(info) = bpf_obj_get_info_by_fd(prog_fd.as_fd(), |_| {}) {
-            return info.gpl_compatible() != 0;
-        }
-        false
-    })
 }
 
 pub(crate) fn is_probe_read_kernel_supported() -> bool {
@@ -805,7 +837,7 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
 }
 
 pub(crate) fn is_perf_link_supported() -> bool {
-    with_trivial_prog(|attr| {
+    with_trivial_prog(ProgramType::TracePoint, |attr| {
         if let Ok(fd) = bpf_prog_load(attr) {
             let fd = fd.as_fd();
             // Uses an invalid target FD so we get EBADF if supported.
@@ -1073,7 +1105,7 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
     bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
-fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
+pub(super) fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
     // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) }
 }
@@ -1085,7 +1117,7 @@ fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<i64> {
     })
 }
 
-fn unit_sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<()> {
+pub(super) fn unit_sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<()> {
     sys_bpf(cmd, attr).map(|code| assert_eq!(code, 0))
 }
 
