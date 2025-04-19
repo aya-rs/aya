@@ -21,7 +21,7 @@ pub fn test_bpf_strncmp(ctx: ProbeContext) -> Result<(), c_long> {
     let mut b1 = [0u8; 3];
     let _: &[u8] = unsafe { bpf_probe_read_user_str_bytes(s1, &mut b1) }?;
 
-    let ptr = RESULT.get_ptr_mut(0).ok_or(-1)?;
+    let ptr = RESULT.get_ptr_mut(0).map_err(|_| -1)?;
     let dst = unsafe { ptr.as_mut() };
     let TestResult(dst_res) = dst.ok_or(-1)?;
     *dst_res = bpf_strncmp(&b1, c"ff");

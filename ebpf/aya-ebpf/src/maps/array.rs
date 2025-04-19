@@ -1,4 +1,4 @@
-use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
+use core::{cell::UnsafeCell, fmt, marker::PhantomData, mem, ptr::NonNull};
 
 use aya_ebpf_cty::c_long;
 
@@ -12,6 +12,24 @@ use crate::{
 pub struct Array<T> {
     def: UnsafeCell<bpf_map_def>,
     _t: PhantomData<T>,
+}
+
+#[derive(Debug)]
+pub struct OutOfBounds {
+    length: u32,
+    index: u32,
+}
+
+impl core::error::Error for OutOfBounds {}
+
+impl fmt::Display for OutOfBounds {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Array index {} is out of bounds; length = {}",
+            self.index, self.length
+        )
+    }
 }
 
 unsafe impl<T: Sync> Sync for Array<T> {}
@@ -48,24 +66,29 @@ impl<T> Array<T> {
     }
 
     #[inline(always)]
-    pub fn get(&self, index: u32) -> Option<&T> {
+    pub fn get(&self, index: u32) -> Result<&T, OutOfBounds> {
         // FIXME: alignment
         unsafe { self.lookup(index).map(|p| p.as_ref()) }
     }
 
     #[inline(always)]
-    pub fn get_ptr(&self, index: u32) -> Option<*const T> {
+    pub fn get_ptr(&self, index: u32) -> Result<*const T, OutOfBounds> {
         unsafe { self.lookup(index).map(|p| p.as_ptr() as *const T) }
     }
 
     #[inline(always)]
-    pub fn get_ptr_mut(&self, index: u32) -> Option<*mut T> {
+    pub fn get_ptr_mut(&self, index: u32) -> Result<*mut T, OutOfBounds> {
         unsafe { self.lookup(index).map(|p| p.as_ptr()) }
     }
 
     #[inline(always)]
-    unsafe fn lookup(&self, index: u32) -> Option<NonNull<T>> {
-        lookup(self.def.get(), &index)
+    unsafe fn lookup(&self, index: u32) -> Result<NonNull<T>, OutOfBounds> {
+        let map_def = self.def.get();
+
+        lookup(map_def, &index).ok_or(OutOfBounds {
+            length: unsafe { (*map_def).max_entries },
+            index,
+        })
     }
 
     /// Sets the value of the element at the given index.
