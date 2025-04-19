@@ -30,7 +30,7 @@ pub fn test_64_32_call_relocs(_ctx: ProbeContext) {
 #[inline(never)]
 fn set_result(index: u32, value: u64) {
     unsafe {
-        if let Some(v) = RESULTS.get_ptr_mut(index) {
+        if let Ok(v) = RESULTS.get_ptr_mut(index) {
             *v = value;
         }
     }
