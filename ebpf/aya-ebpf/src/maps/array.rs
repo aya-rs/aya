@@ -35,6 +35,9 @@ impl fmt::Display for OutOfBounds {
 unsafe impl<T: Sync> Sync for Array<T> {}
 
 impl<T> Array<T> {
+    /// Constructs a new [`Array`] with `max_entries` entries.
+    ///
+    /// All the entries are zero-initialized.
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Array<T> {
         Array {
             def: UnsafeCell::new(bpf_map_def {
@@ -65,17 +68,23 @@ impl<T> Array<T> {
         }
     }
 
+    /// Get a reference to an array element at the given index.
+    ///
+    /// Arrays are zero-initialised upon creation so this will always return a reference to `T` as long as the index is within bounds.
+    /// All fields of `T` may therefore be in their default state, i.e. `bool` will be `false`, `u32` will be `0`, etc.
     #[inline(always)]
     pub fn get(&self, index: u32) -> Result<&T, OutOfBounds> {
         // FIXME: alignment
         unsafe { self.lookup(index).map(|p| p.as_ref()) }
     }
 
+    /// Like [`Array::get`] but returns a pointer instead.
     #[inline(always)]
     pub fn get_ptr(&self, index: u32) -> Result<*const T, OutOfBounds> {
         unsafe { self.lookup(index).map(|p| p.as_ptr() as *const T) }
     }
 
+    /// Like [`Array::get`] but returns a mutable pointer instead.
     #[inline(always)]
     pub fn get_ptr_mut(&self, index: u32) -> Result<*mut T, OutOfBounds> {
         unsafe { self.lookup(index).map(|p| p.as_ptr()) }
