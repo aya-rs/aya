@@ -27,7 +27,7 @@ use core::{ffi::c_void, ptr::NonNull};
 
 pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
-use cty::{c_int, c_long};
+use cty::c_long;
 use helpers::{
     bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid, bpf_map_delete_elem,
     bpf_map_lookup_elem, bpf_map_update_elem,
@@ -60,50 +60,53 @@ pub trait EbpfContext {
     }
 }
 
-#[unsafe(no_mangle)]
-#[expect(clippy::missing_safety_doc, unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
-    #[expect(clippy::cast_sign_loss)]
-    let b = c as u8;
-    for i in 0..n {
-        *s.add(i) = b;
+#[cfg_attr(target_arch = "bpf", expect(clippy::missing_safety_doc))]
+mod intrinsics {
+    use super::cty::c_int;
+
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
+        #[expect(clippy::cast_sign_loss)]
+        let b = c as u8;
+        for i in 0..n {
+            unsafe { *s.add(i) = b }
+        }
+    }
+
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *mut u8, n: usize) {
+        unsafe { copy_forward(dest, src, n) }
+    }
+
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn memmove(dest: *mut u8, src: *mut u8, n: usize) {
+        let delta = (dest as usize).wrapping_sub(src as usize);
+        if delta >= n {
+            // We can copy forwards because either dest is far enough ahead of src,
+            // or src is ahead of dest (and delta overflowed).
+            unsafe { copy_forward(dest, src, n) }
+        } else {
+            unsafe { copy_backward(dest, src, n) }
+        }
+    }
+
+    #[inline(always)]
+    unsafe fn copy_forward(dest: *mut u8, src: *mut u8, n: usize) {
+        for i in 0..n {
+            unsafe { *dest.add(i) = *src.add(i) }
+        }
+    }
+
+    #[inline(always)]
+    unsafe fn copy_backward(dest: *mut u8, src: *mut u8, n: usize) {
+        for i in (0..n).rev() {
+            unsafe { *dest.add(i) = *src.add(i) }
+        }
     }
 }
 
-#[unsafe(no_mangle)]
-#[expect(clippy::missing_safety_doc, unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *mut u8, n: usize) {
-    copy_forward(dest, src, n);
-}
-
-#[unsafe(no_mangle)]
-#[expect(clippy::missing_safety_doc, unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn memmove(dest: *mut u8, src: *mut u8, n: usize) {
-    let delta = (dest as usize).wrapping_sub(src as usize);
-    if delta >= n {
-        // We can copy forwards because either dest is far enough ahead of src,
-        // or src is ahead of dest (and delta overflowed).
-        copy_forward(dest, src, n);
-    } else {
-        copy_backward(dest, src, n);
-    }
-}
-
-#[inline(always)]
-#[expect(unsafe_op_in_unsafe_fn)]
-unsafe fn copy_forward(dest: *mut u8, src: *mut u8, n: usize) {
-    for i in 0..n {
-        *dest.add(i) = *src.add(i);
-    }
-}
-
-#[inline(always)]
-#[expect(unsafe_op_in_unsafe_fn)]
-unsafe fn copy_backward(dest: *mut u8, src: *mut u8, n: usize) {
-    for i in (0..n).rev() {
-        *dest.add(i) = *src.add(i);
-    }
-}
+#[cfg(target_arch = "bpf")]
+pub use intrinsics::*;
 
 /// Check if a value is within a range, using conditional forms compatible with
 /// the verifier.
