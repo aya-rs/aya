@@ -464,7 +464,6 @@ impl Btf {
     pub fn to_bytes(&self) -> Vec<u8> {
         // Safety: btf_header is POD
         let mut buf = unsafe { bytes_of::<btf_header>(&self.header).to_vec() };
-        // Skip the first type since it's always BtfType::Unknown for type_by_id to work
         buf.extend(self.types.to_bytes());
         buf.put(self.strings.as_slice());
         buf
