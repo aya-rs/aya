@@ -55,7 +55,7 @@ where
             if i != 0 {
                 writeln!(f)?;
             }
-            write!(f, "{:?}", error)?;
+            write!(f, "{error:?}")?;
         }
         Ok(())
     }

@@ -65,8 +65,7 @@ pub(crate) fn boot_time() -> SystemTime {
         assert_eq!(
             unsafe { libc::clock_gettime(clock_id, &mut time) },
             0,
-            "clock_gettime({}, _)",
-            clock_id
+            "clock_gettime({clock_id}, _)"
         );
         let libc::timespec { tv_sec, tv_nsec } = time;
 

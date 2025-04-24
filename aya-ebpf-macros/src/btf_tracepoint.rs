@@ -30,7 +30,7 @@ impl BtfTracePoint {
             block: _,
         } = item;
         let section_name: Cow<'_, _> = if let Some(function) = function {
-            format!("tp_btf/{}", function).into()
+            format!("tp_btf/{function}").into()
         } else {
             "tp_btf".into()
         };

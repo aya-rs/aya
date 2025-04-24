@@ -448,7 +448,7 @@ pub fn run(opts: Options) -> Result<()> {
 
                 for (profile, binaries) in binaries {
                     for (name, binary) in binaries {
-                        let name = format!("{}-{}", profile, name);
+                        let name = format!("{profile}-{name}");
                         let path = tmp_dir.path().join(&name);
                         copy(&binary, &path).with_context(|| {
                             format!("copy({}, {}) failed", binary.display(), path.display())
@@ -558,7 +558,7 @@ pub fn run(opts: Options) -> Result<()> {
                         .spawn(move || {
                             for line in stderr.lines() {
                                 let line = line.context("failed to read line from stderr")?;
-                                eprintln!("{}", line);
+                                eprintln!("{line}");
                                 terminate_if_kernel_hang(&line, &stdin)?;
                             }
                             anyhow::Ok(())
@@ -569,7 +569,7 @@ pub fn run(opts: Options) -> Result<()> {
                 let mut outcome = None;
                 for line in stdout.lines() {
                     let line = line.context("failed to read line from stdout")?;
-                    println!("{}", line);
+                    println!("{line}");
                     terminate_if_kernel_hang(&line, &stdin)?;
                     // The init program will print "init: success" or "init: failure" to indicate
                     // the outcome of running the binaries it found in /bin.

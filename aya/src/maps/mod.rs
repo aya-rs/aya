@@ -254,7 +254,7 @@ fn maybe_warn_rlimit() {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 let &Self(size) = self;
                 if size < 1024 {
-                    write!(f, "{} bytes", size)
+                    write!(f, "{size} bytes")
                 } else if size < 1024 * 1024 {
                     write!(f, "{} KiB", size / 1024)
                 } else {
@@ -1020,7 +1020,7 @@ mod test_utils {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
             } => Ok(crate::MockableFd::mock_signed_fd().into()),
-            call => panic!("unexpected syscall {:?}", call),
+            call => panic!("unexpected syscall {call:?}"),
         });
         MapData::create(obj, "foo", None).unwrap()
     }

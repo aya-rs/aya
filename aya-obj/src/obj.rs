@@ -1322,12 +1322,12 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             "pinning" => {
                 let pinning = get_map_field(btf, m.btf_type)?;
                 map_def.pinning = PinningType::try_from(pinning).unwrap_or_else(|_| {
-                    debug!("{} is not a valid pin type. using PIN_NONE", pinning);
+                    debug!("{pinning} is not a valid pin type. using PIN_NONE");
                     PinningType::None
                 });
             }
             other => {
-                debug!("skipping unknown map section: {}", other);
+                debug!("skipping unknown map section: {other}");
                 continue;
             }
         }

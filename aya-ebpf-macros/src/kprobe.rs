@@ -44,7 +44,7 @@ impl KProbe {
             .as_deref()
             .map(str::parse)
             .transpose()
-            .map_err(|err| span.error(format!("failed to parse `offset` argument: {}", err)))?;
+            .map_err(|err| span.error(format!("failed to parse `offset` argument: {err}")))?;
         err_on_unknown_args(&args)?;
 
         Ok(Self {

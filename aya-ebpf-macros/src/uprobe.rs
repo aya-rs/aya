@@ -47,7 +47,7 @@ impl UProbe {
             .as_deref()
             .map(str::parse)
             .transpose()
-            .map_err(|err| span.error(format!("failed to parse `offset` argument: {}", err)))?;
+            .map_err(|err| span.error(format!("failed to parse `offset` argument: {err}")))?;
         let sleepable = pop_bool_arg(&mut args, "sleepable");
         err_on_unknown_args(&args)?;
         Ok(Self {

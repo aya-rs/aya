@@ -690,7 +690,7 @@ fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
                 Ok(v) => {
                     full_log_msg.push_str(v);
                 }
-                Err(e) => error!("received invalid utf8 string: {}", e),
+                Err(e) => error!("received invalid utf8 string: {e}"),
             },
         }
 
