@@ -23,8 +23,6 @@ fn iter_task() {
     let expected_values = ["1        1        init", "1        1        systemd"];
     assert!(
         expected_values.contains(&line_init.as_str()),
-        "Unexpected line_init value: '{}', expected one of: {:?}",
-        line_init,
-        expected_values
+        "Unexpected line_init value: '{line_init}', expected one of: {expected_values:?}"
     );
 }

@@ -40,7 +40,7 @@ impl Lsm {
         } = item;
         let section_prefix = if *sleepable { "lsm.s" } else { "lsm" };
         let section_name: Cow<'_, _> = if let Some(hook) = hook {
-            format!("{}/{}", section_prefix, hook).into()
+            format!("{section_prefix}/{hook}").into()
         } else {
             section_prefix.into()
         };

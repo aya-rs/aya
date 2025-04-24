@@ -40,7 +40,7 @@ impl FEntry {
         } = item;
         let section_prefix = if *sleepable { "fentry.s" } else { "fentry" };
         let section_name: Cow<'_, _> = if let Some(function) = function {
-            format!("{}/{}", section_prefix, function).into()
+            format!("{section_prefix}/{function}").into()
         } else {
             section_prefix.into()
         };

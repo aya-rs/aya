@@ -51,7 +51,7 @@ fn try_main(quiet: bool, name: String) -> anyhow::Result<()> {
         module
     );
     let module_path = glob(&pattern)
-        .with_context(|| format!("failed to glob: {}", pattern))?
+        .with_context(|| format!("failed to glob: {pattern}"))?
         .next()
         .ok_or_else(|| anyhow!("module not found: {}", module))?
         .context("glob error")?;
@@ -106,10 +106,10 @@ fn resolve_alias(quiet: bool, module_dir: &Path, name: &str) -> anyhow::Result<S
             }
             let alias = parts
                 .next()
-                .with_context(|| format!("alias line missing alias: {}", line))?;
+                .with_context(|| format!("alias line missing alias: {line}"))?;
             let module = parts
                 .next()
-                .with_context(|| format!("alias line missing module: {}", line))?;
+                .with_context(|| format!("alias line missing module: {line}"))?;
             if parts.next().is_some() {
                 bail!("alias line has too many parts: {}", line);
             }

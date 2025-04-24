@@ -516,7 +516,7 @@ impl Btf {
                 }
                 // Sanitize DATASEC if they are not supported.
                 BtfType::DataSec(d) if !features.btf_datasec => {
-                    debug!("{}: not supported. replacing with STRUCT", kind);
+                    debug!("{kind}: not supported. replacing with STRUCT");
 
                     // STRUCT aren't allowed to have "." in their name, fixup this if needed.
                     let mut name_offset = d.name_offset;
@@ -565,7 +565,7 @@ impl Btf {
 
                     // There are some cases when the compiler does indeed populate the size.
                     if d.size > 0 {
-                        debug!("{} {}: size fixup not required", kind, name);
+                        debug!("{kind} {name}: size fixup not required");
                     } else {
                         // We need to get the size of the section from the ELF file.
                         // Fortunately, we cached these when parsing it initially
@@ -576,7 +576,7 @@ impl Btf {
                                 return Err(BtfError::UnknownSectionSize { section_name: name });
                             }
                         };
-                        debug!("{} {}: fixup size to {}", kind, name, size);
+                        debug!("{kind} {name}: fixup size to {size}");
                         d.size = *size as u32;
 
                         // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
@@ -591,10 +591,7 @@ impl Btf {
                             if let BtfType::Var(var) = types.type_by_id(e.btf_type)? {
                                 let var_name = self.string_at(var.name_offset)?;
                                 if var.linkage == VarLinkage::Static {
-                                    debug!(
-                                        "{} {}: VAR {}: fixup not required",
-                                        kind, name, var_name
-                                    );
+                                    debug!("{kind} {name}: VAR {var_name}: fixup not required");
                                     continue;
                                 }
 
@@ -607,10 +604,7 @@ impl Btf {
                                     }
                                 };
                                 e.offset = *offset as u32;
-                                debug!(
-                                    "{} {}: VAR {}: fixup offset {}",
-                                    kind, name, var_name, offset
-                                );
+                                debug!("{kind} {name}: VAR {var_name}: fixup offset {offset}");
                             } else {
                                 return Err(BtfError::InvalidDatasec);
                             }
@@ -632,7 +626,7 @@ impl Btf {
                 }
                 // Sanitize FUNC_PROTO.
                 BtfType::FuncProto(ty) if !features.btf_func => {
-                    debug!("{}: not supported. replacing with ENUM", kind);
+                    debug!("{kind}: not supported. replacing with ENUM");
                     let members: Vec<BtfEnum> = ty
                         .params
                         .iter()
@@ -649,7 +643,7 @@ impl Btf {
                     let name = self.string_at(ty.name_offset)?;
                     // Sanitize FUNC.
                     if !features.btf_func {
-                        debug!("{}: not supported. replacing with TYPEDEF", kind);
+                        debug!("{kind}: not supported. replacing with TYPEDEF");
                         *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
                     } else if !features.btf_func_global
                         || name == "memset"
@@ -665,8 +659,7 @@ impl Btf {
                         if ty.linkage() == FuncLinkage::Global {
                             if !features.btf_func_global {
                                 debug!(
-                                    "{}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
-                                    kind
+                                    "{kind}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
                                 );
                             } else {
                                 debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
@@ -677,27 +670,27 @@ impl Btf {
                 }
                 // Sanitize FLOAT.
                 BtfType::Float(ty) if !features.btf_float => {
-                    debug!("{}: not supported. replacing with STRUCT", kind);
+                    debug!("{kind}: not supported. replacing with STRUCT");
                     *t = BtfType::Struct(Struct::new(0, vec![], ty.size));
                 }
                 // Sanitize DECL_TAG.
                 BtfType::DeclTag(ty) if !features.btf_decl_tag => {
-                    debug!("{}: not supported. replacing with INT", kind);
+                    debug!("{kind}: not supported. replacing with INT");
                     *t = BtfType::Int(Int::new(ty.name_offset, 1, IntEncoding::None, 0));
                 }
                 // Sanitize TYPE_TAG.
                 BtfType::TypeTag(ty) if !features.btf_type_tag => {
-                    debug!("{}: not supported. replacing with CONST", kind);
+                    debug!("{kind}: not supported. replacing with CONST");
                     *t = BtfType::Const(Const::new(ty.btf_type));
                 }
                 // Sanitize Signed ENUMs.
                 BtfType::Enum(ty) if !features.btf_enum64 && ty.is_signed() => {
-                    debug!("{}: signed ENUMs not supported. Marking as unsigned", kind);
+                    debug!("{kind}: signed ENUMs not supported. Marking as unsigned");
                     ty.set_signed(false);
                 }
                 // Sanitize ENUM64.
                 BtfType::Enum64(ty) if !features.btf_enum64 => {
-                    debug!("{}: not supported. replacing with UNION", kind);
+                    debug!("{kind}: not supported. replacing with UNION");
                     let placeholder_id =
                         enum64_placeholder_id.expect("enum64_placeholder_id must be set");
                     let members: Vec<BtfMember> = ty
@@ -1215,7 +1208,7 @@ mod tests {
             ]
         };
         assert_eq!(data.len(), 517);
-        let btf = Btf::parse(data, Endianness::default()).unwrap_or_else(|e| panic!("{}", e));
+        let btf = Btf::parse(data, Endianness::default()).unwrap();
         let data2 = btf.to_bytes();
         assert_eq!(data2.len(), 517);
         assert_eq!(data, data2);
@@ -1259,8 +1252,7 @@ mod tests {
         let ext_data = unsafe { bytes_of::<TestStruct>(&test_data).to_vec() };
 
         assert_eq!(ext_data.len(), 80);
-        let _: BtfExt = BtfExt::parse(&ext_data, Endianness::default(), &btf)
-            .unwrap_or_else(|e| panic!("{}", e));
+        let _: BtfExt = BtfExt::parse(&ext_data, Endianness::default(), &btf).unwrap();
     }
 
     #[test]
@@ -1323,7 +1315,7 @@ mod tests {
         let btf_bytes = btf.to_bytes();
         let raw_btf = btf_bytes.as_slice();
 
-        let btf = Btf::parse(raw_btf, Endianness::default()).unwrap_or_else(|e| panic!("{}", e));
+        let btf = Btf::parse(raw_btf, Endianness::default()).unwrap();
         assert_eq!(btf.string_at(1).unwrap(), "int");
         assert_eq!(btf.string_at(5).unwrap(), "widget");
     }

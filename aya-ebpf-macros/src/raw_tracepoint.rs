@@ -29,7 +29,7 @@ impl RawTracePoint {
             block: _,
         } = item;
         let section_name: Cow<'_, _> = if let Some(tracepoint) = tracepoint {
-            format!("raw_tp/{}", tracepoint).into()
+            format!("raw_tp/{tracepoint}").into()
         } else {
             "raw_tp".into()
         };

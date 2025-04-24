@@ -457,7 +457,7 @@ mod tests {
                 Some(10) => set_next_key(attr, 20),
                 Some(20) => sys_error(EFAULT),
                 Some(30) => sys_error(ENOENT),
-                Some(i) => panic!("invalid key {}", i),
+                Some(i) => panic!("invalid key {i}"),
             },
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,

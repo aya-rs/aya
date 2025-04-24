@@ -15,7 +15,7 @@ impl std::fmt::Display for Errors {
             if i != 0 {
                 writeln!(f)?;
             }
-            write!(f, "{:?}", error)?;
+            write!(f, "{error:?}")?;
         }
         Ok(())
     }

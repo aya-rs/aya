@@ -117,8 +117,7 @@ fn check_package_api(
     }
     let rustdoc_json = builder.build().with_context(|| {
         format!(
-            "rustdoc_json::Builder::default().toolchain({}).package({}).build()",
-            toolchain, package
+            "rustdoc_json::Builder::default().toolchain({toolchain}).package({package}).build()"
         )
     })?;
 
@@ -134,7 +133,7 @@ fn check_package_api(
     if bless {
         let mut output =
             File::create(&path).with_context(|| format!("error creating {}", path.display()))?;
-        write!(&mut output, "{}", public_api)
+        write!(&mut output, "{public_api}")
             .with_context(|| format!("error writing {}", path.display()))?;
     }
     let current_api =
@@ -145,8 +144,8 @@ fn check_package_api(
         .fold(String::new(), |mut buf, diff| {
             match diff {
                 Diff::Both(..) => (),
-                Diff::Right(line) => writeln!(&mut buf, "-{}", line).unwrap(),
-                Diff::Left(line) => writeln!(&mut buf, "+{}", line).unwrap(),
+                Diff::Right(line) => writeln!(&mut buf, "-{line}").unwrap(),
+                Diff::Left(line) => writeln!(&mut buf, "+{line}").unwrap(),
             };
             buf
         }))

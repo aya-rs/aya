@@ -290,7 +290,7 @@ mod tests {
         override_syscall(|call| match call {
             Syscall::PerfEventOpen { .. } => Ok(crate::MockableFd::mock_signed_fd().into()),
             Syscall::PerfEventIoctl { .. } => Ok(0),
-            call => panic!("unexpected syscall: {:?}", call),
+            call => panic!("unexpected syscall: {call:?}"),
         });
         TEST_MMAP_RET.with(|ret| *ret.borrow_mut() = buf.cast());
     }

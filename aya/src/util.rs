@@ -342,7 +342,7 @@ pub fn syscall_prefix() -> Result<&'static str, io::Error> {
     ];
     let ksym = kernel_symbols()?;
     for p in PREFIXES {
-        let prefixed_syscall = format!("{}bpf", p);
+        let prefixed_syscall = format!("{p}bpf");
         if ksym.values().any(|el| *el == prefixed_syscall) {
             return Ok(p);
         }

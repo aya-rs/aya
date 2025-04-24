@@ -110,14 +110,14 @@ fn read_aliases_from_module(
             let end = start + s.size() as usize;
             let sym_data = &data[start..end];
             let cstr = std::ffi::CStr::from_bytes_with_nul(sym_data)
-                .with_context(|| format!("failed to convert {:?} to cstr", sym_data))?;
+                .with_context(|| format!("failed to convert {sym_data:?} to cstr"))?;
             let sym_str = cstr
                 .to_str()
-                .with_context(|| format!("failed to convert {:?} to str", cstr))?;
+                .with_context(|| format!("failed to convert {cstr:?} to str"))?;
             let alias = sym_str
                 .strip_prefix("alias=")
-                .with_context(|| format!("failed to strip prefix 'alias=' from {}", sym_str))?;
-            writeln!(output, "alias {} {}", alias, module_name).expect("write");
+                .with_context(|| format!("failed to strip prefix 'alias=' from {sym_str}"))?;
+            writeln!(output, "alias {alias} {module_name}").expect("write");
         }
     }
     Ok(())

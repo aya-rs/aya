@@ -239,7 +239,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             m
         } else {
             let Some(m) = maps_by_section.get(&section_index) else {
-                debug!("failed relocating map by section index {}", section_index);
+                debug!("failed relocating map by section index {section_index}");
                 return Err(RelocationError::SectionNotFound {
                     symbol_index: rel.symbol_index,
                     symbol_name: sym.name.clone(),

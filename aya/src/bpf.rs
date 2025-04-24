@@ -86,7 +86,7 @@ fn detect_features() -> Features {
         is_info_gpl_compatible_supported(),
         btf,
     );
-    debug!("BPF Feature Detection: {:#?}", f);
+    debug!("BPF Feature Detection: {f:#?}");
     f
 }
 
