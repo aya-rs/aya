@@ -4272,6 +4272,7 @@ pub fn aya::programs::links::CgroupAttachMode::from(t: T) -> T
 pub enum aya::programs::links::LinkError
 pub aya::programs::links::LinkError::InvalidLink
 pub aya::programs::links::LinkError::SyscallError(aya::sys::SyscallError)
+pub aya::programs::links::LinkError::UnexpectedLinkType
 impl core::convert::From<aya::sys::SyscallError> for aya::programs::links::LinkError
 pub fn aya::programs::links::LinkError::from(source: aya::sys::SyscallError) -> Self
 impl core::error::Error for aya::programs::links::LinkError
@@ -4304,8 +4305,63 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::links::LinkError where T: 
 pub fn aya::programs::links::LinkError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::links::LinkError
 pub fn aya::programs::links::LinkError::from(t: T) -> T
+#[non_exhaustive] pub enum aya::programs::links::LinkType
+pub aya::programs::links::LinkType::Cgroup = 3
+pub aya::programs::links::LinkType::Iter = 4
+pub aya::programs::links::LinkType::KProbeMulti = 8
+pub aya::programs::links::LinkType::Netfilter = 10
+pub aya::programs::links::LinkType::Netkit = 13
+pub aya::programs::links::LinkType::Netns = 5
+pub aya::programs::links::LinkType::PerfEvent = 7
+pub aya::programs::links::LinkType::RawTracePoint = 1
+pub aya::programs::links::LinkType::StructOps = 9
+pub aya::programs::links::LinkType::Tcx = 11
+pub aya::programs::links::LinkType::Tracing = 2
+pub aya::programs::links::LinkType::UProbeMulti = 12
+pub aya::programs::links::LinkType::Unspecified = 0
+pub aya::programs::links::LinkType::Xdp = 6
+impl core::clone::Clone for aya::programs::links::LinkType
+pub fn aya::programs::links::LinkType::clone(&self) -> aya::programs::links::LinkType
+impl core::cmp::PartialEq for aya::programs::links::LinkType
+pub fn aya::programs::links::LinkType::eq(&self, other: &aya::programs::links::LinkType) -> bool
+impl core::convert::TryFrom<aya_obj::generated::linux_bindings_x86_64::bpf_link_type> for aya::programs::links::LinkType
+pub type aya::programs::links::LinkType::Error = aya::programs::links::LinkError
+pub fn aya::programs::links::LinkType::try_from(link_type: aya_obj::generated::linux_bindings_x86_64::bpf_link_type) -> core::result::Result<Self, Self::Error>
+impl core::fmt::Debug for aya::programs::links::LinkType
+pub fn aya::programs::links::LinkType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::links::LinkType
+impl core::marker::StructuralPartialEq for aya::programs::links::LinkType
+impl core::marker::Freeze for aya::programs::links::LinkType
+impl core::marker::Send for aya::programs::links::LinkType
+impl core::marker::Sync for aya::programs::links::LinkType
+impl core::marker::Unpin for aya::programs::links::LinkType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::LinkType
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::LinkType
+impl<T, U> core::convert::Into<U> for aya::programs::links::LinkType where U: core::convert::From<T>
+pub fn aya::programs::links::LinkType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::links::LinkType where U: core::convert::Into<T>
+pub type aya::programs::links::LinkType::Error = core::convert::Infallible
+pub fn aya::programs::links::LinkType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::links::LinkType where U: core::convert::TryFrom<T>
+pub type aya::programs::links::LinkType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::links::LinkType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::programs::links::LinkType where T: core::clone::Clone
+pub type aya::programs::links::LinkType::Owned = T
+pub fn aya::programs::links::LinkType::clone_into(&self, target: &mut T)
+pub fn aya::programs::links::LinkType::to_owned(&self) -> T
+impl<T> core::any::Any for aya::programs::links::LinkType where T: 'static + ?core::marker::Sized
+pub fn aya::programs::links::LinkType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::links::LinkType where T: ?core::marker::Sized
+pub fn aya::programs::links::LinkType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::links::LinkType where T: ?core::marker::Sized
+pub fn aya::programs::links::LinkType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya::programs::links::LinkType where T: core::clone::Clone
+pub unsafe fn aya::programs::links::LinkType::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya::programs::links::LinkType
+pub fn aya::programs::links::LinkType::from(t: T) -> T
 pub struct aya::programs::links::FdLink
 impl aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::info(&self) -> core::result::Result<aya::programs::links::LinkInfo, aya::programs::links::LinkError>
 pub fn aya::programs::links::FdLink::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<aya::programs::links::PinnedLink, aya::pin::PinError>
 impl aya::programs::links::Link for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Id = aya::programs::links::FdLinkId
@@ -4454,6 +4510,33 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::links::FdLinkId where T: ?
 pub fn aya::programs::links::FdLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::links::FdLinkId
 pub fn aya::programs::links::FdLinkId::from(t: T) -> T
+pub struct aya::programs::links::LinkInfo(_)
+impl aya::programs::links::LinkInfo
+pub fn aya::programs::links::LinkInfo::id(&self) -> u32
+pub fn aya::programs::links::LinkInfo::link_type(&self) -> core::result::Result<aya::programs::links::LinkType, aya::programs::links::LinkError>
+pub fn aya::programs::links::LinkInfo::program_id(&self) -> u32
+impl core::marker::Freeze for aya::programs::links::LinkInfo
+impl core::marker::Send for aya::programs::links::LinkInfo
+impl core::marker::Sync for aya::programs::links::LinkInfo
+impl core::marker::Unpin for aya::programs::links::LinkInfo
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::LinkInfo
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::LinkInfo
+impl<T, U> core::convert::Into<U> for aya::programs::links::LinkInfo where U: core::convert::From<T>
+pub fn aya::programs::links::LinkInfo::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::links::LinkInfo where U: core::convert::Into<T>
+pub type aya::programs::links::LinkInfo::Error = core::convert::Infallible
+pub fn aya::programs::links::LinkInfo::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::links::LinkInfo where U: core::convert::TryFrom<T>
+pub type aya::programs::links::LinkInfo::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::links::LinkInfo::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::links::LinkInfo where T: 'static + ?core::marker::Sized
+pub fn aya::programs::links::LinkInfo::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::links::LinkInfo where T: ?core::marker::Sized
+pub fn aya::programs::links::LinkInfo::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::links::LinkInfo where T: ?core::marker::Sized
+pub fn aya::programs::links::LinkInfo::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::links::LinkInfo
+pub fn aya::programs::links::LinkInfo::from(t: T) -> T
 pub struct aya::programs::links::LinkOrder
 impl aya::programs::links::LinkOrder
 pub fn aya::programs::links::LinkOrder::after_link<L: aya::programs::MultiProgLink>(link: &L) -> core::result::Result<Self, aya::programs::links::LinkError>
@@ -9995,6 +10078,7 @@ pub trait aya::programs::MultiProgram
 pub fn aya::programs::MultiProgram::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
 impl aya::programs::MultiProgram for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
+pub fn aya::programs::loaded_links() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::links::LinkInfo, aya::programs::links::LinkError>>
 pub fn aya::programs::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
 pub mod aya::sys
 #[non_exhaustive] pub enum aya::sys::Stats

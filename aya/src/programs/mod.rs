@@ -83,7 +83,7 @@ use std::{
 use aya_obj::{
     VerifierLog,
     btf::BtfError,
-    generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
+    generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
     programs::XdpAttachType,
 };
 use info::impl_info;
@@ -130,9 +130,8 @@ use crate::{
     programs::{links::*, perf_attach::*},
     sys::{
         EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
-        bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd, bpf_load_program,
-        bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids,
-        retry_with_verifier_logs,
+        bpf_get_object, bpf_link_get_fd_by_id, bpf_load_program, bpf_pin_object,
+        bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids, retry_with_verifier_logs,
     },
     util::KernelVersion,
 };
@@ -1192,10 +1191,29 @@ impl_info!(
     Iter,
 );
 
-// TODO(https://github.com/aya-rs/aya/issues/645): this API is currently used in tests. Stabilize
-// and remove doc(hidden).
-#[doc(hidden)]
-pub fn loaded_links() -> impl Iterator<Item = Result<bpf_link_info, ProgramError>> {
+/// Returns an iterator over all loaded links.
+///
+/// This function is useful for debugging and inspecting the state of
+/// loaded links in the kernel. It can be used to check which links are
+/// currently active and to gather information about them.
+///
+/// # Errors
+///
+/// This function may return an error if there is an issue with
+/// retrieving the link information from the kernel.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya::programs::loaded_links;
+///
+/// for info in loaded_links() {
+///    if let Ok(info) = info {
+///        println!("Loaded link: {}", info.id());
+///    }
+/// }
+/// ```
+pub fn loaded_links() -> impl Iterator<Item = Result<LinkInfo, LinkError>> {
     iter_link_ids()
         .map(|id| {
             let id = id?;
@@ -1203,7 +1221,6 @@ pub fn loaded_links() -> impl Iterator<Item = Result<bpf_link_info, ProgramError
         })
         .map(|fd| {
             let fd = fd?;
-            bpf_link_get_info_by_fd(fd.as_fd())
+            LinkInfo::new_from_fd(fd.as_fd())
         })
-        .map(|result| result.map_err(Into::into))
 }
