@@ -8,7 +8,7 @@ use std::{
 
 use aya_obj::generated::{
     BPF_F_AFTER, BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE, BPF_F_BEFORE, BPF_F_ID, BPF_F_LINK,
-    BPF_F_REPLACE, bpf_attach_type,
+    BPF_F_REPLACE, bpf_attach_type, bpf_link_info, bpf_link_type,
 };
 use hashbrown::hash_set::{Entry, HashSet};
 use thiserror::Error;
@@ -16,7 +16,10 @@ use thiserror::Error;
 use crate::{
     pin::PinError,
     programs::{MultiProgLink, MultiProgram, ProgramError, ProgramFd, ProgramId},
-    sys::{SyscallError, bpf_get_object, bpf_pin_object, bpf_prog_attach, bpf_prog_detach},
+    sys::{
+        SyscallError, bpf_get_object, bpf_link_get_info_by_fd, bpf_pin_object, bpf_prog_attach,
+        bpf_prog_detach,
+    },
 };
 
 /// A Link.
@@ -105,6 +108,108 @@ impl<T: Link> Drop for Links<T> {
     }
 }
 
+/// Provides metadata information about an eBPF attachment.
+#[doc(alias = "bpf_link_info")]
+pub struct LinkInfo(bpf_link_info);
+
+impl LinkInfo {
+    pub(crate) fn new_from_fd(fd: BorrowedFd<'_>) -> Result<Self, LinkError> {
+        let info = bpf_link_get_info_by_fd(fd)?;
+        Ok(Self(info))
+    }
+
+    /// Returns the link ID.
+    pub fn id(&self) -> u32 {
+        self.0.id
+    }
+
+    /// Returns the program ID.
+    pub fn program_id(&self) -> u32 {
+        self.0.prog_id
+    }
+
+    /// Returns the type of the link.
+    pub fn link_type(&self) -> Result<LinkType, LinkError> {
+        bpf_link_type::try_from(self.0.type_)
+            .map_err(|e| LinkError::UnknownLinkType(e.value))
+            .and_then(LinkType::try_from)
+    }
+}
+
+/// The type of eBPF program.
+#[non_exhaustive]
+#[doc(alias = "bpf_link_type")]
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum LinkType {
+    /// An unspecified link type.
+    #[doc(alias = "BPF_LINK_TYPE_UNSPEC")]
+    Unspecified = bpf_link_type::BPF_LINK_TYPE_UNSPEC as isize,
+    /// A Raw Tracepoint link type.
+    #[doc(alias = "BPF_LINK_TYPE_RAW_TRACEPOINT")]
+    RawTracePoint = bpf_link_type::BPF_LINK_TYPE_RAW_TRACEPOINT as isize,
+    /// A Tracing link type.
+    #[doc(alias = "BPF_LINK_TYPE_TRACING")]
+    Tracing = bpf_link_type::BPF_LINK_TYPE_TRACING as isize,
+    /// A Cgroup link type.
+    #[doc(alias = "BPF_LINK_TYPE_CGROUP")]
+    Cgroup = bpf_link_type::BPF_LINK_TYPE_CGROUP as isize,
+    /// An Iterator link type.
+    #[doc(alias = "BPF_LINK_TYPE_ITER")]
+    Iter = bpf_link_type::BPF_LINK_TYPE_ITER as isize,
+    /// A Network Namespace link type.
+    #[doc(alias = "BPF_LINK_TYPE_NETNS")]
+    Netns = bpf_link_type::BPF_LINK_TYPE_NETNS as isize,
+    /// An XDP link type.
+    #[doc(alias = "BPF_LINK_TYPE_XDP")]
+    Xdp = bpf_link_type::BPF_LINK_TYPE_XDP as isize,
+    /// A Perf Event link type.
+    #[doc(alias = "BPF_LINK_TYPE_PERF_EVENT")]
+    PerfEvent = bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as isize,
+    /// A KProbe Multi link type.
+    #[doc(alias = "BPF_LINK_TYPE_KPROBE_MULTI")]
+    KProbeMulti = bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI as isize,
+    /// A StructOps link type.
+    #[doc(alias = "BPF_LINK_TYPE_STRUCT_OPS")]
+    StructOps = bpf_link_type::BPF_LINK_TYPE_STRUCT_OPS as isize,
+    /// A Netfilter link type.
+    #[doc(alias = "BPF_LINK_TYPE_NETFILTER")]
+    Netfilter = bpf_link_type::BPF_LINK_TYPE_NETFILTER as isize,
+    /// A Tcx link type.
+    #[doc(alias = "BPF_LINK_TYPE_TCX")]
+    Tcx = bpf_link_type::BPF_LINK_TYPE_TCX as isize,
+    /// A Uprobe Multi link type.
+    #[doc(alias = "BPF_LINK_TYPE_UPROBE_MULTI")]
+    UProbeMulti = bpf_link_type::BPF_LINK_TYPE_UPROBE_MULTI as isize,
+    /// A Netkit link type.
+    #[doc(alias = "BPF_LINK_TYPE_NETKIT")]
+    Netkit = bpf_link_type::BPF_LINK_TYPE_NETKIT as isize,
+}
+
+impl TryFrom<bpf_link_type> for LinkType {
+    type Error = LinkError;
+
+    fn try_from(link_type: bpf_link_type) -> Result<Self, Self::Error> {
+        use bpf_link_type::*;
+        match link_type {
+            BPF_LINK_TYPE_UNSPEC => Ok(Self::Unspecified),
+            BPF_LINK_TYPE_RAW_TRACEPOINT => Ok(Self::RawTracePoint),
+            BPF_LINK_TYPE_TRACING => Ok(Self::Tracing),
+            BPF_LINK_TYPE_CGROUP => Ok(Self::Cgroup),
+            BPF_LINK_TYPE_ITER => Ok(Self::Iter),
+            BPF_LINK_TYPE_NETNS => Ok(Self::Netns),
+            BPF_LINK_TYPE_XDP => Ok(Self::Xdp),
+            BPF_LINK_TYPE_PERF_EVENT => Ok(Self::PerfEvent),
+            BPF_LINK_TYPE_KPROBE_MULTI => Ok(Self::KProbeMulti),
+            BPF_LINK_TYPE_STRUCT_OPS => Ok(Self::StructOps),
+            BPF_LINK_TYPE_NETFILTER => Ok(Self::Netfilter),
+            BPF_LINK_TYPE_TCX => Ok(Self::Tcx),
+            BPF_LINK_TYPE_UPROBE_MULTI => Ok(Self::UProbeMulti),
+            BPF_LINK_TYPE_NETKIT => Ok(Self::Netkit),
+            __MAX_BPF_LINK_TYPE => Err(LinkError::UnknownLinkType(link_type as u32)),
+        }
+    }
+}
+
 /// The identifier of an `FdLink`.
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct FdLinkId(pub(crate) RawFd);
@@ -188,6 +293,11 @@ impl FdLink {
             io_error,
         })?;
         Ok(PinnedLink::new(path.into(), self))
+    }
+
+    /// Returns the kernel information about this link.
+    pub fn info(&self) -> Result<LinkInfo, LinkError> {
+        LinkInfo::new_from_fd(self.fd.as_fd())
     }
 }
 
@@ -449,6 +559,12 @@ pub enum LinkError {
     /// Invalid link.
     #[error("Invalid link")]
     InvalidLink,
+
+    /// The kernel type of this link is not understood by Aya.
+    /// Please open an issue on GitHub if you encounter this error.
+    #[error("unknown link type {0}")]
+    UnknownLinkType(u32),
+
     /// Syscall failed.
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
