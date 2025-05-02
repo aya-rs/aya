@@ -1,8 +1,13 @@
 //! Safe wrapper around memory-mapped files.
 
-use std::{io, os::fd::BorrowedFd, ptr};
+use std::{
+    fs, io,
+    os::fd::{AsFd as _, BorrowedFd},
+    path::Path,
+    ptr,
+};
 
-use libc::{MAP_FAILED, c_int, c_void, off_t};
+use libc::{MAP_FAILED, MAP_PRIVATE, PROT_READ, c_int, c_void, off_t};
 
 use super::{SyscallError, mmap, munmap};
 
@@ -45,6 +50,19 @@ impl MMap {
                 Ok(Self { ptr, len })
             }
         }
+    }
+
+    /// Maps the file at `path` for reading, using `mmap` with `MAP_PRIVATE`.
+    pub(crate) fn mmap_whole_file(path: &Path) -> Result<Self, io::Error> {
+        let file = fs::File::open(path)?;
+        Self::new(
+            file.as_fd(),
+            file.metadata()?.len() as usize,
+            PROT_READ,
+            MAP_PRIVATE,
+            0,
+        )
+        .map_err(|e| e.io_error)
     }
 }
 
