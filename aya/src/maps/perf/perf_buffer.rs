@@ -13,9 +13,8 @@ use bytes::BytesMut;
 use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
-use crate::{
-    maps::MMap,
-    sys::{PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open_bpf},
+use crate::sys::{
+    MMap, PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open_bpf,
 };
 
 /// Perf buffer error.

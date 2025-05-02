@@ -17,7 +17,8 @@ use aya_obj::generated::{BPF_RINGBUF_BUSY_BIT, BPF_RINGBUF_DISCARD_BIT, BPF_RING
 use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
 
 use crate::{
-    maps::{MMap, MapData, MapError},
+    maps::{MapData, MapError},
+    sys::MMap,
     util::page_size,
 };
 
