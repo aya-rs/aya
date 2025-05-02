@@ -14,8 +14,8 @@ use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
 use crate::{
-    maps::MMap,
     sys::{PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open_bpf},
+    util::MMap,
 };
 
 /// Perf buffer error.
@@ -126,7 +126,7 @@ impl PerfBuffer {
     }
 
     fn buf(&self) -> ptr::NonNull<perf_event_mmap_page> {
-        self.mmap.ptr.cast()
+        self.mmap.ptr().cast()
     }
 
     pub(crate) fn readable(&self) -> bool {

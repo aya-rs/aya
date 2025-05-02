@@ -17,8 +17,8 @@ use aya_obj::generated::{BPF_RINGBUF_BUSY_BIT, BPF_RINGBUF_DISCARD_BIT, BPF_RING
 use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
 
 use crate::{
-    maps::{MMap, MapData, MapError},
-    util::page_size,
+    maps::{MapData, MapError},
+    util::{MMap, page_size},
 };
 
 /// A map that can be used to receive events from eBPF programs.
@@ -201,10 +201,7 @@ impl ConsumerMetadata {
 
 impl AsRef<AtomicUsize> for ConsumerMetadata {
     fn as_ref(&self) -> &AtomicUsize {
-        let Self {
-            mmap: MMap { ptr, .. },
-        } = self;
-        unsafe { ptr.cast::<AtomicUsize>().as_ref() }
+        unsafe { self.mmap.ptr().cast::<AtomicUsize>().as_ref() }
     }
 }
 
@@ -318,7 +315,7 @@ impl ProducerData {
             ref mut pos_cache,
             ref mut mask,
         } = self;
-        let pos = unsafe { mmap.ptr.cast().as_ref() };
+        let pos = unsafe { mmap.ptr().cast().as_ref() };
         let mmap_data = mmap.as_ref();
         let data_pages = mmap_data.get(*data_offset..).unwrap_or_else(|| {
             panic!(
