@@ -689,33 +689,36 @@ fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> 
     let data = fs::read(path)?;
     let obj = object::read::File::parse(&*data)?;
 
-    let mut debug_data = Vec::default();
-    let mut debug_obj_keeper = None;
+    if let Some(sym) = find_symbol_in_object(&obj, symbol) {
+        symbol_translated_address(&obj, sym, symbol)
+    } else {
+        // Only search in the debug object if the symbol was not found in the main object
+        let debug_path = find_debug_path_in_object(&obj, path, symbol)?;
+        let debug_data = fs::read(&debug_path).map_err(|e| {
+            ResolveSymbolError::DebuglinkAccessError(
+                debug_path
+                    .to_str()
+                    .unwrap_or("Debuglink path missing")
+                    .to_string(),
+                e,
+            )
+        })?;
+        let debug_obj = object::read::File::parse(&*debug_data)?;
 
-    let sym = find_symbol_in_object(&obj, symbol).map_or_else(
-        || {
-            // Only search in the debug object if the symbol was not found in the main object
-            let debug_path = find_debug_path_in_object(&obj, path, symbol)?;
-            debug_data = fs::read(&debug_path).map_err(|e| {
-                ResolveSymbolError::DebuglinkAccessError(
-                    debug_path
-                        .to_str()
-                        .unwrap_or("Debuglink path missing")
-                        .to_string(),
-                    e,
-                )
-            })?;
-            let debug_obj = object::read::File::parse(&*debug_data)?;
+        verify_build_ids(&obj, &debug_obj, symbol)?;
 
-            verify_build_ids(&obj, &debug_obj, symbol)?;
+        let sym = find_symbol_in_object(&debug_obj, symbol)
+            .ok_or_else(|| ResolveSymbolError::Unknown(symbol.to_string()))?;
 
-            debug_obj_keeper = Some(debug_obj);
-            find_symbol_in_object(debug_obj_keeper.as_ref().unwrap(), symbol)
-                .ok_or_else(|| ResolveSymbolError::Unknown(symbol.to_string()))
-        },
-        Ok,
-    )?;
+        symbol_translated_address(&debug_obj, sym, symbol)
+    }
+}
 
+fn symbol_translated_address(
+    obj: &object::File<'_>,
+    sym: Symbol<'_, '_>,
+    symbol_name: &str,
+) -> Result<u64, ResolveSymbolError> {
     let needs_addr_translation = matches!(
         obj.kind(),
         object::ObjectKind::Dynamic | object::ObjectKind::Executable
@@ -725,11 +728,11 @@ fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> 
     } else {
         let index = sym
             .section_index()
-            .ok_or_else(|| ResolveSymbolError::NotInSection(symbol.to_string()))?;
+            .ok_or_else(|| ResolveSymbolError::NotInSection(symbol_name.to_string()))?;
         let section = obj.section_by_index(index)?;
         let (offset, _size) = section.file_range().ok_or_else(|| {
             ResolveSymbolError::SectionFileRangeNone(
-                symbol.to_string(),
+                symbol_name.to_string(),
                 section.name().map(str::to_owned),
             )
         })?;
