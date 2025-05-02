@@ -8,15 +8,21 @@ use std::{
     io::{self, BufRead, BufReader},
     mem,
     num::ParseIntError,
-    slice,
+    os::fd::BorrowedFd,
+    ptr, slice,
     str::{FromStr, Utf8Error},
 };
 
 use aya_obj::generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK};
-use libc::{_SC_PAGESIZE, if_nametoindex, sysconf, uname, utsname};
+use libc::{
+    _SC_PAGESIZE, MAP_FAILED, c_int, c_void, if_nametoindex, off_t, sysconf, uname, utsname,
+};
 use log::warn;
 
-use crate::Pod;
+use crate::{
+    Pod,
+    sys::{SyscallError, mmap, munmap},
+};
 
 /// Represents a kernel version, in major.minor.release version.
 // Adapted from https://docs.rs/procfs/latest/procfs/sys/kernel/struct.Version.html.
@@ -429,6 +435,66 @@ pub(crate) fn bytes_of_bpf_name(bpf_name: &[core::ffi::c_char; 16]) -> &[u8] {
         .map(|pos| pos + 1)
         .unwrap_or(0);
     unsafe { slice::from_raw_parts(bpf_name.as_ptr() as *const _, length) }
+}
+
+// MMap corresponds to a memory-mapped region.
+//
+// The data is unmapped in Drop.
+#[cfg_attr(test, derive(Debug))]
+pub(crate) struct MMap {
+    ptr: ptr::NonNull<c_void>,
+    len: usize,
+}
+
+// Needed because NonNull<T> is !Send and !Sync out of caution that the data
+// might be aliased unsafely.
+unsafe impl Send for MMap {}
+unsafe impl Sync for MMap {}
+
+impl MMap {
+    pub(crate) fn new(
+        fd: BorrowedFd<'_>,
+        len: usize,
+        prot: c_int,
+        flags: c_int,
+        offset: off_t,
+    ) -> Result<Self, SyscallError> {
+        match unsafe { mmap(ptr::null_mut(), len, prot, flags, fd, offset) } {
+            MAP_FAILED => Err(SyscallError {
+                call: "mmap",
+                io_error: io::Error::last_os_error(),
+            }),
+            ptr => {
+                let ptr = ptr::NonNull::new(ptr).ok_or(
+                    // This should never happen, but to be paranoid, and so we never need to talk
+                    // about a null pointer, we check it anyway.
+                    SyscallError {
+                        call: "mmap",
+                        io_error: io::Error::other("mmap returned null pointer"),
+                    },
+                )?;
+                Ok(Self { ptr, len })
+            }
+        }
+    }
+
+    pub(crate) fn ptr(&self) -> ptr::NonNull<c_void> {
+        self.ptr
+    }
+}
+
+impl AsRef<[u8]> for MMap {
+    fn as_ref(&self) -> &[u8] {
+        let Self { ptr, len } = self;
+        unsafe { std::slice::from_raw_parts(ptr.as_ptr().cast(), *len) }
+    }
+}
+
+impl Drop for MMap {
+    fn drop(&mut self) {
+        let Self { ptr, len } = *self;
+        unsafe { munmap(ptr.as_ptr(), len) };
+    }
 }
 
 #[cfg(test)]
