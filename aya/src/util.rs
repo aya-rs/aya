@@ -18,6 +18,8 @@ use log::warn;
 
 use crate::Pod;
 
+pub mod mmap;
+
 /// Represents a kernel version, in major.minor.release version.
 // Adapted from https://docs.rs/procfs/latest/procfs/sys/kernel/struct.Version.html.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd)]
