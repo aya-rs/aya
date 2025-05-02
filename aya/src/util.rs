@@ -8,14 +8,16 @@ use std::{
     io::{self, BufRead, BufReader},
     mem,
     num::ParseIntError,
-    os::fd::BorrowedFd,
+    os::fd::{AsFd as _, BorrowedFd},
+    path::Path,
     ptr, slice,
     str::{FromStr, Utf8Error},
 };
 
 use aya_obj::generated::{TC_H_MAJ_MASK, TC_H_MIN_MASK};
 use libc::{
-    _SC_PAGESIZE, MAP_FAILED, c_int, c_void, if_nametoindex, off_t, sysconf, uname, utsname,
+    _SC_PAGESIZE, MAP_FAILED, MAP_PRIVATE, PROT_READ, c_int, c_void, if_nametoindex, off_t,
+    sysconf, uname, utsname,
 };
 use log::warn;
 
@@ -476,6 +478,24 @@ impl MMap {
                 Ok(Self { ptr, len })
             }
         }
+    }
+
+    /// Maps the file at `path` for reading, using `mmap` with `MAP_PRIVATE`.
+    pub(crate) fn map_copy_read_only(path: &Path) -> Result<Self, io::Error> {
+        let file = fs::File::open(path)?;
+        Self::new(
+            file.as_fd(),
+            file.metadata()?.len().try_into().map_err(|e| {
+                io::Error::new(
+                    io::ErrorKind::FileTooLarge,
+                    format!("file too large to mmap: {e}"),
+                )
+            })?,
+            PROT_READ,
+            MAP_PRIVATE,
+            0,
+        )
+        .map_err(|SyscallError { io_error, .. }| io_error)
     }
 
     pub(crate) fn ptr(&self) -> ptr::NonNull<c_void> {

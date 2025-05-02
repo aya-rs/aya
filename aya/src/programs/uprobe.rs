@@ -24,6 +24,7 @@ use crate::{
         probe::{OsStringExt as _, ProbeKind, attach},
     },
     sys::bpf_link_get_info_by_fd,
+    util::MMap,
 };
 
 const LD_SO_CACHE_FILE: &str = "/etc/ld.so.cache";
@@ -686,15 +687,15 @@ fn find_symbol_in_object<'a>(obj: &'a object::File<'a>, symbol: &str) -> Option<
 }
 
 fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> {
-    let data = fs::read(path)?;
-    let obj = object::read::File::parse(&*data)?;
+    let data = MMap::map_copy_read_only(path)?;
+    let obj = object::read::File::parse(data.as_ref())?;
 
     if let Some(sym) = find_symbol_in_object(&obj, symbol) {
         symbol_translated_address(&obj, sym, symbol)
     } else {
         // Only search in the debug object if the symbol was not found in the main object
         let debug_path = find_debug_path_in_object(&obj, path, symbol)?;
-        let debug_data = fs::read(&debug_path).map_err(|e| {
+        let debug_data = MMap::map_copy_read_only(&debug_path).map_err(|e| {
             ResolveSymbolError::DebuglinkAccessError(
                 debug_path
                     .to_str()
@@ -703,7 +704,7 @@ fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> 
                 e,
             )
         })?;
-        let debug_obj = object::read::File::parse(&*debug_data)?;
+        let debug_obj = object::read::File::parse(debug_data.as_ref())?;
 
         verify_build_ids(&obj, &debug_obj, symbol)?;
 
