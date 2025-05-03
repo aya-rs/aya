@@ -1,4 +1,4 @@
-//! Safe wrapper around memory-mapped files.
+//! mmap/munmap syscall wrappers and a RAII wrapper around memory-mapped files.
 
 use std::{
     fs, io,
@@ -9,7 +9,42 @@ use std::{
 
 use libc::{MAP_FAILED, MAP_PRIVATE, PROT_READ, c_int, c_void, off_t};
 
-use super::{SyscallError, mmap, munmap};
+use super::SyscallError;
+
+#[cfg_attr(test, expect(unused_variables))]
+pub(crate) unsafe fn mmap(
+    addr: *mut c_void,
+    len: usize,
+    prot: c_int,
+    flags: c_int,
+    fd: BorrowedFd<'_>,
+    offset: libc::off_t,
+) -> *mut c_void {
+    #[cfg(test)]
+    {
+        super::TEST_MMAP_RET.with(|ret| *ret.borrow())
+    }
+
+    #[cfg(not(test))]
+    {
+        use std::os::fd::AsRawFd as _;
+
+        unsafe { libc::mmap(addr, len, prot, flags, fd.as_raw_fd(), offset) }
+    }
+}
+
+#[cfg_attr(test, expect(unused_variables))]
+pub(crate) unsafe fn munmap(addr: *mut c_void, len: usize) -> c_int {
+    #[cfg(test)]
+    {
+        0
+    }
+
+    #[cfg(not(test))]
+    {
+        unsafe { libc::munmap(addr, len) }
+    }
+}
 
 // MMap corresponds to a memory-mapped region.
 //
