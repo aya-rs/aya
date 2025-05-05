@@ -621,7 +621,7 @@ enum ResolveSymbolError {
     SectionFileRangeNone(String, Result<String, object::Error>),
 
     #[error("failed to access debuglink file `{0}`: `{1}`")]
-    DebuglinkAccessError(String, io::Error),
+    DebuglinkAccessError(PathBuf, io::Error),
 
     #[error("symbol `{0}` not found, mismatched build IDs in main and debug files")]
     BuildIdMismatch(String),
@@ -695,15 +695,8 @@ fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> 
     } else {
         // Only search in the debug object if the symbol was not found in the main object
         let debug_path = find_debug_path_in_object(&obj, path, symbol)?;
-        let debug_data = MMap::map_copy_read_only(&debug_path).map_err(|e| {
-            ResolveSymbolError::DebuglinkAccessError(
-                debug_path
-                    .to_str()
-                    .unwrap_or("Debuglink path missing")
-                    .to_string(),
-                e,
-            )
-        })?;
+        let debug_data = MMap::map_copy_read_only(&debug_path)
+            .map_err(|e| ResolveSymbolError::DebuglinkAccessError(debug_path, e))?;
         let debug_obj = object::read::File::parse(debug_data.as_ref())?;
 
         verify_build_ids(&obj, &debug_obj, symbol)?;
