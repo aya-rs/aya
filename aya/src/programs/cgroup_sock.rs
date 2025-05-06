@@ -15,6 +15,8 @@ use crate::{
     util::KernelVersion,
 };
 
+use super::links::LinkError;
+
 /// A program that is called on socket creation, bind and release.
 ///
 /// [`CgroupSock`] programs can be used to allow or deny socket creation from
@@ -161,3 +163,14 @@ define_link_wrapper!(
     CgroupSockLinkIdInner,
     CgroupSock,
 );
+
+impl TryFrom<CgroupSockLink> for FdLink {
+    type Error = LinkError;
+
+    fn try_from(value: CgroupSockLink) -> Result<Self, Self::Error> {
+        match value.into_inner() {
+            CgroupSockLinkInner::Fd(fd) => Ok(fd),
+            CgroupSockLinkInner::ProgAttach(_) => Err(LinkError::InvalidLink),
+        }
+    }
+}
