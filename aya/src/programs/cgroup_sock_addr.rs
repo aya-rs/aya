@@ -15,6 +15,8 @@ use crate::{
     util::KernelVersion,
 };
 
+use super::links::LinkError;
+
 /// A program that can be used to inspect or modify socket addresses (`struct sockaddr`).
 ///
 /// [`CgroupSockAddr`] programs can be used to inspect or modify socket addresses passed to
@@ -162,3 +164,14 @@ define_link_wrapper!(
     CgroupSockAddrLinkIdInner,
     CgroupSockAddr,
 );
+
+impl TryFrom<CgroupSockAddrLink> for FdLink {
+    type Error = LinkError;
+
+    fn try_from(value: CgroupSockAddrLink) -> Result<Self, Self::Error> {
+        match value.into_inner() {
+            CgroupSockAddrLinkInner::Fd(fd) => Ok(fd),
+            CgroupSockAddrLinkInner::ProgAttach(_) => Err(LinkError::InvalidLink),
+        }
+    }
+}

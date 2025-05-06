@@ -17,6 +17,8 @@ use crate::{
     util::KernelVersion,
 };
 
+use super::links::LinkError;
+
 /// A program used to inspect or filter network activity for a given cgroup.
 ///
 /// [`CgroupSkb`] programs can be used to inspect or filter network activity
@@ -193,4 +195,15 @@ pub enum CgroupSkbAttachType {
     Ingress,
     /// Attach to egress.
     Egress,
+}
+
+impl TryFrom<CgroupSkbLink> for FdLink {
+    type Error = LinkError;
+
+    fn try_from(value: CgroupSkbLink) -> Result<Self, Self::Error> {
+        match value.into_inner() {
+            CgroupSkbLinkInner::Fd(fd) => Ok(fd),
+            CgroupSkbLinkInner::ProgAttach(_) => Err(LinkError::InvalidLink),
+        }
+    }
 }

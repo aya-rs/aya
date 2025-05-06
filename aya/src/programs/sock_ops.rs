@@ -14,6 +14,8 @@ use crate::{
     util::KernelVersion,
 };
 
+use super::links::LinkError;
+
 /// A program used to work with sockets.
 ///
 /// [`SockOps`] programs can access or set socket options, connection
@@ -140,3 +142,14 @@ define_link_wrapper!(
     SockOpsLinkIdInner,
     SockOps,
 );
+
+impl TryFrom<SockOpsLink> for FdLink {
+    type Error = LinkError;
+
+    fn try_from(value: SockOpsLink) -> Result<Self, Self::Error> {
+        match value.into_inner() {
+            SockOpsLinkInner::Fd(fd) => Ok(fd),
+            SockOpsLinkInner::ProgAttach(_) => Err(LinkError::InvalidLink),
+        }
+    }
+}
