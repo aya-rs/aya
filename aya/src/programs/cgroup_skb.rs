@@ -11,7 +11,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, load_program,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
@@ -185,6 +185,8 @@ define_link_wrapper!(
     CgroupSkbLinkIdInner,
     CgroupSkb,
 );
+
+impl_try_into_fdlink!(CgroupSkbLink, CgroupSkbLinkInner);
 
 /// Defines where to attach a [`CgroupSkb`] program.
 #[derive(Copy, Clone, Debug)]

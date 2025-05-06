@@ -443,6 +443,24 @@ macro_rules! define_link_wrapper {
 
 pub(crate) use define_link_wrapper;
 
+macro_rules! impl_try_into_fdlink {
+    ($wrapper:ident, $inner:ident) => {
+        impl TryFrom<$wrapper> for $crate::programs::FdLink {
+            type Error = $crate::programs::LinkError;
+
+            fn try_from(value: $wrapper) -> Result<Self, Self::Error> {
+                if let $inner::Fd(fd) = value.into_inner() {
+                    Ok(fd)
+                } else {
+                    Err($crate::programs::LinkError::InvalidLink)
+                }
+            }
+        }
+    };
+}
+
+pub(crate) use impl_try_into_fdlink;
+
 #[derive(Error, Debug)]
 /// Errors from operations on links.
 pub enum LinkError {
