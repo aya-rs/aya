@@ -158,7 +158,7 @@ impl Xdp {
             })?;
             self.data
                 .links
-                .insert(XdpLink::new(XdpLinkInner::FdLink(FdLink::new(link_fd))))
+                .insert(XdpLink::new(XdpLinkInner::Fd(FdLink::new(link_fd))))
         } else {
             let if_index = if_index as i32;
             unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, flags.bits()) }
@@ -197,7 +197,7 @@ impl Xdp {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         match link.into_inner() {
-            XdpLinkInner::FdLink(fd_link) => {
+            XdpLinkInner::Fd(fd_link) => {
                 let link_fd = fd_link.fd;
                 bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|io_error| {
                     SyscallError {
@@ -208,7 +208,7 @@ impl Xdp {
 
                 self.data
                     .links
-                    .insert(XdpLink::new(XdpLinkInner::FdLink(FdLink::new(link_fd))))
+                    .insert(XdpLink::new(XdpLinkInner::Fd(FdLink::new(link_fd))))
             }
             XdpLinkInner::NlLink(nl_link) => {
                 let if_index = nl_link.if_index;
@@ -280,7 +280,7 @@ pub(crate) enum XdpLinkIdInner {
 
 #[derive(Debug)]
 pub(crate) enum XdpLinkInner {
-    FdLink(FdLink),
+    Fd(FdLink),
     NlLink(NlLink),
 }
 
@@ -289,14 +289,14 @@ impl Link for XdpLinkInner {
 
     fn id(&self) -> Self::Id {
         match self {
-            Self::FdLink(link) => XdpLinkIdInner::FdLinkId(link.id()),
+            Self::Fd(link) => XdpLinkIdInner::FdLinkId(link.id()),
             Self::NlLink(link) => XdpLinkIdInner::NlLinkId(link.id()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         match self {
-            Self::FdLink(link) => link.detach(),
+            Self::Fd(link) => link.detach(),
             Self::NlLink(link) => link.detach(),
         }
     }
@@ -308,7 +308,7 @@ impl TryFrom<XdpLink> for FdLink {
     type Error = LinkError;
 
     fn try_from(value: XdpLink) -> Result<Self, Self::Error> {
-        if let XdpLinkInner::FdLink(fd) = value.into_inner() {
+        if let XdpLinkInner::Fd(fd) = value.into_inner() {
             Ok(fd)
         } else {
             Err(LinkError::InvalidLink)
@@ -323,7 +323,7 @@ impl TryFrom<FdLink> for XdpLink {
         // unwrap of fd_link.fd will not panic since it's only None when being dropped.
         let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_XDP as u32) {
-            return Ok(Self::new(XdpLinkInner::FdLink(fd_link)));
+            return Ok(Self::new(XdpLinkInner::Fd(fd_link)));
         }
         Err(LinkError::InvalidLink)
     }
