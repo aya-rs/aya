@@ -4384,6 +4384,8 @@ impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fexit:
 pub fn aya::programs::fexit::FExitLink::from(b: aya::programs::links::FdLink) -> aya::programs::fexit::FExitLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::lsm::LsmLink
 pub fn aya::programs::lsm::LsmLink::from(b: aya::programs::links::FdLink) -> aya::programs::lsm::LsmLink
+impl core::convert::From<aya::programs::links::FdLink> for aya::programs::lsm_cgroup::LsmLink
+pub fn aya::programs::lsm_cgroup::LsmLink::from(b: aya::programs::links::FdLink) -> aya::programs::lsm_cgroup::LsmLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::raw_trace_point::RawTracePointLink
 pub fn aya::programs::raw_trace_point::RawTracePointLink::from(b: aya::programs::links::FdLink) -> aya::programs::raw_trace_point::RawTracePointLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::sk_lookup::SkLookupLink
@@ -4394,6 +4396,8 @@ impl core::convert::From<aya::programs::links::PinnedLink> for aya::programs::li
 pub fn aya::programs::links::FdLink::from(p: aya::programs::links::PinnedLink) -> Self
 impl core::convert::From<aya::programs::lsm::LsmLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::lsm::LsmLink) -> aya::programs::links::FdLink
+impl core::convert::From<aya::programs::lsm_cgroup::LsmLink> for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(w: aya::programs::lsm_cgroup::LsmLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::raw_trace_point::RawTracePointLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::raw_trace_point::RawTracePointLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::sk_lookup::SkLookupLink> for aya::programs::links::FdLink
@@ -4752,6 +4756,10 @@ impl aya::programs::links::Link for aya::programs::lsm::LsmLink
 pub type aya::programs::lsm::LsmLink::Id = aya::programs::lsm::LsmLinkId
 pub fn aya::programs::lsm::LsmLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::lsm::LsmLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::lsm_cgroup::LsmLink
+pub type aya::programs::lsm_cgroup::LsmLink::Id = aya::programs::lsm_cgroup::LsmLinkId
+pub fn aya::programs::lsm_cgroup::LsmLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::lsm_cgroup::LsmLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::perf_attach::PerfLink
 pub type aya::programs::perf_attach::PerfLink::Id = aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -5066,6 +5074,136 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::lsm::LsmLinkId where T: ?c
 pub fn aya::programs::lsm::LsmLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::lsm::LsmLinkId
 pub fn aya::programs::lsm::LsmLinkId::from(t: T) -> T
+pub mod aya::programs::lsm_cgroup
+pub struct aya::programs::lsm_cgroup::LsmCgroup
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T) -> core::result::Result<aya::programs::lsm_cgroup::LsmLinkId, aya::programs::ProgramError>
+pub fn aya::programs::lsm_cgroup::LsmCgroup::load(&mut self, lsm_hook_name: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::detach(&mut self, link_id: aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::lsm_cgroup::LsmCgroup::take_link(&mut self, link_id: aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<aya::programs::lsm_cgroup::LsmLink, aya::programs::ProgramError>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::lsm_cgroup::LsmCgroup::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lsm_cgroup::LsmCgroup
+pub type &'a aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::lsm_cgroup::LsmCgroup::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lsm_cgroup::LsmCgroup
+pub type &'a mut aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::lsm_cgroup::LsmCgroup::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::lsm_cgroup::LsmCgroup
+impl core::marker::Send for aya::programs::lsm_cgroup::LsmCgroup
+impl core::marker::Sync for aya::programs::lsm_cgroup::LsmCgroup
+impl core::marker::Unpin for aya::programs::lsm_cgroup::LsmCgroup
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
+impl<T, U> core::convert::Into<U> for aya::programs::lsm_cgroup::LsmCgroup where U: core::convert::From<T>
+pub fn aya::programs::lsm_cgroup::LsmCgroup::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::lsm_cgroup::LsmCgroup where U: core::convert::Into<T>
+pub type aya::programs::lsm_cgroup::LsmCgroup::Error = core::convert::Infallible
+pub fn aya::programs::lsm_cgroup::LsmCgroup::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::lsm_cgroup::LsmCgroup where U: core::convert::TryFrom<T>
+pub type aya::programs::lsm_cgroup::LsmCgroup::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::lsm_cgroup::LsmCgroup::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::lsm_cgroup::LsmCgroup where T: 'static + ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmCgroup::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::lsm_cgroup::LsmCgroup where T: ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmCgroup::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::lsm_cgroup::LsmCgroup where T: ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmCgroup::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::from(t: T) -> T
+pub struct aya::programs::lsm_cgroup::LsmLink(_)
+impl aya::programs::links::Link for aya::programs::lsm_cgroup::LsmLink
+pub type aya::programs::lsm_cgroup::LsmLink::Id = aya::programs::lsm_cgroup::LsmLinkId
+pub fn aya::programs::lsm_cgroup::LsmLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::lsm_cgroup::LsmLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::lsm_cgroup::LsmLink
+impl core::cmp::PartialEq for aya::programs::lsm_cgroup::LsmLink
+pub fn aya::programs::lsm_cgroup::LsmLink::eq(&self, other: &Self) -> bool
+impl core::convert::From<aya::programs::links::FdLink> for aya::programs::lsm_cgroup::LsmLink
+pub fn aya::programs::lsm_cgroup::LsmLink::from(b: aya::programs::links::FdLink) -> aya::programs::lsm_cgroup::LsmLink
+impl core::convert::From<aya::programs::lsm_cgroup::LsmLink> for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(w: aya::programs::lsm_cgroup::LsmLink) -> aya::programs::links::FdLink
+impl core::fmt::Debug for aya::programs::lsm_cgroup::LsmLink
+pub fn aya::programs::lsm_cgroup::LsmLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::lsm_cgroup::LsmLink
+pub fn aya::programs::lsm_cgroup::LsmLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
+impl core::ops::drop::Drop for aya::programs::lsm_cgroup::LsmLink
+pub fn aya::programs::lsm_cgroup::LsmLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::lsm_cgroup::LsmLink> for aya::programs::lsm_cgroup::LsmLinkId
+pub fn aya::programs::lsm_cgroup::LsmLinkId::equivalent(&self, key: &aya::programs::lsm_cgroup::LsmLink) -> bool
+impl core::marker::Freeze for aya::programs::lsm_cgroup::LsmLink
+impl core::marker::Send for aya::programs::lsm_cgroup::LsmLink
+impl core::marker::Sync for aya::programs::lsm_cgroup::LsmLink
+impl core::marker::Unpin for aya::programs::lsm_cgroup::LsmLink
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm_cgroup::LsmLink
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmLink
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::lsm_cgroup::LsmLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmLink::equivalent(&self, key: &K) -> bool
+impl<T, U> core::convert::Into<U> for aya::programs::lsm_cgroup::LsmLink where U: core::convert::From<T>
+pub fn aya::programs::lsm_cgroup::LsmLink::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::lsm_cgroup::LsmLink where U: core::convert::Into<T>
+pub type aya::programs::lsm_cgroup::LsmLink::Error = core::convert::Infallible
+pub fn aya::programs::lsm_cgroup::LsmLink::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::lsm_cgroup::LsmLink where U: core::convert::TryFrom<T>
+pub type aya::programs::lsm_cgroup::LsmLink::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::lsm_cgroup::LsmLink::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::lsm_cgroup::LsmLink where T: 'static + ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmLink::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::lsm_cgroup::LsmLink where T: ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmLink::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::lsm_cgroup::LsmLink where T: ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmLink::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::lsm_cgroup::LsmLink
+pub fn aya::programs::lsm_cgroup::LsmLink::from(t: T) -> T
+pub struct aya::programs::lsm_cgroup::LsmLinkId(_)
+impl core::cmp::Eq for aya::programs::lsm_cgroup::LsmLinkId
+impl core::cmp::PartialEq for aya::programs::lsm_cgroup::LsmLinkId
+pub fn aya::programs::lsm_cgroup::LsmLinkId::eq(&self, other: &aya::programs::lsm_cgroup::LsmLinkId) -> bool
+impl core::fmt::Debug for aya::programs::lsm_cgroup::LsmLinkId
+pub fn aya::programs::lsm_cgroup::LsmLinkId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::lsm_cgroup::LsmLinkId
+pub fn aya::programs::lsm_cgroup::LsmLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for aya::programs::lsm_cgroup::LsmLinkId
+impl equivalent::Equivalent<aya::programs::lsm_cgroup::LsmLink> for aya::programs::lsm_cgroup::LsmLinkId
+pub fn aya::programs::lsm_cgroup::LsmLinkId::equivalent(&self, key: &aya::programs::lsm_cgroup::LsmLink) -> bool
+impl core::marker::Freeze for aya::programs::lsm_cgroup::LsmLinkId
+impl core::marker::Send for aya::programs::lsm_cgroup::LsmLinkId
+impl core::marker::Sync for aya::programs::lsm_cgroup::LsmLinkId
+impl core::marker::Unpin for aya::programs::lsm_cgroup::LsmLinkId
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm_cgroup::LsmLinkId
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmLinkId
+impl<Q, K> equivalent::Equivalent<K> for aya::programs::lsm_cgroup::LsmLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmLinkId::equivalent(&self, key: &K) -> bool
+impl<T, U> core::convert::Into<U> for aya::programs::lsm_cgroup::LsmLinkId where U: core::convert::From<T>
+pub fn aya::programs::lsm_cgroup::LsmLinkId::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::lsm_cgroup::LsmLinkId where U: core::convert::Into<T>
+pub type aya::programs::lsm_cgroup::LsmLinkId::Error = core::convert::Infallible
+pub fn aya::programs::lsm_cgroup::LsmLinkId::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::lsm_cgroup::LsmLinkId where U: core::convert::TryFrom<T>
+pub type aya::programs::lsm_cgroup::LsmLinkId::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::lsm_cgroup::LsmLinkId::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::lsm_cgroup::LsmLinkId where T: 'static + ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmLinkId::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::lsm_cgroup::LsmLinkId where T: ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmLinkId::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::lsm_cgroup::LsmLinkId where T: ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmLinkId::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::lsm_cgroup::LsmLinkId
+pub fn aya::programs::lsm_cgroup::LsmLinkId::from(t: T) -> T
 pub mod aya::programs::perf_attach
 pub struct aya::programs::perf_attach::PerfLink
 impl aya::programs::links::Link for aya::programs::perf_attach::PerfLink
@@ -7671,6 +7809,7 @@ pub aya::programs::Program::Iter(aya::programs::iter::Iter)
 pub aya::programs::Program::KProbe(aya::programs::kprobe::KProbe)
 pub aya::programs::Program::LircMode2(aya::programs::lirc_mode2::LircMode2)
 pub aya::programs::Program::Lsm(aya::programs::lsm::Lsm)
+pub aya::programs::Program::LsmCgroup(aya::programs::lsm_cgroup::LsmCgroup)
 pub aya::programs::Program::PerfEvent(aya::programs::perf_event::PerfEvent)
 pub aya::programs::Program::RawTracePoint(aya::programs::raw_trace_point::RawTracePoint)
 pub aya::programs::Program::SchedClassifier(aya::programs::tc::SchedClassifier)
@@ -7732,6 +7871,9 @@ pub fn &'a aya::programs::lirc_mode2::LircMode2::try_from(program: &'a aya::prog
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lsm::Lsm
 pub type &'a aya::programs::lsm::Lsm::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::lsm::Lsm::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::lsm::Lsm, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lsm_cgroup::LsmCgroup
+pub type &'a aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::lsm_cgroup::LsmCgroup::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::perf_event::PerfEvent
 pub type &'a aya::programs::perf_event::PerfEvent::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::perf_event::PerfEvent::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::perf_event::PerfEvent, aya::programs::ProgramError>
@@ -7810,6 +7952,9 @@ pub fn &'a mut aya::programs::lirc_mode2::LircMode2::try_from(program: &'a mut a
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lsm::Lsm
 pub type &'a mut aya::programs::lsm::Lsm::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::lsm::Lsm::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lsm::Lsm, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lsm_cgroup::LsmCgroup
+pub type &'a mut aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::lsm_cgroup::LsmCgroup::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::perf_event::PerfEvent
 pub type &'a mut aya::programs::perf_event::PerfEvent::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::perf_event::PerfEvent::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::perf_event::PerfEvent, aya::programs::ProgramError>
@@ -9155,6 +9300,56 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::lsm::Lsm where T: ?core::m
 pub fn aya::programs::lsm::Lsm::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::lsm::Lsm
 pub fn aya::programs::lsm::Lsm::from(t: T) -> T
+pub struct aya::programs::LsmCgroup
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::attach<T: std::os::fd::owned::AsFd>(&mut self, cgroup: T) -> core::result::Result<aya::programs::lsm_cgroup::LsmLinkId, aya::programs::ProgramError>
+pub fn aya::programs::lsm_cgroup::LsmCgroup::load(&mut self, lsm_hook_name: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::detach(&mut self, link_id: aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::lsm_cgroup::LsmCgroup::take_link(&mut self, link_id: aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<aya::programs::lsm_cgroup::LsmLink, aya::programs::ProgramError>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::lsm_cgroup::LsmCgroup::unpin(self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lsm_cgroup::LsmCgroup
+pub type &'a aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::lsm_cgroup::LsmCgroup::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lsm_cgroup::LsmCgroup
+pub type &'a mut aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::lsm_cgroup::LsmCgroup::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::lsm_cgroup::LsmCgroup
+impl core::marker::Send for aya::programs::lsm_cgroup::LsmCgroup
+impl core::marker::Sync for aya::programs::lsm_cgroup::LsmCgroup
+impl core::marker::Unpin for aya::programs::lsm_cgroup::LsmCgroup
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
+impl<T, U> core::convert::Into<U> for aya::programs::lsm_cgroup::LsmCgroup where U: core::convert::From<T>
+pub fn aya::programs::lsm_cgroup::LsmCgroup::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::lsm_cgroup::LsmCgroup where U: core::convert::Into<T>
+pub type aya::programs::lsm_cgroup::LsmCgroup::Error = core::convert::Infallible
+pub fn aya::programs::lsm_cgroup::LsmCgroup::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::lsm_cgroup::LsmCgroup where U: core::convert::TryFrom<T>
+pub type aya::programs::lsm_cgroup::LsmCgroup::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::lsm_cgroup::LsmCgroup::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::lsm_cgroup::LsmCgroup where T: 'static + ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmCgroup::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::lsm_cgroup::LsmCgroup where T: ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmCgroup::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::lsm_cgroup::LsmCgroup where T: ?core::marker::Sized
+pub fn aya::programs::lsm_cgroup::LsmCgroup::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::from(t: T) -> T
 pub struct aya::programs::PerfEvent
 impl aya::programs::perf_event::PerfEvent
 pub const aya::programs::perf_event::PerfEvent::PROGRAM_TYPE: aya::programs::ProgramType
@@ -10018,6 +10213,10 @@ impl aya::programs::links::Link for aya::programs::lsm::LsmLink
 pub type aya::programs::lsm::LsmLink::Id = aya::programs::lsm::LsmLinkId
 pub fn aya::programs::lsm::LsmLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::lsm::LsmLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::lsm_cgroup::LsmLink
+pub type aya::programs::lsm_cgroup::LsmLink::Id = aya::programs::lsm_cgroup::LsmLinkId
+pub fn aya::programs::lsm_cgroup::LsmLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::lsm_cgroup::LsmLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::perf_attach::PerfLink
 pub type aya::programs::perf_attach::PerfLink::Id = aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
