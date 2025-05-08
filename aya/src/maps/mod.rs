@@ -85,6 +85,7 @@ pub mod ring_buf;
 pub mod sock;
 pub mod stack;
 pub mod stack_trace;
+pub mod task_storage;
 pub mod xdp;
 
 pub use array::{Array, PerCpuArray, ProgramArray};
@@ -101,6 +102,7 @@ pub use ring_buf::RingBuf;
 pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
+pub use task_storage::TaskStorage;
 pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 
 #[derive(Error, Debug)]
@@ -310,6 +312,8 @@ pub enum Map {
     Stack(MapData),
     /// A [`StackTraceMap`] map.
     StackTraceMap(MapData),
+    /// A [`TaskStorage`] map.
+    TaskStorage(MapData),
     /// An unsupported map type.
     Unsupported(MapData),
     /// A [`XskMap`] map.
@@ -339,6 +343,7 @@ impl Map {
             Self::SockMap(map) => map.obj.map_type(),
             Self::Stack(map) => map.obj.map_type(),
             Self::StackTraceMap(map) => map.obj.map_type(),
+            Self::TaskStorage(map) => map.obj.map_type(),
             Self::Unsupported(map) => map.obj.map_type(),
             Self::XskMap(map) => map.obj.map_type(),
         }
@@ -369,6 +374,7 @@ impl Map {
             Self::SockMap(map) => map.pin(path),
             Self::Stack(map) => map.pin(path),
             Self::StackTraceMap(map) => map.pin(path),
+            Self::TaskStorage(map) => map.pin(path),
             Self::Unsupported(map) => map.pin(path),
             Self::XskMap(map) => map.pin(path),
         }
@@ -418,6 +424,7 @@ impl_map_pin!((V) {
     BloomFilter,
     Queue,
     Stack,
+    TaskStorage,
 });
 
 impl_map_pin!((K, V) {
@@ -499,6 +506,7 @@ impl_try_from_map!((V) {
     Queue,
     SockHash,
     Stack,
+    TaskStorage,
 });
 
 impl_try_from_map!((K, V) {

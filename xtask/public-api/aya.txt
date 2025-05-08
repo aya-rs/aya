@@ -920,6 +920,45 @@ impl<T> core::borrow::BorrowMut<T> for aya::maps::stack_trace::StackTraceMap<T> 
 pub fn aya::maps::stack_trace::StackTraceMap<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::stack_trace::StackTraceMap<T>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::from(t: T) -> T
+pub mod aya::maps::task_storage
+pub struct aya::maps::task_storage::TaskStorage<T, V>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::task_storage::TaskStorage<T, V>
+pub fn aya::maps::task_storage::TaskStorage<T, V>::get(&self, pid: &u32, flags: u64) -> core::result::Result<V, aya::maps::MapError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::task_storage::TaskStorage<T, V>
+pub fn aya::maps::task_storage::TaskStorage<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::task_storage::TaskStorage<&'a aya::maps::MapData, V>
+pub type aya::maps::task_storage::TaskStorage<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::task_storage::TaskStorage<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::task_storage::TaskStorage<&'a mut aya::maps::MapData, V>
+pub type aya::maps::task_storage::TaskStorage<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::task_storage::TaskStorage<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, V: core::fmt::Debug> core::fmt::Debug for aya::maps::task_storage::TaskStorage<T, V>
+pub fn aya::maps::task_storage::TaskStorage<T, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::task_storage::TaskStorage<aya::maps::MapData, V>
+pub type aya::maps::task_storage::TaskStorage<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::task_storage::TaskStorage<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T, V> core::marker::Freeze for aya::maps::task_storage::TaskStorage<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::task_storage::TaskStorage<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::task_storage::TaskStorage<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::task_storage::TaskStorage<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::task_storage::TaskStorage<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::task_storage::TaskStorage<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for aya::maps::task_storage::TaskStorage<T, V> where U: core::convert::From<T>
+pub fn aya::maps::task_storage::TaskStorage<T, V>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::maps::task_storage::TaskStorage<T, V> where U: core::convert::Into<T>
+pub type aya::maps::task_storage::TaskStorage<T, V>::Error = core::convert::Infallible
+pub fn aya::maps::task_storage::TaskStorage<T, V>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::maps::task_storage::TaskStorage<T, V> where U: core::convert::TryFrom<T>
+pub type aya::maps::task_storage::TaskStorage<T, V>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::maps::task_storage::TaskStorage<T, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::maps::task_storage::TaskStorage<T, V> where T: 'static + ?core::marker::Sized
+pub fn aya::maps::task_storage::TaskStorage<T, V>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::maps::task_storage::TaskStorage<T, V> where T: ?core::marker::Sized
+pub fn aya::maps::task_storage::TaskStorage<T, V>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::maps::task_storage::TaskStorage<T, V> where T: ?core::marker::Sized
+pub fn aya::maps::task_storage::TaskStorage<T, V>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::maps::task_storage::TaskStorage<T, V>
+pub fn aya::maps::task_storage::TaskStorage<T, V>::from(t: T) -> T
 pub mod aya::maps::xdp
 pub enum aya::maps::xdp::XdpMapError
 pub aya::maps::xdp::XdpMapError::ChainedProgramNotSupported
@@ -1136,6 +1175,7 @@ pub aya::maps::Map::SockHash(aya::maps::MapData)
 pub aya::maps::Map::SockMap(aya::maps::MapData)
 pub aya::maps::Map::Stack(aya::maps::MapData)
 pub aya::maps::Map::StackTraceMap(aya::maps::MapData)
+pub aya::maps::Map::TaskStorage(aya::maps::MapData)
 pub aya::maps::Map::Unsupported(aya::maps::MapData)
 pub aya::maps::Map::XskMap(aya::maps::MapData)
 impl aya::maps::Map
@@ -1208,6 +1248,9 @@ pub fn aya::maps::queue::Queue<&'a aya::maps::MapData, V>::try_from(map: &'a aya
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::stack::Stack<&'a aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::stack::Stack<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::task_storage::TaskStorage<&'a aya::maps::MapData, V>
+pub type aya::maps::task_storage::TaskStorage<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::task_storage::TaskStorage<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::PerCpuArray<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1226,6 +1269,9 @@ pub fn aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::try_from(map: &'a
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::task_storage::TaskStorage<&'a mut aya::maps::MapData, V>
+pub type aya::maps::task_storage::TaskStorage<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::task_storage::TaskStorage<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::CpuMap<&'a aya::maps::MapData>
 pub type aya::maps::CpuMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::CpuMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1313,6 +1359,9 @@ pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::try_from(map: aya::maps::
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::stack::Stack<aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::task_storage::TaskStorage<aya::maps::MapData, V>
+pub type aya::maps::task_storage::TaskStorage<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::task_storage::TaskStorage<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl core::marker::Freeze for aya::maps::Map
 impl core::marker::Send for aya::maps::Map
 impl core::marker::Sync for aya::maps::Map
@@ -2417,6 +2466,44 @@ impl<T> core::borrow::BorrowMut<T> for aya::maps::stack_trace::StackTraceMap<T> 
 pub fn aya::maps::stack_trace::StackTraceMap<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::stack_trace::StackTraceMap<T>
 pub fn aya::maps::stack_trace::StackTraceMap<T>::from(t: T) -> T
+pub struct aya::maps::TaskStorage<T, V>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::task_storage::TaskStorage<T, V>
+pub fn aya::maps::task_storage::TaskStorage<T, V>::get(&self, pid: &u32, flags: u64) -> core::result::Result<V, aya::maps::MapError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::task_storage::TaskStorage<T, V>
+pub fn aya::maps::task_storage::TaskStorage<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::task_storage::TaskStorage<&'a aya::maps::MapData, V>
+pub type aya::maps::task_storage::TaskStorage<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::task_storage::TaskStorage<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::task_storage::TaskStorage<&'a mut aya::maps::MapData, V>
+pub type aya::maps::task_storage::TaskStorage<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::task_storage::TaskStorage<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, V: core::fmt::Debug> core::fmt::Debug for aya::maps::task_storage::TaskStorage<T, V>
+pub fn aya::maps::task_storage::TaskStorage<T, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::task_storage::TaskStorage<aya::maps::MapData, V>
+pub type aya::maps::task_storage::TaskStorage<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::task_storage::TaskStorage<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T, V> core::marker::Freeze for aya::maps::task_storage::TaskStorage<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::task_storage::TaskStorage<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::task_storage::TaskStorage<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::task_storage::TaskStorage<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::task_storage::TaskStorage<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::task_storage::TaskStorage<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for aya::maps::task_storage::TaskStorage<T, V> where U: core::convert::From<T>
+pub fn aya::maps::task_storage::TaskStorage<T, V>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::maps::task_storage::TaskStorage<T, V> where U: core::convert::Into<T>
+pub type aya::maps::task_storage::TaskStorage<T, V>::Error = core::convert::Infallible
+pub fn aya::maps::task_storage::TaskStorage<T, V>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::maps::task_storage::TaskStorage<T, V> where U: core::convert::TryFrom<T>
+pub type aya::maps::task_storage::TaskStorage<T, V>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::maps::task_storage::TaskStorage<T, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::maps::task_storage::TaskStorage<T, V> where T: 'static + ?core::marker::Sized
+pub fn aya::maps::task_storage::TaskStorage<T, V>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::maps::task_storage::TaskStorage<T, V> where T: ?core::marker::Sized
+pub fn aya::maps::task_storage::TaskStorage<T, V>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::maps::task_storage::TaskStorage<T, V> where T: ?core::marker::Sized
+pub fn aya::maps::task_storage::TaskStorage<T, V>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::maps::task_storage::TaskStorage<T, V>
+pub fn aya::maps::task_storage::TaskStorage<T, V>::from(t: T) -> T
 pub struct aya::maps::XskMap<T>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::XskMap<T>
 pub fn aya::maps::XskMap<T>::len(&self) -> u32
