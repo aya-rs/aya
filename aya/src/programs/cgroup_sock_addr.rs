@@ -8,14 +8,12 @@ pub use aya_obj::programs::CgroupSockAddrAttachType;
 use crate::{
     VerifierLogLevel,
     programs::{
-        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, load_program,
+        CgroupAttachMode, FdLink, Link, LinkError, ProgAttachLink, ProgramData, ProgramError,
+        ProgramType, define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
 };
-
-use super::links::LinkError;
 
 /// A program that can be used to inspect or modify socket addresses (`struct sockaddr`).
 ///
@@ -165,13 +163,4 @@ define_link_wrapper!(
     CgroupSockAddr,
 );
 
-impl TryFrom<CgroupSockAddrLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: CgroupSockAddrLink) -> Result<Self, Self::Error> {
-        match value.into_inner() {
-            CgroupSockAddrLinkInner::Fd(fd) => Ok(fd),
-            CgroupSockAddrLinkInner::ProgAttach(_) => Err(LinkError::InvalidLink),
-        }
-    }
-}
+impl_try_into_fdlink!(CgroupSockAddrLink, CgroupSockAddrLinkInner);

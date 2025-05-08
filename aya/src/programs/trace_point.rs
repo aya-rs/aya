@@ -11,7 +11,7 @@ use thiserror::Error;
 use crate::{
     programs::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        load_program,
+        impl_try_into_fdlink, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
         utils::find_tracefs_path,
     },
@@ -99,17 +99,7 @@ define_link_wrapper!(
     TracePoint,
 );
 
-impl TryFrom<TracePointLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: TracePointLink) -> Result<Self, Self::Error> {
-        if let PerfLinkInner::Fd(fd) = value.into_inner() {
-            Ok(fd)
-        } else {
-            Err(LinkError::InvalidLink)
-        }
-    }
-}
+impl_try_into_fdlink!(TracePointLink, PerfLinkInner);
 
 impl TryFrom<FdLink> for TracePointLink {
     type Error = LinkError;

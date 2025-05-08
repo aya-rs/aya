@@ -21,7 +21,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         FdLink, Link, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        id_as_key, load_program,
+        id_as_key, impl_try_into_fdlink, load_program,
     },
     sys::{
         LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_get_info_by_fd,
@@ -304,17 +304,7 @@ impl Link for XdpLinkInner {
 
 id_as_key!(XdpLinkInner, XdpLinkIdInner);
 
-impl TryFrom<XdpLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: XdpLink) -> Result<Self, Self::Error> {
-        if let XdpLinkInner::Fd(fd) = value.into_inner() {
-            Ok(fd)
-        } else {
-            Err(LinkError::InvalidLink)
-        }
-    }
-}
+impl_try_into_fdlink!(XdpLink, XdpLinkInner);
 
 impl TryFrom<FdLink> for XdpLink {
     type Error = LinkError;

@@ -19,7 +19,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         Link, LinkError, LinkOrder, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        id_as_key, load_program, query,
+        id_as_key, impl_try_into_fdlink, load_program, query,
     },
     sys::{
         BpfLinkCreateArgs, LinkTarget, NetlinkError, ProgQueryTarget, SyscallError,
@@ -244,9 +244,7 @@ impl SchedClassifier {
 
                 self.data
                     .links
-                    .insert(SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(
-                        fd,
-                    ))))
+                    .insert(SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(fd))))
             }
             TcLinkInner::NlLink(NlLink {
                 if_index,
@@ -450,17 +448,7 @@ impl<'a> TryFrom<&'a SchedClassifierLink> for &'a FdLink {
     }
 }
 
-impl TryFrom<SchedClassifierLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: SchedClassifierLink) -> Result<Self, Self::Error> {
-        if let TcLinkInner::Fd(fd) = value.into_inner() {
-            Ok(fd)
-        } else {
-            Err(LinkError::InvalidLink)
-        }
-    }
-}
+impl_try_into_fdlink!(SchedClassifierLink, TcLinkInner);
 
 impl TryFrom<FdLink> for SchedClassifierLink {
     type Error = LinkError;

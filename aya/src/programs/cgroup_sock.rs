@@ -8,14 +8,12 @@ pub use aya_obj::programs::CgroupSockAttachType;
 use crate::{
     VerifierLogLevel,
     programs::{
-        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, load_program,
+        CgroupAttachMode, FdLink, Link, LinkError, ProgAttachLink, ProgramData, ProgramError,
+        ProgramType, define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
 };
-
-use super::links::LinkError;
 
 /// A program that is called on socket creation, bind and release.
 ///
@@ -164,13 +162,4 @@ define_link_wrapper!(
     CgroupSock,
 );
 
-impl TryFrom<CgroupSockLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: CgroupSockLink) -> Result<Self, Self::Error> {
-        match value.into_inner() {
-            CgroupSockLinkInner::Fd(fd) => Ok(fd),
-            CgroupSockLinkInner::ProgAttach(_) => Err(LinkError::InvalidLink),
-        }
-    }
-}
+impl_try_into_fdlink!(CgroupSockLink, CgroupSockLinkInner);

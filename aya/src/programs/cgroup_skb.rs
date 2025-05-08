@@ -10,14 +10,12 @@ use aya_obj::generated::{
 use crate::{
     VerifierLogLevel,
     programs::{
-        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, load_program,
+        CgroupAttachMode, FdLink, Link, LinkError, ProgAttachLink, ProgramData, ProgramError,
+        ProgramType, define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
 };
-
-use super::links::LinkError;
 
 /// A program used to inspect or filter network activity for a given cgroup.
 ///
@@ -188,6 +186,8 @@ define_link_wrapper!(
     CgroupSkb,
 );
 
+impl_try_into_fdlink!(CgroupSkbLink, CgroupSkbLinkInner);
+
 /// Defines where to attach a [`CgroupSkb`] program.
 #[derive(Copy, Clone, Debug)]
 pub enum CgroupSkbAttachType {
@@ -195,15 +195,4 @@ pub enum CgroupSkbAttachType {
     Ingress,
     /// Attach to egress.
     Egress,
-}
-
-impl TryFrom<CgroupSkbLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: CgroupSkbLink) -> Result<Self, Self::Error> {
-        match value.into_inner() {
-            CgroupSkbLinkInner::Fd(fd) => Ok(fd),
-            CgroupSkbLinkInner::ProgAttach(_) => Err(LinkError::InvalidLink),
-        }
-    }
 }

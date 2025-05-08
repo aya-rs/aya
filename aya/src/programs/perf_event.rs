@@ -16,7 +16,7 @@ pub use aya_obj::generated::{
 
 use crate::{
     programs::{
-        FdLink, LinkError, ProgramData, ProgramError, ProgramType,
+        FdLink, LinkError, ProgramData, ProgramError, ProgramType, impl_try_into_fdlink,
         links::define_link_wrapper,
         load_program, perf_attach,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
@@ -188,17 +188,7 @@ impl PerfEvent {
     }
 }
 
-impl TryFrom<PerfEventLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: PerfEventLink) -> Result<Self, Self::Error> {
-        if let PerfLinkInner::Fd(fd) = value.into_inner() {
-            Ok(fd)
-        } else {
-            Err(LinkError::InvalidLink)
-        }
-    }
-}
+impl_try_into_fdlink!(PerfEventLink, PerfLinkInner);
 
 impl TryFrom<FdLink> for PerfEventLink {
     type Error = LinkError;

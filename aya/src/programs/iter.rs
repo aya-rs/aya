@@ -15,7 +15,7 @@ use aya_obj::{
 use crate::{
     programs::{
         FdLink, LinkError, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, load_program,
+        define_link_wrapper, impl_try_into_fdlink, load_program,
     },
     sys::{LinkTarget, SyscallError, bpf_create_iter, bpf_link_create, bpf_link_get_info_by_fd},
 };
@@ -104,18 +104,6 @@ impl AsFd for IterFd {
     }
 }
 
-impl TryFrom<IterLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: IterLink) -> Result<Self, Self::Error> {
-        if let PerfLinkInner::Fd(fd) = value.into_inner() {
-            Ok(fd)
-        } else {
-            Err(LinkError::InvalidLink)
-        }
-    }
-}
-
 impl TryFrom<FdLink> for IterLink {
     type Error = LinkError;
 
@@ -127,6 +115,8 @@ impl TryFrom<FdLink> for IterLink {
         Err(LinkError::InvalidLink)
     }
 }
+
+impl_try_into_fdlink!(IterLink, PerfLinkInner);
 
 define_link_wrapper!(
     /// The link used by [`Iter`] programs.
