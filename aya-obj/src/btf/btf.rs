@@ -14,8 +14,9 @@ use object::{Endianness, SectionIndex};
 use crate::{
     Object,
     btf::{
-        Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
-        IntEncoding, LineInfo, Struct, Typedef, Union, VarLinkage,
+        Array, BtfEnum, BtfKind, BtfMember, BtfRebaseInfo, BtfRebaseInfoField, BtfType, Const,
+        Enum, FuncInfo, FuncLinkage, Int, IntEncoding, LineInfo, Struct, Typedef, Union,
+        VarLinkage,
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
     },
@@ -268,6 +269,50 @@ impl Btf {
         }
     }
 
+    /// Merges a base BTF and multiple split BTFs into a single BTF.
+    pub fn merge_split_btfs(mut base_btf: Btf, split_btfs: &[Btf]) -> Btf {
+        let strings_rebase_from = base_btf.strings.len() as u32;
+        let types_rebase_from = base_btf.types.types.len() as u32;
+        for split_btf in split_btfs {
+            let Btf {
+                header: split_btf_header,
+                strings: split_btf_strings,
+                types: split_btf_types,
+                _endianness,
+            } = split_btf;
+
+            let rebase_info = BtfRebaseInfo {
+                strings: BtfRebaseInfoField {
+                    rebase_from: strings_rebase_from,
+                    new_offset: base_btf.strings.len() as u32,
+                },
+                types: BtfRebaseInfoField {
+                    rebase_from: types_rebase_from,
+                    new_offset: base_btf.types.types.len() as u32,
+                },
+            };
+
+            // Append the strings from the split BTF. We concatenate it with the
+            // existing strings, and will rebase the types to take the new
+            // offsets into account.
+            base_btf.strings.extend(split_btf_strings);
+
+            // Skip over the Unknown type at offset 0, as this only exists in
+            // the "base" BTF, and not the "split" BTFs. Append the rest of the
+            // types from the split BTF.
+            for ty in split_btf_types.types.iter().skip(1) {
+                base_btf.types.types.push(ty.rebase(&rebase_info));
+            }
+
+            // Update the header.
+            base_btf.header.str_len = base_btf.strings.len() as u32;
+            base_btf.header.type_len += split_btf_header.type_len;
+            base_btf.header.str_off += split_btf_header.type_len;
+        }
+
+        base_btf
+    }
+
     pub(crate) fn is_empty(&self) -> bool {
         // the first one is awlays BtfType::Unknown
         self.types.types.len() < 2
@@ -296,10 +341,34 @@ impl Btf {
         type_id as u32
     }
 
-    /// Loads BTF metadata from `/sys/kernel/btf/vmlinux`.
+    /// Loads BTF metadata from `/sys/kernel/btf/`.
     #[cfg(feature = "std")]
     pub fn from_sys_fs() -> Result<Btf, BtfError> {
-        Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
+        let base_btf = Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())?;
+        let mut split_btfs = vec![];
+        let sys_kernel_btf_path = "/sys/kernel/btf";
+        let dir_iter =
+            std::fs::read_dir(sys_kernel_btf_path).map_err(|error| BtfError::FileError {
+                path: sys_kernel_btf_path.into(),
+                error,
+            })?;
+        for entry in dir_iter {
+            let entry = entry.map_err(|error| BtfError::FileError {
+                path: sys_kernel_btf_path.into(),
+                error,
+            })?;
+            let file_type = entry.file_type().map_err(|error| BtfError::FileError {
+                path: entry.path(),
+                error,
+            })?;
+
+            if !file_type.is_file() {
+                continue;
+            }
+            split_btfs.push(Btf::parse_file(entry.path(), Endianness::default())?);
+        }
+
+        Ok(Self::merge_split_btfs(base_btf, &split_btfs))
     }
 
     /// Loads BTF metadata from the given `path`.
