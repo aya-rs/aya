@@ -19,7 +19,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         Link, LinkError, LinkOrder, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        id_as_key, load_program, query,
+        id_as_key, impl_try_into_fdlink, load_program, query,
     },
     sys::{
         BpfLinkCreateArgs, LinkTarget, NetlinkError, ProgQueryTarget, SyscallError,
@@ -231,7 +231,7 @@ impl SchedClassifier {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         match link.into_inner() {
-            TcLinkInner::FdLink(link) => {
+            TcLinkInner::Fd(link) => {
                 let fd = link.fd;
                 let link_fd = fd.as_fd();
 
@@ -244,9 +244,7 @@ impl SchedClassifier {
 
                 self.data
                     .links
-                    .insert(SchedClassifierLink::new(TcLinkInner::FdLink(FdLink::new(
-                        fd,
-                    ))))
+                    .insert(SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(fd))))
             }
             TcLinkInner::NlLink(NlLink {
                 if_index,
@@ -314,7 +312,7 @@ impl SchedClassifier {
 
                 self.data
                     .links
-                    .insert(SchedClassifierLink::new(TcLinkInner::FdLink(FdLink::new(
+                    .insert(SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(
                         link_fd,
                     ))))
             }
@@ -414,7 +412,7 @@ pub(crate) enum TcLinkIdInner {
 
 #[derive(Debug)]
 pub(crate) enum TcLinkInner {
-    FdLink(FdLink),
+    Fd(FdLink),
     NlLink(NlLink),
 }
 
@@ -423,14 +421,14 @@ impl Link for TcLinkInner {
 
     fn id(&self) -> Self::Id {
         match self {
-            Self::FdLink(link) => TcLinkIdInner::FdLinkId(link.id()),
+            Self::Fd(link) => TcLinkIdInner::FdLinkId(link.id()),
             Self::NlLink(link) => TcLinkIdInner::NlLinkId(link.id()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         match self {
-            Self::FdLink(link) => link.detach(),
+            Self::Fd(link) => link.detach(),
             Self::NlLink(link) => link.detach(),
         }
     }
@@ -442,7 +440,7 @@ impl<'a> TryFrom<&'a SchedClassifierLink> for &'a FdLink {
     type Error = LinkError;
 
     fn try_from(value: &'a SchedClassifierLink) -> Result<Self, Self::Error> {
-        if let TcLinkInner::FdLink(fd) = value.inner() {
+        if let TcLinkInner::Fd(fd) = value.inner() {
             Ok(fd)
         } else {
             Err(LinkError::InvalidLink)
@@ -450,17 +448,7 @@ impl<'a> TryFrom<&'a SchedClassifierLink> for &'a FdLink {
     }
 }
 
-impl TryFrom<SchedClassifierLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: SchedClassifierLink) -> Result<Self, Self::Error> {
-        if let TcLinkInner::FdLink(fd) = value.into_inner() {
-            Ok(fd)
-        } else {
-            Err(LinkError::InvalidLink)
-        }
-    }
-}
+impl_try_into_fdlink!(SchedClassifierLink, TcLinkInner);
 
 impl TryFrom<FdLink> for SchedClassifierLink {
     type Error = LinkError;
@@ -468,7 +456,7 @@ impl TryFrom<FdLink> for SchedClassifierLink {
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
         let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_TCX as u32) {
-            return Ok(Self::new(TcLinkInner::FdLink(fd_link)));
+            return Ok(Self::new(TcLinkInner::Fd(fd_link)));
         }
         Err(LinkError::InvalidLink)
     }

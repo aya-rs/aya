@@ -13,7 +13,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        load_program,
+        impl_try_into_fdlink, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{ProbeKind, attach},
     },
@@ -127,17 +127,7 @@ pub enum KProbeError {
     },
 }
 
-impl TryFrom<KProbeLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: KProbeLink) -> Result<Self, Self::Error> {
-        if let PerfLinkInner::FdLink(fd) = value.into_inner() {
-            Ok(fd)
-        } else {
-            Err(LinkError::InvalidLink)
-        }
-    }
-}
+impl_try_into_fdlink!(KProbeLink, PerfLinkInner);
 
 impl TryFrom<FdLink> for KProbeLink {
     type Error = LinkError;
@@ -145,7 +135,7 @@ impl TryFrom<FdLink> for KProbeLink {
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
         let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI as u32) {
-            return Ok(Self::new(PerfLinkInner::FdLink(fd_link)));
+            return Ok(Self::new(PerfLinkInner::Fd(fd_link)));
         }
         Err(LinkError::InvalidLink)
     }
