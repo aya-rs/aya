@@ -66,10 +66,21 @@ fn main() -> Result<()> {
         ("iter.bpf.c", true),
         ("main.bpf.c", false),
         ("multimap-btf.bpf.c", false),
-        ("reloc.bpf.c", true),
+        ("enum_signed_32_checked_variants_reloc.bpf.c", true),
+        ("enum_signed_32_reloc.bpf.c", true),
+        ("enum_signed_64_checked_variants_reloc.bpf.c", true),
+        ("enum_signed_64_reloc.bpf.c", true),
+        ("enum_unsigned_32_checked_variants_reloc.bpf.c", true),
+        ("enum_unsigned_32_reloc.bpf.c", true),
+        ("enum_unsigned_64_checked_variants_reloc.bpf.c", true),
+        ("enum_unsigned_64_reloc.bpf.c", true),
+        ("field_reloc.bpf.c", true),
+        ("pointer_reloc.bpf.c", true),
+        ("struct_flavors_reloc.bpf.c", true),
         ("text_64_64_reloc.c", false),
         ("variables_reloc.bpf.c", false),
     ];
+    const C_BPF_HEADERS: &[&str] = &["reloc.h", "struct_with_scalars.h"];
 
     if build_integration_bpf {
         let endian = env::var_os("CARGO_CFG_TARGET_ENDIAN")
@@ -124,11 +135,21 @@ fn main() -> Result<()> {
             cmd
         };
 
+        for hdr in C_BPF_HEADERS {
+            let hdr = bpf_dir.join(hdr);
+            let exists = hdr
+                .try_exists()
+                .with_context(|| format!("{}", hdr.display()))?;
+            anyhow::ensure!(exists, "{}", hdr.display());
+            let hdr = hdr.to_str().with_context(|| format!("{}", hdr.display()))?;
+            println!("cargo:rerun-if-changed={hdr}");
+        }
+
         for (src, build_btf) in C_BPF {
             let dst = out_dir.join(src).with_extension("o");
             let src = bpf_dir.join(src);
             {
-                let src = src.to_str().with_context(|| format!("{src:?}"))?;
+                let src = src.to_str().with_context(|| format!("{}", src.display()))?;
                 println!("cargo:rerun-if-changed={src}");
             }
 
@@ -175,10 +196,11 @@ fn main() -> Result<()> {
     } else {
         for (src, build_btf) in C_BPF {
             let dst = out_dir.join(src).with_extension("o");
-            fs::write(&dst, []).with_context(|| format!("failed to create {dst:?}"))?;
+            fs::write(&dst, []).with_context(|| format!("failed to create {}", dst.display()))?;
             if *build_btf {
                 let dst = dst.with_extension("target.o");
-                fs::write(&dst, []).with_context(|| format!("failed to create {dst:?}"))?;
+                fs::write(&dst, [])
+                    .with_context(|| format!("failed to create {}", dst.display()))?;
             }
         }
 
@@ -188,7 +210,7 @@ fn main() -> Result<()> {
                 continue;
             }
             let dst = out_dir.join(name);
-            fs::write(&dst, []).with_context(|| format!("failed to create {dst:?}"))?;
+            fs::write(&dst, []).with_context(|| format!("failed to create {}", dst.display()))?;
         }
     }
     Ok(())
