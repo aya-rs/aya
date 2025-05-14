@@ -11,6 +11,7 @@ mod rbpf;
 mod relocations;
 mod ring_buf;
 mod smoke;
+mod socket_filter;
 mod strncmp;
 mod tcx;
 mod uprobe_cookie;
