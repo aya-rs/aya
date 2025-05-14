@@ -2,6 +2,7 @@ use aya::include_bytes_aligned;
 
 pub const EXT: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ext.bpf.o"));
 pub const ITER_TASK: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/iter.bpf.o"));
+pub const KSYM: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/ksym.bpf.o"));
 pub const MAIN: &[u8] = include_bytes_aligned!(concat!(env!("OUT_DIR"), "/main.bpf.o"));
 pub const MULTIMAP_BTF: &[u8] =
     include_bytes_aligned!(concat!(env!("OUT_DIR"), "/multimap-btf.bpf.o"));

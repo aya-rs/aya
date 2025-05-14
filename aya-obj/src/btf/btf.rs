@@ -15,12 +15,12 @@ use crate::{
     Object,
     btf::{
         Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
-        IntEncoding, LineInfo, Struct, Typedef, Union, VarLinkage,
+        IntEncoding, LineInfo, Struct, Typedef, Union, Var, VarLinkage,
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
     },
     generated::{btf_ext_header, btf_header},
-    util::{HashMap, bytes_of},
+    util::{HashMap, HashSet, bytes_of},
 };
 
 pub(crate) const MAX_RESOLVE_DEPTH: usize = 32;
@@ -365,6 +365,15 @@ impl Btf {
             // read() reads POD values from ELF, which is sound, but the values can still contain
             // internally inconsistent values (like out of bound offsets and such).
             let ty = unsafe { BtfType::read(data, endianness)? };
+            if let BtfType::DataSec(ref datasec) = ty {
+                for entry in &datasec.entries {
+                    let btf_ty = types.type_by_id(entry.btf_type)?;
+                    if let BtfType::Func(_) = btf_ty {
+                        types.has_ksym_funcs = true;
+                    }
+                    types.ksym_types.insert(entry.btf_type);
+                }
+            }
             data = &data[ty.type_info_size()..];
             types.push(ty);
         }
@@ -484,7 +493,7 @@ impl Btf {
         symbol_offsets: &HashMap<String, u64>,
         features: &BtfFeatures,
     ) -> Result<(), BtfError> {
-        // ENUM64 placeholder type needs to be added before we take ownership of
+        // Placeholder types need to be added before we take ownership of
         // self.types to ensure that the offsets in the BtfHeader are correct.
         let placeholder_name = self.add_string("enum64_placeholder");
         let enum64_placeholder_id = (!features.btf_enum64
@@ -496,6 +505,22 @@ impl Btf {
                 IntEncoding::None,
                 0,
             )))
+        });
+        let ksym_func_placeholder_id = self.types.has_ksym_funcs.then(|| {
+            let int_btf_id = self
+                .types()
+                .enumerate()
+                .find(|(_, t)| {
+                    if let BtfType::Int(int) = t {
+                        int.size == 4 && int.encoding() == IntEncoding::Signed
+                    } else {
+                        false
+                    }
+                })
+                .map(|(i, _)| i as u32)
+                .expect("no `int` type in BTF");
+            let name = self.add_string("ksym_func_placeholder");
+            self.add_type(BtfType::Var(Var::new(name, int_btf_id, VarLinkage::Global)))
         });
         let mut types = mem::take(&mut self.types);
         for i in 0..types.types.len() {
@@ -566,6 +591,45 @@ impl Btf {
                     // There are some cases when the compiler does indeed populate the size.
                     if d.size > 0 {
                         debug!("{kind} {name}: size fixup not required");
+                    } else if name == ".ksyms" {
+                        // Size of `.ksyms` can't be retrieved from ELF. We know that each entry
+                        // has a size of a signed 32-bit integer.
+                        let size = d.entries.len() * mem::size_of::<i32>();
+                        debug!("{kind} {name}: fixup size to {size}");
+                        d.size = size as u32;
+
+                        let mut entries = mem::take(&mut d.entries);
+                        let mut fixed_section = d.clone();
+
+                        for (i, e) in entries.iter_mut().enumerate() {
+                            let size = mem::size_of::<i32>();
+                            let offset = i * size;
+                            e.offset = offset as u32;
+                            e.size = size as u32;
+                            match types.type_by_id(e.btf_type)? {
+                                BtfType::Func(func) => {
+                                    e.btf_type = ksym_func_placeholder_id
+                                        .expect("ksym_func_placeholder_id must be set");
+
+                                    let func_name = self.string_at(func.name_offset)?;
+
+                                    debug!(
+                                        "{kind} {name}: FUNC {func_name}: fixup offset {offset}"
+                                    );
+                                }
+                                BtfType::Var(var) => {
+                                    let var_name = self.string_at(var.name_offset)?;
+
+                                    debug!("{kind} {name}: VAR {var_name}: fixup offset {offset}");
+                                }
+                                _ => unreachable!("`.ksyms` members have to be either FUNC or VAR"),
+                            }
+                        }
+                        fixed_section.entries = entries;
+
+                        // Must reborrow here because we borrow `types` immutably above.
+                        let t = &mut types.types[i];
+                        *t = BtfType::DataSec(fixed_section);
                     } else {
                         // We need to get the size of the section from the ELF file.
                         // Fortunately, we cached these when parsing it initially
@@ -641,6 +705,9 @@ impl Btf {
                 // Sanitize FUNC.
                 BtfType::Func(ty) => {
                     let name = self.string_at(ty.name_offset)?;
+                    if types.ksym_types.contains(&(i as u32)) {
+                        ty.set_linkage(FuncLinkage::Global);
+                    }
                     // Sanitize FUNC.
                     if !features.btf_func {
                         debug!("{kind}: not supported. replacing with TYPEDEF");
@@ -1010,12 +1077,16 @@ impl<'a> Iterator for SecInfoIter<'a> {
 #[derive(Debug, Clone)]
 pub(crate) struct BtfTypes {
     pub(crate) types: Vec<BtfType>,
+    pub(crate) ksym_types: HashSet<u32>,
+    pub(crate) has_ksym_funcs: bool,
 }
 
 impl Default for BtfTypes {
     fn default() -> Self {
         Self {
             types: vec![BtfType::Unknown],
+            ksym_types: HashSet::new(),
+            has_ksym_funcs: false,
         }
     }
 }

@@ -4,6 +4,7 @@ mod elf;
 mod feature_probe;
 mod info;
 mod iter;
+mod ksym;
 mod load;
 mod log;
 mod raw_tracepoint;

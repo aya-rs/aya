@@ -64,6 +64,7 @@ fn main() -> Result<()> {
     const C_BPF: &[(&str, bool)] = &[
         ("ext.bpf.c", false),
         ("iter.bpf.c", true),
+        ("ksym.bpf.c", true),
         ("main.bpf.c", false),
         ("multimap-btf.bpf.c", false),
         ("reloc.bpf.c", true),
