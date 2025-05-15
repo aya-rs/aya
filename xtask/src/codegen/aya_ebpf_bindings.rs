@@ -8,7 +8,7 @@ use aya_tool::bindgen;
 use proc_macro2::TokenStream;
 use quote::ToTokens as _;
 use syn::{Item, parse_str};
-use xtask::install_libbpf_headers;
+use xtask::{exec, install_libbpf_headers_cmd};
 
 use crate::codegen::{
     Architecture, SysrootOptions,
@@ -30,7 +30,8 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
     let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
     let libbpf_headers_dir = tmp_dir.path().join("libbpf_headers");
 
-    install_libbpf_headers(libbpf_dir, &libbpf_headers_dir)?;
+    let mut cmd = install_libbpf_headers_cmd(libbpf_dir, &libbpf_headers_dir);
+    exec(&mut cmd)?;
 
     let dir = PathBuf::from("ebpf/aya-ebpf-bindings");
 
