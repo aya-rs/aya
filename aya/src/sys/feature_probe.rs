@@ -15,7 +15,7 @@ use aya_obj::{
 use libc::{E2BIG, EBADF, EINVAL};
 
 use super::{
-    SyscallError, bpf_prog_load, bpf_raw_tracepoint_open, fd_sys_bpf, unit_sys_bpf,
+    SyscallError, bpf_map_create, bpf_prog_load, bpf_raw_tracepoint_open, unit_sys_bpf,
     with_trivial_prog,
 };
 use crate::{
@@ -297,13 +297,10 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
             u_map.key_size = 1;
             u_map.value_size = 1;
             u_map.max_entries = 1;
-            // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
-            inner_map_fd = unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr_map) }.map_err(
-                |io_error| SyscallError {
-                    call: "bpf_map_create",
-                    io_error,
-                },
-            )?;
+            inner_map_fd = bpf_map_create(&mut attr_map).map_err(|io_error| SyscallError {
+                call: "bpf_map_create",
+                io_error,
+            })?;
 
             u.inner_map_fd = inner_map_fd.as_raw_fd() as u32;
         }
@@ -318,8 +315,8 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
     }
 
     // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
-    let io_error = match unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) } {
-        Ok(_) => return Ok(true),
+    let io_error = match bpf_map_create(&mut attr) {
+        Ok(_fd) => return Ok(true),
         Err(io_error) => io_error,
     };
 
