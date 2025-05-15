@@ -158,7 +158,7 @@ pub enum ProgramError {
     NotAttached,
 
     /// Loading the program failed.
-    #[error("the BPF_PROG_LOAD syscall failed. Verifier output: {verifier_log}")]
+    #[error("the BPF_PROG_LOAD syscall returned {io_error}. Verifier output: {verifier_log}")]
     LoadError {
         /// The [`io::Error`] returned by the `BPF_PROG_LOAD` syscall.
         #[source]
