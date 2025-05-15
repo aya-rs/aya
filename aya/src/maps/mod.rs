@@ -60,7 +60,7 @@ use std::{
 };
 
 use aya_obj::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type, parse_map_info};
-use libc::{RLIM_INFINITY, RLIMIT_MEMLOCK, getrlimit, rlim_t, rlimit};
+use libc::{RLIM_INFINITY, RLIMIT_MEMLOCK, getrlimit, rlim_t, rlimit, setrlimit};
 use log::warn;
 use thiserror::Error;
 
@@ -232,40 +232,6 @@ impl AsFd for MapFd {
     fn as_fd(&self) -> BorrowedFd<'_> {
         let Self { fd } = self;
         fd.as_fd()
-    }
-}
-
-/// Raises a warning about rlimit. Should be used only if creating a map was not
-/// successful.
-fn maybe_warn_rlimit() {
-    let mut limit = mem::MaybeUninit::<rlimit>::uninit();
-    let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
-    if ret == 0 {
-        let limit = unsafe { limit.assume_init() };
-
-        if limit.rlim_cur == RLIM_INFINITY {
-            return;
-        }
-        struct HumanSize(rlim_t);
-
-        impl fmt::Display for HumanSize {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                let &Self(size) = self;
-                if size < 1024 {
-                    write!(f, "{size} bytes")
-                } else if size < 1024 * 1024 {
-                    write!(f, "{} KiB", size / 1024)
-                } else {
-                    write!(f, "{} MiB", size / 1024 / 1024)
-                }
-            }
-        }
-        warn!(
-            "RLIMIT_MEMLOCK value is {}, not RLIM_INFINITY; if experiencing problems with creating \
-            maps, try raising RLIMIT_MEMLOCK either to RLIM_INFINITY or to a higher value sufficient \
-            for the size of your maps",
-            HumanSize(limit.rlim_cur)
-        );
     }
 }
 
@@ -576,15 +542,58 @@ impl MapData {
             }
         };
 
-        let fd = bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| {
-            if !KernelVersion::at_least(5, 11, 0) {
-                maybe_warn_rlimit();
-            }
+        let create_map = || bpf_create_map(&c_name, &obj, btf_fd);
+        let mut fd = create_map();
+        if let Err(err) = fd.as_ref() {
+            if err.raw_os_error() == Some(libc::EPERM) && !KernelVersion::at_least(5, 11, 0) {
+                (|| {
+                    let mut limit = mem::MaybeUninit::<rlimit>::uninit();
+                    let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
+                    if ret != 0 {
+                        warn!("getrlimit(RLIMIT_MEMLOCK) failed: {ret}");
+                        return;
+                    }
+                    let rlimit {
+                        rlim_cur,
+                        rlim_max: _,
+                    } = unsafe { limit.assume_init() };
 
-            MapError::CreateError {
-                name: name.into(),
-                io_error,
+                    if rlim_cur == RLIM_INFINITY {
+                        return;
+                    }
+                    let limit = rlimit {
+                        rlim_cur: RLIM_INFINITY,
+                        rlim_max: RLIM_INFINITY,
+                    };
+                    let ret = unsafe { setrlimit(RLIMIT_MEMLOCK, &limit) };
+                    if ret != 0 {
+                        struct HumanSize(rlim_t);
+
+                        impl fmt::Display for HumanSize {
+                            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                                let &Self(size) = self;
+                                if size < 1024 {
+                                    write!(f, "{size} bytes")
+                                } else if size < 1024 * 1024 {
+                                    write!(f, "{} KiB", size / 1024)
+                                } else {
+                                    write!(f, "{} MiB", size / 1024 / 1024)
+                                }
+                            }
+                        }
+                        warn!(
+                            "setrlimit(RLIMIT_MEMLOCK, RLIM_INFINITIY) failed: {ret}; current value is {}",
+                            HumanSize(rlim_cur)
+                        );
+                        return;
+                    }
+                    fd = create_map();
+                })();
             }
+        };
+        let fd = fd.map_err(|io_error| MapError::CreateError {
+            name: name.into(),
+            io_error,
         })?;
         Ok(Self {
             obj,
