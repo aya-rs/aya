@@ -50,7 +50,7 @@
 use std::{
     borrow::Borrow,
     ffi::CString,
-    fmt, io,
+    io,
     marker::PhantomData,
     mem,
     ops::Deref,
@@ -60,8 +60,6 @@ use std::{
 };
 
 use aya_obj::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type, parse_map_info};
-use libc::{RLIM_INFINITY, RLIMIT_MEMLOCK, getrlimit, rlim_t, rlimit};
-use log::warn;
 use thiserror::Error;
 
 use crate::{
@@ -71,7 +69,7 @@ use crate::{
         SyscallError, bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
         bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object,
     },
-    util::{KernelVersion, nr_cpus},
+    util::nr_cpus,
 };
 
 pub mod array;
@@ -232,40 +230,6 @@ impl AsFd for MapFd {
     fn as_fd(&self) -> BorrowedFd<'_> {
         let Self { fd } = self;
         fd.as_fd()
-    }
-}
-
-/// Raises a warning about rlimit. Should be used only if creating a map was not
-/// successful.
-fn maybe_warn_rlimit() {
-    let mut limit = mem::MaybeUninit::<rlimit>::uninit();
-    let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
-    if ret == 0 {
-        let limit = unsafe { limit.assume_init() };
-
-        if limit.rlim_cur == RLIM_INFINITY {
-            return;
-        }
-        struct HumanSize(rlim_t);
-
-        impl fmt::Display for HumanSize {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                let &Self(size) = self;
-                if size < 1024 {
-                    write!(f, "{size} bytes")
-                } else if size < 1024 * 1024 {
-                    write!(f, "{} KiB", size / 1024)
-                } else {
-                    write!(f, "{} MiB", size / 1024 / 1024)
-                }
-            }
-        }
-        warn!(
-            "RLIMIT_MEMLOCK value is {}, not RLIM_INFINITY; if experiencing problems with creating \
-            maps, try raising RLIMIT_MEMLOCK either to RLIM_INFINITY or to a higher value sufficient \
-            for the size of your maps",
-            HumanSize(limit.rlim_cur)
-        );
     }
 }
 
@@ -576,16 +540,11 @@ impl MapData {
             }
         };
 
-        let fd = bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| {
-            if !KernelVersion::at_least(5, 11, 0) {
-                maybe_warn_rlimit();
-            }
-
-            MapError::CreateError {
+        let fd =
+            bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| MapError::CreateError {
                 name: name.into(),
                 io_error,
-            }
-        })?;
+            })?;
         Ok(Self {
             obj,
             fd: MapFd::from_fd(fd),
