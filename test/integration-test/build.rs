@@ -179,7 +179,8 @@ fn main() -> Result<()> {
                         .arg("--dump-section")
                         .arg(output)
                         .arg("-")
-                        .stdin(stdout),
+                        .stdin(stdout)
+                        .stdout(Stdio::null()),
                 )?;
 
                 let output = child
