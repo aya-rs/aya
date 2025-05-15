@@ -1,7 +1,7 @@
 use std::{
     cmp,
     ffi::{CStr, CString, c_char},
-    io, iter,
+    fmt, io, iter,
     mem::{self, MaybeUninit},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, RawFd},
 };
@@ -22,7 +22,11 @@ use aya_obj::{
     },
     maps::{LegacyMap, bpf_map_def},
 };
-use libc::{ENOENT, ENOSPC};
+use libc::{
+    EBADF, ENOENT, ENOSPC, EPERM, RLIM_INFINITY, RLIMIT_MEMLOCK, getrlimit, rlim_t, rlimit,
+    setrlimit,
+};
+use log::warn;
 
 use crate::{
     Btf, Pod, VerifierLogLevel,
@@ -99,8 +103,7 @@ pub(crate) fn bpf_create_map(
             .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
     }
 
-    // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
-    unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) }
+    bpf_map_create(&mut attr)
 }
 
 pub(crate) fn bpf_pin_object(fd: BorrowedFd<'_>, path: &CStr) -> io::Result<()> {
@@ -695,6 +698,65 @@ pub(super) unsafe fn fd_sys_bpf(
     Ok(unsafe { crate::MockableFd::from_raw_fd(fd) })
 }
 
+static RAISE_MEMLIMIT: std::sync::Once = std::sync::Once::new();
+fn with_raised_rlimit_retry<T, F: FnMut() -> io::Result<T>>(mut op: F) -> io::Result<T> {
+    let mut result = op();
+    if matches!(result.as_ref(), Err(err) if err.raw_os_error() == Some(EPERM)) {
+        RAISE_MEMLIMIT.call_once(|| {
+            if KernelVersion::at_least(5, 11, 0) {
+                return;
+            }
+            let mut limit = mem::MaybeUninit::<rlimit>::uninit();
+            let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
+            if ret != 0 {
+                warn!("getrlimit(RLIMIT_MEMLOCK) failed: {ret}");
+                return;
+            }
+            let rlimit {
+                rlim_cur,
+                rlim_max: _,
+            } = unsafe { limit.assume_init() };
+
+            if rlim_cur == RLIM_INFINITY {
+                return;
+            }
+            let limit = rlimit {
+                rlim_cur: RLIM_INFINITY,
+                rlim_max: RLIM_INFINITY,
+            };
+            let ret = unsafe { setrlimit(RLIMIT_MEMLOCK, &limit) };
+            if ret != 0 {
+                struct HumanSize(rlim_t);
+
+                impl fmt::Display for HumanSize {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        let &Self(size) = self;
+                        if size < 1024 {
+                            write!(f, "{size} bytes")
+                        } else if size < 1024 * 1024 {
+                            write!(f, "{} KiB", size / 1024)
+                        } else {
+                            write!(f, "{} MiB", size / 1024 / 1024)
+                        }
+                    }
+                }
+                warn!(
+                    "setrlimit(RLIMIT_MEMLOCK, RLIM_INFINITIY) failed: {ret}; current value is {}",
+                    HumanSize(rlim_cur)
+                );
+            }
+        });
+        // Retry after raising the limit.
+        result = op();
+    }
+    result
+}
+
+pub(super) fn bpf_map_create(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
+    // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
+    with_raised_rlimit_retry(|| unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, attr) })
+}
+
 pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<crate::MockableFd, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     attr.__bindgen_anon_6.__bindgen_anon_1.btf_id = id;
@@ -849,7 +911,7 @@ pub(crate) fn is_perf_link_supported() -> bool {
                 None,
             );
             // Returns EINVAL if unsupported. EBADF if supported.
-            matches!(link, Err(err) if err.raw_os_error() == Some(libc::EBADF))
+            matches!(link, Err(err) if err.raw_os_error() == Some(EBADF))
         } else {
             false
         }
@@ -944,9 +1006,7 @@ pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
     u.max_entries = 1;
     u.map_flags = 0;
 
-    // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
-    let fd = unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) };
-    fd.is_ok()
+    bpf_map_create(&mut attr).is_ok()
 }
 
 pub(crate) fn is_btf_supported() -> bool {
@@ -1107,7 +1167,7 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
 
 pub(super) fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
     // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
-    unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) }
+    with_raised_rlimit_retry(|| unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) })
 }
 
 fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<i64> {
@@ -1225,7 +1285,7 @@ pub(crate) fn retry_with_verifier_logs<T>(
 
 #[cfg(test)]
 mod tests {
-    use libc::{EBADF, EINVAL};
+    use libc::EINVAL;
 
     use super::*;
     use crate::sys::override_syscall;
