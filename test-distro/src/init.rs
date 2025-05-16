@@ -134,11 +134,12 @@ fn run() -> anyhow::Result<()> {
         .map(|entry| {
             let entry = entry.context("read_dir(/bin) failed")?;
             let path = entry.path();
-            let status = std::process::Command::new(&path)
+            let mut cmd = std::process::Command::new(&path);
+            let status = cmd
                 .args(&args)
                 .env("RUST_LOG", "debug")
                 .status()
-                .with_context(|| format!("failed to execute {}", path.display()))?;
+                .with_context(|| format!("failed to execute {cmd:?}"))?;
 
             if status.code() == Some(0) {
                 Ok(())
