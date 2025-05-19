@@ -33,7 +33,7 @@ jobs:
 
       - run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
 
-      - uses: DavidAnson/markdownlint-cli2-action@v19
+      - uses: DavidAnson/markdownlint-cli2-action@v20
 
       - run: taplo fmt --check
 
