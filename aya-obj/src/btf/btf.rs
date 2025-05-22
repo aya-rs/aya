@@ -96,21 +96,21 @@ pub enum BtfError {
     },
 
     /// unknown BTF type id
-    #[error("Unknown BTF type id `{type_id}`")]
+    #[error("unknown BTF type id `{type_id}`")]
     UnknownBtfType {
         /// type id
         type_id: u32,
     },
 
     /// unexpected btf type id
-    #[error("Unexpected BTF type id `{type_id}`")]
+    #[error("unexpected BTF type id `{type_id}`")]
     UnexpectedBtfType {
         /// type id
         type_id: u32,
     },
 
     /// unknown BTF type
-    #[error("Unknown BTF type `{type_name}`")]
+    #[error("unknown BTF type `{type_name}`")]
     UnknownBtfTypeName {
         /// type name
         type_name: String,
@@ -125,7 +125,7 @@ pub enum BtfError {
 
     #[cfg(feature = "std")]
     /// Loading the btf failed
-    #[error("the BPF_BTF_LOAD syscall failed. Verifier output: {verifier_log}")]
+    #[error("the BPF_BTF_LOAD syscall returned {io_error}. Verifier output: {verifier_log}")]
     LoadError {
         /// The [`std::io::Error`] returned by the `BPF_BTF_LOAD` syscall.
         #[source]
