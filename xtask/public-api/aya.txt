@@ -750,7 +750,7 @@ impl<T> core::borrow::BorrowMut<T> for aya::maps::SockMap<T> where T: ?core::mar
 pub fn aya::maps::SockMap<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::SockMap<T>
 pub fn aya::maps::SockMap<T>::from(t: T) -> T
-pub struct aya::maps::sock::SockMapFd(_)
+#[repr(transparent)] pub struct aya::maps::sock::SockMapFd(_)
 impl aya::maps::sock::SockMapFd
 pub fn aya::maps::sock::SockMapFd::try_clone(&self) -> std::io::error::Result<Self>
 impl std::os::fd::owned::AsFd for aya::maps::sock::SockMapFd
