@@ -8,7 +8,12 @@
     html_logo_url = "https://aya-rs.dev/assets/images/crabby.svg",
     html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
-#![cfg_attr(unstable, expect(incomplete_features), feature(generic_const_exprs))]
+// TODO(https://github.com/rust-lang/rust/issues/141492): reenable this.
+#![cfg_attr(
+    generic_const_exprs,
+    expect(incomplete_features),
+    feature(generic_const_exprs)
+)]
 #![cfg_attr(unstable, feature(never_type))]
 #![cfg_attr(target_arch = "bpf", feature(asm_experimental_arch))]
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]

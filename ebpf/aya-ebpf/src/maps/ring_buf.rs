@@ -14,7 +14,7 @@ use crate::{
     maps::PinningType,
 };
 
-#[cfg(unstable)]
+#[cfg(generic_const_exprs)]
 mod const_assert {
     pub struct Assert<const COND: bool> {}
 
@@ -22,7 +22,7 @@ mod const_assert {
 
     impl IsTrue for Assert<true> {}
 }
-#[cfg(unstable)]
+#[cfg(generic_const_exprs)]
 use const_assert::{Assert, IsTrue};
 
 #[repr(transparent)]
@@ -101,7 +101,7 @@ impl RingBuf {
     /// Reserve memory in the ring buffer that can fit `T`.
     ///
     /// Returns `None` if the ring buffer is full.
-    #[cfg(unstable)]
+    #[cfg(generic_const_exprs)]
     pub fn reserve<T: 'static>(&self, flags: u64) -> Option<RingBufEntry<T>>
     where
         Assert<{ 8 % mem::align_of::<T>() == 0 }>: IsTrue,
@@ -117,7 +117,7 @@ impl RingBuf {
     /// be equal or smaller than 8. If you use this with a `T` that isn't properly aligned, this
     /// function will be compiled to a panic; depending on your panic_handler, this may make
     /// the eBPF program fail to load, or it may make it have undefined behavior.
-    #[cfg(not(unstable))]
+    #[cfg(not(generic_const_exprs))]
     pub fn reserve<T: 'static>(&self, flags: u64) -> Option<RingBufEntry<T>> {
         assert_eq!(8 % mem::align_of::<T>(), 0);
         self.reserve_impl(flags)
