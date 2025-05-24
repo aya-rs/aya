@@ -28,11 +28,12 @@ fn main() {
     }
     println!("))");
 
-    println!("cargo::rustc-check-cfg=cfg(unstable)");
+    println!("cargo::rustc-check-cfg=cfg(generic_const_exprs,unstable)");
 }
 
 #[rustversion::nightly]
 fn check_rust_version() {
+    println!("cargo:rustc-cfg=generic_const_exprs");
     println!("cargo:rustc-cfg=unstable");
 }
 
