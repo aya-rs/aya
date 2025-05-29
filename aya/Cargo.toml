@@ -22,6 +22,7 @@ async-io = { workspace = true, optional = true }
 aya-obj = { path = "../aya-obj", version = "^0.2.1", features = ["std"] }
 bitflags = { workspace = true }
 bytes = { workspace = true }
+compio = { workspace = true, optional = true, features = ["default"] }
 hashbrown = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }
@@ -36,6 +37,7 @@ tempfile = { workspace = true }
 [features]
 async_std = ["dep:async-io"]
 async_tokio = ["tokio/net"]
+async_compio = ["dep:compio"]
 default = []
 
 [package.metadata.docs.rs]

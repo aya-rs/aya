@@ -68,7 +68,11 @@
     //unused_results,
 )]
 #![cfg_attr(
-    all(feature = "async_tokio", feature = "async_std"),
+    all(
+        feature = "async_tokio",
+        feature = "async_std",
+        feature = "async_compio"
+    ),
     expect(unused_crate_dependencies)
 )]
 

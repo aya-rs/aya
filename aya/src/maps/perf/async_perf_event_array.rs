@@ -1,3 +1,9 @@
+#[cfg(all(
+    not(feature = "async_tokio"),
+    not(feature = "async_std"),
+    feature = "async_compio"
+))]
+use std::os::fd::AsRawFd as _;
 use std::{
     borrow::{Borrow, BorrowMut},
     path::Path,
@@ -10,6 +16,18 @@ use std::{
 #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
 use async_io::Async;
 use bytes::BytesMut;
+#[cfg(all(
+    not(feature = "async_tokio"),
+    not(feature = "async_std"),
+    feature = "async_compio"
+))]
+use compio::{
+    driver::{
+        SharedFd,
+        op::{Interest, PollOnce},
+    },
+    runtime,
+};
 #[cfg(feature = "async_tokio")]
 use tokio::io::unix::AsyncFd;
 
@@ -171,6 +189,16 @@ impl<T: BorrowMut<MapData>> AsyncPerfEventArrayBuffer<T> {
                 }
                 unsafe { buf.get_mut() }
             };
+
+            #[cfg(all(
+                not(feature = "async_tokio"),
+                not(feature = "async_std"),
+                feature = "async_compio"
+            ))]
+            {
+                let poll_once = PollOnce::new(SharedFd::new(buf.as_raw_fd()), Interest::Readable);
+                runtime::submit(poll_once).await.0?;
+            }
 
             let events = buf.read_events(buffers)?;
             const EMPTY: Events = Events { read: 0, lost: 0 };

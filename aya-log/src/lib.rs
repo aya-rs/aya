@@ -165,7 +165,8 @@ impl EbpfLogger {
             let mut buf = logs.open(cpu_id, None)?;
 
             let log = logger.clone();
-            tokio::spawn(async move {
+
+            let fut = async move {
                 let mut buffers = vec![BytesMut::with_capacity(LOG_BUF_CAPACITY); 10];
 
                 loop {
@@ -175,7 +176,26 @@ impl EbpfLogger {
                         log_buf(buf.as_ref(), &*log).unwrap();
                     }
                 }
-            });
+            };
+
+            #[cfg(feature = "async_tokio")]
+            {
+                tokio::spawn(fut);
+            }
+
+            #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
+            {
+                async_global_executor::spawn(fut).detach();
+            }
+
+            #[cfg(all(
+                not(feature = "async_tokio"),
+                not(feature = "async_std"),
+                feature = "async_compio"
+            ))]
+            {
+                compio::runtime::spawn(fut).detach();
+            }
         }
         Ok(())
     }
