@@ -17,7 +17,6 @@ rust-version.workspace = true
 workspace = true
 
 [features]
-default = ["async_tokio"]
 async_tokio = ["aya/async_tokio", "dep:tokio"]
 async_std = ["aya/async_std", "dep:async-global-executor"]
 async_compio = ["aya/async_compio", "dep:compio"]

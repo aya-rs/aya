@@ -59,6 +59,23 @@ use std::{
 
 const MAP_NAME: &str = "AYA_LOGS";
 
+// check async feature mutual exclusivity
+#[cfg(all(feature = "async_tokio", feature = "async_std"))]
+compile_error!("Cannot enable both async_tokio and async_std features at the same time");
+
+#[cfg(all(feature = "async_tokio", feature = "async_compio"))]
+compile_error!("Cannot enable both async_tokio and async_compio features at the same time");
+
+#[cfg(all(feature = "async_std", feature = "async_compio"))]
+compile_error!("Cannot enable both async_std and async_compio features at the same time");
+
+#[cfg(not(any(
+    feature = "async_tokio",
+    feature = "async_std",
+    feature = "async_compio"
+)))]
+compile_error!("Must enable at least one async feature: async_tokio, async_std, or async_compio");
+
 use aya::{
     Ebpf, Pod,
     maps::{
@@ -183,16 +200,12 @@ impl EbpfLogger {
                 tokio::spawn(fut);
             }
 
-            #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
+            #[cfg(feature = "async_std")]
             {
                 async_global_executor::spawn(fut).detach();
             }
 
-            #[cfg(all(
-                not(feature = "async_tokio"),
-                not(feature = "async_std"),
-                feature = "async_compio"
-            ))]
+            #[cfg(feature = "async_compio")]
             {
                 compio::runtime::spawn(fut).detach();
             }

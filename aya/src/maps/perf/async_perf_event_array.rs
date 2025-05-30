@@ -1,8 +1,14 @@
-#[cfg(all(
-    not(feature = "async_tokio"),
-    not(feature = "async_std"),
-    feature = "async_compio"
-))]
+// check async feature mutual exclusivity
+#[cfg(all(feature = "async_tokio", feature = "async_std"))]
+compile_error!("Cannot enable both async_tokio and async_std features at the same time");
+
+#[cfg(all(feature = "async_tokio", feature = "async_compio"))]
+compile_error!("Cannot enable both async_tokio and async_compio features at the same time");
+
+#[cfg(all(feature = "async_std", feature = "async_compio"))]
+compile_error!("Cannot enable both async_std and async_compio features at the same time");
+
+#[cfg(feature = "async_compio")]
 use std::os::fd::AsRawFd as _;
 use std::{
     borrow::{Borrow, BorrowMut},
@@ -13,14 +19,10 @@ use std::{
 //
 // We should eventually split async functionality out into separate crates "aya-async-tokio" and
 // "async-async-std". Presently we arbitrarily choose tokio over async-std when both are requested.
-#[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
+#[cfg(feature = "async_std")]
 use async_io::Async;
 use bytes::BytesMut;
-#[cfg(all(
-    not(feature = "async_tokio"),
-    not(feature = "async_std"),
-    feature = "async_compio"
-))]
+#[cfg(feature = "async_compio")]
 use compio::{
     driver::{
         SharedFd,
@@ -121,7 +123,7 @@ impl<T: BorrowMut<MapData>> AsyncPerfEventArray<T> {
         let buf = perf_map.open(index, page_count)?;
         #[cfg(feature = "async_tokio")]
         let buf = AsyncFd::new(buf)?;
-        #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
+        #[cfg(feature = "async_std")]
         let buf = Async::new(buf)?;
         Ok(AsyncPerfEventArrayBuffer { buf })
     }
@@ -157,7 +159,7 @@ pub struct AsyncPerfEventArrayBuffer<T: BorrowMut<MapData>> {
     #[cfg(feature = "async_tokio")]
     buf: AsyncFd<PerfEventArrayBuffer<T>>,
 
-    #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
+    #[cfg(feature = "async_std")]
     buf: Async<PerfEventArrayBuffer<T>>,
 }
 
@@ -182,7 +184,7 @@ impl<T: BorrowMut<MapData>> AsyncPerfEventArrayBuffer<T> {
             #[cfg(feature = "async_tokio")]
             let buf = guard.get_inner_mut();
 
-            #[cfg(all(not(feature = "async_tokio"), feature = "async_std"))]
+            #[cfg(feature = "async_std")]
             let buf = {
                 if !buf.get_ref().readable() {
                     buf.readable().await?;
@@ -190,11 +192,7 @@ impl<T: BorrowMut<MapData>> AsyncPerfEventArrayBuffer<T> {
                 unsafe { buf.get_mut() }
             };
 
-            #[cfg(all(
-                not(feature = "async_tokio"),
-                not(feature = "async_std"),
-                feature = "async_compio"
-            ))]
+            #[cfg(feature = "async_compio")]
             {
                 let poll_once = PollOnce::new(SharedFd::new(buf.as_raw_fd()), Interest::Readable);
                 runtime::submit(poll_once).await.0?;
