@@ -18,7 +18,7 @@ workspace = true
 
 [features]
 async_tokio = ["aya/async_tokio", "dep:tokio"]
-async_std = ["aya/async_std", "dep:async-global-executor"]
+async_std = ["aya/async_std", "async-global-executor/async-io"]
 async_compio = ["aya/async_compio", "dep:compio"]
 
 [dependencies]
