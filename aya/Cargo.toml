@@ -22,7 +22,7 @@ async-io = { workspace = true, optional = true }
 aya-obj = { path = "../aya-obj", version = "^0.2.1", features = ["std"] }
 bitflags = { workspace = true }
 bytes = { workspace = true }
-compio = { workspace = true, optional = true, features = ["default"] }
+compio = { workspace = true, optional = true, features = ["runtime"] }
 hashbrown = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }

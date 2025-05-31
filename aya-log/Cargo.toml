@@ -32,6 +32,7 @@ async-global-executor = { workspace = true, optional = true }
 compio = { workspace = true, optional = true }
 
 [dev-dependencies]
+compio = { workspace = true, features = ["io-uring"] }
 env_logger = { workspace = true }
 testing_logger = { workspace = true }
 
