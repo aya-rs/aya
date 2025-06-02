@@ -95,7 +95,7 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>, toolchain: Toolch
         }
 
         // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
-        let target_dir = out_dir.join(name);
+        let target_dir = out_dir.join(name.as_str());
         cmd.arg("--target-dir").arg(&target_dir);
 
         let mut child = cmd

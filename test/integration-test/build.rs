@@ -52,7 +52,7 @@ fn main() -> Result<()> {
         .context("MetadataCommand::exec")?;
     let integration_ebpf_package = packages
         .into_iter()
-        .find(|Package { name, .. }| name == "integration-ebpf")
+        .find(|Package { name, .. }| name.as_str() == "integration-ebpf")
         .ok_or_else(|| anyhow!("integration-ebpf package not found"))?;
 
     let manifest_dir =

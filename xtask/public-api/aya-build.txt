@@ -27,4 +27,5 @@ impl<T> core::borrow::BorrowMut<T> for aya_build::Toolchain<'a> where T: ?core::
 pub fn aya_build::Toolchain<'a>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_build::Toolchain<'a>
 pub fn aya_build::Toolchain<'a>::from(t: T) -> T
+impl<T> yoke::erased::ErasedDestructor for aya_build::Toolchain<'a> where T: 'static
 pub fn aya_build::build_ebpf(packages: impl core::iter::traits::collect::IntoIterator<Item = cargo_metadata::Package>, toolchain: aya_build::Toolchain<'_>) -> anyhow::Result<()>
