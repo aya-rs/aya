@@ -50,6 +50,12 @@ jobs:
       - uses: peter-evans/create-pull-request@v7
         if: github.event_name != 'pull_request' && github.repository_owner == 'aya-rs'
         with:
+          # GitHub actions aren't allowed to trigger other actions to prevent
+          # abuse; the canonical workaround is to use a sufficiently authorized
+          # token.
+          #
+          # See https://github.com/peter-evans/create-pull-request/issues/48.
+          token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
           branch: create-pull-request/public-api
           commit-message: 'public-api: regenerate'
           title: 'public-api: regenerate'
