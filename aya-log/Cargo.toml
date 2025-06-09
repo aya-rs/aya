@@ -16,15 +16,23 @@ rust-version.workspace = true
 [lints]
 workspace = true
 
+[features]
+async_tokio = ["aya/async_tokio", "dep:tokio"]
+async_std = ["aya/async_std", "async-global-executor/async-io"]
+async_compio = ["aya/async_compio", "dep:compio"]
+
 [dependencies]
-aya = { path = "../aya", version = "^0.13.1", features = ["async_tokio"] }
+aya = { path = "../aya", version = "^0.13.1" }
 aya-log-common = { path = "../aya-log-common", version = "^0.1.15", default-features = false }
 bytes = { workspace = true }
 log = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["rt"] }
+tokio = { workspace = true, features = ["rt"], optional = true }
+async-global-executor = { workspace = true, optional = true }
+compio = { workspace = true, optional = true }
 
 [dev-dependencies]
+compio = { workspace = true, features = ["io-uring"] }
 env_logger = { workspace = true }
 testing_logger = { workspace = true }
 

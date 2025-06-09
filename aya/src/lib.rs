@@ -24,13 +24,14 @@
 //! * Support for function call relocation and global data maps, which
 //!   allows eBPF programs to make **function calls** and use **global variables
 //!   and initializers**.
-//! * **Async support** with both [tokio] and [async-std].
+//! * **Async support** with [tokio], [async-std] and [compio].
 //! * Easy to deploy and fast to build: aya doesn't require a kernel build or
 //!   compiled headers, and not even a C toolchain; a release build completes in a matter
 //!   of seconds.
 //!
 //! [tokio]: https://docs.rs/tokio
 //! [async-std]: https://docs.rs/async-std
+//! [compio]: https://docs.rs/compio
 
 #![doc(
     html_logo_url = "https://aya-rs.dev/assets/images/crabby.svg",
@@ -68,7 +69,11 @@
     //unused_results,
 )]
 #![cfg_attr(
-    all(feature = "async_tokio", feature = "async_std"),
+    all(
+        feature = "async_tokio",
+        feature = "async_std",
+        feature = "async_compio"
+    ),
     expect(unused_crate_dependencies)
 )]
 

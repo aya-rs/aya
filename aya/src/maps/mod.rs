@@ -92,8 +92,19 @@ pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use info::{MapInfo, MapType, loaded_maps};
 pub use lpm_trie::LpmTrie;
-#[cfg(any(feature = "async_tokio", feature = "async_std"))]
-#[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std"))))]
+#[cfg(any(
+    feature = "async_tokio",
+    feature = "async_std",
+    feature = "async_compio"
+))]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        feature = "async_tokio",
+        feature = "async_std",
+        feature = "async_compio"
+    )))
+)]
 pub use perf::AsyncPerfEventArray;
 pub use perf::PerfEventArray;
 pub use queue::Queue;
@@ -487,8 +498,8 @@ impl_try_from_map!(() {
     SockMap,
     StackTraceMap,
     XskMap,
-    #[cfg(any(feature = "async_tokio", feature = "async_std"))]
-    #[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std"))))]
+    #[cfg(any(feature = "async_tokio", feature = "async_std", feature = "async_compio"))]
+    #[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std", feature = "async_compio"))))]
     AsyncPerfEventArray from PerfEventArray,
 });
 
