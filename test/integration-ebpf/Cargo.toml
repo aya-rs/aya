@@ -21,7 +21,7 @@ integration-common = { path = "../integration-common" }
 network-types = { workspace = true }
 
 [build-dependencies]
-which = { workspace = true }
+which = { workspace = true, features = ["real-sys"] }
 xtask = { path = "../../xtask" }
 
 [[bin]]
