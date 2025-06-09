@@ -11,11 +11,12 @@ use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
 use crate::utils::NetNsGuard;
 
-#[test]
-fn af_xdp() {
+#[test_case::test_case(crate::REDIRECT)]
+#[test_case::test_case(crate::REDIRECT_BTF)]
+fn af_xdp(prog: &[u8]) {
     let _netns = NetNsGuard::new();
 
-    let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
+    let mut bpf = Ebpf::load(prog).unwrap();
     let mut socks: XskMap<_> = bpf.take_map("SOCKS").unwrap().try_into().unwrap();
 
     let xdp: &mut Xdp = bpf
@@ -144,11 +145,12 @@ fn map_load() {
     bpf.program("xdp_frags_devmap").unwrap();
 }
 
-#[test]
-fn cpumap_chain() {
+#[test_case::test_case(crate::REDIRECT)]
+#[test_case::test_case(crate::REDIRECT_BTF)]
+fn cpumap_chain(prog: &[u8]) {
     let _netns = NetNsGuard::new();
 
-    let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
+    let mut bpf = Ebpf::load(prog).unwrap();
 
     // Load our cpumap and our canary map
     let mut cpus: CpuMap<_> = bpf.take_map("CPUS").unwrap().try_into().unwrap();

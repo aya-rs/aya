@@ -1,4 +1,6 @@
 pub(crate) mod args;
+#[cfg(feature = "btf-maps")]
+mod btf_map;
 mod btf_tracepoint;
 mod cgroup_device;
 mod cgroup_skb;
@@ -24,6 +26,8 @@ mod tracepoint;
 mod uprobe;
 mod xdp;
 
+#[cfg(feature = "btf-maps")]
+use btf_map::BtfMap;
 use btf_tracepoint::BtfTracePoint;
 use cgroup_device::CgroupDevice;
 use cgroup_skb::CgroupSkb;
@@ -58,6 +62,16 @@ pub fn map(attrs: TokenStream, item: TokenStream) -> TokenStream {
     }
     .into()
 }
+
+#[proc_macro_attribute]
+pub fn btf_map(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match BtfMap::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
+}
+
 #[proc_macro_attribute]
 pub fn kprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match KProbe::parse(KProbeKind::KProbe, attrs.into(), item.into()) {
