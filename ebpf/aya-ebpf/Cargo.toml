@@ -20,3 +20,7 @@ aya-ebpf-macros = { version = "^0.1.1", path = "../../aya-ebpf-macros" }
 
 [build-dependencies]
 rustversion = { workspace = true }
+
+[features]
+btf-maps = ["aya-ebpf-macros/btf-maps"]
+default = ["btf-maps"]

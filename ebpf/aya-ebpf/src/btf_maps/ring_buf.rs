@@ -1,17 +1,13 @@
 use core::{
     cell::UnsafeCell,
-    mem,
-    mem::MaybeUninit,
-    ops::{Deref, DerefMut},
+    mem::{self, MaybeUninit},
 };
 
 use crate::{
-    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_RINGBUF},
-    helpers::{
-        bpf_ringbuf_discard, bpf_ringbuf_output, bpf_ringbuf_query, bpf_ringbuf_reserve,
-        bpf_ringbuf_submit,
-    },
-    maps::PinningType,
+    bindings::bpf_map_type::BPF_MAP_TYPE_RINGBUF,
+    btf_maps::AyaBtfMapMarker,
+    helpers::{bpf_ringbuf_output, bpf_ringbuf_query, bpf_ringbuf_reserve},
+    maps::ring_buf::RingBufEntry,
 };
 
 #[cfg(generic_const_exprs)]
@@ -25,82 +21,35 @@ mod const_assert {
 #[cfg(generic_const_exprs)]
 use const_assert::{Assert, IsTrue};
 
+#[allow(dead_code)]
+pub struct RingBufDef<const S: usize, const F: usize = 0> {
+    r#type: *const [i32; BPF_MAP_TYPE_RINGBUF as usize],
+    max_entries: *const [i32; S],
+
+    // Anonymize the struct.
+    _anon: AyaBtfMapMarker,
+}
+
 #[repr(transparent)]
-pub struct RingBuf {
-    def: UnsafeCell<bpf_map_def>,
-}
+pub struct RingBuf<const S: usize, const F: usize = 0>(UnsafeCell<RingBufDef<S, F>>);
 
-unsafe impl Sync for RingBuf {}
+unsafe impl<const S: usize, const F: usize> Sync for RingBuf<S, F> {}
 
-/// A ring buffer entry, returned from [`RingBuf::reserve`].
-///
-/// You must [`submit`] or [`discard`] this entry before it gets dropped.
-///
-/// [`submit`]: RingBufEntry::submit
-/// [`discard`]: RingBufEntry::discard
-#[must_use = "eBPF verifier requires ring buffer entries to be either submitted or discarded"]
-pub struct RingBufEntry<T: 'static>(&'static mut MaybeUninit<T>);
-
-impl<T> Deref for RingBufEntry<T> {
-    type Target = MaybeUninit<T>;
-
-    fn deref(&self) -> &Self::Target {
-        self.0
-    }
-}
-
-impl<T> DerefMut for RingBufEntry<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.0
-    }
-}
-
-impl<T> RingBufEntry<T> {
-    #[cfg(feature = "btf-maps")]
-    pub(crate) fn new(entry: &'static mut MaybeUninit<T>) -> Self {
-        Self(entry)
-    }
-
-    /// Discard this ring buffer entry. The entry will be skipped by the userspace reader.
-    pub fn discard(self, flags: u64) {
-        unsafe { bpf_ringbuf_discard(self.0.as_mut_ptr() as *mut _, flags) };
-    }
-
-    /// Commit this ring buffer entry. The entry will be made visible to the userspace reader.
-    pub fn submit(self, flags: u64) {
-        unsafe { bpf_ringbuf_submit(self.0.as_mut_ptr() as *mut _, flags) };
-    }
-}
-
-impl RingBuf {
+impl<const S: usize, const F: usize> RingBuf<S, F> {
     /// Declare an eBPF ring buffer.
     ///
     /// The linux kernel requires that `byte_size` be a power-of-2 multiple of the page size. The
     /// loading program may coerce the size when loading the map.
-    pub const fn with_byte_size(byte_size: u32, flags: u32) -> Self {
-        Self::new(byte_size, flags, PinningType::None)
-    }
-
-    /// Declare a pinned eBPF ring buffer.
-    ///
-    /// The linux kernel requires that `byte_size` be a power-of-2 multiple of the page size. The
-    /// loading program may coerce the size when loading the map.
-    pub const fn pinned(byte_size: u32, flags: u32) -> Self {
-        Self::new(byte_size, flags, PinningType::ByName)
-    }
-
-    const fn new(byte_size: u32, flags: u32, pinning_type: PinningType) -> Self {
-        Self {
-            def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_RINGBUF,
-                key_size: 0,
-                value_size: 0,
-                max_entries: byte_size,
-                map_flags: flags,
-                id: 0,
-                pinning: pinning_type as u32,
-            }),
-        }
+    // Implementing `Default` makes no sense in this case. Maps are always
+    // global variables, so they need to be instantiated with a `const` method.
+    // The `Default::default` method is not `const`.
+    #[allow(clippy::new_without_default)]
+    pub const fn new() -> Self {
+        Self(UnsafeCell::new(RingBufDef {
+            r#type: &[0i32; BPF_MAP_TYPE_RINGBUF as usize],
+            max_entries: &[0i32; S],
+            _anon: AyaBtfMapMarker::new(),
+        }))
     }
 
     /// Reserve memory in the ring buffer that can fit `T`.
@@ -129,10 +78,10 @@ impl RingBuf {
     }
 
     fn reserve_impl<T: 'static>(&self, flags: u64) -> Option<RingBufEntry<T>> {
-        let ptr = unsafe {
-            bpf_ringbuf_reserve(self.def.get() as *mut _, mem::size_of::<T>() as _, flags)
-        } as *mut MaybeUninit<T>;
-        unsafe { ptr.as_mut() }.map(|ptr| RingBufEntry(ptr))
+        let ptr =
+            unsafe { bpf_ringbuf_reserve(self.0.get() as *mut _, mem::size_of::<T>() as _, flags) }
+                as *mut MaybeUninit<T>;
+        unsafe { ptr.as_mut() }.map(|ptr| RingBufEntry::new(ptr))
     }
 
     /// Copy `data` to the ring buffer output.
@@ -154,7 +103,7 @@ impl RingBuf {
         assert_eq!(8 % mem::align_of_val(data), 0);
         let ret = unsafe {
             bpf_ringbuf_output(
-                self.def.get() as *mut _,
+                self.0.get() as *mut _,
                 data as *const _ as *mut _,
                 mem::size_of_val(data) as _,
                 flags,
@@ -167,6 +116,6 @@ impl RingBuf {
     ///
     /// Consult `bpf_ringbuf_query` documentation for a list of allowed flags.
     pub fn query(&self, flags: u64) -> u64 {
-        unsafe { bpf_ringbuf_query(self.def.get() as *mut _, flags) }
+        unsafe { bpf_ringbuf_query(self.0.get() as *mut _, flags) }
     }
 }

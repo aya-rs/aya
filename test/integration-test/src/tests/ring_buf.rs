@@ -18,7 +18,6 @@ use aya::{
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
 use integration_common::ring_buf::Registers;
 use rand::Rng as _;
-use test_log::test;
 use tokio::{
     io::unix::AsyncFd,
     time::{Duration, sleep},
@@ -37,14 +36,14 @@ struct RingBufTest {
 const RING_BUF_MAX_ENTRIES: usize = 512;
 
 impl RingBufTest {
-    fn new() -> Self {
+    fn new(prog: &[u8]) -> Self {
         const RING_BUF_BYTE_SIZE: u32 =
             (RING_BUF_MAX_ENTRIES * (mem::size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
 
         // Use the loader API to control the size of the ring_buf.
         let mut bpf = EbpfLoader::new()
             .set_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
-            .load(crate::RING_BUF)
+            .load(prog)
             .unwrap();
         let ring_buf = bpf.take_map("RING_BUF").unwrap();
         let ring_buf = RingBuf::try_from(ring_buf).unwrap();
@@ -75,20 +74,19 @@ impl RingBufTest {
 struct WithData(RingBufTest, Vec<u64>);
 
 impl WithData {
-    fn new(n: usize) -> Self {
-        Self(RingBufTest::new(), {
+    fn new(prog: &[u8], n: usize) -> Self {
+        Self(RingBufTest::new(prog), {
             let mut rng = rand::rng();
             std::iter::repeat_with(|| rng.random()).take(n).collect()
         })
     }
 }
 
-#[test_case::test_case(0; "write zero items")]
-#[test_case::test_case(1; "write one item")]
-#[test_case::test_case(RING_BUF_MAX_ENTRIES / 2; "write half the capacity items")]
-#[test_case::test_case(RING_BUF_MAX_ENTRIES - 1; "write one less than capacity items")]
-#[test_case::test_case(RING_BUF_MAX_ENTRIES * 8; "write more items than capacity")]
-fn ring_buf(n: usize) {
+#[test_case::test_matrix(
+    [crate::RING_BUF, crate::RING_BUF_BTF],
+    [0, 1, RING_BUF_MAX_ENTRIES / 2, RING_BUF_MAX_ENTRIES - 1, RING_BUF_MAX_ENTRIES * 8]
+)]
+fn ring_buf(prog: &[u8], n: usize) {
     let WithData(
         RingBufTest {
             mut ring_buf,
@@ -96,7 +94,7 @@ fn ring_buf(n: usize) {
             _bpf,
         },
         data,
-    ) = WithData::new(n);
+    ) = WithData::new(prog, n);
 
     // Note that after expected_capacity has been submitted, reserve calls in the probe will fail
     // and the probe will give up.
@@ -151,8 +149,10 @@ pub extern "C" fn ring_buf_trigger_ebpf_program(arg: u64) {
 // to fill the ring_buf. We just ensure that the number of events we see is sane given
 // what the producer sees, and that the logic does not hang. This exercises interleaving
 // discards, successful commits, and drops due to the ring_buf being full.
-#[test(tokio::test(flavor = "multi_thread"))]
-async fn ring_buf_async_with_drops() {
+#[test_case::test_case(crate::RING_BUF)]
+#[test_case::test_case(crate::RING_BUF_BTF)]
+#[tokio::test(flavor = "multi_thread")]
+async fn ring_buf_async_with_drops(prog: &[u8]) {
     let WithData(
         RingBufTest {
             ring_buf,
@@ -160,7 +160,7 @@ async fn ring_buf_async_with_drops() {
             _bpf,
         },
         data,
-    ) = WithData::new(RING_BUF_MAX_ENTRIES * 8);
+    ) = WithData::new(prog, RING_BUF_MAX_ENTRIES * 8);
 
     let mut async_fd = AsyncFd::new(ring_buf).unwrap();
 
@@ -258,8 +258,10 @@ async fn ring_buf_async_with_drops() {
     );
 }
 
-#[test(tokio::test(flavor = "multi_thread"))]
-async fn ring_buf_async_no_drop() {
+#[test_case::test_case(crate::RING_BUF)]
+#[test_case::test_case(crate::RING_BUF_BTF)]
+#[tokio::test(flavor = "multi_thread")]
+async fn ring_buf_async_no_drop(prog: &[u8]) {
     let WithData(
         RingBufTest {
             ring_buf,
@@ -267,7 +269,7 @@ async fn ring_buf_async_no_drop() {
             _bpf,
         },
         data,
-    ) = WithData::new(RING_BUF_MAX_ENTRIES * 3);
+    ) = WithData::new(prog, RING_BUF_MAX_ENTRIES * 3);
 
     let writer = {
         let mut rng = rand::rng();
@@ -326,13 +328,14 @@ async fn ring_buf_async_no_drop() {
 // This test reproduces a bug where the ring buffer would not be notified of new entries if the
 // state was not properly synchronized between the producer and consumer. This would result in the
 // consumer never being woken up and the test hanging.
-#[test]
-fn ring_buf_epoll_wakeup() {
+#[test_case::test_case(crate::RING_BUF)]
+#[test_case::test_case(crate::RING_BUF_BTF)]
+fn ring_buf_epoll_wakeup(prog: &[u8]) {
     let RingBufTest {
         mut ring_buf,
         _bpf,
         regs: _,
-    } = RingBufTest::new();
+    } = RingBufTest::new(prog);
 
     let epoll_fd = epoll::create(false).unwrap();
     epoll::ctl(
@@ -360,13 +363,15 @@ fn ring_buf_epoll_wakeup() {
 }
 
 // This test is like the above test but uses tokio and AsyncFd instead of raw epoll.
-#[test(tokio::test)]
-async fn ring_buf_asyncfd_events() {
+#[test_case::test_case(crate::RING_BUF)]
+#[test_case::test_case(crate::RING_BUF_BTF)]
+#[tokio::test]
+async fn ring_buf_asyncfd_events(prog: &[u8]) {
     let RingBufTest {
         ring_buf,
         regs: _,
         _bpf,
-    } = RingBufTest::new();
+    } = RingBufTest::new(prog);
 
     let mut async_fd = AsyncFd::new(ring_buf).unwrap();
     let mut total_events = 0;

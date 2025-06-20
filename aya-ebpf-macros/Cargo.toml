@@ -24,3 +24,7 @@ syn = { workspace = true, default-features = true, features = ["full"] }
 
 [dev-dependencies]
 aya-ebpf = { path = "../ebpf/aya-ebpf", default-features = false }
+
+[features]
+btf-maps = []
+default = ["btf-maps"]

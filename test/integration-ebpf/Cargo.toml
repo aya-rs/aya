@@ -33,8 +33,16 @@ name = "log"
 path = "src/log.rs"
 
 [[bin]]
-name = "map_test"
-path = "src/map_test.rs"
+name = "map_info"
+path = "src/map_info.rs"
+
+[[bin]]
+name = "maps"
+path = "src/maps.rs"
+
+[[bin]]
+name = "maps_btf"
+path = "src/maps_btf.rs"
 
 [[bin]]
 name = "memmove_test"
@@ -57,12 +65,20 @@ name = "redirect"
 path = "src/redirect.rs"
 
 [[bin]]
+name = "redirect_btf"
+path = "src/redirect_btf.rs"
+
+[[bin]]
 name = "relocations"
 path = "src/relocations.rs"
 
 [[bin]]
 name = "ring_buf"
 path = "src/ring_buf.rs"
+
+[[bin]]
+name = "ring_buf_btf"
+path = "src/ring_buf_btf.rs"
 
 [[bin]]
 name = "simple_prog"

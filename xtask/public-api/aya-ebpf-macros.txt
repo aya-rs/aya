@@ -1,4 +1,5 @@
 pub mod aya_ebpf_macros
+pub proc macro aya_ebpf_macros::#[btf_map]
 pub proc macro aya_ebpf_macros::#[btf_tracepoint]
 pub proc macro aya_ebpf_macros::#[cgroup_device]
 pub proc macro aya_ebpf_macros::#[cgroup_skb]
