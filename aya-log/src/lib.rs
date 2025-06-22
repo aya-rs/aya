@@ -75,11 +75,9 @@ use bytes::BytesMut;
 use log::{Log, Record, error};
 use thiserror::Error;
 
-#[expect(dead_code)] // TODO(https://github.com/rust-lang/rust/issues/120770): Remove when false positive is fixed.
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 struct RecordFieldWrapper(RecordField);
-#[expect(dead_code)] // TODO(https://github.com/rust-lang/rust/issues/120770): Remove when false positive is fixed.
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 struct ArgumentWrapper(Argument);
