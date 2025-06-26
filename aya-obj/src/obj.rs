@@ -758,7 +758,7 @@ impl Object {
                 if type_name == section.name {
                     // each btf_var_secinfo contains a map
                     for info in &datasec.entries {
-                        let (map_name, def) = parse_btf_map_def(btf, info)?;
+                        let (map_name, def) = parse_btf_map(btf, info)?;
                         let symbol_index =
                             maps.get(&map_name)
                                 .ok_or_else(|| ParseError::SymbolNotFound {
@@ -1240,7 +1240,7 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     }
 }
 
-fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDef), BtfError> {
+fn parse_btf_map(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDef), BtfError> {
     let ty = match btf.type_by_id(info.btf_type)? {
         BtfType::Var(var) => var,
         other => {
@@ -1250,11 +1250,17 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         }
     };
     let map_name = btf.string_at(ty.name_offset)?;
-    let mut map_def = BtfMapDef::default();
 
-    // Safety: union
-    let root_type = btf.resolve_type(ty.btf_type)?;
-    let s = match btf.type_by_id(root_type)? {
+    let root_type_id = btf.resolve_type(ty.btf_type)?;
+    parse_btf_map_def(btf, &map_name, root_type_id)
+}
+
+fn parse_btf_map_def(
+    btf: &Btf,
+    map_name: &str,
+    btf_type_id: u32,
+) -> Result<(String, BtfMapDef), BtfError> {
+    let s = match btf.type_by_id(btf_type_id)? {
         BtfType::Struct(s) => s,
         other => {
             return Err(BtfError::UnexpectedBtfType {
@@ -1263,8 +1269,26 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         }
     };
 
+    let mut map_def = BtfMapDef::default();
+
     for m in &s.members {
+        // In aya-ebpf, the BTF map definition types are not used directly.
+        // Instead, they are wrapped in structs provided by aya-ebpf (e.g.
+        // `HashMap`, `Array`), which then wrap the definition type in
+        // `UnsafeCell`.
+        // To retrieve the definition type, we need to walk through all the
+        // wrapper types:
+        //
+        // - aya-ebpf wrappers like `HashMap`, `Array` etc. They wrap an
+        //   `UnsafeCell` in a tuple struct with one member, hence the field
+        //   name is `__0`.
+        // - `UnsafeCell`, which wraps the BTF map definition inside a `value`
+        //   field.
         match btf.string_at(m.name_offset)?.as_ref() {
+            "__0" => {
+                let unsafe_cell_id = btf.resolve_type(m.btf_type)?;
+                return parse_btf_map_def(btf, map_name, unsafe_cell_id);
+            }
             "type" => {
                 map_def.map_type = get_map_field(btf, m.btf_type)?;
             }
@@ -1284,6 +1308,32 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
                 map_def.key_size = get_map_field(btf, m.btf_type)?;
             }
             "value" => {
+                // There are two cases to handle:
+                //
+                // 1. We are parsing an actual BTF map type with fields like
+                //    `type`, `value`, `key`. In this case, `value` is a
+                //    pointer.
+                // 2. We are parsing an `UnsafeCell`, which wraps an actual BTF
+                //    map type, and the `value` field of `UnsafeCell` is a
+                //    struct which we want to parse.
+                match btf.type_by_id(m.btf_type)? {
+                    // BTF map with `value` as a pointer field.
+                    BtfType::Ptr(pty) => {
+                        let t = pty.btf_type;
+                        map_def.value_size = btf.type_size(t)? as u32;
+                        map_def.btf_value_type_id = t;
+                    }
+                    // `UnsafeCell` wrapping a BTF map in a `value field`.
+                    BtfType::Struct(_) => {
+                        let map_type_id = btf.resolve_type(m.btf_type)?;
+                        return parse_btf_map_def(btf, map_name, map_type_id);
+                    }
+                    _ => {
+                        return Err(BtfError::UnexpectedBtfType {
+                            type_id: m.btf_type,
+                        });
+                    }
+                }
                 if let BtfType::Ptr(pty) = btf.type_by_id(m.btf_type)? {
                     let t = pty.btf_type;
                     map_def.value_size = btf.type_size(t)? as u32;
@@ -1316,6 +1366,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             }
         }
     }
+
     Ok((map_name.to_string(), map_def))
 }
 
