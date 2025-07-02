@@ -617,14 +617,11 @@ enum ResolveSymbolError {
     BuildIdMismatch(String),
 }
 
-fn construct_debuglink_path(
-    filename: &[u8],
-    main_path: &Path,
-) -> Result<PathBuf, ResolveSymbolError> {
+fn construct_debuglink_path(filename: &[u8], main_path: &Path) -> PathBuf {
     let filename_str = OsStr::from_bytes(filename);
     let debuglink_path = Path::new(filename_str);
 
-    let resolved_path = if debuglink_path.is_relative() {
+    if debuglink_path.is_relative() {
         // If the debug path is relative, resolve it against the parent of the main path
         main_path.parent().map_or_else(
             || PathBuf::from(debuglink_path), // Use original if no parent
@@ -633,9 +630,7 @@ fn construct_debuglink_path(
     } else {
         // If the path is not relative, just use original
         PathBuf::from(debuglink_path)
-    };
-
-    Ok(resolved_path)
+    }
 }
 
 fn verify_build_ids<'a>(
@@ -664,7 +659,7 @@ fn find_debug_path_in_object<'a>(
     symbol: &str,
 ) -> Result<PathBuf, ResolveSymbolError> {
     match obj.gnu_debuglink() {
-        Ok(Some((filename, _))) => construct_debuglink_path(filename, main_path),
+        Ok(Some((filename, _))) => Ok(construct_debuglink_path(filename, main_path)),
         Ok(None) => Err(ResolveSymbolError::Unknown(symbol.to_string())),
         Err(err) => Err(ResolveSymbolError::Object(err)),
     }
@@ -737,7 +732,7 @@ mod tests {
         let main_path = Path::new("/usr/lib/main_binary");
         let expected = Path::new("/usr/lib/debug_info");
 
-        let result = construct_debuglink_path(filename, main_path).unwrap();
+        let result = construct_debuglink_path(filename, main_path);
         assert_eq!(
             result, expected,
             "The debug path should resolve relative to the main path's parent"
@@ -750,7 +745,7 @@ mod tests {
         let main_path = Path::new("main_binary");
         let expected = Path::new("debug_info");
 
-        let result = construct_debuglink_path(filename, main_path).unwrap();
+        let result = construct_debuglink_path(filename, main_path);
         assert_eq!(
             result, expected,
             "The debug path should be the original path as there is no parent"
@@ -763,7 +758,7 @@ mod tests {
         let main_path = Path::new("/usr/lib/main_binary");
         let expected = Path::new("/absolute/path/to/debug_info");
 
-        let result = construct_debuglink_path(filename, main_path).unwrap();
+        let result = construct_debuglink_path(filename, main_path);
         assert_eq!(
             result, expected,
             "The debug path should be the same as the input absolute path"
