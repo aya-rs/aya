@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The implementation is now backed by a ring buffer rather than a perf event array. This should
   improve performance but increases the minimum supported kernel version to 5.8.
 
+- Drop the built-in `tokio` dependency. Users must now BYOR (bring your own runtime).
+
 ## v0.2.1 (2024-10-09)
 
 ### Chore

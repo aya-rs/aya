@@ -1,6 +1,5 @@
 pub mod aya_log
 pub enum aya_log::Error
-pub aya_log::Error::AsyncFdNew(std::io::error::Error)
 pub aya_log::Error::MapError(aya::maps::MapError)
 pub aya_log::Error::MapNotFound
 pub aya_log::Error::ProgramError(aya::programs::ProgramError)
@@ -64,34 +63,38 @@ impl<T> core::borrow::BorrowMut<T> for aya_log::DefaultFormatter where T: ?core:
 pub fn aya_log::DefaultFormatter::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_log::DefaultFormatter
 pub fn aya_log::DefaultFormatter::from(t: T) -> T
-pub struct aya_log::EbpfLogger
-impl aya_log::EbpfLogger
-pub fn aya_log::EbpfLogger::init(bpf: &mut aya::bpf::Ebpf) -> core::result::Result<aya_log::EbpfLogger, aya_log::Error>
-pub fn aya_log::EbpfLogger::init_from_id(program_id: u32) -> core::result::Result<aya_log::EbpfLogger, aya_log::Error>
-pub fn aya_log::EbpfLogger::init_from_id_with_logger<T: log::Log + 'static>(program_id: u32, logger: T) -> core::result::Result<aya_log::EbpfLogger, aya_log::Error>
-pub fn aya_log::EbpfLogger::init_with_logger<T: log::Log + 'static>(bpf: &mut aya::bpf::Ebpf, logger: T) -> core::result::Result<aya_log::EbpfLogger, aya_log::Error>
-impl core::marker::Freeze for aya_log::EbpfLogger
-impl core::marker::Send for aya_log::EbpfLogger
-impl core::marker::Sync for aya_log::EbpfLogger
-impl core::marker::Unpin for aya_log::EbpfLogger
-impl core::panic::unwind_safe::RefUnwindSafe for aya_log::EbpfLogger
-impl core::panic::unwind_safe::UnwindSafe for aya_log::EbpfLogger
-impl<T, U> core::convert::Into<U> for aya_log::EbpfLogger where U: core::convert::From<T>
-pub fn aya_log::EbpfLogger::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya_log::EbpfLogger where U: core::convert::Into<T>
-pub type aya_log::EbpfLogger::Error = core::convert::Infallible
-pub fn aya_log::EbpfLogger::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya_log::EbpfLogger where U: core::convert::TryFrom<T>
-pub type aya_log::EbpfLogger::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya_log::EbpfLogger::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_log::EbpfLogger where T: 'static + ?core::marker::Sized
-pub fn aya_log::EbpfLogger::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_log::EbpfLogger where T: ?core::marker::Sized
-pub fn aya_log::EbpfLogger::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_log::EbpfLogger where T: ?core::marker::Sized
-pub fn aya_log::EbpfLogger::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya_log::EbpfLogger
-pub fn aya_log::EbpfLogger::from(t: T) -> T
+pub struct aya_log::EbpfLogger<T>
+impl aya_log::EbpfLogger<&'static dyn log::Log>
+pub fn aya_log::EbpfLogger<&'static dyn log::Log>::init(bpf: &mut aya::bpf::Ebpf) -> core::result::Result<Self, aya_log::Error>
+pub fn aya_log::EbpfLogger<&'static dyn log::Log>::init_from_id(program_id: u32) -> core::result::Result<Self, aya_log::Error>
+impl<T: log::Log> aya_log::EbpfLogger<T>
+pub fn aya_log::EbpfLogger<T>::flush(&mut self)
+pub fn aya_log::EbpfLogger<T>::init_from_id_with_logger(program_id: u32, logger: T) -> core::result::Result<Self, aya_log::Error>
+pub fn aya_log::EbpfLogger<T>::init_with_logger(bpf: &mut aya::bpf::Ebpf, logger: T) -> core::result::Result<Self, aya_log::Error>
+impl<T> std::os::fd::raw::AsRawFd for aya_log::EbpfLogger<T>
+pub fn aya_log::EbpfLogger<T>::as_raw_fd(&self) -> std::os::fd::raw::RawFd
+impl<T> core::marker::Freeze for aya_log::EbpfLogger<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for aya_log::EbpfLogger<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya_log::EbpfLogger<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya_log::EbpfLogger<T> where T: core::marker::Unpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_log::EbpfLogger<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya_log::EbpfLogger<T> where T: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for aya_log::EbpfLogger<T> where U: core::convert::From<T>
+pub fn aya_log::EbpfLogger<T>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::EbpfLogger<T> where U: core::convert::Into<T>
+pub type aya_log::EbpfLogger<T>::Error = core::convert::Infallible
+pub fn aya_log::EbpfLogger<T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::EbpfLogger<T> where U: core::convert::TryFrom<T>
+pub type aya_log::EbpfLogger<T>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::EbpfLogger<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::EbpfLogger<T> where T: 'static + ?core::marker::Sized
+pub fn aya_log::EbpfLogger<T>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::EbpfLogger<T> where T: ?core::marker::Sized
+pub fn aya_log::EbpfLogger<T>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::EbpfLogger<T> where T: ?core::marker::Sized
+pub fn aya_log::EbpfLogger<T>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::EbpfLogger<T>
+pub fn aya_log::EbpfLogger<T>::from(t: T) -> T
 pub struct aya_log::Ipv4Formatter
 impl<T> aya_log::Formatter<T> for aya_log::Ipv4Formatter where T: core::convert::Into<core::net::ip_addr::Ipv4Addr>
 pub fn aya_log::Ipv4Formatter::format(v: T) -> alloc::string::String
@@ -312,4 +315,4 @@ impl<T> aya_log::Formatter<T> for aya_log::LowerHexFormatter where T: core::fmt:
 pub fn aya_log::LowerHexFormatter::format(v: T) -> alloc::string::String
 impl<T> aya_log::Formatter<T> for aya_log::UpperHexFormatter where T: core::fmt::UpperHex
 pub fn aya_log::UpperHexFormatter::format(v: T) -> alloc::string::String
-pub type aya_log::BpfLogger = aya_log::EbpfLogger
+pub type aya_log::BpfLogger<T> = aya_log::EbpfLogger<T>

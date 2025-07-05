@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    sync::{Arc, Mutex},
-};
+use std::{borrow::Cow, sync::Mutex};
 
 use aya::{Ebpf, programs::UProbe};
 use aya_log::EbpfLogger;
@@ -15,10 +12,10 @@ pub extern "C" fn trigger_ebpf_program() {
 }
 
 struct TestingLogger<F> {
-    log: F,
+    log: Mutex<F>,
 }
 
-impl<F: Send + Sync + Fn(&Record)> Log for TestingLogger<F> {
+impl<F: Send + FnMut(&Record)> Log for TestingLogger<F> {
     fn enabled(&self, _metadata: &log::Metadata) -> bool {
         true
     }
@@ -27,6 +24,7 @@ impl<F: Send + Sync + Fn(&Record)> Log for TestingLogger<F> {
 
     fn log(&self, record: &Record) {
         let Self { log } = self;
+        let mut log = log.lock().unwrap();
         log(record);
     }
 }
@@ -38,28 +36,21 @@ struct CapturedLog<'a> {
     pub target: Cow<'a, str>,
 }
 
-#[test(tokio::test)]
-async fn log() {
+#[test]
+fn log() {
     let mut bpf = Ebpf::load(crate::LOG).unwrap();
 
-    let captured_logs = Arc::new(Mutex::new(Vec::new()));
-    {
-        let captured_logs = captured_logs.clone();
-        EbpfLogger::init_with_logger(
-            &mut bpf,
-            TestingLogger {
-                log: move |record: &Record| {
-                    let mut logs = captured_logs.lock().unwrap();
-                    logs.push(CapturedLog {
-                        body: format!("{}", record.args()).into(),
-                        level: record.level(),
-                        target: record.target().to_string().into(),
-                    });
-                },
-            },
-        )
-        .unwrap();
-    }
+    let mut captured_logs = Vec::new();
+    let logger = TestingLogger {
+        log: Mutex::new(|record: &Record| {
+            captured_logs.push(CapturedLog {
+                body: format!("{}", record.args()).into(),
+                level: record.level(),
+                target: record.target().to_string().into(),
+            });
+        }),
+    };
+    let mut logger = EbpfLogger::init_with_logger(&mut bpf, &logger).unwrap();
 
     let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
@@ -69,21 +60,9 @@ async fn log() {
     // Call the function that the uprobe is attached to, so it starts logging.
     trigger_ebpf_program();
 
-    let mut logs = 0;
-    let records = loop {
-        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-        let records = captured_logs.lock().unwrap();
-        let len = records.len();
-        if len == 0 {
-            continue;
-        }
-        if len == logs {
-            break records;
-        }
-        logs = len;
-    };
+    logger.flush();
 
-    let mut records = records.iter();
+    let mut records = captured_logs.iter();
 
     assert_eq!(
         records.next(),
