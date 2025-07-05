@@ -21,11 +21,11 @@ aya = { path = "../aya", version = "^0.13.1", default-features = false }
 aya-log-common = { path = "../aya-log-common", version = "^0.1.15", default-features = false }
 log = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["net", "rt"] }
 
 [dev-dependencies]
 env_logger = { workspace = true }
 testing_logger = { workspace = true }
+tokio = { workspace = true, features = ["net", "rt"] }
 
 [lib]
 path = "src/lib.rs"
