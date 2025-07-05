@@ -134,16 +134,21 @@ fn run() -> anyhow::Result<()> {
         .map(|entry| {
             let entry = entry.context("read_dir(/bin) failed")?;
             let path = entry.path();
-            let status = std::process::Command::new(&path)
-                .args(&args)
-                .env("RUST_LOG", "debug")
+            let mut cmd = std::process::Command::new(&path);
+            cmd.args(&args)
+                .env("RUST_BACKTRACE", "1")
+                .env("RUST_LOG", "debug");
+
+            println!("running {cmd:?}");
+
+            let status = cmd
                 .status()
-                .with_context(|| format!("failed to execute {}", path.display()))?;
+                .with_context(|| format!("failed to run {cmd:?}"))?;
 
             if status.code() == Some(0) {
                 Ok(())
             } else {
-                Err(anyhow::anyhow!("{} failed: {status:?}", path.display()))
+                Err(anyhow::anyhow!("{cmd:?} failed: {status:?}"))
             }
         })
         .filter_map(|result| {

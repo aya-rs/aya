@@ -184,7 +184,11 @@ pub fn run(opts: Options) -> Result<()> {
             for (profile, binaries) in binaries {
                 for (name, binary) in binaries {
                     let mut cmd = Command::new(runner);
-                    let cmd = cmd.args(args.iter()).arg(binary).args(run_args.clone());
+                    cmd.args(args.iter())
+                        .arg(binary)
+                        .args(run_args.clone())
+                        .env("RUST_BACKTRACE", "1")
+                        .env("RUST_LOG", "debug");
 
                     println!("{profile}:{name} running {cmd:?}");
 
