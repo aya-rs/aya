@@ -38,7 +38,15 @@ use aya_log::EbpfLogger;
 env_logger::init();
 
 // Will log using the default logger, which is TermLogger in this case
-EbpfLogger::init(&mut bpf).unwrap();
+let logger = EbpfLogger::init(&mut bpf).unwrap();
+let mut logger = tokio::io::unix::AsyncFd::with_interest(logger, tokio::io::Interest::READABLE).unwrap();
+tokio::task::spawn(async move { 
+    loop {
+        let mut guard = logger.readable_mut().await.unwrap();
+        guard.get_inner_mut().flush();
+        guard.clear_ready();
+    }
+});
 ```
 
 ### eBPF code
