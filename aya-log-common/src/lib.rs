@@ -173,17 +173,12 @@ pub(crate) fn write(tag: u8, value: &[u8], buf: &mut [u8]) -> Option<NonZeroUsiz
         Err(TryFromIntError { .. }) => None,
     }?;
     let mut size = 0;
-    macro_rules! copy_from_slice {
-        ($value:expr) => {{
-            let buf = buf.get_mut(size..)?;
-            let buf = buf.get_mut(..$value.len())?;
-            buf.copy_from_slice($value);
-            size += $value.len();
-        }};
+    for slice in [&[tag][..], &wire_len.to_ne_bytes()[..], value] {
+        let buf = buf.get_mut(size..)?;
+        let buf = buf.get_mut(..slice.len())?;
+        buf.copy_from_slice(slice);
+        size += slice.len();
     }
-    copy_from_slice!(&[tag]);
-    copy_from_slice!(&wire_len.to_ne_bytes());
-    copy_from_slice!(value);
     NonZeroUsize::new(size)
 }
 
@@ -320,19 +315,18 @@ pub fn write_record_header(
 ) -> Option<NonZeroUsize> {
     let level: u8 = level.into();
     let mut size = 0;
-    macro_rules! write {
-        ($tag:expr, $value:expr) => {{
-            let buf = buf.get_mut(size..)?;
-            let len = write($tag.into(), $value, buf)?;
-            size += len.get();
-        }};
+    for (tag, value) in [
+        (RecordField::Target, target.as_bytes()),
+        (RecordField::Level, &level.to_ne_bytes()),
+        (RecordField::Module, module.as_bytes()),
+        (RecordField::File, file.as_bytes()),
+        (RecordField::Line, &line.to_ne_bytes()),
+        (RecordField::NumArgs, &num_args.to_ne_bytes()),
+    ] {
+        let buf = buf.get_mut(size..)?;
+        let len = write(tag.into(), value, buf)?;
+        size += len.get();
     }
-    write!(RecordField::Target, target.as_bytes());
-    write!(RecordField::Level, &level.to_ne_bytes());
-    write!(RecordField::Module, module.as_bytes());
-    write!(RecordField::File, file.as_bytes());
-    write!(RecordField::Line, &line.to_ne_bytes());
-    write!(RecordField::NumArgs, &num_args.to_ne_bytes());
     NonZeroUsize::new(size)
 }
 
