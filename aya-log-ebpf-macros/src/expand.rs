@@ -151,11 +151,11 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
     let len = Ident::new("len", Span::mixed_site());
     let record = Ident::new("record", Span::mixed_site());
     Ok(quote! {
-        match ::aya_log_ebpf::AYA_LOG_BUF.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
+        match ::aya_log_ebpf::macro_support::AYA_LOG_BUF.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
             None => {},
-            Some(::aya_log_ebpf::LogBuf { buf: #buf }) => {
+            Some(::aya_log_ebpf::macro_support::LogBuf { buf: #buf }) => {
                 let _: Option<()> = (|| {
-                    let #size = ::aya_log_ebpf::write_record_header(
+                    let #size = ::aya_log_ebpf::macro_support::write_record_header(
                         #buf,
                         #target,
                         #level,
@@ -168,12 +168,12 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
                     #(
                         {
                             let #buf = #buf.get_mut(#size..)?;
-                            let #len = ::aya_log_ebpf::WriteToBuf::write(#values_iter, #buf)?;
+                            let #len = ::aya_log_ebpf::macro_support::WriteToBuf::write(#values_iter, #buf)?;
                             #size += #len.get();
                         }
                     )*
                     let #record = #buf.get(..#size)?;
-                    ::aya_log_ebpf::AYA_LOGS.output(#ctx, #record, 0);
+                    ::aya_log_ebpf::macro_support::AYA_LOGS.output(#ctx, #record, 0);
                     Some(())
                 })();
             }
