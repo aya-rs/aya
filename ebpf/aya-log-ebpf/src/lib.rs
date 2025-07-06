@@ -7,33 +7,23 @@ pub use aya_log_ebpf_macros::{debug, error, info, log, trace, warn};
 pub mod macro_support {
     #[cfg(target_arch = "bpf")]
     use aya_ebpf::macros::map;
-    use aya_ebpf::maps::{PerCpuArray, RingBuf};
-    use aya_log_common::LogValueLength;
+    use aya_ebpf::maps::RingBuf;
     pub use aya_log_common::{
-        DefaultFormatter, DisplayHint, IpFormatter, Level, LowerHexFormatter, LowerMacFormatter,
-        UpperHexFormatter, UpperMacFormatter, WriteToBuf, write_record_header,
+        Argument, DefaultFormatter, DisplayHint, Field, Header, IpFormatter, Level, LogValueLength,
+        LowerHexFormatter, LowerMacFormatter, UpperHexFormatter, UpperMacFormatter,
     };
 
-    const LOG_BUF_CAPACITY: LogValueLength = 8192;
-
-    #[repr(C)]
-    pub struct LogBuf {
-        pub buf: [u8; LOG_BUF_CAPACITY as usize],
-    }
-
     // This cfg_attr prevents compilation failures on macOS where the generated section name doesn't
     // meet mach-o's requirements. We wouldn't ordinarily build this crate for macOS, but we do so
     // because the integration-test crate depends on this crate transitively. See comment in
     // test/integration-test/Cargo.toml.
     #[cfg_attr(target_arch = "bpf", map)]
-    pub static AYA_LOG_BUF: PerCpuArray<LogBuf> = PerCpuArray::with_max_entries(1, 0);
-
     // This cfg_attr prevents compilation failures on macOS where the generated section name doesn't
     // meet mach-o's requirements. We wouldn't ordinarily build this crate for macOS, but we do so
     // because the integration-test crate depends on this crate transitively. See comment in
     // test/integration-test/Cargo.toml.
     #[cfg_attr(target_arch = "bpf", map)]
-    pub static AYA_LOGS: RingBuf = RingBuf::with_byte_size((LOG_BUF_CAPACITY as u32) << 4, 0);
+    pub static AYA_LOGS: RingBuf = RingBuf::with_byte_size(1 << 17 /* 128 KiB */, 0);
 
     /// Global log level controlling which log statements are active.
     ///

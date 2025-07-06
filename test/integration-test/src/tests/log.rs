@@ -181,7 +181,7 @@ fn log() {
     assert_eq!(
         records.next(),
         Some(&CapturedLog {
-            body: "42 43 44 45".into(),
+            body: "42 43 44 45 46 47 48".into(),
             level: Level::Debug,
             target: "log".into(),
         })
@@ -191,6 +191,24 @@ fn log() {
         records.next(),
         Some(&CapturedLog {
             body: "variable length buffer: ffffff".into(),
+            level: Level::Info,
+            target: "log".into(),
+        })
+    );
+
+    assert_eq!(
+        records.next(),
+        Some(&CapturedLog {
+            body: format!("2KiB array: {}", "00".repeat(2048)).into(),
+            level: Level::Info,
+            target: "log".into(),
+        })
+    );
+
+    assert_eq!(
+        records.next(),
+        Some(&CapturedLog {
+            body: format!("4KiB array: {}", "00".repeat(4096)).into(),
             level: Level::Info,
             target: "log".into(),
         })

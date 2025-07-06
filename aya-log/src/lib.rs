@@ -74,16 +74,16 @@ use aya::{
     programs::{ProgramError, loaded_programs},
 };
 pub use aya_log_common::Level;
-use aya_log_common::{Argument, DisplayHint, LOG_FIELDS, LogValueLength, RecordField};
+use aya_log_common::{ArgumentKind, DisplayHint, LogValueLength, RecordFieldKind};
 use log::{Log, Record, error};
 use thiserror::Error;
 
 #[derive(Copy, Clone)]
 #[repr(transparent)]
-struct RecordFieldWrapper(RecordField);
+struct RecordFieldWrapper(RecordFieldKind);
 #[derive(Copy, Clone)]
 #[repr(transparent)]
-struct ArgumentWrapper(Argument);
+struct ArgumentWrapper(ArgumentKind);
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 struct DisplayHintWrapper(DisplayHint);
@@ -459,6 +459,15 @@ pub enum Error {
 }
 
 fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
+    let size = LogValueLength::from_ne_bytes(
+        buf.get(..size_of::<LogValueLength>())
+            .ok_or(())?
+            .try_into()
+            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+    )
+    .into();
+    buf = buf.get(size_of::<LogValueLength>()..size).ok_or(())?;
+
     let mut target = None;
     let mut level = None;
     let mut module = None;
@@ -466,15 +475,25 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
     let mut line = None;
     let mut num_args = None;
 
-    for () in std::iter::repeat_n((), LOG_FIELDS) {
+    while target.is_none()
+        || level.is_none()
+        || module.is_none()
+        || file.is_none()
+        || line.is_none()
+        || num_args.is_none()
+    {
         let (RecordFieldWrapper(tag), value, rest) = try_read(buf)?;
 
         match tag {
-            RecordField::Target => {
-                target = Some(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
+            RecordFieldKind::Target => {
+                let target =
+                    target.replace(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
+                if target.is_some() {
+                    return Err(());
+                }
             }
-            RecordField::Level => {
-                level = Some({
+            RecordFieldKind::Level => {
+                let level = level.replace({
                     let level = unsafe { ptr::read_unaligned(value.as_ptr() as *const _) };
                     match level {
                         Level::Error => log::Level::Error,
@@ -483,27 +502,44 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                         Level::Debug => log::Level::Debug,
                         Level::Trace => log::Level::Trace,
                     }
-                })
+                });
+                if level.is_some() {
+                    return Err(());
+                }
             }
-            RecordField::Module => {
-                module = Some(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
+            RecordFieldKind::Module => {
+                let module =
+                    module.replace(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
+                if module.is_some() {
+                    return Err(());
+                }
             }
-            RecordField::File => {
-                file = Some(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
+            RecordFieldKind::File => {
+                let file =
+                    file.replace(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
+                if file.is_some() {
+                    return Err(());
+                }
             }
-            RecordField::Line => {
-                line = Some(u32::from_ne_bytes(
+            RecordFieldKind::Line => {
+                let line = line.replace(u32::from_ne_bytes(
                     value
                         .try_into()
                         .map_err(|std::array::TryFromSliceError { .. }| ())?,
                 ));
+                if line.is_some() {
+                    return Err(());
+                }
             }
-            RecordField::NumArgs => {
-                num_args = Some(usize::from_ne_bytes(
+            RecordFieldKind::NumArgs => {
+                let num_args = num_args.replace(u32::from_ne_bytes(
                     value
                         .try_into()
                         .map_err(|std::array::TryFromSliceError { .. }| ())?,
                 ));
+                if num_args.is_some() {
+                    return Err(());
+                }
             }
         }
 
@@ -512,14 +548,17 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
 
     let mut full_log_msg = String::new();
     let mut last_hint: Option<DisplayHintWrapper> = None;
-    for () in std::iter::repeat_n((), num_args.ok_or(())?) {
+    let num_args = num_args.ok_or(()).and_then(|num_args| {
+        usize::try_from(num_args).map_err(|std::num::TryFromIntError { .. }| ())
+    })?;
+    for () in std::iter::repeat_n((), num_args) {
         let (ArgumentWrapper(tag), value, rest) = try_read(buf)?;
 
         match tag {
-            Argument::DisplayHint => {
+            ArgumentKind::DisplayHint => {
                 last_hint = Some(unsafe { ptr::read_unaligned(value.as_ptr() as *const _) });
             }
-            Argument::I8 => {
+            ArgumentKind::I8 => {
                 full_log_msg.push_str(
                     &i8::from_ne_bytes(
                         value
@@ -529,7 +568,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::I16 => {
+            ArgumentKind::I16 => {
                 full_log_msg.push_str(
                     &i16::from_ne_bytes(
                         value
@@ -539,7 +578,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::I32 => {
+            ArgumentKind::I32 => {
                 full_log_msg.push_str(
                     &i32::from_ne_bytes(
                         value
@@ -549,7 +588,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::I64 => {
+            ArgumentKind::I64 => {
                 full_log_msg.push_str(
                     &i64::from_ne_bytes(
                         value
@@ -559,7 +598,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::Isize => {
+            ArgumentKind::Isize => {
                 full_log_msg.push_str(
                     &isize::from_ne_bytes(
                         value
@@ -569,7 +608,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::U8 => {
+            ArgumentKind::U8 => {
                 full_log_msg.push_str(
                     &u8::from_ne_bytes(
                         value
@@ -579,7 +618,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::U16 => {
+            ArgumentKind::U16 => {
                 full_log_msg.push_str(
                     &u16::from_ne_bytes(
                         value
@@ -589,7 +628,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::U32 => {
+            ArgumentKind::U32 => {
                 full_log_msg.push_str(
                     &u32::from_ne_bytes(
                         value
@@ -599,7 +638,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::U64 => {
+            ArgumentKind::U64 => {
                 full_log_msg.push_str(
                     &u64::from_ne_bytes(
                         value
@@ -609,7 +648,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::Usize => {
+            ArgumentKind::Usize => {
                 full_log_msg.push_str(
                     &usize::from_ne_bytes(
                         value
@@ -619,7 +658,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::F32 => {
+            ArgumentKind::F32 => {
                 full_log_msg.push_str(
                     &f32::from_ne_bytes(
                         value
@@ -629,7 +668,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::F64 => {
+            ArgumentKind::F64 => {
                 full_log_msg.push_str(
                     &f64::from_ne_bytes(
                         value
@@ -639,39 +678,39 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .format(last_hint.take())?,
                 );
             }
-            Argument::Ipv4Addr => {
+            ArgumentKind::Ipv4Addr => {
                 let value: [u8; 4] = value
                     .try_into()
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 let value = Ipv4Addr::from(value);
                 full_log_msg.push_str(&value.format(last_hint.take())?)
             }
-            Argument::Ipv6Addr => {
+            ArgumentKind::Ipv6Addr => {
                 let value: [u8; 16] = value
                     .try_into()
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 let value = Ipv6Addr::from(value);
                 full_log_msg.push_str(&value.format(last_hint.take())?)
             }
-            Argument::ArrU8Len4 => {
+            ArgumentKind::ArrU8Len4 => {
                 let value: [u8; 4] = value
                     .try_into()
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
-            Argument::ArrU8Len6 => {
+            ArgumentKind::ArrU8Len6 => {
                 let value: [u8; 6] = value
                     .try_into()
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
-            Argument::ArrU8Len16 => {
+            ArgumentKind::ArrU8Len16 => {
                 let value: [u8; 16] = value
                     .try_into()
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
-            Argument::ArrU16Len8 => {
+            ArgumentKind::ArrU16Len8 => {
                 let data: [u8; 16] = value
                     .try_into()
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
@@ -681,10 +720,10 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                 }
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
-            Argument::Bytes => {
+            ArgumentKind::Bytes => {
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
-            Argument::Str => match str::from_utf8(value) {
+            ArgumentKind::Str => match str::from_utf8(value) {
                 Ok(v) => {
                     full_log_msg.push_str(v);
                 }
@@ -732,14 +771,57 @@ fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
 
 #[cfg(test)]
 mod test {
-    use std::net::IpAddr;
+    use std::{net::IpAddr, num::NonZeroUsize};
 
-    use aya_log_common::{WriteToBuf as _, write_record_header};
+    use aya_log_common::{Argument, Field, Header};
     use log::{Level, logger};
+
+    trait WriteToBuf {
+        fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize>;
+    }
+
+    impl<T: Argument> WriteToBuf for T {
+        fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
+            let (kind, value) = self.as_argument();
+            let field = Field::new(kind, value)?;
+            let mut size = 0;
+            let mut op = |slice: &[u8]| {
+                let buf = buf.get_mut(size..)?;
+                let buf = buf.get_mut(..slice.len())?;
+                buf.copy_from_slice(slice);
+                size += slice.len();
+                Some(())
+            };
+            field.with_bytes(&mut op)?;
+            NonZeroUsize::new(size)
+        }
+    }
 
     use super::*;
 
-    fn new_log(args: usize) -> Option<(usize, Vec<u8>)> {
+    fn write_record_header(
+        buf: &mut [u8],
+        target: &str,
+        level: aya_log_common::Level,
+        module: &str,
+        file: &str,
+        line: u32,
+        num_args: u32,
+    ) -> Option<NonZeroUsize> {
+        let header = Header::new(target, level, module, file, line, num_args)?;
+        let mut size = 0;
+        let mut op = |slice: &[u8]| {
+            let buf = buf.get_mut(size..)?;
+            let buf = buf.get_mut(..slice.len())?;
+            buf.copy_from_slice(slice);
+            size += slice.len();
+            Some(())
+        };
+        header.with_bytes(&mut op)?;
+        NonZeroUsize::new(size)
+    }
+
+    fn new_log(args: u32) -> Option<(usize, Vec<u8>)> {
         let mut buf = vec![0; 8192];
         let len = write_record_header(
             &mut buf,
@@ -760,7 +842,8 @@ mod test {
 
         len += "test".write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -779,7 +862,8 @@ mod test {
         len += "hello ".write(&mut input[len..]).unwrap().get();
         len += "test".write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -801,7 +885,8 @@ mod test {
             .get();
         len += [0xde, 0xad].write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -831,7 +916,8 @@ mod test {
             .get();
         len += [0xbe, 0xef].write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -861,7 +947,8 @@ mod test {
             .get();
         len += [0x12].write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -881,7 +968,8 @@ mod test {
         len += DisplayHint::Default.write(&mut input[len..]).unwrap().get();
         len += 14.write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -904,7 +992,8 @@ mod test {
             .get();
         len += 200.write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -927,7 +1016,8 @@ mod test {
             .get();
         len += 200.write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -950,7 +1040,8 @@ mod test {
             .unwrap()
             .get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -973,7 +1064,8 @@ mod test {
             .unwrap()
             .get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -994,7 +1086,8 @@ mod test {
         // 10.0.0.1 as u32
         len += 167772161u32.write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -1019,7 +1112,8 @@ mod test {
         .unwrap()
         .get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -1044,7 +1138,8 @@ mod test {
         .unwrap()
         .get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -1069,7 +1164,8 @@ mod test {
         ];
         len += ipv6_arr.write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -1092,7 +1188,8 @@ mod test {
         let ipv6_arr = ipv6.octets();
         len += ipv6_arr.write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -1117,7 +1214,8 @@ mod test {
         let mac_arr: [u8; 6] = [0x00, 0x00, 0x5e, 0x00, 0x53, 0xaf];
         len += mac_arr.write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();
@@ -1142,7 +1240,8 @@ mod test {
         let mac_arr: [u8; 6] = [0x00, 0x00, 0x5e, 0x00, 0x53, 0xaf];
         len += mac_arr.write(&mut input[len..]).unwrap().get();
 
-        _ = len;
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
 
         let logger = logger();
         let () = log_buf(&input, logger).unwrap();

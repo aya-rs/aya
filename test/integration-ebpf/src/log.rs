@@ -19,6 +19,10 @@ extern crate ebpf_panic;
 #[map]
 static BUFFER: Array<Buffer> = Array::with_max_entries(1, 0);
 
+const TWO_KB_ARRAY: [u8; 2048] = [0u8; 2048];
+const FOUR_KB_ARRAY: [u8; 4096] = [0u8; 4096];
+const EIGHT_KB_ARRAY: [u8; 8192] = [0u8; 8192];
+
 #[uprobe]
 pub fn test_log(ctx: ProbeContext) {
     debug!(&ctx, "Hello from eBPF!");
@@ -73,11 +77,17 @@ pub fn test_log(ctx: ProbeContext) {
     warn!(&ctx, "hex lc: {:x}, hex uc: {:X}", hex, hex);
     let hex = [0xde, 0xad, 0xbe, 0xef].as_slice();
     debug!(&ctx, "hex lc: {:x}, hex uc: {:X}", hex, hex);
-    let len = 42;
-    let size = 43;
-    let slice = 44;
-    let record = 45;
-    debug!(&ctx, "{} {} {} {}", len, size, slice, record);
+    let header = 42;
+    let tmp = 43;
+    let kind = 44;
+    let value = 45;
+    let size = 46;
+    let op = 47;
+    let buf = 48;
+    debug!(
+        &ctx,
+        "{} {} {} {} {} {} {}", header, tmp, kind, value, size, op, buf
+    );
 
     // Testing compilation only.
     if false {
@@ -101,6 +111,11 @@ pub fn test_log(ctx: ProbeContext) {
     let len = *len;
     let buf = &buf[..core::cmp::min(len, buf.len())];
     info!(&ctx, "variable length buffer: {:x}", buf);
+
+    info!(&ctx, "2KiB array: {:x}", &TWO_KB_ARRAY);
+    info!(&ctx, "4KiB array: {:x}", &FOUR_KB_ARRAY);
+    // This one is too big and should be dropped.
+    info!(&ctx, "8KiB array: {:x}", &EIGHT_KB_ARRAY);
 }
 
 #[uprobe]
