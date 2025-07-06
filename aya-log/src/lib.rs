@@ -138,8 +138,7 @@ impl EbpfLogger {
             .ok_or(Error::ProgramNotFound)?;
 
         let map = program_info
-            .map_ids()
-            .map_err(Error::ProgramError)?
+            .map_ids()?
             .ok_or_else(|| Error::MapNotFound)?
             .iter()
             .filter_map(|id| MapInfo::from_id(*id).ok())
@@ -148,7 +147,7 @@ impl EbpfLogger {
                 None => false,
             })
             .ok_or(Error::MapNotFound)?;
-        let map = MapData::from_id(map.id()).map_err(Error::MapError)?;
+        let map = MapData::from_id(map.id())?;
 
         Self::read_logs_async(Map::PerfEventArray(map), logger)?;
 
