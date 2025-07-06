@@ -1,15 +1,12 @@
 pub mod aya_log
 pub enum aya_log::Error
-pub aya_log::Error::InvalidOnlineCpu(std::io::error::Error)
+pub aya_log::Error::AsyncFdNew(std::io::error::Error)
 pub aya_log::Error::MapError(aya::maps::MapError)
 pub aya_log::Error::MapNotFound
-pub aya_log::Error::PerfBufferError(aya::maps::perf::perf_buffer::PerfBufferError)
 pub aya_log::Error::ProgramError(aya::programs::ProgramError)
 pub aya_log::Error::ProgramNotFound
 impl core::convert::From<aya::maps::MapError> for aya_log::Error
 pub fn aya_log::Error::from(source: aya::maps::MapError) -> Self
-impl core::convert::From<aya::maps::perf::perf_buffer::PerfBufferError> for aya_log::Error
-pub fn aya_log::Error::from(source: aya::maps::perf::perf_buffer::PerfBufferError) -> Self
 impl core::convert::From<aya::programs::ProgramError> for aya_log::Error
 pub fn aya_log::Error::from(source: aya::programs::ProgramError) -> Self
 impl core::error::Error for aya_log::Error

@@ -154,6 +154,8 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
         match ::aya_log_ebpf::macro_support::AYA_LOG_BUF.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
             None => {},
             Some(::aya_log_ebpf::macro_support::LogBuf { buf: #buf }) => {
+                // Silence unused variable warning; we may need ctx in the future.
+                let _ = #ctx;
                 let _: Option<()> = (|| {
                     let #size = ::aya_log_ebpf::macro_support::write_record_header(
                         #buf,
@@ -173,8 +175,7 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
                         }
                     )*
                     let #record = #buf.get(..#size)?;
-                    ::aya_log_ebpf::macro_support::AYA_LOGS.output(#ctx, #record, 0);
-                    Some(())
+                    Result::<_, i64>::ok(::aya_log_ebpf::macro_support::AYA_LOGS.output(#record, 0))
                 })();
             }
         }

@@ -177,7 +177,6 @@ impl<T> core::clone::CloneToUninit for aya_log_common::RecordField where T: core
 pub unsafe fn aya_log_common::RecordField::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_log_common::RecordField
 pub fn aya_log_common::RecordField::from(t: T) -> T
-pub const aya_log_common::LOG_BUF_CAPACITY: usize
 pub const aya_log_common::LOG_FIELDS: usize
 pub trait aya_log_common::DefaultFormatter
 impl aya_log_common::DefaultFormatter for &str
