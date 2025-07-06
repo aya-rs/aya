@@ -1,5 +1,5 @@
 use aya_log_common::DisplayHint;
-use aya_log_parser::{Fragment, parse};
+use aya_log_parser::{Fragment, Parameter, parse};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{
@@ -105,12 +105,12 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
     for fragment in fragments {
         match fragment {
             Fragment::Literal(s) => values.push(quote!(#s)),
-            Fragment::Parameter(p) => {
-                let arg = match formatting_args {
-                    Some(ref args) => args[arg_i].clone(),
+            Fragment::Parameter(Parameter { hint }) => {
+                let arg = match &formatting_args {
+                    Some(args) => &args[arg_i],
                     None => return Err(Error::new(format_string.span(), "no arguments provided")),
                 };
-                let (hint, formatter) = match p.hint {
+                let (hint, formatter) = match hint {
                     DisplayHint::Default => {
                         (quote!(DisplayHint::Default), quote!(DefaultFormatter))
                     }
@@ -144,41 +144,77 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
         }
     }
 
-    let num_args = values.len();
-    let values_iter = values.iter();
-    let buf = Ident::new("buf", Span::mixed_site());
-    let size = Ident::new("size", Span::mixed_site());
-    let len = Ident::new("len", Span::mixed_site());
-    let record = Ident::new("record", Span::mixed_site());
+    let idents: Vec<_> = (0..values.len())
+        .map(|arg_i| quote::format_ident!("__arg{arg_i}"))
+        .collect();
+
+    let len = values.len();
+    let num_args = Ident::new("__num_args", Span::call_site());
+    let header = Ident::new("__header", Span::call_site());
+    let tmp = Ident::new("__tmp", Span::call_site());
+    let kind = Ident::new("__kind", Span::call_site());
+    let value = Ident::new("__value", Span::call_site());
+    let size = Ident::new("__size", Span::call_site());
+    let op = Ident::new("__op", Span::call_site());
+    let buf = Ident::new("__buf", Span::call_site());
     Ok(quote! {
-        match ::aya_log_ebpf::macro_support::AYA_LOG_BUF.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
-            None => {},
-            Some(::aya_log_ebpf::macro_support::LogBuf { buf: #buf }) => {
-                // Silence unused variable warning; we may need ctx in the future.
-                let _ = #ctx;
-                let _: Option<()> = (|| {
-                    let #size = ::aya_log_ebpf::macro_support::write_record_header(
-                        #buf,
-                        #target,
-                        #level,
-                        module_path!(),
-                        file!(),
-                        line!(),
-                        #num_args,
-                    )?;
-                    let mut #size = #size.get();
-                    #(
-                        {
-                            let #buf = #buf.get_mut(#size..)?;
-                            let #len = ::aya_log_ebpf::macro_support::WriteToBuf::write(#values_iter, #buf)?;
-                            #size += #len.get();
-                        }
-                    )*
-                    let #record = #buf.get(..#size)?;
-                    Result::<_, i64>::ok(::aya_log_ebpf::macro_support::AYA_LOGS.output(#record, 0))
-                })();
+        // Silence unused variable warning; we may need ctx in the future.
+        let _ = #ctx;
+        let _: Option<()> = (|| {
+            use ::aya_log_ebpf::macro_support::{Header, Field, Argument, AYA_LOGS};
+
+            let #num_args = match u32::try_from(#len) {
+                Ok(n) => Some(n),
+                Err(core::num::TryFromIntError { .. }) => None,
+            }?;
+            let #header = Header::new(
+                #target,
+                #level,
+                module_path!(),
+                file!(),
+                line!(),
+                #num_args,
+            )?;
+
+            #(
+                let #tmp = #values;
+                let (#kind, #value) = #tmp.as_argument();
+                let #idents = Field::new(#kind, #value)?;
+            )*
+
+            let mut #size = 0;
+            let mut #op = |slice: &[u8]| {
+                #size += slice.len();
+                Some(())
+            };
+            #header.with_bytes(&mut #op)?;
+            #(
+                #idents.with_bytes(&mut #op)?;
+            )*
+
+            let mut #buf = AYA_LOGS.reserve_bytes(#size, 0)?;
+
+            match (|| {
+                let mut #size = 0;
+                let mut #op = |slice: &[u8]| {
+                    let #buf = #buf.get_mut(#size..)?;
+                    let #buf = #buf.get_mut(..slice.len())?;
+                    #buf.copy_from_slice(slice);
+                    #size += slice.len();
+                    Some(())
+                };
+                #header.with_bytes(&mut #op)?;
+                #(
+                    #idents.with_bytes(&mut #op)?;
+                )*
+                Some(())
+            })() {
+                Some(()) => #buf.submit(0),
+                None => #buf.discard(0),
             }
-        }
+
+            Some(())
+        })();
     })
 }
 
