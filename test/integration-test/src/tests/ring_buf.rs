@@ -20,7 +20,7 @@ use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
 use integration_common::ring_buf::Registers;
 use rand::Rng as _;
 use test_log::test;
-use tokio::io::unix::AsyncFd;
+use tokio::io::{Interest, unix::AsyncFd};
 
 struct RingBufTest {
     _bpf: Ebpf,
@@ -160,7 +160,7 @@ async fn ring_buf_async_with_drops() {
         data,
     ) = WithData::new(RING_BUF_MAX_ENTRIES * 8);
 
-    let mut async_fd = AsyncFd::new(ring_buf).unwrap();
+    let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
 
     // Spawn the writer which internally will spawn many parallel writers.
     // Construct an AsyncFd from the RingBuf in order to receive readiness notifications.
@@ -278,7 +278,7 @@ async fn ring_buf_async_no_drop() {
     };
 
     // Construct an AsyncFd from the RingBuf in order to receive readiness notifications.
-    let mut async_fd = AsyncFd::new(ring_buf).unwrap();
+    let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
     // Note that unlike in the synchronous case where all of the entries are written before any of
     // them are read, in this case we expect all of the entries to make their way to userspace
     // because entries are being consumed as they are produced.
@@ -359,7 +359,7 @@ async fn ring_buf_asyncfd_events() {
         _bpf,
     } = RingBufTest::new();
 
-    let mut async_fd = AsyncFd::new(ring_buf).unwrap();
+    let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
     let mut total_events = 0;
     let writer = WriterThread::spawn();
     while total_events < WriterThread::NUM_MESSAGES {
