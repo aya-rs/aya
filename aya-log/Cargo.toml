@@ -17,12 +17,11 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-aya = { path = "../aya", version = "^0.13.1", features = ["async_tokio"] }
+aya = { path = "../aya", version = "^0.13.1", default-features = false }
 aya-log-common = { path = "../aya-log-common", version = "^0.1.15", default-features = false }
-bytes = { workspace = true }
 log = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["rt"] }
+tokio = { workspace = true, features = ["net", "rt"] }
 
 [dev-dependencies]
 env_logger = { workspace = true }

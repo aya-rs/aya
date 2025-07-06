@@ -54,24 +54,16 @@ use std::{
     io, mem,
     net::{Ipv4Addr, Ipv6Addr},
     ptr, str,
-    sync::Arc,
 };
 
 const MAP_NAME: &str = "AYA_LOGS";
 
 use aya::{
     Ebpf, Pod,
-    maps::{
-        Map, MapData, MapError, MapInfo,
-        perf::{AsyncPerfEventArray, Events, PerfBufferError},
-    },
+    maps::{Map, MapData, MapError, MapInfo, RingBuf},
     programs::{ProgramError, loaded_programs},
-    util::online_cpus,
 };
-use aya_log_common::{
-    Argument, DisplayHint, LOG_BUF_CAPACITY, LOG_FIELDS, Level, LogValueLength, RecordField,
-};
-use bytes::BytesMut;
+use aya_log_common::{Argument, DisplayHint, LOG_FIELDS, Level, LogValueLength, RecordField};
 use log::{Log, Record, error};
 use thiserror::Error;
 
@@ -112,8 +104,7 @@ impl EbpfLogger {
         logger: T,
     ) -> Result<EbpfLogger, Error> {
         let map = bpf.take_map(MAP_NAME).ok_or(Error::MapNotFound)?;
-        Self::read_logs_async(map, logger)?;
-        Ok(EbpfLogger {})
+        Self::read_logs_async(map, logger)
     }
 
     /// Attaches to an existing `aya-log-ebpf` instance.
@@ -149,32 +140,26 @@ impl EbpfLogger {
             .ok_or(Error::MapNotFound)?;
         let map = MapData::from_id(map.id())?;
 
-        Self::read_logs_async(Map::PerfEventArray(map), logger)?;
-
-        Ok(EbpfLogger {})
+        Self::read_logs_async(Map::RingBuf(map), logger)
     }
 
-    fn read_logs_async<T: Log + 'static>(map: Map, logger: T) -> Result<(), Error> {
-        let mut logs: AsyncPerfEventArray<_> = map.try_into()?;
+    fn read_logs_async<T: Log + 'static>(map: Map, logger: T) -> Result<Self, Error> {
+        let ring_buf: RingBuf<_> = map.try_into()?;
+        let mut async_fd =
+            tokio::io::unix::AsyncFd::with_interest(ring_buf, tokio::io::Interest::READABLE)
+                .map_err(Error::AsyncFdNew)?;
 
-        let logger = Arc::new(logger);
-        for cpu_id in online_cpus().map_err(|(_, error)| Error::InvalidOnlineCpu(error))? {
-            let mut buf = logs.open(cpu_id, None)?;
-
-            let log = logger.clone();
-            tokio::spawn(async move {
-                let mut buffers = vec![BytesMut::with_capacity(LOG_BUF_CAPACITY); 10];
-
-                loop {
-                    let Events { read, lost: _ } = buf.read_events(&mut buffers).await.unwrap();
-
-                    for buf in buffers.iter().take(read) {
-                        log_buf(buf.as_ref(), &*log).unwrap();
-                    }
+        tokio::spawn(async move {
+            loop {
+                let mut guard = async_fd.readable_mut().await.unwrap();
+                while let Some(buf) = guard.get_inner_mut().next() {
+                    log_buf(buf.as_ref(), &logger).unwrap();
                 }
-            });
-        }
-        Ok(())
+                guard.clear_ready();
+            }
+        });
+
+        Ok(EbpfLogger {})
     }
 }
 
@@ -438,17 +423,14 @@ impl_format_float!(f64);
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("log event array {} doesn't exist", MAP_NAME)]
+    #[error("{} not found", MAP_NAME)]
     MapNotFound,
 
-    #[error("error opening log event array")]
+    #[error(transparent)]
     MapError(#[from] MapError),
 
-    #[error("error opening log buffer")]
-    PerfBufferError(#[from] PerfBufferError),
-
-    #[error("invalid /sys/devices/system/cpu/online format")]
-    InvalidOnlineCpu(#[source] io::Error),
+    #[error("tokio::io::unix::AsyncFd::new")]
+    AsyncFdNew(#[source] io::Error),
 
     #[error("program not found")]
     ProgramNotFound,
@@ -457,7 +439,7 @@ pub enum Error {
     ProgramError(#[from] ProgramError),
 }
 
-fn log_buf(mut buf: &[u8], logger: &dyn Log) -> Result<(), ()> {
+fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
     let mut target = None;
     let mut level = None;
     let mut module = None;

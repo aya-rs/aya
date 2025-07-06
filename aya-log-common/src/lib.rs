@@ -7,8 +7,6 @@ use core::{
 
 use num_enum::IntoPrimitive;
 
-pub const LOG_BUF_CAPACITY: usize = 8192;
-
 pub const LOG_FIELDS: usize = 6;
 
 pub type LogValueLength = u16;
@@ -328,19 +326,4 @@ pub fn write_record_header(
         size += len.get();
     }
     NonZeroUsize::new(size)
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn log_value_length_sufficient() {
-        assert!(
-            LOG_BUF_CAPACITY <= LogValueLength::MAX.into(),
-            "{} > {}",
-            LOG_BUF_CAPACITY,
-            LogValueLength::MAX
-        );
-    }
 }
