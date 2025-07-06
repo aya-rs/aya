@@ -67,10 +67,6 @@
     //unused_qualifications, https://github.com/rust-lang/rust/commit/9ccc7b7 added size_of to the prelude, but we need to continue to qualify it so that we build on older compilers.
     //unused_results,
 )]
-#![cfg_attr(
-    all(feature = "async_tokio", feature = "async_std"),
-    expect(unused_crate_dependencies)
-)]
 
 mod bpf;
 pub mod maps;

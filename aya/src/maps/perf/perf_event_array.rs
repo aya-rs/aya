@@ -151,16 +151,9 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// amounts of data, in order not to lose events you might want to process each
 /// [`PerfEventArrayBuffer`] on a different thread.
 ///
-/// # Async
-///
-/// If you are using [tokio] or [async-std], you should use `AsyncPerfEventArray` which
-/// efficiently integrates with those and provides a nicer `Future` based API.
-///
 /// [`perf`]: https://perf.wiki.kernel.org/index.php/Main_Page
 /// [epoll]: https://docs.rs/epoll
 /// [mio]: https://docs.rs/mio
-/// [tokio]: https://docs.rs/tokio
-/// [async-std]: https://docs.rs/async-std
 #[doc(alias = "BPF_MAP_TYPE_PERF_EVENT_ARRAY")]
 pub struct PerfEventArray<T> {
     map: Arc<T>,

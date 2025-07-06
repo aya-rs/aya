@@ -18,7 +18,6 @@ workspace = true
 
 [dependencies]
 assert_matches = { workspace = true }
-async-io = { workspace = true, optional = true }
 aya-obj = { path = "../aya-obj", version = "^0.2.1", features = ["std"] }
 bitflags = { workspace = true }
 bytes = { workspace = true }
@@ -28,15 +27,9 @@ log = { workspace = true }
 object = { workspace = true, features = ["elf", "read_core", "std", "write"] }
 once_cell = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["rt"], optional = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
-
-[features]
-async_std = ["dep:async-io"]
-async_tokio = ["tokio/net"]
-default = []
 
 [package.metadata.docs.rs]
 all-features = true

@@ -185,8 +185,8 @@ pub enum MapType {
     /// Introduced in kernel v4.2.
     #[doc(alias = "BPF_MAP_TYPE_PROG_ARRAY")]
     ProgramArray = bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY as isize,
-    /// A Perf Event Array map type. See [`PerfEventArray`](super::perf::PerfEventArray) and
-    /// [`AsyncPerfEventArray`](super::perf::AsyncPerfEventArray) for the map implementations.
+    /// A Perf Event Array map type. See [`PerfEventArray`](super::perf::PerfEventArray) for the map
+    /// implementation.
     ///
     /// Introduced in kernel v4.3.
     #[doc(alias = "BPF_MAP_TYPE_PERF_EVENT_ARRAY")]
