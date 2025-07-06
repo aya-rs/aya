@@ -69,22 +69,27 @@ impl Parse for LogArgs {
 }
 
 pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStream> {
-    let ctx = args.ctx;
-    let target = match args.target {
+    let LogArgs {
+        ctx,
+        target,
+        level: level_expr,
+        format_string,
+        formatting_args,
+    } = args;
+    let target = match target {
         Some(t) => quote! { #t },
         None => quote! { module_path!() },
     };
-    let lvl: TokenStream = if let Some(l) = level {
-        l
-    } else if let Some(l) = args.level {
-        quote! { #l }
-    } else {
-        return Err(Error::new(
-            args.format_string.span(),
-            "missing `level` argument: try passing an `aya_log_ebpf::Level` value",
-        ));
+    let level = match level {
+        Some(l) => l,
+        None => {
+            let l = level_expr.ok_or(Error::new(
+                format_string.span(),
+                "missing `level` argument: try passing an `aya_log_ebpf::Level` value",
+            ))?;
+            quote! { #l }
+        }
     };
-    let format_string = args.format_string;
 
     let format_string_val = format_string.value();
     let fragments = parse(&format_string_val).map_err(|e| {
@@ -101,7 +106,7 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
         match fragment {
             Fragment::Literal(s) => values.push(quote!(#s)),
             Fragment::Parameter(p) => {
-                let arg = match args.formatting_args {
+                let arg = match formatting_args {
                     Some(ref args) => args[arg_i].clone(),
                     None => return Err(Error::new(format_string.span(), "no arguments provided")),
                 };
@@ -146,14 +151,14 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
     let len = Ident::new("len", Span::mixed_site());
     let record = Ident::new("record", Span::mixed_site());
     Ok(quote! {
-        match ::aya_log_ebpf::AYA_LOG_BUF.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
+        match ::aya_log_ebpf::macro_support::AYA_LOG_BUF.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
             None => {},
-            Some(::aya_log_ebpf::LogBuf { buf: #buf }) => {
+            Some(::aya_log_ebpf::macro_support::LogBuf { buf: #buf }) => {
                 let _: Option<()> = (|| {
-                    let #size = ::aya_log_ebpf::write_record_header(
+                    let #size = ::aya_log_ebpf::macro_support::write_record_header(
                         #buf,
                         #target,
-                        #lvl,
+                        #level,
                         module_path!(),
                         file!(),
                         line!(),
@@ -163,12 +168,12 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
                     #(
                         {
                             let #buf = #buf.get_mut(#size..)?;
-                            let #len = ::aya_log_ebpf::WriteToBuf::write(#values_iter, #buf)?;
+                            let #len = ::aya_log_ebpf::macro_support::WriteToBuf::write(#values_iter, #buf)?;
                             #size += #len.get();
                         }
                     )*
                     let #record = #buf.get(..#size)?;
-                    ::aya_log_ebpf::AYA_LOGS.output(#ctx, #record, 0);
+                    ::aya_log_ebpf::macro_support::AYA_LOGS.output(#ctx, #record, 0);
                     Some(())
                 })();
             }

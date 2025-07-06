@@ -1,7 +1,4 @@
 pub mod aya_log_ebpf
-pub use aya_log_ebpf::LOG_BUF_CAPACITY
-pub use aya_log_ebpf::Level
-pub use aya_log_ebpf::WriteToBuf
 pub use aya_log_ebpf::debug
 pub use aya_log_ebpf::error
 pub use aya_log_ebpf::info
