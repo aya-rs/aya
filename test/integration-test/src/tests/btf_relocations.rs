@@ -43,6 +43,7 @@ use test_case::test_case;
     None,
     2
 )]
+#[test_log::test]
 fn relocation_tests(
     bpf: &[u8],
     btf: Option<&[u8]>,

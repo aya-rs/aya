@@ -6,7 +6,6 @@ use std::{
 use aya::{Ebpf, programs::UProbe};
 use aya_log::EbpfLogger;
 use log::{Level, Log, Record};
-use test_log::test;
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -38,7 +37,8 @@ struct CapturedLog<'a> {
     pub target: Cow<'a, str>,
 }
 
-#[test(tokio::test)]
+#[tokio::test]
+#[test_log::test]
 async fn log() {
     let mut bpf = Ebpf::load(crate::LOG).unwrap();
 

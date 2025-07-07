@@ -6,12 +6,11 @@ use aya::{
     programs::{Xdp, XdpFlags},
 };
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
-use test_log::test;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
 use crate::utils::NetNsGuard;
 
-#[test]
+#[test_log::test]
 fn af_xdp() {
     let _netns = NetNsGuard::new();
 
@@ -98,7 +97,7 @@ fn af_xdp() {
     assert_eq!(rx.available(), 2);
 }
 
-#[test]
+#[test_log::test]
 fn prog_sections() {
     let obj_file = object::File::parse(crate::XDP_SEC).unwrap();
 
@@ -132,7 +131,7 @@ fn ensure_symbol(obj_file: &object::File, sec_name: &str, sym_name: &str) {
     );
 }
 
-#[test]
+#[test_log::test]
 fn map_load() {
     let bpf = Ebpf::load(crate::XDP_SEC).unwrap();
 
@@ -144,7 +143,7 @@ fn map_load() {
     bpf.program("xdp_frags_devmap").unwrap();
 }
 
-#[test]
+#[test_log::test]
 fn cpumap_chain() {
     let _netns = NetNsGuard::new();
 

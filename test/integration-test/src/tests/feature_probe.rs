@@ -11,7 +11,7 @@ use procfs::kernel_config;
 
 use crate::utils::kernel_assert;
 
-#[test]
+#[test_log::test]
 fn probe_supported_programs() {
     let kernel_config = kernel_config().unwrap_or_default();
     macro_rules! is_supported {
@@ -136,7 +136,7 @@ fn probe_supported_programs() {
     kernel_assert!(is_supported!(ProgramType::Netfilter), kern_version);
 }
 
-#[test]
+#[test_log::test]
 fn probe_supported_maps() {
     macro_rules! is_supported {
         ($map_type:expr) => {
