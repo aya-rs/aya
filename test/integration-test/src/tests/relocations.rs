@@ -3,9 +3,8 @@ use aya::{
     programs::{UProbe, Xdp},
     util::KernelVersion,
 };
-use test_log::test;
 
-#[test]
+#[test_log::test]
 fn relocations() {
     let bpf = load_and_attach("test_64_32_call_relocs", crate::RELOCATIONS);
 
@@ -17,7 +16,7 @@ fn relocations() {
     assert_eq!(m.get(&2, 0).unwrap(), 3);
 }
 
-#[test]
+#[test_log::test]
 fn text_64_64_reloc() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 13, 0) {
@@ -39,7 +38,7 @@ fn text_64_64_reloc() {
     assert_eq!(m.get(&1, 0).unwrap(), 3);
 }
 
-#[test]
+#[test_log::test]
 fn variables_reloc() {
     let mut bpf = Ebpf::load(crate::VARIABLES_RELOC).unwrap();
     let prog: &mut Xdp = bpf

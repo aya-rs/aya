@@ -3,7 +3,6 @@ use std::{borrow::Cow, sync::Mutex};
 use aya::{Ebpf, programs::UProbe};
 use aya_log::EbpfLogger;
 use log::{Level, Log, Record};
-use test_log::test;
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -36,7 +35,7 @@ struct CapturedLog<'a> {
     pub target: Cow<'a, str>,
 }
 
-#[test]
+#[test_log::test]
 fn log() {
     let mut bpf = Ebpf::load(crate::LOG).unwrap();
 

@@ -11,12 +11,11 @@ use aya::{
     util::KernelVersion,
 };
 use aya_obj::programs::XdpAttachType;
-use test_log::test;
 
 const MAX_RETRIES: usize = 100;
 pub(crate) const RETRY_DURATION: Duration = Duration::from_millis(10);
 
-#[test]
+#[test_log::test]
 fn long_name() {
     let mut bpf = Ebpf::load(crate::NAME_TEST).unwrap();
     let name_prog: &mut Xdp = bpf
@@ -32,7 +31,7 @@ fn long_name() {
     // Therefore, as long as we were able to load the program, this is good enough.
 }
 
-#[test]
+#[test_log::test]
 fn multiple_btf_maps() {
     let mut bpf = Ebpf::load(crate::MULTIMAP_BTF).unwrap();
 
@@ -62,7 +61,7 @@ fn multiple_btf_maps() {
     remove_file(map_pin).unwrap();
 }
 
-#[test]
+#[test_log::test]
 fn pin_lifecycle_multiple_btf_maps() {
     let mut bpf = Ebpf::load(crate::MULTIMAP_BTF).unwrap();
 
@@ -191,7 +190,7 @@ fn assert_unloaded(name: &str) {
     )
 }
 
-#[test]
+#[test_log::test]
 fn unload_xdp() {
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
@@ -216,7 +215,7 @@ fn unload_xdp() {
     assert_unloaded("pass");
 }
 
-#[test]
+#[test_log::test]
 fn unload_kprobe() {
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut KProbe = bpf.program_mut("test_kprobe").unwrap().try_into().unwrap();
@@ -241,7 +240,7 @@ fn unload_kprobe() {
     assert_unloaded("test_kprobe");
 }
 
-#[test]
+#[test_log::test]
 fn memmove() {
     let mut bpf = Ebpf::load(crate::MEMMOVE_TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("do_dnat").unwrap().try_into().unwrap();
@@ -250,7 +249,7 @@ fn memmove() {
     assert_loaded("do_dnat");
 }
 
-#[test]
+#[test_log::test]
 fn basic_tracepoint() {
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut TracePoint = bpf
@@ -281,7 +280,7 @@ fn basic_tracepoint() {
     assert_unloaded("test_tracepoint");
 }
 
-#[test]
+#[test_log::test]
 fn basic_uprobe() {
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut UProbe = bpf.program_mut("test_uprobe").unwrap().try_into().unwrap();
@@ -311,7 +310,7 @@ fn basic_uprobe() {
     assert_unloaded("test_uprobe");
 }
 
-#[test]
+#[test_log::test]
 fn basic_flow_dissector() {
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut FlowDissector = bpf.program_mut("test_flow").unwrap().try_into().unwrap();
@@ -339,7 +338,7 @@ fn basic_flow_dissector() {
     assert_unloaded("test_flow");
 }
 
-#[test]
+#[test_log::test]
 fn pin_link() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 9, 0) {
@@ -370,7 +369,7 @@ fn pin_link() {
     assert_unloaded("pass");
 }
 
-#[test]
+#[test_log::test]
 fn pin_lifecycle() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 18, 0) {
@@ -433,7 +432,7 @@ fn pin_lifecycle() {
     assert_unloaded("pass");
 }
 
-#[test]
+#[test_log::test]
 fn pin_lifecycle_tracepoint() {
     // 1. Load Program and Pin
     {
@@ -487,7 +486,7 @@ fn pin_lifecycle_tracepoint() {
     assert_unloaded("test_tracepoint");
 }
 
-#[test]
+#[test_log::test]
 fn pin_lifecycle_kprobe() {
     // 1. Load Program and Pin
     {
@@ -551,7 +550,7 @@ extern "C" fn uprobe_function() {
     core::hint::black_box(uprobe_function);
 }
 
-#[test]
+#[test_log::test]
 fn pin_lifecycle_uprobe() {
     const FIRST_PIN_PATH: &str = "/sys/fs/bpf/aya-uprobe-test-prog-1";
     const SECOND_PIN_PATH: &str = "/sys/fs/bpf/aya-uprobe-test-prog-2";

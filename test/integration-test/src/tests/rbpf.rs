@@ -3,9 +3,8 @@ use std::collections::HashMap;
 
 use assert_matches::assert_matches;
 use aya_obj::{Object, ProgramSection, generated::bpf_insn, programs::XdpAttachType};
-use test_log::test;
 
-#[test]
+#[test_log::test]
 fn run_with_rbpf() {
     let object = Object::parse(crate::PASS).unwrap();
 
@@ -37,7 +36,7 @@ fn run_with_rbpf() {
 
 static mut MULTIMAP_MAPS: [*mut Vec<u64>; 3] = [null_mut(); 3];
 
-#[test]
+#[test_log::test]
 fn use_map_with_rbpf() {
     let mut object = Object::parse(crate::MULTIMAP_BTF).unwrap();
 

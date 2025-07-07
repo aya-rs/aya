@@ -1,9 +1,8 @@
 use std::io::BufRead as _;
 
 use aya::{Btf, Ebpf, programs::Iter};
-use test_log::test;
 
-#[test]
+#[test_log::test]
 fn iter_task() {
     let mut ebpf = Ebpf::load(crate::ITER_TASK).unwrap();
     let btf = Btf::from_sys_fs().unwrap();

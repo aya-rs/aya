@@ -19,7 +19,7 @@ use libc::EINVAL;
 
 use crate::utils::{kernel_assert, kernel_assert_eq};
 
-#[test]
+#[test_log::test]
 fn test_loaded_programs() {
     if !is_program_supported(ProgramType::SocketFilter).unwrap() {
         eprintln!("skipping test - socket_filter program not supported");
@@ -72,7 +72,7 @@ fn test_loaded_programs() {
     p.detach(res).unwrap();
 }
 
-#[test]
+#[test_log::test]
 fn test_program_info() {
     if !is_program_supported(ProgramType::SocketFilter).unwrap() {
         eprintln!("skipping test - socket_filter program not supported");
@@ -135,7 +135,7 @@ fn test_program_info() {
     test_prog.fd().unwrap();
 }
 
-#[test]
+#[test_log::test]
 fn test_loaded_at() {
     if !is_program_supported(ProgramType::SocketFilter).unwrap() {
         eprintln!("skipping test - socket_filter program not supported");
@@ -184,7 +184,7 @@ fn test_loaded_at() {
     }
 }
 
-#[test]
+#[test_log::test]
 fn test_prog_stats() {
     if !is_program_supported(ProgramType::TracePoint).unwrap() {
         eprintln!("skipping test - tracepoint program not supported");
@@ -210,7 +210,7 @@ fn test_prog_stats() {
     kernel_assert!(test_prog.run_count() > 0, KernelVersion::new(5, 1, 0));
 }
 
-#[test]
+#[test_log::test]
 fn list_loaded_maps() {
     if !is_program_supported(ProgramType::SocketFilter).unwrap() {
         eprintln!("skipping test - socket_filter program not supported");
@@ -269,7 +269,7 @@ fn list_loaded_maps() {
     );
 }
 
-#[test]
+#[test_log::test]
 fn test_map_info() {
     if !is_program_supported(ProgramType::SocketFilter).unwrap() {
         eprintln!("skipping test - socket_filter program not supported");

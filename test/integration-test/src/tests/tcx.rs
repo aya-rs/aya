@@ -3,11 +3,10 @@ use aya::{
     programs::{LinkOrder, ProgramId, SchedClassifier, TcAttachType, tc::TcAttachOptions},
     util::KernelVersion,
 };
-use test_log::test;
 
 use crate::utils::NetNsGuard;
 
-#[test]
+#[test_log::test]
 fn tcx() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(6, 6, 0) {

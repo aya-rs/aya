@@ -6,7 +6,7 @@ fn get_event(bpf: &mut Ebpf) -> SysEnterEvent {
     map.get(&0, 0).unwrap()
 }
 
-#[test]
+#[test_log::test]
 fn raw_tracepoint() {
     let mut bpf = Ebpf::load(crate::RAW_TRACEPOINT).unwrap();
 
