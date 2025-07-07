@@ -64,7 +64,7 @@ impl<T: BorrowMut<MapData>> AsFd for PerfEventArrayBuffer<T> {
 
 impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
     fn as_raw_fd(&self) -> RawFd {
-        self.buf.as_fd().as_raw_fd()
+        self.as_fd().as_raw_fd()
     }
 }
 

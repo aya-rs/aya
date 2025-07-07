@@ -9,7 +9,7 @@ use std::{
     fmt::{self, Debug, Formatter},
     mem,
     ops::Deref,
-    os::fd::{AsFd as _, AsRawFd, BorrowedFd, RawFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
     sync::atomic::{AtomicU32, AtomicUsize, Ordering},
 };
 
@@ -130,15 +130,20 @@ impl<T> RingBuf<T> {
     }
 }
 
-/// Access to the RawFd can be used to construct an AsyncFd for use with epoll.
-impl<T: Borrow<MapData>> AsRawFd for RingBuf<T> {
-    fn as_raw_fd(&self) -> RawFd {
+impl<T: Borrow<MapData>> AsFd for RingBuf<T> {
+    fn as_fd(&self) -> BorrowedFd<'_> {
         let Self {
             map,
             consumer: _,
             producer: _,
         } = self;
-        map.borrow().fd().as_fd().as_raw_fd()
+        map.borrow().fd().as_fd()
+    }
+}
+
+impl<T: Borrow<MapData>> AsRawFd for RingBuf<T> {
+    fn as_raw_fd(&self) -> RawFd {
+        self.as_fd().as_raw_fd()
     }
 }
 
