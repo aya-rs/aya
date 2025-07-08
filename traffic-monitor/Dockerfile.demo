@@ -1,0 +1,171 @@
+FROM ubuntu:24.04
+
+# Install basic dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    pkg-config \
+    iproute2 \
+    net-tools \
+    jq \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust (stable only for demo)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Set up working directory
+WORKDIR /workspace
+
+# Copy only the necessary files for testing (not the full eBPF source)
+COPY Cargo.toml .
+COPY src/lib.rs src/
+COPY src/config.rs src/
+COPY src/event_handler.rs src/
+COPY src/ip_utils.rs src/
+COPY tests/ tests/
+COPY configs/ configs/
+COPY examples/standalone-demo.rs examples/
+
+# Create a minimal Cargo.toml that doesn't depend on aya
+RUN cat > Cargo.toml << 'TOMLEOF'\
+[package]\
+name = "traffic-monitor"\
+version = "0.1.0"\
+edition = "2021"\
+\
+[dependencies]\
+serde = { version = "1.0", features = ["derive"] }\
+serde_json = "1.0"\
+log = "0.4"\
+anyhow = "1.0"\
+\
+[[example]]\
+name = "standalone-demo"\
+path = "examples/standalone-demo.rs"\
+\
+[dev-dependencies]\
+tempfile = "3.0"\
+TOMLEOF
+
+# Create minimal lib.rs without eBPF dependencies
+RUN cat > src/lib.rs << 'LIBEOF'\
+pub mod config;\
+pub mod event_handler;\
+pub mod ip_utils;\
+\
+pub use config::TrafficMonitorConfig;\
+pub use ip_utils::{format_ip_info, ip_in_cidr, parse_cidr};\
+\
+// Simplified version of TrafficEvent for demo\
+#[derive(Debug, Clone)]\
+pub struct TrafficEvent {\
+    pub src_ip: std::net::Ipv4Addr,\
+    pub dst_ip: std::net::Ipv4Addr,\
+    pub src_port: u16,\
+    pub dst_port: u16,\
+    pub protocol: u8,\
+    pub packet_size: u16,\
+    pub action: u8,\
+}\
+LIBEOF
+
+# Update event_handler.rs to work without eBPF
+RUN sed -i 's/use traffic_monitor::/use crate::/g' src/event_handler.rs
+RUN sed -i 's/#\[repr(C)\]//g' src/event_handler.rs
+RUN sed -i 's/pub struct TrafficEvent {/pub struct _OriginalTrafficEvent {/g' src/event_handler.rs
+
+# Run tests to verify functionality
+RUN cargo test --release
+
+# Build the standalone demo
+RUN cargo build --example standalone-demo --release
+
+# Create demonstration script
+RUN cat > demo.sh << 'DEMOEOF'
+#!/bin/bash
+echo "🚀 Traffic Monitor Demo - Linux Container Environment"
+echo "===================================================="
+echo
+echo "📊 System Information:"
+echo "  Kernel: $(uname -r)"
+echo "  Architecture: $(uname -m)" 
+echo "  OS: $(cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '"')"
+echo "  Container: $([ -f /.dockerenv ] && echo "Docker" || echo "Unknown")"
+echo
+
+echo "🔧 Available Network Interfaces:"
+ip link show | grep -E "^[0-9]+:" | while read line; do
+  iface=$(echo "$line" | cut -d: -f2 | tr -d " ")
+  state=$(echo "$line" | grep -o "state [A-Z]*" | cut -d" " -f2 || echo "UNKNOWN")
+  echo "  $iface ($state)"
+done
+echo
+
+echo "📦 Development Tools:"
+echo "  Rust: $(rustc --version)"
+echo "  Cargo: $(cargo --version)"
+echo
+
+echo "🧪 Running Traffic Monitor Tests:"
+echo "=================================="
+cargo test --release --lib 2>/dev/null
+echo
+
+echo "📋 Configuration Example:"
+echo "========================"
+if [ -f configs/default.json ]; then
+    echo "Default permitted networks:"
+    cat configs/default.json | jq .
+else
+    echo '{"permitted_cidrs":["127.0.0.0/8","10.0.0.0/8","172.16.0.0/12","192.168.0.0/16"]}' | jq .
+fi
+echo
+
+echo "🎯 Running Standalone Demo:"
+echo "==========================="
+cargo run --example standalone-demo --release
+echo
+
+echo "🐧 Linux eBPF Capability Check:"
+echo "==============================="
+echo "Kernel version: $(uname -r)"
+if [ -d /sys/kernel/btf ]; then
+    echo "✅ BTF support: Available"
+else
+    echo "❌ BTF support: Not available"
+fi
+
+if [ -f /proc/kallsyms ]; then
+    if grep -q bpf /proc/kallsyms 2>/dev/null; then
+        echo "✅ BPF syscalls: Available"
+    else
+        echo "❌ BPF syscalls: Limited visibility"
+    fi
+else
+    echo "❌ Kernel symbols: Not accessible"
+fi
+
+echo
+echo "📈 What the Full Traffic Monitor Would Do:"
+echo "=========================================="
+echo "1. Load eBPF program into kernel at XDP layer"
+echo "2. Attach to network interface (e.g., eth0)"
+echo "3. Process packets at line speed in kernel space"
+echo "4. Filter based on source IP against CIDR ranges"
+echo "5. Log non-permitted traffic via ring buffer"
+echo "6. Optionally drop packets in kernel (--drop-packets)"
+echo "7. Provide real-time statistics in userspace"
+echo
+
+echo "🔧 To run the actual traffic monitor (requires privileges):"
+echo "sudo ./target/release/traffic-monitor -i eth0 -c configs/default.json"
+echo
+
+echo "✅ Demo completed successfully!"
+DEMOEOF
+
+RUN chmod +x demo.sh
+
+CMD ["/workspace/demo.sh"]

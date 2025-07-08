@@ -1,0 +1,33 @@
+FROM ubuntu:24.04
+
+# Install basic dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    pkg-config \
+    iproute2 \
+    net-tools \
+    jq \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Set up working directory
+WORKDIR /workspace
+
+# Copy source files
+COPY configs/ configs/
+COPY examples/standalone-demo.rs examples/
+COPY demo-cargo.toml Cargo.toml
+COPY demo.sh .
+
+# Make demo script executable
+RUN chmod +x demo.sh
+
+# Build just the standalone demo (doesn't require eBPF dependencies)
+RUN cargo build --example standalone-demo --release
+
+CMD ["./demo.sh"]

@@ -1,0 +1,408 @@
+{
+  "summary": {
+    "total_events": 53,
+    "total_bytes": 34036,
+    "time_range_seconds": 112,
+    "unique_sources": 11,
+    "unique_destinations": 3,
+    "avg_packet_size": 642.188679245283,
+    "events_per_second": 0.4732142857142857
+  },
+  "top_sources": [
+    {
+      "ip": "203.0.113.5",
+      "count": 13,
+      "bytes": 832,
+      "protocols": [
+        "TCP"
+      ],
+      "percentage": 24.528301886792452
+    },
+    {
+      "ip": "198.51.100.42",
+      "count": 5,
+      "bytes": 5120,
+      "protocols": [
+        "TCP"
+      ],
+      "percentage": 9.433962264150944
+    },
+    {
+      "ip": "47.254.33.187",
+      "count": 5,
+      "bytes": 7300,
+      "protocols": [
+        "TCP"
+      ],
+      "percentage": 9.433962264150944
+    },
+    {
+      "ip": "185.220.101.142",
+      "count": 5,
+      "bytes": 260,
+      "protocols": [
+        "TCP"
+      ],
+      "percentage": 9.433962264150944
+    },
+    {
+      "ip": "94.102.49.190",
+      "count": 5,
+      "bytes": 320,
+      "protocols": [
+        "ICMP"
+      ],
+      "percentage": 9.433962264150944
+    },
+    {
+      "ip": "141.98.80.137",
+      "count": 5,
+      "bytes": 5120,
+      "protocols": [
+        "TCP"
+      ],
+      "percentage": 9.433962264150944
+    },
+    {
+      "ip": "120.48.85.74",
+      "count": 5,
+      "bytes": 10240,
+      "protocols": [
+        "TCP"
+      ],
+      "percentage": 9.433962264150944
+    },
+    {
+      "ip": "1.1.1.1",
+      "count": 4,
+      "bytes": 3564,
+      "protocols": [
+        "TCP"
+      ],
+      "percentage": 7.547169811320755
+    },
+    {
+      "ip": "111.230.56.78",
+      "count": 3,
+      "bytes": 384,
+      "protocols": [
+        "Unknown"
+      ],
+      "percentage": 5.660377358490567
+    },
+    {
+      "ip": "8.8.8.8",
+      "count": 2,
+      "bytes": 384,
+      "protocols": [
+        "UDP"
+      ],
+      "percentage": 3.7735849056603774
+    }
+  ],
+  "top_destinations": [
+    {
+      "ip": "192.168.1.100",
+      "count": 51,
+      "bytes": 33268,
+      "protocols": [
+        "Unknown",
+        "UDP",
+        "TCP",
+        "ICMP"
+      ],
+      "percentage": 96.22641509433963
+    },
+    {
+      "ip": "192.168.1.101",
+      "count": 1,
+      "bytes": 256,
+      "protocols": [
+        "UDP"
+      ],
+      "percentage": 1.8867924528301887
+    },
+    {
+      "ip": "192.168.1.102",
+      "count": 1,
+      "bytes": 512,
+      "protocols": [
+        "UDP"
+      ],
+      "percentage": 1.8867924528301887
+    }
+  ],
+  "protocol_distribution": {
+    "distribution": {
+      "TCP": {
+        "count": 42,
+        "percentage": 79.24528301886792
+      },
+      "ICMP": {
+        "count": 5,
+        "percentage": 9.433962264150944
+      },
+      "UDP": {
+        "count": 3,
+        "percentage": 5.660377358490567
+      },
+      "Unknown": {
+        "count": 3,
+        "percentage": 5.660377358490567
+      }
+    }
+  },
+  "temporal_analysis": {
+    "hourly_distribution": {
+      "18": 53
+    },
+    "daily_distribution": {
+      "2024-11-28": 53
+    },
+    "peak_hour": {
+      "hour": 18,
+      "count": 53
+    },
+    "total_days": 1
+  },
+  "action_distribution": {
+    "distribution": {
+      "LOG": {
+        "count": 45,
+        "percentage": 84.90566037735849
+      },
+      "DROP": {
+        "count": 8,
+        "percentage": 15.09433962264151
+      }
+    }
+  },
+  "interface_distribution": {
+    "distribution": {
+      "eth0": {
+        "count": 52,
+        "percentage": 98.11320754716981
+      },
+      "wlan0": {
+        "count": 1,
+        "percentage": 1.8867924528301887
+      }
+    }
+  },
+  "packet_sizes": {
+    "min": 52,
+    "max": 2048,
+    "mean": 642.188679245283,
+    "median": 128,
+    "std_dev": 694.3772266904344,
+    "percentiles": {
+      "25th": 64.0,
+      "75th": 1024.0,
+      "95th": 2048.0,
+      "99th": 0
+    }
+  },
+  "threat_analysis": {
+    "port_scanners": [],
+    "high_volume_sources": [],
+    "unusual_protocols": [],
+    "suspicious_patterns": []
+  },
+  "flow_analysis": {
+    "total_flows": 19,
+    "top_flows": [
+      {
+        "src_ip": "203.0.113.5",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 8080,
+        "protocol": "TCP",
+        "packet_count": 13,
+        "total_bytes": 832,
+        "duration_seconds": 12,
+        "avg_packet_size": 64.0
+      },
+      {
+        "src_ip": "47.254.33.187",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 445,
+        "protocol": "TCP",
+        "packet_count": 5,
+        "total_bytes": 7300,
+        "duration_seconds": 4,
+        "avg_packet_size": 1460.0
+      },
+      {
+        "src_ip": "185.220.101.142",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 22,
+        "protocol": "TCP",
+        "packet_count": 5,
+        "total_bytes": 260,
+        "duration_seconds": 4,
+        "avg_packet_size": 52.0
+      },
+      {
+        "src_ip": "94.102.49.190",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 0,
+        "protocol": "ICMP",
+        "packet_count": 5,
+        "total_bytes": 320,
+        "duration_seconds": 4,
+        "avg_packet_size": 64.0
+      },
+      {
+        "src_ip": "141.98.80.137",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 3389,
+        "protocol": "TCP",
+        "packet_count": 5,
+        "total_bytes": 5120,
+        "duration_seconds": 4,
+        "avg_packet_size": 1024.0
+      },
+      {
+        "src_ip": "120.48.85.74",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 9200,
+        "protocol": "TCP",
+        "packet_count": 5,
+        "total_bytes": 10240,
+        "duration_seconds": 4,
+        "avg_packet_size": 2048.0
+      },
+      {
+        "src_ip": "111.230.56.78",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 0,
+        "protocol": "Unknown",
+        "packet_count": 3,
+        "total_bytes": 384,
+        "duration_seconds": 2,
+        "avg_packet_size": 128.0
+      },
+      {
+        "src_ip": "8.8.8.8",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 12345,
+        "protocol": "UDP",
+        "packet_count": 1,
+        "total_bytes": 128,
+        "duration_seconds": 0,
+        "avg_packet_size": 128.0
+      },
+      {
+        "src_ip": "1.1.1.1",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 54321,
+        "protocol": "TCP",
+        "packet_count": 1,
+        "total_bytes": 1500,
+        "duration_seconds": 0,
+        "avg_packet_size": 1500.0
+      },
+      {
+        "src_ip": "198.51.100.42",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 45678,
+        "protocol": "TCP",
+        "packet_count": 1,
+        "total_bytes": 1024,
+        "duration_seconds": 0,
+        "avg_packet_size": 1024.0
+      },
+      {
+        "src_ip": "198.51.100.42",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 45679,
+        "protocol": "TCP",
+        "packet_count": 1,
+        "total_bytes": 1024,
+        "duration_seconds": 0,
+        "avg_packet_size": 1024.0
+      },
+      {
+        "src_ip": "198.51.100.42",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 45680,
+        "protocol": "TCP",
+        "packet_count": 1,
+        "total_bytes": 1024,
+        "duration_seconds": 0,
+        "avg_packet_size": 1024.0
+      },
+      {
+        "src_ip": "198.51.100.42",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 45681,
+        "protocol": "TCP",
+        "packet_count": 1,
+        "total_bytes": 1024,
+        "duration_seconds": 0,
+        "avg_packet_size": 1024.0
+      },
+      {
+        "src_ip": "198.51.100.42",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 45682,
+        "protocol": "TCP",
+        "packet_count": 1,
+        "total_bytes": 1024,
+        "duration_seconds": 0,
+        "avg_packet_size": 1024.0
+      },
+      {
+        "src_ip": "8.8.8.8",
+        "dst_ip": "192.168.1.101",
+        "dst_port": 12346,
+        "protocol": "UDP",
+        "packet_count": 1,
+        "total_bytes": 256,
+        "duration_seconds": 0,
+        "avg_packet_size": 256.0
+      },
+      {
+        "src_ip": "8.8.4.4",
+        "dst_ip": "192.168.1.102",
+        "dst_port": 12347,
+        "protocol": "UDP",
+        "packet_count": 1,
+        "total_bytes": 512,
+        "duration_seconds": 0,
+        "avg_packet_size": 512.0
+      },
+      {
+        "src_ip": "1.1.1.1",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 54323,
+        "protocol": "TCP",
+        "packet_count": 1,
+        "total_bytes": 64,
+        "duration_seconds": 0,
+        "avg_packet_size": 64.0
+      },
+      {
+        "src_ip": "1.1.1.1",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 54324,
+        "protocol": "TCP",
+        "packet_count": 1,
+        "total_bytes": 1200,
+        "duration_seconds": 0,
+        "avg_packet_size": 1200.0
+      },
+      {
+        "src_ip": "1.1.1.1",
+        "dst_ip": "192.168.1.100",
+        "dst_port": 54325,
+        "protocol": "TCP",
+        "packet_count": 1,
+        "total_bytes": 800,
+        "duration_seconds": 0,
+        "avg_packet_size": 800.0
+      }
+    ],
+    "avg_packets_per_flow": 2.789473684210526,
+    "avg_bytes_per_flow": 1791.3684210526317
+  }
+}

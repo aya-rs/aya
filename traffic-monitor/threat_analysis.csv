@@ -1,0 +1,8 @@
+Metric,Value
+total_events,29
+total_bytes,329728
+time_range_seconds,28
+unique_sources,4
+unique_destinations,1
+avg_packet_size,11369.931034482759
+events_per_second,1.0357142857142858

@@ -1,0 +1,44 @@
+FROM ubuntu:24.04
+
+# Install basic dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    pkg-config \
+    iproute2 \
+    net-tools \
+    jq \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Set up working directory
+WORKDIR /workspace
+
+# Copy source files
+COPY src/config.rs src/
+COPY src/event_handler.rs src/
+COPY src/ip_utils.rs src/
+COPY tests/ tests/
+COPY configs/ configs/
+COPY examples/standalone-demo.rs examples/
+COPY demo-cargo.toml Cargo.toml
+COPY demo-lib.rs src/lib.rs
+COPY demo.sh .
+
+# Update event_handler.rs to work without eBPF dependencies  
+RUN sed -i 's/use traffic_monitor::/use crate::/g' src/event_handler.rs
+RUN sed -i 's/#\[repr(C)\]//g' src/event_handler.rs
+RUN sed -i 's/pub struct TrafficEvent {/pub struct _OriginalTrafficEvent {/g' src/event_handler.rs
+
+# Make demo script executable
+RUN chmod +x demo.sh
+
+# Run tests and build
+RUN cargo test --release --lib
+RUN cargo build --example standalone-demo --release
+
+CMD ["./demo.sh"]
