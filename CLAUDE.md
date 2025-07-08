@@ -142,3 +142,105 @@ The library automatically detects kernel BPF features at runtime through `detect
 - **eBPF programs**: `ebpf/` directory
 - **Integration tests**: `test/integration-test/` and `test/integration-ebpf/`
 - **Test kernels**: `test/.tmp/` (downloaded during CI)
+
+## Traffic Monitor Project
+
+The traffic-monitor directory contains a complete eBPF-based network traffic monitoring solution that demonstrates advanced Aya capabilities. This project was developed as a comprehensive example showcasing XDP (eXpress Data Path) packet processing with structured logging and analytics.
+
+### Development History (Branch: ks/claude-dev)
+
+This project was developed through a comprehensive implementation process that included:
+
+#### Phase 1: Core eBPF Implementation
+- **eBPF Kernel Program**: XDP-based packet filtering with CIDR range matching
+- **Userspace Management**: Program loading, configuration, and event processing
+- **Configuration System**: JSON-based CIDR range management
+- **Event Handling**: Real-time statistics and traffic analysis
+
+#### Phase 2: Structured Logging Enhancement
+- **Multi-Format Logging**: JSON, CSV, JSONL, and Console output formats
+- **Performance Optimization**: Buffered I/O and configurable buffer sizes
+- **Flow Correlation**: Unique flow hashing for session tracking
+- **Metadata Enrichment**: Timestamps, protocol details, and action logging
+
+#### Phase 3: Analytics and Threat Detection
+- **Log Analysis Script**: Comprehensive Python-based analytics tool
+- **Threat Detection**: Port scanning, high-volume source, and anomaly detection
+- **Statistical Analysis**: Traffic patterns, protocol distribution, and flow analysis
+- **Export Capabilities**: JSON and CSV report generation
+
+#### Phase 4: Testing and Documentation
+- **Comprehensive Testing**: Unit tests, integration tests, and sample data
+- **Docker Integration**: Multiple container configurations for testing
+- **Demo Infrastructure**: Standalone demos and validation scripts
+- **Documentation**: Complete README with usage examples and architecture
+
+### Key Commits in Development
+
+1. **05b72261**: Project structure initialization with Cargo configuration
+2. **b5bedb4f**: Core eBPF functionality with XDP packet processing
+3. **f48e144b**: Structured logging system with multiple output formats
+4. **60024872**: Main userspace program with integrated logging
+5. **243320b3**: Log analysis script with threat detection
+6. **85c09ad9**: Configuration examples and comprehensive test suite
+7. **7764e3e0**: Examples and sample data for testing
+8. **5de83133**: Comprehensive documentation and README
+9. **35abd160**: Docker containerization and demo infrastructure
+
+### Project Structure
+
+```
+traffic-monitor/
+├── src/
+│   ├── main.rs              # Userspace program with CLI
+│   ├── traffic_monitor.bpf.rs  # eBPF kernel program
+│   ├── logger.rs            # Structured logging system
+│   ├── config.rs            # Configuration management
+│   ├── event_handler.rs     # Event processing and stats
+│   └── ip_utils.rs          # CIDR parsing utilities
+├── scripts/
+│   └── analyze_logs.py      # Log analysis and threat detection
+├── configs/
+│   ├── default.json         # Default CIDR ranges
+│   ├── strict.json          # Restrictive configuration
+│   └── logging-example.json # Logging configuration
+├── examples/
+│   ├── *.jsonl              # Sample log data
+│   ├── *.csv                # CSV format examples
+│   └── *.rs                 # Demo programs
+├── tests/
+│   └── integration_tests.rs # Comprehensive test suite
+└── Dockerfile*              # Container configurations
+```
+
+### Build and Test Commands
+
+```bash
+# Build the traffic monitor
+cd traffic-monitor
+cargo build --release
+
+# Run tests
+cargo test
+
+# Run with sample data analysis
+python3 scripts/analyze_logs.py examples/comprehensive_traffic.jsonl
+
+# Docker demo (Linux container)
+docker build -f Dockerfile.simple -t traffic-monitor .
+docker run --rm traffic-monitor
+
+# Usage examples
+sudo ./target/release/traffic-monitor -i eth0 -c configs/default.json
+sudo ./target/release/traffic-monitor -i eth0 -c configs/default.json \
+  --log-format jsonl --log-file traffic.jsonl
+```
+
+### Key Features Implemented
+
+- **High-Performance Monitoring**: XDP-based packet processing at line rate
+- **Flexible Configuration**: JSON-based CIDR range management
+- **Structured Logging**: Multiple output formats for analytics integration
+- **Threat Detection**: Automated security analysis and anomaly detection
+- **Cross-Platform Testing**: Docker containerization for Linux environments
+- **Comprehensive Documentation**: Usage examples and troubleshooting guides
