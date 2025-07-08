@@ -1,0 +1,15 @@
+{
+  "permitted_cidrs": [
+    "127.0.0.0/8",
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/16"
+  ],
+  "logging": {
+    "format": "jsonl",
+    "output_file": "traffic_monitor.jsonl",
+    "buffer_size": 8192,
+    "rotate_size_mb": 100,
+    "max_files": 10
+  }
+}
