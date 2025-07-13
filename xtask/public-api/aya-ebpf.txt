@@ -472,6 +472,7 @@ pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self,
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
 pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>>
+pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve_bytes(&self, size: usize, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufBytes<'_>>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl core::marker::Sync for aya_ebpf::maps::ring_buf::RingBuf
 impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
@@ -495,6 +496,39 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::ring_buf::RingBuf where T
 pub fn aya_ebpf::maps::ring_buf::RingBuf::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::from(t: T) -> T
+pub struct aya_ebpf::maps::ring_buf::RingBufBytes<'a>(_)
+impl aya_ebpf::maps::ring_buf::RingBufBytes<'_>
+pub fn aya_ebpf::maps::ring_buf::RingBufBytes<'_>::discard(self, flags: u64)
+pub fn aya_ebpf::maps::ring_buf::RingBufBytes<'_>::submit(self, flags: u64)
+impl core::ops::deref::Deref for aya_ebpf::maps::ring_buf::RingBufBytes<'_>
+pub type aya_ebpf::maps::ring_buf::RingBufBytes<'_>::Target = [u8]
+pub fn aya_ebpf::maps::ring_buf::RingBufBytes<'_>::deref(&self) -> &Self::Target
+impl core::ops::deref::DerefMut for aya_ebpf::maps::ring_buf::RingBufBytes<'_>
+pub fn aya_ebpf::maps::ring_buf::RingBufBytes<'_>::deref_mut(&mut self) -> &mut Self::Target
+impl<'a> core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBufBytes<'a>
+impl<'a> core::marker::Send for aya_ebpf::maps::ring_buf::RingBufBytes<'a>
+impl<'a> core::marker::Sync for aya_ebpf::maps::ring_buf::RingBufBytes<'a>
+impl<'a> core::marker::Unpin for aya_ebpf::maps::ring_buf::RingBufBytes<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::ring_buf::RingBufBytes<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::ring_buf::RingBufBytes<'a>
+impl<P, T> core::ops::deref::Receiver for aya_ebpf::maps::ring_buf::RingBufBytes<'a> where P: core::ops::deref::Deref<Target = T> + ?core::marker::Sized, T: ?core::marker::Sized
+pub type aya_ebpf::maps::ring_buf::RingBufBytes<'a>::Target = T
+impl<T, U> core::convert::Into<U> for aya_ebpf::maps::ring_buf::RingBufBytes<'a> where U: core::convert::From<T>
+pub fn aya_ebpf::maps::ring_buf::RingBufBytes<'a>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::maps::ring_buf::RingBufBytes<'a> where U: core::convert::Into<T>
+pub type aya_ebpf::maps::ring_buf::RingBufBytes<'a>::Error = core::convert::Infallible
+pub fn aya_ebpf::maps::ring_buf::RingBufBytes<'a>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::ring_buf::RingBufBytes<'a> where U: core::convert::TryFrom<T>
+pub type aya_ebpf::maps::ring_buf::RingBufBytes<'a>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::maps::ring_buf::RingBufBytes<'a>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::maps::ring_buf::RingBufBytes<'a> where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::maps::ring_buf::RingBufBytes<'a>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::ring_buf::RingBufBytes<'a> where T: ?core::marker::Sized
+pub fn aya_ebpf::maps::ring_buf::RingBufBytes<'a>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::ring_buf::RingBufBytes<'a> where T: ?core::marker::Sized
+pub fn aya_ebpf::maps::ring_buf::RingBufBytes<'a>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::maps::ring_buf::RingBufBytes<'a>
+pub fn aya_ebpf::maps::ring_buf::RingBufBytes<'a>::from(t: T) -> T
 pub struct aya_ebpf::maps::ring_buf::RingBufEntry<T: 'static>(_)
 impl<T> aya_ebpf::maps::ring_buf::RingBufEntry<T>
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::discard(self, flags: u64)
@@ -1201,6 +1235,7 @@ pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self,
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
 pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>>
+pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve_bytes(&self, size: usize, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufBytes<'_>>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl core::marker::Sync for aya_ebpf::maps::ring_buf::RingBuf
 impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
