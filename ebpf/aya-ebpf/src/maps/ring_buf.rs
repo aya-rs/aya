@@ -32,6 +32,45 @@ pub struct RingBuf {
 
 unsafe impl Sync for RingBuf {}
 
+/// A ring buffer entry, returned from [`RingBuf::reserve_bytes`].
+///
+/// You must [`submit`] or [`discard`] this entry before it gets dropped.
+///
+/// [`submit`]: RingBufBytes::submit
+/// [`discard`]: RingBufBytes::discard
+#[must_use = "eBPF verifier requires ring buffer entries to be either submitted or discarded"]
+pub struct RingBufBytes<'a>(&'a mut [u8]);
+
+impl Deref for RingBufBytes<'_> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        let Self(inner) = self;
+        inner
+    }
+}
+
+impl DerefMut for RingBufBytes<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        let Self(inner) = self;
+        inner
+    }
+}
+
+impl RingBufBytes<'_> {
+    /// Commit this ring buffer entry. The entry will be made visible to the userspace reader.
+    pub fn submit(self, flags: u64) {
+        let Self(inner) = self;
+        unsafe { bpf_ringbuf_submit(inner.as_mut_ptr().cast(), flags) };
+    }
+
+    /// Discard this ring buffer entry. The entry will be skipped by the userspace reader.
+    pub fn discard(self, flags: u64) {
+        let Self(inner) = self;
+        unsafe { bpf_ringbuf_discard(inner.as_mut_ptr().cast(), flags) };
+    }
+}
+
 /// A ring buffer entry, returned from [`RingBuf::reserve`].
 ///
 /// You must [`submit`] or [`discard`] this entry before it gets dropped.
@@ -100,6 +139,18 @@ impl RingBuf {
                 pinning: pinning_type as u32,
             }),
         }
+    }
+
+    /// Reserve a dynamically sized byte buffer in the ring buffer.
+    ///
+    /// Returns `None` if the ring buffer is full.
+    pub fn reserve_bytes(&self, size: usize, flags: u64) -> Option<RingBufBytes<'_>> {
+        let ptr =
+            unsafe { bpf_ringbuf_reserve(self.def.get().cast(), size as u64, flags) }.cast::<u8>();
+        (!ptr.is_null()).then(|| {
+            let inner = unsafe { core::slice::from_raw_parts_mut(ptr, size) };
+            RingBufBytes(inner)
+        })
     }
 
     /// Reserve memory in the ring buffer that can fit `T`.
